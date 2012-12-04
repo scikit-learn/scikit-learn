@@ -56,6 +56,7 @@ cdef class PairwiseDataset:
                    INTEGER **a_ind_ptr, INTEGER **b_ind_ptr,
                    int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b)
 
+
 cdef class PairwiseRocDataset(PairwiseDataset):
     cdef DOUBLE *Y_data_ptr
     cdef INTEGER[::1] pos_index
@@ -67,9 +68,6 @@ cdef class PairwiseRocDataset(PairwiseDataset):
     cdef void draw_roc_sample(self, INTEGER *a_idx, INTEGER *b_idx,
                           DOUBLE *y_a, DOUBLE *y_b)
 
-    cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
-                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr,
-                   int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b)
 
 cdef class PairwiseArrayDatasetRoc(PairwiseRocDataset):
     
@@ -79,27 +77,15 @@ cdef class PairwiseArrayDatasetRoc(PairwiseRocDataset):
     cdef np.ndarray feature_indices
     cdef INTEGER *feature_indices_ptr
 
-    cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
-                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, 
-                   int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b)
-
 
 cdef class PairwiseCSRDatasetRoc(PairwiseRocDataset):
     cdef DOUBLE *X_data_ptr
     cdef INTEGER *X_indptr_ptr
     cdef INTEGER *X_indices_ptr
 
-    cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
-                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, 
-                   int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b)
-
 
 cdef class PairwiseRankDataset(PairwiseDataset):
     cdef DOUBLE *Y_data_ptr
-    
-    cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
-                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, 
-                   int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b)
 
 
 cdef class PairwiseArrayDatasetRank(PairwiseRankDataset):
@@ -113,10 +99,6 @@ cdef class PairwiseArrayDatasetRank(PairwiseRankDataset):
     cdef dict group_id_y_to_count
     cdef DOUBLE *query_data_ptr    
 
-    cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
-                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, 
-                   int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b)
-
 
 cdef class PairwiseCSRDatasetRank(PairwiseRankDataset):
     cdef DOUBLE *X_data_ptr
@@ -126,7 +108,3 @@ cdef class PairwiseCSRDatasetRank(PairwiseRankDataset):
     cdef dict group_id_y_to_index
     cdef dict group_id_y_to_count
     cdef DOUBLE *query_data_ptr    
-
-    cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
-                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, 
-                   int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b)

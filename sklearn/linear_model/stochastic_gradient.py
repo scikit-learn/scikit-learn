@@ -236,7 +236,7 @@ def _make_dataset(X, y_i, sample_weight, query_id=None, sampling=None):
         if sampling == 1:
             if sp.issparse(X):
                 dataset = PairwiseCSRDatasetRoc(X.data, X.indptr, X.indices,
-                                                y_i)#, sample_weight)
+                                                y_i)
                 intercept_decay = SPARSE_INTERCEPT_DECAY
             else:
                 dataset = PairwiseArrayDatasetRoc(X, y_i)
@@ -246,13 +246,13 @@ def _make_dataset(X, y_i, sample_weight, query_id=None, sampling=None):
                 query_id = np.ones(X.shape[0])
             if sp.issparse(X):
                 dataset = PairwiseCSRDatasetRank(X.data, X.indptr, X.indices,
-                                                 y_i, query_id)#, sample_weight)
+                                                 y_i, query_id)
                 intercept_decay = SPARSE_INTERCEPT_DECAY
             else:
                 dataset = PairwiseArrayDatasetRank(X, y_i, query_id)
                 intercept_decay = 1.0
     elif sp.issparse(X):
-        dataset = CSRDataset(X.data, X.indptr, X.indices, y_i)#, sample_weight)
+        dataset = CSRDataset(X.data, X.indptr, X.indices, y_i)
         intercept_decay = SPARSE_INTERCEPT_DECAY
     else:
         dataset = ArrayDataset(X, y_i, sample_weight)
@@ -833,19 +833,19 @@ class SGDRanking(SGDClassifier):
     >>> from sklearn import linear_model
     >>> X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
     >>> Y = np.array([1, 1, 0, 0])
-    >>> clf = linear_model.SGDRanking()
+    >>> clf = linear_model.SGDRanking(sampling='roc')
     >>> clf.fit(X, Y)
     ... #doctest: +NORMALIZE_WHITESPACE
     SGDRanking(alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
       fit_intercept=True, l1_ratio=0.15, learning_rate='optimal',
-      loss='roc_pairwise_ranking', n_iter=5, n_jobs=1, penalty='l2',
-      power_t=0.5, rho=None, seed=0, shuffle=False, verbose=0,
+      loss='hinge', n_iter=5, n_jobs=1, penalty='l2', power_t=0.5,
+      rho=None, sampling='roc', seed=0, shuffle=False, verbose=0,
       warm_start=False)
-    >>> print(clf.predict([[-0.8, -1]]))
-    [1]
-    >>> print(clf.rank(X))
-    [2 3 1 0] 
-
+    >>> print(clf.predict(X))
+    array([0, 1, 3, 2])
+    >>> print("Kendall-Tau: %3f" % clf.score(X,Y))
+    Kendall-Tau: 0.816497
+    
     """
 
     loss_functions = {
@@ -888,8 +888,9 @@ class SGDRanking(SGDClassifier):
             raise ValueError("sampling type %s"
                              "is not supported. " % sampling)
 
-    def _partial_fit(self, X, y, query_id, n_iter, classes=None, sample_weight=None,
-                     coef_init=None, intercept_init=None):
+    def _partial_fit(self, X, y, query_id, n_iter, classes=None,
+                     sample_weight=None, coef_init=None,
+                     intercept_init=None):
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         y = np.asarray(y).ravel()
 
@@ -928,7 +929,8 @@ class SGDRanking(SGDClassifier):
 
         return self
 
-    def partial_fit(self, X, y, query_id=None, classes=None, sample_weight=None):
+    def partial_fit(self, X, y, query_id=None, classes=None,
+                    sample_weight=None):
         """Fit linear model with Stochastic Gradient Descent.
 
         Parameters

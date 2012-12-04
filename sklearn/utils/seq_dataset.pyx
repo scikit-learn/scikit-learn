@@ -80,7 +80,8 @@ cdef class ArrayDataset(SequentialDataset):
         self.n_samples = X.shape[0]
         self.n_features = X.shape[1]
         cdef np.ndarray[INTEGER, ndim=1,
-                        mode='c'] feature_indices = np.arange(0, self.n_features,
+                        mode='c'] feature_indices = np.arange(0,
+                                                              self.n_features,
                                                               dtype=np.int32)
         self.feature_indices = feature_indices
         self.feature_indices_ptr = <INTEGER *> feature_indices.data
@@ -189,13 +190,15 @@ cdef class CSRDataset(SequentialDataset):
 cdef class PairwiseDataset:
     """Base class for datasets with sequential access to pairs."""
     """
-    Calling next_pair() returns a random pair of examples with disagreeing labels.
+    Calling next_pair() returns a random pair of examples with disagreeing
+    labels.
 
     The dtype of the numpy array is expected to be ``np.float64``
     and C-style memory layout.
     """
     cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
-                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b):
+                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a,
+                   int *nnz_b, DOUBLE *y_a, DOUBLE *y_b):
 
         """Get the next pair of examples ``a`` and ``b`` from the dataset.
 
@@ -225,12 +228,13 @@ cdef class PairwiseDataset:
         raise NotImplementedError()    
 
 
-cdef class PairwiseRocDataset:
-    """Base class for datasets with sequential access to pairs.
+cdef class PairwiseRocDataset(PairwiseDataset):
+    """Base class for Roc-sampling datasets with sequential access to pairs.
 
     Implements a sample index of
     D. Sculley, Large-scale Learning to Rank, NIPS 2011
-    Calling next_pair() returns a random pair of examples with disagreeing labels.
+    Calling next_pair() returns a random pair of examples with disagreeing
+    labels.
 
     The dtype of the numpy array is expected to be ``np.float64``
     and C-style memory layout.
@@ -249,9 +253,11 @@ cdef class PairwiseRocDataset:
             else:
                 negatives.append(i)
         cdef np.ndarray[INTEGER, ndim=1,
-                        mode='c'] pos_index = np.array(positives, dtype=np.int32)
+                        mode='c'] pos_index = np.array(positives,
+                                                       dtype=np.int32)
         cdef np.ndarray[INTEGER, ndim=1,
-                        mode='c'] neg_index = np.array(negatives, dtype=np.int32)
+                        mode='c'] neg_index = np.array(negatives,
+                                                       dtype=np.int32)
         self.pos_index = pos_index
         self.neg_index = neg_index
         self.n_pos_samples = pos_index.shape[0]
@@ -279,34 +285,6 @@ cdef class PairwiseRocDataset:
         a_idx[0] = sample_a_idx
         b_idx[0] = sample_b_idx
 
-    cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
-                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b):
-
-        """Get the next pair of examples ``a`` and ``b`` from the dataset.
-
-        Parameters
-        ----------
-        a_data_ptr : np.float64**
-            A pointer to the double array which holds the feature
-            values of the first example in the pair.
-        b_data_ptr : np.float64**
-            A pointer to the double array which holds the feature
-            values of the second example in the pair.
-        x_ind_ptr : np.int32**
-            A pointer to the int32 array which holds the feature
-            indices of the next example.
-        nnz_a : int*
-            A pointer to an int holding the number of non-zero
-            values of the first example in the pair.
-        nnz_b : int*
-            A pointer to an int holding the number of non-zero
-            values of the second example in the pair.
-        y_a : np.float64*
-            The target value of first example in the pair.
-        y_b : np.float64*
-            The target value of second example in the pair.
-        """
-        raise NotImplementedError()
 
 cdef class PairwiseArrayDatasetRoc(PairwiseRocDataset):
     def __cinit__(self, np.ndarray[DOUBLE, ndim=2, mode='c'] X,
@@ -330,7 +308,8 @@ cdef class PairwiseArrayDatasetRoc(PairwiseRocDataset):
         self.Y_data_ptr = <DOUBLE *>Y.data
 
         cdef np.ndarray[INTEGER, ndim=1,
-                        mode='c'] feature_indices = np.arange(0, self.n_features,
+                        mode='c'] feature_indices = np.arange(0,
+                                                              self.n_features,
                                                               dtype=np.int32)
         self.feature_indices = feature_indices
         self.feature_indices_ptr = <INTEGER *> feature_indices.data
@@ -351,9 +330,11 @@ cdef class PairwiseArrayDatasetRoc(PairwiseRocDataset):
             else:
                 negatives.append(i)
         cdef np.ndarray[INTEGER, ndim=1,
-                        mode='c'] pos_index = np.array(positives, dtype=np.int32)
+                        mode='c'] pos_index = np.array(positives,
+                                                       dtype=np.int32)
         cdef np.ndarray[INTEGER, ndim=1,
-                        mode='c'] neg_index = np.array(negatives, dtype=np.int32)
+                        mode='c'] neg_index = np.array(negatives,
+                                                       dtype=np.int32)
         self.pos_index = pos_index
         self.neg_index = neg_index
         self.n_pos_samples = pos_index.shape[0]
@@ -361,7 +342,8 @@ cdef class PairwiseArrayDatasetRoc(PairwiseRocDataset):
         """
 
     cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
-                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b):
+                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a,
+                   int *nnz_b, DOUBLE *y_a, DOUBLE *y_b):
 
         cdef INTEGER sample_a_idx
         cdef INTEGER sample_b_idx
@@ -418,12 +400,6 @@ cdef class PairwiseCSRDatasetRoc(PairwiseRocDataset):
         nnz_b[0] = self.X_indptr_ptr[sample_a_idx + 1] - offset        
 
 
-cdef class PairwiseRankDataset(PairwiseDataset):
-
-    cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
-                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, 
-                   int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b)
-
 cdef class PairwiseArrayDatasetRank(PairwiseRankDataset):
     def __cinit__(self, np.ndarray[DOUBLE, ndim=2, mode='c'] X,
                   np.ndarray[DOUBLE, ndim=1, mode='c'] Y,
@@ -450,16 +426,17 @@ cdef class PairwiseArrayDatasetRank(PairwiseRankDataset):
         self.Y_data_ptr = <DOUBLE *>Y.data
 
         cdef np.ndarray[INTEGER, ndim=1,
-                        mode='c'] feature_indices = np.arange(0, self.n_features,
+                        mode='c'] feature_indices = np.arange(0,
+                                                              self.n_features,
                                                               dtype=np.int32)
         self.feature_indices = feature_indices
         self.feature_indices_ptr = <INTEGER *> feature_indices.data
         self.stride = X.strides[0] / X.strides[1]
       
         self.group_id_y_to_count = <dict> collections.defaultdict(int)
-        # must declare in the cinit as closures inside cdef functions not yet supported
-        self.group_id_y_to_index = <dict> collections.defaultdict(lambda: \
-                                                           collections.defaultdict(list))
+        # must declare in the cinit as closures inside cdef functions not yet
+        # supported
+        self.group_id_y_to_index = <dict> collections.defaultdict(lambda: collections.defaultdict(list))
         self.query_data_ptr = <DOUBLE *>query_id.data
         cdef Py_ssize_t i
         cdef DOUBLE query_data_ptr_idx
@@ -470,7 +447,8 @@ cdef class PairwiseArrayDatasetRank(PairwiseRankDataset):
 
 
     cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
-                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b):
+                        INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a, int *nnz_b,
+                        DOUBLE *y_a, DOUBLE *y_b):
 
         a_ind_ptr[0] = self.feature_indices_ptr
         b_ind_ptr[0] = self.feature_indices_ptr        
@@ -525,7 +503,8 @@ cdef class PairwiseCSRDatasetRank(PairwiseRankDataset):
         self.X_indices_ptr = <INTEGER *>X_indices.data
 
         self.group_id_y_to_count = <dict> collections.defaultdict(int)
-        # must declare in the cinit as closures inside cdef functions not yet supported
+        # must declare in the cinit as closures inside cdef functions
+        # not yet supported
         self.group_id_y_to_index = <dict> collections.defaultdict(lambda: \
                                                            collections.defaultdict(list))
         self.query_data_ptr = <DOUBLE *>query_id.data
@@ -538,7 +517,8 @@ cdef class PairwiseCSRDatasetRank(PairwiseRankDataset):
                 
 
     cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
-                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b):
+                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a, int *nnz_b,
+                   DOUBLE *y_a, DOUBLE *y_b):
 
         cdef int num_chances = 1000
         cdef Py_ssize_t i
