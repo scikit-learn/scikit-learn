@@ -494,16 +494,9 @@ def test_classifiers_train():
                     pass
 
             if hasattr(clf, "classes_"):
-                if hasattr(clf, "n_outputs_"):
-                    assert_equal(clf.n_outputs_, 1)
-                    assert_array_equal(
-                        clf.classes_, [classes],
-                        "Unexpected classes_ attribute for %r" % clf)
-                else:
-                    # flat classes array: XXX inconsistent
-                    assert_array_equal(
-                        clf.classes_, classes,
-                        "Unexpected classes_ attribute for %r" % clf)
+                assert_array_equal(
+                    clf.classes_, classes,
+                    "Unexpected classes_ attribute for %r" % clf)
 
 
 def test_classifiers_classes():
