@@ -358,30 +358,32 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                              " input n_features is %s "
                              % (self.n_features_, n_features))
 
-        P_ = self.tree_.predict(X)
+        proba = self.tree_.predict(X)
 
         # Classification
         if isinstance(self, ClassifierMixin):
             if self.n_outputs_ == 1:
-                return self.classes_.take(np.argmax(P_[:, 0], axis=1), axis=0)
+                return self.classes_.take(np.argmax(proba[:, 0], axis=1),
+                                          axis=0)
 
             else:
-                P = np.zeros((n_samples, self.n_outputs_))
+                predictions = np.zeros((n_samples, self.n_outputs_))
 
                 for k in xrange(self.n_outputs_):
-                    P[:, k] = self.classes_[k].take(np.argmax(P_[:, k],
-                                                              axis=1),
-                                                    axis=0)
+                    predictions[:, k] = self.classes_[k].take(
+                                            np.argmax(proba[:, k],
+                                                      axis=1),
+                                            axis=0)
 
-                return P
+                return predictions
 
         # Regression
         else:
             if self.n_outputs_ == 1:
-                return P_[:, 0, 0]
+                return proba[:, 0, 0]
 
             else:
-                return P_[:, :, 0]
+                return proba[:, :, 0]
 
 
 class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
@@ -523,27 +525,27 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                              " input n_features is %s "
                              % (self.n_features_, n_features))
 
-        P_ = self.tree_.predict(X)
+        proba = self.tree_.predict(X)
 
         if self.n_outputs_ == 1:
-            P = P_[:, 0, :self.n_classes_]
-            normalizer = P.sum(axis=1)[:, np.newaxis]
+            proba = proba[:, 0, :self.n_classes_]
+            normalizer = proba.sum(axis=1)[:, np.newaxis]
             normalizer[normalizer == 0.0] = 1.0
-            P /= normalizer
-
-            return P
-
-        else:
-            proba = []
-
-            for k in xrange(self.n_outputs_):
-                P_k = P_[:, k, :self.n_classes_[k]]
-                normalizer = P_k.sum(axis=1)[:, np.newaxis]
-                normalizer[normalizer == 0.0] = 1.0
-                P_k /= normalizer
-                proba.append(P_k)
+            proba /= normalizer
 
             return proba
+
+        else:
+            all_proba = []
+
+            for k in xrange(self.n_outputs_):
+                proba_k = proba[:, k, :self.n_classes_[k]]
+                normalizer = proba_k.sum(axis=1)[:, np.newaxis]
+                normalizer[normalizer == 0.0] = 1.0
+                proba_k /= normalizer
+                all_proba.append(proba_k)
+
+            return all_proba
 
     def predict_log_proba(self, X):
         """Predict class log-probabilities of the input samples X.

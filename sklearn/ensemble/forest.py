@@ -98,36 +98,36 @@ def _parallel_predict_proba(trees, X, n_classes, n_outputs):
     n_samples = X.shape[0]
 
     if n_outputs == 1:
-        p = np.zeros((n_samples, n_classes))
+        proba = np.zeros((n_samples, n_classes))
 
         for tree in trees:
-            p_tree = tree.predict_proba(X)
+            proba_tree = tree.predict_proba(X)
 
             if n_classes == tree.n_classes_:
-                p += p_tree
+                proba += proba_tree
 
             else:
                 for j, c in enumerate(tree.classes_):
-                    p[:, c] += p_tree[:, j]
+                    proba[:, c] += proba_tree[:, j]
 
     else:
-        p = []
+        proba = []
 
         for k in xrange(n_outputs):
-            p.append(np.zeros((n_samples, n_classes[k])))
+            proba.append(np.zeros((n_samples, n_classes[k])))
 
         for tree in trees:
-            p_tree = tree.predict_proba(X)
+            proba_tree = tree.predict_proba(X)
 
             for k in xrange(n_outputs):
                 if n_classes[k] == tree.n_classes_[k]:
-                    p[k] += p_tree[k]
+                    proba[k] += proba_tree[k]
 
                 else:
                     for j, c in enumerate(tree.classes_[k]):
-                        p[k][:, c] += p_tree[k][:, j]
+                        proba[k][:, c] += proba_tree[k][:, j]
 
-    return p
+    return proba
 
 
 def _parallel_predict_regression(trees, X):
@@ -479,16 +479,16 @@ class ForestClassifier(BaseForest, ClassifierMixin):
             The predicted classes.
         """
         n_samples = len(X)
-        probas = self.predict_proba(X)
+        proba = self.predict_proba(X)
 
         if self.n_outputs_ == 1:
-            return self.classes_.take(np.argmax(probas, axis=1), axis=0)
+            return self.classes_.take(np.argmax(proba, axis=1), axis=0)
 
         else:
             predictions = np.zeros((n_samples, self.n_outputs_))
 
             for k in xrange(self.n_outputs_):
-                predictions[:, k] = self.classes_[k].take(np.argmax(probas[k],
+                predictions[:, k] = self.classes_[k].take(np.argmax(proba[k],
                                                                     axis=1),
                                                           axis=0)
 
@@ -520,7 +520,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
         n_jobs, n_trees, starts = _partition_trees(self)
 
         # Parallel loop
-        all_p = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
+        all_proba = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_predict_proba)(
                 self.estimators_[starts[i]:starts[i + 1]],
                 X,
@@ -529,23 +529,23 @@ class ForestClassifier(BaseForest, ClassifierMixin):
             for i in xrange(n_jobs))
 
         # Reduce
-        p = all_p[0]
+        proba = all_proba[0]
 
         if self.n_outputs_ == 1:
-            for j in xrange(1, len(all_p)):
-                p += all_p[j]
+            for j in xrange(1, len(all_proba)):
+                proba += all_proba[j]
 
-            p /= self.n_estimators
+            proba /= self.n_estimators
 
         else:
-            for j in xrange(1, len(all_p)):
+            for j in xrange(1, len(all_proba)):
                 for k in xrange(self.n_outputs_):
-                    p[k] += all_p[j][k]
+                    proba[k] += all_proba[j][k]
 
             for k in xrange(self.n_outputs_):
-                p[k] /= self.n_estimators
+                proba[k] /= self.n_estimators
 
-        return p
+        return proba
 
     def predict_log_proba(self, X):
         """Predict class log-probabilities for X.
