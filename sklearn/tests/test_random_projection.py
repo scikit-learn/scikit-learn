@@ -1,7 +1,9 @@
 from __future__ import division
+import warnings
 
 import scipy.sparse as sp
 import numpy as np
+from numpy.testing import assert_allclose
 
 from sklearn.metrics import euclidean_distances
 from sklearn.random_projection import (johnson_lindenstrauss_min_dim,
@@ -19,7 +21,6 @@ from sklearn.utils.testing import (assert_less,
                                    assert_in,
                                    )
 
-from numpy.testing import assert_allclose
 
 sparse_random_projection = [BernouilliRandomProjection]
 dense_random_projection = [GaussianRandomProjection]
@@ -280,3 +281,13 @@ def test_random_projection_dimensions():
             assert_equal(rp.components_.shape, (100, n_features))
             assert_less(rp.components_.nnz, 110)  # close to 1% density
             assert_less(90, rp.components_.nnz)  # close to 1% density
+
+
+def test_n_component_greater_than_n_features():
+    n_features = 20
+    data, _ = make_sparse_random_data(5, n_features, int(n_features / 4))
+
+    for RandomProjection in all_random_projection:
+        with warnings.catch_warnings() as w:
+            # Trigger a warning.
+            RandomProjection(n_components=n_features + 1).fit(data)
