@@ -23,12 +23,14 @@ Johnson-Lindenstrauss lemma (quoting Wikipedia):
   http://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
 
 """
-# Authors: Olivier Grisel <olivier.grisel@ensta.org>
+# Authors: Olivier Grisel <olivier.grisel@ensta.org>,
+#          Arnaud Joly <a.joly@ulg.ac.be>
 # License: Simple BSD
 
 from __future__ import division
 import math
 import random
+import warnings
 
 import numpy as np
 from numpy.testing import assert_equal
@@ -336,6 +338,13 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
             if self.n_components <= 0:
                 raise ValueError("n_components must be greater than 0, got %s"
                                  % self.n_components_)
+            elif self.n_components > n_features:
+                warnings.warn(
+                    "The number of components is higher than the number of"
+                    " features: n_features > n_components (%s > %s)."
+                    "The dimensionality of the problem will not be reduced."
+                    % (n_features, self.n_components))
+
             self.n_components_ = self.n_components
 
         if self.distribution == "bernouilli":
@@ -349,8 +358,8 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
                 raise ValueError("Density should be equal to one for Gaussian"
                                  " random projection.")
 
-            self.components_ = gaussian_random_matrix(self.n_components_,
-                n_features, random_state=self.random_state)
+            self.components_ = gaussian_random_matrix(
+                self.n_components_, n_features, random_state=self.random_state)
 
         else:
             raise ValueError('Unknown specified distribution.')
@@ -359,7 +368,7 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
             self.components_.shape,
             (self.n_components_, n_features),
             err_msg=('An error has occured the projection matrix has not '
-                 'the proper shape.'))
+                     'the proper shape.'))
 
         return self
 
@@ -383,9 +392,10 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
             raise ValueError('No random projection matrix had been fit.')
 
         if X.shape[1] != self.components_.shape[1]:
-            raise ValueError('Impossible to perform projection:'
-            'X at fit stage had a different number of features.'
-            '(%s != %s)' % (X.shape[1], self.components_.shape[1]))
+            raise ValueError(
+                'Impossible to perform projection:'
+                'X at fit stage had a different number of features.'
+                '(%s != %s)' % (X.shape[1], self.components_.shape[1]))
 
         if not sp.issparse(X):
             X = np.atleast_2d(X)
