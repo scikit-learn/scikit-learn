@@ -177,18 +177,19 @@ def test_affinities():
 def test_discretize(seed=8):
     # Test the discretize using a noise assignment matrix
     random_state = np.random.RandomState(seed)
-    for n_sample in [50, 100, 150, 500]:
+    for n_samples in [50, 100, 150, 500]:
         for n_class in range(2, 10):
             # random class labels
-            y_true = random_state.random_integers(0, n_class, n_sample)
+            y_true = random_state.random_integers(0, n_class, n_samples)
             y_true = np.array(y_true, np.float)
             # noise class assignment matrix
-            y_indicator = sparse.coo_matrix((np.ones(n_sample),
-                                            (np.arange(n_sample),
+            y_indicator = sparse.coo_matrix((np.ones(n_samples),
+                                            (np.arange(n_samples),
                                              y_true)),
-                                            shape=(n_sample,
+                                            shape=(n_samples,
                                                    n_class + 1))
             y_true_noisy = (y_indicator.todense()
-                            + 0.1 * random_state.randn(n_sample, n_class + 1))
+                            + 0.1 * random_state.randn(n_samples,
+                                                       n_class + 1))
             y_pred = discretize(y_true_noisy, random_state)
             assert_greater(adjusted_rand_score(y_true, y_pred), 0.8)
