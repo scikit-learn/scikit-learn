@@ -466,7 +466,8 @@ cdef class PairwiseArrayDatasetRank(PairwiseRankDataset):
         for i in range(self.n_samples):
             query_data_ptr_idx = self.query_data_ptr[i]
             self.group_id_y_to_index[query_data_ptr_idx][self.Y_data_ptr[i]].append(i) 
-            self.group_id_y_to_count[query_data_ptr_idx]+=1   
+            self.group_id_y_to_count[query_data_ptr_idx]+=1
+
 
     cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
                    INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b):
@@ -504,6 +505,7 @@ cdef class PairwiseArrayDatasetRank(PairwiseRankDataset):
                 b_idx = idx_list[random_int]
                 b_offset = b_idx * self.stride
                 b_data_ptr[0] = self.X_data_ptr + b_offset
+                y_b[0] = self.Y_data_ptr[b_idx]
                 break
 
 
@@ -533,6 +535,7 @@ cdef class PairwiseCSRDatasetRank(PairwiseRankDataset):
             query_data_ptr_idx = self.query_data_ptr[i]
             self.group_id_y_to_index[query_data_ptr_idx][self.Y_data_ptr[i]].append(i) 
             self.group_id_y_to_count[query_data_ptr_idx]+=1   
+                
 
     cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
                    INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b):
@@ -550,6 +553,7 @@ cdef class PairwiseCSRDatasetRank(PairwiseRankDataset):
             a_offset = self.X_indptr_ptr[a_idx]
             a_data_ptr[0] = self.X_data_ptr + a_offset
             a_ind_ptr[0] = self.X_indices_ptr + a_offset
+            y_a[0] = self.Y_data_ptr[a_idx]
             nnz_a[0] = self.X_indptr_ptr[a_idx + 1] - a_offset
             group_id = self.query_data_ptr[a_idx]
             y_to_list = self.group_id_y_to_index[group_id]
@@ -557,6 +561,7 @@ cdef class PairwiseCSRDatasetRank(PairwiseRankDataset):
             len(self.group_id_y_to_index[group_id][y_a[0]])
             if (y_range==0):
                 continue
+            break
         
         # set vector b
         cdef unsigned int random_int = rand() % y_range
@@ -571,4 +576,5 @@ cdef class PairwiseCSRDatasetRank(PairwiseRankDataset):
                 b_data_ptr[0] = self.X_data_ptr + b_offset
                 b_ind_ptr[0] = self.X_indices_ptr + b_offset
                 nnz_b[0] = self.X_indptr_ptr[b_idx + 1] - b_offset
+                y_b[0] = self.Y_data_ptr[b_idx]
                 break

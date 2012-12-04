@@ -644,12 +644,9 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         # intercept is a float, need to convert it to an array of length 1
         self.intercept_ = np.atleast_1d(intercept)
 
+    """
     def _fit_multiclass(self, X, y, sample_weight, n_iter):
-        """Fit a multi-class classifier by combining binary classifiers
 
-        Each binary classifier predicts one class versus all others. This
-        strategy is called OVA: One Versus All.
-        """
         # Use joblib to fit OvA in parallel
         result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
             delayed(fit_binary)(self, i, X, y, n_iter,
@@ -660,7 +657,7 @@ class SGDClassifier(BaseSGD, LinearClassifierMixin, SelectorMixin):
         for i, (coef, intercept) in enumerate(result):
             self.coef_[i] = coef
             self.intercept_[i] = intercept
-
+    """
 
 def _prepare_fit_binary(est, y, i, query_id=None):
     """Initialization for fit_binary.
@@ -925,14 +922,7 @@ class SGDRanking(SGDClassifier):
         if self.t_ is None:
             self._init_t(self.loss_function)
 
-        # delegate to concrete training procedure
-        if n_classes > 2:
-            self._fit_multiclass(X, y, query_id, sample_weight, n_iter)
-        elif n_classes == 2:
-            self._fit_binary(X, y, query_id, sample_weight, n_iter)
-        else:
-            raise ValueError("The number of class labels must be "
-                             "greater than one.")
+        self._fit_binary(X, y, query_id, sample_weight, n_iter)
 
         self.t_ += n_iter * n_samples
 
@@ -1039,25 +1029,6 @@ class SGDRanking(SGDClassifier):
         self.coef_ = coef.reshape(1, -1)
         # intercept is a float, need to convert it to an array of length 1
         self.intercept_ = np.atleast_1d(intercept)
- 
-
-    def _fit_multiclass(self, X, y, query_id, sample_weight, n_iter):
-        """Fit a multi-class classifier by combining binary classifiers
-
-        Each binary classifier predicts one class versus all others. This
-        strategy is called OVA: One Versus All.
-        """
-        # Use joblib to fit OvA in parallel
-        result = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-            delayed(fit_binary_ranking)(self, i, X, y, query_id, n_iter,
-                                self._expanded_class_weight[i], 1.,
-                                sample_weight)
-            for i in xrange(len(self.classes_)))
-
-        for i, (coef, intercept) in enumerate(result):
-            self.coef_[i] = coef
-            self.intercept_[i] = intercept
-
 
     def decision_function(self, X):
         """Predict using the ranking model

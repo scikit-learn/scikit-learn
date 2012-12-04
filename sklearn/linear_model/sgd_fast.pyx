@@ -547,8 +547,6 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         #if shuffle:
         #    dataset.shuffle(seed)
         for i in range(n_samples):
-            #dataset.next_pair(&a_data_ptr, &b_data_ptr, &x_ind_ptr,
-            #             &xnnz_a, &xnnz_b, &y_a, &y_b)
 
             dataset.next_pair(&a_data_ptr, &b_data_ptr, &a_ind_ptr,
                               &b_ind_ptr, &xnnz_a, &xnnz_b, &y_a, &y_b)
@@ -565,7 +563,6 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
                 y = -1.0
             else:
                 y = 0.0
-
             p = w.dot_on_difference(a_data_ptr, b_data_ptr, a_ind_ptr,
                                     b_ind_ptr, xnnz_a, xnnz_b) + intercept
 
