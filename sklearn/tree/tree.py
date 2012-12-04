@@ -316,6 +316,10 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         self.tree_.build(X, y, sample_mask=sample_mask,
                          X_argsorted=X_argsorted)
 
+        if self.n_outputs_ == 1:
+            self.n_classes_ = self.n_classes_[0]
+            self.classes_ = self.classes_[0]
+
         if self.compute_importances:
             self.feature_importances_ = \
                 self.tree_.compute_feature_importances()
@@ -356,19 +360,25 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         P = self.tree_.predict(X)
 
         if isinstance(self, ClassifierMixin):
-            predictions = np.zeros((n_samples, self.n_outputs_))
+            if self.n_outputs_ == 1:
+                return self.classes_.take(np.argmax(P[:, 0], axis=1), axis=0)
 
-            for k in xrange(self.n_outputs_):
-                predictions[:, k] = self.classes_[k].take(np.argmax(P[:, k],
-                                                                    axis=1),
-                                                          axis=0)
+            else:
+                predictions = np.zeros((n_samples, self.n_outputs_))
+
+                for k in xrange(self.n_outputs_):
+                    predictions[:, k] = self.classes_[k].take(np.argmax(P[:, k],
+                                                                        axis=1),
+                                                              axis=0)
+
+                return predictions
+
         else:
-            predictions = P[:, :, 0]
+            if self.n_outputs_ == 1:
+                return P[:, 0, 0]
 
-        if self.n_outputs_ == 1:
-            predictions = predictions.reshape((n_samples, ))
-
-        return predictions
+            else:
+                return P[:, :, 0]
 
 
 class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
@@ -510,20 +520,26 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                              " input n_features is %s "
                              % (self.n_features_, n_features))
 
-        proba = []
         P = self.tree_.predict(X)
 
-        for k in xrange(self.n_outputs_):
-            P_k = P[:, k, :self.n_classes_[k]]
-            normalizer = P_k.sum(axis=1)[:, np.newaxis]
-            normalizer[normalizer == 0.0] = 1.0
-            P_k /= normalizer
-            proba.append(P_k)
-
         if self.n_outputs_ == 1:
-            return proba[0]
+            P = P[:, 0, :self.n_classes_]
+            normalizer = P.sum(axis=1)[:, np.newaxis]
+            normalizer[normalizer == 0.0] = 1.0
+            P /= normalizer
+
+            return P
 
         else:
+            proba = []
+
+            for k in xrange(self.n_outputs_):
+                P_k = P[:, k, :self.n_classes_[k]]
+                normalizer = P_k.sum(axis=1)[:, np.newaxis]
+                normalizer[normalizer == 0.0] = 1.0
+                P_k /= normalizer
+                proba.append(P_k)
+
             return proba
 
     def predict_log_proba(self, X):
