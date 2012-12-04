@@ -11,13 +11,13 @@ from itertools import product
 import time
 
 import numpy as np
-from scipy import sparse
 
 from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
 from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
-from .utils import safe_mask
+from .utils import safe_mask, check_arrays
+from .utils.validation import _num_samples
 
 __all__ = ['GridSearchCV', 'IterGrid', 'fit_grid_point']
 
@@ -85,11 +85,10 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
 
     if hasattr(base_clf, 'kernel') and hasattr(base_clf.kernel, '__call__'):
         # cannot compute the kernel values with custom function
-        raise ValueError(
-            "Cannot use a custom kernel function. "
-            "Precompute the kernel matrix instead.")
+        raise ValueError("Cannot use a custom kernel function. "
+                         "Precompute the kernel matrix instead.")
 
-    if isinstance(X, list) or isinstance(X, tuple):
+    if not hasattr(X, "shape"):
         if getattr(base_clf, "_pairwise", False):
             raise ValueError("Precomputed kernels or affinity matrices have "
                              "to be passed as arrays or sparse matrices.")
@@ -118,17 +117,9 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
             this_score = score_func(y_test, y_pred)
         else:
             this_score = clf.score(X_test, y_test)
-        if hasattr(y, 'shape'):
-            this_n_test_samples = y.shape[0]
-        else:
-            this_n_test_samples = len(y)
     else:
         clf.fit(X_train, **fit_params)
         this_score = clf.score(X_test)
-        if hasattr(X, 'shape'):
-            this_n_test_samples = X.shape[0]
-        else:
-            this_n_test_samples = len(X)
 
     if verbose > 2:
         msg += ", score=%f" % this_score
@@ -137,7 +128,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
                               logger.short_format_time(time.time() -
                                                        start_time))
         print "[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg)
-    return this_score, clf_params, this_n_test_samples
+    return this_score, clf_params, _num_samples(X)
 
 
 def _check_param_grid(param_grid):
@@ -304,8 +295,8 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
     def __init__(self, estimator, param_grid, loss_func=None, score_func=None,
                  fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs'):
-        if not hasattr(estimator, 'fit') or \
-           not (hasattr(estimator, 'predict') or hasattr(estimator, 'score')):
+        if not hasattr(estimator, 'fit') or not (hasattr(estimator, 'predict')
+                 or hasattr(estimator, 'score')):
             raise TypeError("estimator should a be an estimator implementing"
                             " 'fit' and 'predict' or 'score' methods,"
                             " %s (type %s) was passed" %
@@ -357,21 +348,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
         estimator = self.estimator
         cv = self.cv
 
-        if hasattr(X, 'shape'):
-            n_samples = X.shape[0]
-        else:
-            # support list of unstructured objects on which feature
-            # extraction will be applied later in the tranformer chain
-            n_samples = len(X)
-        if y is not None:
-            if len(y) != n_samples:
-                raise ValueError('Target variable (y) has a different number '
-                                 'of samples (%i) than data (X: %i samples)'
-                                 % (len(y), n_samples))
-            y = np.asarray(y)
-
-        if sparse.issparse(X):
-            X = X.tocsr()
+        X, y = check_arrays(X, y, sparse_format="csr", allow_lists=True)
         cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
         grid = IterGrid(self.param_grid)

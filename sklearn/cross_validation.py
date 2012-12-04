@@ -960,7 +960,7 @@ class StratifiedShuffleSplit(object):
         self.n = self.y.size
         self.n_iter = n_iter
         if n_iterations is not None:  # pragma: no cover
-            warnings.warn("n_iterations was renamed to n_iter for consistency "
+            warnings.warn("n_iterations was renamed to n_iter for consistency"
                           " and will be removed in 0.16.")
             self.n_iter = n_iterations
         self.test_size = test_size
@@ -1098,7 +1098,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
     fit_params : dict, optional
         Parameters to pass to the fit method of the estimator.
     """
-    X, y = check_arrays(X, y, sparse_format='csr')
+    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     if score_func is None:
         if not hasattr(estimator, 'score'):
@@ -1161,7 +1161,7 @@ def check_cv(cv, X=None, y=None, classifier=False):
         stratified KFold will be used.
     """
     is_sparse = sp.issparse(X)
-    needs_indices = is_sparse or isinstance(X, list) or isinstance(X, tuple)
+    needs_indices = is_sparse or not hasattr(X, "shape")
     if cv is None:
         cv = 3
     if isinstance(cv, numbers.Integral):
