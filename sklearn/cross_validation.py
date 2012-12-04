@@ -1026,7 +1026,7 @@ def _cross_val_score(estimator, X, y, score_func, train, test, verbose,
     fit_params = dict([(k, np.asarray(v)[train] if hasattr(v, '__len__') and
                         len(v) == n_samples else v)
                        for k, v in fit_params.items()])
-    if isinstance(X, list) or isinstance(X, tuple):
+    if not hasattr(X, "shape"):
         if getattr(estimator, "_pairwise", False):
             raise ValueError("Precomputed kernels or affinity matrices have "
                              "to be passed as arrays or sparse matrices.")
