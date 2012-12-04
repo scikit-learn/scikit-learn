@@ -156,9 +156,9 @@ API changes summary
      :class:`cluster.SpectralClustering` to ``eigen_solver``.
 
     - ``classes_`` and ``n_classes_`` attributes of
-      `tree.DecisionTreeClassifier` and all derived ensemble models are now
-      flat in case single output problems and nested in cases of multi-output
-      problems.
+      :class:`tree.DecisionTreeClassifier` and all derived ensemble models are
+      now flat in case single output problems and nested in cases of
+      multi-output problems.
 
 .. _changes_0_12.1:
 
