@@ -69,10 +69,10 @@ def check_input_size_random_matrix(random_matrix):
 
 
 def check_size_generated(random_matrix):
-    assert_equal(gaussian_random_matrix(1, 5).shape, (1, 5))
-    assert_equal(gaussian_random_matrix(5, 1).shape, (5, 1))
-    assert_equal(gaussian_random_matrix(5, 5).shape, (5, 5))
-    assert_equal(gaussian_random_matrix(1, 1).shape, (1, 1))
+    assert_equal(random_matrix(1, 5).shape, (1, 5))
+    assert_equal(random_matrix(5, 1).shape, (5, 1))
+    assert_equal(random_matrix(5, 5).shape, (5, 5))
+    assert_equal(random_matrix(1, 1).shape, (1, 1))
 
 
 def check_input_with_sparse_random_matrix(random_matrix):
