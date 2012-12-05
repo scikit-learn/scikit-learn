@@ -139,6 +139,7 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
     Examples
     --------
       >>> import numpy as np
+
       >>> from sklearn.random_projection import gaussian_random_matrix
 
       >>> n_components, n_features = 10, 10000
@@ -203,11 +204,11 @@ def bernouilli_random_matrix(n_components, n_features, density='auto',
     --------
 
       >>> import numpy as np
-      >>> from sklearn.random_projection import sparse_random_matrix
+      >>> from sklearn.random_projection import bernouilli_random_matrix
 
       >>> n_components, n_features = 10, 10000
 
-      >>> r = sparse_random_matrix(n_components, n_features, random_state=0)
+      >>> r = bernouilli_random_matrix(n_components, n_features, random_state=0)
       >>> r                                   # doctest: +NORMALIZE_WHITESPACE
       <10x10000 sparse matrix of type '<type 'numpy.float64'>'
           with 988 stored elements in Compressed Sparse Row format>
