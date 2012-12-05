@@ -157,7 +157,7 @@ API changes summary
 
     - ``classes_`` and ``n_classes_`` attributes of
       :class:`tree.DecisionTreeClassifier` and all derived ensemble models are
-      now flat in case single output problems and nested in cases of
+      now flat in case of single output problems and nested in case of
       multi-output problems.
 
 .. _changes_0_12.1:
