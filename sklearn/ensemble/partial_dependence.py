@@ -155,7 +155,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
                    order='C')
     for stage in xrange(n_estimators):
         for k in range(n_trees_per_stage):
-            tree = gbrt.estimators_[stage, k]
+            tree = gbrt.estimators_[stage, k].tree_
             _partial_dependence_tree(tree, grid, target_variables,
                                      gbrt.learning_rate, pdp[k])
 
