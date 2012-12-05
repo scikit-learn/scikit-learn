@@ -893,6 +893,7 @@ class SGDRanking(SGDClassifier):
 
     loss_functions = {
         "hinge": (Hinge, 1.0),
+        "squared_hinge": (SquaredHinge, 1.0),
         "perceptron": (Hinge, 0.0),
         "log": (Log, ),
         "modified_huber": (ModifiedHuber, ),

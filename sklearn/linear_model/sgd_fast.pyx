@@ -596,7 +596,6 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
 
     cdef DOUBLE *a_data_ptr = NULL
     cdef DOUBLE *b_data_ptr = NULL
-    #cdef INTEGER *x_ind_ptr = NULL
     cdef INTEGER *a_ind_ptr = NULL
     cdef INTEGER *b_ind_ptr = NULL
 
