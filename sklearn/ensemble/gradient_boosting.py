@@ -680,8 +680,9 @@ class BaseGradientBoosting(BaseEnsemble):
                              "call `fit` before `feature_importances_`.")
         total_sum = np.zeros((self.n_features, ), dtype=np.float64)
         for stage in self.estimators_:
-            stage_sum = sum(tree.compute_feature_importances(method='gini')
-                            for tree in stage) / len(stage)
+            stage_sum = sum(
+                        tree.tree_.compute_feature_importances(method='gini')
+                        for tree in stage) / len(stage)
             total_sum += stage_sum
 
         importances = total_sum / len(self.estimators_)
