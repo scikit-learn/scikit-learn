@@ -79,9 +79,8 @@ def check_input_with_sparse_random_matrix(random_matrix):
     n_components, n_features = 5, 10
 
     for density in [-1., 0.0, 1.1]:
-        assert_raises(
-            ValueError,
-            random_matrix, n_components, n_features, density=density)
+        assert_raises(ValueError,
+                      random_matrix, n_components, n_features, density=density)
 
 
 def test_basic_property_of_random_matrix():
