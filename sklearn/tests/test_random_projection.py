@@ -25,9 +25,10 @@ all_sparse_random_matrix = [bernouilli_random_matrix]
 all_dense_random_matrix = [gaussian_random_matrix]
 all_random_matrix = set(all_sparse_random_matrix + all_dense_random_matrix)
 
-all_sparse_transformer = [BernouilliRandomProjection]
-all_dense_transformer = [GaussianRandomProjection]
-all_transformer = set(all_sparse_transformer + all_dense_transformer)
+all_SparseRandomProjection = [BernouilliRandomProjection]
+all_DenseRandomProjection = [GaussianRandomProjection]
+all_RandomProjection = set(all_SparseRandomProjection +
+                           all_DenseRandomProjection)
 
 
 # Make some random data with uniformly located non zero entries with
@@ -160,22 +161,19 @@ def test_bernouilli_random_matrix():
 # tests on random projection transformer
 ###############################################################################
 def test_sparse_random_projection_transformer_invalid_density():
-    for RandomProjection in all_sparse_transformer:
-        assert_raises(
-            ValueError,
-            BernouilliRandomProjection(density=1.1).fit, data)
+    for RandomProjection in all_SparseRandomProjection:
+        assert_raises(ValueError,
+                      RandomProjection(density=1.1).fit, data)
 
-        assert_raises(
-            ValueError,
-            BernouilliRandomProjection(density=0).fit, data)
+        assert_raises(ValueError,
+                      RandomProjection(density=0).fit, data)
 
-        assert_raises(
-            ValueError,
-            BernouilliRandomProjection(density=-0.1).fit, data)
+        assert_raises(ValueError,
+                      RandomProjection(density=-0.1).fit, data)
 
 
 def test_random_projection_transformer_invalid_input():
-    for RandomProjection in all_transformer:
+    for RandomProjection in all_RandomProjection:
         assert_raises(ValueError,
                       RandomProjection(n_components='auto').fit, [0, 1, 2])
 
@@ -184,7 +182,7 @@ def test_random_projection_transformer_invalid_input():
 
 
 def test_try_to_transform_before_fit():
-    for RandomProjection in all_transformer:
+    for RandomProjection in all_RandomProjection:
         assert_raises(ValueError,
                       RandomProjection(n_components='auto').transform, data)
 
@@ -192,8 +190,7 @@ def test_try_to_transform_before_fit():
 def test_too_many_samples_to_find_a_safe_embedding():
     data, _ = make_sparse_random_data(1000, 100, 1000)
 
-    for RandomProjection in [BernouilliRandomProjection,
-                             GaussianRandomProjection]:
+    for RandomProjection in all_RandomProjection:
         rp = RandomProjection(n_components='auto', eps=0.1)
         expected_msg = (
             'eps=0.100000 and n_samples=1000 lead to a target dimension'
@@ -213,7 +210,7 @@ def test_random_projection_embedding_quality():
     # remove 0 distances to avoid division by 0
     original_distances = original_distances[non_identical]
 
-    for RandomProjection in all_transformer:
+    for RandomProjection in all_RandomProjection:
         rp = RandomProjection(n_components='auto', eps=eps, random_state=0)
         projected = rp.fit_transform(data)
 
@@ -239,10 +236,10 @@ def test_BaseRandomProjection_set_with_wrong_distribution():
 
 
 def test_SparseRandomProjection_output_representation():
-    for RandomProjection in all_sparse_transformer:
+    for SparseRandomProjection in all_SparseRandomProjection:
         # when using sparse input, the projected data can be forced to be a
         # dense numpy array
-        rp = RandomProjection(n_components=10, dense_output=True,
+        rp = SparseRandomProjection(n_components=10, dense_output=True,
                               random_state=0)
         rp.fit(data)
         assert isinstance(rp.transform(data), np.ndarray)
@@ -251,7 +248,7 @@ def test_SparseRandomProjection_output_representation():
         assert isinstance(rp.transform(sparse_data), np.ndarray)
 
         # the output can be left to a sparse matrix instead
-        rp = RandomProjection(n_components=10, dense_output=False,
+        rp = SparseRandomProjection(n_components=10, dense_output=False,
                               random_state=0)
         rp = rp.fit(data)
         # output for dense input will stay dense:
@@ -262,7 +259,7 @@ def test_SparseRandomProjection_output_representation():
 
 
 def test_correct_RandomProjection_dimensions_embedding():
-    for RandomProjection in all_transformer:
+    for RandomProjection in all_RandomProjection:
         rp = RandomProjection(n_components='auto', random_state=0).fit(data)
 
         # the number of components is adjusted from the shape of the training
@@ -270,7 +267,7 @@ def test_correct_RandomProjection_dimensions_embedding():
         assert_equal(rp.n_components, 'auto')
         assert_equal(rp.n_components_, 110)
 
-        if RandomProjection in all_sparse_transformer:
+        if RandomProjection in all_SparseRandomProjection:
             assert_equal(rp.density, 'auto')
             assert_almost_equal(rp.density_, 0.03, 2)
 
@@ -293,7 +290,7 @@ def test_correct_RandomProjection_dimensions_embedding():
 
         # it is also possible to fix the number of components and the density
         # level
-        if RandomProjection in all_sparse_transformer:
+        if RandomProjection in all_SparseRandomProjection:
             rp = RandomProjection(n_components=100, density=0.001,
                                   random_state=0)
             projected = rp.fit_transform(data)
@@ -307,7 +304,7 @@ def test_warning_n_component_greater_than_n_features():
     n_features = 20
     data, _ = make_sparse_random_data(5, n_features, int(n_features / 4))
 
-    for RandomProjection in all_transformer:
+    for RandomProjection in all_RandomProjection:
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             RandomProjection(n_components=n_features + 1).fit(data)
@@ -318,7 +315,7 @@ def test_warning_n_component_greater_than_n_features():
 
 
 def test_DenseRandomProjection_error_with_density_not_equal_to_1():
-    for DenseRandomProjection in all_dense_transformer:
+    for DenseRandomProjection in all_DenseRandomProjection:
         for density in ["auto", 0.5, 0.0]:
             rp = DenseRandomProjection()
             rp.density = 0.5  # User try to modify density, but this features
