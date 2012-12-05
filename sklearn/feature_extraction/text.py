@@ -16,6 +16,7 @@ import re
 import unicodedata
 import warnings
 import numbers
+from ..externals.joblib import Parallel, delayed
 
 import numpy as np
 import scipy.sparse as sp
@@ -82,6 +83,41 @@ def _check_stop_list(stop):
         raise ValueError("not a built-in stop list: %s" % stop)
     else:               # assume it's a collection
         return stop
+
+
+###############################################################################
+# These two functions are required for the joblib parallelization of the 
+# CV's analyze function. Since multiprocessing.Pool was causing me some 
+# trouble with the pickling of instance members and lambda functions, I cut it 
+# short by simply extracting the logic for a single case (word ngrams), 
+# with some default parameters hardcoded. Hence, this is NOT meant to be a 
+# complete solution, just the minimal code for my proof of concept.
+
+def _word_ngrams_single(tokens, stop_words=None):
+    """Turn tokens into a sequence of n-grams after stop words filtering"""
+    # handle stop words
+    if stop_words is not None:
+        tokens = [w for w in tokens if w not in stop_words]
+
+    # handle token n-grams
+    min_n, max_n = (1, 1)#self.ngram_range
+    if max_n != 1:
+        original_tokens = tokens
+        tokens = []
+        n_original_tokens = len(original_tokens)
+        for n in xrange(min_n,
+                        min(max_n + 1, n_original_tokens + 1)):
+            for i in xrange(n_original_tokens - n + 1):
+                tokens.append(u" ".join(original_tokens[i: i + n]))
+
+    return tokens
+
+def _analyze_single(doc):
+    token_pattern = re.compile(ur"(?u)\b\w\w+\b")    
+    return _word_ngrams_single(token_pattern.findall(doc.decode('utf-8', 'strict')))
+
+
+###############################################################################
 
 
 class CountVectorizer(BaseEstimator):
@@ -432,7 +468,7 @@ class CountVectorizer(BaseEstimator):
         self.fit_transform(raw_documents)
         return self
 
-    def fit_transform(self, raw_documents, y=None):
+    def fit_transform(self, raw_documents, y=None, n_jobs=1, batch_size=1):
         """Learn the vocabulary dictionary and return the count vectors
 
         This is more efficient than calling fit followed by transform.
@@ -467,15 +503,22 @@ class CountVectorizer(BaseEstimator):
 
         analyze = self.build_analyzer()
 
+        # Let's see if we can gain some speed by introducing a job batch mechanism        
+        for analysis in Parallel(n_jobs=n_jobs, 
+                                 batch_size=batch_size)(delayed(_analyze_single)(doc) 
+                                                        for doc in raw_documents):
+            term_count_current = Counter(analysis)
+            term_counts.update(Counter(analysis))
+            document_counts.update(term_count_current.iterkeys())
+            term_counts_per_doc.append(term_count_current)
+            
         # TODO: parallelize the following loop with joblib?
         # (see XXX up ahead)
-        for doc in raw_documents:
-            term_count_current = Counter(analyze(doc))
-            term_counts.update(term_count_current)
-
-            document_counts.update(term_count_current.iterkeys())
-
-            term_counts_per_doc.append(term_count_current)
+        # for doc in raw_documents:
+        #     term_count_current = Counter(analyze(doc))
+        #     term_counts.update(term_count_current)
+        #     document_counts.update(term_count_current.iterkeys())
+        #     term_counts_per_doc.append(term_count_current)
 
         n_doc = len(term_counts_per_doc)
         max_features = self.max_features
