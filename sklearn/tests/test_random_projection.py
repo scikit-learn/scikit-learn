@@ -21,10 +21,13 @@ from sklearn.utils.testing import (assert_less,
                                    assert_in,
                                    )
 
+all_sparse_random_matrix = [bernouilli_random_matrix]
+all_dense_random_matrix = [gaussian_random_matrix]
+all_random_matrix = set(all_sparse_random_matrix + all_dense_random_matrix)
 
-sparse_random_projection = [BernouilliRandomProjection]
-dense_random_projection = [GaussianRandomProjection]
-all_random_projection = set(sparse_random_projection + dense_random_projection)
+all_sparse_transformer = [BernouilliRandomProjection]
+all_dense_transformer = [GaussianRandomProjection]
+all_transformer = set(all_sparse_transformer + all_dense_transformer)
 
 
 # Make some random data with uniformly located non zero entries with
@@ -71,13 +74,23 @@ def check_size_generated(random_matrix):
     assert_equal(gaussian_random_matrix(1, 1).shape, (1, 1))
 
 
+def check_input_with_sparse_random_matrix(random_matrix):
+    n_components, n_features = 5, 10
+
+    for density in [-1., 0.0, 1.1]:
+        assert_raises(
+            ValueError,
+            random_matrix, n_components, n_features, density=density)
+
+
 def test_basic_property_of_random_matrix():
     """Check basic properties of random matrix generation"""
-    for random_matrix in [gaussian_random_matrix,
-                          bernouilli_random_matrix]:
-
+    for random_matrix in all_random_matrix:
         check_input_size_random_matrix(random_matrix)
         check_size_generated(random_matrix)
+
+    for random_matrix in all_sparse_random_matrix:
+        check_input_with_sparse_random_matrix(random_matrix)
 
 
 def test_gaussian_random_matrix():
@@ -102,6 +115,7 @@ def test_bernouilli_random_matrix():
 
     for density in [0.3, 1.]:
         s = 1 / density
+
         A = np.array(bernouilli_random_matrix(n_components,
                                               n_features,
                                               density=density,
@@ -145,22 +159,32 @@ def test_bernouilli_random_matrix():
 ###############################################################################
 # tests on random projection transformer
 ###############################################################################
+def test_sparse_random_projection_transformer_invalid_density():
+    for RandomProjection in all_sparse_transformer:
+        assert_raises(
+            ValueError,
+            BernouilliRandomProjection(density=1.1).fit, data)
+
+        assert_raises(
+            ValueError,
+            BernouilliRandomProjection(density=0).fit, data)
+
+        assert_raises(
+            ValueError,
+            BernouilliRandomProjection(density=-0.1).fit, data)
+
+
 def test_random_projection_transformer_invalid_input():
-    for RandomProjection in all_random_projection:
+    for RandomProjection in all_transformer:
         assert_raises(ValueError,
                       RandomProjection(n_components='auto').fit, [0, 1, 2])
 
         assert_raises(ValueError,
                       RandomProjection(n_components=-10).fit, data)
 
-        if RandomProjection in sparse_random_projection:
-            assert_raises(
-                ValueError,
-                BernouilliRandomProjection(density=1.1).fit, data)
-
 
 def test_try_to_transform_before_fit():
-    for RandomProjection in all_random_projection:
+    for RandomProjection in all_transformer:
         assert_raises(ValueError,
                       RandomProjection(n_components='auto').transform, data)
 
@@ -189,7 +213,7 @@ def test_random_projection_embedding_quality():
     # remove 0 distances to avoid division by 0
     original_distances = original_distances[non_identical]
 
-    for RandomProjection in all_random_projection:
+    for RandomProjection in all_transformer:
         rp = RandomProjection(n_components='auto', eps=eps, random_state=0)
         projected = rp.fit_transform(data)
 
@@ -214,8 +238,8 @@ def test_BaseRandomProjection_set_with_wrong_distribution():
         BaseRandomProjection(distribution="not_implemented").fit, data)
 
 
-def test_BernouilliRandomProjection_output_representation():
-    for RandomProjection in sparse_random_projection:
+def test_SparseRandomProjection_output_representation():
+    for RandomProjection in all_sparse_transformer:
         # when using sparse input, the projected data can be forced to be a
         # dense numpy array
         rp = RandomProjection(n_components=10, dense_output=True,
@@ -237,8 +261,8 @@ def test_BernouilliRandomProjection_output_representation():
         assert sp.issparse(rp.transform(sparse_data))
 
 
-def test_random_projection_dimensions():
-    for RandomProjection in all_random_projection:
+def test_correct_RandomProjection_dimensions_embedding():
+    for RandomProjection in all_transformer:
         rp = RandomProjection(n_components='auto', random_state=0).fit(data)
 
         # the number of components is adjusted from the shape of the training
@@ -246,7 +270,7 @@ def test_random_projection_dimensions():
         assert_equal(rp.n_components, 'auto')
         assert_equal(rp.n_components_, 110)
 
-        if RandomProjection in sparse_random_projection:
+        if RandomProjection in all_sparse_transformer:
             assert_equal(rp.density, 'auto')
             assert_almost_equal(rp.density_, 0.03, 2)
 
@@ -269,7 +293,7 @@ def test_random_projection_dimensions():
 
         # it is also possible to fix the number of components and the density
         # level
-        if RandomProjection in sparse_random_projection:
+        if RandomProjection in all_sparse_transformer:
             rp = RandomProjection(n_components=100, density=0.001,
                                   random_state=0)
             projected = rp.fit_transform(data)
@@ -279,11 +303,24 @@ def test_random_projection_dimensions():
             assert_less(90, rp.components_.nnz)  # close to 1% density
 
 
-def test_n_component_greater_than_n_features():
+def test_warning_n_component_greater_than_n_features():
     n_features = 20
     data, _ = make_sparse_random_data(5, n_features, int(n_features / 4))
 
-    for RandomProjection in all_random_projection:
-        with warnings.catch_warnings() as w:
-            # Trigger a warning.
+    for RandomProjection in all_transformer:
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
             RandomProjection(n_components=n_features + 1).fit(data)
+
+            # Verify some things
+            assert_equal(len(w), 1)
+            assert issubclass(w[-1].category, UserWarning)
+
+
+def test_DenseRandomProjection_error_with_density_not_equal_to_1():
+    for DenseRandomProjection in all_dense_transformer:
+        for density in ["auto", 0.5, 0.0]:
+            rp = DenseRandomProjection()
+            rp.density = 0.5  # User try to modify density, but this features
+                              # is not implemented.
+            assert_raises(NotImplementedError, rp.fit, data)
