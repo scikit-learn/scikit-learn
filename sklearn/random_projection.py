@@ -102,6 +102,7 @@ def _check_density(density, n_features):
     """Factorize density check according to Li et al."""
     if density is 'auto':
         density = min(1 / math.sqrt(n_features), 1 / 3.)
+
     elif density <= 0 or density > 1:
         raise ValueError("Expected density in range (0, 1], got: %r"
                          % density)
@@ -296,6 +297,7 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
 
         self.components_ = None
         self.n_components_ = None
+        self.density_ = None
 
     def fit(self, X, y=None):
         """Generate a sparse random projection matrix
@@ -316,18 +318,20 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
         """
         if not sp.issparse(X):
             X = np.atleast_2d(X)
+
         self.random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
 
         if self.n_components == 'auto':
             self.n_components_ = johnson_lindenstrauss_min_dim(
-                n_samples, eps=self.eps)
+                n_samples=n_samples, eps=self.eps)
 
             if self.n_components_ <= 0:
                 raise ValueError(
                     'eps=%f and n_samples=%d lead to a target dimension of '
                     '%d which is invalid' % (
                         self.eps, n_samples, self.n_components_))
+
             elif self.n_components_ > n_features:
                 raise ValueError(
                     'eps=%f and n_samples=%d lead to a target dimension of '
@@ -338,6 +342,7 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
             if self.n_components <= 0:
                 raise ValueError("n_components must be greater than 0, got %s"
                                  % self.n_components_)
+
             elif self.n_components > n_features:
                 warnings.warn(
                     "The number of components is higher than the number of"
@@ -347,16 +352,19 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
 
             self.n_components_ = self.n_components
 
+        self.density_ = _check_density(self.density, n_features)
+
         if self.distribution == "bernouilli":
-            self.density_ = _check_density(self.density, n_features)
             self.components_ = bernouilli_random_matrix(
                 self.n_components_, n_features, density=self.density,
                 random_state=self.random_state)
 
         elif self.distribution == "gaussian":
-            if self.density != "auto" and self.density != 1.0:
-                raise ValueError("Density should be equal to one for Gaussian"
-                                 " random projection.")
+            if self.density != 1.0:
+                raise NotImplementedError(
+                    "Sparse gaussion projection not implemented."
+                    "Density should be equal to 1.0 for Gaussian random "
+                    "projection.")
 
             self.components_ = gaussian_random_matrix(
                 self.n_components_, n_features, random_state=self.random_state)
