@@ -33,9 +33,6 @@ description, quoted from the `website
   experiments in text applications of machine learning techniques,
   such as text classification and text clustering.
 
-To download the dataset, go to ``$TUTORIAL_HOME/data/twenty_newsgroups``
-and run the ``fetch_data.py`` script.
-
 In the following we will use the built-in dataset loader for 20 newsgroups
 from scikit-learn. Alternatively it is possible to download the dataset
 manually from the web-site and use the :func:`sklearn.datasets.load_files`
@@ -158,32 +155,7 @@ and ``scikit-learn`` has built-in support for these structures.
 Tokenizing text with ``scikit-learn``
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-``scikit-learn`` offers a couple of basic yet useful utilities to
-work with text data. The first one is a preprocessor that removes
-accents and converts to lowercase on roman languages::
-
-  >>> from sklearn.feature_extraction.text import RomanPreprocessor
-  >>> text = u"J'ai bien mang\xe9."
-  >>> print RomanPreprocessor().preprocess(text)
-  j'ai bien mange.
-
-The second one is a utility that splits the text into words after
-having applied the preprocessor::
-
-  >>> from sklearn.feature_extraction.text import WordNGramAnalyzer
-  >>> WordNGramAnalyzer().analyze(text)
-  ['ai', 'bien', 'mange']
-
-Note that punctuation and single letter words have automatically
-been removed.
-
-It is further possible to configure ``WordNGramAnalyzer`` to extract n-grams
-instead of single words::
-
-  >>> WordNGramAnalyzer(min_n=1, max_n=2).analyze(text)
-  [u'ai', u'bien', u'mange', u'ai bien', u'bien mange']
-
-These tools are wrapped into a higher level component that is able to build a
+Text preprocessing, tokenizing and filtering of stopwords are included in a high level component that is able to build a
 dictionary of features and transform documents to feature vectors::
 
   >>> from sklearn.feature_extraction.text import CountVectorizer
@@ -192,6 +164,7 @@ dictionary of features and transform documents to feature vectors::
   >>> X_train_counts.shape
   (2257, 33883)
 
+``CountVectorizer`` supports counts of N-grams of words or consequective characters.
 Once fitted, the vectorizer has built a dictionary of feature indices::
 
   >>> count_vect.vocabulary.get(u'algorithm')
