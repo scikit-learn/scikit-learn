@@ -3,13 +3,7 @@
 Random projection benchmark
 ===========================
 
-Transformer      |  dense-fit   | dense-transf |  sparse-fit  | sparse-transf
------------------|--------------|--------------|--------------|--------------
-Bernouilli       |   6.9329s    |   13.7461s   |   7.0625s    |   0.3768s
-Gaussian         |   9.4521s    |  148.2662s   |   9.9962s    |   1.5707s
-
-Still TODO:
-    - add args to select either sparse or dense problem.
+Benchmarks for randm projections.
 
 """
 from __future__ import division
@@ -28,6 +22,8 @@ from sklearn import clone
 from sklearn.random_projection import (
                                         BernouilliRandomProjection,
                                         GaussianRandomProjection,
+                                        johnson_lindenstrauss_min_dim,
+                                        _check_density
                                        )
 
 
@@ -86,13 +82,11 @@ def make_sparse_random_data(n_samples, n_features, n_nonzeros,
     return data_coo.toarray(), data_coo.tocsr()
 
 
-def print_row(clf_type, time_dense_fit, time_dense_transform, time_sparse_fit,
-              time_sparse_transform):
-    print("%s \t | %s | %s | %s | %s" % (clf_type.ljust(12),
-                              ("%.4fs" % time_dense_fit).center(12),
-                              ("%.4fs" % time_dense_transform).center(12),
-                              ("%.4fs" % time_sparse_fit).center(12),
-                              ("%.4fs" % time_sparse_transform).center(12)))
+def print_row(clf_type, time_fit, time_transform):
+    print("%s \t | %s | %s" % (clf_type.ljust(12),
+                              ("%.4fs" % time_fit).center(12),
+                              ("%.4fs" % time_transform).center(12)))
+
 
 if __name__ == "__main__":
     ###########################################################################
@@ -108,7 +102,7 @@ if __name__ == "__main__":
                   help="Number of features in the benchmarks")
 
     op.add_option("--n-components",
-                  dest="n_components", default=10 ** 3,
+                  dest="n_components", default="auto",
                   help="Size of the random subspace."
                        "('auto' or int > 0)")
 
@@ -141,6 +135,12 @@ if __name__ == "__main__":
                        "Default: %default. Available: "
                        "GaussianRandomProjection,BernouilliRandomProjection")
 
+    op.add_option("--sparse",
+                  dest="sparse",
+                  default='Gaussian,Bernouilli',
+                  action="store_true",
+                  help="Set input space as a sparse matrix.")
+
     (opts, args) = op.parse_args()
     if len(args) > 0:
         op.error("this script takes no arguments.")
@@ -154,23 +154,20 @@ if __name__ == "__main__":
     ###########################################################################
     n_nonzeros = int(opts.ratio_nonzeros * opts.n_features)
 
-    print('=' * 80)
-    print('Datasets statics')
-    print('=' * 80)
-    print('n_features \t= %s' % opts.n_features)
+    print('Dataset statics')
+    print("===========================")
     print('n_samples \t= %s' % opts.n_samples)
+    print('n_features \t= %s' % opts.n_features)
+    if opts.n_components == "auto":
+        print('n_components \t= %s (auto)' %
+              johnson_lindenstrauss_min_dim(n_samples=opts.n_samples,
+                                            eps=opts.eps))
+    else:
+        print('n_components \t= %s' % opts.n_components)
     print('n_elements \t= %s' % (opts.n_features * opts.n_samples))
     print('n_nonzeros \t= %s per feature' % n_nonzeros)
     print('ratio_nonzeros \t= %s' % opts.ratio_nonzeros)
-    print('n_components \t= %s' % opts.n_components)
-
-    print("")
-    print("Generate dataset benchmarks...")
-    X_dense, X_sparse = make_sparse_random_data(opts.n_samples,
-                                                opts.n_features,
-                                                n_nonzeros,
-                                                random_state=opts.random_seed)
-    print("")
+    print('')
 
     ###########################################################################
     # Set transfomer input
@@ -201,55 +198,62 @@ if __name__ == "__main__":
     ###########################################################################
     # Perform benchmark
     ###########################################################################
-    time_dense_fit = collections.defaultdict(list)
-    time_dense_transform = collections.defaultdict(list)
-    time_sparse_fit = collections.defaultdict(list)
-    time_sparse_transform = collections.defaultdict(list)
+    time_fit = collections.defaultdict(list)
+    time_transform = collections.defaultdict(list)
 
-    print('=' * 80)
     print('Benchmarks')
-    print('=' * 80)
+    print("===========================")
+    print("Generate dataset benchmarks... ", end="")
+    X_dense, X_sparse = make_sparse_random_data(opts.n_samples,
+                                                opts.n_features,
+                                                n_nonzeros,
+                                                random_state=opts.random_seed)
+    X = X_sparse if opts.sparse else X_dense
+    print("done")
 
     for name in selected_transformers:
         print("Perform benchmarks for %s..." % name)
 
-        # Benchmark for dense matrix
         for iteration in xrange(opts.n_times):
-            print("iter dense %s" % iteration)
-            time_fit, time_transform = bench_scikit_transformer(X_dense,
-                transformers[name])
-            time_dense_fit[name].append(time_fit)
-            time_dense_transform[name].append(time_transform)
+            print("\titer %s..." % iteration, end="")
+            time_to_fit, time_to_transform = bench_scikit_transformer(X_dense,
+              transformers[name])
+            time_fit[name].append(time_to_fit)
+            time_transform[name].append(time_to_transform)
+            print("done")
 
-        # Benchmark for sparse matrix
-        for iteration in xrange(opts.n_times):
-            print("iter sparse %s" % iteration)
-            time_fit, time_transform = bench_scikit_transformer(X_sparse,
-                transformers[name])
-            time_sparse_fit[name].append(time_fit)
-            time_sparse_transform[name].append(time_transform)
+    print("")
 
     ###########################################################################
     # Print results
     ###########################################################################
+    print("Script arguments")
+    print("===========================")
+    arguments = vars(opts)
+    print("%s \t | %s " % ("Arguments".ljust(16),
+                           "fit".center(12),))
+    print(25 * "-" + ("|" + "-" * 14) * 1)
+    for key, value in arguments.items():
+        if key == "density":
+            value = "%s (auto)" % _check_density(opts.density, opts.n_features)
+
+        print("%s \t | %s " % (str(key).ljust(16),
+                               str(value).strip().center(12)))
     print("")
+
     print("Transformer performance:")
     print("===========================")
     print("Results are averaged over %s repetition(s)." % opts.n_times)
     print("")
-    print("%s \t | %s | %s | %s | %s" % ("Transformer".ljust(12),
-                                         "dense-fit".center(12),
-                                         "dense-transf".center(12),
-                                         "sparse-fit".center(12),
-                                         "sparse-transf".center(12)))
-    print(17 * "-" + ("|" + "-" * 14) * 4)
+    print("%s \t | %s | %s" % ("Transformer".ljust(12),
+                               "fit".center(12),
+                               "transform".center(12)))
+    print(17 * "-" + ("|" + "-" * 14) * 2)
 
     for name in sorted(selected_transformers):
         print_row(name,
-                  np.mean(time_dense_fit[name]),
-                  np.mean(time_dense_transform[name]),
-                  np.mean(time_sparse_fit[name]),
-                  np.mean(time_sparse_transform[name]))
+                  np.mean(time_fit[name]),
+                  np.mean(time_transform[name]))
 
     print("")
     print("")
