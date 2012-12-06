@@ -15,7 +15,7 @@ Changelog
      :class:`linear_model.PassiverAggressiveRegressor` by `Rob Zinkov` and
      `Mathieu Blondel`_.
 
-   - The table of contents has now been made expandible (on the
+   - The table of contents has now been made expandable (on the
      index page) - by Jaques Grobler.
 
    - :class:`feature_selection.SelectPercentile` now breaks ties
@@ -88,16 +88,16 @@ Changelog
 
 API changes summary
 -------------------
-   - Renamed all occurences of ``n_atoms`` to ``n_components`` for consistency.
+   - Renamed all occurrences of ``n_atoms`` to ``n_components`` for consistency.
      This applies to :class:`dic_learning.DictionaryLearning`,
      :class:`dic_learning.MiniBatchDictionaryLearning`,
      :func:'dic_learning.dict_learning', :func:'dic_learning.dict_learning_online'
 
-   - Renamed all occurences of ``max_iters`` to ``max_iter`` for consistency.
+   - Renamed all occurrences of ``max_iters`` to ``max_iter`` for consistency.
      This applies to :class:`label_propagation.BaseLabelPropagation`,
      'label_propagation.LabelSpreading'
 
-   - Renamed all occurences of ``learn_rate`` to ``learning_rate`` for consistency.
+   - Renamed all occurrences of ``learn_rate`` to ``learning_rate`` for consistency.
      This applies to :class:`gradient_boosting.LossFunction`,
      :class:`gradient_boosting.LeastSquaresError`,
      :class:'gradient_boosting.BaseGradientBoosting',
@@ -107,10 +107,10 @@ API changes summary
      was already integrated into the "regular" linear models.
 
    - ``sklearn.metrics.mean_square_error``, which incorrectly returned the
-     cumulated error, was removed. Use ``mean_squared_error`` instead.
+     accumulated error, was removed. Use ``mean_squared_error`` instead.
 
    - Passing ``class_weight`` parameters to ``fit`` methods is no longer
-     supported. Pass them to estimator constuctors instead.
+     supported. Pass them to estimator constructors instead.
 
    - GMMs no longer have ``decode`` and ``rvs`` methods. Use the ``score``,
      ``predict`` or ``sample`` methods instead.
@@ -126,7 +126,7 @@ API changes summary
      :class:`cross_validation.StratifiedKFold` to ``n_folds``, renamed
      ``n_bootstraps`` to ``n_iter`` in ``cross_validation.Bootstrap``.
 
-   - Renamed all occurences of ``n_iterations`` to ``n_iter`` for consistency.
+   - Renamed all occurrences of ``n_iterations`` to ``n_iter`` for consistency.
      This applies to :class:`cross_validation.ShuffleSplit`,
      :class:`cross_validation.StratifiedShuffleSplit`,
      :func:`utils.randomized_range_finder` and :func:`utils.randomized_svd`.
@@ -160,8 +160,8 @@ API changes summary
 0.12.1
 =======
 
-The 0.12.1 release is a bug-fix release with no additional feature, but a
-set of bug fixed
+The 0.12.1 release is a bug-fix release with no additional features, but is
+instead a set of bug fixes
 
 Changelog
 ----------
