@@ -1179,5 +1179,48 @@ def r2_score(y_true, y_pred):
             # arbitary set to zero to avoid -inf scores, having a constant
             # y_true is not interesting for scoring a regression anyway
             return 0.0
+    return 1 - numerator / denominator
 
+
+def weighted_r2_score(y_true, y_pred, weights=None):
+    """Weighted R^2 (coefficient of determination) regression score function
+
+    Best possible score is 1.0, lower values are worse.
+
+    Parameters
+    ----------
+    y_true : array-like
+
+    y_pred : array-like
+
+    Returns
+    -------
+    z : float
+        The R^2 score
+
+    Notes
+    -----
+    This is not a symmetric function.
+
+    References
+    ----------
+    http://en.wikipedia.org/wiki/Coefficient_of_determination
+    """
+    y_true, y_pred = check_arrays(y_true, y_pred)
+    if len(y_true) == 1:
+        raise ValueError("r2_score can only be computed given more than one"
+                         " sample.")
+    if weights is None:
+        numerator = ((y_true - y_pred) ** 2).sum()
+        denominator = ((y_true - y_true.mean()) ** 2).sum()
+    else:
+        numerator = (weights * (y_true - y_pred) ** 2).sum()
+        denominator = (weights * (y_true - y_true.mean()) ** 2).sum()
+    if denominator == 0.0:
+        if numerator == 0.0:
+            return 1.0
+        else:
+            # arbitary set to zero to avoid -inf scores, having a constant
+            # y_true is not interesting for scoring a regression anyway
+            return 0.0
     return 1 - numerator / denominator
