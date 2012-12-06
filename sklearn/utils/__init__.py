@@ -296,6 +296,28 @@ def shuffle(*arrays, **options):
     return resample(*arrays, **options)
 
 
+def balance_weights(y):
+    """Compute sample weights such that the class distribution of y becomes
+       balanced.
+
+    Parameters
+    ----------
+    y : array-like
+
+    Returns
+    -------
+    weights : array-like
+    """
+    y = safe_asarray(y)
+    y = np.searchsorted(np.unique(y), y)
+    bins = np.bincount(y)
+
+    weights = 1. / bins.take(y)
+    weights *= bins.min()
+
+    return weights
+
+
 def safe_sqr(X, copy=True):
     """Element wise squaring of array-likes and sparse matrices.
 
