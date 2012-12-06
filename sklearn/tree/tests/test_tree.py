@@ -71,8 +71,10 @@ def test_weighted_classification_toy():
 def test_weighted_classification_toy():
     """Check classification on a weighted toy dataset."""
     clf = tree.DecisionTreeClassifier()
+
     clf.fit(X, y, sample_weight=np.ones(len(X)))
     assert_array_equal(clf.predict(T), true_result)
+
     clf.fit(X, y, sample_weight=np.ones(len(X)) * 0.5)
     assert_array_equal(clf.predict(T), true_result)
 
@@ -194,6 +196,17 @@ def test_iris():
         score = np.mean(clf.predict(iris.data) == iris.target)
         assert score > 0.5, "Failed with criterion " + c + \
             " and score = " + str(score)
+
+
+def test_unbalanced_iris():
+    """Check class rebalancing."""
+    unbalanced_X = iris.data[:125]
+    unbalanced_y = iris.target[:125]
+    sample_weight = balance_weights(unbalanced_y)
+
+    clf = tree.DecisionTreeClassifier()
+    clf.fit(unbalanced_X, unbalanced_y, sample_weight=sample_weight)
+    assert_almost_equal(clf.predict(unbalanced_X), unbalanced_y)
 
 
 def test_boston():

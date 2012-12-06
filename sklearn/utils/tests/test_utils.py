@@ -5,12 +5,13 @@ import scipy.sparse as sp
 from scipy.linalg import pinv2
 
 from nose.tools import assert_equal, assert_raises, assert_true
-from numpy.testing import assert_almost_equal
+from numpy.testing import assert_almost_equal, assert_array_equal
 
 from sklearn.utils import check_random_state
 from sklearn.utils import deprecated
 from sklearn.utils import resample
 from sklearn.utils import safe_mask
+from sklearn.utils import balance_weights
 from sklearn.utils.extmath import pinvh
 
 
@@ -117,3 +118,14 @@ def test_pinvh_simple_complex():
     a = np.dot(a, a.conj().T)
     a_pinv = pinvh(a)
     assert_almost_equal(np.dot(a, a_pinv), np.eye(3))
+
+
+def test_balance_weights():
+    weights = balance_weights([0, 0, 1, 1])
+    assert_array_equal(weights, [1., 1., 1., 1.])
+
+    weights = balance_weights([0, 1, 1, 1, 1])
+    assert_array_equal(weights, [1., 0.25, 0.25, 0.25, 0.25])
+
+    weights = balance_weights([0, 0])
+    assert_array_equal(weights, [1., 1.])
