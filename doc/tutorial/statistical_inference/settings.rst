@@ -26,10 +26,10 @@ these arrays is the **samples** axis, while the second is the
     features: their sepal and petal length and width, as detailed in
     `iris.DESCR`.
 
-When the data is not intially in the `(n_samples, n_features)` shape, it
-needs to be preprocessed to be used by the scikit.
+When the data is not initially in the `(n_samples, n_features)` shape, it
+needs to be preprocessed in order to by used by scikit.
 
-.. topic:: An example of reshaping data: the digits dataset 
+.. topic:: An example of reshaping data would be the digits dataset 
 
     .. image:: ../../auto_examples/datasets/images/plot_digits_last_image_1.png
         :target: ../../auto_examples/datasets/plot_digits_last_image.html
@@ -46,7 +46,7 @@ needs to be preprocessed to be used by the scikit.
         >>> pl.imshow(digits.images[-1], cmap=pl.cm.gray_r) #doctest: +SKIP
         <matplotlib.image.AxesImage object at ...>
 
-    To use this dataset with the scikit, we transform each 8x8 image in a
+    To use this dataset with the scikit, we transform each 8x8 image into a
     feature vector of length 64 ::
 
         >>> data = digits.images.reshape((digits.images.shape[0], -1))
@@ -68,16 +68,16 @@ Estimators objects
 
 **Fitting data**: the main API implemented by scikit-learn is that of the
 `estimator`. An estimator is any object that learns from data;
-it may a classification, regression or clustering algorithm or
+it may be a classification, regression or clustering algorithm or
 a `transformer` that extracts/filters useful features from raw data.
 
-All estimator objects expose a `fit` method, that takes a dataset
+All estimator objects expose a `fit` method that takes a dataset
 (usually a 2-d array):
 
     >>> estimator.fit(data)
 
 **Estimator parameters**: All the parameters of an estimator can be set
-when it is instantiated, or by modifying the corresponding attribute::
+when it is instantiated or by modifying the corresponding attribute::
 
     >>> estimator = Estimator(param1=1, param2=2)
     >>> estimator.param1
@@ -89,5 +89,4 @@ parameters are attributes of the estimator object ending by an
 underscore::
 
     >>> estimator.estimated_param_ #doctest: +SKIP
-
 
