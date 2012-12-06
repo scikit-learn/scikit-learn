@@ -63,13 +63,16 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
                                                           data_home)
         fhandle = urllib2.urlopen(DATA_URL)
         buf = StringIO(fhandle.read())
-        with ZipFile(buf) as zip_file:
+        zip_file = ZipFile(buf)
+        try:
             cadata_fd = zip_file.open('cadata.txt', 'r')
             cadata = StringIO(cadata_fd.read())
             # skip the first 27 lines (documentation)
             cal_housing = np.loadtxt(cadata, skiprows=27)
             joblib.dump(cal_housing, join(data_home, TARGET_FILENAME),
                         compress=6)
+        finally:
+            zip_file.close()
     else:
         cal_housing = joblib.load(join(data_home, TARGET_FILENAME))
 

@@ -18,23 +18,23 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
 
     Parameters
     ----------
-    X: array [n_samples, n_features]
-        Input points
+    X : array [n_samples, n_features]
+        Input points.
 
-    quantile: float, default 0.3
+    quantile : float, default 0.3
         should be between [0, 1]
-        0.5 means that the median is all pairwise distances is used
+        0.5 means that the median is all pairwise distances is used.
 
-    n_samples: int
+    n_samples : int
         The number of samples to use. If None, all samples are used.
 
-    random_state: int or RandomState
+    random_state : int or RandomState
         Pseudo number generator state used for random sampling.
 
     Returns
     -------
-    bandwidth: float
-        The bandwidth parameter
+    bandwidth : float
+        The bandwidth parameter.
     """
     random_state = check_random_state(random_state)
     if n_samples is not None:
