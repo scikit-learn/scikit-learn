@@ -64,5 +64,6 @@ pl.xlabel('Tree')
 pl.ylim((0, max(bdt.boost_weights_) * 1.2))
 pl.xlim((-20, len(bdt) + 20))
 
-
+# prevent overlapping y-axis labels
+pl.subplots_adjust(wspace=0.4)
 pl.show()
