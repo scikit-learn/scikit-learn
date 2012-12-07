@@ -134,7 +134,7 @@ def test_dict_learning_online_partial_fit():
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     rng1 = np.random.RandomState(0)
     rng2 = np.random.RandomState(0)
-    dico1 = MiniBatchDictionaryLearning(n_components, n_iter=10, chunk_size=1,
+    dico1 = MiniBatchDictionaryLearning(n_components, n_iter=10, batch_size=1,
                                         shuffle=False, dict_init=V,
                                         random_state=rng1).fit(X)
     dico2 = MiniBatchDictionaryLearning(n_components, n_iter=1, dict_init=V,
