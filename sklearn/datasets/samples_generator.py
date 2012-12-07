@@ -1278,7 +1278,7 @@ def make_gaussian_quantiles(n_samples=100, n_features=2, n_classes=3,
     # Build multivariate normal distribution
     cov = np.diag(np.ones(n_features))
     mean = np.zeros(n_features)
-    X = list(np.random.multivariate_normal(mean, cov, n_samples))
+    X = list(generator.multivariate_normal(mean, cov, n_samples))
 
     # Sort by distance from origin
     X.sort(key=lambda x: sum([x_i**2 for x_i in x]))
