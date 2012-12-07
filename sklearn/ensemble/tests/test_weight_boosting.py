@@ -88,12 +88,19 @@ def test_gridsearch():
     clf = GridSearchCV(boost, parameters)
     clf.fit(iris.data, iris.target)
 
+    # AdaBoost regression
+    boost = AdaBoostRegressor()
+    parameters = {'n_estimators': (1, 2),
+                  'base_estimator__max_depth': (1, 2)}
+    clf = GridSearchCV(boost, parameters)
+    clf.fit(boston.data, boston.target)
+
 
 def test_pickle():
     """Check pickability."""
     import pickle
 
-    # Adaboost
+    # Adaboost classifier
     obj = AdaBoostClassifier()
     obj.fit(iris.data, iris.target)
     score = obj.score(iris.data, iris.target)
@@ -102,6 +109,17 @@ def test_pickle():
     obj2 = pickle.loads(s)
     assert_equal(type(obj2), obj.__class__)
     score2 = obj2.score(iris.data, iris.target)
+    assert score == score2
+
+    # Adaboost regressor
+    obj = AdaBoostRegressor()
+    obj.fit(boston.data, boston.target)
+    score = obj.score(boston.data, boston.target)
+    s = pickle.dumps(obj)
+
+    obj2 = pickle.loads(s)
+    assert_equal(type(obj2), obj.__class__)
+    score2 = obj2.score(boston.data, boston.target)
     assert score == score2
 
 
