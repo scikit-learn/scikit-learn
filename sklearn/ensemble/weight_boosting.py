@@ -601,7 +601,10 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             True if this is the last boost.
         """
         err_vect = np.abs(y_predict - y_true)
-        err_vect /= err_vect.max()
+        err_max = err_vect.max()
+
+        if err_max != 0.:
+            err_vect /= err_vect.max()
 
         err = (sample_weight * err_vect).sum()
 
@@ -629,4 +632,5 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         alpha = self.learn_rate * np.log(1. / beta)
         if not is_last:
             sample_weight *= np.power(beta, (1. - err_vect) * self.learn_rate)
+
         return sample_weight, alpha, err

@@ -8,7 +8,7 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_equal
 
 from sklearn.grid_search import GridSearchCV
-from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import AdaBoostClassifier, AdaBoostRegressor
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import datasets
 
@@ -21,16 +21,29 @@ true_result = [-1, 1, 1]
 # also load the iris dataset
 # and randomly permute it
 iris = datasets.load_iris()
-np.random.seed([1])
-perm = np.random.permutation(iris.target.size)
+rng = np.random.RandomState(0)
+perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
+
+# also load the boston dataset
+# and randomly permute it
+boston = datasets.load_boston()
+perm = rng.permutation(boston.target.size)
+boston.data = boston.data[perm]
+boston.target = boston.target[perm]
 
 
 def test_classification_toy():
     """Check classification on a toy dataset."""
-    # Adaboost Classification
     clf = AdaBoostClassifier(n_estimators=10)
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+
+
+def test_regression_toy():
+    """Check classification on a toy dataset."""
+    clf = AdaBoostRegressor(n_estimators=10)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
 
@@ -45,6 +58,15 @@ def test_iris():
         score = clf.score(iris.data, iris.target)
         assert score > 0.9, "Failed with criterion %s and score = %f" % (c,
                                                                          score)
+
+
+def test_boston():
+    """Check consistency on dataset boston house prices."""
+    clf = AdaBoostRegressor(n_estimators=10)
+    clf.fit(boston.data, boston.target)
+    score = clf.score(boston.data, boston.target)
+    assert score > 0.99
+
 
 def test_probability():
     """Predict probabilities."""
