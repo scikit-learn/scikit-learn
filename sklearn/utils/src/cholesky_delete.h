@@ -13,7 +13,7 @@
  * TODO: put transpose as an option
  *
  */
-int double_cholesky_delete (int m, int n, double *L, int go_out) {
+static inline int double_cholesky_delete (int m, int n, double *L, int go_out) {
 
     double c, s;
 
@@ -47,7 +47,7 @@ int double_cholesky_delete (int m, int n, double *L, int go_out) {
 }
 
 
-int float_cholesky_delete (int m, int n, float *L, int go_out) {
+static inline int float_cholesky_delete (int m, int n, float *L, int go_out) {
 
     float c, s;
 
