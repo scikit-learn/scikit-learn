@@ -4,7 +4,7 @@
 #cython: wraparound=False
 
 cimport cython
-from libc.math cimport exp, fabs, log, sqrt, tanh
+from libc.math cimport exp, fabs, log, log1p, sqrt, tanh
 from libc.stdint cimport uint64_t
 
 cimport numpy as np
@@ -43,7 +43,11 @@ cdef void relu_act(double[:] z) nogil:
 cdef void softplus(double[:] z) nogil:
     """Softplus activation function (smooth approx. to rectified linear)."""
     for i in xrange(z.shape[0]):
-        z[i] = log(1 + exp(z[i]))
+        z[i] = log1p(exp(z[i]))
+
+
+cdef inline void softplus_deriv(double[:] z) nogil:
+    return logistic(z)
 
 
 cdef void tanh_act(double[:] z) nogil:
