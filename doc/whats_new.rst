@@ -176,11 +176,14 @@ API changes summary
      now flat in case of single output problems and nested in case of
      multi-output problems.
 
+   - The ``estimators_`` attribute of
+     :class:`ensemble.gradient_boosting.GradientBoostingRegressor` and
+     :class:`ensemble.gradient_boosting.GradientBoostingClassifier` is now an
+     array of :class:'tree.DecisionTreeRegressor'.
 
-    - The ``estimators_`` attribute of
-    :class:`ensemble.gradient_boosting.GradientBoostingRegressor` and
-    :class:`ensemble.gradient_boosting.GradientBoostingClassifier` is now
-    an array of :class:'tree.DecisionTreeRegressor'.
+   - Renamed ``chunk_size`` to ``batch_size`` in
+     :class:`decomposition.MiniBatchDictionaryLearning` and
+     :class:`decomposition.MiniBatchSparsePCA` for consistency.
 
 .. _changes_0_12.1:
 
