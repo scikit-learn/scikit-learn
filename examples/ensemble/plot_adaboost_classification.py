@@ -8,8 +8,6 @@ plots the decision surfaces and class probabilities.
 """
 print __doc__
 
-from itertools import izip
-
 import pylab as pl
 import numpy as np
 
