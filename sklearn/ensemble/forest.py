@@ -403,10 +403,12 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                     decision = (predictions[k] /
                                 predictions[k].sum(axis=1)[:, np.newaxis])
                     self.oob_decision_function_.append(decision)
-                    self.oob_score_ += np.mean(
-                        (y[:, k] == classes_[k].take(
-                            np.argmax(predictions[k], axis=1),
-                            axis=0)))
+                    self.oob_score_ += \
+                        np.average((y[:, k] == classes_[k].take(
+                                                   np.argmax(predictions[k],
+                                                             axis=1),
+                                                   axis=0)),
+                                   weights=sample_weight)
 
                 if self.n_outputs_ == 1:
                     self.oob_decision_function_ = \
@@ -446,8 +448,9 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                 self.oob_score_ = 0.0
 
                 for k in xrange(self.n_outputs_):
-                    self.oob_score_ += r2_score(y[:, k],
-                                                predictions[:, k])
+                    self.oob_score_ += weighted_r2_score(y[:, k],
+                                                         predictions[:, k],
+                                                         weights=sample_weight)
 
                 self.oob_score_ /= self.n_outputs_
 
