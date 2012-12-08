@@ -302,6 +302,10 @@ class MDS(BaseEstimator):
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
+    proximity : string
+        Which proximity measure to use.
+        Supported are 'euclidean' and 'precomputed'.
+
 
     Attributes
     ----------
@@ -372,18 +376,18 @@ class MDS(BaseEstimator):
             if ndarray, initialize the SMACOF algorithm with this array.
 
         """
-        if X.shape[0] == X.shape[1] and self.affinity != "precomputed":
+        if X.shape[0] == X.shape[1] and self.proximity != "precomputed":
             warnings.warn("The MDS API has changed. ``fit`` now constructs an"
                           "proximity matrix from data. To use a custom "
-                          "affinity matrix, set ``proximity=precomputed``.")
+                          "proximity matrix, set ``proximity=precomputed``.")
 
         if self.proximity is "precomputed":
             self.proximity_matrix_ = X
         elif self.proximity is "euclidean":
             self.proximity_matrix_ = euclidean_distances(X)
         else:
-            raise ValueError("Affinity must be 'precomputed' or 'euclidean'."
-                             " Got %s instead" % str(self.affinity))
+            raise ValueError("Proximity must be 'precomputed' or 'euclidean'."
+                             " Got %s instead" % str(self.proximity))
 
         self.embedding_, self.stress_ = smacof(
             X, metric=self.metric, n_components=self.n_components, init=init,
