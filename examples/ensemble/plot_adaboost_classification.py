@@ -17,12 +17,15 @@ from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.datasets import make_classification
 
-X, y = make_classification(n_samples=10000, n_features=2, n_classes=2,
-        n_informative=2,
-        n_redundant=0)
+X, y = make_classification(n_samples=1000,
+                           n_features=2,
+                           n_classes=2,
+                           n_informative=2,
+                           n_redundant=0)
 
 bdt = AdaBoostClassifier(DecisionTreeClassifier(min_samples_leaf=100),
-                         n_estimators=200, learn_rate=.5)
+                         n_estimators=50,
+                         learn_rate=.5)
 
 bdt.fit(X, y)
 
@@ -43,6 +46,7 @@ for weight, tree in zip(bdt.boost_weights_, bdt.estimators_):
     Z = Z.reshape(xx.shape)
     cs = pl.contourf(xx, yy, Z, alpha=weight / norm, cmap=pl.cm.Paired)
 pl.axis("tight")
+
 # Plot the training points
 for i, c in zip(xrange(2), plot_colors):
     idx = np.where(y == i)

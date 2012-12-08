@@ -29,7 +29,7 @@ test_errors = []
 train_errors = []
 
 bdt = AdaBoostClassifier(DecisionTreeClassifier(min_samples_leaf=100),
-                         n_estimators=300, learn_rate=.05)
+                         n_estimators=100, learn_rate=.05)
 
 bdt.fit(X_train, y_train)
 

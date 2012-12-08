@@ -21,7 +21,7 @@ plot_colors = "bry"
 plot_step = 0.02
 
 model = AdaBoostClassifier(DecisionTreeClassifier(min_samples_leaf=10),
-                           n_estimators=200)
+                           n_estimators=50)
 
 # Load data
 X, y = make_gaussian_quantiles(n_samples=500, n_features=2,
