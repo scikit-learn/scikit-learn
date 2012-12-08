@@ -53,7 +53,7 @@ except:
     ax = fig.add_subplot(241, projection='3d')
     pl.scatter(X[:, 0], X[:, 2], c=color, cmap=pl.cm.Spectral)
 
-methods = ['original', 'ltsa', 'hessian', 'modified']
+methods = ['standard', 'ltsa', 'hessian', 'modified']
 labels = ['LLE', 'LTSA', 'Hessian LLE', 'Modified LLE']
 
 for i, method in enumerate(methods):
