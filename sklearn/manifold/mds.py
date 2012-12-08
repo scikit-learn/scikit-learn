@@ -259,8 +259,7 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
 
 
 class MDS(BaseEstimator):
-    """
-    Multidimensional scaling
+    """Multidimensional scaling
 
     Parameters
     ----------
@@ -312,8 +311,8 @@ class MDS(BaseEstimator):
         disparities and the distances for all constrained points)
 
 
-    Notes
-    -----
+    References
+    ----------
     "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
     Groenen P. Springer Series in Statistics (1997)
 
@@ -326,8 +325,9 @@ class MDS(BaseEstimator):
     """
     def __init__(self, n_components=2, metric=True, n_init=4,
                  max_iter=300, verbose=0, eps=1e-3, n_jobs=1,
-                 random_state=None):
+                 random_state=None, proximity="euclidean"):
         self.n_components = n_components
+        self.proximity = proximity
         self.metric = metric
         self.n_init = n_init
         self.max_iter = max_iter
@@ -336,18 +336,22 @@ class MDS(BaseEstimator):
         self.n_jobs = n_jobs
         self.random_state = random_state
 
+    @property
+    def _pairwise(self):
+        return self.kernel == "precomputed"
+
     def fit(self, X, init=None, y=None):
         """
         Computes the position of the points in the embedding space
 
         Parameters
         ----------
-        X: array, shape=[n_samples, n_samples], symetric
-            Proximity matrice
+        X : array, shape=[n_samples, n_features]
+            Input data.
 
-        init: {None or ndarray, shape (n_samples,)}, optional
-            if None, randomly chooses the initial configuration
-            if ndarray, initialize the SMACOF algorithm with this array
+        init : {None or ndarray, shape (n_samples,)}, optional
+            If None, randomly chooses the initial configuration
+            if ndarray, initialize the SMACOF algorithm with this array.
         """
         self.fit_transform(X, init=init)
         return self
@@ -358,14 +362,27 @@ class MDS(BaseEstimator):
 
         Parameters
         ----------
-        X: array, shape=[n_samples, n_samples], symetric
-            Proximity matrice
+        X : array, shape=[n_samples, n_features]
+            Input data.
 
-        init: {None or ndarray, shape (n_samples,)}, optional
-            if None, randomly chooses the initial configuration
-            if ndarray, initialize the SMACOF algorithm with this array
+        init : {None or ndarray, shape (n_samples,)}, optional
+            If None, randomly chooses the initial configuration
+            if ndarray, initialize the SMACOF algorithm with this array.
 
         """
+        if X.shape[0] == X.shape[1] and self.affinity != "precomputed":
+            warnings.warn("The MDS API has changed. ``fit`` now constructs an"
+                          "proximity matrix from data. To use a custom "
+                          "affinity matrix, set ``proximity=precomputed``.")
+
+        if self.proximity is "precomputed":
+            self.proximity_matrix_ = X
+        elif self.proximity is "euclidean":
+            self.proximity_matrix_ = euclidean_distances(X)
+        else:
+            raise ValueError("Affinity must be 'precomputed' or 'euclidean'."
+                             " Got %s instead" % str(self.affinity))
+
         self.embedding_, self.stress_ = smacof(
             X, metric=self.metric, n_components=self.n_components, init=init,
             n_init=self.n_init, n_jobs=self.n_jobs, max_iter=self.max_iter,
