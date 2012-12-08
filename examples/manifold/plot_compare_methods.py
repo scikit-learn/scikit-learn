@@ -30,7 +30,6 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.ticker import NullFormatter
 
 from sklearn import manifold, datasets
-from sklearn.metrics import euclidean_distances
 
 # Next line to silence pyflakes. This import is needed.
 Axes3D
@@ -85,7 +84,7 @@ pl.axis('tight')
 
 t0 = time()
 mds = manifold.MDS(n_components, max_iter=100, n_init=1)
-Y = mds.fit_transform(euclidean_distances(X))
+Y = mds.fit_transform(X)
 t1 = time()
 print "MDS: %.2g sec" % (t1 - t0)
 ax = fig.add_subplot(247)

@@ -388,8 +388,9 @@ class MDS(BaseEstimator):
                              " Got %s instead" % str(self.proximity))
 
         self.embedding_, self.stress_ = smacof(
-            X, metric=self.metric, n_components=self.n_components, init=init,
-            n_init=self.n_init, n_jobs=self.n_jobs, max_iter=self.max_iter,
-            verbose=self.verbose, eps=self.eps, random_state=self.random_state)
+            self.proximity_matrix_, metric=self.metric,
+            n_components=self.n_components, init=init, n_init=self.n_init,
+            n_jobs=self.n_jobs, max_iter=self.max_iter, verbose=self.verbose,
+            eps=self.eps, random_state=self.random_state)
 
         return self.embedding_
