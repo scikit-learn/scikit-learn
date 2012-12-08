@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 """
-=========================================
+=============================================
 Manifold Learning methods on a severed sphere
-=========================================
+=============================================
 
 An application of the different :ref:`manifold` techniques
 on a spherical data-set. Here one can see the use of
