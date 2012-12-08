@@ -235,7 +235,10 @@ if __name__ == "__main__":
     print(25 * "-" + ("|" + "-" * 14) * 1)
     for key, value in arguments.items():
         if key == "density":
-            value = "%s (auto)" % _check_density(opts.density, opts.n_features)
+            value = "%s" % _check_density(opts.density, opts.n_features)
+
+            if opts.density == 'auto':
+                value += " (auto)"
 
         print("%s \t | %s " % (str(key).ljust(16),
                                str(value).strip().center(12)))
