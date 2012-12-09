@@ -14,6 +14,9 @@ of :class:`RBFSampler`, which uses random Fourier features) and different sized
 subsets of the training set (for :class:`Nystroem)` for the approximate mapping
 are shown.
 
+Please not that the dataset here is not large enough to show the benefits
+of kernel approximation, as the exact SVM is still reasonably fast.
+
 Sampling more dimensions clearly leads to better classification results, but
 comes at a greater cost. This means there is a tradeoff between runtime and
 accuracy, given by the parameter n_components. Note that solving the Linear
@@ -78,7 +81,7 @@ linear_svm = svm.LinearSVC()
 feature_map_fourier = RBFSampler(gamma=.2, random_state=1)
 feature_map_nystroem = Nystroem(gamma=.2, random_state=1)
 fourier_approx_svm = pipeline.Pipeline([("feature_map", feature_map_fourier),
-                                               ("svm", svm.LinearSVC())])
+                                        ("svm", svm.LinearSVC())])
 
 nystroem_approx_svm = pipeline.Pipeline([("feature_map", feature_map_nystroem),
                                         ("svm", svm.LinearSVC())])
@@ -132,15 +135,15 @@ timescale.plot(sample_sizes, fourier_times, '--',
                label='Fourier approx. kernel')
 
 # horizontal lines for exact rbf and linear kernels:
-accuracy.plot([sample_sizes[0], sample_sizes[-1]], [linear_svm_score,
-    linear_svm_score], label="linear svm")
-timescale.plot([sample_sizes[0], sample_sizes[-1]], [linear_svm_time,
-        linear_svm_time], '--', label='linear svm')
+accuracy.plot([sample_sizes[0], sample_sizes[-1]],
+              [linear_svm_score, linear_svm_score], label="linear svm")
+timescale.plot([sample_sizes[0], sample_sizes[-1]],
+               [linear_svm_time, linear_svm_time], '--', label='linear svm')
 
-accuracy.plot([sample_sizes[0], sample_sizes[-1]], [kernel_svm_score,
-    kernel_svm_score], label="rbf svm")
-timescale.plot([sample_sizes[0], sample_sizes[-1]], [kernel_svm_time,
-        kernel_svm_time], '--', label='rbf svm')
+accuracy.plot([sample_sizes[0], sample_sizes[-1]],
+              [kernel_svm_score, kernel_svm_score], label="rbf svm")
+timescale.plot([sample_sizes[0], sample_sizes[-1]],
+               [kernel_svm_time, kernel_svm_time], '--', label='rbf svm')
 
 # vertical line for dataset dimensionality = 64
 accuracy.plot([64, 64], [0.7, 1], label="n_features")
