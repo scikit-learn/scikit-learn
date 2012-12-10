@@ -48,6 +48,24 @@ class BaseWeightBoosting(BaseEnsemble):
     learn_rate : float, optional (default=0.5)
         learning rate shrinks the contribution of each classifier by
         `learn_rate`. There is a trade-off between learn_rate and n_estimators.
+
+    compute_importances : boolean, optional (default=False)
+        Whether feature importances are computed and stored into the
+        ``feature_importances_`` attribute when calling fit.
+
+    Attributes
+    ----------
+    `feature_importances_` : array of shape = [n_features]
+        The feature importances (the higher, the more important the feature).
+        The importance I(f) of a feature f is computed as the (normalized)
+        total reduction of error brought by that feature. It is also known as
+        the Gini importance [1]_.
+
+    References
+    ----------
+
+    .. [1] L. Breiman, and A. Cutler, "Random Forests",
+           http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
     """
     def __init__(self, base_estimator=None,
                  n_estimators=10,
@@ -76,6 +94,7 @@ class BaseWeightBoosting(BaseEnsemble):
         self.learn_rate = learn_rate
         self.compute_importances = compute_importances
         self.feature_importances_ = None
+
         if compute_importances:
             try:
                 base_estimator.compute_importances = True

@@ -6,6 +6,7 @@ import numpy as np
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_equal
+from nose.tools import assert_true
 
 from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import AdaBoostClassifier, AdaBoostRegressor
@@ -79,6 +80,17 @@ def test_probability():
                               np.exp(clf.predict_log_proba(iris.data)))
 
 
+def test_staged_predict():
+    """Check that staged predictions."""
+    clf = AdaBoostRegressor(n_estimators=10)
+    clf.fit(boston.data, boston.target)
+    predictions = clf.predict(boston.data)
+    staged_predictions = [p for p in clf.staged_predict(boston.data)]
+
+    assert_equal(len(staged_predictions), 10)
+    assert_array_equal(predictions, staged_predictions[-1])
+
+
 def test_gridsearch():
     """Check that base trees can be grid-searched."""
     # AdaBoost classification
@@ -121,6 +133,29 @@ def test_pickle():
     assert_equal(type(obj2), obj.__class__)
     score2 = obj2.score(boston.data, boston.target)
     assert score == score2
+
+
+def test_importances():
+    """Check variable importances."""
+    X, y = datasets.make_classification(n_samples=1000,
+                                        n_features=10,
+                                        n_informative=3,
+                                        n_redundant=0,
+                                        n_repeated=0,
+                                        shuffle=False,
+                                        random_state=2)
+
+    clf = AdaBoostClassifier(compute_importances=True, n_estimators=100)
+    clf.fit(X, y)
+    importances = clf.feature_importances_
+    n_important = sum(importances > 0.1)
+
+    assert_equal(importances.shape[0], 10)
+    assert_equal(n_important, 3)
+
+    clf = AdaBoostClassifier()
+    clf.fit(X, y)
+    assert_true(clf.feature_importances_ is None)
 
 
 if __name__ == "__main__":
