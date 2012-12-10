@@ -282,7 +282,8 @@ class WeightedClassifierMixin(ClassifierMixin):
     """Mixin class for classifiers that support sample weights"""
 
     def score(self, X, y, sample_weight=None):
-        """Returns the mean accuracy on the given test data and labels.
+        """Returns the weighted mean accuracy on the given test data and
+           labels.
 
         Parameters
         ----------
