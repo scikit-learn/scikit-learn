@@ -6,8 +6,11 @@ import numpy as np
 from scipy.sparse import issparse
 import warnings
 
-from .validation import *
 from .murmurhash import murmurhash3_32
+from .validation import (as_float_array, check_arrays, safe_asarray,
+                         assert_all_finite, array2d, atleast2d_or_csc,
+                         atleast2d_or_csr, warn_if_not_float,
+                         check_random_state)
 
 # Make sure that DeprecationWarning get printed
 warnings.simplefilter("always", DeprecationWarning)
