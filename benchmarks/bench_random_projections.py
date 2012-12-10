@@ -3,7 +3,7 @@
 Random projection benchmark
 ===========================
 
-Benchmarks for randm projections.
+Benchmarks for random projections.
 
 """
 from __future__ import division
@@ -23,8 +23,9 @@ from sklearn.random_projection import (
                                         BernouilliRandomProjection,
                                         GaussianRandomProjection,
                                         johnson_lindenstrauss_min_dim,
-                                        _check_density
                                        )
+
+from sklearn.random_projection.random_projection import _check_density
 
 
 def type_auto_or_float(val):

@@ -40,6 +40,8 @@ from sklearn.utils import check_random_state
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.base import BaseEstimator
 from sklearn.base import TransformerMixin
+from _random_projection import sample_int
+
 
 __all__ = ["BernouilliRandomProjection",
            "GaussianRandomProjection",
@@ -136,17 +138,6 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
         Control the pseudo random number generator used to generate the
         matrix at fit time.
 
-    Examples
-    --------
-      >>> import numpy as np
-
-      >>> from sklearn.random_projection import gaussian_random_matrix
-
-      >>> n_components, n_features = 10, 10000
-
-      >>> r = gaussian_random_matrix(n_components, n_features, random_state=0)
-
-
     See Also
     --------
     bernouilli_random_matrix
@@ -200,29 +191,6 @@ def bernouilli_random_matrix(n_components, n_features, density='auto',
     --------
     gaussian_random_matrix
 
-    Examples
-    --------
-
-      >>> import numpy as np
-      >>> from sklearn.random_projection import bernouilli_random_matrix
-
-      >>> n_components, n_features = 10, 10000
-
-      >>> r = bernouilli_random_matrix(n_components, n_features, random_state=0)
-      >>> r                                   # doctest: +NORMALIZE_WHITESPACE
-      <10x10000 sparse matrix of type '<type 'numpy.float64'>'
-          with 988 stored elements in Compressed Sparse Row format>
-
-    The random matrix has only two possible non-zero values::
-
-      >>> np.unique(r.data)                              # doctest: +ELLIPSIS
-      array([-3.16...,  3.16...])
-
-    The matrix is centered on zero::
-
-      >>> np.abs(r.mean())                                # doctest: +ELLIPSIS
-      0.00...
-
     References
     ----------
 
@@ -236,44 +204,31 @@ def bernouilli_random_matrix(n_components, n_features, density='auto',
     """
     _check_input_size(n_components, n_features)
     density = _check_density(density, n_features)
-
-    # seed numpy and python pseudo random number generators from one another
-    # to ensure reproducible executions
     rng = check_random_state(random_state)
 
     # placeholders for the CSR datastructure
     indices = []
-    data = []
     offset = 0
     indptr = [offset]
-    py_random_state = random.Random(rng.rand())
-
     for i in xrange(n_components):
         # find the indices of the non-zero components for row i
         n_nonzero_i = rng.binomial(n_features, density)
+        indices_i = sample_int(n_features, n_nonzero_i,
+                               random_state=rng)
+        indices.append(indices_i)
 
-        # Use the python rng to perform reservoir sampling without
-        # replacement and without exhausting the memory.
-        # The python RNG sampling method is at least twice slower than
-        # calling random_state.randint(n_features, n_nonzero_i) but the
-        # latter would not be exact because of the replacement
-        # If speed is an issue it might be interesting to integrate this
-        # cython implementation by Robert Kern:
-        # http://mail.scipy.org/pipermail/numpy-discussion/2010-December/
-        # 054289.html
-        indices_i = py_random_state.sample(xrange(n_features), n_nonzero_i)
-        indices.append(np.array(indices_i, dtype=np.int))
-
-        # among non zero components the probability of the sign is 50%/50%
-        data_i = np.ones(n_nonzero_i, dtype=np.float)
-        u = rng.uniform(size=n_nonzero_i)
-        data_i[u < 0.5] *= -1
-        data.append(data_i)
+        # # among non zero components the probability of the sign is 50%/50%
         offset += n_nonzero_i
         indptr.append(offset)
 
+    indices = np.concatenate(indices)
+
+    # Generate data
+    data = np.ones(shape=len(indices), dtype=np.float)
+    u = rng.uniform(size=data.shape)
+    data[u < 0.5] *= -1
+
     # build the CSR structure by concatenating the rows
-    data, indices = np.concatenate(data), np.concatenate(indices)
     r = sp.csr_matrix((data, indices, indptr),
                       shape=(n_components, n_features))
 

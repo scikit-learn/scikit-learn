@@ -6,19 +6,23 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 from sklearn.metrics import euclidean_distances
-from sklearn.random_projection import (johnson_lindenstrauss_min_dim,
-                                       gaussian_random_matrix,
-                                       bernouilli_random_matrix,
-                                       BernouilliRandomProjection,
-                                       GaussianRandomProjection,
-                                       BaseRandomProjection,
-                                       )
+from sklearn.random_projection.random_projection import (
+   johnson_lindenstrauss_min_dim,
+   gaussian_random_matrix,
+   bernouilli_random_matrix,
+   BernouilliRandomProjection,
+   GaussianRandomProjection,
+   BaseRandomProjection,
+   )
+
+from sklearn.random_projection._random_projection import sample_int
 
 from sklearn.utils.testing import (assert_less,
                                    assert_raises, assert_raise_message,
                                    assert_array_equal,
                                    assert_equal, assert_almost_equal,
                                    assert_in,
+                                   assert_true,
                                    )
 
 all_sparse_random_matrix = [bernouilli_random_matrix]
@@ -55,6 +59,78 @@ def test_invalid_jl_domain():
     assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, 1.1)
     assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, 0.0)
     assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, -0.1)
+
+
+###############################################################################
+# test the random number generator
+###############################################################################
+def test_edge_case_of_sample_int():
+
+    # n_poluation < n_sample
+    assert_raises(ValueError, sample_int, 0, 1)
+    assert_raises(ValueError, sample_int, 1, 2)
+
+    # n_population == n_samples
+    assert_equal(sample_int(0, 0).shape, (0, ))
+
+    assert_equal(sample_int(1, 1).shape, (1, ))
+
+    # n_population >= n_samples
+    assert_equal(sample_int(5, 0).shape, (0, ))
+    assert_equal(sample_int(5, 1).shape, (1, ))
+
+    # n_population < 0 or n_samples < 0
+    assert_raises(ValueError, sample_int, -1, 5)
+    assert_raises(ValueError, sample_int, 5, -1)
+
+
+def test_sample_int():
+    # This test is heavily inspired from test_random.py of python-core.
+    #
+    # For the entire allowable range of 0 <= k <= N, validate that
+    # the sample is of the correct length and contains only unique items
+    n_population = 100
+
+    for n_samples in xrange(n_population + 1):
+        s = sample_int(n_population, n_samples)
+        assert_equal(len(s), n_samples)
+        unique = np.unique(s)
+        assert_equal(np.size(unique), n_samples)
+        assert_true(np.all(unique < n_population))
+
+    # test edge case n_population == n_samples == 0
+    assert_equal(np.size(sample_int(0, 0)), 0)
+
+
+def test_sample_int_distribution():
+    # This test is heavily inspired from test_random.py of python-core.
+    #
+    # For the entire allowable range of 0 <= k <= N, validate that
+    # sample generates all possible permutations
+    n_population = 6
+
+    # large num prevents false negatives without slowing normal case
+    n_trials = 10000
+
+    def factorial(n):
+        return reduce(int.__mul__, xrange(1, n), 1)
+
+    def permutation(n, k):
+        return factorial(n) / factorial(n - k)
+
+    for n_samples in xrange(n_population):
+        n_expected = permutation(n_population, n_samples)
+
+        output = {}
+        for i in xrange(n_trials):
+            output[tuple(sample_int(n_population, n_samples))] = None
+
+            if len(output) == n_expected:
+                break
+        else:
+            raise AssertionError(
+                "number of combination != number of expected (%s != %s)" %
+                (len(output), n_expected))
 
 
 ###############################################################################
@@ -200,7 +276,7 @@ def test_too_many_samples_to_find_a_safe_embedding():
 
 def test_random_projection_embedding_quality():
     data, _ = make_sparse_random_data(8, 5000, 15000)
-    eps = 0.3
+    eps = 0.2
 
     original_distances = euclidean_distances(data, squared=True)
     original_distances = original_distances.ravel()
@@ -295,8 +371,8 @@ def test_correct_RandomProjection_dimensions_embedding():
             projected = rp.fit_transform(data)
             assert_equal(projected.shape, (n_samples, 100))
             assert_equal(rp.components_.shape, (100, n_features))
-            assert_less(rp.components_.nnz, 110)  # close to 1% density
-            assert_less(90, rp.components_.nnz)  # close to 1% density
+            assert_less(rp.components_.nnz, 115)  # close to 1% density
+            assert_less(85, rp.components_.nnz)  # close to 1% density
 
 
 def test_warning_n_component_greater_than_n_features():
