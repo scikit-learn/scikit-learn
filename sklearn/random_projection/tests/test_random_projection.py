@@ -151,6 +151,22 @@ def check_size_generated(random_matrix):
     assert_equal(random_matrix(1, 1).shape, (1, 1))
 
 
+def check_zero_mean_and_unit_norm(random_matrix):
+    # All random matrix should produce a transformation matrix
+    # with zero mean and unit norm for each columns
+
+    def densify(matrix):
+        if not sp.issparse(matrix):
+            return matrix
+        else:
+            return np.array(matrix.todense())
+
+    A = densify(random_matrix(10000, 1, random_state=0))
+
+    assert_allclose(0, np.mean(A), atol=10 ** -3)
+    assert_allclose(1.0, np.linalg.norm(A),  rtol=1e-1)
+
+
 def check_input_with_sparse_random_matrix(random_matrix):
     n_components, n_features = 5, 10
 
@@ -164,6 +180,7 @@ def test_basic_property_of_random_matrix():
     for random_matrix in all_random_matrix:
         check_input_size_random_matrix(random_matrix)
         check_size_generated(random_matrix)
+        check_zero_mean_and_unit_norm(random_matrix)
 
     for random_matrix in all_sparse_random_matrix:
         check_input_with_sparse_random_matrix(random_matrix)
