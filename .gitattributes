@@ -4,8 +4,10 @@
 /sklearn/cluster/_k_means.c -diff
 /sklearn/datasets/_svmlight_format.c -diff
 /sklearn/ensemble/_gradient_boosting.c -diff
+/sklearn/feature_extraction/_hashing.c -diff
 /sklearn/linear_model/cd_fast.c -diff
 /sklearn/linear_model/sgd_fast.c -diff
+/sklearn/metric/pairwise_fast.c -diff
 /sklearn/neighbors/ball_tree.c -diff
 /sklearn/svm/liblinear.c -diff
 /sklearn/svm/libsvm.c -diff

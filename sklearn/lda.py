@@ -12,7 +12,7 @@ from scipy import linalg
 from .base import BaseEstimator, ClassifierMixin, TransformerMixin
 from .utils.extmath import logsumexp
 from .utils.fixes import unique
-from .utils import check_arrays
+from .utils import check_arrays, array2d
 
 __all__ = ['LDA']
 
@@ -177,7 +177,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         return self.classes_
 
     def _decision_function(self, X):
-        X = np.asarray(X)
+        X = array2d(X)
         # center and scale data
         X = np.dot(X - self.xbar_, self.scaling)
         return np.dot(X, self.coef_.T) + self.intercept_
@@ -216,7 +216,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         -------
         X_new : array, shape = [n_samples, n_components]
         """
-        X = np.asarray(X)
+        X = array2d(X)
         # center and scale data
         X = np.dot(X - self.xbar_, self.scaling)
         n_comp = X.shape[1] if self.n_components is None else self.n_components

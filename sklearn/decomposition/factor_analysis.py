@@ -185,6 +185,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
             The latent variables of X.
         """
+        X = array2d(X)
         Ih = np.eye(len(self.components_))
 
         X_transformed = X - self.mean_

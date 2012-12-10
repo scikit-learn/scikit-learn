@@ -31,10 +31,10 @@ def ricker_function(resolution, center, width):
     return x
 
 
-def ricker_matrix(width, resolution, n_atoms):
+def ricker_matrix(width, resolution, n_components):
     """Dictionary of Ricker (mexican hat) wavelets"""
-    centers = np.linspace(0, resolution - 1, n_atoms)
-    D = np.empty((n_atoms, resolution))
+    centers = np.linspace(0, resolution - 1, n_components)
+    D = np.empty((n_components, resolution))
     for i, center in enumerate(centers):
         D[i] = ricker_function(resolution, center, width)
     D /= np.sqrt(np.sum(D ** 2, axis=1))[:, np.newaxis]
@@ -44,12 +44,12 @@ def ricker_matrix(width, resolution, n_atoms):
 resolution = 1024
 subsampling = 3  # subsampling factor
 width = 100
-n_atoms = resolution / subsampling
+n_components = resolution / subsampling
 
 # Compute a wavelet dictionary
-D_fixed = ricker_matrix(width=width, resolution=resolution, n_atoms=n_atoms)
+D_fixed = ricker_matrix(width=width, resolution=resolution, n_components=n_components)
 D_multi = np.r_[tuple(ricker_matrix(width=w, resolution=resolution,
-                                     n_atoms=np.floor(n_atoms / 5))
+                                     n_components=np.floor(n_components / 5))
                  for w in (10, 50, 100, 500, 1000))]
 
 # Generate a signal

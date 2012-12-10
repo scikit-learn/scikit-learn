@@ -3,7 +3,6 @@ from io import BytesIO
 import numpy as np
 import scipy.sparse
 
-from cStringIO import StringIO
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -92,15 +91,11 @@ def test_discretenb_pickle():
         clf = cls().fit(X2, y2)
         y_pred = clf.predict(X2)
 
-        store = StringIO()
+        store = BytesIO()
         pickle.dump(clf, store)
-        clf = pickle.load(StringIO(store.getvalue()))
+        clf = pickle.load(BytesIO(store.getvalue()))
 
         assert_array_equal(y_pred, clf.predict(X2))
-
-    store = BytesIO()
-    pickle.dump(clf, store)
-    clf = pickle.load(BytesIO(store.getvalue()))
 
 
 def test_input_check():

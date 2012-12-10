@@ -107,22 +107,22 @@ of the computer.
 
 .. currentmodule:: sklearn.svm
 
-.. image:: ../../auto_examples/exercises/images/plot_cv_digits_1.png
-   :target: ../../auto_examples/exercises/plot_cv_digits.html
-   :align: right
-   :scale: 100
-
 .. topic:: **Exercise**
    :class: green
 
+   .. image:: ../../auto_examples/exercises/images/plot_cv_digits_1.png
+        :target: ../../auto_examples/exercises/plot_cv_digits.html
+        :align: right
+        :scale: 90
+
    On the digits dataset, plot the cross-validation score of a :class:`SVC`
-   estimator with an RBF kernel as a function of parameter `C` (use a
+   estimator with an linear kernel as a function of parameter `C` (use a
    logarithmic grid of points, from `1` to `10`).
 
    .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py
        :lines: 13-23
 
-   Solution: :download:`../../auto_examples/exercises/plot_cv_digits.py`
+   **Solution:** :ref:`example_exercises_plot_cv_digits.py`
 
 
 
@@ -214,6 +214,6 @@ appended to their name.
    .. literalinclude:: ../../auto_examples/exercises/plot_cv_diabetes.py
        :lines: 11-22
 
-   Solution: :ref:`example_exercises_plot_cv_diabetes.py`
+   **Solution:** :ref:`example_exercises_plot_cv_diabetes.py`
 
 

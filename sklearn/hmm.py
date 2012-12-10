@@ -415,14 +415,9 @@ class _BaseHMM(BaseEstimator):
                           stacklevel=2)
             # initialisations for in case the user still adds parameters to fit
             # so things don't break
-            if 'n_iter' in kwargs:
-                self.n_iter = kwargs['n_iter']
-            if 'thresh' in kwargs:
-                self.thresh = kwargs['thresh']
-            if 'params' in kwargs:
-                self.params = kwargs['params']
-            if 'init_params' in kwargs:
-                self.init_params = kwargs['init_params']
+            for name in ('n_iter', 'thresh', 'params', 'init_params'):
+                if name in kwargs:
+                    setattr(self, name, kwargs[name])
 
         if self.algorithm not in decoder_algorithms:
             self._algorithm = "viterbi"
@@ -571,21 +566,14 @@ class _BaseHMM(BaseEstimator):
         if 's' in params:
             stats['start'] += posteriors[0]
         if 't' in params:
-            if _hmmc:
-                n_observations, n_components = framelogprob.shape
-                lneta = np.zeros((n_observations - 1,
-                            n_components, n_components))
-                lnP = logsumexp(fwdlattice[-1])
-                _hmmc._compute_lneta(n_observations, n_components,
-                        fwdlattice, self._log_transmat, bwdlattice,
-                        framelogprob, lnP, lneta)
-                stats["trans"] += np.exp(logsumexp(lneta, 0))
-            else:
-                for t in xrange(len(framelogprob)):
-                    zeta = (fwdlattice[t - 1][:, np.newaxis]
-                            + self._log_transmat + framelogprob[t]
-                            + bwdlattice[t])
-                    stats['trans'] += np.exp(zeta - logsumexp(zeta))
+            n_observations, n_components = framelogprob.shape
+            lneta = np.zeros((n_observations - 1,
+                        n_components, n_components))
+            lnP = logsumexp(fwdlattice[-1])
+            _hmmc._compute_lneta(n_observations, n_components,
+                    fwdlattice, self._log_transmat, bwdlattice,
+                    framelogprob, lnP, lneta)
+            stats["trans"] += np.exp(logsumexp(lneta, 0))
 
     def _do_mstep(self, stats, params):
         # Based on Huang, Acero, Hon, "Spoken Language Processing",
@@ -714,7 +702,6 @@ class GaussianHMM(_BaseHMM):
         self.covars_prior = covars_prior
         self.covars_weight = covars_weight
 
-    # Read-only properties.
     @property
     def covariance_type(self):
         """Covariance type of the model.
@@ -1133,6 +1120,7 @@ class GMMHMM(_BaseHMM):
         self.n_mix = n_mix
         self._covariance_type = covariance_type
         self.covars_prior = covars_prior
+        self.gmms = gmms
         if gmms is None:
             gmms = []
             for x in xrange(self.n_components):
@@ -1141,7 +1129,7 @@ class GMMHMM(_BaseHMM):
                 else:
                     g = GMM(n_mix, covariance_type=covariance_type)
                 gmms.append(g)
-        self.gmms = gmms
+        self.gmms_ = gmms
 
     # Read-only properties.
     @property
@@ -1153,24 +1141,24 @@ class GMMHMM(_BaseHMM):
         return self._covariance_type
 
     def _compute_log_likelihood(self, obs):
-        return np.array([g.score(obs) for g in self.gmms]).T
+        return np.array([g.score(obs) for g in self.gmms_]).T
 
     def _generate_sample_from_state(self, state, random_state=None):
-        return self.gmms[state].sample(1, random_state=random_state).flatten()
+        return self.gmms_[state].sample(1, random_state=random_state).flatten()
 
     def _init(self, obs, params='stwmc'):
         super(GMMHMM, self)._init(obs, params=params)
 
         allobs = np.concatenate(obs, 0)
-        for g in self.gmms:
+        for g in self.gmms_:
             g.set_params(init_params=params, n_iter=0)
             g.fit(allobs)
 
     def _initialize_sufficient_statistics(self):
         stats = super(GMMHMM, self)._initialize_sufficient_statistics()
-        stats['norm'] = [np.zeros(g.weights_.shape) for g in self.gmms]
-        stats['means'] = [np.zeros(np.shape(g.means_)) for g in self.gmms]
-        stats['covars'] = [np.zeros(np.shape(g.covars_)) for g in self.gmms]
+        stats['norm'] = [np.zeros(g.weights_.shape) for g in self.gmms_]
+        stats['means'] = [np.zeros(np.shape(g.means_)) for g in self.gmms_]
+        stats['covars'] = [np.zeros(np.shape(g.covars_)) for g in self.gmms_]
         return stats
 
     def _accumulate_sufficient_statistics(self, stats, obs, framelogprob,
@@ -1180,7 +1168,7 @@ class GMMHMM(_BaseHMM):
             stats, obs, framelogprob, posteriors, fwdlattice, bwdlattice,
             params)
 
-        for state, g in enumerate(self.gmms):
+        for state, g in enumerate(self.gmms_):
             _, lgmm_posteriors = g.eval(obs)
             lgmm_posteriors += np.log(posteriors[:, state][:, np.newaxis]
                                       + np.finfo(np.float).eps)
@@ -1213,7 +1201,7 @@ class GMMHMM(_BaseHMM):
         super(GMMHMM, self)._do_mstep(stats, params)
         # All that is left to do is to apply covars_prior to the
         # parameters updated in _accumulate_sufficient_statistics.
-        for state, g in enumerate(self.gmms):
+        for state, g in enumerate(self.gmms_):
             n_features = g.means_.shape[1]
             norm = stats['norm'][state]
             if 'w' in params:

@@ -41,7 +41,7 @@ alpha = 0.95
 
 clf = GradientBoostingRegressor(loss='quantile', alpha=alpha,
                                 n_estimators=250, max_depth=3,
-                                learn_rate=.1, min_samples_leaf=9,
+                                learning_rate=.1, min_samples_leaf=9,
                                 min_samples_split=9)
 
 clf.fit(X, y)

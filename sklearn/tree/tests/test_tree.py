@@ -453,6 +453,50 @@ def test_multioutput():
     assert_equal(y_hat.shape, (4, 2))
 
 
+def test_sample_mask():
+    """Test sample_mask argument. """
+    # test list sample_mask
+    clf = tree.DecisionTreeClassifier()
+    sample_mask = [1] * len(X)
+    clf.fit(X, y, sample_mask=sample_mask)
+    assert_array_equal(clf.predict(T), true_result)
+
+    # test different dtype
+    clf = tree.DecisionTreeClassifier()
+    sample_mask = np.ones((len(X),), dtype=np.int32)
+    clf.fit(X, y, sample_mask=sample_mask)
+    assert_array_equal(clf.predict(T), true_result)
+
+
+def test_X_argsorted():
+    """Test X_argsorted argument. """
+    # test X_argsorted with different layout and dtype
+    clf = tree.DecisionTreeClassifier()
+    X_argsorted = np.argsort(np.array(X).T, axis=1).T
+    clf.fit(X, y, X_argsorted=X_argsorted)
+    assert_array_equal(clf.predict(T), true_result)
+
+
+def test_classes_shape():
+    """Test that n_classes_ and classes_ have proper shape."""
+    # Classification, single output
+    clf = tree.DecisionTreeClassifier()
+    clf.fit(X, y)
+
+    assert_equal(clf.n_classes_, 2)
+    assert_equal(clf.classes_, [-1, 1])
+
+    # Classification, multi-output
+    _y = np.vstack((y, np.array(y) * 2)).T
+    clf = tree.DecisionTreeClassifier()
+    clf.fit(X, _y)
+
+    assert_equal(len(clf.n_classes_), 2)
+    assert_equal(len(clf.classes_), 2)
+    assert_equal(clf.n_classes_, [2, 2])
+    assert_equal(clf.classes_, [[-1, 1], [-2, 2]])
+
+
 if __name__ == "__main__":
     import nose
     nose.runmodule()

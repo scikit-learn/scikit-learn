@@ -8,6 +8,13 @@
 Changelog
 ---------
 
+   - Partial dependence plots for :mod:`ensemble.gradient_boosting` by
+     `Peter Prettenhofer`_.
+
+   - New estimators :class:`linear_model.PassiveAggressiveClassifier` and
+     :class:`linear_model.PassiverAggressiveRegressor` by `Rob Zinkov` and
+     `Mathieu Blondel`_.
+
    - The table of contents has now been made expandible (on the
      index page) - by Jaques Grobler.
 
@@ -38,16 +45,66 @@ Changelog
      of several transformers by `Andreas Müller`_.
 
    - Faster and more robust :func:`metrics.confusion_matrix` and
-     :ref:`clustering_evaluation`_ by Wei Li.
+     :ref:`clustering_evaluation` by Wei Li.
 
    - New estimator :class:`decomposition.FactorAnalysis` by
      `Christian Osendorfer`_ and `Alexandre Gramfort`_
 
    - :func:`datasets.make_circles` now has the same number of inner and outer points.
 
+   - :func:`cross_validation.cross_val_score` now works with precomputed kernels
+     and affinity matrices, by `Andreas Müller`_.
+
+   - LARS algorithm made more numerically stable with heuristics to drop
+     regressors too correlated as well as to stop the path when
+     numerical noise becomes predominant, by `Gael Varoquaux`_.
+
+   - New estimator :class:`preprocessing.OneHotEncoder` to compute
+     binary encodings of categorical features by `Andreas Müller`_.
+
+   - Faster implementation of :func:`metrics.precision_recall_curve` by
+     Conrad Lee.
+
+   - New :class:`feature_extraction.FeatureHasher`, implementing the
+     "hashing trick" for fast, low-memory feature extraction from string data
+     by `Lars Buitinck`_.
+
+   - New dummy estimators :class:`dummy.DummyClassifiers` and
+     :class:`DummyRegressor` by `Mathieu Blondel`_. Useful to sanity-check your
+     estimators.
+
+   - New kernel :class:`metrics.chi2_kernel` by `Andreas Müller`_, often used
+     in computer vision applications.
+
+   - Longstanding bug in :class:`naive_bayes.BernoulliNB` fixed by
+     Shaun Jackman.
+
+   - New estimator :class:`manifold.SpectralEmbedding` and function
+     :func:`manifold.spectral_embedding`, implementing the
+     "laplacian eigenmaps" for nonlinear dimensionality reduction by Wei Li.
+
+   - Implement `predict_proba` in :class:`multiclass.OneVsRestClassifier`, by
+     Andrew Winterman.
+
+   - Added :class:`kernel_approximation.Nystrom` for approximating arbitrary
+     kernels to the :ref:`kernel_approximation` module by `Andreas Müller`_.
 
 API changes summary
 -------------------
+   - Renamed all occurences of ``n_atoms`` to ``n_components`` for consistency.
+     This applies to :class:`decomposition.DictionaryLearning`,
+     :class:`decomposition.MiniBatchDictionaryLearning`,
+     :func:`decomposition.dict_learning`, :func:`decomposition.dict_learning_online`.
+
+   - Renamed all occurences of ``max_iters`` to ``max_iter`` for consistency.
+     This applies to :class:`label_propagation.BaseLabelPropagation`,
+     'label_propagation.LabelSpreading'
+
+   - Renamed all occurences of ``learn_rate`` to ``learning_rate`` for consistency.
+     This applies to :class:`gradient_boosting.LossFunction`,
+     :class:`gradient_boosting.LeastSquaresError`,
+     :class:'gradient_boosting.BaseGradientBoosting',
+     :class:'gradient_boosting.GradientBoostingRegressor'
 
    - The module ``sklearn.linear_model.sparse`` is gone. Sparse matrix support
      was already integrated into the "regular" linear models.
@@ -82,7 +139,29 @@ API changes summary
      had different meanings; ``l1_ratio`` was introduced to avoid confusion.
      It has the same meaning as previously ``rho`` in
      :class:`linear_model.ElasticNet` and ``(1-rho)`` in
-     :class:`linear_model.SGDClassifier`,
+     :class:`linear_model.SGDClassifier`.
+
+   - :class:`linear_model.LassoLars` and :class:`linear_model.Lars` now
+     store a list of paths in the case of multiple targets, rather than
+     an array of paths.
+
+   - The attribute ``gmm`` of :class:`hmm.GMMHMM` was renamed to ``gmm_``
+     to adhere more strictly with the API.
+
+   - :func:`cluster.spectral_embedding` is now in
+     :func:`manifold.spectral_embedding`.
+
+   - Renamed ``eig_tol`` in :func:`manifold.spectral_embedding`,
+     :class:`cluster.SpectralClustering` to ``eigen_tol``, renamed ``mode``
+     to ``eigen_solver``.
+
+   - Renamed ``mode`` in :func:`manifold.spectral_embedding` and
+     :class:`cluster.SpectralClustering` to ``eigen_solver``.
+
+   - ``classes_`` and ``n_classes_`` attributes of
+     :class:`tree.DecisionTreeClassifier` and all derived ensemble models are
+     now flat in case of single output problems and nested in case of
+     multi-output problems.
 
 
 .. _changes_0_12.1:

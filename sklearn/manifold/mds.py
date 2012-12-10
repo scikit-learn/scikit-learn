@@ -14,7 +14,7 @@ from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_arrays
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
-from ..linear_model.isotonic_regression_ import isotonic_regression
+from ..isotonic import isotonic_regression
 
 
 def _smacof_single(similarities, metric=True, n_components=2, init=None,

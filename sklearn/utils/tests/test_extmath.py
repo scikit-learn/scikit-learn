@@ -8,15 +8,18 @@ from scipy import stats
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
+
+from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import logsumexp
 from sklearn.utils.extmath import randomized_svd
 from sklearn.utils.extmath import weighted_mode
-from sklearn.datasets.samples_generator import make_low_rank_matrix
+from sklearn.utils.extmath import cartesian
 
 
 def test_density():
@@ -216,3 +219,29 @@ def test_randomized_svd_sign_flip():
         u2, s2, v2 = randomized_svd(a, 2, flip_sign=True, random_state=seed)
         assert_almost_equal(u1, u2)
         assert_almost_equal(v1, v2)
+
+
+def test_cartesian():
+    """Check if cartesian product delivers the right results"""
+
+    axes = (np.array([1, 2, 3]), np.array([4, 5]), np.array([6, 7]))
+
+    true_out = np.array([[1, 4, 6],
+                         [1, 4, 7],
+                         [1, 5, 6],
+                         [1, 5, 7],
+                         [2, 4, 6],
+                         [2, 4, 7],
+                         [2, 5, 6],
+                         [2, 5, 7],
+                         [3, 4, 6],
+                         [3, 4, 7],
+                         [3, 5, 6],
+                         [3, 5, 7]])
+
+    out = cartesian(axes)
+    assert_array_equal(true_out, out)
+
+    # check single axis
+    x = np.arange(3)
+    assert_array_equal(x[:, np.newaxis], cartesian((x,)))

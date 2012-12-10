@@ -1,10 +1,15 @@
 """
 General tests for all estimators in sklearn.
 """
+
+# Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
+#          Gael Varoquaux gael.varoquaux@normalesup.org
+# License: BSD Style.
 import os
 import warnings
 import sys
 import traceback
+import inspect
 
 import numpy as np
 from scipy import sparse
@@ -14,15 +19,15 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import all_estimators
+from sklearn.utils.testing import set_random_state
+from sklearn.utils.testing import assert_greater
 
 import sklearn
-from sklearn.utils.testing import all_estimators, set_random_state
-from sklearn.utils.testing import assert_greater
 from sklearn.base import clone, ClassifierMixin, RegressorMixin, \
         TransformerMixin, ClusterMixin
 from sklearn.utils import shuffle
 from sklearn.preprocessing import StandardScaler, Scaler
-#from sklearn.cross_validation import train_test_split
 from sklearn.datasets import load_iris, load_boston, make_blobs
 from sklearn.metrics import zero_one_score, adjusted_rand_score
 from sklearn.lda import LDA
@@ -33,24 +38,26 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.decomposition import SparseCoder
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.pls import _PLS, PLSCanonical, PLSRegression, CCA, PLSSVD
-from sklearn.ensemble import BaseEnsemble
+from sklearn.ensemble import BaseEnsemble, RandomTreesEmbedding
 from sklearn.multiclass import OneVsOneClassifier, OneVsRestClassifier,\
         OutputCodeClassifier
 from sklearn.feature_selection import RFE, RFECV, SelectKBest
+from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB
 from sklearn.covariance import EllipticEnvelope, EllipticEnvelop
-from sklearn.feature_extraction import DictVectorizer
+from sklearn.feature_extraction import DictVectorizer, FeatureHasher
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.preprocessing import LabelBinarizer, LabelEncoder, Binarizer, \
-        Normalizer
+        Normalizer, OneHotEncoder
 from sklearn.cluster import WardAgglomeration, AffinityPropagation, \
         SpectralClustering
-from sklearn.linear_model import IsotonicRegression
+from sklearn.isotonic import IsotonicRegression
 
 dont_test = [Pipeline, FeatureUnion, GridSearchCV, SparseCoder,
         EllipticEnvelope, EllipticEnvelop, DictVectorizer, LabelBinarizer,
-        LabelEncoder, TfidfTransformer, IsotonicRegression]
+        LabelEncoder, TfidfTransformer, IsotonicRegression, OneHotEncoder,
+        RandomTreesEmbedding, FeatureHasher, DummyClassifier, DummyRegressor]
 meta_estimators = [BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
         OneVsRestClassifier, RFE, RFECV]
 
@@ -72,10 +79,37 @@ def test_all_estimators():
                 e = E(clf)
             else:
                 e = E()
-            #test cloning
+            # test cloning
             clone(e)
             # test __repr__
             repr(e)
+
+            # test if init does nothing but set parameters
+            # this is important for grid_search etc.
+            # We get the default parameters from init and then
+            # compare these against the actual values of the attributes.
+
+            # this comes from getattr. Gets rid of deprecation decorator.
+            init = getattr(e.__init__, 'deprecated_original', e.__init__)
+            try:
+                args, varargs, kws, defaults = inspect.getargspec(init)
+            except TypeError:
+                # init is not a python function.
+                # true for mixins
+                continue
+            params = e.get_params()
+            if E in meta_estimators:
+                # they need a non-default argument
+                args = args[2:]
+            else:
+                args = args[1:]
+            if args:
+                # non-empty list
+                assert_equal(len(args), len(defaults))
+            else:
+                continue
+            for arg, default in zip(args[1:], defaults[1:]):
+                assert_equal(params[arg], default)
 
 
 def test_estimators_sparse_data():
@@ -220,6 +254,91 @@ def test_transformers_sparse_data():
             raise exc
 
 
+def test_estimators_nan_inf():
+    # Test that all estimators check their input for NaN's and infs
+    rnd = np.random.RandomState(0)
+    X_train_finite = rnd.uniform(size=(10, 3))
+    X_train_nan = rnd.uniform(size=(10, 3))
+    X_train_nan[0, 0] = np.nan
+    X_train_inf = rnd.uniform(size=(10, 3))
+    X_train_inf[0, 0] = np.inf
+    y = np.ones(10)
+    y[:5] = 0
+    estimators = all_estimators()
+    estimators = [(name, E) for name, E in estimators if
+            issubclass(E, ClassifierMixin) or issubclass(E, RegressorMixin) or
+            issubclass(E, TransformerMixin) or issubclass(E, ClusterMixin)]
+    error_string_fit = "Estimator doesn't check for NaN and inf in fit."
+    error_string_predict = ("Estimator doesn't check for NaN and inf in"
+        " predict.")
+    error_string_transform = ("Estimator doesn't check for NaN and inf in"
+        " transform.")
+    for X_train in [X_train_nan, X_train_inf]:
+        for name, Est in estimators:
+            if Est in dont_test or Est in meta_estimators:
+                continue
+            if Est in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
+                continue
+            # catch deprecation warnings
+            with warnings.catch_warnings(record=True):
+                est = Est()
+                set_random_state(est, 1)
+                # try to fit
+                try:
+                    if issubclass(Est, ClusterMixin):
+                        est.fit(X_train)
+                    else:
+                        est.fit(X_train, y)
+                except ValueError, e:
+                    if not 'inf' in repr(e) and not 'NaN' in repr(e):
+                        print(error_string_fit, Est, e)
+                        traceback.print_exc(file=sys.stdout)
+                        raise e
+                except Exception, exc:
+                        print(error_string_fit, Est, exc)
+                        traceback.print_exc(file=sys.stdout)
+                        raise exc
+                else:
+                    raise AssertionError(error_string_fit, Est)
+                # actually fit
+                if issubclass(Est, ClusterMixin):
+                    # All estimators except clustering algorithm
+                    # support fitting with (optional) y
+                    est.fit(X_train_finite)
+                else:
+                    est.fit(X_train_finite, y)
+
+                # predict
+                if hasattr(est, "predict"):
+                    try:
+                        est.predict(X_train)
+                    except ValueError, e:
+                        if not 'inf' in repr(e) and not 'NaN' in repr(e):
+                            print(error_string_predict, Est, e)
+                            traceback.print_exc(file=sys.stdout)
+                            raise e
+                    except Exception, exc:
+                        print(error_string_predict, Est, exc)
+                        traceback.print_exc(file=sys.stdout)
+                    else:
+                        raise AssertionError(error_string_predict, Est)
+
+                # transform
+                if hasattr(est, "transform"):
+                    try:
+                        est.transform(X_train)
+                    except ValueError, e:
+                        if not 'inf' in repr(e) and not 'NaN' in repr(e):
+                            print(error_string_transform, Est, e)
+                            traceback.print_exc(file=sys.stdout)
+                            raise e
+                    except Exception, exc:
+                        print(error_string_transform, Est, exc)
+                        traceback.print_exc(file=sys.stdout)
+                    else:
+                        raise AssertionError(error_string_transform, Est)
+
+
 def test_classifiers_one_label():
     # test classifiers trained on a single label always return this label
     # or raise an sensible error message
@@ -282,8 +401,7 @@ def test_clustering():
             alg = Alg()
             if hasattr(alg, "n_clusters"):
                 alg.set_params(n_clusters=3)
-            if hasattr(alg, "random_state"):
-                alg.set_params(random_state=1)
+            set_random_state(alg)
             if Alg is AffinityPropagation:
                 alg.set_params(preference=-100)
             # fit
@@ -296,8 +414,7 @@ def test_clustering():
         if Alg is SpectralClustering:
             # there is no way to make Spectral clustering deterministic :(
             continue
-        if hasattr(alg, "random_state"):
-            alg.set_params(random_state=1)
+        set_random_state(alg)
         with warnings.catch_warnings(record=True):
             pred2 = alg.fit_predict(X)
         assert_array_equal(pred, pred2)
@@ -309,8 +426,7 @@ def test_classifiers_train():
     estimators = all_estimators()
     classifiers = [(name, E) for name, E in estimators if issubclass(E,
         ClassifierMixin)]
-    iris = load_iris()
-    X_m, y_m = iris.data, iris.target
+    X_m, y_m = make_blobs(random_state=0)
     X_m, y_m = shuffle(X_m, y_m, random_state=7)
     X_m = StandardScaler().fit_transform(X_m)
     # generate binary problem from multi-class one
@@ -338,7 +454,7 @@ def test_classifiers_train():
             y_pred = clf.predict(X)
             assert_equal(y_pred.shape, (n_samples,))
             # training set performance
-            assert_greater(zero_one_score(y, y_pred), 0.78)
+            assert_greater(zero_one_score(y, y_pred), 0.85)
 
             # raises error on malformed input for predict
             assert_raises(ValueError, clf.predict, X.T)
@@ -378,16 +494,9 @@ def test_classifiers_train():
                     pass
 
             if hasattr(clf, "classes_"):
-                if hasattr(clf, "n_outputs_"):
-                    assert_equal(clf.n_outputs_, 1)
-                    assert_array_equal(
-                        clf.classes_, [classes],
-                        "Unexpected classes_ attribute for %r" % clf)
-                else:
-                    # flat classes array: XXX inconsistent
-                    assert_array_equal(
-                        clf.classes_, classes,
-                        "Unexpected classes_ attribute for %r" % clf)
+                assert_array_equal(
+                    clf.classes_, classes,
+                    "Unexpected classes_ attribute for %r" % clf)
 
 
 def test_classifiers_classes():
@@ -395,8 +504,7 @@ def test_classifiers_classes():
     estimators = all_estimators()
     classifiers = [(name, E) for name, E in estimators if issubclass(E,
         ClassifierMixin)]
-    iris = load_iris()
-    X, y = iris.data, iris.target
+    X, y = make_blobs()
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
     y = 2 * y + 1
@@ -417,7 +525,8 @@ def test_classifiers_classes():
         y_pred = clf.predict(X)
         # training set performance
         assert_array_equal(np.unique(y), np.unique(y_pred))
-        assert_greater(zero_one_score(y, y_pred), 0.78)
+        assert_greater(zero_one_score(y, y_pred), 0.78,
+                       "accuracy of %s not greater than 0.78" % str(Clf))
 
 
 def test_regressors_int():
@@ -439,12 +548,8 @@ def test_regressors_int():
             # separate estimators to control random seeds
             reg1 = Reg()
             reg2 = Reg()
-        if hasattr(reg1, 'alpha'):
-            reg1.set_params(alpha=0.01)
-            reg2.set_params(alpha=0.01)
-        if hasattr(reg1, 'random_state'):
-            reg1.set_params(random_state=0)
-            reg2.set_params(random_state=0)
+        set_random_state(reg1)
+        set_random_state(reg2)
 
         if Reg in (_PLS, PLSCanonical, PLSRegression):
             y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
@@ -478,8 +583,9 @@ def test_regressors_train():
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
             reg = Reg()
-        if hasattr(reg, 'alpha'):
-            reg.set_params(alpha=0.01)
+        if not hasattr(reg, 'alphas') and hasattr(reg, 'alpha'):
+            # linear regressors need to set alpha, but not generalized CV ones
+            reg.alpha = 0.01
 
         # raises error on malformed input for fit
         assert_raises(ValueError, reg.fit, X, y[:-1])

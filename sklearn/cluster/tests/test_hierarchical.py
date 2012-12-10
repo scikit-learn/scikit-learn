@@ -5,6 +5,7 @@ Several basic tests for hierarchical clustering procedures
 # Authors: Vincent Michel, 2010, Gael Varoquaux 2012
 # License: BSD-like
 import warnings
+from tempfile import mkdtemp
 
 import numpy as np
 from scipy import sparse
@@ -78,6 +79,10 @@ def test_ward_clustering():
     connectivity = grid_to_graph(*mask.shape)
     clustering = Ward(n_clusters=10, connectivity=connectivity)
     clustering.fit(X)
+    # test caching
+    clustering = Ward(n_clusters=10, connectivity=connectivity,
+                      memory=mkdtemp())
+    clustering.fit(X)
     labels = clustering.labels_
     assert_true(np.size(np.unique(labels)) == 10)
     # Check that we obtain the same solution with early-stopping of the
@@ -94,7 +99,7 @@ def test_ward_clustering():
     assert_raises(TypeError, clustering.fit, X)
     clustering = Ward(n_clusters=10,
                       connectivity=sparse.lil_matrix(
-                                connectivity.todense()[:10, :10]))
+                          connectivity.todense()[:10, :10]))
     assert_raises(ValueError, clustering.fit, X)
 
 
@@ -166,7 +171,7 @@ def test_connectivity_popagation():
                   (.018, .153), (.018, .153), (.018, .153),
                   (.018, .153), (.018, .153), (.018, .153),
                   (.018, .152), (.018, .149), (.018, .144),
-                 ])
+                  ])
     nn = NearestNeighbors(n_neighbors=10, warn_on_equidistant=False).fit(X)
     connectivity = nn.kneighbors_graph(X)
     ward = Ward(n_clusters=4, connectivity=connectivity)

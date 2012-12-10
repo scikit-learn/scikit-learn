@@ -65,17 +65,18 @@ datasets = [make_moons(noise=0.3, random_state=0),
             linearly_separable
             ]
 
-figure, all_axes = pl.subplots(len(datasets), len(classifiers),
-                               figsize=(20, 8))
+figure = pl.figure(figsize=(20, 8))
+i = 1
 # iterate over datasets
-for ds, axes in zip(datasets, all_axes):
+for ds in datasets:
     # preprocess dataset, split into training and test part
     X, y = ds
     X = StandardScaler().fit_transform(X)
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.4)
 
     # iterate over classifiers
-    for name, clf, ax in zip(names, classifiers, axes):
+    for name, clf in zip(names, classifiers):
+        ax = pl.subplot(len(datasets), len(classifiers), i)
         clf.fit(X_train, y_train)
         score = clf.score(X_test, y_test)
 
@@ -107,6 +108,7 @@ for ds, axes in zip(datasets, all_axes):
         ax.set_title(name)
         ax.text(xx.max() - .3, yy.min() + .3, ('%.2f' % score).lstrip('0'),
                 size=15, horizontalalignment='right')
+        i += 1
 
 figure.subplots_adjust(left=.02, right=.98)
 pl.show()

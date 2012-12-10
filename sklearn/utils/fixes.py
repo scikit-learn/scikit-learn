@@ -107,6 +107,7 @@ for x in np.__version__.split('.'):
     except ValueError:
         # x may be of the form dev-1ea1592
         np_version.append(x)
+np_version = tuple(np_version)
 
 if np_version[:2] < (1, 5):
     unique = _unique

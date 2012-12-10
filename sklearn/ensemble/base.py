@@ -29,7 +29,9 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
         new base estimator. If none are given, default parameters are used.
     """
 
-    def __init__(self, base_estimator, n_estimators=10, estimator_params=[]):
+    def __init__(self, base_estimator, n_estimators=10,
+                 estimator_params=tuple()):
+
         # Check parameters
         if not isinstance(base_estimator, BaseEstimator):
             raise TypeError("estimator must be a subclass of BaseEstimator")

@@ -1,4 +1,8 @@
+import warnings
+from nose.tools import assert_equal
+
 import numpy as np
+from scipy import linalg
 
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
@@ -163,13 +167,47 @@ def test_no_path_all_precomputed():
 
 
 def test_singular_matrix():
-    """
-    Test when input is a singular matrix
-    """
+    # Test when input is a singular matrix
+    # In this test the "drop for good strategy" of lars_path is necessary
+    # to give a good answer
     X1 = np.array([[1, 1.], [1., 1.]])
     y1 = np.array([1, 1])
-    alphas, active, coef_path = linear_model.lars_path(X1, y1)
-    assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0], [1, 0]])
+    with warnings.catch_warnings(record=True) as warning_list:
+        warnings.simplefilter("always", UserWarning)
+        alphas, active, coef_path = linear_model.lars_path(X1, y1)
+    assert_true(len(warning_list) > 0)
+    assert_true('Dropping a regressor' in warning_list[0].message.args[0])
+
+    assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0]])
+
+
+def test_rank_deficient_design():
+    # consistency test that checks that LARS Lasso is handling rank
+    # deficient input data (with n_features < rank) in the same way
+    # as coordinate descent Lasso
+    y = [5, 0, 5]
+    for X in (
+                [[  5,  0],
+                 [  0,  5],
+                 [ 10, 10]],
+
+                [[   10,  10,  0],
+                 [1e-32,   0,  0],
+                 [    0,   0,  1]],
+             ):
+        # To be able to use the coefs to compute the objective function,
+        # we need to turn off normalization
+        lars = linear_model.LassoLars(.1, normalize=False)
+        coef_lars_ = lars.fit(X, y).coef_
+        obj_lars = (1. / (2. * 3.)
+                    * linalg.norm(y - np.dot(X, coef_lars_)) ** 2
+                    + .1 * linalg.norm(coef_lars_, 1))
+        coord_descent = linear_model.Lasso(.1, tol=1e-6,
+                                            normalize=False)
+        coef_cd_ = coord_descent.fit(X, y).coef_
+        obj_cd = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, coef_cd_)) ** 2
+                    + .1 * linalg.norm(coef_cd_, 1))
+        assert_array_almost_equal(obj_lars, obj_cd)
 
 
 def test_lasso_lars_vs_lasso_cd(verbose=False):
@@ -240,6 +278,71 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
         assert_less(error, 0.01)
 
 
+def test_lasso_lars_path_length():
+    # Test that the path length of the LassoLars is right
+    lasso = linear_model.LassoLars()
+    lasso.fit(X, y)
+    lasso2 = linear_model.LassoLars(alpha=lasso.alphas_[2])
+    lasso2.fit(X, y)
+    np.testing.assert_array_equal(lasso.alphas_[:3], lasso2.alphas_)
+    # Also check that the sequence of alphas is always decreasing
+    assert_true(np.all(np.diff(lasso.alphas_) < 0))
+
+
+def test_lasso_lars_vs_lasso_cd_ill_conditioned():
+    # Test lasso lars on a very ill-conditioned design, and check that
+    # it does not blow up, and stays somewhat close to a solution given
+    # by the coordinate descent solver
+    rng = np.random.RandomState(42)
+
+    # Generate data
+    n, m = 80, 100
+    k = 5
+    X = rng.randn(n, m)
+    w = np.zeros((m, 1))
+    i = np.arange(0, m)
+    rng.shuffle(i)
+    supp = i[:k]
+    w[supp] = np.sign(rng.randn(k, 1)) * (rng.rand(k, 1) + 1)
+    y = np.dot(X, w)
+    sigma = 0.2
+    y += sigma * rng.rand(*y.shape)
+    y = y.squeeze()
+
+    with warnings.catch_warnings(record=True) as warning_list:
+        warnings.simplefilter("always", UserWarning)
+        lars_alphas, _, lars_coef = linear_model.lars_path(X, y,
+                                                    method='lasso')
+    assert_true(len(warning_list) > 0)
+    assert_true(('Dropping a regressor' in warning_list[0].message.args[0])
+                or ('Early stopping' in warning_list[0].message.args[0]))
+
+    lasso_coef = np.zeros((w.shape[0], len(lars_alphas)))
+    for i, model in enumerate(linear_model.lasso_path(X, y,
+                                alphas=lars_alphas, tol=1e-6)):
+        lasso_coef[:, i] = model.coef_
+    np.testing.assert_array_almost_equal(lars_coef, lasso_coef, decimal=1)
+
+
+def test_lars_drop_for_good():
+    # Create an ill-conditioned situation in which the LARS has to good
+    # far in the path to converge, and check that LARS and coordinate
+    # descent give the same answers
+    X = [[    10, 10,  0],
+         [-1e-32,  0,  0],
+         [     1,  1,  1]]
+    y = [100, -100, 1]
+    lars = linear_model.LassoLars(.001, normalize=False)
+    lars_coef_ = lars.fit(X, y).coef_
+    lars_obj = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, lars_coef_)) ** 2
+                + .1 * linalg.norm(lars_coef_, 1))
+    coord_descent = linear_model.Lasso(.001, tol=1e-10, normalize=False)
+    cd_coef_ = coord_descent.fit(X, y).coef_
+    cd_obj = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, cd_coef_)) ** 2
+                + .1 * linalg.norm(cd_coef_, 1))
+    assert_array_almost_equal(lars_obj / cd_obj, 1.0, decimal=3)
+
+
 def test_lars_add_features():
     """
     assure that at least some features get added if necessary
@@ -257,7 +360,10 @@ def test_lars_add_features():
 def test_lars_n_nonzero_coefs(verbose=False):
     lars = linear_model.Lars(n_nonzero_coefs=6, verbose=verbose)
     lars.fit(X, y)
-    assert_true(len(lars.coef_.nonzero()[0]) == 6)
+    assert_equal(len(lars.coef_.nonzero()[0]), 6)
+    # The path should be of length 6 + 1 in a Lars going down to 6
+    # non-zero coefs
+    assert_equal(len(lars.alphas_), 7)
 
 
 def test_multitarget():
@@ -274,10 +380,10 @@ def test_multitarget():
                                       estimator.coef_, estimator.coef_path_)
         for k in xrange(n_targets):
             estimator.fit(X, Y[:, k])
-            assert_array_almost_equal(alphas[k, :], estimator.alphas_)
-            assert_array_almost_equal(active[k, :], estimator.active_)
-            assert_array_almost_equal(coef[k, :], estimator.coef_)
-            assert_array_almost_equal(path[k, :, :], estimator.coef_path_)
+            assert_array_almost_equal(alphas[k], estimator.alphas_)
+            assert_array_almost_equal(active[k], estimator.active_)
+            assert_array_almost_equal(coef[k], estimator.coef_)
+            assert_array_almost_equal(path[k], estimator.coef_path_)
 
 
 def test_lars_cv():
