@@ -129,7 +129,7 @@ class BaseWeightBoosting(BaseEnsemble):
         """
         X, y = check_arrays(X, y, sparse_format='dense')
         X = np.asfortranarray(X, dtype=DTYPE)
-        y = np.ravel(y, order='C')
+        #y = np.ravel(y, order='C')
 
         if sample_weight is None:
             # initialize weights to 1/N
@@ -390,7 +390,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         # instances incorrectly classified
         incorrect = (y_predict != y_true).astype(np.int32)
         # error fraction
-        err = np.average(incorrect, weights=sample_weight)
+        err = np.mean(np.average(incorrect, weights=sample_weight, axis=0))
 
         # stop if classification is perfect
         if err == 0:
@@ -448,19 +448,53 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         """
         if n_estimators == 0:
             raise ValueError("n_estimators must not equal 0")
-        probs = None
-        norm = 0.
-        for i, (alpha, estimator) in enumerate(
-                zip(self.boost_weights_, self.estimators_)):
-            if i == n_estimators:
-                break
-            current_probs = estimator.predict_proba(X) * alpha
-            if probs is None:
-                probs = current_probs
-            else:
-                probs += current_probs
-            norm += alpha
-        return probs / norm
+
+        if self.n_outputs_ == 1:
+            probs = None
+            norm = 0.
+
+            for i, (alpha, estimator) in enumerate(
+                    zip(self.boost_weights_, self.estimators_)):
+
+                if i == n_estimators:
+                    break
+
+                current_probs = estimator.predict_proba(X) * alpha
+
+                if probs is None:
+                    probs = current_probs
+                else:
+                    probs += current_probs
+
+                norm += alpha
+
+            return probs / norm
+
+        else:
+            probs = []
+            norm = []
+
+            for i, (alpha, estimator) in enumerate(
+                    zip(self.boost_weights_, self.estimators_)):
+
+                if i == n_estimators:
+                    break
+
+                p = estimator.predict_proba(X)
+
+                for j in xrange(self.n_outputs_):
+                    if i == 0:
+                        probs.append(p[j] * alpha)
+                        norm.append(alpha)
+
+                    else:
+                        probs[j] += p[j] * alpha
+                        norm[j] += alpha
+
+            for j in xrange(self.n_outputs_):
+                probs[j] /= norm[j]
+
+            return probs
 
     def staged_predict_proba(self, X, n_estimators=-1):
         """Predict class probabilities for X.
@@ -522,7 +556,16 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The class log-probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
-        return np.log(self.predict_proba(X, n_estimators=n_estimators))
+        proba = self.predict_proba(X, n_estimators=n_estimators)
+
+        if self.n_outputs_ == 1:
+            return np.log(proba)
+
+        else:
+            for k in xrange(self.n_outputs_):
+                proba[k] = np.log(proba[k])
+
+            return proba
 
     def score(self, X, y, sample_weight=None, n_estimators=-1):
         """Returns the mean accuracy on the given test data and labels.
