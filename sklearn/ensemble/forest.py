@@ -40,7 +40,8 @@ import numpy as np
 from warnings import warn
 from abc import ABCMeta, abstractmethod
 
-from ..base import ClassifierMixin, RegressorMixin
+from ..base import ClassifierMixin, RegressorMixin, \
+                   WeightedClassifierMixin, WeightedRegressorMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..metrics import r2_score, weighted_r2_score
@@ -463,7 +464,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         return self
 
 
-class ForestClassifier(BaseForest, ClassifierMixin):
+class ForestClassifier(BaseForest, WeightedClassifierMixin):
     """Base class for forest of trees-based classifiers.
 
     Warning: This class should not be used directly. Use derived classes
@@ -608,28 +609,8 @@ class ForestClassifier(BaseForest, ClassifierMixin):
 
             return proba
 
-    def score(self, X, y, sample_weight=None):
-        """Returns the mean accuracy on the given test data and labels.
 
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training set.
-
-        y : array-like, shape = [n_samples]
-            Labels for X.
-
-        sample_weight : array-like, shape = [n_samples], optional
-            Sample weights.
-
-        Returns
-        -------
-        z : float
-        """
-        return np.average((self.predict(X) == y), weights=sample_weight)
-
-
-class ForestRegressor(BaseForest, RegressorMixin):
+class ForestRegressor(BaseForest, WeightedRegressorMixin):
     """Base class for forest of trees-based regressors.
 
     Warning: This class should not be used directly. Use derived classes
@@ -692,27 +673,6 @@ class ForestRegressor(BaseForest, RegressorMixin):
         y_hat = sum(all_y_hat) / self.n_estimators
 
         return y_hat
-
-    def score(self, X, y, sample_weight=None):
-        """Returns the coefficient of determination R^2 of the prediction.
-
-        The coefficient R^2 is defined as (1 - u/v), where u is the
-        regression sum of squares ((y - y_pred) ** 2).sum() and v is the
-        residual sum of squares ((y_true - y_true.mean()) ** 2).sum().
-        Best possible score is 1.0, lower values are worse.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training set.
-
-        y : array-like, shape = [n_samples]
-
-        Returns
-        -------
-        z : float
-        """
-        return weighted_r2_score(y, self.predict(X), weights=sample_weight)
 
 
 class RandomForestClassifier(ForestClassifier):

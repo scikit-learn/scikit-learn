@@ -22,7 +22,8 @@ The module structure is the following:
 import numpy as np
 
 from .base import BaseEnsemble
-from ..base import ClassifierMixin, RegressorMixin
+from ..base import ClassifierMixin, RegressorMixin, \
+                   WeightedClassifierMixin, WeightedRegressorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..tree._tree import DTYPE
 from ..utils import array2d, check_arrays
@@ -345,7 +346,7 @@ class BaseWeightBoosting(BaseEnsemble):
                 yield P_local
 
 
-class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
+class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
     """An AdaBoosted classifier.
 
     An AdaBoosted classifier is a meta estimator that begins by fitting a
@@ -621,7 +622,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                 yield np.mean(y_pred == y)
 
 
-class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
+class AdaBoostRegressor(BaseWeightBoosting, WeightedRegressorMixin):
     """An AdaBoosted regressor.
 
     An AdaBoosted regressor is a meta estimator that begins by fitting a
