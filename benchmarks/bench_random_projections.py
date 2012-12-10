@@ -138,7 +138,7 @@ if __name__ == "__main__":
 
     op.add_option("--sparse",
                   dest="sparse",
-                  default='Gaussian,Bernouilli',
+                  default=False,
                   action="store_true",
                   help="Set input space as a sparse matrix.")
 
