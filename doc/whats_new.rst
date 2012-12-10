@@ -86,6 +86,9 @@ Changelog
    - Implement `predict_proba` in :class:`multiclass.OneVsRestClassifier`, by
      Andrew Winterman.
 
+   - Added :class:`kernel_approximation.Nystrom` for approximating arbitrary
+     kernels to the :ref:`kernel_approximation` module by `Andreas Müller`_.
+
 API changes summary
 -------------------
    - Renamed all occurences of ``n_atoms`` to ``n_components`` for consistency.

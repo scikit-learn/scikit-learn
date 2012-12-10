@@ -26,10 +26,21 @@ Since there has not been much empirical work using approximate embeddings, it
 is advisable to compare results against exact kernel methods when possible.
 
 
+.. currentmodule:: sklearn.kernel_approximation
+
+Nystroem Method for Kernel Approximation
+----------------------------------------
+The Nystroem method, as implemented in :class:`Nystroem` is a general method
+for low-rank approximations of kernels. It achieves this by essentially subsampling
+the data on which the kernel is evaluated.
+By default :class:`Nystroem` uses the ``rbf`` kernel, but it can use any
+kernel function or a precomputed kernel matrix.
+The number of samples used - which is also the dimensionality of the features computed -
+is given by the parameter ``n_components``.
+
+
 Radial Basis Function Kernel
 ----------------------------
-
-.. currentmodule:: sklearn.kernel_approximation
 
 The :class:`RBFSampler` constructs an approximate mapping for the radial basis
 function kernel. This transformation can be used to explicitly model a kernel map,
@@ -65,6 +76,10 @@ similar to those produced by a kernel SVM. Note that "fitting" the feature
 function does not actually depend on the data given to the ``fit`` function.
 Only the dimensionality of the data is used.
 Details on the method can be found in [RR2007]_.
+
+For a given value of ``n_components`` :class:`RBFSampler` is often less acurate
+as :class:`Nystroem`. :class:`RBFSampler` is cheaper to compute, though, making
+use of larger feature spaces more efficient.
 
 .. figure:: ../auto_examples/images/plot_kernel_approximation_2.png
     :target: ../auto_examples/plot_kernel_approximation.html
