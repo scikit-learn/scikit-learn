@@ -69,7 +69,5 @@ class AgglomerationTransform(TransformerMixin):
             if np.size((Xred.shape)) == 1:
                 X[self.labels_ == unil[i]] = Xred[i]
             else:
-                ncol = np.sum(self.labels_ == unil[i])
-                X[:, self.labels_ == unil[i]] = np.tile(array2d(Xred[:, i]).T,
-                                                        ncol)
+                X[:, self.labels_ == unil[i]] = array2d(Xred[:, i]).T
         return X
