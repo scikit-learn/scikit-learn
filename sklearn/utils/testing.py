@@ -78,10 +78,10 @@ def assert_raise_message(exception, message, callable, *args, **kwargs):
     except exception as e:
         if hasattr(e, 'message'):
             # python 2.x
-            assert_equal(message, e.message)
+            assert_in(message, e.message)
         else:
             # python 3.x
-            assert_equal(message, e.args[0])
+            assert_in(message, e.args[0])
 
 
 def fake_mldata_cache(columns_dict, dataname, matfile, ordering=None):
