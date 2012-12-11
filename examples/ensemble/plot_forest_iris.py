@@ -7,8 +7,8 @@ Plot the decision surfaces of forests of randomized trees trained on pairs of
 features of the iris dataset.
 
 This plot compares the decision surfaces learned by a decision tree classifier
-(first column), by a random forest classifier (second column) and by an extra-
-trees classifier (third column).
+(first column), by a random forest classifier (second column), by an extra-
+trees classifier (third column) and by an AdaBoost classifier (fourth column).
 
 In the first row, the classifiers are built using the sepal width and the sepal
 length features only, on the second row using the petal length and sepal length
@@ -21,7 +21,7 @@ import pylab as pl
 
 from sklearn import clone
 from sklearn.datasets import load_iris
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 
 # Parameters
@@ -38,7 +38,8 @@ plot_idx = 1
 for pair in ([0, 1], [0, 2], [2, 3]):
     for model in (DecisionTreeClassifier(),
                   RandomForestClassifier(n_estimators=n_estimators),
-                  ExtraTreesClassifier(n_estimators=n_estimators)):
+                  ExtraTreesClassifier(n_estimators=n_estimators),
+                  AdaBoostClassifier(n_estimators=n_estimators)):
          # We only take the two corresponding features
         X = iris.data[:, pair]
         y = iris.target
@@ -60,7 +61,7 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         clf = model.fit(X, y)
 
         # Plot the decision boundary
-        pl.subplot(3, 3, plot_idx)
+        pl.subplot(3, 4, plot_idx)
 
         x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
         y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
@@ -89,6 +90,5 @@ for pair in ([0, 1], [0, 2], [2, 3]):
 
         plot_idx += 1
 
-pl.suptitle("Decision surfaces of a decision tree, of a random forest, and of "
-            "an extra-trees classifier")
+pl.suptitle("Decision surfaces of DecisionTreeClassifier, RandomForestClassifier, ExtraTreesClassifier and AdaBoostClassifier")
 pl.show()
