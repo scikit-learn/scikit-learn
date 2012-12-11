@@ -746,8 +746,8 @@ def _prepare_fit_binary(est, y, i, query_id=None):
     else:
         return y_i, coef, intercept
 
-def fit_binary_ranking(est, i, X, y, query_id, n_iter, pos_weight, neg_weight,
-                       sample_weight):
+def fit_binary_ranking(est, i, X, y, query_id, alpha, learning_rate, n_iter,
+                       pos_weight, neg_weight, sample_weight):
     """Fit a single binary classifier.
     
     The i'th class is considered the "positive" class.
@@ -761,7 +761,7 @@ def fit_binary_ranking(est, i, X, y, query_id, n_iter, pos_weight, neg_weight,
     penalty_type = est._get_penalty_type(est.penalty)
     learning_rate_type = est._get_learning_rate_type(est.learning_rate)
     return ranking_sgd(coef, intercept, est.loss_function,
-                       penalty_type, est.alpha, est.l1_ratio,
+                       penalty_type, alpha, est.l1_ratio,
                        dataset, n_iter, int(est.fit_intercept),
                        int(est.verbose), int(est.shuffle), est.seed,
                        learning_rate_type, est.eta0,
@@ -919,7 +919,6 @@ class SGDRanking(SGDClassifier):
                                          eta0=eta0, power_t=power_t,
                                          warm_start=warm_start)
         self.seed = seed
-        self.class_weight = class_weight
         self.classes_ = None
         self.n_jobs = int(n_jobs)
         self.sampling = sampling
@@ -933,9 +932,12 @@ class SGDRanking(SGDClassifier):
             raise ValueError("sampling type %s"
                              "is not supported. " % sampling)
 
-    def _partial_fit(self, X, y, query_id, n_iter, classes=None,
-                     sample_weight=None, coef_init=None,
+    def _partial_fit(self, X, y, query_id, alpha, loss, learning_rate,
+                     n_iter, classes=None, sample_weight=None, coef_init=None,
                      intercept_init=None):
+
+        if query_id is None:
+            query_id = query_id = np.ones(X.shape[0])
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         y = np.asarray(y).ravel()
 
@@ -964,11 +966,13 @@ class SGDRanking(SGDClassifier):
             self._allocate_parameter_mem(n_classes, n_features,
                                          coef_init, intercept_init)
 
-        self.loss_function = self._get_loss_function(self.loss)
+        self.loss_function = self._get_loss_function(loss)
         if self.t_ is None:
             self._init_t(self.loss_function)
 
-        self._fit_binary(X, y, query_id, sample_weight, n_iter)
+        self._fit_binary(X, y, query_id, alpha=alpha,
+                         learning_rate=learning_rate,
+                         sample_weight=sample_weight, n_iter=n_iter)
 
         self.t_ += n_iter * n_samples
 
@@ -1005,13 +1009,46 @@ class SGDRanking(SGDClassifier):
         -------
         self : returns an instance of self.
         """
+        return self._partial_fit(X, y, query_id, alpha=self.alpha, C=1.0, loss=self.loss,
+                                 learning_rate=self.learning_rate, n_iter=1,
+                                 classes=classes, sample_weight=sample_weight,
+                                 coef_init=None, intercept_init=None)
+
+    def _fit(self, X, y, query_id, alpha, loss, learning_rate,
+             coef_init=None, intercept_init=None,
+             sample_weight=None):
         if query_id is None:
             query_id = np.ones(X.shape[0])
-        return self._partial_fit(X, y, query_id, n_iter=1, classes=classes,
-                                 sample_weight=sample_weight)
+
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        n_samples, n_features = X.shape
+        # labels can be encoded as float, int, or string literals
+        # np.unique sorts in asc order; largest class id is positive class
+        classes = np.unique(y)
+
+        if self.warm_start and self.coef_ is not None:
+            if coef_init is None:
+                coef_init = self.coef_
+            if intercept_init is None:
+                intercept_init = self.intercept_
+        else:
+            self.coef_ = None
+            self.intercept_ = None
+
+        # Clear iteration count for multiple call to fit.
+        self.t_ = None
+
+        self._partial_fit(X, y, query_id, alpha, loss, learning_rate, self.n_iter,
+                          classes, sample_weight, coef_init, intercept_init)
+
+        # fitting is over, we can now transform coef_ to fortran order
+        # for faster predictions
+        self._set_coef(self.coef_)
+
+        return self
 
     def fit(self, X, y, query_id=None, coef_init=None, intercept_init=None,
-            class_weight=None, sample_weight=None):
+            sample_weight=None):
         """Fit ranking model with Stochastic Gradient Descent.
 
         Parameters
@@ -1036,42 +1073,20 @@ class SGDRanking(SGDClassifier):
         -------
         self : returns an instance of self.
         """
-        if query_id is None:
-            query_id = np.ones(X.shape[0])
-        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
-        n_samples, n_features = X.shape
+        
+        return self._fit(X, y, query_id, alpha=self.alpha,
+                  loss=self.loss, learning_rate=self.learning_rate,
+                  coef_init=coef_init, intercept_init=intercept_init,
+                  sample_weight=sample_weight)
 
-        # labels can be encoded as float, int, or string literals
-        # np.unique sorts in asc order; largest class id is positive class
-        classes = np.unique(y)
-
-        if self.warm_start and self.coef_ is not None:
-            if coef_init is None:
-                coef_init = self.coef_
-            if intercept_init is None:
-                intercept_init = self.intercept_
-        else:
-            self.coef_ = None
-            self.intercept_ = None
-
-        # Clear iteration count for multiple call to fit.
-        self.t_ = None
-
-        self._partial_fit(X, y, query_id, self.n_iter, classes,
-                          sample_weight, coef_init, intercept_init)
-
-        # fitting is over, we can now transform coef_ to fortran order
-        # for faster predictions
-        self._set_coef(self.coef_)
-
-        return self
-
-    def _fit_binary(self, X, y, query_id, sample_weight, n_iter):
+    def _fit_binary(self, X, y, query_id,  alpha, learning_rate,
+                        sample_weight, n_iter):
         """Fit a binary classifier on X and y. """
-        coef, intercept = fit_binary_ranking(self, 1, X, y, query_id, n_iter,
-                                     self._expanded_class_weight[1],
-                                     self._expanded_class_weight[0],
-                                     sample_weight)
+        coef, intercept = fit_binary_ranking(self, 1, X, y, query_id, alpha,
+                                             learning_rate, n_iter,
+                                             self._expanded_class_weight[1],
+                                             self._expanded_class_weight[0],
+                                             sample_weight)
         # need to be 2d
         self.coef_ = coef.reshape(1, -1)
         # intercept is a float, need to convert it to an array of length 1
