@@ -53,6 +53,8 @@ from sklearn.preprocessing import LabelBinarizer, LabelEncoder, Binarizer, \
 from sklearn.cluster import WardAgglomeration, AffinityPropagation, \
         SpectralClustering
 from sklearn.isotonic import IsotonicRegression
+from sklearn.random_projection import (GaussianRandomProjection,
+                                       BernouilliRandomProjection)
 
 dont_test = [Pipeline, FeatureUnion, GridSearchCV, SparseCoder,
         EllipticEnvelope, EllipticEnvelop, DictVectorizer, LabelBinarizer,
@@ -160,6 +162,8 @@ def test_transformers():
     succeeded = True
 
     for name, Trans in transformers:
+        trans = None
+
         if Trans in dont_test or Trans in meta_estimators:
             continue
         # these don't actually fit the data:
@@ -176,6 +180,13 @@ def test_transformers():
             # SelectKBest has a default of k=10
             # which is more feature than we have.
             trans.k = 1
+        elif Trans in [GaussianRandomProjection,
+                       BernouilliRandomProjection]:
+            # Due to the jl lemma and very few samples, the number
+            # of components of the random matrix projection will be greater
+            # than the number of featuers.
+            # So we impose a smaller number (avoid "auto" mode)
+            trans.n_components = 1
 
         # fit
 
@@ -237,6 +248,13 @@ def test_transformers_sparse_data():
         with warnings.catch_warnings(record=True):
             if Trans in [Scaler, StandardScaler]:
                 trans = Trans(with_mean=False)
+            elif Trans in [GaussianRandomProjection,
+                           BernouilliRandomProjection]:
+                # Due to the jl lemma and very few samples, the number
+                # of components of the random matrix projection will be greater
+                # than the number of featuers.
+                # So we impose a smaller number (avoid "auto" mode)
+                trans = Trans(n_components=np.int(X.shape[1] / 4))
             else:
                 trans = Trans()
         # fit
@@ -280,9 +298,19 @@ def test_estimators_nan_inf():
                 continue
             if Est in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
                 continue
+
             # catch deprecation warnings
             with warnings.catch_warnings(record=True):
                 est = Est()
+                if Est in [GaussianRandomProjection,
+                           BernouilliRandomProjection]:
+                    # Due to the jl lemma and very few samples, the number
+                    # of components of the random matrix projection will be
+                    # greater
+                    # than the number of featuers.
+                    # So we impose a smaller number (avoid "auto" mode)
+                    est = Est(n_components=1)
+
                 set_random_state(est, 1)
                 # try to fit
                 try:
