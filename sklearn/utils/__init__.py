@@ -342,3 +342,29 @@ def gen_even_slices(n, n_packs):
 
 class ConvergenceWarning(Warning):
     "Custom warning to capture convergence problems"
+
+
+def compute_class_weight(class_weight, classes, y):
+    """Estimate class weights for unbalanced datasets."""
+    if class_weight is None or len(class_weight) == 0:
+        # uniform class weights
+        weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
+    elif class_weight == 'auto':
+        # proportional to the number of samples in the class
+        weight = np.array([1.0 / np.sum(y == i) for i in classes],
+                          dtype=np.float64, order='C')
+        weight *= classes.shape[0] / np.sum(weight)
+    else:
+        # user-defined dictionary
+        weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
+        if not isinstance(class_weight, dict):
+            raise ValueError("class_weight must be dict, 'auto', or None,"
+                             " got: %r" % class_weight)
+        for c in class_weight:
+            i = np.searchsorted(classes, c)
+            if classes[i] != c:
+                raise ValueError("Class label %d not present." % c)
+            else:
+                weight[i] = class_weight[c]
+
+    return weight
