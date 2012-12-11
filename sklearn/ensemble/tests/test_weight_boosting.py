@@ -158,61 +158,6 @@ def test_importances():
     assert_true(clf.feature_importances_ is None)
 
 
-def test_multioutput():
-    """Check estimators on multi-output problems."""
-
-    X = [[-2, -1],
-         [-1, -1],
-         [-1, -2],
-         [1, 1],
-         [1, 2],
-         [2, 1],
-         [-2, 1],
-         [-1, 1],
-         [-1, 2],
-         [2, -1],
-         [1, -1],
-         [1, -2]]
-
-    y = [[-1, 0],
-         [-1, 0],
-         [-1, 0],
-         [1, 1],
-         [1, 1],
-         [1, 1],
-         [-1, 2],
-         [-1, 2],
-         [-1, 2],
-         [1, 3],
-         [1, 3],
-         [1, 3]]
-
-    T = [[-1, -1], [1, 1], [-1, 1], [1, -1]]
-    y_true = [[-1, 0], [1, 1], [-1, 2], [1, 3]]
-
-    # toy classification problem
-    clf = AdaBoostClassifier()
-    y_hat = clf.fit(X, y).predict(T)
-    assert_array_equal(y_hat, y_true)
-    assert_equal(y_hat.shape, (4, 2))
-
-    proba = clf.predict_proba(T)
-    assert_equal(len(proba), 2)
-    assert_equal(proba[0].shape, (4, 2))
-    assert_equal(proba[1].shape, (4, 4))
-
-    log_proba = clf.predict_log_proba(T)
-    assert_equal(len(log_proba), 2)
-    assert_equal(log_proba[0].shape, (4, 2))
-    assert_equal(log_proba[1].shape, (4, 4))
-
-    # toy regression problem
-    # clf = AdaBoostRegressor()
-    # y_hat = clf.fit(X, y).predict(T)
-    # assert_almost_equal(y_hat, y_true)
-    # assert_equal(y_hat.shape, (4, 2))
-
-
 if __name__ == "__main__":
     import nose
     nose.runmodule()
