@@ -188,8 +188,8 @@ cdef class CSRDataset(SequentialDataset):
 
 
 cdef class PairwiseDataset:
-    """Base class for datasets with sequential access to pairs."""
-    """
+    """Base class for datasets with sequential access to pairs.
+
     Calling next_pair() returns a random pair of examples with disagreeing
     labels.
 
@@ -198,7 +198,8 @@ cdef class PairwiseDataset:
     """
     cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
                    INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a,
-                   int *nnz_b, DOUBLE *y_a, DOUBLE *y_b):
+                   int *nnz_b, DOUBLE *y_a, DOUBLE *y_b,
+                   DOUBLE *sample_weight_a, DOUBLE *sample_weight_b):
 
         """Get the next pair of examples ``a`` and ``b`` from the dataset.
 
@@ -223,6 +224,10 @@ cdef class PairwiseDataset:
             The target value of first example in the pair.
         y_b : np.float64*
             The target value of second example in the pair.
+        sample_weight_a : np.float64*
+            The weight of the first example in the pair.
+        sample_weight_b : np.float64*
+            The weight of the first example in the pair.
         """
 
         raise NotImplementedError()    
@@ -288,7 +293,8 @@ cdef class PairwiseRocDataset(PairwiseDataset):
 
 cdef class PairwiseArrayDatasetRoc(PairwiseRocDataset):
     def __cinit__(self, np.ndarray[DOUBLE, ndim=2, mode='c'] X,
-                  np.ndarray[DOUBLE, ndim=1, mode='c'] Y):
+                  np.ndarray[DOUBLE, ndim=1, mode='c'] Y,
+                  np.ndarray[DOUBLE, ndim=1, mode='c'] sample_weights):
 
         """A ``PairwiseArrayDataset`` backed by a two-dimensional numpy array.
 
@@ -300,12 +306,16 @@ cdef class PairwiseArrayDatasetRoc(PairwiseRocDataset):
         Y : ndarray, dtype=np.float64, ndim=1, mode='c'
             The target values; a one-dimensional c-continuous numpy array of
             dtype np.float64.
+        sample_weights : ndarray, dtype=np.float64, ndim=1, mode='c'
+            The weight of each sample; a one-dimensional c-continuous numpy
+            array of dtype np.float64.            
         """
 
         self.n_samples = X.shape[0]
         self.n_features = X.shape[1]
         self.X_data_ptr = <DOUBLE *>X.data
         self.Y_data_ptr = <DOUBLE *>Y.data
+        self.sample_weight_data = <DOUBLE *>sample_weights.data
 
         cdef np.ndarray[INTEGER, ndim=1,
                         mode='c'] feature_indices = np.arange(0,
@@ -316,34 +326,11 @@ cdef class PairwiseArrayDatasetRoc(PairwiseRocDataset):
         self.stride = X.strides[0] / X.strides[1]
         
         self.init_roc_index()
-        
-        """
-        # Create an index of positives and negatives for fast sampling
-        # of disagreeing pairs
-        # FIXME use arrays of size n_samples and shrink afterwards
-        positives = []
-        negatives = []
-        cdef Py_ssize_t i
-        for i in range(self.n_samples):
-            if self.Y_data_ptr[i] > 0:
-                positives.append(i)
-            else:
-                negatives.append(i)
-        cdef np.ndarray[INTEGER, ndim=1,
-                        mode='c'] pos_index = np.array(positives,
-                                                       dtype=np.int32)
-        cdef np.ndarray[INTEGER, ndim=1,
-                        mode='c'] neg_index = np.array(negatives,
-                                                       dtype=np.int32)
-        self.pos_index = pos_index
-        self.neg_index = neg_index
-        self.n_pos_samples = pos_index.shape[0]
-        self.n_neg_samples = neg_index.shape[0]  
-        """
 
     cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
                    INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a,
-                   int *nnz_b, DOUBLE *y_a, DOUBLE *y_b):
+                   int *nnz_b, DOUBLE *y_a, DOUBLE *y_b,
+                   DOUBLE *sample_weight_a, DOUBLE *sample_weight_b):
 
         cdef INTEGER sample_a_idx
         cdef INTEGER sample_b_idx
@@ -358,6 +345,8 @@ cdef class PairwiseArrayDatasetRoc(PairwiseRocDataset):
         b_ind_ptr[0] = self.feature_indices_ptr
         nnz_a[0] = self.n_features
         nnz_b[0] = self.n_features
+        sample_weight_a[0] = self.sample_weight_data[sample_a_idx]
+        sample_weight_b[0] = self.sample_weight_data[sample_b_idx]
 
         a_data_ptr[0] = self.X_data_ptr + pos_offset
         b_data_ptr[0] = self.X_data_ptr + neg_offset
@@ -367,12 +356,14 @@ cdef class PairwiseCSRDatasetRoc(PairwiseRocDataset):
     def __cinit__(self, np.ndarray[DOUBLE, ndim=1, mode='c'] X_data,
                   np.ndarray[INTEGER, ndim=1, mode='c'] X_indptr,
                   np.ndarray[INTEGER, ndim=1, mode='c'] X_indices,
-                  np.ndarray[DOUBLE, ndim=1, mode='c'] Y):
+                  np.ndarray[DOUBLE, ndim=1, mode='c'] Y,
+                  np.ndarray[DOUBLE, ndim=1, mode='c'] sample_weights):
 
         self.n_samples = Y.shape[0]
 
         self.X_data_ptr = <DOUBLE *>X_data.data
         self.Y_data_ptr = <DOUBLE *>Y.data
+        self.sample_weight_data = <DOUBLE *>sample_weights.data
 
         self.X_indptr_ptr = <INTEGER *>X_indptr.data
         self.X_indices_ptr = <INTEGER *>X_indices.data
@@ -381,7 +372,8 @@ cdef class PairwiseCSRDatasetRoc(PairwiseRocDataset):
 
     cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
                    INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a, 
-                   int *nnz_b, DOUBLE *y_a, DOUBLE *y_b):
+                   int *nnz_b, DOUBLE *y_a, DOUBLE *y_b,
+                   DOUBLE *sample_weight_a, DOUBLE *sample_weight_b):
         
         cdef INTEGER sample_a_idx
         cdef INTEGER sample_b_idx
@@ -392,18 +384,21 @@ cdef class PairwiseCSRDatasetRoc(PairwiseRocDataset):
         a_data_ptr[0] = self.X_data_ptr + offset
         a_ind_ptr[0] = self.X_indices_ptr + offset
         nnz_a[0] = self.X_indptr_ptr[sample_a_idx + 1] - offset
+        sample_weight_a[0] = self.sample_weight_data[sample_a_idx]
 
         # set vector b
         offset = self.X_indptr_ptr[sample_b_idx]
         b_data_ptr[0] = self.X_data_ptr + offset
         b_ind_ptr[0] = self.X_indices_ptr + offset
-        nnz_b[0] = self.X_indptr_ptr[sample_a_idx + 1] - offset        
+        nnz_b[0] = self.X_indptr_ptr[sample_a_idx + 1] - offset
+        sample_weight_b[0] = self.sample_weight_data[sample_b_idx]
 
 
 cdef class PairwiseArrayDatasetRank(PairwiseRankDataset):
     def __cinit__(self, np.ndarray[DOUBLE, ndim=2, mode='c'] X,
                   np.ndarray[DOUBLE, ndim=1, mode='c'] Y,
-                  np.ndarray[DOUBLE, ndim=1, mode='c'] query_id):
+                  np.ndarray[DOUBLE, ndim=1, mode='c'] query_id,
+                  np.ndarray[DOUBLE, ndim=1, mode='c'] sample_weights):
 
         """A ``PairwiseDataset`` backed by a two-dimensional numpy array.
 
@@ -418,12 +413,16 @@ cdef class PairwiseArrayDatasetRank(PairwiseRankDataset):
         query_id: ndarray, dtype=np.float64, ndim=1, mode='c'
             The query values; a one-dimensional c-continuous numpy array of
             dtype np.float64
+        sample_weights : ndarray, dtype=np.float64, ndim=1, mode='c'
+            The weight of each sample; a one-dimensional c-continuous numpy
+            array of dtype np.float64.
         """
 
         self.n_samples = X.shape[0]
         self.n_features = X.shape[1]
         self.X_data_ptr = <DOUBLE *>X.data
         self.Y_data_ptr = <DOUBLE *>Y.data
+        self.sample_weight_data = <DOUBLE *>sample_weights.data
 
         cdef np.ndarray[INTEGER, ndim=1,
                         mode='c'] feature_indices = np.arange(0,
@@ -436,7 +435,8 @@ cdef class PairwiseArrayDatasetRank(PairwiseRankDataset):
         self.group_id_y_to_count = <dict> collections.defaultdict(int)
         # must declare in the cinit as closures inside cdef functions not yet
         # supported
-        self.group_id_y_to_index = <dict> collections.defaultdict(lambda: collections.defaultdict(list))
+        self.group_id_y_to_index = <dict> collections.defaultdict(lambda: \
+                                          collections.defaultdict(list))
         self.query_data_ptr = <DOUBLE *>query_id.data
         cdef Py_ssize_t i
         cdef DOUBLE query_data_ptr_idx
@@ -447,8 +447,9 @@ cdef class PairwiseArrayDatasetRank(PairwiseRankDataset):
 
 
     cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
-                        INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a, int *nnz_b,
-                        DOUBLE *y_a, DOUBLE *y_b):
+                        INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a,
+                        int *nnz_b, DOUBLE *y_a, DOUBLE *y_b,
+                        DOUBLE *sample_weight_a, DOUBLE *sample_weight_b):
 
         a_ind_ptr[0] = self.feature_indices_ptr
         b_ind_ptr[0] = self.feature_indices_ptr        
@@ -462,29 +463,29 @@ cdef class PairwiseArrayDatasetRank(PairwiseRankDataset):
         cdef DOUBLE group_id
         cdef int y_range
         
-        for i in range(num_chances):
+        y_range = 0
+        while y_range == 0:
             a_idx = rand() % self.n_samples
             a_offset = a_idx * self.stride
             a_data_ptr[0] = self.X_data_ptr + a_offset
             group_id = self.query_data_ptr[a_idx]
             y_a[0] = self.Y_data_ptr[a_idx]
+            sample_weight_a[0] = self.sample_weight_data[a_idx]
             y_to_list = self.group_id_y_to_index[group_id]
             y_range = self.group_id_y_to_count[group_id] - \
             len(self.group_id_y_to_index[group_id][y_a[0]])
-            if (y_range==0):
-                continue
         cdef unsigned int random_int = rand() % y_range
         cdef int b_idx
         cdef int b_offset
         for b_y, idx_list in y_to_list.items():
             if y_a[0] == b_y:
                 continue
-            if random_int < len(idx_list):
-                b_idx = idx_list[random_int]
-                b_offset = b_idx * self.stride
-                b_data_ptr[0] = self.X_data_ptr + b_offset
-                y_b[0] = self.Y_data_ptr[b_idx]
-                break
+            b_idx = idx_list[random_int]
+            sample_weight_b[0] = self.sample_weight_data[b_idx]
+            b_offset = b_idx * self.stride
+            b_data_ptr[0] = self.X_data_ptr + b_offset
+            y_b[0] = self.Y_data_ptr[b_idx]
+            break
 
 
 cdef class PairwiseCSRDatasetRank(PairwiseRankDataset):
@@ -492,12 +493,14 @@ cdef class PairwiseCSRDatasetRank(PairwiseRankDataset):
                   np.ndarray[INTEGER, ndim=1, mode='c'] X_indptr,
                   np.ndarray[INTEGER, ndim=1, mode='c'] X_indices,
                   np.ndarray[DOUBLE, ndim=1, mode='c'] Y,
-                  np.ndarray[DOUBLE, ndim=1, mode='c'] query_id):
+                  np.ndarray[DOUBLE, ndim=1, mode='c'] query_id,
+                  np.ndarray[DOUBLE, ndim=1, mode='c'] sample_weights):
 
         self.n_samples = Y.shape[0]
 
         self.X_data_ptr = <DOUBLE *>X_data.data
         self.Y_data_ptr = <DOUBLE *>Y.data
+        self.sample_weight_data = <DOUBLE *>sample_weights.data
 
         self.X_indptr_ptr = <INTEGER *>X_indptr.data
         self.X_indices_ptr = <INTEGER *>X_indices.data
@@ -506,7 +509,7 @@ cdef class PairwiseCSRDatasetRank(PairwiseRankDataset):
         # must declare in the cinit as closures inside cdef functions
         # not yet supported
         self.group_id_y_to_index = <dict> collections.defaultdict(lambda: \
-                                                           collections.defaultdict(list))
+                                          collections.defaultdict(list))
         self.query_data_ptr = <DOUBLE *>query_id.data
         cdef Py_ssize_t i
         cdef DOUBLE query_data_ptr_idx
@@ -517,8 +520,9 @@ cdef class PairwiseCSRDatasetRank(PairwiseRankDataset):
                 
 
     cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
-                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a, int *nnz_b,
-                   DOUBLE *y_a, DOUBLE *y_b):
+                   INTEGER **a_ind_ptr, INTEGER **b_ind_ptr, int *nnz_a,
+                   int *nnz_b, DOUBLE *y_a, DOUBLE *y_b,
+                   DOUBLE *sample_weight_a, DOUBLE *sample_weight_b):
 
         cdef int num_chances = 1000
         cdef Py_ssize_t i
@@ -528,20 +532,19 @@ cdef class PairwiseCSRDatasetRank(PairwiseRankDataset):
         cdef int y_range
 
         # set vector a
-        for i in range(num_chances):
+        y_range = 0
+        while y_range == 0:
             a_idx = rand() % self.n_samples
             a_offset = self.X_indptr_ptr[a_idx]
             a_data_ptr[0] = self.X_data_ptr + a_offset
             a_ind_ptr[0] = self.X_indices_ptr + a_offset
             y_a[0] = self.Y_data_ptr[a_idx]
             nnz_a[0] = self.X_indptr_ptr[a_idx + 1] - a_offset
+            sample_weight_a[0] = self.sample_weight_data[a_idx]
             group_id = self.query_data_ptr[a_idx]
             y_to_list = self.group_id_y_to_index[group_id]
             y_range = self.group_id_y_to_count[group_id] - \
             len(self.group_id_y_to_index[group_id][y_a[0]])
-            if (y_range==0):
-                continue
-            break
         
         # set vector b
         cdef unsigned int random_int = rand() % y_range
@@ -550,11 +553,11 @@ cdef class PairwiseCSRDatasetRank(PairwiseRankDataset):
         for b_y, idx_list in y_to_list.items():
             if y_a[0] == b_y:
                 continue
-            if random_int < len(idx_list):
-                b_idx = idx_list[random_int]
-                b_offset = self.X_indptr_ptr[b_idx]
-                b_data_ptr[0] = self.X_data_ptr + b_offset
-                b_ind_ptr[0] = self.X_indices_ptr + b_offset
-                nnz_b[0] = self.X_indptr_ptr[b_idx + 1] - b_offset
-                y_b[0] = self.Y_data_ptr[b_idx]
-                break
+            b_idx = idx_list[random_int]
+            b_offset = self.X_indptr_ptr[b_idx]
+            b_data_ptr[0] = self.X_data_ptr + b_offset
+            b_ind_ptr[0] = self.X_indices_ptr + b_offset
+            nnz_b[0] = self.X_indptr_ptr[b_idx + 1] - b_offset
+            sample_weight_b[0] = self.sample_weight_data[b_idx]
+            y_b[0] = self.Y_data_ptr[b_idx]
+            break

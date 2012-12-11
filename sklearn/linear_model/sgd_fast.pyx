@@ -609,6 +609,9 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
     cdef DOUBLE y_a = 0.0
     cdef DOUBLE y_b = 0.0
     cdef DOUBLE y = 0.0
+    cdef DOUBLE sample_weight_a
+    cdef DOUBLE sample_weight_b
+    cdef DOUBLE sample_weight
     cdef double class_weight = 1.0
     cdef unsigned int count = 0
     cdef unsigned int epoch = 0
@@ -636,7 +639,8 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         for i in range(n_samples):
 
             dataset.next_pair(&a_data_ptr, &b_data_ptr, &a_ind_ptr,
-                              &b_ind_ptr, &xnnz_a, &xnnz_b, &y_a, &y_b)
+                              &b_ind_ptr, &xnnz_a, &xnnz_b, &y_a, &y_b,
+                              &sample_weight_a, &sample_weight_b)
 
             if learning_rate == OPTIMAL:
                 eta = 1.0 / (alpha * t)
@@ -656,7 +660,12 @@ def ranking_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
             if verbose > 0:
                 sumloss += loss.loss(p, y)
 
-            update = y * -eta * loss.dloss(p, y) * class_weight
+            if sample_weight_a - sample_weight_b == 0:
+                sample_weight = 1.0
+            else:
+                sample_weight = sample_weight_a - sample_weight_b
+
+            update = y * -eta * loss.dloss(p, y) * class_weight * sample_weight
                         
             if update != 0.0:
                 w.add(a_data_ptr, a_ind_ptr, xnnz_a, update)

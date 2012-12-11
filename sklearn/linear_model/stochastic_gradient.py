@@ -242,23 +242,24 @@ def _make_dataset(X, y_i, sample_weight, query_id=None, sampling=None):
         if sampling == 1:
             if sp.issparse(X):
                 dataset = PairwiseCSRDatasetRoc(X.data, X.indptr, X.indices,
-                                                y_i)
+                                                y_i, sample_weight)
                 intercept_decay = SPARSE_INTERCEPT_DECAY
             else:
-                dataset = PairwiseArrayDatasetRoc(X, y_i)
+                dataset = PairwiseArrayDatasetRoc(X, y_i, sample_weight)
                 intercept_decay = 1.0
         else:
             if query_id is None:
                 query_id = np.ones(X.shape[0])
             if sp.issparse(X):
                 dataset = PairwiseCSRDatasetRank(X.data, X.indptr, X.indices,
-                                                 y_i, query_id)
+                                                 y_i, query_id, sample_weight)
                 intercept_decay = SPARSE_INTERCEPT_DECAY
             else:
-                dataset = PairwiseArrayDatasetRank(X, y_i, query_id)
+                dataset = PairwiseArrayDatasetRank(X, y_i, query_id,
+                                                   sample_weight)
                 intercept_decay = 1.0
     elif sp.issparse(X):
-        dataset = CSRDataset(X.data, X.indptr, X.indices, y_i)
+        dataset = CSRDataset(X.data, X.indptr, X.indices, y_i, sample_weight)
         intercept_decay = SPARSE_INTERCEPT_DECAY
     else:
         dataset = ArrayDataset(X, y_i, sample_weight)

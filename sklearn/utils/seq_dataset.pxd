@@ -54,7 +54,8 @@ cdef class PairwiseDataset:
 
     cdef void next_pair(self, DOUBLE **a_data_ptr, DOUBLE **b_data_ptr, 
                    INTEGER **a_ind_ptr, INTEGER **b_ind_ptr,
-                   int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b)
+                   int *nnz_a, int *nnz_b, DOUBLE *y_a, DOUBLE *y_b,
+                   DOUBLE *sample_weight_a, DOUBLE *sample_weight_b)
 
 
 cdef class PairwiseRocDataset(PairwiseDataset):
@@ -70,18 +71,19 @@ cdef class PairwiseRocDataset(PairwiseDataset):
 
 
 cdef class PairwiseArrayDatasetRoc(PairwiseRocDataset):
-    
     cdef Py_ssize_t n_features
     cdef DOUBLE *X_data_ptr
     cdef int stride
     cdef np.ndarray feature_indices
     cdef INTEGER *feature_indices_ptr
+    cdef DOUBLE *sample_weight_data
 
 
 cdef class PairwiseCSRDatasetRoc(PairwiseRocDataset):
     cdef DOUBLE *X_data_ptr
     cdef INTEGER *X_indptr_ptr
     cdef INTEGER *X_indices_ptr
+    cdef DOUBLE *sample_weight_data
 
 
 cdef class PairwiseRankDataset(PairwiseDataset):
@@ -94,6 +96,7 @@ cdef class PairwiseArrayDatasetRank(PairwiseRankDataset):
     cdef int stride
     cdef np.ndarray feature_indices
     cdef INTEGER *feature_indices_ptr
+    cdef DOUBLE *sample_weight_data
 
     cdef dict group_id_y_to_index
     cdef dict group_id_y_to_count
@@ -104,6 +107,7 @@ cdef class PairwiseCSRDatasetRank(PairwiseRankDataset):
     cdef DOUBLE *X_data_ptr
     cdef INTEGER *X_indptr_ptr
     cdef INTEGER *X_indices_ptr
+    cdef DOUBLE *sample_weight_data
 
     cdef dict group_id_y_to_index
     cdef dict group_id_y_to_count
