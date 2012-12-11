@@ -117,10 +117,9 @@ def _set_diag(laplacian, value):
     return laplacian
 
 
-def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
-                       random_state=None, eigen_tol=0.0,
-                       norm_laplacian=True, drop_first=True,
-                       mode=None):
+def _solve_eigenvalue_problem(adjacency, n_components=1, eigen_solver=None,
+                              random_state=None, eigen_tol=0.0,
+                              norm_laplacian=True, mode=None):
     """Project the sample on the first eigen vectors of the graph Laplacian.
 
     The adjacency matrix is used to compute a normalized graph Laplacian
@@ -167,8 +166,12 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     Returns
     -------
-    embedding : array, shape=(n_samples, n_components)
-        The reduced samples.
+    lambdas : array, shape=(n_components,)
+        The eigenvalues of the Laplacian
+    vectors : array, shape=(n_components, n_samples)
+        The eigenvectors of the Laplacian
+    degrees : array, shape=(n_samples,)
+        The degrees of the graph
 
     Notes
     -----
@@ -209,9 +212,6 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     random_state = check_random_state(random_state)
 
     n_nodes = adjacency.shape[0]
-    # Whether to drop the first eigenvector
-    if drop_first:
-        n_components = n_components + 1
     # Check that the matrices given is symmetric
     if ((not sparse.isspmatrix(adjacency) and
          not np.all((adjacency - adjacency.T) < 1e-10)) or
@@ -258,7 +258,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             lambdas, diffusion_map = eigsh(-laplacian, k=n_components,
                                            sigma=1.0, which='LM',
                                            tol=eigen_tol)
-            embedding = diffusion_map.T[n_components::-1] * dd
+            vectors = diffusion_map.T[n_components::-1]
         except RuntimeError:
             # When submatrices are exactly singular, an LU decomposition
             # in arpack fails. We fallback to lobpcg
@@ -277,8 +277,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         X[:, 0] = dd.ravel()
         lambdas, diffusion_map = lobpcg(laplacian, X, M=M, tol=1.e-12,
                                         largest=False)
-        embedding = diffusion_map.T * dd
-        if embedding.shape[0] == 1:
+        vectors = diffusion_map.T
+        if vectors.shape[0] == 1:
             raise ValueError
 
     elif eigen_solver == "lobpcg":
@@ -290,7 +290,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             if sparse.isspmatrix(laplacian):
                 laplacian = laplacian.todense()
             lambdas, diffusion_map = symeig(laplacian)
-            embedding = diffusion_map.T[:n_components] * dd
+            vectors = diffusion_map.T[:n_components]
         else:
             # lobpcg needs native floats
             laplacian = laplacian.astype(np.float)
@@ -301,13 +301,98 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
             X[:, 0] = dd.ravel()
             lambdas, diffusion_map = lobpcg(laplacian, X, tol=1e-15,
                                             largest=False, maxiter=2000)
-            embedding = diffusion_map.T[:n_components] * dd
-            if embedding.shape[0] == 1:
+            vectors = diffusion_map.T[:n_components]
+            if vectors.shape[0] == 1:
                 raise ValueError
+    return lambdas[:n_components], vectors, dd
+
+
+def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
+                       random_state=None, eigen_tol=0.0,
+                       norm_laplacian=True, drop_first=True,
+                       mode=None, diffusion_time=None):
+    """Project the sample on the first eigen vectors of the graph Laplacian
+
+    The adjacency matrix is used to compute a normalized graph Laplacian
+    whose spectrum (especially the eigen vectors associated to the
+    smallest eigen values) has an interpretation in terms of minimal
+    number of cuts necessary to split the graph into comparably sized
+    components.
+
+    This embedding can also 'work' even if the ``adjacency`` variable is
+    not strictly the adjacency matrix of a graph but more generally
+    an affinity or similarity matrix between samples (for instance the
+    heat kernel of a euclidean distance matrix or a k-NN matrix).
+
+    However care must taken to always make the affinity matrix symmetric
+    so that the eigen vector decomposition works as expected.
+
+    Parameters
+    ----------
+    adjacency : array-like or sparse matrix, shape: (n_samples, n_samples)
+        The adjacency matrix of the graph to embed.
+
+    n_components : integer, optional
+        The dimension of the projection subspace.
+
+    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
+        The eigenvalue decomposition strategy to use. AMG requires pyamg
+        to be installed. It can be faster on very large, sparse problems,
+        but may also lead to instabilities.
+
+    random_state : int seed, RandomState instance, or None (default)
+        A pseudo random number generator used for the initialization of the
+        lobpcg eigen vectors decomposition when eigen_solver == 'amg'.
+        By default, arpack is used.
+
+    eigen_tol : float, optional, default=0.0
+        Stopping criterion for eigendecomposition of the Laplacian matrix
+        when using arpack eigen_solver.
+
+    drop_first : bool, optional, default=True
+        Whether to drop the first eigenvector. For spectral embedding, this
+        should be True as the first eigenvector should be constant vector for
+        connected graph, but for spectral clustering, this should be kept as
+        False to retain the first eigenvector.
+
+    diffusion_time: float, optional, default=None
+        Determines the scaling of the eigenvalues of the Laplacian
+
+    Returns
+    -------
+    embedding : array, shape=(n_samples, n_components)
+        The reduced samples.
+
+    Notes
+    -----
+    Spectral embedding is most useful when the graph has one connected
+    component. If there graph has many components, the first few eigenvectors
+    will simply uncover the connected components of the graph.
+
+    References
+    ----------
+    * http://en.wikipedia.org/wiki/LOBPCG
+
+    * Toward the Optimal Preconditioned Eigensolver: Locally Optimal
+      Block Preconditioned Conjugate Gradient Method
+      Andrew V. Knyazev
+      http://dx.doi.org/10.1137%2FS1064827500366124
+    """
+    # Whether to drop the first eigenvector
     if drop_first:
-        return embedding[1:n_components].T
+        n_components += 1
+    _, vectors, dd = _solve_eigenvalue_problem(adjacency=adjacency,
+                                               n_components=n_components,
+                                               eigen_solver=eigen_solver,
+                                               random_state=random_state,
+                                               eigen_tol=eigen_tol,
+                                               norm_laplacian=norm_laplacian,
+                                               mode=mode)
+    embedding = vectors * dd
+    if drop_first:
+        return embedding[1:].T
     else:
-        return embedding[:n_components].T
+        return embedding.T
 
 
 class SpectralEmbedding(BaseEstimator, TransformerMixin):
@@ -486,3 +571,165 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         """
         self.fit(X)
         return self.embedding_
+
+
+def diffusion_embedding(adjacency, n_components=8, diffusion_time=None,
+                        eigen_solver=None, random_state=None, eigen_tol=0.0,
+                        norm_laplacian=True, drop_first=True):
+    """Project the sample on the first eigenvectors of the graph Laplacian
+
+    The adjacency matrix is used to compute a normalized graph Laplacian
+    whose spectrum (especially the eigen vectors associated to the
+    smallest eigen values) has an interpretation in terms of minimal
+    number of cuts necessary to split the graph into comparably sized
+    components.
+
+    This embedding can also 'work' even if the ``adjacency`` variable is
+    not strictly the adjacency matrix of a graph but more generally
+    an affinity or similarity matrix between samples (for instance the
+    heat kernel of a euclidean distance matrix or a k-NN matrix).
+
+    However care must taken to always make the affinity matrix symmetric
+    so that the eigen vector decomposition works as expected.
+
+    Parameters
+    ----------
+    adjacency : array-like or sparse matrix, shape: (n_samples, n_samples)
+        The adjacency matrix of the graph to embed.
+
+    n_components : integer, optional
+        The dimension of the projection subspace.
+
+    diffusion_time: float, optional, default=None
+        Determines the scaling of the eigenvalues of the Laplacian
+
+    eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
+        The eigenvalue decomposition strategy to use. AMG requires pyamg
+        to be installed. It can be faster on very large, sparse problems,
+        but may also lead to instabilities.
+
+    random_state : int seed, RandomState instance, or None (default)
+        A pseudo random number generator used for the initialization of the
+        lobpcg eigen vectors decomposition when eigen_solver == 'amg'.
+        By default, arpack is used.
+
+    eigen_tol : float, optional, default=0.0
+        Stopping criterion for eigendecomposition of the Laplacian matrix
+        when using arpack eigen_solver.
+
+    drop_first : bool, optional, default=True
+        Whether to drop the first eigenvector. For spectral embedding, this
+        should be True as the first eigenvector should be constant vector for
+        connected graph, but for spectral clustering, this should be kept as
+        False to retain the first eigenvector.
+
+    Returns
+    -------
+    embedding : array, shape=(n_samples, n_components)
+        The reduced samples.
+
+    Notes
+    -----
+    Diffusion embedding is most useful when the graph has one connected
+    component. If there graph has many components, the first few eigenvectors
+    will simply uncover the connected components of the graph.
+
+    References
+    ----------
+
+    - Lafon, Stephane, and Ann B. Lee. "Diffusion maps and coarse-graining: A
+      unified framework for dimensionality reduction, graph partitioning, and
+      data set parameterization." Pattern Analysis and Machine Intelligence,
+      IEEE Transactions on 28.9 (2006): 1393-1403.
+    - Coifman, Ronald R., and Stephane Lafon. Diffusion maps. Applied and
+      Computational Harmonic Analysis 21.1 (2006): 5-30.
+
+    """
+    # Whether to drop the first eigenvector
+    if drop_first:
+        n_components += 1
+    lambdas, vectors, dd = _solve_eigenvalue_problem(adjacency=adjacency,
+                                                     n_components=n_components,
+                                                     eigen_solver=eigen_solver,
+                                                     random_state=random_state,
+                                                     eigen_tol=eigen_tol,
+                                                     norm_laplacian=norm_laplacian)
+    embedding = vectors * dd
+    if diffusion_time is not None:
+        norm_factor = np.sqrt(np.sum(dd))
+        psi = (norm_factor * np.diag(1. / (dd ** 0.5))).dot(vectors)
+        Lt = np.power(1 + lambdas, diffusion_time)
+        embedding = psi * Lt
+    if drop_first:
+        return embedding[1:].T
+    else:
+        return embedding.T
+
+
+class DiffusionEmbedding(SpectralEmbedding):
+    """Diffusion embedding for nonlinear dimensionality reduction
+
+    Diffusion embedding adds an extra parameter `diffusion_time` to spectral
+    embedding.
+
+    Parameters
+    -----------
+    diffusion_time : float
+        Determines the scaling of the eigenvalues of the Laplacian
+
+    For all other parameters see `SpectralEmbedding`
+
+    References
+    ----------
+
+    - Lafon, Stephane, and Ann B. Lee. "Diffusion maps and coarse-graining: A
+      unified framework for dimensionality reduction, graph partitioning, and
+      data set parameterization." Pattern Analysis and Machine Intelligence,
+      IEEE Transactions on 28.9 (2006): 1393-1403.
+    - Coifman, Ronald R., and Stephane Lafon. Diffusion maps. Applied and
+      Computational Harmonic Analysis 21.1 (2006): 5-30.
+
+    """
+
+    def __init__(self, diffusion_time=0., **kwargs):
+        super(DiffusionEmbedding, self).__init__(**kwargs)
+        self.diffusion_time = diffusion_time
+
+    def fit(self, X, y=None):
+        """Fit the model from data in X.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training vector, where n_samples in the number of samples
+            and n_features is the number of features.
+
+            If affinity is "precomputed"
+            X : array-like, shape (n_samples, n_samples),
+            Interpret X as precomputed adjacency graph computed from
+            samples.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
+        self.random_state = check_random_state(self.random_state)
+        if isinstance(self.affinity, basestring):
+            if self.affinity not in set(("nearest_neighbors", "rbf",
+                                         "precomputed")):
+                raise ValueError(("%s is not a valid affinity. Expected "
+                                  "'precomputed', 'rbf', 'nearest_neighbors' "
+                                  "or a callable.") % self.affinity)
+        elif not hasattr(self.affinity, "__call__"):
+            raise ValueError(("'affinity' is expected to be an an affinity "
+                              "name or a callable. Got: %s") % self.affinity)
+
+        affinity_matrix = self._get_affinity_matrix(X)
+        self.embedding_ = diffusion_embedding(affinity_matrix,
+                                              n_components=self.n_components,
+                                              eigen_solver=self.eigen_solver,
+                                              random_state=self.random_state,
+                                              diffusion_time=self.diffusion_time,
+                                              drop_first=False)
+        return self
