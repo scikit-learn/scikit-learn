@@ -2,19 +2,25 @@
 Testing for grid search module (sklearn.grid_search)
 
 """
+
+from cStringIO import StringIO
+import sys
+
+import numpy as np
+import scipy.sparse as sp
+
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 
-import numpy as np
-import scipy.sparse as sp
-
 from sklearn.base import BaseEstimator
 from sklearn.grid_search import GridSearchCV
-from sklearn.datasets.samples_generator import make_classification
+from sklearn.datasets.samples_generator import make_classification, make_blobs
 from sklearn.svm import LinearSVC, SVC
+from sklearn.cluster import KMeans, MeanShift
 from sklearn.metrics import f1_score, precision_score
+from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.cross_validation import KFold
 
 
@@ -45,9 +51,12 @@ y = np.array([1, 1, 2, 2])
 def test_grid_search():
     """Test that the best estimator contains the right value for foo_param"""
     clf = MockClassifier()
-    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]})
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, verbose=3)
     # make sure it selects the smallest parameter in case of ties
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
     grid_search.fit(X, y)
+    sys.stdout = old_stdout
     assert_equal(grid_search.best_estimator_.foo_param, 2)
 
     for i, foo_i in enumerate([1, 2, 3]):
@@ -145,6 +154,17 @@ def test_grid_search_sparse_score_func():
     #np.testing.assert_allclose(f1_score(cv.predict(X_[:180]), y[:180]),
     #                        cv.score(X_[:180], y[:180]))
 
+    # test loss_func
+    def f1_loss(y_true_, y_pred_):
+        return -f1_score(y_true_, y_pred_)
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, loss_func=f1_loss)
+    cv.fit(X_[:180], y_[:180])
+    y_pred3 = cv.predict(X_[180:])
+    C3 = cv.best_estimator_.C
+
+    assert_array_equal(y_pred, y_pred3)
+    assert_equal(C, C3)
+
 
 def test_grid_search_precomputed_kernel():
     """Test that grid search works when the input features are given in the
@@ -227,3 +247,22 @@ def test_X_as_list():
     cv = KFold(n=len(X), n_folds=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X.tolist(), y).score(X, y)
+
+
+def test_unsupervised_grid_search():
+    # test grid-search with unsupervised estimator
+    X, y = make_blobs(random_state=0)
+    km = KMeans(random_state=0)
+    grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]),
+                               score_func=adjusted_rand_score)
+    grid_search.fit(X)
+    # most number of clusters should be best
+    assert_equal(grid_search.best_params_["n_clusters"], 4)
+
+
+def test_bad_estimator():
+    # test grid-search with unsupervised estimator
+    ms = MeanShift()
+    assert_raises(TypeError, GridSearchCV, ms,
+                  param_grid=dict(gamma=[.1, 1, 10]),
+                  score_func=adjusted_rand_score)
