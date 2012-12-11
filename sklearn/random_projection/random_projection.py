@@ -29,6 +29,7 @@ Johnson-Lindenstrauss lemma (quoting Wikipedia):
 
 from __future__ import division
 import warnings
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from numpy.testing import assert_equal
@@ -36,6 +37,7 @@ import scipy.sparse as sp
 
 from sklearn.utils import check_random_state
 from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.validation import check_arrays
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.random_projection._random_projection import sample_int
 
@@ -244,6 +246,9 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
     def __init__(self, n_components='auto', density='auto', eps=0.5,
                  dense_output=False, random_state=None,
                  distribution="bernouilli"):
@@ -275,6 +280,8 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
         self
 
         """
+        X, y = check_arrays(X, y)
+
         if not sp.issparse(X):
             X = np.atleast_2d(X)
 
@@ -355,6 +362,8 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
             Projected array.
 
         """
+        X, y = check_arrays(X, y)
+
         if self.components_ is None:
             raise ValueError('No random projection matrix had been fit.')
 
