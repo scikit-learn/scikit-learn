@@ -495,20 +495,17 @@ def test_classifiers_train():
                 except NotImplementedError:
                     pass
 
-            assert_array_equal(
-                clf.classes_, classes,
-                "Unexpected classes_ attribute for %r" % clf)
-
 
 def test_classifiers_classes():
     # test if classifiers can cope with non-consecutive classes
     estimators = all_estimators()
-    classifiers = [(name, E) for name, E in estimators if issubclass(E,
-        ClassifierMixin)]
+    classifiers = [(name, E) for name, E in estimators
+                   if issubclass(E, ClassifierMixin)]
     X, y = make_blobs(random_state=12345)
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
     y = 2 * y + 1
+    classes = np.unique(y)
     # TODO: make work with next line :)
     #y = y.astype(np.str)
     for name, Clf in classifiers:
@@ -528,6 +525,9 @@ def test_classifiers_classes():
         assert_array_equal(np.unique(y), np.unique(y_pred))
         assert_greater(zero_one_score(y, y_pred), 0.78,
                        "accuracy of %s not greater than 0.78" % str(Clf))
+        assert_array_equal(
+            clf.classes_, classes,
+            "Unexpected classes_ attribute for %r" % clf)
 
 
 def test_regressors_int():
