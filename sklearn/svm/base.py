@@ -8,8 +8,9 @@ from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils import atleast2d_or_csr, array2d, check_random_state
+from ..utils import ConvergenceWarning, compute_class_weight
+from ..utils.fixes import unique
 from ..utils.extmath import safe_sparse_dot
-from ..utils import ConvergenceWarning
 
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -159,18 +160,27 @@ class BaseLibSVM(BaseEstimator):
                              "by not using the ``sparse`` parameter")
 
         X = atleast2d_or_csr(X, dtype=np.float64, order='C')
-        y = np.asarray(y, dtype=np.float64, order='C')
 
+        if self.impl in ['c_svc', 'nu_svc']:
+            # classification
+            self.classes_, y = unique(y, return_inverse=True)
+            self.class_weight_ = compute_class_weight(self.class_weight,
+                                                      self.classes_, y)
+            self.class_weight_label_ = np.arange(len(self.classes_),
+                                                 dtype=np.int32)
+        else:
+            self.class_weight_label_ = np.empty(0, dtype=np.int32)
+            self.class_weight_ = np.empty(0)
         if self.impl != "one_class" and len(np.unique(y)) < 2:
             raise ValueError("The number of classes has to be greater than"
                              " one.")
+
+        y = np.asarray(y, dtype=np.float64, order='C')
 
         sample_weight = np.asarray([]
                                    if sample_weight is None
                                    else sample_weight, dtype=np.float64)
         solver_type = LIBSVM_IMPL.index(self.impl)
-        self.class_weight_, self.class_weight_label_ = \
-            _get_class_weight(self.class_weight, y)
 
         # input validation
         if solver_type != 2 and X.shape[0] != y.shape[0]:
@@ -296,7 +306,11 @@ class BaseLibSVM(BaseEstimator):
         """
         X = self._validate_for_predict(X)
         predict = self._sparse_predict if self._sparse else self._dense_predict
-        return predict(X)
+        y = predict(X)
+        if self.impl in ['c_svc', 'nu_svc']:
+            # classification
+            y = self.classes_.take(y.astype(np.int))
+        return y
 
     def _dense_predict(self, X):
         n_samples, n_features = X.shape
@@ -661,11 +675,13 @@ class BaseLibLinear(BaseEstimator):
             raise ValueError("The number of classes has to be greater than"
                              " one.")
 
+        self.class_weight_label_ = np.arange(len(self.classes_),
+                                             dtype=np.int32)
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         y = np.asarray(y, dtype=np.float64).ravel()
 
-        self.class_weight_, self.class_weight_label_ = \
-            _get_class_weight(self.class_weight, y)
+        self.class_weight_ = compute_class_weight(self.class_weight,
+                                                  self.classes_, y)
 
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n"
