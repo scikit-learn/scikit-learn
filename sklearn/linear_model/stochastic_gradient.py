@@ -20,6 +20,7 @@ from ..utils.extmath import safe_sparse_dot
 
 from .sgd_fast import plain_sgd as plain_sgd
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
+from ..utils import compute_class_weight
 from .sgd_fast import Hinge
 from .sgd_fast import SquaredHinge
 from .sgd_fast import Log
@@ -317,31 +318,6 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
         self.classes_ = None
         self.n_jobs = int(n_jobs)
 
-    def _set_class_weight(self, class_weight, classes, y):
-        """Estimate class weights for unbalanced datasets."""
-        if class_weight is None or len(class_weight) == 0:
-            # uniform class weights
-            weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
-        elif class_weight == 'auto':
-            # proportional to the number of samples in the class
-            weight = np.array([1.0 / np.sum(y == i) for i in classes],
-                              dtype=np.float64, order='C')
-            weight *= classes.shape[0] / np.sum(weight)
-        else:
-            # user-defined dictionary
-            weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
-            if not isinstance(class_weight, dict):
-                raise ValueError("class_weight must be dict, 'auto', or None,"
-                                 " got: %r" % class_weight)
-            for c in class_weight:
-                i = np.searchsorted(classes, c)
-                if classes[i] != c:
-                    raise ValueError("Class label %d not present." % c)
-                else:
-                    weight[i] = class_weight[c]
-
-        self._expanded_class_weight = weight
-
     def _partial_fit(self, X, y, alpha, C,
                      loss, learning_rate, n_iter,
                      classes, sample_weight,
@@ -367,7 +343,8 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
         n_classes = self.classes_.shape[0]
 
         # Allocate datastructures from input arguments
-        self._set_class_weight(self.class_weight, self.classes_, y)
+        self._expanded_class_weight = compute_class_weight(self.class_weight,
+                                                           self.classes_, y)
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
         if self.coef_ is None:
@@ -802,9 +779,8 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
                                  sample_weight=sample_weight,
                                  coef_init=None, intercept_init=None)
 
-    def _fit(self, X, y, alpha, C, loss, learning_rate,
-             coef_init=None, intercept_init=None,
-            sample_weight=None):
+    def _fit(self, X, y, alpha, C, loss, learning_rate, coef_init=None,
+             intercept_init=None, sample_weight=None):
         if self.warm_start and self.coef_ is not None:
             if coef_init is None:
                 coef_init = self.coef_
