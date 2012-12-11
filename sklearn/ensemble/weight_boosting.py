@@ -143,7 +143,7 @@ class BaseWeightBoosting(BaseEnsemble):
 
         for iboost in xrange(self.n_estimators):
             estimator = self._make_estimator()
-            print estimator
+
             if hasattr(estimator, 'fit_predict'):
                 # optim for estimators that are able to save redundant
                 # computations when calling fit + predict
@@ -172,8 +172,6 @@ class BaseWeightBoosting(BaseEnsemble):
             if iboost < self.n_estimators - 1:
                 # normalize
                 sample_weight /= sample_weight.sum()
-
-        print self.estimators_
 
         # Sum the importances
         try:
