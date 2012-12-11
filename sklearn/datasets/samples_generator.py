@@ -1253,16 +1253,6 @@ def make_gaussian_quantiles(n_samples=100, n_features=2, n_classes=3,
     y : array of shape [n_samples]
         The integer labels for quantile membership of each sample.
 
-    Examples
-    --------
-    >>> from sklearn.datasets.samples_generator import make_gaussian_quantiles
-    >>> X, y = make_gaussian_quantiles(n_samples=10, n_features=5,
-    ...                                n_classes=2, random_state=0)
-    >>> X.shape
-    (10, 5)
-    >>> y
-    array([0, 1, 0, 1, 0, 1, 1, 0, 0, 1])
-
     Notes
     -----
     **References**:
