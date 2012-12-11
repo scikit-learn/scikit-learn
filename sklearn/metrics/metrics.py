@@ -98,7 +98,7 @@ def roc_curve(y_true, y_score, pos_label=None):
         the positive class, confidence values, or binary decisions.
 
     pos_label : int
-        label considered as postive and others are considered negative.
+        label considered as positive and others are considered negative.
 
     Returns
     -------
