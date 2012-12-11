@@ -72,6 +72,11 @@ class BaseWeightBoosting(BaseEnsemble):
                  n_estimators=10,
                  learn_rate=.5,
                  compute_importances=False):
+        self.boost_weights_ = []
+        self.errs_ = []
+        self.learn_rate = learn_rate
+        self.compute_importances = compute_importances
+        self.feature_importances_ = None
 
         if base_estimator is None:
             if isinstance(self, ClassifierMixin):
@@ -87,23 +92,6 @@ class BaseWeightBoosting(BaseEnsemble):
             raise TypeError("base_estimator must be a "
                             "subclass of ClassifierMixin")
 
-        if learn_rate <= 0:
-            raise ValueError("learn_rate must be greater than 0")
-
-        self.boost_weights_ = list()
-        self.errs_ = list()
-        self.learn_rate = learn_rate
-        self.compute_importances = compute_importances
-        self.feature_importances_ = None
-
-        if compute_importances:
-            try:
-                base_estimator.compute_importances = True
-            except AttributeError:
-                raise AttributeError(
-                    "Unable to compute feature importances "
-                    "since base_estimator does not have a "
-                    "compute_importances attribute")
         super(BaseWeightBoosting, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators)
@@ -128,9 +116,16 @@ class BaseWeightBoosting(BaseEnsemble):
         self : object
             Returns self.
         """
+        # Check parameters
+        if self.learn_rate <= 0:
+            raise ValueError("learn_rate must be greater than 0")
+
+        if self.compute_importances:
+            self.base_estimator.set_params(compute_importances=True)
+
+        # Format data
         X, y = check_arrays(X, y, sparse_format='dense')
         X = np.asfortranarray(X, dtype=DTYPE)
-        #y = np.ravel(y, order='C')
 
         if sample_weight is None:
             # initialize weights to 1/N
@@ -140,10 +135,10 @@ class BaseWeightBoosting(BaseEnsemble):
             # normalize
             sample_weight /= sample_weight.sum()
 
-        # clear any previous fit results
-        self.estimators_ = list()
-        self.boost_weights_ = list()
-        self.errs_ = list()
+        # Clear any previous fit results
+        self.estimators_ = []
+        self.boost_weights_ = []
+        self.errs_ = []
 
         for iboost in xrange(self.n_estimators):
             estimator = self._make_estimator()
@@ -176,7 +171,7 @@ class BaseWeightBoosting(BaseEnsemble):
                 # normalize
                 sample_weight /= sample_weight.sum()
 
-        # sum the importances
+        # Sum the importances
         try:
             if self.compute_importances:
                 norm = sum(self.boost_weights_)

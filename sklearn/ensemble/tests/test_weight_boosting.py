@@ -7,6 +7,7 @@ from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_equal
 from nose.tools import assert_true
+from nose.tools import assert_raises
 
 from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import AdaBoostClassifier, AdaBoostRegressor
@@ -156,6 +157,14 @@ def test_importances():
     clf = AdaBoostClassifier()
     clf.fit(X, y)
     assert_true(clf.feature_importances_ is None)
+
+
+def test_error():
+    """Test that it gives proper exception on deficient input."""
+    # Invalid values for parameters
+    assert_raises(ValueError,
+                  AdaBoostClassifier(learn_rate=-1).fit,
+                  X, y)
 
 
 if __name__ == "__main__":
