@@ -15,7 +15,9 @@ from sklearn.utils import check_random_state
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cpdef sample_int(np.int_t n_population, np.int_t n_samples, random_state=None):
-    """ Sample a given number integers from the set [0, n_population) without
+    """Sample integers without replacement.
+
+    Select n_samples integers from the set [0, n_population) without
     replacement.
 
     Parameters
