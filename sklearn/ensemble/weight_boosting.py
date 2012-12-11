@@ -219,7 +219,7 @@ class BaseWeightBoosting(BaseEnsemble):
         X = array2d(X)
         n_samples, n_features = X.shape
 
-        P = None
+        pred = None
         norm = 0.
         for i, (alpha, estimator) in enumerate(
                 zip(self.boost_weights_, self.estimators_)):
@@ -227,45 +227,46 @@ class BaseWeightBoosting(BaseEnsemble):
                 break
             if isinstance(self, ClassifierMixin):
                 if self.n_outputs_ > 1:
-                    p = [out * alpha for out in estimator.predict_proba(X)]
+                    current_pred = [out * alpha
+                            for out in estimator.predict_proba(X)]
                 else:
-                    p = estimator.predict_proba(X) * alpha
+                    current_pred = estimator.predict_proba(X) * alpha
             else:
-                p = estimator.predict(X) * alpha
+                current_pred = estimator.predict(X) * alpha
 
-            if P is None:
-                P = p
+            if pred is None:
+                pred = current_pred
             else:
                 if self.n_outputs_ > 1:
                     for i in xrange(self.n_outputs_):
-                        P[i] += p[i]
+                        pred[i] += current_pred[i]
                 else:
-                    P += p
+                    pred += current_pred
 
             norm += alpha
 
         if self.n_outputs_ > 1:
-            P = [P[i] / norm for i in xrange(self.n_outputs_)]
+            pred = [pred[i] / norm for i in xrange(self.n_outputs_)]
         else:
-            P /= norm
+            pred /= norm
 
         if isinstance(self, ClassifierMixin):
             if self.n_outputs_ > 1:
                 predictions = np.zeros((n_samples, self.n_outputs_))
                 for k in xrange(self.n_outputs_):
                     predictions[:, k] = self.classes_[k].take(
-                            np.argmax(P[k], axis=1), axis=0)
+                            np.argmax(pred[k], axis=1), axis=0)
             else:
                 if isinstance(self.classes_, list):
                     classes = self.classes_[0]
                 else:
                     classes = self.classes_
                 predictions = classes.take(
-                        np.argmax(P, axis=1), axis=0)
+                        np.argmax(pred, axis=1), axis=0)
 
             return predictions
         else:
-            return P
+            return pred
 
     def staged_predict(self, X, n_estimators=-1):
         """Predict class for X.
@@ -297,7 +298,7 @@ class BaseWeightBoosting(BaseEnsemble):
         X = array2d(X)
         n_samples, n_features = X.shape
 
-        P = None
+        pred = None
         norm = 0.
         for i, (alpha, estimator) in enumerate(
                 zip(self.boost_weights_, self.estimators_)):
@@ -305,45 +306,45 @@ class BaseWeightBoosting(BaseEnsemble):
                 break
             if isinstance(self, ClassifierMixin):
                 if self.n_outputs_ > 1:
-                    p = [out * alpha for out in estimator.predict_proba(X)]
+                    current_pred = [out * alpha
+                            for out in estimator.predict_proba(X)]
                 else:
-                    p = estimator.predict_proba(X) * alpha
+                    current_pred = estimator.predict_proba(X) * alpha
             else:
-                p = estimator.predict(X) * alpha
+                current_pred = estimator.predict(X) * alpha
 
-            if P is None:
-                P = p
+            if pred is None:
+                pred = current_pred
             else:
                 if self.n_outputs_ > 1:
                     for i in xrange(self.n_outputs_):
-                        P[i] += p[i]
+                        pred[i] += current_pred[i]
                 else:
-                    P += p
+                    pred += current_pred
 
             norm += alpha
 
             if self.n_outputs_ > 1:
-                P_local = [P[i] / norm for i in xrange(self.n_outputs_)]
+                normed_pred = [pred[i] / norm for i in xrange(self.n_outputs_)]
             else:
-                P_local = P / norm
+                normed_pred = pred / norm
 
             if isinstance(self, ClassifierMixin):
                 if self.n_outputs_ > 1:
                     predictions = np.zeros((n_samples, self.n_outputs_))
                     for k in xrange(self.n_outputs_):
                         predictions[:, k] = self.classes_[k].take(
-                                np.argmax(P_local[k], axis=1), axis=0)
+                                np.argmax(normed_pred[k], axis=1), axis=0)
                 else:
                     if isinstance(self.classes_, list):
                         classes = self.classes_[0]
                     else:
                         classes = self.classes_
                     predictions = classes.take(
-                            np.argmax(P_local, axis=1), axis=0)
-
+                            np.argmax(normed_pred, axis=1), axis=0)
                 yield predictions
             else:
-                yield P_local
+                yield normed_pred
 
 
 class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
@@ -451,7 +452,7 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
             raise ValueError("n_estimators must not equal 0")
 
         if self.n_outputs_ == 1:
-            probs = None
+            proba = None
             norm = 0.
 
             for i, (alpha, estimator) in enumerate(
@@ -460,19 +461,19 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
                 if i == n_estimators:
                     break
 
-                current_probs = estimator.predict_proba(X) * alpha
+                current_proba = estimator.predict_proba(X) * alpha
 
-                if probs is None:
-                    probs = current_probs
+                if proba is None:
+                    proba = current_proba
                 else:
-                    probs += current_probs
+                    proba += current_proba
 
                 norm += alpha
 
-            return probs / norm
+            return proba / norm
 
         else:
-            probs = []
+            proba = []
             norm = []
 
             for i, (alpha, estimator) in enumerate(
@@ -481,21 +482,21 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
                 if i == n_estimators:
                     break
 
-                p = estimator.predict_proba(X)
+                current_proba = estimator.predict_proba(X)
 
                 for j in xrange(self.n_outputs_):
                     if i == 0:
-                        probs.append(p[j] * alpha)
+                        proba.append(current_proba[j] * alpha)
                         norm.append(alpha)
 
                     else:
-                        probs[j] += p[j] * alpha
+                        proba[j] += current_proba[j] * alpha
                         norm[j] += alpha
 
             for j in xrange(self.n_outputs_):
-                probs[j] /= norm[j]
+                proba[j] /= norm[j]
 
-            return probs
+            return proba
 
     def staged_predict_proba(self, X, n_estimators=-1):
         """Predict class probabilities for X.
