@@ -248,11 +248,11 @@ class BaseLibSVM(BaseEstimator):
         self.support_, self.support_vectors_, self.n_support_, \
             self.dual_coef_, self.intercept_, self.label_, self.probA_, \
             self.probB_, self.fit_status_ = libsvm.fit(
-                X, y, svm_type=solver_type, sample_weight=sample_weight,
-                class_weight=self.class_weight_,
-                class_weight_label=self.class_weight_label_, kernel=kernel,
-                C=self.C, nu=self.nu, probability=self.probability,
-                degree=self.degree, shrinking=self.shrinking, tol=self.tol,
+                X, y,
+                svm_type=solver_type, sample_weight=sample_weight,
+                class_weight=self.class_weight_, kernel=kernel, C=self.C,
+                nu=self.nu, probability=self.probability, degree=self.degree,
+                shrinking=self.shrinking, tol=self.tol,
                 cache_size=self.cache_size, coef0=self.coef0,
                 gamma=self._gamma, epsilon=self.epsilon,
                 max_iter=self.max_iter)
@@ -271,7 +271,7 @@ class BaseLibSVM(BaseEstimator):
             libsvm_sparse.libsvm_sparse_train(
                 X.shape[1], X.data, X.indices, X.indptr, y, solver_type,
                 kernel_type, self.degree, self._gamma, self.coef0, self.tol,
-                self.C, self.class_weight_label_, self.class_weight_,
+                self.C, self.class_weight_,
                 sample_weight, self.nu, self.cache_size, self.epsilon,
                 int(self.shrinking), int(self.probability), self.max_iter)
 
@@ -352,14 +352,17 @@ class BaseLibSVM(BaseEstimator):
         C = 0.0  # C is not useful here
 
         return libsvm_sparse.libsvm_sparse_predict(
-            X.data, X.indices, X.indptr, self.support_vectors_.data,
-            self.support_vectors_.indices, self.support_vectors_.indptr,
+            X.data, X.indices, X.indptr,
+            self.support_vectors_.data,
+            self.support_vectors_.indices,
+            self.support_vectors_.indptr,
             self.dual_coef_.data, self._intercept_,
-            LIBSVM_IMPL.index(self.impl), kernel_type, self.degree,
-            self._gamma, self.coef0, self.tol, C, self.class_weight_label_,
-            self.class_weight_, self.nu, self.epsilon, self.shrinking,
-            self.probability, self.n_support_, self.label_, self.probA_,
-            self.probB_)
+            LIBSVM_IMPL.index(self.impl), kernel_type,
+            self.degree, self._gamma, self.coef0, self.tol,
+            C, self.class_weight_,
+            self.nu, self.epsilon, self.shrinking,
+            self.probability, self.n_support_, self.label_,
+            self.probA_, self.probB_)
 
     def _compute_kernel(self, X):
         """Return the data transformed by a callable kernel"""
@@ -569,7 +572,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             self.dual_coef_.data, self._intercept_,
             LIBSVM_IMPL.index(self.impl), kernel_type,
             self.degree, self._gamma, self.coef0, self.tol,
-            self.C, self.class_weight_label_, self.class_weight_,
+            self.C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
             self.probability, self.n_support_, self.label_,
             self.probA_, self.probB_)

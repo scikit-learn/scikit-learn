@@ -51,8 +51,6 @@ def fit(
     int svm_type=0, str kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0., double tol=1e-3,
     double C=1., double nu=0.5, double epsilon=0.1,
-    np.ndarray[np.int32_t, ndim=1, mode='c']
-        class_weight_label=np.empty(0, dtype=np.int32),
     np.ndarray[np.float64_t, ndim=1, mode='c']
         class_weight=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c']
@@ -151,6 +149,8 @@ def fit(
         &problem, X.data, Y.data, sample_weight.data, X.shape, kernel_index)
     if problem.x == NULL:
         raise MemoryError("Seems we've run out of of memory")
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
+        class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
 
     # set parameters
     set_parameter(
@@ -244,8 +244,6 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
             int svm_type=0, str kernel='rbf', int degree=3,
             double gamma=0.1, double coef0=0., double tol=1e-3,
             double C=1., double nu=0.5, double epsilon=0.1,
-            np.ndarray[np.int32_t, ndim=1, mode='c']
-                class_weight_label=np.empty(0, dtype=np.int32),
             np.ndarray[np.float64_t, ndim=1, mode='c']
                 class_weight=np.empty(0),
             np.ndarray[np.float64_t, ndim=1, mode='c']
@@ -298,6 +296,8 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     cdef svm_parameter param
     cdef svm_model *model
 
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
+        class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
     set_parameter(&param, svm_type, kernel_index, degree, gamma, coef0,
                           nu, cache_size, C, tol, epsilon, shrinking,
@@ -331,8 +331,6 @@ def predict_proba(
     int svm_type=0, str kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0., double tol=1e-3,
     double C=1., double nu=0.5, double epsilon=0.1,
-    np.ndarray[np.int32_t, ndim=1, mode='c']
-        class_weight_label=np.empty(0, dtype=np.int32),
     np.ndarray[np.float64_t, ndim=1, mode='c']
         class_weight=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c']
@@ -370,6 +368,8 @@ def predict_proba(
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
     cdef svm_parameter param
     cdef svm_model *model
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
+        class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
 
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
     set_parameter(&param, svm_type, kernel_index, degree, gamma,
@@ -404,8 +404,6 @@ def decision_function(
     int svm_type=0, str kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0., double tol=1e-3,
     double C=1., double nu=0.5, double epsilon=0.1,
-    np.ndarray[np.int32_t, ndim=1, mode='c']
-        class_weight_label=np.empty(0, dtype=np.int32),
     np.ndarray[np.float64_t, ndim=1, mode='c']
         class_weight=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c']
@@ -423,6 +421,9 @@ def decision_function(
     cdef svm_parameter param
     cdef svm_model *model
     cdef np.npy_intp n_class
+
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
+        class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
 
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
     set_parameter(&param, svm_type, kernel_index, degree, gamma,
@@ -455,8 +456,6 @@ def cross_validation(
     int n_fold, svm_type=0, str kernel='rbf', int degree=3,
     double gamma=0.1, double coef0=0., double tol=1e-3,
     double C=1., double nu=0.5, double epsilon=0.1,
-    np.ndarray[np.int32_t, ndim=1, mode='c']
-        class_weight_label=np.empty(0, dtype=np.int32),
     np.ndarray[np.float64_t, ndim=1, mode='c']
         class_weight=np.empty(0),
     np.ndarray[np.float64_t, ndim=1, mode='c']
@@ -532,6 +531,8 @@ def cross_validation(
         &problem, X.data, Y.data, sample_weight.data, X.shape, kernel_index)
     if problem.x == NULL:
         raise MemoryError("Seems we've run out of of memory")
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
+        class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
 
     # set parameters
     set_parameter(
