@@ -329,9 +329,10 @@ def test_random_projection_embedding_quality():
 
 
 def test_BaseRandomProjection_set_with_wrong_distribution():
-    assert_raises(
-        ValueError,
-        BaseRandomProjection(distribution="not_implemented").fit, data)
+    rp = BernouilliRandomProjection(n_components=10, dense_output=True,
+                                    random_state=0)
+    rp.distribution = "not_implemented"
+    assert_raises(ValueError, rp.fit, data)
 
 
 def test_SparseRandomProjection_output_representation():
