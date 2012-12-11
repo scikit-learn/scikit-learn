@@ -8,7 +8,7 @@ from ..utils import safe_mask, atleast2d_or_csr
 
 
 class SelectorMixin(TransformerMixin):
-    """"Transformer mixin selecting features based on importance weights.
+    """Transformer mixin selecting features based on importance weights.
 
     This implementation can be mixin on any estimator that exposes a
     ``feature_importances_`` or ``coef_`` attribute to evaluate the relative
