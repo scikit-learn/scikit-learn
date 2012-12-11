@@ -64,10 +64,10 @@ def test_iris():
 
 def test_boston():
     """Check consistency on dataset boston house prices."""
-    clf = AdaBoostRegressor(n_estimators=10)
+    clf = AdaBoostRegressor(n_estimators=50)
     clf.fit(boston.data, boston.target)
     score = clf.score(boston.data, boston.target)
-    assert score > 0.99
+    assert score > 0.85
 
 
 def test_probability():
@@ -75,6 +75,7 @@ def test_probability():
     # AdaBoost classification
     clf = AdaBoostClassifier(n_estimators=10)
     clf.fit(iris.data, iris.target)
+
     assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1),
                               np.ones(iris.data.shape[0]))
     assert_array_almost_equal(clf.predict_proba(iris.data),
@@ -82,14 +83,38 @@ def test_probability():
 
 
 def test_staged_predict():
-    """Check that staged predictions."""
-    clf = AdaBoostRegressor(n_estimators=10)
-    clf.fit(boston.data, boston.target)
-    predictions = clf.predict(boston.data)
-    staged_predictions = [p for p in clf.staged_predict(boston.data)]
+    """Check staged predictions."""
+    # AdaBoost classification
+    clf = AdaBoostClassifier(n_estimators=10)
+    clf.fit(iris.data, iris.target)
+
+    predictions = clf.predict(iris.data)
+    staged_predictions = [p for p in clf.staged_predict(iris.data)]
+    proba = clf.predict_proba(iris.data)
+    staged_probas = [p for p in clf.staged_predict_proba(iris.data)]
+    score = clf.score(iris.data, iris.target)
+    staged_scores = [s for s in clf.staged_score(iris.data, iris.target)]
 
     assert_equal(len(staged_predictions), 10)
     assert_array_equal(predictions, staged_predictions[-1])
+    assert_equal(len(staged_probas), 10)
+    assert_array_equal(proba, staged_probas[-1])
+    assert_equal(len(staged_scores), 10)
+    assert_array_equal(score, staged_scores[-1])
+
+    # AdaBoost regression
+    clf = AdaBoostRegressor(n_estimators=10)
+    clf.fit(boston.data, boston.target)
+
+    predictions = clf.predict(boston.data)
+    staged_predictions = [p for p in clf.staged_predict(boston.data)]
+    score = clf.score(boston.data, boston.target)
+    staged_scores = [s for s in clf.staged_score(boston.data, boston.target)]
+
+    assert_equal(len(staged_predictions), 10)
+    assert_array_equal(predictions, staged_predictions[-1])
+    assert_equal(len(staged_scores), 10)
+    assert_array_equal(score, staged_scores[-1])
 
 
 def test_gridsearch():
