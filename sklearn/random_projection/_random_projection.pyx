@@ -3,7 +3,10 @@
 # Author: Arnaud Joly
 #
 # License: BSD Style.
-
+"""
+This module contains fast function used to implement random projection
+matrix.
+"""
 cimport cython
 
 import numpy as np
@@ -74,7 +77,7 @@ cpdef sample_int(np.int_t n_population, np.int_t n_samples, random_state=None):
     #
     # Note on the reservoir sampling implementation:
     #  + The order of the items is not necessarily random. Use a random
-    # permuatation of the array if you need the  order of the items to be
+    # permutation of the array if you need the order of the items to be
     # randomized.
     #  + Time complexity of O(n_population)
     #  + Space complexity of O(n_samples)
