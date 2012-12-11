@@ -300,7 +300,8 @@ class BaseWeightBoosting(BaseEnsemble):
             normed_pred = pred / norm
 
             if isinstance(self, ClassifierMixin):
-                yield self.classes_.take(np.argmax(normed_pred, axis=1), axis=0)
+                yield self.classes_.take(np.argmax(normed_pred, axis=1),
+                                         axis=0)
             else:
                 yield normed_pred
 

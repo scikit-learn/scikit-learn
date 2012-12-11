@@ -15,10 +15,9 @@ from __future__ import division
 import numpy as np
 from abc import ABCMeta, abstractmethod
 
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin, \
+from ..base import BaseEstimator, ClassifierMixin, \
                    WeightedClassifierMixin, WeightedRegressorMixin
 from ..feature_selection.selector_mixin import SelectorMixin
-from ..metrics import weighted_r2_score
 from ..utils import array2d, check_random_state
 from ..utils.validation import check_arrays
 

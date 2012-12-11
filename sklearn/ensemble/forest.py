@@ -40,7 +40,7 @@ import numpy as np
 from warnings import warn
 from abc import ABCMeta, abstractmethod
 
-from ..base import ClassifierMixin, RegressorMixin, \
+from ..base import ClassifierMixin, \
                    WeightedClassifierMixin, WeightedRegressorMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..feature_selection.selector_mixin import SelectorMixin
