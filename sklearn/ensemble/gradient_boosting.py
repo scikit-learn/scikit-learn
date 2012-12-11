@@ -16,7 +16,8 @@ The module structure is the following:
   regression problems.
 """
 
-# Authors: Peter Prettenhofer, Scott White, Gilles Louppe, Emanuele Olivetti
+# Authors: Peter Prettenhofer, Scott White, Gilles Louppe, Emanuele Olivetti,
+#          Arnaud Joly
 # License: BSD Style.
 
 from __future__ import print_function
