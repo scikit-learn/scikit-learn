@@ -52,35 +52,49 @@ def test_classification_toy():
 
     deviance_decrease = (clf.train_score_[:-1] - clf.train_score_[1:])
     assert np.any(deviance_decrease >= 0.0), \
-           "Train deviance does not monotonically decrease."
+        "Train deviance does not monotonically decrease."
 
 
 def test_parameter_checks():
     """Check input parameter validation."""
-    assert_raises(ValueError, GradientBoostingClassifier, n_estimators=0)
-    assert_raises(ValueError, GradientBoostingClassifier, n_estimators=-1)
 
-    assert_raises(ValueError, GradientBoostingClassifier, learning_rate=0.0)
-    assert_raises(ValueError, GradientBoostingClassifier, learning_rate=-1.0)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(n_estimators=0).fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(n_estimators=-1).fit, X, y)
 
-    assert_raises(ValueError, GradientBoostingRegressor, loss='foobar')
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(learning_rate=0.0).fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(learning_rate=-1.0).fit, X, y)
 
-    assert_raises(ValueError, GradientBoostingClassifier,
-                  min_samples_split=0.0)
-    assert_raises(ValueError, GradientBoostingClassifier,
-                  min_samples_split=-1.0)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(loss='foobar').fit, X, y)
 
-    assert_raises(ValueError, GradientBoostingClassifier, min_samples_leaf=0)
-    assert_raises(ValueError, GradientBoostingClassifier, min_samples_leaf=-1.)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(min_samples_split=0.0).fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(min_samples_split=-1.0).fit, X, y)
 
-    assert_raises(ValueError, GradientBoostingClassifier, subsample=0.0)
-    assert_raises(ValueError, GradientBoostingClassifier, subsample=1.1)
-    assert_raises(ValueError, GradientBoostingClassifier, subsample=-0.1)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(min_samples_leaf=0).fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(min_samples_leaf=-1.).fit, X, y)
 
-    assert_raises(ValueError, GradientBoostingClassifier, max_depth=-0.1)
-    assert_raises(ValueError, GradientBoostingClassifier, max_depth=0)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(subsample=0.0).fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(subsample=1.1).fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(subsample=-0.1).fit, X, y)
 
-    assert_raises(ValueError, GradientBoostingClassifier, init={})
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(max_depth=-0.1).fit, X, y)
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(max_depth=0).fit, X, y)
+
+    assert_raises(ValueError,
+                  GradientBoostingClassifier(init={}).fit, X, y)
 
     # test fit before feature importance
     assert_raises(ValueError,
@@ -119,7 +133,7 @@ def test_classification_synthetic():
     gbrt.fit(X_train, y_train)
     error_rate = (1.0 - gbrt.score(X_test, y_test))
     assert error_rate < 0.085, \
-           "GB failed with error %.4f" % error_rate
+        "GB failed with error %.4f" % error_rate
 
     gbrt = GradientBoostingClassifier(n_estimators=200, min_samples_split=1,
                                       max_depth=1,
@@ -128,7 +142,7 @@ def test_classification_synthetic():
     gbrt.fit(X_train, y_train)
     error_rate = (1.0 - gbrt.score(X_test, y_test))
     assert error_rate < 0.08, \
-           "Stochastic GB failed with error %.4f" % error_rate
+        "Stochastic GB failed with error %.4f" % error_rate
 
 
 def test_boston():
@@ -153,7 +167,7 @@ def test_iris():
         clf.fit(iris.data, iris.target)
         score = clf.score(iris.data, iris.target)
         assert score > 0.9, "Failed with subsample %.1f " \
-               "and score = %f" % (subsample, score)
+            "and score = %f" % (subsample, score)
 
 
 def test_regression_synthetic():
@@ -193,19 +207,18 @@ def test_regression_synthetic():
     assert mse < 0.015, "Failed on Friedman3 with mse = %.4f" % mse
 
 
-# def test_feature_importances():
-#     X = np.array(boston.data, dtype=np.float32)
-#     y = np.array(boston.target, dtype=np.float32)
+def test_feature_importances():
+    X = np.array(boston.data, dtype=np.float32)
+    y = np.array(boston.target, dtype=np.float32)
 
-#     clf = GradientBoostingRegressor(n_estimators=100, max_depth=5,
-#                                     min_samples_split=1, random_state=1)
-#     clf.fit(X, y)
-#     feature_importances = clf.feature_importances_
+    clf = GradientBoostingRegressor(n_estimators=100, max_depth=5,
+                                    min_samples_split=1, random_state=1)
+    clf.fit(X, y)
+    feature_importances = clf.feature_importances_
 
-#     # true feature importance ranking
-#     true_ranking = np.array([3, 1, 8, 2, 10, 9, 4, 11, 0, 6, 7, 5, 12])
-
-#     assert_array_equal(true_ranking, feature_importances.argsort())
+    # true feature importance ranking
+    # true_ranking = np.array([3, 1, 8, 2, 10, 9, 4, 11, 0, 6, 7, 5, 12])
+    # assert_array_equal(true_ranking, feature_importances.argsort())
 
 
 def test_probability():

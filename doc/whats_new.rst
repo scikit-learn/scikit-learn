@@ -89,6 +89,12 @@ Changelog
    - Added :class:`kernel_approximation.Nystrom` for approximating arbitrary
      kernels to the :ref:`kernel_approximation` module by `Andreas Müller`_.
 
+   - Improve consistency in :mod:`ensemble.gradient_boosting`: estimators
+    :class:`ensemble.gradient_boosting.GradientBoostingRegressor` and
+    :class:`ensemble.gradient_boosting.GradientBoostingClassifier` use
+    the estimator :class:`tree.DecisionTreeRegressor` instead of the
+    :class:`tree._tree.Tree` datastructure by `Arnaud Joly`_.
+
 API changes summary
 -------------------
    - Renamed all occurences of ``n_atoms`` to ``n_components`` for consistency.
@@ -163,6 +169,11 @@ API changes summary
      now flat in case of single output problems and nested in case of
      multi-output problems.
 
+
+    - The ``estimators_`` attribute of
+    :class:`ensemble.gradient_boosting.GradientBoostingRegressor` and
+    :class:`ensemble.gradient_boosting.GradientBoostingClassifier` is now
+    an array of :class:'tree.DecisionTreeRegressor'.
 
 .. _changes_0_12.1:
 

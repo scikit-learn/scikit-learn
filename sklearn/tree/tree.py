@@ -146,14 +146,15 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __init__(self, criterion,
-                       max_depth,
-                       min_samples_split,
-                       min_samples_leaf,
-                       min_density,
-                       max_features,
-                       compute_importances,
-                       random_state):
+    def __init__(self,
+                 criterion,
+                 max_depth,
+                 min_samples_split,
+                 min_samples_leaf,
+                 min_density,
+                 max_features,
+                 compute_importances,
+                 random_state):
         self.criterion = criterion
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
@@ -204,6 +205,10 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             to share the data structure and to avoid re-computation in
             tree ensembles. For maximum efficiency use dtype np.int32.
 
+        check_input: boolean, (default=True)
+            Allow to bypass several input checking.
+            Don't use this parameter unless you know what you do.
+
         Returns
         -------
         self : object
@@ -218,8 +223,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                                      2 * self.min_samples_leaf)
 
         # Convert data
-        if getattr(X, "dtype", None) != DTYPE or \
-           X.ndim != 2 or not X.flags.fortran:
+        if (getattr(X, "dtype", None) != DTYPE or
+            X.ndim != 2 or not X.flags.fortran):
             X = array2d(X, dtype=DTYPE, order="F")
 
         n_samples, self.n_features_ = X.shape
@@ -228,7 +233,9 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         y = np.atleast_1d(y)
         if y.ndim == 1:
-            y = y[:, np.newaxis]
+            # reshape is necessary to preserve the data contiguity against vs
+            # [:, np.newaxis] that does not.
+            y = np.reshape(y, (-1, 1))
 
         self.n_outputs_ = y.shape[1]
 
@@ -480,14 +487,15 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     array([ 1.     ,  0.93...,  0.86...,  0.93...,  0.93...,
             0.93...,  0.93...,  1.     ,  0.93...,  1.      ])
     """
-    def __init__(self, criterion="gini",
-                       max_depth=None,
-                       min_samples_split=1,
-                       min_samples_leaf=1,
-                       min_density=0.1,
-                       max_features=None,
-                       compute_importances=False,
-                       random_state=None):
+    def __init__(self,
+                 criterion="gini",
+                 max_depth=None,
+                 min_samples_split=1,
+                 min_samples_leaf=1,
+                 min_density=0.1,
+                 max_features=None,
+                 compute_importances=False,
+                 random_state=None):
         super(DecisionTreeClassifier, self).__init__(criterion,
                                                      max_depth,
                                                      min_samples_split,
@@ -670,14 +678,15 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     array([ 0.61..., 0.57..., -0.34..., 0.41..., 0.75...,
             0.07..., 0.29..., 0.33..., -1.42..., -1.77...])
     """
-    def __init__(self, criterion="mse",
-                       max_depth=None,
-                       min_samples_split=1,
-                       min_samples_leaf=1,
-                       min_density=0.1,
-                       max_features=None,
-                       compute_importances=False,
-                       random_state=None):
+    def __init__(self,
+                 criterion="mse",
+                 max_depth=None,
+                 min_samples_split=1,
+                 min_samples_leaf=1,
+                 min_density=0.1,
+                 max_features=None,
+                 compute_importances=False,
+                 random_state=None):
         super(DecisionTreeRegressor, self).__init__(criterion,
                                                     max_depth,
                                                     min_samples_split,
@@ -710,14 +719,15 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """
-    def __init__(self, criterion="gini",
-                       max_depth=None,
-                       min_samples_split=1,
-                       min_samples_leaf=1,
-                       min_density=0.1,
-                       max_features="auto",
-                       compute_importances=False,
-                       random_state=None):
+    def __init__(self,
+                 criterion="gini",
+                 max_depth=None,
+                 min_samples_split=1,
+                 min_samples_leaf=1,
+                 min_density=0.1,
+                 max_features="auto",
+                 compute_importances=False,
+                 random_state=None):
         super(ExtraTreeClassifier, self).__init__(criterion,
                                                   max_depth,
                                                   min_samples_split,
@@ -756,14 +766,15 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     .. [1] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized trees",
            Machine Learning, 63(1), 3-42, 2006.
     """
-    def __init__(self, criterion="mse",
-                       max_depth=None,
-                       min_samples_split=1,
-                       min_samples_leaf=1,
-                       min_density=0.1,
-                       max_features="auto",
-                       compute_importances=False,
-                       random_state=None):
+    def __init__(self,
+                 criterion="mse",
+                 max_depth=None,
+                 min_samples_split=1,
+                 min_samples_leaf=1,
+                 min_density=0.1,
+                 max_features="auto",
+                 compute_importances=False,
+                 random_state=None):
         super(ExtraTreeRegressor, self).__init__(criterion,
                                                  max_depth,
                                                  min_samples_split,
