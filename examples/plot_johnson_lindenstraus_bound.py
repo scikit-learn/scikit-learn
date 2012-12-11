@@ -44,12 +44,6 @@ frequences) dataset: some 500 documents with 100k features in total are
 projected using a sparse random matrix to smaller euclidean spaces with
 various values for the target number of dimensions n_components.
 
-It is possible to trade memory usage and ``fit`` time for ``prediction``
-time by switching the ``materialize`` hyperparameter from True to False:
-In that case the random matrix will be simulated with a hash function on
-the fly each time while performing the projection while never allocating
-the projection matrix in memory.
-
 For each value of n_components we plot:
 
 - 2D distribution of sample pairs with pairwise distances in original
@@ -136,7 +130,7 @@ for n_components in n_components_range:
     if hasattr(rp, 'components_'):
         n_bytes = rp.components_.data.nbytes
         n_bytes += rp.components_.indices.nbytes
-        print "Materialized random matrix with size: %0.3fMB" % (
+        print "Random matrix with size: %0.3fMB" % (
             n_bytes / 1e6)
 
     projected_dists = euclidean_distances(
