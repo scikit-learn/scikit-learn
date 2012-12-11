@@ -472,6 +472,7 @@ def test_classifiers_train():
 
             # fit
             clf.fit(X, y)
+            assert_true(hasattr(clf, "classes_"))
             y_pred = clf.predict(X)
             assert_equal(y_pred.shape, (n_samples,))
             # training set performance
@@ -514,10 +515,9 @@ def test_classifiers_train():
                 except NotImplementedError:
                     pass
 
-            if hasattr(clf, "classes_"):
-                assert_array_equal(
-                    clf.classes_, classes,
-                    "Unexpected classes_ attribute for %r" % clf)
+            assert_array_equal(
+                clf.classes_, classes,
+                "Unexpected classes_ attribute for %r" % clf)
 
 
 def test_classifiers_classes():
