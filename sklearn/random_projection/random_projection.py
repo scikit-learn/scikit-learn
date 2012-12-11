@@ -28,7 +28,6 @@ Johnson-Lindenstrauss lemma (quoting Wikipedia):
 # License: Simple BSD
 
 from __future__ import division
-import math
 import warnings
 
 import numpy as np
@@ -37,9 +36,8 @@ import scipy.sparse as sp
 
 from sklearn.utils import check_random_state
 from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.base import BaseEstimator
-from sklearn.base import TransformerMixin
-from _random_projection import sample_int
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.random_projection._random_projection import sample_int
 
 
 __all__ = ["BernouilliRandomProjection",
@@ -102,7 +100,7 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
 def _check_density(density, n_features):
     """Factorize density check according to Li et al."""
     if density is 'auto':
-        density = min(1 / math.sqrt(n_features), 1 / 3.)
+        density = min(1 / np.sqrt(n_features), 1 / 3.)
 
     elif density <= 0 or density > 1:
         raise ValueError("Expected density in range (0, 1], got: %r"
@@ -123,7 +121,8 @@ def _check_input_size(n_components, n_features):
 def gaussian_random_matrix(n_components, n_features, random_state=None):
     """ Generate a dense gaussian random matrix.
 
-    The component of the random matrix is drawn from N(0, 1.0 / n_components).
+    The components of the random matrix are drawn from
+    N(0, 1.0 / n_components).
 
     Parameters
     ----------
@@ -143,10 +142,10 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
     """
     _check_input_size(n_components, n_features)
     rng = check_random_state(random_state)
-    r = rng.normal(loc=0.0,
-                   scale=1.0 / np.sqrt(n_components),
-                   size=(n_components, n_features))
-    return r
+    rp_matrix = rng.normal(loc=0.0,
+                           scale=1.0 / np.sqrt(n_components),
+                           size=(n_components, n_features))
+    return rp_matrix
 
 
 def bernouilli_random_matrix(n_components, n_features, density='auto',
@@ -180,7 +179,7 @@ def bernouilli_random_matrix(n_components, n_features, density='auto',
         Use density = 1 / 3.0 if you want to reproduce the results from
         Achlioptas, 2001.
 
-        Use density = 1 if you want to get a dense Bernouilli random matrix.
+        Use density = 1 if you want a dense bernouilli matrix.
 
     random_state : integer, RandomState instance or None (default)
         Control the pseudo random number generator used to generate the
@@ -205,33 +204,38 @@ def bernouilli_random_matrix(n_components, n_features, density='auto',
     density = _check_density(density, n_features)
     rng = check_random_state(random_state)
 
-    # placeholders for the CSR datastructure
-    indices = []
-    offset = 0
-    indptr = [offset]
-    for i in xrange(n_components):
-        # find the indices of the non-zero components for row i
-        n_nonzero_i = rng.binomial(n_features, density)
-        indices_i = sample_int(n_features, n_nonzero_i,
-                               random_state=rng)
-        indices.append(indices_i)
+    if density == 1:
+        # efficient implementation for dense bernouilli projection
+        rp_matrix = rng.binomial(1, 0.5, (n_components, n_features)) * 2 - 1
+        return 1 / np.sqrt(n_components) * rp_matrix
 
-        # # among non zero components the probability of the sign is 50%/50%
-        offset += n_nonzero_i
-        indptr.append(offset)
+    else:
+        # Generate location of non zero element
+        indices = []
+        offset = 0
+        indptr = [offset]
+        for i in xrange(n_components):
+            # find the indices of the non-zero components for row i
+            n_nonzero_i = rng.binomial(n_features, density)
+            indices_i = sample_int(n_features, n_nonzero_i,
+                                   random_state=rng)
+            indices.append(indices_i)
 
-    indices = np.concatenate(indices)
+            # among non zero components the probability of the sign is
+            # 50%/50%
+            offset += n_nonzero_i
+            indptr.append(offset)
 
-    # Generate data
-    data = np.ones(shape=len(indices), dtype=np.float)
-    u = rng.uniform(size=data.shape)
-    data[u < 0.5] *= -1
+        indices = np.concatenate(indices)
 
-    # build the CSR structure by concatenating the rows
-    r = sp.csr_matrix((data, indices, indptr),
-                      shape=(n_components, n_features))
+        # Generate data
+        data = rng.binomial(1, 0.5, size=len(indices)) * 2 - 1
 
-    return math.sqrt(1 / density) / math.sqrt(n_components) * r
+        # build the CSR structure by concatenating the rows
+        rp_matrix = sp.csr_matrix((data, indices, indptr),
+                                  shape=(n_components, n_features))
+
+        return np.sqrt(1 / density) / np.sqrt(n_components) * rp_matrix
 
 
 class BaseRandomProjection(BaseEstimator, TransformerMixin):
@@ -330,8 +334,8 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
         assert_equal(
             self.components_.shape,
             (self.n_components_, n_features),
-            err_msg=('An error has occured the projection matrix has not '
-                     'the proper shape.'))
+            err_msg=('An error has occured the self.components_ matrix has not'
+                     ' the proper shape.'))
 
         return self
 
@@ -471,7 +475,7 @@ class BernouilliRandomProjection(BaseRandomProjection):
         Use density = 1 / 3.0 if you want to reproduce the results from
         Achlioptas, 2001.
 
-        Use density = 1 if you want to get a dense Bernouilli random matrix.
+        Use density = 1 if you want dense bernouilli random projection.
 
     eps : strictly positive float, optional, default 0.1
         Parameter to control the quality of the embedding according to

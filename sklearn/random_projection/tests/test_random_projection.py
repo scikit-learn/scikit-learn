@@ -16,13 +16,13 @@ from sklearn.random_projection.random_projection import (
 
 from sklearn.random_projection._random_projection import sample_int
 
-from sklearn.utils.testing import (assert_less,
-                                   assert_raises, assert_raise_message,
-                                   assert_array_equal,
-                                   assert_equal, assert_almost_equal,
-                                   assert_in,
-                                   assert_true,
-                                   )
+from sklearn.utils.testing import (
+    assert_less,
+    assert_raises, assert_raise_message,
+    assert_array_equal,
+    assert_equal, assert_almost_equal,
+    assert_in,
+    assert_true)
 
 all_sparse_random_matrix = [bernouilli_random_matrix]
 all_dense_random_matrix = [gaussian_random_matrix]
@@ -44,6 +44,13 @@ def make_sparse_random_data(n_samples, n_features, n_nonzeros):
          rng.randint(n_features, size=n_nonzeros))),
         shape=(n_samples, n_features))
     return data_coo.toarray(), data_coo.tocsr()
+
+
+def densify(matrix):
+    if not sp.issparse(matrix):
+        return matrix
+    else:
+        return np.array(matrix.todense())
 
 
 n_samples, n_features = (10, 1000)
@@ -154,12 +161,6 @@ def check_zero_mean_and_unit_norm(random_matrix):
     # All random matrix should produce a transformation matrix
     # with zero mean and unit norm for each columns
 
-    def densify(matrix):
-        if not sp.issparse(matrix):
-            return matrix
-        else:
-            return np.array(matrix.todense())
-
     A = densify(random_matrix(10000, 1, random_state=0))
 
     assert_allclose(0, np.mean(A), atol=10 ** -3)
@@ -183,6 +184,12 @@ def test_basic_property_of_random_matrix():
 
     for random_matrix in all_sparse_random_matrix:
         check_input_with_sparse_random_matrix(random_matrix)
+
+        random_matrix_dense = \
+            lambda n_components, n_features, random_state: random_matrix(
+                n_components, n_features, random_state=random_state,
+                density=1.0)
+        check_zero_mean_and_unit_norm(random_matrix_dense)
 
 
 def test_gaussian_random_matrix():
@@ -208,10 +215,11 @@ def test_bernouilli_random_matrix():
     for density in [0.3, 1.]:
         s = 1 / density
 
-        A = np.array(bernouilli_random_matrix(n_components,
-                                              n_features,
-                                              density=density,
-                                              random_state=0).todense())
+        A = bernouilli_random_matrix(n_components,
+                                     n_features,
+                                     density=density,
+                                     random_state=0)
+        A = densify(A)
 
         # Check possible values
         values = np.unique(A)
