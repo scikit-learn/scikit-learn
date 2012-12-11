@@ -13,6 +13,7 @@ better
 # License: BSD Style.
 
 from itertools import izip
+import warnings
 import numpy as np
 from scipy.sparse import coo_matrix
 
@@ -80,7 +81,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
     return CM
 
 
-def roc_curve(y_true, y_score):
+def roc_curve(y_true, y_score, pos_label=None):
     """compute Receiver operating characteristic (ROC)
 
     Note: this implementation is restricted to the binary classification task.
@@ -89,19 +90,23 @@ def roc_curve(y_true, y_score):
     ----------
 
     y_true : array, shape = [n_samples]
-        true binary labels
+        true binary labels in range {0, 1} or {-1, 1}.
+        If labels are not binary, pos_label should be explictly given.
 
     y_score : array, shape = [n_samples]
         target scores, can either be probability estimates of
         the positive class, confidence values, or binary decisions.
 
+    pos_label : int
+        label considered as positive and others are considered negative.
+
     Returns
     -------
     fpr : array, shape = [>2]
-        False Positive Rates
+        False Positive Rates.
 
     tpr : array, shape = [>2]
-        True Positive Rates
+        True Positive Rates.
 
     thresholds : array, shape = [>2]
         Thresholds on y_score used to compute fpr and tpr.
@@ -118,7 +123,7 @@ def roc_curve(y_true, y_score):
     >>> from sklearn import metrics
     >>> y = np.array([1, 1, 2, 2])
     >>> scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, tpr, thresholds = metrics.roc_curve(y, scores)
+    >>> fpr, tpr, thresholds = metrics.roc_curve(y, scores, pos_label=2)
     >>> fpr
     array([ 0. ,  0.5,  0.5,  1. ])
 
@@ -128,19 +133,37 @@ def roc_curve(y_true, y_score):
 
     """
     y_true = np.ravel(y_true)
+    y_score = np.ravel(y_score)
     classes = np.unique(y_true)
 
-    # ROC only for binary classification
-    if classes.shape[0] != 2:
-        raise ValueError("ROC is defined for binary classification only")
+    # ROC only for binary classification if pos_label not given
+    if (pos_label is None and
+        not (np.all(classes == [0, 1]) or
+             np.all(classes == [-1, 1]) or
+             np.all(classes == [0]) or
+             np.all(classes == [-1]) or
+             np.all(classes == [1]))):
+        raise ValueError("ROC is defined for binary classification only or "
+                         "pos_label should be explicitly given")
+    elif pos_label is None:
+        pos_label = 1.
 
-    y_score = np.ravel(y_score)
+    # y_true will be transformed into a boolean vector
+    y_true = (y_true == pos_label)
+    n_pos = float(y_true.sum())
+    n_neg = y_true.shape[0] - n_pos
 
-    n_pos = float(np.sum(y_true == classes[1]))  # nb of true positive
-    n_neg = float(np.sum(y_true == classes[0]))  # nb of true negative
+    if n_pos == 0:
+        warnings.warn("No positive samples in y_true, "
+                      "true positve value should be meaningless")
+        n_pos = np.nan
+    if n_neg == 0:
+        warnings.warn("No negative samples in y_true, "
+                      "false positve value should be meaningless")
+        n_neg = np.nan
 
     thresholds = np.unique(y_score)
-    neg_value, pos_value = classes[0], classes[1]
+    neg_value, pos_value = False, True
 
     tpr = np.empty(thresholds.size, dtype=np.float)  # True positive rate
     fpr = np.empty(thresholds.size, dtype=np.float)  # False positive rate
@@ -178,6 +201,12 @@ def roc_curve(y_true, y_score):
     elif fpr.shape[0] == 1:
         fpr = np.array([0.0, fpr[0], 1.0])
         tpr = np.array([0.0, tpr[0], 1.0])
+
+    if n_pos is np.nan:
+        tpr[0] = np.nan
+
+    if n_neg is np.nan:
+        fpr[0] = np.nan
 
     return fpr, tpr, thresholds[::-1]
 
@@ -278,7 +307,7 @@ def auc(x, y, reorder=False):
     >>> from sklearn import metrics
     >>> y = np.array([1, 1, 2, 2])
     >>> pred = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred)
+    >>> fpr, tpr, thresholds = metrics.roc_curve(y, pred, pos_label=2)
     >>> metrics.auc(fpr, tpr)
     0.75
 
