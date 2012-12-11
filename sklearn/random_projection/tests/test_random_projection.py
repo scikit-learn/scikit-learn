@@ -7,13 +7,12 @@ from numpy.testing import assert_allclose
 
 from sklearn.metrics import euclidean_distances
 from sklearn.random_projection.random_projection import (
-   johnson_lindenstrauss_min_dim,
-   gaussian_random_matrix,
-   bernouilli_random_matrix,
-   BernouilliRandomProjection,
-   GaussianRandomProjection,
-   BaseRandomProjection,
-   )
+    johnson_lindenstrauss_min_dim,
+    gaussian_random_matrix,
+    bernouilli_random_matrix,
+    BernouilliRandomProjection,
+    GaussianRandomProjection,
+    BaseRandomProjection)
 
 from sklearn.random_projection._random_projection import sample_int
 
@@ -332,7 +331,7 @@ def test_SparseRandomProjection_output_representation():
         # when using sparse input, the projected data can be forced to be a
         # dense numpy array
         rp = SparseRandomProjection(n_components=10, dense_output=True,
-                              random_state=0)
+                                    random_state=0)
         rp.fit(data)
         assert isinstance(rp.transform(data), np.ndarray)
 
@@ -341,7 +340,7 @@ def test_SparseRandomProjection_output_representation():
 
         # the output can be left to a sparse matrix instead
         rp = SparseRandomProjection(n_components=10, dense_output=False,
-                              random_state=0)
+                                    random_state=0)
         rp = rp.fit(data)
         # output for dense input will stay dense:
         assert isinstance(rp.transform(data), np.ndarray)

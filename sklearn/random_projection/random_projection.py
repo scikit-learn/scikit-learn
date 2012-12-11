@@ -29,7 +29,6 @@ Johnson-Lindenstrauss lemma (quoting Wikipedia):
 
 from __future__ import division
 import math
-import random
 import warnings
 
 import numpy as np
