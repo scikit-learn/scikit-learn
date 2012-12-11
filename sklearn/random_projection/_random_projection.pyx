@@ -20,6 +20,7 @@ cpdef sample_int(np.int_t n_population, np.int_t n_samples, random_state=None):
     Select n_samples integers from the set [0, n_population) without
     replacement.
 
+
     Parameters
     ----------
     n_population : int,
@@ -51,14 +52,14 @@ cpdef sample_int(np.int_t n_population, np.int_t n_samples, random_state=None):
     cdef np.ndarray[np.int_t, ndim=1] result = np.empty((n_samples, ),
                                                         dtype=np.int)
 
-    cdef set selected = set()
-    selected_add = selected.add
-
     rng = check_random_state(random_state)
     rng_randint = rng.randint
 
     # The following line of code are heavily inspired from python core,
     # more precisely of random.sample.
+    cdef set selected = set()
+    selected_add = selected.add
+
     for i in range(n_samples):
         j = rng_randint(n_population)
         while j in selected:
@@ -69,8 +70,16 @@ cpdef sample_int(np.int_t n_population, np.int_t n_samples, random_state=None):
     # If memory is an issue it might be interesting to integrate this
     # cython implementation by Robert Kern:
     # http://mail.scipy.org/pipermail/numpy-discussion/2010-December/
+    # 054289.html
     #
-    # for i from range(n_samples):
+    # Note on the reservoir sampling implementation:
+    #  + The order of the items is not necessarily random. Use a random
+    # permuatation of the array if you need the  order of the items to be
+    # randomized.
+    #  + Time complexity of O(n_population)
+    #  + Space complexity of O(n_samples)
+    #
+    # for i in range(n_samples):
     #     result[i] = i
     #
     # for i from n_samples <= i < n_population:
@@ -79,3 +88,5 @@ cpdef sample_int(np.int_t n_population, np.int_t n_samples, random_state=None):
     #         result[j] = i
 
     return result
+
+
