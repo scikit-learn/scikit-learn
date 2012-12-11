@@ -143,6 +143,7 @@ class BaseWeightBoosting(BaseEnsemble):
 
         for iboost in xrange(self.n_estimators):
             estimator = self._make_estimator()
+            print estimator
             if hasattr(estimator, 'fit_predict'):
                 # optim for estimators that are able to save redundant
                 # computations when calling fit + predict
@@ -171,6 +172,8 @@ class BaseWeightBoosting(BaseEnsemble):
             if iboost < self.n_estimators - 1:
                 # normalize
                 sample_weight /= sample_weight.sum()
+
+        print self.estimators_
 
         # Sum the importances
         try:
@@ -583,11 +586,6 @@ class AdaBoostRegressor(BaseWeightBoosting, WeightedRegressorMixin):
         if err == 0:
             self.boost_weights_.append(1.)
             self.errs_.append(err)
-            return None, None, None
-
-        # stop if the error is at least as bad as random guessing
-        if err >= .5:
-            self.estimators_.pop(-1)
             return None, None, None
 
         # negative sample weights can yield an overall negative error...
