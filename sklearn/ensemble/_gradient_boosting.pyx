@@ -116,7 +116,7 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
 
     for i in range(n_estimators):
         for k in range(K):
-            tree = estimators[i, k]
+            tree = estimators[i, k].tree_
 
             # avoid buffer validation by casting to ndarray
             # and get data pointer
@@ -150,7 +150,7 @@ def predict_stage(np.ndarray[object, ndim=2] estimators,
     cdef Py_ssize_t K = estimators.shape[1]
     cdef Tree tree
     for k in range(K):
-        tree = estimators[stage, k]
+        tree = estimators[stage, k].tree_
 
         _predict_regression_tree_inplace_fast(
                 <DTYPE_t*>(X.data),
