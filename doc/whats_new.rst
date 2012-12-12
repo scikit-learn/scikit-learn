@@ -79,6 +79,9 @@ Changelog
      :func:`manifold.spectral_embedding`, implementing the
      "laplacian eigenmaps" for nonlinear dimensionality reduction by Wei Li.
 
+   - Fix :func:`metrics.roc_curve` fails when y_true has only one class 
+     by Wei Li.
+
 API changes summary
 -------------------
    - Renamed all occurences of ``n_atoms`` to ``n_components`` for consistency.
