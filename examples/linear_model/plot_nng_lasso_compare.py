@@ -43,10 +43,10 @@ for alpha_val, fig_num in ((0.35, 1), (0.45, 2), (0.55, 3), (0.65, 4)):
             # CHECK: Do example with 10 featues, three relevant, 3rd = X1 + X2
             X1 = rng.randn(sample_size)
             X2 = rng.randn(sample_size)
-            X3 = np.sqrt(1 - 2 * alpha_val**2) * rng.randn(sample_size) \
-                + alpha_val * (X1 + X2)
+            X3 = (np.sqrt(1 - 2 * alpha_val**2) * rng.randn(sample_size)
+                  + alpha_val * (X1 + X2))
             X = np.c_[X1, X2, X3]
-            y = np.dot(X, coef)
+            y = np.dot(X, coef) + rng.randn(sample_size)
 
             # get the lasso's coefficients
             _, _, lars_coefs = lars_path(X, y, method='lasso')
