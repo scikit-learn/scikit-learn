@@ -16,26 +16,6 @@ from ..utils.extmath import safe_sparse_dot
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
 
 
-def _get_class_weight(class_weight, y):
-    """Estimate class weights for unbalanced datasets."""
-    if class_weight == 'auto':
-        uy = np.unique(y)
-        weight_label = np.asarray(uy, dtype=np.int32, order='C')
-        weight = np.array([1.0 / np.sum(y == i) for i in uy],
-                          dtype=np.float64, order='C')
-        weight *= uy.shape[0] / np.sum(weight)
-    else:
-        if class_weight is None:
-            keys = values = []
-        else:
-            keys = class_weight.keys()
-            values = class_weight.values()
-        weight = np.asarray(values, dtype=np.float64, order='C')
-        weight_label = np.asarray(keys, dtype=np.int32, order='C')
-
-    return weight, weight_label
-
-
 def _one_vs_one_coef(dual_coef, n_support, support_vectors):
     """Generate primal coefficients from dual coefficients
     for the one-vs-one multi class LibSVM in the case
