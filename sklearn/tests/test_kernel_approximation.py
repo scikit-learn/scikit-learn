@@ -2,7 +2,7 @@ import numpy as np
 from scipy.sparse import csr_matrix
 
 from sklearn.utils.testing import assert_array_equal, assert_equal
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal, assert_raises
 
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.kernel_approximation import AdditiveChi2Sampler
@@ -35,6 +35,7 @@ def test_additive_chi2_sampler():
     transform = AdditiveChi2Sampler(sample_steps=3)
     X_trans = transform.fit_transform(X)
     Y_trans = transform.transform(Y)
+
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
     assert_array_almost_equal(kernel, kernel_approx, 1)
@@ -44,6 +45,15 @@ def test_additive_chi2_sampler():
 
     assert_array_equal(X_trans, X_sp_trans.A)
     assert_array_equal(Y_trans, Y_sp_trans.A)
+
+    # test error is raised on negative input
+    Y_neg = Y.copy()
+    Y_neg[0, 0] = -1
+    assert_raises(ValueError, transform.transform, Y_neg)
+
+    # test error on invalid sample_steps
+    transform = AdditiveChi2Sampler(sample_steps=4)
+    assert_raises(ValueError, transform.fit, X)
 
 
 def test_skewed_chi2_sampler():
@@ -57,8 +67,8 @@ def test_skewed_chi2_sampler():
 
     # we do it in log-space in the hope that it's more stable
     # this array is n_samples_x x n_samples_y big x n_features
-    log_kernel = ((np.log(X_c) / 2.) + (np.log(Y_c) / 2.) +
-        np.log(2.) - np.log(X_c + Y_c))
+    log_kernel = ((np.log(X_c) / 2.) + (np.log(Y_c) / 2.) + np.log(2.) -
+                  np.log(X_c + Y_c))
     # reduce to n_samples_x x n_samples_y by summing over features in log-space
     kernel = np.exp(log_kernel.sum(axis=2))
 
@@ -67,8 +77,14 @@ def test_skewed_chi2_sampler():
                                   random_state=42)
     X_trans = transform.fit_transform(X)
     Y_trans = transform.transform(Y)
+
     kernel_approx = np.dot(X_trans, Y_trans.T)
     assert_array_almost_equal(kernel, kernel_approx, 1)
+
+    # test error is raised on negative input
+    Y_neg = Y.copy()
+    Y_neg[0, 0] = -1
+    assert_raises(ValueError, transform.transform, Y_neg)
 
 
 def test_rbf_sampler():
