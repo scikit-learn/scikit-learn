@@ -175,7 +175,7 @@ classifier what is the digit of our last image in the `digits` dataset,
 which we have not used to train the classifier::
 
   >>> clf.predict(digits.data[-1])
-  array([ 8.])
+  array([8])
 
 The corresponding image is the following:
 
@@ -212,7 +212,7 @@ persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_
   >>> s = pickle.dumps(clf)
   >>> clf2 = pickle.loads(s)
   >>> clf2.predict(X[0])
-  array([ 0.])
+  array([0])
   >>> y[0]
   0
 
