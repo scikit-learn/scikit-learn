@@ -148,6 +148,7 @@ def test_estimators_sparse_data():
 def test_transformers():
     # test if transformers do something sensible on training set
     # also test all shapes / shape errors
+    np.random.seed(12345)
     estimators = all_estimators()
     transformers = [(name, E) for name, E in estimators if issubclass(E,
         TransformerMixin)]
