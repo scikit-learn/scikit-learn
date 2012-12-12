@@ -504,7 +504,7 @@ def test_classifiers_classes():
     estimators = all_estimators()
     classifiers = [(name, E) for name, E in estimators if issubclass(E,
         ClassifierMixin)]
-    X, y = make_blobs()
+    X, y = make_blobs(random_state=12345)
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
     y = 2 * y + 1
