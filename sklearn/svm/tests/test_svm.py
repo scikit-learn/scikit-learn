@@ -336,11 +336,13 @@ def test_auto_weight():
     # we take as dataset a the two-dimensional projection of iris so
     # that it is not separable and remove half of predictors from
     # class 1
-    from sklearn.svm.base import _get_class_weight
+    from sklearn.utils import compute_class_weight
     X, y = iris.data[:, :2], iris.target
     unbalanced = np.delete(np.arange(y.size), np.where(y > 1)[0][::2])
-
-    assert_true(np.argmax(_get_class_weight('auto', y[unbalanced])[0]) == 2)
+    
+    classes = np.unique(y[unbalanced])
+    class_weights = compute_class_weight('auto', classes, y[unbalanced])
+    assert_true(np.argmax(class_weights) == 2)
 
     for clf in (svm.SVC(kernel='linear'), svm.LinearSVC(random_state=0),
                 LogisticRegression()):
