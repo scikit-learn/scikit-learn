@@ -90,7 +90,7 @@ training samples::
 After being fitted, the model can then be used to predict new values::
 
     >>> clf.predict([[2., 2.]])
-    array([ 1.])
+    array([1])
 
 SVMs decision function depends on some subset of the training data,
 called the support vectors. Some properties of these support vectors
@@ -471,7 +471,7 @@ vectors and the test vectors must be provided.
     shrinking=True, tol=0.001, verbose=False)
     >>> # predict on training examples
     >>> clf.predict(gram)
-    array([ 0.,  1.])
+    array([0, 1])
 
 Parameters of the RBF Kernel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
