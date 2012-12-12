@@ -90,10 +90,13 @@ Changelog
      kernels to the :ref:`kernel_approximation` module by `Andreas Müller`_.
 
    - Improve consistency in :mod:`ensemble.gradient_boosting`: estimators
-    :class:`ensemble.gradient_boosting.GradientBoostingRegressor` and
-    :class:`ensemble.gradient_boosting.GradientBoostingClassifier` use
-    the estimator :class:`tree.DecisionTreeRegressor` instead of the
-    :class:`tree._tree.Tree` datastructure by `Arnaud Joly`_.
+     :class:`ensemble.gradient_boosting.GradientBoostingRegressor` and
+     :class:`ensemble.gradient_boosting.GradientBoostingClassifier` use
+     the estimator :class:`tree.DecisionTreeRegressor` instead of the
+     :class:`tree._tree.Tree` datastructure by `Arnaud Joly`_.
+
+   - Fixed a floating point exception in the :ref:`decision trees <tree>` 
+     module, by Seberg. 
 
 API changes summary
 -------------------
