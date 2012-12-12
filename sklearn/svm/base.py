@@ -166,10 +166,7 @@ class BaseLibSVM(BaseEstimator):
             self.classes_, y = unique(y, return_inverse=True)
             self.class_weight_ = compute_class_weight(self.class_weight,
                                                       self.classes_, y)
-            self.class_weight_label_ = np.arange(len(self.classes_),
-                                                 dtype=np.int32)
         else:
-            self.class_weight_label_ = np.empty(0, dtype=np.int32)
             self.class_weight_ = np.empty(0)
         if self.impl != "one_class" and len(np.unique(y)) < 2:
             raise ValueError("The number of classes has to be greater than"
@@ -678,8 +675,6 @@ class BaseLibLinear(BaseEstimator):
             raise ValueError("The number of classes has to be greater than"
                              " one.")
 
-        self.class_weight_label_ = np.arange(len(self.classes_),
-                                             dtype=np.int32)
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         y = np.asarray(y, dtype=np.float64).ravel()
 
@@ -703,7 +698,7 @@ class BaseLibLinear(BaseEstimator):
             print '[LibLinear]',
         self.raw_coef_ = train(X, y, self._get_solver_type(), self.tol,
                                self._get_bias(), self.C,
-                               self.class_weight_label_, self.class_weight_,
+                               self.class_weight_,
                                # seed for srand in range [0..INT_MAX);
                                # due to limitations in Numpy on 32-bit
                                # platforms, we can't get to the UINT_MAX
