@@ -426,9 +426,9 @@ cdef class Tree:
         cdef DOUBLE_t* y_ptr = <DOUBLE_t*> y.data
         cdef BOOL_t* sample_mask_ptr = <BOOL_t*> sample_mask.data
 
-        cdef int X_stride = <int> X.strides[1] / <int> X.strides[0]
-        cdef int X_argsorted_stride = <int> X_argsorted.strides[1] / <int> X_argsorted.strides[0]
-        cdef int y_stride = <int> y.strides[0] / <int> y.strides[1]
+        cdef int X_stride = <int> X.strides[1] / <int> X.itemsize
+        cdef int X_argsorted_stride = <int> X_argsorted.strides[1] / <int> X_argsorted.itemsize
+        cdef int y_stride = <int> y.strides[0] / <int> y.itemsize
 
         cdef int n_total_samples = y.shape[0]
         cdef int feature
@@ -482,14 +482,14 @@ cdef class Tree:
                 n_total_samples = n_node_samples
 
                 X_ptr = <DTYPE_t*> X.data
-                X_stride = <int> X.strides[1] / <int> X.strides[0]
+                X_stride = <int> X.strides[1] / <int> X.itemsize
                 sample_mask_ptr = <BOOL_t*> sample_mask.data
 
                 # !! No need to update the other variables
                 # X_argsorted_ptr = <int*> X_argsorted.data
                 # y_ptr = <DOUBLE_t*> y.data
-                # X_argsorted_stride = <int> X_argsorted.strides[1] / <int> X_argsorted.strides[0]
-                # y_stride = <int> y.strides[0] / <int> y.strides[1]
+                # X_argsorted_stride = <int> X_argsorted.strides[1] / <int> X_argsorted.itemsize
+                # y_stride = <int> y.strides[0] / <int> y.itemsize
 
             # Split
             X_ptr = X_ptr + feature * X_stride
