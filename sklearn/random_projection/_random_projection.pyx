@@ -26,15 +26,27 @@ cpdef _sample_int_check_input(np.int_t n_population, np.int_t n_samples):
                          'n_samples, got n_samples > n_population (%s > %s)'
                          % (n_samples, n_population))
 
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef sample_int_with_set_based_method(np.int_t n_population,
-                                       np.int_t n_samples,
-                                       random_state=None):
+cpdef sample_int_with_tracking_selection(np.int_t n_population,
+                                         np.int_t n_samples,
+                                         random_state=None):
     """Sample integers without replacement.
 
     Select n_samples integers from the set [0, n_population) without
     replacement.
+
+    Time complexity:
+        - Worst-case: unbounded
+        - Average-case:
+            O(\sum_{i=1}^n_samples 1 / (1 - i / n_population)))
+            <= O(n_population * ln((n_population - 2)
+                                   /(n_population - 1 - n_samples)))
+            <= O(n_population * 1 / (n_population / n_samples - 1))
+
+    Space complexity of O(n_samples)
+
 
     Parameters
     ----------
@@ -68,13 +80,12 @@ cpdef sample_int_with_set_based_method(np.int_t n_population,
     # The following line of code are heavily inspired from python core,
     # more precisely of random.sample.
     cdef set selected = set()
-    selected_add = selected.add
 
     for i in range(n_samples):
         j = rng_randint(n_population)
         while j in selected:
             j = rng_randint(n_population)
-        selected_add(j)
+        selected.add(j)
         result[i] = j
 
     return result
@@ -124,7 +135,7 @@ cpdef sample_int_with_reservoir_sampling(np.int_t n_population,
     rng = check_random_state(random_state)
     rng_randint = rng.randint
 
-    # This cython implementation  is based on the one of Robert Kern:
+    # This cython implementation is based on the one of Robert Kern:
     # http://mail.scipy.org/pipermail/numpy-discussion/2010-December/
     # 054289.html
     #
@@ -162,9 +173,9 @@ cpdef sample_int(np.int_t n_population, np.int_t n_samples, method="auto",
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    method: "auto", "set_based" or "reservoir_sampling"
+    method: "auto", "tracking_selection" or "reservoir_sampling"
         If method == "auto", an algorithm is automatically selected.
-        If method =="set_based", a set based implementation is used which is
+        If method =="tracking_selection", a set based implementation is used which is
         suitable for `n_samples` <<< `n_population`.
         If method == "reservoir_sampling", a reservoir samplingn algorithm
         which is suitable for high memory constraint or when
@@ -177,10 +188,10 @@ cpdef sample_int(np.int_t n_population, np.int_t n_samples, method="auto",
     """
     _sample_int_check_input(n_population, n_samples)
 
-    all_methods = ("auto", "set_based", "reservoir_sampling")
+    all_methods = ("auto", "tracking_selection", "reservoir_sampling")
 
-    if method == "auto" or method == "set_based":
-        return sample_int_with_set_based_method(n_population, n_samples,
+    if method == "auto" or method == "tracking_selection":
+        return sample_int_with_tracking_selection(n_population, n_samples,
                                                 random_state)
 
     elif method == "reservoir_sampling":
