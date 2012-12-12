@@ -232,7 +232,7 @@ if __name__ == "__main__":
     print("===========================")
     arguments = vars(opts)
     print("%s \t | %s " % ("Arguments".ljust(16),
-                           "fit".center(12),))
+                           "Value".center(12),))
     print(25 * "-" + ("|" + "-" * 14) * 1)
     for key, value in arguments.items():
         if key == "density":
