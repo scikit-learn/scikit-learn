@@ -28,7 +28,7 @@ from .metrics import (accuracy_score,
 from .metrics import zero_one
 from .metrics import zero_one_score
 
-from .score_objects import _score_obj_from_string, _score_obj_from_func
+from .score_objects import AsScorer, scorers
 
 from . import cluster
 from .cluster import (adjusted_rand_score,
@@ -80,4 +80,6 @@ __all__ = ['accuracy_score',
            'silhouette_score',
            'silhouette_samples',
            'v_measure_score',
-           'zero_one_loss']
+           'zero_one_loss',
+           'AsScorer',
+           'scorers']

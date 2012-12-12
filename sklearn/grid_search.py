@@ -18,9 +18,9 @@ from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
 from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
-from .utils import safe_mask, check_arrays
 from .utils.validation import _num_samples
-from .metrics import _score_obj_from_string, _score_obj_from_func
+from .utils import check_arrays, safe_mask
+from .metrics import scorers, AsScorer
 
 __all__ = ['GridSearchCV', 'IterGrid', 'fit_grid_point']
 
@@ -71,8 +71,8 @@ class IterGrid(object):
                 yield params
 
 
-def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
-                   score_func, verbose, **fit_params):
+def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
+                   verbose, loss_func=None, **fit_params):
     """Run fit on one set of parameters
 
     Returns the score and the instance of the classifier
@@ -80,7 +80,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
     if verbose > 1:
         start_time = time.time()
         msg = '%s' % (', '.join('%s=%s' % (k, v)
-                                for k, v in clf_params.iteritems()))
+                      for k, v in clf_params.iteritems()))
         print "[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.')
     # update parameters of the classifier after a copy of its base structure
     clf = clone(base_clf)
@@ -113,14 +113,13 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
         y_train = y[safe_mask(y, train)]
         clf.fit(X_train, y_train, **fit_params)
 
-        if score_func is not None:
-            this_score = score_func(clf, X_test, y_test)
+        if scorer is not None:
+            this_score = scorer(clf, X_test, y_test)
         else:
             this_score = clf.score(X_test, y_test)
     else:
         clf.fit(X_train, **fit_params)
         this_score = clf.score(X_test)
-
     if verbose > 2:
         msg += ", score=%f" % this_score
     if verbose > 1:
@@ -363,10 +362,9 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
             warnings.warn("Passing a loss function is "
                           "deprecated and will be removed in 0.15. "
                           "Either use strings or score objects.")
-            score_func = _score_obj_from_func(self.loss_func,
-                                        greater_is_better=False)()
+            scorer = AsScorer(self.loss_func, greater_is_better=False)
         elif isinstance(score_func, str):  # FIXME BaseString
-            score_func = _score_obj_from_string(score_func)
+            scorer = scorers[score_func]
         elif callable(score_func):
             # Check if "old style" score function or new scoring object.
             # Old style get (y, y_pred), new style get (estimator, X, y).
@@ -376,9 +374,9 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
                 warnings.warn("Passing function as ``score_func`` is "
                               "deprecated and will be removed in 0.15. "
                               "Either use strings or score objects.")
-                score_func = _score_obj_from_func(score_func)()
+                scorer = AsScorer(score_func)
         elif score_func is None:
-            pass
+            scorer = None
         else:
             raise ValueError("Invalid score_func. "
                              "Expected string or callable, got %s."
@@ -389,8 +387,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
                        pre_dispatch=pre_dispatch)(
                            delayed(fit_grid_point)(
                                X, y, base_clf, clf_params, train, test,
-                               self.loss_func, self.score_func, self.verbose,
-                               **self.fit_params)
+                               scorer, self.verbose, **self.fit_params)
                            for clf_params in grid for train, test in cv)
 
         # Out is a list of triplet: score, estimator, n_test_samples
@@ -421,8 +418,8 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
         # Note: we do not use max(out) to make ties deterministic even if
         # comparison on estimator instances is not deterministic
         greater_is_better = True
-        if score_func is not None:
-            greater_is_better = score_func.greater_is_better
+        if scorer is not None:
+            greater_is_better = scorer.greater_is_better
         if greater_is_better:
             best_score = -np.inf
         else:
@@ -430,7 +427,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
 
         for score, params in scores:
             if ((score > best_score and greater_is_better)
-               or (score < best_score and not greater_is_better)):
+                    or (score < best_score and not greater_is_better)):
                 best_score = score
                 best_params = params
 
@@ -459,9 +456,9 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
     def score(self, X, y=None):
         if hasattr(self.best_estimator_, 'score'):
             return self.best_estimator_.score(X, y)
-        if self.score_func is None:
+        if self.scorer is None:
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
         y_predicted = self.predict(X)
-        return self.score_func(y, y_predicted)
+        return self.scorer(y, y_predicted)
