@@ -180,7 +180,8 @@ def test_transformers():
         # fit
 
         if Trans in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
-            y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
+            random_state = np.random.RandomState(seed=12345)
+            y_ = np.vstack([y, 2 * y + random_state.randint(2, size=len(y))])
             y_ = y_.T
         else:
             y_ = y
