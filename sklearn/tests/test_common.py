@@ -501,6 +501,7 @@ def test_classifiers_train():
 
 def test_classifiers_classes():
     # test if classifiers can cope with non-consecutive classes
+    np.random.seed(12345)
     estimators = all_estimators()
     classifiers = [(name, E) for name, E in estimators if issubclass(E,
         ClassifierMixin)]
