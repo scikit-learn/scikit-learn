@@ -7,7 +7,7 @@ The module structure is the following:
 
 - The ``BaseAdaBoost`` base class implements a common ``fit`` method
   for all the estimators in the module. Regression and classification
-  only differ the the concrete ``LossFunction`` used.
+  only differ from each other in the loss function that is optimized.
 
 - ``AdaBoostClassifier`` implements adaptive boosting (AdaBoost-SAMME) for
   classification problems.
@@ -16,7 +16,7 @@ The module structure is the following:
   regression problems.
 """
 
-# Authors: Noel Dawe
+# Authors: Noel Dawe, Gilles Louppe
 # License: BSD Style
 
 import numpy as np
@@ -110,7 +110,7 @@ class BaseWeightBoosting(BaseEnsemble):
             classification, real numbers in regression).
 
         sample_weight : array-like of shape = [n_samples], optional
-            Sample weights
+            Sample weights.
 
         Returns
         -------
