@@ -345,7 +345,27 @@ class ConvergenceWarning(Warning):
 
 
 def compute_class_weight(class_weight, classes, y):
-    """Estimate class weights for unbalanced datasets."""
+    """Estimate class weights for unbalanced datasets.
+
+    Parameters
+    ----------
+    class_weight : dict or 'auto'
+        If 'auto', class weights will be given inverse proportional
+        to the frequency of the class in the data.
+        If a dictionary is given, keys are classes and values
+        are corresponding class weights.
+    classes : list
+        List of the classes occuring in the data, as given by
+        ``np.unique(y_org)`` with ``y_org`` the original class labels.
+    y : array-like, shape=(n_samples,), dtype=int
+        Array of class-indices for 0 to n_classes.
+
+    Returns
+    -------
+    class_weight_vect : ndarray, shape=(n_classes,)
+        Array with class_weight_vect[i] the weight for i-th class
+        (as determined by sorting).
+    """
     if class_weight is None or len(class_weight) == 0:
         # uniform class weights
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
