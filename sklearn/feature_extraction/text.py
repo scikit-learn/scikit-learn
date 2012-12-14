@@ -10,6 +10,7 @@ The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
 build feature vectors from text documents.
 """
 
+from abc import ABCMeta
 from collections import Mapping
 from operator import itemgetter
 import re
@@ -86,8 +87,14 @@ def _check_stop_list(stop):
 
 
 
-class BaseVectorizer(BaseEstimator):
-    """Abstract base class to factorozer text tokenization logics"""
+class BaseVectorizer(BaseEstimator, TransformerMixin):
+    """Abstract base class to factorozer text tokenization logics.
+
+    Warning: This class should not be used directly. Use derived classes
+    instead.
+
+    """
+    __metaclass__ = ABCMeta
 
     _white_spaces = re.compile(ur"\s\s+")
 
