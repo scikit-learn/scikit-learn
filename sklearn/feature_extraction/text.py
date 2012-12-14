@@ -87,7 +87,7 @@ def _check_stop_list(stop):
 
 
 
-class BaseVectorizer(BaseEstimator, TransformerMixin):
+class BaseVectorizer(object):
     """Abstract base class to factorozer text tokenization logics.
 
     Warning: This class should not be used directly. Use derived classes
@@ -235,7 +235,7 @@ class BaseVectorizer(BaseEstimator, TransformerMixin):
             raise ValueError('%s is not a valid tokenization scheme/analyzer' %
                              self.analyzer)
 
-class HashingVectorizer(BaseVectorizer):
+class HashingVectorizer(BaseEstimator, BaseVectorizer):
     """Convert a collection of text documents to a matrix of token occurrences
 
     It turns a collection of text documents into a scipy.sparse matrix holding
@@ -333,7 +333,7 @@ class HashingVectorizer(BaseVectorizer):
         will be removed from the resulting tokens.
 
     lowercase: boolean, default True
-        Convert all characters to lowercase befor tokenizing.
+        Convert all characters to lowercase before tokenizing.
 
     token_pattern: string
         Regular expression denoting what constitutes a "token", only used
@@ -434,13 +434,17 @@ class HashingVectorizer(BaseVectorizer):
             X = normalize(X, norm=self.norm, copy=False)
         return X
 
+    # Alias transform to fit_transform for convenience
+    fit_transform = transform
+
     def _get_hasher(self):
         return FeatureHasher(n_features=self.n_features,
                              input_type='string', dtype=self.dtype,
                              non_negative=self.non_negative)
 
 
-class CountVectorizer(BaseVectorizer):
+
+class CountVectorizer(BaseEstimator, BaseVectorizer):
     """Convert a collection of text documents to a matrix of token counts
 
     This implementation produces a sparse representation of the counts using
@@ -515,7 +519,7 @@ class CountVectorizer(BaseVectorizer):
         words based on intra corpus document frequency of terms.
 
     lowercase : boolean, default True
-        Convert all characters to lowercase befor tokenizing.
+        Convert all characters to lowercase before tokenizing.
 
     token_pattern : string
         Regular expression denoting what constitutes a "token", only used
@@ -1015,7 +1019,7 @@ class TfidfVectorizer(CountVectorizer):
         words based on intra corpus document frequency of terms.
 
     lowercase : boolean, default True
-        Convert all characters to lowercase befor tokenizing.
+        Convert all characters to lowercase before tokenizing.
 
     token_pattern : string
         Regular expression denoting what constitutes a "token", only used
