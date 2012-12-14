@@ -23,6 +23,7 @@ import scipy.sparse as sp
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import normalize
 from ..utils.fixes import Counter
+from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 
 __all__ = ['CountVectorizer',
@@ -341,11 +342,6 @@ class HashingVectorizer(BaseVectorizer):
     norm : 'l1', 'l2' or None, optional
         Norm used to normalize term vectors. None for no normalization.
 
-    vocabulary: Mapping or iterable, optional
-        Either a Mapping (e.g., a dict) where keys are terms and values are
-        indices in the feature matrix, or an iterable over terms. If not
-        given, a vocabulary is determined from the input documents.
-
     binary: boolean, False by default.
         If True, all non zero counts are set to 1. This is useful for discrete
         probabilistic models that model binary events rather than integer
@@ -370,8 +366,9 @@ class HashingVectorizer(BaseVectorizer):
                  charset_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
                  stop_words=None, token_pattern=ur"(?u)\b\w\w+\b",
-                 ngram_range=(1, 1), analyzer='word', norm='l2',
-                 n_features=(2 ** 20), binary=False, dtype=long):
+                 ngram_range=(1, 1), analyzer='word', n_features=(2 ** 20),
+                 binary=False, norm='l2', non_negative=False,
+                 dtype=np.float64):
         self.input = input
         self.charset = charset
         self.charset_error = charset_error
@@ -386,6 +383,7 @@ class HashingVectorizer(BaseVectorizer):
         self.ngram_range = ngram_range
         self.binary = binary
         self.norm = norm
+        self.non_negative = non_negative
         self.dtype = dtype
 
     def partial_fit(self, X, y=None):
@@ -399,10 +397,40 @@ class HashingVectorizer(BaseVectorizer):
 
     def fit(self, X, y=None):
         """Does nothing: this transformer is stateless."""
+        # triggers a parameter validation
+        self._get_hasher().fit(X, y=y)
         return self
 
-    def transform(self, X):
+    def transform(self, X, y=None):
+        """Transform a sequence of instances to a scipy.sparse matrix.
 
+        Parameters
+        ----------
+        X : iterable over raw text documents, length = n_samples
+            Samples. Each sample must be a text document (either bytes or
+            unicode strings, filen ame or file object depending on the
+            constructor argument) which will be tokenized and hashed.
+
+        y : (ignored)
+
+        Returns
+        -------
+        X : scipy.sparse matrix, shape = (n_samples, self.n_features)
+            Feature matrix, for use with estimators or further transformers.
+
+        """
+        analyzer = self.build_analyzer()
+        X = self._get_hasher().transform(analyzer(doc) for doc in X)
+        if self.binary:
+            X.data.fill(1)
+        if self.norm is not None:
+            X = normalize(X, norm=self.norm, copy=False)
+        return X
+
+    def _get_hasher(self):
+        return FeatureHasher(n_features=self.n_features,
+                             input_type='string', dtype=self.dtype,
+                             non_negative=self.non_negative)
 
 
 class CountVectorizer(BaseVectorizer):
