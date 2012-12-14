@@ -468,7 +468,7 @@ class BaseGradientBoosting(BaseEnsemble):
                 max_depth=self.max_depth,
                 min_samples_split=self.min_samples_split,
                 min_samples_leaf=self.min_samples_leaf,
-                min_density=0.0,
+                min_density=self.min_density,
                 max_features=self.max_features,
                 compute_importances=False,
                 random_state=self.random_state)
@@ -558,6 +558,9 @@ class BaseGradientBoosting(BaseEnsemble):
             raise ValueError("alpha must be in (0.0, 1.0)")
 
         self.random_state = check_random_state(self.random_state)
+
+        # use default min_density (0.1) only for deep trees
+        self.min_density = 0.0 if self.max_depth < 6 else 0.1
 
         # create argsorted X for fast tree induction
         X_argsorted = np.asfortranarray(
