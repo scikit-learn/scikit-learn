@@ -22,7 +22,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
     n_components: int or None
         Number of components. If None, all non-zero components are kept.
 
-    kernel: "linear" | "poly" | "rbf" | "sigmoid" | "precomputed"
+    kernel: "linear" | "poly" | "rbf" | "sigmoid" | "cos"| "precomputed"
         Kernel.
         Default: "linear"
 
