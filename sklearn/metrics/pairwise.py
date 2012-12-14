@@ -355,6 +355,38 @@ def rbf_kernel(X, Y=None, gamma=None):
     np.exp(K, K)    # exponentiate K in-place
     return K
 
+def cos_kernel(X, Y=None):
+    """
+    Compute the cosinus kernel between X and Y::
+
+        K(X, Y) = <X, Y> / (||X||*||Y||)
+
+    Parameters
+    ----------
+    X : array of shape (n_samples_1, n_features)
+
+    Y : array of shape (n_samples_1, n_features)
+
+    Returns
+    -------
+    kernel matrix : array of shape (n_samples_1, n_samples_2)
+    """
+    X, Y = check_pairwise_arrays(X, Y)
+    n_samples_X, n_features_X = X.shape
+    n_samples_Y, n_features_Y = Y.shape
+    if n_features_X != n_features_Y:
+        raise Exception("X and Y should have the same number of features!")
+
+    XX = X / np.tile(np.sqrt(np.sum(X * X, axis=1)[:, np.newaxis]),\
+	                (1, n_features_X))
+    if X is Y:
+        YY = XX
+    else:
+        YY = Y / np.tile(np.sqrt(np.sum(X * X, axis=1)[:, np.newaxis]),\
+		                (1, n_features_Y))
+
+    return np.dot(XX, YY.T, dense_output=True)
+
 
 def additive_chi2_kernel(X, Y=None):
     """Computes the additive chi-squared kernel between observations in X and Y
@@ -659,6 +691,7 @@ pairwise_kernel_functions = {
     'poly': polynomial_kernel,
     'rbf': rbf_kernel,
     'sigmoid': sigmoid_kernel,
+	'cos': cos_kernel,
     }
 
 
@@ -680,6 +713,7 @@ def kernel_metrics():
       'polynomial'     sklearn.pairwise.polynomial_kernel
       'rbf'            sklearn.pairwise.rbf_kernel
       'sigmoid'        sklearn.pairwise.sigmoid_kernel
+	  'cos'            sklearn.pairwise.cos_kernel
       ==============   ========================================
     """
     return pairwise_kernel_functions
@@ -693,6 +727,7 @@ kernel_params = {
     "sigmoid": set(("gamma", "coef0")),
     "polynomial": set(("gamma", "degree", "coef0")),
     "poly": set(("gamma", "degree", "coef0")),
+	"cos":set(),
 }
 
 
@@ -712,7 +747,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     kernel between the arrays from both X and Y.
 
     Valid values for metric are::
-        ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear']
+        ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear', 'cos']
 
     Parameters
     ----------
