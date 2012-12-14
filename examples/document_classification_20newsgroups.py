@@ -31,6 +31,7 @@ import pylab as pl
 
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.linear_model import RidgeClassifier
 from sklearn.svm import LinearSVC
@@ -67,6 +68,14 @@ op.add_option("--top10",
 op.add_option("--all_categories",
               action="store_true", dest="all_categories",
               help="Whether to use all categories or not.")
+op.add_option("--use_hashing",
+              action="store_true",
+              help="Use a hashing vectorizer.")
+op.add_option("--n_features",
+              action="store", type=int, default=2 ** 16,
+              help="n_features when using the hashing vectorizer.")
+
+
 
 (opts, args) = op.parse_args()
 if len(args) > 0:
@@ -112,9 +121,14 @@ y_train, y_test = data_train.target, data_test.target
 
 print "Extracting features from the training dataset using a sparse vectorizer"
 t0 = time()
-vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5,
-                             stop_words='english')
-X_train = vectorizer.fit_transform(data_train.data)
+if opts.use_hashing:
+    vectorizer = HashingVectorizer(stop_words='english', non_negative=True,
+                                   n_features=opts.n_features)
+    X_train = vectorizer.transform(data_train.data)
+else:
+    vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5,
+                                 stop_words='english')
+    X_train = vectorizer.fit_transform(data_train.data)
 print "done in %fs" % (time() - t0)
 print "n_samples: %d, n_features: %d" % X_train.shape
 print
@@ -143,7 +157,10 @@ def trim(s):
 
 
 # mapping from integer feature name to original token string
-feature_names = np.asarray(vectorizer.get_feature_names())
+if opts.use_hashing:
+    feature_names = None
+else:
+    feature_names = np.asarray(vectorizer.get_feature_names())
 
 
 ###############################################################################
@@ -169,7 +186,7 @@ def benchmark(clf):
         print "dimensionality: %d" % clf.coef_.shape[1]
         print "density: %f" % density(clf.coef_)
 
-        if opts.print_top10:
+        if opts.print_top10 and feature_names is not None:
             print "top 10 keywords per class:"
             for i, category in enumerate(categories):
                 top10 = np.argsort(clf.coef_[i])[-10:]
