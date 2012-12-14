@@ -734,12 +734,8 @@ def test_pickling_vectorizer():
         assert_equal(type(copy), orig.__class__)
         assert_equal(copy.get_params(), orig.get_params())
         assert_array_equal(
-            copy.fit(JUNK_FOOD_DOCS).transform(JUNK_FOOD_DOCS).toarray(),
-            orig.fit(JUNK_FOOD_DOCS).transform(JUNK_FOOD_DOCS).toarray())
-        if hasattr(s, 'fit_transform'):
-            assert_array_equal(
-                copy.fit_transform(JUNK_FOOD_DOCS).toarray(),
-                orig.fit_transform(JUNK_FOOD_DOCS).toarray())
+            copy.fit_transform(JUNK_FOOD_DOCS).toarray(),
+            orig.fit_transform(JUNK_FOOD_DOCS).toarray())
 
 
 def test_pickling_transformer():
