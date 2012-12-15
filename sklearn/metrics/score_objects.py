@@ -32,8 +32,8 @@ R2Scorer = AsScorer(r2_score, True)
 MSEScorer = AsScorer(mean_squared_error, False)
 
 # Standard Classification Scores
-ZeroOneScorer = AsScorer(zero_one_score, False)
-F1Scorer = AsScorer(f1_score, False)
+ZeroOneScorer = AsScorer(zero_one_score, True)
+F1Scorer = AsScorer(f1_score, True)
 
 # Score functions that need decision values
 AUCScorer = AsScorer(auc_score, True, True)

@@ -407,9 +407,11 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
 
         # Note: we do not use max(out) to make ties deterministic even if
         # comparison on estimator instances is not deterministic
-        greater_is_better = True
         if scorer is not None:
             greater_is_better = scorer.greater_is_better
+        else:
+            greater_is_better = True
+
         if greater_is_better:
             best_score = -np.inf
         else:

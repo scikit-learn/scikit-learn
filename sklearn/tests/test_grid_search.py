@@ -21,6 +21,7 @@ from sklearn.datasets.samples_generator import make_classification, make_blobs
 from sklearn.svm import LinearSVC, SVC
 from sklearn.cluster import KMeans, MeanShift
 from sklearn.metrics import f1_score, precision_score
+from sklearn.metrics.score_objects import AsScorer
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.cross_validation import KFold, StratifiedKFold
 
@@ -161,17 +162,18 @@ def test_grid_search_sparse_score_func():
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
     clf = LinearSVC()
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, scoring="f1")
     cv.fit(X_[:180], y_[:180])
     y_pred = cv.predict(X_[180:])
     C = cv.best_estimator_.C
 
     X_ = sp.csr_matrix(X_)
     clf = LinearSVC()
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, scoring="f1")
     cv.fit(X_[:180], y_[:180])
     y_pred2 = cv.predict(X_[180:])
     C2 = cv.best_estimator_.C
+    print(cv.grid_scores_)
 
     assert_array_equal(y_pred, y_pred2)
     assert_equal(C, C2)
@@ -179,16 +181,18 @@ def test_grid_search_sparse_score_func():
     #np.testing.assert_allclose(f1_score(cv.predict(X_[:180]), y[:180]),
     #                        cv.score(X_[:180], y[:180]))
 
-    # test loss_func
+    # test loss where greater is worse
     def f1_loss(y_true_, y_pred_):
         return -f1_score(y_true_, y_pred_)
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, loss_func=f1_loss)
+    F1Loss = AsScorer(f1_loss, greater_is_better=False)
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, scoring=F1Loss)
     cv.fit(X_[:180], y_[:180])
     y_pred3 = cv.predict(X_[180:])
     C3 = cv.best_estimator_.C
+    print(cv.grid_scores_)
 
-    assert_array_equal(y_pred, y_pred3)
     assert_equal(C, C3)
+    assert_array_equal(y_pred, y_pred3)
 
 
 def test_grid_search_precomputed_kernel():
