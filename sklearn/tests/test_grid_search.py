@@ -20,7 +20,7 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.datasets.samples_generator import make_classification, make_blobs
 from sklearn.svm import LinearSVC, SVC
 from sklearn.cluster import KMeans, MeanShift
-from sklearn.metrics import f1_score, precision_score
+from sklearn.metrics import f1_score
 from sklearn.metrics.score_objects import AsScorer
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.cross_validation import KFold, StratifiedKFold
@@ -158,7 +158,7 @@ def test_grid_search_sparse():
     assert_equal(C, C2)
 
 
-def test_grid_search_sparse_score_func():
+def test_grid_search_sparse_scoring():
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
     clf = LinearSVC()
@@ -173,7 +173,6 @@ def test_grid_search_sparse_score_func():
     cv.fit(X_[:180], y_[:180])
     y_pred2 = cv.predict(X_[180:])
     C2 = cv.best_estimator_.C
-    print(cv.grid_scores_)
 
     assert_array_equal(y_pred, y_pred2)
     assert_equal(C, C2)
@@ -189,7 +188,6 @@ def test_grid_search_sparse_score_func():
     cv.fit(X_[:180], y_[:180])
     y_pred3 = cv.predict(X_[180:])
     C3 = cv.best_estimator_.C
-    print(cv.grid_scores_)
 
     assert_equal(C, C3)
     assert_array_equal(y_pred, y_pred3)
@@ -266,7 +264,7 @@ def test_refit():
     y = np.array([0] * 5 + [1] * 5)
 
     clf = GridSearchCV(BrokenClassifier(), [{'parameter': [0, 1]}],
-                       score_func=precision_score, refit=True)
+                       scoring="precision", refit=True)
     clf.fit(X, y)
 
 
@@ -286,8 +284,9 @@ def test_unsupervised_grid_search():
     # test grid-search with unsupervised estimator
     X, y = make_blobs(random_state=0)
     km = KMeans(random_state=0)
+    ARIScorer = AsScorer(adjusted_rand_score)
     grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]),
-                               score_func=adjusted_rand_score)
+                               scoring=ARIScorer)
     grid_search.fit(X)
     # most number of clusters should be best
     assert_equal(grid_search.best_params_["n_clusters"], 4)
@@ -296,9 +295,10 @@ def test_unsupervised_grid_search():
 def test_bad_estimator():
     # test grid-search with unsupervised estimator
     ms = MeanShift()
+    ARIScorer = AsScorer(adjusted_rand_score)
     assert_raises(TypeError, GridSearchCV, ms,
                   param_grid=dict(gamma=[.1, 1, 10]),
-                  score_func=adjusted_rand_score)
+                  scoring=ARIScorer)
 
 
 def test_score_func_string():

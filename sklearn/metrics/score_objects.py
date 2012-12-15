@@ -1,7 +1,7 @@
 import numpy as np
 
 from .metrics import (r2_score, mean_squared_error, zero_one_score, f1_score,
-                      auc_score, average_precision_score)
+                      auc_score, average_precision_score, precision_score)
 
 
 class AsScorer(object):
@@ -28,16 +28,19 @@ class AsScorer(object):
 
 
 # Standard regression scores
-R2Scorer = AsScorer(r2_score, True)
-MSEScorer = AsScorer(mean_squared_error, False)
+R2Scorer = AsScorer(r2_score)
+MSEScorer = AsScorer(mean_squared_error, greater_is_better=False)
 
 # Standard Classification Scores
-ZeroOneScorer = AsScorer(zero_one_score, True)
-F1Scorer = AsScorer(f1_score, True)
+ZeroOneScorer = AsScorer(zero_one_score)
+F1Scorer = AsScorer(f1_score)
 
 # Score functions that need decision values
 AUCScorer = AsScorer(auc_score, True, True)
-AveragePrecisionScorer = AsScorer(average_precision_score, True, True)
+AveragePrecisionScorer = AsScorer(average_precision_score,
+                                  needs_threshold=True)
+PrecisionScorer = AsScorer(precision_score)
 
 scorers = dict(r2=R2Scorer, mse=MSEScorer, zero_one=ZeroOneScorer, f1=F1Scorer,
-               auc=AUCScorer, ap=AveragePrecisionScorer)
+               auc=AUCScorer, ap=AveragePrecisionScorer,
+               precision=PrecisionScorer)
