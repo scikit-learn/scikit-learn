@@ -9,7 +9,6 @@ of an estimator.
 
 from itertools import product
 import time
-import inspect
 import warnings
 
 import numpy as np
@@ -171,16 +170,16 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
 
     Parameters
     ----------
-    estimator: object type that implements the "fit" and "predict" methods
+    estimator : object type that implements the "fit" and "predict" methods
         A object of that type is instantiated for each grid point.
 
-    param_grid: dict or list of dictionaries
+    param_grid : dict or list of dictionaries
         Dictionary with parameters names (string) as keys and lists of
         parameter settings to try as values, or a list of such
         dictionaries, in which case the grids spanned by each dictionary
         in the list are explored.
 
-    score_func: string or object, optional
+    score : string or object, optional
         Either one of ["zero-one", "f1", "auc"] for classification,
         ["mse", "r2"] for regression or an object providing a
         scoreing method.
@@ -262,8 +261,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
     Notes
     ------
     The parameters selected are those that maximize the score of the left out
-    data, unless an explicit score_func is passed in which case it is used
-    instead.
+    data, unless an explicit score is passed in which case it is used instead.
 
     If `n_jobs` was set to a value higher than one, the data is copied for each
     point in the grid (and not `n_jobs` times). This is done for efficiency
@@ -285,12 +283,12 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
 
     """
 
-    def __init__(self, estimator, param_grid, loss_func=None, score_func=None,
-                 fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
-                 verbose=0, pre_dispatch='2*n_jobs'):
+    def __init__(self, estimator, param_grid, score=None, loss_func=None,
+                 score_func=None, fit_params=None, n_jobs=1, iid=True,
+                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs'):
         if (not hasattr(estimator, 'score') and
             (not hasattr(estimator, 'predict')
-             or (loss_func is None and score_func is None))):
+             or (score is None and loss_func is None and score_func is None))):
             raise TypeError("The provided estimator %s does not implement a "
                             "score function. In this case, it needs to "
                             "implement a predict fuction and you have to "
@@ -303,6 +301,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
         self.param_grid = param_grid
         self.loss_func = loss_func
         self.score_func = score_func
+        self.score = score
         self.n_jobs = n_jobs
         self.fit_params = fit_params if fit_params is not None else {}
         self.iid = iid
@@ -355,32 +354,22 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
             self._set_methods()
             return self
 
-        # parse score_func:
-        score_func = self.score_func
-
         if self.loss_func is not None:
             warnings.warn("Passing a loss function is "
                           "deprecated and will be removed in 0.15. "
                           "Either use strings or score objects.")
             scorer = AsScorer(self.loss_func, greater_is_better=False)
-        elif isinstance(score_func, str):  # FIXME BaseString
-            scorer = scorers[score_func]
-        elif callable(score_func):
-            # Check if "old style" score function or new scoring object.
-            # Old style get (y, y_pred), new style get (estimator, X, y).
-            # XXX we could get rid of this by renaming the new score_func.
-            arg_spec = inspect.getargspec(score_func)
-            if "estimator" not in arg_spec.args:
-                warnings.warn("Passing function as ``score_func`` is "
-                              "deprecated and will be removed in 0.15. "
-                              "Either use strings or score objects.")
-                scorer = AsScorer(score_func)
-        elif score_func is None:
-            scorer = None
+        elif self.score_func is not None:
+            warnings.warn("Passing function as ``score_func`` is "
+                          "deprecated and will be removed in 0.15. "
+                          "Either use strings or score objects.")
+            scorer = AsScorer(self.score_func)
+        if isinstance(self.score, str):  # FIXME BaseString
+            scorer = scorers[self.score]
         else:
-            raise ValueError("Invalid score_func. "
-                             "Expected string or callable, got %s."
-                             % repr(self.score_func))
+            scorer = self.score
+
+        self.scorer_ = scorer
 
         pre_dispatch = self.pre_dispatch
         out = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
@@ -456,7 +445,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
     def score(self, X, y=None):
         if hasattr(self.best_estimator_, 'score'):
             return self.best_estimator_.score(X, y)
-        if self.scorer is None:
+        if self.scorer_ is None:
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
