@@ -1130,8 +1130,6 @@ class LassoLarsIC(LassoLars):
     def __init__(self, criterion='aic', fit_intercept=True, verbose=False,
                  normalize=True, precompute='auto', max_iter=500,
                  eps=np.finfo(np.float).eps, copy_X=True):
-        if criterion not in ['aic', 'bic']:
-            raise ValueError('criterion should be either bic or aic')
         self.criterion = criterion
         self.fit_intercept = fit_intercept
         self.max_iter = max_iter
