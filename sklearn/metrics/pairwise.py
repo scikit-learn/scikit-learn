@@ -375,10 +375,6 @@ def cosine_kernel(X, Y=None):
         An array with shape (n_samples_X, n_samples_Y).
     """
     X, Y = check_pairwise_arrays(X, Y)
-    n_samples_X, n_features_X = X.shape
-    n_samples_Y, n_features_Y = Y.shape
-    if n_features_X != n_features_Y:
-        raise Exception("X and Y should have the same number of features!")
 
     X_norm = (X ** 2).sum(axis=1)
     if X is Y:
