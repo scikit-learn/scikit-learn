@@ -186,6 +186,26 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
             assert_array_equal(clf.predict(T), true_result)
 
     @raises(ValueError)
+    def test_sgd_bad_l1_ratio(self):
+        """Check whether expected ValueError on bad l1_ratio"""
+        self.factory(l1_ratio=1.1)
+
+    @raises(ValueError)
+    def test_sgd_bad_learning_rate_schedule(self):
+        """Check whether expected ValueError on bad learning_rate"""
+        self.factory(learning_rate="<unknown>")
+
+    @raises(ValueError)
+    def test_sgd_bad_eta0(self):
+        """Check whether expected ValueError on bad eta0"""
+        self.factory(eta0=0, learning_rate="constant")
+
+    @raises(ValueError)
+    def test_sgd_bad_alpha(self):
+        """Check whether expected ValueError on bad alpha"""
+        self.factory(alpha=-.1)
+
+    @raises(ValueError)
     def test_sgd_bad_penalty(self):
         """Check whether expected ValueError on bad penalty"""
         self.factory(penalty='foobar', l1_ratio=0.85)
@@ -338,7 +358,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
 
         # we give a small weights to class 1
         clf = self.factory(alpha=0.1, n_iter=1000, fit_intercept=False,
-                class_weight={1: 0.001})
+                           class_weight={1: 0.001})
         clf.fit(X, y)
 
         # now the hyperplane should rotate clock-wise and
@@ -355,7 +375,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         X = [[1, 0], [0, 1]]
         y = [0, 1]
         clf_weighted = self.factory(alpha=0.1, n_iter=1000,
-                class_weight={0: 0.5, 1: 0.5})
+                                    class_weight={0: 0.5, 1: 0.5})
         clf_weighted.fit(X, y)
 
         # should be similar up to some epsilon due to learning rate schedule
@@ -660,11 +680,12 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
                                              fit_intercept=False)
                 cd.fit(X, y)
                 sgd = self.factory(penalty='elasticnet', n_iter=50,
-                        alpha=alpha, l1_ratio=l1_ratio, fit_intercept=False)
+                                   alpha=alpha, l1_ratio=l1_ratio,
+                                   fit_intercept=False)
                 sgd.fit(X, y)
                 err_msg = ("cd and sgd did not converge to comparable "
-                        "results for alpha=%f and l1_ratio=%f"
-                        % (alpha, l1_ratio))
+                           "results for alpha=%f and l1_ratio=%f"
+                           % (alpha, l1_ratio))
                 assert_almost_equal(cd.coef_, sgd.coef_, decimal=2,
                                     err_msg=err_msg)
 
