@@ -14,10 +14,12 @@ from ..pairwise import chi2_kernel, additive_chi2_kernel
 from ..pairwise import polynomial_kernel
 from ..pairwise import rbf_kernel
 from ..pairwise import sigmoid_kernel
+from ..pairwise import cosine_kernel
 from .. import pairwise_distances, pairwise_kernels
 from ..pairwise import pairwise_kernel_functions
 from ..pairwise import check_pairwise_arrays
 from ..pairwise import _parallel_pairwise
+from ...preprocessing import normalize
 
 
 def test_pairwise_distances():
@@ -264,20 +266,21 @@ def test_cosine_kernel():
     """ Test the cosine_kernels. """
 
     X = np.array([[1., 0.], [0., 1.], [-1., 0.], [0., -1.]])
-    Y = np.array([[0., .5], [-.5, 0.], [0., -.5]])
+    Y = np.array(
+        [[sqrt(3.) / 2., .5], [-sqrt(2.) / 2., sqrt(2.) / 2.], [0., -.5]])
 
     metric = "cosine"
     function = pairwise_kernel_functions[metric]
 
     # Test with Y=None
     K1 = pairwise_kernels(X, metric=metric)
-    assert_array_almost_equal(K1, np.array(
-        [[1., 0., -1., 0.], [0., 1., 0., -1.], [-1., 0., 1., 0.],
-        [0., -1., 0., 1.]]))
+    K2 = np.dot(normalize(X), normalize(X).T)
+    assert_array_almost_equal(K1, K2)
+
     # Test with Y=Y
     K1 = pairwise_kernels(X, Y=Y, metric=metric)
-    assert_array_almost_equal(K1, np.array(
-        [[0., -1., 0.], [1., 0., -1.], [0., 1., 0.], [-1., 0., 1.]]))
+    K2 = np.dot(normalize(X), normalize(Y).T)
+    assert_array_almost_equal(K1, K2)
 
 
 def test_check_dense_matrices():
