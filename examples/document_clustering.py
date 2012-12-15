@@ -16,18 +16,18 @@ Two feature extraction methods can be used in this example:
     the corpus.
 
   - HashingVectorizer hashes word occurrences to a fixed dimensional space,
-    possibly with collisions. The word count vectors are then projected to the
-    euclidean unit-ball which seems to be important for k-means to work in high
-    dimensional space.
+    possibly with collisions. The word count vectors are then normalized to each
+    have l2-norm equal to one (projected to the euclidean unit-ball) which seems
+    to be important for k-means to work in high dimensional space.
 
     HashingVectorizer does not provide IDF weighting as this is a stateless
-    model (the fit method does nothing). When IDF is need it can be added by
-    pipelining its output to a TfidfTransformer instance.
+    model (the fit method does nothing). When IDF weighting is needed it can
+    be added by pipelining its output to a TfidfTransformer instance.
 
 Two algorithms are demoed: ordinary k-means and its more scalable cousin
 minibatch k-means.
 
-It can be noted that k-means and (minibatch k-means) are very sensitive to
+It can be noted that k-means (and minibatch k-means) are very sensitive to
 feature scaling and that in this case the IDF weighting helps improve the
 quality of the clustering by quite a lot as measured against the "ground truth"
 provided by the class label assignments of the 20 newsgroups dataset.
