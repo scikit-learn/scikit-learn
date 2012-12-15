@@ -27,7 +27,7 @@ from ..externals.joblib import Parallel, delayed
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', copy_X=True,
               eps=np.finfo(np.float).eps,
-              copy_Gram=True, verbose=False, return_path=True):
+              copy_Gram=True, verbose=0, return_path=True):
     """Compute Least Angle Regression and Lasso path
 
     The optimization objective for Lasso is::
@@ -36,38 +36,41 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     Parameters
     -----------
-    X: array, shape: (n_samples, n_features)
-        Input data
+    X : array, shape: (n_samples, n_features)
+        Input data.
 
-    y: array, shape: (n_samples)
-        Input targets
+    y : array, shape: (n_samples)
+        Input targets.
 
-    max_iter: integer, optional
+    max_iter : integer, optional
         Maximum number of iterations to perform, set to infinity for no limit.
 
-    Gram: None, 'auto', array, shape: (n_features, n_features), optional
+    Gram : None, 'auto', array, shape: (n_features, n_features), optional
         Precomputed Gram matrix (X' * X), if 'auto', the Gram
         matrix is precomputed from the given X, if there are more samples
-        than features
+        than features.
 
-    alpha_min: float, optional
+    alpha_min : float, optional
         Minimum correlation along the path. It corresponds to the
         regularization parameter alpha parameter in the Lasso.
 
-    method: {'lar', 'lasso'}
+    method : {'lar', 'lasso'}
         Specifies the returned model. Select 'lar' for Least Angle
         Regression, 'lasso' for the Lasso.
 
-    eps: float, optional
+    eps : float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems.
 
-    copy_X: bool
+    copy_X : bool
         If False, X is overwritten.
 
-    copy_Gram: bool
+    copy_Gram : bool
         If False, Gram is overwritten.
+
+    verbose : int (default=0)
+        Controls output verbosity.
 
     Returns
     --------

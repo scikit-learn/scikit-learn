@@ -23,8 +23,16 @@ def test_simple():
     Principle of Lars is to keep covariances tied and decreasing
     """
 
+    # also test verbose output
+    from cStringIO import StringIO
+    import sys
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+
     alphas_, active, coef_path_ = linear_model.lars_path(
-        diabetes.data, diabetes.target, method="lar")
+        diabetes.data, diabetes.target, method="lar", verbose=10)
+
+    sys.stdout = old_stdout
 
     for (i, coef_) in enumerate(coef_path_.T):
         res = y - np.dot(X, coef_)
