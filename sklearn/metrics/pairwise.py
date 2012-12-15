@@ -377,15 +377,15 @@ def cosine_kernel(X, Y=None):
     if n_features_X != n_features_Y:
         raise Exception("X and Y should have the same number of features!")
 
-    XX = X / np.tile(np.sqrt(np.sum(X * X, axis=1)[:, np.newaxis]),\
-	                (1, n_features_X))
+    X_norm = (X ** 2).sum(axis=1)
     if X is Y:
-        YY = XX
+        Y_norm = X_norm
     else:
-        YY = Y / np.tile(np.sqrt(np.sum(X * X, axis=1)[:, np.newaxis]),\
-		                (1, n_features_Y))
+        Y_norm = (Y ** 2).sum(axis=1)
 
-    return np.dot(XX, YY.T, dense_output=True)
+    K = linear_kernel(X, Y) / np.outer(np.sqrt(X_norm), np.sqrt(Y_norm))
+
+    return K
 
 
 def additive_chi2_kernel(X, Y=None):
