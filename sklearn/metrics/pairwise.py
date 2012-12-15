@@ -355,7 +355,7 @@ def rbf_kernel(X, Y=None, gamma=None):
     np.exp(K, K)    # exponentiate K in-place
     return K
 
-def cos_kernel(X, Y=None):
+def cosine_kernel(X, Y=None):
     """
     Compute the cosinus kernel between X and Y::
 
@@ -691,7 +691,7 @@ pairwise_kernel_functions = {
     'poly': polynomial_kernel,
     'rbf': rbf_kernel,
     'sigmoid': sigmoid_kernel,
-	'cos': cos_kernel,
+	'cosine': cosine_kernel,
     }
 
 
@@ -713,7 +713,7 @@ def kernel_metrics():
       'polynomial'     sklearn.pairwise.polynomial_kernel
       'rbf'            sklearn.pairwise.rbf_kernel
       'sigmoid'        sklearn.pairwise.sigmoid_kernel
-	  'cos'            sklearn.pairwise.cos_kernel
+	  'cosine'         sklearn.pairwise.cosine_kernel
       ==============   ========================================
     """
     return pairwise_kernel_functions
@@ -727,7 +727,7 @@ kernel_params = {
     "sigmoid": set(("gamma", "coef0")),
     "polynomial": set(("gamma", "degree", "coef0")),
     "poly": set(("gamma", "degree", "coef0")),
-	"cos":set(),
+	"cosine":set(),
 }
 
 
@@ -747,7 +747,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     kernel between the arrays from both X and Y.
 
     Valid values for metric are::
-        ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear', 'cos']
+        ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear', 'cosine']
 
     Parameters
     ----------
