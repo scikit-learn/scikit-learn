@@ -168,6 +168,19 @@ def test_adjusted_mutual_info_score():
 def test_entropy():
     ent = entropy([0, 0, 42.])
     assert_almost_equal(ent, 0.6365141, 5)
+    assert_almost_equal(entropy([]), 1)
+
+
+def test_contingency_matrix():
+    labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
+    labels_b = np.array([1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 3, 1, 3, 3, 3, 2, 2])
+    C = contingency_matrix(labels_a, labels_b)
+    C2 = np.histogram2d(labels_a, labels_b,
+                        bins=(np.arange(1, 5),
+                              np.arange(1, 5)))[0]
+    assert_array_almost_equal(C, C2)
+    C = contingency_matrix(labels_a, labels_b, eps=.1)
+    assert_array_almost_equal(C, C2 + .1)
 
 
 def test_exactly_zero_info_score():
