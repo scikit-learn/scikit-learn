@@ -356,20 +356,22 @@ def rbf_kernel(X, Y=None, gamma=None):
     return K
 
 def cosine_kernel(X, Y=None):
-    """
-    Compute the cosinus kernel between X and Y::
+    """Compute the cosinus kernel between X and Y.
 
         K(X, Y) = <X, Y> / (||X||*||Y||)
-
+    
     Parameters
     ----------
-    X : array of shape (n_samples_1, n_features)
+    X : array_like
+        An array with shape (n_samples_X, n_features).
 
-    Y : array of shape (n_samples_1, n_features)
+    Y : array_like, optional
+        An array with shape (n_samples_Y, n_features).
 
     Returns
     -------
-    kernel matrix : array of shape (n_samples_1, n_samples_2)
+    kernel matrix : array_like
+        An array with shape (n_samples_X, n_samples_Y).
     """
     X, Y = check_pairwise_arrays(X, Y)
     n_samples_X, n_features_X = X.shape
@@ -691,7 +693,7 @@ pairwise_kernel_functions = {
     'poly': polynomial_kernel,
     'rbf': rbf_kernel,
     'sigmoid': sigmoid_kernel,
-	'cosine': cosine_kernel,
+    'cosine': cosine_kernel,
     }
 
 
@@ -713,7 +715,7 @@ def kernel_metrics():
       'polynomial'     sklearn.pairwise.polynomial_kernel
       'rbf'            sklearn.pairwise.rbf_kernel
       'sigmoid'        sklearn.pairwise.sigmoid_kernel
-	  'cosine'         sklearn.pairwise.cosine_kernel
+      'cosine'         sklearn.pairwise.cosine_kernel
       ==============   ========================================
     """
     return pairwise_kernel_functions
@@ -727,7 +729,7 @@ kernel_params = {
     "sigmoid": set(("gamma", "coef0")),
     "polynomial": set(("gamma", "degree", "coef0")),
     "poly": set(("gamma", "degree", "coef0")),
-	"cosine":set(),
+    "cosine":set(),
 }
 
 

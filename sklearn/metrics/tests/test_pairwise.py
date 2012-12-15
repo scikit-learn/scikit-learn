@@ -271,7 +271,7 @@ def test_rbf_kernel():
 	
 def test_cosine_kernel():
     """ Test the cosine_kernels. """
-	
+
     X = np.array([[1.,0.],[0.,1.],[-1.,0.],[0.,-1.]])
     Y = np.array([[0.,.5],[-.5,0.],[0.,-.5]])
 
@@ -288,7 +288,7 @@ def test_cosine_kernel():
     assert_array_almost_equal(K1, \
     np.array([[0., -1., 0.],[1., 0., -1.],[0., 1., 0.],[-1., 0., 1.]]))
 
-	
+
 def test_check_dense_matrices():
     """ Ensure that pairwise array check works for dense matrices."""
     # Check that if XB is None, XB is returned as reference to XA
