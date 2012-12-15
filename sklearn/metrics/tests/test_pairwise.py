@@ -144,25 +144,26 @@ def test_pairwise_kernels():
 
 def test_cosine_kernel():
     """ Test the cosine_kernels. """
-	
-    X = np.array([[1.,0.],[0.,1.],[-1.,0.],[0.,-1.]])
-    Y = np.array([[0.,.5],[-.5,0.],[0.,-.5]])
+
+    X = np.array([[1., 0.], [0., 1.], [-1., 0.], [0., -1.]])
+    Y = np.array([[0., .5], [-.5, 0.], [0., -.5]])
 
     metric = "cosine"
     function = pairwise_kernel_functions[metric]
 
     # Test with Y=None
     K1 = pairwise_kernels(X, metric=metric)
-    assert_array_almost_equal(K1, \
-	np.array([[1., 0., -1., 0.],[0., 1., 0., -1.],\
-	[-1., 0., 1., 0.],[0., -1., 0., 1.]]))
+    assert_array_almost_equal(
+        K1, np.array(
+            [[1., 0., -1., 0.], [0., 1., 0., -1.], [-1., 0., 1., 0.],
+            [0., -1., 0., 1.]]))
     # Test with Y=Y
     K1 = pairwise_kernels(X, Y=Y, metric=metric)
-    assert_array_almost_equal(K1, \
-	np.array([[0., -1., 0.],[1., 0., -1.],[0., 1., 0.],[-1., 0., 1.]]))
+    assert_array_almost_equal(
+        K1,	np.array(
+            [[0., -1., 0.], [1., 0., -1.], [0., 1., 0.], [-1., 0., 1.]]))
 
 
-	
 def test_pairwise_kernels_filter_param():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
@@ -272,6 +273,7 @@ def test_linear_kernel():
     # the diagonal elements of a linear kernel are their squared norm
     assert_array_almost_equal(K.flat[::6], [linalg.norm(x) ** 2 for x in X])
 
+
 def test_rbf_kernel():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
@@ -279,25 +281,25 @@ def test_rbf_kernel():
     # the diagonal elements of a rbf kernel are 1
     assert_array_almost_equal(K.flat[::6], np.ones(5))
 
-	
+
 def test_cosine_kernel():
     """ Test the cosine_kernels. """
 
-    X = np.array([[1.,0.],[0.,1.],[-1.,0.],[0.,-1.]])
-    Y = np.array([[0.,.5],[-.5,0.],[0.,-.5]])
+    X = np.array([[1., 0.], [0., 1.], [-1., 0.], [0., -1.]])
+    Y = np.array([[0., .5], [-.5, 0.], [0., -.5]])
 
     metric = "cosine"
     function = pairwise_kernel_functions[metric]
 
     # Test with Y=None
     K1 = pairwise_kernels(X, metric=metric)
-    assert_array_almost_equal(K1, \
-    np.array([[1., 0., -1., 0.],[0., 1., 0., -1.],\
-    [-1., 0., 1., 0.],[0., -1., 0., 1.]]))
+    assert_array_almost_equal(K1, np.array(
+        [[1., 0., -1., 0.], [0., 1., 0., -1.], [-1., 0., 1., 0.],
+        [0., -1., 0., 1.]]))
     # Test with Y=Y
     K1 = pairwise_kernels(X, Y=Y, metric=metric)
-    assert_array_almost_equal(K1, \
-    np.array([[0., -1., 0.],[1., 0., -1.],[0., 1., 0.],[-1., 0., 1.]]))
+    assert_array_almost_equal(K1, np.array(
+        [[0., -1., 0.], [1., 0., -1.], [0., 1., 0.], [-1., 0., 1.]]))
 
 
 def test_check_dense_matrices():
