@@ -171,7 +171,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
         YY = atleast2d_or_csr(Y_norm_squared)
         if YY.shape != (1, Y.shape[0]):
             raise ValueError(
-                        "Incompatible dimensions for Y and Y_norm_squared")
+                "Incompatible dimensions for Y and Y_norm_squared")
 
     # TODO: a faster Cython implementation would do the clipping of negative
     # values in a single pass over the output matrix.
@@ -355,11 +355,12 @@ def rbf_kernel(X, Y=None, gamma=None):
     np.exp(K, K)    # exponentiate K in-place
     return K
 
+
 def cosine_kernel(X, Y=None):
     """Compute the cosinus kernel between X and Y.
 
         K(X, Y) = <X, Y> / (||X||*||Y||)
-    
+
     Parameters
     ----------
     X : array_like
@@ -521,8 +522,7 @@ pairwise_distance_functions = {
     'l2': euclidean_distances,
     'l1': manhattan_distances,
     'manhattan': manhattan_distances,
-    'cityblock': manhattan_distances,
-    }
+    'cityblock': manhattan_distances, }
 
 
 def distance_metrics():
@@ -558,8 +558,8 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
         Y = X
 
     ret = Parallel(n_jobs=n_jobs, verbose=0)(
-            delayed(func)(X, Y[s], **kwds)
-            for s in gen_even_slices(Y.shape[0], n_jobs))
+        delayed(func)(X, Y[s], **kwds)
+        for s in gen_even_slices(Y.shape[0], n_jobs))
 
     return np.hstack(ret)
 
@@ -693,8 +693,7 @@ pairwise_kernel_functions = {
     'poly': polynomial_kernel,
     'rbf': rbf_kernel,
     'sigmoid': sigmoid_kernel,
-    'cosine': cosine_kernel,
-    }
+    'cosine': cosine_kernel, }
 
 
 def kernel_metrics():
@@ -729,8 +728,7 @@ kernel_params = {
     "sigmoid": set(("gamma", "coef0")),
     "polynomial": set(("gamma", "degree", "coef0")),
     "poly": set(("gamma", "degree", "coef0")),
-    "cosine":set(),
-}
+    "cosine": set(), }
 
 
 def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
@@ -804,7 +802,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     elif metric in pairwise_kernel_functions:
         if filter_params:
             kwds = dict((k, kwds[k]) for k in kwds
-                                        if k in kernel_params[metric])
+                        if k in kernel_params[metric])
         func = pairwise_kernel_functions[metric]
         if n_jobs == 1:
             return func(X, Y, **kwds)
