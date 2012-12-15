@@ -13,6 +13,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_almost_equal
 
 from sklearn.base import BaseEstimator
 from sklearn.grid_search import GridSearchCV
@@ -21,7 +22,7 @@ from sklearn.svm import LinearSVC, SVC
 from sklearn.cluster import KMeans, MeanShift
 from sklearn.metrics import f1_score, precision_score
 from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.cross_validation import KFold
+from sklearn.cross_validation import KFold, StratifiedKFold
 
 
 class MockClassifier(BaseEstimator):
@@ -294,3 +295,28 @@ def test_bad_estimator():
     assert_raises(TypeError, GridSearchCV, ms,
                   param_grid=dict(gamma=[.1, 1, 10]),
                   score_func=adjusted_rand_score)
+
+
+def test_score_func_string():
+    # test that correct scores are used
+    from sklearn.metrics import auc_score
+    clf = LinearSVC()
+    X, y = make_blobs(random_state=0, centers=2)
+    Cs = [.1, 1, 10]
+    for score in ['f1', 'auc']:
+        grid_search = GridSearchCV(clf, {'C': Cs}, score=score)
+        grid_search.fit(X, y)
+        cv = StratifiedKFold(n_folds=3, y=y)
+        for C, scores in zip(Cs, grid_search.grid_scores_):
+            clf.set_params(C=C)
+            scores = scores[2]  # get the separate runs from grid scores
+            i = 0
+            for train, test in cv:
+                clf.fit(X[train], y[train])
+                if score == "f1":
+                    correct_score = f1_score(y[test], clf.predict(X[test]))
+                elif score == "auc":
+                    correct_score = auc_score(y[test],
+                                              clf.decision_function(X[test]))
+                assert_almost_equal(correct_score, scores[i])
+                i += 1
