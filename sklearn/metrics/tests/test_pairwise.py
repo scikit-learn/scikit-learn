@@ -142,28 +142,6 @@ def test_pairwise_kernels():
     assert_array_almost_equal(K1, K2)
 
 
-def test_cosine_kernel():
-    """ Test the cosine_kernels. """
-
-    X = np.array([[1., 0.], [0., 1.], [-1., 0.], [0., -1.]])
-    Y = np.array([[0., .5], [-.5, 0.], [0., -.5]])
-
-    metric = "cosine"
-    function = pairwise_kernel_functions[metric]
-
-    # Test with Y=None
-    K1 = pairwise_kernels(X, metric=metric)
-    assert_array_almost_equal(
-        K1, np.array(
-            [[1., 0., -1., 0.], [0., 1., 0., -1.], [-1., 0., 1., 0.],
-            [0., -1., 0., 1.]]))
-    # Test with Y=Y
-    K1 = pairwise_kernels(X, Y=Y, metric=metric)
-    assert_array_almost_equal(
-        K1,	np.array(
-            [[0., -1., 0.], [1., 0., -1.], [0., 1., 0.], [-1., 0., 1.]]))
-
-
 def test_pairwise_kernels_filter_param():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
