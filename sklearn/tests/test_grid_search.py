@@ -300,11 +300,11 @@ def test_bad_estimator():
 def test_score_func_string():
     # test that correct scores are used
     from sklearn.metrics import auc_score
-    clf = LinearSVC()
+    clf = LinearSVC(random_state=0)
     X, y = make_blobs(random_state=0, centers=2)
     Cs = [.1, 1, 10]
     for score in ['f1', 'auc']:
-        grid_search = GridSearchCV(clf, {'C': Cs}, score=score)
+        grid_search = GridSearchCV(clf, {'C': Cs}, scoring=score)
         grid_search.fit(X, y)
         cv = StratifiedKFold(n_folds=3, y=y)
         for C, scores in zip(Cs, grid_search.grid_scores_):

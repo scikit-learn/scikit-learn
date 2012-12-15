@@ -283,12 +283,13 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
 
     """
 
-    def __init__(self, estimator, param_grid, score=None, loss_func=None,
+    def __init__(self, estimator, param_grid, scoring=None, loss_func=None,
                  score_func=None, fit_params=None, n_jobs=1, iid=True,
                  refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs'):
         if (not hasattr(estimator, 'score') and
             (not hasattr(estimator, 'predict')
-             or (score is None and loss_func is None and score_func is None))):
+             or (scoring is None and loss_func is None
+                 and score_func is None))):
             raise TypeError("The provided estimator %s does not implement a "
                             "score function. In this case, it needs to "
                             "implement a predict fuction and you have to "
@@ -301,7 +302,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
         self.param_grid = param_grid
         self.loss_func = loss_func
         self.score_func = score_func
-        self.score = score
+        self.scoring = scoring
         self.n_jobs = n_jobs
         self.fit_params = fit_params if fit_params is not None else {}
         self.iid = iid
@@ -364,10 +365,10 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
                           "deprecated and will be removed in 0.15. "
                           "Either use strings or score objects.")
             scorer = AsScorer(self.score_func)
-        if isinstance(self.score, str):  # FIXME BaseString
-            scorer = scorers[self.score]
+        elif isinstance(self.scoring, str):  # FIXME BaseString
+            scorer = scorers[self.scoring]
         else:
-            scorer = self.score
+            scorer = self.scoring
 
         self.scorer_ = scorer
 
