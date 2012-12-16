@@ -271,28 +271,25 @@ def test_cosine_kernel():
         [[sqrt(3.) / 2., .5], [-sqrt(2.) / 2., sqrt(2.) / 2.], [0., -.5]])
     Y_sparse = csr_matrix(Y)
 
-    metric = "cosine"
-    function = pairwise_kernel_functions[metric]
-
     # Test with Y=None
     #   for numpy arrays
-    K1 = pairwise_kernels(X, metric=metric)
-    K2 = pairwise_kernels(normalize(X), metric=metric)
+    K1 = pairwise_kernels(X, metric="cosine")
+    K2 = pairwise_kernels(normalize(X), metric="linear")
     assert_array_almost_equal(K1, K2)
     #   for scipy.sparse inputs
-    K1 = pairwise_kernels(X_sparse, metric=metric)
-    K2 = pairwise_kernels(normalize(X_sparse), metric=metric)
+    K1 = pairwise_kernels(X_sparse, metric="cosine")
+    K2 = pairwise_kernels(normalize(X_sparse), metric="linear")
     assert_array_almost_equal(K1, K2)
 
     # Test with Y=Y
     #   for numpy arrays
-    K1 = pairwise_kernels(X, Y=Y, metric=metric)
-    K2 = pairwise_kernels(normalize(X), Y=normalize(Y), metric=metric)
+    K1 = pairwise_kernels(X, Y=Y, metric="cosine")
+    K2 = pairwise_kernels(normalize(X), Y=normalize(Y), metric="linear")
     assert_array_almost_equal(K1, K2)
     #   for scipy.sparse inputs
-    K1 = pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
+    K1 = pairwise_kernels(X_sparse, Y=Y_sparse, metric="cosine")
     K2 = pairwise_kernels(
-        normalize(X_sparse), Y=normalize(Y_sparse), metric=metric)
+        normalize(X_sparse), Y=normalize(Y_sparse), metric="linear")
     assert_array_almost_equal(K1, K2)
 
 
