@@ -188,7 +188,7 @@ class LeavePOut(object):
 
     def __len__(self):
         return int(factorial(self.n) / factorial(self.n - self.p)
-                / factorial(self.p))
+                   / factorial(self.p))
 
 
 def _validate_kfold(k, n_samples):
@@ -257,10 +257,10 @@ class KFold(object):
     """
 
     def __init__(self, n, n_folds=3, indices=True, shuffle=False,
-            random_state=None, k=None):
+                 random_state=None, k=None):
         if k is not None:  # pragma: no cover
             warnings.warn("The parameter k was renamed to n_folds and will be"
-                    " removed in 0.15.", DeprecationWarning)
+                          " removed in 0.15.", DeprecationWarning)
             n_folds = k
         _validate_kfold(n_folds, n)
         random_state = check_random_state(random_state)
@@ -353,7 +353,7 @@ class StratifiedKFold(object):
     def __init__(self, y, n_folds=3, indices=True, k=None):
         if k is not None:  # pragma: no cover
             warnings.warn("The parameter k was renamed to n_folds and will be"
-                    " removed in 0.15.", DeprecationWarning)
+                          " removed in 0.15.", DeprecationWarning)
             n_folds = k
         y = np.asarray(y)
         n = y.shape[0]
@@ -566,8 +566,8 @@ class LeavePLabelOut(object):
 
     def __len__(self):
         return int(factorial(self.n_unique_labels) /
-                factorial(self.n_unique_labels - self.p) /
-                factorial(self.p))
+                   factorial(self.n_unique_labels - self.p) /
+                   factorial(self.p))
 
 
 class Bootstrap(object):
@@ -647,8 +647,8 @@ class Bootstrap(object):
                           "be removed in 0.16.", DeprecationWarning)
             n_iter = n_bootstraps
         self.n_iter = n_iter
-        if (isinstance(train_size, numbers.Real) and train_size >= 0.0
-                            and train_size <= 1.0):
+        if (isinstance(train_size, numbers.Real) and train_size >= 0.0 and
+                train_size <= 1.0):
             self.train_size = ceil(train_size * n)
         elif isinstance(train_size, numbers.Integral):
             self.train_size = train_size
@@ -683,10 +683,8 @@ class Bootstrap(object):
                                    + self.test_size]
 
             # bootstrap in each split individually
-            train = rng.randint(0, self.train_size,
-                                size=(self.train_size,))
-            test = rng.randint(0, self.test_size,
-                                size=(self.test_size,))
+            train = rng.randint(0, self.train_size, size=(self.train_size,))
+            test = rng.randint(0, self.test_size, size=(self.test_size,))
             yield ind_train[train], ind_test[test]
 
     def __repr__(self):
@@ -772,12 +770,12 @@ class ShuffleSplit(object):
     """
 
     def __init__(self, n, n_iter=10, test_size=0.1, train_size=None,
-            indices=True, random_state=None, n_iterations=None):
+                 indices=True, random_state=None, n_iterations=None):
         self.n = n
         self.n_iter = n_iter
         if n_iterations is not None:  # pragma: no cover
             warnings.warn("n_iterations was renamed to n_iter for consistency "
-                    " and will be removed in 0.16.")
+                          " and will be removed in 0.16.")
             self.n_iter = n_iterations
         self.test_size = test_size
         self.train_size = train_size
@@ -956,14 +954,14 @@ class StratifiedShuffleSplit(object):
     """
 
     def __init__(self, y, n_iter=10, test_size=0.1, train_size=None,
-            indices=True, random_state=None, n_iterations=None):
+                 indices=True, random_state=None, n_iterations=None):
 
         self.y = np.array(y)
         self.n = self.y.size
         self.n_iter = n_iter
         if n_iterations is not None:  # pragma: no cover
             warnings.warn("n_iterations was renamed to n_iter for consistency "
-                   " and will be removed in 0.16.")
+                          " and will be removed in 0.16.")
             self.n_iter = n_iterations
         self.test_size = test_size
         self.train_size = train_size
@@ -1025,9 +1023,9 @@ def _cross_val_score(estimator, X, y, score_func, train, test, verbose,
                      fit_params):
     """Inner loop for cross validation"""
     n_samples = X.shape[0] if sp.issparse(X) else len(X)
-    fit_params = dict([(k, np.asarray(v)[train]
-                    if hasattr(v, '__len__') and len(v) == n_samples else v)
-                    for k, v in fit_params.items()])
+    fit_params = dict([(k, np.asarray(v)[train] if hasattr(v, '__len__') and
+                        len(v) == n_samples else v)
+                       for k, v in fit_params.items()])
     if getattr(estimator, "_pairwise", False):
         # X is a precomputed square kernel matrix
         if X.shape[0] != X.shape[1]:
@@ -1105,9 +1103,10 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
     # independent, and that it is pickle-able.
     fit_params = fit_params if fit_params is not None else {}
     scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
-                delayed(_cross_val_score)(clone(estimator), X, y, score_func,
-                                          train, test, verbose, fit_params)
-                for train, test in cv)
+        delayed(_cross_val_score)(
+            clone(estimator), X, y, score_func, train, test, verbose,
+            fit_params)
+        for train, test in cv)
     return np.array(scores)
 
 
@@ -1173,8 +1172,8 @@ def check_cv(cv, X=None, y=None, classifier=False):
 
 
 def permutation_test_score(estimator, X, y, score_func, cv=None,
-                      n_permutations=100, n_jobs=1, labels=None,
-                      random_state=0, verbose=0):
+                           n_permutations=100, n_jobs=1, labels=None,
+                           random_state=0, verbose=0):
     """Evaluate the significance of a cross-validated score with permutations
 
     Parameters
@@ -1249,10 +1248,10 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     # independent, and that it is pickle-able.
     score = _permutation_test_score(clone(estimator), X, y, cv, score_func)
     permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
-                delayed(_permutation_test_score)(clone(estimator), X,
-                                            _shuffle(y, labels, random_state),
-                                            cv, score_func)
-                for _ in range(n_permutations))
+        delayed(_permutation_test_score)(
+            clone(estimator), X, _shuffle(y, labels, random_state), cv,
+            score_func)
+        for _ in range(n_permutations))
     permutation_scores = np.array(permutation_scores)
     pvalue = (np.sum(permutation_scores >= score) + 1.0) / (n_permutations + 1)
     return score, permutation_scores, pvalue

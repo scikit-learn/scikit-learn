@@ -76,7 +76,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, loss_func,
     if verbose > 1:
         start_time = time.time()
         msg = '%s' % (', '.join('%s=%s' % (k, v)
-                                     for k, v in clf_params.iteritems()))
+                                for k, v in clf_params.iteritems()))
         print "[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.')
 
     X, y = check_arrays(X, y, sparse_format="csr")
@@ -149,7 +149,7 @@ def _check_param_grid(param_grid):
 
             if len(v) == 0:
                 raise ValueError("Parameter values should be a non-empty "
-                        "list.")
+                                 "list.")
 
 
 def _has_one_grid_point(param_grid):
@@ -297,8 +297,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
 
     def __init__(self, estimator, param_grid, loss_func=None, score_func=None,
                  fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
-                 verbose=0, pre_dispatch='2*n_jobs',
-                ):
+                 verbose=0, pre_dispatch='2*n_jobs'):
         if not hasattr(estimator, 'fit') or \
            not (hasattr(estimator, 'predict') or hasattr(estimator, 'score')):
             raise TypeError("estimator should a be an estimator implementing"
@@ -386,11 +385,12 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
 
         pre_dispatch = self.pre_dispatch
         out = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
-                pre_dispatch=pre_dispatch)(
-            delayed(fit_grid_point)(
-                X, y, base_clf, clf_params, train, test, self.loss_func,
-                self.score_func, self.verbose, **self.fit_params)
-                    for clf_params in grid for train, test in cv)
+                       pre_dispatch=pre_dispatch)(
+                           delayed(fit_grid_point)(
+                               X, y, base_clf, clf_params, train, test,
+                               self.loss_func, self.score_func, self.verbose,
+                               **self.fit_params)
+                           for clf_params in grid for train, test in cv)
 
         # Out is a list of triplet: score, estimator, n_test_samples
         n_grid_points = len(list(grid))
@@ -404,7 +404,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
             score = 0
             these_points = list()
             for this_score, clf_params, this_n_test_samples in \
-                                    out[grid_start:grid_start + n_folds]:
+                    out[grid_start:grid_start + n_folds]:
                 these_points.append(this_score)
                 if self.iid:
                     this_score *= this_n_test_samples
@@ -442,10 +442,9 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
         # Store the computed scores
         # XXX: the name is too specific, it shouldn't have
         # 'grid' in it. Also, we should be retrieving/storing variance
-        self.grid_scores_ = [
-            (clf_params, score, all_scores)
-                    for clf_params, (score, _), all_scores
-                    in zip(grid, scores, cv_scores)]
+        self.grid_scores_ = [(clf_params, score, all_scores)
+                             for clf_params, (score, _), all_scores
+                             in zip(grid, scores, cv_scores)]
         return self
 
     def score(self, X, y=None):
