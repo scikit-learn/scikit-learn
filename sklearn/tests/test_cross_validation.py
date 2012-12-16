@@ -21,8 +21,6 @@ from sklearn.datasets import make_regression
 from sklearn.datasets import load_iris
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import r2_score
 from sklearn.metrics import explained_variance_score
 from sklearn.svm import SVC
 from sklearn.linear_model import Ridge
@@ -267,24 +265,16 @@ def test_cross_val_score_fit_params():
 
 def test_cross_val_score_score_func():
     clf = MockClassifier()
-    #_score_func1_args = []
-    _score_func2_args = []
+    _score_func_args = []
 
-    #def score_func1(data):
-        #_score_func1_args.append(data)
-        #return 1.0
-
-    def score_func2(y_test, y_predict):
-        _score_func2_args.append((y_test, y_predict))
+    def score_func(y_test, y_predict):
+        _score_func_args.append((y_test, y_predict))
         return 1.0
 
-    #score1 = cval.cross_val_score(clf, X, score_func=score_func1)
-    #assert_array_equal(score1, [1.0, 1.0, 1.0])
-    #assert len(_score_func1_args) == 3
-
-    score2 = cval.cross_val_score(clf, X, y, score_func=score_func2)
-    assert_array_equal(score2, [1.0, 1.0, 1.0])
-    assert len(_score_func2_args) == 3
+    with warnings.catch_warnings(True):
+        score = cval.cross_val_score(clf, X, y, score_func=score_func)
+    assert_array_equal(score, [1.0, 1.0, 1.0])
+    assert len(_score_func_args) == 3
 
 
 def test_cross_val_score_errors():
@@ -362,18 +352,18 @@ def test_cross_val_score_with_score_func_regression():
 
     # R2 score (aka. determination coefficient) - should be the
     # same as the default estimator score
-    r2_scores = cval.cross_val_score(reg, X, y, score_func=r2_score, cv=5)
+    r2_scores = cval.cross_val_score(reg, X, y, scoring="r2", cv=5)
     assert_array_almost_equal(r2_scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
 
     # Mean squared error
-    mse_scores = cval.cross_val_score(reg, X, y, cv=5,
-                                      score_func=mean_squared_error)
+    mse_scores = cval.cross_val_score(reg, X, y, cv=5, scoring="mse")
     expected_mse = np.array([763.07, 553.16, 274.38, 273.26, 1681.99])
     assert_array_almost_equal(mse_scores, expected_mse, 2)
 
     # Explained variance
-    ev_scores = cval.cross_val_score(reg, X, y, cv=5,
-                                     score_func=explained_variance_score)
+    with warnings.catch_warnings(True):
+        ev_scores = cval.cross_val_score(reg, X, y, cv=5,
+                                         score_func=explained_variance_score)
     assert_array_almost_equal(ev_scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
 
 
@@ -386,13 +376,12 @@ def test_permutation_score():
     cv = cval.StratifiedKFold(y, 2)
 
     score, scores, pvalue = cval.permutation_test_score(
-        svm, X, y, accuracy_score, cv)
-
+        svm, X, y, "accuracy", cv)
     assert_greater(score, 0.9)
     np.testing.assert_almost_equal(pvalue, 0.0, 1)
 
     score_label, _, pvalue_label = cval.permutation_test_score(
-        svm, X, y, accuracy_score, cv, labels=np.ones(y.size), random_state=0)
+        svm, X, y, "accuracy", cv, labels=np.ones(y.size), random_state=0)
 
     assert_true(score_label == score)
     assert_true(pvalue_label == pvalue)
@@ -401,7 +390,7 @@ def test_permutation_score():
     svm_sparse = SVC(kernel='linear')
     cv_sparse = cval.StratifiedKFold(y, 2, indices=True)
     score_label, _, pvalue_label = cval.permutation_test_score(
-        svm_sparse, X_sparse, y, accuracy_score, cv_sparse,
+        svm_sparse, X_sparse, y, "accuracy", cv_sparse,
         labels=np.ones(y.size), random_state=0)
 
     assert_true(score_label == score)
@@ -411,8 +400,15 @@ def test_permutation_score():
     y = np.mod(np.arange(len(y)), 3)
 
     score, scores, pvalue = cval.permutation_test_score(svm, X, y,
-                                                        accuracy_score, cv)
+                                                        "accuracy", cv)
 
+    assert_less(score, 0.5)
+    assert_greater(pvalue, 0.4)
+
+    # test with deprecated interface
+    with warnings.catch_warnings(record=True):
+        score, scores, pvalue = cval.permutation_test_score(
+            svm, X, y, score_func=accuracy_score, cv=cv)
     assert_less(score, 0.5)
     assert_greater(pvalue, 0.4)
 

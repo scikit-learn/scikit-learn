@@ -186,7 +186,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
     scoring : string or object, optional
         Either one of ["zero_one", "f1", "auc"] for classification,
         ["mse", "r2"] for regression or an object providing a
-        scoreing method.
+        scoring method.
 
     fit_params : dict, optional
         parameters to pass to the fit method

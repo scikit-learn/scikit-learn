@@ -1118,7 +1118,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     if score_func is not None:
         warnings.warn("Passing function as ``score_func`` is "
                       "deprecated and will be removed in 0.15. "
-                      "Either use strings or score objects.")
+                      "Either use strings or score objects.", stacklevel=2)
         scorer = AsScorer(score_func)
     elif isinstance(scoring, basestring):
         scorer = scorers[scoring]
@@ -1139,13 +1139,12 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     return np.array(scores)
 
 
-def _permutation_test_score(estimator, X, y, cv, score_func):
+def _permutation_test_score(estimator, X, y, cv, scorer):
     """Auxilary function for permutation_test_score"""
     avg_score = []
     for train, test in cv:
-        avg_score.append(score_func(y[test],
-                                    estimator.fit(X[train],
-                                                  y[train]).predict(X[test])))
+        estimator.fit(X[train], y[train])
+        avg_score.append(scorer(estimator, X[test], y[test]))
     return np.mean(avg_score)
 
 
@@ -1201,9 +1200,9 @@ def check_cv(cv, X=None, y=None, classifier=False):
     return cv
 
 
-def permutation_test_score(estimator, X, y, score_func, cv=None,
+def permutation_test_score(estimator, X, y, scoring=None, cv=None,
                            n_permutations=100, n_jobs=1, labels=None,
-                           random_state=0, verbose=0):
+                           random_state=0, verbose=0, score_func=None):
     """Evaluate the significance of a cross-validated score with permutations
 
     Parameters
@@ -1218,12 +1217,10 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
         The target variable to try to predict in the case of
         supervised learning.
 
-    score_func : callable
-        Callable taking as arguments the test targets (y_test) and
-        the predicted targets (y_pred) and returns a float. The score
-        functions are expected to return a bigger value for a better result
-        otherwise the returned value does not correspond to a p-value (see
-        Returns below for further details).
+    scoring : string or object, optional
+        Either one of ["zero_one", "f1", "auc"] for classification,
+        ["mse", "r2"] for regression or an object providing a
+        scoring method.
 
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
@@ -1272,15 +1269,28 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     X, y = check_arrays(X, y, sparse_format='csr')
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
+    if score_func is not None:
+        warnings.warn("Passing function as ``score_func`` is "
+                      "deprecated and will be removed in 0.15. "
+                      "Either use strings or score objects.")
+        scorer = AsScorer(score_func)
+    elif isinstance(scoring, basestring):
+        scorer = scorers[scoring]
+    else:
+        scorer = scoring
+
+    if scorer is None:
+        raise ValueError("No valid scoring provided.")
+
     random_state = check_random_state(random_state)
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
-    score = _permutation_test_score(clone(estimator), X, y, cv, score_func)
+    score = _permutation_test_score(clone(estimator), X, y, cv, scorer)
     permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
-        delayed(_permutation_test_score)(clone(estimator), X,
-                                         _shuffle(y, labels, random_state),
-                                         cv, score_func)
+        delayed(_permutation_test_score)(
+            clone(estimator), X, _shuffle(y, labels, random_state), cv,
+            scorer)
         for _ in range(n_permutations))
     permutation_scores = np.array(permutation_scores)
     pvalue = (np.sum(permutation_scores >= score) + 1.0) / (n_permutations + 1)
