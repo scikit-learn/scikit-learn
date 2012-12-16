@@ -265,21 +265,34 @@ def test_rbf_kernel():
 def test_cosine_kernel():
     """ Test the cosine_kernels. """
 
-    X = np.array([[1., 0.], [0., 1.], [-1., 0.], [0., -1.]])
+    X = np.array([[3., 0.], [0., 4.], [-2., 0.], [0., -1.]])
+    X_sparse = csr_matrix(X)
     Y = np.array(
         [[sqrt(3.) / 2., .5], [-sqrt(2.) / 2., sqrt(2.) / 2.], [0., -.5]])
+    Y_sparse = csr_matrix(Y)
 
     metric = "cosine"
     function = pairwise_kernel_functions[metric]
 
     # Test with Y=None
+    #   for numpy arrays
     K1 = pairwise_kernels(X, metric=metric)
-    K2 = np.dot(normalize(X), normalize(X).T)
+    K2 = pairwise_kernels(normalize(X), metric=metric)
+    assert_array_almost_equal(K1, K2)
+    #   for scipy.sparse inputs
+    K1 = pairwise_kernels(X_sparse, metric=metric)
+    K2 = pairwise_kernels(normalize(X_sparse), metric=metric)
     assert_array_almost_equal(K1, K2)
 
     # Test with Y=Y
+    #   for numpy arrays
     K1 = pairwise_kernels(X, Y=Y, metric=metric)
-    K2 = np.dot(normalize(X), normalize(Y).T)
+    K2 = pairwise_kernels(normalize(X), Y=normalize(Y), metric=metric)
+    assert_array_almost_equal(K1, K2)
+    #   for scipy.sparse inputs
+    K1 = pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
+    K2 = pairwise_kernels(
+        normalize(X_sparse), Y=normalize(Y_sparse), metric=metric)
     assert_array_almost_equal(K1, K2)
 
 
