@@ -1,7 +1,8 @@
 """Test the cross_validation module"""
 
-import numpy as np
 import warnings
+
+import numpy as np
 from scipy.sparse import coo_matrix
 
 from sklearn.utils.testing import assert_true
@@ -266,20 +267,20 @@ def test_cross_val_score_fit_params():
 
 def test_cross_val_score_score_func():
     clf = MockClassifier()
-    _score_func1_args = []
+    #_score_func1_args = []
     _score_func2_args = []
 
-    def score_func1(data):
-        _score_func1_args.append(data)
-        return 1.0
+    #def score_func1(data):
+        #_score_func1_args.append(data)
+        #return 1.0
 
     def score_func2(y_test, y_predict):
         _score_func2_args.append((y_test, y_predict))
         return 1.0
 
-    score1 = cval.cross_val_score(clf, X, score_func=score_func1)
-    assert_array_equal(score1, [1.0, 1.0, 1.0])
-    assert len(_score_func1_args) == 3
+    #score1 = cval.cross_val_score(clf, X, score_func=score_func1)
+    #assert_array_equal(score1, [1.0, 1.0, 1.0])
+    #assert len(_score_func1_args) == 3
 
     score2 = cval.cross_val_score(clf, X, y, score_func=score_func2)
     assert_array_equal(score2, [1.0, 1.0, 1.0])
@@ -335,13 +336,18 @@ def test_cross_val_score_with_score_func_classification():
     # Correct classification score (aka. zero / one score) - should be the
     # same as the default estimator score
     zo_scores = cval.cross_val_score(clf, iris.data, iris.target,
-                                     score_func=accuracy_score, cv=5)
+                                     scoring="accuracy", cv=5)
     assert_array_almost_equal(zo_scores, [1., 0.97, 0.90, 0.97, 1.], 2)
 
     # F1 score (class are balanced so f1_score should be equal to zero/one
     # score
     f1_scores = cval.cross_val_score(clf, iris.data, iris.target,
-                                     score_func=f1_score, cv=5)
+                                     scoring="f1", cv=5)
+    assert_array_almost_equal(f1_scores, [1., 0.97, 0.90, 0.97, 1.], 2)
+    # also test deprecated old way
+    with warnings.catch_warnings(record=True):
+        f1_scores = cval.cross_val_score(clf, iris.data, iris.target,
+                                         score_func=f1_score, cv=5)
     assert_array_almost_equal(f1_scores, [1., 0.97, 0.90, 0.97, 1.], 2)
 
 
