@@ -358,18 +358,18 @@ def rbf_kernel(X, Y=None, gamma=None):
 
 
 def cosine_kernel(X, Y=None):
-    """Compute the cosinus kernel between X and Y, also referred to as cosine 
+    """Compute the cosinus kernel between X and Y, also referred to as cosine
     similarity.
 
         K(X, Y) = <X, Y> / (||X||*||Y||)
 
     Parameters
     ----------
-    X : array_like
-        An array with shape (n_samples_X, n_features).
+    X : array_like, sparse matrix
+        with shape (n_samples_X, n_features).
 
-    Y : array_like, optional
-        An array with shape (n_samples_Y, n_features).
+    Y : array_like, sparse matrix (optional)
+        with shape (n_samples_Y, n_features).
 
     Returns
     -------
@@ -378,13 +378,13 @@ def cosine_kernel(X, Y=None):
     """
     X, Y = check_pairwise_arrays(X, Y)
 
-    X_norm = (X ** 2).sum(axis=1)
+    X_normalized = normalize(X, copy=True)
     if X is Y:
-        Y_norm = X_norm
+        Y_normalized = X_normalized
     else:
-        Y_norm = (Y ** 2).sum(axis=1)
+        Y_normalized = normalize(Y, copy=True)
 
-    K = linear_kernel(X, Y) / np.outer(np.sqrt(X_norm), np.sqrt(Y_norm))
+    K = linear_kernel(X_normalized, Y_normalized)
 
     return K
 
