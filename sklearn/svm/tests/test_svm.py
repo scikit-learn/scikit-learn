@@ -339,7 +339,7 @@ def test_auto_weight():
     from sklearn.utils import compute_class_weight
     X, y = iris.data[:, :2], iris.target
     unbalanced = np.delete(np.arange(y.size), np.where(y > 1)[0][::2])
-    
+
     classes = np.unique(y[unbalanced])
     class_weights = compute_class_weight('auto', classes, y[unbalanced])
     assert_true(np.argmax(class_weights) == 2)
