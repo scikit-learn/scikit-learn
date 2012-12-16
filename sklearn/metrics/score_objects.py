@@ -1,25 +1,20 @@
-import warnings
 import numpy as np
 
-from .metrics import (r2_score, mean_squared_error, zero_one_score, f1_score,
-                      auc_score, average_precision_score, precision_score)
+from . import (r2_score, mean_squared_error, zero_one_score, f1_score,
+               auc_score, average_precision_score, precision_score)
+
+from .cluster import adjusted_rand_score
 
 
 class AsScorer(object):
     def __init__(self, score_func, greater_is_better=True,
-                 needs_threshold=False, is_unsupervised=False, **kwargs):
+                 needs_threshold=False, **kwargs):
         self.score_func = score_func
         self.greater_is_better = greater_is_better
         self.needs_threshold = needs_threshold
-        self.is_unsupervised = is_unsupervised
         self.kwargs = kwargs
 
-    def __call__(self, estimator, X, y=None):
-        if y is None and not self.is_unsupervised:
-            # this is a warning for backward compatibility.
-            # should it be a deprecation warning?
-            warnings.warn("Score function %s is supervised, but no y was "
-                          "passed." % type(self.score_func))
+    def __call__(self, estimator, X, y):
         if self.needs_threshold:
             if len(np.unique(y)) > 2:
                 raise ValueError("This classification score only "
@@ -48,6 +43,9 @@ AveragePrecisionScorer = AsScorer(average_precision_score,
                                   needs_threshold=True)
 PrecisionScorer = AsScorer(precision_score)
 
+# Clustering scores
+ARIScorer = AsScorer(adjusted_rand_score)
+
 scorers = dict(r2=R2Scorer, mse=MSEScorer, zero_one=ZeroOneScorer, f1=F1Scorer,
                auc=AUCScorer, ap=AveragePrecisionScorer,
-               precision=PrecisionScorer)
+               precision=PrecisionScorer, ari=ARIScorer)

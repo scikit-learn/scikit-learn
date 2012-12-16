@@ -118,7 +118,11 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
             this_score = clf.score(X_test, y_test)
     else:
         clf.fit(X_train, **fit_params)
-        this_score = clf.score(X_test)
+        if scorer is not None:
+            this_score = scorer(clf, X_test)
+        else:
+            this_score = clf.score(X_test)
+
     if verbose > 2:
         msg += ", score=%f" % this_score
     if verbose > 1:

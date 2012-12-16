@@ -22,8 +22,7 @@ from sklearn.datasets.samples_generator import make_classification, make_blobs
 from sklearn.svm import LinearSVC, SVC
 from sklearn.cluster import KMeans, MeanShift
 from sklearn.metrics import f1_score
-from sklearn.metrics.score_objects import AsScorer
-from sklearn.metrics.cluster import adjusted_rand_score
+from sklearn.metrics.score_objects import AsScorer, ARIScorer
 from sklearn.cross_validation import KFold, StratifiedKFold
 
 
@@ -318,18 +317,21 @@ def test_unsupervised_grid_search():
     # test grid-search with unsupervised estimator
     X, y = make_blobs(random_state=0)
     km = KMeans(random_state=0)
-    ARIScorer = AsScorer(adjusted_rand_score)
     grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]),
                                scoring=ARIScorer)
+    grid_search.fit(X, y)
+    # ARI can find the right number :)
+    assert_equal(grid_search.best_params_["n_clusters"], 3)
+
+    # Now without a score, and without y
+    grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]))
     grid_search.fit(X)
-    # most number of clusters should be best
     assert_equal(grid_search.best_params_["n_clusters"], 4)
 
 
 def test_bad_estimator():
     # test grid-search with unsupervised estimator
     ms = MeanShift()
-    ARIScorer = AsScorer(adjusted_rand_score)
     assert_raises(TypeError, GridSearchCV, ms,
                   param_grid=dict(gamma=[.1, 1, 10]),
                   scoring=ARIScorer)
