@@ -179,7 +179,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
         dictionaries, in which case the grids spanned by each dictionary
         in the list are explored.
 
-    score : string or object, optional
+    scoring : string or object, optional
         Either one of ["zero_one", "f1", "auc"] for classification,
         ["mse", "r2"] for regression or an object providing a
         scoreing method.
@@ -365,7 +365,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
                           "deprecated and will be removed in 0.15. "
                           "Either use strings or score objects.")
             scorer = AsScorer(self.score_func)
-        elif isinstance(self.scoring, str):  # FIXME BaseString
+        elif isinstance(self.scoring, basestring):
             scorer = scorers[self.scoring]
         else:
             scorer = self.scoring
@@ -375,10 +375,11 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
         pre_dispatch = self.pre_dispatch
         out = Parallel(n_jobs=self.n_jobs, verbose=self.verbose,
                        pre_dispatch=pre_dispatch)(
-                           delayed(fit_grid_point)(
-                               X, y, base_clf, clf_params, train, test,
-                               scorer, self.verbose, **self.fit_params)
-                           for clf_params in grid for train, test in cv)
+                           delayed(fit_grid_point)(X, y, base_clf, clf_params,
+                                                   train, test, scorer,
+                                                   self.verbose,
+                                                   **self.fit_params) for
+                           clf_params in grid for train, test in cv)
 
         # Out is a list of triplet: score, estimator, n_test_samples
         n_grid_points = len(list(grid))

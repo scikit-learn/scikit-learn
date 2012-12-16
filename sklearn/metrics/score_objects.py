@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 
 from .metrics import (r2_score, mean_squared_error, zero_one_score, f1_score,
@@ -6,13 +7,19 @@ from .metrics import (r2_score, mean_squared_error, zero_one_score, f1_score,
 
 class AsScorer(object):
     def __init__(self, score_func, greater_is_better=True,
-                 needs_threshold=False, **kwargs):
+                 needs_threshold=False, is_unsupervised=False, **kwargs):
         self.score_func = score_func
         self.greater_is_better = greater_is_better
         self.needs_threshold = needs_threshold
+        self.is_unsupervised = is_unsupervised
         self.kwargs = kwargs
 
-    def __call__(self, estimator, X, y):
+    def __call__(self, estimator, X, y=None):
+        if y is None and not self.is_unsupervised:
+            # this is a warning for backward compatibility.
+            # should it be a deprecation warning?
+            warnings.warn("Score function %s is supervised, but no y was "
+                          "passed." % type(self.score_func))
         if self.needs_threshold:
             if len(np.unique(y)) > 2:
                 raise ValueError("This classification score only "
