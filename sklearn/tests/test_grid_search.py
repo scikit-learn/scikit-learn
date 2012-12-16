@@ -213,6 +213,10 @@ def test_grid_search_precomputed_kernel():
 
     assert_true(np.mean(y_pred == y_test) >= 0)
 
+    # test error is raised when the precomputed kernel is not array-like
+    # or sparse
+    assert_raises(ValueError, cv.fit, K_train.tolist(), y_train)
+
 
 def test_grid_search_precomputed_kernel_error_nonsquare():
     """Test that grid search returns an error with a non-square precomputed
