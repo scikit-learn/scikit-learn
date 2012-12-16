@@ -47,7 +47,7 @@ def _fit_binary(estimator, X, y, classes=None):
             else:
                 c = y[0]
             warnings.warn("Label %s is present in all training examples." %
-                    str(classes[c]))
+                          str(classes[c]))
         estimator = _ConstantPredictor().fit(X, unique_y)
     else:
         estimator = clone(estimator)
@@ -67,8 +67,8 @@ def _predict_binary(estimator, X):
 
 def _check_estimator(estimator):
     """Make sure that an estimator implements the necessary methods."""
-    if not hasattr(estimator, "decision_function") and \
-       not hasattr(estimator, "predict_proba"):
+    if (not hasattr(estimator, "decision_function") and
+            not hasattr(estimator, "predict_proba")):
         raise ValueError("The base estimator should implement "
                          "decision_function or predict_proba!")
 
@@ -80,7 +80,7 @@ def fit_ovr(estimator, X, y):
     lb = LabelBinarizer()
     Y = lb.fit_transform(y)
     estimators = [_fit_binary(estimator, X, Y[:, i],
-                             classes=["not %s" % str(i), i])
+                              classes=["not %s" % str(i), i])
                   for i in range(Y.shape[1])]
     return estimators, lb
 

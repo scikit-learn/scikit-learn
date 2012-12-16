@@ -165,8 +165,8 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         self.xbar_ = xbar
         # weight vectors / centroids
         self.coef_ = np.dot(self.means_ - self.xbar_, self.scaling)
-        self.intercept_ = -0.5 * np.sum(self.coef_ ** 2, axis=1) + \
-                           np.log(self.priors_)
+        self.intercept_ = (-0.5 * np.sum(self.coef_ ** 2, axis=1) +
+                           np.log(self.priors_))
         return self
 
     @property

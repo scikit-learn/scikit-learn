@@ -34,7 +34,7 @@ from . import _k_means
 
 
 def _k_init(X, n_clusters, n_local_trials=None, random_state=None,
-        x_squared_norms=None):
+            x_squared_norms=None):
     """Init n_clusters seeds according to k-means++
 
     Parameters
@@ -233,8 +233,8 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
     if not k is None:
         n_clusters = k
         warnings.warn("Parameter k has been renamed to 'n_clusters'"
-                " and will be removed in release 0.14.",
-                DeprecationWarning, stacklevel=2)
+                      " and will be removed in release 0.14.",
+                      DeprecationWarning, stacklevel=2)
 
     best_inertia = np.infty
     X = as_float_array(X, copy=copy_x)
@@ -281,9 +281,9 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
         seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
         results = Parallel(n_jobs=n_jobs, verbose=0)(
             delayed(_kmeans_single)(X, n_clusters, max_iter=max_iter,
-                init=init, verbose=verbose, tol=tol,
-                precompute_distances=precompute_distances,
-                x_squared_norms=x_squared_norms,
+                                    init=init, verbose=verbose, tol=tol,
+                                    precompute_distances=precompute_distances,
+                                    x_squared_norms=x_squared_norms,
                                     # Change seed to ensure variety
                                     random_state=seed)
             for seed in seeds)
@@ -302,8 +302,8 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
 
 
 def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
-        verbose=False, x_squared_norms=None, random_state=None, tol=1e-4,
-        precompute_distances=True):
+                   verbose=False, x_squared_norms=None, random_state=None,
+                   tol=1e-4, precompute_distances=True):
     """A single run of k-means, assumes preparation completed prior.
 
     Parameters
@@ -380,14 +380,14 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
         centers_old = centers.copy()
         # labels assignement is also called the E-step of EM
         labels, inertia = \
-                _labels_inertia(X, x_squared_norms, centers,
-                                precompute_distances=precompute_distances,
-                                distances=distances)
+            _labels_inertia(X, x_squared_norms, centers,
+                            precompute_distances=precompute_distances,
+                            distances=distances)
 
         # computation of the means is also called the M-step of EM
         if sp.issparse(X):
             centers = _k_means._centers_sparse(X, labels, n_clusters,
-                    distances)
+                                               distances)
         else:
             centers = _k_means._centers_dense(X, labels, n_clusters, distances)
 
@@ -525,7 +525,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
                 RuntimeWarning, stacklevel=2)
             init_size = 3 * k
         init_indices = random_state.random_integers(
-                0, n_samples - 1, init_size)
+            0, n_samples - 1, init_size)
         X = X[init_indices]
         x_squared_norms = x_squared_norms[init_indices]
         n_samples = X.shape[0]
@@ -534,9 +534,8 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
                 "n_samples=%d should be larger than k=%d" % (n_samples, k))
 
     if init == 'k-means++':
-        centers = _k_init(X, k,
-                        random_state=random_state,
-                        x_squared_norms=x_squared_norms)
+        centers = _k_init(X, k, random_state=random_state,
+                          x_squared_norms=x_squared_norms)
     elif init == 'random':
         seeds = random_state.permutation(n_samples)[:k]
         centers = X[seeds]
@@ -546,8 +545,8 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
         centers = init(X, k, random_state=random_state)
     else:
         raise ValueError("the init parameter for the k-means should "
-            "be 'k-means++' or 'random' or an ndarray, "
-            "'%s' (type '%s') was passed." % (init, type(init)))
+                         "be 'k-means++' or 'random' or an ndarray, "
+                         "'%s' (type '%s') was passed." % (init, type(init)))
 
     if sp.issparse(centers):
         centers = centers.toarray()
@@ -683,8 +682,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
                                  n_features, expected_n_features))
         if not X.dtype.kind is 'f':
             warnings.warn("Got data type %s, converted to float "
-                    "to avoid overflows" % X.dtype,
-                    RuntimeWarning, stacklevel=2)
+                          "to avoid overflows" % X.dtype,
+                          RuntimeWarning, stacklevel=2)
             X = X.astype(np.float)
 
         return X
@@ -704,8 +703,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         if not self.k is None:
             n_clusters = self.k
             warnings.warn("Parameter k has been renamed by 'n_clusters'"
-                    " and will be removed in release 0.14.",
-                    DeprecationWarning, stacklevel=2)
+                          " and will be removed in release 0.14.",
+                          DeprecationWarning, stacklevel=2)
             self.n_clusters = n_clusters
         else:
             n_clusters = self.n_clusters
@@ -926,7 +925,7 @@ def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
         no_improvement += 1
 
     if (model.max_no_improvement is not None
-        and no_improvement >= model.max_no_improvement):
+            and no_improvement >= model.max_no_improvement):
         if verbose:
             print ('Converged (lack of improvement in inertia)'
                    ' at iteration %d/%d' % (
@@ -1030,9 +1029,10 @@ class MiniBatchKMeans(KMeans):
                  random_state=None, tol=0.0, max_no_improvement=10,
                  init_size=None, n_init=3, k=None):
 
-        super(MiniBatchKMeans, self).__init__(n_clusters=n_clusters, init=init,
-              max_iter=max_iter, verbose=verbose, random_state=random_state,
-              tol=tol, n_init=n_init, k=k)
+        super(MiniBatchKMeans, self).__init__(
+            n_clusters=n_clusters, init=init, max_iter=max_iter,
+            verbose=verbose, random_state=random_state, tol=tol, n_init=n_init,
+            k=k)
 
         self.max_no_improvement = max_no_improvement
         self.batch_size = batch_size
@@ -1050,14 +1050,14 @@ class MiniBatchKMeans(KMeans):
         self.random_state = check_random_state(self.random_state)
         if self.k is not None:
             warnings.warn("Parameter k has been replaced by 'n_clusters'"
-                " and will be removed in release 0.14.",
-                DeprecationWarning, stacklevel=2)
+                          " and will be removed in release 0.14.",
+                          DeprecationWarning, stacklevel=2)
             self.n_clusters = self.k
         X = check_arrays(X, sparse_format="csr", copy=False,
                          check_ccontiguous=True, dtype=np.float64)[0]
         n_samples, n_features = X.shape
         if n_samples < self.n_clusters:
-            raise ValueError("Number of samples smaller than number "\
+            raise ValueError("Number of samples smaller than number "
                              "of clusters.")
 
         if hasattr(self.init, '__array__'):
@@ -1089,8 +1089,8 @@ class MiniBatchKMeans(KMeans):
             init_size = n_samples
         self.init_size_ = init_size
 
-        validation_indices = self.random_state.random_integers(
-                0, n_samples - 1, init_size)
+        validation_indices = self.random_state.random_integers(0, n_samples -
+                                                               1, init_size)
         X_valid = X[validation_indices]
         x_squared_norms_valid = x_squared_norms[validation_indices]
 
@@ -1150,9 +1150,9 @@ class MiniBatchKMeans(KMeans):
 
             # Monitor convergence and do early stopping if necessary
             if _mini_batch_convergence(
-                self, iteration_idx, n_iter, tol, n_samples,
-                centers_squared_diff, batch_inertia, convergence_context,
-                verbose=self.verbose):
+                    self, iteration_idx, n_iter, tol, n_samples,
+                    centers_squared_diff, batch_inertia, convergence_context,
+                    verbose=self.verbose):
                 break
 
         if self.compute_labels:
@@ -1184,7 +1184,7 @@ class MiniBatchKMeans(KMeans):
         x_squared_norms = _squared_norms(X)
 
         if (not hasattr(self, 'counts_')
-            or not hasattr(self, 'cluster_centers_')):
+                or not hasattr(self, 'cluster_centers_')):
             # this is the first call partial_fit on this object:
             # initialize the cluster centers
             self.cluster_centers_ = _init_centroids(

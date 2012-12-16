@@ -118,8 +118,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         remaining_iterations -= 1
 
     previous_dist = dist
-    dist = (np.dot(X - location, precision) \
-                * (X - location)).sum(axis=1)
+    dist = (np.dot(X - location, precision) * (X - location)).sum(axis=1)
     # Catch computation errors
     if np.isinf(det):
         raise ValueError(
@@ -132,13 +131,13 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
     if np.allclose(det, previous_det):
         # c_step procedure converged
         if verbose:
-            print "Optimal couple (location, covariance) found before" \
-                "ending iterations (%d left)" % (remaining_iterations)
+            print("Optimal couple (location, covariance) found before"
+                  "ending iterations (%d left)" % (remaining_iterations))
         results = location, covariance, det, support, dist
     elif det > previous_det:
         # determinant has increased (should not happen)
-        warnings.warn("Warning! det > previous_det (%.15f > %.15f)" \
-                          % (det, previous_det), RuntimeWarning)
+        warnings.warn("Warning! det > previous_det (%.15f > %.15f)"
+                      % (det, previous_det), RuntimeWarning)
         results = previous_location, previous_covariance, \
             previous_det, previous_support, previous_dist
 
@@ -227,7 +226,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         n_trials = estimates_list[0].shape[0]
     else:
         raise TypeError("Invalid 'n_trials' parameter, expected tuple or "
-                " integer, got %s (%s)" % (n_trials, type(n_trials)))
+                        " integer, got %s (%s)" % (n_trials, type(n_trials)))
 
     # compute `n_trials` location and shape estimates candidates in the subset
     all_estimates = []
@@ -244,10 +243,10 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         for j in range(n_trials):
             initial_estimates = (estimates_list[0][j], estimates_list[1][j])
             all_estimates.append(c_step(
-                    X, n_support, remaining_iterations=n_iter,
-                    initial_estimates=initial_estimates, verbose=verbose,
-                    cov_computation_method=cov_computation_method,
-                    random_state=random_state))
+                X, n_support, remaining_iterations=n_iter,
+                initial_estimates=initial_estimates, verbose=verbose,
+                cov_computation_method=cov_computation_method,
+                random_state=random_state))
     all_locs_sub, all_covs_sub, all_dets_sub, all_supports_sub, all_ds_sub = \
         zip(*all_estimates)
     # find the `n_best` best results among the `n_trials` ones
@@ -321,8 +320,8 @@ def fast_mcd(X, support_fraction=None,
     X = np.asanyarray(X)
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
-        warnings.warn("Only one sample available. " \
-                          "You may want to reshape your data array")
+        warnings.warn("Only one sample available. "
+                      "You may want to reshape your data array")
     n_samples, n_features = X.shape
 
     # minimum breakdown value
@@ -350,8 +349,7 @@ def fast_mcd(X, support_fraction=None,
             location = np.array([location])
             # get precision matrix in an optimized way
             precision = pinvh(covariance)
-            dist = (np.dot(X_centered, precision) \
-                        * (X_centered)).sum(axis=1)
+            dist = (np.dot(X_centered, precision) * (X_centered)).sum(axis=1)
         else:
             support = np.ones(n_samples, dtype=bool)
             covariance = np.asarray([[np.var(X)]])
@@ -359,10 +357,8 @@ def fast_mcd(X, support_fraction=None,
             X_centered = X - location
             # get precision matrix in an optimized way
             precision = pinvh(covariance)
-            dist = (np.dot(X_centered, precision) \
-                        * (X_centered)).sum(axis=1)
-
-    ### Starting FastMCD algorithm for p-dimensional case
+            dist = (np.dot(X_centered, precision) * (X_centered)).sum(axis=1)
+### Starting FastMCD algorithm for p-dimensional case
     if (n_samples > 500) and (n_features > 1):
         ## 1. Find candidate supports on subsets
         # a. split the set in subsets of size ~ 300
@@ -565,17 +561,17 @@ class MinCovDet(EmpiricalCovariance):
         n_samples, n_features = X.shape
         # check that the empirical covariance is full rank
         if (linalg.svdvals(np.dot(X.T, X)) > 1e-8).sum() != n_features:
-            warnings.warn("The covariance matrix associated to your dataset " \
-                              "is not full rank")
+            warnings.warn("The covariance matrix associated to your dataset "
+                          "is not full rank")
         # compute and store raw estimates
         raw_location, raw_covariance, raw_support, raw_dist = fast_mcd(
-                X, support_fraction=self.support_fraction,
-                cov_computation_method=self._nonrobust_covariance,
-                random_state=self.random_state)
+            X, support_fraction=self.support_fraction,
+            cov_computation_method=self._nonrobust_covariance,
+            random_state=self.random_state)
         if self.assume_centered:
             raw_location = np.zeros(n_features)
-            raw_covariance = self._nonrobust_covariance(
-                    X[raw_support], assume_centered=True)
+            raw_covariance = self._nonrobust_covariance(X[raw_support],
+                                                        assume_centered=True)
             # get precision matrix in an optimized way
             precision = pinvh(raw_covariance)
             raw_dist = np.sum(np.dot(X, precision) * X, 1)

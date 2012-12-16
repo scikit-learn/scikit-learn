@@ -159,7 +159,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, eps=0.5, min_samples=5, metric='euclidean',
-            random_state=None):
+                 random_state=None):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric

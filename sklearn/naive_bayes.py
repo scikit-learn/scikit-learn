@@ -178,7 +178,7 @@ class GaussianNB(BaseNB):
         for i in xrange(np.size(self.classes_)):
             jointi = np.log(self.class_prior_[i])
             n_ij = - 0.5 * np.sum(np.log(np.pi * self.sigma_[i, :]))
-            n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) / \
+            n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) /
                                  (self.sigma_[i, :]), 1)
             joint_log_likelihood.append(jointi + n_ij)
 
@@ -240,8 +240,8 @@ class BaseDiscreteNB(BaseNB):
 
         if class_prior:
             if len(class_prior) != n_classes:
-                raise ValueError(
-                        "Number of priors must match number of classes")
+                raise ValueError("Number of priors must match number of"
+                                 " classes.")
             self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
             # empirical prior, with sample_weight taken into account
@@ -261,12 +261,12 @@ class BaseDiscreteNB(BaseNB):
     # XXX The following is a stopgap measure; we need to set the dimensions
     # of class_log_prior_ and feature_log_prob_ correctly.
     def _get_coef(self):
-        return self.feature_log_prob_[1] if len(self.classes_) == 2 \
-                                         else self.feature_log_prob_
+        return (self.feature_log_prob_[1]
+                if len(self.classes_) == 2 else self.feature_log_prob_)
 
     def _get_intercept(self):
-        return self.class_log_prior_[1] if len(self.classes_) == 2 \
-                                        else self.class_log_prior_
+        return (self.class_log_prior_[1]
+                if len(self.classes_) == 2 else self.class_log_prior_)
 
     coef_ = property(_get_coef)
     intercept_ = property(_get_intercept)
@@ -339,7 +339,7 @@ class MultinomialNB(BaseDiscreteNB):
         """Calculate the posterior log probability of the samples X"""
         X = atleast2d_or_csr(X)
         return (safe_sparse_dot(X, self.feature_log_prob_.T)
-               + self.class_log_prior_)
+                + self.class_log_prior_)
 
 
 class BernoulliNB(BaseDiscreteNB):
@@ -426,7 +426,7 @@ class BernoulliNB(BaseDiscreteNB):
         neg_prob = np.log(1 - np.exp(self.feature_log_prob_))
         # Compute  neg_prob · (1 - X).T  as  ∑neg_prob - X · neg_prob
         X_neg_prob = (neg_prob.sum(axis=1)
-                    - safe_sparse_dot(X, neg_prob.T))
+                      - safe_sparse_dot(X, neg_prob.T))
         jll = safe_sparse_dot(X, self.feature_log_prob_.T) + X_neg_prob
 
         return jll + self.class_log_prior_
