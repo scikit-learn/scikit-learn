@@ -48,6 +48,7 @@ from ..utils.validation import array2d
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.joblib.parallel import cpu_count
+from ..preprocessing import normalize
 
 from .pairwise_fast import _chi2_kernel_fast
 
@@ -353,7 +354,8 @@ def rbf_kernel(X, Y=None, gamma=None):
 
 
 def cosine_kernel(X, Y=None):
-    """Compute the cosinus kernel between X and Y.
+    """Compute the cosinus kernel between X and Y, also referred to as cosine 
+    similarity.
 
         K(X, Y) = <X, Y> / (||X||*||Y||)
 
