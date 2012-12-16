@@ -285,20 +285,20 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
         if X.shape[0] == X.shape[1] and not self._pairwise:
             warnings.warn("The API of AffinityPropagation has changed."
-                "Now ``fit`` constructs an affinity matrix from the data."
-                "To use a custom affinity matrix, set "
-                "``affinity=precomputed``.")
+                          "Now ``fit`` constructs an affinity matrix from the"
+                          " data. To use a custom affinity matrix, set "
+                          "``affinity=precomputed``.")
         if self.affinity is "precomputed":
             self.affinity_matrix_ = X
         elif self.affinity is "euclidean":
             self.affinity_matrix_ = -euclidean_distances(X, squared=True)
         else:
             raise ValueError("Affinity must be 'precomputed' or "
-                        "'euclidean'. Got %s instead" % str(self.affinity))
+                             "'euclidean'. Got %s instead"
+                             % str(self.affinity))
 
         self.cluster_centers_indices_, self.labels_ = affinity_propagation(
-                self.affinity_matrix_, self.preference,
-                max_iter=self.max_iter,
-                convergence_iter=self.convergence_iter,
-                damping=self.damping, copy=self.copy, verbose=self.verbose)
+            self.affinity_matrix_, self.preference, max_iter=self.max_iter,
+            convergence_iter=self.convergence_iter, damping=self.damping,
+            copy=self.copy, verbose=self.verbose)
         return self

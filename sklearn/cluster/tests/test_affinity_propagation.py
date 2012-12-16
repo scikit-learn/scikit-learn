@@ -25,8 +25,8 @@ def test_affinity_propagation():
     S = -euclidean_distances(X, squared=True)
     preference = np.median(S) * 10
     # Compute Affinity Propagation
-    cluster_centers_indices, labels = affinity_propagation(S,
-                                       preference=preference)
+    cluster_centers_indices, labels = affinity_propagation(
+        S, preference=preference)
 
     n_clusters_ = len(cluster_centers_indices)
 

@@ -16,8 +16,6 @@ from sklearn.cluster.spectral import discretize
 from sklearn.metrics import pairwise_distances, adjusted_rand_score
 from sklearn.datasets.samples_generator import make_blobs
 
-from sklearn.preprocessing import LabelBinarizer
-
 
 def test_spectral_clustering():
     S = np.array([[1, 5, 2, 1, 0, 0, 0],
