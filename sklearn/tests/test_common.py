@@ -180,7 +180,8 @@ def test_transformers():
         # fit
 
         if Trans in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
-            y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
+            random_state = np.random.RandomState(seed=12345)
+            y_ = np.vstack([y, 2 * y + random_state.randint(2, size=len(y))])
             y_ = y_.T
         else:
             y_ = y
@@ -504,7 +505,7 @@ def test_classifiers_classes():
     estimators = all_estimators()
     classifiers = [(name, E) for name, E in estimators if issubclass(E,
         ClassifierMixin)]
-    X, y = make_blobs()
+    X, y = make_blobs(random_state=12345)
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
     y = 2 * y + 1
