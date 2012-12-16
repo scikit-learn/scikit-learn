@@ -23,10 +23,10 @@ class AsScorer(object):
                 y_pred = estimator.decision_function(X).ravel()
             except (NotImplementedError, AttributeError):
                 y_pred = estimator.predict_proba(X)[:, 1]
-            return self.score_func(y, y_pred)
+            return self.score_func(y, y_pred, **self.kwargs)
         else:
             y_pred = estimator.predict(X)
-            return self.score_func(y, y_pred)
+            return self.score_func(y, y_pred, **self.kwargs)
 
 
 # Standard regression scores
