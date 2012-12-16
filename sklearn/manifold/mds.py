@@ -300,8 +300,8 @@ class MDS(BaseEstimator):
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
-    proximity : string
-        Which proximity measure to use.
+    dissimilarity : string
+        Which dissimilarity measure to use.
         Supported are 'euclidean' and 'precomputed'.
 
 
@@ -329,9 +329,9 @@ class MDS(BaseEstimator):
     """
     def __init__(self, n_components=2, metric=True, n_init=4,
                  max_iter=300, verbose=0, eps=1e-3, n_jobs=1,
-                 random_state=None, proximity="euclidean"):
+                 random_state=None, dissimilarity="euclidean"):
         self.n_components = n_components
-        self.proximity = proximity
+        self.dissimilarity = dissimilarity
         self.metric = metric
         self.n_init = n_init
         self.max_iter = max_iter
@@ -374,21 +374,22 @@ class MDS(BaseEstimator):
             if ndarray, initialize the SMACOF algorithm with this array.
 
         """
-        if X.shape[0] == X.shape[1] and self.proximity != "precomputed":
+        if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
             warnings.warn("The MDS API has changed. ``fit`` now constructs an"
-                          "proximity matrix from data. To use a custom "
-                          "proximity matrix, set ``proximity=precomputed``.")
+                          "dissimilarity matrix from data. To use a custom "
+                          "dissimilarity matrix, set "
+                          "``dissimilarity=precomputed``.")
 
-        if self.proximity is "precomputed":
-            self.proximity_matrix_ = X
-        elif self.proximity is "euclidean":
-            self.proximity_matrix_ = euclidean_distances(X)
+        if self.dissimilarity is "precomputed":
+            self.dissimilarity_matrix_ = X
+        elif self.dissimilarity is "euclidean":
+            self.dissimilarity_matrix_ = euclidean_distances(X)
         else:
             raise ValueError("Proximity must be 'precomputed' or 'euclidean'."
-                             " Got %s instead" % str(self.proximity))
+                             " Got %s instead" % str(self.dissimilarity))
 
         self.embedding_, self.stress_ = smacof(
-            self.proximity_matrix_, metric=self.metric,
+            self.dissimilarity_matrix_, metric=self.metric,
             n_components=self.n_components, init=init, n_init=self.n_init,
             n_jobs=self.n_jobs, max_iter=self.max_iter, verbose=self.verbose,
             eps=self.eps, random_state=self.random_state)
