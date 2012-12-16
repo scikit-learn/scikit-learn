@@ -353,11 +353,12 @@ def compute_class_weight(class_weight, classes, y):
 
     Parameters
     ----------
-    class_weight : dict or 'auto'
+    class_weight : dict, 'auto' or None
         If 'auto', class weights will be given inverse proportional
         to the frequency of the class in the data.
         If a dictionary is given, keys are classes and values
         are corresponding class weights.
+        If None is given, the class weights will be uniform.
     classes : list
         List of the classes occuring in the data, as given by
         ``np.unique(y_org)`` with ``y_org`` the original class labels.
