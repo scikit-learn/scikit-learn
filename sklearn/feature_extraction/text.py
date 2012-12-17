@@ -86,7 +86,6 @@ def _check_stop_list(stop):
         return stop
 
 
-
 class VectorizerMixin(object):
     """Provides common code for text vectorizers (tokenization logic)."""
 
@@ -436,7 +435,6 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         return FeatureHasher(n_features=self.n_features,
                              input_type='string', dtype=self.dtype,
                              non_negative=self.non_negative)
-
 
 
 class CountVectorizer(BaseEstimator, VectorizerMixin):
