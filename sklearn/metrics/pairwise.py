@@ -48,6 +48,7 @@ from ..utils.validation import array2d
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.joblib.parallel import cpu_count
+from ..preprocessing import normalize
 
 from .pairwise_fast import _chi2_kernel_fast
 
@@ -171,7 +172,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
         YY = atleast2d_or_csr(Y_norm_squared)
         if YY.shape != (1, Y.shape[0]):
             raise ValueError(
-                        "Incompatible dimensions for Y and Y_norm_squared")
+                "Incompatible dimensions for Y and Y_norm_squared")
 
     # TODO: a faster Cython implementation would do the clipping of negative
     # values in a single pass over the output matrix.
@@ -356,6 +357,38 @@ def rbf_kernel(X, Y=None, gamma=None):
     return K
 
 
+def cosine_kernel(X, Y=None):
+    """Compute the cosinus kernel between X and Y, also referred to as cosine
+    similarity.
+
+        K(X, Y) = <X, Y> / (||X||*||Y||)
+
+    Parameters
+    ----------
+    X : array_like, sparse matrix
+        with shape (n_samples_X, n_features).
+
+    Y : array_like, sparse matrix (optional)
+        with shape (n_samples_Y, n_features).
+
+    Returns
+    -------
+    kernel matrix : array_like
+        An array with shape (n_samples_X, n_samples_Y).
+    """
+    X, Y = check_pairwise_arrays(X, Y)
+
+    X_normalized = normalize(X, copy=True)
+    if X is Y:
+        Y_normalized = X_normalized
+    else:
+        Y_normalized = normalize(Y, copy=True)
+
+    K = linear_kernel(X_normalized, Y_normalized)
+
+    return K
+
+
 def additive_chi2_kernel(X, Y=None):
     """Computes the additive chi-squared kernel between observations in X and Y
 
@@ -487,8 +520,7 @@ pairwise_distance_functions = {
     'l2': euclidean_distances,
     'l1': manhattan_distances,
     'manhattan': manhattan_distances,
-    'cityblock': manhattan_distances,
-    }
+    'cityblock': manhattan_distances, }
 
 
 def distance_metrics():
@@ -524,8 +556,8 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
         Y = X
 
     ret = Parallel(n_jobs=n_jobs, verbose=0)(
-            delayed(func)(X, Y[s], **kwds)
-            for s in gen_even_slices(Y.shape[0], n_jobs))
+        delayed(func)(X, Y[s], **kwds)
+        for s in gen_even_slices(Y.shape[0], n_jobs))
 
     return np.hstack(ret)
 
@@ -659,7 +691,7 @@ pairwise_kernel_functions = {
     'poly': polynomial_kernel,
     'rbf': rbf_kernel,
     'sigmoid': sigmoid_kernel,
-    }
+    'cosine': cosine_kernel, }
 
 
 def kernel_metrics():
@@ -680,6 +712,7 @@ def kernel_metrics():
       'polynomial'     sklearn.pairwise.polynomial_kernel
       'rbf'            sklearn.pairwise.rbf_kernel
       'sigmoid'        sklearn.pairwise.sigmoid_kernel
+      'cosine'         sklearn.pairwise.cosine_kernel
       ==============   ========================================
     """
     return pairwise_kernel_functions
@@ -693,7 +726,7 @@ kernel_params = {
     "sigmoid": set(("gamma", "coef0")),
     "polynomial": set(("gamma", "degree", "coef0")),
     "poly": set(("gamma", "degree", "coef0")),
-}
+    "cosine": set(), }
 
 
 def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
@@ -712,7 +745,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     kernel between the arrays from both X and Y.
 
     Valid values for metric are::
-        ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear']
+        ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear', 'cosine']
 
     Parameters
     ----------
@@ -767,7 +800,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     elif metric in pairwise_kernel_functions:
         if filter_params:
             kwds = dict((k, kwds[k]) for k in kwds
-                                        if k in kernel_params[metric])
+                        if k in kernel_params[metric])
         func = pairwise_kernel_functions[metric]
         if n_jobs == 1:
             return func(X, Y, **kwds)
