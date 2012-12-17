@@ -351,7 +351,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
 class Scaler(StandardScaler):
     def __init__(self, copy=True, with_mean=True, with_std=True):
         warnings.warn("Scaler was renamed to StandardScaler. The old name "
-                " will be removed in 0.15.", DeprecationWarning)
+                      " will be removed in 0.15.", DeprecationWarning)
         super(Scaler, self).__init__(copy, with_mean, with_std)
 
 
@@ -590,9 +590,8 @@ def _is_label_indicator_matrix(y):
 def _is_multilabel(y):
     # the explicit check for ndarray is for forward compatibility; future
     # versions of Numpy might want to register ndarray as a Sequence
-    return not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) \
-       and not isinstance(y[0], basestring) \
-        or _is_label_indicator_matrix(y)
+    return (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) and
+            not isinstance(y[0], basestring) or _is_label_indicator_matrix(y))
 
 
 class OneHotEncoder(BaseEstimator, TransformerMixin):
@@ -691,12 +690,12 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             try:
                 n_values = np.asarray(self.n_values, dtype=int)
             except (ValueError, TypeError):
-                raise TypeError("Wrong type for parameter `n_values`."
-                        " Expected 'auto', int or array of ints, got %r"
-                        % type(X))
+                raise TypeError("Wrong type for parameter `n_values`. Expected"
+                                " 'auto', int or array of ints, got %r"
+                                % type(X))
             if n_values.ndim < 1 or n_values.shape[0] != X.shape[1]:
-                raise ValueError("Shape mismatch: if n_values is "
-                        "an array, it has to be of shape (n_features,).")
+                raise ValueError("Shape mismatch: if n_values is an array,"
+                                 " it has to be of shape (n_features,).")
         self.n_values_ = n_values
         n_values = np.hstack([[0], n_values])
         indices = np.cumsum(n_values)
@@ -707,7 +706,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                 n_features)
         data = np.ones(n_samples * n_features)
         out = sp.coo_matrix((data, (row_indices, column_indices)),
-                shape=(n_samples, indices[-1]), dtype=self.dtype).tocsr()
+                            shape=(n_samples, indices[-1]),
+                            dtype=self.dtype).tocsr()
 
         if self.n_values == 'auto':
             mask = np.array(out.sum(axis=0)).ravel() != 0
@@ -750,7 +750,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
                                 n_features)
         data = np.ones(n_samples * n_features)
         out = sp.coo_matrix((data, (row_indices, column_indices)),
-                shape=(n_samples, indices[-1]), dtype=self.dtype).tocsr()
+                            shape=(n_samples, indices[-1]),
+                            dtype=self.dtype).tocsr()
         if self.n_values == 'auto':
             out = out[:, self.active_features_]
         return out
@@ -985,8 +986,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         y_is_multilabel = _is_multilabel(y)
 
         if y_is_multilabel and not self.multilabel:
-            raise ValueError("The object was not " +
-                    "fitted with multilabel input!")
+            raise ValueError("The object was not fitted with multilabel"
+                             " input!")
 
         elif self.multilabel:
             if not _is_multilabel(y):
@@ -1081,10 +1082,10 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
     """Center a kernel matrix
 
     Let K(x_i, x_j) be a kernel defined by K(x_i, x_j) = phi(x_i)^T phi(x_j),
-    where phi(x) is a function mapping x to a hilbert space. KernelCenterer is a
-    class to center (i.e., normalize to have zero-mean) the data without
-    explicitly computing phi(x). It is equivalent equivalent to centering phi(x)
-    with sklearn.preprocessing.StandardScaler(with_std=False).
+    where phi(x) is a function mapping x to a hilbert space. KernelCenterer is
+    a class to center (i.e., normalize to have zero-mean) the data without
+    explicitly computing phi(x). It is equivalent equivalent to centering
+    phi(x) with sklearn.preprocessing.StandardScaler(with_std=False).
     """
 
     def fit(self, K, y=None):

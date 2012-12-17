@@ -39,7 +39,7 @@ else:
             """
 
             def test(self, label='fast', verbose=1, extra_argv=['--exe'],
-                            doctests=True, coverage=False):
+                     doctests=True, coverage=False):
                 """Run the full test suite
 
                 Examples
@@ -49,9 +49,11 @@ else:
                 >>> from sklearn import test
                 >>> test(extra_argv=['--exe', '-sx']) #doctest: +SKIP
                 """
-                return super(_NoseTester, self).test(label=label, verbose=verbose,
-                                        extra_argv=extra_argv,
-                                        doctests=doctests, coverage=coverage)
+                return super(_NoseTester, self).test(label=label,
+                                                     verbose=verbose,
+                                                     extra_argv=extra_argv,
+                                                     doctests=doctests,
+                                                     coverage=coverage)
 
         try:
             test = _NoseTester(raise_warnings="release").test

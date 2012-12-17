@@ -82,15 +82,16 @@ class Pipeline(BaseEstimator):
         estimator = estimators[-1]
 
         for t in transforms:
-            if not (hasattr(t, "fit") or hasattr(t, "fit_transform")) \
-              or not hasattr(t, "transform"):
+            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
+                    hasattr(t, "transform")):
                 raise TypeError("All intermediate steps a the chain should "
-                        "be transforms and implement fit and transform"
-                        "'%s' (type %s) doesn't)" % (t, type(t)))
+                                "be transforms and implement fit and transform"
+                                "'%s' (type %s) doesn't)" % (t, type(t)))
 
         if not hasattr(estimator, "fit"):
             raise TypeError("Last step of chain should implement fit "
-                "'%s' (type %s) doesn't)" % (estimator, type(estimator)))
+                            "'%s' (type %s) doesn't)"
+                            % (estimator, type(estimator)))
 
     def get_params(self, deep=True):
         if not deep:
@@ -265,9 +266,9 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
         for name, trans in self.transformer_list:
             if not hasattr(trans, 'get_feature_names'):
                 raise AttributeError("Transformer %s does not provide"
-                        " get_feature_names." % str(name))
-            feature_names.extend([name + "__" + f
-                for f in trans.get_feature_names()])
+                                     " get_feature_names." % str(name))
+            feature_names.extend([name + "__" + f for f in
+                                  trans.get_feature_names()])
         return feature_names
 
     def fit(self, X, y=None):
@@ -278,8 +279,9 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
         X : array-like or sparse matrix, shape (n_samples, n_features)
             Input data, used to fit transformers.
         """
-        Parallel(n_jobs=self.n_jobs)(delayed(_fit_one_transformer)(trans, X, y)
-                for name, trans in self.transformer_list)
+        Parallel(n_jobs=self.n_jobs)(
+            delayed(_fit_one_transformer)(trans, X, y)
+            for name, trans in self.transformer_list)
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
