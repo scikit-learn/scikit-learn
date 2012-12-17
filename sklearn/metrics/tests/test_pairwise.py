@@ -258,7 +258,7 @@ def test_cosine_kernel():
     X = np.array([[3., 0.], [0., 4.], [-2., 0.], [0., -1.]])
     X_sparse = csr_matrix(X)
     Y = np.array(
-        [[sqrt(3.) / 2., .5], [-sqrt(2.) / 2., sqrt(2.) / 2.], [0., -.5]])
+        [[np.sqrt(3.) / 2., .5], [-np.sqrt(2.) / 2., np.sqrt(2.) / 2.], [0., -.5]])
     Y_sparse = csr_matrix(Y)
 
     # Test with Y=None
