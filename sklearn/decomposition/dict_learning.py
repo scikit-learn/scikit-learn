@@ -489,9 +489,10 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
 
 
 def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
-                return_code=True, dict_init=None, callback=None, chunk_size=3,
-                verbose=False, shuffle=True, n_jobs=1, method='lars',
-                iter_offset=0, random_state=None, n_atoms=None):
+                         return_code=True, dict_init=None, callback=None,
+                         batch_size=3, verbose=False, shuffle=True, n_jobs=1,
+                         method='lars', iter_offset=0, random_state=None,
+                         n_atoms=None, chunk_size=None):
     """Solves a dictionary learning matrix factorization problem online.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -508,58 +509,58 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     Parameters
     ----------
     X: array of shape (n_samples, n_features)
-        data matrix
+        Data matrix.
 
-    n_components: int,
-        number of dictionary atoms to extract
+    n_components : int,
+        Number of dictionary atoms to extract.
 
-    alpha: int,
-        sparsity controlling parameter
+    alpha : int,
+        Sparsity controlling parameter.
 
-    n_iter: int,
-        number of iterations to perform
+    n_iter : int,
+        Number of iterations to perform.
 
-    return_code: boolean,
-        whether to also return the code U or just the dictionary V
+    return_code : boolean,
+        Whether to also return the code U or just the dictionary V.
 
-    dict_init: array of shape (n_components, n_features),
-        initial value for the dictionary for warm restart scenarios
+    dict_init : array of shape (n_components, n_features),
+        Initial value for the dictionary for warm restart scenarios.
 
-    callback:
-        callable that gets invoked every five iterations
+    callback :
+        Callable that gets invoked every five iterations.
 
-    chunk_size: int,
-        the number of samples to take in each batch
+    batch_size : int,
+        The number of samples to take in each batch.
 
-    verbose:
-        degree of output the procedure will print
+    verbose :
+        Degree of output the procedure will print.
 
-    shuffle: boolean,
-        whether to shuffle the data before splitting it in batches
+    shuffle : boolean,
+        Whether to shuffle the data before splitting it in batches.
 
-    n_jobs: int,
-        number of parallel jobs to run, or -1 to autodetect.
+    n_jobs : int,
+        Number of parallel jobs to run, or -1 to autodetect.
 
-    method: {'lars', 'cd'}
+    method : {'lars', 'cd'}
         lars: uses the least angle regression method to solve the lasso problem
         (linear_model.lars_path)
         cd: uses the coordinate descent method to compute the
         Lasso solution (linear_model.Lasso). Lars will be faster if
         the estimated components are sparse.
 
-    iter_offset: int, default 0
-        number of previous iterations completed on the dictionary used for
-        initialization
+    iter_offset : int, default 0
+        Number of previous iterations completed on the dictionary used for
+        initialization.
 
-    random_state: int or RandomState
+    random_state : int or RandomState
         Pseudo number generator state used for random sampling.
 
     Returns
     -------
-    code: array of shape (n_samples, n_components),
+    code : array of shape (n_samples, n_components),
         the sparse code (only returned if `return_code=True`)
 
-    dictionary: array of shape (n_components, n_features),
+    dictionary : array of shape (n_components, n_features),
         the solutions to the dictionary learning problem
 
     See also
@@ -572,11 +573,17 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
     """
 
-    if not n_atoms is None:
+    if n_atoms is not None:
         n_components = n_atoms
-        warnings.warn("Parameter n_atoms has been renamed to"
-            'n_components'" and will be removed in release 0.14.",
-            DeprecationWarning, stacklevel=2)
+        warnings.warn("Parameter n_atoms has been renamed to "
+                      "'n_components' and will be removed in release 0.14.",
+                      DeprecationWarning, stacklevel=2)
+
+    if chunk_size is not None:
+        chunk_size = batch_size
+        warnings.warn("Parameter chunk_size has been renamed to "
+                      "'batch_size' and will be removed in release 0.14.",
+                      DeprecationWarning, stacklevel=2)
 
     if method not in ('lars', 'cd'):
         raise ValueError('Coding method not supported as a fit algorithm.')
@@ -608,7 +615,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     if verbose == 1:
         print '[dict_learning]',
 
-    n_batches = floor(float(len(X)) / chunk_size)
+    n_batches = floor(float(len(X)) / batch_size)
     if shuffle:
         X_train = X.copy()
         random_state.shuffle(X_train)
@@ -637,11 +644,11 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
                                   alpha=alpha).T
 
         # Update the auxiliary variables
-        if ii < chunk_size - 1:
-            theta = float((ii + 1) * chunk_size)
+        if ii < batch_size - 1:
+            theta = float((ii + 1) * batch_size)
         else:
-            theta = float(chunk_size ** 2 + ii + 1 - chunk_size)
-        beta = (theta + 1 - chunk_size) / (theta + 1)
+            theta = float(batch_size ** 2 + ii + 1 - batch_size)
+        beta = (theta + 1 - batch_size) / (theta + 1)
 
         A *= beta
         A += np.dot(this_code, this_code.T)
@@ -916,7 +923,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
                  n_jobs=1, code_init=None, dict_init=None, verbose=False,
                  split_sign=False, random_state=None, n_atoms=None):
 
-        if not n_atoms is None:
+        if n_atoms is not None:
             n_components = n_atoms
             warnings.warn("Parameter n_atoms has been renamed to"
                         'n_components'" and will be removed in release 0.14.",
@@ -1038,7 +1045,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
     verbose :
         degree of verbosity of the printed output
 
-    chunk_size : int,
+    batch_size : int,
         number of samples in each mini-batch
 
     shuffle : bool,
@@ -1068,17 +1075,23 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
 
     """
     def __init__(self, n_components=None, alpha=1, n_iter=1000,
-                 fit_algorithm='lars', n_jobs=1, chunk_size=3,
+                 fit_algorithm='lars', n_jobs=1, batch_size=3,
                  shuffle=True, dict_init=None, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  verbose=False, split_sign=False, random_state=None,
-                 n_atoms=None):
+                 n_atoms=None, chunk_size=None):
 
-        if not n_atoms is None:
+        if n_atoms is not None:
             n_components = n_atoms
             warnings.warn("Parameter n_atoms has been renamed to"
-                        'n_components'" and will be removed in release 0.14.",
-                         DeprecationWarning, stacklevel=2)
+                          "'n_components' and will be removed in release"
+                          " 0.14.", DeprecationWarning, stacklevel=2)
+
+        if chunk_size is not None:
+            chunk_size = batch_size
+            warnings.warn("Parameter chunk_size has been renamed to"
+                          "'batch_size' and will be removed in release"
+                          " 0.14.", DeprecationWarning, stacklevel=2)
 
         self._set_sparse_coding_params(n_components, transform_algorithm,
                                        transform_n_nonzero_coefs,
@@ -1089,7 +1102,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         self.dict_init = dict_init
         self.verbose = verbose
         self.shuffle = shuffle
-        self.chunk_size = chunk_size
+        self.batch_size = batch_size
         self.split_sign = split_sign
         self.random_state = random_state
 
@@ -1119,7 +1132,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
                                  method=self.fit_algorithm,
                                  n_jobs=self.n_jobs,
                                  dict_init=self.dict_init,
-                                 chunk_size=self.chunk_size,
+                                 batch_size=self.batch_size,
                                  shuffle=self.shuffle, verbose=self.verbose,
                                  random_state=self.random_state)
         self.components_ = U
@@ -1149,7 +1162,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
                                  n_iter=self.n_iter,
                                  method=self.fit_algorithm,
                                  n_jobs=self.n_jobs, dict_init=dict_init,
-                                 chunk_size=len(X), shuffle=False,
+                                 batch_size=len(X), shuffle=False,
                                  verbose=self.verbose, return_code=False,
                                  iter_offset=iter_offset,
                                  random_state=self.random_state)
