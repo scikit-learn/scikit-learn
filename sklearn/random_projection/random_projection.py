@@ -39,7 +39,8 @@ from sklearn.utils import check_random_state
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.validation import check_arrays
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.random_projection._random_projection import sample_int
+from sklearn.random_projection._random_projection import (
+    sample_without_replacement)
 
 
 __all__ = ["BernouilliRandomProjection",
@@ -219,8 +220,8 @@ def bernouilli_random_matrix(n_components, n_features, density='auto',
         for i in xrange(n_components):
             # find the indices of the non-zero components for row i
             n_nonzero_i = rng.binomial(n_features, density)
-            indices_i = sample_int(n_features, n_nonzero_i,
-                                   random_state=rng)
+            indices_i = sample_without_replacement(n_features, n_nonzero_i,
+                                                   random_state=rng)
             indices.append(indices_i)
 
             # among non zero components the probability of the sign is

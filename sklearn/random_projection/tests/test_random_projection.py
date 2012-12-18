@@ -15,10 +15,10 @@ from sklearn.random_projection.random_projection import (
     GaussianRandomProjection)
 
 from sklearn.random_projection._random_projection import (
-    sample_int as sample_int_auto,
-    sample_int_with_tracking_selection,
-    sample_int_with_pool,
-    sample_int_with_reservoir_sampling,
+    sample_without_replacement as sample_without_replacement_auto,
+    sample_without_replacement_with_tracking_selection,
+    sample_without_replacement_with_pool,
+    sample_without_replacement_with_reservoir_sampling,
     )
 
 from sklearn.utils.testing import (
@@ -78,10 +78,10 @@ def test_invalid_jl_domain():
 def test_sample_int_algorithm():
     # TODOO !!!!! => add parameter for shuffling in reservoir sampling + auto
     for sampling_alg in [
-                        sample_int_auto,
-                        sample_int_with_tracking_selection,
-                        sample_int_with_pool,
-                        sample_int_with_reservoir_sampling,
+                        sample_without_replacement_auto,
+                        sample_without_replacement_with_tracking_selection,
+                        sample_without_replacement_with_pool,
+                        sample_without_replacement_with_reservoir_sampling,
                         ]:
         check_edge_case_of_sample_int(sampling_alg)
         check_sample_int(sampling_alg)
