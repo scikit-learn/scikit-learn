@@ -1207,7 +1207,7 @@ def weighted_r2_score(y_true, y_pred, weights=None):
     http://en.wikipedia.org/wiki/Coefficient_of_determination
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
-    if len(y_true) == 1:
+    if len(y_true) <= 1:
         raise ValueError("r2_score can only be computed given more than one"
                          " sample.")
     if weights is None:
