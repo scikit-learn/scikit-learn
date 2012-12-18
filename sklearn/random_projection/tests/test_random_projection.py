@@ -1,9 +1,10 @@
 from __future__ import division
 import warnings
 
-import scipy.sparse as sp
 import numpy as np
 from numpy.testing import assert_allclose
+import scipy.sparse as sp
+from scipy.misc import comb as combinations
 
 from sklearn.metrics import euclidean_distances
 from sklearn.random_projection.random_projection import (
@@ -11,10 +12,14 @@ from sklearn.random_projection.random_projection import (
     gaussian_random_matrix,
     bernouilli_random_matrix,
     BernouilliRandomProjection,
-    GaussianRandomProjection,
-    BaseRandomProjection)
+    GaussianRandomProjection)
 
-from sklearn.random_projection._random_projection import sample_int
+from sklearn.random_projection._random_projection import (
+    sample_int as sample_int_auto,
+    sample_int_with_tracking_selection,
+    sample_int_with_pool,
+    sample_int_with_reservoir_sampling,
+    )
 
 from sklearn.utils.testing import (
     assert_less,
@@ -70,7 +75,20 @@ def test_invalid_jl_domain():
 ###############################################################################
 # test the random number generator
 ###############################################################################
-def test_edge_case_of_sample_int():
+def test_sample_int_algorithm():
+    # TODOO !!!!! => add parameter for shuffling in reservoir sampling + auto
+    for sampling_alg in [
+                        sample_int_auto,
+                        sample_int_with_tracking_selection,
+                        sample_int_with_pool,
+                        sample_int_with_reservoir_sampling,
+                        ]:
+        check_edge_case_of_sample_int(sampling_alg)
+        check_sample_int(sampling_alg)
+        check_sample_int_distribution(sampling_alg)
+
+
+def check_edge_case_of_sample_int(sample_int):
 
     # n_poluation < n_sample
     assert_raises(ValueError, sample_int, 0, 1)
@@ -90,7 +108,7 @@ def test_edge_case_of_sample_int():
     assert_raises(ValueError, sample_int, 5, -1)
 
 
-def test_sample_int():
+def check_sample_int(sample_int):
     # This test is heavily inspired from test_random.py of python-core.
     #
     # For the entire allowable range of 0 <= k <= N, validate that
@@ -108,28 +126,25 @@ def test_sample_int():
     assert_equal(np.size(sample_int(0, 0)), 0)
 
 
-def test_sample_int_distribution():
+def check_sample_int_distribution(sample_int):
     # This test is heavily inspired from test_random.py of python-core.
     #
     # For the entire allowable range of 0 <= k <= N, validate that
     # sample generates all possible permutations
-    n_population = 6
+    n_population = 10
 
     # large num prevents false negatives without slowing normal case
     n_trials = 10000
 
-    def factorial(n):
-        return reduce(int.__mul__, xrange(1, n), 1)
-
-    def permutation(n, k):
-        return factorial(n) / factorial(n - k)
-
     for n_samples in xrange(n_population):
-        n_expected = permutation(n_population, n_samples)
+        # Counting the number of combinations is not as good as counting the
+        # the number of permutations. However, it works with sampling algorithm
+        # that does not provide a random permutation of the subset of integer.
+        n_expected = combinations(n_population, n_samples, exact=True)
 
         output = {}
         for i in xrange(n_trials):
-            output[tuple(sample_int(n_population, n_samples))] = None
+            output[frozenset(sample_int(n_population, n_samples))] = None
 
             if len(output) == n_expected:
                 break
