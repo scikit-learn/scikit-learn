@@ -17,6 +17,8 @@ np.import_array()
 
 from sklearn.utils import check_random_state
 
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef _sample_int_check_input(np.int_t n_population, np.int_t n_samples):
     """ Check that input are consistent for sample_int function"""
     if n_population < 0:
@@ -42,10 +44,13 @@ cpdef sample_int_with_tracking_selection(np.int_t n_population,
     Time complexity:
         - Worst-case: unbounded
         - Average-case:
-            O(\sum_{i=1}^n_samples 1 / (1 - i / n_population)))
-            <= O(n_population * ln((n_population - 2)
-                                   /(n_population - 1 - n_samples)))
-            <= O(n_population * 1 /é (n_population / n_samples - 1))
+            O(O(np.random.randint) * \sum_{i=1}^n_samples 1 /
+                                              (1 - i / n_population)))
+            <= O(O(np.random.randint) *
+                   n_population * ln((n_population - 2)
+                                     /(n_population - 1 - n_samples)))
+            <= O(O(np.random.randint) *
+                 n_population * 1 / (1 - n_samples / n_population))
 
     Space complexity of O(n_samples) in a python set.
 
@@ -92,8 +97,8 @@ cpdef sample_int_with_tracking_selection(np.int_t n_population,
 
     return result
 
-# @cython.boundscheck(False)
-# @cython.wraparound(False)
+@cython.boundscheck(False)
+@cython.wraparound(False)
 cpdef sample_int_with_pool(np.int_t n_population,
                            np.int_t n_samples,
                            random_state=None):
@@ -102,7 +107,7 @@ cpdef sample_int_with_pool(np.int_t n_population,
     Select n_samples integers from the set [0, n_population) without
     replacement.
 
-    Time complexity: O(n_population)
+    Time complexity: O(n_population +  O(np.random.randint) * n_samples)
 
     Space complexity of O(n_population + n_samples).
 
@@ -163,7 +168,7 @@ cpdef sample_int_with_reservoir_sampling(np.int_t n_population,
     Select n_samples integers from the set [0, n_population) without
     replacement.
 
-    Time complexity of O(n_population)
+    Time complexity of O((n_population - n_samples) * O(np.random.randint))
     Space complexity of O(n_samples)
 
 
@@ -245,24 +250,32 @@ cpdef sample_int(np.int_t n_population, np.int_t n_samples, method="auto",
 
         If method == "reservoir_sampling", a reservoir sampling algorithm
         which is suitable for high memory constraint or when
-        o(`n_samples`) ~ o(`n_population`).
+        O(`n_samples`) ~ O(`n_population`).
         The subset of selected integer is not randomized.
 
         If method == "pool", a pool based algorithm is used which is suitable
-        for o(`n_samples`) ~ o(`n_population`), but not if you have high
-        memory constraint.
+        for O(`n_samples`) ~ O(`n_population`), but not if you have high
+        memory constraint. For n_samples ~ n_population, the reservoir sampling
+        method is faster.
 
     Returns
     -------
     result : array of size (n_samples, )
-        The sampled subsets of integer.
+        The sampled subsets of integer. This subset might not be randomized,
+        see method argument.
     """
     _sample_int_check_input(n_population, n_samples)
 
     all_methods = ("auto", "tracking_selection", "reservoir_sampling", "pool")
 
     if method == "auto" or method == "tracking_selection":
-        if n_samples / n_population < 0.2:
+        # TODO the pool based method can also be used.
+        #      however, it requires special benchmark to take into account
+        #      the memory requirement of the array vs the set.
+        ratio = n_samples / n_population if n_population != 0.0 else 1.0
+
+        # The value 0.2 has been determined through benchmarking.
+        if ratio < 0.2:
             return sample_int_with_tracking_selection(n_population, n_samples,
                                                       random_state)
         else:
