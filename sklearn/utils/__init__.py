@@ -363,7 +363,9 @@ def compute_class_weight(class_weight, classes, y):
         List of the classes occuring in the data, as given by
         ``np.unique(y_org)`` with ``y_org`` the original class labels.
     y : array-like, shape=(n_samples,), dtype=int
-        Array of class-indices for 0 to n_classes.
+        Array of class indices per sample;
+        0 <= y[i] < n_classes for i in range(n_samples).
+
 
     Returns
     -------
