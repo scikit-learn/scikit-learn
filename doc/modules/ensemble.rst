@@ -166,11 +166,11 @@ amount of time (e.g., on large datasets).
 
 .. topic:: References
 
- .. [B2001] Leo Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+ .. [B2001] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
- .. [B1998] Leo Breiman, "Arcing Classifiers", Annals of Statistics 1998.
+ .. [B1998] L. Breiman, "Arcing Classifiers", Annals of Statistics 1998.
 
- .. [GEW2006] Pierre Geurts, Damien Ernst., and Louis Wehenkel, "Extremely randomized
+ .. [GEW2006] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
    trees", Machine Learning, 63(1), 3-42, 2006.
 
 .. _random_forest_feature_importance:
@@ -251,13 +251,22 @@ the transformation performs an implicit, non-parametric density estimation.
 AdaBoost
 ========
 
-Hello world.
+The module :mod:`sklearn.ensemble` implements the AdaBoost algorithm first
+introduced by Freud and Schapire [FS1995]_ back in 1995.
 
 .. topic:: Examples:
 
  * :ref:`example_ensemble_plot_adaboost_classification.py`
  * :ref:`example_ensemble_plot_adaboost_regression.py`
  * :ref:`example_ensemble_plot_adaboost_error.py`
+
+.. topic:: References
+
+ .. [FS1995] Y. Freud, and R. Schapire, "A decision theoretic generalization of online learning and an application to boosting", 1997.
+
+ .. [ZZRH2009] J. Zhu, H. Zou, S. Rosset, T. Hastie. "Multi-class AdaBoost", 2009.
+
+ .. [D1997] H. Drucker. "Improving Regressor using Boosting Techniques", 1997.
 
 
 .. _gradient_boosting:
