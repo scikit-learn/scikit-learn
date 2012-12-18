@@ -23,7 +23,7 @@ Two families of ensemble methods are usually distinguished:
   tries to reduce the bias of the combined model. The motivation is to combine
   several weak models to produce a powerful ensemble.
 
-  **Examples:** AdaBoost, Least Squares Boosting, :ref:`Gradient Tree Boosting <gradient_boosting>`, ...
+  **Examples:** :ref:`AdaBoost <adaboost>`, :ref:`Gradient Tree Boosting <gradient_boosting>`, ...
 
 
 .. _forest:
@@ -54,7 +54,6 @@ Like :ref:`decision trees <tree>`, forests of trees also extend
 to :ref:`multi-output problems <tree_multioutput>`  (if Y is an array of size
 ``[n_samples, n_outputs]``).
 
-
 Random Forests
 --------------
 
@@ -73,7 +72,6 @@ increase in bias, hence yielding an overall better model.
 In contrast to the original publication [B2001]_, the scikit-learn
 implementation combines classifiers by averaging their probabilistic
 prediction, instead of letting each classifier vote for a single class.
-
 
 Extremely Randomized Trees
 --------------------------
@@ -146,7 +144,6 @@ are important, it might also be beneficial to adjust the ``min_density``
 parameter, that controls a heuristic for speeding up computations in
 each tree.  See :ref:`Complexity of trees<tree_complexity>` for details.
 
-
 Parallelization
 ---------------
 
@@ -167,7 +164,6 @@ amount of time (e.g., on large datasets).
  * :ref:`example_ensemble_plot_forest_importances_faces.py`
  * :ref:`example_ensemble_plot_forest_multioutput.py`
 
-
 .. topic:: References
 
  .. [B2001] Leo Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
@@ -176,7 +172,6 @@ amount of time (e.g., on large datasets).
 
  .. [GEW2006] Pierre Geurts, Damien Ernst., and Louis Wehenkel, "Extremely randomized
    trees", Machine Learning, 63(1), 3-42, 2006.
-
 
 .. _random_forest_feature_importance:
 
@@ -203,7 +198,6 @@ a :class:`ExtraTreesClassifier` model.
    :target: ../auto_examples/ensemble/plot_forest_importances_faces.html
    :align: center
    :scale: 75
-
 
 In practice those estimates can be computed by explicitly passing
 ``compute_importances=True`` to the constructor of the decision trees,
@@ -242,14 +236,29 @@ the transformation performs an implicit, non-parametric density estimation.
 
  * :ref:`example_ensemble_plot_random_forest_embedding.py`
 
-  * :ref:`example_manifold_plot_lle_digits.py` compares non-linear
-    dimensionality reduction technics on handwritten digits.
+ * :ref:`example_manifold_plot_lle_digits.py` compares non-linear
+   dimensionality reduction technics on handwritten digits.
 
 .. seealso::
 
    :ref:`manifold` techniques can also be useful to derive non-linear
    representations of feature space, also these approaches focus also on
    dimensionality reduction.
+
+
+.. _adaboost:
+
+AdaBoost
+========
+
+Hello world.
+
+.. topic:: Examples:
+
+ * :ref:`example_ensemble_plot_adaboost_classification.py`
+ * :ref:`example_ensemble_plot_adaboost_regression.py`
+ * :ref:`example_ensemble_plot_adaboost_error.py`
+
 
 .. _gradient_boosting:
 

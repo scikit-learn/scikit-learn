@@ -349,11 +349,13 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
 
     References
     ----------
+
     .. [1] Yoav Freund, Robert E. Schapire. "A Decision-Theoretic
            Generalization of on-Line Learning and an Application
-           to Boosting", 1995
+           to Boosting", 1995.
+
     .. [2] Ji Zhu, Hui Zou, Saharon Rosset, Trevor Hastie.
-           "Multi-class AdaBoost" 2009
+           "Multi-class AdaBoost", 2009.
     """
     def _boost(self, sample_weight, y_predict, y_true, is_last):
         """Implement a single boost
@@ -545,10 +547,12 @@ class AdaBoostRegressor(BaseWeightBoosting, WeightedRegressorMixin):
 
     References
     ----------
+
     .. [1] Yoav Freund, Robert E. Schapire. "A Decision-Theoretic
            Generalization of on-Line Learning and an Application
-           to Boosting", 1995
-    .. [2] Drucker. AdaBoost.R2, 1997
+           to Boosting", 1995.
+
+    .. [2] Drucker. AdaBoost.R2, 1997.
     """
     def _boost(self, sample_weight, y_predict, y_true, is_last):
         """Implement a single boost for regression
