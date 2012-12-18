@@ -37,7 +37,7 @@ __all__ = [
 
 
 class BaseWeightBoosting(BaseEnsemble):
-    """Abstract base class for weight boosting.
+    """Base class for weight boosting.
 
     Parameters
     ----------
@@ -91,7 +91,7 @@ class BaseWeightBoosting(BaseEnsemble):
         elif (isinstance(self, RegressorMixin)
               and not isinstance(base_estimator, RegressorMixin)):
             raise TypeError("base_estimator must be a "
-                            "subclass of ClassifierMixin")
+                            "subclass of RegressorMixin")
 
         super(BaseWeightBoosting, self).__init__(
             base_estimator=base_estimator,
