@@ -38,8 +38,8 @@ x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
 y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
 xx, yy = np.meshgrid(np.arange(x_min, x_max, plot_step),
                      np.arange(y_min, y_max, plot_step))
-norm = sum(bdt.boost_weights_)
-for weight, tree in zip(bdt.boost_weights_, bdt.estimators_):
+norm = sum(bdt.weights_)
+for weight, tree in zip(bdt.weights_, bdt.estimators_):
     Z = tree.predict(np.c_[xx.ravel(), yy.ravel()])
     Z = Z.reshape(xx.shape)
     cs = pl.contourf(xx, yy, Z, alpha=weight / norm, cmap=pl.cm.Paired)
