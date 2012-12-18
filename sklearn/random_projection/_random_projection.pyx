@@ -7,6 +7,8 @@
 This module contains fast function used to implement random projection
 matrix.
 """
+from __future__ import division
+
 cimport cython
 
 import numpy as np
@@ -43,9 +45,9 @@ cpdef sample_int_with_tracking_selection(np.int_t n_population,
             O(\sum_{i=1}^n_samples 1 / (1 - i / n_population)))
             <= O(n_population * ln((n_population - 2)
                                    /(n_population - 1 - n_samples)))
-            <= O(n_population * 1 / (n_population / n_samples - 1))
+            <= O(n_population * 1 /é (n_population / n_samples - 1))
 
-    Space complexity of O(n_samples)
+    Space complexity of O(n_samples) in a python set.
 
 
     Parameters
@@ -87,6 +89,67 @@ cpdef sample_int_with_tracking_selection(np.int_t n_population,
             j = rng_randint(n_population)
         selected.add(j)
         result[i] = j
+
+    return result
+
+# @cython.boundscheck(False)
+# @cython.wraparound(False)
+cpdef sample_int_with_pool(np.int_t n_population,
+                           np.int_t n_samples,
+                           random_state=None):
+    """Sample integers without replacement.
+
+    Select n_samples integers from the set [0, n_population) without
+    replacement.
+
+    Time complexity: O(n_population)
+
+    Space complexity of O(n_population + n_samples).
+
+
+    Parameters
+    ----------
+    n_population: int,
+        The size of the set to sample from.
+
+    n_samples: int,
+        The number of integer to sample.
+
+    random_state: int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    Returns
+    -------
+    result : array of size (n_samples, )
+        The sampled subsets of integer.
+    """
+    _sample_int_check_input(n_population, n_samples)
+
+    cdef np.int_t i
+    cdef np.int_t j
+    cdef np.ndarray[np.int_t, ndim=1] result = np.empty((n_samples, ),
+                                                        dtype=np.int)
+
+    cdef np.ndarray[np.int_t, ndim=1] pool = np.empty((n_population, ),
+                                                        dtype=np.int)
+
+    rng = check_random_state(random_state)
+    rng_randint = rng.randint
+
+    # Initialize the pool
+    for i in xrange(n_population):
+        pool[i] = i
+
+    # The following line of code are heavily inspired from python core,
+    # more precisely of random.sample.
+    for i in xrange(n_samples):
+        j = rng_randint(n_population - i) # invariant:  non-selected at [0,n-i)
+        result[i] = pool[j]
+        pool[j] = pool[n_population - i - 1] # move non-selected item into
+                                             # vacancy
 
     return result
 
@@ -175,11 +238,19 @@ cpdef sample_int(np.int_t n_population, np.int_t n_samples, method="auto",
 
     method: "auto", "tracking_selection" or "reservoir_sampling"
         If method == "auto", an algorithm is automatically selected.
-        If method =="tracking_selection", a set based implementation is used which is
-        suitable for `n_samples` <<< `n_population`.
-        If method == "reservoir_sampling", a reservoir samplingn algorithm
+        The subset of selected integer is not randomized.
+
+        If method =="tracking_selection", a set based implementation is used
+        which is suitable for `n_samples` <<< `n_population`.
+
+        If method == "reservoir_sampling", a reservoir sampling algorithm
         which is suitable for high memory constraint or when
-        `n_samples` ~ `n_population`
+        o(`n_samples`) ~ o(`n_population`).
+        The subset of selected integer is not randomized.
+
+        If method == "pool", a pool based algorithm is used which is suitable
+        for o(`n_samples`) ~ o(`n_population`), but not if you have high
+        memory constraint.
 
     Returns
     -------
@@ -188,15 +259,22 @@ cpdef sample_int(np.int_t n_population, np.int_t n_samples, method="auto",
     """
     _sample_int_check_input(n_population, n_samples)
 
-    all_methods = ("auto", "tracking_selection", "reservoir_sampling")
+    all_methods = ("auto", "tracking_selection", "reservoir_sampling", "pool")
 
     if method == "auto" or method == "tracking_selection":
-        return sample_int_with_tracking_selection(n_population, n_samples,
-                                                random_state)
+        if n_samples / n_population < 0.2:
+            return sample_int_with_tracking_selection(n_population, n_samples,
+                                                      random_state)
+        else:
+            return sample_int_with_reservoir_sampling(n_population, n_samples,
+                                                  random_state)
 
     elif method == "reservoir_sampling":
         return sample_int_with_reservoir_sampling(n_population, n_samples,
                                                   random_state)
+    elif method == "pool":
+        return sample_int_with_pool(n_population, n_samples,
+                                    random_state)
     else:
         raise ValueError('Expected a method name in %s, got %s. '
                          % (all_methods, method))
