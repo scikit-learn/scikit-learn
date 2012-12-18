@@ -22,8 +22,8 @@ The module structure is the following:
 import numpy as np
 
 from .base import BaseEnsemble
-from ..base import (ClassifierMixin, RegressorMixin,
-    WeightedClassifierMixin, WeightedRegressorMixin)
+from ..base import ClassifierMixin, RegressorMixin
+from ..base import WeightedClassifierMixin, WeightedRegressorMixin
 from ..metrics import weighted_r2_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..tree._tree import DTYPE
