@@ -129,7 +129,7 @@ class BaseWeightBoosting(BaseEnsemble):
         X = np.asfortranarray(X, dtype=DTYPE)
 
         if sample_weight is None:
-            # initialize weights to 1/N
+            # initialize weights to 1 / n_samples
             sample_weight = np.ones(X.shape[0], dtype=np.float64) / X.shape[0]
         else:
             sample_weight = np.copy(sample_weight)
