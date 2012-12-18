@@ -159,7 +159,7 @@ class BaseWeightBoosting(BaseEnsemble):
                 else:
                     self.n_classes_ = 1
 
-            sample_weight, alpha, err = self.boost(sample_weight, p, y,
+            sample_weight, alpha, err = self._boost(sample_weight, p, y,
                     iboost == self.n_estimators - 1)
 
             # early termination
@@ -355,7 +355,7 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
     .. [2] Ji Zhu, Hui Zou, Saharon Rosset, Trevor Hastie.
            "Multi-class AdaBoost" 2009
     """
-    def boost(self, sample_weight, y_predict, y_true, is_last):
+    def _boost(self, sample_weight, y_predict, y_true, is_last):
         """Implement a single boost
 
         Perform a single boost according to the multi-class SAMME algorithm and
@@ -550,7 +550,7 @@ class AdaBoostRegressor(BaseWeightBoosting, WeightedRegressorMixin):
            to Boosting", 1995
     .. [2] Drucker. AdaBoost.R2, 1997
     """
-    def boost(self, sample_weight, y_predict, y_true, is_last):
+    def _boost(self, sample_weight, y_predict, y_true, is_last):
         """Implement a single boost for regression
 
         Perform a single boost according to the AdaBoost.R2 algorithm and
