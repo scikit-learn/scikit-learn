@@ -22,8 +22,8 @@ The module structure is the following:
 import numpy as np
 
 from .base import BaseEnsemble
-from ..base import ClassifierMixin, RegressorMixin, \
-                   WeightedClassifierMixin, WeightedRegressorMixin
+from ..base import (ClassifierMixin, RegressorMixin,
+    WeightedClassifierMixin, WeightedRegressorMixin)
 from ..metrics import weighted_r2_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..tree._tree import DTYPE
@@ -42,14 +42,15 @@ class BaseWeightBoosting(BaseEnsemble):
     Parameters
     ----------
     base_estimator : object, optional (default=DecisionTreeClassifier)
-        The base estimator from which the ensemble is built.
+        The base estimator from which the boosted ensemble is built.
 
     n_estimators : integer, optional (default=10)
         The maximum number of estimators at which boosting is terminated.
 
-    learn_rate : float, optional (default=0.5)
-        learning rate shrinks the contribution of each classifier by
-        `learn_rate`. There is a trade-off between learn_rate and n_estimators.
+    learning_rate : float, optional (default=0.5)
+        Learning rate shrinks the contribution of each classifier by
+        ``learning_rate``. There is a trade-off between ``learning_rate`` and
+        ``n_estimators``.
 
     compute_importances : boolean, optional (default=False)
         Whether feature importances are computed and stored into the
@@ -57,11 +58,18 @@ class BaseWeightBoosting(BaseEnsemble):
 
     Attributes
     ----------
+    `weights_` : list of floats
+        Weights for each estimator in the boosted ensemble.
+
+    `errors_` : list of floats
+        Classification or regression error for each estimator in the boosted
+        ensemble.
+
+    `estimators_` : list of classifiers or regressors
+        The collection of fitted sub-estimators.
+
     `feature_importances_` : array of shape = [n_features]
-        The feature importances (the higher, the more important the feature).
-        The importance I(f) of a feature f is computed as the (normalized)
-        total reduction of error brought by that feature. It is also known as
-        the Gini importance [1]_.
+        The feature importances if supported by the ``base_estimator``.
 
     References
     ----------
@@ -71,11 +79,11 @@ class BaseWeightBoosting(BaseEnsemble):
     """
     def __init__(self, base_estimator=None,
                  n_estimators=10,
-                 learn_rate=.5,
+                 learning_rate=.5,
                  compute_importances=False):
-        self.boost_weights_ = []
-        self.errs_ = []
-        self.learn_rate = learn_rate
+        self.weights_ = []
+        self.errors_ = []
+        self.learning_rate = learning_rate
         self.compute_importances = compute_importances
         self.feature_importances_ = None
 
@@ -86,12 +94,12 @@ class BaseWeightBoosting(BaseEnsemble):
                 base_estimator = DecisionTreeRegressor(max_depth=3)
         elif (isinstance(self, ClassifierMixin)
               and not isinstance(base_estimator, ClassifierMixin)):
-            raise TypeError("base_estimator must be a "
-                            "subclass of ClassifierMixin")
+            raise TypeError("``base_estimator`` must be a "
+                            "subclass of ``ClassifierMixin``")
         elif (isinstance(self, RegressorMixin)
               and not isinstance(base_estimator, RegressorMixin)):
-            raise TypeError("base_estimator must be a "
-                            "subclass of RegressorMixin")
+            raise TypeError("``base_estimator`` must be a "
+                            "subclass of ``RegressorMixin``")
 
         super(BaseWeightBoosting, self).__init__(
             base_estimator=base_estimator,
@@ -118,8 +126,8 @@ class BaseWeightBoosting(BaseEnsemble):
             Returns self.
         """
         # Check parameters
-        if self.learn_rate <= 0:
-            raise ValueError("learn_rate must be greater than 0")
+        if self.learning_rate <= 0:
+            raise ValueError("``learning_rate`` must be greater than zero")
 
         if self.compute_importances:
             self.base_estimator.set_params(compute_importances=True)
@@ -138,8 +146,8 @@ class BaseWeightBoosting(BaseEnsemble):
 
         # Clear any previous fit results
         self.estimators_ = []
-        self.boost_weights_ = []
-        self.errs_ = []
+        self.weights_ = []
+        self.errors_ = []
 
         for iboost in xrange(self.n_estimators):
             estimator = self._make_estimator()
@@ -159,15 +167,15 @@ class BaseWeightBoosting(BaseEnsemble):
                 else:
                     self.n_classes_ = 1
 
-            sample_weight, alpha, err = self._boost(sample_weight, p, y,
+            sample_weight, weight, error = self._boost(sample_weight, p, y,
                     iboost == self.n_estimators - 1)
 
             # early termination
             if sample_weight is None:
                 break
 
-            self.boost_weights_.append(alpha)
-            self.errs_.append(err)
+            self.weights_.append(weight)
+            self.errors_.append(error)
 
             if iboost < self.n_estimators - 1:
                 # normalize
@@ -176,16 +184,16 @@ class BaseWeightBoosting(BaseEnsemble):
         # Sum the importances
         try:
             if self.compute_importances:
-                norm = sum(self.boost_weights_)
+                norm = sum(self.weights_)
                 self.feature_importances_ = (
                     sum(weight * clf.feature_importances_ for weight, clf
-                      in zip(self.boost_weights_, self.estimators_))
+                      in zip(self.weights_, self.estimators_))
                     / norm)
         except AttributeError:
             raise AttributeError(
                     "Unable to compute feature importances "
                     "since base_estimator does not have a "
-                    "feature_importances_ attribute")
+                    "``feature_importances_`` attribute")
 
         return self
 
@@ -201,10 +209,11 @@ class BaseWeightBoosting(BaseEnsemble):
             The input samples.
 
         n_estimators : int, optional (default=-1)
-            Use only the first N=n_estimators classifiers for the prediction.
-            This is useful for grid searching the n_estimators parameter since
+            Use only the first ``n_estimators`` classifiers for the prediction.
+            This is useful for grid searching the ``n_estimators`` parameter since
             it is not necessary to fit separately for all choices of
-            n_estimators, but only the highest n_estimators.
+            ``n_estimators``, but only the highest ``n_estimators``. Any
+            negative value will result in all estimators being used.
 
         Returns
         -------
@@ -212,35 +221,34 @@ class BaseWeightBoosting(BaseEnsemble):
             The predicted classes.
         """
         if n_estimators == 0:
-            raise ValueError("n_estimators must not equal 0")
+            raise ValueError("``n_estimators`` must not equal zero")
 
         if not self.estimators_:
-            raise Exception("AdaBoost not initialized. Perform a fit first")
+            raise RuntimeError(
+                    ("{0} is not initialized. "
+                     "Perform a fit first").format(self.__class__.__name__))
 
         X = array2d(X)
         n_samples, n_features = X.shape
 
         pred = None
-        norm = 0.
 
-        for i, (alpha, estimator) in enumerate(
-                zip(self.boost_weights_, self.estimators_)):
+        for i, (weight, estimator) in enumerate(
+                zip(self.weights_, self.estimators_)):
             if i == n_estimators:
                 break
 
             if isinstance(self, ClassifierMixin):
-                current_pred = estimator.predict_proba(X) * alpha
+                current_pred = estimator.predict_proba(X) * weight
             else:
-                current_pred = estimator.predict(X) * alpha
+                current_pred = estimator.predict(X) * weight
 
             if pred is None:
                 pred = current_pred
             else:
                 pred += current_pred
 
-            norm += alpha
-
-        pred /= norm
+        pred /= sum(self.weights_)
 
         if isinstance(self, ClassifierMixin):
             return self.classes_.take(np.argmax(pred, axis=1), axis=0)
@@ -271,10 +279,12 @@ class BaseWeightBoosting(BaseEnsemble):
             The predicted classes.
         """
         if n_estimators == 0:
-            raise ValueError("n_estimators must not equal 0")
+            raise ValueError("``n_estimators`` must not equal zero")
 
         if not self.estimators_:
-            raise Exception("AdaBoost not initialized. Perform a fit first")
+            raise RuntimeError(
+                    ("{0} is not initialized. "
+                     "Perform a fit first").format(self.__class__.__name__))
 
         X = array2d(X)
         n_samples, n_features = X.shape
@@ -282,22 +292,22 @@ class BaseWeightBoosting(BaseEnsemble):
         pred = None
         norm = 0.
 
-        for i, (alpha, estimator) in enumerate(
-                zip(self.boost_weights_, self.estimators_)):
+        for i, (weight, estimator) in enumerate(
+                zip(self.weights_, self.estimators_)):
             if i == n_estimators:
                 break
 
             if isinstance(self, ClassifierMixin):
-                current_pred = estimator.predict_proba(X) * alpha
+                current_pred = estimator.predict_proba(X) * weight
             else:
-                current_pred = estimator.predict(X) * alpha
+                current_pred = estimator.predict(X) * weight
 
             if pred is None:
                 pred = current_pred
             else:
                 pred += current_pred
 
-            norm += alpha
+            norm += weight
             normed_pred = pred / norm
 
             if isinstance(self, ClassifierMixin):
@@ -367,7 +377,6 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
 
         Parameters
         ----------
-
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.
 
@@ -379,43 +388,57 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
 
         is_last : Boolean
             True if this is the last boost.
+
+        Returns
+        -------
+        sample_weight : array-like of shape = [n_samples] or None
+            The reweighted sample weights.
+            If None then boosting has terminated early.
+
+        weight : float
+            The weight for the current boost.
+            If None then boosting has terminated early.
+
+        error : float
+            The classification error for the current boost.
+            If None then boosting has terminated early.
         """
         # instances incorrectly classified
-        incorrect = (y_predict != y_true).astype(np.int32)
+        incorrect = y_predict != y_true
 
         # error fraction
-        err = np.mean(np.average(incorrect, weights=sample_weight, axis=0))
+        error = np.mean(np.average(incorrect, weights=sample_weight, axis=0))
 
         # stop if classification is perfect
-        if err == 0:
-            self.boost_weights_.append(1.)
-            self.errs_.append(err)
+        if error == 0:
+            self.weights_.append(1.)
+            self.errors_.append(error)
             return None, None, None
 
         # negative sample weights can yield an overall negative error...
-        if err < 0:
+        if error < 0:
             # use the absolute value
             # if you have a better idea of how to handle negative
             # sample weights let me know
-            err = abs(err)
+            error = abs(error)
 
         n_classes = self.n_classes_
 
         # stop if the error is at least as bad as random guessing
-        if err >= 1. - (1. / n_classes):
+        if error >= 1. - (1. / n_classes):
             self.estimators_.pop(-1)
             return None, None, None
 
         # boost weight using multi-class AdaBoost SAMME alg
-        alpha = self.learn_rate * (
-                np.log((1. - err) / err) +
+        weight = self.learning_rate * (
+                np.log((1. - error) / error) +
                 np.log(n_classes - 1.))
 
-        # only bother to boost the weights if I will fit again
+        # only boost the weights if I will fit again
         if not is_last:
-            sample_weight *= np.exp(alpha * incorrect)
+            sample_weight *= np.exp(weight * incorrect)
 
-        return sample_weight, alpha, err
+        return sample_weight, weight, error
 
     def predict_proba(self, X, n_estimators=-1):
         """Predict class probabilities for X.
@@ -442,25 +465,25 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
             ordered by arithmetical order.
         """
         if n_estimators == 0:
-            raise ValueError("n_estimators must not equal 0")
+            raise ValueError("``n_estimators`` must not equal zero")
 
         proba = None
         norm = 0.
 
-        for i, (alpha, estimator) in enumerate(
-                zip(self.boost_weights_, self.estimators_)):
+        for i, (weight, estimator) in enumerate(
+                zip(self.weights_, self.estimators_)):
 
             if i == n_estimators:
                 break
 
-            current_proba = estimator.predict_proba(X) * alpha
+            current_proba = estimator.predict_proba(X) * weight
 
             if proba is None:
                 proba = current_proba
             else:
                 proba += current_proba
 
-            norm += alpha
+            norm += weight
 
         return proba / norm
 
@@ -489,24 +512,24 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
             ordered by arithmetical order.
         """
         if n_estimators == 0:
-            raise ValueError("n_estimators must not equal 0")
+            raise ValueError("``n_estimators`` must not equal zero")
 
         proba = None
         norm = 0.
 
-        for i, (alpha, estimator) in enumerate(
-                zip(self.boost_weights_, self.estimators_)):
+        for i, (weight, estimator) in enumerate(
+                zip(self.weights_, self.estimators_)):
             if i == n_estimators:
                 break
 
-            current_proba = estimator.predict_proba(X) * alpha
+            current_proba = estimator.predict_proba(X) * weight
 
             if proba is None:
                 proba = current_proba
             else:
                 proba += current_proba
 
-            norm += alpha
+            norm += weight
 
             yield proba / norm
 
@@ -567,7 +590,6 @@ class AdaBoostRegressor(BaseWeightBoosting, WeightedRegressorMixin):
 
         Parameters
         ----------
-
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.
 
@@ -579,33 +601,47 @@ class AdaBoostRegressor(BaseWeightBoosting, WeightedRegressorMixin):
 
         is_last : Boolean
             True if this is the last boost.
+
+        Returns
+        -------
+        sample_weight : array-like of shape = [n_samples] or None
+            The reweighted sample weights.
+            If None then boosting has terminated early.
+
+        weight : float
+            The weight for the current boost.
+            If None then boosting has terminated early.
+
+        error : float
+            The regression error for the current boost.
+            If None then boosting has terminated early.
         """
-        err_vect = np.abs(y_predict - y_true)
-        err_max = err_vect.max()
+        error_vect = np.abs(y_predict - y_true)
+        error_max = error_vect.max()
 
-        if err_max != 0.:
-            err_vect /= err_vect.max()
+        if error_max != 0.:
+            error_vect /= error_vect.max()
 
-        err = (sample_weight * err_vect).sum()
+        error = (sample_weight * error_vect).sum()
 
         # stop if fit is perfect
-        if err == 0:
-            self.boost_weights_.append(1.)
-            self.errs_.append(err)
+        if error == 0:
+            self.weights_.append(1.)
+            self.errors_.append(error)
             return None, None, None
 
         # negative sample weights can yield an overall negative error...
-        if err < 0:
+        if error < 0:
             # use the absolute value
             # if you have a better idea of how to handle negative
             # sample weights let me know
-            err = abs(err)
+            error = abs(error)
 
-        beta = err / (1. - err)
+        beta = error / (1. - error)
 
         # boost weight using AdaBoost.R2 alg
-        alpha = self.learn_rate * np.log(1. / beta)
+        weight = self.learning_rate * np.log(1. / beta)
         if not is_last:
-            sample_weight *= np.power(beta, (1. - err_vect) * self.learn_rate)
+            sample_weight *= np.power(beta, (1. - error_vect) * self.learning_rate)
 
-        return sample_weight, alpha, err
+        return sample_weight, weight, error

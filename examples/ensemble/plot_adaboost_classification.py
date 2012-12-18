@@ -23,7 +23,7 @@ X, y = make_classification(n_samples=1000,
 
 bdt = AdaBoostClassifier(DecisionTreeClassifier(min_samples_leaf=100),
                          n_estimators=50,
-                         learn_rate=.5)
+                         learning_rate=.5)
 
 bdt.fit(X, y)
 

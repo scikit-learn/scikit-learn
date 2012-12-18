@@ -188,7 +188,7 @@ def test_error():
     """Test that it gives proper exception on deficient input."""
     # Invalid values for parameters
     assert_raises(ValueError,
-                  AdaBoostClassifier(learn_rate=-1).fit,
+                  AdaBoostClassifier(learning_rate=-1).fit,
                   X, y)
 
 
