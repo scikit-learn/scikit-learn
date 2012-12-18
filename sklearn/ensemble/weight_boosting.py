@@ -343,6 +343,8 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
     the same dataset where the weights of incorrectly classified instances are
     adjusted such that subsequent classifiers focus more on difficult cases.
 
+    This class implements the algorithm known as AdaBoost-SAMME [2].
+
     See also
     --------
     DecisionTreeClassifier
@@ -541,6 +543,8 @@ class AdaBoostRegressor(BaseWeightBoosting, WeightedRegressorMixin):
     the error of the prediction such that subsequent regressors focus more on
     difficult cases.
 
+    This class implements the algorithm known as AdaBoost.R2 [2].
+
     See also
     --------
     DecisionTreeRegressor
@@ -552,7 +556,8 @@ class AdaBoostRegressor(BaseWeightBoosting, WeightedRegressorMixin):
            Generalization of on-Line Learning and an Application
            to Boosting", 1995.
 
-    .. [2] Drucker. AdaBoost.R2, 1997.
+    .. [2] Harris Drucker. "Improving Regressor using Boosting Techniques",
+           1997.
     """
     def _boost(self, sample_weight, y_predict, y_true, is_last):
         """Implement a single boost for regression
