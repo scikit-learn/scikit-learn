@@ -354,9 +354,10 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
     """An AdaBoost classifier.
 
     An AdaBoost classifier is a meta-estimator that begins by fitting a
-    classifier on a dataset and then fits additional copies of the classifer on
-    the same dataset where the weights of incorrectly classified instances are
-    adjusted such that subsequent classifiers focus more on difficult cases.
+    classifier on the original dataset and then fits additional copies of the
+    classifer on the same dataset but where the weights of incorrectly
+    classified instances are adjusted such that subsequent classifiers focus
+    more on difficult cases.
 
     This class implements the algorithm known as AdaBoost-SAMME [2].
 
@@ -578,11 +579,11 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
 class AdaBoostRegressor(BaseWeightBoosting, WeightedRegressorMixin):
     """An AdaBoost regressor.
 
-    An AdaBoosted regressor is a meta-estimator that begins by fitting a
-    regressor on a dataset and then fits additional copies of the regressor on
-    the same dataset where the weights of instances are adjusted according to
-    the error of the prediction such that subsequent regressors focus more on
-    difficult cases.
+    An AdaBoost regressor is a meta-estimator that begins by fitting a
+    regressor on the original dataset and then fits additional copies of the
+    regressor on the same dataset but where the weights of instances are
+    adjusted according to the error of the current prediction. As such,
+    subsequent regressors focus more on difficult cases.
 
     This class implements the algorithm known as AdaBoost.R2 [2].
 
