@@ -77,7 +77,7 @@ def test_invalid_jl_domain():
 ###############################################################################
 # test custom sampling algorithm
 ###############################################################################
-def test_sample_with_replacement_algorithms():
+def test_sample_without_replacement_algorithms():
     sample_without_replacement_algorithms = [
         sample_without_replacement_auto,
         sample_without_replacement_with_tracking_selection,
