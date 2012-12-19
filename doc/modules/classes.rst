@@ -662,6 +662,14 @@ user guide for further details.
 
 .. currentmodule:: sklearn
 
+Grid Search Interface
+---------------------
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   metrics.AsScorer
+
 Classification metrics
 ----------------------
 
