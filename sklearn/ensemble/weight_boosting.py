@@ -363,9 +363,17 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
 
     This class implements the algorithm known as AdaBoost-SAMME [2].
 
+    Attributes
+    ----------
+    `classes_`: array of shape = [n_classes]
+        The classes labels.
+
+    `n_classes_`: int
+        The number of classes.
+
     See also
     --------
-    DecisionTreeClassifier
+    AdaBoostRegressor, GradientBoostingClassifier, DecisionTreeClassifier
 
     References
     ----------
@@ -591,7 +599,7 @@ class AdaBoostRegressor(BaseWeightBoosting, WeightedRegressorMixin):
 
     See also
     --------
-    DecisionTreeRegressor
+    AdaBoostClassifier, GradientBoostingRegressor, DecisionTreeRegressor
 
     References
     ----------
