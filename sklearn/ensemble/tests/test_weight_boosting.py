@@ -163,15 +163,15 @@ def test_pickle():
 
 def test_importances():
     """Check variable importances."""
-    X, y = datasets.make_classification(n_samples=1000,
+    X, y = datasets.make_classification(n_samples=2000,
                                         n_features=10,
                                         n_informative=3,
                                         n_redundant=0,
                                         n_repeated=0,
                                         shuffle=False,
-                                        random_state=2)
+                                        random_state=1)
 
-    clf = AdaBoostClassifier(compute_importances=True, n_estimators=100)
+    clf = AdaBoostClassifier(compute_importances=True, n_estimators=50)
     clf.fit(X, y)
     importances = clf.feature_importances_
     n_important = sum(importances > 0.1)
