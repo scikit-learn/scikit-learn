@@ -1088,10 +1088,10 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         The target variable to try to predict in the case of
         supervised learning.
 
-    scoring : string or object, optional
-        Either one of ["zero_one", "f1", "auc"] for classification,
-        ["mse", "r2"] for regression or an object providing a
-        scoreing method.
+    scoring : string or callable, optional
+        Either one of either a string ("zero_one", "f1", "roc_auc", ... for
+        classification, "mse", "r2",... for regression) or a callable.
+        See the user guide for details.
 
     cv : cross-validation generator, optional
         A cross-validation generator. If None, a 3-fold cross

@@ -183,10 +183,10 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
         dictionaries, in which case the grids spanned by each dictionary
         in the list are explored.
 
-    scoring : string or object, optional
-        Either one of ["zero_one", "f1", "auc"] for classification,
-        ["mse", "r2"] for regression or an object providing a
-        scoring method.
+    scoring : string or callable, optional
+        Either one of either a string ("zero_one", "f1", "roc_auc", ... for
+        classification, "mse", "r2",... for regression) or a callable.
+        See the user guide for details.
 
     fit_params : dict, optional
         parameters to pass to the fit method
