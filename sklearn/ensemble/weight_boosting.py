@@ -132,9 +132,8 @@ class BaseWeightBoosting(BaseEnsemble):
         if self.compute_importances:
             self.base_estimator.set_params(compute_importances=True)
 
-        # Format data
+        # Check data
         X, y = check_arrays(X, y, sparse_format='dense')
-        X = np.asfortranarray(X, dtype=DTYPE)
 
         if sample_weight is None:
             # initialize weights to 1 / n_samples
