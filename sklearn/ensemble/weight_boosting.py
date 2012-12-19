@@ -39,45 +39,8 @@ __all__ = [
 class BaseWeightBoosting(BaseEnsemble):
     """Base class for weight boosting.
 
-    Parameters
-    ----------
-    base_estimator : object, optional (default=DecisionTreeClassifier)
-        The base estimator from which the boosted ensemble is built.
-        Support for sample weighting is required, as well as proper `classes_`
-        and `n_classes_` attributes in case of classification.
-
-    n_estimators : integer, optional (default=10)
-        The maximum number of estimators at which boosting is terminated.
-
-    learning_rate : float, optional (default=0.5)
-        Learning rate shrinks the contribution of each classifier by
-        ``learning_rate``. There is a trade-off between ``learning_rate`` and
-        ``n_estimators``.
-
-    compute_importances : boolean, optional (default=False)
-        Whether feature importances are computed and stored into the
-        ``feature_importances_`` attribute when calling fit.
-
-    Attributes
-    ----------
-    `weights_` : list of floats
-        Weights for each estimator in the boosted ensemble.
-
-    `errors_` : list of floats
-        Classification or regression error for each estimator in the boosted
-        ensemble.
-
-    `estimators_` : list of classifiers or regressors
-        The collection of fitted sub-estimators.
-
-    `feature_importances_` : array of shape = [n_features]
-        The feature importances if supported by the ``base_estimator``.
-
-    References
-    ----------
-
-    .. [1] L. Breiman, and A. Cutler, "Random Forests",
-           http://www.stat.berkeley.edu/~breiman/RandomForests/cc_home.htm
+    Warning: This class should not be used directly. Use derived classes
+    instead.
     """
     def __init__(self, base_estimator=None,
                  n_estimators=10,
@@ -363,13 +326,45 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
 
     This class implements the algorithm known as AdaBoost-SAMME [2].
 
+    Parameters
+    ----------
+    base_estimator : object, optional (default=DecisionTreeClassifier)
+        The base estimator from which the boosted ensemble is built.
+        Support for sample weighting is required, as well as proper `classes_`
+        and `n_classes_` attributes in case of classification.
+
+    n_estimators : integer, optional (default=10)
+        The maximum number of estimators at which boosting is terminated.
+
+    learning_rate : float, optional (default=0.5)
+        Learning rate shrinks the contribution of each classifier by
+        ``learning_rate``. There is a trade-off between ``learning_rate`` and
+        ``n_estimators``.
+
+    compute_importances : boolean, optional (default=False)
+        Whether feature importances are computed and stored into the
+        ``feature_importances_`` attribute when calling fit.
+
     Attributes
     ----------
+    `estimators_` : list of classifiers
+        The collection of fitted sub-estimators.
+
     `classes_`: array of shape = [n_classes]
         The classes labels.
 
     `n_classes_`: int
         The number of classes.
+
+    `weights_` : list of floats
+        Weights for each estimator in the boosted ensemble.
+
+    `errors_` : list of floats
+        Classification error for each estimator in the boosted
+        ensemble.
+
+    `feature_importances_` : array of shape = [n_features]
+        The feature importances if supported by the ``base_estimator``.
 
     See also
     --------
@@ -596,6 +591,39 @@ class AdaBoostRegressor(BaseWeightBoosting, WeightedRegressorMixin):
     subsequent regressors focus more on difficult cases.
 
     This class implements the algorithm known as AdaBoost.R2 [2].
+
+    Parameters
+    ----------
+    base_estimator : object, optional (default=DecisionTreeClassifier)
+        The base estimator from which the boosted ensemble is built.
+        Support for sample weighting is required, as well as proper `classes_`
+        and `n_classes_` attributes in case of classification.
+
+    n_estimators : integer, optional (default=10)
+        The maximum number of estimators at which boosting is terminated.
+
+    learning_rate : float, optional (default=0.5)
+        Learning rate shrinks the contribution of each regressor by
+        ``learning_rate``. There is a trade-off between ``learning_rate`` and
+        ``n_estimators``.
+
+    compute_importances : boolean, optional (default=False)
+        Whether feature importances are computed and stored into the
+        ``feature_importances_`` attribute when calling fit.
+
+    Attributes
+    ----------
+    `estimators_` : list of classifiers
+        The collection of fitted sub-estimators.
+
+    `weights_` : list of floats
+        Weights for each estimator in the boosted ensemble.
+
+    `errors_` : list of floats
+        Regression error for each estimator in the boosted ensemble.
+
+    `feature_importances_` : array of shape = [n_features]
+        The feature importances if supported by the ``base_estimator``.
 
     See also
     --------
