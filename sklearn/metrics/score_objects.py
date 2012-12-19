@@ -1,7 +1,8 @@
 import numpy as np
 
 from . import (r2_score, mean_squared_error, zero_one_score, f1_score,
-               auc_score, average_precision_score, precision_score)
+               auc_score, average_precision_score, precision_score,
+               recall_score)
 
 from .cluster import adjusted_rand_score
 
@@ -95,10 +96,11 @@ AUCScorer = AsScorer(auc_score, True, True)
 AveragePrecisionScorer = AsScorer(average_precision_score,
                                   needs_threshold=True)
 PrecisionScorer = AsScorer(precision_score)
+RecallScorer = AsScorer(recall_score)
 
 # Clustering scores
 ARIScorer = AsScorer(adjusted_rand_score)
 
 scorers = dict(r2=R2Scorer, mse=MSEScorer, zero_one=ZeroOneScorer, f1=F1Scorer,
-               auc=AUCScorer, ap=AveragePrecisionScorer,
-               precision=PrecisionScorer, ari=ARIScorer)
+               roc_auc=AUCScorer, average_precision=AveragePrecisionScorer,
+               precision=PrecisionScorer, recall=RecallScorer, ari=ARIScorer)
