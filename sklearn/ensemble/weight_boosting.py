@@ -43,6 +43,8 @@ class BaseWeightBoosting(BaseEnsemble):
     ----------
     base_estimator : object, optional (default=DecisionTreeClassifier)
         The base estimator from which the boosted ensemble is built.
+        Support for sample weighting is required, as well as proper `classes_`
+        and `n_classes_` attributes in case of classification.
 
     n_estimators : integer, optional (default=10)
         The maximum number of estimators at which boosting is terminated.

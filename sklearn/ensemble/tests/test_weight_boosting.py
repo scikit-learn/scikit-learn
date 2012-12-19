@@ -192,6 +192,35 @@ def test_error():
                   X, y)
 
 
+def test_base_estimator():
+    """Test different base estimators."""
+    from sklearn.tree import DecisionTreeClassifier
+    from sklearn.ensemble import RandomForestClassifier
+    from sklearn.svm import SVC
+
+    clf = AdaBoostClassifier(base_estimator=DecisionTreeClassifier())
+    clf.fit(X, y)
+
+    clf = AdaBoostClassifier(base_estimator=RandomForestClassifier())
+    clf.fit(X, y)
+
+    clf = AdaBoostClassifier(base_estimator=SVC())
+    clf.fit(X, y)
+
+    from sklearn.tree import DecisionTreeRegressor
+    from sklearn.ensemble import RandomForestRegressor
+    from sklearn.svm import SVR
+
+    clf = AdaBoostRegressor(base_estimator=DecisionTreeRegressor())
+    clf.fit(X, y)
+
+    clf = AdaBoostRegressor(base_estimator=RandomForestRegressor())
+    clf.fit(X, y)
+
+    clf = AdaBoostRegressor(base_estimator=SVR())
+    clf.fit(X, y)
+
+
 if __name__ == "__main__":
     import nose
     nose.runmodule()
