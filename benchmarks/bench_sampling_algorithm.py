@@ -16,10 +16,10 @@ import numpy as np
 import random
 
 from sklearn.random_projection._random_projection import (
-    sample_int,
-    sample_int_with_tracking_selection,
-    sample_int_with_reservoir_sampling,
-    sample_int_with_pool,
+    sample_without_replacement as sample_without_replacement_auto,
+    sample_without_replacement_with_tracking_selection,
+    sample_without_replacement_with_pool,
+    sample_without_replacement_with_reservoir_sampling,
     )
 
 
@@ -49,7 +49,7 @@ if __name__ == "__main__":
                   help="Bench results are average over n_times experiments")
 
     op.add_option("--n-population",
-                  dest="n_population", default=1000000, type=int,
+                  dest="n_population", default=100000, type=int,
                   help="Size of the population to sample from.")
 
     op.add_option("--n-step",
@@ -99,21 +99,21 @@ if __name__ == "__main__":
     ###########################################################################
     # Set custom tracking based method
     sampling_algorithm["custom-tracking-selection"] = \
-        sample_int_with_tracking_selection
+        sample_without_replacement_with_tracking_selection
 
     ###########################################################################
     # Set custom automatic method selection
-    sampling_algorithm["custom-auto"] = sample_int
+    sampling_algorithm["custom-auto"] = sample_without_replacement_auto
 
     ###########################################################################
     # Set custom reservoir based method
     sampling_algorithm["custom-reservoir-sampling"] = \
-        sample_int_with_reservoir_sampling
+        sample_without_replacement_with_reservoir_sampling
 
     ###########################################################################
     # Set custom reservoir based method
     sampling_algorithm["custom-pool"] = \
-        sample_int_with_pool
+        sample_without_replacement_with_pool
 
     ###########################################################################
     # Numpy permutation based
@@ -191,5 +191,4 @@ if __name__ == "__main__":
     handles2, labels2 = zip(*hl)
     ax.legend(handles2, labels2, loc=0)
 
-    plt.savefig("plot_sampling_benchmark_n_population_%s.png" %
-        opts.n_population)
+    plt.show()
