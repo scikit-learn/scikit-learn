@@ -66,11 +66,13 @@ bounded distortion introduced by the random projection::
   array([ 7894,  9868, 11841])
 
 
-.. topic:: References:
+.. topic:: Example:
 
   * See :ref:`example_plot_johnson_lindenstraus_bound.py`
     for a theoretical explication on the Johnson-Lindenstrauss lemma and an
     empirical validation using sparse Bernoulli random matrix.
+
+.. topic:: References:
 
   * Sanjoy Dasgupta and Anupam Gupta, 1999.
     `An elementary proof of the Johnson-Lindenstrauss Lemma.
