@@ -375,7 +375,9 @@ def test_SparseRandomProjection_output_representation():
 
 def test_correct_RandomProjection_dimensions_embedding():
     for RandomProjection in all_RandomProjection:
-        rp = RandomProjection(n_components='auto', random_state=0).fit(data)
+        rp = RandomProjection(n_components='auto',
+                              random_state=0,
+                              eps=0.5).fit(data)
 
         # the number of components is adjusted from the shape of the training
         # set
@@ -396,7 +398,7 @@ def test_correct_RandomProjection_dimensions_embedding():
         assert_array_equal(projected_1, projected_2)
 
         # fit transform with same random seed will lead to the same results
-        rp2 = RandomProjection(random_state=0)
+        rp2 = RandomProjection(random_state=0, eps=0.5)
         projected_3 = rp2.fit_transform(data)
         assert_array_equal(projected_1, projected_3)
 
@@ -432,7 +434,7 @@ def test_warning_n_component_greater_than_n_features():
 def test_DenseRandomProjection_error_with_density_not_equal_to_1():
     for DenseRandomProjection in all_DenseRandomProjection:
         for density in ["auto", 0.5, 0.0]:
-            rp = DenseRandomProjection()
+            rp = DenseRandomProjection(eps=0.5)
             rp.density = 0.5  # User try to modify density, but this features
                               # is not implemented.
             assert_raises(NotImplementedError, rp.fit, data)

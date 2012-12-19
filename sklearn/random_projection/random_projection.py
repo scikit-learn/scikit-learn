@@ -95,7 +95,7 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
     eps = np.asarray(eps)
     if np.any(eps <= 0.0) or np.any(eps > 1):
         raise ValueError(
-            "The JL bound is defined for eps in (0, 1]: got %r" % eps)
+            "The JL bound is defined for eps in (0, 1], got %r" % eps)
     denominator = (eps ** 2 / 2) - (eps ** 3 / 3)
     return (4 * np.log(n_samples) / denominator).astype(np.int)
 
@@ -125,7 +125,8 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
     """ Generate a dense gaussian random matrix.
 
     The components of the random matrix are drawn from
-    N(0, 1.0 / n_components).
+
+        N(0, 1.0 / n_components).
 
     Parameters
     ----------
@@ -139,16 +140,21 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
         Control the pseudo random number generator used to generate the
         matrix at fit time.
 
+    Return
+    ------
+    components: numpy array of shape [n_components, n_features]
+        The generated Gaussian random matrix.
+
     See Also
     --------
     bernouilli_random_matrix
     """
     _check_input_size(n_components, n_features)
     rng = check_random_state(random_state)
-    rp_matrix = rng.normal(loc=0.0,
-                           scale=1.0 / np.sqrt(n_components),
-                           size=(n_components, n_features))
-    return rp_matrix
+    components = rng.normal(loc=0.0,
+                            scale=1.0 / np.sqrt(n_components),
+                            size=(n_components, n_features))
+    return components
 
 
 def bernouilli_random_matrix(n_components, n_features, density='auto',
@@ -157,9 +163,11 @@ def bernouilli_random_matrix(n_components, n_features, density='auto',
 
     Setting density to 1/3 will yield the original matrix by Dimitris
     Achlioptas while setting a lower value will yield the generalization
-    by Ping Li et al:
+    by Ping Li et al. A dense Bernouilli random can be obtained with
+    density set to 1.
 
-    If we note `s = 1 / density` the components of the random matrix are:
+    If we note `s = 1 / density`, the components of the random matrix are
+    drawn from:
 
       - -sqrt(s) / sqrt(n_components)   with probability 1 / 2s
       -  0                              with probability 1 - 1 / s
@@ -187,6 +195,11 @@ def bernouilli_random_matrix(n_components, n_features, density='auto',
     random_state : integer, RandomState instance or None (default)
         Control the pseudo random number generator used to generate the
         matrix at fit time.
+
+    Return
+    ------
+    components: CSR matrix with shape [n_components, n_features]
+        The generated Gaussian random matrix.
 
     See Also
     --------
@@ -223,22 +236,19 @@ def bernouilli_random_matrix(n_components, n_features, density='auto',
             indices_i = sample_without_replacement(n_features, n_nonzero_i,
                                                    random_state=rng)
             indices.append(indices_i)
-
-            # among non zero components the probability of the sign is
-            # 50%/50%
             offset += n_nonzero_i
             indptr.append(offset)
 
         indices = np.concatenate(indices)
 
-        # Generate data
+        # Among non zero components the probability of the sign is 50%/50%
         data = rng.binomial(1, 0.5, size=len(indices)) * 2 - 1
 
         # build the CSR structure by concatenating the rows
-        rp_matrix = sp.csr_matrix((data, indices, indptr),
+        components = sp.csr_matrix((data, indices, indptr),
                                   shape=(n_components, n_features))
 
-        return np.sqrt(1 / density) / np.sqrt(n_components) * rp_matrix
+        return np.sqrt(1 / density) / np.sqrt(n_components) * components
 
 
 class BaseRandomProjection(BaseEstimator, TransformerMixin):
@@ -250,7 +260,7 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __init__(self, n_components='auto', density='auto', eps=0.5,
+    def __init__(self, n_components='auto', density='auto', eps=0.1,
                  dense_output=False, random_state=None,
                  distribution="bernouilli"):
         self.n_components = n_components
@@ -329,9 +339,9 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
         elif self.distribution == "gaussian":
             if self.density != 1.0:
                 raise NotImplementedError(
-                    "Sparse gaussion projection not implemented."
+                    "Sparse gaussion projection are not implemented."
                     "Density should be equal to 1.0 for Gaussian random "
-                    "projection.")
+                    "projection, got %s." % self.density)
 
             self.components_ = gaussian_random_matrix(
                 self.n_components_, n_features, random_state=self.random_state)
@@ -377,8 +387,9 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
         if not sp.issparse(X):
             X = np.atleast_2d(X)
 
-        return safe_sparse_dot(X, self.components_.T,
-                               dense_output=self.dense_output)
+        X_new = safe_sparse_dot(X, self.components_.T,
+                                dense_output=self.dense_output)
+        return X_new
 
 
 class GaussianRandomProjection(BaseRandomProjection):
@@ -402,17 +413,6 @@ class GaussianRandomProjection(BaseRandomProjection):
         very conservative estimated of the required number of components
         as it makes no assumption on the structure of the dataset.
 
-    density : float in range (0, 1], optional
-        Ratio of non-zero component in the random projection matrix.
-
-        By default the value is set to the minimum density as recommended
-        by Ping Li et al.: 1 / sqrt(n_features)
-
-        Use density = 1 / 3.0 if you want to reproduce the results from
-        Achlioptas, 2001.
-
-        Use density = 1 if you want to get a dense Bernouilli random matrix.
-
     eps : strictly positive float, optional, default 0.1
         Parameter to control the quality of the embedding according to
         the Johnson-Lindenstrauss lemma when n_components is set to
@@ -430,11 +430,11 @@ class GaussianRandomProjection(BaseRandomProjection):
     n_component_: int
         Concrete number of components computed when n_components="auto".
 
-    components_: CSR matrix with shape [n_components, n_features]
+    components_: numpy array of shape [n_components, n_features]
         Random matrix used for the projection.
 
     """
-    def __init__(self, n_components='auto', eps=0.5, random_state=None):
+    def __init__(self, n_components='auto', eps=0.1, random_state=None):
         super(GaussianRandomProjection, self).__init__(
             n_components=n_components,
             density=1.0,
@@ -531,7 +531,7 @@ class BernouilliRandomProjection(BaseRandomProjection):
       http://www.cs.ucsc.edu/~optas/papers/jl.pdf
 
     """
-    def __init__(self, n_components='auto', density='auto', eps=0.5,
+    def __init__(self, n_components='auto', density='auto', eps=0.1,
                  dense_output=False, random_state=None):
         super(BernouilliRandomProjection, self).__init__(
             n_components=n_components,
