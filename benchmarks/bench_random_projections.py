@@ -84,9 +84,9 @@ def make_sparse_random_data(n_samples, n_features, n_nonzeros,
 
 
 def print_row(clf_type, time_fit, time_transform):
-    print("%s \t | %s | %s" % (clf_type.ljust(12),
-                              ("%.4fs" % time_fit).center(12),
-                              ("%.4fs" % time_transform).center(12)))
+    print("%s | %s | %s" % (clf_type.ljust(30),
+                           ("%.4fs" % time_fit).center(12),
+                           ("%.4fs" % time_transform).center(12)))
 
 
 if __name__ == "__main__":
@@ -95,11 +95,11 @@ if __name__ == "__main__":
     ###########################################################################
     op = optparse.OptionParser()
     op.add_option("--n-times",
-                  dest="n_times", default=10, type=int,
+                  dest="n_times", default=5, type=int,
                   help="Bench results are average over n_times experiments")
 
     op.add_option("--n-features",
-                  dest="n_features", default=5 * 10 ** 4, type=int,
+                  dest="n_features", default=10 ** 4, type=int,
                   help="Number of features in the benchmarks")
 
     op.add_option("--n-components",
@@ -112,7 +112,7 @@ if __name__ == "__main__":
                   help="Number of features in the benchmarks")
 
     op.add_option("--n-samples",
-                  dest="n_samples", default=1000, type=int,
+                  dest="n_samples", default=500, type=int,
                   help="Number of samples in the benchmarks")
 
     op.add_option("--random-seed",
@@ -125,22 +125,22 @@ if __name__ == "__main__":
                        "('auto' or float (0.0, 1.0]")
 
     op.add_option("--eps",
-                  dest="eps", default=0.1, type=float,
+                  dest="eps", default=0.5, type=float,
                   help="See the documentation of the underlying transformers.")
 
     op.add_option("--transformers",
                   dest="selected_transformers",
-                  default='Gaussian,Bernouilli',
+                  default='GaussianRandomProjection,BernouilliRandomProjection',
                   type=str,
                   help="Comma-separated list of transformer to benchmark. "
                        "Default: %default. Available: "
                        "GaussianRandomProjection,BernouilliRandomProjection")
 
-    op.add_option("--sparse",
-                  dest="sparse",
+    op.add_option("--dense",
+                  dest="dense",
                   default=False,
                   action="store_true",
-                  help="Set input space as a sparse matrix.")
+                  help="Set input space as a dense matrix.")
 
     (opts, args) = op.parse_args()
     if len(args) > 0:
@@ -181,8 +181,8 @@ if __name__ == "__main__":
         "n_components": opts.n_components,
         "random_state": opts.random_seed
     }
-    transformers["Gaussian"] = \
-        GaussianRandomProjection(** gaussian_params)
+    transformers["GaussianRandomProjection"] = \
+        GaussianRandomProjection(**gaussian_params)
 
     ###########################################################################
     # Set BernouilliRandomProjection input
@@ -190,11 +190,11 @@ if __name__ == "__main__":
         "n_components": opts.n_components,
         "random_state": opts.random_seed,
         "density": opts.density,
-        "density": opts.eps,
+        "eps": opts.eps,
     }
 
-    transformers["Bernouilli"] = \
-        BernouilliRandomProjection(** bernouilli_params)
+    transformers["BernouilliRandomProjection"] = \
+        BernouilliRandomProjection(**bernouilli_params)
 
     ###########################################################################
     # Perform benchmark
@@ -209,7 +209,7 @@ if __name__ == "__main__":
                                                 opts.n_features,
                                                 n_nonzeros,
                                                 random_state=opts.random_seed)
-    X = X_sparse if opts.sparse else X_dense
+    X = X_dense if opts.dense else X_sparse
     print("done")
 
     for name in selected_transformers:
@@ -249,10 +249,10 @@ if __name__ == "__main__":
     print("===========================")
     print("Results are averaged over %s repetition(s)." % opts.n_times)
     print("")
-    print("%s \t | %s | %s" % ("Transformer".ljust(12),
-                               "fit".center(12),
-                               "transform".center(12)))
-    print(17 * "-" + ("|" + "-" * 14) * 2)
+    print("%s | %s | %s" % ("Transformer".ljust(30),
+                            "fit".center(12),
+                            "transform".center(12)))
+    print(31 * "-" + ("|" + "-" * 14) * 2)
 
     for name in sorted(selected_transformers):
         print_row(name,
