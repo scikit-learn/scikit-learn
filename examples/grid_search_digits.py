@@ -22,8 +22,6 @@ from sklearn import datasets
 from sklearn.cross_validation import train_test_split
 from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import classification_report
-from sklearn.metrics import precision_score
-from sklearn.metrics import recall_score
 from sklearn.svm import SVC
 
 print(__doc__)
@@ -46,16 +44,13 @@ tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],
                      'C': [1, 10, 100, 1000]},
                     {'kernel': ['linear'], 'C': [1, 10, 100, 1000]}]
 
-scores = [
-    ('precision', precision_score),
-    ('recall', recall_score),
-]
+scores = ['precision', 'recall']
 
-for score_name, score_func in scores:
-    print("# Tuning hyper-parameters for %s" % score_name)
+for score in scores:
+    print("# Tuning hyper-parameters for %s" % score)
     print()
 
-    clf = GridSearchCV(SVC(C=1), tuned_parameters, score_func=score_func)
+    clf = GridSearchCV(SVC(C=1), tuned_parameters, scoring=score)
     clf.fit(X_train, y_train, cv=5)
 
     print("Best parameters set found on development set:")
