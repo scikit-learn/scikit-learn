@@ -154,6 +154,9 @@ def test_spectral_clustering_sparse():
 
 
 def test_affinities():
+    # Note: in the following, random_state has been selected to have
+    # a dataset that yields a stable eigen decomposition both when built
+    # on OSX and Linux
     X, y = make_blobs(n_samples=40, random_state=2, centers=[[1, 1], [-1, -1]],
                       cluster_std=0.4)
     # nearest neighbors affinity
