@@ -2,7 +2,6 @@ from __future__ import division
 import warnings
 
 import numpy as np
-from numpy.testing import assert_allclose
 import scipy.sparse as sp
 from scipy.misc import comb as combinations
 
@@ -23,11 +22,14 @@ from sklearn.random_projection._random_projection import (
 
 from sklearn.utils.testing import (
     assert_less,
-    assert_raises, assert_raise_message,
+    assert_raises,
+    assert_raise_message,
     assert_array_equal,
-    assert_equal, assert_almost_equal,
+    assert_equal,
+    assert_almost_equal,
     assert_in,
-    assert_true)
+    assert_true,
+    assert_allclose)
 
 all_sparse_random_matrix = [bernouilli_random_matrix]
 all_dense_random_matrix = [gaussian_random_matrix]
