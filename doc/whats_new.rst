@@ -95,11 +95,17 @@ Changelog
      the estimator :class:`tree.DecisionTreeRegressor` instead of the
      :class:`tree._tree.Tree` datastructure by `Arnaud Joly`_.
 
-   - Fixed a floating point exception in the :ref:`decision trees <tree>` 
-     module, by Seberg. 
+   - Fixed a floating point exception in the :ref:`decision trees <tree>`
+     module, by Seberg.
 
-   - Fix :func:`metrics.roc_curve` fails when y_true has only one class 
+   - Fix :func:`metrics.roc_curve` fails when y_true has only one class
      by Wei Li.
+
+   - New transformers :class:`random_projection.GaussianRandomProjection`,
+    :class:`random_projection.BernouilliRandomProjection` and the function
+    :func:`random_projection.johnson_lindenstrauss_min_dim`, implementing
+    Gaussian, Bernouilli and sparse Bernouilli random projection matrix
+    by `Olivier Grisel`_ and `Arnaud Joly`_.
 
 
 API changes summary

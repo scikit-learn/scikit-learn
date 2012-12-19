@@ -55,9 +55,8 @@ The main theoretical result behind the efficiency of random projection is the
 Knowing only the number of samples, the
 :func:`sklearn.random_projection.johnson_lindenstrauss_min_dim` estimates
 conservatively the minimal size of the random subspace to guarantee a
-bounded distortion introduced by the random projection.
+bounded distortion introduced by the random projection::
 
-::
   >>> from sklearn.random_projection import johnson_lindenstrauss_min_dim
   >>> johnson_lindenstrauss_min_dim(n_samples=1e6, eps=0.5)
   663
@@ -87,9 +86,7 @@ matrix where components are drawn from the following distribution
 :math:`N(0, \frac{1}{n_{components}})`.
 
 Here a small excerpt which illustrates how to use the Gaussian random
-projection transformer:
-
-::
+projection transformer::
 
   >>> import numpy as np
   >>> from sklearn import random_projection
@@ -130,9 +127,7 @@ By default the density of non zero element is set to the minimum density as
 recommended by Ping Li et al.: :math:`1 / \sqrt{n_{\text{features}}}`.
 
 Here a small excerpt which illustrates how to use the Bernoulli random
-projection transformer:
-
-::
+projection transformer::
 
   >>> import numpy as np
   >>> from sklearn import random_projection
