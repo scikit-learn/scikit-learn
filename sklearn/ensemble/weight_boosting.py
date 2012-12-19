@@ -261,8 +261,9 @@ class BaseWeightBoosting(BaseEnsemble):
         The predicted class or regression value of an input sample is computed
         as the weighted mean prediction of the classifiers in the ensemble.
 
-        This method allows monitoring (i.e. determine error on testing set)
-        after each boost. See examples/ensemble/plot_adaboost_error.py
+        This generator method yields the ensemble prediction after each boost
+        and therefore allows monitoring, such as to determine the prediction on
+        a test set after each boost.
 
         Parameters
         ----------
@@ -270,7 +271,11 @@ class BaseWeightBoosting(BaseEnsemble):
             The input samples.
 
         n_estimators : int, optional (default=-1)
-            See docs above for the predict method
+            Use only the first ``n_estimators`` classifiers for the prediction.
+            This is useful for grid searching the ``n_estimators`` parameter since
+            it is not necessary to fit separately for all choices of
+            ``n_estimators``, but only the highest ``n_estimators``. Any
+            negative value will result in all estimators being used.
 
         Returns
         -------
@@ -318,8 +323,9 @@ class BaseWeightBoosting(BaseEnsemble):
     def staged_score(self, X, y, sample_weight=None, n_estimators=-1):
         """Return staged scores for X, y.
 
-        This method allows monitoring (i.e. determine error on testing set)
-        after each boost. See examples/ensemble/plot_adaboost_error.py
+        This generator method yields the ensemble score after each boost
+        and therefore allows monitoring, such as to determine the score on a
+        test set after each boost.
 
         Parameters
         ----------
@@ -455,7 +461,11 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
             The input samples.
 
         n_estimators : int, optional (default=-1)
-            See docs above for the predict method
+            Use only the first ``n_estimators`` classifiers for the prediction.
+            This is useful for grid searching the ``n_estimators`` parameter since
+            it is not necessary to fit separately for all choices of
+            ``n_estimators``, but only the highest ``n_estimators``. Any
+            negative value will result in all estimators being used.
 
         Returns
         -------
@@ -493,8 +503,9 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
         the weighted mean predicted class probabilities
         of the classifiers in the ensemble.
 
-        This method allows monitoring (i.e. determine error on testing set)
-        after each boost. See examples/ensemble/plot_adaboost_error.py
+        This generator method yields the ensemble predicted class probabilities
+        after each boost and therefore allows monitoring, such as to determine
+        the predicted class probabilities on a test set after each boost.
 
         Parameters
         ----------
@@ -502,7 +513,11 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
             The input samples.
 
         n_estimators : int, optional (default=-1)
-            See docs above for the predict method
+            Use only the first ``n_estimators`` classifiers for the prediction.
+            This is useful for grid searching the ``n_estimators`` parameter since
+            it is not necessary to fit separately for all choices of
+            ``n_estimators``, but only the highest ``n_estimators``. Any
+            negative value will result in all estimators being used.
 
         Returns
         -------
@@ -545,7 +560,11 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
             The input samples.
 
         n_estimators : int, optional (default=-1)
-            See docs above for the predict method
+            Use only the first ``n_estimators`` classifiers for the prediction.
+            This is useful for grid searching the ``n_estimators`` parameter since
+            it is not necessary to fit separately for all choices of
+            ``n_estimators``, but only the highest ``n_estimators``. Any
+            negative value will result in all estimators being used.
 
         Returns
         -------
