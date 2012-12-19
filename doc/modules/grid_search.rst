@@ -49,6 +49,29 @@ combinations is retained.
   This can be done by using the :func:`cross_validation.train_test_split`
   utility function.
 
+.. _scoring_functions:
+
+Scoring functions for GridSearchCV
+----------------------------------
+By default, :class:`grid_search.GridSearchCV` uses the ``score`` function of the estimator
+to evaluate a parameter setting. These are the :func:``sklearn.metrics.zero_one_score`` for classification
+and ``sklearn.metrics.r2_score`` for regression.
+For some applications, other scoring function are better suited (for example in
+unbalanced classification, the zero-one score is often non-informative). An alternative scoring function
+can be specified via the ``scoring`` parameter to GridSearchCV. There are several build-in scores available,
+that can be selected by giving a string argument:
+
+- ``r2``, corresponding to ``sklearn.metrics.r2_score``.
+- ``mse``, corresponding to ``sklearn.metrics.mean_squared_error``.
+- ``zero_one``, corresponding to ``sklearn.metrics.zero_one_score``.
+- ``f1``, corresponding to ``sklearn.metrics.f1_score``.
+- ``roc_auc``, corresponding to ``sklearn.metrics.auc_score``, the area under the ROC curve.
+- ``average_precision``, corresponding to ``sklearn.metrics.average_precision_score``, the area under the Precision-Recall curve.
+- ``precision``, corresponding to ``sklearn.metrics.precision_score``.
+- ``recall``, corresponding to ``sklearn.metrics.recall_score``.
+
+Custom scoring functions can be specified by passing any callable that can be called by :class:`grid_search.GridSearchCV`` as
+``scoring(estimator, X, y)``. An easy way to create such a callable is via :class:``sklearn.metrics.AsScorer``.
 
 Examples
 ========
