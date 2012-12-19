@@ -78,7 +78,6 @@ def test_invalid_jl_domain():
 # test the random number generator
 ###############################################################################
 def test_sample_int_algorithm():
-    # TODOO !!!!! => add parameter for shuffling in reservoir sampling + auto
     for sample_without_replacement in [
         sample_without_replacement_auto,
         sample_without_replacement_with_tracking_selection,
