@@ -57,7 +57,7 @@ def densify(matrix):
     if not sp.issparse(matrix):
         return matrix
     else:
-        return np.array(matrix.todense())
+        return matrix.toarray()
 
 
 n_samples, n_features = (10, 1000)
@@ -75,9 +75,9 @@ def test_invalid_jl_domain():
 
 
 ###############################################################################
-# test the random number generator
+# test custom sampling algorithm
 ###############################################################################
-def test_sample_int_algorithm():
+def test_sample_with_replacement_algorithms():
     for sample_without_replacement in [
         sample_without_replacement_auto,
         sample_without_replacement_with_tracking_selection,
@@ -153,12 +153,12 @@ def check_sample_int_distribution(sample_without_replacement):
                 break
         else:
             raise AssertionError(
-                "number of combination != number of expected (%s != %s)" %
+                "number of combinations != number of expected (%s != %s)" %
                 (len(output), n_expected))
 
 
 ###############################################################################
-# tests on random matrix generation
+# tests random matrix generation
 ###############################################################################
 def check_input_size_random_matrix(random_matrix):
     assert_raises(ValueError, random_matrix, 0, 0)
@@ -419,7 +419,7 @@ def test_correct_RandomProjection_dimensions_embedding():
             assert_less(85, rp.components_.nnz)  # close to 1% density
 
 
-def test_warning_n_component_greater_than_n_features():
+def test_warning_n_components_greater_than_n_features():
     n_features = 20
     data, _ = make_sparse_random_data(5, n_features, int(n_features / 4))
 
@@ -427,8 +427,6 @@ def test_warning_n_component_greater_than_n_features():
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
             RandomProjection(n_components=n_features + 1).fit(data)
-
-            # Verify some things
             assert_equal(len(w), 1)
             assert issubclass(w[-1].category, UserWarning)
 
