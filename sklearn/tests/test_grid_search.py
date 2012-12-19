@@ -343,7 +343,7 @@ def test_score_func_string():
     clf = LinearSVC(random_state=0)
     X, y = make_blobs(random_state=0, centers=2)
     Cs = [.1, 1, 10]
-    for score in ['f1', 'auc']:
+    for score in ['f1', 'roc_auc']:
         grid_search = GridSearchCV(clf, {'C': Cs}, scoring=score)
         grid_search.fit(X, y)
         cv = StratifiedKFold(n_folds=3, y=y)
@@ -355,7 +355,7 @@ def test_score_func_string():
                 clf.fit(X[train], y[train])
                 if score == "f1":
                     correct_score = f1_score(y[test], clf.predict(X[test]))
-                elif score == "auc":
+                elif score == "roc_auc":
                     correct_score = auc_score(y[test],
                                               clf.decision_function(X[test]))
                 assert_almost_equal(correct_score, scores[i])

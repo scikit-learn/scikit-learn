@@ -44,7 +44,7 @@ def test_thresholded_scores():
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf = LogisticRegression(random_state=0)
     clf.fit(X_train, y_train)
-    score1 = scorers['auc'](clf, X_test, y_test)
+    score1 = scorers['roc_auc'](clf, X_test, y_test)
     score2 = auc_score(y_test, clf.decision_function(X_test))
     score3 = auc_score(y_test, clf.predict_proba(X_test)[:, 1])
     assert_almost_equal(score1, score2)
@@ -53,7 +53,7 @@ def test_thresholded_scores():
     #same for an estimator without decision_function
     clf = DecisionTreeClassifier()
     clf.fit(X_train, y_train)
-    score1 = scorers['auc'](clf, X_test, y_test)
+    score1 = scorers['roc_auc'](clf, X_test, y_test)
     score2 = auc_score(y_test, clf.predict_proba(X_test)[:, 1])
     assert_almost_equal(score1, score2)
 
@@ -61,7 +61,7 @@ def test_thresholded_scores():
     X, y = make_blobs(random_state=0, centers=3)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf.fit(X_train, y_train)
-    assert_raises(ValueError, scorers['auc'], clf, X_test, y_test)
+    assert_raises(ValueError, scorers['roc_auc'], clf, X_test, y_test)
 
 
 def test_unsupervised_scores():
