@@ -209,12 +209,12 @@ def bernoulli_random_matrix(n_components, n_features, density='auto',
     References
     ----------
 
-    - Ping Li, Trevor Hastieand Kenneth Church, 2006
-      "Very Sparse Random Projections".
-      http://www.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
+    .. [1] Ping Li, T. Hastie and K. W. Church, 2006,
+           "Very Sparse Random Projections".
+           http://www.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
 
-    - Database-friendly random projections, Dimitris Achlioptas, 2001
-      http://www.cs.ucsc.edu/~optas/papers/jl.pdf
+    .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
+           http://www.cs.ucsc.edu/~optas/papers/jl.pdf
 
     """
     _check_input_size(n_components, n_features)
