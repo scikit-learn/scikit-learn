@@ -246,7 +246,7 @@ def bernouilli_random_matrix(n_components, n_features, density='auto',
 
         # build the CSR structure by concatenating the rows
         components = sp.csr_matrix((data, indices, indptr),
-                                  shape=(n_components, n_features))
+                                   shape=(n_components, n_features))
 
         return np.sqrt(1 / density) / np.sqrt(n_components) * components
 

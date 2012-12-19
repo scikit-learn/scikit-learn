@@ -18,8 +18,7 @@ from sklearn.random_projection._random_projection import (
     sample_without_replacement as sample_without_replacement_auto,
     sample_without_replacement_with_tracking_selection,
     sample_without_replacement_with_pool,
-    sample_without_replacement_with_reservoir_sampling,
-    )
+    sample_without_replacement_with_reservoir_sampling)
 
 from sklearn.utils.testing import (
     assert_less,
@@ -81,11 +80,11 @@ def test_invalid_jl_domain():
 def test_sample_int_algorithm():
     # TODOO !!!!! => add parameter for shuffling in reservoir sampling + auto
     for sample_without_replacement in [
-                        sample_without_replacement_auto,
-                        sample_without_replacement_with_tracking_selection,
-                        sample_without_replacement_with_pool,
-                        sample_without_replacement_with_reservoir_sampling,
-                        ]:
+        sample_without_replacement_auto,
+        sample_without_replacement_with_tracking_selection,
+        sample_without_replacement_with_pool,
+        sample_without_replacement_with_reservoir_sampling]:
+
         check_edge_case_of_sample_int(sample_without_replacement)
         check_sample_int(sample_without_replacement)
         check_sample_int_distribution(sample_without_replacement)
