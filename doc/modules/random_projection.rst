@@ -65,6 +65,15 @@ bounded distortion introduced by the random projection::
   >>> johnson_lindenstrauss_min_dim(n_samples=[1e4, 1e5, 1e6], eps=0.1)
   array([ 7894,  9868, 11841])
 
+.. figure:: ../auto_examples/images/plot_johnson_lindenstraus_bound_1.png
+   :target: ../auto_examples/plot_johnson_lindenstraus_bound.html
+   :scale: 75
+   :align: center
+
+.. figure:: ../auto_examples/images/plot_johnson_lindenstraus_bound_2.png
+   :target: ../auto_examples/plot_johnson_lindenstraus_bound.html
+   :scale: 75
+   :align: center
 
 .. topic:: Example:
 
