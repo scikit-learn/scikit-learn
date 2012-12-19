@@ -31,8 +31,8 @@ class AsScorer(object):
         can not be computed using predictions alone, but need the output of
         ``decision_function`` or ``predict_proba``.
 
-    Example
-    -------
+    Examples
+    --------
     >>> from sklearn.metrics import fbeta_score, AsScorer
     >>> ftwo_scorer = AsScorer(fbeta_score, beta=2)
     >>> from sklearn.grid_search import GridSearchCV

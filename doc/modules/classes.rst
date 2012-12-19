@@ -666,7 +666,7 @@ Grid Search Interface
 ---------------------
 .. autosummary::
    :toctree: generated/
-   :template: class.rst
+   :template: class_with_call.rst
 
    metrics.AsScorer
 
