@@ -11,6 +11,11 @@ Changelog
    - Hyperlinks to documentation in example code on the website by
      `Martin Luessi`_.
 
+   - :class:`grid_search.GridSearchCV` and
+     :func:`cross_validation.cross_Val_score` now support the use of advanced
+     scoring function such as area under the ROC curve and f-beta scores.
+     See :ref:`scoring_functions` for details.
+
 
 .. _changes_0_13:
 
