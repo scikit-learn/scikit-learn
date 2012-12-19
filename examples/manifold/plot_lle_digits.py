@@ -86,7 +86,7 @@ pl.title('A selection from the 64-dimensional digits dataset')
 #----------------------------------------------------------------------
 # Random 2D projection using a random unitary matrix
 print "Computing random projection"
-rp = random_projection.BernouilliRandomProjection(n_components=2, random_state=42)
+rp = random_projection.BernoulliRandomProjection(n_components=2, random_state=42)
 X_projected = rp.fit_transform(X)
 plot_embedding(X_projected, "Random Projection of the digits")
 
