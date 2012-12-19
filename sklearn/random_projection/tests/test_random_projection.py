@@ -6,6 +6,7 @@ import scipy.sparse as sp
 from scipy.misc import comb as combinations
 
 from sklearn.metrics import euclidean_distances
+
 from sklearn.random_projection.random_projection import (
     johnson_lindenstrauss_min_dim,
     gaussian_random_matrix,
@@ -79,38 +80,38 @@ def test_invalid_jl_domain():
 ###############################################################################
 def test_sample_int_algorithm():
     # TODOO !!!!! => add parameter for shuffling in reservoir sampling + auto
-    for sampling_alg in [
+    for sample_without_replacement in [
                         sample_without_replacement_auto,
                         sample_without_replacement_with_tracking_selection,
                         sample_without_replacement_with_pool,
                         sample_without_replacement_with_reservoir_sampling,
                         ]:
-        check_edge_case_of_sample_int(sampling_alg)
-        check_sample_int(sampling_alg)
-        check_sample_int_distribution(sampling_alg)
+        check_edge_case_of_sample_int(sample_without_replacement)
+        check_sample_int(sample_without_replacement)
+        check_sample_int_distribution(sample_without_replacement)
 
 
-def check_edge_case_of_sample_int(sample_int):
+def check_edge_case_of_sample_int(sample_without_replacement):
 
     # n_poluation < n_sample
-    assert_raises(ValueError, sample_int, 0, 1)
-    assert_raises(ValueError, sample_int, 1, 2)
+    assert_raises(ValueError, sample_without_replacement, 0, 1)
+    assert_raises(ValueError, sample_without_replacement, 1, 2)
 
     # n_population == n_samples
-    assert_equal(sample_int(0, 0).shape, (0, ))
+    assert_equal(sample_without_replacement(0, 0).shape, (0, ))
 
-    assert_equal(sample_int(1, 1).shape, (1, ))
+    assert_equal(sample_without_replacement(1, 1).shape, (1, ))
 
     # n_population >= n_samples
-    assert_equal(sample_int(5, 0).shape, (0, ))
-    assert_equal(sample_int(5, 1).shape, (1, ))
+    assert_equal(sample_without_replacement(5, 0).shape, (0, ))
+    assert_equal(sample_without_replacement(5, 1).shape, (1, ))
 
     # n_population < 0 or n_samples < 0
-    assert_raises(ValueError, sample_int, -1, 5)
-    assert_raises(ValueError, sample_int, 5, -1)
+    assert_raises(ValueError, sample_without_replacement, -1, 5)
+    assert_raises(ValueError, sample_without_replacement, 5, -1)
 
 
-def check_sample_int(sample_int):
+def check_sample_int(sample_without_replacement):
     # This test is heavily inspired from test_random.py of python-core.
     #
     # For the entire allowable range of 0 <= k <= N, validate that
@@ -118,17 +119,17 @@ def check_sample_int(sample_int):
     n_population = 100
 
     for n_samples in xrange(n_population + 1):
-        s = sample_int(n_population, n_samples)
+        s = sample_without_replacement(n_population, n_samples)
         assert_equal(len(s), n_samples)
         unique = np.unique(s)
         assert_equal(np.size(unique), n_samples)
         assert_true(np.all(unique < n_population))
 
     # test edge case n_population == n_samples == 0
-    assert_equal(np.size(sample_int(0, 0)), 0)
+    assert_equal(np.size(sample_without_replacement(0, 0)), 0)
 
 
-def check_sample_int_distribution(sample_int):
+def check_sample_int_distribution(sample_without_replacement):
     # This test is heavily inspired from test_random.py of python-core.
     #
     # For the entire allowable range of 0 <= k <= N, validate that
@@ -146,7 +147,8 @@ def check_sample_int_distribution(sample_int):
 
         output = {}
         for i in xrange(n_trials):
-            output[frozenset(sample_int(n_population, n_samples))] = None
+            output[frozenset(sample_without_replacement(n_population,
+                                                        n_samples))] = None
 
             if len(output) == n_expected:
                 break
