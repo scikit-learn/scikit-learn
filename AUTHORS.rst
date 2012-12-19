@@ -101,6 +101,8 @@ People
   * `Satra Ghosh <http://www.mit.edu/~satra>`_
 
   * `Wei Li <http://kuantkid.github.com>`_
+  
+  * `Noel Dawe <http://noel.dawe.me>`_
 
   * `Arnaud Joly <http://www.ajoly.org>`_
 
