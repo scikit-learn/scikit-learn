@@ -6,7 +6,7 @@ Random Projection
 .. currentmodule:: sklearn.random_projection
 
 The :mod:`sklearn.random_projection` module implements a simple and
-computationally  efficient way to reduce the dimensionality of the data by
+computationally efficient way to reduce the dimensionality of the data by
 trading a controlled amount of accuracy (as additional variance) for faster
 processing times and smaller model sizes. This module implements two types of
 unstructured random matrix
@@ -52,7 +52,7 @@ The main theoretical result behind the efficiency of random projection is the
   nearly preserved. The map used for the embedding is at least Lipschitz,
   and can even be taken to be an orthogonal projection.
 
-Knowing only the number of sample, the
+Knowing only the number of samples, the
 :func:`sklearn.random_projection.johnson_lindenstrauss_min_dim` estimates
 conservatively the minimal size of the random subspace to guarantee a
 bounded distortion introduced by the random projection.
@@ -105,7 +105,7 @@ projection transformer:
 (Sparse) Bernoulli random projection
 =====================================
 The :class:`sklearn.random_projection.BernoulliRandomProjection` reduces the
-dimensionality by projecting the original input space on a possibly sparse
+dimensionality by projecting the original input space using a sparse
 Bernoulli random matrix.
 
 Sparse Bernoulli random matrix is an alternative to dense random projection
@@ -129,7 +129,7 @@ where :math:`n_{\text{components}}` is the size of the projected subspace.
 By default the density of non zero element is set to the minimum density as
 recommended by Ping Li et al.: :math:`1 / \sqrt{n_{\text{features}}}`.
 
-Here a small excerpt which illustrates how to use the sparse Bernoulli random
+Here a small excerpt which illustrates how to use the Bernoulli random
 projection transformer:
 
 ::
