@@ -78,12 +78,13 @@ def test_invalid_jl_domain():
 # test custom sampling algorithm
 ###############################################################################
 def test_sample_with_replacement_algorithms():
-    for sample_without_replacement in [
+    sample_without_replacement_algorithms = [
         sample_without_replacement_auto,
         sample_without_replacement_with_tracking_selection,
         sample_without_replacement_with_pool,
-        sample_without_replacement_with_reservoir_sampling]:
+        sample_without_replacement_with_reservoir_sampling]
 
+    for sample_without_replacement in sample_without_replacement_algorithms:
         check_edge_case_of_sample_int(sample_without_replacement)
         check_sample_int(sample_without_replacement)
         check_sample_int_distribution(sample_without_replacement)
@@ -233,9 +234,9 @@ def test_bernoulli_random_matrix():
         s = 1 / density
 
         A = bernoulli_random_matrix(n_components,
-                                     n_features,
-                                     density=density,
-                                     random_state=0)
+                                    n_features,
+                                    density=density,
+                                    random_state=0)
         A = densify(A)
 
         # Check possible values
@@ -347,7 +348,7 @@ def test_random_projection_embedding_quality():
 
 def test_BaseRandomProjection_set_with_wrong_distribution():
     rp = BernoulliRandomProjection(n_components=10, dense_output=True,
-                                    random_state=0)
+                                   random_state=0)
     rp.distribution = "not_implemented"
     assert_raises(ValueError, rp.fit, data)
 
