@@ -10,8 +10,8 @@ from sklearn.metrics import euclidean_distances
 from sklearn.random_projection.random_projection import (
     johnson_lindenstrauss_min_dim,
     gaussian_random_matrix,
-    bernouilli_random_matrix,
-    BernouilliRandomProjection,
+    bernoulli_random_matrix,
+    BernoulliRandomProjection,
     GaussianRandomProjection)
 
 from sklearn.random_projection._random_projection import (
@@ -31,18 +31,18 @@ from sklearn.utils.testing import (
     assert_true,
     assert_allclose)
 
-all_sparse_random_matrix = [bernouilli_random_matrix]
+all_sparse_random_matrix = [bernoulli_random_matrix]
 all_dense_random_matrix = [gaussian_random_matrix]
 all_random_matrix = set(all_sparse_random_matrix + all_dense_random_matrix)
 
-all_SparseRandomProjection = [BernouilliRandomProjection]
+all_SparseRandomProjection = [BernoulliRandomProjection]
 all_DenseRandomProjection = [GaussianRandomProjection]
 all_RandomProjection = set(all_SparseRandomProjection +
                            all_DenseRandomProjection)
 
 
 # Make some random data with uniformly located non zero entries with
-# gaussian distributed values
+# Gaussian distributed values
 def make_sparse_random_data(n_samples, n_features, n_nonzeros):
     rng = np.random.RandomState(0)
     data_coo = sp.coo_matrix(
@@ -134,7 +134,8 @@ def check_sample_int_distribution(sample_without_replacement):
     # sample generates all possible permutations
     n_population = 10
 
-    # large num prevents false negatives without slowing normal case
+    # a large number of trials prevents false negatives without slowing normal
+    # case
     n_trials = 10000
 
     for n_samples in xrange(n_population):
@@ -210,7 +211,7 @@ def test_basic_property_of_random_matrix():
 
 
 def test_gaussian_random_matrix():
-    """Check some statical properties of gaussian random matrix"""
+    """Check some statical properties of Gaussian random matrix"""
     # Check that the random matrix follow the proper distribution.
     # Let's say that each element of a_{ij} of A is taken from
     #   a_ij ~ N(0.0, 1 / n_components).
@@ -223,16 +224,15 @@ def test_gaussian_random_matrix():
     assert_allclose(np.var(A, ddof=1), 1 / n_components, rtol=1e-1)
 
 
-def test_bernouilli_random_matrix():
-    """Check some statical properties of (sparse) bernouilli random matrix"""
-    # np.unique does not work on .todense sparse matrix
+def test_bernoulli_random_matrix():
+    """Check some statical properties of (sparse) Bernoulli random matrix"""
     n_components = 100
     n_features = 500
 
     for density in [0.3, 1.]:
         s = 1 / density
 
-        A = bernouilli_random_matrix(n_components,
+        A = bernoulli_random_matrix(n_components,
                                      n_features,
                                      density=density,
                                      random_state=0)
@@ -340,13 +340,13 @@ def test_random_projection_embedding_quality():
 
         # check that the automatically tuned values for the density respect the
         # contract for eps: pairwise distances are preserved according to the
-        # Johnson Lindenstrauss bound
+        # Johnson-Lindenstrauss lemma
         assert_less(distances_ratio.max(), 1 + eps)
         assert_less(1 - eps, distances_ratio.min())
 
 
 def test_BaseRandomProjection_set_with_wrong_distribution():
-    rp = BernouilliRandomProjection(n_components=10, dense_output=True,
+    rp = BernoulliRandomProjection(n_components=10, dense_output=True,
                                     random_state=0)
     rp.distribution = "not_implemented"
     assert_raises(ValueError, rp.fit, data)
@@ -371,7 +371,7 @@ def test_SparseRandomProjection_output_representation():
         # output for dense input will stay dense:
         assert isinstance(rp.transform(data), np.ndarray)
 
-        # ouput for sparse output will be sparse:
+        # output for sparse output will be sparse:
         assert sp.issparse(rp.transform(sparse_data))
 
 

@@ -20,7 +20,7 @@ import scipy.sparse as sp
 
 from sklearn import clone
 from sklearn.random_projection import (
-                                        BernouilliRandomProjection,
+                                        BernoulliRandomProjection,
                                         GaussianRandomProjection,
                                         johnson_lindenstrauss_min_dim,
                                        )
@@ -71,7 +71,7 @@ def bench_scikit_transformer(X, transfomer):
 
 
 # Make some random data with uniformly located non zero entries with
-# gaussian distributed values
+# Gaussian distributed values
 def make_sparse_random_data(n_samples, n_features, n_nonzeros,
                             random_state=None):
     rng = np.random.RandomState(random_state)
@@ -130,11 +130,11 @@ if __name__ == "__main__":
 
     op.add_option("--transformers",
                   dest="selected_transformers",
-                  default='GaussianRandomProjection,BernouilliRandomProjection',
+                  default='GaussianRandomProjection,BernoulliRandomProjection',
                   type=str,
                   help="Comma-separated list of transformer to benchmark. "
                        "Default: %default. Available: "
-                       "GaussianRandomProjection,BernouilliRandomProjection")
+                       "GaussianRandomProjection,BernoulliRandomProjection")
 
     op.add_option("--dense",
                   dest="dense",
@@ -171,7 +171,7 @@ if __name__ == "__main__":
     print('')
 
     ###########################################################################
-    # Set transfomer input
+    # Set transformer input
     ###########################################################################
     transformers = {}
 
@@ -185,7 +185,7 @@ if __name__ == "__main__":
         GaussianRandomProjection(**gaussian_params)
 
     ###########################################################################
-    # Set BernouilliRandomProjection input
+    # Set BernoulliRandomProjection input
     bernouilli_params = {
         "n_components": opts.n_components,
         "random_state": opts.random_seed,
@@ -193,8 +193,8 @@ if __name__ == "__main__":
         "eps": opts.eps,
     }
 
-    transformers["BernouilliRandomProjection"] = \
-        BernouilliRandomProjection(**bernouilli_params)
+    transformers["BernoulliRandomProjection"] = \
+        BernoulliRandomProjection(**bernouilli_params)
 
     ###########################################################################
     # Perform benchmark

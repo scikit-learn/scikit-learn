@@ -43,7 +43,7 @@ from sklearn.random_projection._random_projection import (
     sample_without_replacement)
 
 
-__all__ = ["BernouilliRandomProjection",
+__all__ = ["BernoulliRandomProjection",
            "GaussianRandomProjection",
            "johnson_lindenstrauss_min_dim"]
 
@@ -58,7 +58,7 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
       (1 - eps) ||u - v||^2 < ||p(u) - p(v)||^2 < (1 + eps) ||u - v||^2
 
     Where u and v are any rows taken from a dataset of shape [n_samples,
-    n_features] and p is a projection by a random gaussian N(0, 1) matrix
+    n_features] and p is a projection by a random Gaussian N(0, 1) matrix
     with shape [n_components, n_features] (or a sparse Achlioptas matrix).
 
     The minimum number of components to guarantees the eps-embedding is
@@ -85,11 +85,12 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
 
     References
     ----------
-    - http://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
 
-    - An elementary proof of the Johnson-Lindenstrauss Lemma.
-      Sanjoy Dasgupta and Anupam Gupta, 1999
-      http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.45.3654
+    .. [1] http://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
+
+    .. [2] Sanjoy Dasgupta and Anupam Gupta, 1999,
+           "An elementary proof of the Johnson-Lindenstrauss Lemma."
+           http://citeseer.ist.psu.edu/viewdoc/summary?doi=10.1.1.45.3654
 
     """
     eps = np.asarray(eps)
@@ -122,7 +123,7 @@ def _check_input_size(n_components, n_features):
 
 
 def gaussian_random_matrix(n_components, n_features, random_state=None):
-    """ Generate a dense gaussian random matrix.
+    """ Generate a dense Gaussian random matrix.
 
     The components of the random matrix are drawn from
 
@@ -147,7 +148,7 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
 
     See Also
     --------
-    bernouilli_random_matrix
+    bernoulli_random_matrix
     """
     _check_input_size(n_components, n_features)
     rng = check_random_state(random_state)
@@ -157,16 +158,16 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
     return components
 
 
-def bernouilli_random_matrix(n_components, n_features, density='auto',
+def bernoulli_random_matrix(n_components, n_features, density='auto',
                              random_state=None):
     """Generalized Achlioptas random sparse matrix for random projection
 
-    Setting density to 1/3 will yield the original matrix by Dimitris
+    Setting density to 1 / 3 will yield the original matrix by Dimitris
     Achlioptas while setting a lower value will yield the generalization
-    by Ping Li et al. A dense Bernouilli random can be obtained with
+    by Ping Li et al. A dense Bernoulli random can be obtained with
     density set to 1.
 
-    If we note `s = 1 / density`, the components of the random matrix are
+    If we note :math:`s = 1 / density`, the components of the random matrix are
     drawn from:
 
       - -sqrt(s) / sqrt(n_components)   with probability 1 / 2s
@@ -190,7 +191,7 @@ def bernouilli_random_matrix(n_components, n_features, density='auto',
         Use density = 1 / 3.0 if you want to reproduce the results from
         Achlioptas, 2001.
 
-        Use density = 1 if you want a dense bernouilli matrix.
+        Use density = 1 if you want a dense Bernoulli matrix.
 
     random_state : integer, RandomState instance or None (default)
         Control the pseudo random number generator used to generate the
@@ -198,7 +199,7 @@ def bernouilli_random_matrix(n_components, n_features, density='auto',
 
     Return
     ------
-    components: CSR matrix with shape [n_components, n_features]
+    components: numpy array or CSR matrix with shape [n_components, n_features]
         The generated Gaussian random matrix.
 
     See Also
@@ -208,8 +209,8 @@ def bernouilli_random_matrix(n_components, n_features, density='auto',
     References
     ----------
 
-    - Very Sparse Random Projections. Ping Li, Trevor Hastie
-      and Kenneth Church, 2006
+    - Ping Li, Trevor Hastieand Kenneth Church, 2006
+      "Very Sparse Random Projections".
       http://www.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
 
     - Database-friendly random projections, Dimitris Achlioptas, 2001
@@ -221,7 +222,7 @@ def bernouilli_random_matrix(n_components, n_features, density='auto',
     rng = check_random_state(random_state)
 
     if density == 1:
-        # efficient implementation for dense bernouilli projection
+        # efficient implementation for dense Bernoulli projection
         rp_matrix = rng.binomial(1, 0.5, (n_components, n_features)) * 2 - 1
         return 1 / np.sqrt(n_components) * rp_matrix
 
@@ -262,7 +263,7 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
     @abstractmethod
     def __init__(self, n_components='auto', density='auto', eps=0.1,
                  dense_output=False, random_state=None,
-                 distribution="bernouilli"):
+                 distribution="Bernoulli"):
         self.n_components = n_components
         self.density = density
         self.eps = eps
@@ -331,15 +332,15 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
 
         self.density_ = _check_density(self.density, n_features)
 
-        if self.distribution == "bernouilli":
-            self.components_ = bernouilli_random_matrix(
+        if self.distribution == "Bernoulli":
+            self.components_ = bernoulli_random_matrix(
                 self.n_components_, n_features, density=self.density,
                 random_state=self.random_state)
 
-        elif self.distribution == "gaussian":
+        elif self.distribution == "Gaussian":
             if self.density != 1.0:
                 raise NotImplementedError(
-                    "Sparse gaussion projection are not implemented."
+                    "Sparse Gaussian projection are not implemented."
                     "Density should be equal to 1.0 for Gaussian random "
                     "projection, got %s." % self.density)
 
@@ -352,8 +353,8 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
         assert_equal(
             self.components_.shape,
             (self.n_components_, n_features),
-            err_msg=('An error has occured the self.components_ matrix has not'
-                     ' the proper shape.'))
+            err_msg=('An error has occurred the self.components_ matrix has '
+                     ' not the proper shape.'))
 
         return self
 
@@ -396,8 +397,7 @@ class GaussianRandomProjection(BaseRandomProjection):
     """Transformer to reduce the dimensionality with Gaussian random
     projection.
 
-    The components of the random matrix are drawn from
-        N(0, 1.0 / n_components).
+    The components of the random matrix are drawn from N(0, 1 / n_components).
 
     Parameters
     ----------
@@ -406,10 +406,10 @@ class GaussianRandomProjection(BaseRandomProjection):
 
         n_components can be automatically adjusted according to the
         number of samples in the dataset and the bound given by the
-        Johnson Lindenstrauss lemma. In that case the quality of the
+        Johnson-Lindenstrauss lemma. In that case the quality of the
         embedding is controlled by the ``eps`` parameter.
 
-        It should be noted that Johnson Lindenstrauss lemma can yield
+        It should be noted that Johnson-Lindenstrauss lemma can yield
         very conservative estimated of the required number of components
         as it makes no assumption on the structure of the dataset.
 
@@ -441,16 +441,16 @@ class GaussianRandomProjection(BaseRandomProjection):
             eps=eps,
             dense_output=True,
             random_state=random_state,
-            distribution="gaussian")
+            distribution="Gaussian")
 
 
-class BernouilliRandomProjection(BaseRandomProjection):
-    """Transformer to reduce the dimensionality with bernouilli random
+class BernoulliRandomProjection(BaseRandomProjection):
+    """Transformer to reduce the dimensionality with Bernoulli random
     projection.
 
-    Bernouilli random matrix is an alternative to Gaussian projection.
+    Bernoulli random matrix is an alternative to Gaussian projection.
 
-    Sparse bernouilli random matrix is an alternative to dense random
+    Sparse Bernoulli random matrix is an alternative to dense random
     projection matrix that guarantees similar embedding quality while being
     much more memory efficient and allowing faster computation of the
     projected data.
@@ -469,10 +469,10 @@ class BernouilliRandomProjection(BaseRandomProjection):
 
         n_components can be automatically adjusted according to the
         number of samples in the dataset and the bound given by the
-        Johnson Lindenstrauss lemma. In that case the quality of the
+        Johnson-Lindenstrauss lemma. In that case the quality of the
         embedding is controlled by the ``eps`` parameter.
 
-        It should be noted that Johnson Lindenstrauss lemma can yield
+        It should be noted that Johnson-Lindenstrauss lemma can yield
         very conservative estimated of the required number of components
         as it makes no assumption on the structure of the dataset.
 
@@ -485,7 +485,7 @@ class BernouilliRandomProjection(BaseRandomProjection):
         Use density = 1 / 3.0 if you want to reproduce the results from
         Achlioptas, 2001.
 
-        Use density = 1 if you want dense bernouilli random projection.
+        Use density = 1 if you want dense Bernoulli random projection.
 
     eps : strictly positive float, optional, default 0.1
         Parameter to control the quality of the embedding according to
@@ -519,24 +519,25 @@ class BernouilliRandomProjection(BaseRandomProjection):
         Random matrix used for the projection.
 
     density_: float in range 0.0 - 1.0
-        Concrete density computed from when density="auto".
+        Concrete density computed from when density = "auto".
 
     References
     ----------
-    - Very Sparse Random Projections. Ping Li, Trevor Hastie
-      and Kenneth Church, 2006
-      http://www.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
 
-    - Database-friendly random projections, Dimitris Achlioptas, 2001
-      http://www.cs.ucsc.edu/~optas/papers/jl.pdf
+    .. [1] Ping Li, T. Hastie and K. W. Church, 2006,
+           "Very Sparse Random Projections".
+           http://www.stanford.edu/~hastie/Papers/Ping/KDD06_rp.pdf
+
+    .. [2] D. Achlioptas, 2001, "Database-friendly random projections",
+           http://www.cs.ucsc.edu/~optas/papers/jl.pdf
 
     """
     def __init__(self, n_components='auto', density='auto', eps=0.1,
                  dense_output=False, random_state=None):
-        super(BernouilliRandomProjection, self).__init__(
+        super(BernoulliRandomProjection, self).__init__(
             n_components=n_components,
             density=density,
             eps=eps,
             dense_output=dense_output,
             random_state=random_state,
-            distribution="bernouilli")
+            distribution="Bernoulli")

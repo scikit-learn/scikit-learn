@@ -1,15 +1,15 @@
 """
 The :mod:`sklearn.random_projection` module implements several random
-projection matrix.
+projection operators.
 """
 
 from sklearn.random_projection.random_projection import (
-    BernouilliRandomProjection,
+    BernoulliRandomProjection,
     GaussianRandomProjection,
     johnson_lindenstrauss_min_dim)
 
 __all__ = [
-    "BernouilliRandomProjection",
+    "BernoulliRandomProjection",
     "GaussianRandomProjection"
     "johnson_lindenstrauss_min_dim",
 ]
