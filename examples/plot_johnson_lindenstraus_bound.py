@@ -62,7 +62,7 @@ from time import time
 import numpy as np
 import pylab as pl
 from sklearn.random_projection import johnson_lindenstrauss_min_dim
-from sklearn.random_projection import BernouilliRandomProjection
+from sklearn.random_projection import BernoulliRandomProjection
 from sklearn.datasets import fetch_20newsgroups_vectorized
 from sklearn.metrics.pairwise import euclidean_distances
 
@@ -123,7 +123,7 @@ dists = dists[nonzero]
 
 for n_components in n_components_range:
     t0 = time()
-    rp = BernouilliRandomProjection(n_components=n_components)
+    rp = BernoulliRandomProjection(n_components=n_components)
     projected_data = rp.fit_transform(data)
     print "Projected %d samples from %d to %d in %0.3fs" % (
         n_samples, n_features, n_components, time() - t0)
