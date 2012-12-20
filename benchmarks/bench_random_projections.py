@@ -19,7 +19,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn import clone
-from sklearn.random_projection import (BernoulliRandomProjection,
+from sklearn.random_projection import (SparseRandomProjection,
                                        GaussianRandomProjection,
                                        johnson_lindenstrauss_min_dim)
 
@@ -126,11 +126,11 @@ if __name__ == "__main__":
 
     op.add_option("--transformers",
                   dest="selected_transformers",
-                  default='GaussianRandomProjection,BernoulliRandomProjection',
+                  default='GaussianRandomProjection,SparseRandomProjection',
                   type=str,
                   help="Comma-separated list of transformer to benchmark. "
                        "Default: %default. Available: "
-                       "GaussianRandomProjection,BernoulliRandomProjection")
+                       "GaussianRandomProjection,SparseRandomProjection")
 
     op.add_option("--dense",
                   dest="dense",
@@ -181,7 +181,7 @@ if __name__ == "__main__":
         GaussianRandomProjection(**gaussian_params)
 
     ###########################################################################
-    # Set BernoulliRandomProjection input
+    # Set SparseRandomProjection input
     bernouilli_params = {
         "n_components": opts.n_components,
         "random_state": opts.random_seed,
@@ -189,8 +189,8 @@ if __name__ == "__main__":
         "eps": opts.eps,
     }
 
-    transformers["BernoulliRandomProjection"] = \
-        BernoulliRandomProjection(**bernouilli_params)
+    transformers["SparseRandomProjection"] = \
+        SparseRandomProjection(**bernouilli_params)
 
     ###########################################################################
     # Perform benchmark

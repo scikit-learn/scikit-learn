@@ -964,7 +964,7 @@ Pairwise metrics
    :template: class.rst
 
    random_projection.GaussianRandomProjection
-   random_projection.BernoulliRandomProjection
+   random_projection.SparseRandomProjection
 
 .. autosummary::
    :toctree: generated/

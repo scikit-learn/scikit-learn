@@ -24,7 +24,6 @@ from time import time
 import numpy as np
 import pylab as pl
 from matplotlib import offsetbox
-from sklearn.utils.fixes import qr_economic
 from sklearn import (manifold, datasets, decomposition, ensemble, lda,
                      random_projection)
 from sklearn.metrics import euclidean_distances
@@ -86,7 +85,7 @@ pl.title('A selection from the 64-dimensional digits dataset')
 #----------------------------------------------------------------------
 # Random 2D projection using a random unitary matrix
 print "Computing random projection"
-rp = random_projection.BernoulliRandomProjection(n_components=2, random_state=42)
+rp = random_projection.SparseRandomProjection(n_components=2, random_state=42)
 X_projected = rp.fit_transform(X)
 plot_embedding(X_projected, "Random Projection of the digits")
 
