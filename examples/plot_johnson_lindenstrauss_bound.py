@@ -42,10 +42,21 @@ dimensions ``n_components`` for a given number of samples ``n_samples``
 Empirical validation
 ====================
 
-We validate the Johnson-Lindenstrauss lemma on the 20 newsgroups text document
-(TF-IDF word frequencies) dataset: some 500 documents with 100k features in
-total are projected using a sparse random matrix to smaller euclidean spaces
-with various values of ``n_components``, the target number of dimensions .
+We validate the above bounds on the the digits dataset or on the 20 newsgroups
+text document (TF-IDF word frequencies) dataset:
+
+- for the digits dataset, some 8x8 gray level pixels data for 500
+  handwritten digits pictures are randomly projected to spaces for various
+  larger number of dimensions ``n_components``.
+
+- for the 20 newsgroups dataset some 500 documents with 100k
+  features in total are projected using a sparse random matrix to smaller
+  euclidean spaces with various values for the target number of dimensions
+  ``n_components``.
+
+The default dataset is the digits dataset. To run the example on the twenty
+newsgroups dataset, pass the --twenty-newsgroups command line argument to this
+script.
 
 For each value of ``n_components``, we plot:
 
@@ -55,18 +66,35 @@ For each value of ``n_components``, we plot:
 - 1D histogram of the ratio of those distances (projected / original).
 
 We can see that for low values of ``n_components`` the distribution is wide
-with many distorted paired and a skewed distribution (due to the hard
+with many distorted pairs and a skewed distribution (due to the hard
 limit of zero ratio on the left as distances are always positives)
 while for larger values of n_components the distortion is controlled
 and the distances are well preserved by the random projection.
 
+
+Remarks
+=======
+
+According to the JL lemma, projecting 500 samples without too much distortions
+will require at least several thousands dimensions, irrespectively of the
+number of features of the original dataset.
+
+Hence using random projections on the digits dataset which only has 64 features
+in the input space does not make sense as it does not allow for dimensionality
+reduction in this case.
+
+On the twenty newsgroups on the other hand the dimensionality can be decreased
+from 56436 down to 10000 while reasonably preserving pairwise distances.
+
 """
+import sys
 from time import time
 import numpy as np
 import pylab as pl
 from sklearn.random_projection import johnson_lindenstrauss_min_dim
 from sklearn.random_projection import BernoulliRandomProjection
 from sklearn.datasets import fetch_20newsgroups_vectorized
+from sklearn.datasets import load_digits
 from sklearn.metrics.pairwise import euclidean_distances
 
 # Part 1: plot the theoretical dependency between n_components_min and
@@ -108,12 +136,18 @@ pl.ylabel("Minimum number of dimensions")
 pl.title("Johnson-Lindenstrauss bounds:\nn_components vs eps")
 pl.show()
 
-# Part 2: perform sparse random projection of some documents of the 20
-# newsgroups data which is both high dimensional and sparse
+# Part 2: perform sparse random projection of some digits images which are
+# quite low dimensional and dense or documents of the 20 newsgroups dataset
+# which is both high dimensional and sparse
 
-data = fetch_20newsgroups_vectorized().data[:500]
+if '--twenty-newsgroups' in sys.argv:
+    # Need an internet connection hence not enabled by default
+    data = fetch_20newsgroups_vectorized().data[:500]
+else:
+    data = load_digits().data[:500]
+
 n_samples, n_features = data.shape
-print "Embedding %d faces with dim %d using various random projections" % (
+print "Embedding %d samples with dim %d using various random projections" % (
     n_samples, n_features)
 
 n_components_range = np.array([300, 1000, 10000])
