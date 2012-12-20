@@ -102,9 +102,9 @@ Changelog
      by Wei Li.
 
    - New transformers :class:`random_projection.GaussianRandomProjection`,
-    :class:`random_projection.BernouilliRandomProjection` and the function
+    :class:`random_projection.SparseRandomProjection` and the function
     :func:`random_projection.johnson_lindenstrauss_min_dim`, implementing
-    Gaussian, Bernouilli and sparse Bernouilli random projection matrix
+    Gaussian and sparse random projection matrix
     by `Olivier Grisel`_ and `Arnaud Joly`_.
 
 

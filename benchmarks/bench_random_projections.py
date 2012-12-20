@@ -173,16 +173,16 @@ if __name__ == "__main__":
 
     ###########################################################################
     # Set GaussianRandomProjection input
-    gaussian_params = {
+    gaussian_matrix_params = {
         "n_components": opts.n_components,
         "random_state": opts.random_seed
     }
     transformers["GaussianRandomProjection"] = \
-        GaussianRandomProjection(**gaussian_params)
+        GaussianRandomProjection(**gaussian_matrix_params)
 
     ###########################################################################
     # Set SparseRandomProjection input
-    bernouilli_params = {
+    sparse_matrix_params = {
         "n_components": opts.n_components,
         "random_state": opts.random_seed,
         "density": opts.density,
@@ -190,7 +190,7 @@ if __name__ == "__main__":
     }
 
     transformers["SparseRandomProjection"] = \
-        SparseRandomProjection(**bernouilli_params)
+        SparseRandomProjection(**sparse_matrix_params)
 
     ###########################################################################
     # Perform benchmark

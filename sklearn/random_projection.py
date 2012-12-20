@@ -176,8 +176,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
 
     Setting density to 1 / 3 will yield the original matrix by Dimitris
     Achlioptas while setting a lower value will yield the generalization
-    by Ping Li et al. A dense Bernoulli random can be obtained with
-    density set to 1.
+    by Ping Li et al.
 
     If we note :math:`s = 1 / density`, the components of the random matrix are
     drawn from:
@@ -202,8 +201,6 @@ def sparse_random_matrix(n_components, n_features, density='auto',
 
         Use density = 1 / 3.0 if you want to reproduce the results from
         Achlioptas, 2001.
-
-        Use density = 1 if you want a dense Bernoulli matrix.
 
     random_state : integer, RandomState instance or None (default)
         Control the pseudo random number generator used to generate the
@@ -234,7 +231,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
     rng = check_random_state(random_state)
 
     if density == 1:
-        # efficient implementation for dense Bernoulli projection
+        # skipp index generation if totally dense
         components = rng.binomial(1, 0.5, (n_components, n_features)) * 2 - 1
         return 1 / np.sqrt(n_components) * components
 
@@ -509,8 +506,6 @@ class SparseRandomProjection(BaseRandomProjection):
 
         Use density = 1 / 3.0 if you want to reproduce the results from
         Achlioptas, 2001.
-
-        Use density = 1 if you want a sign random projection.
 
     eps : strictly positive float, optional, default 0.1
         Parameter to control the quality of the embedding according to

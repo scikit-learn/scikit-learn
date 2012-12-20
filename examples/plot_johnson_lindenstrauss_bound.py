@@ -159,7 +159,7 @@ dists = dists[nonzero]
 
 for n_components in n_components_range:
     t0 = time()
-    rp = BernoulliRandomProjection(n_components=n_components)
+    rp = SparseRandomProjection(n_components=n_components)
     projected_data = rp.fit_transform(data)
     print "Projected %d samples from %d to %d in %0.3fs" % (
         n_samples, n_features, n_components, time() - t0)
