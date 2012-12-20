@@ -439,6 +439,10 @@ class GaussianRandomProjection(BaseRandomProjection):
     components_: numpy array of shape [n_components, n_features]
         Random matrix used for the projection.
 
+    See Also
+    --------
+    SparseRandomProjection
+
     """
     def __init__(self, n_components='auto', eps=0.1, random_state=None):
         super(GaussianRandomProjection, self).__init__(
@@ -540,6 +544,10 @@ class SparseRandomProjection(BaseRandomProjection):
 
     density_: float in range 0.0 - 1.0
         Concrete density computed from when density = "auto".
+
+    See Also
+    --------
+    GaussianRandomProjection
 
     References
     ----------
