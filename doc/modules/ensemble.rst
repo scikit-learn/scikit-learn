@@ -255,8 +255,8 @@ The module :mod:`sklearn.ensemble` implements the popular AdaBoost algorithm
 first introduced by Freud and Schapire [FS1995]_ back in 1995.
 
 The core principle of AdaBoost is to fit a sequence of weak learners (i.e.,
-models that are only slightly better than random guessing, such as a small
-decision tree) on repeatedly modified versions of the data. The predictions from
+models that are only slightly better than random guessing, such as small
+decision trees) on repeatedly modified versions of the data. The predictions from
 all of them are then combined through a weighted majority vote (or sum) to
 produce the final prediction. The data modifications at each boosting iteration
 consist of applying weights :math:`w_1`, :math:`w_2`, ..., :math:`w_N` to each
