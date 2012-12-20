@@ -134,7 +134,8 @@ def check_arrays(*arrays, **options):
 
     Converting lists to arrays can be disabled by setting ``allow_lists=True``.
     Lists can then contain arbitrary objects and are not checked for dtype,
-    finiteness or anything else but length.
+    finiteness or anything else but length. Arrays are still checked
+    and possibly converted.
 
 
     Parameters
