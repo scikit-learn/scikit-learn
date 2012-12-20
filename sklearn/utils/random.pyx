@@ -4,10 +4,13 @@
 #
 # License: BSD Style.
 """
-This module complement missing features of numpy.random.
+Random utility function
+=======================
+This module complements missing features of ``numpy.random``.
 
-Currently, the module contains:
+The module contains:
     * Several algorithms to sample integer without replacement.
+
 """
 from __future__ import division
 
