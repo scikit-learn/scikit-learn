@@ -75,7 +75,7 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
         Number of samples.
 
     eps: float or numpy array of float in [0,1),
-        Maximum distortion rate as defined by Johnson-Lindenstrauss lemma.
+        Maximum distortion rate as defined by the Johnson-Lindenstrauss lemma.
 
     Return
     ------
