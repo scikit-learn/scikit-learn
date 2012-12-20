@@ -260,19 +260,33 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __init__(self, n_components='auto', density='auto', eps=0.1,
-                 dense_output=False, random_state=None,
-                 distribution="Bernoulli"):
+    def __init__(self, n_components='auto', eps=0.1, dense_output=False,
+                 random_state=None):
         self.n_components = n_components
-        self.density = density
         self.eps = eps
         self.dense_output = dense_output
         self.random_state = random_state
-        self.distribution = distribution
 
         self.components_ = None
         self.n_components_ = None
-        self.density_ = None
+
+    @abstractmethod
+    def _make_random_matrix(n_components, n_features):
+        """ Generate the random projection matrix
+
+        Parameters
+        ----------
+        n_components: int,
+            Dimensionality of the target projection space.
+
+        n_features: int,
+            Dimensionality of the original source space.
+
+        Return
+        ------
+        components: numpy array or CSR matrix [n_components, n_features]
+            The generated Gaussian random matrix.
+        """
 
     def fit(self, X, y=None):
         """Generate a sparse random projection matrix
@@ -329,26 +343,11 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
 
             self.n_components_ = self.n_components
 
-        self.density_ = _check_density(self.density, n_features)
+        # Generate a projection matrix of size [n_components, n_features]
+        self.components_ = self._make_random_matrix(self.n_components_,
+                                                    n_features)
 
-        if self.distribution == "Bernoulli":
-            self.components_ = bernoulli_random_matrix(
-                self.n_components_, n_features, density=self.density,
-                random_state=self.random_state)
-
-        elif self.distribution == "Gaussian":
-            if self.density != 1.0:
-                raise NotImplementedError(
-                    "Sparse Gaussian projection are not implemented."
-                    "Density should be equal to 1.0 for Gaussian random "
-                    "projection, got %s." % self.density)
-
-            self.components_ = gaussian_random_matrix(
-                self.n_components_, n_features, random_state=self.random_state)
-
-        else:
-            raise ValueError('Unknown specified distribution.')
-
+        # Check contract
         assert_equal(
             self.components_.shape,
             (self.n_components_, n_features),
@@ -436,11 +435,30 @@ class GaussianRandomProjection(BaseRandomProjection):
     def __init__(self, n_components='auto', eps=0.1, random_state=None):
         super(GaussianRandomProjection, self).__init__(
             n_components=n_components,
-            density=1.0,
             eps=eps,
             dense_output=True,
-            random_state=random_state,
-            distribution="Gaussian")
+            random_state=random_state)
+
+    def _make_random_matrix(self, n_components, n_features):
+        """ Generate the random projection matrix
+
+        Parameters
+        ----------
+        n_components: int,
+            Dimensionality of the target projection space.
+
+        n_features: int,
+            Dimensionality of the original source space.
+
+        Return
+        ------
+        components: numpy array or CSR matrix [n_components, n_features]
+            The generated Gaussian random matrix.
+        """
+        random_state = check_random_state(self.random_state)
+        return gaussian_random_matrix(n_components,
+                                      n_features,
+                                      random_state=random_state)
 
 
 class BernoulliRandomProjection(BaseRandomProjection):
@@ -535,8 +553,32 @@ class BernoulliRandomProjection(BaseRandomProjection):
                  dense_output=False, random_state=None):
         super(BernoulliRandomProjection, self).__init__(
             n_components=n_components,
-            density=density,
             eps=eps,
             dense_output=dense_output,
-            random_state=random_state,
-            distribution="Bernoulli")
+            random_state=random_state)
+
+        self.density = density
+        self.density_ = None
+
+    def _make_random_matrix(self, n_components, n_features):
+        """ Generate the random projection matrix
+
+        Parameters
+        ----------
+        n_components: int,
+            Dimensionality of the target projection space.
+
+        n_features: int,
+            Dimensionality of the original source space.
+
+        Return
+        ------
+        components: numpy array or CSR matrix [n_components, n_features]
+            The generated Gaussian random matrix.
+        """
+        random_state = check_random_state(self.random_state)
+        self.density_ = _check_density(self.density, n_features)
+        return bernoulli_random_matrix(n_components,
+                                       n_features,
+                                       density=self.density,
+                                       random_state=random_state)
