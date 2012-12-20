@@ -241,7 +241,7 @@ def bernoulli_random_matrix(n_components, n_features, density='auto',
         indices = np.concatenate(indices)
 
         # Among non zero components the probability of the sign is 50%/50%
-        data = rng.binomial(1, 0.5, size=len(indices)) * 2 - 1
+        data = rng.binomial(1, 0.5, size=np.size(indices)) * 2 - 1
 
         # build the CSR structure by concatenating the rows
         components = sp.csr_matrix((data, indices, indptr),
