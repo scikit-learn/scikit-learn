@@ -9,8 +9,9 @@ The dimensions and distribution of Random Projections matrices are
 controlled so as to preserve the pairwise distances between any two
 samples of the dataset.
 
-The main theoretical result behind their efficiency is the
-Johnson-Lindenstrauss lemma (quoting Wikipedia):
+The main theoretical result behind the efficiency of random projection is the
+`Johnson-Lindenstrauss lemma (quoting Wikipedia)
+<http://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma>`_:
 
   In mathematics, the Johnson-Lindenstrauss lemma is a result
   concerning low-distortion embeddings of points from high-dimensional
@@ -19,8 +20,6 @@ Johnson-Lindenstrauss lemma (quoting Wikipedia):
   much lower dimension in such a way that distances between the points are
   nearly preserved. The map used for the embedding is at least Lipschitz,
   and can even be taken to be an orthogonal projection.
-
-  http://en.wikipedia.org/wiki/Johnson%E2%80%93Lindenstrauss_lemma
 
 """
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>,
