@@ -647,8 +647,8 @@ class Bootstrap(object):
                           "be removed in 0.16.", DeprecationWarning)
             n_iter = n_bootstraps
         self.n_iter = n_iter
-        if (isinstance(train_size, numbers.Real) and train_size >= 0.0 and
-                train_size <= 1.0):
+        if (isinstance(train_size, numbers.Real) and train_size >= 0.0
+                and train_size <= 1.0):
             self.train_size = ceil(train_size * n)
         elif isinstance(train_size, numbers.Integral):
             self.train_size = train_size
@@ -683,8 +683,10 @@ class Bootstrap(object):
                                    + self.test_size]
 
             # bootstrap in each split individually
-            train = rng.randint(0, self.train_size, size=(self.train_size,))
-            test = rng.randint(0, self.test_size, size=(self.test_size,))
+            train = rng.randint(0, self.train_size,
+                                size=(self.train_size,))
+            test = rng.randint(0, self.test_size,
+                               size=(self.test_size,))
             yield ind_train[train], ind_test[test]
 
     def __repr__(self):
@@ -1023,8 +1025,9 @@ def _cross_val_score(estimator, X, y, score_func, train, test, verbose,
                      fit_params):
     """Inner loop for cross validation"""
     n_samples = X.shape[0] if sp.issparse(X) else len(X)
-    fit_params = dict([(k, np.asarray(v)[train] if hasattr(v, '__len__') and
-                        len(v) == n_samples else v)
+    fit_params = dict([(k, np.asarray(v)[train]
+                        if hasattr(v, '__len__')
+                        and len(v) == n_samples else v)
                        for k, v in fit_params.items()])
     if getattr(estimator, "_pairwise", False):
         # X is a precomputed square kernel matrix
@@ -1104,8 +1107,8 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
     fit_params = fit_params if fit_params is not None else {}
     scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(_cross_val_score)(
-            clone(estimator), X, y, score_func, train, test, verbose,
-            fit_params)
+            clone(estimator), X, y, score_func,
+            train, test, verbose, fit_params)
         for train, test in cv)
     return np.array(scores)
 
@@ -1248,9 +1251,9 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     # independent, and that it is pickle-able.
     score = _permutation_test_score(clone(estimator), X, y, cv, score_func)
     permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
-        delayed(_permutation_test_score)(
-            clone(estimator), X, _shuffle(y, labels, random_state), cv,
-            score_func)
+        delayed(_permutation_test_score)(clone(estimator), X,
+                                         _shuffle(y, labels, random_state),
+                                         cv, score_func)
         for _ in range(n_permutations))
     permutation_scores = np.array(permutation_scores)
     pvalue = (np.sum(permutation_scores >= score) + 1.0) / (n_permutations + 1)
