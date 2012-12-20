@@ -128,14 +128,14 @@ def check_arrays(*arrays, **options):
 
     Checks whether all objects in arrays have the same shape or length.
     By default lists and tuples are converted to numpy arrays.
-    This can be disabled by setting ``allow_lists=True``, in which case
-    only the length is checked for arrays and tuples.
 
     It is possible to enforce certain properties, such as dtype, continguity
     and sparse matrix format (if a sparse matrix is passed).
 
-    allow_lists overwrites all other options and simply checks the shape or
-    length of all elements of arrays.
+    Converting lists to arrays can be disabled by setting ``allow_lists=True``.
+    Lists can then contain arbitrary objects and are not checked for dtype,
+    finiteness or anything else but length.
+
 
     Parameters
     ----------
@@ -161,7 +161,7 @@ def check_arrays(*arrays, **options):
 
     allow_lists : bool
         Allow lists of arbitrary objects as input, just check their length.
-        Disables all other checks and copy.
+        Disables
     """
     sparse_format = options.pop('sparse_format', None)
     if sparse_format not in (None, 'csr', 'csc', 'dense'):
@@ -191,7 +191,7 @@ def check_arrays(*arrays, **options):
             raise ValueError("Found array with dim %d. Expected %d"
                              % (size, n_samples))
 
-        if not allow_lists:
+        if not allow_lists or hasattr(array, "shape"):
             if sparse.issparse(array):
                 if sparse_format == 'csr':
                     array = array.tocsr()
