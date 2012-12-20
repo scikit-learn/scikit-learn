@@ -11,7 +11,7 @@ trading a controlled amount of accuracy (as additional variance) for faster
 processing times and smaller model sizes. This module implements two types of
 unstructured random matrix:
 :ref:`Gaussian random matrix <gaussian_random_matrix>` and
-:ref:`(sparse) Bernoulli random matrix <Bernoulli_random_matrix>`.
+:ref:`sparse random matrix <sparse_random_matrix>`.
 
 The dimensions and distribution of random projections matrices are
 controlled so as to preserve the pairwise distances between any two
@@ -107,15 +107,15 @@ projection transformer::
   (100, 3947)
 
 
-.. _Bernoulli_random_matrix:
+.. _sparse_random_matrix:
 
-(Sparse) Bernoulli random projection
-=====================================
-The :class:`sklearn.random_projection.BernoulliRandomProjection` reduces the
+Sparse random projection
+========================
+The :class:`sklearn.random_projection.SparseRandomProjection` reduces the
 dimensionality by projecting the original input space using a sparse
-Bernoulli random matrix.
+random sign matrix.
 
-Sparse Bernoulli random matrices are an alternative to dense Gaussian random
+Sparse random matrices are an alternative to dense Gaussian random
 projection matrix that guarantees similar embedding quality while being much
 more memory efficient and allowing faster computation of the projected data.
 
@@ -136,13 +136,13 @@ where :math:`n_{\text{components}}` is the size of the projected subspace.
 By default the density of non zero elements is set to the minimum density as
 recommended by Ping Li et al.: :math:`1 / \sqrt{n_{\text{features}}}`.
 
-Here a small excerpt which illustrates how to use the Bernoulli random
+Here a small excerpt which illustrates how to use the sparse random
 projection transformer::
 
   >>> import numpy as np
   >>> from sklearn import random_projection
   >>> X = np.random.rand(100,10000)
-  >>> transformer = random_projection.BernoulliRandomProjection()
+  >>> transformer = random_projection.SparseRandomProjection()
   >>> X_new = transformer.fit_transform(X)
   >>> X_new.shape
   (100, 3947)

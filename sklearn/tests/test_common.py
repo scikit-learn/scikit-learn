@@ -54,7 +54,7 @@ from sklearn.cluster import WardAgglomeration, AffinityPropagation, \
         SpectralClustering
 from sklearn.isotonic import IsotonicRegression
 from sklearn.random_projection import (GaussianRandomProjection,
-                                       BernoulliRandomProjection)
+                                       SparseRandomProjection)
 dont_test = [Pipeline, FeatureUnion, GridSearchCV, SparseCoder,
         EllipticEnvelope, EllipticEnvelop, DictVectorizer, LabelBinarizer,
         LabelEncoder, TfidfTransformer, IsotonicRegression, OneHotEncoder,
@@ -180,7 +180,7 @@ def test_transformers():
             # which is more feature than we have.
             trans.k = 1
         elif Trans in [GaussianRandomProjection,
-                       BernoulliRandomProjection]:
+                       SparseRandomProjection]:
             # Due to the jl lemma and very few samples, the number
             # of components of the random matrix projection will be greater
             # than the number of featuers.
@@ -248,7 +248,7 @@ def test_transformers_sparse_data():
             if Trans in [Scaler, StandardScaler]:
                 trans = Trans(with_mean=False)
             elif Trans in [GaussianRandomProjection,
-                           BernoulliRandomProjection]:
+                           SparseRandomProjection]:
                 # Due to the jl lemma and very few samples, the number
                 # of components of the random matrix projection will be greater
                 # than the number of featuers.
@@ -302,7 +302,7 @@ def test_estimators_nan_inf():
             with warnings.catch_warnings(record=True):
                 est = Est()
                 if Est in [GaussianRandomProjection,
-                           BernoulliRandomProjection]:
+                           SparseRandomProjection]:
                     # Due to the jl lemma and very few samples, the number
                     # of components of the random matrix projection will be
                     # greater

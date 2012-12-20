@@ -41,7 +41,7 @@ from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.random import sample_without_replacement
 
 
-__all__ = ["BernoulliRandomProjection",
+__all__ = ["SparseRandomProjection",
            "GaussianRandomProjection",
            "johnson_lindenstrauss_min_dim"]
 
@@ -160,7 +160,7 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
 
     See Also
     --------
-    bernoulli_random_matrix
+    sparse_random_matrix
     """
     _check_input_size(n_components, n_features)
     rng = check_random_state(random_state)
@@ -170,7 +170,7 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
     return components
 
 
-def bernoulli_random_matrix(n_components, n_features, density='auto',
+def sparse_random_matrix(n_components, n_features, density='auto',
                             random_state=None):
     """Generalized Achlioptas random sparse matrix for random projection
 
@@ -472,12 +472,10 @@ class GaussianRandomProjection(BaseRandomProjection):
                                       random_state=random_state)
 
 
-class BernoulliRandomProjection(BaseRandomProjection):
-    """Reduce dimensionality trough Bernoulli random projection
+class SparseRandomProjection(BaseRandomProjection):
+    """Reduce dimensionality trough sparse random projection
 
-    Bernoulli random matrix is an alternative to Gaussian projection.
-
-    Sparse Bernoulli random matrix is an alternative to dense random
+    Sparse random matrix is an alternative to dense random
     projection matrix that guarantees similar embedding quality while being
     much more memory efficient and allowing faster computation of the
     projected data.
@@ -512,7 +510,7 @@ class BernoulliRandomProjection(BaseRandomProjection):
         Use density = 1 / 3.0 if you want to reproduce the results from
         Achlioptas, 2001.
 
-        Use density = 1 if you want dense Bernoulli random projection.
+        Use density = 1 if you want a sign random projection.
 
     eps : strictly positive float, optional, default 0.1
         Parameter to control the quality of the embedding according to
@@ -561,7 +559,7 @@ class BernoulliRandomProjection(BaseRandomProjection):
     """
     def __init__(self, n_components='auto', density='auto', eps=0.1,
                  dense_output=False, random_state=None):
-        super(BernoulliRandomProjection, self).__init__(
+        super(SparseRandomProjection, self).__init__(
             n_components=n_components,
             eps=eps,
             dense_output=dense_output,
@@ -588,7 +586,7 @@ class BernoulliRandomProjection(BaseRandomProjection):
         """
         random_state = check_random_state(self.random_state)
         self.density_ = _check_density(self.density, n_features)
-        return bernoulli_random_matrix(n_components,
-                                       n_features,
-                                       density=self.density,
-                                       random_state=random_state)
+        return sparse_random_matrix(n_components,
+                                    n_features,
+                                    density=self.density,
+                                    random_state=random_state)

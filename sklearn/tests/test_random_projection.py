@@ -9,8 +9,8 @@ from sklearn.metrics import euclidean_distances
 from sklearn.random_projection import (
     johnson_lindenstrauss_min_dim,
     gaussian_random_matrix,
-    bernoulli_random_matrix,
-    BernoulliRandomProjection,
+    sparse_random_matrix,
+    SparseRandomProjection,
     GaussianRandomProjection)
 
 from sklearn.utils.testing import (
@@ -23,11 +23,11 @@ from sklearn.utils.testing import (
     assert_in,
     assert_allclose)
 
-all_sparse_random_matrix = [bernoulli_random_matrix]
+all_sparse_random_matrix = [sparse_random_matrix]
 all_dense_random_matrix = [gaussian_random_matrix]
 all_random_matrix = set(all_sparse_random_matrix + all_dense_random_matrix)
 
-all_SparseRandomProjection = [BernoulliRandomProjection]
+all_SparseRandomProjection = [SparseRandomProjection]
 all_DenseRandomProjection = [GaussianRandomProjection]
 all_RandomProjection = set(all_SparseRandomProjection +
                            all_DenseRandomProjection)
@@ -134,17 +134,17 @@ def test_gaussian_random_matrix():
 
 
 def test_bernoulli_random_matrix():
-    """Check some statical properties of (sparse) Bernoulli random matrix"""
+    """Check some statical properties of sparse random matrix"""
     n_components = 100
     n_features = 500
 
     for density in [0.3, 1.]:
         s = 1 / density
 
-        A = bernoulli_random_matrix(n_components,
-                                    n_features,
-                                    density=density,
-                                    random_state=0)
+        A = sparse_random_matrix(n_components,
+                                 n_features,
+                                 density=density,
+                                 random_state=0)
         A = densify(A)
 
         # Check possible values
