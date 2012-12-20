@@ -4,8 +4,10 @@
 #
 # License: BSD Style.
 """
-This module contains fast function used to implement random projection
-matrix.
+This module complement missing features of numpy.random.
+
+Currently, the module contains:
+    * Several algorithms to sample integer without replacement.
 """
 from __future__ import division
 
@@ -72,14 +74,14 @@ cpdef sample_without_replacement_with_tracking_selection(np.int_t n_population,
 
     Returns
     -------
-    result : array of size (n_samples, )
+    out : array of size (n_samples, )
         The sampled subsets of integer.
     """
     _sample_without_replacement_check_input(n_population, n_samples)
 
     cdef np.int_t i
     cdef np.int_t j
-    cdef np.ndarray[np.int_t, ndim=1] result = np.empty((n_samples, ),
+    cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ),
                                                         dtype=np.int)
 
     rng = check_random_state(random_state)
@@ -94,9 +96,9 @@ cpdef sample_without_replacement_with_tracking_selection(np.int_t n_population,
         while j in selected:
             j = rng_randint(n_population)
         selected.add(j)
-        result[i] = j
+        out[i] = j
 
-    return result
+    return out
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -129,14 +131,14 @@ cpdef sample_without_replacement_with_pool(np.int_t n_population,
 
     Returns
     -------
-    result : array of size (n_samples, )
+    out : array of size (n_samples, )
         The sampled subsets of integer.
     """
     _sample_without_replacement_check_input(n_population, n_samples)
 
     cdef np.int_t i
     cdef np.int_t j
-    cdef np.ndarray[np.int_t, ndim=1] result = np.empty((n_samples, ),
+    cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ),
                                                         dtype=np.int)
 
     cdef np.ndarray[np.int_t, ndim=1] pool = np.empty((n_population, ),
@@ -153,11 +155,11 @@ cpdef sample_without_replacement_with_pool(np.int_t n_population,
     # more precisely of random.sample.
     for i in xrange(n_samples):
         j = rng_randint(n_population - i) # invariant:  non-selected at [0,n-i)
-        result[i] = pool[j]
+        out[i] = pool[j]
         pool[j] = pool[n_population - i - 1] # move non-selected item into
                                              # vacancy
 
-    return result
+    return out
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -190,7 +192,7 @@ cpdef sample_without_replacement_with_reservoir_sampling(np.int_t n_population,
 
     Returns
     -------
-    result : array of size (n_samples, )
+    out : array of size (n_samples, )
         The sampled subsets of integer. The order of the items is not
         necessarily random. Use a random permutation of the array if the order
         of the items has to be randomized.
@@ -199,7 +201,7 @@ cpdef sample_without_replacement_with_reservoir_sampling(np.int_t n_population,
 
     cdef np.int_t i
     cdef np.int_t j
-    cdef np.ndarray[np.int_t, ndim=1] result = np.empty((n_samples, ),
+    cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ),
                                                         dtype=np.int)
 
     rng = check_random_state(random_state)
@@ -210,14 +212,14 @@ cpdef sample_without_replacement_with_reservoir_sampling(np.int_t n_population,
     # 054289.html
     #
     for i in range(n_samples):
-        result[i] = i
+        out[i] = i
 
     for i from n_samples <= i < n_population:
         j = rng_randint(0, i + 1)
         if j < n_samples:
-            result[j] = i
+            out[j] = i
 
-    return result
+    return out
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -262,7 +264,7 @@ cpdef sample_without_replacement(np.int_t n_population, np.int_t n_samples,
 
     Returns
     -------
-    result : array of size (n_samples, )
+    out : array of size (n_samples, )
         The sampled subsets of integer. The subset of selected integer might
         not be randomized, see the method argument.
     """
