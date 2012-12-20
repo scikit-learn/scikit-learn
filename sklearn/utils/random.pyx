@@ -22,11 +22,12 @@ np.import_array()
 
 from sklearn.utils import check_random_state
 
+
 @cython.boundscheck(False)
 @cython.wraparound(False)
 cpdef _sample_without_replacement_check_input(np.int_t n_population,
                                               np.int_t n_samples):
-    """ Check that input are consistent for sample_without_replacement function"""
+    """ Check that input are consistent for sample_without_replacement"""
     if n_population < 0:
         raise ValueError('n_population should be greater than 0, got %s.'
                          % n_population)
@@ -85,7 +86,7 @@ cpdef sample_without_replacement_with_tracking_selection(np.int_t n_population,
     cdef np.int_t i
     cdef np.int_t j
     cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ),
-                                                        dtype=np.int)
+                                                     dtype=np.int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -102,6 +103,7 @@ cpdef sample_without_replacement_with_tracking_selection(np.int_t n_population,
         out[i] = j
 
     return out
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -142,10 +144,10 @@ cpdef sample_without_replacement_with_pool(np.int_t n_population,
     cdef np.int_t i
     cdef np.int_t j
     cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ),
-                                                        dtype=np.int)
+                                                     dtype=np.int)
 
     cdef np.ndarray[np.int_t, ndim=1] pool = np.empty((n_population, ),
-                                                        dtype=np.int)
+                                                      dtype=np.int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -157,12 +159,13 @@ cpdef sample_without_replacement_with_pool(np.int_t n_population,
     # The following line of code are heavily inspired from python core,
     # more precisely of random.sample.
     for i in xrange(n_samples):
-        j = rng_randint(n_population - i) # invariant:  non-selected at [0,n-i)
+        j = rng_randint(n_population - i)  # invariant: non-selected at [0,n-i)
         out[i] = pool[j]
-        pool[j] = pool[n_population - i - 1] # move non-selected item into
-                                             # vacancy
+        pool[j] = pool[n_population - i - 1]  # move non-selected item into
+                                              # vacancy
 
     return out
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -205,7 +208,7 @@ cpdef sample_without_replacement_with_reservoir_sampling(np.int_t n_population,
     cdef np.int_t i
     cdef np.int_t j
     cdef np.ndarray[np.int_t, ndim=1] out = np.empty((n_samples, ),
-                                                        dtype=np.int)
+                                                     dtype=np.int)
 
     rng = check_random_state(random_state)
     rng_randint = rng.randint
@@ -223,6 +226,7 @@ cpdef sample_without_replacement_with_reservoir_sampling(np.int_t n_population,
             out[j] = i
 
     return out
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -299,5 +303,3 @@ cpdef sample_without_replacement(np.int_t n_population, np.int_t n_samples,
     else:
         raise ValueError('Expected a method name in %s, got %s. '
                          % (all_methods, method))
-
-

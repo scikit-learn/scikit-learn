@@ -24,8 +24,8 @@ from sklearn.utils.testing import set_random_state
 from sklearn.utils.testing import assert_greater
 
 import sklearn
-from sklearn.base import clone, ClassifierMixin, RegressorMixin, \
-        TransformerMixin, ClusterMixin
+from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
+                          TransformerMixin, ClusterMixin)
 from sklearn.utils import shuffle
 from sklearn.preprocessing import StandardScaler, Scaler
 from sklearn.datasets import load_iris, load_boston, make_blobs
@@ -39,8 +39,8 @@ from sklearn.decomposition import SparseCoder
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.pls import _PLS, PLSCanonical, PLSRegression, CCA, PLSSVD
 from sklearn.ensemble import BaseEnsemble, RandomTreesEmbedding
-from sklearn.multiclass import OneVsOneClassifier, OneVsRestClassifier,\
-        OutputCodeClassifier
+from sklearn.multiclass import (OneVsOneClassifier, OneVsRestClassifier,
+                                OutputCodeClassifier)
 from sklearn.feature_selection import RFE, RFECV, SelectKBest
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB
@@ -48,19 +48,22 @@ from sklearn.covariance import EllipticEnvelope, EllipticEnvelop
 from sklearn.feature_extraction import DictVectorizer, FeatureHasher
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.kernel_approximation import AdditiveChi2Sampler
-from sklearn.preprocessing import LabelBinarizer, LabelEncoder, Binarizer, \
-        Normalizer, OneHotEncoder
-from sklearn.cluster import WardAgglomeration, AffinityPropagation, \
-        SpectralClustering
+from sklearn.preprocessing import (LabelBinarizer, LabelEncoder, Binarizer,
+                                   Normalizer, OneHotEncoder)
+from sklearn.cluster import (WardAgglomeration, AffinityPropagation,
+                             SpectralClustering)
 from sklearn.isotonic import IsotonicRegression
 from sklearn.random_projection import (GaussianRandomProjection,
                                        SparseRandomProjection)
+
 dont_test = [Pipeline, FeatureUnion, GridSearchCV, SparseCoder,
-        EllipticEnvelope, EllipticEnvelop, DictVectorizer, LabelBinarizer,
-        LabelEncoder, TfidfTransformer, IsotonicRegression, OneHotEncoder,
-        RandomTreesEmbedding, FeatureHasher, DummyClassifier, DummyRegressor]
+             EllipticEnvelope, EllipticEnvelop, DictVectorizer,
+             LabelBinarizer, LabelEncoder, TfidfTransformer,
+             IsotonicRegression, OneHotEncoder, RandomTreesEmbedding,
+             FeatureHasher, DummyClassifier, DummyRegressor]
+
 meta_estimators = [BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
-        OneVsRestClassifier, RFE, RFECV]
+                   OneVsRestClassifier, RFE, RFECV]
 
 
 def test_all_estimators():
@@ -123,7 +126,7 @@ def test_estimators_sparse_data():
     y = (4 * rng.rand(40)).astype(np.int)
     estimators = all_estimators()
     estimators = [(name, E) for name, E in estimators
-                        if issubclass(E, (ClassifierMixin, RegressorMixin))]
+                  if issubclass(E, (ClassifierMixin, RegressorMixin))]
     for name, Clf in estimators:
         if Clf in dont_test or Clf in meta_estimators:
             continue
@@ -136,12 +139,12 @@ def test_estimators_sparse_data():
         except TypeError, e:
             if not 'sparse' in repr(e):
                 print ("Estimator %s doesn't seem to fail gracefully on "
-                    "sparse data" % name)
+                       "sparse data" % name)
                 traceback.print_exc(file=sys.stdout)
                 raise e
         except Exception, exc:
             print ("Estimator %s doesn't seem to fail gracefully on "
-                "sparse data" % name)
+                   "sparse data" % name)
             traceback.print_exc(file=sys.stdout)
             raise exc
 
@@ -151,9 +154,9 @@ def test_transformers():
     # also test all shapes / shape errors
     estimators = all_estimators()
     transformers = [(name, E) for name, E in estimators if issubclass(E,
-        TransformerMixin)]
+                    TransformerMixin)]
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
-            random_state=0, n_features=2, cluster_std=0.1)
+                      random_state=0, n_features=2, cluster_std=0.1)
     n_samples, n_features = X.shape
     X = StandardScaler().fit_transform(X)
     X -= X.min()
@@ -218,10 +221,12 @@ def test_transformers():
                 X_pred2 = trans.transform(X)
             if isinstance(X_pred, tuple) and isinstance(X_pred2, tuple):
                 for x_pred, x_pred2 in zip(X_pred, X_pred2):
-                    assert_array_almost_equal(x_pred, x_pred2, 2,
+                    assert_array_almost_equal(
+                        x_pred, x_pred2, 2,
                         "fit_transform not correct in %s" % Trans)
             else:
-                assert_array_almost_equal(X_pred, X_pred2, 2,
+                assert_array_almost_equal(
+                    X_pred, X_pred2, 2,
                     "fit_transform not correct in %s" % Trans)
 
             # raises error on malformed input for transform
@@ -239,7 +244,7 @@ def test_transformers_sparse_data():
     y = (4 * rng.rand(40)).astype(np.int)
     estimators = all_estimators()
     estimators = [(name, E) for name, E in estimators
-                        if issubclass(E, TransformerMixin)]
+                  if issubclass(E, TransformerMixin)]
     for name, Trans in estimators:
         if Trans in dont_test or Trans in meta_estimators:
             continue
@@ -262,12 +267,12 @@ def test_transformers_sparse_data():
         except TypeError, e:
             if not 'sparse' in repr(e):
                 print ("Estimator %s doesn't seem to fail gracefully on "
-                    "sparse data" % name)
+                       "sparse data" % name)
                 traceback.print_exc(file=sys.stdout)
                 raise e
         except Exception, exc:
             print ("Estimator %s doesn't seem to fail gracefully on "
-                "sparse data" % name)
+                   "sparse data" % name)
             traceback.print_exc(file=sys.stdout)
             raise exc
 
@@ -283,14 +288,16 @@ def test_estimators_nan_inf():
     y = np.ones(10)
     y[:5] = 0
     estimators = all_estimators()
-    estimators = [(name, E) for name, E in estimators if
-            issubclass(E, ClassifierMixin) or issubclass(E, RegressorMixin) or
-            issubclass(E, TransformerMixin) or issubclass(E, ClusterMixin)]
+    estimators = [(name, E) for name, E in estimators
+                  if (issubclass(E, ClassifierMixin) or
+                      issubclass(E, RegressorMixin) or
+                      issubclass(E, TransformerMixin) or
+                      issubclass(E, ClusterMixin))]
     error_string_fit = "Estimator doesn't check for NaN and inf in fit."
     error_string_predict = ("Estimator doesn't check for NaN and inf in"
-        " predict.")
+                            " predict.")
     error_string_transform = ("Estimator doesn't check for NaN and inf in"
-        " transform.")
+                              " transform.")
     for X_train in [X_train_nan, X_train_inf]:
         for name, Est in estimators:
             if Est in dont_test or Est in meta_estimators:
@@ -375,11 +382,11 @@ def test_classifiers_one_label():
     X_test = rnd.uniform(size=(10, 3))
     y = np.ones(10)
     estimators = all_estimators()
-    classifiers = [(name, E) for name, E in estimators if issubclass(E,
-        ClassifierMixin)]
+    classifiers = [(name, E) for name, E in estimators
+                   if issubclass(E, ClassifierMixin)]
     error_string_fit = "Classifier can't train when only one class is present."
     error_string_predict = ("Classifier can't predict when only one class is "
-        "present.")
+                            "present.")
     for name, Clf in classifiers:
         if Clf in dont_test or Clf in meta_estimators:
             continue
@@ -412,8 +419,8 @@ def test_clustering():
     # test if clustering algorithms do something sensible
     # also test all shapes / shape errors
     estimators = all_estimators()
-    clustering = [(name, E) for name, E in estimators if issubclass(E,
-        ClusterMixin)]
+    clustering = [(name, E) for name, E in estimators
+                  if issubclass(E, ClusterMixin)]
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=7)
@@ -452,8 +459,8 @@ def test_classifiers_train():
     # test if classifiers do something sensible on training set
     # also test all shapes / shape errors
     estimators = all_estimators()
-    classifiers = [(name, E) for name, E in estimators if issubclass(E,
-        ClassifierMixin)]
+    classifiers = [(name, E) for name, E in estimators
+                   if issubclass(E, ClassifierMixin)]
     X_m, y_m = make_blobs(random_state=0)
     X_m, y_m = shuffle(X_m, y_m, random_state=7)
     X_m = StandardScaler().fit_transform(X_m)
@@ -530,8 +537,8 @@ def test_classifiers_train():
 def test_classifiers_classes():
     # test if classifiers can cope with non-consecutive classes
     estimators = all_estimators()
-    classifiers = [(name, E) for name, E in estimators if issubclass(E,
-        ClassifierMixin)]
+    classifiers = [(name, E) for name, E in estimators
+                   if issubclass(E, ClassifierMixin)]
     X, y = make_blobs(random_state=12345)
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
@@ -561,8 +568,8 @@ def test_regressors_int():
     # test if regressors can cope with integer labels (by converting them to
     # float)
     estimators = all_estimators()
-    regressors = [(name, E) for name, E in estimators if issubclass(E,
-        RegressorMixin)]
+    regressors = [(name, E) for name, E in estimators
+                  if issubclass(E, RegressorMixin)]
     boston = load_boston()
     X, y = boston.data, boston.target
     X, y = shuffle(X, y, random_state=0)
@@ -595,8 +602,8 @@ def test_regressors_int():
 
 def test_regressors_train():
     estimators = all_estimators()
-    regressors = [(name, E) for name, E in estimators if issubclass(E,
-        RegressorMixin)]
+    regressors = [(name, E) for name, E in estimators
+                  if issubclass(E, RegressorMixin)]
     boston = load_boston()
     X, y = boston.data, boston.target
     X, y = shuffle(X, y, random_state=0)
