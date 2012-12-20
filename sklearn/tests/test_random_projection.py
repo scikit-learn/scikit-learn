@@ -133,7 +133,7 @@ def test_gaussian_random_matrix():
     assert_allclose(np.var(A, ddof=1), 1 / n_components, rtol=1e-1)
 
 
-def test_bernoulli_random_matrix():
+def test_sparse_random_matrix():
     """Check some statical properties of sparse random matrix"""
     n_components = 100
     n_features = 500

@@ -78,7 +78,7 @@ bounded distortion introduced by the random projection::
 
   * See :ref:`example_plot_johnson_lindenstrauss_bound.py`
     for a theoretical explication on the Johnson-Lindenstrauss lemma and an
-    empirical validation using sparse Bernoulli random matrices.
+    empirical validation using sparse random matrices.
 
 .. topic:: References:
 
@@ -113,7 +113,7 @@ Sparse random projection
 ========================
 The :class:`sklearn.random_projection.SparseRandomProjection` reduces the
 dimensionality by projecting the original input space using a sparse
-random sign matrix.
+random matrix.
 
 Sparse random matrices are an alternative to dense Gaussian random
 projection matrix that guarantees similar embedding quality while being much
