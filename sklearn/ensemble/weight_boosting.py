@@ -43,8 +43,8 @@ class BaseWeightBoosting(BaseEnsemble):
     instead.
     """
     def __init__(self, base_estimator=None,
-                 n_estimators=10,
-                 learning_rate=.5,
+                 n_estimators=50,
+                 learning_rate=0.1,
                  compute_importances=False):
         self.weights_ = []
         self.errors_ = []
@@ -333,10 +333,11 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
         Support for sample weighting is required, as well as proper `classes_`
         and `n_classes_` attributes in case of classification.
 
-    n_estimators : integer, optional (default=10)
+    n_estimators : integer, optional (default=50)
         The maximum number of estimators at which boosting is terminated.
+        In case of perfect fit, the learning procedure is early stopped.
 
-    learning_rate : float, optional (default=0.5)
+    learning_rate : float, optional (default=0.1)
         Learning rate shrinks the contribution of each classifier by
         ``learning_rate``. There is a trade-off between ``learning_rate`` and
         ``n_estimators``.
@@ -599,10 +600,11 @@ class AdaBoostRegressor(BaseWeightBoosting, WeightedRegressorMixin):
         Support for sample weighting is required, as well as proper `classes_`
         and `n_classes_` attributes in case of classification.
 
-    n_estimators : integer, optional (default=10)
+    n_estimators : integer, optional (default=50)
         The maximum number of estimators at which boosting is terminated.
+        In case of perfect fit, the learning procedure is early stopped.
 
-    learning_rate : float, optional (default=0.5)
+    learning_rate : float, optional (default=0.1)
         Learning rate shrinks the contribution of each regressor by
         ``learning_rate``. There is a trade-off between ``learning_rate`` and
         ``n_estimators``.

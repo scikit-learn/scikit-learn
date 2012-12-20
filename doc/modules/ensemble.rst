@@ -294,10 +294,13 @@ learners::
     >>> scores.mean()                             # doctest: +ELLIPSIS
     0.966...
 
-The number of weak learners is controlled by the parameter ``n_estimators``.
-The ``learning_rate`` parameter controls the contribution of the weak learners
-in the final combination. A good practice is to use many weak learners with a
-small learning rate. By default, weak learners are decision trees of
+The number of weak learners is controlled by the parameter ``n_estimators``. The
+``learning_rate`` parameter controls the contribution of the weak learners in
+the final combination. As with
+:ref:`Gradient Tree Boosting <gradient_boosting>`, a good practice is to use
+many weak learners with a small learning rate (e.g., ``learning_rate <= 0.1``).
+Empirical evidence indeed suggests that small values of ``learning_rate`` favor
+better test error. By default, weak learners are decision trees of
 ``max_depth=3``. Different weak learners can be specified through the
 ``base_estimator`` parameter.
 
