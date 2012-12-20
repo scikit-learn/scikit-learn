@@ -69,6 +69,20 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
     the larger the dataset, the higher is the minimal dimensionality of
     random projection embedding.
 
+    Parameters
+    ----------
+    n_samples: int or numpy array of int,
+        Number of samples.
+
+    eps: float or numpy array of float in [0,1),
+        Maximum distortion rate as defined by Johnson-Lindenstrauss lemma.
+
+    Return
+    ------
+    n_components: int or numpy array of int,
+        The minimal number of components to guarantee with good probability
+        an eps-embedding with n_samples.
+
     Examples
     --------
 
