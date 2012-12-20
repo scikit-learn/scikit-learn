@@ -254,13 +254,6 @@ def test_random_projection_embedding_quality():
         assert_less(1 - eps, distances_ratio.min())
 
 
-def test_BaseRandomProjection_set_with_wrong_distribution():
-    rp = BernoulliRandomProjection(n_components=10, dense_output=True,
-                                   random_state=0)
-    rp.distribution = "not_implemented"
-    assert_raises(ValueError, rp.fit, data)
-
-
 def test_SparseRandomProjection_output_representation():
     for SparseRandomProjection in all_SparseRandomProjection:
         # when using sparse input, the projected data can be forced to be a
@@ -338,12 +331,3 @@ def test_warning_n_components_greater_than_n_features():
             RandomProjection(n_components=n_features + 1).fit(data)
             assert_equal(len(w), 1)
             assert issubclass(w[-1].category, UserWarning)
-
-
-def test_DenseRandomProjection_error_with_density_not_equal_to_1():
-    for DenseRandomProjection in all_DenseRandomProjection:
-        for density in ["auto", 0.5, 0.0]:
-            rp = DenseRandomProjection(eps=0.5)
-            rp.density = 0.5  # User try to modify density, but this features
-                              # is not implemented.
-            assert_raises(NotImplementedError, rp.fit, data)
