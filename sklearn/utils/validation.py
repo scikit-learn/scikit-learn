@@ -13,9 +13,9 @@ from .fixes import safe_copy
 
 def _assert_all_finite(X):
     """Like assert_all_finite, but only for ndarray."""
-    if X.dtype.char in np.typecodes['AllFloat'] and not np.isfinite(X.sum()) \
-      and not np.isfinite(X).all():
-            raise ValueError("Array contains NaN or infinity.")
+    if (X.dtype.char in np.typecodes['AllFloat'] and not np.isfinite(X.sum())
+            and not np.isfinite(X).all()):
+        raise ValueError("Array contains NaN or infinity.")
 
 
 def assert_all_finite(X):
@@ -124,13 +124,25 @@ def _num_samples(x):
 
 
 def check_arrays(*arrays, **options):
-    """Checked that all arrays have consistent first dimensions
+    """Check that all arrays have consistent first dimensions.
+
+    Checks whether all objects in arrays have the same shape or length.
+    By default lists and tuples are converted to numpy arrays.
+
+    It is possible to enforce certain properties, such as dtype, continguity
+    and sparse matrix format (if a sparse matrix is passed).
+
+    Converting lists to arrays can be disabled by setting ``allow_lists=True``.
+    Lists can then contain arbitrary objects and are not checked for dtype,
+    finiteness or anything else but length. Arrays are still checked
+    and possibly converted.
+
 
     Parameters
     ----------
     *arrays : sequence of arrays or scipy.sparse matrices with same shape[0]
         Python lists or tuples occurring in arrays are converted to 1D numpy
-        arrays.
+        arrays, unless allow_lists is specified.
 
     sparse_format : 'csr', 'csc' or 'dense', None by default
         If not None, any scipy.sparse matrix is converted to
@@ -147,6 +159,10 @@ def check_arrays(*arrays, **options):
 
     dtype : a numpy dtype instance, None by default
         Enforce a specific dtype.
+
+    allow_lists : bool
+        Allow lists of arbitrary objects as input, just check their length.
+        Disables
     """
     sparse_format = options.pop('sparse_format', None)
     if sparse_format not in (None, 'csr', 'csc', 'dense'):
@@ -154,6 +170,7 @@ def check_arrays(*arrays, **options):
     copy = options.pop('copy', False)
     check_ccontiguous = options.pop('check_ccontiguous', False)
     dtype = options.pop('dtype', None)
+    allow_lists = options.pop('allow_lists', False)
     if options:
         raise TypeError("Unexpected keyword arguments: %r" % options.keys())
 
@@ -172,28 +189,30 @@ def check_arrays(*arrays, **options):
         size = _num_samples(array)
 
         if size != n_samples:
-            raise ValueError("Found array with dim %d. Expected %d" % (
-                size, n_samples))
+            raise ValueError("Found array with dim %d. Expected %d"
+                             % (size, n_samples))
 
-        if sparse.issparse(array):
-            if sparse_format == 'csr':
-                array = array.tocsr()
-            elif sparse_format == 'csc':
-                array = array.tocsc()
-            elif sparse_format == 'dense':
-                raise TypeError('A sparse matrix was passed, but dense data '
-                    'is required. Use X.todense() to convert to dense.')
-            if check_ccontiguous:
-                array.data = np.ascontiguousarray(array.data, dtype=dtype)
+        if not allow_lists or hasattr(array, "shape"):
+            if sparse.issparse(array):
+                if sparse_format == 'csr':
+                    array = array.tocsr()
+                elif sparse_format == 'csc':
+                    array = array.tocsc()
+                elif sparse_format == 'dense':
+                    raise TypeError('A sparse matrix was passed, but dense '
+                                    'data is required. Use X.toarray() to '
+                                    'convert to a dense numpy array.')
+                if check_ccontiguous:
+                    array.data = np.ascontiguousarray(array.data, dtype=dtype)
+                else:
+                    array.data = np.asarray(array.data, dtype=dtype)
+                _assert_all_finite(array.data)
             else:
-                array.data = np.asarray(array.data, dtype=dtype)
-            _assert_all_finite(array.data)
-        else:
-            if check_ccontiguous:
-                array = np.ascontiguousarray(array, dtype=dtype)
-            else:
-                array = np.asarray(array, dtype=dtype)
-            _assert_all_finite(array)
+                if check_ccontiguous:
+                    array = np.ascontiguousarray(array, dtype=dtype)
+                else:
+                    array = np.asarray(array, dtype=dtype)
+                _assert_all_finite(array)
 
         if copy and array is array_orig:
             array = array.copy()

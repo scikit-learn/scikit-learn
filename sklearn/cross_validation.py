@@ -960,7 +960,7 @@ class StratifiedShuffleSplit(object):
         self.n = self.y.size
         self.n_iter = n_iter
         if n_iterations is not None:  # pragma: no cover
-            warnings.warn("n_iterations was renamed to n_iter for consistency "
+            warnings.warn("n_iterations was renamed to n_iter for consistency"
                           " and will be removed in 0.16.")
             self.n_iter = n_iterations
         self.test_size = test_size
@@ -1026,15 +1026,22 @@ def _cross_val_score(estimator, X, y, score_func, train, test, verbose,
     fit_params = dict([(k, np.asarray(v)[train] if hasattr(v, '__len__') and
                         len(v) == n_samples else v)
                        for k, v in fit_params.items()])
-    if getattr(estimator, "_pairwise", False):
-        # X is a precomputed square kernel matrix
-        if X.shape[0] != X.shape[1]:
-            raise ValueError("X should be a square kernel matrix")
-        X_train = X[np.ix_(train, train)]
-        X_test = X[np.ix_(test, train)]
+    if not hasattr(X, "shape"):
+        if getattr(estimator, "_pairwise", False):
+            raise ValueError("Precomputed kernels or affinity matrices have "
+                             "to be passed as arrays or sparse matrices.")
+        X_train = [X[idx] for idx in train]
+        X_test = [X[idx] for idx in test]
     else:
-        X_train = X[safe_mask(X, train)]
-        X_test = X[safe_mask(X, test)]
+        if getattr(estimator, "_pairwise", False):
+            # X is a precomputed square kernel matrix
+            if X.shape[0] != X.shape[1]:
+                raise ValueError("X should be a square kernel matrix")
+            X_train = X[np.ix_(train, train)]
+            X_test = X[np.ix_(test, train)]
+        else:
+            X_train = X[safe_mask(X, train)]
+            X_test = X[safe_mask(X, test)]
 
     if y is None:
         estimator.fit(X_train, **fit_params)
@@ -1091,7 +1098,7 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
     fit_params : dict, optional
         Parameters to pass to the fit method of the estimator.
     """
-    X, y = check_arrays(X, y, sparse_format='csr')
+    X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
     if score_func is None:
         if not hasattr(estimator, 'score'):
@@ -1154,20 +1161,21 @@ def check_cv(cv, X=None, y=None, classifier=False):
         stratified KFold will be used.
     """
     is_sparse = sp.issparse(X)
+    needs_indices = is_sparse or not hasattr(X, "shape")
     if cv is None:
         cv = 3
     if isinstance(cv, numbers.Integral):
         if classifier:
-            cv = StratifiedKFold(y, cv, indices=is_sparse)
+            cv = StratifiedKFold(y, cv, indices=needs_indices)
         else:
             if not is_sparse:
                 n_samples = len(X)
             else:
                 n_samples = X.shape[0]
-            cv = KFold(n_samples, cv, indices=is_sparse)
-    if is_sparse and not getattr(cv, "indices", True):
-        raise ValueError("Sparse data require indices-based cross validation"
-                         " generator, got: %r", cv)
+            cv = KFold(n_samples, cv, indices=needs_indices)
+    if needs_indices and not getattr(cv, "indices", True):
+        raise ValueError("Sparse data and lists require indices-based cross"
+                         " validation generator, got: %r", cv)
     return cv
 
 

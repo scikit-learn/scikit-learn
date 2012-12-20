@@ -44,6 +44,30 @@ class MockClassifier(BaseEstimator):
         return score
 
 
+class MockListClassifier(BaseEstimator):
+    """Dummy classifier to test the cross-validation.
+
+    Checks that GridSearchCV didn't convert X to array.
+    """
+    def __init__(self, foo_param=0):
+        self.foo_param = foo_param
+
+    def fit(self, X, Y):
+        assert_true(len(X) == len(Y))
+        assert_true(isinstance(X, list))
+        return self
+
+    def predict(self, T):
+        return T.shape[0]
+
+    def score(self, X=None, Y=None):
+        if self.foo_param > 1:
+            score = 1.
+        else:
+            score = 0.
+        return score
+
+
 X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
 y = np.array([1, 1, 2, 2])
 
@@ -189,6 +213,10 @@ def test_grid_search_precomputed_kernel():
 
     assert_true(np.mean(y_pred == y_test) >= 0)
 
+    # test error is raised when the precomputed kernel is not array-like
+    # or sparse
+    assert_raises(ValueError, cv.fit, K_train.tolist(), y_train)
+
 
 def test_grid_search_precomputed_kernel_error_nonsquare():
     """Test that grid search returns an error with a non-square precomputed
@@ -243,7 +271,7 @@ def test_X_as_list():
     X = np.arange(100).reshape(10, 10)
     y = np.array([0] * 5 + [1] * 5)
 
-    clf = MockClassifier()
+    clf = MockListClassifier()
     cv = KFold(n=len(X), n_folds=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X.tolist(), y).score(X, y)
