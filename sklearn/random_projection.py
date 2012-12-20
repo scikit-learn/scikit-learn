@@ -221,8 +221,8 @@ def bernoulli_random_matrix(n_components, n_features, density='auto',
 
     if density == 1:
         # efficient implementation for dense Bernoulli projection
-        rp_matrix = rng.binomial(1, 0.5, (n_components, n_features)) * 2 - 1
-        return 1 / np.sqrt(n_components) * rp_matrix
+        components = rng.binomial(1, 0.5, (n_components, n_features)) * 2 - 1
+        return 1 / np.sqrt(n_components) * components
 
     else:
         # Generate location of non zero element
@@ -391,8 +391,7 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
 
 
 class GaussianRandomProjection(BaseRandomProjection):
-    """Transformer to reduce the dimensionality with Gaussian random
-    projection.
+    """Reduce dimensionality trough Gaussian random projection
 
     The components of the random matrix are drawn from N(0, 1 / n_components).
 
@@ -461,8 +460,7 @@ class GaussianRandomProjection(BaseRandomProjection):
 
 
 class BernoulliRandomProjection(BaseRandomProjection):
-    """Transformer to reduce the dimensionality with Bernoulli random
-    projection.
+    """Reduce dimensionality trough Bernoulli random projection
 
     Bernoulli random matrix is an alternative to Gaussian projection.
 
