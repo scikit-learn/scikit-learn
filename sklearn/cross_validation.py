@@ -361,11 +361,11 @@ class StratifiedKFold(object):
         _, y_sorted = unique(y, return_inverse=True)
         min_labels = np.min(np.bincount(y_sorted))
         if n_folds > min_labels:
-            raise ValueError("The least populated class in y has only %d"
-                             " members, which is too few. The minimum"
-                             " number of labels for any class cannot"
-                             " be less than n_folds=%d."
-                             % (min_labels, n_folds))
+            warnings.warn(("The least populated class in y has only %d"
+                          " members, which is too few.\n The minimum"
+                          " number of labels for any class cannot"
+                          " be less than n_folds=%d."
+                          % (min_labels, n_folds)), Warning)
         self.y = y
         self.n_folds = n_folds
         self.indices = indices
