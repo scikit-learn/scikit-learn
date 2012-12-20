@@ -312,13 +312,16 @@ better test error. By default, weak learners are decision trees of
 
 .. topic:: References
 
- .. [FS1995] Y. Freud, and R. Schapire, "A decision theoretic generalization of online learning and an application to boosting", 1997.
+ .. [FS1995] Y. Freud, and R. Schapire, "A decision theoretic generalization of
+             online learning and an application to boosting", 1997.
 
- .. [ZZRH2009] J. Zhu, H. Zou, S. Rosset, T. Hastie. "Multi-class AdaBoost", 2009.
+ .. [ZZRH2009] J. Zhu, H. Zou, S. Rosset, T. Hastie. "Multi-class AdaBoost",
+               2009.
 
  .. [D1997] H. Drucker. "Improving Regressor using Boosting Techniques", 1997.
 
- .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical Learning Ed. 2", Springer, 2009.
+ .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, "Elements of
+              Statistical Learning Ed. 2", Springer, 2009.
 
 
 .. _gradient_boosting:
