@@ -309,7 +309,6 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
         if not sp.issparse(X):
             X = np.atleast_2d(X)
 
-        self.random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
 
         if self.n_components == 'auto':
