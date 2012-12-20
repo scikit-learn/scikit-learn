@@ -19,13 +19,9 @@ import numpy as np
 import scipy.sparse as sp
 
 from sklearn import clone
-from sklearn.random_projection import (
-                                        BernoulliRandomProjection,
-                                        GaussianRandomProjection,
-                                        johnson_lindenstrauss_min_dim,
-                                       )
-
-from sklearn.random_projection.random_projection import _check_density
+from sklearn.random_projection import (BernoulliRandomProjection,
+                                       GaussianRandomProjection,
+                                       johnson_lindenstrauss_min_dim)
 
 
 def type_auto_or_float(val):
@@ -235,12 +231,6 @@ if __name__ == "__main__":
                            "Value".center(12),))
     print(25 * "-" + ("|" + "-" * 14) * 1)
     for key, value in arguments.items():
-        if key == "density":
-            value = "%s" % _check_density(opts.density, opts.n_features)
-
-            if opts.density == 'auto':
-                value += " (auto)"
-
         print("%s \t | %s " % (str(key).ljust(16),
                                str(value).strip().center(12)))
     print("")
