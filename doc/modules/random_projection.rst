@@ -9,10 +9,9 @@ The :mod:`sklearn.random_projection` module implements a simple and
 computationally efficient way to reduce the dimensionality of the data by
 trading a controlled amount of accuracy (as additional variance) for faster
 processing times and smaller model sizes. This module implements two types of
-unstructured random matrix
+unstructured random matrix:
 :ref:`Gaussian random matrix <gaussian_random_matrix>` and
-:ref:`(sparse) Bernoulli random matrix <Bernoulli_random_matrix>`
-through a transformer object.
+:ref:`(sparse) Bernoulli random matrix <Bernoulli_random_matrix>`.
 
 The dimensions and distribution of random projections matrices are
 controlled so as to preserve the pairwise distances between any two
@@ -79,7 +78,7 @@ bounded distortion introduced by the random projection::
 
   * See :ref:`example_plot_johnson_lindenstraus_bound.py`
     for a theoretical explication on the Johnson-Lindenstrauss lemma and an
-    empirical validation using sparse Bernoulli random matrix.
+    empirical validation using sparse Bernoulli random matrices.
 
 .. topic:: References:
 
@@ -116,9 +115,9 @@ The :class:`sklearn.random_projection.BernoulliRandomProjection` reduces the
 dimensionality by projecting the original input space using a sparse
 Bernoulli random matrix.
 
-Sparse Bernoulli random matrix is an alternative to dense random projection
-matrix that guarantees similar embedding quality while being much more memory
-efficient and allowing faster computation of the projected data.
+Sparse Bernoulli random matrices are an alternative to dense Gaussian random
+projection matrix that guarantees similar embedding quality while being much
+more memory efficient and allowing faster computation of the projected data.
 
 If we note `s = 1 / density`, the elements of the random matrix
 are drawn from
@@ -134,7 +133,7 @@ are drawn from
   \right.
 
 where :math:`n_{\text{components}}` is the size of the projected subspace.
-By default the density of non zero element is set to the minimum density as
+By default the density of non zero elements is set to the minimum density as
 recommended by Ping Li et al.: :math:`1 / \sqrt{n_{\text{features}}}`.
 
 Here a small excerpt which illustrates how to use the Bernoulli random
