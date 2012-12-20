@@ -87,14 +87,8 @@ def _check_stop_list(stop):
 
 
 
-class BaseVectorizer(object):
-    """Abstract base class to factorozer text tokenization logics.
-
-    Warning: This class should not be used directly. Use derived classes
-    instead.
-
-    """
-    __metaclass__ = ABCMeta
+class VectorizerMixin(object):
+    """Provides common code for text vectorizers (tokenization logic)."""
 
     _white_spaces = re.compile(ur"\s\s+")
 
@@ -235,7 +229,8 @@ class BaseVectorizer(object):
             raise ValueError('%s is not a valid tokenization scheme/analyzer' %
                              self.analyzer)
 
-class HashingVectorizer(BaseEstimator, BaseVectorizer):
+
+class HashingVectorizer(BaseEstimator, VectorizerMixin):
     """Convert a collection of text documents to a matrix of token occurrences
 
     It turns a collection of text documents into a scipy.sparse matrix holding
@@ -444,7 +439,7 @@ class HashingVectorizer(BaseEstimator, BaseVectorizer):
 
 
 
-class CountVectorizer(BaseEstimator, BaseVectorizer):
+class CountVectorizer(BaseEstimator, VectorizerMixin):
     """Convert a collection of text documents to a matrix of token counts
 
     This implementation produces a sparse representation of the counts using
