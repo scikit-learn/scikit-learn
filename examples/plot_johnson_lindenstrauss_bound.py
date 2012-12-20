@@ -21,7 +21,7 @@ as defined by:
   (1 - eps) ||u - v||^2 < ||p(u) - p(v)||^2 < (1 + eps) ||u - v||^2
 
 Where u and v are any rows taken from a dataset of shape [n_samples,
-n_features] and p is a projection by a random gaussian N(0, 1) matrix
+n_features] and p is a projection by a random Gaussian N(0, 1) matrix
 with shape [n_components, n_features] (or a sparse Achlioptas matrix).
 
 The minimum number of components to guarantees the eps-embedding is
@@ -30,28 +30,31 @@ given by:
   n_components >= 4 log(n_samples) / (eps^2 / 2 - eps^3 / 3)
 
 
-The first two plots gives a visualization of the minimum number
-dimensions ``n_components`` on the number of samples ``n_samples``
-to embed through random projections various values of the admissible
-distorion eps according to the lemma.
+The first plot shows that with an increasing number of samples ``n_samples``,
+the minimal number of dimensions ``n_components`` increased logarithmically
+in order to guarantee an ``eps``-embedding.
+
+The second plot shows that an increase of the admissible
+distortion ``eps`` allows to reduce drastically the minimal number of
+dimensions ``n_components`` for a given number of samples ``n_samples``
 
 
 Empirical validation
 ====================
 
-We validate those bounds on the 20 newsgroups text document (TF-IDF word
-frequences) dataset: some 500 documents with 100k features in total are
-projected using a sparse random matrix to smaller euclidean spaces with
-various values for the target number of dimensions n_components.
+We validate the Johnson-Lindenstrauss lemma on the 20 newsgroups text document
+(TF-IDF word frequencies) dataset: some 500 documents with 100k features in
+total are projected using a sparse random matrix to smaller euclidean spaces
+with various values of ``n_components``, the target number of dimensions .
 
-For each value of n_components we plot:
+For each value of ``n_components``, we plot:
 
 - 2D distribution of sample pairs with pairwise distances in original
   and projected spaces as x and y axis respectively.
 
 - 1D histogram of the ratio of those distances (projected / original).
 
-We can see that for low values of n_components the distribution is wide
+We can see that for low values of ``n_components`` the distribution is wide
 with many distorted paired and a skewed distribution (due to the hard
 limit of zero ratio on the left as distances are always positives)
 while for larger values of n_components the distortion is controlled
@@ -85,7 +88,7 @@ pl.legend(["eps = %0.1f" % eps for eps in eps_range], loc="lower right")
 pl.xlabel("Number of observations to eps-embed")
 pl.ylabel("Minimum number of dimensions")
 pl.title("Johnson-Lindenstrauss bounds:\nn_samples vs n_components")
-
+pl.show()
 
 # range of admissible distortions
 eps_range = np.linspace(0.01, 1.0, 100)
@@ -103,7 +106,7 @@ pl.legend(["n_samples = %d" % n for n in n_samples_range], loc="upper right")
 pl.xlabel("Distortion eps")
 pl.ylabel("Minimum number of dimensions")
 pl.title("Johnson-Lindenstrauss bounds:\nn_components vs eps")
-
+pl.show()
 
 # Part 2: perform sparse random projection of some documents of the 20
 # newsgroups data which is both high dimensional and sparse
@@ -113,7 +116,6 @@ n_samples, n_features = data.shape
 print "Embedding %d faces with dim %d using various random projections" % (
     n_samples, n_features)
 
-materialize = True  # switch to False to never allocate the random matrix
 n_components_range = np.array([300, 1000, 10000])
 dists = euclidean_distances(data, squared=True).ravel()
 
@@ -155,8 +157,7 @@ for n_components in n_components_range:
     pl.ylabel("Distribution of samples pairs")
     pl.title("Histogram of pairwise distance rates for n_components=%d" %
              n_components)
+    pl.show()
 
     # TODO: compute the expected value of eps and add them to the previous plot
     # as vertical lines / region
-
-pl.show()
