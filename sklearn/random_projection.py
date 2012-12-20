@@ -39,8 +39,7 @@ from sklearn.utils import check_random_state
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.validation import check_arrays
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.random_projection._random_projection import (
-    sample_without_replacement)
+from sklearn.utils.random import sample_without_replacement
 
 
 __all__ = ["BernoulliRandomProjection",
