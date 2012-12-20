@@ -171,7 +171,7 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
 
 
 def sparse_random_matrix(n_components, n_features, density='auto',
-                            random_state=None):
+                         random_state=None):
     """Generalized Achlioptas random sparse matrix for random projection
 
     Setting density to 1 / 3 will yield the original matrix by Dimitris
