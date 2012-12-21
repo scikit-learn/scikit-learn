@@ -1291,9 +1291,6 @@ def make_gaussian_quantiles(n_samples=100, n_features=2, n_classes=3,
     y = np.array(y)
 
     if shuffle:
-        indices = np.arange(n_samples)
-        generator.shuffle(indices)
-        X = X[indices]
-        y = y[indices]
+        X, y = util_shuffle(X, y, random_state=generator)
 
     return X, y
