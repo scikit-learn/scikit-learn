@@ -48,7 +48,6 @@ from ..utils.validation import array2d
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.joblib.parallel import cpu_count
-from ..preprocessing import normalize
 
 from .pairwise_fast import _chi2_kernel_fast
 
@@ -372,6 +371,9 @@ def cosine_kernel(X, Y=None):
     kernel matrix : array_like
         An array with shape (n_samples_X, n_samples_Y).
     """
+    # to avoid recursive import
+    from ..preprocessing import normalize
+
     X, Y = check_pairwise_arrays(X, Y)
 
     X_normalized = normalize(X, copy=True)
