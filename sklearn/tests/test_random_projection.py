@@ -64,6 +64,18 @@ def test_invalid_jl_domain():
     assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, 1.1)
     assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, 0.0)
     assert_raises(ValueError, johnson_lindenstrauss_min_dim, 100, -0.1)
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 0, 0.5)
+
+
+def test_input_size_jl_min_dim():
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 3 * [100],
+        2 * [0.9])
+
+    assert_raises(ValueError, johnson_lindenstrauss_min_dim, 3 * [100],
+        2 * [0.9])
+
+    johnson_lindenstrauss_min_dim(np.random.randint(1, 10, size=(10, 10)),
+                                  0.5 * np.ones((10, 10)))
 
 
 ###############################################################################
