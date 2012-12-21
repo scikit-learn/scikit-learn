@@ -15,12 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random
 
-from sklearn.random_projection._random_projection import (
-    sample_without_replacement as sample_without_replacement_auto,
-    sample_without_replacement_with_tracking_selection,
-    sample_without_replacement_with_pool,
-    sample_without_replacement_with_reservoir_sampling,
-    )
+from sklearn.utils.random import sample_without_replacement
 
 
 def compute_time(t_start, delta):
@@ -96,24 +91,41 @@ if __name__ == "__main__":
         lambda n_population, n_sample: \
             random.sample(xrange(n_population), n_sample)
 
+   ###########################################################################
+    # Set custom automatic method selection
+    sampling_algorithm["custom-auto"] = \
+        lambda n_population, n_samples, random_state=None: \
+            sample_without_replacement(n_population,
+                                       n_samples,
+                                       method="auto",
+                                       random_state=random_state)
+
     ###########################################################################
     # Set custom tracking based method
     sampling_algorithm["custom-tracking-selection"] = \
-        sample_without_replacement_with_tracking_selection
-
-    ###########################################################################
-    # Set custom automatic method selection
-    sampling_algorithm["custom-auto"] = sample_without_replacement_auto
+        lambda n_population, n_samples, random_state=None: \
+            sample_without_replacement(n_population,
+                                       n_samples,
+                                       method="tracking_selection",
+                                       random_state=random_state)
 
     ###########################################################################
     # Set custom reservoir based method
     sampling_algorithm["custom-reservoir-sampling"] = \
-        sample_without_replacement_with_reservoir_sampling
+        lambda n_population, n_samples, random_state=None: \
+            sample_without_replacement(n_population,
+                                       n_samples,
+                                       method="reservoir_sampling",
+                                       random_state=random_state)
 
     ###########################################################################
     # Set custom reservoir based method
     sampling_algorithm["custom-pool"] = \
-        sample_without_replacement_with_pool
+        lambda n_population, n_samples, random_state=None: \
+            sample_without_replacement(n_population,
+                                       n_samples,
+                                       method="pool",
+                                       random_state=random_state)
 
     ###########################################################################
     # Numpy permutation based
