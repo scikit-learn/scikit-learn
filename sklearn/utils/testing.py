@@ -4,6 +4,8 @@
 # Authors: Pietro Berkes,
 #          Andreas Muller
 #          Mathieu Blondel
+#          Olivier Grisel
+#          Arnaud Joly
 # License: BSD
 import inspect
 import pkgutil
@@ -16,7 +18,6 @@ from functools import wraps
 import sklearn
 from sklearn.base import BaseEstimator
 from .fixes import savemat
-
 
 # Conveniently import all assertions in one place.
 from nose.tools import assert_equal
@@ -32,6 +33,7 @@ from numpy.testing import assert_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_less
+from numpy.testing import assert_allclose
 
 
 try:
@@ -69,6 +71,17 @@ try:
     from nose.tools import assert_greater
 except ImportError:
     assert_greater = _assert_greater
+
+
+def assert_raise_message(exception, message, function, *args, **kwargs):
+    """Helper function to test error messages in exceptions"""
+
+    try:
+        function(*args, **kwargs)
+        raise AssertionError("Should have raised %r" % exception(message))
+    except exception as e:
+        error_message = str(e)
+        assert_in(message, error_message)
 
 
 def fake_mldata_cache(columns_dict, dataname, matfile, ordering=None):

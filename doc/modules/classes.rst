@@ -946,6 +946,33 @@ Pairwise metrics
 
    qda.QDA
 
+.. _random_projection_ref:
+
+:mod:`sklearn.random_projection`: Random projection
+===================================================
+
+.. automodule:: sklearn.random_projection
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`random_projection` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   random_projection.GaussianRandomProjection
+   random_projection.SparseRandomProjection
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   random_projection.johnson_lindenstrauss_min_dim
+
+
 .. _svm_ref:
 
 :mod:`sklearn.svm`: Support Vector Machines
