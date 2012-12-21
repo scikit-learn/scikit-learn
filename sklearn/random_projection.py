@@ -1,3 +1,4 @@
+# -*- coding: utf8
 """Random Projection transformers
 
 Random Projections are a simple and computationally efficient way to
@@ -34,11 +35,11 @@ import numpy as np
 from numpy.testing import assert_equal
 import scipy.sparse as sp
 
+from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import check_random_state
 from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.utils.validation import check_arrays
-from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils.random import sample_without_replacement
+from sklearn.utils.validation import check_arrays
 
 
 __all__ = ["SparseRandomProjection",
@@ -49,17 +50,19 @@ __all__ = ["SparseRandomProjection",
 def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
     """Find a 'safe' number of components to randomly project to
 
-    The distortion introduced by a random projection `p` is asserted by
-    the fact that `p` is defining an eps-embedding with good probability
-    as defined by:
+    The distortion introduced by a random projection `p` only changes the
+    distance between two points by a factor (1 ± eps) in an euclidean space
+    with good probability. The projection `p` is an eps-embedding as defined
+    by:
 
       (1 - eps) ||u - v||^2 < ||p(u) - p(v)||^2 < (1 + eps) ||u - v||^2
 
     Where u and v are any rows taken from a dataset of shape [n_samples,
-    n_features] and p is a projection by a random Gaussian N(0, 1) matrix
-    with shape [n_components, n_features] (or a sparse Achlioptas matrix).
+    n_features], eps is in ]0, 1[ and p is a projection by a random Gaussian
+    N(0, 1) matrix with shape [n_components, n_features] (or a sparse
+    Achlioptas matrix).
 
-    The minimum number of components to guarantees the eps-embedding is
+    The minimum number of components to guarantee the eps-embedding is
     given by:
 
       n_components >= 4 log(n_samples) / (eps^2 / 2 - eps^3 / 3)
@@ -67,19 +70,22 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
     Note that the number of dimensions is independent of the original
     number of features but instead depends on the size of the dataset:
     the larger the dataset, the higher is the minimal dimensionality of
-    random projection embedding.
+    an eps-embedding.
 
     Parameters
     ----------
-    n_samples: int or numpy array of int,
-        Number of samples.
+    n_samples : int or numpy array of int greater than 0,
+        Number of samples. If an array is given, it will compute
+        a safe number of components array-wise.
 
-    eps: float or numpy array of float in [0,1),
+    eps : float or numpy array of float in ]0,1[,
         Maximum distortion rate as defined by the Johnson-Lindenstrauss lemma.
+        If an array is given, it will compute a safe number of components
+        array-wise.
 
-    Return
-    ------
-    n_components: int or numpy array of int,
+    Returns
+    -------
+    n_components : int or numpy array of int,
         The minimal number of components to guarantee with good probability
         an eps-embedding with n_samples.
 
@@ -106,9 +112,16 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
 
     """
     eps = np.asarray(eps)
-    if np.any(eps <= 0.0) or np.any(eps > 1):
+
+    if np.any(eps <= 0.0) or np.any(eps >= 1):
         raise ValueError(
-            "The JL bound is defined for eps in (0, 1], got %r" % eps)
+            "The JL bound is defined for eps in ]0, 1[, got %r" % eps)
+
+    if np.any(n_samples) <= 0:
+        raise ValueError(
+            "The JL bound is defined for n_samples greater than zero, got %r"
+            % n_samples)
+
     denominator = (eps ** 2 / 2) - (eps ** 3 / 3)
     return (4 * np.log(n_samples) / denominator).astype(np.int)
 
@@ -119,7 +132,7 @@ def _check_density(density, n_features):
         density = min(1 / np.sqrt(n_features), 1 / 3.)
 
     elif density <= 0 or density > 1:
-        raise ValueError("Expected density in range (0, 1], got: %r"
+        raise ValueError("Expected density in range ]0, 1], got: %r"
                          % density)
     return density
 
@@ -143,19 +156,19 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
 
     Parameters
     ----------
-    n_components: int,
+    n_components : int,
         Dimensionality of the target projection space.
 
-    n_features: int,
+    n_features : int,
         Dimensionality of the original source space.
 
     random_state : int, RandomState instance or None (default)
         Control the pseudo random number generator used to generate the
         matrix at fit time.
 
-    Return
-    ------
-    components: numpy array of shape [n_components, n_features]
+    Returns
+    -------
+    components : numpy array of shape [n_components, n_features]
         The generated Gaussian random matrix.
 
     See Also
@@ -187,13 +200,13 @@ def sparse_random_matrix(n_components, n_features, density='auto',
 
     Parameters
     ----------
-    n_components: int,
+    n_components : int,
         Dimensionality of the target projection space.
 
-    n_features: int,
+    n_features : int,
         Dimensionality of the original source space.
 
-    density: float in range (0, 1/3], optional
+    density : float in range ]0, 1/3], optional
         Ratio of non-zero component in the random projection matrix.
 
         By default the value is set to the minimum density as recommended
@@ -206,8 +219,8 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         Control the pseudo random number generator used to generate the
         matrix at fit time.
 
-    Return
-    ------
+    Returns
+    -------
     components: numpy array or CSR matrix with shape [n_components, n_features]
         The generated Gaussian random matrix.
 
@@ -231,12 +244,12 @@ def sparse_random_matrix(n_components, n_features, density='auto',
     rng = check_random_state(random_state)
 
     if density == 1:
-        # skipp index generation if totally dense
+        # skip index generation if totally dense
         components = rng.binomial(1, 0.5, (n_components, n_features)) * 2 - 1
         return 1 / np.sqrt(n_components) * components
 
     else:
-        # Generate location of non zero element
+        # Generate location of non zero elements
         indices = []
         offset = 0
         indptr = [offset]
@@ -286,16 +299,17 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        n_components: int,
+        n_components : int,
             Dimensionality of the target projection space.
 
-        n_features: int,
+        n_features : int,
             Dimensionality of the original source space.
 
-        Return
-        ------
-        components: numpy array or CSR matrix [n_components, n_features]
+        Returns
+        -------
+        components : numpy array or CSR matrix [n_components, n_features]
             The generated Gaussian random matrix.
+
         """
 
     def fit(self, X, y=None):
@@ -401,7 +415,7 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
 
 
 class GaussianRandomProjection(BaseRandomProjection):
-    """Reduce dimensionality trough Gaussian random projection
+    """Reduce dimensionality through Gaussian random projection
 
     The components of the random matrix are drawn from N(0, 1 / n_components).
 
@@ -433,10 +447,10 @@ class GaussianRandomProjection(BaseRandomProjection):
 
     Attributes
     ----------
-    n_component_: int
+    ``n_component_`` : int
         Concrete number of components computed when n_components="auto".
 
-    components_: numpy array of shape [n_components, n_features]
+    ``components_`` : numpy array of shape [n_components, n_features]
         Random matrix used for the projection.
 
     See Also
@@ -456,16 +470,17 @@ class GaussianRandomProjection(BaseRandomProjection):
 
         Parameters
         ----------
-        n_components: int,
+        n_components : int,
             Dimensionality of the target projection space.
 
-        n_features: int,
+        n_features : int,
             Dimensionality of the original source space.
 
-        Return
-        ------
-        components: numpy array or CSR matrix [n_components, n_features]
+        Returns
+        -------
+        components : numpy array or CSR matrix [n_components, n_features]
             The generated Gaussian random matrix.
+
         """
         random_state = check_random_state(self.random_state)
         return gaussian_random_matrix(n_components,
@@ -474,7 +489,7 @@ class GaussianRandomProjection(BaseRandomProjection):
 
 
 class SparseRandomProjection(BaseRandomProjection):
-    """Reduce dimensionality trough sparse random projection
+    """Reduce dimensionality through sparse random projection
 
     Sparse random matrix is an alternative to dense random
     projection matrix that guarantees similar embedding quality while being
@@ -536,13 +551,13 @@ class SparseRandomProjection(BaseRandomProjection):
 
     Attributes
     ----------
-    n_component_: int
+    ``n_component_`` : int
         Concrete number of components computed when n_components="auto".
 
-    components_: CSR matrix with shape [n_components, n_features]
+    ``components_`` : CSR matrix with shape [n_components, n_features]
         Random matrix used for the projection.
 
-    density_: float in range 0.0 - 1.0
+    ``density_`` : float in range 0.0 - 1.0
         Concrete density computed from when density = "auto".
 
     See Also
@@ -576,16 +591,17 @@ class SparseRandomProjection(BaseRandomProjection):
 
         Parameters
         ----------
-        n_components: int,
+        n_components : int,
             Dimensionality of the target projection space.
 
-        n_features: int,
+        n_features : int,
             Dimensionality of the original source space.
 
-        Return
-        ------
-        components: numpy array or CSR matrix [n_components, n_features]
+        Returns
+        -------
+        components : numpy array or CSR matrix [n_components, n_features]
             The generated Gaussian random matrix.
+
         """
         random_state = check_random_state(self.random_state)
         self.density_ = _check_density(self.density, n_features)
