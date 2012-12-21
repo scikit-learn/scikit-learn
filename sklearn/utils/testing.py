@@ -4,6 +4,8 @@
 # Authors: Pietro Berkes,
 #          Andreas Muller
 #          Mathieu Blondel
+#          Olivier Grisel
+#          Arnaud Joly
 # License: BSD
 import inspect
 import pkgutil
@@ -71,18 +73,15 @@ except ImportError:
     assert_greater = _assert_greater
 
 
-def assert_raise_message(exception, message, callable, *args, **kwargs):
+def assert_raise_message(exception, message, function, *args, **kwargs):
     """Helper function to test error messages in exceptions"""
+
     try:
-        callable(*args, **kwargs)
+        function(*args, **kwargs)
         raise AssertionError("Should have raised %r" % exception(message))
     except exception as e:
-        if hasattr(e, 'message'):
-            # python 2.x
-            assert_in(message, e.message)
-        else:
-            # python 3.x
-            assert_in(message, e.args[0])
+        error_message = str(e)
+        assert_in(message, error_message)
 
 
 def fake_mldata_cache(columns_dict, dataname, matfile, ordering=None):
