@@ -21,7 +21,7 @@ from sklearn.utils.testing import (
     assert_equal,
     assert_almost_equal,
     assert_in,
-    assert_allclose)
+    assert_array_almost_equal)
 
 all_sparse_random_matrix = [sparse_random_matrix]
 all_dense_random_matrix = [gaussian_random_matrix]
@@ -102,8 +102,8 @@ def check_zero_mean_and_unit_norm(random_matrix):
 
     A = densify(random_matrix(10000, 1, random_state=0))
 
-    assert_allclose(0, np.mean(A), atol=10 ** -3)
-    assert_allclose(1.0, np.linalg.norm(A),  rtol=1e-1)
+    assert_array_almost_equal(0, np.mean(A), 3)
+    assert_array_almost_equal(1.0, np.linalg.norm(A),  1)
 
 
 def check_input_with_sparse_random_matrix(random_matrix):
@@ -141,8 +141,8 @@ def test_gaussian_random_matrix():
     n_features = 1000
     A = gaussian_random_matrix(n_components, n_features, random_state=0)
 
-    assert_allclose(0.0, np.mean(A), atol=0.01)
-    assert_allclose(np.var(A, ddof=1), 1 / n_components, rtol=1e-1)
+    assert_array_almost_equal(0.0, np.mean(A), 2)
+    assert_array_almost_equal(np.var(A, ddof=1), 1 / n_components, 1)
 
 
 def test_sparse_random_matrix():
