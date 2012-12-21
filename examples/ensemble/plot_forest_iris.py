@@ -21,7 +21,8 @@ import pylab as pl
 
 from sklearn import clone
 from sklearn.datasets import load_iris
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, AdaBoostClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier,\
+                             AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 
 # Parameters
@@ -90,5 +91,7 @@ for pair in ([0, 1], [0, 2], [2, 3]):
 
         plot_idx += 1
 
-pl.suptitle("Decision surfaces of DecisionTreeClassifier, RandomForestClassifier, ExtraTreesClassifier and AdaBoostClassifier")
+pl.suptitle("Decision surfaces of DecisionTreeClassifier,"
+            "RandomForestClassifier, ExtraTreesClassifier"
+            " and AdaBoostClassifier")
 pl.show()

@@ -54,10 +54,14 @@ pl.xlabel("Decision Surfaces")
 
 # plot the class probabilities
 pl.subplot(122)
-pl.hist(bdt.predict_proba(X[y==0])[:,-1], bins=20, range=(0, 1),
+pl.hist(bdt.predict_proba(X[y == 0])[:, -1],
+        bins=20,
+        range=(0, 1),
         facecolor=plot_colors[0],
         label='Class A')
-pl.hist(bdt.predict_proba(X[y==1])[:,-1], bins=20, range=(0, 1),
+pl.hist(bdt.predict_proba(X[y == 1])[:, -1],
+        bins=20,
+        range=(0, 1),
         facecolor=plot_colors[1],
         label='Class B')
 pl.legend()

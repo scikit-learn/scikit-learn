@@ -1271,18 +1271,20 @@ def make_gaussian_quantiles(n_samples=100, n_features=2, n_classes=3,
     X = list(generator.multivariate_normal(mean, cov, n_samples))
 
     # Sort by distance from origin
-    X.sort(key=lambda x: sum([x_i**2 for x_i in x]))
+    X.sort(key=lambda x: sum([x_i ** 2 for x_i in x]))
     X = np.array(X)
 
     # Label by quantile.
     y = np.empty(n_samples, dtype=np.int)
     step = n_samples / n_classes
     begin = 0
+
     for i in xrange(n_classes):
         if i == n_classes - 1:
             end = n_samples
         else:
             end = begin + step
+
         y[begin:end] = i
         begin += step
 

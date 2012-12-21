@@ -251,25 +251,27 @@ the transformation performs an implicit, non-parametric density estimation.
 AdaBoost
 ========
 
-The module :mod:`sklearn.ensemble` implements the popular AdaBoost algorithm
-first introduced by Freud and Schapire [FS1995]_ back in 1995.
+The module :mod:`sklearn.ensemble` implements the popular boosting algorithm
+known as AdaBoost. This algorithm was first introduced by Freud and Schapire
+[FS1995]_ back in 1995.
 
 The core principle of AdaBoost is to fit a sequence of weak learners (i.e.,
 models that are only slightly better than random guessing, such as small
-decision trees) on repeatedly modified versions of the data. The predictions from
-all of them are then combined through a weighted majority vote (or sum) to
-produce the final prediction. The data modifications at each boosting iteration
-consist of applying weights :math:`w_1`, :math:`w_2`, ..., :math:`w_N` to each
-of the training samples. Initially, those weights are all set to :math:`w_i =
-1/N`, so that the first step simply trains a weak learner on the original data.
-For each successive iteration, the sample weights are individually modified and
-the learning algorithm is reapplied to the reweighted data. At a given step,
-those training examples that were incorrectly predicted by the boosting model
-induced at the previous step have their weights increased, whereas the weights
-are decreased for those that were predicted correctly. As iterations proceed,
-examples that are difficult to predict receive ever- increasing influence. Each
-subsequent weak learner is thereby forced to concentrate on the examples that
-are missed by the previous ones in the sequence [HTF2009]_.
+decision trees) on repeatedly modified versions of the data. The predictions
+from all of them are then combined through a weighted majority vote (or sum) to
+produce the final prediction. The data modifications at each so-called boosting
+iteration consist of applying weights :math:`w_1`, :math:`w_2`, ..., :math:`w_N`
+to each of the training samples. Initially, those weights are all set to
+:math:`w_i = 1/N`, so that the first step simply trains a weak learner on the
+original data. For each successive iteration, the sample weights are
+individually modified and the learning algorithm is reapplied to the reweighted
+data. At a given step, those training examples that were incorrectly predicted
+by the boosting model induced at the previous step have their weights increased,
+whereas the weights are decreased for those that were predicted correctly. As
+iterations proceed, examples that are difficult to predict receive
+ever-increasing influence. Each subsequent weak learner is thereby forced to
+concentrate on the examples that are missed by the previous ones in the sequence
+[HTF2009]_.
 
 AdaBoost can be used both for classification and regression problems:
 

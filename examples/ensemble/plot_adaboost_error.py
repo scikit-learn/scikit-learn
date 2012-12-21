@@ -3,8 +3,8 @@
 Testing and Training Error with Boosting
 ========================================
 
-This example shows the use of boosting to improve prediction accuracy.
-The error on the test and training sets after each boost is plotted on
+This example shows the use of boosting to improve prediction accuracy. The
+error on the test and training sets after each boosting iteration is plotted on
 the left. The boost weights and error of each tree are also shown.
 """
 print __doc__
@@ -36,8 +36,10 @@ bdt.fit(X_train, y_train)
 
 for y_test_predict, y_train_predict in izip(bdt.staged_predict(X_test),
                                             bdt.staged_predict(X_train)):
-    test_errors.append((y_test_predict != y_test).sum() / float(y_test.shape[0]))
-    train_errors.append((y_train_predict != y_train).sum() / float(y_train.shape[0]))
+    test_errors.append((y_test_predict != y_test).sum() /
+                       float(y_test.shape[0]))
+    train_errors.append((y_train_predict != y_train).sum() /
+                        float(y_train.shape[0]))
 
 n_trees = xrange(1, len(bdt) + 1)
 
