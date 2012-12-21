@@ -3,11 +3,7 @@ from __future__ import division
 import numpy as np
 from scipy.misc import comb as combinations
 
-from sklearn.utils.random import (
-    sample_without_replacement as sample_without_replacement_auto,
-    sample_without_replacement_with_tracking_selection,
-    sample_without_replacement_with_pool,
-    sample_without_replacement_with_reservoir_sampling)
+from sklearn.utils.random import sample_without_replacement
 
 from sklearn.utils.testing import (
     assert_raises,
@@ -16,19 +12,26 @@ from sklearn.utils.testing import (
 
 
 ###############################################################################
-# test custom sampling algorithm
+# test custom sampling without replacement algorithm
 ###############################################################################
-def test_sample_without_replacement_algorithms():
-    sample_without_replacement_algorithms = [
-        sample_without_replacement_auto,
-        sample_without_replacement_with_tracking_selection,
-        sample_without_replacement_with_pool,
-        sample_without_replacement_with_reservoir_sampling]
+def test_invalid_sample_without_replacement_algorithm():
+    assert_raises(ValueError, sample_without_replacement, 5, 4, "unknown")
 
-    for sample_without_replacement in sample_without_replacement_algorithms:
-        check_edge_case_of_sample_int(sample_without_replacement)
-        check_sample_int(sample_without_replacement)
-        check_sample_int_distribution(sample_without_replacement)
+
+def test_sample_without_replacement_algorithms():
+    methods = ("auto", "tracking_selection", "reservoir_sampling", "pool")
+
+    for m in methods:
+        sample_without_replacement_method = \
+            lambda n_population, n_samples, random_state=None: \
+                sample_without_replacement(n_population,
+                                           n_samples,
+                                           method=m,
+                                           random_state=random_state)
+
+        check_edge_case_of_sample_int(sample_without_replacement_method)
+        check_sample_int(sample_without_replacement_method)
+        check_sample_int_distribution(sample_without_replacement_method)
 
 
 def check_edge_case_of_sample_int(sample_without_replacement):

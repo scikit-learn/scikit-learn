@@ -9,7 +9,7 @@ Random utility function
 This module complements missing features of ``numpy.random``.
 
 The module contains:
-    * Several algorithms to sample integer without replacement.
+    * Several algorithms to sample integers without replacement.
 
 """
 from __future__ import division
@@ -40,9 +40,10 @@ cpdef _sample_without_replacement_check_input(np.int_t n_population,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef sample_without_replacement_with_tracking_selection(np.int_t n_population,
-                                                         np.int_t n_samples,
-                                                         random_state=None):
+cpdef _sample_without_replacement_with_tracking_selection(
+        np.int_t n_population,
+        np.int_t n_samples,
+        random_state=None):
     """Sample integers without replacement.
 
     Select n_samples integers from the set [0, n_population) without
@@ -64,13 +65,13 @@ cpdef sample_without_replacement_with_tracking_selection(np.int_t n_population,
 
     Parameters
     ----------
-    n_population: int,
+    n_population : int,
         The size of the set to sample from.
 
-    n_samples: int,
+    n_samples : int,
         The number of integer to sample.
 
-    random_state: int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -107,9 +108,9 @@ cpdef sample_without_replacement_with_tracking_selection(np.int_t n_population,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef sample_without_replacement_with_pool(np.int_t n_population,
-                                           np.int_t n_samples,
-                                           random_state=None):
+cpdef _sample_without_replacement_with_pool(np.int_t n_population,
+                                            np.int_t n_samples,
+                                            random_state=None):
     """Sample integers without replacement.
 
     Select n_samples integers from the set [0, n_population) without
@@ -122,13 +123,13 @@ cpdef sample_without_replacement_with_pool(np.int_t n_population,
 
     Parameters
     ----------
-    n_population: int,
+    n_population : int,
         The size of the set to sample from.
 
-    n_samples: int,
+    n_samples : int,
         The number of integer to sample.
 
-    random_state: int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -169,9 +170,10 @@ cpdef sample_without_replacement_with_pool(np.int_t n_population,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef sample_without_replacement_with_reservoir_sampling(np.int_t n_population,
-                                                         np.int_t n_samples,
-                                                         random_state=None):
+cpdef _sample_without_replacement_with_reservoir_sampling(
+    np.int_t n_population,
+    np.int_t n_samples,
+    random_state=None):
     """Sample integers without replacement.
 
     Select n_samples integers from the set [0, n_population) without
@@ -184,13 +186,13 @@ cpdef sample_without_replacement_with_reservoir_sampling(np.int_t n_population,
 
     Parameters
     ----------
-    n_population: int,
+    n_population : int,
         The size of the set to sample from.
 
-    n_samples: int,
+    n_samples : int,
          The number of integer to sample.
 
-    random_state: int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
@@ -240,19 +242,19 @@ cpdef sample_without_replacement(np.int_t n_population, np.int_t n_samples,
 
     Parameters
     ----------
-    n_population: int,
+    n_population : int,
         The size of the set to sample from.
 
-    n_samples: int,
+    n_samples : int,
         The number of integer to sample.
 
-    random_state: int, RandomState instance or None, optional (default=None)
+    random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
         If None, the random number generator is the RandomState instance used
         by `np.random`.
 
-    method: "auto", "tracking_selection" or "reservoir_sampling"
+    method : "auto", "tracking_selection" or "reservoir_sampling"
         If method == "auto", an algorithm is automatically selected.
         The subset of selected integer is not randomized.
 
@@ -287,18 +289,18 @@ cpdef sample_without_replacement(np.int_t n_population, np.int_t n_samples,
 
         # The value 0.2 has been determined through benchmarking.
         if ratio < 0.2:
-            return sample_without_replacement_with_tracking_selection(
+            return _sample_without_replacement_with_tracking_selection(
                 n_population, n_samples, random_state)
         else:
-            return sample_without_replacement_with_reservoir_sampling(
+            return _sample_without_replacement_with_reservoir_sampling(
                 n_population, n_samples, random_state)
 
     elif method == "reservoir_sampling":
-        return sample_without_replacement_with_reservoir_sampling(n_population,
-                                                                  n_samples,
-                                                                  random_state)
+        return _sample_without_replacement_with_reservoir_sampling(
+            n_population, n_samples, random_state)
+
     elif method == "pool":
-        return sample_without_replacement_with_pool(n_population, n_samples,
+        return _sample_without_replacement_with_pool(n_population, n_samples,
                                                     random_state)
     else:
         raise ValueError('Expected a method name in %s, got %s. '
