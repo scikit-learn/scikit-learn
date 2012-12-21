@@ -101,7 +101,7 @@ from sklearn.metrics.pairwise import euclidean_distances
 # n_samples
 
 # range of admissible distortions
-eps_range = np.linspace(0.1, 1.0, 5)
+eps_range = np.linspace(0.1, 0.99, 5)
 colors = pl.cm.Blues(np.linspace(0.3, 1.0, len(eps_range)))
 
 # range of number of samples (observation) to embed
@@ -119,7 +119,7 @@ pl.title("Johnson-Lindenstrauss bounds:\nn_samples vs n_components")
 pl.show()
 
 # range of admissible distortions
-eps_range = np.linspace(0.01, 1.0, 100)
+eps_range = np.linspace(0.01, 0.99, 100)
 
 # range of number of samples (observation) to embed
 n_samples_range = np.logspace(2, 6, 5)
