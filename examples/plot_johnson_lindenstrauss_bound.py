@@ -75,12 +75,12 @@ and the distances are well preserved by the random projection.
 Remarks
 =======
 
-According to the JL lemma, projecting 500 samples without too much distortions
+According to the JL lemma, projecting 500 samples without too much distortion
 will require at least several thousands dimensions, irrespectively of the
 number of features of the original dataset.
 
 Hence using random projections on the digits dataset which only has 64 features
-in the input space does not make sense as it does not allow for dimensionality
+in the input space does not make sense: it does not allow for dimensionality
 reduction in this case.
 
 On the twenty newsgroups on the other hand the dimensionality can be decreased
