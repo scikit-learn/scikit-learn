@@ -185,7 +185,7 @@ def test_transformers():
                        SparseRandomProjection]:
             # Due to the jl lemma and very few samples, the number
             # of components of the random matrix projection will be greater
-            # than the number of featuers.
+            # than the number of features.
             # So we impose a smaller number (avoid "auto" mode)
             trans.n_components = 1
 
@@ -255,7 +255,7 @@ def test_transformers_sparse_data():
                            SparseRandomProjection]:
                 # Due to the jl lemma and very few samples, the number
                 # of components of the random matrix projection will be greater
-                # than the number of featuers.
+                # than the number of features.
                 # So we impose a smaller number (avoid "auto" mode)
                 trans = Trans(n_components=np.int(X.shape[1] / 4))
             else:
@@ -312,7 +312,7 @@ def test_estimators_nan_inf():
                     # Due to the jl lemma and very few samples, the number
                     # of components of the random matrix projection will be
                     # greater
-                    # than the number of featuers.
+                    # than the number of features.
                     # So we impose a smaller number (avoid "auto" mode)
                     est = Est(n_components=1)
 
