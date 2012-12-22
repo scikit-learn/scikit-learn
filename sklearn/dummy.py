@@ -33,11 +33,18 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    `classes_` : array, shape = [n_classes]
-        Class labels.
+    `classes_` : array or list of of array of shape = [n_classes]
+        Class labels for each output.
 
-    `class_prior_` : array, shape = [n_classes]
-        Probability of each class.
+    `n_classes_` : array or list of of array of shape = [n_classes]
+        Number of label for each output.
+
+    `class_prior_` : array or list of array of shape = [n_classes]
+        Probability of each class. If it is a list, its length is equal to
+        `n_outputs_`.
+
+    `n_outputs_` : int,
+        Number of outputs.
     """
 
     def __init__(self, strategy="stratified", random_state=None):
@@ -112,7 +119,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         classes_ = self.classes_
         class_prior_ = self.class_prior_
         if self.n_outputs_ == 1:
-            # Get same type even for n_output == 1
+            # Get same type even for self.n_outputs_ == 1
             n_classes_ = [n_classes_]
             classes_ = [classes_]
             class_prior_ = [class_prior_]
@@ -170,6 +177,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         classes_ = self.classes_
         class_prior_ = self.class_prior_
         if self.n_outputs_ == 1:
+            # Get same type even for self.n_outputs_ == 1
             n_classes_ = [n_classes_]
             classes_ = [classes_]
             class_prior_ = [class_prior_]
