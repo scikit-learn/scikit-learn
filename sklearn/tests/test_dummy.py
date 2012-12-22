@@ -12,8 +12,8 @@ from sklearn.dummy import DummyRegressor
 
 def _check_predict_proba(clf, X, y):
     proba = clf.predict_proba(X)
-    with warnings.catch_warnings(record=True):
-        warnings.simplefilter("always")
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
         # We know that we can have division by zero
         log_proba = clf.predict_log_proba(X)
 
@@ -32,8 +32,8 @@ def _check_predict_proba(clf, X, y):
         assert_equal(proba[k].shape[0], n_samples)
         assert_equal(proba[k].shape[1], len(np.unique(y[:, k])))
         assert_array_equal(proba[k].sum(axis=1), np.ones(len(X)))
-        with warnings.catch_warnings(record=True):
-            warnings.simplefilter("always")
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
             # We know that we can have division by zero
             assert_array_equal(np.log(proba[k]), log_proba[k])
 
