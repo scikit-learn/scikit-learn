@@ -482,15 +482,17 @@ class CountVectorizer(BaseEstimator):
         max_df = self.max_df
         min_df = self.min_df
 
-        max_doc_count = (max_df if isinstance(max_df, numbers.Integral)
-                                else max_df * n_doc)
-        min_doc_count = (min_df if isinstance(min_df, numbers.Integral)
-                                else min_df * n_doc)
+        max_doc_count = (max_df
+                         if isinstance(max_df, numbers.Integral)
+                         else max_df * n_doc)
+        min_doc_count = (min_df
+                         if isinstance(min_df, numbers.Integral)
+                         else min_df * n_doc)
 
         # filter out stop words: terms that occur in almost all documents
         if max_doc_count < n_doc or min_doc_count > 1:
             stop_words = set(t for t, dc in document_counts.iteritems()
-                               if dc > max_doc_count or dc < min_doc_count)
+                             if dc > max_doc_count or dc < min_doc_count)
         else:
             stop_words = set()
 

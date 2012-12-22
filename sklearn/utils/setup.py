@@ -54,9 +54,9 @@ def configuration(parent_package='', top_path=None):
                          libraries=libraries)
 
     config.add_extension("random",
-         sources=["random.c"],
-         include_dirs=[numpy.get_include()],
-         libraries=libraries)
+                         sources=["random.c"],
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries)
 
     return config
 
