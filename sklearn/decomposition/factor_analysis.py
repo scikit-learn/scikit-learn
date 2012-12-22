@@ -132,7 +132,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         else:
             if len(self.noise_variance_init) != n_features:
                 raise ValueError("noise_variance_init dimension does not "
-                                 "with number of featueres : %d != %d" %
+                                 "with number of features : %d != %d" %
                                  (len(self.noise_variance_init), n_features))
             psi = np.array(self.noise_variance_init)
 
