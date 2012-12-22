@@ -171,7 +171,7 @@ def adjusted_rand_score(labels_true, labels_pred):
     # Special limit cases: no clustering since the data is not split.
     # This is a perfect match hence return 1.0.
     if (classes.shape[0] == clusters.shape[0] == 1
-        or classes.shape[0] == clusters.shape[0] == 0):
+            or classes.shape[0] == clusters.shape[0] == 0):
         return 1.0
 
     contingency = contingency_matrix(labels_true, labels_pred)
@@ -634,7 +634,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     # Special limit cases: no clustering since the data is not split.
     # This is a perfect match hence return 1.0.
     if (classes.shape[0] == clusters.shape[0] == 1
-        or classes.shape[0] == clusters.shape[0] == 0):
+            or classes.shape[0] == clusters.shape[0] == 0):
         return 1.0
     contingency = contingency_matrix(labels_true, labels_pred)
     contingency = np.array(contingency, dtype='float')
@@ -713,7 +713,7 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     # Special limit cases: no clustering since the data is not split.
     # This is a perfect match hence return 1.0.
     if (classes.shape[0] == clusters.shape[0] == 1
-        or classes.shape[0] == clusters.shape[0] == 0):
+            or classes.shape[0] == clusters.shape[0] == 0):
         return 1.0
     contingency = contingency_matrix(labels_true, labels_pred)
     contingency = np.array(contingency, dtype='float')

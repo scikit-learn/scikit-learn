@@ -54,11 +54,11 @@ def _make_edges_3d(n_x, n_y, n_z=1):
 def _compute_gradient_3d(edges, img):
     n_x, n_y, n_z = img.shape
     gradient = np.abs(img[edges[0] // (n_y * n_z),
-                                (edges[0] % (n_y * n_z)) // n_z,
-                                (edges[0] % (n_y * n_z)) % n_z] -
-                                img[edges[1] // (n_y * n_z),
-                                (edges[1] % (n_y * n_z)) // n_z,
-                                (edges[1] % (n_y * n_z)) % n_z])
+                      (edges[0] % (n_y * n_z)) // n_z,
+                      (edges[0] % (n_y * n_z)) % n_z] -
+                      img[edges[1] // (n_y * n_z),
+                      (edges[1] % (n_y * n_z)) // n_z,
+                      (edges[1] % (n_y * n_z)) % n_z])
     return gradient
 
 
@@ -228,7 +228,7 @@ def extract_patches(arr, patch_shape=8, extraction_step=1):
     indexing_strides = arr[slices].strides
 
     patch_indices_shape = ((np.array(arr.shape) - np.array(patch_shape)) /
-        np.array(extraction_step)) + 1
+                           np.array(extraction_step)) + 1
 
     shape = tuple(list(patch_indices_shape) + list(patch_shape))
     strides = tuple(list(indexing_strides) + list(patch_strides))
@@ -306,8 +306,8 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     all_patches = n_h * n_w
 
     extracted_patches = extract_patches(image,
-                        patch_shape=(p_h, p_w, n_colors),
-                        extraction_step=1)
+                                        patch_shape=(p_h, p_w, n_colors),
+                                        extraction_step=1)
     if max_patches:
         if (isinstance(max_patches, (numbers.Integral))
                 and max_patches < all_patches):

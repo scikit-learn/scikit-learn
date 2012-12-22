@@ -8,8 +8,8 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 
-from sklearn.linear_model.coordinate_descent import Lasso, ElasticNet, \
-                                                    ElasticNetCV
+from sklearn.linear_model.coordinate_descent import (Lasso, ElasticNet,
+                                                     ElasticNetCV)
 
 
 def test_sparse_coef():
@@ -162,8 +162,8 @@ def _test_sparse_enet_not_as_toy_dataset(alpha, fit_intercept, positive):
 
     # check the convergence is the same as the dense version
     d_clf = ElasticNet(alpha=alpha, l1_ratio=0.8, fit_intercept=fit_intercept,
-                      max_iter=max_iter, tol=1e-7, positive=positive,
-                      warm_start=True)
+                       max_iter=max_iter, tol=1e-7, positive=positive,
+                       warm_start=True)
     d_clf.fit(X_train.todense(), y_train)
 
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
@@ -208,15 +208,13 @@ def test_sparse_lasso_not_as_toy_dataset():
     X_train, X_test = X[n_samples / 2:], X[:n_samples / 2]
     y_train, y_test = y[n_samples / 2:], y[:n_samples / 2]
 
-    s_clf = Lasso(alpha=0.1, fit_intercept=False,
-                        max_iter=max_iter, tol=1e-7)
+    s_clf = Lasso(alpha=0.1, fit_intercept=False, max_iter=max_iter, tol=1e-7)
     s_clf.fit(X_train, y_train)
     assert_almost_equal(s_clf.dual_gap_, 0, 4)
     assert_greater(s_clf.score(X_test, y_test), 0.85)
 
     # check the convergence is the same as the dense version
-    d_clf = Lasso(alpha=0.1, fit_intercept=False, max_iter=max_iter,
-            tol=1e-7)
+    d_clf = Lasso(alpha=0.1, fit_intercept=False, max_iter=max_iter, tol=1e-7)
     d_clf.fit(X_train.todense(), y_train)
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
     assert_greater(d_clf.score(X_test, y_test), 0.85)

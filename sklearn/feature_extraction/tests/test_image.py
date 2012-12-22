@@ -10,8 +10,8 @@ from nose.tools import assert_equal, assert_true
 from numpy.testing import assert_raises
 
 from ..image import img_to_graph, grid_to_graph
-from ..image import extract_patches_2d, reconstruct_from_patches_2d, \
-                    PatchExtractor, extract_patches
+from ..image import (extract_patches_2d, reconstruct_from_patches_2d,
+                     PatchExtractor, extract_patches)
 from ...utils.graph import cs_graph_components
 
 
@@ -76,10 +76,10 @@ def test_connect_regions_with_grid():
 
 def _downsampled_lena():
     lena = sp.misc.lena().astype(np.float32)
-    lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + \
-           lena[1::2, 1::2]
-    lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + \
-           lena[1::2, 1::2]
+    lena = (lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2]
+            + lena[1::2, 1::2])
+    lena = (lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2]
+            + lena[1::2, 1::2])
     lena = lena.astype(np.float)
     lena /= 16.0
     return lena
@@ -149,12 +149,10 @@ def test_extract_patches_max_patches():
     patches = extract_patches_2d(lena, (p_h, p_w), max_patches=0.5)
     assert_equal(patches.shape, (expected_n_patches, p_h, p_w))
 
-    assert_raises(ValueError, extract_patches_2d, lena,
-                                                  (p_h, p_w),
-                                                  max_patches=2.0)
-    assert_raises(ValueError, extract_patches_2d, lena,
-                                                  (p_h, p_w),
-                                                  max_patches=-1.0)
+    assert_raises(ValueError, extract_patches_2d, lena, (p_h, p_w),
+                  max_patches=2.0)
+    assert_raises(ValueError, extract_patches_2d, lena, (p_h, p_w),
+                  max_patches=-1.0)
 
 
 def test_reconstruct_patches_perfect():

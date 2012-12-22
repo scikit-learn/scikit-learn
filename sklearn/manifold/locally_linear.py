@@ -177,10 +177,9 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
 
 
 def locally_linear_embedding(
-    X, n_neighbors, n_components, reg=1e-3, eigen_solver='auto',
-    tol=1e-6, max_iter=100, method='standard',
-    hessian_tol=1E-4, modified_tol=1E-12,
-    random_state=None):
+        X, n_neighbors, n_components, reg=1e-3, eigen_solver='auto', tol=1e-6,
+        max_iter=100, method='standard', hessian_tol=1E-4, modified_tol=1E-12,
+        random_state=None):
     """Perform a Locally Linear Embedding analysis on the data.
 
     Parameters
@@ -309,7 +308,8 @@ def locally_linear_embedding(
 
         if n_neighbors <= n_components + dp:
             raise ValueError("for method='hessian', n_neighbors must be "
-                    "greater than [n_components * (n_components + 3) / 2]")
+                             "greater than "
+                             "[n_components * (n_components + 3) / 2]")
 
         neighbors = nbrs.kneighbors(X, n_neighbors=n_neighbors + 1,
                                     return_distance=False)
@@ -337,8 +337,8 @@ def locally_linear_embedding(
 
             j = 1 + n_components
             for k in range(n_components):
-                Yi[:, j:j + n_components - k] = \
-                        U[:, k:k + 1] * U[:, k:n_components]
+                Yi[:, j:j + n_components - k] = (U[:, k:k + 1]
+                                                 * U[:, k:n_components])
                 j += n_components - k
 
             Q, R = qr(Yi)
@@ -358,7 +358,7 @@ def locally_linear_embedding(
     elif method == 'modified':
         if n_neighbors < n_components:
             raise ValueError("modified LLE requires "
-                "n_neighbors >= n_components")
+                             "n_neighbors >= n_components")
 
         neighbors = nbrs.kneighbors(X, n_neighbors=n_neighbors + 1,
                                     return_distance=False)
@@ -589,9 +589,9 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_neighbors=5, n_components=2, reg=1E-3,
-            eigen_solver='auto', tol=1E-6, max_iter=100, method='standard',
-            hessian_tol=1E-4, modified_tol=1E-12, neighbors_algorithm='auto',
-            random_state=None):
+                 eigen_solver='auto', tol=1E-6, max_iter=100,
+                 method='standard', hessian_tol=1E-4, modified_tol=1E-12,
+                 neighbors_algorithm='auto', random_state=None):
 
         self.n_neighbors = n_neighbors
         self.n_components = n_components
@@ -607,7 +607,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
 
     def _fit_transform(self, X):
         self.nbrs_ = NearestNeighbors(self.n_neighbors,
-                algorithm=self.neighbors_algorithm)
+                                      algorithm=self.neighbors_algorithm)
 
         self.random_state = check_random_state(self.random_state)
         X, = check_arrays(X, sparse_format='dense')

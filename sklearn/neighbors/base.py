@@ -68,7 +68,7 @@ def _get_weights(dist, weights):
         return weights(dist)
     else:
         raise ValueError("weights not recognized: should be 'uniform', "
-                            "'distance', or a callable function")
+                         "'distance', or a callable function")
 
 
 class NeighborsBase(BaseEstimator):
@@ -211,7 +211,7 @@ class KNeighborsMixin(object):
                [2]]...)
 
         """
-        if self._fit_method == None:
+        if self._fit_method is None:
             raise ValueError("must fit neighbors before querying")
 
         X = atleast2d_or_csr(X)
@@ -392,7 +392,7 @@ class RadiusNeighborsMixin(object):
         each object is a 1D array of indices or distances.
         """
 
-        if self._fit_method == None:
+        if self._fit_method is None:
             raise ValueError("must fit neighbors before querying")
 
         X = atleast2d_or_csr(X)
@@ -427,12 +427,12 @@ class RadiusNeighborsMixin(object):
 
             if return_distance:
                 if self.p == 2:
-                    dist = np.array([np.sqrt(d[neigh_ind[i]]) \
-                                        for i, d in enumerate(dist)],
+                    dist = np.array([np.sqrt(d[neigh_ind[i]])
+                                     for i, d in enumerate(dist)],
                                     dtype=dtype_F)
                 else:
-                    dist = np.array([d[neigh_ind[i]] \
-                                         for i, d in enumerate(dist)],
+                    dist = np.array([d[neigh_ind[i]]
+                                     for i, d in enumerate(dist)],
                                     dtype=dtype_F)
                 return dist, neigh_ind
             else:

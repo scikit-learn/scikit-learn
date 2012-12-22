@@ -305,7 +305,7 @@ class RFECV(RFE, MetaEstimatorMixin):
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
     def __init__(self, estimator, step=1, cv=None, loss_func=None,
-            estimator_params={}, verbose=0):
+                 estimator_params={}, verbose=0):
         self.estimator = estimator
         self.step = step
         self.cv = cv
@@ -330,8 +330,8 @@ class RFECV(RFE, MetaEstimatorMixin):
         X, y = check_arrays(X, y, sparse_format="csr")
         # Initialization
         rfe = RFE(estimator=self.estimator, n_features_to_select=1,
-                step=self.step, estimator_params=self.estimator_params,
-                verbose=self.verbose - 1)
+                  step=self.step, estimator_params=self.estimator_params,
+                  verbose=self.verbose - 1)
 
         cv = check_cv(self.cv, X, y, is_classifier(self.estimator))
         scores = {}
@@ -349,13 +349,10 @@ class RFECV(RFE, MetaEstimatorMixin):
                 estimator.fit(X[train][:, mask], y[train])
 
                 if self.loss_func is None:
-                    score_k = 1.0 - estimator.score(
-                                  X[test][:, mask],
-                                  y[test])
+                    score_k = 1.0 - estimator.score(X[test][:, mask], y[test])
                 else:
                     score_k = self.loss_func(
-                                  y[test],
-                                  estimator.predict(X[test][:, mask]))
+                        y[test], estimator.predict(X[test][:, mask]))
 
                 if not k in scores:
                     scores[k] = 0.0

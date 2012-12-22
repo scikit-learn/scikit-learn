@@ -263,7 +263,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         # Precompute some data
         X, y = check_arrays(X, y, sparse_format="dense")
         if (getattr(X, "dtype", None) != DTYPE or
-            X.ndim != 2 or not X.flags.fortran):
+                X.ndim != 2 or not X.flags.fortran):
             X = array2d(X, dtype=DTYPE, order="F")
 
         n_samples, self.n_features_ = X.shape

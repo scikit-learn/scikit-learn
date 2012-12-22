@@ -56,22 +56,20 @@ def test_pls():
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # center scale X, Y
     Xc, Yc, x_mean, y_mean, x_std, y_std =\
-         pls._center_scale_xy(X.copy(), Y.copy(), scale=True)
-    assert_array_almost_equal(Xc, np.dot(T, P.T),
-        err_msg="X != TP'")
-    assert_array_almost_equal(Yc, np.dot(U, Q.T),
-        err_msg="Y != UQ'")
+        pls._center_scale_xy(X.copy(), Y.copy(), scale=True)
+    assert_array_almost_equal(Xc, np.dot(T, P.T), err_msg="X != TP'")
+    assert_array_almost_equal(Yc, np.dot(U, Q.T), err_msg="Y != UQ'")
 
     # Check that rotations on training data lead to scores
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     Xr = plsca.transform(X)
     assert_array_almost_equal(Xr, plsca.x_scores_,
-        err_msg="rotation on X failed")
+                              err_msg="rotation on X failed")
     Xr, Yr = plsca.transform(X, Y)
     assert_array_almost_equal(Xr, plsca.x_scores_,
-        err_msg="rotation on X failed")
+                              err_msg="rotation on X failed")
     assert_array_almost_equal(Yr, plsca.y_scores_,
-        err_msg="rotation on Y failed")
+                              err_msg="rotation on Y failed")
 
     # "Non regression test" on canonical PLS
     # --------------------------------------
@@ -146,10 +144,10 @@ def test_pls():
     latents = np.array([l1, l1, l2, l2]).T
     X = latents + np.random.normal(size=4 * n).reshape((n, 4))
     Y = latents + np.random.normal(size=4 * n).reshape((n, 4))
-    X = np.concatenate((X,
-        np.random.normal(size=p_noise * n).reshape(n, p_noise)), axis=1)
-    Y = np.concatenate((Y,
-        np.random.normal(size=q_noise * n).reshape(n, q_noise)), axis=1)
+    X = np.concatenate(
+        (X, np.random.normal(size=p_noise * n).reshape(n, p_noise)), axis=1)
+    Y = np.concatenate(
+        (Y, np.random.normal(size=q_noise * n).reshape(n, q_noise)), axis=1)
     np.random.seed(None)
     pls_ca = pls.PLSCanonical(n_components=3)
     pls_ca.fit(X, Y)
@@ -231,7 +229,7 @@ def test_scale():
     # causes X[:, -1].std() to be zero
     X[:, -1] = 1.0
 
-    for clf in [pls.PLSCanonical(), pls.PLSRegression(),
-                    pls.CCA(), pls.PLSSVD()]:
+    for clf in [pls.PLSCanonical(), pls.PLSRegression(), pls.CCA(),
+                pls.PLSSVD()]:
         clf.set_params(scale=True)
         clf.fit(X, Y)

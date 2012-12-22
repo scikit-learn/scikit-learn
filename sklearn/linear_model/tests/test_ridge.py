@@ -315,7 +315,7 @@ def test_dense_sparse():
         # test sparse matrix
         ret_sparse = test_func(SPARSE_FILTER)
         # test that the outputs are the same
-        if ret_dense != None and ret_sparse != None:
+        if ret_dense is not None and ret_sparse is not None:
             assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
 

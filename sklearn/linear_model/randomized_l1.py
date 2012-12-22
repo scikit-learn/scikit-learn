@@ -16,8 +16,8 @@ from scipy.interpolate import interp1d
 
 from .base import center_data
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import as_float_array, check_random_state, safe_asarray, \
-        check_arrays, safe_mask
+from ..utils import (as_float_array, check_random_state, safe_asarray,
+                     check_arrays, safe_mask)
 from ..externals.joblib import Parallel, delayed
 from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
@@ -36,19 +36,19 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
 
     if not (0 < scaling < 1):
         raise ValueError(
-             "'scaling' should be between 0 and 1. Got %r instead." % scaling)
+            "'scaling' should be between 0 and 1. Got %r instead." % scaling)
 
     scaling = 1. - scaling
     scores_ = 0.0
     for active_set in Parallel(n_jobs=n_jobs, verbose=verbose,
                                pre_dispatch=pre_dispatch)(
-                delayed(estimator_func)(X, y,
-                        weights=scaling * random_state.random_integers(0,
-                                                    1, size=(n_features,)),
-                        mask=(random_state.rand(n_samples) < sample_fraction),
-                        verbose=max(0, verbose - 1),
-                        **params)
-                for _ in range(n_resampling)):
+            delayed(estimator_func)(
+                X, y, weights=scaling * random_state.random_integers(
+                    0, 1, size=(n_features,)),
+                mask=(random_state.rand(n_samples) < sample_fraction),
+                verbose=max(0, verbose - 1),
+                **params)
+            for _ in range(n_resampling)):
         scores_ += active_set.astype(np.float)
 
     scores_ /= n_resampling
@@ -99,17 +99,17 @@ class BaseRandomizedLinearModel(BaseEstimator, TransformerMixin):
         if isinstance(memory, basestring):
             memory = Memory(cachedir=memory)
 
-        scores_ = memory.cache(_resample_model,
-                ignore=['verbose', 'n_jobs', 'pre_dispatch'])(
-                                    estimator_func, X, y,
-                                    scaling=self.scaling,
-                                    n_resampling=self.n_resampling,
-                                    n_jobs=self.n_jobs,
-                                    verbose=self.verbose,
-                                    pre_dispatch=self.pre_dispatch,
-                                    random_state=self.random_state,
-                                    sample_fraction=self.sample_fraction,
-                                    **params)
+        scores_ = memory.cache(
+            _resample_model, ignore=['verbose', 'n_jobs', 'pre_dispatch'])(
+                estimator_func, X, y,
+                scaling=self.scaling,
+                n_resampling=self.n_resampling,
+                n_jobs=self.n_jobs,
+                verbose=self.verbose,
+                pre_dispatch=self.pre_dispatch,
+                random_state=self.random_state,
+                sample_fraction=self.sample_fraction,
+                **params)
 
         if scores_.ndim == 1:
             scores_ = scores_[:, np.newaxis]
@@ -162,10 +162,10 @@ def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
 
     X = (1 - weights) * X
     alphas_, _, coef_ = lars_path(X, y,
-                Gram=precompute, copy_X=False,
-                copy_Gram=False, alpha_min=np.min(alpha),
-                method='lasso', verbose=verbose,
-                max_iter=max_iter, eps=eps)
+                                  Gram=precompute, copy_X=False,
+                                  copy_Gram=False, alpha_min=np.min(alpha),
+                                  method='lasso', verbose=verbose,
+                                  max_iter=max_iter, eps=eps)
 
     if len(alpha) > 1:
         if len(alphas_) > 1:  # np.min(alpha) < alpha_min
@@ -323,9 +323,9 @@ class RandomizedLasso(BaseRandomizedLinearModel):
                                 eps=self.eps)
             model.fit(X, y)
             self.alpha_ = alpha = model.alpha_
-        return _randomized_lasso, dict(alpha=alpha,
-                    max_iter=self.max_iter, eps=self.eps,
-                    precompute=self.precompute)
+        return _randomized_lasso, dict(alpha=alpha, max_iter=self.max_iter,
+                                       eps=self.eps,
+                                       precompute=self.precompute)
 
 
 ###############################################################################
@@ -348,10 +348,10 @@ def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
     for this_C, this_scores in zip(C, scores.T):
         # XXX : would be great to do it with a warm_start ...
         clf = LogisticRegression(C=this_C, tol=tol, penalty='l1', dual=False,
-                fit_intercept=fit_intercept)
+                                 fit_intercept=fit_intercept)
         clf.fit(X, y)
         this_scores[:] = np.any(
-                    np.abs(clf.coef_) > 10 * np.finfo(np.float).eps, axis=0)
+            np.abs(clf.coef_) > 10 * np.finfo(np.float).eps, axis=0)
     return scores
 
 
@@ -481,7 +481,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     def _center_data(self, X, y, fit_intercept, normalize=False):
         """Center the data in X but not in y"""
         X, _, Xmean, _, X_std = center_data(X, y, fit_intercept,
-                                                 normalize=normalize)
+                                            normalize=normalize)
         return X, y, Xmean, y, X_std
 
 
@@ -496,7 +496,7 @@ def _lasso_stability_path(X, y, mask, weights, eps):
     alpha_max = np.max(np.abs(np.dot(X.T, y))) / X.shape[0]
     alpha_min = eps * alpha_max  # set for early stopping in path
     alphas, _, coefs = lars_path(X, y, method='lasso', verbose=False,
-                                    alpha_min=alpha_min)
+                                 alpha_min=alpha_min)
     # Scale alpha by alpha_max
     alphas /= alphas[0]
     # Sort alphas in assending order
@@ -576,12 +576,12 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
     n_samples, n_features = X.shape
 
     paths = Parallel(n_jobs=n_jobs, verbose=verbose)(
-            delayed(_lasso_stability_path)(X, y,
-                    mask=rng.rand(n_samples) < sample_fraction,
-                    weights=1. - scaling * rng.random_integers(0,
-                                    1, size=(n_features,)),
-                    eps=eps)
-            for k in xrange(n_resampling))
+        delayed(_lasso_stability_path)(
+            X, y, mask=rng.rand(n_samples) < sample_fraction,
+            weights=1. - scaling * rng.random_integers(0, 1,
+                                                       size=(n_features,)),
+            eps=eps)
+        for k in xrange(n_resampling))
 
     all_alphas = sorted(list(set(itertools.chain(*[p[0] for p in paths]))))
     # Take approximately n_grid values

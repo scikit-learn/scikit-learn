@@ -270,8 +270,8 @@ class HuberLossFunction(RegressionLossFunction):
         """LAD updates terminal regions to median estimates. """
         terminal_region = np.where(terminal_regions == leaf)[0]
         gamma = self.gamma
-        diff = y.take(terminal_region, axis=0) - \
-               pred.take(terminal_region, axis=0)
+        diff = (y.take(terminal_region, axis=0)
+                - pred.take(terminal_region, axis=0))
         median = np.median(diff)
         diff_minus_median = diff - median
         tree.value[leaf, 0] = median + np.mean(
@@ -314,8 +314,8 @@ class QuantileLossFunction(RegressionLossFunction):
                                 residual, pred):
         """LAD updates terminal regions to median estimates. """
         terminal_region = np.where(terminal_regions == leaf)[0]
-        diff = y.take(terminal_region, axis=0) - \
-               pred.take(terminal_region, axis=0)
+        diff = (y.take(terminal_region, axis=0)
+                - pred.take(terminal_region, axis=0))
         val = stats.scoreatpercentile(diff, self.percentile)
         tree.value[leaf, 0] = val
 
@@ -549,7 +549,7 @@ class BaseGradientBoosting(BaseEnsemble):
 
         if self.init is not None:
             if (not hasattr(self.init, 'fit')
-                or not hasattr(self.init, 'predict')):
+                    or not hasattr(self.init, 'predict')):
                 raise ValueError("init must be valid estimator")
         else:
             self.init = self.loss_.init_estimator()
@@ -685,8 +685,8 @@ class BaseGradientBoosting(BaseEnsemble):
         total_sum = np.zeros((self.n_features, ), dtype=np.float64)
         for stage in self.estimators_:
             stage_sum = sum(
-                        tree.tree_.compute_feature_importances(method='gini')
-                        for tree in stage) / len(stage)
+                tree.tree_.compute_feature_importances(method='gini')
+                for tree in stage) / len(stage)
             total_sum += stage_sum
 
         importances = total_sum / len(self.estimators_)

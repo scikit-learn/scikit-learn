@@ -192,9 +192,8 @@ class _BaseRidge(LinearModel):
         X = safe_asarray(X, dtype=np.float)
         y = np.asarray(y, dtype=np.float)
 
-        X, y, X_mean, y_mean, X_std = \
-           self._center_data(X, y, self.fit_intercept,
-                   self.normalize, self.copy_X)
+        X, y, X_mean, y_mean, X_std = self._center_data(
+            X, y, self.fit_intercept, self.normalize, self.copy_X)
 
         self.coef_ = ridge_regression(X, y,
                                       alpha=self.alpha,
@@ -379,9 +378,9 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, class_weight=None,
                  solver="auto"):
-        super(RidgeClassifier, self).__init__(alpha=alpha,
-                fit_intercept=fit_intercept, normalize=normalize,
-                copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver)
+        super(RidgeClassifier, self).__init__(
+            alpha=alpha, fit_intercept=fit_intercept, normalize=normalize,
+            copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver)
         self.class_weight = class_weight
 
     def fit(self, X, y, solver=None):
@@ -560,8 +559,8 @@ class _RidgeGCV(LinearModel):
 
         n_samples, n_features = X.shape
 
-        X, y, X_mean, y_mean, X_std = LinearModel._center_data(X, y,
-                self.fit_intercept, self.normalize, self.copy_X)
+        X, y, X_mean, y_mean, X_std = LinearModel._center_data(
+            X, y, self.fit_intercept, self.normalize, self.copy_X)
 
         gcv_mode = self.gcv_mode
         with_sw = len(np.shape(sample_weight))
@@ -574,7 +573,7 @@ class _RidgeGCV(LinearModel):
         elif gcv_mode == "svd" and with_sw:
             # FIXME non-uniform sample weights not yet supported
             warnings.warn("non-uniform sample weights unsupported for svd, "
-                "forcing usage of eigen")
+                          "forcing usage of eigen")
             gcv_mode = 'eigen'
 
         if gcv_mode == 'eigen':
@@ -609,7 +608,7 @@ class _RidgeGCV(LinearModel):
         else:
             func = self.score_func if self.score_func else self.loss_func
             out = [func(y.ravel(), cv_values[:, i])
-                    for i in range(len(self.alphas))]
+                   for i in range(len(self.alphas))]
             best = np.argmax(out) if self.score_func else np.argmin(out)
 
         self.alpha_ = self.alphas[best]
@@ -630,9 +629,9 @@ class _RidgeGCV(LinearModel):
     @property
     def best_alpha(self):
         warnings.warn("Use alpha_. Using best_alpha is deprecated"
-                "since version 0.12, and backward compatibility "
-                "won't be maintained from version 0.14 onward. ",
-                DeprecationWarning, stacklevel=2)
+                      "since version 0.12, and backward compatibility "
+                      "won't be maintained from version 0.14 onward. ",
+                      DeprecationWarning, stacklevel=2)
         return self.alpha_
 
 
@@ -851,11 +850,11 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     advantage of the multi-variate response support in Ridge.
     """
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
-            normalize=False, score_func=None, loss_func=None, cv=None,
-            class_weight=None):
-        super(RidgeClassifierCV, self).__init__(alphas=alphas,
-                fit_intercept=fit_intercept, normalize=normalize,
-                score_func=score_func, loss_func=loss_func, cv=cv)
+                 normalize=False, score_func=None, loss_func=None, cv=None,
+                 class_weight=None):
+        super(RidgeClassifierCV, self).__init__(
+            alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,
+            score_func=score_func, loss_func=loss_func, cv=cv)
         self.class_weight = class_weight
 
     def fit(self, X, y, sample_weight=1.0, class_weight=None):
@@ -881,7 +880,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         if self.class_weight is not None:
             get_cw = self.class_weight.get
             sample_weight = (sample_weight
-                           * np.array([get_cw(k, 1.0) for k in y]))
+                             * np.array([get_cw(k, 1.0) for k in y]))
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
         _BaseRidgeCV.fit(self, X, Y, sample_weight=sample_weight)

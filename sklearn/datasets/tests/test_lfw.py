@@ -141,8 +141,8 @@ def test_load_fake_lfw_people():
     assert_array_equal(lfw_people.target,
                        [0, 0, 1, 6, 5, 6, 3, 6, 0, 3, 6, 1, 2, 4, 5, 1, 2])
     assert_array_equal(lfw_people.target_names,
-                      ['Abdelatif Smith', 'Abhati Kepler', 'Camara Alvaro',
-                       'Chen Dupont', 'John Lee', 'Lin Bauman', 'Onur Lopez'])
+                       ['Abdelatif Smith', 'Abhati Kepler', 'Camara Alvaro',
+                        'Chen Dupont', 'John Lee', 'Lin Bauman', 'Onur Lopez'])
 
 
 @raises(ValueError)

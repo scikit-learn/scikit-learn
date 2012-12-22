@@ -23,8 +23,7 @@ def test_factor_analysis():
     h = rng.randn(n_samples, n_components)
     # using gamma to model different noise variance
     # per component
-    noise = rng.gamma(1, size=n_features) \
-                * rng.randn(n_samples, n_features)
+    noise = rng.gamma(1, size=n_features) * rng.randn(n_samples, n_features)
 
     # generate observations
     # wlog, mean is 0
