@@ -86,7 +86,7 @@ def test_rfecv():
 
     # Test using a customized loss function
     rfecv = RFECV(estimator=SVC(kernel="linear"), step=1, cv=3,
-            loss_func=zero_one)
+                  loss_func=zero_one)
     rfecv.fit(X, y)
     X_r = rfecv.transform(X)
 

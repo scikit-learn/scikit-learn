@@ -75,7 +75,7 @@ def test_projgrad_nmf_fit_nn_output():
 def test_projgrad_nmf_fit_close():
     """Test that the fit is not too far away"""
     assert_true(nmf.ProjectedGradientNMF(5, init='nndsvda').fit(np.abs(
-      random_state.randn(6, 5))).reconstruction_err_ < 0.05)
+        random_state.randn(6, 5))).reconstruction_err_ < 0.05)
 
 
 @raises(ValueError)
@@ -126,10 +126,10 @@ def test_projgrad_nmf_sparseness():
 
     A = np.abs(random_state.randn(10, 10))
     m = nmf.ProjectedGradientNMF(n_components=5).fit(A)
-    data_sp = nmf.ProjectedGradientNMF(n_components=5,
-                  sparseness='data').fit(A).data_sparseness_
-    comp_sp = nmf.ProjectedGradientNMF(n_components=5,
-                  sparseness='components').fit(A).comp_sparseness_
+    data_sp = nmf.ProjectedGradientNMF(
+        n_components=5, sparseness='data').fit(A).data_sparseness_
+    comp_sp = nmf.ProjectedGradientNMF(
+        n_components=5, sparseness='components').fit(A).comp_sparseness_
     assert_greater(data_sp, m.data_sparseness_)
     assert_greater(comp_sp, m.comp_sparseness_)
 
@@ -150,10 +150,12 @@ def test_sparse_input():
 
     # same with sparseness
 
-    T2 = nmf.ProjectedGradientNMF(n_components=5, init='random',
-            sparseness='data', random_state=999).fit_transform(A_sparse)
-    T1 = nmf.ProjectedGradientNMF(n_components=5, init='random',
-            sparseness='data', random_state=999).fit_transform(A)
+    T2 = nmf.ProjectedGradientNMF(
+        n_components=5, init='random', sparseness='data',
+        random_state=999).fit_transform(A_sparse)
+    T1 = nmf.ProjectedGradientNMF(
+        n_components=5, init='random', sparseness='data',
+        random_state=999).fit_transform(A)
 
 
 if __name__ == '__main__':

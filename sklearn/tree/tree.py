@@ -223,8 +223,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                                      2 * self.min_samples_leaf)
 
         # Convert data
-        if (getattr(X, "dtype", None) != DTYPE or
-            X.ndim != 2 or not X.flags.fortran):
+        if (getattr(X, "dtype", None) != DTYPE or X.ndim != 2 or not
+                X.flags.fortran):
             X = array2d(X, dtype=DTYPE, order="F")
 
         n_samples, self.n_features_ = X.shape
@@ -371,17 +371,14 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         if isinstance(self, ClassifierMixin):
             if self.n_outputs_ == 1:
                 return np.array(self.classes_.take(
-                            np.argmax(proba[:, 0], axis=1),
-                            axis=0))
+                    np.argmax(proba[:, 0], axis=1), axis=0))
 
             else:
                 predictions = np.zeros((n_samples, self.n_outputs_))
 
                 for k in xrange(self.n_outputs_):
                     predictions[:, k] = self.classes_[k].take(
-                                            np.argmax(proba[:, k],
-                                                      axis=1),
-                                            axis=0)
+                        np.argmax(proba[:, k], axis=1), axis=0)
 
                 return predictions
 

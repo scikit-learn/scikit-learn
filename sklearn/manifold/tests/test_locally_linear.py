@@ -43,7 +43,8 @@ def test_lle_simple_grid():
     X = X + 1e-10 * rng.uniform(size=X.shape)
     n_components = 2
     clf = manifold.LocallyLinearEmbedding(n_neighbors=5,
-            n_components=n_components, random_state=rng)
+                                          n_components=n_components,
+                                          random_state=rng)
     tol = 0.1
 
     N = barycenter_kneighbors_graph(X, clf.n_neighbors).todense()
@@ -76,7 +77,8 @@ def test_lle_manifold():
     n_components = 2
     for method in ["standard", "hessian", "modified", "ltsa"]:
         clf = manifold.LocallyLinearEmbedding(n_neighbors=6,
-                n_components=n_components, method=method, random_state=0)
+                                              n_components=n_components,
+                                              method=method, random_state=0)
         tol = 1.5 if method == "standard" else 3
 
         N = barycenter_kneighbors_graph(X, clf.n_neighbors).toarray()
@@ -89,8 +91,7 @@ def test_lle_manifold():
             assert_true(clf.embedding_.shape[1] == n_components)
             reconstruction_error = np.linalg.norm(
                 np.dot(N, clf.embedding_) - clf.embedding_, 'fro') ** 2
-            details = ("solver: %s, method: %s"
-                % (solver, method))
+            details = ("solver: %s, method: %s" % (solver, method))
             assert_less(reconstruction_error, tol, msg=details)
             assert_less(np.abs(clf.reconstruction_error_ -
                                reconstruction_error),

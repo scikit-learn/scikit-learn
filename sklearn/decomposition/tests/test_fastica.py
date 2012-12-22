@@ -87,8 +87,7 @@ def test_fastica(add_noise=False):
                           algorithm=algo)
         else:
             X = PCA(n_components=2, whiten=True).fit_transform(m.T)
-            k_, mixing_, s_ = fastica(X, fun=nl, algorithm=algo,
-                                     whiten=False)
+            k_, mixing_, s_ = fastica(X, fun=nl, algorithm=algo, whiten=False)
             assert_raises(ValueError, fastica, X, fun=np.tanh,
                           algorithm=algo)
         s_ = s_.T
@@ -106,7 +105,7 @@ def test_fastica(add_noise=False):
         s2_ *= np.sign(np.dot(s2_, s2))
 
         # Check that we have estimated the original sources
-        if add_noise == False:
+        if not add_noise:
             assert_almost_equal(np.dot(s1_, s1) / n_samples, 1, decimal=2)
             assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=2)
         else:
@@ -177,7 +176,7 @@ def test_non_square_fastica(add_noise=False):
     s2_ *= np.sign(np.dot(s2_, s2))
 
     # Check that we have estimated the original sources
-    if add_noise == False:
+    if not add_noise:
         assert_almost_equal(np.dot(s1_, s1) / n_samples, 1, decimal=3)
         assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=3)
 

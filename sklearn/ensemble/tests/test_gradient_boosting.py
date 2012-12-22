@@ -7,12 +7,11 @@ from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_equal
 
-from nose.tools import assert_raises
+from nose.tools import assert_raises, assert_true
 
 from sklearn.metrics import mean_squared_error
 from sklearn.utils import check_random_state
 
-from sklearn.ensemble import gradient_boosting
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
 
@@ -214,7 +213,8 @@ def test_feature_importances():
     clf = GradientBoostingRegressor(n_estimators=100, max_depth=5,
                                     min_samples_split=1, random_state=1)
     clf.fit(X, y)
-    feature_importances = clf.feature_importances_
+    #feature_importances = clf.feature_importances_
+    assert_true(hasattr(clf, 'feature_importances_'))
 
     # true feature importance ranking
     # true_ranking = np.array([3, 1, 8, 2, 10, 9, 4, 11, 0, 6, 7, 5, 12])
@@ -304,8 +304,7 @@ def test_max_feature_regression():
                                       max_features=2, random_state=1)
     gbrt.fit(X_train, y_train)
     deviance = gbrt.loss_(y_test, gbrt.decision_function(X_test))
-    assert deviance < 0.5, \
-           "GB failed with deviance %.4f" % deviance
+    assert_true(deviance < 0.5, "GB failed with deviance %.4f" % deviance)
 
 
 def test_staged_predict():

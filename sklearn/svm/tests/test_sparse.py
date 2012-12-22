@@ -2,8 +2,8 @@ import warnings
 import numpy as np
 from scipy import sparse
 from sklearn import datasets, svm, linear_model, base
-from numpy.testing import assert_array_almost_equal, \
-     assert_array_equal, assert_equal
+from numpy.testing import (assert_array_almost_equal, assert_array_equal,
+                           assert_equal)
 
 from nose.tools import assert_raises, assert_true
 from nose.tools import assert_equal as nose_assert_equal
@@ -48,7 +48,7 @@ def test_svc():
 
     assert_true(sparse.issparse(sp_clf.support_vectors_))
     assert_array_almost_equal(clf.support_vectors_,
-            sp_clf.support_vectors_.todense())
+                              sp_clf.support_vectors_.todense())
 
     assert_true(sparse.issparse(sp_clf.dual_coef_))
     assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
@@ -61,11 +61,12 @@ def test_svc():
     clf.fit(X2, Y2)
     sp_clf.fit(X2_sp, Y2)
     assert_array_almost_equal(clf.support_vectors_,
-            sp_clf.support_vectors_.todense())
+                              sp_clf.support_vectors_.todense())
     assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
     assert_array_almost_equal(clf.coef_, sp_clf.coef_.todense())
     assert_array_almost_equal(clf.predict(T2), sp_clf.predict(T2))
-    assert_array_almost_equal(clf.predict_proba(T2), sp_clf.predict_proba(T2), 4)
+    assert_array_almost_equal(clf.predict_proba(T2),
+                              sp_clf.predict_proba(T2), 4)
 
 
 def test_svc_with_custom_kernel():
@@ -82,7 +83,7 @@ def test_svc_iris():
         clf = svm.SVC(kernel=k).fit(iris.data.todense(), iris.target)
 
         assert_array_almost_equal(clf.support_vectors_,
-                sp_clf.support_vectors_.todense())
+                                  sp_clf.support_vectors_.todense())
         assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
         assert_array_almost_equal(
             clf.predict(iris.data.todense()), sp_clf.predict(iris.data))
@@ -200,12 +201,12 @@ def test_sparse_realdata():
     X = sparse.csr_matrix((data, indices, indptr))
     y = np.array(
         [1.,  0.,  2.,  2.,  1.,  1.,  1.,  2.,  2.,  0.,  1.,  2.,  2.,
-        0.,  2.,  0.,  3.,  0.,  3.,  0.,  1.,  1.,  3.,  2.,  3.,  2.,
-        0.,  3.,  1.,  0.,  2.,  1.,  2.,  0.,  1.,  0.,  2.,  3.,  1.,
-        3.,  0.,  1.,  0.,  0.,  2.,  0.,  1.,  2.,  2.,  2.,  3.,  2.,
-        0.,  3.,  2.,  1.,  2.,  3.,  2.,  2.,  0.,  1.,  0.,  1.,  2.,
-        3.,  0.,  0.,  2.,  2.,  1.,  3.,  1.,  1.,  0.,  1.,  2.,  1.,
-        1.,  3.])
+         0.,  2.,  0.,  3.,  0.,  3.,  0.,  1.,  1.,  3.,  2.,  3.,  2.,
+         0.,  3.,  1.,  0.,  2.,  1.,  2.,  0.,  1.,  0.,  2.,  3.,  1.,
+         3.,  0.,  1.,  0.,  0.,  2.,  0.,  1.,  2.,  2.,  2.,  3.,  2.,
+         0.,  3.,  2.,  1.,  2.,  3.,  2.,  2.,  0.,  1.,  0.,  1.,  2.,
+         3.,  0.,  0.,  2.,  2.,  1.,  3.,  1.,  1.,  0.,  1.,  2.,  1.,
+         1.,  3.])
 
     clf = svm.SVC(kernel='linear').fit(X.todense(), y)
     sp_clf = svm.SVC(kernel='linear').fit(sparse.coo_matrix(X), y)
@@ -231,7 +232,7 @@ def test_sparse_svc_clone_with_callable_kernel():
     b.predict_proba(X_sp)
 
     dense_svm = svm.SVC(C=1, kernel=lambda x, y: np.dot(x, y.T),
-            probability=True)
+                        probability=True)
     pred_dense = dense_svm.fit(X, Y).predict(X)
     assert_array_equal(pred_dense, pred)
     # b.decision_function(X_sp)  # XXX : should be supported
@@ -239,13 +240,12 @@ def test_sparse_svc_clone_with_callable_kernel():
 
 def test_timeout():
     sp = svm.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True,
-            max_iter=1)
+                 max_iter=1)
     with warnings.catch_warnings(record=True) as foo:
         sp.fit(X_sp, Y)
-        nose_assert_equal(len(foo), 1,
-            msg=foo)
+        nose_assert_equal(len(foo), 1, msg=foo)
         nose_assert_equal(foo[0].category, ConvergenceWarning,
-            msg=foo[0].category)
+                          msg=foo[0].category)
 
 
 if __name__ == '__main__':

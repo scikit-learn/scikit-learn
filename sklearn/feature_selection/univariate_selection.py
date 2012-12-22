@@ -92,7 +92,7 @@ def f_oneway(*args):
     n_samples_per_class = np.array([a.shape[0] for a in args])
     n_samples = np.sum(n_samples_per_class)
     ss_alldata = reduce(lambda x, y: x + y,
-            [safe_sqr(a).sum(axis=0) for a in args])
+                        [safe_sqr(a).sum(axis=0) for a in args])
     sums_args = [a.sum(axis=0) for a in args]
     square_of_sums_alldata = safe_sqr(reduce(lambda x, y: x + y, sums_args))
     square_of_sums_args = [safe_sqr(s) for s in sums_args]
@@ -550,8 +550,8 @@ class GenericUnivariateSelect(_AbstractUnivariateFilter):
             raise ValueError(
                 "The mode passed should be one of %s, %r, (type %s) "
                 "was passed." % (
-                        self._selection_modes.keys(),
-                        mode, type(mode)))
+                    self._selection_modes.keys(),
+                    mode, type(mode)))
         super(GenericUnivariateSelect, self).__init__(score_func)
         self.mode = mode
         self.param = param

@@ -215,7 +215,7 @@ class GaussianHMMBaseTester(object):
         self.startprob = self.startprob / self.startprob.sum()
         self.transmat = prng.rand(n_components, n_components)
         self.transmat /= np.tile(self.transmat.sum(axis=1)[:, np.newaxis],
-                (1, n_components))
+                                 (1, n_components))
         self.means = prng.randint(-20, 20, (n_components, n_features))
         self.covars = {
             'spherical': (1.0 + 2 * np.dot(prng.rand(n_components, 1),
@@ -238,7 +238,7 @@ class GaussianHMMBaseTester(object):
     def test_bad_covariance_type(self):
         hmm.GaussianHMM(20, self.covariance_type)
         self.assertRaises(ValueError, hmm.GaussianHMM, 20,
-                'badcovariance_type')
+                          'badcovariance_type')
 
     def test_eval_and_decode(self):
         h = hmm.GaussianHMM(self.n_components, self.covariance_type)
@@ -275,8 +275,8 @@ class GaussianHMMBaseTester(object):
     def test_fit(self, params='stmc', n_iter=5, verbose=False, **kwargs):
         h = hmm.GaussianHMM(self.n_components, self.covariance_type)
         h.startprob_ = self.startprob
-        h.transmat_ = hmm.normalize(self.transmat
-                + np.diag(self.prng.rand(self.n_components)), 1)
+        h.transmat_ = hmm.normalize(
+            self.transmat + np.diag(self.prng.rand(self.n_components)), 1)
         h.means_ = 20 * self.means
         h.covars_ = self.covars[self.covariance_type]
 
@@ -326,8 +326,8 @@ class GaussianHMMBaseTester(object):
         h = hmm.GaussianHMM(self.n_components, self.covariance_type)
         h.startprob_ = self.startprob
         h.startprob_prior = startprob_prior
-        h.transmat_ = hmm.normalize(self.transmat
-                + np.diag(self.prng.rand(self.n_components)), 1)
+        h.transmat_ = hmm.normalize(
+            self.transmat + np.diag(self.prng.rand(self.n_components)), 1)
         h.transmat_prior = transmat_prior
         h.means_ = 20 * self.means
         h.means_prior = means_prior
@@ -409,8 +409,8 @@ class MultinomialHMMTestCase(TestCase):
         self.transmat = [[0.7, 0.3], [0.4, 0.6]]
 
         self.h = hmm.MultinomialHMM(self.n_components,
-                               startprob=self.startprob,
-                               transmat=self.transmat)
+                                    startprob=self.startprob,
+                                    transmat=self.transmat)
         self.h.emissionprob_ = self.emissionprob
 
     def test_set_emissionprob(self):
@@ -431,12 +431,8 @@ class MultinomialHMMTestCase(TestCase):
 
     def test_decode_map_algorithm(self):
         observations = [0, 1, 2]
-        h = hmm.MultinomialHMM(
-            self.n_components,
-            startprob=self.startprob,
-            transmat=self.transmat,
-            algorithm="map",
-            )
+        h = hmm.MultinomialHMM(self.n_components, startprob=self.startprob,
+                               transmat=self.transmat, algorithm="map",)
         h.emissionprob_ = self.emissionprob
         logprob, state_sequence = h.decode(observations)
         assert_array_equal(state_sequence, [1, 0, 0])
@@ -450,7 +446,7 @@ class MultinomialHMMTestCase(TestCase):
             [0.23170303, 0.76829697],
             [0.62406281, 0.37593719],
             [0.86397706, 0.13602294],
-            ])
+        ])
 
     def test_attributes(self):
         h = hmm.MultinomialHMM(self.n_components)
@@ -504,7 +500,7 @@ class MultinomialHMMTestCase(TestCase):
         # Mess up the parameters and see if we can re-learn them.
         h.startprob_ = hmm.normalize(self.prng.rand(self.n_components))
         h.transmat_ = hmm.normalize(self.prng.rand(self.n_components,
-                                                  self.n_components), axis=1)
+                                                   self.n_components), axis=1)
         h.emissionprob_ = hmm.normalize(
             self.prng.rand(self.n_components, self.n_symbols), axis=1)
 
@@ -521,8 +517,8 @@ class MultinomialHMMTestCase(TestCase):
     def test_fit_emissionprob(self):
         self.test_fit('e')
 
-    def test_fit_with_init(self, params='ste', n_iter=5,
-                            verbose=False, **kwargs):
+    def test_fit_with_init(self, params='ste', n_iter=5, verbose=False,
+                           **kwargs):
         h = self.h
         learner = hmm.MultinomialHMM(self.n_components)
 
@@ -637,8 +633,8 @@ class GMMHMMBaseTester(object):
         h.gmms_ = self.gmms_
 
         # Create training data by sampling from the HMM.
-        train_obs = [h.sample(n=10,
-            random_state=self.prng)[0] for x in xrange(10)]
+        train_obs = [h.sample(n=10, random_state=self.prng)[0]
+                     for x in xrange(10)]
 
         # Mess up the parameters and see if we can re-learn them.
         h.n_iter = 0

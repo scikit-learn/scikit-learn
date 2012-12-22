@@ -10,8 +10,8 @@ from ...utils import check_random_state
 from ..pairwise import pairwise_distances
 
 
-def silhouette_score(X, labels, metric='euclidean',
-                      sample_size=None, random_state=None, **kwds):
+def silhouette_score(X, labels, metric='euclidean', sample_size=None,
+                     random_state=None, **kwds):
     """Compute the mean Silhouette Coefficient of all samples.
 
     The Silhouette Coefficient is calculated using the mean intra-cluster

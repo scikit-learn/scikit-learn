@@ -57,7 +57,7 @@ DATA_ARCHIVE_NAME = "species_coverage.pkz"
 
 
 def _load_coverage(F, header_length=6,
-                  dtype=np.int16):
+                   dtype=np.int16):
     """
     load a coverage file.
     This will return a numpy array of the given dtype

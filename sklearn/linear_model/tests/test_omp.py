@@ -12,8 +12,8 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_greater
 
-from sklearn.linear_model import orthogonal_mp, orthogonal_mp_gram, \
-                                 OrthogonalMatchingPursuit
+from sklearn.linear_model import (orthogonal_mp, orthogonal_mp_gram,
+                                  OrthogonalMatchingPursuit)
 from sklearn.utils.fixes import count_nonzero
 from sklearn.datasets import make_sparse_coded_signal
 
@@ -43,7 +43,7 @@ def test_n_nonzero_coefs():
     assert_true(count_nonzero(orthogonal_mp(X, y[:, 0],
                               n_nonzero_coefs=5)) <= 5)
     assert_true(count_nonzero(orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5,
-                                       precompute_gram=True)) <= 5)
+                                            precompute_gram=True)) <= 5)
 
 
 def test_tol():

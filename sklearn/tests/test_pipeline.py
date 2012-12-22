@@ -64,8 +64,7 @@ def test_pipeline_init():
     assert_raises(TypeError, Pipeline)
     # Check that we can't instantiate pipelines with objects without fit
     # method
-    pipe = assert_raises(TypeError, Pipeline,
-                        [('svc', IncorrectT)])
+    pipe = assert_raises(TypeError, Pipeline, [('svc', IncorrectT)])
     # Smoke test with only an estimator
     clf = T()
     pipe = Pipeline([('svc', clf)])
@@ -199,7 +198,7 @@ def test_feature_union():
     # check if it does the expected thing
     assert_array_almost_equal(X_transformed[:, :-1], pca.fit_transform(X))
     assert_array_equal(X_transformed[:, -1],
-            select.fit_transform(X, y).ravel())
+                       select.fit_transform(X, y).ravel())
 
     # test if it also works for sparse input
     # We use a different pca object to control the random_state stream
@@ -261,28 +260,27 @@ def test_feature_union_weights():
     select = SelectKBest(k=1)
     # test using fit followed by transform
     fs = FeatureUnion([("pca", pca), ("select", select)],
-            transformer_weights={"pca": 10})
+                      transformer_weights={"pca": 10})
     fs.fit(X, y)
     X_transformed = fs.transform(X)
     # test using fit_transform
     fs = FeatureUnion([("pca", pca), ("select", select)],
-            transformer_weights={"pca": 10})
+                      transformer_weights={"pca": 10})
     X_fit_transformed = fs.fit_transform(X, y)
     # test it works with transformers missing fit_transform
     fs = FeatureUnion([("mock", TransfT()), ("pca", pca), ("select", select)],
-            transformer_weights={"mock": 10})
+                      transformer_weights={"mock": 10})
     X_fit_transformed_wo_method = fs.fit_transform(X, y)
     # check against expected result
 
     # We use a different pca object to control the random_state stream
-    assert_array_almost_equal(X_transformed[:, :-1],
-                    10 * pca.fit_transform(X))
+    assert_array_almost_equal(X_transformed[:, :-1], 10 * pca.fit_transform(X))
     assert_array_equal(X_transformed[:, -1],
-            select.fit_transform(X, y).ravel())
+                       select.fit_transform(X, y).ravel())
     assert_array_almost_equal(X_fit_transformed[:, :-1],
-                    10 * pca.fit_transform(X))
+                              10 * pca.fit_transform(X))
     assert_array_equal(X_fit_transformed[:, -1],
-            select.fit_transform(X, y).ravel())
+                       select.fit_transform(X, y).ravel())
     assert_equal(X_fit_transformed_wo_method.shape, (X.shape[0], 7))
 
 

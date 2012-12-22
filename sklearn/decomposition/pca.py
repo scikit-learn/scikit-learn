@@ -48,13 +48,13 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     """
     if rank > len(spectrum):
         raise ValueError("The tested rank cannot exceed the rank of the"
-                " dataset")
+                         " dataset")
     from scipy.special import gammaln
 
     pu = -rank * np.log(2)
     for i in range(rank):
         pu += (gammaln((n_features - i) / 2)
-                - np.log(np.pi) * (n_features - i) / 2)
+               - np.log(np.pi) * (n_features - i) / 2)
 
     pl = np.sum(np.log(spectrum[:rank]))
     pl = -pl * n_samples / 2
@@ -232,8 +232,8 @@ class PCA(BaseEstimator, TransformerMixin):
         X -= self.mean_
         U, S, V = linalg.svd(X, full_matrices=False)
         self.explained_variance_ = (S ** 2) / n_samples
-        self.explained_variance_ratio_ = self.explained_variance_ / \
-                                        self.explained_variance_.sum()
+        self.explained_variance_ratio_ = (self.explained_variance_ /
+                                          self.explained_variance_.sum())
 
         if self.whiten:
             self.components_ = V / S[:, np.newaxis] * np.sqrt(n_samples)
@@ -243,9 +243,9 @@ class PCA(BaseEstimator, TransformerMixin):
         if self.n_components == 'mle':
             if n_samples < n_features:
                 raise ValueError("n_components='mle' is only supported "
-                "if n_samples >= n_features")
+                                 "if n_samples >= n_features")
             self.n_components = _infer_dimension_(self.explained_variance_,
-                                            n_samples, n_features)
+                                                  n_samples, n_features)
 
         elif (self.n_components is not None
               and 0 < self.n_components
@@ -258,9 +258,9 @@ class PCA(BaseEstimator, TransformerMixin):
         if self.n_components is not None:
             self.components_ = self.components_[:self.n_components, :]
             self.explained_variance_ = \
-                    self.explained_variance_[:self.n_components]
+                self.explained_variance_[:self.n_components]
             self.explained_variance_ratio_ = \
-                    self.explained_variance_ratio_[:self.n_components]
+                self.explained_variance_ratio_[:self.n_components]
 
         return (U, S, V)
 
@@ -329,8 +329,8 @@ class ProbabilisticPCA(PCA):
         if n_features <= self.n_components:
             delta = np.zeros(n_features)
         elif homoscedastic:
-            delta = (Xr ** 2).sum() * np.ones(n_features) \
-                    / (n_samples * n_features)
+            delta = ((Xr ** 2).sum() * np.ones(n_features)
+                     / (n_samples * n_features))
         else:
             delta = (Xr ** 2).mean(0) / (n_features - self.n_components)
         self.covariance_ = np.diag(delta)
@@ -345,9 +345,9 @@ class ProbabilisticPCA(PCA):
     @property
     def dim(self):
         warnings.warn("Using dim is deprecated "
-                "since version 0.12, and backward compatibility "
-                "won't be maintained from version 0.14 onward. ",
-                DeprecationWarning, stacklevel=2)
+                      "since version 0.12, and backward compatibility "
+                      "won't be maintained from version 0.14 onward. ",
+                      DeprecationWarning, stacklevel=2)
         return self._dim
 
     def score(self, X, y=None):
@@ -368,8 +368,8 @@ class ProbabilisticPCA(PCA):
         log_like = np.zeros(X.shape[0])
         self.precision_ = linalg.inv(self.covariance_)
         log_like = -.5 * (Xr * (np.dot(Xr, self.precision_))).sum(axis=1)
-        log_like -= .5 * (fast_logdet(self.covariance_) + \
-                                    n_features * log(2 * np.pi))
+        log_like -= .5 * (fast_logdet(self.covariance_)
+                          + n_features * log(2 * np.pi))
         return log_like
 
 
@@ -448,7 +448,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_components=None, copy=True, iterated_power=3,
-            whiten=False, random_state=None):
+                 whiten=False, random_state=None):
         self.n_components = n_components
         self.copy = copy
         self.iterated_power = iterated_power

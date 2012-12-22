@@ -15,3 +15,9 @@ from .gradient_boosting import GradientBoostingRegressor
 from . import forest
 from . import gradient_boosting
 from . import partial_dependence
+
+__all__ = ["BaseEnsemble", "RandomForestClassifier", "RandomForestRegressor",
+           "RandomTreesEmbedding", "ExtraTreesClassifier",
+           "ExtraTreesRegressor", "GradientBoostingClassifier",
+           "GradientBoostingRegressor", "forest", "gradient_boosting",
+           "partial_dependence"]

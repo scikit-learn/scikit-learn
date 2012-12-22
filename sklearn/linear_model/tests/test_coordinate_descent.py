@@ -165,15 +165,12 @@ def test_lasso_path():
     # for this we check that they don't fall in the grid of
     # clf.alphas further than 1
     assert_true(np.abs(
-            np.searchsorted(clf.alphas_[::-1], lars.alpha_)
-            - np.searchsorted(clf.alphas_[::-1], clf.alpha_)
-                ) <= 1)
+        np.searchsorted(clf.alphas_[::-1], lars.alpha_)
+        - np.searchsorted(clf.alphas_[::-1], clf.alpha_)) <= 1)
     # check that they also give a similar MSE
     mse_lars = interpolate.interp1d(lars.cv_alphas_, lars.cv_mse_path_.T)
-    np.testing.assert_approx_equal(
-                            mse_lars(clf.alphas_[5]).mean(),
-                            clf.mse_path_[5].mean(),
-                            significant=2)
+    np.testing.assert_approx_equal(mse_lars(clf.alphas_[5]).mean(),
+                                   clf.mse_path_[5].mean(), significant=2)
 
     # test set
     assert_greater(clf.score(X_test, y_test), 0.99)
