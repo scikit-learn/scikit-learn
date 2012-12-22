@@ -111,8 +111,11 @@ def test_all_estimators():
                 assert_equal(len(args), len(defaults))
             else:
                 continue
-            for arg, default in zip(args[1:], defaults[1:]):
-                assert_equal(params[arg], default)
+            for arg, default in zip(args, defaults):
+                if isinstance(params[arg], np.ndarray):
+                    assert_array_equal(params[arg], default)
+                else:
+                    assert_equal(params[arg], default)
 
 
 def test_estimators_sparse_data():
