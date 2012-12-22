@@ -97,7 +97,7 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
             neigh.fit(X)
 
             results_nodist.append(neigh.kneighbors(test,
-                return_distance=False))
+                                                   return_distance=False))
             results.append(neigh.kneighbors(test, return_distance=True))
 
         for i in range(len(results) - 1):
@@ -194,11 +194,9 @@ def test_kneighbors_classifier(n_samples=40,
             assert_array_equal(y_pred, y_str[:n_test_pts])
 
 
-def test_kneighbors_classifier_float_labels(n_samples=40,
-                               n_features=5,
-                               n_test_pts=10,
-                               n_neighbors=5,
-                               random_state=0):
+def test_kneighbors_classifier_float_labels(n_samples=40, n_features=5,
+                                            n_test_pts=10, n_neighbors=5,
+                                            random_state=0):
     """Test k-neighbors classification"""
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
@@ -440,7 +438,8 @@ def test_neighbors_iris():
 
     for algorithm in ALGORITHMS:
         clf = neighbors.KNeighborsClassifier(n_neighbors=1,
-                algorithm=algorithm, warn_on_equidistant=False)
+                                             algorithm=algorithm,
+                                             warn_on_equidistant=False)
         clf.fit(iris.data, iris.target)
         assert_array_equal(clf.predict(iris.data), iris.target)
 
@@ -449,7 +448,7 @@ def test_neighbors_iris():
         assert_true(np.mean(clf.predict(iris.data) == iris.target) > 0.95)
 
         rgs = neighbors.KNeighborsRegressor(n_neighbors=5, algorithm=algorithm,
-                warn_on_equidistant=False)
+                                            warn_on_equidistant=False)
         rgs.fit(iris.data, iris.target)
         assert_true(np.mean(rgs.predict(iris.data).round() == iris.target)
                     > 0.95)
@@ -471,7 +470,7 @@ def test_neighbors_digits():
     (X_train, Y_train, X_test, Y_test) = X[train], Y[train], X[test], Y[test]
 
     clf = neighbors.KNeighborsClassifier(n_neighbors=1, algorithm='brute',
-        warn_on_equidistant=False)
+                                         warn_on_equidistant=False)
     score_uint8 = clf.fit(X_train, Y_train).score(X_test, Y_test)
     score_float = clf.fit(X_train.astype(float), Y_train).score(
         X_test.astype(float), Y_test)

@@ -273,7 +273,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
         y = y[:, np.newaxis]
     if y.shape[1] > 1:  # subsequent targets will be affected
         copy_X = True
-    if n_nonzero_coefs == None and tol == None:
+    if n_nonzero_coefs is None and tol is None:
         # default for n_nonzero_coefs is 0.1 * n_features
         # but at least one.
         n_nonzero_coefs = max(int(0.1 * X.shape[1]), 1)
@@ -375,9 +375,9 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
         if tol is not None:
             norms_squared = [norms_squared]
 
-    if n_nonzero_coefs == None and tol is None:
+    if n_nonzero_coefs is None and tol is None:
         n_nonzero_coefs = int(0.1 * len(Gram))
-    if tol is not None and norms_squared == None:
+    if tol is not None and norms_squared is None:
         raise ValueError('Gram OMP needs the precomputed norms in order '
                          'to evaluate the error sum of squares.')
     if tol is not None and tol < 0:
@@ -386,7 +386,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
         raise ValueError("The number of atoms must be positive")
     if tol is None and n_nonzero_coefs > len(Gram):
         raise ValueError("The number of atoms cannot be more than the number "
-                          "of features")
+                         "of features")
     coef = np.zeros((len(Gram), Xy.shape[1]))
     for k in range(Xy.shape[1]):
         x, idx = _gram_omp(Gram, Xy[:, k], n_nonzero_coefs,
@@ -467,9 +467,9 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     decomposition.sparse_encode
 
     """
-    def __init__(self, copy_X=True, copy_Gram=True,
-            copy_Xy=True, n_nonzero_coefs=None, tol=None,
-            fit_intercept=True, normalize=True, precompute_gram=False):
+    def __init__(self, copy_X=True, copy_Gram=True, copy_Xy=True,
+                 n_nonzero_coefs=None, tol=None, fit_intercept=True,
+                 normalize=True, precompute_gram=False):
         self.n_nonzero_coefs = n_nonzero_coefs
         self.tol = tol
         self.fit_intercept = fit_intercept
@@ -515,18 +515,18 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         if y.ndim == 1:
             y = y[:, np.newaxis]
 
-        if self.n_nonzero_coefs == None and self.tol is None:
+        if self.n_nonzero_coefs is None and self.tol is None:
             # default for n_nonzero_coefs is 0.1 * n_features
             # but at least one.
             self.n_nonzero_coefs = max(int(0.1 * n_features), 1)
-        if (Gram is not None or Xy is not None) and (self.fit_intercept is True
-                                                 or self.normalize is True):
-            warnings.warn('Mean subtraction (fit_intercept) and '
-                 'normalization cannot be applied on precomputed Gram '
-                 'and Xy matrices. Your precomputed values are ignored '
-                 'and recomputed. To avoid this, do the scaling yourself '
-                 'and call with fit_intercept and normalize set to False.',
-                 RuntimeWarning, stacklevel=2)
+        if (Gram is not None or Xy is not None) and (self.fit_intercept
+                                                     or self.normalize):
+            warnings.warn('Mean subtraction (fit_intercept) and normalization '
+                          'cannot be applied on precomputed Gram and Xy '
+                          'matrices. Your precomputed values are ignored and '
+                          'recomputed. To avoid this, do the scaling yourself '
+                          'and call with fit_intercept and normalize set to '
+                          'False.', RuntimeWarning, stacklevel=2)
             Gram, Xy = None, None
 
         if Gram is not None:

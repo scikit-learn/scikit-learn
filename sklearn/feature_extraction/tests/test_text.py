@@ -13,8 +13,8 @@ from sklearn.svm import LinearSVC
 
 import numpy as np
 from nose import SkipTest
-from nose.tools import assert_equal, assert_equals, \
-            assert_false, assert_not_equal, assert_true
+from nose.tools import (assert_equal, assert_equals, assert_false,
+                        assert_not_equal, assert_true)
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
@@ -597,7 +597,8 @@ def test_vectorizer_pipeline_grid_selection():
 
 def test_count_vectorizer_unicode():
     # tests that the count vectorizer works with cyrillic.
-    document = (u"\xd0\x9c\xd0\xb0\xd1\x88\xd0\xb8\xd0\xbd\xd0\xbd\xd0\xbe\xd0"
+    document = (
+        u"\xd0\x9c\xd0\xb0\xd1\x88\xd0\xb8\xd0\xbd\xd0\xbd\xd0\xbe\xd0"
         u"\xb5 \xd0\xbe\xd0\xb1\xd1\x83\xd1\x87\xd0\xb5\xd0\xbd\xd0\xb8\xd0"
         u"\xb5 \xe2\x80\x94 \xd0\xbe\xd0\xb1\xd1\x88\xd0\xb8\xd1\x80\xd0\xbd"
         u"\xd1\x8b\xd0\xb9 \xd0\xbf\xd0\xbe\xd0\xb4\xd1\x80\xd0\xb0\xd0\xb7"

@@ -126,14 +126,15 @@ class ElasticNet(LinearModel, RegressorMixin):
     should be directly passed as a fortran contiguous numpy array.
     """
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
-            normalize=False, precompute='auto', max_iter=1000, copy_X=True,
-            tol=1e-4, warm_start=False, positive=False, rho=None):
+                 normalize=False, precompute='auto', max_iter=1000,
+                 copy_X=True, tol=1e-4, warm_start=False, positive=False,
+                 rho=None):
         self.alpha = alpha
         self.l1_ratio = l1_ratio
         if rho is not None:
             self.l1_ratio = rho
             warnings.warn("rho was renamed to l1_ratio and will be removed "
-                    "in 0.15", DeprecationWarning)
+                          "in 0.15", DeprecationWarning)
         self.coef_ = None
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -172,8 +173,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         """
         if self.alpha == 0:
             warnings.warn("With alpha=0, this aglorithm does not converge"
-                "well. You are advised to use the LinearRegression estimator",
-                stacklevel=2)
+                          "well. You are advised to use the LinearRegression "
+                          "estimator", stacklevel=2)
         X = atleast2d_or_csc(X, dtype=np.float64, order='F',
                              copy=self.copy_X and self.fit_intercept)
         # From now on X can be touched inplace
@@ -185,9 +186,9 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     def _dense_fit(self, X, y, Xy=None, coef_init=None):
 
-        X, y, X_mean, y_mean, X_std = center_data(X, y,
-                self.fit_intercept, self.normalize,
-                copy=False)  # copy was done in fit if necessary
+        # copy was done in fit if necessary
+        X, y, X_mean, y_mean, X_std = center_data(
+            X, y, self.fit_intercept, self.normalize, copy=False)
 
         if y.ndim == 1:
             y = y[:, np.newaxis]
@@ -215,8 +216,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         # precompute if n_samples > n_features
         if hasattr(precompute, '__array__'):
             Gram = precompute
-        elif precompute == True or \
-               (precompute == 'auto' and n_samples > n_features):
+        elif precompute or (precompute == 'auto' and n_samples > n_features):
             Gram = np.dot(X.T, X)
         else:
             Gram = None
@@ -224,9 +224,9 @@ class ElasticNet(LinearModel, RegressorMixin):
         for k in xrange(n_targets):
             if Gram is None:
                 coef_[k, :], dual_gap_[k], eps_[k] = \
-                        cd_fast.enet_coordinate_descent(coef_[k, :],
-                        l1_reg, l2_reg, X, y[:, k], self.max_iter, self.tol,
-                        self.positive)
+                    cd_fast.enet_coordinate_descent(
+                        coef_[k, :], l1_reg, l2_reg, X, y[:, k], self.max_iter,
+                        self.tol, self.positive)
             else:
                 Gram = Gram.copy()
                 if Xy is None:
@@ -234,17 +234,17 @@ class ElasticNet(LinearModel, RegressorMixin):
                 else:
                     this_Xy = Xy[:, k]
                 coef_[k, :], dual_gap_[k], eps_[k] = \
-                        cd_fast.enet_coordinate_descent_gram(coef_[k, :],
-                        l1_reg, l2_reg, Gram, this_Xy, y[:, k], self.max_iter,
-                        self.tol, self.positive)
+                    cd_fast.enet_coordinate_descent_gram(
+                        coef_[k, :], l1_reg, l2_reg, Gram, this_Xy, y[:, k],
+                        self.max_iter, self.tol, self.positive)
 
             if dual_gap_[k] > eps_[k]:
                 warnings.warn('Objective did not converge for ' +
                               'target %d, you might want' % k +
                               ' to increase the number of iterations')
 
-        self.coef_, self.dual_gap_, self.eps_ = (np.squeeze(a) for a in (
-                                                    coef_, dual_gap_, eps_))
+        self.coef_, self.dual_gap_, self.eps_ = (np.squeeze(a) for a in
+                                                 (coef_, dual_gap_, eps_))
         self._set_intercept(X_mean, y_mean, X_std)
 
         # return self for chaining fit and predict calls
@@ -259,9 +259,8 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         # NOTE: we are explicitly not centering the data the naive way to
         # avoid breaking the sparsity of X
-        X_data, y, X_mean, y_mean, X_std = sparse_center_data(X, y,
-                                                       self.fit_intercept,
-                                                       self.normalize)
+        X_data, y, X_mean, y_mean, X_std = sparse_center_data(
+            X, y, self.fit_intercept, self.normalize)
 
         if y.ndim == 1:
             y = y[:, np.newaxis]
@@ -278,18 +277,18 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         for k in xrange(n_targets):
             coef_[k, :], dual_gap_[k], eps_[k] = \
-                    cd_fast.sparse_enet_coordinate_descent(
-                        coef_[k, :], l1_reg, l2_reg, X_data, X.indices,
-                        X.indptr, y[:, k], X_mean / X_std,
-                        self.max_iter, self.tol, self.positive)
+                cd_fast.sparse_enet_coordinate_descent(
+                    coef_[k, :], l1_reg, l2_reg, X_data, X.indices,
+                    X.indptr, y[:, k], X_mean / X_std,
+                    self.max_iter, self.tol, self.positive)
 
             if dual_gap_[k] > eps_[k]:
                 warnings.warn('Objective did not converge for ' +
                               'target %d, you might want' % k +
                               ' to increase the number of iterations')
 
-        self.coef_, self.dual_gap_, self.eps_ = (np.squeeze(a) for a in (
-                                                    coef_, dual_gap_, eps_))
+        self.coef_, self.dual_gap_, self.eps_ = (np.squeeze(a) for a in
+                                                 (coef_, dual_gap_, eps_))
         self._set_intercept(X_mean, y_mean, X_std)
 
         # return self for chaining fit and predict calls
@@ -307,8 +306,9 @@ class ElasticNet(LinearModel, RegressorMixin):
         if coef_.ndim == 1:
             coef_ = coef_[np.newaxis, :]
         if coef_.shape != (n_targets, n_features):
-            raise ValueError("X and coef_init have incompatible " +
-                 "shapes (%s != %s)." % (coef_.shape, (n_targets, n_features)))
+            raise ValueError("X and coef_init have incompatible "
+                             "shapes (%s != %s)."
+                             % (coef_.shape, (n_targets, n_features)))
 
         return coef_
 
@@ -330,8 +330,8 @@ class ElasticNet(LinearModel, RegressorMixin):
             The predicted decision function
         """
         if sparse.isspmatrix(X):
-            return np.ravel(safe_sparse_dot(self.coef_, X.T, \
-                                        dense_output=True) + self.intercept_)
+            return np.ravel(safe_sparse_dot(self.coef_, X.T, dense_output=True)
+                            + self.intercept_)
         else:
             return super(ElasticNet, self).decision_function(X)
 
@@ -444,11 +444,11 @@ class Lasso(ElasticNet):
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  precompute='auto', copy_X=True, max_iter=1000,
                  tol=1e-4, warm_start=False, positive=False):
-        super(Lasso, self).__init__(alpha=alpha, l1_ratio=1.0,
-                            fit_intercept=fit_intercept, normalize=normalize,
-                            precompute=precompute, copy_X=copy_X,
-                            max_iter=max_iter, tol=tol, warm_start=warm_start,
-                            positive=positive)
+        super(Lasso, self).__init__(
+            alpha=alpha, l1_ratio=1.0, fit_intercept=fit_intercept,
+            normalize=normalize, precompute=precompute, copy_X=copy_X,
+            max_iter=max_iter, tol=tol, warm_start=warm_start,
+            positive=positive)
 
 
 ###############################################################################
@@ -530,9 +530,9 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     sklearn.decomposition.sparse_encode
     """
     return enet_path(X, y, l1_ratio=1., eps=eps, n_alphas=n_alphas,
-            alphas=alphas, precompute=precompute, Xy=Xy,
-            fit_intercept=fit_intercept, normalize=normalize, copy_X=copy_X,
-            verbose=verbose, **params)
+                     alphas=alphas, precompute=precompute, Xy=Xy,
+                     fit_intercept=fit_intercept, normalize=normalize,
+                     copy_X=copy_X, verbose=verbose, **params)
 
 
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
@@ -612,10 +612,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     if rho is not None:
         l1_ratio = rho
         warnings.warn("rho was renamed to l1_ratio and will be removed "
-                "in 0.15", DeprecationWarning)
+                      "in 0.15", DeprecationWarning)
 
     X = atleast2d_or_csc(X, dtype=np.float64, order='F',
-                        copy=copy_X and fit_intercept)
+                         copy=copy_X and fit_intercept)
     # From now on X can be touched inplace
     if not sparse.isspmatrix(X):
         X, y, X_mean, y_mean, X_std = center_data(X, y, fit_intercept,
@@ -625,15 +625,14 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     n_samples, n_features = X.shape
 
-    if hasattr(precompute, '__array__') \
-            and not np.allclose(X_mean, np.zeros(n_features)) \
-            and not np.allclose(X_std, np.ones(n_features)):
+    if (hasattr(precompute, '__array__')
+            and not np.allclose(X_mean, np.zeros(n_features))
+            and not np.allclose(X_std, np.ones(n_features))):
         # recompute Gram
         precompute = 'auto'
         Xy = None
 
-    if precompute is True or \
-                ((precompute == 'auto') and (n_samples > n_features)):
+    if precompute or ((precompute == 'auto') and (n_samples > n_features)):
         if sparse.isspmatrix(X):
             warnings.warn("precompute is ignored for sparse data")
             precompute = False
@@ -655,7 +654,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     n_alphas = len(alphas)
     for i, alpha in enumerate(alphas):
-        model = ElasticNet(alpha=alpha, l1_ratio=l1_ratio,
+        model = ElasticNet(
+            alpha=alpha, l1_ratio=l1_ratio,
             fit_intercept=fit_intercept if sparse.isspmatrix(X) else False,
             precompute=precompute)
         model.set_params(**params)
@@ -693,8 +693,8 @@ class LinearModelCV(LinearModel):
 
     @abstractmethod
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
-            normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
-            copy_X=True, cv=None, verbose=False):
+                 normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
+                 copy_X=True, cv=None, verbose=False):
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
@@ -729,7 +729,7 @@ class LinearModelCV(LinearModel):
         y = np.asarray(y, dtype=np.float64)
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have inconsistent dimensions (%d != %d)"
-                              % (X.shape[0], y.shape[0]))
+                             % (X.shape[0], y.shape[0]))
 
         # All LinearModelCV parameters except 'cv' are acceptable
         path_params = self.get_params()
@@ -763,11 +763,12 @@ class LinearModelCV(LinearModel):
         # We do a double for loop folded in one, in order to be able to
         # iterate in parallel on l1_ratio and folds
         for l1_ratio, mse_alphas in itertools.groupby(
-                    Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-                        delayed(_path_residuals)(X, y, train, test,
-                                    self.path, path_params, l1_ratio=l1_ratio)
-                            for l1_ratio in l1_ratios for train, test in folds
-                    ), operator.itemgetter(1)):
+                Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+                    delayed(_path_residuals)(
+                        X, y, train, test, self.path, path_params,
+                        l1_ratio=l1_ratio)
+                    for l1_ratio in l1_ratios for train, test in folds
+                ), operator.itemgetter(1)):
 
             mse_alphas = [m[0] for m in mse_alphas]
             mse_alphas = np.array(mse_alphas)
@@ -796,15 +797,15 @@ class LinearModelCV(LinearModel):
     @property
     def rho_(self):
         warnings.warn("rho was renamed to l1_ratio and will be removed "
-                "in 0.15", DeprecationWarning)
+                      "in 0.15", DeprecationWarning)
         return self.l1_ratio_
 
     @property
     def alpha(self):
         warnings.warn("Use alpha_. Using alpha is deprecated "
-                "since version 0.12, and backward compatibility "
-                "won't be maintained from version 0.14 onward. ",
-                DeprecationWarning, stacklevel=1)
+                      "since version 0.12, and backward compatibility "
+                      "won't be maintained from version 0.14 onward. ",
+                      DeprecationWarning, stacklevel=1)
         return self.alpha_
 
 
@@ -889,12 +890,13 @@ class LassoCV(LinearModelCV, RegressorMixin):
     n_jobs = 1
 
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
-            normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
-            copy_X=True, cv=None, verbose=False):
-        super(LassoCV, self).__init__(eps=eps, n_alphas=n_alphas,
-                alphas=alphas, fit_intercept=fit_intercept,
-                normalize=normalize, precompute=precompute, max_iter=max_iter,
-                tol=tol, copy_X=copy_X, cv=cv, verbose=verbose)
+                 normalize=False, precompute='auto', max_iter=1000, tol=1e-4,
+                 copy_X=True, cv=None, verbose=False):
+        super(LassoCV, self).__init__(
+            eps=eps, n_alphas=n_alphas, alphas=alphas,
+            fit_intercept=fit_intercept, normalize=normalize,
+            precompute=precompute, max_iter=max_iter, tol=tol, copy_X=copy_X,
+            cv=cv, verbose=verbose)
 
 
 class ElasticNetCV(LinearModelCV, RegressorMixin):
@@ -1014,7 +1016,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         if rho is not None:
             self.l1_ratio = rho
             warnings.warn("rho was renamed to l1_ratio and will be removed "
-                    "in 0.15", DeprecationWarning)
+                          "in 0.15", DeprecationWarning)
         self.eps = eps
         self.n_alphas = n_alphas
         self.alphas = alphas
@@ -1118,13 +1120,13 @@ class MultiTaskElasticNet(Lasso):
     should be directly passed as a fortran contiguous numpy array.
     """
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
-            normalize=False, copy_X=True, max_iter=1000, tol=1e-4,
-            warm_start=False, rho=None):
+                 normalize=False, copy_X=True, max_iter=1000, tol=1e-4,
+                 warm_start=False, rho=None):
         self.l1_ratio = l1_ratio
         if rho is not None:
             self.l1_ratio = rho
             warnings.warn("rho was renamed to l1_ratio and will be removed "
-                    "in 0.15", DeprecationWarning)
+                          "in 0.15", DeprecationWarning)
         self.alpha = alpha
         self.coef_ = None
         self.fit_intercept = fit_intercept
@@ -1169,13 +1171,13 @@ class MultiTaskElasticNet(Lasso):
         n_samples, n_features = X.shape
         _, n_tasks = y.shape
 
-        X, y, X_mean, y_mean, X_std = center_data(X, y,
-                self.fit_intercept, self.normalize, copy=False)
+        X, y, X_mean, y_mean, X_std = center_data(
+            X, y, self.fit_intercept, self.normalize, copy=False)
 
         if coef_init is None:
             if not self.warm_start or self.coef_ is None:
                 self.coef_ = np.zeros((n_tasks, n_features), dtype=np.float64,
-                                       order='F')
+                                      order='F')
         else:
             self.coef_ = coef_init
 
@@ -1185,8 +1187,8 @@ class MultiTaskElasticNet(Lasso):
         self.coef_ = np.asfortranarray(self.coef_)  # coef contiguous in memory
 
         self.coef_, self.dual_gap_, self.eps_ = \
-                cd_fast.enet_coordinate_descent_multi_task(self.coef_, l1_reg,
-                        l2_reg, X, y, self.max_iter, self.tol)
+            cd_fast.enet_coordinate_descent_multi_task(
+                self.coef_, l1_reg, l2_reg, X, y, self.max_iter, self.tol)
 
         self._set_intercept(X_mean, y_mean, X_std)
 

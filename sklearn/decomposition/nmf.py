@@ -360,8 +360,8 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_components=None, init=None, sparseness=None, beta=1,
-            eta=0.1, tol=1e-4, max_iter=200, nls_max_iter=2000,
-            random_state=None):
+                 eta=0.1, tol=1e-4, max_iter=200, nls_max_iter=2000,
+                 random_state=None):
         self.n_components = n_components
         self.init = init
         self.tol = tol
@@ -389,8 +389,9 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             random_state = check_random_state(init)
             init = "random"
             warnings.warn("Passing a random seed or generator as init "
-                "is deprecated and will be removed in 0.15. Use "
-                "init='random' and random_state instead.", DeprecationWarning)
+                          "is deprecated and will be removed in 0.15. Use "
+                          "init='random' and random_state instead.",
+                          DeprecationWarning)
         else:
             random_state = self.random_state
 
@@ -418,44 +419,44 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     def _update_W(self, X, H, W, tolW):
         n_samples, n_features = X.shape
 
-        if self.sparseness == None:
+        if self.sparseness is None:
             W, gradW, iterW = _nls_subproblem(X.T, H.T, W.T, tolW,
                                               self.nls_max_iter)
         elif self.sparseness == 'data':
             W, gradW, iterW = _nls_subproblem(
-                    safe_vstack([X.T, np.zeros((1, n_samples))]),
-                    safe_vstack([H.T, np.sqrt(self.beta) * np.ones((1,
-                                 self.n_components))]),
-                    W.T, tolW, self.nls_max_iter)
+                safe_vstack([X.T, np.zeros((1, n_samples))]),
+                safe_vstack([H.T, np.sqrt(self.beta) * np.ones((1,
+                             self.n_components))]),
+                W.T, tolW, self.nls_max_iter)
         elif self.sparseness == 'components':
             W, gradW, iterW = _nls_subproblem(
-                    safe_vstack([X.T,
-                                 np.zeros((self.n_components, n_samples))]),
-                    safe_vstack([H.T, np.sqrt(self.eta)
-                                      * np.eye(self.n_components)]),
-                    W.T, tolW, self.nls_max_iter)
+                safe_vstack([X.T,
+                             np.zeros((self.n_components, n_samples))]),
+                safe_vstack([H.T,
+                             np.sqrt(self.eta) * np.eye(self.n_components)]),
+                W.T, tolW, self.nls_max_iter)
 
         return W, gradW, iterW
 
     def _update_H(self, X, H, W, tolH):
         n_samples, n_features = X.shape
 
-        if self.sparseness == None:
+        if self.sparseness is None:
             H, gradH, iterH = _nls_subproblem(X, W, H, tolH,
                                               self.nls_max_iter)
         elif self.sparseness == 'data':
             H, gradH, iterH = _nls_subproblem(
-                    safe_vstack([X,
-                                 np.zeros((self.n_components, n_features))]),
-                    safe_vstack([W, np.sqrt(self.eta)
-                                    * np.eye(self.n_components)]),
-                    H, tolH, self.nls_max_iter)
+                safe_vstack([X, np.zeros((self.n_components, n_features))]),
+                safe_vstack([W,
+                             np.sqrt(self.eta) * np.eye(self.n_components)]),
+                H, tolH, self.nls_max_iter)
         elif self.sparseness == 'components':
             H, gradH, iterH = _nls_subproblem(
-                    safe_vstack([X, np.zeros((1, n_features))]),
-                    safe_vstack([W, np.sqrt(self.beta) *
-                          np.ones((1, self.n_components))]),
-                    H, tolH, self.nls_max_iter)
+                safe_vstack([X, np.zeros((1, n_features))]),
+                safe_vstack([W,
+                             np.sqrt(self.beta)
+                             * np.ones((1, self.n_components))]),
+                H, tolH, self.nls_max_iter)
 
         return H, gradH, iterH
 

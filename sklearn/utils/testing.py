@@ -34,6 +34,11 @@ from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_less
 
+__all__ = ["assert_equal", "assert_not_equal", "assert_raises", "raises",
+           "with_setup", "assert_true", "assert_false", "assert_almost_equal",
+           "assert_array_equal", "assert_array_almost_equal",
+           "assert_array_less"]
+
 
 try:
     from nose.tools import assert_in, assert_not_in
@@ -167,8 +172,8 @@ def all_estimators():
     all_classes = []
     # get parent folder
     path = sklearn.__path__
-    for importer, modname, ispkg in pkgutil.walk_packages(path=path,
-                            prefix='sklearn.', onerror=lambda x: None):
+    for importer, modname, ispkg in pkgutil.walk_packages(
+            path=path, prefix='sklearn.', onerror=lambda x: None):
         module = __import__(modname, fromlist="dummy")
         if ".tests." in modname:
             continue

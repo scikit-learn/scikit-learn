@@ -135,8 +135,8 @@ def test_randomized_pca_check_projection():
 def test_randomized_pca_check_list():
     """Test that the projection by RandomizedPCA on list data is correct"""
     X = [[1.0, 0.0], [0.0, 1.0]]
-    X_transformed = RandomizedPCA(n_components=1, random_state=0
-                        ).fit(X).transform(X)
+    X_transformed = RandomizedPCA(n_components=1,
+                                  random_state=0).fit(X).transform(X)
     assert_equal(X_transformed.shape, (2, 1))
     assert_almost_equal(X_transformed.mean(), 0.00, 2)
     assert_almost_equal(X_transformed.std(), 0.71, 2)
@@ -227,8 +227,8 @@ def test_infer_dim_1():
     """
     n, p = 1000, 5
     rng = np.random.RandomState(0)
-    X = rng.randn(n, p) * .1 + rng.randn(n, 1) * np.array([3, 4, 5, 1, 2]) \
-            + np.array([1, 0, 7, 4, 6])
+    X = (rng.randn(n, p) * .1 + rng.randn(n, 1) * np.array([3, 4, 5, 1, 2])
+         + np.array([1, 0, 7, 4, 6]))
     pca = PCA(n_components=p)
     pca.fit(X)
     spect = pca.explained_variance_

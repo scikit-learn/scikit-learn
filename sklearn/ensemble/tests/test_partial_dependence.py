@@ -32,8 +32,7 @@ def test_partial_dependence_classifier():
     clf = GradientBoostingClassifier(n_estimators=10, random_state=1)
     clf.fit(X, y)
 
-    pdp, axes = partial_dependence(clf, [0], X=X,
-                                                     grid_resolution=5)
+    pdp, axes = partial_dependence(clf, [0], X=X, grid_resolution=5)
 
     # only 4 grid points instead of 5 because only 4 unique X[:,0] vals
     assert pdp.shape == (1, 4)

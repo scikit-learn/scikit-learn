@@ -89,8 +89,7 @@ def _graph_laplacian_sparse(graph, normed=False, return_diag=False):
 
         lap = lap.tolil()
 
-        diagonal_holes = list(set(range(n_nodes)).difference(
-                                diag_idx))
+        diagonal_holes = list(set(range(n_nodes)).difference(diag_idx))
         lap[diagonal_holes, diagonal_holes] = 1
         lap = lap.tocoo()
         diag_mask = (lap.row == lap.col)
@@ -132,8 +131,8 @@ def _graph_laplacian_dense(graph, normed=False, return_diag=False):
 def graph_laplacian(graph, normed=False, return_diag=False):
     """ Return the Laplacian of the given graph.
     """
-    if normed and (np.issubdtype(graph.dtype, np.int)
-                    or np.issubdtype(graph.dtype, np.uint)):
+    if normed and (np.issubdtype(graph.dtype, np.int) or
+                   np.issubdtype(graph.dtype, np.uint)):
         graph = graph.astype(np.float)
     if sparse.isspmatrix(graph):
         return _graph_laplacian_sparse(graph, normed=normed,
@@ -141,4 +140,4 @@ def graph_laplacian(graph, normed=False, return_diag=False):
     else:
         # We have a numpy array
         return _graph_laplacian_dense(graph, normed=normed,
-                                       return_diag=return_diag)
+                                      return_diag=return_diag)

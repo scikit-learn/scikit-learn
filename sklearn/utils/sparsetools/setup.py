@@ -7,7 +7,8 @@ def configuration(parent_package='', top_path=None):
     sources = [fmt + '_wrap.cxx']
     depends = [fmt + '.h']
     config.add_extension('_' + fmt, sources=sources,
-            define_macros=[('__STDC_FORMAT_MACROS', 1)], depends=depends)
+                         define_macros=[('__STDC_FORMAT_MACROS', 1)],
+                         depends=depends)
 
     return config
 

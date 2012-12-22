@@ -132,8 +132,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         else:
             if len(self.noise_variance_init) != n_features:
                 raise ValueError("noise_variance_init dimension does not "
-                        "with number of featueres : %d != %d" %
-                        (len(self.noise_variance_init), n_features))
+                                 "with number of features : %d != %d" %
+                                 (len(self.noise_variance_init), n_features))
             psi = np.array(self.noise_variance_init)
 
         loglike = []
@@ -207,8 +207,8 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         cov : array, shape=(n_features, n_features)
             Estimated covariance of data.
         """
-        cov = np.dot(self.components_.T, self.components_) \
-              + np.diag(self.noise_variance_)
+        cov = (np.dot(self.components_.T, self.components_)
+               + np.diag(self.noise_variance_))
         return cov
 
     def score(self, X):
@@ -230,6 +230,5 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
         log_like = np.zeros(X.shape[0])
         self.precision_ = linalg.inv(cov)
         log_like = -.5 * (Xr * (np.dot(Xr, self.precision_))).sum(axis=1)
-        log_like -= .5 * (fast_logdet(cov) + \
-                n_features * np.log(2 * np.pi))
+        log_like -= .5 * (fast_logdet(cov) + n_features * np.log(2 * np.pi))
         return log_like

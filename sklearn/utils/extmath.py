@@ -80,7 +80,7 @@ def safe_sparse_dot(a, b, dense_output=False):
 
 
 def randomized_range_finder(A, size, n_iter, random_state=None,
-        n_iterations=None):
+                            n_iterations=None):
     """Computes an orthonormal matrix whose range approximates the range of A.
 
     Parameters
@@ -110,7 +110,7 @@ def randomized_range_finder(A, size, n_iter, random_state=None,
     """
     if n_iterations is not None:
         warnings.warn("n_iterations was renamed to n_iter for consistency "
-                "and will be removed in 0.16.", DeprecationWarning)
+                      "and will be removed in 0.16.", DeprecationWarning)
         n_iter = n_iterations
     random_state = check_random_state(random_state)
 
@@ -180,7 +180,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
     """
     if n_iterations is not None:
         warnings.warn("n_iterations was renamed to n_iter for consistency "
-                "and will be removed in 0.16.", DeprecationWarning)
+                      "and will be removed in 0.16.", DeprecationWarning)
         n_iter = n_iterations
 
     random_state = check_random_state(random_state)

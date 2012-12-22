@@ -258,8 +258,8 @@ class LinearRegression(LinearModel, RegressorMixin):
         X = safe_asarray(X)
         y = np.asarray(y)
 
-        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-                self.fit_intercept, self.normalize, self.copy_X)
+        X, y, X_mean, y_mean, X_std = self._center_data(
+            X, y, self.fit_intercept, self.normalize, self.copy_X)
 
         if sp.issparse(X):
             if y.ndim < 2:
@@ -268,13 +268,14 @@ class LinearRegression(LinearModel, RegressorMixin):
                 self.residues_ = out[3]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
-                outs = Parallel(n_jobs=n_jobs)(delayed(lsqr)
-                        (X, y[:, j].ravel()) for j in range(y.shape[1]))
+                outs = Parallel(n_jobs=n_jobs)(
+                    delayed(lsqr)(X, y[:, j].ravel())
+                    for j in range(y.shape[1]))
                 self.coef_ = np.vstack(out[0] for out in outs)
                 self.residues_ = np.vstack(out[3] for out in outs)
         else:
             self.coef_, self.residues_, self.rank_, self.singular_ = \
-                    linalg.lstsq(X, y)
+                linalg.lstsq(X, y)
             self.coef_ = self.coef_.T
 
         if y.ndim == 1:

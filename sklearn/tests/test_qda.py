@@ -61,9 +61,9 @@ def test_qda_store_covariances():
     assert_array_almost_equal(
         clf.covariances_[0],
         np.array([[0.7, 0.45], [0.45, 0.7]])
-        )
+    )
 
     assert_array_almost_equal(
         clf.covariances_[1],
         np.array([[0.33333333, -0.33333333], [-0.33333333, 0.66666667]])
-        )
+    )

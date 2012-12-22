@@ -95,8 +95,8 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
         try:
             err_mgt = np.seterr(all='ignore')
             lasso_lars = LassoLars(alpha=alpha, fit_intercept=False,
-                            verbose=False, normalize=False, precompute=gram,
-                            fit_path=False)
+                                   verbose=False, normalize=False,
+                                   precompute=gram, fit_path=False)
             lasso_lars.fit(dictionary.T, X.T, Xy=cov)
             new_code = lasso_lars.coef_
         finally:
@@ -137,8 +137,8 @@ def _sparse_encode(X, dictionary, gram, cov=None, algorithm='lasso_lars',
 
 # XXX : could be moved to the linear_model module
 def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
-        n_nonzero_coefs=None, alpha=None, copy_cov=True, init=None,
-        max_iter=1000, n_jobs=1):
+                  n_nonzero_coefs=None, alpha=None, copy_cov=True, init=None,
+                  max_iter=1000, n_jobs=1):
     """Sparse coding
 
     Each row of the result is the solution to a sparse coding problem.
@@ -243,12 +243,12 @@ def sparse_encode(X, dictionary, gram=None, cov=None, algorithm='lasso_lars',
     slices = list(gen_even_slices(n_samples, n_jobs))
 
     code_views = Parallel(n_jobs=n_jobs)(
-                delayed(_sparse_encode)(X[this_slice], dictionary, gram,
-                           cov[:, this_slice], algorithm,
-                           regularization=regularization, copy_cov=copy_cov,
-                           init=init[this_slice] if init is not None else None,
-                           max_iter=max_iter)
-                for this_slice in slices)
+        delayed(_sparse_encode)(
+            X[this_slice], dictionary, gram, cov[:, this_slice], algorithm,
+            regularization=regularization, copy_cov=copy_cov,
+            init=init[this_slice] if init is not None else None,
+            max_iter=max_iter)
+        for this_slice in slices)
     for this_slice, this_view in zip(slices, code_views):
         code[this_slice] = this_view
     return code
@@ -406,8 +406,8 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     if not n_atoms is None:
         n_components = n_atoms
         warnings.warn("Parameter n_atoms has been renamed to"
-            'n_components'" and will be removed in release 0.14.",
-            DeprecationWarning, stacklevel=2)
+                      "'n_components' and will be removed in release 0.14.",
+                      DeprecationWarning, stacklevel=2)
 
     if method not in ('lars', 'cd'):
         raise ValueError('Coding method not supported as a fit algorithm.')
@@ -456,8 +456,8 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
             sys.stdout.flush()
         elif verbose:
             print ("Iteration % 3i "
-                "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)" %
-                    (ii, dt, dt / 60, current_cost))
+                   "(elapsed time: % 3is, % 4.1fmn, current cost % 7.3f)"
+                   % (ii, dt, dt / 60, current_cost))
 
         # Update code
         code = sparse_encode(X, dictionary, algorithm=method, alpha=alpha,
@@ -637,8 +637,8 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
             sys.stdout.flush()
         elif verbose:
             if verbose > 10 or ii % ceil(100. / verbose) == 0:
-                print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)" %
-                    (ii, dt, dt / 60))
+                print ("Iteration % 3i (elapsed time: % 3is, % 4.1fmn)"
+                       % (ii, dt, dt / 60))
 
         this_code = sparse_encode(this_X, dictionary.T, algorithm=method,
                                   alpha=alpha).T
@@ -925,9 +925,9 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
 
         if n_atoms is not None:
             n_components = n_atoms
-            warnings.warn("Parameter n_atoms has been renamed to"
-                        'n_components'" and will be removed in release 0.14.",
-                         DeprecationWarning, stacklevel=2)
+            warnings.warn("Parameter n_atoms has been renamed to "
+                          "'n_components' and will be removed in release"
+                          " 0.14.", DeprecationWarning, stacklevel=2)
 
         self._set_sparse_coding_params(n_components, transform_algorithm,
                                        transform_n_nonzero_coefs,

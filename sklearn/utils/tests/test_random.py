@@ -22,12 +22,11 @@ def test_sample_without_replacement_algorithms():
     methods = ("auto", "tracking_selection", "reservoir_sampling", "pool")
 
     for m in methods:
-        sample_without_replacement_method = \
-            lambda n_population, n_samples, random_state=None: \
-                sample_without_replacement(n_population,
-                                           n_samples,
-                                           method=m,
-                                           random_state=random_state)
+        def sample_without_replacement_method(n_population, n_samples,
+                                              random_state=None):
+            return sample_without_replacement(n_population, n_samples,
+                                              method=m,
+                                              random_state=random_state)
 
         check_edge_case_of_sample_int(sample_without_replacement_method)
         check_sample_int(sample_without_replacement_method)

@@ -122,13 +122,13 @@ def _ica_par(X, tol, g, gprime, fun_args, max_iter, w_init):
                                  'tuple. Therefore fun_prime has to be a '
                                  'function, not %s' % str(type(gprime)))
             warnings.warn("Passing g and gprime separately is deprecated "
-                              "and will be removed in 0.14.",
-                              DeprecationWarning, stacklevel=2)
+                          "and will be removed in 0.14.",
+                          DeprecationWarning, stacklevel=2)
             gwtx = nonlin
             g_wtx = gprime(wtx, fun_args)
 
-        W1 = np.dot(gwtx, X.T) / float(p) \
-             - np.dot(np.diag(g_wtx.mean(axis=1)), W)
+        W1 = (np.dot(gwtx, X.T) / float(p)
+              - np.dot(np.diag(g_wtx.mean(axis=1)), W))
 
         W1 = _sym_decorrelation(W1)
 
@@ -261,8 +261,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
                 return x ** 3, 3 * x ** 2
 
         else:
-            raise ValueError(
-                        'fun argument should be one of logcosh, exp or cube')
+            raise ValueError('fun argument should be one of logcosh, exp or'
+                             ' cube')
     elif callable(fun):
         def g(x, fun_args):
             return fun(x, **fun_args)
@@ -277,7 +277,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     n, p = X.shape
 
-    if whiten == False and n_components is not None:
+    if not whiten and n_components is not None:
         n_components = None
         warnings.warn('Ignoring n_components with whiten=False.')
 
@@ -412,12 +412,11 @@ class FastICA(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         fun_args = {} if self.fun_args is None else self.fun_args
-        whitening_, unmixing_, sources_ = fastica(X, self.n_components,
-                        self.algorithm, self.whiten,
-                        self.fun, self.fun_prime, fun_args, self.max_iter,
-                        self.tol, self.w_init,
-                        random_state=self.random_state)
-        if self.whiten == True:
+        whitening_, unmixing_, sources_ = fastica(
+            X, self.n_components, self.algorithm, self.whiten, self.fun,
+            self.fun_prime, fun_args, self.max_iter, self.tol, self.w_init,
+            random_state=self.random_state)
+        if self.whiten:
             self.components_ = np.dot(unmixing_, whitening_)
         else:
             self.components_ = unmixing_
