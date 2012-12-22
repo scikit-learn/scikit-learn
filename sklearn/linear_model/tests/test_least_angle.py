@@ -196,15 +196,14 @@ def test_rank_deficient_design():
     # deficient input data (with n_features < rank) in the same way
     # as coordinate descent Lasso
     y = [5, 0, 5]
-    for X in (
-                [[  5,  0],
-                 [  0,  5],
-                 [ 10, 10]],
+    for X in ([[5,   0],
+               [0,   5],
+               [10, 10]],
 
-                [[   10,  10,  0],
-                 [1e-32,   0,  0],
-                 [    0,   0,  1]],
-             ):
+              [[10,     10,  0],
+               [1e-32,   0,  0],
+               [0,       0,  1]],
+              ):
         # To be able to use the coefs to compute the objective function,
         # we need to turn off normalization
         lars = linear_model.LassoLars(.1, normalize=False)
@@ -337,9 +336,9 @@ def test_lars_drop_for_good():
     # Create an ill-conditioned situation in which the LARS has to good
     # far in the path to converge, and check that LARS and coordinate
     # descent give the same answers
-    X = [[    10, 10,  0],
+    X = [[10,     10,  0],
          [-1e-32,  0,  0],
-         [     1,  1,  1]]
+         [1,       1,  1]]
     y = [100, -100, 1]
     lars = linear_model.LassoLars(.001, normalize=False)
     lars_coef_ = lars.fit(X, y).coef_

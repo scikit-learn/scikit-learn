@@ -165,8 +165,9 @@ class BaseLibSVM(BaseEstimator):
             raise ValueError("The number of classes has to be greater than"
                              " one.")
 
-        sample_weight = np.asarray([] if sample_weight is None
-                                      else sample_weight, dtype=np.float64)
+        sample_weight = np.asarray([]
+                                   if sample_weight is None
+                                   else sample_weight, dtype=np.float64)
         solver_type = LIBSVM_IMPL.index(self.impl)
         self.class_weight_, self.class_weight_label_ = \
             _get_class_weight(self.class_weight, y)
@@ -486,8 +487,8 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
                                       "and NuSVC")
 
         X = self._validate_for_predict(X)
-        pred_proba = self._sparse_predict_proba if self._sparse \
-                                                else self._dense_predict_proba
+        pred_proba = (self._sparse_predict_proba
+                      if self._sparse else self._dense_predict_proba)
         return pred_proba(X)
 
     def predict_log_proba(self, X):

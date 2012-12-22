@@ -499,10 +499,10 @@ class Lars(LinearModel, RegressorMixin):
         parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            training data.
+            Training data.
 
         y : array-like, shape = [n_samples] or [n_samples, n_targets]
-            target values.
+            Target values.
 
         Xy : array-like, shape = [n_samples] or [n_samples, n_targets], optional
             Xy = np.dot(X.T, y) that can be precomputed. It is useful

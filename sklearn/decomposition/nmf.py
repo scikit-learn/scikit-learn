@@ -432,8 +432,8 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             W, gradW, iterW = _nls_subproblem(
                 safe_vstack([X.T,
                              np.zeros((self.n_components, n_samples))]),
-                safe_vstack([H.T, np.sqrt(self.eta)
-                                  * np.eye(self.n_components)]),
+                safe_vstack([H.T,
+                             np.sqrt(self.eta) * np.eye(self.n_components)]),
                 W.T, tolW, self.nls_max_iter)
 
         return W, gradW, iterW
@@ -447,14 +447,15 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         elif self.sparseness == 'data':
             H, gradH, iterH = _nls_subproblem(
                 safe_vstack([X, np.zeros((self.n_components, n_features))]),
-                safe_vstack([W, np.sqrt(self.eta)
-                                * np.eye(self.n_components)]),
+                safe_vstack([W,
+                             np.sqrt(self.eta) * np.eye(self.n_components)]),
                 H, tolH, self.nls_max_iter)
         elif self.sparseness == 'components':
             H, gradH, iterH = _nls_subproblem(
                 safe_vstack([X, np.zeros((1, n_features))]),
-                safe_vstack([W, np.sqrt(self.beta)
-                                * np.ones((1, self.n_components))]),
+                safe_vstack([W,
+                             np.sqrt(self.beta)
+                             * np.ones((1, self.n_components))]),
                 H, tolH, self.nls_max_iter)
 
         return H, gradH, iterH
