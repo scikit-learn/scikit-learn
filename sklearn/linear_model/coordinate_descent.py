@@ -625,15 +625,14 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     n_samples, n_features = X.shape
 
-    if hasattr(precompute, '__array__') \
-            and not np.allclose(X_mean, np.zeros(n_features)) \
-            and not np.allclose(X_std, np.ones(n_features)):
+    if (hasattr(precompute, '__array__')
+            and not np.allclose(X_mean, np.zeros(n_features))
+            and not np.allclose(X_std, np.ones(n_features))):
         # recompute Gram
         precompute = 'auto'
         Xy = None
 
-    if precompute is True or \
-            ((precompute == 'auto') and (n_samples > n_features)):
+    if precompute or ((precompute == 'auto') and (n_samples > n_features)):
         if sparse.isspmatrix(X):
             warnings.warn("precompute is ignored for sparse data")
             precompute = False
