@@ -33,15 +33,14 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    `classes_` : array or list of of array of shape = [n_classes]
+    `classes_` : array or list of array of shape = [n_classes]
         Class labels for each output.
 
-    `n_classes_` : array or list of of array of shape = [n_classes]
+    `n_classes_` : array or list of array of shape = [n_classes]
         Number of label for each output.
 
     `class_prior_` : array or list of array of shape = [n_classes]
-        Probability of each class. If it is a list, its length is equal to
-        `n_outputs_`.
+        Probability of each class for each output.
 
     `n_outputs_` : int,
         Number of outputs.
