@@ -8,6 +8,13 @@
 Changelog
 ---------
 
+   - New estimators :class:`ensemble.AdaBoostClassifier` and
+     :class:`ensemble.AdaBoostRegressor` implementing the popular AdaBoost
+     algorithm, by `Noel Dawe`_  and `Gilles Louppe`_.
+
+   - :class:`tree.DecisionTreeClassifier` and all derived ensemble models now
+     support sample weighting, by `Noel Dawe`_  and `Gilles Louppe`_.
+
    - Partial dependence plots for :mod:`ensemble.gradient_boosting` by
      `Peter Prettenhofer`_.
 
@@ -100,12 +107,6 @@ Changelog
 
    - Fix :func:`metrics.roc_curve` fails when y_true has only one class
      by Wei Li.
-
-   - New transformers :class:`random_projection.GaussianRandomProjection`,
-    :class:`random_projection.SparseRandomProjection` and the function
-    :func:`random_projection.johnson_lindenstrauss_min_dim`, implementing
-    Gaussian and sparse random projection matrix
-    by `Olivier Grisel`_ and `Arnaud Joly`_.
 
 
 API changes summary
@@ -1607,3 +1608,5 @@ of commits):
 .. _@kernc: http://github.com/kernc
 
 .. _Christian Osendorfer: http://osdf.github.com
+
+.. _Noel Dawe: http://noel.dawe.me
