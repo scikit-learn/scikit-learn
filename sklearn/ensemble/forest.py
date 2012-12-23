@@ -83,16 +83,23 @@ def _parallel_build_trees(n_trees, forest, X, y, sample_weight,
                 curr_sample_weight = sample_weight.copy()
 
             indices = random_state.randint(0, n_samples, n_samples)
-            sample_counts = np.bincount(indices, minlength=n_samples)
+            sample_counts = np.bincount(indices)
+
+            if len(sample_counts) < n_samples:
+                sample_counts = np.append(
+                    sample_counts, np.zeros(n_samples - len(sample_counts)))
+
             curr_sample_weight *= sample_counts
             curr_sample_mask = sample_mask.copy()
             curr_sample_mask[sample_counts == 0] = False
 
             tree.fit(X, y,
+                     sample_weight=curr_sample_weight,
                      sample_mask=curr_sample_mask,
                      X_argsorted=X_argsorted,
                      check_input=False)
-            tree.indices_ = indices
+
+            tree.indices_ = curr_sample_mask
 
         else:
             tree.fit(X, y,
@@ -395,11 +402,10 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                     decision = (predictions[k] /
                                 predictions[k].sum(axis=1)[:, np.newaxis])
                     self.oob_decision_function_.append(decision)
-                    self.oob_score_ += np.average(
+                    self.oob_score_ += np.mean(
                         (y[:, k] == classes_[k].take(
                             np.argmax(predictions[k], axis=1),
-                            axis=0)),
-                        weights=sample_weight)
+                            axis=0)))
 
                 if self.n_outputs_ == 1:
                     self.oob_decision_function_ = \
