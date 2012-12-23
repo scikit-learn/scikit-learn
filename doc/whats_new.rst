@@ -11,7 +11,7 @@ Changelog
    - :class:`tree.DecisionTreeClassifier` and all derived ensemble models now
      support sample weighting, by `Noel Dawe`_  and `Gilles Louppe`_.
 
-   - Speedup improvement when using boostrap samples in forests of randomized
+   - Speedup improvement when using bootstrap samples in forests of randomized
      trees, by `Peter Prettenhofer`_  and `Gilles Louppe`_.
 
    - Partial dependence plots for :mod:`ensemble.gradient_boosting` by
