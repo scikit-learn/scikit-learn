@@ -40,15 +40,14 @@ import numpy as np
 from warnings import warn
 from abc import ABCMeta, abstractmethod
 
-from ..base import ClassifierMixin, \
-                   WeightedClassifierMixin, WeightedRegressorMixin
+from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..feature_selection.selector_mixin import SelectorMixin
+from ..metrics import r2_score
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import array2d, check_random_state, check_arrays, safe_asarray
-from ..metrics import weighted_r2_score
 from ..preprocessing import OneHotEncoder
 
 from .base import BaseEnsemble
@@ -440,9 +439,8 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                 self.oob_score_ = 0.0
 
                 for k in xrange(self.n_outputs_):
-                    self.oob_score_ += weighted_r2_score(y[:, k],
-                                                         predictions[:, k],
-                                                         weights=sample_weight)
+                    self.oob_score_ += r2_score(y[:, k],
+                                                predictions[:, k])
 
                 self.oob_score_ /= self.n_outputs_
 
@@ -455,7 +453,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         return self
 
 
-class ForestClassifier(BaseForest, WeightedClassifierMixin):
+class ForestClassifier(BaseForest, ClassifierMixin):
     """Base class for forest of trees-based classifiers.
 
     Warning: This class should not be used directly. Use derived classes
@@ -601,7 +599,7 @@ class ForestClassifier(BaseForest, WeightedClassifierMixin):
             return proba
 
 
-class ForestRegressor(BaseForest, WeightedRegressorMixin):
+class ForestRegressor(BaseForest, RegressorMixin):
     """Base class for forest of trees-based regressors.
 
     Warning: This class should not be used directly. Use derived classes

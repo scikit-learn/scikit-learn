@@ -8,10 +8,6 @@
 Changelog
 ---------
 
-   - New estimators :class:`ensemble.AdaBoostClassifier` and
-     :class:`ensemble.AdaBoostRegressor` implementing the popular AdaBoost
-     algorithm, by `Noel Dawe`_  and `Gilles Louppe`_.
-
    - :class:`tree.DecisionTreeClassifier` and all derived ensemble models now
      support sample weighting, by `Noel Dawe`_  and `Gilles Louppe`_.
 
