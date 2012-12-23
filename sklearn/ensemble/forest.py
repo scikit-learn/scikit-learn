@@ -273,8 +273,8 @@ class BaseForest(BaseEnsemble, SelectorMixin):
             The target values (integers that correspond to classes in
             classification, real numbers in regression).
 
-        sample_weight : array-like, shape = [n_samples], optional
-            Sample weights.
+        sample_weight : array-like, shape = [n_samples] or None
+            Sample weights. If None, then samples are equally weighted.
 
         Returns
         -------
