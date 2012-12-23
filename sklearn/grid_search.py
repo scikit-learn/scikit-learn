@@ -19,7 +19,7 @@ from .base import MetaEstimatorMixin
 from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
 from .utils import safe_mask, check_random_state
-from .utils.validation import _num_samples
+from .utils.validation import _num_samples, check_arrays
 
 __all__ = ['GridSearchCV', 'IterGrid', 'fit_grid_point']
 
@@ -274,12 +274,9 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         estimator = self.estimator
         cv = self.cv
 
-        if hasattr(X, 'shape'):
-            n_samples = X.shape[0]
-        else:
-            # support list of unstructured objects on which feature
-            # extraction will be applied later in the tranformer chain
-            n_samples = len(X)
+        n_samples = _num_samples(X)
+        X, y = check_arrays(X, y, allow_lists=True, sparse_format='csr')
+
         if y is not None:
             if len(y) != n_samples:
                 raise ValueError('Target variable (y) has a different number '
