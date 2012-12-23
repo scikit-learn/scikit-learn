@@ -82,6 +82,8 @@ cdef class Tree:
     cdef double* init_error
     cdef int* n_samples
 
+    cdef np.ndarray features
+
     # Methods
     cdef void resize(self, int capacity=*)
 

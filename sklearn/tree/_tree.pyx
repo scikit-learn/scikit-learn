@@ -34,6 +34,9 @@ cdef extern from "math.h":
 cdef extern from "float.h":
     cdef extern double DBL_MAX
 
+from numpy import zeros, ones
+from numpy import bool
+
 
 # ==============================================================================
 # Types and constants
@@ -245,6 +248,8 @@ cdef class Tree:
         self.init_error = NULL
         self.n_samples = NULL
 
+        self.features = np.arange(n_features, dtype=np.int32)
+
     def __dealloc__(self):
         """Destructor."""
         # Free all inner structures
@@ -390,7 +395,7 @@ cdef class Tree:
                         sample_weight, dtype=DOUBLE, order="C")
 
         if sample_mask is None:
-            sample_mask = np.ones((X.shape[0],), dtype=np.bool)
+            sample_mask = ones((X.shape[0],), dtype=bool)
 
         if X_argsorted is None:
             X_argsorted = np.asfortranarray(
@@ -402,7 +407,7 @@ cdef class Tree:
         cdef double weighted_n_node_samples
 
         if self.max_depth <= 10:
-            init_capacity = (2 ** (int(self.max_depth) + 1)) - 1
+            init_capacity = (2 ** (<int>(self.max_depth) + 1)) - 1
         else:
             init_capacity = 2047
 
@@ -471,10 +476,12 @@ cdef class Tree:
         cdef int i
         cdef np.ndarray sample_mask_left
         cdef np.ndarray sample_mask_right
-        cdef int n_node_samples_left
-        cdef int n_node_samples_right
-        cdef double weighted_n_node_samples_left
-        cdef double weighted_n_node_samples_right
+        cdef BOOL_t* sample_mask_left_ptr = NULL
+        cdef BOOL_t* sample_mask_right_ptr = NULL
+        cdef int n_node_samples_left = 0
+        cdef int n_node_samples_right = 0
+        cdef double weighted_n_node_samples_left = 0.0
+        cdef double weighted_n_node_samples_right = 0.0
 
         # Count samples
         if n_node_samples == 0:
@@ -521,7 +528,7 @@ cdef class Tree:
                 if sample_weight is not None:
                     sample_weight = sample_weight[sample_mask]
                     sample_weight_ptr = <DOUBLE_t*> sample_weight.data
-                sample_mask = np.ones((n_node_samples, ), dtype=np.bool)
+                sample_mask = ones((n_node_samples, ), dtype=bool)
 
                 n_total_samples = n_node_samples
 
@@ -537,23 +544,27 @@ cdef class Tree:
 
             # Split
             X_ptr = X_ptr + feature * X_stride
-            sample_mask_left = np.zeros((n_total_samples, ), dtype=np.bool)
-            sample_mask_right = np.zeros((n_total_samples, ), dtype=np.bool)
+
+            sample_mask_left = zeros((n_total_samples, ), dtype=bool)
+            sample_mask_right = zeros((n_total_samples, ), dtype=bool)
+            sample_mask_left_ptr = <BOOL_t*> sample_mask_left.data
+            sample_mask_right_ptr = <BOOL_t*> sample_mask_right.data
+
             n_node_samples_left = 0
             n_node_samples_right = 0
-            weighted_n_node_samples_left = 0.
-            weighted_n_node_samples_right = 0.
+            weighted_n_node_samples_left = 0.0
+            weighted_n_node_samples_right = 0.0
 
             for i from 0 <= i < n_total_samples:
                 if sample_mask_ptr[i]:
                     if sample_weight_ptr != NULL:
                         w = sample_weight_ptr[i]
                     if X_ptr[i] <= threshold:
-                        sample_mask_left[i] = 1
+                        sample_mask_left_ptr[i] = 1
                         n_node_samples_left += 1
                         weighted_n_node_samples_left += w
                     else:
-                        sample_mask_right[i] = 1
+                        sample_mask_right_ptr[i] = 1
                         n_node_samples_right += 1
                         weighted_n_node_samples_right += w
 
@@ -696,7 +707,7 @@ cdef class Tree:
         cdef int i, a, b, best_i = -1
         cdef np.int32_t feature_idx = -1
         cdef int n_left = 0
-        cdef double weighted_n_left = 0.
+        cdef double weighted_n_left = 0.0
 
         cdef double t, initial_error, error
         cdef double best_error = INFINITY, best_t = INFINITY
@@ -705,7 +716,7 @@ cdef class Tree:
         cdef int* X_argsorted_i = NULL
         cdef DTYPE_t X_a, X_b
 
-        cdef np.ndarray[np.int32_t, ndim=1, mode="c"] features = None
+        cdef np.ndarray[np.int32_t, ndim=1, mode="c"] features = self.features
 
         # Compute the initial criterion value in the node
         criterion.init(y_ptr, y_stride,
@@ -725,11 +736,8 @@ cdef class Tree:
             return
 
         # Features to consider
-        features = np.arange(n_features, dtype=np.int32)
-
         if max_features < 0 or max_features >= n_features:
             max_features = n_features
-
         else:
             features = random_state.permutation(features)
 
@@ -830,7 +838,7 @@ cdef class Tree:
         cdef int i, a, b, c, best_i = -1
         cdef np.int32_t feature_idx = -1
         cdef int n_left = 0
-        cdef double weighted_n_left = 0.
+        cdef double weighted_n_left = 0.0
         cdef double random
 
         cdef double t, initial_error, error
@@ -840,7 +848,7 @@ cdef class Tree:
         cdef int* X_argsorted_i = NULL
         cdef DTYPE_t X_a, X_b
 
-        cdef np.ndarray[np.int32_t, ndim=1, mode="c"] features = None
+        cdef np.ndarray[np.int32_t, ndim=1, mode="c"] features = self.features
 
         # Compute the initial criterion value in the node
         criterion.init(y_ptr, y_stride,
@@ -860,11 +868,8 @@ cdef class Tree:
             return
 
         # Features to consider
-        features = np.arange(n_features, dtype=np.int32)
-
         if max_features < 0 or max_features >= n_features:
             max_features = n_features
-
         else:
             features = random_state.permutation(features)
 
@@ -955,7 +960,7 @@ cdef class Tree:
         cdef int offset_output
 
         cdef np.ndarray[np.float64_t, ndim=3] out
-        out = np.zeros((n_samples, self.n_outputs, self.max_n_classes), dtype=np.float64)
+        out = zeros((n_samples, self.n_outputs, self.max_n_classes), dtype=np.float64)
 
         for i from 0 <= i < n_samples:
             node_id = 0
@@ -984,7 +989,7 @@ cdef class Tree:
         cdef int node_id = 0
 
         cdef np.ndarray[np.int32_t, ndim=1] out
-        out = np.zeros((n_samples, ), dtype=np.int32)
+        out = zeros((n_samples, ), dtype=np.int32)
 
         for i from 0 <= i < n_samples:
             node_id = 0
@@ -1022,7 +1027,7 @@ cdef class Tree:
 
         cdef int node
         cdef np.ndarray[np.float64_t, ndim=1] importances
-        importances = np.zeros((self.n_features,), dtype=np.float64)
+        importances = zeros((self.n_features,), dtype=np.float64)
 
         if method == "gini":
             for node from 0 <= node < self.node_count:
@@ -1844,7 +1849,7 @@ def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
     cdef np.ndarray[np.float64_t, ndim=1, mode="c"] rand = \
          random_state.rand(n_total_samples)
     cdef np.ndarray[BOOL_t, ndim=1, mode="c"] sample_mask = \
-         np.zeros((n_total_samples,), dtype=np.int8)
+         zeros((n_total_samples,), dtype=np.int8)
 
     cdef int n_bagged = 0
     cdef int i = 0
@@ -1854,4 +1859,4 @@ def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
             sample_mask[i] = 1
             n_bagged += 1
 
-    return sample_mask.astype(np.bool)
+    return sample_mask.astype(bool)
