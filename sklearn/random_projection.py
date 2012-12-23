@@ -129,7 +129,7 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
 def _check_density(density, n_features):
     """Factorize density check according to Li et al."""
     if density is 'auto':
-        density = min(1 / np.sqrt(n_features), 1 / 3.)
+        density = 1 / np.sqrt(n_features)
 
     elif density <= 0 or density > 1:
         raise ValueError("Expected density in range ]0, 1], got: %r"
@@ -173,6 +173,7 @@ def gaussian_random_matrix(n_components, n_features, random_state=None):
 
     See Also
     --------
+    GaussianRandomProjection
     sparse_random_matrix
     """
     _check_input_size(n_components, n_features)
@@ -206,11 +207,11 @@ def sparse_random_matrix(n_components, n_features, density='auto',
     n_features : int,
         Dimensionality of the original source space.
 
-    density : float in range ]0, 1/3], optional
+    density : float in range ]0, 1] or 'auto', optional
         Ratio of non-zero component in the random projection matrix.
 
         By default the value is set to the minimum density as recommended
-        by Ping Li et al.: 1 / sqrt(n_features)
+        by Ping Li et al.:  1 / sqrt(n_features)
 
         Use density = 1 / 3.0 if you want to reproduce the results from
         Achlioptas, 2001.
@@ -226,6 +227,7 @@ def sparse_random_matrix(n_components, n_features, density='auto',
 
     See Also
     --------
+    SparseRandomProjection
     gaussian_random_matrix
 
     References
@@ -308,7 +310,7 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
         Returns
         -------
         components : numpy array or CSR matrix [n_components, n_features]
-            The generated Gaussian random matrix.
+            The generated random matrix.
 
         """
 
@@ -479,7 +481,7 @@ class GaussianRandomProjection(BaseRandomProjection):
         Returns
         -------
         components : numpy array or CSR matrix [n_components, n_features]
-            The generated Gaussian random matrix.
+            The generated random matrix.
 
         """
         random_state = check_random_state(self.random_state)
@@ -517,7 +519,7 @@ class SparseRandomProjection(BaseRandomProjection):
         very conservative estimated of the required number of components
         as it makes no assumption on the structure of the dataset.
 
-    density : float in range (0, 1], optional
+    density : float in range ]0, 1], optional
         Ratio of non-zero component in the random projection matrix.
 
         By default the value is set to the minimum density as recommended
@@ -600,7 +602,7 @@ class SparseRandomProjection(BaseRandomProjection):
         Returns
         -------
         components : numpy array or CSR matrix [n_components, n_features]
-            The generated Gaussian random matrix.
+            The generated random matrix.
 
         """
         random_state = check_random_state(self.random_state)
