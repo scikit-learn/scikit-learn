@@ -112,6 +112,7 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
 
     """
     eps = np.asarray(eps)
+    n_samples = np.asarray(n_samples)
 
     if np.any(eps <= 0.0) or np.any(eps >= 1):
         raise ValueError(
