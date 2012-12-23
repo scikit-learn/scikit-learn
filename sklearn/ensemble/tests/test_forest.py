@@ -200,13 +200,14 @@ def test_importances():
 
 
 def test_oob_score_classification():
-    """Check that oob prediction is as acurate as
-    usual prediction on the training set.
-    Not really a good test that prediction is independent."""
+    """Check that oob prediction is a good estimation of the generalization
+    error."""
     clf = RandomForestClassifier(oob_score=True, random_state=rng)
-    clf.fit(X, y)
-    training_score = clf.score(X, y)
-    assert_almost_equal(training_score, clf.oob_score_)
+    n_samples = iris.data.shape[0]
+    clf.fit(iris.data[:n_samples / 2, :], iris.target[:n_samples / 2])
+    test_score = clf.score(iris.data[n_samples / 2:, :],
+                           iris.target[n_samples / 2:])
+    assert_less(abs(test_score - clf.oob_score_), 0.02)
 
 
 def test_oob_score_regression():
