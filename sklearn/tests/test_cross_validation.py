@@ -101,7 +101,7 @@ def test_kfold_valueerrors():
         assert_equal(w[0].category, Warning)
         # checking it's the right warning. This might be a bad test since it's
         # a characteristic of the code and not a behavior
-        assert_equal(w[0].lineno, 368)
+        assert_true("The least populated class" in str(w[0]))
 
     # Error when number of folds is <= 0
     assert_raises(ValueError, cval.KFold, 2, 0)
