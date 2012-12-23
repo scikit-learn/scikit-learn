@@ -12,6 +12,13 @@ Changelog
      of misclassifications, rather than the raw number of misclassifications.
      By `Kyle Beauchamp`_.
 
+   - New estimators :class:`ensemble.AdaBoostClassifier` and
+     :class:`ensemble.AdaBoostRegressor` implementing the popular AdaBoost
+     algorithm, by `Noel Dawe`_  and `Gilles Louppe`_.
+
+   - :class:`tree.DecisionTreeClassifier` and all derived ensemble models now
+     support sample weighting, by `Noel Dawe`_  and `Gilles Louppe`_.
+
    - Partial dependence plots for :mod:`ensemble.gradient_boosting` by
      `Peter Prettenhofer`_.
 
@@ -1631,3 +1638,5 @@ of commits):
 .. _@kernc: http://github.com/kernc
 
 .. _Christian Osendorfer: http://osdf.github.com
+
+.. _Noel Dawe: http://noel.dawe.me
