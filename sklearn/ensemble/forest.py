@@ -274,7 +274,8 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         # Precompute some data
         X, y = check_arrays(X, y, sparse_format="dense")
         if (getattr(X, "dtype", None) != DTYPE or
-            X.ndim != 2 or not X.flags.fortran):
+                X.ndim != 2 or
+                not X.flags.fortran):
             X = array2d(X, dtype=DTYPE, order="F")
 
         n_samples, self.n_features_ = X.shape
@@ -394,12 +395,11 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                     decision = (predictions[k] /
                                 predictions[k].sum(axis=1)[:, np.newaxis])
                     self.oob_decision_function_.append(decision)
-                    self.oob_score_ += \
-                        np.average((y[:, k] == classes_[k].take(
-                                                   np.argmax(predictions[k],
-                                                             axis=1),
-                                                   axis=0)),
-                                   weights=sample_weight)
+                    self.oob_score_ += np.average(
+                        (y[:, k] == classes_[k].take(
+                            np.argmax(predictions[k], axis=1),
+                            axis=0)),
+                        weights=sample_weight)
 
                 if self.n_outputs_ == 1:
                     self.oob_decision_function_ = \
