@@ -226,7 +226,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         # Convert data
         if (getattr(X, "dtype", None) != DTYPE or
-            X.ndim != 2 or not X.flags.fortran):
+                X.ndim != 2 or
+                not X.flags.fortran):
             X = array2d(X, dtype=DTYPE, order="F")
 
         n_samples, self.n_features_ = X.shape
@@ -266,20 +267,18 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             criterion = REGRESSION[self.criterion](self.n_outputs_)
 
         if sample_weight is not None:
-            if getattr(sample_weight, "dtype", None) != DOUBLE or \
-                not sample_weight.flags.contiguous:
+            if (getattr(sample_weight, "dtype", None) != DOUBLE or
+                    not sample_weight.flags.contiguous):
                 sample_weight = np.ascontiguousarray(
-                        sample_weight, dtype=DOUBLE)
+                    sample_weight, dtype=DOUBLE)
             if len(sample_weight.shape) > 1:
-                raise ValueError(
-                        "Sample weights array has more "
-                        "than one dimension: %d" %
-                        len(sample_weight.shape))
+                raise ValueError("Sample weights array has more "
+                                 "than one dimension: %d" %
+                                 len(sample_weight.shape))
             if len(sample_weight) != n_samples:
-                raise ValueError(
-                        "Number of weights=%d does not match "
-                        "number of samples=%d" %
-                        (len(sample_weight), n_samples))
+                raise ValueError("Number of weights=%d does not match "
+                                 "number of samples=%d" %
+                                 (len(sample_weight), n_samples))
 
         # Check parameters
         max_depth = np.inf if self.max_depth is None else self.max_depth
@@ -394,17 +393,16 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         if isinstance(self, ClassifierMixin):
             if self.n_outputs_ == 1:
                 return np.array(self.classes_.take(
-                            np.argmax(proba[:, 0], axis=1),
-                            axis=0))
+                    np.argmax(proba[:, 0], axis=1),
+                    axis=0))
 
             else:
                 predictions = np.zeros((n_samples, self.n_outputs_))
 
                 for k in xrange(self.n_outputs_):
                     predictions[:, k] = self.classes_[k].take(
-                                            np.argmax(proba[:, k],
-                                                      axis=1),
-                                            axis=0)
+                        np.argmax(proba[:, k], axis=1),
+                        axis=0)
 
                 return predictions
 
