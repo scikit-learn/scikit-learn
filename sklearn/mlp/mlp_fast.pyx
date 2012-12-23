@@ -139,8 +139,10 @@ cdef class Tanh(OutputFunction):
 cdef class SoftMax(OutputFunction):
 
     def output(self, np.ndarray[DTYPE_t, ndim=2] x, np.ndarray[DTYPE_t, ndim=2] out):
-        np.exp(x, out)
-        out /= np.sum(out, axis=1)[:, np.newaxis]
+        # TODO: get rid of this allocation
+        r = np.logaddexp.reduce(x, axis=1)[:, np.newaxis]
+        np.subtract(x, r, out)
+        np.exp(out, out)
 
 
 cdef class LogSig(OutputFunction):
