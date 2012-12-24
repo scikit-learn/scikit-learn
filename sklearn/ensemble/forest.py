@@ -44,11 +44,12 @@ from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..metrics import r2_score
+from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import array2d, check_random_state, check_arrays, safe_asarray
-from ..preprocessing import OneHotEncoder
+from ..utils.fixes import bincount
 
 from .base import BaseEnsemble
 
@@ -83,11 +84,7 @@ def _parallel_build_trees(n_trees, forest, X, y, sample_weight,
                 curr_sample_weight = sample_weight.copy()
 
             indices = random_state.randint(0, n_samples, n_samples)
-            sample_counts = np.bincount(indices)
-
-            if len(sample_counts) < n_samples:
-                sample_counts = np.append(
-                    sample_counts, np.zeros(n_samples - len(sample_counts)))
+            sample_counts = bincount(indices, minlength=n_samples)
 
             curr_sample_weight *= sample_counts
             curr_sample_mask = sample_mask.copy()
