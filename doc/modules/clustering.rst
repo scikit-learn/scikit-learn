@@ -451,8 +451,8 @@ set of non-core samples, which are samples that are neighbors of a core sample
 in the cluster but are not themselves core samples. Intuitively, these samples
 are on the fringes of a cluster.
 
-Any core sample is part of a cluster, by definition. Further, any cluster must
-have at least `min_samples` points in it, following the definition of a core
+Any core sample is part of a cluster, by definition. Further, any cluster has
+at least `min_samples` points in it, following the definition of a core
 sample. For any sample that is not a core sample, and does not have a
 similarity higher than `eps` to a core sample, it is considered an outlier by
 the algorithm.
@@ -465,9 +465,9 @@ than `eps` to two core samples in different classes. Following from the
 triangular inequality, those two core samples would be less similar than
 `eps` from each other -- else they would be in the same class. The non-core
 sample is simply assigned to which ever cluster is generated first, where
-the order is determined randomly within the code. Other than *that*, the
-algorithm is deterministic, making the results relatively stable between
-iterations on the same data.
+the order is determined randomly within the code. Other than the ordering of,
+the dataset, the algorithm is deterministic, making the results relatively
+stable between iterations on the same data.
 
 In the figure below, the color indicates cluster membership, with large circles
 indicating core samples found by the algorithm. Smaller circles are non-core 
