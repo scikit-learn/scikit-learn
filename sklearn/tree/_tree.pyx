@@ -396,7 +396,7 @@ cdef class Tree:
                         sample_weight, dtype=DOUBLE, order="C")
 
         if sample_mask is None:
-            sample_mask = np_ones((X.shape[0],), dtype=bool)
+            sample_mask = np_ones((X.shape[0],), dtype=np_bool)
 
         if X_argsorted is None:
             X_argsorted = np.asfortranarray(
@@ -529,7 +529,7 @@ cdef class Tree:
                 if sample_weight is not None:
                     sample_weight = sample_weight[sample_mask]
                     sample_weight_ptr = <DOUBLE_t*> sample_weight.data
-                sample_mask = np_ones((n_node_samples, ), dtype=bool)
+                sample_mask = np_ones((n_node_samples, ), dtype=np_bool)
 
                 n_total_samples = n_node_samples
 
@@ -546,8 +546,8 @@ cdef class Tree:
             # Split
             X_ptr = X_ptr + feature * X_stride
 
-            sample_mask_left = np_zeros((n_total_samples, ), dtype=bool)
-            sample_mask_right = np_zeros((n_total_samples, ), dtype=bool)
+            sample_mask_left = np_zeros((n_total_samples, ), dtype=np_bool)
+            sample_mask_right = np_zeros((n_total_samples, ), dtype=np_bool)
             sample_mask_left_ptr = <BOOL_t*> sample_mask_left.data
             sample_mask_right_ptr = <BOOL_t*> sample_mask_right.data
 
