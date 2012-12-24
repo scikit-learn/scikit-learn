@@ -166,7 +166,7 @@ class mock_urllib2(object):
 # Meta estimators need another estimator to be instantiated.
 meta_estimators = ["OneVsOneClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier", "RFE",
-                   "RFECV"]
+                   "RFECV", "BaseEnsemble"]
 # estimators that there is no way to default-construct sensibly
 other = ["Pipeline", "FeatureUnion", "GridSearchCV"]
 
@@ -185,8 +185,8 @@ def all_estimators(include_meta_estimators=False, include_other=False,
     include_meta_estimators : boolean, default=False
         Whether to include meta-estimators that can be constructed using
         an estimator as their first argument. These are currently
-        OneVsOneClassifier, OutputCodeClassifier, OneVsRestClassifier, RFE,
-        RFECV.
+        BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
+        OneVsRestClassifier, RFE, RFECV.
 
     include_others : boolean, default=False
         Wether to include meta-estimators that are somehow special and can
