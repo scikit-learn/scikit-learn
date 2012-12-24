@@ -2410,7 +2410,7 @@ model* train(const problem *prob, const parameter *param)
 				for(; k<sub_prob.l; k++)
 					sub_prob.y[k] = +1;
 
-				train_one(&sub_prob, param, &model_->w[0], weighted_C[0], weighted_C[1]);
+				train_one(&sub_prob, param, &model_->w[0], weighted_C[1], weighted_C[0]);
 			}
 			else
 			{
