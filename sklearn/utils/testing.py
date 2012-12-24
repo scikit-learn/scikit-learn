@@ -34,6 +34,9 @@ from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_less
 
+from sklearn.base import (ClassifierMixin, RegressorMixin, TransformerMixin,
+                          ClusterMixin)
+
 __all__ = ["assert_equal", "assert_not_equal", "assert_raises", "raises",
            "with_setup", "assert_true", "assert_false", "assert_almost_equal",
            "assert_array_equal", "assert_array_almost_equal",
@@ -160,8 +163,48 @@ class mock_urllib2(object):
     def quote(self, string, safe='/'):
         return urllib2.quote(string, safe)
 
+# Meta estimators need another estimator to be instantiated.
+meta_estimators = ["OneVsOneClassifier",
+                   "OutputCodeClassifier", "OneVsRestClassifier", "RFE",
+                   "RFECV"]
+# estimators that there is no way to default-construct sensibly
+other = ["Pipeline", "FeatureUnion", "GridSearchCV"]
 
-def all_estimators():
+
+def all_estimators(include_meta_estimators=False, include_other=False,
+                   type_filter=None):
+    """Get a list of all estimators from sklearn.
+
+    This function crawls the module and gets all classes that inherit
+    from BaseEstimator. Classes that are defined in test-modules are not
+    included.
+    By default meta_estimators such as GridSearchCV are also not included.
+
+    Parameters
+    ----------
+    include_meta_estimators : boolean, default=False
+        Whether to include meta-estimators that can be constructed using
+        an estimator as their first argument. These are currently
+        OneVsOneClassifier, OutputCodeClassifier, OneVsRestClassifier, RFE,
+        RFECV.
+
+    include_others : boolean, default=False
+        Wether to include meta-estimators that are somehow special and can
+        not be default-constructed sensibly. These are currently
+        Pipeline, FeatureUnion and GridSearchCV
+
+    type_filter : string or None, default=None
+        Which kind of estimators should be returned. If None, no filter is
+        applied and all estimators are returned.  Possible values are
+        'classifier', 'regressor', 'cluster' and 'transformer' to get
+        estimators only of these specific types.
+
+    Returns
+    -------
+    estimators : list of tuples
+        List of (name, class), where ``name`` is the class name as string
+        and ``class`` is the actuall type of the class.
+    """
     def is_abstract(c):
         if not(hasattr(c, '__abstractmethods__')):
             return False
@@ -182,9 +225,35 @@ def all_estimators():
 
     all_classes = set(all_classes)
 
-    estimators = [c for c in all_classes if issubclass(c[1], BaseEstimator)]
+    estimators = [c for c in all_classes
+                  if (issubclass(c[1], BaseEstimator)
+                      and c[0] != 'BaseEstimator')]
     # get rid of abstract base classes
     estimators = [c for c in estimators if not is_abstract(c[1])]
+
+    if not include_other:
+        estimators = [c for c in estimators if not c[0] in other]
+    # possibly get rid of meta estimators
+    if not include_meta_estimators:
+        estimators = [c for c in estimators if not c[0] in meta_estimators]
+
+    if type_filter == 'classifier':
+        estimators = [est for est in estimators
+                      if issubclass(est[1], ClassifierMixin)]
+    elif type_filter == 'regressor':
+        estimators = [est for est in estimators
+                      if issubclass(est[1], RegressorMixin)]
+    elif type_filter == 'transformer':
+        estimators = [est for est in estimators
+                      if issubclass(est[1], TransformerMixin)]
+    elif type_filter == 'cluster':
+        estimators = [est for est in estimators
+                      if issubclass(est[1], ClusterMixin)]
+    elif type_filter is not None:
+        raise ValueError("Parmeter type_filter must be 'classifier', "
+                         "'regressor', 'transformer', 'cluster' or None, got"
+                         " %s." % repr(type_filter))
+
     # We sort in order to have reproducible test failures
     return sorted(estimators)
 

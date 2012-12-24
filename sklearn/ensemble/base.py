@@ -5,6 +5,8 @@ Base class for ensemble-based estimators.
 # Authors: Gilles Louppe
 # License: BSD 3
 
+from abc import ABCMeta, abstractmethod
+
 from ..base import clone
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
@@ -28,7 +30,9 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
         The list of attributes to use as parameters when instantiating a
         new base estimator. If none are given, default parameters are used.
     """
+    __metaclass__ = ABCMeta
 
+    @abstractmethod
     def __init__(self, base_estimator, n_estimators=10,
                  estimator_params=tuple()):
 
