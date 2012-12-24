@@ -1,13 +1,13 @@
 import warnings
 import numpy as np
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_raises
+from sklearn.base import clone
+from sklearn.utils.testing import (assert_array_equal,
+                                   assert_equal,
+                                   assert_almost_equal,
+                                   assert_raises)
 
-from sklearn.dummy import DummyClassifier
-from sklearn.dummy import DummyRegressor
+from sklearn.dummy import DummyClassifier, DummyRegressor
 
 
 def _check_predict_proba(clf, X, y):
@@ -38,6 +38,26 @@ def _check_predict_proba(clf, X, y):
             assert_array_equal(np.log(proba[k]), log_proba[k])
 
 
+def _check_behavior_2d(clf):
+    # 1d case
+    X = np.array([[0], [0], [0], [0]])  # ignored
+    y = np.array([1, 2, 1, 1])
+    est = clone(clf)
+    est.fit(X, y)
+    y_pred = est.predict(X)
+    assert_equal(y.shape, y_pred.shape)
+
+    # 2d case
+    y = np.array([[1, 0],
+                  [2, 0],
+                  [1, 0],
+                  [1, 3]])
+    est = clone(clf)
+    est.fit(X, y)
+    y_pred = est.predict(X)
+    assert_equal(y.shape, y_pred.shape)
+
+
 def test_most_frequent_strategy():
     X = [[0], [0], [0], [0]]  # ignored
     y = [1, 2, 1, 1]
@@ -63,6 +83,7 @@ def test_most_frequent_strategy_multioutput():
                        np.hstack([np.ones((n_samples, 1)),
                                   np.zeros((n_samples, 1))]))
     _check_predict_proba(clf, X, y)
+    _check_behavior_2d(clf)
 
 
 def test_stratified_strategy():
@@ -99,6 +120,8 @@ def test_stratified_strategy_multioutput():
         assert_almost_equal(p[2], 2. / 5, decimal=1)
         _check_predict_proba(clf, X, y)
 
+    _check_behavior_2d(clf)
+
 
 def test_uniform_strategy():
     X = [[0]] * 4  # ignored
@@ -131,6 +154,8 @@ def test_uniform_strategy_multioutput():
         assert_almost_equal(p[1], 0.5, decimal=1)
         assert_almost_equal(p[2], 0.5, decimal=1)
         _check_predict_proba(clf, X, y)
+
+    _check_behavior_2d(clf)
 
 
 def test_string_labels():
@@ -176,6 +201,7 @@ def test_multioutput_regressor():
 
     assert_array_equal(np.tile(mean, (y_learn.shape[0], 1)), y_pred_learn)
     assert_array_equal(np.tile(mean, (y_test.shape[0], 1)), y_pred_test)
+    _check_behavior_2d(est)
 
 
 def test_regressor_exceptions():

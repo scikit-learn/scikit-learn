@@ -44,6 +44,9 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
     `n_outputs_` : int,
         Number of outputs.
+
+    `outputs_2d_` : bool,
+        True if the output at fit is 2d, else false.
     """
 
     def __init__(self, strategy="stratified", random_state=None):
@@ -71,6 +74,8 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             raise ValueError("Unknown strategy type.")
 
         y = np.atleast_1d(y)
+        self.output_2d_ = y.ndim == 2
+
         if y.ndim == 1:
             y = np.reshape(y, (-1, 1))
 
@@ -85,7 +90,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             self.n_classes_.append(classes.shape[0])
             self.class_prior_.append(np.bincount(y_k) / float(y_k.shape[0]))
 
-        if self.n_outputs_ == 1:
+        if self.n_outputs_ == 1 and not self.output_2d_:
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
             self.class_prior_ = self.class_prior_[0]
@@ -143,7 +148,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
             y.append(classes_[k][ret])
 
         y = np.vstack(y).T
-        if self.n_outputs_ == 1:
+        if self.n_outputs_ == 1 and not self.output_2d_:
             y = np.ravel(y)
 
         return y
@@ -175,7 +180,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
         n_classes_ = self.n_classes_
         classes_ = self.classes_
         class_prior_ = self.class_prior_
-        if self.n_outputs_ == 1:
+        if self.n_outputs_ == 1 and not self.output_2d_:
             # Get same type even for self.n_outputs_ == 1
             n_classes_ = [n_classes_]
             classes_ = [classes_]
@@ -197,7 +202,7 @@ class DummyClassifier(BaseEstimator, ClassifierMixin):
 
             P.append(out)
 
-        if self.n_outputs_ == 1:
+        if self.n_outputs_ == 1 and not self.output_2d_:
             P = P[0]
 
         return P
@@ -238,6 +243,12 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
     ----------
     `y_mean_` : float or array of shape [n_outputs]
         Mean of the training targets.
+
+    `n_outputs_` : int,
+        Number of outputs.
+
+    `outputs_2d_` : bool,
+        True if the output at fit is 2d, else false.
     """
 
     def fit(self, X, y):
@@ -257,7 +268,10 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
         self : object
             Returns self.
         """
+        y = safe_asarray(y)
         self.y_mean_ = np.reshape(np.mean(y, axis=0), (1, -1))
+        self.n_outputs_ = np.size(self.y_mean_)  # y.shape[1] is not safe
+        self.output_2d_ = (y.ndim == 2)
         return self
 
     def predict(self, X):
@@ -280,11 +294,9 @@ class DummyRegressor(BaseEstimator, RegressorMixin):
 
         X = safe_asarray(X)
         n_samples = X.shape[0]
-        n_outputs = np.size(self.y_mean_)
-
         y = np.ones((n_samples, 1)) * self.y_mean_
 
-        if n_outputs == 1:
+        if self.n_outputs_ == 1 and not self.output_2d_:
             y = np.ravel(y)
 
         return y
