@@ -8,9 +8,9 @@
 # License: BSD Style.
 
 
-# ==============================================================================
+# =============================================================================
 # Imports
-# ==============================================================================
+# =============================================================================
 
 cimport cython
 
@@ -41,9 +41,9 @@ cdef extern from "float.h":
     cdef extern double DBL_MAX
 
 
-# ==============================================================================
+# =============================================================================
 # Types and constants
-# ==============================================================================
+# =============================================================================
 
 # Dtype
 DTYPE = np_float32
@@ -66,9 +66,9 @@ cdef int _TREE_SPLIT_BEST = TREE_SPLIT_BEST
 cdef int _TREE_SPLIT_RANDOM = TREE_SPLIT_RANDOM
 
 
-# ==============================================================================
+# =============================================================================
 # Tree
-# ==============================================================================
+# =============================================================================
 
 cdef class Tree:
     """Struct-of-arrays representation of a binary decision tree.
@@ -190,10 +190,13 @@ cdef class Tree:
     property value:
         def __get__(self):
             cdef np.npy_intp shape[3]
+
             shape[0] = <np.npy_intp> self.node_count
             shape[1] = <np.npy_intp> self.n_outputs
             shape[2] = <np.npy_intp> self.max_n_classes
-            return np.PyArray_SimpleNewFromData(3, shape, np.NPY_DOUBLE, self.value)
+
+            return np.PyArray_SimpleNewFromData(
+                3, shape, np.NPY_DOUBLE, self.value)
 
     property best_error:
         def __get__(self):
@@ -1059,9 +1062,9 @@ cdef class Tree:
         return error * error
 
 
-# ==============================================================================
+# =============================================================================
 # Criterion
-# ==============================================================================
+# =============================================================================
 
 cdef class Criterion:
     """Interface for splitting criteria (regression and classification)."""
@@ -1276,10 +1279,10 @@ cdef class ClassificationCriterion(Criterion):
                 label_count_right[k * label_count_stride + c] = label_count_init[k * label_count_stride + c]
 
     cdef void update(self, int a, int b,
-                      DOUBLE_t* y, int y_stride,
-                      int* X_argsorted_i,
-                      DOUBLE_t* sample_weight,
-                      BOOL_t* sample_mask):
+                           DOUBLE_t* y, int y_stride,
+                           int* X_argsorted_i,
+                           DOUBLE_t* sample_weight,
+                           BOOL_t* sample_mask):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
         cdef int n_outputs = self.n_outputs
@@ -1337,7 +1340,7 @@ cdef class ClassificationCriterion(Criterion):
                 # does anyone know of a better way to handle negative sample
                 # weights here? Using absolute value for now...
                 buffer_value[k * label_count_stride + c] = abs(
-                        label_count_init[k * label_count_stride + c])
+                    label_count_init[k * label_count_stride + c])
 
 
 cdef class Gini(ClassificationCriterion):
@@ -1678,7 +1681,7 @@ cdef class RegressionCriterion(Criterion):
             sq_sum_left[k] = 0.0
             var_left[k] = 0.0
             var_right[k] = (sq_sum_right[k] -
-                    weighted_n_samples * (mean_right[k] * mean_right[k]))
+                weighted_n_samples * (mean_right[k] * mean_right[k]))
 
     cdef void update(self, int a, int b,
                           DOUBLE_t* y, int y_stride,
@@ -1777,9 +1780,9 @@ cdef class MSE(RegressionCriterion):
         return total / n_outputs
 
 
-# ==============================================================================
+# =============================================================================
 # Utils
-# ==============================================================================
+# =============================================================================
 
 cdef inline np.ndarray intp_to_ndarray(int* data, int size):
     """Encapsulate data into a 1D numpy array of int's."""
