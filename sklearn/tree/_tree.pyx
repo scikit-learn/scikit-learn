@@ -21,6 +21,8 @@ np.import_array()
 from numpy import zeros as np_zeros
 from numpy import ones as np_ones
 from numpy import bool as np_bool
+from numpy import float32 as np_float32
+from numpy import float64 as np_float64
 
 cdef extern from "stdlib.h":
     void* malloc(size_t size)
@@ -44,8 +46,8 @@ cdef extern from "float.h":
 # ==============================================================================
 
 # Dtype
-DTYPE = np.float32
-DOUBLE = np.float64
+DTYPE = np_float32
+DOUBLE = np_float64
 # ctypedef np.float32_t DTYPE_t
 # ctypedef np.float64_t DOUBLE_t
 # ctypedef np.int8_t BOOL_t
