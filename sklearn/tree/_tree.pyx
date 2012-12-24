@@ -739,7 +739,7 @@ cdef class Tree:
         if max_features < 0 or max_features >= n_features:
             max_features = n_features
         else:
-            features = random_state.permutation(features)
+            random_state.shuffle(features)
 
         # Look for the best split
         for feature_idx from 0 <= feature_idx < n_features:
@@ -871,7 +871,7 @@ cdef class Tree:
         if max_features < 0 or max_features >= n_features:
             max_features = n_features
         else:
-            features = random_state.permutation(features)
+            random_state.shuffle(features)
 
         # Look for the best split
         for feature_idx from 0 <= feature_idx < n_features:
