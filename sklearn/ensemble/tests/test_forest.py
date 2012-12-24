@@ -207,7 +207,7 @@ def test_oob_score_classification():
     clf.fit(iris.data[:n_samples / 2, :], iris.target[:n_samples / 2])
     test_score = clf.score(iris.data[n_samples / 2:, :],
                            iris.target[n_samples / 2:])
-    assert_less(abs(test_score - clf.oob_score_), 0.02)
+    assert_less(abs(test_score - clf.oob_score_), 0.05)
 
 
 def test_oob_score_regression():
