@@ -18,6 +18,10 @@ import numpy as np
 cimport numpy as np
 np.import_array()
 
+from numpy import zeros as np_zeros
+from numpy import ones as np_ones
+from numpy import bool as np_bool
+
 cdef extern from "stdlib.h":
     void* malloc(size_t size)
     void* calloc(size_t nmemb, size_t size)
@@ -33,9 +37,6 @@ cdef extern from "math.h":
 
 cdef extern from "float.h":
     cdef extern double DBL_MAX
-
-from numpy import zeros, ones
-from numpy import bool
 
 
 # ==============================================================================
@@ -395,7 +396,7 @@ cdef class Tree:
                         sample_weight, dtype=DOUBLE, order="C")
 
         if sample_mask is None:
-            sample_mask = ones((X.shape[0],), dtype=bool)
+            sample_mask = np_ones((X.shape[0],), dtype=bool)
 
         if X_argsorted is None:
             X_argsorted = np.asfortranarray(
@@ -528,7 +529,7 @@ cdef class Tree:
                 if sample_weight is not None:
                     sample_weight = sample_weight[sample_mask]
                     sample_weight_ptr = <DOUBLE_t*> sample_weight.data
-                sample_mask = ones((n_node_samples, ), dtype=bool)
+                sample_mask = np_ones((n_node_samples, ), dtype=bool)
 
                 n_total_samples = n_node_samples
 
@@ -545,8 +546,8 @@ cdef class Tree:
             # Split
             X_ptr = X_ptr + feature * X_stride
 
-            sample_mask_left = zeros((n_total_samples, ), dtype=bool)
-            sample_mask_right = zeros((n_total_samples, ), dtype=bool)
+            sample_mask_left = np_zeros((n_total_samples, ), dtype=bool)
+            sample_mask_right = np_zeros((n_total_samples, ), dtype=bool)
             sample_mask_left_ptr = <BOOL_t*> sample_mask_left.data
             sample_mask_right_ptr = <BOOL_t*> sample_mask_right.data
 
@@ -960,7 +961,7 @@ cdef class Tree:
         cdef int offset_output
 
         cdef np.ndarray[np.float64_t, ndim=3] out
-        out = zeros((n_samples, self.n_outputs, self.max_n_classes), dtype=np.float64)
+        out = np_zeros((n_samples, self.n_outputs, self.max_n_classes), dtype=np.float64)
 
         for i from 0 <= i < n_samples:
             node_id = 0
@@ -989,7 +990,7 @@ cdef class Tree:
         cdef int node_id = 0
 
         cdef np.ndarray[np.int32_t, ndim=1] out
-        out = zeros((n_samples, ), dtype=np.int32)
+        out = np_zeros((n_samples, ), dtype=np.int32)
 
         for i from 0 <= i < n_samples:
             node_id = 0
@@ -1027,7 +1028,7 @@ cdef class Tree:
 
         cdef int node
         cdef np.ndarray[np.float64_t, ndim=1] importances
-        importances = zeros((self.n_features,), dtype=np.float64)
+        importances = np_zeros((self.n_features,), dtype=np.float64)
 
         if method == "gini":
             for node from 0 <= node < self.node_count:
@@ -1849,7 +1850,7 @@ def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
     cdef np.ndarray[np.float64_t, ndim=1, mode="c"] rand = \
          random_state.rand(n_total_samples)
     cdef np.ndarray[BOOL_t, ndim=1, mode="c"] sample_mask = \
-         zeros((n_total_samples,), dtype=np.int8)
+         np_zeros((n_total_samples,), dtype=np.int8)
 
     cdef int n_bagged = 0
     cdef int i = 0
@@ -1859,4 +1860,4 @@ def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
             sample_mask[i] = 1
             n_bagged += 1
 
-    return sample_mask.astype(bool)
+    return sample_mask.astype(np_bool)
