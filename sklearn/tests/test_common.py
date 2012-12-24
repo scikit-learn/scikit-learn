@@ -53,6 +53,8 @@ from sklearn.isotonic import IsotonicRegression
 from sklearn.random_projection import (GaussianRandomProjection,
                                        SparseRandomProjection)
 
+from sklearn.cross_validation import train_test_split
+
 dont_test = [SparseCoder, EllipticEnvelope, EllipticEnvelop, DictVectorizer,
              LabelBinarizer, LabelEncoder, TfidfTransformer,
              IsotonicRegression, OneHotEncoder, RandomTreesEmbedding,
@@ -645,3 +647,32 @@ def test_configure():
     finally:
         sys.argv = old_argv
         os.chdir(cwd)
+
+
+def test_class_weight_classifiers():
+    # test that class_weight works and that the semantics are consistent
+    classifiers = all_estimators(type_filter='classifier')
+
+    with warnings.catch_warnings(record=True):
+        classifiers = [c for c in classifiers
+                       if 'class_weight' in c[1]().get_params().keys()]
+
+    # first blanced classification
+    for n_centers in [2, 3]:
+        X, y = make_blobs(centers=n_centers, random_state=0, cluster_std=0.1)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5,
+                                                            random_state=0)
+        for name, Clf in classifiers:
+            if n_centers == 2:
+                class_weight = {0: 1000, 1: 0.0001}
+            else:
+                class_weight = {0: 1000, 1: 0.0001, 2: 0.0001}
+
+            with warnings.catch_warnings(record=True):
+                clf = Clf(class_weight=class_weight)
+            set_random_state(clf)
+            clf.fit(X_train, y_train)
+            y_pred = clf.predict(X_test)
+            #assert_array_equal(y_pred, 0)
+            if (y_pred != 0).any():
+                print name, y_pred
