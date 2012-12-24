@@ -40,13 +40,13 @@ def confusion_matrix(y_true, y_pred, labels=None):
     Parameters
     ----------
     y_true : array, shape = [n_samples]
-        true targets
+        Ground truth (correct) target values.
 
     y_pred : array, shape = [n_samples]
-        estimated targets
+        Estimated targets as returned by a classifier.
 
     labels : array, shape = [n_classes]
-        lists all labels occuring in the dataset.
+        List of all labels occuring in the dataset.
         If none is given, those that appear at least once
         in y_true or y_pred are used.
 
@@ -90,15 +90,15 @@ def roc_curve(y_true, y_score, pos_label=None):
     ----------
 
     y_true : array, shape = [n_samples]
-        true binary labels in range {0, 1} or {-1, 1}.
+        True binary labels in range {0, 1} or {-1, 1}.
         If labels are not binary, pos_label should be explictly given.
 
     y_score : array, shape = [n_samples]
-        target scores, can either be probability estimates of
+        Target scores, can either be probability estimates of
         the positive class, confidence values, or binary decisions.
 
     pos_label : int
-        label considered as positive and others are considered negative.
+        Label considered as positive and others are considered negative.
 
     Returns
     -------
@@ -222,10 +222,10 @@ def average_precision_score(y_true, y_score):
     ----------
 
     y_true : array, shape = [n_samples]
-        true binary labels
+        True binary labels.
 
     y_score : array, shape = [n_samples]
-        target scores, can either be probability estimates of
+        Target scores, can either be probability estimates of
         the positive class, confidence values, or binary decisions.
 
     Returns
@@ -255,10 +255,10 @@ def auc_score(y_true, y_score):
     ----------
 
     y_true : array, shape = [n_samples]
-        true binary labels
+        True binary labels.
 
     y_score : array, shape = [n_samples]
-        target scores, can either be probability estimates of
+        Target scores, can either be probability estimates of
         the positive class, confidence values, or binary decisions.
 
     Returns
@@ -351,13 +351,13 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     Parameters
     ----------
     y_true : array, shape = [n_samples]
-        True targets
+        Ground truth (correct) target values.
 
     y_pred : array, shape = [n_samples]
-        Predicted targets
+        Estimated targets as returned by a classifier.
 
     labels : array
-        Integer array of labels
+        Integer array of labels.
 
     pos_label : int
         In the binary classification case, give the label of the positive
@@ -405,13 +405,13 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     Parameters
     ----------
     y_true : array, shape = [n_samples]
-        True targets
+        Ground truth (correct) target values.
 
     y_pred : array, shape = [n_samples]
-        Predicted targets
+        Estimated targets as returned by a classifier.
 
     labels : array
-        Integer array of labels
+        Integer array of labels.
 
     pos_label : int
         In the binary classification case, give the label of the positive
@@ -461,16 +461,16 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     Parameters
     ----------
     y_true : array, shape = [n_samples]
-        True targets
+        Ground truth (correct) target values.
 
     y_pred : array, shape = [n_samples]
-        Predicted targets
+        Estimated targets as returned by a classifier.
 
     beta: float
         Weight of precision in harmonic mean.
 
     labels : array
-        Integer array of labels
+        Integer array of labels.
 
     pos_label : int
         In the binary classification case, give the label of the positive
@@ -514,7 +514,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
 
 def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
-    """Compute f1 score
+    """Compute the f1 score of a prediction.
 
     The F1 score can be interpreted as a weighted average of the precision
     and recall, where an F1 score reaches its best value at 1 and worst
@@ -531,10 +531,10 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     Parameters
     ----------
     y_true : array, shape = [n_samples]
-        True targets
+        Ground truth (correct) target values.
 
     y_pred : array, shape = [n_samples]
-        Predicted targets
+        Estimated targets as returned by a classifier.
 
     labels : array
         Integer array of labels
@@ -601,10 +601,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     Parameters
     ----------
     y_true : array, shape = [n_samples]
-        True targets
+        Ground truth (correct) target values.
 
     y_pred : array, shape = [n_samples]
-        Predicted targets
+        Estimated targets as returned by a classifier.
 
     beta : float, 1.0 by default
         The strength of recall versus precision in the f-score.
@@ -737,10 +737,10 @@ def matthews_corrcoef(y_true, y_pred):
     Parameters
     ----------
     y_true : array, shape = [n_samples]
-        true targets
+        Ground truth (correct) target values.
 
     y_pred : array, shape = [n_samples]
-        estimated targets
+        Estimated targets as returned by a classifier.
 
     Returns
     -------
@@ -767,16 +767,16 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
     Parameters
     ----------
     y_true : array, shape = [n_samples]
-        True targets
+        Ground truth (correct) target values.
 
     y_pred : array, shape = [n_samples]
-        Estimated targets
+        Estimated targets as returned by a classifier.
 
     labels : array, shape = [n_labels]
-        Optional list of label indices to include in the report
+        Optional list of label indices to include in the report.
 
     target_names : list of strings
-        Optional display names matching the labels (same order)
+        Optional display names matching the labels (same order).
 
     Returns
     -------
@@ -834,7 +834,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
 
 
 def precision_recall_curve(y_true, probas_pred):
-    """Compute precision-recall pairs for different probability thresholds
+    """Compute precision-recall pairs for different probability thresholds.
 
     Note: this implementation is restricted to the binary classification task.
 
@@ -854,21 +854,21 @@ def precision_recall_curve(y_true, probas_pred):
     Parameters
     ----------
     y_true : array, shape = [n_samples]
-        True targets of binary classification in range {-1, 1} or {0, 1}
+        True targets of binary classification in range {-1, 1} or {0, 1}.
 
     probas_pred : array, shape = [n_samples]
-        Estimated probabilities
+        Estimated probabilities or decision function.
 
     Returns
     -------
     precision : array, shape = [n + 1]
-        Precision values
+        Precision values.
 
     recall : array, shape = [n + 1]
-        Recall values
+        Recall values.
 
     thresholds : array, shape = [n]
-        Thresholds on y_score used to compute precision and recall
+        Thresholds on y_score used to compute precision and recall.
 
     """
     y_true = np.ravel(y_true)
@@ -938,13 +938,19 @@ def explained_variance_score(y_true, y_pred):
 
     Note: the explained variance is not a symmetric function.
 
-    return the explained variance
-
     Parameters
     ----------
     y_true : array-like
+        Ground truth (correct) target values.
 
     y_pred : array-like
+        Estimated target values.
+
+    Returns
+    -------
+    score : float
+        explained variance
+
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
@@ -968,8 +974,10 @@ def r2_score(y_true, y_pred):
     Parameters
     ----------
     y_true : array-like
+        Ground truth (correct) target values.
 
     y_pred : array-like
+        Estimated target values.
 
     Returns
     -------
@@ -1011,7 +1019,7 @@ def zero_one_score(y_true, y_pred):
     Parameters
     ----------
     y_true : array-like, shape = n_samples
-        Gold standard labels.
+        Ground truth (correct) labels.
 
     y_pred : array-like, shape = n_samples
         Predicted labels, as returned by a classifier.
