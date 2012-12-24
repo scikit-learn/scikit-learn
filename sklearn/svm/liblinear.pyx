@@ -11,7 +11,7 @@ cimport liblinear
 
 def train_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
                np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
-               int solver_type, double eps, double bias, double C, 
+               int solver_type, double eps, double bias, double C,
                np.ndarray[np.float64_t, ndim=1] class_weight,
                unsigned random_seed):
     """
@@ -35,12 +35,12 @@ def train_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
         free_problem(problem)
         free_parameter(param)
         raise ValueError(error_msg)
- 
+
     # early return
     model = train(problem, param)
 
     # coef matrix holder created as fortran since that's what's used in liblinear
-    cdef np.ndarray[np.float64_t, ndim=2, mode='fortran'] w  
+    cdef np.ndarray[np.float64_t, ndim=2, mode='fortran'] w
     cdef int nr_class = get_nr_class(model)
     cdef int nr_feature = get_nr_feature(model)
     if bias > 0: nr_feature = nr_feature + 1
@@ -49,7 +49,7 @@ def train_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
         copy_w(w.data, model, nr_feature)
     else:
         len_w = (nr_class) * nr_feature
-        w = np.empty((nr_class, nr_feature),order='F') 
+        w = np.empty((nr_class, nr_feature),order='F')
         copy_w(w.data, model, len_w)
 
     ### FREE
