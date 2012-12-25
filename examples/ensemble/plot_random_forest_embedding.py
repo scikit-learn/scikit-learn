@@ -74,8 +74,7 @@ ax.set_yticks(())
 h = .01
 x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
 y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
-xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
-        np.arange(y_min, y_max, h))
+xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 
 # transform grid using RandomTreesEmbedding
 transformed_grid = hasher.transform(np.c_[xx.ravel(), yy.ravel()])

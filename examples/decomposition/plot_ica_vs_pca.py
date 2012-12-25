@@ -68,8 +68,8 @@ def plot_samples(S, axis_list=None):
             # Trick to get legend to work
             pl.plot(0.1 * x_axis, 0.1 * y_axis, linewidth=2, color=color)
             # pl.quiver(x_axis, y_axis, x_axis, y_axis, zorder=11, width=0.01,
-            pl.quiver(0, 0, x_axis, y_axis, zorder=11, width=0.01,
-                        scale=6, color=color)
+            pl.quiver(0, 0, x_axis, y_axis, zorder=11, width=0.01, scale=6,
+                      color=color)
 
     pl.hlines(0, -3, 3)
     pl.vlines(0, -3, 3)

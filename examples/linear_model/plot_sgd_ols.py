@@ -16,8 +16,8 @@ from sklearn.datasets.samples_generator import make_regression
 
 # this is our test set, it's just a straight line with some
 # gaussian noise
-X, Y = make_regression(n_samples=100, n_features=1, n_informative=1,\
-                        random_state=0, noise=35)
+X, Y = make_regression(n_samples=100, n_features=1, n_informative=1,
+                       random_state=0, noise=35)
 
 # run the classifier
 clf = SGDRegressor(alpha=0.1, n_iter=20)

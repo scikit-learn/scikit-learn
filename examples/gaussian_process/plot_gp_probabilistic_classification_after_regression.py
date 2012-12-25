@@ -60,7 +60,7 @@ gp.fit(X, y)
 
 # Evaluate real function, the prediction and its MSE on a grid
 res = 50
-x1, x2 = np.meshgrid(np.linspace(- lim, lim, res), \
+x1, x2 = np.meshgrid(np.linspace(- lim, lim, res),
                      np.linspace(- lim, lim, res))
 xx = np.vstack([x1.reshape(x1.size), x2.reshape(x2.size)]).T
 
@@ -84,7 +84,7 @@ ax.set_yticklabels([])
 pl.xlabel('$x_1$')
 pl.ylabel('$x_2$')
 
-cax = pl.imshow(np.flipud(PHI(- y_pred / sigma)), cmap=cm.gray_r, alpha=0.8, \
+cax = pl.imshow(np.flipud(PHI(- y_pred / sigma)), cmap=cm.gray_r, alpha=0.8,
                 extent=(- lim, lim, - lim, lim))
 norm = pl.matplotlib.colors.Normalize(vmin=0., vmax=0.9)
 cb = pl.colorbar(cax, ticks=[0., 0.2, 0.4, 0.6, 0.8, 1.], norm=norm)
@@ -94,18 +94,17 @@ pl.plot(X[y <= 0, 0], X[y <= 0, 1], 'r.', markersize=12)
 
 pl.plot(X[y > 0, 0], X[y > 0, 1], 'b.', markersize=12)
 
-cs = pl.contour(x1, x2, y_true, [0.], colors='k', \
-                linestyles='dashdot')
+cs = pl.contour(x1, x2, y_true, [0.], colors='k', linestyles='dashdot')
 
-cs = pl.contour(x1, x2, PHI(- y_pred / sigma), [0.025], colors='b', \
+cs = pl.contour(x1, x2, PHI(- y_pred / sigma), [0.025], colors='b',
                 linestyles='solid')
 pl.clabel(cs, fontsize=11)
 
-cs = pl.contour(x1, x2, PHI(- y_pred / sigma), [0.5], colors='k', \
+cs = pl.contour(x1, x2, PHI(- y_pred / sigma), [0.5], colors='k',
                 linestyles='dashed')
 pl.clabel(cs, fontsize=11)
 
-cs = pl.contour(x1, x2, PHI(- y_pred / sigma), [0.975], colors='r', \
+cs = pl.contour(x1, x2, PHI(- y_pred / sigma), [0.975], colors='r',
                 linestyles='solid')
 pl.clabel(cs, fontsize=11)
 

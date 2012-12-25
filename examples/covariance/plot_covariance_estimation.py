@@ -69,7 +69,7 @@ X_test = np.dot(base_X_test, coloring_matrix)
 # spanning a range of possible shrinkage coefficient values
 shrinkages = np.logspace(-2, 0, 30)
 negative_logliks = [-ShrunkCovariance(shrinkage=s).fit(X_train).score(X_test)
-                     for s in shrinkages]
+                    for s in shrinkages]
 
 # under the ground-truth model, which we would not have access to in real
 # settings

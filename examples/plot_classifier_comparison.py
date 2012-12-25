@@ -43,19 +43,19 @@ from sklearn.qda import QDA
 h = .02  # step size in the mesh
 
 names = ["Nearest Neighbors", "Linear SVM", "RBF SVM", "Decision Tree",
-        "Random Forest", "Naive Bayes", "LDA", "QDA"]
-classifiers = [KNeighborsClassifier(3),
+         "Random Forest", "Naive Bayes", "LDA", "QDA"]
+classifiers = [
+    KNeighborsClassifier(3),
     SVC(kernel="linear", C=0.025),
     SVC(gamma=2, C=1),
     DecisionTreeClassifier(max_depth=5),
     RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
     GaussianNB(),
     LDA(),
-    QDA()
-    ]
+    QDA()]
 
-X, y = make_classification(n_features=2, n_redundant=0,
-        n_informative=2, random_state=1, n_clusters_per_class=1)
+X, y = make_classification(n_features=2, n_redundant=0, n_informative=2,
+                           random_state=1, n_clusters_per_class=1)
 rng = np.random.RandomState(2)
 X += 2 * rng.uniform(size=X.shape)
 linearly_separable = (X, y)
@@ -85,7 +85,7 @@ for ds in datasets:
         x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
         y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
         xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
-                np.arange(y_min, y_max, h))
+                             np.arange(y_min, y_max, h))
         if hasattr(clf, "decision_function"):
             Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])
         else:

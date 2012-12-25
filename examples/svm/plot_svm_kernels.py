@@ -39,8 +39,7 @@ X = np.c_[(.4, -.7),
           (.5, -2.4),
           (.2, -2.3),
           (0, -2.7),
-          (1.3, 2.1),
-         ].T
+          (1.3, 2.1)].T
 Y = [0] * 8 + [1] * 8
 
 # figure number
@@ -55,8 +54,8 @@ for kernel in ('linear', 'poly', 'rbf'):
     pl.figure(fignum, figsize=(4, 3))
     pl.clf()
 
-    pl.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1],
-            s=80, facecolors='none', zorder=10)
+    pl.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1], s=80,
+               facecolors='none', zorder=10)
     pl.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap=pl.cm.Paired)
 
     pl.axis('tight')
@@ -72,9 +71,8 @@ for kernel in ('linear', 'poly', 'rbf'):
     Z = Z.reshape(XX.shape)
     pl.figure(fignum, figsize=(4, 3))
     pl.pcolormesh(XX, YY, Z > 0, cmap=pl.cm.Paired)
-    pl.contour(XX, YY, Z, colors=['k', 'k', 'k'],
-              linestyles=['--', '-', '--'],
-              levels=[-.5, 0, .5])
+    pl.contour(XX, YY, Z, colors=['k', 'k', 'k'], linestyles=['--', '-', '--'],
+               levels=[-.5, 0, .5])
 
     pl.xlim(x_min, x_max)
     pl.ylim(y_min, y_max)
