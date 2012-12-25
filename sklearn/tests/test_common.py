@@ -29,7 +29,8 @@ from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
                           TransformerMixin, ClusterMixin)
 from sklearn.utils import shuffle
 from sklearn.preprocessing import StandardScaler, Scaler
-from sklearn.datasets import load_iris, load_boston, make_blobs
+from sklearn.datasets import (load_iris, load_boston, make_blobs,
+                              make_classification)
 from sklearn.metrics import zero_one_score, adjusted_rand_score
 from sklearn.lda import LDA
 from sklearn.svm.base import BaseLibSVM
@@ -52,6 +53,7 @@ from sklearn.cluster import (WardAgglomeration, AffinityPropagation,
 from sklearn.isotonic import IsotonicRegression
 from sklearn.random_projection import (GaussianRandomProjection,
                                        SparseRandomProjection)
+from sklearn.metrics import f1_score
 
 from sklearn.cross_validation import train_test_split
 
@@ -684,3 +686,40 @@ def test_class_weight_classifiers():
                 assert_greater(np.mean(y_pred == 0), 0.9)
             except:
                 print name, y_pred
+
+
+def test_class_weight_auto_classifies():
+    # test that class_weight="auto" improves f1-score
+    classifiers = all_estimators(type_filter='classifier')
+
+    with warnings.catch_warnings(record=True):
+        classifiers = [c for c in classifiers
+                       if 'class_weight' in c[1]().get_params().keys()]
+
+    for n_classes in [2, 3]:
+        # create unbalanced dataset
+        X, y = make_classification(n_classes=n_classes, n_samples=200,
+                                   n_features=10, weights=[0.7, 0.3],
+                                   random_state=0)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5,
+                                                            random_state=0)
+        for name, Clf in classifiers:
+            if name == "NuSVC":
+                # the sparse version has a parameter that doesn't do anything
+                continue
+
+            with warnings.catch_warnings(record=True):
+                clf = Clf()
+            if hasattr(clf, "n_iter"):
+                clf.set_params(n_iter=100)
+
+            set_random_state(clf)
+            clf.fit(X_train, y_train)
+            y_pred = clf.predict(X_test)
+
+            clf.set_params(class_weight='auto')
+            clf.fit(X_train, y_train)
+            y_pred_auto = clf.predict(X_test)
+            assert_greater(f1_score(y_test, y_pred_auto),
+                           f1_score(y_test, y_pred))
+            print(f1_score(y_test, y_pred_auto), f1_score(y_test, y_pred))
