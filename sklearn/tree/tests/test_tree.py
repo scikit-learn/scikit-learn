@@ -187,17 +187,6 @@ def test_iris():
             " and score = " + str(score)
 
 
-def test_unbalanced_iris():
-    """Check class rebalancing."""
-    unbalanced_X = iris.data[:125]
-    unbalanced_y = iris.target[:125]
-    sample_weight = balance_weights(unbalanced_y)
-
-    clf = tree.DecisionTreeClassifier()
-    clf.fit(unbalanced_X, unbalanced_y, sample_weight=sample_weight)
-    assert_almost_equal(clf.predict(unbalanced_X), unbalanced_y)
-
-
 def test_boston():
     """Check consistency on dataset boston house prices."""
     for c in ('mse',):
@@ -538,6 +527,50 @@ def test_classes_shape():
     assert_equal(clf.n_classes_, [2, 2])
     assert_equal(clf.classes_, [[-1, 1], [-2, 2]])
 
+
+def test_unbalanced_iris():
+    """Check class rebalancing."""
+    unbalanced_X = iris.data[:125]
+    unbalanced_y = iris.target[:125]
+    sample_weight = balance_weights(unbalanced_y)
+
+    clf = tree.DecisionTreeClassifier()
+    clf.fit(unbalanced_X, unbalanced_y, sample_weight=sample_weight)
+    assert_almost_equal(clf.predict(unbalanced_X), unbalanced_y)
+
+
+def test_sample_weight():
+    """Check sample weighting."""
+    # Test that zero-weighted samples are not taken into account
+    X = np.arange(100)[:, np.newaxis]
+    y = np.ones(100)
+    y[:50] = 0.0
+
+    sample_weight = np.ones(100)
+    sample_weight[y == 0] = 0.0
+
+    clf = tree.DecisionTreeClassifier()
+    clf.fit(X, y, sample_weight=sample_weight)
+    assert_array_equal(clf.predict(X), np.ones(100))
+
+    # Test that low weighted samples are not taken into account at low depth
+    X = np.arange(200)[:, np.newaxis]
+    y = np.zeros(200)
+    y[50:100] = 1
+    y[100:200] = 2
+    X[100:200, 0] = 200
+
+    sample_weight = np.ones(200)
+
+    sample_weight[y == 2] = .51 # Samples of class '2' are still weightier
+    clf = tree.DecisionTreeClassifier(max_depth=1)
+    clf.fit(X, y, sample_weight=sample_weight)
+    assert_equal(clf.tree_.threshold[0], 149.5)
+
+    sample_weight[y == 2] = .50 # Samples of class '2' are no longer weightier
+    clf = tree.DecisionTreeClassifier(max_depth=1)
+    clf.fit(X, y, sample_weight=sample_weight)
+    assert_equal(clf.tree_.threshold[0], 49.5) # Threshold should have moved
 
 if __name__ == "__main__":
     import nose
