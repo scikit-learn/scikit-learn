@@ -572,6 +572,25 @@ def test_sample_weight():
     clf.fit(X, y, sample_weight=sample_weight)
     assert_equal(clf.tree_.threshold[0], 49.5) # Threshold should have moved
 
+    # Test that sample weighting is the same as having dupplicates
+    X = iris.data
+    y = iris.data
+
+    dupplicates = rng.randint(0, X.shape[0], 1000)
+
+    clf = tree.DecisionTreeClassifier(random_state=1)
+    clf.fit(X[dupplicates], y[dupplicates])
+
+    from sklearn.utils.fixes import bincount
+    sample_weight = bincount(dupplicates, minlength=X.shape[0])
+    clf2 = tree.DecisionTreeClassifier(random_state=1)
+    clf2.fit(X, y, sample_weight=sample_weight)
+
+    internal = clf.tree_.children_left != tree._tree.TREE_LEAF
+    assert_array_equal(clf.tree_.threshold[internal],
+                       clf2.tree_.threshold[internal])
+
+
 if __name__ == "__main__":
     import nose
     nose.runmodule()
