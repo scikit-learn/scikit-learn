@@ -112,6 +112,9 @@ Changelog
      :fun:`metrics.mean_absolute_error` and
      :fun:`metrics.r2_score` metrics support multioutput by `Arnaud Joly`_.
 
+  - Fixed `class_weight` support in :class:`svm.LinearSVC` and
+    :class:`linear_model.LogisticRegression` by `Andreas Müller`_.
+
 API changes summary
 -------------------
    - Renamed all occurences of ``n_atoms`` to ``n_components`` for consistency.
