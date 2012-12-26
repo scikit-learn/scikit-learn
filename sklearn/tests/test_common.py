@@ -659,7 +659,6 @@ def test_class_weight_classifiers():
         classifiers = [c for c in classifiers
                        if 'class_weight' in c[1]().get_params().keys()]
 
-    # first blanced classification
     for n_centers in [2, 3]:
         # create a very noisy dataset
         X, y = make_blobs(centers=n_centers, random_state=0, cluster_std=20)
@@ -697,11 +696,12 @@ def test_class_weight_auto_classifies():
         classifiers = [c for c in classifiers
                        if 'class_weight' in c[1]().get_params().keys()]
 
-    for n_classes in [2, 3]:
+    for n_classes, weights in zip([2, 3], [[.8, .2], [.8, .1, .1]]):
         # create unbalanced dataset
         X, y = make_classification(n_classes=n_classes, n_samples=200,
-                                   n_features=10, weights=[0.7, 0.3],
-                                   random_state=0)
+                                   n_features=10, weights=weights,
+                                   random_state=0, n_informative=n_classes)
+        X = StandardScaler().fit_transform(X)
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5,
                                                             random_state=0)
         for name, Clf in classifiers:
@@ -728,4 +728,3 @@ def test_class_weight_auto_classifies():
             y_pred_auto = clf.predict(X_test)
             assert_greater(f1_score(y_test, y_pred_auto),
                            f1_score(y_test, y_pred))
-            print(f1_score(y_test, y_pred_auto), f1_score(y_test, y_pred))
