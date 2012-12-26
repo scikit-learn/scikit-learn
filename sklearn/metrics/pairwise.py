@@ -237,15 +237,11 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
            [ 1.,  1.]]...)
     """
     X, Y = check_pairwise_arrays(X, Y)
-    n_samples_X, n_features_X = X.shape
-    n_samples_Y, n_features_Y = Y.shape
-    if n_features_X != n_features_Y:
-        raise Exception("X and Y should have the same number of features!")
     D = np.abs(X[:, np.newaxis, :] - Y[np.newaxis, :, :])
     if sum_over_features:
         D = np.sum(D, axis=2)
     else:
-        D = D.reshape((n_samples_X * n_samples_Y, n_features_X))
+        D = D.reshape((-1, X.shape[1]))
     return D
 
 
