@@ -518,8 +518,9 @@ From text
    :toctree: generated/
    :template: class.rst
 
-   kernel_approximation.RBFSampler
    kernel_approximation.AdditiveChi2Sampler
+   kernel_approximation.Nystroem
+   kernel_approximation.RBFSampler
    kernel_approximation.SkewedChi2Sampler
 
 :mod:`sklearn.semi_supervised` Semi-Supervised Learning
