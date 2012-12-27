@@ -137,13 +137,23 @@ def test_min_max_scaler_zero_variance_features():
          [ 0.,  1., -0.1],
          [ 0.,  1.,  1.1]]
 
-    scaler = MinMaxScaler()
+    X_new = [[ 0.,  2.,  0.5],
+             [-1.,  1.,  0. ],
+             [ 0.,  1.,  1.5]]
+
     # default params
+    scaler = MinMaxScaler()
     X_trans = scaler.fit_transform(X)
     X_expected_0_1 = [[ 0.,  0.,  0.5],
                       [ 0.,  0.,  0.0],
                       [ 0.,  0.,  1.0]]
     assert_array_almost_equal(X_trans, X_expected_0_1)
+
+    X_trans_new = scaler.transform(X_new)
+    X_expected_0_1_new = [[ 0.,  1.,  0.5  ],
+                          [-1.,  0.,  0.083],
+                          [ 0.,  0.,  1.333]]
+    assert_array_almost_equal(X_trans_new, X_expected_0_1_new, decimal=2)
 
     # not default params
     scaler = MinMaxScaler(feature_range=(1, 2))
