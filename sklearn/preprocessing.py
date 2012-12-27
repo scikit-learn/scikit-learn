@@ -190,7 +190,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
                              " than maximum. Got %s." % str(feature_range))
         min_ = np.min(X, axis=0)
         scale_ = np.max(X, axis=0) - min_
-        # Do not scale feature with zero variance
+        # Do not scale constant features
         scale_[scale_ == 0.0] = 1.0
         self.scale_ = (feature_range[1] - feature_range[0]) / scale_
         self.min_ = feature_range[0] - min_ / scale_
