@@ -86,7 +86,7 @@ def test_grid_search():
     assert_equal(grid_search.best_estimator_.foo_param, 2)
 
     for i, foo_i in enumerate([1, 2, 3]):
-        assert_true(grid_search.estimator_scores_[i][0]
+        assert_true(grid_search.cv_scores_[i][0]
                     == {'foo_param': foo_i})
     # Smoke test the score:
     grid_search.score(X, y)

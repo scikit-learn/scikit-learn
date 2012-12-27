@@ -297,18 +297,18 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
                 for clf_params in parameter_iterator for train, test in cv)
 
         # Out is a list of triplet: score, estimator, n_test_samples
-        n_grid_points = len(list(parameter_iterator))
+        n_param_points = len(list(parameter_iterator))
         n_fits = len(out)
-        n_folds = n_fits // n_grid_points
+        n_folds = n_fits // n_param_points
 
         scores = list()
         cv_scores = list()
-        for grid_start in range(0, n_fits, n_folds):
+        for start in range(0, n_fits, n_folds):
             n_test_samples = 0
             score = 0
             these_points = list()
             for this_score, clf_params, this_n_test_samples in \
-                    out[grid_start:grid_start + n_folds]:
+                    out[start:start + n_folds]:
                 these_points.append(this_score)
                 if self.iid:
                     this_score *= this_n_test_samples
@@ -344,9 +344,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
             self._set_methods()
 
         # Store the computed scores
-        # XXX: the name is too specific, it shouldn't have
-        # 'grid' in it. Also, we should be retrieving/storing variance
-        self.estimator_scores_ = [
+        self.cv_scores_ = [
             (clf_params, score, all_scores)
             for clf_params, (score, _), all_scores
             in zip(parameter_iterator, scores, cv_scores)]
@@ -443,7 +441,7 @@ class GridSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    `estimator_scores_` : dict of any to float
+    `cv_scores_` : dict of any to float
         Contains scores for all parameter combinations in param_grid.
 
     `best_estimator_` : estimator
@@ -498,7 +496,7 @@ class GridSearchCV(BaseSearchCV):
         warnings.warn("grid_scores_ is deprecated and will be removed in 0.15."
                       " Use estomator_scores_ instead.", DeprecationWarning)
 
-        return self.estimator_scores_
+        return self.cv_scores_
 
     def fit(self, X, y=None, **params):
         """Run fit with all sets of parameters.
@@ -544,8 +542,10 @@ class RandomizedSearchCV(BaseSearchCV):
     any classifier except that the parameters of the classifier
     used to predict is optimized by cross-validation.
 
-    In constrast to GridSearchCV, not all parameter values are tried out,
-    but rather a sampled from using a given budget.
+    In constrast to GridSearchCV, not all parameter values are tried out, but
+    rather a fixed number of parmeter settings is sampled from the specified
+    distributions. The number of parameter settings that are tried is
+    given by n_iter.
 
     Parameters
     ----------
@@ -558,8 +558,12 @@ class RandomizedSearchCV(BaseSearchCV):
         method for sampling (such as those from scipy.stats.distributions).
         If a list is given, it is sampled uniformly.
 
+    n_iter: int, default=10
+        Number of parameter settings that are sampled. n_iter trades
+        off runtime vs qualitiy of the solution.
+
     loss_func: callable, optional
-        function that takes 2 arguments and compares them in
+        Function that takes 2 arguments and compares them in
         order to evaluate the performance of prediciton (small is good)
         if None is passed, the score of the estimator is maximized
 
@@ -569,10 +573,10 @@ class RandomizedSearchCV(BaseSearchCV):
         If None is passed, the score of the estimator is maximized.
 
     fit_params : dict, optional
-        parameters to pass to the fit method
+        Parameters to pass to the fit method.
 
     n_jobs: int, optional
-        number of jobs to run in parallel (default 1)
+        Number of jobs to run in parallel (default 1).
 
     pre_dispatch: int, or string, optional
         Controls the number of jobs that get dispatched during parallel
@@ -612,7 +616,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    `estimator_scores_` : dict of any to float
+    `cv_scores_` : dict of any to float
         Contains scores for all parameter setting that were sampled
         during ``fit``.
 
