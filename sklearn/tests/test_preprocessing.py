@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 import numpy.linalg as la
 import scipy.sparse as sp
@@ -279,6 +280,19 @@ def test_scale_function_without_centering():
     assert_array_almost_equal(X_csr_scaled_mean, X_scaled.mean(axis=0))
     assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
 
+
+def test_warning_scaling_integers():
+    """Check warning when scaling integer data"""
+    X = np.array([[1, 2, 0],
+                  [0, 0, 0]], dtype=np.uint8)
+
+    with warnings.catch_warnings(record=True) as w:
+        StandardScaler().fit(X)
+        assert_equal(len(w), 1)
+
+    with warnings.catch_warnings(record=True) as w:
+        MinMaxScaler().fit(X)
+        assert_equal(len(w), 1)
 
 def test_normalizer_l1():
     rng = np.random.RandomState(0)
