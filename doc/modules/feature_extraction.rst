@@ -555,8 +555,38 @@ into account. Many such models will thus be casted as "Structured output"
 problems which are currently outside of the scope of scikit-learn.
 
 
+Vectorizing a large text corpus with the hashing trick
+------------------------------------------------------
+
+The above vectorization scheme is simple but the fact that it holds an **in-
+memory mapping from the string tokens to the integer feature indices** (the
+``vocabulary_`` attribute) causes several **problems when dealing with large
+datasets**:
+
+- the larger the corpus, the larger the vocabulary will grow and hence the
+  memory use too
+
+- pickling and un-pickling vectorizers with a large ``vocabulary_`` can be very
+  slow (typically much slower than pickling / un-pickling flat data-structures
+  such as a NumPy array of the same size).
+
+- it is not easily possible to split the vectorization work into concurrent sub
+  tasks as the ``vocabulary_`` attribute would have to be a shared state with a
+  fine grained synchronization barrier: the mapping from token string to
+  feature index is dependent on ordering of the first occurrence of each token
+  hence would have to be shared, potentially harming the concurrent workers
+  performance to the point of making them slower than the sequential variant.
+
+It is possible to overcome those limitations by combining the "hashing trick"
+(:ref:`Feature_hashing`) implemented by the
+:class:`sklearn.feature_extraction.FeatureHasher` class and the document
+preprocessing tokenization features of the :class:`CountVectorizer` class.
+
+TODO: short usage example
+
+
 Customizing the vectorizer classes
------------------------------------
+----------------------------------
 
 It is possible to customize the behavior by passing a callable
 to the vectorizer constructor::
