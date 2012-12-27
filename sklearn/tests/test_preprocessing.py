@@ -111,7 +111,7 @@ def test_scaler_2d_arrays():
     assert_true(X_scaled is not X)
 
 
-def test_min_max_scaler():
+def test_min_max_scaler_iris():
     X = iris.data
     scaler = MinMaxScaler()
     # default params
@@ -129,6 +129,29 @@ def test_min_max_scaler():
     # raises on invalid range
     scaler = MinMaxScaler(feature_range=(2, 1))
     assert_raises(ValueError, scaler.fit, X)
+
+
+def test_min_max_scaler_zero_variance_features():
+    """Check min max scaler on toy data with zero variance features"""
+    X = [[ 0.,  1.,  0.5],
+         [ 0.,  1., -0.1],
+         [ 0.,  1.,  1.1]]
+
+    scaler = MinMaxScaler()
+    # default params
+    X_trans = scaler.fit_transform(X)
+    X_expected_0_1 = [[ 0.,  0.,  0.5],
+                      [ 0.,  0.,  0.0],
+                      [ 0.,  0.,  1.0]]
+    assert_array_almost_equal(X_trans, X_expected_0_1)
+
+    # not default params
+    scaler = MinMaxScaler(feature_range=(1, 2))
+    X_trans = scaler.fit_transform(X)
+    X_expected_1_2 = [[ 1.,  1.,  1.5],
+                      [ 1.,  1.,  1.0],
+                      [ 1.,  1.,  2.0]]
+    assert_array_almost_equal(X_trans, X_expected_1_2)
 
 
 def test_scaler_without_centering():
