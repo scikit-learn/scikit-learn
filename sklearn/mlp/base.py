@@ -43,6 +43,7 @@ class BaseMLP(BaseEstimator):
 
     def fit(self, X, y, max_epochs, verbose=0):
 
+        y = np.asarray(y).astype("float64")
         n_samples, n_features = X.shape
         n_outs = y.shape[1]
 
