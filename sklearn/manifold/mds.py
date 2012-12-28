@@ -336,7 +336,7 @@ class MDS(BaseEstimator):
         self.eps = eps
         self.verbose = verbose
         self.n_jobs = n_jobs
-        self.random_state = None
+        self.random_state = random_state
 
     def fit(self, X, init=None, y=None):
         """
