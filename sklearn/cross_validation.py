@@ -821,18 +821,19 @@ class ShuffleSplit(object):
 
 
 def _validate_shuffle_split(n, test_size, train_size):
-    if np.asarray(test_size).dtype.kind == 'f':
-        if test_size >= 1.:
-            raise ValueError(
-                'test_size=%f should be smaller '
-                'than 1.0 or be an integer' % test_size)
-    elif np.asarray(test_size).dtype.kind == 'i':
-        if test_size >= n:
-            raise ValueError(
-                'test_size=%d should be smaller '
-                'than the number of samples %d' % (test_size, n))
-    else:
-        raise ValueError("Invalid value for test_size: %r" % test_size)
+    if test_size is not None:
+        if np.asarray(test_size).dtype.kind == 'f':
+            if test_size >= 1.:
+                raise ValueError(
+                    'test_size=%f should be smaller '
+                    'than 1.0 or be an integer' % test_size)
+        elif np.asarray(test_size).dtype.kind == 'i':
+            if test_size >= n:
+                raise ValueError(
+                    'test_size=%d should be smaller '
+                    'than the number of samples %d' % (test_size, n))
+        else:
+            raise ValueError("Invalid value for test_size: %r" % test_size)
 
     if train_size is not None:
         if np.asarray(train_size).dtype.kind == 'f':
@@ -855,7 +856,7 @@ def _validate_shuffle_split(n, test_size, train_size):
 
     if np.asarray(test_size).dtype.kind == 'f':
         n_test = ceil(test_size * n)
-    else:
+    elif np.asarray(test_size).dtype.kind == 'i':
         n_test = float(test_size)
 
     if train_size is None:
@@ -865,6 +866,9 @@ def _validate_shuffle_split(n, test_size, train_size):
             n_train = floor(train_size * n)
         else:
             n_train = float(train_size)
+
+    if test_size is None:
+        n_test = n - n_train
 
     if n_train + n_test > n:
         raise ValueError('The sum of train_size and test_size = %d, '
@@ -1285,16 +1289,18 @@ def train_test_split(*arrays, **options):
         Python lists or tuples occurring in arrays are converted to 1D numpy
         arrays.
 
-    test_size : float (default 0.25) or int
+    test_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the test split. If
-        int, represents the absolute number of test samples.
+        int, represents the absolute number of test samples. If None,
+        the value is automatically set to the complement of the train size.
+        If train size is also None, test size is set to 0.25.
 
     train_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
-        the value is automatically set to the complement of the test fraction.
+        the value is automatically set to the complement of the test size.
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
@@ -1336,10 +1342,13 @@ def train_test_split(*arrays, **options):
     if n_arrays == 0:
         raise ValueError("At least one array required as input")
 
-    test_size = options.pop('test_size', 0.1)
+    test_size = options.pop('test_size', None)
     train_size = options.pop('train_size', None)
     random_state = options.pop('random_state', None)
     options['sparse_format'] = 'csr'
+
+    if test_size is None and train_size is None:
+        test_size = 0.25
 
     arrays = check_arrays(*arrays, **options)
     n_samples = arrays[0].shape[0]
