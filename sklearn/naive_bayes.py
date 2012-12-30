@@ -240,9 +240,10 @@ class BaseDiscreteNB(BaseNB):
             Y *= array2d(sample_weight).T
 
         if class_prior is not None:
-            warnings.warn('class_prior is deprecated in fit function. Use it'
-                            ' in __init__ instead.')
-            self.class_prior = class_prior
+            warnings.warn('class_prior is deprecated in fit function and will'
+                    'be removed in version 0.15. Use it in __init__ instead.')
+        else:
+            class_prior = self.class_prior 
 
         if self.class_prior:
             if len(self.class_prior) != n_classes:
