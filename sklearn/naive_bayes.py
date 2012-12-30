@@ -195,7 +195,7 @@ class BaseDiscreteNB(BaseNB):
     _joint_log_likelihood(X) as per BaseNB
     """
 
-    def fit(self, X, y, sample_weight=None, class_prior=None):
+    def fit(self, X, y, sample_weight=None):
         """Fit Naive Bayes classifier according to X, y
 
         Parameters
@@ -238,11 +238,11 @@ class BaseDiscreteNB(BaseNB):
         if sample_weight is not None:
             Y *= array2d(sample_weight).T
 
-        if class_prior:
-            if len(class_prior) != n_classes:
+        if self.class_prior:
+            if len(self.class_prior) != n_classes:
                 raise ValueError("Number of priors must match number of"
                                  " classes.")
-            self.class_log_prior_ = np.log(class_prior)
+            self.class_log_prior_ = np.log(self.class_prior)
         elif self.fit_prior:
             # empirical prior, with sample_weight taken into account
             y_freq = Y.sum(axis=0)
@@ -322,9 +322,10 @@ class MultinomialNB(BaseDiscreteNB):
     Tackling the poor assumptions of naive Bayes text classifiers, ICML.
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True):
+    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.fit_prior = fit_prior
+        self.class_prior = None
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
@@ -395,10 +396,11 @@ class BernoulliNB(BaseDiscreteNB):
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
     """
 
-    def __init__(self, alpha=1.0, binarize=.0, fit_prior=True):
+    def __init__(self, alpha=1.0, binarize=.0, fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.binarize = binarize
         self.fit_prior = fit_prior
+        self.class_prior = None
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
