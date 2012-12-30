@@ -195,7 +195,7 @@ class BaseDiscreteNB(BaseNB):
     _joint_log_likelihood(X) as per BaseNB
     """
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, class_prior=None):
         """Fit Naive Bayes classifier according to X, y
 
         Parameters
@@ -237,6 +237,11 @@ class BaseDiscreteNB(BaseNB):
 
         if sample_weight is not None:
             Y *= array2d(sample_weight).T
+
+        if class_prior is not None:
+            warnings.warn('class_prior is deprecated in fit function. Use it'
+                            ' in __init__ instead.')
+            self.class_prior = class_prior
 
         if self.class_prior:
             if len(self.class_prior) != n_classes:
