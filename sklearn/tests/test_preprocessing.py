@@ -134,34 +134,34 @@ def test_min_max_scaler_iris():
 
 def test_min_max_scaler_zero_variance_features():
     """Check min max scaler on toy data with zero variance features"""
-    X = [[ 0.,  1.,  0.5],
-         [ 0.,  1., -0.1],
-         [ 0.,  1.,  1.1]]
+    X = [[0.,  1.,  0.5],
+         [0.,  1., -0.1],
+         [0.,  1.,  1.1]]
 
-    X_new = [[ 0.,  2.,  0.5],
-             [-1.,  1.,  0. ],
-             [ 0.,  1.,  1.5]]
+    X_new = [[+0.,  2.,  0.5],
+             [-1.,  1.,  0.0],
+             [+0.,  1.,  1.5]]
 
     # default params
     scaler = MinMaxScaler()
     X_trans = scaler.fit_transform(X)
-    X_expected_0_1 = [[ 0.,  0.,  0.5],
-                      [ 0.,  0.,  0.0],
-                      [ 0.,  0.,  1.0]]
+    X_expected_0_1 = [[0.,  0.,  0.5],
+                      [0.,  0.,  0.0],
+                      [0.,  0.,  1.0]]
     assert_array_almost_equal(X_trans, X_expected_0_1)
 
     X_trans_new = scaler.transform(X_new)
-    X_expected_0_1_new = [[ 0.,  1.,  0.5  ],
+    X_expected_0_1_new = [[+0.,  1.,  0.500],
                           [-1.,  0.,  0.083],
-                          [ 0.,  0.,  1.333]]
+                          [+0.,  0.,  1.333]]
     assert_array_almost_equal(X_trans_new, X_expected_0_1_new, decimal=2)
 
     # not default params
     scaler = MinMaxScaler(feature_range=(1, 2))
     X_trans = scaler.fit_transform(X)
-    X_expected_1_2 = [[ 1.,  1.,  1.5],
-                      [ 1.,  1.,  1.0],
-                      [ 1.,  1.,  2.0]]
+    X_expected_1_2 = [[1.,  1.,  1.5],
+                      [1.,  1.,  1.0],
+                      [1.,  1.,  2.0]]
     assert_array_almost_equal(X_trans, X_expected_1_2)
 
 
@@ -293,6 +293,7 @@ def test_warning_scaling_integers():
     with warnings.catch_warnings(record=True) as w:
         MinMaxScaler().fit(X)
         assert_equal(len(w), 1)
+
 
 def test_normalizer_l1():
     rng = np.random.RandomState(0)
