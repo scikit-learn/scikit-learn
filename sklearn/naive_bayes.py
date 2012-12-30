@@ -19,6 +19,7 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy.sparse import issparse
+import warnings
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
