@@ -77,7 +77,7 @@ def test_deprecated_load_filenames():
 def test_default_load_files():
     res = load_files(LOAD_FILES_ROOT)
     assert_equal(len(res.filenames), 1)
-    assert_equal(len(res.target_names), 2)    
+    assert_equal(len(res.target_names), 2)
     assert_equal(res.DESCR, None)
     assert_equal(res.data, ["Hello World!\n"])
 
@@ -88,7 +88,7 @@ def test_load_files_w_categories_desc_and_charset():
     res = load_files(LOAD_FILES_ROOT, description="test",
                      categories=category, charset="utf-8")
     assert_equal(len(res.filenames), 1)
-    assert_equal(len(res.target_names), 1)    
+    assert_equal(len(res.target_names), 1)
     assert_equal(res.DESCR, "test")
     assert_equal(res.data, ["Hello World!\n"])
 
@@ -97,6 +97,6 @@ def test_load_files_w_categories_desc_and_charset():
 def test_load_files_wo_load_content():
     res = load_files(LOAD_FILES_ROOT, load_content=False)
     assert_equal(len(res.filenames), 1)
-    assert_equal(len(res.target_names), 2)    
+    assert_equal(len(res.target_names), 2)
     assert_equal(res.DESCR, None)
     assert_equal(res.get('data'), None)
