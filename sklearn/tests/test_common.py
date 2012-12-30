@@ -669,7 +669,7 @@ def test_class_weight_classifiers():
                 # the sparse version has a parameter that doesn't do anything
                 continue
             if name.startswith("RidgeClassifier"):
-                # RidgeClassifier behaves unexpected
+                # RidgeClassifier shows unexpected behavior
                 # FIXME!
                 continue
             if n_centers == 2:
