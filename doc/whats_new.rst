@@ -15,9 +15,8 @@ Changelog
      :class:`linear_model.PassiverAggressiveRegressor` by `Rob Zinkov` and
      `Mathieu Blondel`_.
 
-   - The table of contents has now been made expandable..  (on the
-     .. index
-     page) - by Jaques Grobler.
+   - The table of contents has now been made expandible (on the
+     index page) - by Jaques Grobler.
 
    - :class:`feature_selection.SelectPercentile` now breaks ties
      deterministically instead of returning all equally ranked features.
@@ -111,16 +110,16 @@ Changelog
 
 API changes summary
 -------------------
-   - Renamed all occurrences of ``n_atoms`` to ``n_components`` for consistency.
+   - Renamed all occurences of ``n_atoms`` to ``n_components`` for consistency.
      This applies to :class:`decomposition.DictionaryLearning`,
      :class:`decomposition.MiniBatchDictionaryLearning`,
      :func:`decomposition.dict_learning`, :func:`decomposition.dict_learning_online`.
 
-   - Renamed all occurrences of ``max_iters`` to ``max_iter`` for consistency.
+   - Renamed all occurences of ``max_iters`` to ``max_iter`` for consistency.
      This applies to :class:`label_propagation.BaseLabelPropagation`,
      'label_propagation.LabelSpreading'
 
-   - Renamed all occurrences of ``learn_rate`` to ``learning_rate`` for consistency.
+   - Renamed all occurences of ``learn_rate`` to ``learning_rate`` for consistency.
      This applies to :class:`gradient_boosting.LossFunction`,
      :class:`gradient_boosting.LeastSquaresError`,
      :class:'gradient_boosting.BaseGradientBoosting',
@@ -130,10 +129,10 @@ API changes summary
      was already integrated into the "regular" linear models.
 
    - ``sklearn.metrics.mean_square_error``, which incorrectly returned the
-     accumulated error, was removed. Use ``mean_squared_error`` instead.
+     cumulated error, was removed. Use ``mean_squared_error`` instead.
 
    - Passing ``class_weight`` parameters to ``fit`` methods is no longer
-     supported. Pass them to estimator constructors instead.
+     supported. Pass them to estimator constuctors instead.
 
    - GMMs no longer have ``decode`` and ``rvs`` methods. Use the ``score``,
      ``predict`` or ``sample`` methods instead.
@@ -149,7 +148,7 @@ API changes summary
      :class:`cross_validation.StratifiedKFold` to ``n_folds``, renamed
      ``n_bootstraps`` to ``n_iter`` in ``cross_validation.Bootstrap``.
 
-   - Renamed all occurrences of ``n_iterations`` to ``n_iter`` for consistency.
+   - Renamed all occurences of ``n_iterations`` to ``n_iter`` for consistency.
      This applies to :class:`cross_validation.ShuffleSplit`,
      :class:`cross_validation.StratifiedShuffleSplit`,
      :func:`utils.randomized_range_finder` and :func:`utils.randomized_svd`.
@@ -197,8 +196,8 @@ API changes summary
 0.12.1
 =======
 
-The 0.12.1 release is a bug-fix release with no additional feature, but is
-instead a set of bug fixes
+The 0.12.1 release is a bug-fix release with no additional feature, but a
+set of bug fixed
 
 Changelog
 ----------
