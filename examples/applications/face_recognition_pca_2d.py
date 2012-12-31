@@ -84,7 +84,7 @@ olivetti_faces = fetch_olivetti_faces()
 # introspect the images arrays to find the shapes
 n_samples, h, w = olivetti_faces.images.shape
 
-# we use the 2 data directly
+# we use the 2d data directly
 X = olivetti_faces.images
 
 
