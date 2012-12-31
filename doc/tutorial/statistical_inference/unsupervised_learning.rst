@@ -9,7 +9,7 @@ Clustering: grouping observations together
 
     Given the iris dataset, if we knew that there were 3 types of iris, but
     did not have access to a taxonomist to label them: we could try a
-    **clustering task**: split the observations in to well-separated group
+    **clustering task**: split the observations into well-separated group
     called *clusters*.
 
 ..   
@@ -61,7 +61,7 @@ algorithms. The simplest clustering algorithm is
    
     There is absolutely no guarantee of recovering a ground truth. First,
     choosing the right number of clusters is hard. Second, the algorithm
-    is sensitive to initialization, and can fall in to local minima,
+    is sensitive to initialization, and can fall into local minima,
     although in the `sklearn` package we play many tricks to mitigate this
     issue.
 
@@ -106,7 +106,7 @@ algorithms. The simplest clustering algorithm is
 
     Clustering in general and KMeans, in particular, can be seen as a way
     of choosing a small number of exemplars to compress the information.
-    A problem sometimes known as 
+    The problem is sometimes known as 
     `vector quantization <http://en.wikipedia.org/wiki/Vector_quantization>`_. 
     For instance, this can be used to posterize an image::
 

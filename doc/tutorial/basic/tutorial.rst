@@ -39,7 +39,7 @@ We can separate learning problems in a few large categories:
       categories.  Another way to think of classification is as a discrete 
       (as opposed to continuous) form of supervised learning where one has a 
       limited number of categories and for each of the n samples provided,
-      one is to try to label them with the correct categroy or class.
+      one is to try to label them with the correct category or class.
 
     * `regression <http://en.wikipedia.org/wiki/Regression_analysis>`_:
       if the desired output consists of one or more
