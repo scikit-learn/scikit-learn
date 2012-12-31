@@ -99,7 +99,7 @@ of the computer.
 
     - Split it K folds, train on K-1 and then test on left-out
 
-    - Make sure that all classes are even across the folds
+    - It preserves the class ratios / label distribution within each fold. 
 
     - Leave one observation out
 
