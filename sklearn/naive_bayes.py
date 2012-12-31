@@ -245,11 +245,11 @@ class BaseDiscreteNB(BaseNB):
         else:
             class_prior = self.class_prior 
 
-        if self.class_prior:
-            if len(self.class_prior) != n_classes:
+        if class_prior:
+            if len(class_prior) != n_classes:
                 raise ValueError("Number of priors must match number of"
                                  " classes.")
-            self.class_log_prior_ = np.log(self.class_prior)
+            self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
             # empirical prior, with sample_weight taken into account
             y_freq = Y.sum(axis=0)
