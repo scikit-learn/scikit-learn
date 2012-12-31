@@ -75,7 +75,7 @@ cdef class ArrayDataset(SequentialDataset):
         self.feature_indices = feature_indices
         self.feature_indices_ptr = <INTEGER *> feature_indices.data
         self.current_index = -1
-        self.stride = X.strides[0] / X.strides[1]
+        self.stride = X.strides[0] / X.itemsize
         self.X_data_ptr = <DOUBLE *>X.data
         self.Y_data_ptr = <DOUBLE *>Y.data
         self.sample_weight_data = <DOUBLE *>sample_weights.data

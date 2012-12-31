@@ -3,8 +3,8 @@ import unittest
 
 from nose.tools import assert_true
 import numpy as np
-from numpy.testing import assert_array_equal, assert_array_almost_equal, \
-     assert_raises
+from numpy.testing import (assert_array_equal, assert_array_almost_equal,
+                           assert_raises)
 from scipy import stats
 from sklearn import mixture
 from sklearn.datasets.samples_generator import make_spd_matrix
@@ -138,15 +138,15 @@ class GMMTester():
         self.means = rng.randint(-20, 20, (self.n_components, self.n_features))
         self.threshold = -0.5
         self.I = np.eye(self.n_features)
-        self.covars = {'spherical': (0.1 + 2 * \
-                        rng.rand(self.n_components, self.n_features)) ** 2,
-                  'tied': make_spd_matrix(self.n_features, random_state=0) +\
-                        5 * self.I,
-                  'diag': (0.1 + 2 * rng.rand(self.n_components,\
-                        self.n_features)) ** 2,
-                  'full': np.array([make_spd_matrix(self.n_features,\
-                        random_state=0)
-                      + 5 * self.I for x in range(self.n_components)])}
+        self.covars = {
+            'spherical': (0.1 + 2 * rng.rand(self.n_components,
+                                             self.n_features)) ** 2,
+            'tied': (make_spd_matrix(self.n_features, random_state=0)
+                     + 5 * self.I),
+            'diag': (0.1 + 2 * rng.rand(self.n_components,
+                                        self.n_features)) ** 2,
+            'full': np.array([make_spd_matrix(self.n_features, random_state=0)
+                              + 5 * self.I for x in range(self.n_components)])}
 
     def test_eval(self):
         if not self.do_test_eval:

@@ -18,7 +18,7 @@ from sklearn.datasets.samples_generator import make_blobs
 # Generate sample data
 centers = [[1, 1], [-1, -1], [1, -1]]
 X, labels_true = make_blobs(n_samples=300, centers=centers, cluster_std=0.5,
-        random_state=0)
+                            random_state=0)
 
 ##############################################################################
 # Compute Affinity Propagation
@@ -34,10 +34,10 @@ print "Completeness: %0.3f" % metrics.completeness_score(labels_true, labels)
 print "V-measure: %0.3f" % metrics.v_measure_score(labels_true, labels)
 print "Adjusted Rand Index: %0.3f" % \
     metrics.adjusted_rand_score(labels_true, labels)
-print "Adjusted Mutual Information: %0.3f" % \
-    metrics.adjusted_mutual_info_score(labels_true, labels)
-print ("Silhouette Coefficient: %0.3f" %
-        metrics.silhouette_score(X, labels, metric='sqeuclidean'))
+print("Adjusted Mutual Information: %0.3f" %
+      metrics.adjusted_mutual_info_score(labels_true, labels))
+print("Silhouette Coefficient: %0.3f" %
+      metrics.silhouette_score(X, labels, metric='sqeuclidean'))
 
 ##############################################################################
 # Plot result

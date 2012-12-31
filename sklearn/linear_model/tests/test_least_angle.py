@@ -8,6 +8,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_raises
 
 from sklearn import linear_model, datasets
 
@@ -22,8 +23,16 @@ def test_simple():
     Principle of Lars is to keep covariances tied and decreasing
     """
 
+    # also test verbose output
+    from cStringIO import StringIO
+    import sys
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+
     alphas_, active, coef_path_ = linear_model.lars_path(
-        diabetes.data, diabetes.target, method="lar")
+        diabetes.data, diabetes.target, method="lar", verbose=10)
+
+    sys.stdout = old_stdout
 
     for (i, coef_) in enumerate(coef_path_.T):
         res = y - np.dot(X, coef_)
@@ -112,8 +121,9 @@ def test_collinearity():
     X = np.random.rand(n_samples, 5)
     y = np.zeros(n_samples)
     _, _, coef_path_ = linear_model.lars_path(X, y, Gram='auto', copy_X=False,
-            copy_Gram=False, alpha_min=0., method='lasso', verbose=0,
-            max_iter=500)
+                                              copy_Gram=False, alpha_min=0.,
+                                              method='lasso', verbose=0,
+                                              max_iter=500)
     assert_array_almost_equal(coef_path_, np.zeros_like(coef_path_))
 
 
@@ -186,15 +196,14 @@ def test_rank_deficient_design():
     # deficient input data (with n_features < rank) in the same way
     # as coordinate descent Lasso
     y = [5, 0, 5]
-    for X in (
-                [[  5,  0],
-                 [  0,  5],
-                 [ 10, 10]],
+    for X in ([[5,   0],
+               [0,   5],
+               [10, 10]],
 
-                [[   10,  10,  0],
-                 [1e-32,   0,  0],
-                 [    0,   0,  1]],
-             ):
+              [[10,     10,  0],
+               [1e-32,   0,  0],
+               [0,       0,  1]],
+              ):
         # To be able to use the coefs to compute the objective function,
         # we need to turn off normalization
         lars = linear_model.LassoLars(.1, normalize=False)
@@ -202,11 +211,10 @@ def test_rank_deficient_design():
         obj_lars = (1. / (2. * 3.)
                     * linalg.norm(y - np.dot(X, coef_lars_)) ** 2
                     + .1 * linalg.norm(coef_lars_, 1))
-        coord_descent = linear_model.Lasso(.1, tol=1e-6,
-                                            normalize=False)
+        coord_descent = linear_model.Lasso(.1, tol=1e-6, normalize=False)
         coef_cd_ = coord_descent.fit(X, y).coef_
         obj_cd = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, coef_cd_)) ** 2
-                    + .1 * linalg.norm(coef_cd_, 1))
+                  + .1 * linalg.norm(coef_cd_, 1))
         assert_array_almost_equal(obj_lars, obj_cd)
 
 
@@ -258,7 +266,7 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
     alphas_min = [10, 0.9, 1e-4]
     for alphas_min in alphas_min:
         alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso',
-                                                    alpha_min=0.9)
+                                                       alpha_min=0.9)
         lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8)
         lasso_cd.alpha = alphas[-1]
         lasso_cd.fit(X, y)
@@ -269,7 +277,7 @@ def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
     # same test, with normalization
     for alphas_min in alphas_min:
         alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso',
-                                                    alpha_min=0.9)
+                                                       alpha_min=0.9)
         lasso_cd = linear_model.Lasso(fit_intercept=True, normalize=True,
                                       tol=1e-8)
         lasso_cd.alpha = alphas[-1]
@@ -312,14 +320,14 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     with warnings.catch_warnings(record=True) as warning_list:
         warnings.simplefilter("always", UserWarning)
         lars_alphas, _, lars_coef = linear_model.lars_path(X, y,
-                                                    method='lasso')
+                                                           method='lasso')
     assert_true(len(warning_list) > 0)
     assert_true(('Dropping a regressor' in warning_list[0].message.args[0])
                 or ('Early stopping' in warning_list[0].message.args[0]))
 
     lasso_coef = np.zeros((w.shape[0], len(lars_alphas)))
-    for i, model in enumerate(linear_model.lasso_path(X, y,
-                                alphas=lars_alphas, tol=1e-6)):
+    for i, model in enumerate(linear_model.lasso_path(X, y, alphas=lars_alphas,
+                                                      tol=1e-6)):
         lasso_coef[:, i] = model.coef_
     np.testing.assert_array_almost_equal(lars_coef, lasso_coef, decimal=1)
 
@@ -328,9 +336,9 @@ def test_lars_drop_for_good():
     # Create an ill-conditioned situation in which the LARS has to good
     # far in the path to converge, and check that LARS and coordinate
     # descent give the same answers
-    X = [[    10, 10,  0],
+    X = [[10,     10,  0],
          [-1e-32,  0,  0],
-         [     1,  1,  1]]
+         [1,       1,  1]]
     y = [100, -100, 1]
     lars = linear_model.LassoLars(.001, normalize=False)
     lars_coef_ = lars.fit(X, y).coef_
@@ -339,7 +347,7 @@ def test_lars_drop_for_good():
     coord_descent = linear_model.Lasso(.001, tol=1e-10, normalize=False)
     cd_coef_ = coord_descent.fit(X, y).coef_
     cd_obj = ((1. / (2. * 3.)) * linalg.norm(y - np.dot(X, cd_coef_)) ** 2
-                + .1 * linalg.norm(cd_coef_, 1))
+              + .1 * linalg.norm(cd_coef_, 1))
     assert_array_almost_equal(lars_obj / cd_obj, 1.0, decimal=3)
 
 
@@ -422,6 +430,10 @@ def test_lasso_lars_ic():
     assert_greater(lars_bic.alpha_, lars_aic.alpha_)
     assert_less(len(nonzero_bic), len(nonzero_aic))
     assert_less(np.max(nonzero_bic), diabetes.data.shape[1])
+
+    # test error on unknown IC
+    lars_broken = linear_model.LassoLarsIC('<unknown>')
+    assert_raises(ValueError, lars_broken.fit, X, y)
 
 
 if __name__ == '__main__':

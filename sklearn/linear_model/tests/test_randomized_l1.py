@@ -8,8 +8,9 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
 
-from sklearn.linear_model.randomized_l1 import lasso_stability_path, \
-        RandomizedLasso, RandomizedLogisticRegression
+from sklearn.linear_model.randomized_l1 import (lasso_stability_path,
+                                                RandomizedLasso,
+                                                RandomizedLogisticRegression)
 from sklearn.datasets import load_diabetes, load_iris
 from sklearn.feature_selection import f_regression, f_classif
 from sklearn.preprocessing import StandardScaler
@@ -30,7 +31,8 @@ def test_lasso_stability_path():
     # Load diabetes data and add noisy features
     scaling = 0.3
     coef_grid, scores_path = lasso_stability_path(X, y, scaling=scaling,
-                                        random_state=42, n_resampling=30)
+                                                  random_state=42,
+                                                  n_resampling=30)
 
     assert_array_equal(np.argsort(F)[-3:],
                        np.argsort(np.sum(scores_path, axis=1))[-3:])
@@ -43,13 +45,15 @@ def test_randomized_lasso():
 
     # or with 1 alpha
     clf = RandomizedLasso(verbose=False, alpha=1, random_state=42,
-                    scaling=scaling, selection_threshold=selection_threshold)
+                          scaling=scaling,
+                          selection_threshold=selection_threshold)
     feature_scores = clf.fit(X, y).scores_
     assert_array_equal(np.argsort(F)[-3:], np.argsort(feature_scores)[-3:])
 
     # or with many alphas
     clf = RandomizedLasso(verbose=False, alpha=[1, 0.8], random_state=42,
-                    scaling=scaling, selection_threshold=selection_threshold)
+                          scaling=scaling,
+                          selection_threshold=selection_threshold)
     feature_scores = clf.fit(X, y).scores_
     assert_equal(clf.all_scores_.shape, (X.shape[1], 2))
     assert_array_equal(np.argsort(F)[-3:], np.argsort(feature_scores)[-3:])
@@ -83,12 +87,14 @@ def test_randomized_logistic():
 
     scaling = 0.3
     clf = RandomizedLogisticRegression(verbose=False, C=1., random_state=42,
-                                scaling=scaling, n_resampling=50, tol=1e-3)
+                                       scaling=scaling, n_resampling=50,
+                                       tol=1e-3)
     feature_scores = clf.fit(X, y).scores_
     assert_array_equal(np.argsort(F), np.argsort(feature_scores))
 
     clf = RandomizedLogisticRegression(verbose=False, C=[1., 0.5],
-            random_state=42, scaling=scaling, n_resampling=50, tol=1e-3)
+                                       random_state=42, scaling=scaling,
+                                       n_resampling=50, tol=1e-3)
     feature_scores = clf.fit(X, y).scores_
     assert_array_equal(np.argsort(F), np.argsort(feature_scores))
 
@@ -110,9 +116,11 @@ def test_randomized_logistic_sparse():
 
     scaling = 0.3
     clf = RandomizedLogisticRegression(verbose=False, C=1., random_state=42,
-                                scaling=scaling, n_resampling=50, tol=1e-3)
+                                       scaling=scaling, n_resampling=50,
+                                       tol=1e-3)
     feature_scores = clf.fit(X, y).scores_
     clf = RandomizedLogisticRegression(verbose=False, C=1., random_state=42,
-                                scaling=scaling, n_resampling=50, tol=1e-3)
+                                       scaling=scaling, n_resampling=50,
+                                       tol=1e-3)
     feature_scores_sp = clf.fit(X_sp, y).scores_
     assert_array_equal(feature_scores, feature_scores_sp)

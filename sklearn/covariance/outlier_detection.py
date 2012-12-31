@@ -13,7 +13,7 @@ covariance estimator (the Minimum Covariance Determinant).
 # License: BSD Style.
 
 import numpy as np
-import  scipy as sp
+import scipy as sp
 from . import MinCovDet
 from ..utils import deprecated
 from ..base import ClassifierMixin

@@ -205,8 +205,8 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     r = [_open_and_load(f, dtype, multilabel, bool(zero_based), bool(query_id))
          for f in files]
 
-    if zero_based is False \
-     or zero_based == "auto" and all(np.min(tmp[1]) > 0 for tmp in r):
+    if (zero_based is False
+            or zero_based == "auto" and all(np.min(tmp[1]) > 0 for tmp in r)):
         for ind in r:
             indices = ind[1]
             indices -= 1

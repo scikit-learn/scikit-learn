@@ -25,9 +25,9 @@ from sklearn.decomposition import SparseCoder
 def ricker_function(resolution, center, width):
     """Discrete sub-sampled Ricker (mexican hat) wavelet"""
     x = np.linspace(0, resolution - 1, resolution)
-    x = (2 / ((np.sqrt(3 * width) * np.pi ** 1 / 4))) * (
-         1 - ((x - center) ** 2 / width ** 2)) * np.exp(
-         (-(x - center) ** 2) / (2 * width ** 2))
+    x = ((2 / ((np.sqrt(3 * width) * np.pi ** 1 / 4)))
+         * (1 - ((x - center) ** 2 / width ** 2))
+         * np.exp((-(x - center) ** 2) / (2 * width ** 2)))
     return x
 
 
@@ -47,10 +47,11 @@ width = 100
 n_components = resolution / subsampling
 
 # Compute a wavelet dictionary
-D_fixed = ricker_matrix(width=width, resolution=resolution, n_components=n_components)
+D_fixed = ricker_matrix(width=width, resolution=resolution,
+                        n_components=n_components)
 D_multi = np.r_[tuple(ricker_matrix(width=w, resolution=resolution,
-                                     n_components=np.floor(n_components / 5))
-                 for w in (10, 50, 100, 500, 1000))]
+                                    n_components=np.floor(n_components / 5))
+                for w in (10, 50, 100, 500, 1000))]
 
 # Generate a signal
 y = np.linspace(0, resolution - 1, resolution)
@@ -60,9 +61,7 @@ y[np.logical_not(first_quarter)] = -1.
 
 # List the different sparse coding methods in the following format:
 # (title, transform_algorithm, transform_alpha, transform_n_nozero_coefs)
-estimators = [('OMP', 'omp', None, 15),
-              ('Lasso', 'lasso_cd', 2, None),
-]
+estimators = [('OMP', 'omp', None, 15), ('Lasso', 'lasso_cd', 2, None), ]
 
 pl.figure(figsize=(13, 6))
 for subplot, (D, title) in enumerate(zip((D_fixed, D_multi),
@@ -78,8 +77,8 @@ for subplot, (D, title) in enumerate(zip((D_fixed, D_multi),
         density = len(np.flatnonzero(x))
         x = np.ravel(np.dot(x, D))
         squared_error = np.sum((y - x) ** 2)
-        pl.plot(x, label='%s: %s nonzero coefs,\n%.2f error' %
-                          (title, density, squared_error))
+        pl.plot(x, label='%s: %s nonzero coefs,\n%.2f error'
+                % (title, density, squared_error))
 
     # Soft thresholding debiasing
     coder = SparseCoder(dictionary=D, transform_algorithm='threshold',

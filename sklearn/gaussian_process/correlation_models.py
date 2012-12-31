@@ -221,7 +221,7 @@ def cubic(theta, d):
         n_features = 1
 
     lth = theta.size
-    if  lth == 1:
+    if lth == 1:
         td = np.abs(d) * theta
     elif lth != n_features:
         raise Exception("Length of theta must be 1 or " + str(n_features))

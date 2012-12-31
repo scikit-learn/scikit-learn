@@ -10,8 +10,8 @@ from nose.tools import assert_equal, assert_true
 from numpy.testing import assert_raises
 
 from ..image import img_to_graph, grid_to_graph
-from ..image import extract_patches_2d, reconstruct_from_patches_2d, \
-                    PatchExtractor, extract_patches
+from ..image import (extract_patches_2d, reconstruct_from_patches_2d,
+                     PatchExtractor, extract_patches)
 from ...utils.graph import cs_graph_components
 
 
@@ -76,10 +76,10 @@ def test_connect_regions_with_grid():
 
 def _downsampled_lena():
     lena = sp.misc.lena().astype(np.float32)
-    lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + \
-           lena[1::2, 1::2]
-    lena = lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2] + \
-           lena[1::2, 1::2]
+    lena = (lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2]
+            + lena[1::2, 1::2])
+    lena = (lena[::2, ::2] + lena[1::2, ::2] + lena[::2, 1::2]
+            + lena[1::2, 1::2])
     lena = lena.astype(np.float)
     lena /= 16.0
     return lena
@@ -149,12 +149,10 @@ def test_extract_patches_max_patches():
     patches = extract_patches_2d(lena, (p_h, p_w), max_patches=0.5)
     assert_equal(patches.shape, (expected_n_patches, p_h, p_w))
 
-    assert_raises(ValueError, extract_patches_2d, lena,
-                                                  (p_h, p_w),
-                                                  max_patches=2.0)
-    assert_raises(ValueError, extract_patches_2d, lena,
-                                                  (p_h, p_w),
-                                                  max_patches=-1.0)
+    assert_raises(ValueError, extract_patches_2d, lena, (p_h, p_w),
+                  max_patches=2.0)
+    assert_raises(ValueError, extract_patches_2d, lena, (p_h, p_w),
+                  max_patches=-1.0)
 
 
 def test_reconstruct_patches_perfect():
@@ -246,8 +244,8 @@ def test_extract_patches_strided():
 
     for (image_shape, patch_size, patch_step,
          expected_view, last_patch) in zip(
-             image_shapes, patch_sizes, patch_steps,
-               expected_views, last_patches):
+             image_shapes, patch_sizes, patch_steps, expected_views,
+             last_patches):
         image = np.arange(np.prod(image_shape)).reshape(image_shape)
         patches = extract_patches(image, patch_shape=patch_size,
                                   extraction_step=patch_step)
@@ -260,6 +258,16 @@ def test_extract_patches_strided():
         assert_true((patches[[slice(-1, None, None)] * ndim] ==
                     image[last_patch_slices].squeeze()).all())
 
+
+def test_extract_patches_square():
+    # test same patch size for all dimensions
+    lena = downsampled_lena
+    i_h, i_w = lena.shape
+    p = 8
+    expected_n_patches = ((i_h - p + 1),  (i_w - p + 1))
+    patches = extract_patches(lena, patch_shape=p)
+    assert_true(patches.shape == (expected_n_patches[0], expected_n_patches[1],
+                                  p, p))
 
 if __name__ == '__main__':
     import nose

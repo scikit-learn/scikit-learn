@@ -18,7 +18,7 @@ from ..isotonic import isotonic_regression
 
 
 def _smacof_single(similarities, metric=True, n_components=2, init=None,
-           max_iter=300, verbose=0, eps=1e-3, random_state=None):
+                   max_iter=300, verbose=0, eps=1e-3, random_state=None):
     """
     Computes multidimensional scaling using SMACOF algorithm
 
@@ -67,7 +67,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
 
     if similarities.shape[0] != similarities.shape[1]:
         raise ValueError("similarities must be a square array (shape=%d)" %
-                            n_samples)
+                         n_samples)
     res = 100 * np.finfo(np.float).resolution
     if np.any((similarities - similarities.T) > res):
         raise ValueError("similarities must be symmetric")
@@ -83,7 +83,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
         n_components = init.shape[1]
         if n_samples != init.shape[0]:
             raise ValueError("init matrix should be of shape (%d, %d)" %
-                                 (n_samples, n_components))
+                             (n_samples, n_components))
         X = init
 
     old_stress = None
@@ -106,12 +106,11 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
             disparities = dis_flat.copy()
             disparities[sim_flat != 0] = disparities_flat
             disparities = disparities.reshape((n_samples, n_samples))
-            disparities *= np.sqrt((n_samples * (n_samples - 1) / 2) /
-                           (disparities ** 2).sum())
+            disparities *= np.sqrt((n_samples * (n_samples - 1) / 2)
+                                   / (disparities ** 2).sum())
 
         # Compute stress
-        stress = ((dis.ravel() -
-                    disparities.ravel()) ** 2).sum() / 2
+        stress = ((dis.ravel() - disparities.ravel()) ** 2).sum() / 2
 
         # Update X using the Guttman transform
         dis[dis == 0] = 1e-5
@@ -240,10 +239,9 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
     if n_jobs == 1:
         for it in range(n_init):
             pos, stress = _smacof_single(similarities, metric=metric,
-                                        n_components=n_components,
-                                        init=init, max_iter=max_iter,
-                                        verbose=verbose, eps=eps,
-                                        random_state=random_state)
+                                         n_components=n_components, init=init,
+                                         max_iter=max_iter, verbose=verbose,
+                                         eps=eps, random_state=random_state)
             if best_stress is None or stress < best_stress:
                 best_stress = stress
                 best_pos = pos.copy()
@@ -251,11 +249,10 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
         seeds = random_state.randint(np.iinfo(np.int32).max, size=n_init)
         results = Parallel(n_jobs=n_jobs, verbose=max(verbose - 1, 0))(
             delayed(_smacof_single)(
-                        similarities, metric=metric, n_components=n_components,
-                        init=init, max_iter=max_iter,
-                        verbose=verbose, eps=eps,
-                        random_state=seed)
-                for seed in seeds)
+                similarities, metric=metric, n_components=n_components,
+                init=init, max_iter=max_iter, verbose=verbose, eps=eps,
+                random_state=seed)
+            for seed in seeds)
         positions, stress = zip(*results)
         best = np.argmin(stress)
         best_stress = stress[best]
@@ -339,7 +336,7 @@ class MDS(BaseEstimator):
         self.eps = eps
         self.verbose = verbose
         self.n_jobs = n_jobs
-        self.random_state = None
+        self.random_state = random_state
 
     def fit(self, X, init=None, y=None):
         """
@@ -371,14 +368,9 @@ class MDS(BaseEstimator):
             if ndarray, initialize the SMACOF algorithm with this array
 
         """
-        self.embedding_, self.stress_ = smacof(X, metric=self.metric,
-                                     n_components=self.n_components,
-                                     init=init,
-                                     n_init=self.n_init,
-                                     n_jobs=self.n_jobs,
-                                     max_iter=self.max_iter,
-                                     verbose=self.verbose,
-                                     eps=self.eps,
-                                     random_state=self.random_state)
+        self.embedding_, self.stress_ = smacof(
+            X, metric=self.metric, n_components=self.n_components, init=init,
+            n_init=self.n_init, n_jobs=self.n_jobs, max_iter=self.max_iter,
+            verbose=self.verbose, eps=self.eps, random_state=self.random_state)
 
         return self.embedding_

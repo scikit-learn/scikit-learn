@@ -171,7 +171,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
         YY = atleast2d_or_csr(Y_norm_squared)
         if YY.shape != (1, Y.shape[0]):
             raise ValueError(
-                        "Incompatible dimensions for Y and Y_norm_squared")
+                "Incompatible dimensions for Y and Y_norm_squared")
 
     # TODO: a faster Cython implementation would do the clipping of negative
     # values in a single pass over the output matrix.
@@ -237,15 +237,11 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
            [ 1.,  1.]]...)
     """
     X, Y = check_pairwise_arrays(X, Y)
-    n_samples_X, n_features_X = X.shape
-    n_samples_Y, n_features_Y = Y.shape
-    if n_features_X != n_features_Y:
-        raise Exception("X and Y should have the same number of features!")
     D = np.abs(X[:, np.newaxis, :] - Y[np.newaxis, :, :])
     if sum_over_features:
         D = np.sum(D, axis=2)
     else:
-        D = D.reshape((n_samples_X * n_samples_Y, n_features_X))
+        D = D.reshape((-1, X.shape[1]))
     return D
 
 
@@ -268,7 +264,7 @@ def linear_kernel(X, Y=None):
     return safe_sparse_dot(X, Y.T, dense_output=True)
 
 
-def polynomial_kernel(X, Y=None, degree=3, gamma=0, coef0=1):
+def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     """
     Compute the polynomial kernel between X and Y::
 
@@ -287,7 +283,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=0, coef0=1):
     Gram matrix : array of shape (n_samples_1, n_samples_2)
     """
     X, Y = check_pairwise_arrays(X, Y)
-    if gamma == 0:
+    if gamma is None:
         gamma = 1.0 / X.shape[1]
 
     K = linear_kernel(X, Y)
@@ -297,7 +293,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=0, coef0=1):
     return K
 
 
-def sigmoid_kernel(X, Y=None, gamma=0, coef0=1):
+def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     """
     Compute the sigmoid kernel between X and Y::
 
@@ -316,7 +312,7 @@ def sigmoid_kernel(X, Y=None, gamma=0, coef0=1):
     Gram matrix: array of shape (n_samples_1, n_samples_2)
     """
     X, Y = check_pairwise_arrays(X, Y)
-    if gamma == 0:
+    if gamma is None:
         gamma = 1.0 / X.shape[1]
 
     K = linear_kernel(X, Y)
@@ -487,8 +483,7 @@ pairwise_distance_functions = {
     'l2': euclidean_distances,
     'l1': manhattan_distances,
     'manhattan': manhattan_distances,
-    'cityblock': manhattan_distances,
-    }
+    'cityblock': manhattan_distances}
 
 
 def distance_metrics():
@@ -524,8 +519,8 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
         Y = X
 
     ret = Parallel(n_jobs=n_jobs, verbose=0)(
-            delayed(func)(X, Y[s], **kwds)
-            for s in gen_even_slices(Y.shape[0], n_jobs))
+        delayed(func)(X, Y[s], **kwds)
+        for s in gen_even_slices(Y.shape[0], n_jobs))
 
     return np.hstack(ret)
 
@@ -658,8 +653,7 @@ pairwise_kernel_functions = {
     'polynomial': polynomial_kernel,
     'poly': polynomial_kernel,
     'rbf': rbf_kernel,
-    'sigmoid': sigmoid_kernel,
-    }
+    'sigmoid': sigmoid_kernel, }
 
 
 def kernel_metrics():
@@ -766,8 +760,9 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         return X
     elif metric in pairwise_kernel_functions:
         if filter_params:
-            kwds = dict((k, kwds[k]) for k in kwds \
-                                        if k in kernel_params[metric])
+            kwds = dict((k, kwds[k])
+                        for k in kwds
+                        if k in kernel_params[metric])
         func = pairwise_kernel_functions[metric]
         if n_jobs == 1:
             return func(X, Y, **kwds)

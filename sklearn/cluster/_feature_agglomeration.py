@@ -37,7 +37,7 @@ class AgglomerationTransform(TransformerMixin):
         nX = []
         if len(self.labels_) != X.shape[1]:
             raise ValueError("X has a different number of features than "
-                    "during fitting.")
+                             "during fitting.")
 
         for l in np.unique(self.labels_):
             nX.append(pooling_func(X[:, self.labels_ == l], axis=1))
@@ -69,7 +69,5 @@ class AgglomerationTransform(TransformerMixin):
             if np.size((Xred.shape)) == 1:
                 X[self.labels_ == unil[i]] = Xred[i]
             else:
-                ncol = np.sum(self.labels_ == unil[i])
-                X[:, self.labels_ == unil[i]] = np.tile(array2d(Xred[:, i]).T,
-                                                        ncol)
+                X[:, self.labels_ == unil[i]] = array2d(Xred[:, i]).T
         return X

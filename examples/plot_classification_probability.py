@@ -32,11 +32,9 @@ C = 1.0
 
 # Create different classifiers. The logistic regression cannot do
 # multiclass out of the box.
-classifiers = {
-                'L1 logistic': LogisticRegression(C=C, penalty='l1'),
-                'L2 logistic': LogisticRegression(C=C, penalty='l2'),
-                'Linear SVC': SVC(kernel='linear', C=C, probability=True),
-              }
+classifiers = {'L1 logistic': LogisticRegression(C=C, penalty='l1'),
+               'L2 logistic': LogisticRegression(C=C, penalty='l2'),
+               'Linear SVC': SVC(kernel='linear', C=C, probability=True)}
 
 n_classifiers = len(classifiers)
 
@@ -48,7 +46,7 @@ for index, (name, classifier) in enumerate(classifiers.iteritems()):
 
     y_pred = classifier.predict(X)
     classif_rate = np.mean(y_pred.ravel() == y.ravel()) * 100
-    print  "classif_rate for %s : %f " % (name, classif_rate)
+    print("classif_rate for %s : %f " % (name, classif_rate))
 
     # View probabilities=
     xx = np.linspace(3, 9, 100)

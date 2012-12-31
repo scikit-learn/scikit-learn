@@ -86,12 +86,34 @@ Changelog
    - Implement `predict_proba` in :class:`multiclass.OneVsRestClassifier`, by
      Andrew Winterman.
 
+   - Added :class:`kernel_approximation.Nystrom` for approximating arbitrary
+     kernels to the :ref:`kernel_approximation` module by `Andreas Müller`_.
+
+   - Improve consistency in :mod:`ensemble.gradient_boosting`: estimators
+     :class:`ensemble.gradient_boosting.GradientBoostingRegressor` and
+     :class:`ensemble.gradient_boosting.GradientBoostingClassifier` use
+     the estimator :class:`tree.DecisionTreeRegressor` instead of the
+     :class:`tree._tree.Tree` datastructure by `Arnaud Joly`_.
+
+   - Fixed a floating point exception in the :ref:`decision trees <tree>`
+     module, by Seberg.
+
+   - Fix :func:`metrics.roc_curve` fails when y_true has only one class
+     by Wei Li.
+
+   - New transformers :class:`random_projection.GaussianRandomProjection`,
+    :class:`random_projection.SparseRandomProjection` and the function
+    :func:`random_projection.johnson_lindenstrauss_min_dim`, implementing
+    Gaussian and sparse random projection matrix
+    by `Olivier Grisel`_ and `Arnaud Joly`_.
+
+
 API changes summary
 -------------------
    - Renamed all occurrences of ``n_atoms`` to ``n_components`` for consistency.
-     This applies to :class:`dic_learning.DictionaryLearning`,
-     :class:`dic_learning.MiniBatchDictionaryLearning`,
-     :func:'dic_learning.dict_learning', :func:'dic_learning.dict_learning_online'
+     This applies to :class:`decomposition.DictionaryLearning`,
+     :class:`decomposition.MiniBatchDictionaryLearning`,
+     :func:`decomposition.dict_learning`, :func:`decomposition.dict_learning_online`.
 
    - Renamed all occurrences of ``max_iters`` to ``max_iter`` for consistency.
      This applies to :class:`label_propagation.BaseLabelPropagation`,
@@ -107,7 +129,7 @@ API changes summary
      was already integrated into the "regular" linear models.
 
    - ``sklearn.metrics.mean_square_error``, which incorrectly returned the
-     accumulated error, was removed. Use ``mean_squared_error`` instead.
+     cumulated error, was removed. Use ``mean_squared_error`` instead.
 
    - Passing ``class_weight`` parameters to ``fit`` methods is no longer
      supported. Pass them to estimator constructors instead.
@@ -136,7 +158,7 @@ API changes summary
      had different meanings; ``l1_ratio`` was introduced to avoid confusion.
      It has the same meaning as previously ``rho`` in
      :class:`linear_model.ElasticNet` and ``(1-rho)`` in
-     :class:`linear_model.SGDClassifier`,
+     :class:`linear_model.SGDClassifier`.
 
    - :class:`linear_model.LassoLars` and :class:`linear_model.Lars` now
      store a list of paths in the case of multiple targets, rather than
@@ -150,22 +172,31 @@ API changes summary
 
    - Renamed ``eig_tol`` in :func:`manifold.spectral_embedding`,
      :class:`cluster.SpectralClustering` to ``eigen_tol``, renamed ``mode``
-     to ``eigen_solver``
+     to ``eigen_solver``.
 
    - Renamed ``mode`` in :func:`manifold.spectral_embedding` and
      :class:`cluster.SpectralClustering` to ``eigen_solver``.
 
-    - ``classes_`` and ``n_classes_`` attributes of
-      :class:`tree.DecisionTreeClassifier` and all derived ensemble models are
-      now flat in case of single output problems and nested in case of
-      multi-output problems.
+   - ``classes_`` and ``n_classes_`` attributes of
+     :class:`tree.DecisionTreeClassifier` and all derived ensemble models are
+     now flat in case of single output problems and nested in case of
+     multi-output problems.
+
+   - The ``estimators_`` attribute of
+     :class:`ensemble.gradient_boosting.GradientBoostingRegressor` and
+     :class:`ensemble.gradient_boosting.GradientBoostingClassifier` is now an
+     array of :class:'tree.DecisionTreeRegressor'.
+
+   - Renamed ``chunk_size`` to ``batch_size`` in
+     :class:`decomposition.MiniBatchDictionaryLearning` and
+     :class:`decomposition.MiniBatchSparsePCA` for consistency.
 
 .. _changes_0_12.1:
 
 0.12.1
 =======
 
-The 0.12.1 release is a bug-fix release with no additional features, but is
+The 0.12.1 release is a bug-fix release with no additional feature, but is
 instead a set of bug fixes
 
 Changelog

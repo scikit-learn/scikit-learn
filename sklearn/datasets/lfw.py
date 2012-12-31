@@ -167,7 +167,7 @@ def _load_imgs(file_paths, slice_, color, resize):
 #
 
 def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
-                     min_faces_per_person=0):
+                      min_faces_per_person=0):
     """Perform the actual data loading for the lfw people dataset
 
     This operation is meant to be cached by a joblib wrapper.
@@ -208,9 +208,9 @@ def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
 
 
 def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
-                    min_faces_per_person=None, color=False,
-                    slice_=(slice(70, 195), slice(78, 172)),
-                    download_if_missing=True):
+                     min_faces_per_person=None, color=False,
+                     slice_=(slice(70, 195), slice(78, 172)),
+                     download_if_missing=True):
     """Loader for the Labeled Faces in the Wild (LFW) people dataset
 
     This dataset is a collection of JPEG pictures of famous people
@@ -283,7 +283,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
 
 
 def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
-                    color=False, resize=None):
+                     color=False, resize=None):
     """Perform the actual data loading for the LFW pairs dataset
 
     This operation is meant to be cached by a joblib wrapper.
@@ -339,7 +339,7 @@ def load_lfw_people(download_if_missing=False, **kwargs):
 
 
 def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
-                   color=False, slice_=(slice(70, 195), slice(78, 172)),
+                    color=False, slice_=(slice(70, 195), slice(78, 172)),
                     download_if_missing=True):
     """Loader for the Labeled Faces in the Wild (LFW) pairs dataset
 

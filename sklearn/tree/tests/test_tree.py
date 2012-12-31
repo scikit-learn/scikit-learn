@@ -102,14 +102,17 @@ def test_graphviz_toy():
     tree.export_graphviz(clf, out_file=out)
     contents1 = out.getvalue()
 
-    tree_toy = StringIO("digraph Tree {\n"
-    "0 [label=\"X[0] <= 0.0000\\nerror = 0.5"
-    "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
-    "1 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 3.  0.]\", shape=\"box\"] ;\n"
-    "0 -> 1 ;\n"
-    "2 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 0.  3.]\", shape=\"box\"] ;\n"
-    "0 -> 2 ;\n"
-    "}")
+    tree_toy = StringIO(
+        "digraph Tree {\n"
+        "0 [label=\"X[0] <= 0.0000\\nerror = 0.5"
+        "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
+        "1 [label=\"error = 0.0000\\nsamples = 3\\n"
+        "value = [ 3.  0.]\", shape=\"box\"] ;\n"
+        "0 -> 1 ;\n"
+        "2 [label=\"error = 0.0000\\nsamples = 3\\n"
+        "value = [ 0.  3.]\", shape=\"box\"] ;\n"
+        "0 -> 2 ;\n"
+        "}")
     contents2 = tree_toy.getvalue()
 
     assert contents1 == contents2, \
@@ -121,14 +124,17 @@ def test_graphviz_toy():
                                feature_names=["feature1", ""])
     contents1 = out.getvalue()
 
-    tree_toy = StringIO("digraph Tree {\n"
-    "0 [label=\"feature1 <= 0.0000\\nerror = 0.5"
-    "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
-    "1 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 3.  0.]\", shape=\"box\"] ;\n"
-    "0 -> 1 ;\n"
-    "2 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 0.  3.]\", shape=\"box\"] ;\n"
-    "0 -> 2 ;\n"
-    "}")
+    tree_toy = StringIO(
+        "digraph Tree {\n"
+        "0 [label=\"feature1 <= 0.0000\\nerror = 0.5"
+        "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
+        "1 [label=\"error = 0.0000\\nsamples = 3\\n"
+        "value = [ 3.  0.]\", shape=\"box\"] ;\n"
+        "0 -> 1 ;\n"
+        "2 [label=\"error = 0.0000\\nsamples = 3\\n"
+        "value = [ 0.  3.]\", shape=\"box\"] ;\n"
+        "0 -> 2 ;\n"
+        "}")
     contents2 = tree_toy.getvalue()
 
     assert contents1 == contents2, \
@@ -142,10 +148,10 @@ def test_graphviz_toy():
 
 def test_iris():
     """Check consistency on dataset iris."""
-    for c in ('gini', \
+    for c in ('gini',
               'entropy'):
-        clf = tree.DecisionTreeClassifier(criterion=c)\
-              .fit(iris.data, iris.target)
+        clf = tree.DecisionTreeClassifier(criterion=c).fit(iris.data,
+                                                           iris.target)
 
         score = np.mean(clf.predict(iris.data) == iris.target)
         assert score > 0.9, "Failed with criterion " + c + \
@@ -153,8 +159,8 @@ def test_iris():
 
         clf = tree.DecisionTreeClassifier(criterion=c,
                                           max_features=2,
-                                          random_state=1)\
-              .fit(iris.data, iris.target)
+                                          random_state=1).fit(iris.data,
+                                                              iris.target)
 
         score = np.mean(clf.predict(iris.data) == iris.target)
         assert score > 0.5, "Failed with criterion " + c + \
@@ -164,8 +170,8 @@ def test_iris():
 def test_boston():
     """Check consistency on dataset boston house prices."""
     for c in ('mse',):
-        clf = tree.DecisionTreeRegressor(criterion=c)\
-              .fit(boston.data, boston.target)
+        clf = tree.DecisionTreeRegressor(criterion=c).fit(boston.data,
+                                                          boston.target)
 
         score = np.mean(np.power(clf.predict(boston.data) - boston.target, 2))
         assert score < 1, "Failed with criterion " + c + \
@@ -173,8 +179,8 @@ def test_boston():
 
         clf = tree.DecisionTreeRegressor(criterion=c,
                                          max_features=6,
-                                         random_state=1)\
-              .fit(boston.data, boston.target)
+                                         random_state=1).fit(boston.data,
+                                                             boston.target)
 
         #using fewer features reduces the learning ability of this tree,
         # but reduces training time.
@@ -186,7 +192,7 @@ def test_boston():
 def test_probability():
     """Predict probabilities using DecisionTreeClassifier."""
     clf = tree.DecisionTreeClassifier(max_depth=1, max_features=1,
-            random_state=42)
+                                      random_state=42)
     clf.fit(iris.data, iris.target)
 
     prob_predict = clf.predict_proba(iris.data)
@@ -225,8 +231,8 @@ def test_numerical_stability():
     old_settings = np.geterr()
     np.seterr(all="raise")
 
-    X = np.array(
-       [[152.08097839, 140.40744019, 129.75102234, 159.90493774],
+    X = np.array([
+        [152.08097839, 140.40744019, 129.75102234, 159.90493774],
         [142.50700378, 135.81935120, 117.82884979, 162.75781250],
         [127.28772736, 140.40744019, 129.75102234, 159.90493774],
         [132.37025452, 143.71923828, 138.35694885, 157.84558105],
@@ -383,7 +389,7 @@ def test_pickle():
     assert_equal(type(obj2), obj.__class__)
     score2 = obj2.score(iris.data, iris.target)
     assert score == score2, "Failed to generate same score " + \
-            " after pickling (classification) "
+        " after pickling (classification) "
 
     # regression
     obj = tree.DecisionTreeRegressor()
@@ -395,7 +401,7 @@ def test_pickle():
     assert_equal(type(obj2), obj.__class__)
     score2 = obj2.score(boston.data, boston.target)
     assert score == score2, "Failed to generate same score " + \
-            " after pickling (regression) "
+        " after pickling (regression) "
 
 
 def test_multioutput():

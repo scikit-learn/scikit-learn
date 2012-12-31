@@ -8,13 +8,17 @@ approximate kernel feature maps base on Fourier transforms.
 #
 # License: BSD Style.
 
+import warnings
+
 import numpy as np
 import scipy.sparse as sp
+from scipy.linalg import svd
 
 from .base import BaseEstimator
 from .base import TransformerMixin
 from .utils import array2d, atleast2d_or_csr, check_random_state
 from .utils.extmath import safe_sparse_dot
+from .metrics.pairwise import pairwise_kernels
 
 
 class RBFSampler(BaseEstimator, TransformerMixin):
@@ -66,10 +70,13 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         self.random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
 
-        self.random_weights_ = (np.sqrt(self.gamma) *
-                self.random_state.normal(size=(n_features, self.n_components)))
+        self.random_weights_ = (np.sqrt(self.gamma)
+                                * self.random_state.normal(size=(n_features,
+                                                           self.n_components)))
+
         self.random_offset_ = self.random_state.uniform(0,
-                2 * np.pi, size=self.n_components)
+                                                        2 * np.pi,
+                                                        size=self.n_components)
         return self
 
     def transform(self, X, y=None):
@@ -97,10 +104,10 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    skewedness: float
+    skewedness : float
         "skewedness" parameter of the kernel. Needs to be cross-validated.
 
-    n_components: int
+    n_components : int
         number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
@@ -147,12 +154,13 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         self.random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
         uniform = self.random_state.uniform(size=(n_features,
-            self.n_components))
+                                                  self.n_components))
         # transform by inverse CDF of sech
         self.random_weights_ = (1. / np.pi
-                * np.log(np.tan(np.pi / 2. * uniform)))
+                                * np.log(np.tan(np.pi / 2. * uniform)))
         self.random_offset_ = self.random_state.uniform(0,
-                2 * np.pi, size=self.n_components)
+                                                        2 * np.pi,
+                                                        size=self.n_components)
         return self
 
     def transform(self, X, y=None):
@@ -173,7 +181,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
             raise ValueError("X may not contain entries smaller than zero.")
 
         projection = safe_sparse_dot(np.log(X + self.skewedness),
-                self.random_weights_)
+                                     self.random_weights_)
 
         return (np.sqrt(2.) / np.sqrt(self.n_components)
                 * np.cos(projection + self.random_offset_))
@@ -196,9 +204,9 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    sample_steps: int, optional
+    sample_steps : int, optional
         Gives the number of (complex) sampling points.
-    sample_interval: float, optional
+    sample_interval : float, optional
         Sampling interval. Must be specified when sample_steps not in {1,2,3}.
 
     Notes
@@ -231,7 +239,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
     def fit(self, X, y=None):
         """Set parameters."""
         X = atleast2d_or_csr(X)
-        if self.sample_interval == None:
+        if self.sample_interval is None:
             # See reference, figure 2 c)
             if self.sample_steps == 1:
                 self.sample_interval = 0.8
@@ -241,7 +249,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
                 self.sample_interval = 0.4
             else:
                 raise ValueError("If sample_steps is not in [1, 2, 3],"
-                    " you need to provide sample_interval")
+                                 " you need to provide sample_interval")
         return self
 
     def transform(self, X, y=None):
@@ -286,7 +294,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
         for j in xrange(1, self.sample_steps):
             factor_nz = np.sqrt(step_nz /
-                             np.cosh(np.pi * j * self.sample_interval))
+                                np.cosh(np.pi * j * self.sample_interval))
 
             X_step = np.zeros_like(X)
             X_step[non_zero] = factor_nz * np.cos(j * log_step_nz)
@@ -312,7 +320,7 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
         for j in xrange(1, self.sample_steps):
             factor_nz = np.sqrt(step_nz /
-                             np.cosh(np.pi * j * self.sample_interval))
+                                np.cosh(np.pi * j * self.sample_interval))
 
             data_step = factor_nz * np.cos(j * log_step_nz)
             X_step = sp.csr_matrix((data_step, indices, indptr),
@@ -325,3 +333,139 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
             X_new.append(X_step)
 
         return sp.hstack(X_new)
+
+
+class Nystroem(BaseEstimator, TransformerMixin):
+    """Approximate a kernel map using a subset of the training data.
+
+    Constructs an approximate feature map for an arbitrary kernel
+    using a subset of the data as basis.
+
+    Parameters
+    ----------
+    kernel : string or callable, default="rbf"
+        Kernel map to be approximated.
+
+    n_components : int
+        Number of features to construct.
+        How many data points will be used to construct the mapping.
+
+    gamma : float, default=1/n_features.
+        Parameter for the RBF kernel.
+
+    random_state : {int, RandomState}, optional
+        If int, random_state is the seed used by the random number generator;
+        if RandomState instance, random_state is the random number generator.
+
+
+    Attributes
+    ----------
+    `components_` : array, shape (n_components, n_features)
+        Subset of training points used to construct the feature map.
+
+    `component_indices_` : array, shape (n_components)
+        Indices of ``components_`` in the training set.
+
+    `normalization_` : array, shape (n_components, n_components)
+        Normalization matrix needed for embedding.
+        Square root of the kernel matrix on ``components_``.
+
+
+    References
+    ----------
+    * Williams, C.K.I. and Seeger, M.
+      "Using the Nystrom method to speed up kernel machines",
+      Advances in neural information processing systems 2001
+
+    * T. Yang, Y. Li, M. Mahdavi, R. Jin and Z. Zhou
+      "Nystroem Method vs Random Fourier Features: A Theoretical and Empirical
+      Comparison",
+      Advances in Neural Information Processing Systems 2012
+
+
+    See also
+    --------
+    RBFSampler : An approximation to the RBF kernel using random Fourier
+                 features.
+
+    sklearn.metric.pairwise.kernel_metrics : List of build-in kernels.
+    """
+    def __init__(self, kernel="rbf", gamma=None, coef0=1, degree=3,
+                 n_components=100, random_state=None):
+        self.kernel = kernel
+        self.gamma = gamma
+        self.coef0 = coef0
+        self.degree = degree
+        self.n_components = n_components
+        self.random_state = random_state
+
+    def fit(self, X, y=None):
+        """Fit estimator to data.
+
+        Samples a subset of training points, computes kernel
+        on these and computes normalization matrix.
+
+        Parmeters
+        ---------
+        X : array-like, shape=(n_samples, n_feature)
+            Training data.
+        """
+
+        rnd = check_random_state(self.random_state)
+        n_samples = X.shape[0]
+
+        # get basis vectors
+        if self.n_components > n_samples:
+            # XXX should we just bail?
+            n_components = n_samples
+            warnings.warn("n_components > n_samples. This is not possible.\n"
+                          "n_components was set to n_samples, which results"
+                          " in inefficient evaluation of the full kernel.")
+
+        else:
+            n_components = self.n_components
+        n_components = min(n_samples, n_components)
+        inds = rnd.permutation(n_samples)
+        basis_inds = inds[:n_components]
+        basis = X[basis_inds]
+
+        if callable(self.kernel):
+            basis_kernel = self.kernel(basis, basis)
+        else:
+            params = {"gamma": self.gamma,
+                      "degree": self.degree,
+                      "coef0": self.coef0}
+            basis_kernel = pairwise_kernels(basis, metric=self.kernel,
+                                            filter_params=True, **params)
+
+        # sqrt of kernel matrix on basis vectors
+        U, S, V = svd(basis_kernel)
+        self.normalization_ = np.dot(U * 1. / np.sqrt(S), V)
+        self.components_ = basis
+        self.component_indices_ = inds
+        return self
+
+    def transform(self, X):
+        """Apply feature map to X.
+
+        Computes an approximate feature map using the kernel
+        between some training points and X.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, n_features)
+            Data to transform.
+
+        Returns
+        -------
+        X_transformed : array, shape=(n_samples, n_components)
+            Transformed data.
+        """
+
+        if callable(self.kernel):
+            embedded = self.kernel(X, self.components_)
+        else:
+            embedded = pairwise_kernels(X, self.components_,
+                                        metric=self.kernel,
+                                        gamma=self.gamma)
+        return np.dot(embedded, self.normalization_.T)

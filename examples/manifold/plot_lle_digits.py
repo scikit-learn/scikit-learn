@@ -24,8 +24,8 @@ from time import time
 import numpy as np
 import pylab as pl
 from matplotlib import offsetbox
-from sklearn.utils.fixes import qr_economic
-from sklearn import manifold, datasets, decomposition, ensemble, lda
+from sklearn import (manifold, datasets, decomposition, ensemble, lda,
+                     random_projection)
 from sklearn.metrics import euclidean_distances
 
 digits = datasets.load_digits(n_class=6)
@@ -68,13 +68,14 @@ def plot_embedding(X, title=None):
 
 #----------------------------------------------------------------------
 # Plot images of the digits
-N = 20
-img = np.zeros((10 * N, 10 * N))
-for i in range(N):
+n_img_per_row = 20
+img = np.zeros((10 * n_img_per_row, 10 * n_img_per_row))
+for i in range(n_img_per_row):
     ix = 10 * i + 1
-    for j in range(N):
+    for j in range(n_img_per_row):
         iy = 10 * j + 1
-        img[ix:ix + 8, iy:iy + 8] = X[i * N + j].reshape((8, 8))
+        img[ix:ix + 8, iy:iy + 8] = X[i * n_img_per_row + j].reshape((8, 8))
+
 pl.imshow(img, cmap=pl.cm.binary)
 pl.xticks([])
 pl.yticks([])
@@ -84,9 +85,8 @@ pl.title('A selection from the 64-dimensional digits dataset')
 #----------------------------------------------------------------------
 # Random 2D projection using a random unitary matrix
 print "Computing random projection"
-rng = np.random.RandomState(42)
-Q, _ = qr_economic(rng.normal(size=(n_features, 2)))
-X_projected = np.dot(Q.T, X.T).T
+rp = random_projection.SparseRandomProjection(n_components=2, random_state=42)
+X_projected = rp.fit_transform(X)
 plot_embedding(X_projected, "Random Projection of the digits")
 
 

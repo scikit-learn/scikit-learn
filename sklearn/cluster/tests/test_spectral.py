@@ -16,18 +16,15 @@ from sklearn.cluster.spectral import discretize
 from sklearn.metrics import pairwise_distances, adjusted_rand_score
 from sklearn.datasets.samples_generator import make_blobs
 
-from sklearn.preprocessing import LabelBinarizer
-
 
 def test_spectral_clustering():
-    S = np.array([[1, 5, 2, 1, 0, 0, 0],
-                  [5, 1, 3, 1, 0, 0, 0],
-                  [2, 3, 1, 1, 0, 0, 0],
-                  [1, 1, 1, 1, 2, 1, 1],
-                  [0, 0, 0, 2, 2, 3, 2],
-                  [0, 0, 0, 1, 3, 1, 4],
-                  [0, 0, 0, 1, 2, 4, 1],
-                  ])
+    S = np.array([[1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
+                  [1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
+                  [1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
+                  [0.2, 0.2, 0.2, 1.0, 1.0, 1.0, 1.0],
+                  [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0],
+                  [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0],
+                  [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0]])
 
     for eigen_solver in ('arpack', 'lobpcg'):
         for assign_labels in ('kmeans', 'discretize'):
@@ -157,7 +154,10 @@ def test_spectral_clustering_sparse():
 
 
 def test_affinities():
-    X, y = make_blobs(n_samples=40, random_state=1, centers=[[1, 1], [-1, -1]],
+    # Note: in the following, random_state has been selected to have
+    # a dataset that yields a stable eigen decomposition both when built
+    # on OSX and Linux
+    X, y = make_blobs(n_samples=40, random_state=2, centers=[[1, 1], [-1, -1]],
                       cluster_std=0.4)
     # nearest neighbors affinity
     sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',

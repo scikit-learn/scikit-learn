@@ -71,6 +71,11 @@ def test_pairwise_distances():
     S = pairwise_distances(X, Y, metric="minkowski", **kwds)
     S2 = pairwise_distances(X, Y, metric=minkowski, **kwds)
     assert_array_almost_equal(S, S2)
+    # same with Y = None
+    kwds = {"p": 2.0}
+    S = pairwise_distances(X, metric="minkowski", **kwds)
+    S2 = pairwise_distances(X, metric=minkowski, **kwds)
+    assert_array_almost_equal(S, S2)
     # Test that scipy distance metrics throw an error if sparse matrix given
     assert_raises(TypeError, pairwise_distances, X_sparse, metric="minkowski")
     assert_raises(TypeError, pairwise_distances, X, Y_sparse,
@@ -126,9 +131,14 @@ def test_pairwise_kernels():
     # Test with a callable function, with given keywords.
     metric = callable_rbf_kernel
     kwds = {}
-    kwds['gamma'] = 0.
+    kwds['gamma'] = 0.1
     K1 = pairwise_kernels(X, Y=Y, metric=metric, **kwds)
     K2 = rbf_kernel(X, Y=Y, **kwds)
+    assert_array_almost_equal(K1, K2)
+
+    # callable function, X=Y
+    K1 = pairwise_kernels(X, Y=X, metric=metric, **kwds)
+    K2 = rbf_kernel(X, Y=X, **kwds)
     assert_array_almost_equal(K1, K2)
 
 

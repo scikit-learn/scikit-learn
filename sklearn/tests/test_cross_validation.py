@@ -1,6 +1,7 @@
 """Test the cross_validation module"""
 
 import numpy as np
+import warnings
 from scipy.sparse import coo_matrix
 
 from sklearn.utils.testing import assert_true
@@ -24,6 +25,30 @@ from sklearn.linear_model import Ridge
 
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
+
+
+class MockListClassifier(BaseEstimator):
+    """Dummy classifier to test the cross-validation.
+
+    Checks that GridSearchCV didn't convert X to array.
+    """
+    def __init__(self, foo_param=0):
+        self.foo_param = foo_param
+
+    def fit(self, X, Y):
+        assert_true(len(X) == len(Y))
+        assert_true(isinstance(X, list))
+        return self
+
+    def predict(self, T):
+        return T.shape[0]
+
+    def score(self, X=None, Y=None):
+        if self.foo_param > 1:
+            score = 1.
+        else:
+            score = 0.
+        return score
 
 
 class MockClassifier(BaseEstimator):
@@ -63,8 +88,20 @@ y = np.arange(10) / 2
 def test_kfold_valueerrors():
     # Check that errors are raised if there is not enough samples
     assert_raises(ValueError, cval.KFold, 3, 4)
-    y = [0, 0, 1, 1, 2]
-    assert_raises(ValueError, cval.StratifiedKFold, y, 3)
+
+    # Check that a warning is raised if the least populated class has too few
+    # members.
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always')
+        y = [0, 0, 1, 1, 2]
+        cval.StratifiedKFold(y, 3)
+        # checking there was only one warning.
+        assert_equal(len(w), 1)
+        # checking it has the right type
+        assert_equal(w[0].category, Warning)
+        # checking it's the right warning. This might be a bad test since it's
+        # a characteristic of the code and not a behavior
+        assert_true("The least populated class" in str(w[0]))
 
     # Error when number of folds is <= 0
     assert_raises(ValueError, cval.KFold, 2, 0)
@@ -196,6 +233,10 @@ def test_cross_val_score():
 
         scores = cval.cross_val_score(clf, X_sparse, y)
         assert_array_equal(scores, clf.score(X_sparse, y))
+
+    # test with X as list
+    clf = MockListClassifier()
+    scores = cval.cross_val_score(clf, X.tolist(), y)
 
 
 def test_cross_val_score_precomputed():

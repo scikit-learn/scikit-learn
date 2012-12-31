@@ -145,7 +145,8 @@ rules before submitting a pull request:
 
 You can also check for common programming errors with the following tools:
 
-    * Code with a good unittest coverage (at least 80%), check with::
+    * Code with a good unittest coverage (at least 90%, better 100%), check
+      with::
 
         $ pip install nose coverage
         $ nosetests --with-coverage path/to/tests_for_package

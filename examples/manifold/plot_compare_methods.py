@@ -36,7 +36,7 @@ from sklearn.metrics import euclidean_distances
 Axes3D
 
 n_points = 1000
-X, color = datasets.samples_generator.make_s_curve(n_points)
+X, color = datasets.samples_generator.make_s_curve(n_points, random_state=0)
 n_neighbors = 10
 n_components = 2
 

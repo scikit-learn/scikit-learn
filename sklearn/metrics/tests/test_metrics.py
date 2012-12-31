@@ -219,7 +219,7 @@ def test_average_precision_score_tied_values():
     # could be swapped around, creating an imperfect sorting. This
     # imperfection should come through in the end score, making it less
     # than one.
-    y_true = [0,  1,  1]
+    y_true = [0, 1, 1]
     y_score = [.5, .5, .6]
     assert_not_equal(average_precision_score(y_true, y_score), 1.)
 
@@ -357,15 +357,15 @@ def test_confusion_matrix_multiclass():
 
     # compute confusion matrix with default labels introspection
     cm = confusion_matrix(y_true, y_pred)
-    assert_array_equal(cm, [[23, 2,  0],
-                            [5,  5, 20],
-                            [0,  2, 18]])
+    assert_array_equal(cm, [[23, 2, 0],
+                            [5, 5, 20],
+                            [0, 2, 18]])
 
     # compute confusion matrix with explicit label ordering
     cm = confusion_matrix(y_true, y_pred, labels=[0, 2, 1])
-    assert_array_equal(cm, [[23, 0,  2],
-                            [0, 18,  2],
-                            [5, 20,  5]])
+    assert_array_equal(cm, [[23, 0, 2],
+                            [0, 18, 2],
+                            [5, 20, 5]])
 
 
 def test_confusion_matrix_multiclass_subset_labels():
@@ -375,13 +375,13 @@ def test_confusion_matrix_multiclass_subset_labels():
     # compute confusion matrix with only first two labels considered
     cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
     assert_array_equal(cm, [[23, 2],
-                            [5,  5]])
+                            [5, 5]])
 
     # compute confusion matrix with explicit label ordering for only subset
     # of labels
     cm = confusion_matrix(y_true, y_pred, labels=[2, 1])
-    assert_array_equal(cm, [[18,  2],
-                            [20,  5]])
+    assert_array_equal(cm, [[18, 2],
+                            [20, 5]])
 
 
 def test_classification_report():
@@ -529,3 +529,23 @@ def test_hinge_loss_binary():
     pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
     assert_equal(1.2 / 4,
                  hinge_loss(y_true, pred_decision, pos_label=2, neg_label=0))
+
+
+def test_roc_curve_one_label():
+    y_true = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    y_pred = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
+    # assert there are warnings
+    with warnings.catch_warnings(True) as w:
+        fpr, tpr, thresholds = roc_curve(y_true, y_pred)
+        assert_equal(len(w), 1)
+    # all true labels, all fpr should be nan
+    assert_array_equal(fpr,
+                       np.nan * np.ones(len(thresholds) + 1))
+    # assert there are warnings
+    with warnings.catch_warnings(True) as w:
+        fpr, tpr, thresholds = roc_curve([1 - x for x in y_true],
+                                         y_pred)
+        assert_equal(len(w), 1)
+    # all negative labels, all tpr should be nan
+    assert_array_equal(tpr,
+                       np.nan * np.ones(len(thresholds) + 1))

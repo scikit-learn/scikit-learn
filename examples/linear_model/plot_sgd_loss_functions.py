@@ -10,8 +10,7 @@ print __doc__
 
 import numpy as np
 import pylab as pl
-from sklearn.linear_model.sgd_fast import Hinge, \
-     ModifiedHuber, SquaredLoss
+from sklearn.linear_model.sgd_fast import Hinge, ModifiedHuber, SquaredLoss
 
 ###############################################################################
 # Define loss funcitons
