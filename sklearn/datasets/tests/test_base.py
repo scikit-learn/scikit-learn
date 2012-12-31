@@ -3,6 +3,11 @@ import shutil
 import tempfile
 import nose
 
+from sklearn.datasets import get_data_home
+from sklearn.datasets import clear_data_home
+from sklearn.datasets import load_filenames
+from sklearn.datasets import load_files
+
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
@@ -25,11 +30,6 @@ def teardown_module():
         _remove_dir(path)
 
 
-def _get_load_file_method():
-    from sklearn.datasets import load_files
-    return load_files
-
-
 def setup_load_files():
     global TEST_CATEGORY_DIR1
     global TEST_CATEGORY_DIR2
@@ -47,9 +47,6 @@ def teardown_load_files():
 
 
 def test_data_home():
-    from sklearn.datasets import get_data_home
-    from sklearn.datasets import clear_data_home
-
     # get_data_home will point to a pre-existing folder
     data_home = get_data_home(data_home=DATA_HOME)
     assert_equal(data_home, DATA_HOME)
@@ -65,7 +62,6 @@ def test_data_home():
 
 
 def test_default_empty_load_files():
-    load_files = _get_load_file_method()
     res = load_files(LOAD_FILES_ROOT)
     assert_equal(len(res.filenames), 0)
     assert_equal(len(res.target_names), 0)
@@ -73,14 +69,12 @@ def test_default_empty_load_files():
 
 
 def test_deprecated_load_filenames():
-    from sklearn.datasets import load_filenames
     res = load_filenames(LOAD_FILES_ROOT)
     assert_true(res)
 
 
 @nose.tools.with_setup(setup_load_files, teardown_load_files)
 def test_default_load_files():
-    load_files = _get_load_file_method()
     res = load_files(LOAD_FILES_ROOT)
     assert_equal(len(res.filenames), 1)
     assert_equal(len(res.target_names), 2)    
@@ -90,7 +84,6 @@ def test_default_load_files():
 
 @nose.tools.with_setup(setup_load_files, teardown_load_files)
 def test_load_files_w_categories_desc_and_charset():
-    load_files = _get_load_file_method()
     category = os.path.abspath(TEST_CATEGORY_DIR1).split('/').pop()
     res = load_files(LOAD_FILES_ROOT, description="test",
                      categories=category, charset="utf-8")
@@ -102,7 +95,6 @@ def test_load_files_w_categories_desc_and_charset():
 
 @nose.tools.with_setup(setup_load_files, teardown_load_files)
 def test_load_files_wo_load_content():
-    load_files = _get_load_file_method()
     res = load_files(LOAD_FILES_ROOT, load_content=False)
     assert_equal(len(res.filenames), 1)
     assert_equal(len(res.target_names), 2)    
