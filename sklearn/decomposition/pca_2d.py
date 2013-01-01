@@ -132,12 +132,16 @@ class PCA2D(BaseEstimator, TransformerMixin):
         """
 
         # Converting the data to 3 dimensions
+        assert_all_finite(X)
         X = np.atleast_3d(X)
 
         n_samples, n_row, n_column = X.shape
 
         # Making sure the type of the data is float
-        X = as_float_array(X, copy=self.copy)
+        #X = as_float_array(X, copy=self.copy)
+        X.astype(float)
+        if self.copy:
+            X = np.copy(X)
 
         # Center data
         self.mean_ = np.mean(X, axis=0)
@@ -220,6 +224,7 @@ class PCA2D(BaseEstimator, TransformerMixin):
         """
 
         # X -= self.mean_
+        assert_all_finite(X)
         if np.size(X.shape) == 2:
             return (self.row_components_.T.dot(X - self.mean_).
                     dot(self.column_components_))
@@ -257,6 +262,7 @@ class PCA2D(BaseEstimator, TransformerMixin):
             exact inverse operation as transform.
         """
 
+        assert_all_finite(X)
         if np.size(X.shape) == 2:
             return (self.row_components_.dot(X).
                     dot(self.column_components_.T) + self.mean_)
