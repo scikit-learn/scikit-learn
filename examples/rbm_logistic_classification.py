@@ -27,6 +27,7 @@ print __doc__
 import numpy as np
 
 from sklearn import linear_model, datasets, metrics, preprocessing
+from sklearn.cross_validation import train_test_split
 from sklearn.neural_networks import RestrictedBolzmannMachine
 from sklearn.pipeline import Pipeline
 from sklearn.grid_search import GridSearchCV
@@ -40,13 +41,8 @@ np.random.seed(0xfeeb)
 digits = datasets.load_digits()
 X = np.asarray(digits.data, 'float32') / digits.data.max()
 Y = digits.target
-train_size = int(0.8 * X.shape[0])
-
-# Shuffle train-test split
-inds = range(X.shape[0])
-np.random.shuffle(inds)
-X = X[inds]
-Y = Y[inds]
+X_train, X_test, Y_train, Y_test = train_test_split(X, Y,
+    test_size=0.2, random_state=0xfeeb)
 
 # Models we will use
 logistic = linear_model.LogisticRegression()
@@ -69,13 +65,13 @@ estimator = GridSearchCV(pipe,
                               rbm__learning_rate=learning_rate,
                               rbm__n_iter=n_iter,
                               logistic__C=Cs))
-estimator.fit(X[:train_size], Y[:train_size])
+estimator.fit(X_train, Y_train)
 classifier = estimator.best_estimator_
 
 # Training Logistic regression
 logistic_estimator = GridSearchCV(logistic,
                                   dict(C=Cs))
-logistic_estimator.fit(X[:train_size], Y[:train_size])
+logistic_estimator.fit(X_train, Y_train)
 logistic_classifier = logistic_estimator.best_estimator_
 
 
@@ -83,9 +79,9 @@ logistic_classifier = logistic_estimator.best_estimator_
 # Evaluation
 
 print "Classification report for classifier %s:\n%s\n" % (
-    classifier, metrics.classification_report(Y[train_size:],
-        classifier.predict(X[train_size:])))
+    classifier, metrics.classification_report(Y_test,
+        classifier.predict(X_test)))
 
 print "Classification report for classifier %s:\n%s\n" % (
-    logistic_classifier, metrics.classification_report(Y[train_size:],
-        logistic_classifier.predict(X[train_size:])))
+    logistic_classifier, metrics.classification_report(Y_test,
+        logistic_classifier.predict(X_test)))
