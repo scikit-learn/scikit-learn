@@ -24,6 +24,10 @@ def test_isotonic_regression():
                        ir.fit_transform(x, y)[perm])
     assert_array_equal(ir.transform(x[perm]), ir.transform(x)[perm])
 
+    # check it doesn't change y when all x are equal:
+    ir = IsotonicRegression()
+    assert_array_equal(ir.fit_transform(np.ones(len(x)), y), y)
+
 
 def test_assert_raises_exceptions():
     ir = IsotonicRegression()
