@@ -8,7 +8,7 @@
 import numpy as np
 from scipy import linalg
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import as_float_array
+from ..utils import as_float_array, assert_all_finite
 
 
 class PCA2D(BaseEstimator, TransformerMixin):
