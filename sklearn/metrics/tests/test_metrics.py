@@ -569,6 +569,21 @@ def test_multioutput_regression():
     assert_almost_equal(error, 1 - 5. / 2)
 
 
+def test_multioutput_number_of_output_differ():
+    y_true = np.array([[1, 0, 0, 1],
+                       [0, 1, 1, 1],
+                       [1, 1, 0, 1],
+                       ])
+
+    y_pred = np.array([[0, 0],
+                       [1, 0],
+                       [0, 0],
+                       ])
+
+    assert_raises(ValueError, mean_squared_error, y_true, y_pred)
+    assert_raises(ValueError, r2_score, y_true, y_pred)
+
+
 def test_multioutput_regression_invariance_to_dimension_shuffling():
     # test invariance to dimension shuffling
     y_true, y_pred, _ = make_prediction()
