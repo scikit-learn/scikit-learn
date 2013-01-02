@@ -549,3 +549,37 @@ def test_roc_curve_one_label():
     # all negative labels, all tpr should be nan
     assert_array_equal(tpr,
                        np.nan * np.ones(len(thresholds) + 1))
+
+
+def test_multioutput_regression():
+    y_true = np.array([[1, 0, 0, 1],
+                       [0, 1, 1, 1],
+                       [1, 1, 0, 1],
+                       ])
+
+    y_pred = np.array([[0, 0, 0, 1],
+                       [1, 0, 1, 1],
+                       [0, 0, 0, 1],
+                       ])
+
+    error = mean_squared_error(y_true, y_pred)
+    assert_almost_equal(error, (1. / 3 + 2. / 3 + 2. / 3) / 4.)
+
+    error = r2_score(y_true, y_pred)
+    assert_almost_equal(error, 1 - 5. / 2)
+
+
+def test_multioutput_regression_invariance_to_dimension_shuffling():
+    # test invariance to dimension shuffling
+    y_true, y_pred, _ = make_prediction()
+    n_dims = 3
+    y_true = np.reshape(y_true, (-1, n_dims))
+    y_pred = np.reshape(y_pred, (-1, n_dims))
+
+    for metric in [r2_score, mean_squared_error]:
+        error = metric(y_true, y_pred)
+
+        for _ in xrange(3):
+            perm = np.random.permutation(n_dims)
+            assert_almost_equal(error,
+                                metric(y_true[:, perm], y_pred[:, perm]))
