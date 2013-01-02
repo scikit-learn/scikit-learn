@@ -73,7 +73,7 @@ over :math:`n_{\text{samples}}` is given by
 
 .. math::
 
-  R^2(y) = 1 - \frac{\sum_{i=0}^{n_{\text{samples}}} (y_i - \hat{y}_i)^2}{\sum_{i=0}^{n_{\text{samples}}} (y_i - \bar{y})^2}
+  R^2(y, \hat{y}) = 1 - \frac{\sum_{i=0}^{n_{\text{samples}}} (y_i - \hat{y}_i)^2}{\sum_{i=0}^{n_{\text{samples}}} (y_i - \bar{y})^2}
 
 where :math:`\bar{y} =  \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}} y_i`.
 
