@@ -9,7 +9,7 @@ Clustering: grouping observations together
 
     Given the iris dataset, if we knew that there were 3 types of iris, but
     did not have access to a taxonomist to label them: we could try a
-    **clustering task**: split the observations in well-separated group
+    **clustering task**: split the observations into well-separated group
     called *clusters*.
 
 ..   
@@ -20,8 +20,8 @@ Clustering: grouping observations together
 K-means clustering
 -------------------
 
-Note that their exists a lot of different clustering criteria and associated
-algorithms. The simplest clustering algorithm is the 
+Note that there exist a lot of different clustering criteria and associated
+algorithms. The simplest clustering algorithm is 
 :ref:`k_means`.
 
 .. image:: ../../auto_examples/cluster/images/plot_cluster_iris_2.png
@@ -59,9 +59,9 @@ algorithms. The simplest clustering algorithm is the
 
 .. warning:: 
    
-    There is absolutely no guarantee of recovering a ground truth. First
+    There is absolutely no guarantee of recovering a ground truth. First,
     choosing the right number of clusters is hard. Second, the algorithm
-    is sensitive to initialization, and can fall in local minima,
+    is sensitive to initialization, and can fall into local minima,
     although in the `sklearn` package we play many tricks to mitigate this
     issue.
 
@@ -104,9 +104,9 @@ algorithms. The simplest clustering algorithm is the
 
 .. topic:: **Application example: vector quantization**
 
-    Clustering in general and KMeans in particular, can be seen as a way
-    of choosing a small number of examplars to compress the information,
-    a problem sometimes known as 
+    Clustering in general and KMeans, in particular, can be seen as a way
+    of choosing a small number of exemplars to compress the information.
+    The problem is sometimes known as 
     `vector quantization <http://en.wikipedia.org/wiki/Vector_quantization>`_. 
     For instance, this can be used to posterize an image::
 
@@ -159,7 +159,7 @@ of this technique are either:
   * **Divisive** - `top-down` approaches.
 
 For estimating a large number of clusters, top-down approaches are both
-statisticaly ill-posed, and slow - due to it starting with all observations
+statistically ill-posed and slow due to it starting with all observations
 as one cluster, which it splits recursively. Agglomerative 
 hierarchical-clustering is a bottom-up approach that successively merges 
 observations together and is particularly useful when the clusters of interest 
@@ -172,8 +172,9 @@ Connectivity-constrained clustering
 
 With Ward clustering, it is possible to specify which samples can be
 clustered together by giving a connectivity graph. Graphs in the scikit
-are represented by their adjacency matrix. Often a sparse matrix is used.
-This can be useful for instance to retrieve connect regions when
+are represented by their adjacency matrix. Often, a sparse matrix is used.
+This can be useful, for instance, to retrieve connected regions (sometimes
+also referred to as connected components) when
 clustering an image:
 
 .. image:: ../../auto_examples/cluster/images/plot_lena_ward_segmentation_1.png
@@ -193,9 +194,9 @@ Feature agglomeration
 ......................
 
 We have seen that sparsity could be used to mitigate the curse of
-dimensionality, *i.e* the insufficience of observations compared to the
+dimensionality, *i.e* an insufficient amount of observations compared to the
 number of features. Another approach is to merge together similar
-features: **feature agglomeration**. This approach can be implementing by
+features: **feature agglomeration**. This approach can be implemented by
 clustering in the feature direction, in other words clustering the
 transposed data.
 
@@ -230,8 +231,8 @@ Decompositions: from a signal to components and loadings
 
 .. topic:: **Components and loadings**
 
-   If X is our multivariate data, the problem that we are trying to solve
-   is to rewrite it on a different observation basis: we want to learn
+   If X is our multivariate data, then the problem that we are trying to solve
+   is to rewrite it on a different observational basis: we want to learn
    loadings L and a set of components C such that *X = L C*.
    Different criteria exist to choose the components
 
@@ -254,8 +255,8 @@ explain the maximum variance in the signal.
    |pca_3d_axis| |pca_3d_aligned|
 
 The point cloud spanned by the observations above is very flat in one
-direction: one of the 3 univariate features can almost be exactly
-computed using the 2 other. PCA finds the directions in which the data is
+direction: one of the three univariate features can almost be exactly
+computed using the other two. PCA finds the directions in which the data is
 not *flat*
 
 When used to *transform* data, PCA can reduce the dimensionality of the
