@@ -33,23 +33,23 @@ def test_correct_shapes():
 
     assert_array_equal(Xr.shape, (50, 10, 12))
 
-    Xr_2d = pca2d.transform(X[0, :, :])
+    #Xr_2d = pca2d.transform(X[0, :, :])
 
-    assert_array_equal(Xr_2d.shape, (10, 12))
+    #assert_array_equal(Xr_2d.shape, (10, 12))
 
     # Testing shapes after inverse transformation
 
     # Testing first that the data X has not been changed by the transformation
 
-    assert_array_almost_equal(X, X_copy, 2)
+    assert_array_almost_equal(X, X_copy)
 
     X_inv = pca2d.inverse_transform(Xr)
 
     assert_array_equal(X_inv.shape, X.shape)
 
-    X_inv_2d = pca2d.inverse_transform(Xr_2d)
+    #X_inv_2d = pca2d.inverse_transform(Xr_2d)
 
-    assert_array_equal(X_inv_2d.shape, X[0, :, :].shape)
+    #assert_array_equal(X_inv_2d.shape, X[0, :, :].shape)
 
 
 def test_logic():
@@ -66,7 +66,7 @@ def test_logic():
     # Computing the covariance matrix of Xr on the row dimension
     X_cov = np.tensordot(Xr, Xr, axes=([0, 2], [0, 2])) / X.shape[0]
     X_cov = X_cov - np.diag(np.diag(X_cov))
-    assert_array_almost_equal(X_cov, np.zeros((4, 4)), 2)
+    assert_array_almost_equal(X_cov, np.zeros((4, 4)))
 
     # after column transformation
     pca2d = PCA2D(n_row_components=0, n_column_components=4, epsilon=0)
@@ -75,7 +75,7 @@ def test_logic():
     # Computing the covariance matrix of Xr on the column dimension
     X_cov = np.tensordot(Xr, Xr, axes=([0, 1], [0, 1])) / X.shape[0]
     X_cov = X_cov - np.diag(np.diag(X_cov))
-    assert_array_almost_equal(X_cov, np.zeros((4, 4)), 2)
+    assert_array_almost_equal(X_cov, np.zeros((4, 4)))
 
 
 def test_logic_whitening():
@@ -91,7 +91,7 @@ def test_logic_whitening():
     Xr = pca2d.transform(X)
     # Computing the covariance matrix of Xr on the row dimension
     X_cov = np.tensordot(Xr, Xr, axes=([0, 2], [0, 2])) / X.shape[0]
-    assert_array_almost_equal(X_cov, np.eye(4, 4), 2)
+    assert_array_almost_equal(X_cov, np.eye(4, 4))
 
     # after column transformation
     pca2d = PCA2D(n_row_components=0, n_column_components=4,
@@ -100,7 +100,7 @@ def test_logic_whitening():
     Xr = pca2d.transform(X)
     # Computing the covariance matrix of Xr on the column dimension
     X_cov = np.tensordot(Xr, Xr, axes=([0, 1], [0, 1])) / X.shape[0]
-    assert_array_almost_equal(X_cov, np.eye(4, 4), 2)
+    assert_array_almost_equal(X_cov, np.eye(4, 4))
 
 
 def test_pca2d_efficiency():
@@ -118,4 +118,4 @@ def test_pca2d_efficiency():
     X_ori = pca2d.inverse_transform(Xr)
 
     # X_ori should be approximately equal to X
-    assert_array_almost_equal(X_ori, X, 2)
+    assert_array_almost_equal(X_ori, X)

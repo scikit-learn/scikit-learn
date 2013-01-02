@@ -134,24 +134,22 @@ class PCA2D(BaseEstimator, TransformerMixin):
 
         # Checking if X is not sparse
         if issparse(X):
-            raise ValueError("sparse matrices are not currently supported")
-            
-            
+            raise TypeError("sparse matrices are not currently supported")
+
         # Converting the data to 3 dimensions array
         X = np.asarray(X, np.float64)
         assert_all_finite(X)
         X = np.atleast_3d(X)
-        
+
         # Copy the data if necessary
         if self.copy:
             X = X.copy()
-        
 
         n_samples, n_row, n_column = X.shape
 
         # Making sure the type of the data is float
-        #X = as_float_array(X, copy=self.copy)
-        #X = X.astype(np.float64)
+        # X = as_float_array(X, copy=self.copy)
+        # X = X.astype(np.float64)
 
         # Center data
         self.mean_ = np.mean(X, axis=0)
@@ -220,14 +218,12 @@ class PCA2D(BaseEstimator, TransformerMixin):
         X: array-like, shape (n_samples, n_row, n_column)
             Training matrix where n_samples is the number of samples
             and n_row x n_column is the dimension of the features.
-            Or the shape can also be (n_row, n_column)
 
         Returns
         -------
 
         X_new : array-like,
                 shape (n_samples, n_row_components, n_column_components)
-                or shape is (n_row_components, n_column_components)
                 according to X.
 
 
@@ -235,16 +231,19 @@ class PCA2D(BaseEstimator, TransformerMixin):
 
         # X -= self.mean_
         if issparse(X):
-            raise ValueError("sparse matrices are not currently supported")
-            
+            raise TypeError("sparse matrices are not currently supported")
+
         X = np.asarray(X, np.float64)
         assert_all_finite(X)
-        
-        if np.size(X.shape) == 2:
-            return (self.row_components_.T.dot(X - self.mean_).
-                    dot(self.column_components_))
+        X = np.atleast_3d(X)
 
-        elif np.size(X.shape) == 3:
+        # Disabling this features
+        # if X.ndim == 2:
+         #   return (self.row_components_.T.dot(X - self.mean_).
+          #          dot(self.column_components_))
+
+        # elif X.ndim == 3:
+        if X.ndim == 3:
             return ((X - self.mean_).dot(self.column_components_).
                     transpose((0, 2, 1)).dot(self.row_components_).
                     transpose((0, 2, 1)))
@@ -257,8 +256,7 @@ class PCA2D(BaseEstimator, TransformerMixin):
             ----------
 
             X: array-like,
-                shape (n_samples, n_row_components, n_column_components) or
-                shape is (n_row_components, n_column_components)
+                shape (n_samples, n_row_components, n_column_components)
                 New data  where n_samples is the number of samples
                 and n_row_components, n_column_components are the number of
                 components on the row and column direction respectively.
@@ -268,7 +266,7 @@ class PCA2D(BaseEstimator, TransformerMixin):
 
             X_original : array-like, shape (n_samples, n_row, n_column)
 
-                          or shape is (n_row, n_column) according to X
+
 
             Notes
             -----
@@ -278,16 +276,19 @@ class PCA2D(BaseEstimator, TransformerMixin):
         """
 
         if issparse(X):
-            raise ValueError("sparse matrices are not currently supported")
-            
+            raise TypeError("sparse matrices are not currently supported")
+
         X = np.asarray(X, np.float64)
         assert_all_finite(X)
-        
-        if np.size(X.shape) == 2:
-            return (self.row_components_.dot(X).
-                    dot(self.column_components_.T) + self.mean_)
+        X = np.atleast_3d(X)
 
-        elif np.size(X.shape) == 3:
+        # Disabling this features
+        # if X.ndim == 2:
+         #   return (self.row_components_.dot(X).
+          #          dot(self.column_components_.T) + self.mean_)
+
+        # elif X.ndim == 3:
+        if X.ndim == 3:
 
             return (X.dot(self.column_components_.T).transpose((0, 2, 1)).
                     dot(self.row_components_.T).transpose((0, 2, 1)) +
