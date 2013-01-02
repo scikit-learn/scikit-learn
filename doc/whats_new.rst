@@ -386,6 +386,9 @@ Changelog
    - :class:`MiniBatchKMeans`: Add random reassignment of cluster centers
      with little observations attached to them, by `Gael Varoquaux`_.
 
+   - New transformer :ref:`neural_networks.RestrictedBoltzmannMachine`
+     by `Yann Dauphin`_.
+
 
 API changes summary
 -------------------
