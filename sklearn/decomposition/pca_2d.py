@@ -7,6 +7,7 @@
 
 import numpy as np
 from scipy import linalg
+from scipy.sparse import issparse
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import as_float_array, assert_all_finite
 
@@ -131,6 +132,8 @@ class PCA2D(BaseEstimator, TransformerMixin):
         Returns the instance itself.
         """
 
+        if issparse(X):
+            raise ValueError("sparse matrices are not currently supported")
         # Converting the data to 3 dimensions
         assert_all_finite(X)
         X = np.atleast_3d(X)
@@ -141,7 +144,7 @@ class PCA2D(BaseEstimator, TransformerMixin):
         #X = as_float_array(X, copy=self.copy)
         X.astype(float)
         if self.copy:
-            X = np.copy(X)
+            X = X.copy()
 
         # Center data
         self.mean_ = np.mean(X, axis=0)
@@ -224,6 +227,8 @@ class PCA2D(BaseEstimator, TransformerMixin):
         """
 
         # X -= self.mean_
+        if issparse(X):
+            raise ValueError("sparse matrices are not currently supported")
         assert_all_finite(X)
         if np.size(X.shape) == 2:
             return (self.row_components_.T.dot(X - self.mean_).
@@ -262,6 +267,8 @@ class PCA2D(BaseEstimator, TransformerMixin):
             exact inverse operation as transform.
         """
 
+        if issparse(X):
+            raise ValueError("sparse matrices are not currently supported")
         assert_all_finite(X)
         if np.size(X.shape) == 2:
             return (self.row_components_.dot(X).
