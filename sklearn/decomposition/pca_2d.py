@@ -132,19 +132,26 @@ class PCA2D(BaseEstimator, TransformerMixin):
         Returns the instance itself.
         """
 
+        # Checking if X is not sparse
         if issparse(X):
             raise ValueError("sparse matrices are not currently supported")
-        # Converting the data to 3 dimensions
+            
+            
+        # Converting the data to 3 dimensions array
+        X = np.asarray(X, np.float64)
         assert_all_finite(X)
         X = np.atleast_3d(X)
+        
+        # Copy the data if necessary
+        if self.copy:
+            X = X.copy()
+        
 
         n_samples, n_row, n_column = X.shape
 
         # Making sure the type of the data is float
         #X = as_float_array(X, copy=self.copy)
-        X.astype(float)
-        if self.copy:
-            X = X.copy()
+        #X = X.astype(np.float64)
 
         # Center data
         self.mean_ = np.mean(X, axis=0)
@@ -229,7 +236,10 @@ class PCA2D(BaseEstimator, TransformerMixin):
         # X -= self.mean_
         if issparse(X):
             raise ValueError("sparse matrices are not currently supported")
+            
+        X = np.asarray(X, np.float64)
         assert_all_finite(X)
+        
         if np.size(X.shape) == 2:
             return (self.row_components_.T.dot(X - self.mean_).
                     dot(self.column_components_))
@@ -269,7 +279,10 @@ class PCA2D(BaseEstimator, TransformerMixin):
 
         if issparse(X):
             raise ValueError("sparse matrices are not currently supported")
+            
+        X = np.asarray(X, np.float64)
         assert_all_finite(X)
+        
         if np.size(X.shape) == 2:
             return (self.row_components_.dot(X).
                     dot(self.column_components_.T) + self.mean_)
