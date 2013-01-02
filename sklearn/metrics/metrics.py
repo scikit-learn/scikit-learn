@@ -10,6 +10,7 @@ better
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
+#          Arnaud Joly <a.joly@ulg.ac.be>
 # License: BSD Style.
 
 from itertools import izip
@@ -973,10 +974,10 @@ def r2_score(y_true, y_pred):
 
     Parameters
     ----------
-    y_true : array-like
+    y_true : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Ground truth (correct) target values.
 
-    y_pred : array-like
+    y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
         Estimated target values.
 
     Returns
@@ -997,7 +998,8 @@ def r2_score(y_true, y_pred):
         raise ValueError("r2_score can only be computed given more than one"
                          " sample.")
     numerator = ((y_true - y_pred) ** 2).sum()
-    denominator = ((y_true - y_true.mean()) ** 2).sum()
+    denominator = ((y_true - y_true.mean(axis=0)) ** 2).sum()
+
     if denominator == 0.0:
         if numerator == 0.0:
             return 1.0
@@ -1005,6 +1007,7 @@ def r2_score(y_true, y_pred):
             # arbitary set to zero to avoid -inf scores, having a constant
             # y_true is not interesting for scoring a regression anyway
             return 0.0
+
     return 1 - numerator / denominator
 
 
@@ -1066,9 +1069,11 @@ def mean_squared_error(y_true, y_pred):
 
     Parameters
     ----------
-    y_true : array-like
+    y_true : array-like of shape = [n_samples] or [n_samples, n_outputs]
+        Ground truth (correct) target values.
 
-    y_pred : array-like
+    y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
+        Estimated target values.
 
     Returns
     -------
