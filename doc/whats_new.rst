@@ -31,6 +31,9 @@ Changelog
    - New estimator :ref:`FeatureUnion <feature_union>` that concatenates results
      of several transformers by `Andreas Müller`_.
 
+   - New transformer :ref:`neural_networks.RestrictedBoltzmannMachine`
+     by `Yann Dauphin`_.
+
 
 API changes summary
 -------------------
