@@ -107,6 +107,8 @@ Changelog
     Gaussian and sparse random projection matrix
     by `Olivier Grisel`_ and `Arnaud Joly`_.
 
+   - The :fun:`metrics.mean_squared_error` and :fun:`metrics.r2_score` metrics
+     support multioutput by `Arnaud Joly`_.
 
 API changes summary
 -------------------
