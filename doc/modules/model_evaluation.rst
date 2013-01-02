@@ -3,12 +3,72 @@
 ===================
 Model evaluation
 ===================
+The :mod:`sklearn.metrics` implements score functions, performance metrics
+and pairwise metrics and distance computations. Those functions are usefull to
+assess the performance of an estimator under a specific criterion. Note that
+in many cases, the `score` method of the underlying estimator is sufficient
+and appropriate.
+
+In this module, functions named as
+
+  * `*_score` return a scalar value to maximize: the higher the better.
+  * `*_loss` return a scalar value to minimize: the lower the better
+
+.. _regression_metrics:
+
+Regression metrics
+==================
+
+.. currentmodule:: sklearn.metrics
+
+Mean squared error
+------------------
+The :func:`mean_squared_error` function allows to compute the mean square
+error, which is a risk function corresponding to the expected value
+of the squared error loss or quadratic loss.
+
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
+and :math:`y_i` is the corresponding true value, then the mean squared error
+(MSE) estimated over :math:`n_{\text{samples}}` is given by
+
+.. math::
+
+  MSE(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i}^{n_{\text{samples}}} (y_i - \hat{y}_i)^2.
+
+.. topic:: References:
+
+ * `Wikipedia - Mean squared error
+   <http://en.wikipedia.org/wiki/Mean_squared_error>`_
+
+
+R² score, the coefficient of determination
+------------------------------------------
+The :func:`r2_score` function allows to compute R², the coefficient of
+determination. It provides a measure of how well future samples are likely to
+be predicted by the model.
+
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
+and :math:`y_i` is the corresponding true value, then the score R² estimated
+over :math:`n_{\text{samples}}` is given by
+
+.. math::
+
+  R^2(y) = 1 - \frac{\sum_{i=0}^{n_{\text{samples}}} (y_i - \hat{y}_i)^2}{\sum_{i=0}^{n_{\text{samples}}} (y_i - \bar{y})^2}
+
+where :math:`\bar{y} =  \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}} y_i`.
+
+.. topic:: References:
+
+ * `Wikipedia - Coefficient of determination
+   <http://en.wikipedia.org/wiki/Coefficient_of_determination>`_
+
 
 .. TODO
+  Classification metrics
+  ======================
 
-  Metrics
-  =======
-
+  Clustering metrics
+  ======================
 
 Dummy estimators
 =================

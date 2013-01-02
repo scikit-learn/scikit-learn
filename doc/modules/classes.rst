@@ -652,6 +652,9 @@ From text
 :mod:`sklearn.metrics`: Metrics
 ===============================
 
+See the :ref:`model_evaluation` section and the :ref:`metrics` section of the
+user guide for further details.
+
 .. automodule:: sklearn.metrics
    :no-members:
    :no-inherited-members:
@@ -683,6 +686,9 @@ Classification metrics
 
 Regression metrics
 ------------------
+
+See the :ref:`regression_metrics` section of the user guide for further
+details.
 
 .. autosummary::
    :toctree: generated/
