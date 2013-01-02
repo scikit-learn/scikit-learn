@@ -694,8 +694,10 @@ details.
    :toctree: generated/
    :template: function.rst
 
-   metrics.r2_score
+   metrics.mean_absolute_error
    metrics.mean_squared_error
+   metrics.r2_score
+
 
 Clustering metrics
 ------------------

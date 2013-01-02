@@ -18,6 +18,7 @@ from sklearn.metrics import r2_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import matthews_corrcoef
 from sklearn.metrics import mean_squared_error
+from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import precision_recall_curve
 from sklearn.metrics import precision_recall_fscore_support
 from sklearn.metrics import precision_score
@@ -481,6 +482,11 @@ def test_losses():
     assert_almost_equal(mean_squared_error(y_true, y_pred), 12.999 / n, 2)
     assert_almost_equal(mean_squared_error(y_true, y_true), 0.00, 2)
 
+    # mean_absolute_error and mean_squared_error are equal because of
+    # it is a binary problem.
+    assert_almost_equal(mean_absolute_error(y_true, y_pred), 12.999 / n, 2)
+    assert_almost_equal(mean_absolute_error(y_true, y_true), 0.00, 2)
+
     assert_almost_equal(explained_variance_score(y_true, y_pred), -0.04, 2)
     assert_almost_equal(explained_variance_score(y_true, y_true), 1.00, 2)
     assert_equal(explained_variance_score([0, 0, 0], [0, 1, 1]), 0.0)
@@ -494,6 +500,7 @@ def test_losses():
 def test_losses_at_limits():
     # test limit cases
     assert_almost_equal(mean_squared_error([0.], [0.]), 0.00, 2)
+    assert_almost_equal(mean_absolute_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(explained_variance_score([0.], [0.]), 1.00, 2)
     assert_almost_equal(r2_score([0., 1], [0., 1]), 1.00, 2)
 
@@ -512,6 +519,10 @@ def test_symmetry():
                  zero_one(y_pred, y_true))
     assert_almost_equal(mean_squared_error(y_true, y_pred),
                         mean_squared_error(y_pred, y_true))
+
+    assert_almost_equal(mean_absolute_error(y_true, y_pred),
+                        mean_absolute_error(y_pred, y_true))
+
     # not symmetric
     assert_true(explained_variance_score(y_true, y_pred) !=
                 explained_variance_score(y_pred, y_true))
@@ -565,6 +576,9 @@ def test_multioutput_regression():
     error = mean_squared_error(y_true, y_pred)
     assert_almost_equal(error, (1. / 3 + 2. / 3 + 2. / 3) / 4.)
 
+    error = mean_absolute_error(y_true, y_pred)
+    assert_almost_equal(error, (1. / 3 + 2. / 3 + 2. / 3) / 4.)
+
     error = r2_score(y_true, y_pred)
     assert_almost_equal(error, 1 - 5. / 2)
 
@@ -581,6 +595,7 @@ def test_multioutput_number_of_output_differ():
                        ])
 
     assert_raises(ValueError, mean_squared_error, y_true, y_pred)
+    assert_raises(ValueError, mean_absolute_error, y_true, y_pred)
     assert_raises(ValueError, r2_score, y_true, y_pred)
 
 
@@ -591,7 +606,7 @@ def test_multioutput_regression_invariance_to_dimension_shuffling():
     y_true = np.reshape(y_true, (-1, n_dims))
     y_pred = np.reshape(y_pred, (-1, n_dims))
 
-    for metric in [r2_score, mean_squared_error]:
+    for metric in [r2_score, mean_squared_error, mean_absolute_error]:
         error = metric(y_true, y_pred)
 
         for _ in xrange(3):
