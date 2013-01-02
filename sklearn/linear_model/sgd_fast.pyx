@@ -174,8 +174,8 @@ cdef class SquaredHinge(LossFunction):
     ----------
 
     threshold : float > 0.0
-        Margin threshold. When threshold=1.0, one gets the loss used by SVM.
-        When threshold=0.0, one gets the loss used by the Perceptron.
+        Margin threshold. When threshold=1.0, one gets the loss used by
+        (quadratically penalized) SVM.
     """
 
     cdef double threshold
@@ -184,13 +184,13 @@ cdef class SquaredHinge(LossFunction):
         self.threshold = threshold
 
     cpdef double loss(self, double p, double y):
-        cdef double z = 1 - p * y
+        cdef double z = self.threshold - p * y
         if z > 0:
             return z * z
         return 0.0
 
     cpdef double dloss(self, double p, double y):
-        cdef double z = 1 - p * y
+        cdef double z = self.threshold - p * y
         if z > 0:
             return -2 * y * z
         return 0.0
