@@ -71,7 +71,7 @@ Changelog
 
    - New dummy estimators :class:`dummy.DummyClassifiers` and
      :class:`DummyRegressor` by `Mathieu Blondel`_. Useful to sanity-check your
-     estimators.
+     estimators. Multioutput support added by `Arnaud Joly`_.
 
    - New kernel :class:`metrics.chi2_kernel` by `Andreas Müller`_, often used
      in computer vision applications.
