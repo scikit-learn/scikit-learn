@@ -7,10 +7,16 @@ from sklearn.datasets import get_data_home
 from sklearn.datasets import clear_data_home
 from sklearn.datasets import load_filenames
 from sklearn.datasets import load_files
+from sklearn.datasets import load_sample_images
+from sklearn.datasets import load_sample_image
+from sklearn.datasets import load_digits
+from sklearn.datasets import load_diabetes
+from sklearn.datasets import load_linnerud
 
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises
 
 
 DATA_HOME = tempfile.mkdtemp(prefix="scikit_learn_data_home_test_")
@@ -100,3 +106,44 @@ def test_load_files_wo_load_content():
     assert_equal(len(res.target_names), 2)
     assert_equal(res.DESCR, None)
     assert_equal(res.get('data'), None)
+
+
+def test_load_sample_images():    
+    res = load_sample_images()
+    assert_true(res.images)
+    assert_true(res.filenames)
+    assert_true(res.DESCR)
+
+
+def test_load_digits():
+    digits = load_digits()
+    assert_true(digits.data.any())
+
+
+def test_load_digits_n_class_lt_10():
+    digits = load_digits(9)
+    assert_true(digits.data.any())
+
+
+def test_load_sample_image():
+    china = load_sample_image('china.jpg')
+    assert_equal(china.dtype, 'uint8')
+
+
+def test_load_missing_sample_image_error():
+    assert_raises(AttributeError, load_sample_image,
+                  'blop.jpg')
+
+
+def test_load_diabetes():
+    res = load_diabetes()
+    assert_true(res.data.any())
+    assert_true(res.target.any())
+
+
+def test_load_linnerud():
+    res = load_linnerud()
+    assert_true(res.data.any())
+    assert_true(res.target.any())
+    assert_true(res.target_names)
+    assert_true(res.DESCR)
