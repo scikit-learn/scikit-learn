@@ -21,6 +21,26 @@ Regression metrics
 
 .. currentmodule:: sklearn.metrics
 
+Mean absolute error
+-------------------
+The :func:`mean_absolute_error` function allows to compute the mean absolute
+error, which is a risk function corresponding to the expected value
+of the absolute error loss or :math:`l1`-norm loss.
+
+If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
+and :math:`y_i` is the corresponding true value, then the mean absolute error
+(MAE) estimated over :math:`n_{\text{samples}}` is given by
+
+.. math::
+
+  \text{MAE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i}^{n_{\text{samples}}} \left| y_i - \hat{y}_i \right|.
+
+.. topic:: References:
+
+ * `Wikipedia - Mean absolute error
+   <http://en.wikipedia.org/wiki/Mean_absolute_error>`_
+
+
 Mean squared error
 ------------------
 The :func:`mean_squared_error` function allows to compute the mean square
@@ -33,7 +53,7 @@ and :math:`y_i` is the corresponding true value, then the mean squared error
 
 .. math::
 
-  MSE(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i}^{n_{\text{samples}}} (y_i - \hat{y}_i)^2.
+  \text{MSE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i}^{n_{\text{samples}}} (y_i - \hat{y}_i)^2.
 
 .. topic:: References:
 

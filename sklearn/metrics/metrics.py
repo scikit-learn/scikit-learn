@@ -1078,9 +1078,32 @@ def mean_squared_error(y_true, y_pred):
     Returns
     -------
     loss : float
+
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
     return np.mean((y_pred - y_true) ** 2)
+
+
+def mean_absolute_error(y_true, y_pred):
+    """Mean absolute error regression loss
+
+    Return a a positive floating point value (the best value is 0.0).
+
+    Parameters
+    ----------
+    y_true : array-like of shape = [n_samples] or [n_samples, n_outputs]
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape = [n_samples] or [n_samples, n_outputs]
+        Estimated target values.
+
+    Returns
+    -------
+    loss : float
+
+    """
+    y_true, y_pred = check_arrays(y_true, y_pred)
+    return np.mean(np.abs(y_pred - y_true))
 
 
 def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
