@@ -668,21 +668,21 @@ Classification metrics
    :toctree: generated/
    :template: function.rst
 
-   metrics.confusion_matrix
-   metrics.roc_curve
    metrics.auc
-   metrics.precision_score
-   metrics.recall_score
-   metrics.fbeta_score
-   metrics.f1_score
    metrics.auc_score
    metrics.average_precision_score
-   metrics.precision_recall_fscore_support
    metrics.classification_report
+   metrics.confusion_matrix
+   metrics.f1_score
+   metrics.fbeta_score
+   metrics.hinge_loss
    metrics.precision_recall_curve
+   metrics.precision_recall_fscore_support
+   metrics.precision_score
+   metrics.recall_score
+   metrics.roc_curve
    metrics.zero_one_score
    metrics.zero_one
-   metrics.hinge_loss
 
 Regression metrics
 ------------------
