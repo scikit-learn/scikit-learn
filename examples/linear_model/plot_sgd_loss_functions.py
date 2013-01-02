@@ -16,6 +16,7 @@ from sklearn.linear_model.sgd_fast import Hinge, ModifiedHuber, SquaredLoss
 # Define loss funcitons
 xmin, xmax = -3, 3
 hinge = Hinge(1)
+perceptron = Hinge(0)
 log_loss = lambda z, p: np.log2(1.0 + np.exp(-z))
 modified_huber = ModifiedHuber()
 squared_loss = SquaredLoss()
@@ -27,6 +28,8 @@ pl.plot([xmin, 0, 0, xmax], [1, 1, 0, 0], 'k-',
         label="Zero-one loss")
 pl.plot(xx, [hinge.loss(x, 1) for x in xx], 'g-',
         label="Hinge loss")
+pl.plot(xx, [perceptron.loss(x, 1) for x in xx], 'm-',
+        label="Perceptron loss")
 pl.plot(xx, [log_loss(x, 1) for x in xx], 'r-',
         label="Log loss")
 pl.plot(xx, [modified_huber.loss(x, 1) for x in xx], 'y-',
