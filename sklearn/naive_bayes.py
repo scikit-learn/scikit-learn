@@ -240,10 +240,10 @@ class BaseDiscreteNB(BaseNB):
             Y *= array2d(sample_weight).T
 
         if class_prior is not None:
-            warnings.warn('class_prior is deprecated in fit function and will'
+            warnings.warn('class_prior is deprecated in fit function and will '
                     'be removed in version 0.15. Use it in __init__ instead.')
         else:
-            class_prior = self.class_prior 
+            class_prior = self.class_weight
 
         if class_prior:
             if len(class_prior) != n_classes:
@@ -329,10 +329,10 @@ class MultinomialNB(BaseDiscreteNB):
     Tackling the poor assumptions of naive Bayes text classifiers, ICML.
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
+    def __init__(self, alpha=1.0, fit_prior=True, class_weight=None):
         self.alpha = alpha
         self.fit_prior = fit_prior
-        self.class_prior = class_prior
+        self.class_weight = class_weight
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
@@ -403,11 +403,11 @@ class BernoulliNB(BaseDiscreteNB):
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
     """
 
-    def __init__(self, alpha=1.0, binarize=.0, fit_prior=True, class_prior=None):
+    def __init__(self, alpha=1.0, binarize=.0, fit_prior=True, class_weight=None):
         self.alpha = alpha
         self.binarize = binarize
         self.fit_prior = fit_prior
-        self.class_prior = class_prior
+        self.class_weight =  class_weight
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
