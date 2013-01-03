@@ -239,6 +239,38 @@ value and :math:`w`, the predicted decisions as output by
   L(y, w) = \max\left\{1 - wy, 0\right\} = \left|1 - wy\right|_+
 
 
+Receiver operating characteristic (ROC)
+---------------------------------------
+
+The function :func:`roc_curve` computes the `receiver operating characteristic
+curve, or ROC curve (quoting
+wikipedia) <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_:
+
+  A receiver operating characteristic (ROC), or simply ROC curve, is a
+  graphical plot which illustrates the performance of a binary classifier
+  system as its discrimination threshold is varied. It is created by plotting
+  the fraction of true positives out of the positives (TPR = true positive
+  rate) vs. the fraction of false positives out of the negatives (FPR = false
+  positive rate), at various threshold settings. TPR is also known as
+  sensitivity, and FPR is one minus the specificity or true negative rate.
+
+The following figure shows an example of ROC curve.
+
+.. image:: ../auto_examples/images/plot_roc_1.png
+   :target: ../auto_examples/plot_roc.html
+   :scale: 75
+   :align: center
+
+.. topic:: Examples:
+
+  * See :ref:`example_plot_roc.py`
+    for an example of receiver operating characteristic (ROC) metric to
+    evaluate the quality of the output of a classifier.
+
+  * See :ref:`example_plot_roc_crossval.py`
+    for an example of receiver operating characteristic (ROC) metric to
+    evaluate the quality of the output of a classifier using cross-validation.
+
 
 Zero one loss
 --------------
