@@ -14,6 +14,49 @@ In this module, functions named as
   * `*_score` return a scalar value to maximize: the higher the better.
   * `*_loss` return a scalar value to minimize: the lower the better
 
+.. TODO
+   Missing from ref and doc
+   matthews_corrcoef
+   explained_variance_score
+
+
+.. _classification_metrics:
+
+Classification metrics
+======================
+
+.. currentmodule:: sklearn.metrics
+
+The :mod:`sklearn.metrics` implements several losses, scores and utility
+function to measure classification perfomance. Some of these are restricted to
+the binary classification case:
+
+.. autosummary::
+   :template: function.rst
+
+   auc_score
+   average_precision_score
+   hinge_loss
+   precision_recall_curve
+   roc_curve
+
+
+Others have been extended to the multiclass case:
+
+.. autosummary::
+   :template: function.rst
+
+  confusion_matrix
+  f1_score
+  fbeta_score
+  precision_recall_fscore_support
+  precision_score
+  zero_one_score
+  zero_one
+
+In the following sub-sections, we will describe each of those functions.
+
+
 .. _regression_metrics:
 
 Regression metrics
