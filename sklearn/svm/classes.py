@@ -311,13 +311,6 @@ class NuSVC(BaseSVC):
     cache_size : float, optional
         Specify the size of the kernel cache (in MB)
 
-    class_weight : {dict, 'auto'}, optional
-        Set the parameter C of class i to class_weight[i]*C for
-        SVC. If not given, all classes are supposed to have
-        weight one. The 'auto' mode uses the values of y to
-        automatically adjust weights inversely proportional to
-        class frequencies.
-
     verbose : bool, default: False
         Enable verbose output. Note that this setting takes advantage of a
         per-process runtime setting in libsvm that, if enabled, may not work

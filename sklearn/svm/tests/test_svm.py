@@ -13,6 +13,7 @@ from nose.tools import assert_raises, assert_true, assert_equal, assert_false
 
 from sklearn import svm, linear_model, datasets, metrics, base
 from sklearn.datasets.samples_generator import make_classification
+from sklearn.metrics import f1_score
 from sklearn.utils import check_random_state
 from sklearn.utils import ConvergenceWarning
 from sklearn.utils.testing import assert_greater, assert_less
@@ -305,15 +306,15 @@ def test_weight():
     # so all predicted values belong to class 2
     assert_array_almost_equal(clf.predict(X), [2] * 6)
 
-    X_, y_ = make_classification(n_samples=200, n_features=100,
-                                 weights=[0.833, 0.167], random_state=0)
+    X_, y_ = make_classification(n_samples=200, n_features=10,
+                                 weights=[0.833, 0.167], random_state=2)
 
     for clf in (linear_model.LogisticRegression(),
                 svm.LinearSVC(random_state=0), svm.SVC()):
-        clf.set_params(class_weight={0: 5})
-        clf.fit(X_[: 180], y_[: 180])
-        y_pred = clf.predict(X_[180:])
-        assert_true(np.sum(y_pred == y_[180:]) >= 11)
+        clf.set_params(class_weight={0: .1, 1: 10})
+        clf.fit(X_[:100], y_[:100])
+        y_pred = clf.predict(X_[100:])
+        assert_true(f1_score(y_[100:], y_pred) > .3)
 
 
 def test_sample_weights():

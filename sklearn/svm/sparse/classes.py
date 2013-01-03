@@ -1,3 +1,5 @@
+import warnings
+
 from .. import LinearSVC as GeneralLinearSVC
 from ..base import BaseSVC
 from ...base import RegressorMixin
@@ -71,14 +73,15 @@ class NuSVC(SparseBaseLibSVM, BaseSVC):
     [1]
     """
 
-    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma=0.0,
-                 coef0=0.0, shrinking=True, probability=False,
-                 tol=1e-3, cache_size=200, class_weight=None,
-                 verbose=False, max_iter=-1):
-
+    def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma=0.0, coef0=0.0,
+                 shrinking=True, probability=False, tol=1e-3, cache_size=200,
+                 class_weight=None, verbose=False, max_iter=-1):
+        if class_weight is not None:
+            warnings.warn("Parameter class_weight is not supported in NuSVC "
+                          "and will be ignored.", stacklevel=2)
         super(NuSVC, self).__init__(
             'nu_svc', kernel, degree, gamma, coef0, tol, 0., nu, 0., shrinking,
-            probability, cache_size, class_weight, verbose, max_iter)
+            probability, cache_size, None, verbose, max_iter)
 
 
 @deprecated("""to be removed in v0.14;
