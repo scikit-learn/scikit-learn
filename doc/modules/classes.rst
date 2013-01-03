@@ -899,7 +899,7 @@ Pairwise metrics
    :toctree: generated/
    :template: class.rst
 
-   neural_networks.RestrictedBoltzmannMachine
+   neural_networks.BernoulliRBM
 
 
 .. _pls_ref:

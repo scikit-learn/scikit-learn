@@ -28,9 +28,9 @@ def logistic_sigmoid(x):
     return 1. / (1. + np.exp(-np.clip(x, -30, 30)))
 
 
-class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
+class BernoulliRBM(BaseEstimator, TransformerMixin):
     """
-    Restricted Boltzmann Machine (RBM)
+    Bernoulli Restricted Boltzmann Machine (RBM)
 
     A Restricted Boltzmann Machine with binary visible units and
     binary hiddens. Parameters are estimated using Stochastic Maximum
@@ -72,9 +72,9 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
     --------
 
     >>> import numpy as np
-    >>> from sklearn.neural_networks import RestrictedBolzmannMachine
+    >>> from sklearn.neural_networks import BernoulliRBM
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
-    >>> model = RestrictedBolzmannMachine(n_components=2)
+    >>> model = BernoulliRBM(n_components=2)
     >>> model.fit(X)
 
     References
