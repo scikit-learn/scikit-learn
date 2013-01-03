@@ -56,6 +56,27 @@ Others have been extended to the multiclass case:
 
 In the following sub-sections, we will describe each of those functions.
 
+Area under the curve (AUC)
+--------------------------
+The :func:`auc_score` function computes the AUC which is
+the area under the receiver operating characteristic (ROC) curve.
+
+For more information see
+`wipedia article on AUC
+<http://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_curve>`_
+and the :ref:`roc_metrics` section.
+
+Average precision score
+-----------------------
+The :func:`average_precision_score` function computes the verage precision (AP)
+from prediction scores. This score corresponds to the area under the
+precision-recall curve.
+
+For more information see
+`wipedia article on average precision
+<http://en.wikipedia.org/wiki/Information_retrieval#Average_precision>`_
+and the :ref:`precision_recall_f_measure_metrics` section.
+
 Confusion matrix
 ----------------
 The :func:`confusion_matrix` function computes the `confusion matrix
@@ -65,6 +86,8 @@ the accuracy on a classification problem.
 By definition a confusion matrix :math:`cm` is such that :math:`cm[i, j]` is
 equal to the number of observations known to be in group :math:`i` but
 predicted to be in group :math:`j`.
+
+.. _precision_recall_f_measure_metrics:
 
 Precision, recall and F-measures
 --------------------------------
@@ -85,7 +108,6 @@ score:
   * See :ref:`example_plot_precision_recall.py`
     for an example of precision-Recall metric to evaluate the quality of the
     output of a classifier with :func:`precision_recall_curve`.
-
 
 
 Binary classification
@@ -137,9 +159,9 @@ With :math:`\beta = 1`, the :math:`F_\beta` measure leads to the
 
 .. topic:: References:
 
-   * `Precision and recall
+   * `Wikipedia article on precision and recall
      <http://en.wikipedia.org/wiki/Precision_and_recall>`_
-   * `F-measure <http://en.wikipedia.org/wiki/F1_score>`_
+   * `Wikipedia article on F-measure <http://en.wikipedia.org/wiki/F1_score>`_
 
 Multiclass and multilabels classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -238,6 +260,8 @@ value and :math:`w`, the predicted decisions as output by
 
   L(y, w) = \max\left\{1 - wy, 0\right\} = \left|1 - wy\right|_+
 
+
+.. _roc_metrics:
 
 Receiver operating characteristic (ROC)
 ---------------------------------------
