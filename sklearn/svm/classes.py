@@ -240,7 +240,7 @@ class SVC(BaseSVC):
             gamma=0.0, kernel='rbf', max_iter=-1, probability=False,
             shrinking=True, tol=0.001, verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
-    [ 1.]
+    [1]
 
     See also
     --------
@@ -366,7 +366,7 @@ class NuSVC(BaseSVC):
             max_iter=-1, nu=0.5, probability=False, shrinking=True, tol=0.001,
             verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
-    [ 1.]
+    [1]
 
     See also
     --------

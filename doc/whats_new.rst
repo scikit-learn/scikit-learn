@@ -195,6 +195,11 @@ API changes summary
      :class:`decomposition.MiniBatchDictionaryLearning` and
      :class:`decomposition.MiniBatchSparsePCA` for consistency.
 
+   - :class:`svm.SVC` and :class:`svm.NuSVC` now provide a ``classes_``
+     attribute and support arbitrary dtypes for labels ``y``.
+     Also, the dtype returned by ``predict`` now reflects the dtype of
+     ``y`` during ``fit`` (used to be ``np.float``).
+
 .. _changes_0_12.1:
 
 0.12.1

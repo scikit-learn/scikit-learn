@@ -30,7 +30,7 @@ class SVC(SparseBaseLibSVM, BaseSVC):
             gamma=0.0, kernel='rbf', max_iter=-1, probability=False,
             shrinking=True, tol=0.001, verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
-    [ 1.]
+    [1]
     """
 
     def __init__(self, C=1.0, kernel='rbf', degree=3, gamma=0.0,
@@ -68,7 +68,7 @@ class NuSVC(SparseBaseLibSVM, BaseSVC):
             kernel='rbf', max_iter=-1, nu=0.5, probability=False,
             shrinking=True, tol=0.001, verbose=False)
     >>> print(clf.predict([[-0.8, -1]]))
-    [ 1.]
+    [1]
     """
 
     def __init__(self, nu=0.5, kernel='rbf', degree=3, gamma=0.0,

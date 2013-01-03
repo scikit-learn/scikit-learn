@@ -55,13 +55,13 @@ It can be computed using :func:`chi2_kernel` and then passed to an
 
     >>> svm = SVC(kernel='precomputed').fit(K, y)
     >>> svm.predict(K)
-    array([ 0.,  1.,  0.,  1.])
+    array([0, 1, 0, 1])
 
 It can also be directly used as the ``kernel`` argument::
 
     >>> svm = SVC(kernel=chi2_kernel).fit(X, y)
     >>> svm.predict(X)
-    array([ 0.,  1.,  0.,  1.])
+    array([0, 1, 0, 1])
 
 
 The chi squared kernel is given by
