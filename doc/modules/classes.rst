@@ -676,6 +676,7 @@ Classification metrics
    metrics.f1_score
    metrics.fbeta_score
    metrics.hinge_loss
+   metrics.matthews_corrcoef
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
    metrics.precision_score

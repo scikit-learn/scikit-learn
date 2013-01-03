@@ -16,7 +16,6 @@ In this module, functions named as
 
 .. TODO
    Missing from ref and doc
-   matthews_corrcoef
    explained_variance_score
 
 
@@ -37,6 +36,7 @@ the binary classification case:
    auc_score
    average_precision_score
    hinge_loss
+   matthews_corrcoef
    precision_recall_curve
    roc_curve
 
@@ -193,7 +193,8 @@ Let's define some notations:
      :math:`\texttt{F\_beta}_j` are respectively the precision, the recall and
      :math:`F_\beta` measure for the :math:`j`-th label;
    * :math:`tp_j`, :math:`fp_j` and :math:`fn_j` respectively the number of
-     true positive, false positive, false negative for the :math:`j`-th label;
+     true positives, false positives, false negatives for the :math:`j`-th
+     label;
    * :math:`y_i` is the set of true label and
      :math:`\hat{y}_i` is the set of predicted for the
      :math:`i`-th sample;
@@ -244,7 +245,6 @@ their support
   \texttt{weighted\_{}F\_{}beta}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (1 + \beta^2)\frac{|y_i \cap \hat{y}_i|}{|y_i| + |\hat{y}_i|}
 
 
-
 Hinge loss
 ----------
 
@@ -260,6 +260,30 @@ value and :math:`w`, the predicted decisions as output by
 
   L(y, w) = \max\left\{1 - wy, 0\right\} = \left|1 - wy\right|_+
 
+
+Matthews correlation coefficient
+--------------------------------
+The :func:`matthews_corrcoef` function computes the matthew's correlation
+coefficient (MCC) for binary classes (quoting the `wikipedia article on the
+matthew's correlation coefficient
+<http://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_)
+
+    The Matthews correlation coefficient is used in machine learning as a
+    measure of the quality of binary (two-class) classifications. It takes
+    into account true and false positives and negatives and is generally
+    regarded as a balanced measure which can be used even if the classes are
+    of very different sizes. The MCC is in essence a correlation coefficient
+    value between -1 and +1. A coefficient of +1 represents a perfect
+    prediction, 0 an average random prediction and -1 an inverse prediction.
+    The statistic is also known as the phi coefficient. [source: Wikipedia]
+
+If :math:`tp`, :math:`tn`, :math:`fp` and :math:`fn` are respectively the
+number of true positives, true negatives, false positives ans false negatives,
+the MCC coefficient is defined as
+
+.. math::
+
+  MCC = \frac{tp \times tn - fp \times fn}{\sqrt{(tp + fp)(tp + fn)(tn + fp)(tn + fn)}}
 
 .. _roc_metrics:
 

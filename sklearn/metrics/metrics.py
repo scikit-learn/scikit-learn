@@ -237,6 +237,7 @@ def matthews_corrcoef(y_true, y_pred):
     References
     ----------
     http://en.wikipedia.org/wiki/Matthews_correlation_coefficient
+
     http://dx.doi.org/10.1093/bioinformatics/16.5.412
 
     """
