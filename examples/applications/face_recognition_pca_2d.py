@@ -12,7 +12,6 @@ April 1994 at AT&T Laboratories Cambridge. It is the Olivetti faces :
 
 Expected results for the 40 people in the dataset::
 
-
 precision    recall  f1-score   support
 
      Face 0       1.00      0.40      0.57         5
@@ -66,7 +65,6 @@ print __doc__
 from time import time
 import numpy as np
 
-
 from sklearn.grid_search import GridSearchCV
 from sklearn.metrics import classification_report
 from sklearn.metrics import confusion_matrix
@@ -87,15 +85,11 @@ n_samples, h, w = olivetti_faces.images.shape
 # we use the 2d data directly
 X = olivetti_faces.images
 
-
 # the label to predict is the id of the person
 y = olivetti_faces.target
 
 target_names = np.array(["Face %d" % x for x in range(0,
                         np.size(olivetti_faces.target), 1)])
-# target_names = np.array(map(str,
-#               (np.arange(np.size(olivetti_faces.target)).reshape(
-#              olivetti_faces.target.shape))))
 n_classes = target_names.shape[0]
 
 print "Total dataset size:"
@@ -174,6 +168,5 @@ print "done in %0.3fs" % (time() - t0)
 
 print classification_report(y_test, y_pred, target_names=target_names)
 print confusion_matrix(y_test, y_pred, labels=range(n_classes))
-
 print "Size of the components retained %d X %d" % (pca.n_row_components_,
                                                    pca.n_column_components_)
