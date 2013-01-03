@@ -27,7 +27,7 @@ Classification metrics
 .. currentmodule:: sklearn.metrics
 
 The :mod:`sklearn.metrics` implements several losses, scores and utility
-function to measure classification perfomance. Some of these are restricted to
+functions to measure classification perfomance. Some of these are restricted to
 the binary classification case:
 
 .. autosummary::
@@ -358,6 +358,24 @@ Regression metrics
 
 .. currentmodule:: sklearn.metrics
 
+
+
+Explained variance score
+------------------------
+The :func:`explained_variance_score` computes the `explained variance
+regression score <http://en.wikipedia.org/wiki/Explained_variation>`_.
+
+If :math:`\hat{y}` is the estimated target output
+and :math:`y` is the corresponding (correct) target output, then the explained
+variance is  estimated  as follow:
+
+.. math::
+
+  \texttt{explained\_{}variance\_{}score} = 1 - \frac{Var\{ y - \hat{y}\}}{Var\{y\}}
+
+The best possible score is 1.0, lower values are worse.
+
+
 Mean absolute error
 -------------------
 The :func:`mean_absolute_error` function computes the `mean absolute
@@ -372,7 +390,6 @@ and :math:`y_i` is the corresponding true value, then the mean absolute error
 .. math::
 
   \text{MAE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \left| y_i - \hat{y}_i \right|.
-
 
 Mean squared error
 ------------------

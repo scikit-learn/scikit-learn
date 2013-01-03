@@ -350,7 +350,7 @@ def precision_recall_curve(y_true, probas_pred):
 
 
 def roc_curve(y_true, y_score, pos_label=None):
-    """compute Receiver operating characteristic (ROC)
+    """Compute Receiver operating characteristic (ROC)
 
     Note: this implementation is restricted to the binary classification task.
 
