@@ -425,10 +425,12 @@ over :math:`n_{\text{samples}}` is defined as
 
 where :math:`\bar{y} =  \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}} y_i`.
 
-.. TODO
 
-  Clustering metrics
-  ======================
+Clustering metrics
+======================
+The :mod:`sklearn.metrics` implements several losses, scores and utility
+for more information see the :ref:`clustering_evaluation` section.
+
 
 Dummy estimators
 =================
