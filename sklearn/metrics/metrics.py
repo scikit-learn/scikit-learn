@@ -484,9 +484,9 @@ def roc_curve(y_true, y_score, pos_label=None):
 def confusion_matrix(y_true, y_pred, labels=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 
-    By definition a confusion matrix cm is such that cm[i, j] is equal
-    to the number of observations known to be in group i but predicted
-    to be in group j.
+    By definition a confusion matrix :math:`cm` is such that :math:`cm[i, j]`
+    is equal to the number of observations known to be in group :math:`i` but
+    predicted to be in group :math:`j`..
 
     Parameters
     ----------
