@@ -56,6 +56,9 @@ Others have been extended to the multiclass case:
 
 In the following sub-sections, we will describe each of those functions.
 
+.. Precision, recall ahd F-score
+.. -----------------------------
+
 Hinge loss
 ----------
 
@@ -72,6 +75,21 @@ value and :math:`w`, the predicted decisions as output by
   L(y, w) = \max\left\{1 - wy, 0\right\} = \left|1 - wy\right|_+
 
 
+
+Zero one loss
+--------------
+The :func:`zero_one` function computes the 0-1 classification loss over
+:math:`n_{\text{samples}}`. If :math:`\hat{y}_i` is the predicted value of
+the :math:`i`-th sample and :math:`y_i` is the corresponding true value,
+then the 0-1 loss :math:`L_{0-1}` is given by
+
+.. math::
+
+   L_{0-1}(y_i, \hat{y}_i) = 1(\hat{y} != y)
+
+where :math:`1(x)` is the indicator function.
+
+
 .. _regression_metrics:
 
 Regression metrics
@@ -81,7 +99,7 @@ Regression metrics
 
 Mean absolute error
 -------------------
-The :func:`mean_absolute_error` function allows to compute the `mean absolute
+The :func:`mean_absolute_error` function computes the `mean absolute
 error <http://en.wikipedia.org/wiki/Mean_absolute_error>`_, which is a risk
 function corresponding to the expected value of the absolute error loss or
 :math:`l1`-norm loss.
@@ -97,7 +115,7 @@ and :math:`y_i` is the corresponding true value, then the mean absolute error
 
 Mean squared error
 ------------------
-The :func:`mean_squared_error` function allows to compute the `mean square
+The :func:`mean_squared_error` function computes the `mean square
 error <http://en.wikipedia.org/wiki/Mean_squared_error>`_, which is a risk
 function corresponding to the expected value of the squared error loss or
 quadratic loss.
@@ -113,7 +131,7 @@ and :math:`y_i` is the corresponding true value, then the mean squared error
 
 R² score, the coefficient of determination
 ------------------------------------------
-The :func:`r2_score` function allows to compute R², the `coefficient of
+The :func:`r2_score` function computes R², the `coefficient of
 determination <http://en.wikipedia.org/wiki/Coefficient_of_determination>`_.
 It provides a measure of how well future samples are likely to
 be predicted by the model.
