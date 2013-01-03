@@ -195,6 +195,9 @@ API changes summary
      :class:`decomposition.MiniBatchDictionaryLearning` and
      :class:`decomposition.MiniBatchSparsePCA` for consistency.
 
+   - Changed default test_size in :func:`cross_validation.train_test_split`
+     to None. 
+
 .. _changes_0_12.1:
 
 0.12.1
