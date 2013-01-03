@@ -127,6 +127,8 @@ Changelog
      of ``class_weight`` was reversed as erroneously higher weight meant less
      positives of a given class in earlier releases.
 
+   - Improve narrative documentation for :mod:`sklearn.metrics`: regression
+     and classification metrics by `Arnaud Joly`_.
 
 API changes summary
 -------------------
