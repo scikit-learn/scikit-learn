@@ -63,7 +63,6 @@ The :func:`hinge_loss` function allows to compute the average
 `hinge loss function <http://en.wikipedia.org/wiki/Hinge_loss>`_. The hinge loss
 is used in maximal margin classification as support vector machines.
 
-
 If the labels are encoded with +1 and -1,  :math:`y`: the true
 value and :math:`w`, the predicted decisions as output by
 `decision_function`, then the hinge loss is given by:
@@ -82,9 +81,10 @@ Regression metrics
 
 Mean absolute error
 -------------------
-The :func:`mean_absolute_error` function allows to compute the mean absolute
-error, which is a risk function corresponding to the expected value
-of the absolute error loss or :math:`l1`-norm loss.
+The :func:`mean_absolute_error` function allows to compute the `mean absolute
+error <http://en.wikipedia.org/wiki/Mean_absolute_error>`_, which is a risk
+function corresponding to the expected value of the absolute error loss or
+:math:`l1`-norm loss.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
 and :math:`y_i` is the corresponding true value, then the mean absolute error
@@ -94,17 +94,13 @@ and :math:`y_i` is the corresponding true value, then the mean absolute error
 
   \text{MAE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i}^{n_{\text{samples}}} \left| y_i - \hat{y}_i \right|.
 
-.. topic:: References:
-
- * `Wikipedia - Mean absolute error
-   <http://en.wikipedia.org/wiki/Mean_absolute_error>`_
-
 
 Mean squared error
 ------------------
-The :func:`mean_squared_error` function allows to compute the mean square
-error, which is a risk function corresponding to the expected value
-of the squared error loss or quadratic loss.
+The :func:`mean_squared_error` function allows to compute the `mean square
+error <http://en.wikipedia.org/wiki/Mean_squared_error>`_, which is a risk
+function corresponding to the expected value of the squared error loss or
+quadratic loss.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
 and :math:`y_i` is the corresponding true value, then the mean squared error
@@ -114,16 +110,12 @@ and :math:`y_i` is the corresponding true value, then the mean squared error
 
   \text{MSE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i}^{n_{\text{samples}}} (y_i - \hat{y}_i)^2.
 
-.. topic:: References:
-
- * `Wikipedia - Mean squared error
-   <http://en.wikipedia.org/wiki/Mean_squared_error>`_
-
 
 R² score, the coefficient of determination
 ------------------------------------------
-The :func:`r2_score` function allows to compute R², the coefficient of
-determination. It provides a measure of how well future samples are likely to
+The :func:`r2_score` function allows to compute R², the `coefficient of
+determination <http://en.wikipedia.org/wiki/Coefficient_of_determination>`_.
+It provides a measure of how well future samples are likely to
 be predicted by the model.
 
 If :math:`\hat{y}_i` is the predicted value of the :math:`i`-th sample
@@ -138,13 +130,8 @@ where :math:`\bar{y} =  \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{sample
 
 .. topic:: References:
 
- * `Wikipedia - Coefficient of determination
-   <http://en.wikipedia.org/wiki/Coefficient_of_determination>`_
-
 
 .. TODO
-  Classification metrics
-  ======================
 
   Clustering metrics
   ======================
