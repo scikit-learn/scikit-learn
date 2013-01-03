@@ -62,7 +62,7 @@ In the following sub-sections, we will describe each of those functions.
 Hinge loss
 ----------
 
-The :func:`hinge_loss` function allows to compute the average
+The :func:`hinge_loss` function computes the average
 `hinge loss function <http://en.wikipedia.org/wiki/Hinge_loss>`_. The hinge loss
 is used in maximal margin classification as support vector machines.
 
@@ -91,6 +91,22 @@ where :math:`1(x)` is the indicator function.
 
 
 .. _regression_metrics:
+
+Zero one score, the accuraccy
+-----------------------------
+The :func:`zero_one` function computes the
+`accuracy <http://en.wikipedia.org/wiki/Accuracy_and_precision>`_, the fraction
+of correct`predictions.
+
+If :math:`\hat{y}_i` is the predicted value of
+the :math:`i`-th sample and :math:`y_i` is the corresponding true value,
+then the fraction of correct predictions over :math:`n_\text{samples}` is given by
+
+.. math::
+
+   \texttt{zero\_{}one}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}} 1(\hat{y} = y)
+
+where :math:`1(x)` is the indicator function.
 
 Regression metrics
 ==================
