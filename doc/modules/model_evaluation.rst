@@ -12,12 +12,8 @@ and appropriate.
 In this module, functions named as
 
   * `*_score` return a scalar value to maximize: the higher the better.
-  * `*_loss` return a scalar value to minimize: the lower the better
-
-.. TODO
-   Missing from ref and doc
-   explained_variance_score
-
+  * `*_error` or `*_loss` return a scalar value to minimize: the lower the
+    better
 
 .. _classification_metrics:
 
@@ -333,9 +329,6 @@ then the 0-1 loss :math:`L_{0-1}` is defined as:
 
 where :math:`1(x)` is the indicator function.
 
-
-.. _regression_metrics:
-
 Zero one score, the accuraccy
 -----------------------------
 The :func:`zero_one` function computes the
@@ -353,11 +346,19 @@ defined as
 
 where :math:`1(x)` is the indicator function.
 
+
+
+.. _regression_metrics:
+
 Regression metrics
 ==================
 
 .. currentmodule:: sklearn.metrics
 
+The :mod:`sklearn.metrics` implements several losses, scores and utility
+functions to measure regressiion perfomance. Some of those have enhanced
+to treat the multioutput case: :func:`mean_absolute_error`,
+:func:`mean_absolute_error` and :func:`mean_squared_error`.
 
 
 Explained variance score
