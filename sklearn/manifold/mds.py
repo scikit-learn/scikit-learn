@@ -104,8 +104,8 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
             disparities = dis_flat.copy()
             disparities[sim_flat != 0] = disparities_flat
             disparities = disparities.reshape((n_samples, n_samples))
-            disparities *= (n_samples * (n_samples - 1) / 2)
-            disparities /= (disparities ** 2).sum()
+            disparities *= np.sqrt((n_samples * (n_samples - 1) / 2) /
+                                   (disparities ** 2).sum())
 
         # Compute stress
         stress = ((dis.ravel() - disparities.ravel()) ** 2).sum() / 2
