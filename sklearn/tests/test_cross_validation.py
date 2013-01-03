@@ -319,6 +319,9 @@ def test_train_test_split():
     assert_array_equal(X_test, X_s_test.toarray())
     assert_array_equal(X_train[:, 0], y_train * 10)
     assert_array_equal(X_test[:, 0], y_test * 10)
+    split = cval.train_test_split(X, y, test_size=None, train_size=.5)
+    X_train, X_test, y_train, y_test = split
+    assert_equal(len(y_test), len(y_train))
 
 
 def test_cross_val_score_with_score_func_classification():
@@ -465,6 +468,8 @@ def test_shufflesplit_errors():
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=10)
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=8, train_size=3)
     assert_raises(ValueError, cval.ShuffleSplit, 10, train_size=1j)
+    assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=None,
+                train_size=None)
 
 
 def test_shufflesplit_reproducible():
