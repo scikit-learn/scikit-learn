@@ -19,6 +19,7 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy.sparse import issparse
+import warnings
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
@@ -238,6 +239,12 @@ class BaseDiscreteNB(BaseNB):
         if sample_weight is not None:
             Y *= array2d(sample_weight).T
 
+        if class_prior is not None:
+            warnings.warn('class_prior is deprecated in fit function and will '
+                    'be removed in version 0.15. Use it in __init__ instead.')
+        else:
+            class_prior = self.class_weight
+
         if class_prior:
             if len(class_prior) != n_classes:
                 raise ValueError("Number of priors must match number of"
@@ -311,7 +318,7 @@ class MultinomialNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
     >>> clf.fit(X, Y)
-    MultinomialNB(alpha=1.0, fit_prior=True)
+    MultinomialNB(alpha=1.0, class_weight=None, fit_prior=True)
     >>> print(clf.predict(X[2]))
     [3]
 
@@ -322,9 +329,10 @@ class MultinomialNB(BaseDiscreteNB):
     Tackling the poor assumptions of naive Bayes text classifiers, ICML.
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True):
+    def __init__(self, alpha=1.0, fit_prior=True, class_weight=None):
         self.alpha = alpha
         self.fit_prior = fit_prior
+        self.class_weight = class_weight
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
@@ -377,7 +385,7 @@ class BernoulliNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import BernoulliNB
     >>> clf = BernoulliNB()
     >>> clf.fit(X, Y)
-    BernoulliNB(alpha=1.0, binarize=0.0, fit_prior=True)
+    BernoulliNB(alpha=1.0, binarize=0.0, class_weight=None, fit_prior=True)
     >>> print(clf.predict(X[2]))
     [3]
 
@@ -395,10 +403,11 @@ class BernoulliNB(BaseDiscreteNB):
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
     """
 
-    def __init__(self, alpha=1.0, binarize=.0, fit_prior=True):
+    def __init__(self, alpha=1.0, binarize=.0, fit_prior=True, class_weight=None):
         self.alpha = alpha
         self.binarize = binarize
         self.fit_prior = fit_prior
+        self.class_weight =  class_weight
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
