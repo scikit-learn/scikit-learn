@@ -56,6 +56,22 @@ Others have been extended to the multiclass case:
 
 In the following sub-sections, we will describe each of those functions.
 
+Hinge loss
+----------
+
+The :func:`hinge_loss` function allows to compute the average
+`hinge loss function <http://en.wikipedia.org/wiki/Hinge_loss>`_. The hinge loss
+is used in maximal margin classification as support vector machines.
+
+
+If the labels are encoded with +1 and -1,  :math:`y`: the true
+value and :math:`w`, the predicted decisions as output by
+`decision_function`, then the hinge loss is given by:
+
+.. math::
+
+  L(y, w) = \max\left\{1 - wy, 0\right\} = \left|1 - wy\right|_+
+
 
 .. _regression_metrics:
 

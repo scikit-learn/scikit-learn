@@ -94,13 +94,12 @@ def unique_labels(*lists_of_labels):
 # Binary classification loss
 ###############################################################################
 def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
-    """
-    Cumulated hinge loss (non-regularized).
+    """Average hinge loss (non-regularized).
 
     Assuming labels in y_true are encoded with +1 and -1,
     when a prediction mistake is made, margin = y_true * pred_decision
     is always negative (since the signs disagree), therefore 1 - margin
-    is always greater than 1. The cumulated hinge loss therefore
+    is always greater than 1. The cumulated hinge loss is therefore
     upperbounds the number of mistakes made by the classifier.
 
     Parameters
@@ -110,6 +109,14 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
 
     pred_decision : array, shape = [n_samples] or [n_samples, n_classes]
         Predicted decisions, as output by decision_function (floats)
+
+    Returns
+    -------
+    loss : float
+
+    References
+    ----------
+    http://en.wikipedia.org/wiki/Hinge_loss
 
     """
     # TODO: multi-class hinge-loss
