@@ -1,10 +1,10 @@
 """Utilities to evaluate the predictive performance of models
 
-Functions named as *_score return a scalar value to maximize: the higher the
-better
+Functions named as ``*_score`` return a scalar value to maximize: the higher
+the better
 
-Function named as *_loss return a scalar value to minimize: the lower the
-better
+Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
+the lower the better
 """
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -540,7 +540,6 @@ def zero_one_loss(y_true, y_pred, normalize=True):
     """Zero-One classification loss
 
     The best performance is 0.
-
 
     Parameters
     ----------

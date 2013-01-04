@@ -3,17 +3,17 @@
 ===================
 Model evaluation
 ===================
-The :mod:`sklearn.metrics` implements score functions, performance metrics
-and pairwise metrics and distance computations. Those functions are usefull to
+The :mod:`sklearn.metrics` implements score functions, performance metrics,
+pairwise metrics and distance computations. Those functions are usefull to
 assess the performance of an estimator under a specific criterion. Note that
 in many cases, the ``score`` method of the underlying estimator is sufficient
 and appropriate.
 
 In this module, functions named as
 
-  * `*_score` return a scalar value to maximize: the higher the better.
-  * `*_error` or `*_loss` return a scalar value to minimize: the lower the
-    better
+  * ``*_score`` return a scalar value to maximize: the higher the better;
+  * ``*_error`` or ``*_loss`` return a scalar value to minimize: the lower the
+    better.
 
 .. _classification_metrics:
 
@@ -23,7 +23,7 @@ Classification metrics
 .. currentmodule:: sklearn.metrics
 
 The :mod:`sklearn.metrics` implements several losses, scores and utility
-functions to measure classification perfomance. Some of these are restricted to
+functions to measure classification performance. Some of these are restricted to
 the binary classification case:
 
 .. autosummary::
@@ -42,7 +42,7 @@ Others have been extended to the multiclass case:
 .. autosummary::
    :template: function.rst
 
-  accuraccy_sscore
+  accuracy_score
   classification_report
   confusion_matrix
   f1_score
@@ -53,11 +53,11 @@ Others have been extended to the multiclass case:
 
 In the following sub-sections, we will describe each of those functions.
 
-Accuraccy score
+Accuracy score
 ---------------
-The :func:`  accuraccy_sscore` function computes the
+The :func:`accuracy_score` function computes the
 `accuracy <http://en.wikipedia.org/wiki/Accuracy_and_precision>`_, the fraction
-of correct`predictions.
+of correct predictions.
 
 If :math:`\hat{y}_i` is the predicted value of
 the :math:`i`-th sample and :math:`y_i` is the corresponding true value,
@@ -66,13 +66,15 @@ defined as
 
 .. math::
 
-   \texttt{accuraccy}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y} = y)
+   \texttt{accuracy}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y} = y)
 
-where :math:`1(x)` is the indicator function.
+where :math:`1(x)` is the `indicator function
+<http://en.wikipedia.org/wiki/Indicator_function>`_.
 
 .. topic:: Example:
+
   * See :ref:`example_plot_permutation_test_for_classification.py`
-    for an example of accuraccy score usage to assess with permutations the
+    for an example of accuracy score usage to assess with permutations the
     significance of a classification score.
 
 Area under the curve (AUC)
@@ -80,19 +82,19 @@ Area under the curve (AUC)
 The :func:`auc_score` function computes the AUC which is
 the area under the receiver operating characteristic (ROC) curve.
 
-For more information see
-`wipedia article on AUC
+For more information see the
+`Wikipedia article on AUC
 <http://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_curve>`_
 and the :ref:`roc_metrics` section.
 
 Average precision score
 -----------------------
-The :func:`average_precision_score` function computes the verage precision (AP)
-from prediction scores. This score corresponds to the area under the
+The :func:`average_precision_score` function computes the average precision
+(AP) from prediction scores. This score corresponds to the area under the
 precision-recall curve.
 
-For more information see
-`wipedia article on average precision
+For more information see the
+`Wikipedia article on average precision
 <http://en.wikipedia.org/wiki/Information_retrieval#Average_precision>`_
 and the :ref:`precision_recall_f_measure_metrics` section.
 
@@ -102,7 +104,7 @@ The :func:`confusion_matrix` function computes the `confusion matrix
 <http://en.wikipedia.org/wiki/Confusion_matrix>`_ to evaluate
 the accuracy on a classification problem.
 
-By definition a confusion matrix :math:`cm` is such that :math:`cm[i, j]` is
+By definition, a confusion matrix :math:`cm` is such that :math:`cm[i, j]` is
 equal to the number of observations known to be in group :math:`i` but
 predicted to be in group :math:`j`.
 
@@ -113,7 +115,7 @@ predicted to be in group :math:`j`.
     output of a classifier.
 
   * See :ref:`example_plot_digits_classification.py`
-    for an example of confusion matrix usage in the classification of the
+    for an example of confusion matrix usage in the classification of
     hand-written digits.
 
   * See :ref:`example_document_classification_20newsgroups.py`
@@ -121,10 +123,10 @@ predicted to be in group :math:`j`.
     documents.
 
 
-Clasification report
---------------------
-The :func:`classification_report` function build a text report showing the main
- classification metrics.
+Classification report
+---------------------
+The :func:`classification_report` function builds a text report showing the
+main classification metrics.
 
 .. topic:: Example:
 
@@ -138,14 +140,14 @@ The :func:`classification_report` function build a text report showing the main
 
   * See :ref:`example_grid_search_digits.py`
     for an example of classification report usage in parameter estimation using
-    grid search with a nested cross-validation
+    grid search with a nested cross-validation.
 
 
 .. _precision_recall_f_measure_metrics:
 
 Precision, recall and F-measures
 --------------------------------
-Several functions allow you to analyse the precision, recall and F-measures
+Several functions allow you to analyze the precision, recall and F-measures
 score:
 
 .. autosummary::
@@ -156,24 +158,25 @@ score:
    precision_recall_curve
    precision_recall_fscore_support
    precision_score
+   recall_score
 
 .. topic:: Example:
+
+  * See :ref:`example_document_classification_20newsgroups.py`
+    for an example of :func:`f1_score` usage with classification of text
+    documents.
+
+  * See :ref:`example_grid_search_digits.py`
+    for an example of :func:`precision_score` and :func:`recall_score` usage
+    in parameter estimation using grid search with a nested cross-validation.
 
   * See :ref:`example_plot_precision_recall.py`
     for an example of precision-Recall metric to evaluate the quality of the
     output of a classifier with :func:`precision_recall_curve`.
 
-  * See :ref:`example_document_classification_20newsgroups.py`
-    for an example of f1 score usage with classification of text
-    documents.
-
-  * See :ref:`example_grid_search_digits.py`
-    for an example of precision and recall score usage in parameter estimation
-    using grid search with a nested cross-validation
-
-  * See :ref:`example_plot_sparse_recovery.py`
+  * See :ref:`example_linear_model_plot_sparse_recovery.py`
     for an example of :func:`precision_recall_curve` usage in feature selection
-    for sparse linear models
+    for sparse linear models.
 
 Binary classification
 ^^^^^^^^^^^^^^^^^^^^^
@@ -197,14 +200,14 @@ following table:
 In this context, we can define the notions of precision, recall and F-measure.
 
 The precision is intuitively the ability of the classifier not to label as
-positive a sample that is negative
+positive a sample that is negative and is defined as
 
 .. math::
 
    \text{precision} = \frac{tp}{tp + fp}.
 
 The recall is intuitively the ability of the classifier to find all the
-positive samples
+positive samples and is defined as
 
 .. math::
 
@@ -212,15 +215,15 @@ positive samples
 
 
 The :math:`F_\beta` measure can be interpreted as a weighted harmonic mean of
-the precision and recall, where a :math:`F_\beta` measure reaches
-its best value at 1 and worst score at 0.
+the precision and recall
 
 .. math::
 
    F_\beta = (1 + \beta^2) \frac{\text{precision} \times \text{recall}}{\text{precision} + \text{recall}}
 
+A :math:`F_\beta` measure reaches its best value at 1 and worst score at 0.
 With :math:`\beta = 1`, the :math:`F_\beta` measure leads to the
-:math:`F_1` measure, wheres the recall and he precsion are equally important.
+:math:`F_1` measure, wheres the recall and the precsion are equally important.
 
 .. topic:: References:
 
@@ -231,34 +234,34 @@ With :math:`\beta = 1`, the :math:`F_\beta` measure leads to the
 Multiclass and multilabels classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In multiclass and multilabels classification task, the notions of precision,
-recall and F-measures can be applied to each label independantly.
+recall and F-measures can be applied to each label independently.
 
-Nevertheless, these notions can be further extended:
-
-The functions :func:`f1_score`, :func:`fbeta_score`,
-:func:`precision_recall_fscore_support` and `precision_score` support an
-argument ``average`` which define the type of averaging that is performed:
+Moreover, these notions can be further extended. The functions
+:func:`f1_score`, :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
+:func:`precision_score`  and :func:`recall_score` support an argument called
+``average`` which defines the type of averaging:
 
  * ``"macro"``: average over classes (does not take imbalance into account).
  * ``"micro"``: average over instances (takes imbalance into account).
  * ``"weighted"``: average weighted by support (takes imbalance into account).
-   It can result in f1 score that is not between precision and recall.
+   It can result in F1 score that is not between precision and recall.
  * ``None``: no averaging is performed.
 
 .. warning::
 
-  Currently those functions support only the multiclass case. But the following
-  definitions will be general and will treat the multilabel case.
+  Currently those functions support only the multiclass case. However the
+  following definitions will be general and will remain valid in the multilabel
+  case.
 
 Let's define some notations:
 
    * :math:`n_\text{labels}` and :math:`n_\text{samples}` denotes respectively the
      number of labels and the number of samples.
    * :math:`\texttt{precision}_j`, :math:`\texttt{recall}_j` and
-     :math:`\texttt{F\_beta}_j` are respectively the precision, the recall and
+     :math:`{F_\beta}_j` are respectively the precision, the recall and
      :math:`F_\beta` measure for the :math:`j`-th label;
    * :math:`tp_j`, :math:`fp_j` and :math:`fn_j` respectively the number of
-     true positives, false positives, false negatives for the :math:`j`-th
+     true positives, false positives and false negatives for the :math:`j`-th
      label;
    * :math:`y_i` is the set of true label and
      :math:`\hat{y}_i` is the set of predicted for the
@@ -268,30 +271,30 @@ The macro precision, recall and :math:`F_\beta` are averaged over all labels
 
 .. math::
 
-  \texttt{macro\_{}precision} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} \texttt{precision}_j
+  \texttt{macro\_{}precision} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} \texttt{precision}_j,
 
 .. math::
 
-  \texttt{macro\_{}recall} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} \texttt{recall}_j
+  \texttt{macro\_{}recall} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} \texttt{recall}_j,
 
 .. math::
 
-  \texttt{macro\_{}F\_{}beta} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} \texttt{F\_beta}_j
+  \texttt{macro\_{}F\_{}beta} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} {F_\beta}_j.
 
 
-The micro precision, recall and :math:`F_\beta` are averaged over all instance
-
-.. math::
-
-  \texttt{micro\_{}precision} = \frac{\sum_{j=0}^{n_\text{labels} - 1} tp_j}{\sum_{j=0}^{n_\text{labels} - 1} tp_j + \sum_{j=0}^{n_\text{labels} - 1} fp_j}
+The micro precision, recall and :math:`F_\beta` are averaged over all instances
 
 .. math::
 
-  \texttt{micro\_{}recall} = \frac{\sum_{j=0}^{n_\text{labels} - 1} tp_j}{\sum_{j=0}^{n_\text{labels} - 1} tp_j + \sum_{j=0}^{n_\text{labels} - 1} fn_j}
+  \texttt{micro\_{}precision} = \frac{\sum_{j=0}^{n_\text{labels} - 1} tp_j}{\sum_{j=0}^{n_\text{labels} - 1} tp_j + \sum_{j=0}^{n_\text{labels} - 1} fp_j},
 
 .. math::
 
-  \texttt{micro\_{}F\_{}beta} = (1 + \beta^2) \frac{\texttt{micro\_{}precision} \times  \texttt{micro\_{}recall}}{\texttt{micro\_{}precision} +  \texttt{micro\_{}recall}}
+  \texttt{micro\_{}recall} = \frac{\sum_{j=0}^{n_\text{labels} - 1} tp_j}{\sum_{j=0}^{n_\text{labels} - 1} tp_j + \sum_{j=0}^{n_\text{labels} - 1} fn_j},
+
+.. math::
+
+  \texttt{micro\_{}F\_{}beta} = (1 + \beta^2) \frac{\texttt{micro\_{}precision} \times  \texttt{micro\_{}recall}}{\texttt{micro\_{}precision} +  \texttt{micro\_{}recall}}.
 
 
 The weighted precision, recall and :math:`F_\beta` are averaged weighted by
@@ -299,15 +302,15 @@ their support
 
 .. math::
 
-  \texttt{weighted\_{}precision}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} \frac{|y_i \cap \hat{y}_i|}{|y_i \cup \hat{y}_i|}
+  \texttt{weighted\_{}precision}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} \frac{|y_i \cap \hat{y}_i|}{|y_i|},
 
 .. math::
 
-  \texttt{weighted\_{}recall}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} \frac{|y_i \cap \hat{y}_i|}{|\hat{y}_i|}
+  \texttt{weighted\_{}recall}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} \frac{|y_i \cap \hat{y}_i|}{|\hat{y}_i|},
 
 .. math::
 
-  \texttt{weighted\_{}F\_{}beta}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (1 + \beta^2)\frac{|y_i \cap \hat{y}_i|}{|y_i| + |\hat{y}_i|}
+  \texttt{weighted\_{}F\_{}beta}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (1 + \beta^2)\frac{|y_i \cap \hat{y}_i|}{|y_i| + |\hat{y}_i|}.
 
 
 Hinge loss
@@ -317,30 +320,30 @@ The :func:`hinge_loss` function computes the average
 `hinge loss function <http://en.wikipedia.org/wiki/Hinge_loss>`_. The hinge
 loss is used in maximal margin classification as support vector machines.
 
-If the labels are encoded with +1 and -1,  :math:`y`: the true
-value and :math:`w`, the predicted decisions as output by
+If the labels are encoded with +1 and -1,  :math:`y`: is the true
+value and :math:`w` is the predicted decisions as output by
 ``decision_function``, then the hinge loss is defined as:
 
 .. math::
 
-  L(y, w) = \max\left\{1 - wy, 0\right\} = \left|1 - wy\right|_+
+  L_\text{Hinge}(y, w) = \max\left\{1 - wy, 0\right\} = \left|1 - wy\right|_+
 
 
 Matthews correlation coefficient
 --------------------------------
-The :func:`matthews_corrcoef` function computes the matthew's correlation
-coefficient (MCC) for binary classes (quoting the `wikipedia article on the
-matthew's correlation coefficient
-<http://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_)
+The :func:`matthews_corrcoef` function computes the Matthew's correlation
+coefficient (MCC) for binary classes (quoting the `Wikipedia article on the
+Matthew's correlation coefficient
+<http://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_):
 
-    The Matthews correlation coefficient is used in machine learning as a
+    "The Matthews correlation coefficient is used in machine learning as a
     measure of the quality of binary (two-class) classifications. It takes
     into account true and false positives and negatives and is generally
     regarded as a balanced measure which can be used even if the classes are
     of very different sizes. The MCC is in essence a correlation coefficient
     value between -1 and +1. A coefficient of +1 represents a perfect
     prediction, 0 an average random prediction and -1 an inverse prediction.
-    The statistic is also known as the phi coefficient. [source: Wikipedia]
+    The statistic is also known as the phi coefficient."
 
 If :math:`tp`, :math:`tn`, :math:`fp` and :math:`fn` are respectively the
 number of true positives, true negatives, false positives ans false negatives,
@@ -348,7 +351,7 @@ the MCC coefficient is defined as
 
 .. math::
 
-  MCC = \frac{tp \times tn - fp \times fn}{\sqrt{(tp + fp)(tp + fn)(tn + fp)(tn + fn)}}
+  MCC = \frac{tp \times tn - fp \times fn}{\sqrt{(tp + fp)(tp + fn)(tn + fp)(tn + fn)}}.
 
 .. _roc_metrics:
 
@@ -359,15 +362,15 @@ The function :func:`roc_curve` computes the `receiver operating characteristic
 curve, or ROC curve (quoting
 wikipedia) <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_:
 
-  A receiver operating characteristic (ROC), or simply ROC curve, is a
+  "A receiver operating characteristic (ROC), or simply ROC curve, is a
   graphical plot which illustrates the performance of a binary classifier
   system as its discrimination threshold is varied. It is created by plotting
   the fraction of true positives out of the positives (TPR = true positive
   rate) vs. the fraction of false positives out of the negatives (FPR = false
   positive rate), at various threshold settings. TPR is also known as
-  sensitivity, and FPR is one minus the specificity or true negative rate.
+  sensitivity, and FPR is one minus the specificity or true negative rate."
 
-The following figure shows an example of ROC curve.
+The following figure shows an example of such ROC curve.
 
 .. image:: ../auto_examples/images/plot_roc_1.png
    :target: ../auto_examples/plot_roc.html
@@ -384,8 +387,8 @@ The following figure shows an example of ROC curve.
     for an example of receiver operating characteristic (ROC) metric to
     evaluate the quality of the output of a classifier using cross-validation.
 
-  * See :ref:`example_plot_species_distribution_modeling.py`
-    for an example of receiver operating characteristic (ROC) metric usage to
+  * See :ref:`example_applications_plot_species_distribution_modeling.py`
+    for an example of receiver operating characteristic (ROC) metric to
     model species distribution.
 
 Zero one loss
@@ -399,13 +402,14 @@ then the 0-1 loss :math:`L_{0-1}` is defined as:
 
    L_{0-1}(y_i, \hat{y}_i) = 1(\hat{y} \not= y)
 
-where :math:`1(x)` is the indicator function.
+where :math:`1(x)` is the `indicator function
+<http://en.wikipedia.org/wiki/Indicator_function>`_.
 
 
 .. topic:: Example:
 
   * See :ref:`example_plot_rfe_with_cross_validation.py`
-    for an example of zero one loss usage to perform recursive feature
+    for an example of the zero one loss usage to perform recursive feature
     elimination with cross-validation.
 
 
@@ -417,9 +421,9 @@ Regression metrics
 .. currentmodule:: sklearn.metrics
 
 The :mod:`sklearn.metrics` implements several losses, scores and utility
-functions to measure regressiion perfomance. Some of those have enhanced
-to treat the multioutput case: :func:`mean_absolute_error`,
-:func:`mean_absolute_error` and :func:`mean_squared_error`.
+functions to measure regression performance. Some of those have been enhanced
+to handle the multioutput case: :func:`mean_absolute_error`,
+:func:`mean_absolute_error` and :func:`r2_score`.
 
 
 Explained variance score
@@ -433,7 +437,7 @@ variance is  estimated  as follow:
 
 .. math::
 
-  \texttt{explained\_{}variance\_{}score} = 1 - \frac{Var\{ y - \hat{y}\}}{Var\{y\}}
+  \texttt{explained\_{}variance}(y, \hat{y}) = 1 - \frac{Var\{ y - \hat{y}\}}{Var\{y\}}
 
 The best possible score is 1.0, lower values are worse.
 
@@ -471,7 +475,7 @@ and :math:`y_i` is the corresponding true value, then the mean squared error
 
 .. topic:: Examples:
 
-  * See :ref:`example_plot_gradient_boosting_regression.py`
+  * See :ref:`example_ensemble_plot_gradient_boosting_regression.py`
     for an example of mean squared error usage to
     evaluate gradient boosting regression.
 
@@ -491,11 +495,11 @@ over :math:`n_{\text{samples}}` is defined as
 
   R^2(y, \hat{y}) = 1 - \frac{\sum_{i=0}^{n_{\text{samples}} - 1} (y_i - \hat{y}_i)^2}{\sum_{i=0}^{n_\text{samples} - 1} (y_i - \bar{y})^2}
 
-where :math:`\bar{y} =  \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}} y_i`.
+where :math:`\bar{y} =  \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}} - 1} y_i`.
 
 .. topic:: Examples:
 
-  * See :ref:`example_plot_lasso_and_elasticnet.py`
+  * See :ref:`example_linear_model_plot_lasso_and_elasticnet.py`
     for an example of R² score usage to
     evaluate Lasso and Elastic Net on sparse signals.
 
@@ -552,7 +556,7 @@ We see that the accuracy was boosted to almost 100%.
 
 More generally, when the accuracy of a classifier is too close to random classification, it
 probably means that something went wrong: features are not helpful, a
-hyparameter is not correctly tuned, the classifier is suffering from class
+hyper parameter is not correctly tuned, the classifier is suffering from class
 imbalance, etc...
 
 :class:`DummyRegressor` implements a simple rule of thumb for regression:
