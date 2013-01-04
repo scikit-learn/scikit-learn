@@ -210,6 +210,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted.
+            Splits that would yield nodes with net zero or negative weight are
+            ignored while searching for a split in each node.
 
         check_input: boolean, (default=True)
             Allow to bypass several input checking.
