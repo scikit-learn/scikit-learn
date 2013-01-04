@@ -788,8 +788,15 @@ cdef class Tree:
                 weighted_n_left = criterion.weighted_n_left
 
                 # Only consider splits that respect min_leaf
-                if n_left < min_samples_leaf or (n_node_samples - n_left) < min_samples_leaf:
+                if (n_left < min_samples_leaf or
+                    (n_node_samples - n_left) < min_samples_leaf):
                     a = b
+                    continue
+                
+                if (weighted_n_left <= 0 or
+                    (weighted_n_node_samples - weighted_n_left) <= 0):
+                    # skip splits that result in nodes with net 0 or negative
+                    # weights
                     continue
 
                 error = criterion.eval()
