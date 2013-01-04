@@ -117,18 +117,24 @@ Changelog
      Gaussian and sparse random projection matrix
      by `Olivier Grisel`_ and `Arnaud Joly`_.
 
-   - Add the :fun:`metrics.mean_absolute_error` function which computes the
-     mean absolute error. The :fun:`metrics.mean_squared_error`,
-     :fun:`metrics.mean_absolute_error` and
-     :fun:`metrics.r2_score` metrics support multioutput by `Arnaud Joly`_.
+   - Add the :func:`metrics.mean_absolute_error` function which computes the
+     mean absolute error. The :func:`metrics.mean_squared_error`,
+     :func:`metrics.mean_absolute_error` and
+     :func:`metrics.r2_score` metrics support multioutput by `Arnaud Joly`_.
 
    - Fixed ``class_weight`` support in :class:`svm.LinearSVC` and
      :class:`linear_model.LogisticRegression` by `Andreas Müller`_. The meaning
      of ``class_weight`` was reversed as erroneously higher weight meant less
      positives of a given class in earlier releases.
 
+<<<<<<< HEAD
    - Improve narrative documentation for :mod:`sklearn.metrics`: regression
      and classification metrics by `Arnaud Joly`_.
+=======
+   - Improve narrative documentation and consistency in
+     :mod:`sklearn.metrics` for regression and classification metrics
+     by `Arnaud Joly`_.
+>>>>>>> ENH rename zero_loss_score to accuracy_score
 
 API changes summary
 -------------------
@@ -225,6 +231,9 @@ API changes summary
 
    - Renamed function :func:`sklearn.metrics.zero_one` to
      :func:`sklearn.metrics.zero_one_loss`.
+
+   - Renamed function :func:`sklearn.metrics.zero_one_score` to
+     :func:`sklearn.metrics.accuracy_score`.
 
 .. _changes_0_12.1:
 

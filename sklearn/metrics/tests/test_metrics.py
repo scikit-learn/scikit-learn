@@ -1,34 +1,42 @@
+from __future__ import division
+
 import random
 import warnings
 import numpy as np
 
-from nose.tools import raises, assert_not_equal
-from nose.tools import assert_true, assert_raises
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_equal, assert_almost_equal
-
 from sklearn import datasets
 from sklearn import svm
-from sklearn.metrics import auc
-from sklearn.metrics import classification_report
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import explained_variance_score
-from sklearn.metrics import r2_score
-from sklearn.metrics import f1_score
-from sklearn.metrics import matthews_corrcoef
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import mean_absolute_error
-from sklearn.metrics import precision_recall_curve
-from sklearn.metrics import precision_recall_fscore_support
-from sklearn.metrics import precision_score
-from sklearn.metrics import recall_score
-from sklearn.metrics import roc_curve
-from sklearn.metrics import auc_score
-from sklearn.metrics import average_precision_score
-from sklearn.metrics import zero_one
-from sklearn.metrics import zero_one_loss
-from sklearn.metrics import hinge_loss
+
+from sklearn.utils.testing import (assert_true,
+                                   assert_raises,
+                                   assert_equal,
+                                   assert_almost_equal,
+                                   assert_not_equal,
+                                   assert_array_equal,
+                                   assert_array_almost_equal)
+
+
+from sklearn.metrics import (accuracy_score,
+                             average_precision_score,
+                             auc,
+                             auc_score,
+                             classification_report,
+                             confusion_matrix,
+                             explained_variance_score,
+                             f1_score,
+                             hinge_loss,
+                             matthews_corrcoef,
+                             mean_squared_error,
+                             mean_absolute_error,
+                             precision_recall_curve,
+                             precision_recall_fscore_support,
+                             precision_score,
+                             recall_score,
+                             r2_score,
+                             roc_curve,
+                             zero_one,
+                             zero_one_score,
+                             zero_one_loss)
 
 
 def make_prediction(dataset=None, binary=False):
@@ -102,12 +110,11 @@ def test_roc_returns_consistency():
     assert_array_almost_equal(tpr, tpr_correct, decimal=2)
 
 
-@raises(ValueError)
 def test_roc_curve_multi():
     """roc_curve not applicable for multi-class problems"""
     y_true, _, probas_pred = make_prediction(binary=False)
 
-    fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
+    assert_raises(ValueError, roc_curve, y_true, probas_pred)
 
 
 def test_roc_curve_confidence():
@@ -462,11 +469,13 @@ def test_score_scale_invariance():
     # Test that average_precision_score and auc_score are invariant by
     # the scaling or shifting of probabilities
     y_true, _, probas_pred = make_prediction(binary=True)
+
     roc_auc = auc_score(y_true, probas_pred)
     roc_auc_scaled = auc_score(y_true, 100 * probas_pred)
     roc_auc_shifted = auc_score(y_true, probas_pred - 10)
     assert_equal(roc_auc, roc_auc_scaled)
     assert_equal(roc_auc, roc_auc_shifted)
+
     pr_auc = average_precision_score(y_true, probas_pred)
     pr_auc_scaled = average_precision_score(y_true, 100 * probas_pred)
     pr_auc_shifted = average_precision_score(y_true, probas_pred - 10)
@@ -477,26 +486,35 @@ def test_score_scale_invariance():
 def test_losses():
     """Test loss functions"""
     y_true, y_pred, _ = make_prediction(binary=True)
-    n = y_true.shape[0]
+    n_samples = y_true.shape[0]
 
     assert_equal(zero_one(y_true, y_pred), 13)
     assert_almost_equal(zero_one(y_true, y_pred, normalize=True),
-                        13 / float(n), 2)
+                        13 / float(n_samples), 2)
 
     assert_equal(zero_one_loss(y_true, y_pred, normalize=False), 13)
     assert_almost_equal(zero_one_loss(y_true, y_pred, normalize=True),
-                        13 / float(n), 2)
+                        13 / float(n_samples), 2)
     assert_almost_equal(zero_one_loss(y_true, y_true),
                         0.0, 2)
     assert_almost_equal(zero_one_loss(y_true, y_true, normalize=False),
                         0, 2)
 
-    assert_almost_equal(mean_squared_error(y_true, y_pred), 12.999 / n, 2)
-    assert_almost_equal(mean_squared_error(y_true, y_true), 0.00, 2)
+    assert_equal(accuracy_score(y_true, y_pred),
+                 1 - zero_one_loss(y_true, y_pred))
+
+    assert_equal(zero_one_score(y_true, y_pred),
+                 1 - zero_one_loss(y_true, y_pred))
+
+    assert_almost_equal(mean_squared_error(y_true, y_pred),
+                        12.999 / n_samples, 2)
+    assert_almost_equal(mean_squared_error(y_true, y_true),
+                        0.00, 2)
 
     # mean_absolute_error and mean_squared_error are equal because
     # it is a binary problem.
-    assert_almost_equal(mean_absolute_error(y_true, y_pred), 12.999 / n, 2)
+    assert_almost_equal(mean_absolute_error(y_true, y_pred),
+                        12.999 / n_samples, 2)
     assert_almost_equal(mean_absolute_error(y_true, y_true), 0.00, 2)
 
     assert_almost_equal(explained_variance_score(y_true, y_pred), -0.04, 2)
@@ -527,6 +545,9 @@ def test_symmetry():
     y_true, y_pred, _ = make_prediction(binary=True)
 
     # symmetric
+    assert_equal(accuracy_score(y_true, y_pred),
+                 accuracy_score(y_pred, y_true))
+
     assert_equal(zero_one(y_true, y_pred),
                  zero_one(y_pred, y_true))
 
@@ -541,6 +562,9 @@ def test_symmetry():
 
     assert_equal(zero_one_loss(y_true, y_pred, normalize=False),
                  zero_one_loss(y_pred, y_true, normalize=False))
+
+    assert_equal(zero_one_score(y_true, y_pred),
+                 zero_one_score(y_pred, y_true))
 
     assert_almost_equal(mean_squared_error(y_true, y_pred),
                         mean_squared_error(y_pred, y_true))

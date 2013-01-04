@@ -998,6 +998,34 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     return r
 
 
+def accuracy_score(y_true, y_pred):
+    """Accuracy classification score
+
+    Positive integer (number of good classifications).
+    The best performance is 1.
+
+    Return the fraction of correct predictions in y_pred.
+
+    Parameters
+    ----------
+    y_true : array-like, shape = n_samples
+        Ground truth (correct) labels.
+
+    y_pred : array-like, shape = n_samples
+        Predicted labels, as returned by a classifier.
+
+    Returns
+    -------
+    score : float
+
+    See also
+    --------
+    zero_one_loss Zero-One classification loss
+    """
+    y_true, y_pred = check_arrays(y_true, y_pred)
+    return np.mean(y_pred == y_true)
+
+
 def zero_one_score(y_true, y_pred):
     """Zero-one classification score (accuracy)
 
@@ -1019,8 +1047,11 @@ def zero_one_score(y_true, y_pred):
     score : float
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred)
-    return np.mean(y_pred == y_true)
+    warnings.warn(
+        "Function zero_one_score has been renamed to "
+        'accuracy_score'" and will be removed in release 0.15.",
+        DeprecationWarning, stacklevel=2)
+    return accuracy_score(y_true, y_pred)
 
 
 ###############################################################################

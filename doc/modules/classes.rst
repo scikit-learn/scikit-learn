@@ -668,6 +668,7 @@ Classification metrics
    :toctree: generated/
    :template: function.rst
 
+   metrics.accuracy_score
    metrics.auc
    metrics.auc_score
    metrics.average_precision_score
@@ -682,7 +683,6 @@ Classification metrics
    metrics.precision_score
    metrics.recall_score
    metrics.roc_curve
-   metrics.zero_one_score
    metrics.zero_one_loss
 
 Regression metrics

@@ -42,15 +42,33 @@ Others have been extended to the multiclass case:
 .. autosummary::
    :template: function.rst
 
+  accuraccy_sscore
   confusion_matrix
   f1_score
   fbeta_score
   precision_recall_fscore_support
   precision_score
-  zero_one_score
   zero_one_loss
 
 In the following sub-sections, we will describe each of those functions.
+
+Accuraccy score
+---------------
+The :func:`  accuraccy_sscore` function computes the
+`accuracy <http://en.wikipedia.org/wiki/Accuracy_and_precision>`_, the fraction
+of correct`predictions.
+
+If :math:`\hat{y}_i` is the predicted value of
+the :math:`i`-th sample and :math:`y_i` is the corresponding true value,
+then the fraction of correct predictions over :math:`n_\text{samples}` is
+defined as
+
+.. math::
+
+   \texttt{accuraccy}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y} = y)
+
+where :math:`1(x)` is the indicator function.
+
 
 Area under the curve (AUC)
 --------------------------
@@ -326,23 +344,6 @@ then the 0-1 loss :math:`L_{0-1}` is defined as:
 .. math::
 
    L_{0-1}(y_i, \hat{y}_i) = 1(\hat{y} \not= y)
-
-where :math:`1(x)` is the indicator function.
-
-Zero one score, the accuraccy
------------------------------
-The :func:`zero_one_score` function computes the
-`accuracy <http://en.wikipedia.org/wiki/Accuracy_and_precision>`_, the fraction
-of correct`predictions.
-
-If :math:`\hat{y}_i` is the predicted value of
-the :math:`i`-th sample and :math:`y_i` is the corresponding true value,
-then the fraction of correct predictions over :math:`n_\text{samples}` is
-defined as
-
-.. math::
-
-   \texttt{zero\_{}one}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y} = y)
 
 where :math:`1(x)` is the indicator function.
 
