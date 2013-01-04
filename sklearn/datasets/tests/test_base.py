@@ -7,6 +7,7 @@ from sklearn.datasets import get_data_home
 from sklearn.datasets import clear_data_home
 from sklearn.datasets import load_filenames
 from sklearn.datasets import load_files
+
 from sklearn.datasets import load_sample_images
 from sklearn.datasets import load_sample_image
 from sklearn.datasets import load_digits
@@ -147,3 +148,4 @@ def test_load_linnerud():
     assert_true(res.target.any())
     assert_true(res.target_names)
     assert_true(res.DESCR)
+

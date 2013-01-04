@@ -4,9 +4,9 @@ Contributing code
 
 **Note: This document is just to get started, visit [**Contributing
 page**](http://scikit-learn.org/stable/developers/index.html#coding-guidelines)
-for the full contributor's guide. Make sure to read it carefully to make
+for the full contributor's guide. Please be sure to read it carefully to make
 the code review process go as smoothly as possible and maximize the
-likelihood of your contribution to get merged.**
+likelihood of your contribution being merged.**
 
 How to contribute
 -----------------
@@ -29,7 +29,7 @@ GitHub:
 
    and start making changes. Never work in the ``master`` branch!
 
-4. Work on this copy, on your computer, using Git to do the version
+4. Work on this copy on your computer using Git to do the version
    control. When you're done editing, do:
 
           $ git add modified_files
@@ -43,8 +43,8 @@ Finally, go to the web page of the your fork of the scikit-learn repo,
 and click 'Pull request' to send your changes to the maintainers for
 review. request. This will send an email to the committers.
 
-(If any of the above seems like magic to you, then look up the [Git documentation](http://git-scm.com/documentation) 
-on the web.)
+(If any of the above seems like magic to you, then look up the 
+[Git documentation](http://git-scm.com/documentation) on the web.)
 
 It is recommended to check that your contribution complies with the
 following rules before submitting a pull request:
@@ -64,7 +64,7 @@ following rules before submitting a pull request:
    to other methods available in scikit-learn.
 
 -  At least one paragraph of narrative documentation with links to
-   references in the literature (with PDF links when possible) and
+````   references in the literature (with PDF links when possible) and
    the example.
 
 The documentation should also include expected time and space
@@ -76,7 +76,7 @@ scale in dimensionality: n_features is expected to be lower than
 You can also check for common programming errors with the following
 tools:
 
--  Code with a good unittest coverage (at least 80%), check with:
+-  Code with good unittest coverage (at least 80%), check with:
 
           $ pip install nose coverage
           $ nosetests --with-coverage path/to/tests_for_package
@@ -119,7 +119,7 @@ reStructuredText documents (like this one), tutorials, etc.
 reStructuredText documents live in the source code repository under the
 doc/ directory.
 
-You can edit the documentation using any text editor, and then generate
+You can edit the documentation using any text editor and then generate
 the HTML output by typing ``make html`` from the doc/ directory.
 Alternatively, ``make`` can be used to quickly generate the
 documentation without the example gallery. The resulting HTML files will
@@ -133,7 +133,7 @@ For building the documentation, you will need
 When you are writing documentation, it is important to keep a good
 compromise between mathematical and algorithmic details, and give
 intuition to the reader on what the algorithm does. It is best to always
-start with a small paragraph with a hand-waiving explanation of what the
+start with a small paragraph with a hand-waving explanation of what the
 method does to the data and a figure (coming from an example)
 illustrating it.
 
@@ -143,4 +143,3 @@ Further Information
 Visit the [Contributing Code](http://scikit-learn.org/stable/developers/index.html#coding-guidelines)
 section of the website for more information including conforming to the 
 API spec and profiling contributed code.
-

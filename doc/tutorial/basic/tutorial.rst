@@ -16,11 +16,10 @@ Machine learning: the problem setting
 
 In general, a learning problem considers a set of n 
 `samples <http://en.wikipedia.org/wiki/Sample_(statistics)>`_ of
-data and try to predict properties of unknown data. If each sample is
-more than a single number, and for instance a multi-dimensional entry
+data and then tries to predict properties of unknown data. If each sample is
+more than a single number and, for instance, a multi-dimensional entry
 (aka `multivariate <http://en.wikipedia.org/wiki/Multivariate_random_variable>`_ 
-data), is it said to have several attributes,
-or **features**.
+data), is it said to have several attributes or **features**.
 
 We can separate learning problems in a few large categories:
 
@@ -35,9 +34,12 @@ We can separate learning problems in a few large categories:
       samples belong to two or more classes and we
       want to learn from already labeled data how to predict the class
       of unlabeled data. An example of classification problem would
-      be the digit recognition example, in which the aim is to assign
-      each input vector to one of a finite number of discrete
-      categories.
+      be the handwritten digit recognition example, in which the aim is 
+      to assign each input vector to one of a finite number of discrete
+      categories.  Another way to think of classification is as a discrete 
+      (as opposed to continuous) form of supervised learning where one has a 
+      limited number of categories and for each of the n samples provided,
+      one is to try to label them with the correct category or class.
 
     * `regression <http://en.wikipedia.org/wiki/Regression_analysis>`_:
       if the desired output consists of one or more
@@ -52,7 +54,7 @@ We can separate learning problems in a few large categories:
    it is called `clustering <http://en.wikipedia.org/wiki/Cluster_analysis>`_, 
    or to determine the distribution of data within the input space, known as 
    `density estimation <http://en.wikipedia.org/wiki/Density_estimation>`_, or 
-   to project the data from a high-dimensional space down to two or thee 
+   to project the data from a high-dimensional space down to two or three 
    dimensions for the purpose of *visualization* 
    (:ref:`Click here <unsupervised-learning>` 
    to go to the Scikit-Learn unsupervised learning page).
@@ -62,8 +64,8 @@ We can separate learning problems in a few large categories:
     Machine learning is about learning some properties of a data set
     and applying them to new data. This is why a common practice in
     machine learning to evaluate an algorithm is to split the data
-    at hand in two sets, one that we call a **training set** on which
-    we learn data properties, and one that we call a **testing set**,
+    at hand into two sets, one that we call the **training set** on which
+    we learn data properties and one that we call the **testing set**
     on which we test these properties.
 
 .. _loading_example_dataset:
@@ -142,7 +144,7 @@ the classes to which unseen samples belong.
 In `scikit-learn`, an estimator for classification is a Python object that
 implements the methods `fit(X, y)` and `predict(T)`.
 
-An example of estimator is the class ``sklearn.svm.SVC`` that
+An example of an estimator is the class ``sklearn.svm.SVC`` that
 implements `support vector classification
 <http://en.wikipedia.org/wiki/Support_vector_machine>`_. The
 constructor of an estimator takes as arguments the parameters of the
@@ -175,7 +177,7 @@ classifier what is the digit of our last image in the `digits` dataset,
 which we have not used to train the classifier::
 
   >>> clf.predict(digits.data[-1])
-  array([ 8.])
+  array([8])
 
 The corresponding image is the following:
 
@@ -212,7 +214,7 @@ persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_
   >>> s = pickle.dumps(clf)
   >>> clf2 = pickle.loads(s)
   >>> clf2.predict(X[0])
-  array([ 0.])
+  array([0])
   >>> y[0]
   0
 

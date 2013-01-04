@@ -14,7 +14,7 @@ from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_arrays
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
-from ..isotonic import isotonic_regression
+from ..isotonic import IsotonicRegression
 
 
 def _smacof_single(similarities, metric=True, n_components=2, init=None,
@@ -87,6 +87,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
         X = init
 
     old_stress = None
+    ir = IsotonicRegression()
     for it in range(max_iter):
         # Compute distance and monotonic regression
         dis = euclidean_distances(X)
@@ -99,15 +100,12 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
             dis_flat_w = dis_flat[sim_flat != 0]
 
             # Compute the disparities using a monotonic regression
-            indxs = np.lexsort((dis_flat_w, sim_flat_w))
-            rindxs = np.argsort(indxs)
-            disparities_flat = isotonic_regression(dis_flat_w[indxs])
-            disparities_flat = disparities_flat[rindxs]
+            disparities_flat = ir.fit_transform(sim_flat_w, dis_flat_w)
             disparities = dis_flat.copy()
             disparities[sim_flat != 0] = disparities_flat
             disparities = disparities.reshape((n_samples, n_samples))
-            disparities *= np.sqrt((n_samples * (n_samples - 1) / 2)
-                                   / (disparities ** 2).sum())
+            disparities *= np.sqrt((n_samples * (n_samples - 1) / 2) /
+                                   (disparities ** 2).sum())
 
         # Compute stress
         stress = ((dis.ravel() - disparities.ravel()) ** 2).sum() / 2
