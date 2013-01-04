@@ -12,8 +12,8 @@ algorithms.
 
 .. currentmodule:: sklearn.linear_model
 
-The advantage of using approximate explicit feature maps compared to the 
-`kernel trick <http://en.wikipedia.org/wiki/Kernel_trick>`_, 
+The advantage of using approximate explicit feature maps compared to the
+`kernel trick <http://en.wikipedia.org/wiki/Kernel_trick>`_,
 which makes use of feature maps implicitly, is that explicit mappings
 can be better suited for online learning and can significantly reduce the cost
 of learning with very large datasets.
@@ -26,13 +26,41 @@ Since there has not been much empirical work using approximate embeddings, it
 is advisable to compare results against exact kernel methods when possible.
 
 
+.. currentmodule:: sklearn.kernel_approximation
+
+Nystroem Method for Kernel Approximation
+----------------------------------------
+The Nystroem method, as implemented in :class:`Nystroem` is a general method
+for low-rank approximations of kernels. It achieves this by essentially subsampling
+the data on which the kernel is evaluated.
+By default :class:`Nystroem` uses the ``rbf`` kernel, but it can use any
+kernel function or a precomputed kernel matrix.
+The number of samples used - which is also the dimensionality of the features computed -
+is given by the parameter ``n_components``.
+
+
 Radial Basis Function Kernel
 ----------------------------
 
-.. currentmodule:: sklearn.kernel_approximation
-
 The :class:`RBFSampler` constructs an approximate mapping for the radial basis
-function kernel. 
+function kernel. This transformation can be used to explicitly model a kernel map,
+prior to applying a linear algorithm, for example a linear SVM::
+
+    >>> from sklearn.kernel_approximation import RBFSampler
+    >>> from sklearn.linear_model import SGDClassifier
+    >>> X = [[0, 0], [1, 1], [1, 0], [0, 1]]
+    >>> y = [0, 0, 1, 1]
+    >>> rbf_feature = RBFSampler(gamma=1, random_state=1)
+    >>> X_features = rbf_feature.fit_transform(X)
+    >>> clf = SGDClassifier()   # doctest: +NORMALIZE_WHITESPACE
+    >>> clf.fit(X_features, y)
+    SGDClassifier(alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
+           fit_intercept=True, l1_ratio=0.15, learning_rate='optimal',
+           loss='hinge', n_iter=5, n_jobs=1, penalty='l2', power_t=0.5,
+           random_state=None, rho=None, shuffle=False, verbose=0,
+           warm_start=False)
+    >>> clf.score(X_features, y)
+    1.0
 
 The mapping relies on a Monte Carlo approximation to the
 kernel values. The ``fit`` function performs the Monte Carlo sampling, whereas
@@ -49,6 +77,10 @@ function does not actually depend on the data given to the ``fit`` function.
 Only the dimensionality of the data is used.
 Details on the method can be found in [RR2007]_.
 
+For a given value of ``n_components`` :class:`RBFSampler` is often less acurate
+as :class:`Nystroem`. :class:`RBFSampler` is cheaper to compute, though, making
+use of larger feature spaces more efficient.
+
 .. figure:: ../auto_examples/images/plot_kernel_approximation_2.png
     :target: ../auto_examples/plot_kernel_approximation.html
     :scale: 50%
@@ -64,14 +96,17 @@ Details on the method can be found in [RR2007]_.
 Additive Chi Squared Kernel
 ---------------------------
 
-The chi squared kernel is a kernel on histograms, often used in computer vision.
+The additive chi squared kernel is a kernel on histograms, often used in computer vision.
 
-The chi squared kernel is given by
+The additive chi squared kernel as used here is given by
 
 .. math::
 
         k(x, y) = \sum_i \frac{2x_iy_i}{x_i+y_i}
 
+This is not exactly the same as :func:`sklearn.metrics.additive_chi2_kernel`.
+The authors of [VZ2010]_ prefer the version above as it is always positive
+definite.
 Since the kernel is additive, it is possible to treat all components
 :math:`x_i` separately for embedding. This makes it possible to sample
 the Fourier transform in regular intervals, instead of approximating
@@ -102,7 +137,7 @@ The skewed chi squared kernel is given by:
 
 It has properties that are similar to the exponentiated chi squared kernel
 often used in computer vision, but allows for a simple Monte Carlo
-approximation of the feature map. 
+approximation of the feature map.
 
 The usage of the :class:`SkewedChi2Sampler` is the same as the usage described
 above for the :class:`RBFSampler`. The only difference is in the free

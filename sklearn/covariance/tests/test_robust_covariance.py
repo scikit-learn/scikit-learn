@@ -4,10 +4,11 @@
 #
 # License: BSD Style.
 
-from numpy.testing import assert_almost_equal, assert_array_almost_equal, \
-    assert_raises
-
 import numpy as np
+
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_raises
 
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, MinCovDet, \
@@ -40,8 +41,8 @@ def test_mcd():
     launch_mcd_on_dataset(500, 1, 100, 0.001, 0.001, 350)
 
 
-def launch_mcd_on_dataset(
-    n_samples, n_features, n_outliers, tol_loc, tol_cov, tol_support):
+def launch_mcd_on_dataset(n_samples, n_features, n_outliers, tol_loc, tol_cov,
+                          tol_support):
 
     rand_gen = np.random.RandomState(0)
     data = rand_gen.randn(n_samples, n_features)

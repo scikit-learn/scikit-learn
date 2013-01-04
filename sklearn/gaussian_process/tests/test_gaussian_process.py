@@ -15,6 +15,11 @@ from sklearn.gaussian_process import regression_models as regression
 from sklearn.gaussian_process import correlation_models as correlation
 
 
+f = lambda x: x * np.sin(x)
+X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
+y = f(X).ravel()
+
+
 def test_1d(regr=regression.constant, corr=correlation.squared_exponential,
             random_start=10, beta0=None):
     """
@@ -23,9 +28,6 @@ def test_1d(regr=regression.constant, corr=correlation.squared_exponential,
 
     Test the interpolating property.
     """
-    f = lambda x: x * np.sin(x)
-    X = np.atleast_2d([1., 3., 5., 6., 7., 8.]).T
-    y = f(X).ravel()
     gp = GaussianProcess(regr=regr, corr=corr, beta0=beta0,
                          theta0=1e-2, thetaL=1e-4, thetaU=1e-1,
                          random_start=random_start, verbose=False).fit(X, y)
@@ -91,3 +93,9 @@ def test_ordinary_kriging():
     test_1d(regr='quadratic', beta0=[0., 0.5, 0.5])
     test_2d(regr='linear', beta0=[0., 0.5, 0.5])
     test_2d(regr='quadratic', beta0=[0., 0.5, 0.5, 0.5, 0.5, 0.5])
+
+
+def test_no_normalize():
+    gp = GaussianProcess(normalize=False).fit(X, y)
+    y_pred = gp.predict(X)
+    assert_true(np.allclose(y_pred, y))

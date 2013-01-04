@@ -6,11 +6,12 @@
 import os
 from os.path import join, exists
 import re
-import numpy as np
+import numbers
+import urllib2
+
 import scipy as sp
 from scipy import io
 from shutil import copyfileobj
-import urllib2
 
 from .base import get_data_home, Bunch
 
@@ -142,9 +143,9 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
                  for descr in matlab_dict['mldata_descr_ordering'][0]]
 
     # if target or data names are indices, transform then into names
-    if isinstance(target_name, (int, np.integer)):
+    if isinstance(target_name, numbers.Integral):
         target_name = col_names[target_name]
-    if isinstance(data_name, (int, np.integer)):
+    if isinstance(data_name, numbers.Integral):
         data_name = col_names[data_name]
 
     # rules for making sense of the mldata.org data format

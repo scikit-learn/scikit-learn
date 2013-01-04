@@ -13,6 +13,20 @@
     span.linkdescr a {
         color:  #3E4349 ;
     }
+    span.linkdescr {
+        line-height: 1.3em;
+    }
+    div.topic p {
+        margin-top: .2em;
+        line-height: 1.3em;
+    }
+    div.topic {
+        background-color: #FFF0E0;
+        border-color: #FF9C34;
+    }
+    div.warning p {
+        margin-top: .0em;
+    }
     </style>
 
 ..
@@ -75,7 +89,7 @@
 
     .. |banner14| image:: auto_examples/images/plot_lda_qda_1.png
        :height: 139
-       :target: auto_examples/plot_lda_vs_qda.html
+       :target: auto_examples/plot_lda_qda.html
 
     .. |banner15| image:: auto_examples/cluster/images/plot_cluster_comparison_1.png
        :height: 139
@@ -170,21 +184,22 @@
 
 .. topic:: Easy-to-use and general-purpose machine learning in Python
 
-    ``scikit-learn`` is a Python module integrating classic machine
-    learning algorithms in the tightly-knit scientific Python
-    world (`numpy <http://numpy.scipy.org>`_, `scipy
-    <http://www.scipy.org>`_, `matplotlib
-    <http://matplotlib.sourceforge.net/>`_).
-    It aims to provide simple and efficient solutions to learning
-    problems, accessible to everybody and reusable in various
-    contexts: **machine-learning as a versatile tool for science and
-    engineering**.
+    Scikit-learn integrates **machine learning** algorithms in the
+    tightly-knit scientific **Python** world, building upon `numpy
+    <http://numpy.scipy.org/>`_, `scipy <http://scipy.org>`_, and
+    `matplotlib <http://matplotlib.org>`_. As a machine-learning module,
+    it provides versatile tools for data mining and analysis in any field
+    of science and engineering. It strives to be **simple and
+    efficient**, accessible to everybody, and reusable in various
+    contexts.
 
 
 .. raw:: html
 
   <table class="contentstable" style="width: 100% ; margin-top: -8px">
-    <tr valign="top"><td width="28%">
+    <tr valign="top">
+    </td><td align="right" width="2%">
+    <td width="28%">
       <p class="biglink"><a class="biglink" href="supervised_learning.html">
                 Supervised learning</a><br/>
          <span class="linkdescr">
@@ -193,6 +208,7 @@
                 <a href="modules/naive_bayes.html">naive Bayes</a>,
                 <a href="modules/gaussian_process.html">Gaussian processes</a>...
          </span></p>
+    </td><td align="right" width="3%">
     </td><td align="center" width="32%">
       <p class="biglink"><a class="biglink" href="unsupervised_learning.html">
         Unsupervised learning</a><br/>
@@ -203,6 +219,7 @@
                 <a href="modules/decomposition.html">matrix factorization</a>,
                 <a href="modules/covariance.html">covariance</a>...
          </span></p>
+    </td><td align="right" width="3%">
     </td><td align="right" width="30%">
       <p class="biglink"><a class="biglink" href="index.html#user-guide">
         And much more</a><br/>
@@ -214,12 +231,21 @@
     </td></tr>
   </table>
 
+
 **License:** Open source, commercially usable: **BSD license** (3 clause)
 
-.. include:: includes/big_toc_css.rst
+.. raw:: html
+
+   <div class="admonition warning" style="margin: 3px 0; padding: 3px 7px">
 
 Documentation for scikit-learn **version** |release|. For other versions and
 printable format, see :ref:`documentation_resources`.
+
+.. raw:: html
+
+    </div>
+
+.. include:: includes/big_toc_css.rst
 
 User Guide
 ==========
@@ -247,6 +273,7 @@ Development
    developers/performance
    developers/utilities
    developers/debugging
+   developers/maintainer
    about
 
 .. toctree::

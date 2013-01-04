@@ -47,8 +47,8 @@ import pylab as pl
 import numpy as np
 from scipy import linalg
 
-from sklearn.linear_model import RandomizedLasso, lasso_stability_path, \
-                                 LassoLarsCV
+from sklearn.linear_model import (RandomizedLasso, lasso_stability_path,
+                                  LassoLarsCV)
 from sklearn.feature_selection import f_regression
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import auc, precision_recall_curve
@@ -59,10 +59,8 @@ from sklearn.utils.extmath import pinvh
 def mutual_incoherence(X_relevant, X_irelevant):
     """Mutual incoherence, as defined by formula (26a) of [Wainwright2006].
     """
-    projector = np.dot(
-                    np.dot(X_irelevant.T, X_relevant),
-                    pinvh(np.dot(X_relevant.T, X_relevant))
-                    )
+    projector = np.dot(np.dot(X_irelevant.T, X_relevant),
+                       pinvh(np.dot(X_relevant.T, X_relevant)))
     return np.max(np.abs(projector).sum(axis=1))
 
 
@@ -96,7 +94,7 @@ for conditionning in (1, 1e-4):
     X = np.dot(X, corr)
     # Keep [Wainwright2006] (26c) constant
     X[:n_relevant_features] /= np.abs(
-            linalg.svdvals(X[:n_relevant_features])).max()
+        linalg.svdvals(X[:n_relevant_features])).max()
     X = StandardScaler().fit_transform(X.copy())
 
     # The output variable
@@ -111,8 +109,8 @@ for conditionning in (1, 1e-4):
     ###########################################################################
     # Plot stability selection path, using a high eps for early stopping
     # of the path, to save computation time
-    alpha_grid, scores_path = lasso_stability_path(X, y,
-                                            random_state=42, eps=0.05)
+    alpha_grid, scores_path = lasso_stability_path(X, y, random_state=42,
+                                                   eps=0.05)
 
     pl.figure()
     # We plot the path as a function of alpha/alpha_max to the power 1/3: the
@@ -146,10 +144,10 @@ for conditionning in (1, 1e-4):
 
     pl.figure()
     for name, score in [('F-test', F),
-                ('Stability selection', clf.scores_),
-                ('Lasso coefs', np.abs(lars_cv.coef_)),
-                ('Trees', trees.feature_importances_),
-                ]:
+                        ('Stability selection', clf.scores_),
+                        ('Lasso coefs', np.abs(lars_cv.coef_)),
+                        ('Trees', trees.feature_importances_),
+                        ]:
         precision, recall, thresholds = precision_recall_curve(coef != 0,
                                                                score)
         pl.semilogy(np.maximum(score / np.max(score), 1e-4),

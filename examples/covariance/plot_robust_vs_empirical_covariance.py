@@ -122,8 +122,8 @@ pl.errorbar(range_n_outliers[:(x_size / 5 + 1)],
             yerr=err_cov_emp_full.std(1)[:(x_size / 5 + 1)],
             label="Full data set empirical covariance", color='green')
 pl.plot(range_n_outliers[(x_size / 5):(x_size / 2 - 1)],
-         err_cov_emp_full.mean(1)[(x_size / 5):(x_size / 2 - 1)],
-         color='green', ls='--')
+        err_cov_emp_full.mean(1)[(x_size / 5):(x_size / 2 - 1)], color='green',
+        ls='--')
 pl.errorbar(range_n_outliers, err_cov_emp_pure.mean(1),
             yerr=err_cov_emp_pure.std(1),
             label="Pure data set empirical covariance", color='black')

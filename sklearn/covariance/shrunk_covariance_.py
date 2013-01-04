@@ -102,15 +102,16 @@ class ShrunkCovariance(EmpiricalCovariance):
                                      assume_centered=assume_centered)
         self.shrinkage = shrinkage
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """ Fits the shrunk covariance model
         according to the given training data and parameters.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X: array-like, shape = [n_samples, n_features]
           Training data, where n_samples is the number of samples
           and n_features is the number of features.
+        y: not used, present for API consistence purpose.
 
         assume_centered: Boolean
           If True, data are not centered before computation.
@@ -120,8 +121,8 @@ class ShrunkCovariance(EmpiricalCovariance):
 
         Returns
         -------
-        self : object
-            Returns self.
+        self: object
+          Returns self.
 
         """
         # Not calling the parent object to fit, to avoid a potential
@@ -130,8 +131,8 @@ class ShrunkCovariance(EmpiricalCovariance):
             self.location_ = np.zeros(X.shape[1])
         else:
             self.location_ = X.mean(0)
-        covariance = empirical_covariance(X,
-                        assume_centered=self.assume_centered)
+        covariance = empirical_covariance(
+            X, assume_centered=self.assume_centered)
         covariance = shrunk_covariance(covariance, self.shrinkage)
         self._set_covariance(covariance)
 
@@ -180,8 +181,8 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
         return 0.
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
-        warnings.warn("Only one sample available. " \
-                          "You may want to reshape your data array")
+        warnings.warn("Only one sample available. "
+                      "You may want to reshape your data array")
         n_samples = 1
         n_features = X.size
     else:
@@ -217,8 +218,8 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     delta_ += np.sum(np.dot(X.T[block_size * n_splits:],
                             X[:, block_size * n_splits:]) ** 2)
     delta_ /= n_samples ** 2
-    beta_ += np.sum(np.dot(
-            X2.T[block_size * n_splits:], X2[:, block_size * n_splits:]))
+    beta_ += np.sum(np.dot(X2.T[block_size * n_splits:],
+                           X2[:, block_size * n_splits:]))
     # use delta_ to compute beta
     beta = 1. / (n_features * n_samples) * (beta_ / n_samples - delta_)
     # delta is the sum of the squared coefficients of (<X.T,X> - mu*Id) / p
@@ -279,8 +280,8 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
         return np.atleast_2d((X ** 2).mean()), 0.
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
-        warnings.warn("Only one sample available. " \
-                          "You may want to reshape your data array")
+        warnings.warn("Only one sample available. "
+                      "You may want to reshape your data array")
         n_samples = 1
         n_features = X.size
     else:
@@ -362,20 +363,21 @@ class LedoitWolf(EmpiricalCovariance):
                                      assume_centered=assume_centered)
         self.block_size = block_size
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         """ Fits the Ledoit-Wolf shrunk covariance model
         according to the given training data and parameters.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X: array-like, shape = [n_samples, n_features]
           Training data, where n_samples is the number of samples
           and n_features is the number of features.
+        y: not used, present for API consistence purpose.
 
         Returns
         -------
-        self : object
-            Returns self.
+        self: object
+          Returns self.
 
         """
         # Not calling the parent object to fit, to avoid computing the
@@ -385,7 +387,8 @@ class LedoitWolf(EmpiricalCovariance):
         else:
             self.location_ = X.mean(0)
         covariance, shrinkage = ledoit_wolf(X - self.location_,
-                        assume_centered=True, block_size=self.block_size)
+                                            assume_centered=True,
+                                            block_size=self.block_size)
         self.shrinkage_ = shrinkage
         self._set_covariance(covariance)
 
@@ -427,6 +430,11 @@ def oas(X, assume_centered=False):
 
     where mu = trace(cov) / n_features
 
+    The formula we used to implement the OAS
+    does not correspond to the one given in the article. It has been taken
+    from the MATLAB program available from the author's webpage
+    (https://tbayes.eecs.umich.edu/yilun/covestimation).
+
     """
     X = np.asarray(X)
     # for only one feature, the result is the same whatever the shrinkage
@@ -436,8 +444,8 @@ def oas(X, assume_centered=False):
         return np.atleast_2d((X ** 2).mean()), 0.
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
-        warnings.warn("Only one sample available. " \
-                          "You may want to reshape your data array")
+        warnings.warn("Only one sample available. "
+                      "You may want to reshape your data array")
         n_samples = 1
         n_features = X.size
     else:
@@ -509,20 +517,21 @@ class OAS(EmpiricalCovariance):
     Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
 
     """
-    def fit(self, X):
+    def fit(self, X, y=None):
         """ Fits the Oracle Approximating Shrinkage covariance model
         according to the given training data and parameters.
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X: array-like, shape = [n_samples, n_features]
           Training data, where n_samples is the number of samples
           and n_features is the number of features.
+        y: not used, present for API consistence purpose.
 
         Returns
         -------
-        self : object
-            Returns self.
+        self: object
+          Returns self.
 
         """
         # Not calling the parent object to fit, to avoid computing the

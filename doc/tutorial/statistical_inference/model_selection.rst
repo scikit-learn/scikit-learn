@@ -57,7 +57,7 @@ The `sklearn` exposes cross-validation generators to generate list
 of indices for this purpose::
 
     >>> from sklearn import cross_validation
-    >>> k_fold = cross_validation.KFold(n=6, k=3, indices=True)
+    >>> k_fold = cross_validation.KFold(n=6, n_folds=3, indices=True)
     >>> for train_indices, test_indices in k_fold:
     ...      print 'Train: %s | test: %s' % (train_indices, test_indices)
     Train: [2 3 4 5] | test: [0 1]
@@ -66,7 +66,7 @@ of indices for this purpose::
 
 The cross-validation can then be implemented easily::
 
-    >>> kfold = cross_validation.KFold(len(X_digits), k=3)
+    >>> kfold = cross_validation.KFold(len(X_digits), n_folds=3)
     >>> [svc.fit(X_digits[train], y_digits[train]).score(X_digits[test], y_digits[test])
     ...          for train, test in kfold]
     [0.93489148580968284, 0.95659432387312182, 0.93989983305509184]
@@ -97,9 +97,9 @@ of the computer.
 
    *
 
-    - Split it K folds, train on K-1, test on left-out
+    - Split it K folds, train on K-1 and then test on left-out
 
-    - Make sure that all classes are even accross the folds
+    - It preserves the class ratios / label distribution within each fold. 
 
     - Leave one observation out
 
@@ -107,22 +107,22 @@ of the computer.
 
 .. currentmodule:: sklearn.svm
 
-.. image:: ../../auto_examples/exercises/images/plot_cv_digits_1.png
-   :target: ../../auto_examples/exercises/plot_cv_digits.html
-   :align: right
-   :scale: 100
-
 .. topic:: **Exercise**
    :class: green
 
+   .. image:: ../../auto_examples/exercises/images/plot_cv_digits_1.png
+        :target: ../../auto_examples/exercises/plot_cv_digits.html
+        :align: right
+        :scale: 90
+
    On the digits dataset, plot the cross-validation score of a :class:`SVC`
-   estimator with an RBF kernel as a function of parameter `C` (use a
+   estimator with an linear kernel as a function of parameter `C` (use a
    logarithmic grid of points, from `1` to `10`).
 
    .. literalinclude:: ../../auto_examples/exercises/plot_cv_digits.py
        :lines: 13-23
 
-   Solution: :download:`../../auto_examples/exercises/plot_cv_digits.py`
+   **Solution:** :ref:`example_exercises_plot_cv_digits.py`
 
 
 
@@ -155,8 +155,8 @@ estimator during the construction and exposes an estimator API::
     0.94228356336260977
 
 
-By default the :class:`GridSearchCV` uses a 3-fold cross-validation. However, if
-it detects that a classifier is passed, rather than a regressor, it uses
+By default, the :class:`GridSearchCV` uses a 3-fold cross-validation. However, 
+if it detects that a classifier is passed, rather than a regressor, it uses
 a stratified 3-fold.
 
 .. topic:: Nested cross-validation
@@ -167,7 +167,7 @@ a stratified 3-fold.
 	array([ 0.97996661,  0.98163606,  0.98330551])
 
     Two cross-validation loops are performed in parallel: one by the
-    :class:`GridSearchCV` estimator to set `gamma`, the other one by
+    :class:`GridSearchCV` estimator to set `gamma` and the other one by
     `cross_val_score` to measure the prediction performance of the
     estimator. The resulting scores are unbiased estimates of the
     prediction score on new data.
@@ -183,8 +183,8 @@ Cross-validated estimators
 ----------------------------
 
 Cross-validation to set a parameter can be done more efficiently on an
-algorithm-by-algorithm basis. This is why, for certain estimators, the
-sklearn exposes :ref:`cross_validation` estimators, that set their parameter
+algorithm-by-algorithm basis. This is why for certain estimators the
+sklearn exposes :ref:`cross_validation` estimators that set their parameter
 automatically by cross-validation::
 
     >>> from sklearn import linear_model, datasets
@@ -212,8 +212,8 @@ appended to their name.
    **Bonus**: How much can you trust the selection of alpha?
 
    .. literalinclude:: ../../auto_examples/exercises/plot_cv_diabetes.py
-       :lines: 11-23
+       :lines: 11-22
 
-   Solution: :download:`../../auto_examples/exercises/plot_cv_diabetes.py`
+   **Solution:** :ref:`example_exercises_plot_cv_diabetes.py`
 
 

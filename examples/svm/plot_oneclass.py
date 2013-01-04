@@ -55,7 +55,7 @@ pl.legend([a.collections[0], b1, b2, c],
           loc="upper left",
           prop=matplotlib.font_manager.FontProperties(size=11))
 pl.xlabel(
-    "error train: %d/200 ; errors novel regular: %d/20 ; " \
-        "errors novel abnormal: %d/20"
+    "error train: %d/200 ; errors novel regular: %d/20 ; "
+    "errors novel abnormal: %d/20"
     % (n_error_train, n_error_test, n_error_outliers))
 pl.show()

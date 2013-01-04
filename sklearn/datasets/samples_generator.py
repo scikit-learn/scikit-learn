@@ -7,6 +7,7 @@ Generate samples of synthetic data sets.
 # License: BSD 3 clause
 
 from itertools import product
+import numbers
 import numpy as np
 from scipy import linalg
 
@@ -111,13 +112,14 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     # Count features, clusters and samples
     if n_informative + n_redundant + n_repeated > n_features:
         raise ValueError("Number of informative, redundant and repeated "
-            "features must sum to less than the number of total features")
+                         "features must sum to less than the number of total"
+                         " features")
     if 2 ** n_informative < n_classes * n_clusters_per_class:
         raise ValueError("n_classes * n_clusters_per_class must"
-            "be smaller or equal 2 ** n_informative")
+                         "be smaller or equal 2 ** n_informative")
     if weights and len(weights) not in [n_classes, n_classes - 1]:
         raise ValueError("Weights specified but incompatible with number "
-                "of classes.")
+                         "of classes.")
 
     n_useless = n_features - n_informative - n_redundant - n_repeated
     n_clusters = n_classes * n_clusters_per_class
@@ -185,7 +187,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     if n_redundant > 0:
         B = 2 * generator.rand(n_informative, n_redundant) - 1
         X[:, n_informative:n_informative + n_redundant] = \
-                                            np.dot(X[:, :n_informative], B)
+            np.dot(X[:, :n_informative], B)
 
     # Repeat some features
     if n_repeated > 0:
@@ -484,8 +486,8 @@ def make_regression(n_samples=100, n_features=100, n_informative=10,
 
 
 def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
-        factor=.8):
-    """Make a large circle containing a smaller circle in 2di
+                 factor=.8):
+    """Make a large circle containing a smaller circle in 2d.
 
     A simple toy dataset to visualize clustering and classification
     algorithms.
@@ -516,24 +518,18 @@ def make_circles(n_samples=100, shuffle=True, noise=None, random_state=None,
     if factor > 1 or factor < 0:
         raise ValueError("'factor' has to be between 0 and 1.")
 
-    n_samples_out = int(n_samples / float(1 + factor))
-    n_samples_in = n_samples - n_samples_out
-
     generator = check_random_state(random_state)
-
     # so as not to have the first point = last point, we add one and then
     # remove it.
-    n_samples_out, n_samples_in = n_samples_out + 1, n_samples_in + 1
-    outer_circ_x = np.cos(np.linspace(0, 2 * np.pi, n_samples_out)[:-1])
-    outer_circ_y = np.sin(np.linspace(0, 2 * np.pi, n_samples_out)[:-1])
-    inner_circ_x = (np.cos(np.linspace(0, 2 * np.pi, n_samples_in)[:-1])
-                    * factor)
-    inner_circ_y = (np.sin(np.linspace(0, 2 * np.pi, n_samples_in)[:-1])
-                    * factor)
+    linspace = np.linspace(0, 2 * np.pi, n_samples / 2 + 1)[:-1]
+    outer_circ_x = np.cos(linspace)
+    outer_circ_y = np.sin(linspace)
+    inner_circ_x = outer_circ_x * factor
+    inner_circ_y = outer_circ_y * factor
 
-    X = np.vstack((np.append(outer_circ_x, inner_circ_x),\
-           np.append(outer_circ_y, inner_circ_y))).T
-    y = np.hstack([np.zeros(n_samples_out - 1), np.ones(n_samples_in - 1)])
+    X = np.vstack((np.append(outer_circ_x, inner_circ_x),
+                   np.append(outer_circ_y, inner_circ_y))).T
+    y = np.hstack([np.zeros(n_samples / 2), np.ones(n_samples / 2)])
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
 
@@ -579,8 +575,8 @@ def make_moons(n_samples=100, shuffle=True, noise=None, random_state=None):
     inner_circ_x = 1 - np.cos(np.linspace(0, np.pi, n_samples_in))
     inner_circ_y = 1 - np.sin(np.linspace(0, np.pi, n_samples_in)) - .5
 
-    X = np.vstack((np.append(outer_circ_x, inner_circ_x),\
-           np.append(outer_circ_y, inner_circ_y))).T
+    X = np.vstack((np.append(outer_circ_x, inner_circ_x),
+                   np.append(outer_circ_y, inner_circ_y))).T
     y = np.hstack([np.zeros(n_samples_in), np.ones(n_samples_out)])
 
     if shuffle:
@@ -637,14 +633,14 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     >>> from sklearn.datasets.samples_generator import make_blobs
     >>> X, y = make_blobs(n_samples=10, centers=3, n_features=2,
     ...                   random_state=0)
-    >>> X.shape
+    >>> print X.shape
     (10, 2)
     >>> y
     array([0, 0, 1, 0, 2, 2, 2, 1, 1, 0])
     """
     generator = check_random_state(random_state)
 
-    if isinstance(centers, (int, np.integer)):
+    if isinstance(centers, numbers.Integral):
         centers = generator.uniform(center_box[0], center_box[1],
                                     size=(centers, n_features))
     else:
@@ -798,7 +794,7 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
     X[:, 3] += 1
 
     y = (X[:, 0] ** 2
-            + (X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5 \
+         + (X[:, 1] * X[:, 2] - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5 \
         + noise * generator.randn(n_samples)
 
     return X, y
@@ -929,8 +925,8 @@ def make_low_rank_matrix(n_samples=100, n_features=100, effective_rank=10,
     singular_ind = np.arange(n, dtype=np.float64)
 
     # Build the singular profile by assembling signal and noise components
-    low_rank = (1 - tail_strength) * \
-               np.exp(-1.0 * (singular_ind / effective_rank) ** 2)
+    low_rank = ((1 - tail_strength) *
+                np.exp(-1.0 * (singular_ind / effective_rank) ** 2))
     tail = tail_strength * np.exp(-0.1 * singular_ind / effective_rank)
     s = np.identity(n) * (low_rank + tail)
 
@@ -1110,7 +1106,7 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
     aux[aux < alpha] = 0
     aux[aux > alpha] = (smallest_coef
                         + (largest_coef - smallest_coef)
-                          * random_state.rand(np.sum(aux > alpha)))
+                        * random_state.rand(np.sum(aux > alpha)))
     aux = np.tril(aux, k=-1)
 
     # Permute the lines: we don't want to have assymetries in the final

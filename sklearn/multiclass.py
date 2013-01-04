@@ -13,7 +13,15 @@ use these estimators to turn a binary classifier or a regressor into a
 multiclass classifier. It is also possible to use these estimators with
 multiclass estimators in the hope that their accuracy or runtime performance
 improves.
-"""
+
+The one-vs-the-rest meta-classifier also implements a `predic_proba` method, so
+long as such a method is implemented by the base classifier. This method
+returns probabilities of class membership in both the single label and
+multilabel case.  Note that in the multilabel case, probabilities are the
+marginal probability that a given sample falls in the given class. As such, in
+the multilabel case the sum of these probabilities over all possible labels
+for a given sample *will not* sum to unity, as they do in the single label
+case.  """
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 #
@@ -39,7 +47,7 @@ def _fit_binary(estimator, X, y, classes=None):
             else:
                 c = y[0]
             warnings.warn("Label %s is present in all training examples." %
-                    str(classes[c]))
+                          str(classes[c]))
         estimator = _ConstantPredictor().fit(X, unique_y)
     else:
         estimator = clone(estimator)
@@ -49,17 +57,18 @@ def _fit_binary(estimator, X, y, classes=None):
 
 def _predict_binary(estimator, X):
     """Make predictions using a single binary estimator."""
-    if hasattr(estimator, "decision_function"):
-        return np.ravel(estimator.decision_function(X))
-    else:
+    try:
+        score = np.ravel(estimator.decision_function(X))
+    except (AttributeError, NotImplementedError):
         # probabilities of the positive class
-        return estimator.predict_proba(X)[:, 1]
+        score = estimator.predict_proba(X)[:, 1]
+    return score
 
 
 def _check_estimator(estimator):
     """Make sure that an estimator implements the necessary methods."""
-    if not hasattr(estimator, "decision_function") and \
-       not hasattr(estimator, "predict_proba"):
+    if (not hasattr(estimator, "decision_function") and
+            not hasattr(estimator, "predict_proba")):
         raise ValueError("The base estimator should implement "
                          "decision_function or predict_proba!")
 
@@ -71,7 +80,7 @@ def fit_ovr(estimator, X, y):
     lb = LabelBinarizer()
     Y = lb.fit_transform(y)
     estimators = [_fit_binary(estimator, X, Y[:, i],
-                             classes=["not %s" % str(i), i])
+                              classes=["not %s" % str(i), i])
                   for i in range(Y.shape[1])]
     return estimators, lb
 
@@ -82,6 +91,22 @@ def predict_ovr(estimators, label_binarizer, X):
     e = estimators[0]
     thresh = 0 if hasattr(e, "decision_function") and is_classifier(e) else .5
     return label_binarizer.inverse_transform(Y.T, threshold=thresh)
+
+
+def predict_proba_ovr(estimators, X, is_multilabel):
+    """Estimate probabilities using the one-vs-the-rest strategy.
+
+    If multilabel is true, returned matrix will not sum to one.  Estimators
+    must have a predict_proba method."""
+
+    # Y[i,j] gives the probability that sample i has the label j.
+    # In the multi-label case, these are not disjoint.
+    Y = np.array([est.predict_proba(X)[:, 1] for est in estimators]).T
+
+    if not is_multilabel:
+        # Then, probabilities should be normalized to 1.
+        Y /= np.sum(Y, axis=1)[:, np.newaxis]
+    return Y
 
 
 class _ConstantPredictor(BaseEstimator):
@@ -181,6 +206,32 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         return predict_ovr(self.estimators_, self.label_binarizer_, X)
 
+    def predict_proba(self, X):
+        """Probability estimates.
+
+        The returned estimates for all classes are ordered by label of classes.
+
+        Note that in the multilabel case, each sample can have any number of
+        labels. This returns the marginal probability that the given sample has
+        the label in question. For example, it is entirely consistent that two
+        labels both have a 90% probability of applying to a given sample.
+
+        In the single label multiclass case, the rows of the returned matrix
+        sum to 1.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_classes]
+            Returns the probability of the sample for each class in the model,
+            where classes are ordered as they are in `self.classes_`.
+        """
+        return predict_proba_ovr(self.estimators_, X,
+                                 is_multilabel=self.multilabel_)
+
     @property
     def multilabel_(self):
         """Whether this is a multilabel classifier"""
@@ -229,7 +280,7 @@ def fit_ovo(estimator, X, y):
     classes = np.unique(y)
     n_classes = classes.shape[0]
     estimators = [_fit_ovo_binary(estimator, X, y, classes[i], classes[j])
-                    for i in range(n_classes) for j in range(i + 1, n_classes)]
+                  for i in range(n_classes) for j in range(i + 1, n_classes)]
 
     return estimators, classes
 
@@ -367,7 +418,7 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None):
     cls_idx = dict((c, i) for i, c in enumerate(classes))
 
     Y = np.array([code_book[cls_idx[y[i]]] for i in xrange(X.shape[0])],
-            dtype=np.int)
+                 dtype=np.int)
 
     estimators = [_fit_binary(estimator, X, Y[:, i])
                   for i in range(Y.shape[1])]

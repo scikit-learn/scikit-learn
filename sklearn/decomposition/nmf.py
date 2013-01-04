@@ -10,14 +10,23 @@
 
 from __future__ import division
 
-from ..base import BaseEstimator, TransformerMixin
-from ..utils import atleast2d_or_csr, check_random_state
-from ..utils.extmath import randomized_svd, safe_sparse_dot
+import warnings
+import numbers
 
 import numpy as np
 from scipy.optimize import nnls
 import scipy.sparse as sp
-import warnings
+
+from ..base import BaseEstimator, TransformerMixin
+from ..utils import atleast2d_or_csr, check_random_state
+from ..utils.extmath import randomized_svd, safe_sparse_dot
+
+
+def safe_vstack(Xs):
+    if any(sp.issparse(X) for X in Xs):
+        return sp.vstack(Xs)
+    else:
+        return np.vstack(Xs)
 
 
 def _pos(x):
@@ -100,7 +109,7 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
     initialization: A head start for nonnegative
     matrix factorization - Pattern Recognition, 2008
 
-    http://www.cs.rpi.edu/~boutsc/files/nndsvd.pdf
+    http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf
     """
     check_non_negative(X, "NMF initialization")
     if variant not in (None, 'a', 'ar'):
@@ -166,28 +175,27 @@ def _nls_subproblem(V, W, H_init, tol, max_iter):
 
     Parameters
     ----------
-    V, W:
-        Constant matrices
+    V, W : array-like
+        Constant matrices.
 
-    H_init:
-        Initial guess for the solution
+    H_init : array-like
+        Initial guess for the solution.
 
-    tol:
+    tol : float
         Tolerance of the stopping condition.
 
-    max_iter:
-        Maximum number of iterations before
-        timing out.
+    max_iter : int
+        Maximum number of iterations before timing out.
 
     Returns
     -------
-    H:
-        Solution to the non-negative least squares problem
+    H : array-like
+        Solution to the non-negative least squares problem.
 
-    grad:
+    grad : array-like
         The gradient.
 
-    n_iter:
+    n_iter : int
         The number of iterations done by the algorithm.
 
     """
@@ -347,13 +355,13 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     C. Boutsidis, E. Gallopoulos: SVD based
     initialization: A head start for nonnegative
     matrix factorization - Pattern Recognition, 2008
-    http://www.cs.rpi.edu/~boutsc/files/nndsvd.pdf
+    http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf
 
     """
 
     def __init__(self, n_components=None, init=None, sparseness=None, beta=1,
-            eta=0.1, tol=1e-4, max_iter=200, nls_max_iter=2000,
-            random_state=None):
+                 eta=0.1, tol=1e-4, max_iter=200, nls_max_iter=2000,
+                 random_state=None):
         self.n_components = n_components
         self.init = init
         self.tol = tol
@@ -377,12 +385,13 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             else:
                 init = 'random'
 
-        if isinstance(init, (int, np.integer, np.random.RandomState)):
+        if isinstance(init, (numbers.Integral, np.random.RandomState)):
             random_state = check_random_state(init)
             init = "random"
             warnings.warn("Passing a random seed or generator as init "
-                "is deprecated and will be removed in 0.15. Use "
-                "init='random' and random_state instead.", DeprecationWarning)
+                          "is deprecated and will be removed in 0.15. Use "
+                          "init='random' and random_state instead.",
+                          DeprecationWarning)
         else:
             random_state = self.random_state
 
@@ -410,42 +419,44 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     def _update_W(self, X, H, W, tolW):
         n_samples, n_features = X.shape
 
-        if self.sparseness == None:
+        if self.sparseness is None:
             W, gradW, iterW = _nls_subproblem(X.T, H.T, W.T, tolW,
                                               self.nls_max_iter)
         elif self.sparseness == 'data':
             W, gradW, iterW = _nls_subproblem(
-                    np.r_[X.T, np.zeros((1, n_samples))],
-                    np.r_[H.T, np.sqrt(self.beta) *
-                          np.ones((1, self.n_components))],
-                    W.T, tolW, self.nls_max_iter)
+                safe_vstack([X.T, np.zeros((1, n_samples))]),
+                safe_vstack([H.T, np.sqrt(self.beta) * np.ones((1,
+                             self.n_components))]),
+                W.T, tolW, self.nls_max_iter)
         elif self.sparseness == 'components':
             W, gradW, iterW = _nls_subproblem(
-                    np.r_[X.T, np.zeros((self.n_components, n_samples))],
-                    np.r_[H.T, np.sqrt(self.eta) *
-                          np.eye(self.n_components)],
-                    W.T, tolW, self.nls_max_iter)
+                safe_vstack([X.T,
+                             np.zeros((self.n_components, n_samples))]),
+                safe_vstack([H.T,
+                             np.sqrt(self.eta) * np.eye(self.n_components)]),
+                W.T, tolW, self.nls_max_iter)
 
         return W, gradW, iterW
 
     def _update_H(self, X, H, W, tolH):
         n_samples, n_features = X.shape
 
-        if self.sparseness == None:
+        if self.sparseness is None:
             H, gradH, iterH = _nls_subproblem(X, W, H, tolH,
                                               self.nls_max_iter)
         elif self.sparseness == 'data':
             H, gradH, iterH = _nls_subproblem(
-                    np.r_[X, np.zeros((self.n_components, n_features))],
-                    np.r_[W, np.sqrt(self.eta) *
-                          np.eye(self.n_components)],
-                    H, tolH, self.nls_max_iter)
+                safe_vstack([X, np.zeros((self.n_components, n_features))]),
+                safe_vstack([W,
+                             np.sqrt(self.eta) * np.eye(self.n_components)]),
+                H, tolH, self.nls_max_iter)
         elif self.sparseness == 'components':
             H, gradH, iterH = _nls_subproblem(
-                    np.r_[X, np.zeros((1, n_features))],
-                    np.r_[W, np.sqrt(self.beta) *
-                          np.ones((1, self.n_components))],
-                    H, tolH, self.nls_max_iter)
+                safe_vstack([X, np.zeros((1, n_features))]),
+                safe_vstack([W,
+                             np.sqrt(self.beta)
+                             * np.ones((1, self.n_components))]),
+                H, tolH, self.nls_max_iter)
 
         return H, gradH, iterH
 

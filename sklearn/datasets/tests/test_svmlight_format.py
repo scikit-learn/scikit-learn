@@ -6,15 +6,16 @@ import os
 import shutil
 import tempfile
 
-from numpy.testing import assert_equal
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-from nose.tools import assert_raises, raises
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import raises
+from sklearn.utils.testing import assert_in
 
 import sklearn
 from sklearn.datasets import (load_svmlight_file, load_svmlight_files,
                               dump_svmlight_file)
-from sklearn.utils.testing import assert_in
 
 currdir = os.path.dirname(os.path.abspath(__file__))
 datafile = os.path.join(currdir, "data", "svmlight_classification.txt")
@@ -61,8 +62,8 @@ def test_load_svmlight_file_fd():
     fd = os.open(datafile, os.O_RDONLY)
     try:
         X2, y2 = load_svmlight_file(fd)
-        assert_equal(X1.data, X2.data)
-        assert_equal(y1, y2)
+        assert_array_equal(X1.data, X2.data)
+        assert_array_equal(y1, y2)
     finally:
         os.close(fd)
 

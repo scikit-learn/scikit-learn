@@ -39,10 +39,8 @@ X_test = np.c_[0, 2].T
 
 np.random.seed(0)
 
-classifiers = dict(
-    ols=linear_model.LinearRegression(),
-    ridge=linear_model.Ridge(alpha=.1)
-    )
+classifiers = dict(ols=linear_model.LinearRegression(),
+                   ridge=linear_model.Ridge(alpha=.1))
 
 fignum = 1
 for name, clf in classifiers.iteritems():

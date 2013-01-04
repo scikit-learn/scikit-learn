@@ -36,6 +36,7 @@ from sklearn.linear_model import RidgeClassifier
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import Perceptron
+from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.naive_bayes import BernoulliNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import NearestCentroid
@@ -93,10 +94,10 @@ print "Loading 20 newsgroups dataset for categories:"
 print categories if categories else "all"
 
 data_train = fetch_20newsgroups(subset='train', categories=categories,
-                               shuffle=True, random_state=42)
+                                shuffle=True, random_state=42)
 
 data_test = fetch_20newsgroups(subset='test', categories=categories,
-                              shuffle=True, random_state=42)
+                               shuffle=True, random_state=42)
 print 'data loaded'
 
 categories = data_train.target_names    # for case categories == None
@@ -191,9 +192,11 @@ def benchmark(clf):
 
 
 results = []
-for clf, name in ((RidgeClassifier(tol=1e-2, solver="lsqr"), "Ridge Classifier"),
-                  (Perceptron(n_iter=50), "Perceptron"),
-                  (KNeighborsClassifier(n_neighbors=10), "kNN")):
+for clf, name in (
+        (RidgeClassifier(tol=1e-2, solver="lsqr"), "Ridge Classifier"),
+        (Perceptron(n_iter=50), "Perceptron"),
+        (PassiveAggressiveClassifier(n_iter=50), "Passive-Aggressive"),
+        (KNeighborsClassifier(n_neighbors=10), "kNN")):
     print 80 * '='
     print name
     results.append(benchmark(clf))
@@ -207,13 +210,13 @@ for penalty in ["l2", "l1"]:
 
     # Train SGD model
     results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
-                                          penalty=penalty)))
+                                           penalty=penalty)))
 
 # Train SGD with Elastic Net penalty
 print 80 * '='
 print "Elastic-Net penalty"
 results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
-                                      penalty="elasticnet")))
+                                       penalty="elasticnet")))
 
 # Train NearestCentroid without threshold
 print 80 * '='
@@ -264,7 +267,7 @@ pl.yticks(())
 pl.legend(loc='best')
 pl.subplots_adjust(left=.25)
 
-for i, c in  zip(indices, clf_names):
+for i, c in zip(indices, clf_names):
     pl.text(-.3, i, c)
 
 pl.show()

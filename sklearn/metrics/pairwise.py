@@ -22,7 +22,7 @@ if objects ``a`` and ``b`` are considered "more similar" to objects
 
 There are a number of ways to convert between a distance metric and a
 similarity measure, such as a kernel. Let D be the distance, and S be the
-kernel::
+kernel:
 
     1. ``S = np.exp(-D * gamma)``, where one heuristic for choosing
        ``gamma`` is ``1 / num_features``
@@ -32,6 +32,7 @@ kernel::
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Robert Layton <robertlayton@gmail.com>
+#          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD Style.
 
 import numpy as np
@@ -43,9 +44,12 @@ from ..utils import safe_asarray
 from ..utils import atleast2d_or_csr
 from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
+from ..utils.validation import array2d
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.joblib.parallel import cpu_count
+
+from .pairwise_fast import _chi2_kernel_fast
 
 
 # Utility Functions
@@ -167,7 +171,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
         YY = atleast2d_or_csr(Y_norm_squared)
         if YY.shape != (1, Y.shape[0]):
             raise ValueError(
-                        "Incompatible dimensions for Y and Y_norm_squared")
+                "Incompatible dimensions for Y and Y_norm_squared")
 
     # TODO: a faster Cython implementation would do the clipping of negative
     # values in a single pass over the output matrix.
@@ -233,15 +237,11 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
            [ 1.,  1.]]...)
     """
     X, Y = check_pairwise_arrays(X, Y)
-    n_samples_X, n_features_X = X.shape
-    n_samples_Y, n_features_Y = Y.shape
-    if n_features_X != n_features_Y:
-        raise Exception("X and Y should have the same number of features!")
     D = np.abs(X[:, np.newaxis, :] - Y[np.newaxis, :, :])
     if sum_over_features:
         D = np.sum(D, axis=2)
     else:
-        D = D.reshape((n_samples_X * n_samples_Y, n_features_X))
+        D = D.reshape((-1, X.shape[1]))
     return D
 
 
@@ -264,7 +264,7 @@ def linear_kernel(X, Y=None):
     return safe_sparse_dot(X, Y.T, dense_output=True)
 
 
-def polynomial_kernel(X, Y=None, degree=3, gamma=0, coef0=1):
+def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     """
     Compute the polynomial kernel between X and Y::
 
@@ -283,7 +283,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=0, coef0=1):
     Gram matrix : array of shape (n_samples_1, n_samples_2)
     """
     X, Y = check_pairwise_arrays(X, Y)
-    if gamma == 0:
+    if gamma is None:
         gamma = 1.0 / X.shape[1]
 
     K = linear_kernel(X, Y)
@@ -293,7 +293,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=0, coef0=1):
     return K
 
 
-def sigmoid_kernel(X, Y=None, gamma=0, coef0=1):
+def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     """
     Compute the sigmoid kernel between X and Y::
 
@@ -312,7 +312,7 @@ def sigmoid_kernel(X, Y=None, gamma=0, coef0=1):
     Gram matrix: array of shape (n_samples_1, n_samples_2)
     """
     X, Y = check_pairwise_arrays(X, Y)
-    if gamma == 0:
+    if gamma is None:
         gamma = 1.0 / X.shape[1]
 
     K = linear_kernel(X, Y)
@@ -322,32 +322,157 @@ def sigmoid_kernel(X, Y=None, gamma=0, coef0=1):
     return K
 
 
-def rbf_kernel(X, Y=None, gamma=0):
+def rbf_kernel(X, Y=None, gamma=None):
     """
     Compute the rbf (gaussian) kernel between X and Y::
 
-        K(X, Y) = exp(-gamma ||X-Y||^2)
+        K(x, y) = exp(-gamma ||x-y||^2)
+
+    for each pair of rows x in X and y in Y.
 
     Parameters
     ----------
-    X : array of shape (n_samples_1, n_features)
+    X : array of shape (n_samples_X, n_features)
 
-    Y : array of shape (n_samples_2, n_features)
+    Y : array of shape (n_samples_Y, n_features)
 
     gamma : float
 
     Returns
     -------
-    Gram matrix : array of shape (n_samples_1, n_samples_2)
+    kernel_matrix : array of shape (n_samples_X, n_samples_Y)
     """
     X, Y = check_pairwise_arrays(X, Y)
-    if gamma == 0:
+    if gamma is None:
         gamma = 1.0 / X.shape[1]
 
     K = euclidean_distances(X, Y, squared=True)
     K *= -gamma
     np.exp(K, K)    # exponentiate K in-place
     return K
+
+
+def additive_chi2_kernel(X, Y=None):
+    """Computes the additive chi-squared kernel between observations in X and Y
+
+    The chi-squared kernel is computed between each pair of rows in X and Y.  X
+    and Y have to be non-negative. This kernel is most commonly applied to
+    histograms.
+
+    The chi-squared kernel is given by::
+
+        k(x, y) = -\sum_i (x[i] - y[i]) ** 2 / (x[i] + y[i])
+
+    It can be interpreted as a weighted difference per entry.
+
+    Notes
+    -----
+    As the negative of a distance, this kernel is only conditionally positive
+    definite.
+
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples_X, n_features)
+
+    Y : array of shape (n_samples_Y, n_features)
+
+    Returns
+    -------
+    kernel_matrix : array of shape (n_samples_X, n_samples_Y)
+
+    References
+    ----------
+    * Zhang, J. and Marszalek, M. and Lazebnik, S. and Schmid, C.
+      Local features and kernels for classification of texture and object
+      categories: A comprehensive study
+      International Journal of Computer Vision 2007
+      http://eprints.pascal-network.org/archive/00002309/01/Zhang06-IJCV.pdf
+
+
+    See also
+    --------
+    chi2_kernel : The exponentiated version of the kernel, which is usually
+        preferrable.
+
+    sklearn.kernel_approximation.AdditiveChi2Sampler : A Fourier approximation
+        to this kernel.
+    """
+    ### once we support sparse matrices, we can use check_pairwise
+
+    if Y is None:
+        # optimize this case!
+        X = array2d(X)
+        if X.dtype != np.float32:
+            X.astype(np.float)
+        Y = X
+        if (X < 0).any():
+            raise ValueError("X contains negative values.")
+    else:
+        X = array2d(X)
+        Y = array2d(Y)
+
+        if X.shape[1] != Y.shape[1]:
+            raise ValueError("Incompatible dimension for X and Y matrices: "
+                             "X.shape[1] == %d while Y.shape[1] == %d" % (
+                                 X.shape[1], Y.shape[1]))
+
+        if X.dtype != np.float32 or Y.dtype != np.float32:
+            # if not both are 32bit float, convert to 64bit float
+            X = X.astype(np.float)
+            Y = Y.astype(np.float)
+
+        if (X < 0).any():
+            raise ValueError("X contains negative values.")
+        if (Y < 0).any():
+            raise ValueError("Y contains negative values.")
+
+    result = np.zeros((X.shape[0], Y.shape[0]), dtype=X.dtype)
+    _chi2_kernel_fast(X, Y, result)
+    return result
+
+
+def chi2_kernel(X, Y=None, gamma=1.):
+    """Computes the exponential chi-squared kernel X and Y.
+
+    The chi-squared kernel is computed between each pair of rows in X and Y.  X
+    and Y have to be non-negative. This kernel is most commonly applied to
+    histograms.
+
+    The chi-squared kernel is given by::
+
+        k(x, y) = exp(-gamma * \sum_i (x[i] - y[i]) ** 2 / (x[i] + y[i]))
+
+    It can be interpreted as a weighted difference per entry.
+
+    Parameters
+    ----------
+    X : array-like of shape (n_samples_X, n_features)
+
+    Y : array of shape (n_samples_Y, n_features)
+
+    Returns
+    -------
+    kernel_matrix : array of shape (n_samples_X, n_samples_Y)
+
+    References
+    ----------
+    * Zhang, J. and Marszalek, M. and Lazebnik, S. and Schmid, C.
+      Local features and kernels for classification of texture and object
+      categories: A comprehensive study
+      International Journal of Computer Vision 2007
+      http://eprints.pascal-network.org/archive/00002309/01/Zhang06-IJCV.pdf
+
+    See also
+    --------
+    additive_chi2_kernel : The additive version of this kernel
+
+    sklearn.kernel_approximation.AdditiveChi2Sampler : A Fourier approximation
+        to the additive version of this kernel.
+    """
+    K = additive_chi2_kernel(X, Y)
+    K *= gamma
+    return np.exp(K, K)
 
 
 # Helper functions - distance
@@ -358,8 +483,7 @@ pairwise_distance_functions = {
     'l2': euclidean_distances,
     'l1': manhattan_distances,
     'manhattan': manhattan_distances,
-    'cityblock': manhattan_distances,
-    }
+    'cityblock': manhattan_distances}
 
 
 def distance_metrics():
@@ -395,8 +519,8 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
         Y = X
 
     ret = Parallel(n_jobs=n_jobs, verbose=0)(
-            delayed(func)(X, Y[s], **kwds)
-            for s in gen_even_slices(Y.shape[0], n_jobs))
+        delayed(func)(X, Y[s], **kwds)
+        for s in gen_even_slices(Y.shape[0], n_jobs))
 
     return np.hstack(ret)
 
@@ -523,12 +647,13 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 pairwise_kernel_functions = {
     # If updating this dictionary, update the doc in both distance_metrics()
     # and also in pairwise_distances()!
-    'rbf': rbf_kernel,
-    'sigmoid': sigmoid_kernel,
+    'additive_chi2': additive_chi2_kernel,
+    'chi2': chi2_kernel,
+    'linear': linear_kernel,
     'polynomial': polynomial_kernel,
     'poly': polynomial_kernel,
-    'linear': linear_kernel
-    }
+    'rbf': rbf_kernel,
+    'sigmoid': sigmoid_kernel, }
 
 
 def kernel_metrics():
@@ -539,25 +664,29 @@ def kernel_metrics():
     each of the valid strings.
 
     The valid distance metrics, and the function they map to, are:
-      ============   ==================================
-      metric         Function
-      ============   ==================================
-      'linear'       sklearn.pairwise.linear_kernel
-      'poly'         sklearn.pairwise.polynomial_kernel
-      'polynomial'   sklearn.pairwise.polynomial_kernel
-      'rbf'          sklearn.pairwise.rbf_kernel
-      'sigmoid'      sklearn.pairwise.sigmoid_kernel
-      ============   ==================================
+      ==============   ========================================
+      metric           Function
+      ==============   ========================================
+      'additive_chi2'  sklearn.pairwise.additive_chi2_kernel
+      'chi2'           sklearn.pairwise.chi2_kernel
+      'linear'         sklearn.pairwise.linear_kernel
+      'poly'           sklearn.pairwise.polynomial_kernel
+      'polynomial'     sklearn.pairwise.polynomial_kernel
+      'rbf'            sklearn.pairwise.rbf_kernel
+      'sigmoid'        sklearn.pairwise.sigmoid_kernel
+      ==============   ========================================
     """
     return pairwise_kernel_functions
 
 
 kernel_params = {
+    "chi2": (),
+    "exp_chi2": set(("gamma", )),
+    "linear": (),
     "rbf": set(("gamma",)),
     "sigmoid": set(("gamma", "coef0")),
     "polynomial": set(("gamma", "degree", "coef0")),
     "poly": set(("gamma", "degree", "coef0")),
-    "linear": ()
 }
 
 
@@ -631,8 +760,9 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         return X
     elif metric in pairwise_kernel_functions:
         if filter_params:
-            kwds = dict((k, kwds[k]) for k in kwds \
-                                        if k in kernel_params[metric])
+            kwds = dict((k, kwds[k])
+                        for k in kwds
+                        if k in kernel_params[metric])
         func = pairwise_kernel_functions[metric]
         if n_jobs == 1:
             return func(X, Y, **kwds)

@@ -4,9 +4,12 @@ Test the pipeline module.
 import numpy as np
 from scipy import sparse
 
-from nose.tools import assert_raises, assert_equal, assert_false, assert_true
-from numpy.testing import assert_array_equal, \
-        assert_array_almost_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 
 from sklearn.base import BaseEstimator, clone
 from sklearn.pipeline import Pipeline, FeatureUnion
@@ -61,8 +64,7 @@ def test_pipeline_init():
     assert_raises(TypeError, Pipeline)
     # Check that we can't instantiate pipelines with objects without fit
     # method
-    pipe = assert_raises(TypeError, Pipeline,
-                        [('svc', IncorrectT)])
+    pipe = assert_raises(TypeError, Pipeline, [('svc', IncorrectT)])
     # Smoke test with only an estimator
     clf = T()
     pipe = Pipeline([('svc', clf)])
@@ -180,13 +182,13 @@ def test_pipeline_methods_preprocessing_svm():
         pipe.score(X, y)
 
 
-def test_feature_stacker():
-    # basic sanity check for feature stacker
+def test_feature_union():
+    # basic sanity check for feature union
     iris = load_iris()
     X = iris.data
     X -= X.mean(axis=0)
     y = iris.target
-    pca = RandomizedPCA(n_components=2)
+    pca = RandomizedPCA(n_components=2, random_state=0)
     select = SelectKBest(k=1)
     fs = FeatureUnion([("pca", pca), ("select", select)])
     fs.fit(X, y)
@@ -196,9 +198,11 @@ def test_feature_stacker():
     # check if it does the expected thing
     assert_array_almost_equal(X_transformed[:, :-1], pca.fit_transform(X))
     assert_array_equal(X_transformed[:, -1],
-            select.fit_transform(X, y).ravel())
+                       select.fit_transform(X, y).ravel())
 
     # test if it also works for sparse input
+    # We use a different pca object to control the random_state stream
+    fs = FeatureUnion([("pca", pca), ("select", select)])
     X_sp = sparse.csr_matrix(X)
     X_sp_transformed = fs.fit_transform(X_sp, y)
     assert_array_almost_equal(X_transformed, X_sp_transformed.toarray())
@@ -206,6 +210,11 @@ def test_feature_stacker():
     # test setting parameters
     fs.set_params(select__k=2)
     assert_equal(fs.fit_transform(X, y).shape, (X.shape[0], 4))
+
+    # test it works with transformers missing fit_transform
+    fs = FeatureUnion([("mock", TransfT()), ("pca", pca), ("select", select)])
+    X_transformed = fs.fit_transform(X, y)
+    assert_equal(X_transformed.shape, (X.shape[0], 8))
 
 
 def test_pipeline_transform():
@@ -228,24 +237,54 @@ def test_pipeline_transform():
     assert_array_almost_equal(X_back, X_back2)
 
 
-def test_feature_stacker_weights():
-    # test feature stacker with transformer weights
+def test_pipeline_fit_transform():
+    # Test whether pipeline works with a transformer missing fit_transform
     iris = load_iris()
     X = iris.data
     y = iris.target
-    pca = RandomizedPCA(n_components=2)
+    transft = TransfT()
+    pipeline = Pipeline([('mock', transft)])
+
+    # test fit_transform:
+    X_trans = pipeline.fit_transform(X, y)
+    X_trans2 = transft.fit(X, y).transform(X)
+    assert_array_almost_equal(X_trans, X_trans2)
+
+
+def test_feature_union_weights():
+    # test feature union with transformer weights
+    iris = load_iris()
+    X = iris.data
+    y = iris.target
+    pca = RandomizedPCA(n_components=2, random_state=0)
     select = SelectKBest(k=1)
+    # test using fit followed by transform
     fs = FeatureUnion([("pca", pca), ("select", select)],
-            transformer_weights={"pca": 10})
+                      transformer_weights={"pca": 10})
     fs.fit(X, y)
     X_transformed = fs.transform(X)
+    # test using fit_transform
+    fs = FeatureUnion([("pca", pca), ("select", select)],
+                      transformer_weights={"pca": 10})
+    X_fit_transformed = fs.fit_transform(X, y)
+    # test it works with transformers missing fit_transform
+    fs = FeatureUnion([("mock", TransfT()), ("pca", pca), ("select", select)],
+                      transformer_weights={"mock": 10})
+    X_fit_transformed_wo_method = fs.fit_transform(X, y)
     # check against expected result
+
+    # We use a different pca object to control the random_state stream
     assert_array_almost_equal(X_transformed[:, :-1], 10 * pca.fit_transform(X))
     assert_array_equal(X_transformed[:, -1],
-            select.fit_transform(X, y).ravel())
+                       select.fit_transform(X, y).ravel())
+    assert_array_almost_equal(X_fit_transformed[:, :-1],
+                              10 * pca.fit_transform(X))
+    assert_array_equal(X_fit_transformed[:, -1],
+                       select.fit_transform(X, y).ravel())
+    assert_equal(X_fit_transformed_wo_method.shape, (X.shape[0], 7))
 
 
-def test_feature_stacker_feature_names():
+def test_feature_union_feature_names():
     JUNK_FOOD_DOCS = (
         "the pizza pizza beer copyright",
         "the pizza burger beer copyright",

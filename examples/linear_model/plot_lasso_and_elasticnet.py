@@ -58,6 +58,6 @@ pl.plot(enet.coef_, label='Elastic net coefficients')
 pl.plot(lasso.coef_, label='Lasso coefficients')
 pl.plot(coef, '--', label='original coefficients')
 pl.legend(loc='best')
-pl.title("Lasso R^2: %f, Elastic Net R^2: %f" % (r2_score_lasso,
-    r2_score_enet))
+pl.title("Lasso R^2: %f, Elastic Net R^2: %f"
+         % (r2_score_lasso, r2_score_enet))
 pl.show()

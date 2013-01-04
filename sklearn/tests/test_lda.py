@@ -1,6 +1,9 @@
 import numpy as np
-from numpy.testing import assert_array_equal, assert_array_almost_equal
-from nose.tools import assert_equal, assert_true
+
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_true
 
 from .. import lda
 

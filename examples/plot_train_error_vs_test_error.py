@@ -59,8 +59,8 @@ import pylab as pl
 pl.subplot(2, 1, 1)
 pl.semilogx(alphas, train_errors, label='Train')
 pl.semilogx(alphas, test_errors, label='Test')
-pl.vlines(alpha_optim, pl.ylim()[0], np.max(test_errors),
-                        color='k', linewidth=3, label='Optimum on test')
+pl.vlines(alpha_optim, pl.ylim()[0], np.max(test_errors), color='k',
+          linewidth=3, label='Optimum on test')
 pl.legend(loc='lower left')
 pl.ylim([0, 1.2])
 pl.xlabel('Regularization parameter')

@@ -63,9 +63,10 @@ for the training samples::
     >>> clf = SGDClassifier(loss="hinge", penalty="l2")
     >>> clf.fit(X, y)
     SGDClassifier(alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
-           fit_intercept=True, learning_rate='optimal', loss='hinge', n_iter=5,
-           n_jobs=1, penalty='l2', power_t=0.5, rho=0.85, seed=0,
-           shuffle=False, verbose=0, warm_start=False)
+           fit_intercept=True, l1_ratio=0.15, learning_rate='optimal',
+           loss='hinge', n_iter=5, n_jobs=1, penalty='l2', power_t=0.5,
+           random_state=None, rho=None, shuffle=False, verbose=0,
+           warm_start=False)
 
 
 After being fitted, the model can then be used to predict new values::
@@ -338,7 +339,7 @@ is given by
 
     \eta^{(t)} = \frac {1}{\alpha  (t_0 + t)}
 
-where :math:`t` is the time step (there are a total of `n_samples * epochs`
+where :math:`t` is the time step (there are a total of `n_samples * n_iter`
 time steps), :math:`t_0` is determined based on a heuristic proposed by Léon Bottou
 such that the expected initial updates are comparable with the expected
 size of the weights (this assuming that the norm of the training samples is
@@ -359,7 +360,7 @@ For a constant learning rate use ``learning_rate='constant'`` and use ``eta0``
 to specify the learning rate.
 
 The model parameters can be accessed through the members ``coef_`` and
-``intercept\_``:
+``intercept_``:
 
      - Member ``coef_`` holds the weights :math:`w`
 

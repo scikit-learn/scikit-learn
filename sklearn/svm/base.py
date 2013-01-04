@@ -7,31 +7,13 @@ from . import libsvm, liblinear
 from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
-from ..utils import atleast2d_or_csr, array2d
+from ..utils import atleast2d_or_csr, array2d, check_random_state
+from ..utils import ConvergenceWarning, compute_class_weight
+from ..utils.fixes import unique
 from ..utils.extmath import safe_sparse_dot
 
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
-
-
-def _get_class_weight(class_weight, y):
-    """Estimate class weights for unbalanced datasets."""
-    if class_weight == 'auto':
-        uy = np.unique(y)
-        weight_label = np.asarray(uy, dtype=np.int32, order='C')
-        weight = np.array([1.0 / np.sum(y == i) for i in uy],
-                          dtype=np.float64, order='C')
-        weight *= uy.shape[0] / np.sum(weight)
-    else:
-        if class_weight is None:
-            keys = values = []
-        else:
-            keys = class_weight.keys()
-            values = class_weight.values()
-        weight = np.asarray(values, dtype=np.float64, order='C')
-        weight_label = np.asarray(keys, dtype=np.int32, order='C')
-
-    return weight, weight_label
 
 
 def _one_vs_one_coef(dual_coef, n_support, support_vectors):
@@ -63,7 +45,7 @@ def _one_vs_one_coef(dual_coef, n_support, support_vectors):
             # build weight for class1 vs class2
 
             coef.append(safe_sparse_dot(alpha1, sv1)
-                    + safe_sparse_dot(alpha2, sv2))
+                        + safe_sparse_dot(alpha2, sv2))
     return coef
 
 
@@ -71,7 +53,10 @@ class BaseLibSVM(BaseEstimator):
     """Base class for estimators that use libsvm as backing library
 
     This implements support vector machine classification and regression.
+
+    Parameter documentation is in the derived `SVC` class.
     """
+    # see ./classes.py for SVC class.
 
     __metaclass__ = ABCMeta
     _sparse_kernels = ["linear", "poly", "rbf", "sigmoid", "precomputed"]
@@ -79,17 +64,17 @@ class BaseLibSVM(BaseEstimator):
     @abstractmethod
     def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
-                 sparse, class_weight, verbose):
+                 sparse, class_weight, verbose, max_iter):
 
-        if not impl in LIBSVM_IMPL:
+        if not impl in LIBSVM_IMPL:  # pragma: no cover
             raise ValueError("impl should be one of %s, %s was given" % (
                 LIBSVM_IMPL, impl))
 
-        if C is None:
+        if C is None:  # pragma: no cover
             warnings.warn("Using 'None' for C of BaseLibSVM is deprecated "
-                    "since version 0.12, and backward compatibility "
-                    "won't be maintained from version 0.14 onward. "
-                    "Setting C=1.0.", DeprecationWarning, stacklevel=2)
+                          "since version 0.12, and backward compatibility "
+                          "won't be maintained from version 0.14 onward. "
+                          "Setting C=1.0.", DeprecationWarning, stacklevel=2)
             C = 1.0
 
         self.impl = impl
@@ -107,6 +92,7 @@ class BaseLibSVM(BaseEstimator):
         self.sparse = sparse
         self.class_weight = class_weight
         self.verbose = verbose
+        self.max_iter = max_iter
 
     @property
     def _pairwise(self):
@@ -150,21 +136,28 @@ class BaseLibSVM(BaseEstimator):
 
         if self._sparse and self._pairwise:
             raise ValueError("Sparse precomputed kernels are not supported. "
-                    "Using sparse data and dense kernels is possible by not "
-                    "using the ``sparse`` parameter")
+                             "Using sparse data and dense kernels is possible "
+                             "by not using the ``sparse`` parameter")
 
         X = atleast2d_or_csr(X, dtype=np.float64, order='C')
-        y = np.asarray(y, dtype=np.float64, order='C')
 
+        if self.impl in ['c_svc', 'nu_svc']:
+            # classification
+            self.classes_, y = unique(y, return_inverse=True)
+            self.class_weight_ = compute_class_weight(self.class_weight,
+                                                      self.classes_, y)
+        else:
+            self.class_weight_ = np.empty(0)
         if self.impl != "one_class" and len(np.unique(y)) < 2:
             raise ValueError("The number of classes has to be greater than"
-                    " one.")
+                             " one.")
 
-        sample_weight = np.asarray([] if sample_weight is None
-                                      else sample_weight, dtype=np.float64)
+        y = np.asarray(y, dtype=np.float64, order='C')
+
+        sample_weight = np.asarray([]
+                                   if sample_weight is None
+                                   else sample_weight, dtype=np.float64)
         solver_type = LIBSVM_IMPL.index(self.impl)
-        self.class_weight_, self.class_weight_label_ = \
-                     _get_class_weight(self.class_weight, y)
 
         # input validation
         if solver_type != 2 and X.shape[0] != y.shape[0]:
@@ -193,7 +186,7 @@ class BaseLibSVM(BaseEstimator):
             kernel = 'precomputed'
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
-        if self.verbose:
+        if self.verbose:  # pragma: no cover
             print '[LibSVM]',
         fit(X, y, sample_weight, solver_type, kernel)
 
@@ -205,6 +198,14 @@ class BaseLibSVM(BaseEstimator):
         if len(self.label_) == 2 and self.impl != 'one_class':
             self.intercept_ *= -1
         return self
+
+    def _warn_from_fit_status(self):
+        assert self.fit_status_ in (0, 1)
+        if self.fit_status_ == 1:
+            warnings.warn('Solver terminated early (max_iter=%i).'
+                          '  Consider pre-processing your data with'
+                          ' StandardScalar or MinMaxScalar.'
+                          % self.max_iter, ConvergenceWarning)
 
     def _dense_fit(self, X, y, sample_weight, solver_type, kernel):
 
@@ -222,15 +223,18 @@ class BaseLibSVM(BaseEstimator):
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
         self.support_, self.support_vectors_, self.n_support_, \
-        self.dual_coef_, self.intercept_, self.label_, self.probA_, \
-        self.probB_ = libsvm.fit(X, y,
-            svm_type=solver_type, sample_weight=sample_weight,
-            class_weight=self.class_weight_,
-            class_weight_label=self.class_weight_label_,
-            kernel=kernel, C=self.C, nu=self.nu,
-            probability=self.probability, degree=self.degree,
-            shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
-            coef0=self.coef0, gamma=self._gamma, epsilon=self.epsilon)
+            self.dual_coef_, self.intercept_, self.label_, self.probA_, \
+            self.probB_, self.fit_status_ = libsvm.fit(
+                X, y,
+                svm_type=solver_type, sample_weight=sample_weight,
+                class_weight=self.class_weight_, kernel=kernel, C=self.C,
+                nu=self.nu, probability=self.probability, degree=self.degree,
+                shrinking=self.shrinking, tol=self.tol,
+                cache_size=self.cache_size, coef0=self.coef0,
+                gamma=self._gamma, epsilon=self.epsilon,
+                max_iter=self.max_iter)
+
+        self._warn_from_fit_status()
 
     def _sparse_fit(self, X, y, sample_weight, solver_type, kernel):
         X.data = np.asarray(X.data, dtype=np.float64, order='C')
@@ -240,13 +244,15 @@ class BaseLibSVM(BaseEstimator):
         libsvm_sparse.set_verbosity_wrap(self.verbose)
 
         self.support_vectors_, dual_coef_data, self.intercept_, self.label_, \
-            self.n_support_, self.probA_, self.probB_ = \
+            self.n_support_, self.probA_, self.probB_, self.fit_status_ = \
             libsvm_sparse.libsvm_sparse_train(
-                 X.shape[1], X.data, X.indices, X.indptr, y, solver_type,
-                 kernel_type, self.degree, self._gamma, self.coef0, self.tol,
-                 self.C, self.class_weight_label_, self.class_weight_,
-                 sample_weight, self.nu, self.cache_size, self.epsilon,
-                 int(self.shrinking), int(self.probability))
+                X.shape[1], X.data, X.indices, X.indptr, y, solver_type,
+                kernel_type, self.degree, self._gamma, self.coef0, self.tol,
+                self.C, self.class_weight_,
+                sample_weight, self.nu, self.cache_size, self.epsilon,
+                int(self.shrinking), int(self.probability), self.max_iter)
+
+        self._warn_from_fit_status()
 
         n_class = len(self.label_) - 1
         n_SV = self.support_vectors_.shape[0]
@@ -277,7 +283,11 @@ class BaseLibSVM(BaseEstimator):
         """
         X = self._validate_for_predict(X)
         predict = self._sparse_predict if self._sparse else self._dense_predict
-        return predict(X)
+        y = predict(X)
+        if self.impl in ['c_svc', 'nu_svc']:
+            # classification
+            y = self.classes_.take(y.astype(np.int))
+        return y
 
     def _dense_predict(self, X):
         n_samples, n_features = X.shape
@@ -319,17 +329,17 @@ class BaseLibSVM(BaseEstimator):
         C = 0.0  # C is not useful here
 
         return libsvm_sparse.libsvm_sparse_predict(
-                      X.data, X.indices, X.indptr,
-                      self.support_vectors_.data,
-                      self.support_vectors_.indices,
-                      self.support_vectors_.indptr,
-                      self.dual_coef_.data, self._intercept_,
-                      LIBSVM_IMPL.index(self.impl), kernel_type,
-                      self.degree, self._gamma, self.coef0, self.tol,
-                      C, self.class_weight_label_, self.class_weight_,
-                      self.nu, self.epsilon, self.shrinking,
-                      self.probability, self.n_support_, self.label_,
-                      self.probA_, self.probB_)
+            X.data, X.indices, X.indptr,
+            self.support_vectors_.data,
+            self.support_vectors_.indices,
+            self.support_vectors_.indptr,
+            self.dual_coef_.data, self._intercept_,
+            LIBSVM_IMPL.index(self.impl), kernel_type,
+            self.degree, self._gamma, self.coef0, self.tol,
+            C, self.class_weight_,
+            self.nu, self.epsilon, self.shrinking,
+            self.probability, self.n_support_, self.label_,
+            self.probA_, self.probB_)
 
     def _compute_kernel(self, X):
         """Return the data transformed by a callable kernel"""
@@ -356,8 +366,8 @@ class BaseLibSVM(BaseEstimator):
             in the model.
         """
         if self._sparse:
-            raise NotImplementedError("decision_function not supported for"
-                    " sparse SVM")
+            raise NotImplementedError("Decision_function not supported for"
+                                      " sparse SVM.")
 
         X = self._validate_for_predict(X)
 
@@ -418,7 +428,7 @@ class BaseLibSVM(BaseEstimator):
         else:
             # 1vs1 classifier
             coef = _one_vs_one_coef(self.dual_coef_, self.n_support_,
-                    self.support_vectors_)
+                                    self.support_vectors_)
             if sp.issparse(coef[0]):
                 coef = sp.vstack(coef).tocsr()
             else:
@@ -464,15 +474,15 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         """
         if not self.probability:
             raise NotImplementedError(
-                    "probability estimates must be enabled to use this method")
+                "probability estimates must be enabled to use this method")
 
         if self.impl not in ('c_svc', 'nu_svc'):
             raise NotImplementedError("predict_proba only implemented for SVC "
                                       "and NuSVC")
 
         X = self._validate_for_predict(X)
-        pred_proba = self._sparse_predict_proba if self._sparse \
-                                                else self._dense_predict_proba
+        pred_proba = (self._sparse_predict_proba
+                      if self._sparse else self._dense_predict_proba)
         return pred_proba(X)
 
     def predict_log_proba(self, X):
@@ -539,7 +549,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             self.dual_coef_.data, self._intercept_,
             LIBSVM_IMPL.index(self.impl), kernel_type,
             self.degree, self._gamma, self.coef0, self.tol,
-            self.C, self.class_weight_label_, self.class_weight_,
+            self.C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
             self.probability, self.n_support_, self.label_,
             self.probA_, self.probB_)
@@ -557,17 +567,17 @@ class BaseLibLinear(BaseEstimator):
         'PL1_LL2_D0': 5,  # L1 penalty, L2 Loss, primal form
         'PL1_LLR_D0': 6,  # L1 penalty, logistic regression
         'PL2_LLR_D1': 7,  # L2 penalty, logistic regression, dual form
-        }
+    }
 
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
-            multi_class='ovr', fit_intercept=True, intercept_scaling=1,
-            class_weight=None, verbose=0):
+                 multi_class='ovr', fit_intercept=True, intercept_scaling=1,
+                 class_weight=None, verbose=0, random_state=None):
 
-        if C is None:
+        if C is None:  # pragma: no cover
             warnings.warn("Using 'None' for C of BaseLibLinear is deprecated "
-                    "since version 0.12, and backward compatibility "
-                    "won't be maintained from version 0.14 onward. "
-                    "Setting C=1.0.", DeprecationWarning, stacklevel=2)
+                          "since version 0.12, and backward compatibility "
+                          "won't be maintained from version 0.14 onward. "
+                          "Setting C=1.0.", DeprecationWarning, stacklevel=2)
             C = 1.0
 
         self.penalty = penalty
@@ -580,6 +590,7 @@ class BaseLibLinear(BaseEstimator):
         self.multi_class = multi_class
         self.class_weight = class_weight
         self.verbose = verbose
+        self.random_state = random_state
 
         # Check that the arguments given are valid:
         self._get_solver_type()
@@ -598,21 +609,21 @@ class BaseLibLinear(BaseEstimator):
         else:
             if self.multi_class != 'ovr':
                 raise ValueError("`multi_class` must be one of `ovr`, "
-                        "`crammer_singer`")
+                                 "`crammer_singer`")
             solver_type = "P%s_L%s_D%d" % (
                 self.penalty.upper(), self.loss.upper(), int(self.dual))
         if not solver_type in self._solver_type_dict:
             if self.penalty.upper() == 'L1' and self.loss.upper() == 'L1':
                 error_string = ("The combination of penalty='l1' "
-                    "and loss='l1' is not supported.")
+                                "and loss='l1' is not supported.")
             elif self.penalty.upper() == 'L2' and self.loss.upper() == 'L1':
                 # this has to be in primal
                 error_string = ("loss='l2' and penalty='l1' is "
-                    "only supported when dual='true'.")
+                                "only supported when dual='true'.")
             else:
                 # only PL1 in dual remains
                 error_string = ("penalty='l1' is only supported "
-                    "when dual='false'.")
+                                "when dual='false'.")
             raise ValueError('Not supported set of arguments: '
                              + error_string)
         return self._solver_type_dict[solver_type]
@@ -642,17 +653,17 @@ class BaseLibLinear(BaseEstimator):
         y = self._enc.fit_transform(y)
         if len(self.classes_) < 2:
             raise ValueError("The number of classes has to be greater than"
-                    " one.")
+                             " one.")
 
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         y = np.asarray(y, dtype=np.float64).ravel()
 
-        self.class_weight_, self.class_weight_label_ = \
-                     _get_class_weight(self.class_weight, y)
+        self.class_weight_ = compute_class_weight(self.class_weight,
+                                                  self.classes_, y)
 
         if X.shape[0] != y.shape[0]:
-            raise ValueError("X and y have incompatible shapes.\n" +
-                             "X has %s samples, but y has %s." % \
+            raise ValueError("X and y have incompatible shapes.\n"
+                             "X has %s samples, but y has %s." %
                              (X.shape[0], y.shape[0]))
 
         liblinear.set_verbosity_wrap(self.verbose)
@@ -662,11 +673,17 @@ class BaseLibLinear(BaseEstimator):
         else:
             train = liblinear.train_wrap
 
+        rnd = check_random_state(self.random_state)
         if self.verbose:
             print '[LibLinear]',
         self.raw_coef_ = train(X, y, self._get_solver_type(), self.tol,
                                self._get_bias(), self.C,
-                               self.class_weight_label_, self.class_weight_)
+                               self.class_weight_,
+                               # seed for srand in range [0..INT_MAX);
+                               # due to limitations in Numpy on 32-bit
+                               # platforms, we can't get to the UINT_MAX
+                               # limit that srand supports
+                               rnd.randint(np.iinfo('i').max))
 
         if self.fit_intercept:
             self.coef_ = self.raw_coef_[:, :-1]
@@ -680,12 +697,6 @@ class BaseLibLinear(BaseEstimator):
     @property
     def classes_(self):
         return self._enc.classes_
-
-    def _check_n_features(self, X):
-        n_features = self.coef_.shape[1]
-        if X.shape[1] != n_features:
-            raise ValueError("X.shape[1] should be %d, not %d." % (n_features,
-                                                                   X.shape[1]))
 
     def _get_bias(self):
         if self.fit_intercept:

@@ -40,12 +40,6 @@ class Pipeline(BaseEstimator):
         chained, in the order in which they are chained, with the last object
         an estimator.
 
-    Attributes
-    ----------
-    `steps` : list of (name, object)
-        List of the named object that compose the pipeline, in the \
-        order that they are applied on the data.
-
     Examples
     --------
     >>> from sklearn import svm
@@ -88,15 +82,16 @@ class Pipeline(BaseEstimator):
         estimator = estimators[-1]
 
         for t in transforms:
-            if not (hasattr(t, "fit") or hasattr(t, "fit_transform")) \
-              or not hasattr(t, "transform"):
+            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
+                    hasattr(t, "transform")):
                 raise TypeError("All intermediate steps a the chain should "
-                        "be transforms and implement fit and transform"
-                        "'%s' (type %s) doesn't)" % (t, type(t)))
+                                "be transforms and implement fit and transform"
+                                "'%s' (type %s) doesn't)" % (t, type(t)))
 
         if not hasattr(estimator, "fit"):
             raise TypeError("Last step of chain should implement fit "
-                "'%s' (type %s) doesn't)" % (estimator, type(estimator)))
+                            "'%s' (type %s) doesn't)"
+                            % (estimator, type(estimator)))
 
     def get_params(self, deep=True):
         if not deep:
@@ -135,10 +130,12 @@ class Pipeline(BaseEstimator):
     def fit_transform(self, X, y=None, **fit_params):
         """Fit all the transforms one after the other and transform the
         data, then use fit_transform on transformed data using the final
-        estimator. Valid only if the final estimator implements
-        fit_transform."""
+        estimator."""
         Xt, fit_params = self._pre_transform(X, y, **fit_params)
-        return self.steps[-1][-1].fit_transform(Xt, y, **fit_params)
+        if hasattr(self.steps[-1][-1], 'fit_transform'):
+            return self.steps[-1][-1].fit_transform(Xt, y, **fit_params)
+        else:
+            return self.steps[-1][-1].fit(Xt, y, **fit_params).transform(Xt)
 
     def predict(self, X):
         """Applies transforms to the data, and the predict method of the
@@ -216,6 +213,22 @@ def _transform_one(transformer, name, X, transformer_weights):
     return transformer.transform(X)
 
 
+def _fit_transform_one(transformer, name, X, y, transformer_weights,
+                       **fit_params):
+    if transformer_weights is not None and name in transformer_weights:
+        # if we have a weight for this transformer, muliply output
+        if hasattr(transformer, 'fit_transform'):
+            return (transformer.fit_transform(X, y, **fit_params)
+                    * transformer_weights[name])
+        else:
+            return (transformer.fit(X, y, **fit_params).transform(X)
+                    * transformer_weights[name])
+    if hasattr(transformer, 'fit_transform'):
+        return transformer.fit_transform(X, y, **fit_params)
+    else:
+        return transformer.fit(X, y, **fit_params).transform(X)
+
+
 class FeatureUnion(BaseEstimator, TransformerMixin):
     """Concatenates results of multiple transformer objects.
 
@@ -253,9 +266,9 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
         for name, trans in self.transformer_list:
             if not hasattr(trans, 'get_feature_names'):
                 raise AttributeError("Transformer %s does not provide"
-                        " get_feature_names." % str(name))
-            feature_names.extend([name + "__" + f
-                for f in trans.get_feature_names()])
+                                     " get_feature_names." % str(name))
+            feature_names.extend([name + "__" + f for f in
+                                  trans.get_feature_names()])
         return feature_names
 
     def fit(self, X, y=None):
@@ -266,9 +279,35 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
         X : array-like or sparse matrix, shape (n_samples, n_features)
             Input data, used to fit transformers.
         """
-        Parallel(n_jobs=self.n_jobs)(delayed(_fit_one_transformer)(trans, X, y)
-                for name, trans in self.transformer_list)
+        Parallel(n_jobs=self.n_jobs)(
+            delayed(_fit_one_transformer)(trans, X, y)
+            for name, trans in self.transformer_list)
         return self
+
+    def fit_transform(self, X, y=None, **fit_params):
+        """Fit all tranformers using X, transform the data and concatenate
+        results.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            Input data to be transformed.
+
+        Returns
+        -------
+        X_t : array-like or sparse matrix, shape (n_samples, sum_n_components)
+            hstack of results of transformers. sum_n_components is the
+            sum of n_components (output dimension) over transformers.
+        """
+        Xs = Parallel(n_jobs=self.n_jobs)(
+            delayed(_fit_transform_one)(trans, name, X, y,
+                                        self.transformer_weights, **fit_params)
+            for name, trans in self.transformer_list)
+        if any(sparse.issparse(f) for f in Xs):
+            Xs = sparse.hstack(Xs).tocsr()
+        else:
+            Xs = np.hstack(Xs)
+        return Xs
 
     def transform(self, X):
         """Transform X separately by each transformer, concatenate results.

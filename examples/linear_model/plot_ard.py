@@ -67,7 +67,7 @@ pl.figure(figsize=(6, 5))
 pl.title("Histogram of the weights")
 pl.hist(clf.coef_, bins=n_features, log=True)
 pl.plot(clf.coef_[relevant_features], 5 * np.ones(len(relevant_features)),
-         'ro', label="Relevant features")
+        'ro', label="Relevant features")
 pl.ylabel("Features")
 pl.xlabel("Values of the weights")
 pl.legend(loc=1)

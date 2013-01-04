@@ -19,6 +19,7 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy.sparse import issparse
+import warnings
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
@@ -178,7 +179,7 @@ class GaussianNB(BaseNB):
         for i in xrange(np.size(self.classes_)):
             jointi = np.log(self.class_prior_[i])
             n_ij = - 0.5 * np.sum(np.log(np.pi * self.sigma_[i, :]))
-            n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) / \
+            n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) /
                                  (self.sigma_[i, :]), 1)
             joint_log_likelihood.append(jointi + n_ij)
 
@@ -238,10 +239,17 @@ class BaseDiscreteNB(BaseNB):
         if sample_weight is not None:
             Y *= array2d(sample_weight).T
 
+        if class_prior is not None:
+            warnings.warn('class_prior is deprecated in fit function and will '
+                          'be removed in version 0.15. Use the `__init__` '
+                          'parameter  class_weight instead.')
+        else:
+            class_prior = self.class_weight
+
         if class_prior:
             if len(class_prior) != n_classes:
-                raise ValueError(
-                        "Number of priors must match number of classes")
+                raise ValueError("Number of priors must match number of"
+                                 " classes.")
             self.class_log_prior_ = np.log(class_prior)
         elif self.fit_prior:
             # empirical prior, with sample_weight taken into account
@@ -250,38 +258,23 @@ class BaseDiscreteNB(BaseNB):
         else:
             self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
 
+        # N_c_i is the count of feature i in all samples of class c.
+        # N_c is the denominator.
         N_c, N_c_i = self._count(X, Y)
 
-        self.feature_log_prob_ = (np.log(N_c_i + self.alpha)
-                                - np.log(N_c.reshape(-1, 1)
-                                       + self.alpha * X.shape[1]))
+        self.feature_log_prob_ = np.log(N_c_i) - np.log(N_c.reshape(-1, 1))
 
         return self
-
-    @staticmethod
-    def _count(X, Y):
-        """Count feature occurrences.
-
-        Returns (N_c, N_c_i), where
-            N_c is the count of all features in all samples of class c;
-            N_c_i is the count of feature i in all samples of class c.
-        """
-        if np.any((X.data if issparse(X) else X) < 0):
-            raise ValueError("Input X must be non-negative.")
-        N_c_i = safe_sparse_dot(Y.T, X)
-        N_c = np.sum(N_c_i, axis=1)
-
-        return N_c, N_c_i
 
     # XXX The following is a stopgap measure; we need to set the dimensions
     # of class_log_prior_ and feature_log_prob_ correctly.
     def _get_coef(self):
-        return self.feature_log_prob_[1] if len(self.classes_) == 2 \
-                                         else self.feature_log_prob_
+        return (self.feature_log_prob_[1]
+                if len(self.classes_) == 2 else self.feature_log_prob_)
 
     def _get_intercept(self):
-        return self.class_log_prior_[1] if len(self.classes_) == 2 \
-                                        else self.class_log_prior_
+        return (self.class_log_prior_[1]
+                if len(self.classes_) == 2 else self.class_log_prior_)
 
     coef_ = property(_get_coef)
     intercept_ = property(_get_intercept)
@@ -326,7 +319,7 @@ class MultinomialNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
     >>> clf.fit(X, Y)
-    MultinomialNB(alpha=1.0, fit_prior=True)
+    MultinomialNB(alpha=1.0, class_weight=None, fit_prior=True)
     >>> print(clf.predict(X[2]))
     [3]
 
@@ -337,15 +330,25 @@ class MultinomialNB(BaseDiscreteNB):
     Tackling the poor assumptions of naive Bayes text classifiers, ICML.
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True):
+    def __init__(self, alpha=1.0, fit_prior=True, class_weight=None):
         self.alpha = alpha
         self.fit_prior = fit_prior
+        self.class_weight = class_weight
+
+    def _count(self, X, Y):
+        """Count and smooth feature occurrences."""
+        if np.any((X.data if issparse(X) else X) < 0):
+            raise ValueError("Input X must be non-negative.")
+        N_c_i = safe_sparse_dot(Y.T, X) + self.alpha
+        N_c = np.sum(N_c_i, axis=1)
+
+        return N_c, N_c_i
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
         X = atleast2d_or_csr(X)
         return (safe_sparse_dot(X, self.feature_log_prob_.T)
-               + self.class_log_prior_)
+                + self.class_log_prior_)
 
 
 class BernoulliNB(BaseDiscreteNB):
@@ -383,7 +386,7 @@ class BernoulliNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import BernoulliNB
     >>> clf = BernoulliNB()
     >>> clf.fit(X, Y)
-    BernoulliNB(alpha=1.0, binarize=0.0, fit_prior=True)
+    BernoulliNB(alpha=1.0, binarize=0.0, class_weight=None, fit_prior=True)
     >>> print(clf.predict(X[2]))
     [3]
 
@@ -401,15 +404,20 @@ class BernoulliNB(BaseDiscreteNB):
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
     """
 
-    def __init__(self, alpha=1.0, binarize=.0, fit_prior=True):
+    def __init__(self, alpha=1.0, binarize=.0, fit_prior=True,
+                 class_weight=None):
         self.alpha = alpha
         self.binarize = binarize
         self.fit_prior = fit_prior
+        self.class_weight = class_weight
 
     def _count(self, X, Y):
+        """Count and smooth feature occurrences."""
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)
-        return super(BernoulliNB, self)._count(X, Y)
+        N_c_i = safe_sparse_dot(Y.T, X) + self.alpha
+        N_c = Y.sum(axis=0) + self.alpha * Y.shape[1]
+        return N_c, N_c_i
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
@@ -429,7 +437,7 @@ class BernoulliNB(BaseDiscreteNB):
         neg_prob = np.log(1 - np.exp(self.feature_log_prob_))
         # Compute  neg_prob · (1 - X).T  as  ∑neg_prob - X · neg_prob
         X_neg_prob = (neg_prob.sum(axis=1)
-                    - safe_sparse_dot(X, neg_prob.T))
+                      - safe_sparse_dot(X, neg_prob.T))
         jll = safe_sparse_dot(X, self.feature_log_prob_.T) + X_neg_prob
 
         return jll + self.class_log_prior_
