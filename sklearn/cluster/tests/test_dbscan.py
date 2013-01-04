@@ -5,9 +5,9 @@ Tests for DBSCAN clustering algorithm
 import pickle
 
 import numpy as np
-from numpy.testing import assert_equal
 from scipy.spatial import distance
 
+from sklearn.utils.testing import assert_equal
 from sklearn.cluster.dbscan_ import DBSCAN, dbscan
 from .common import generate_clustered_data
 
@@ -25,8 +25,8 @@ def test_dbscan_similarity():
     D = distance.squareform(distance.pdist(X))
     D /= np.max(D)
     # Compute DBSCAN
-    core_samples, labels = dbscan(D, metric="precomputed",
-                                 eps=eps, min_samples=min_samples)
+    core_samples, labels = dbscan(D, metric="precomputed", eps=eps,
+                                  min_samples=min_samples)
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(labels)) - (1 if -1 in labels else 0)
 
@@ -48,8 +48,8 @@ def test_dbscan_feature():
     metric = 'euclidean'
     # Compute DBSCAN
     # parameters chosen for task
-    core_samples, labels = dbscan(X, metric=metric,
-                                 eps=eps, min_samples=min_samples)
+    core_samples, labels = dbscan(X, metric=metric, eps=eps,
+                                  min_samples=min_samples)
 
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(labels)) - int(-1 in labels)
@@ -72,8 +72,8 @@ def test_dbscan_callable():
     metric = distance.euclidean
     # Compute DBSCAN
     # parameters chosen for task
-    core_samples, labels = dbscan(X, metric=metric,
-                                 eps=eps, min_samples=min_samples)
+    core_samples, labels = dbscan(X, metric=metric, eps=eps,
+                                  min_samples=min_samples)
 
     # number of clusters, ignoring noise if present
     n_clusters_1 = len(set(labels)) - int(-1 in labels)

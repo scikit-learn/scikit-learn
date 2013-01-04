@@ -48,29 +48,28 @@ labels = digits.target
 
 sample_size = 300
 
-print "n_digits: %d, \t n_samples %d, \t n_features %d" % (n_digits,
-                                                        n_samples, n_features)
+print("n_digits: %d, \t n_samples %d, \t n_features %d"
+      % (n_digits, n_samples, n_features))
 
 
-print 79 * '_'
-print ('% 9s' % 'init'
-      '    time  inertia    homo   compl  v-meas     ARI     AMI  silhouette')
+print(79 * '_')
+print('% 9s' % 'init'
+      '    time  inertia    homo   compl  v-meas     ARI AMI  silhouette')
 
 
 def bench_k_means(estimator, name, data):
     t0 = time()
     estimator.fit(data)
     print '% 9s   %.2fs    %i   %.3f   %.3f   %.3f   %.3f   %.3f    %.3f' % (
-         name, (time() - t0), estimator.inertia_,
-         metrics.homogeneity_score(labels, estimator.labels_),
-         metrics.completeness_score(labels, estimator.labels_),
-         metrics.v_measure_score(labels, estimator.labels_),
-         metrics.adjusted_rand_score(labels, estimator.labels_),
-         metrics.adjusted_mutual_info_score(labels,  estimator.labels_),
-         metrics.silhouette_score(data, estimator.labels_,
-                                  metric='euclidean',
-                                  sample_size=sample_size),
-         )
+        name, (time() - t0), estimator.inertia_,
+        metrics.homogeneity_score(labels, estimator.labels_),
+        metrics.completeness_score(labels, estimator.labels_),
+        metrics.v_measure_score(labels, estimator.labels_),
+        metrics.adjusted_rand_score(labels, estimator.labels_),
+        metrics.adjusted_mutual_info_score(labels,  estimator.labels_),
+        metrics.silhouette_score(data, estimator.labels_,
+                                 metric='euclidean',
+                                 sample_size=sample_size),)
 
 bench_k_means(KMeans(init='k-means++', n_clusters=n_digits, n_init=10),
               name="k-means++", data=data)

@@ -50,7 +50,7 @@ def get_data_home(data_home=None):
     """
     if data_home is None:
         data_home = environ.get('SCIKIT_LEARN_DATA',
-                               join('~', 'scikit_learn_data'))
+                                join('~', 'scikit_learn_data'))
     data_home = expanduser(data_home)
     if not exists(data_home):
         makedirs(data_home)
@@ -283,7 +283,7 @@ def load_digits(n_class=10):
 
         >>> from sklearn.datasets import load_digits
         >>> digits = load_digits()
-        >>> digits.data.shape
+        >>> print digits.data.shape
         (1797, 64)
         >>> import pylab as pl #doctest: +SKIP
         >>> pl.gray() #doctest: +SKIP
@@ -391,7 +391,7 @@ def load_boston():
     --------
     >>> from sklearn.datasets import load_boston
     >>> boston = load_boston()
-    >>> boston.data.shape
+    >>> print boston.data.shape
     (506, 13)
     """
     module_path = dirname(__file__)

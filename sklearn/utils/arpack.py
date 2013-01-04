@@ -208,8 +208,7 @@ ZNEUPD_ERRORS = {0: "Normal exit.",
                       "converged Ritz values than ZNAUPD got.  This "
                       "indicates the user probably made an error in passing "
                       "data from ZNAUPD to ZNEUPD or that the data was "
-                      "modified before entering ZNEUPD"
-}
+                      "modified before entering ZNEUPD"}
 
 CNEUPD_ERRORS = ZNEUPD_ERRORS.copy()
 CNEUPD_ERRORS[-14] = ("CNAUPD did not find any eigenvalues to sufficient "
@@ -763,11 +762,11 @@ class _UnsymmetricArpackParams(_ArpackParams):
             di = np.zeros(k + 1, self.tp)
             zr = np.zeros((n, k + 1), self.tp)
             dr, di, zr, ierr = \
-                self._arpack_extract(return_eigenvectors,
-                       howmny, sselect, sigmar, sigmai, workev,
-                       self.bmat, self.which, k, self.tol, self.resid,
-                       self.v, self.iparam, self.ipntr,
-                       self.workd, self.workl, self.info)
+                self._arpack_extract(
+                    return_eigenvectors, howmny, sselect, sigmar, sigmai,
+                    workev, self.bmat, self.which, k, self.tol, self.resid,
+                    self.v, self.iparam, self.ipntr, self.workd, self.workl,
+                    self.info)
             if ierr != 0:
                 raise ArpackError(ierr, infodict=self.extract_infodict)
             nreturned = self.iparam[4]  # number of good eigenvalues returned
@@ -862,11 +861,11 @@ class _UnsymmetricArpackParams(_ArpackParams):
         else:
             # complex is so much simpler...
             d, z, ierr =\
-                    self._arpack_extract(return_eigenvectors,
-                           howmny, sselect, self.sigma, workev,
-                           self.bmat, self.which, k, self.tol, self.resid,
-                           self.v, self.iparam, self.ipntr,
-                           self.workd, self.workl, self.rwork, ierr)
+                self._arpack_extract(
+                    return_eigenvectors, howmny, sselect, self.sigma, workev,
+                    self.bmat, self.which, k, self.tol, self.resid, self.v,
+                    self.iparam, self.ipntr, self.workd, self.workl,
+                    self.rwork, ierr)
 
             if ierr != 0:
                 raise ArpackError(ierr, infodict=self.extract_infodict)
@@ -1018,7 +1017,7 @@ def get_OPinv_matvec(A, M, sigma, symmetric=False, tol=0):
         #M is the identity matrix
         if isdense(A):
             if (np.issubdtype(A.dtype, np.complexfloating)
-                or np.imag(sigma) == 0):
+                    or np.imag(sigma) == 0):
                 A = np.copy(A)
             else:
                 A = A + 0j
@@ -1030,14 +1029,14 @@ def get_OPinv_matvec(A, M, sigma, symmetric=False, tol=0):
                 A = A.T
             return SpLuInv(A.tocsc()).matvec
         else:
-            return IterOpInv(_aslinearoperator_with_dtype(A),
-                              M, sigma, tol=tol).matvec
+            return IterOpInv(_aslinearoperator_with_dtype(A), M, sigma,
+                             tol=tol).matvec
     else:
         if ((not isdense(A) and not isspmatrix(A)) or
-            (not isdense(M) and not isspmatrix(M))):
+                (not isdense(M) and not isspmatrix(M))):
             return IterOpInv(_aslinearoperator_with_dtype(A),
-                              _aslinearoperator_with_dtype(M),
-                              sigma, tol=tol).matvec
+                             _aslinearoperator_with_dtype(M), sigma,
+                             tol=tol).matvec
         elif isdense(A) or isdense(M):
             return LuInv(A - sigma * M).matvec
         else:
@@ -1047,9 +1046,9 @@ def get_OPinv_matvec(A, M, sigma, symmetric=False, tol=0):
             return SpLuInv(OP.tocsc()).matvec
 
 
-def _eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
-         ncv=None, maxiter=None, tol=0, return_eigenvectors=True,
-         Minv=None, OPinv=None, OPpart=None):
+def _eigs(A, k=6, M=None, sigma=None, which='LM', v0=None, ncv=None,
+          maxiter=None, tol=0, return_eigenvectors=True, Minv=None, OPinv=None,
+          OPpart=None):
     """
     Find k eigenvalues and eigenvectors of the square matrix A.
 
@@ -1263,9 +1262,9 @@ def _eigs(A, k=6, M=None, sigma=None, which='LM', v0=None,
     return params.extract(return_eigenvectors)
 
 
-def _eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
-          ncv=None, maxiter=None, tol=0, return_eigenvectors=True,
-          Minv=None, OPinv=None, mode='normal'):
+def _eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None, ncv=None,
+           maxiter=None, tol=0, return_eigenvectors=True, Minv=None,
+           OPinv=None, mode='normal'):
     """
     Find k eigenvalues and eigenvectors of the real symmetric square matrix
     or complex hermitian matrix A.
@@ -1409,7 +1408,7 @@ def _eigsh(A, k=6, M=None, sigma=None, which='LM', v0=None,
     >>> vals, vecs = eigsh(id, k=6)
     >>> vals # doctest: +SKIP
     array([ 1.+0.j,  1.+0.j,  1.+0.j,  1.+0.j,  1.+0.j,  1.+0.j])
-    >>> vecs.shape
+    >>> print vecs.shape
     (13, 6)
 
     References

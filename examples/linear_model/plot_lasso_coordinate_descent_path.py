@@ -89,6 +89,6 @@ pl.xlabel('-Log(lambda)')
 pl.ylabel('weights')
 pl.title('Elastic-Net and positive Elastic-Net')
 pl.legend((l1[-1], l2[-1]), ('Elastic-Net', 'positive Elastic-Net'),
-           loc='lower left')
+          loc='lower left')
 pl.axis('tight')
 pl.show()

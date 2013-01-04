@@ -54,9 +54,10 @@ Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 # Authors: Clay Woolam <clay@woolam.org>
 # Licence: BSD
 
-import numpy as np
-from scipy import sparse
+import warnings
 from abc import ABCMeta, abstractmethod
+from scipy import sparse
+import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import rbf_kernel
@@ -87,7 +88,7 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
     alpha : float
         Clamping factor
 
-    max_iters : float
+    max_iter : float
         Change maximum number of iterations allowed
 
     tol : float
@@ -97,8 +98,15 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
     __metaclass__ = ABCMeta
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
-                 alpha=1, max_iters=30, tol=1e-3):
-        self.max_iters = max_iters
+                 alpha=1, max_iter=30, tol=1e-3, max_iters=None):
+
+        if not max_iters is None:
+            max_iter = max_iters
+            warnings.warn("Parameter max_iters has been renamed to"
+                          "'max_iter' and will be removed in release 0.14.",
+                          DeprecationWarning, stacklevel=2)
+
+        self.max_iter = max_iter
         self.tol = tol
 
         # kernel parameters
@@ -120,7 +128,8 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
                 self.nn_fit = NearestNeighbors(self.n_neighbors).fit(X)
             if y is None:
                 return self.nn_fit.kneighbors_graph(self.nn_fit._fit_X,
-                        self.n_neighbors, mode='connectivity')
+                                                    self.n_neighbors,
+                                                    mode='connectivity')
             else:
                 return self.nn_fit.kneighbors(y, return_distance=False)
         else:
@@ -235,24 +244,24 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
 
         l_previous = np.zeros((self.X_.shape[0], n_classes))
 
-        remaining_iter = self.max_iters
+        remaining_iter = self.max_iter
         if sparse.isspmatrix(graph_matrix):
             graph_matrix = graph_matrix.tocsr()
         while (_not_converged(self.label_distributions_, l_previous, self.tol)
                 and remaining_iter > 1):
             l_previous = self.label_distributions_
-            self.label_distributions_ = safe_sparse_dot(graph_matrix,
-                    self.label_distributions_)
+            self.label_distributions_ = safe_sparse_dot(
+                graph_matrix, self.label_distributions_)
             # clamp
-            self.label_distributions_ = np.multiply(clamp_weights,
-                    self.label_distributions_) + y_static
+            self.label_distributions_ = np.multiply(
+                clamp_weights, self.label_distributions_) + y_static
             remaining_iter -= 1
 
         normalizer = np.sum(self.label_distributions_, axis=1)[:, np.newaxis]
         self.label_distributions_ /= normalizer
         # set the transduction item
         transduction = self.classes_[np.argmax(self.label_distributions_,
-                axis=1)]
+                                               axis=1)]
         self.transduction_ = transduction.ravel()
         return self
 
@@ -271,7 +280,7 @@ class LabelPropagation(BaseLabelPropagation):
       parameter for knn kernel
     alpha : float
       clamping factor
-    max_iters : float
+    max_iter : float
       change maximum number of iterations allowed
     tol : float
       Convergence tolerance: threshold to consider the system at steady
@@ -336,7 +345,7 @@ class LabelSpreading(BaseLabelPropagation):
       parameter for knn kernel
     alpha : float
       clamping factor
-    max_iters : float
+    max_iter : float
       maximum number of iterations allowed
     tol : float
       Convergence tolerance: threshold to consider the system at steady
@@ -368,11 +377,19 @@ class LabelSpreading(BaseLabelPropagation):
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7, alpha=0.2,
-                 max_iters=30, tol=1e-3):
+                 max_iter=30, tol=1e-3, max_iters=None):
+
+        if not max_iters is None:
+            max_iter = max_iters
+            warnings.warn("Parameter max_iters has been renamed to"
+                          "'max_iter' and will be removed in release 0.14.",
+                          DeprecationWarning, stacklevel=2)
+
         # this one has different base parameters
         super(LabelSpreading, self).__init__(kernel=kernel, gamma=gamma,
-                n_neighbors=n_neighbors, alpha=alpha,
-                max_iters=max_iters, tol=tol)
+                                             n_neighbors=n_neighbors,
+                                             alpha=alpha, max_iter=max_iter,
+                                             tol=tol)
 
     def _build_graph(self):
         """Graph matrix for Label Spreading computes the graph laplacian"""

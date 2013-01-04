@@ -1,11 +1,11 @@
 import numpy as np
 import scipy.sparse as sp
 
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-import nose
-from nose.tools import assert_equal, assert_raises, raises
-
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import raises
 from sklearn.utils.testing import assert_greater
 
 from sklearn.linear_model import logistic
@@ -96,7 +96,7 @@ def test_inconsistent_input():
 
     # Wrong dimensions for test data
     assert_raises(ValueError, clf.fit(X_, y_).predict,
-            rng.random_sample((3, 12)))
+                  rng.random_sample((3, 12)))
 
 
 def test_write_parameters():
@@ -122,5 +122,10 @@ def test_nan():
     logistic.LogisticRegression().fit(Xnan, Y1)
 
 
-if __name__ == '__main__':
-    nose.runmodule()
+def test_liblinear_random_state():
+    X, y = datasets.make_classification(n_samples=20)
+    lr1 = logistic.LogisticRegression(random_state=0)
+    lr1.fit(X, y)
+    lr2 = logistic.LogisticRegression(random_state=0)
+    lr2.fit(X, y)
+    assert_array_almost_equal(lr1.coef_, lr2.coef_)

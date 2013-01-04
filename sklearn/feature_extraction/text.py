@@ -15,6 +15,7 @@ from operator import itemgetter
 import re
 import unicodedata
 import warnings
+import numbers
 
 import numpy as np
 import scipy.sparse as sp
@@ -199,6 +200,16 @@ class CountVectorizer(BaseEstimator):
 
     dtype: type, optional
         Type of the matrix returned by fit_transform() or transform().
+
+    Attributes
+    ----------
+    `vocabulary_`: dict
+        A mapping of terms to feature indices.
+
+    `stop_words_`: set
+        Terms that were ignored because they occurred in either too
+        many (`max_df`) or in too few (`min_df`) documents.  This is
+        only available if no vocabulary was given.
     """
 
     _white_spaces = re.compile(ur"\s\s+")
@@ -235,9 +246,11 @@ class CountVectorizer(BaseEstimator):
             ngram_range = (min_n, max_n)
         self.ngram_range = ngram_range
         if vocabulary is not None:
-            self.fixed_vocabulary = True
             if not isinstance(vocabulary, Mapping):
                 vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
+            if not vocabulary:
+                raise ValueError("empty vocabulary passed to fit")
+            self.fixed_vocabulary = True
             self.vocabulary_ = vocabulary
         else:
             self.fixed_vocabulary = False
@@ -250,7 +263,8 @@ class CountVectorizer(BaseEstimator):
         The decoding strategy depends on the vectorizer parameters.
         """
         if self.input == 'filename':
-            doc = open(doc, 'rb').read()
+            with open(doc, 'rb') as fh:
+                doc = fh.read()
 
         elif self.input == 'file':
             doc = doc.read()
@@ -396,7 +410,7 @@ class CountVectorizer(BaseEstimator):
             # free memory as we go
             term_count_dict.clear()
 
-        shape = (len(term_count_dicts), max(vocabulary.itervalues()) + 1)
+        shape = (i + 1, max(vocabulary.itervalues()) + 1)
         spmatrix = sp.coo_matrix((values, (i_indices, j_indices)),
                                  shape=shape, dtype=self.dtype)
         if self.binary:
@@ -438,8 +452,8 @@ class CountVectorizer(BaseEstimator):
             # fit_transform overridable without unwanted side effects in
             # TfidfVectorizer
             analyze = self.build_analyzer()
-            term_counts_per_doc = [Counter(analyze(doc))
-                                   for doc in raw_documents]
+            term_counts_per_doc = (Counter(analyze(doc))
+                                   for doc in raw_documents)
             return self._term_count_dicts_to_matrix(term_counts_per_doc)
 
         self.vocabulary_ = {}
@@ -468,15 +482,17 @@ class CountVectorizer(BaseEstimator):
         max_df = self.max_df
         min_df = self.min_df
 
-        max_doc_count = (max_df if isinstance(max_df, (int, np.integer))
-                                else max_df * n_doc)
-        min_doc_count = (min_df if isinstance(min_df,  (int, np.integer))
-                                else min_df * n_doc)
+        max_doc_count = (max_df
+                         if isinstance(max_df, numbers.Integral)
+                         else max_df * n_doc)
+        min_doc_count = (min_df
+                         if isinstance(min_df, numbers.Integral)
+                         else min_df * n_doc)
 
         # filter out stop words: terms that occur in almost all documents
         if max_doc_count < n_doc or min_doc_count > 1:
             stop_words = set(t for t, dc in document_counts.iteritems()
-                               if dc > max_doc_count or dc < min_doc_count)
+                             if dc > max_doc_count or dc < min_doc_count)
         else:
             stop_words = set()
 
@@ -494,14 +510,19 @@ class CountVectorizer(BaseEstimator):
 
         # store the learned stop words to make it easier to debug the value of
         # max_df
-        self.max_df_stop_words_ = stop_words
+        self.stop_words_ = stop_words
 
         # store map from term name to feature integer index: we sort the term
         # to have reproducible outcome for the vocabulary structure: otherwise
         # the mapping from feature name to indices might depend on the memory
         # layout of the machine. Furthermore sorted terms might make it
         # possible to perform binary search in the feature names array.
-        self.vocabulary_ = dict(((t, i) for i, t in enumerate(sorted(terms))))
+        vocab = dict(((t, i) for i, t in enumerate(sorted(terms))))
+        if not vocab:
+            raise ValueError("empty vocabulary; training set may have"
+                             " contained only stop words or min_df (resp. "
+                             "max_df) may be too high (resp. too low).")
+        self.vocabulary_ = vocab
 
         # the term_counts and document_counts might be useful statistics, are
         # we really sure want we want to drop them? They take some memory but
@@ -530,7 +551,7 @@ class CountVectorizer(BaseEstimator):
         # XXX @larsmans tried to parallelize the following loop with joblib.
         # The result was some 20% slower than the serial version.
         analyze = self.build_analyzer()
-        term_counts_per_doc = [Counter(analyze(doc)) for doc in raw_documents]
+        term_counts_per_doc = (Counter(analyze(doc)) for doc in raw_documents)
         return self._term_count_dicts_to_matrix(term_counts_per_doc)
 
     def inverse_transform(self, X):
@@ -567,6 +588,13 @@ class CountVectorizer(BaseEstimator):
 
         return [t for t, i in sorted(self.vocabulary_.iteritems(),
                                      key=itemgetter(1))]
+
+    @property
+    def max_df_stop_words_(self):
+        warnings.warn(
+            "The 'stop_words_ attribute was renamed to 'max_df_stop_words'. "
+            "The old attribute will be removed in 0.15.", DeprecationWarning)
+        return self.stop_words_
 
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
@@ -834,12 +862,12 @@ class TfidfVectorizer(CountVectorizer):
     """
 
     def __init__(self, input='content', charset='utf-8',
-            charset_error='strict', strip_accents=None, lowercase=True,
-            preprocessor=None, tokenizer=None, analyzer='word',
-            stop_words=None, token_pattern=ur"(?u)\b\w\w+\b", min_n=None,
-            max_n=None, ngram_range=(1, 1), max_df=1.0, min_df=2,
-            max_features=None, vocabulary=None, binary=False, dtype=long,
-            norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=False):
+                 charset_error='strict', strip_accents=None, lowercase=True,
+                 preprocessor=None, tokenizer=None, analyzer='word',
+                 stop_words=None, token_pattern=ur"(?u)\b\w\w+\b", min_n=None,
+                 max_n=None, ngram_range=(1, 1), max_df=1.0, min_df=2,
+                 max_features=None, vocabulary=None, binary=False, dtype=long,
+                 norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=False):
 
         super(TfidfVectorizer, self).__init__(
             input=input, charset=charset, charset_error=charset_error,

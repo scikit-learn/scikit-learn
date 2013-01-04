@@ -83,7 +83,7 @@ for pair in ([0, 1], [0, 2], [2, 3]):
         for i, c in zip(xrange(n_classes), plot_colors):
             idx = np.where(y == i)
             pl.scatter(X[idx, 0], X[idx, 1], c=c, label=iris.target_names[i],
-                    cmap=pl.cm.Paired)
+                       cmap=pl.cm.Paired)
 
         pl.axis("tight")
 

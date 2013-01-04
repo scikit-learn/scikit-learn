@@ -48,11 +48,11 @@ colors = np.hstack([colors] * 20)
 
 pl.figure(figsize=(14, 9.5))
 pl.subplots_adjust(left=.001, right=.999, bottom=.001, top=.96, wspace=.05,
-        hspace=.01)
+                   hspace=.01)
 
 plot_num = 1
 for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
-                no_structure]):
+                                     no_structure]):
     X, y = dataset
     # normalize dataset for easier parameter selection
     X = StandardScaler().fit_transform(X)
@@ -73,11 +73,12 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
     ms = cluster.MeanShift(bandwidth=bandwidth, bin_seeding=True)
     two_means = cluster.MiniBatchKMeans(n_clusters=2)
     ward_five = cluster.Ward(n_clusters=2, connectivity=connectivity)
-    spectral = cluster.SpectralClustering(n_clusters=2, mode='arpack',
-            affinity="nearest_neighbors")
+    spectral = cluster.SpectralClustering(n_clusters=2,
+                                          eigen_solver='arpack',
+                                          affinity="nearest_neighbors")
     dbscan = cluster.DBSCAN(eps=.2)
     affinity_propagation = cluster.AffinityPropagation(damping=.9,
-            preference=-200)
+                                                       preference=-200)
 
     for algorithm in [two_means, affinity_propagation, ms, spectral,
                       ward_five, dbscan]:

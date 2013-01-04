@@ -1,11 +1,15 @@
 import numpy as np
 import scipy.sparse as sp
-from nose.tools import assert_true
-from numpy.testing import assert_almost_equal, assert_array_almost_equal, \
-                          assert_equal, assert_array_equal
+
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_greater
+
 from sklearn import datasets
 from sklearn.metrics import mean_squared_error
-from sklearn.utils.testing import assert_greater
 
 from sklearn.linear_model.base import LinearRegression
 from sklearn.linear_model.ridge import Ridge
@@ -311,7 +315,7 @@ def test_dense_sparse():
         # test sparse matrix
         ret_sparse = test_func(SPARSE_FILTER)
         # test that the outputs are the same
-        if ret_dense != None and ret_sparse != None:
+        if ret_dense is not None and ret_sparse is not None:
             assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
 

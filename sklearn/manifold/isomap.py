@@ -77,8 +77,8 @@ class Isomap(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_neighbors=5, n_components=2, eigen_solver='auto',
-            tol=0, max_iter=None, path_method='auto',
-            neighbors_algorithm='auto'):
+                 tol=0, max_iter=None, path_method='auto',
+                 neighbors_algorithm='auto'):
 
         self.n_neighbors = n_neighbors
         self.n_components = n_components
@@ -95,8 +95,9 @@ class Isomap(BaseEstimator, TransformerMixin):
         self.nbrs_.fit(X)
         self.training_data_ = self.nbrs_._fit_X
         self.kernel_pca_ = KernelPCA(n_components=self.n_components,
-                kernel="precomputed", eigen_solver=self.eigen_solver,
-                tol=self.tol, max_iter=self.max_iter)
+                                     kernel="precomputed",
+                                     eigen_solver=self.eigen_solver,
+                                     tol=self.tol, max_iter=self.max_iter)
 
         kng = kneighbors_graph(self.nbrs_, self.n_neighbors,
                                mode='distance')

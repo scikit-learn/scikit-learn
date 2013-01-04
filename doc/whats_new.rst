@@ -8,11 +8,24 @@
 Changelog
 ---------
 
-   - The table of contents has now been made expandible (on the
+   - Partial dependence plots for :mod:`ensemble.gradient_boosting` by
+     `Peter Prettenhofer`_.
+
+   - New estimators :class:`linear_model.PassiveAggressiveClassifier` and
+     :class:`linear_model.PassiverAggressiveRegressor` by `Rob Zinkov` and
+     `Mathieu Blondel`_.
+
+   - The table of contents has now been made expandable (on the
      index page) - by Jaques Grobler.
 
    - :class:`feature_selection.SelectPercentile` now breaks ties
      deterministically instead of returning all equally ranked features.
+
+   - :class:`feature_selection.SelectKBest` and
+     :class:`feature_selection.SelectPercentile` are more numerically stable
+     since they use scores, rather than p-values, to rank results. This means
+     that they might sometimes select different features than they did
+     previously.
 
    - Ridge regression and ridge classification fitting with ``sparse_cg`` solver
      no longer has quadratic memory complexity, by `Lars Buitinck`_ and
@@ -31,18 +44,104 @@ Changelog
    - New estimator :ref:`FeatureUnion <feature_union>` that concatenates results
      of several transformers by `Andreas Müller`_.
 
+   - Faster and more robust :func:`metrics.confusion_matrix` and
+     :ref:`clustering_evaluation` by Wei Li.
+
+   - New estimator :class:`decomposition.FactorAnalysis` by
+     `Christian Osendorfer`_ and `Alexandre Gramfort`_
+
+   - :func:`datasets.make_circles` now has the same number of inner and outer points.
+
+   - :func:`cross_validation.cross_val_score` now works with precomputed kernels
+     and affinity matrices, by `Andreas Müller`_.
+
+   - LARS algorithm made more numerically stable with heuristics to drop
+     regressors too correlated as well as to stop the path when
+     numerical noise becomes predominant, by `Gael Varoquaux`_.
+
+   - New estimator :class:`preprocessing.OneHotEncoder` to compute
+     binary encodings of categorical features by `Andreas Müller`_.
+
+   - Faster implementation of :func:`metrics.precision_recall_curve` by
+     Conrad Lee.
+
+   - New :class:`feature_extraction.FeatureHasher`, implementing the
+     "hashing trick" for fast, low-memory feature extraction from string data
+     by `Lars Buitinck`_.
+
+   - New dummy estimators :class:`dummy.DummyClassifiers` and
+     :class:`DummyRegressor` by `Mathieu Blondel`_. Useful to sanity-check your
+     estimators. Multioutput support added by `Arnaud Joly`_.
+
+   - New kernel :class:`metrics.chi2_kernel` by `Andreas Müller`_, often used
+     in computer vision applications.
+
+   - Longstanding bug in :class:`naive_bayes.BernoulliNB` fixed by
+     Shaun Jackman.
+
+   - New estimator :class:`manifold.SpectralEmbedding` and function
+     :func:`manifold.spectral_embedding`, implementing the
+     "laplacian eigenmaps" for nonlinear dimensionality reduction by Wei Li.
+
+   - Implement `predict_proba` in :class:`multiclass.OneVsRestClassifier`, by
+     Andrew Winterman.
+
+   - Added :class:`kernel_approximation.Nystrom` for approximating arbitrary
+     kernels to the :ref:`kernel_approximation` module by `Andreas Müller`_.
+
+   - Improve consistency in :mod:`ensemble.gradient_boosting`: estimators
+     :class:`ensemble.gradient_boosting.GradientBoostingRegressor` and
+     :class:`ensemble.gradient_boosting.GradientBoostingClassifier` use
+     the estimator :class:`tree.DecisionTreeRegressor` instead of the
+     :class:`tree._tree.Tree` datastructure by `Arnaud Joly`_.
+
+   - Fixed a floating point exception in the :ref:`decision trees <tree>`
+     module, by Seberg.
+
+   - Fix :func:`metrics.roc_curve` fails when y_true has only one class
+     by Wei Li.
+
+   - New transformers :class:`random_projection.GaussianRandomProjection`,
+    :class:`random_projection.SparseRandomProjection` and the function
+    :func:`random_projection.johnson_lindenstrauss_min_dim`, implementing
+    Gaussian and sparse random projection matrix
+    by `Olivier Grisel`_ and `Arnaud Joly`_.
+
+   - Add the :fun:`metrics.mean_absolute_error` function which computes the
+     mean absolute error. The :fun:`metrics.mean_squared_error`,
+     :fun:`metrics.mean_absolute_error` and
+     :fun:`metrics.r2_score` metrics support multioutput by `Arnaud Joly`_.
+
+  - Fixed ``class_weight`` support in :class:`svm.LinearSVC` and
+    :class:`linear_model.LogisticRegression` by `Andreas Müller`_. The meaning
+    of ``class_weight`` was reversed as erroneously higher weight meant less
+    positives of a given class in earlier releases.
 
 API changes summary
 -------------------
+   - Renamed all occurences of ``n_atoms`` to ``n_components`` for consistency.
+     This applies to :class:`decomposition.DictionaryLearning`,
+     :class:`decomposition.MiniBatchDictionaryLearning`,
+     :func:`decomposition.dict_learning`, :func:`decomposition.dict_learning_online`.
+
+   - Renamed all occurrences of ``max_iters`` to ``max_iter`` for consistency.
+     This applies to :class:`label_propagation.BaseLabelPropagation`,
+     'label_propagation.LabelSpreading'
+
+   - Renamed all occurrences of ``learn_rate`` to ``learning_rate`` for consistency.
+     This applies to :class:`gradient_boosting.LossFunction`,
+     :class:`gradient_boosting.LeastSquaresError`,
+     :class:'gradient_boosting.BaseGradientBoosting',
+     :class:'gradient_boosting.GradientBoostingRegressor'
 
    - The module ``sklearn.linear_model.sparse`` is gone. Sparse matrix support
      was already integrated into the "regular" linear models.
 
    - ``sklearn.metrics.mean_square_error``, which incorrectly returned the
-     cumulated error, was removed. Use ``mean_squared_error`` instead.
+     accumulated error, was removed. Use ``mean_squared_error`` instead.
 
    - Passing ``class_weight`` parameters to ``fit`` methods is no longer
-     supported. Pass them to estimator constuctors instead.
+     supported. Pass them to estimator constructors instead.
 
    - GMMs no longer have ``decode`` and ``rvs`` methods. Use the ``score``,
      ``predict`` or ``sample`` methods instead.
@@ -53,6 +152,103 @@ API changes summary
 
    - :class:`DictVectorizer` now returns sparse matrices in the CSR format,
      instead of COO.
+
+   - Renamed ``k`` in :class:`cross_validation.KFold` and
+     :class:`cross_validation.StratifiedKFold` to ``n_folds``, renamed
+     ``n_bootstraps`` to ``n_iter`` in ``cross_validation.Bootstrap``.
+
+   - Renamed all occurrences of ``n_iterations`` to ``n_iter`` for consistency.
+     This applies to :class:`cross_validation.ShuffleSplit`,
+     :class:`cross_validation.StratifiedShuffleSplit`,
+     :func:`utils.randomized_range_finder` and :func:`utils.randomized_svd`.
+
+   - Replaced ``rho`` in :class:`linear_model.ElasticNet` and
+     :class:`linear_model.SGDClassifier` by ``l1_ratio``. The ``rho`` parameter
+     had different meanings; ``l1_ratio`` was introduced to avoid confusion.
+     It has the same meaning as previously ``rho`` in
+     :class:`linear_model.ElasticNet` and ``(1-rho)`` in
+     :class:`linear_model.SGDClassifier`.
+
+   - :class:`linear_model.LassoLars` and :class:`linear_model.Lars` now
+     store a list of paths in the case of multiple targets, rather than
+     an array of paths.
+
+   - The attribute ``gmm`` of :class:`hmm.GMMHMM` was renamed to ``gmm_``
+     to adhere more strictly with the API.
+
+   - :func:`cluster.spectral_embedding` is now in
+     :func:`manifold.spectral_embedding`.
+
+   - Renamed ``eig_tol`` in :func:`manifold.spectral_embedding`,
+     :class:`cluster.SpectralClustering` to ``eigen_tol``, renamed ``mode``
+     to ``eigen_solver``.
+
+   - Renamed ``mode`` in :func:`manifold.spectral_embedding` and
+     :class:`cluster.SpectralClustering` to ``eigen_solver``.
+
+   - ``classes_`` and ``n_classes_`` attributes of
+     :class:`tree.DecisionTreeClassifier` and all derived ensemble models are
+     now flat in case of single output problems and nested in case of
+     multi-output problems.
+
+   - The ``estimators_`` attribute of
+     :class:`ensemble.gradient_boosting.GradientBoostingRegressor` and
+     :class:`ensemble.gradient_boosting.GradientBoostingClassifier` is now an
+     array of :class:'tree.DecisionTreeRegressor'.
+
+   - Renamed ``chunk_size`` to ``batch_size`` in
+     :class:`decomposition.MiniBatchDictionaryLearning` and
+     :class:`decomposition.MiniBatchSparsePCA` for consistency.
+
+   - :class:`svm.SVC` and :class:`svm.NuSVC` now provide a ``classes_``
+     attribute and support arbitrary dtypes for labels ``y``.
+     Also, the dtype returned by ``predict`` now reflects the dtype of
+     ``y`` during ``fit`` (used to be ``np.float``).
+
+.. _changes_0_12.1:
+
+0.12.1
+=======
+
+The 0.12.1 release is a bug-fix release with no additional features, but is
+instead a set of bug fixes
+
+Changelog
+----------
+
+ - Improved numerical stability in spectral embedding by `Gael
+   Varoquaux`_
+
+ - Doctest under windows 64bit by `Gael Varoquaux`_
+
+ - Documentation fixes for elastic net by `Andreas Müller`_ and
+   `Alexandre Gramfort`_
+
+ - Proper behavior with fortran-ordered numpy arrays by `Gael Varoquaux`_
+
+ - Make GridSearchCV work with non-CSR sparse matrix by `Lars Buitinck`_
+
+ - Fix parallel computing in MDS by `Gael Varoquaux`_
+
+ - Fix unicode support in count vectorizer by `Andreas Müller`_
+
+ - Fix MinCovDet breaking with X.shape = (3, 1) by `Virgile Fritsch`_
+
+ - Fix clone of SGD objects by `Peter Prettenhofer`_
+
+ - Stabilize GMM by `Virgile Fritsch`_
+
+People
+------
+
+ *  14  `Peter Prettenhofer`_
+ *  12  `Gael Varoquaux`_
+ *  10  `Andreas Müller`_
+ *   5  `Lars Buitinck`_
+ *   3  `Virgile Fritsch`_
+ *   1  `Alexandre Gramfort`_
+ *   1  `Gilles Louppe`_
+ *   1  `Mathieu Blondel`_
 
 .. _changes_0_12:
 
@@ -118,7 +314,7 @@ Changelog
      by `Andreas Müller`_.
 
    - In :class:`feature_extraction.text.CountVectorizer`, added an option to
-     infrequent words, ``min_df`` by  `Andreas Müller`_.
+     ignore infrequent words, ``min_df`` by  `Andreas Müller`_.
 
    - Add support for multiple targets in some linear models (ElasticNet, Lasso
      and OrthogonalMatchingPursuit) by `Vlad Niculae`_ and
@@ -1188,7 +1384,7 @@ People that made this release possible preceeded by number of commits:
 
    * 2  Ronan Amicel
 
-   * 1 `Christian Osendorfer <http://osdf.github.com/>`_
+   * 1 `Christian Osendorfer`_
 
 
 
@@ -1424,3 +1620,4 @@ of commits):
 
 .. _@kernc: http://github.com/kernc
 
+.. _Christian Osendorfer: http://osdf.github.com

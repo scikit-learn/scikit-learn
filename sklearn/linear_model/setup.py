@@ -18,21 +18,19 @@ def configuration(parent_package='', top_path=None):
         cblas_libs.append('m')
         libraries.append('m')
 
-    config.add_extension('cd_fast',
-         sources=['cd_fast.c'],
-         libraries=cblas_libs,
-         include_dirs=[join('..', 'src', 'cblas'),
-                       numpy.get_include(),
-                       blas_info.pop('include_dirs', [])],
-         extra_compile_args=blas_info.pop('extra_compile_args', []),
-         **blas_info
-         )
+    config.add_extension('cd_fast', sources=['cd_fast.c'],
+                         libraries=cblas_libs,
+                         include_dirs=[join('..', 'src', 'cblas'),
+                                       numpy.get_include(),
+                                       blas_info.pop('include_dirs', [])],
+                         extra_compile_args=blas_info.pop('extra_compile_args',
+                                                          []), **blas_info)
 
     config.add_extension('sgd_fast',
-         sources=['sgd_fast.c'],
-         include_dirs=[numpy.get_include()],
-         libraries=libraries,
-         )
+                         sources=['sgd_fast.c'],
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries,
+                         )
 
     # add other directories
     config.add_subpackage('tests')

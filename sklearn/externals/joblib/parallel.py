@@ -28,6 +28,17 @@ if multiprocessing:
     except ImportError:
         multiprocessing = None
 
+
+# 2nd stage: validate that locking is available on the system and
+#            issue a warning if not
+if multiprocessing:
+    try:
+        _sem = multiprocessing.Semaphore()
+        del _sem # cleanup
+    except (ImportError, OSError) as e:
+        multiprocessing = None
+        warnings.warn('%s.  joblib will operate in serial mode' % (e,))
+
 from .format_stack import format_exc, format_outer_frames
 from .logger import Logger, short_format_time
 from .my_exceptions import TransportableException, _mk_exception
@@ -225,30 +236,31 @@ class Parallel(Logger):
         triggered the exception, even though the traceback happens in the
         child process::
 
-         >>> from string import atoi
+         >>> from heapq import nlargest
          >>> from sklearn.externals.joblib import Parallel, delayed
-         >>> Parallel(n_jobs=2)(delayed(atoi)(n) for n in ('1', '300', 30)) #doctest: +SKIP
+         >>> Parallel(n_jobs=2)(delayed(nlargest)(2, n) for n in (range(4), 'abcde', 3)) #doctest: +SKIP
          #...
          ---------------------------------------------------------------------------
          Sub-process traceback:
          ---------------------------------------------------------------------------
-         TypeError                                          Fri Jul  2 20:32:05 2010
-         PID: 4151                                     Python 2.6.5: /usr/bin/python
+         TypeError                                          Mon Nov 12 11:37:46 2012
+         PID: 12934                                    Python 2.7.3: /usr/bin/python
          ...........................................................................
-         /usr/lib/python2.6/string.pyc in atoi(s=30, base=10)
-             398     is chosen from the leading characters of s, 0 for octal, 0x or
-             399     0X for hexadecimal.  If base is 16, a preceding 0x or 0X is
-             400     accepted.
-             401
-             402     """
-         --> 403     return _int(s, base)
-             404
-             405
-             406 # Convert string to long integer
-             407 def atol(s, base=10):
+         /usr/lib/python2.7/heapq.pyc in nlargest(n=2, iterable=3, key=None)
+             419         if n >= size:
+             420             return sorted(iterable, key=key, reverse=True)[:n]
+             421 
+             422     # When key is none, use simpler decoration
+             423     if key is None:
+         --> 424         it = izip(iterable, count(0,-1))                    # decorate
+             425         result = _nlargest(n, it)
+             426         return map(itemgetter(0), result)                   # undecorate
+             427 
+             428     # General case, slowest method
 
-         TypeError: int() can't convert non-string with explicit base
+         TypeError: izip argument #1 must support iteration
          ___________________________________________________________________________
+
 
         Using pre_dispatch in a producer/consumer situation, where the
         data is generated on the fly. Note how the producer is first
@@ -261,7 +273,7 @@ class Parallel(Logger):
 
          >>> def producer():
          ...     for i in range(6):
-         ...         print 'Produced %s' % i
+         ...         print('Produced %s' % i)
          ...         yield i
 
          >>> out = Parallel(n_jobs=2, verbose=100, pre_dispatch='1.5*n_jobs')(
@@ -279,7 +291,7 @@ class Parallel(Logger):
          [Parallel(n_jobs=2)]: Done   5 out of   6 | elapsed:    0.0s remaining:    0.0s
          [Parallel(n_jobs=2)]: Done   6 out of   6 | elapsed:    0.0s finished
     '''
-    def __init__(self, n_jobs=None, verbose=0, pre_dispatch='all'):
+    def __init__(self, n_jobs=1, verbose=0, pre_dispatch='all'):
         self.verbose = verbose
         self.n_jobs = n_jobs
         self.pre_dispatch = pre_dispatch
@@ -288,6 +300,9 @@ class Parallel(Logger):
         # able to close it ASAP, and not burden the user with closing it.
         self._output = None
         self._jobs = list()
+        # A flag used to abort the dispatching of jobs in case an
+        # exception is found
+        self._aborting = False
 
     def dispatch(self, func, args, kwargs):
         """ Queue the function for computing, with or without multiprocessing
@@ -303,15 +318,17 @@ class Parallel(Logger):
             self._jobs.append(job)
             self.n_dispatched += 1
         else:
-            self._lock.acquire()
             # If job.get() catches an exception, it closes the queue:
+            if self._aborting:
+                return
             try:
+                self._lock.acquire()
                 job = self._pool.apply_async(SafeFunction(func), args,
                             kwargs, callback=CallBack(self.n_dispatched, self))
                 self._jobs.append(job)
                 self.n_dispatched += 1
             except AssertionError:
-                print '[Parallel] Pool seems closed'
+                print('[Parallel] Pool seems closed')
             finally:
                 self._lock.release()
 
@@ -323,7 +340,7 @@ class Parallel(Logger):
             try:
                 # XXX: possible race condition shuffling the order of
                 # dispatchs in the next two lines.
-                func, args, kwargs = self._iterable.next()
+                func, args, kwargs = next(self._iterable)
                 self.dispatch(func, args, kwargs)
                 self._dispatch_amount -= 1
             except ValueError:
@@ -399,33 +416,40 @@ class Parallel(Logger):
                 self._lock.release()
             try:
                 self._output.append(job.get())
-            except tuple(self.exceptions), exception:
-                if isinstance(exception,
-                        (KeyboardInterrupt, WorkerInterrupt)):
-                    # We have captured a user interruption, clean up
-                    # everything
-                    if hasattr(self, '_pool'):
-                        self._pool.close()
-                        self._pool.terminate()
+            except tuple(self.exceptions) as exception:
+                try:
+                    self._aborting = True
+                    self._lock.acquire()
+                    if isinstance(exception,
+                            (KeyboardInterrupt, WorkerInterrupt)):
+                        # We have captured a user interruption, clean up
+                        # everything
+                        if hasattr(self, '_pool'):
+                            self._pool.close()
+                            self._pool.terminate()
+                            # We can now allow subprocesses again
+                            os.environ.pop('__JOBLIB_SPAWNED_PARALLEL__', 0)
+                        raise exception
+                    elif isinstance(exception, TransportableException):
+                        # Capture exception to add information on the local
+                        # stack in addition to the distant stack
+                        this_report = format_outer_frames(context=10,
+                                                        stack_start=1)
+                        report = """Multiprocessing exception:
+    %s
+    ---------------------------------------------------------------------------
+    Sub-process traceback:
+    ---------------------------------------------------------------------------
+    %s""" % (
+                                this_report,
+                                exception.message,
+                            )
+                        # Convert this to a JoblibException
+                        exception_type = _mk_exception(exception.etype)[0]
+                        raise exception_type(report)
                     raise exception
-                elif isinstance(exception, TransportableException):
-                    # Capture exception to add information on the local stack
-                    # in addition to the distant stack
-                    this_report = format_outer_frames(context=10,
-                                                      stack_start=1)
-                    report = """Multiprocessing exception:
-%s
----------------------------------------------------------------------------
-Sub-process traceback:
----------------------------------------------------------------------------
-%s""" % (
-                            this_report,
-                            exception.message,
-                        )
-                    # Convert this to a JoblibException
-                    exception_type = _mk_exception(exception.etype)[0]
-                    raise exception_type(report)
-                raise exception
+                finally:
+                    self._lock.release()
 
     def __call__(self, iterable):
         if self._jobs:
@@ -448,19 +472,36 @@ Sub-process traceback:
                     'Parallel loops cannot be nested, setting n_jobs=1',
                     stacklevel=2)
             else:
+                already_forked = int(os.environ.get('__JOBLIB_SPAWNED_PARALLEL__', 0))
+                if already_forked:
+                    raise ImportError('[joblib] Attempting to do parallel computing'
+                            'without protecting your import on a system that does '
+                            'not support forking. To use parallel-computing in a '
+                            'script, you must protect you main loop using "if '
+                            "__name__ == '__main__'"
+                            '". Please see the joblib documentation on Parallel '
+                            'for more information'
+                        )
+
+                # Set an environment variable to avoid infinite loops
+                os.environ['__JOBLIB_SPAWNED_PARALLEL__'] = '1'
                 self._pool = multiprocessing.Pool(n_jobs)
                 self._lock = threading.Lock()
                 # We are using multiprocessing, we also want to capture
                 # KeyboardInterrupts
                 self.exceptions.extend([KeyboardInterrupt, WorkerInterrupt])
 
-        if self.pre_dispatch == 'all' or n_jobs == 1:
+        pre_dispatch = self.pre_dispatch
+        if isinstance(iterable, list):
+            # We are given a list. No need to be lazy
+            pre_dispatch = 'all'
+
+        if pre_dispatch == 'all' or n_jobs == 1:
             self._iterable = None
             self._pre_dispatch_amount = 0
         else:
             self._iterable = iterable
             self._dispatch_amount = 0
-            pre_dispatch = self.pre_dispatch
             if hasattr(pre_dispatch, 'endswith'):
                 pre_dispatch = eval(pre_dispatch)
             self._pre_dispatch_amount = pre_dispatch = int(pre_dispatch)
@@ -485,6 +526,7 @@ Sub-process traceback:
             if n_jobs > 1:
                 self._pool.close()
                 self._pool.join()
+                os.environ.pop('__JOBLIB_SPAWNED_PARALLEL__', 0)
             self._jobs = list()
         output = self._output
         self._output = None

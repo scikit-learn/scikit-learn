@@ -1,7 +1,9 @@
 
+import warnings
 import  numpy as np
 cimport numpy as np
 from scipy import sparse
+from ..utils import ConvergenceWarning
 
 ################################################################################
 # Includes
@@ -12,7 +14,7 @@ cdef extern from "svm.h":
     cdef struct svm_parameter
     cdef struct svm_csr_problem
     char *svm_csr_check_parameter(svm_csr_problem *, svm_parameter *)
-    svm_csr_model *svm_csr_train(svm_csr_problem *, svm_parameter *)
+    svm_csr_model *svm_csr_train(svm_csr_problem *, svm_parameter *, int *)
     void svm_csr_free_and_destroy_model(svm_csr_model** model_ptr_ptr)
 
 cdef extern from "libsvm_sparse_helper.c":
@@ -27,7 +29,7 @@ cdef extern from "libsvm_sparse_helper.c":
                             char *probA, char *probB)
     svm_parameter *set_parameter (int , int , int , double, double ,
                                   double , double , double , double,
-                                  double, int, int, int, char *, char *)
+                                  double, int, int, int, char *, char *, int)
     void copy_sv_coef   (char *, svm_csr_model *)
     void copy_intercept (char *, svm_csr_model *, np.npy_intp *)
     int copy_predict (char *, svm_csr_model *, np.npy_intp *, char *)
@@ -63,11 +65,10 @@ def libsvm_sparse_train ( int n_features,
                      np.ndarray[np.float64_t, ndim=1, mode='c'] Y,
                      int svm_type, int kernel_type, int degree, double gamma,
                      double coef0, double eps, double C,
-                     np.ndarray[np.int32_t,   ndim=1, mode='c'] weight_label,
-                     np.ndarray[np.float64_t, ndim=1, mode='c'] weight,
+                     np.ndarray[np.float64_t, ndim=1, mode='c'] class_weight,
                      np.ndarray[np.float64_t, ndim=1, mode='c'] sample_weight,
                      double nu, double cache_size, double p, int
-                     shrinking, int probability):
+                     shrinking, int probability, int max_iter):
     """
     Wrap svm_train from libsvm using a scipy.sparse.csr matrix
 
@@ -113,11 +114,14 @@ def libsvm_sparse_train ( int n_features,
                               indptr.shape, indptr.data, Y.data,
                               sample_weight.data, kernel_type)
 
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
+        class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
+
     # set parameters
     param = set_parameter(svm_type, kernel_type, degree, gamma, coef0,
                           nu, cache_size, C, eps, p, shrinking,
-                          probability, <int> weight.shape[0],
-                          weight_label.data, weight.data)
+                          probability, <int> class_weight.shape[0],
+                          class_weight_label.data, class_weight.data, max_iter)
 
     # check parameters
     if (param == NULL or problem == NULL):
@@ -129,7 +133,8 @@ def libsvm_sparse_train ( int n_features,
         raise ValueError(error_msg)
 
     # call svm_train, this does the real work
-    model = svm_csr_train(problem, param)
+    cdef int fit_status = 0
+    model = svm_csr_train(problem, param, &fit_status)
 
     cdef np.npy_intp SV_len = get_l(model)
     cdef np.npy_intp n_class = get_nr(model)
@@ -192,8 +197,8 @@ def libsvm_sparse_train ( int n_features,
     free_problem(problem)
     free_param(param)
 
-    return support_vectors_, sv_coef_data, intercept, label, n_class_SV, probA, probB
-
+    return (support_vectors_, sv_coef_data, intercept, label, n_class_SV,
+            probA, probB, fit_status)
 
 
 def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
@@ -207,8 +212,7 @@ def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
                             intercept, int svm_type, int kernel_type, int
                             degree, double gamma, double coef0, double
                             eps, double C,
-                            np.ndarray[np.int32_t, ndim=1] weight_label,
-                            np.ndarray[np.float64_t, ndim=1] weight,
+                            np.ndarray[np.float64_t, ndim=1] class_weight,
                             double nu, double p, int
                             shrinking, int probability,
                             np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
@@ -240,12 +244,14 @@ def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] dec_values
     cdef svm_parameter *param
     cdef svm_csr_model *model
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
+        class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
     param = set_parameter(svm_type, kernel_type, degree, gamma,
                           coef0, nu,
-			  100., # cache size has no effect on predict
-			  C, eps, p, shrinking,
-                          probability, <int> weight.shape[0], weight_label.data,
-                          weight.data)
+                          100., # cache size has no effect on predict
+                          C, eps, p, shrinking,
+                          probability, <int> class_weight.shape[0], class_weight_label.data,
+                          class_weight.data, -1)
 
     model = csr_set_model(param, <int> nSV.shape[0], SV_data.data,
                           SV_indices.shape, SV_indices.data,
@@ -280,8 +286,7 @@ def libsvm_sparse_predict_proba(
     intercept, int svm_type, int kernel_type, int
     degree, double gamma, double coef0, double
     eps, double C,
-    np.ndarray[np.int32_t, ndim=1] weight_label,
-    np.ndarray[np.float64_t, ndim=1] weight,
+    np.ndarray[np.float64_t, ndim=1] class_weight,
     double nu, double p, int shrinking, int probability,
     np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
     np.ndarray[np.int32_t, ndim=1, mode='c'] label,
@@ -293,12 +298,14 @@ def libsvm_sparse_predict_proba(
     cdef np.ndarray[np.float64_t, ndim=2, mode='c'] dec_values
     cdef svm_parameter *param
     cdef svm_csr_model *model
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
+        class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
     param = set_parameter(svm_type, kernel_type, degree, gamma,
                           coef0, nu,
-			  100., # cache size has no effect on predict
-			  C, eps, p, shrinking,
-                          probability, <int> weight.shape[0], weight_label.data,
-                          weight.data)
+                          100., # cache size has no effect on predict
+                          C, eps, p, shrinking,
+                          probability, <int> class_weight.shape[0], class_weight_label.data,
+                          class_weight.data, -1)
 
     model = csr_set_model(param, <int> nSV.shape[0], SV_data.data,
                           SV_indices.shape, SV_indices.data,

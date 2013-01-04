@@ -25,7 +25,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils.fixes import lsqr
 from ..utils.sparsefuncs import (csc_mean_variance_axis0,
                                  inplace_csc_column_scale)
-from cd_fast import sparse_std
+from .cd_fast import sparse_std
 
 
 ###
@@ -39,7 +39,7 @@ from cd_fast import sparse_std
 
 def sparse_center_data(X, y, fit_intercept, normalize=False):
     """
-    Compute informations needed to center data to have mean zero along
+    Compute information needed to center data to have mean zero along
     axis 0. Be aware that X will not be centered since it would break
     the sparsity, but will be normalized if asked so.
     """
@@ -205,14 +205,6 @@ class LinearRegression(LinearModel, RegressorMixin):
     """
     Ordinary least squares Linear Regression.
 
-    Attributes
-    ----------
-    `coef_` : array
-        Estimated coefficients for the linear regression problem.
-
-    `intercept_` : array
-        Independent term in the linear model.
-
     Parameters
     ----------
     fit_intercept : boolean, optional
@@ -221,6 +213,17 @@ class LinearRegression(LinearModel, RegressorMixin):
         (e.g. data is expected to be already centered).
     normalize : boolean, optional
         If True, the regressors X are normalized
+
+    Attributes
+    ----------
+    `coef_` : array, shape (n_features, ) or (n_targets, n_features)
+        Estimated coefficients for the linear regression problem. If
+        multiple targets are passed during the fit (y 2D), this is a 2D
+        array of shape (n_targets, n_features), while if only one target
+        is passed, this is a 1D array of lenght n_features.
+
+    `intercept_` : array
+        Independent term in the linear model.
 
     Notes
     -----
@@ -242,11 +245,11 @@ class LinearRegression(LinearModel, RegressorMixin):
         ----------
         X : numpy array or sparse matrix of shape [n_samples,n_features]
             Training data
-        y : numpy array of shape [n_samples, n_responses]
+        y : numpy array of shape [n_samples, n_targets]
             Target values
         n_jobs : The number of jobs to use for the computation.
             If -1 all CPUs are used. This will only provide speedup for
-            n_response > 1 and sufficient large problems
+            n_targets > 1 and sufficient large problems
 
         Returns
         -------
@@ -255,8 +258,8 @@ class LinearRegression(LinearModel, RegressorMixin):
         X = safe_asarray(X)
         y = np.asarray(y)
 
-        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-                self.fit_intercept, self.normalize, self.copy_X)
+        X, y, X_mean, y_mean, X_std = self._center_data(
+            X, y, self.fit_intercept, self.normalize, self.copy_X)
 
         if sp.issparse(X):
             if y.ndim < 2:
@@ -265,13 +268,14 @@ class LinearRegression(LinearModel, RegressorMixin):
                 self.residues_ = out[3]
             else:
                 # sparse_lstsq cannot handle y with shape (M, K)
-                outs = Parallel(n_jobs=n_jobs)(delayed(lsqr)
-                        (X, y[:, j].ravel()) for j in range(y.shape[1]))
+                outs = Parallel(n_jobs=n_jobs)(
+                    delayed(lsqr)(X, y[:, j].ravel())
+                    for j in range(y.shape[1]))
                 self.coef_ = np.vstack(out[0] for out in outs)
                 self.residues_ = np.vstack(out[3] for out in outs)
         else:
             self.coef_, self.residues_, self.rank_, self.singular_ = \
-                    linalg.lstsq(X, y)
+                linalg.lstsq(X, y)
             self.coef_ = self.coef_.T
 
         if y.ndim == 1:

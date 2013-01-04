@@ -7,19 +7,18 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 
-from sklearn.utils.testing import assert_less, assert_greater
-
 from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 
 import numpy as np
 from nose import SkipTest
-from nose.tools import assert_equal, assert_equals, \
-            assert_false, assert_not_equal, assert_true
+from nose.tools import (assert_equal, assert_equals, assert_false,
+                        assert_not_equal, assert_true)
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
+from sklearn.utils.testing import assert_in, assert_less, assert_greater
 
 from collections import defaultdict, Mapping
 from functools import partial
@@ -235,6 +234,22 @@ def test_countvectorizer_custom_vocabulary_pipeline():
     assert_equal(set(pipe.named_steps['count'].vocabulary_),
                  set(what_we_like))
     assert_equal(X.shape[1], len(what_we_like))
+
+
+def test_countvectorizer_empty_vocabulary():
+    try:
+        CountVectorizer(vocabulary=[])
+        assert False, "we shouldn't get here"
+    except ValueError as e:
+        assert_in("empty vocabulary", str(e))
+
+    try:
+        v = CountVectorizer(min_df=1, max_df=1.0, stop_words="english")
+        # fit on stopwords only
+        v.fit(["to be or not to be", "and me too", "and so do you"])
+        assert False, "we shouldn't get here"
+    except ValueError as e:
+        assert_in("empty vocabulary", str(e))
 
 
 def test_fit_countvectorizer_twice():
@@ -582,7 +597,8 @@ def test_vectorizer_pipeline_grid_selection():
 
 def test_count_vectorizer_unicode():
     # tests that the count vectorizer works with cyrillic.
-    document = (u"\xd0\x9c\xd0\xb0\xd1\x88\xd0\xb8\xd0\xbd\xd0\xbd\xd0\xbe\xd0"
+    document = (
+        u"\xd0\x9c\xd0\xb0\xd1\x88\xd0\xb8\xd0\xbd\xd0\xbd\xd0\xbe\xd0"
         u"\xb5 \xd0\xbe\xd0\xb1\xd1\x83\xd1\x87\xd0\xb5\xd0\xbd\xd0\xb8\xd0"
         u"\xb5 \xe2\x80\x94 \xd0\xbe\xd0\xb1\xd1\x88\xd0\xb8\xd1\x80\xd0\xbd"
         u"\xd1\x8b\xd0\xb9 \xd0\xbf\xd0\xbe\xd0\xb4\xd1\x80\xd0\xb0\xd0\xb7"

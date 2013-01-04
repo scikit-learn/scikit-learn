@@ -53,7 +53,7 @@ regr.fit(diabetes_X_train, diabetes_y_train)
 print 'Coefficients: \n', regr.coef_
 # The mean square error
 print ("Residual sum of squares: %.2f" %
-        np.mean((regr.predict(diabetes_X_test) - diabetes_y_test) ** 2))
+       np.mean((regr.predict(diabetes_X_test) - diabetes_y_test) ** 2))
 # Explained variance score: 1 is perfect prediction
 print ('Variance score: %.2f' % regr.score(diabetes_X_test, diabetes_y_test))
 

@@ -145,7 +145,8 @@ rules before submitting a pull request:
 
 You can also check for common programming errors with the following tools:
 
-    * Code with a good unittest coverage (at least 80%), check with::
+    * Code with a good unittest coverage (at least 90%, better 100%), check
+      with::
 
         $ pip install nose coverage
         $ nosetests --with-coverage path/to/tests_for_package
@@ -453,7 +454,8 @@ multiple interfaces):
 
 :Model:
 
-    A model that can give a goodness of fit or a likelihood of unseen
+    A model that can give a `goodness of fit <https://en.wikipedia.org/wiki/Goodness_of_fit>`_
+    measure or a likelihood of unseen
     data, implements (higher is better)::
 
       score = obj.score(data)
@@ -491,7 +493,10 @@ The arguments accepted by ``__init__`` should all be keyword arguments
 with a default value. In other words, a user should be able to instantiate
 an estimator without passing any arguments to it. The arguments should all
 correspond to hyperparameters describing the model or the optimisation
-problem the estimator tries to solve.
+problem the estimator tries to solve. These initial arguments (or parameters)
+are always remembered by the estimator.
+Also note that they should not be documented under the `Attributes` section,
+but rather under the `Parameters` section for that estimator.
 
 In addition, **every keyword argument accepted by ``__init__`` should
 correspond to an attribute on the instance**. Scikit-learn relies on this to
@@ -570,7 +575,15 @@ data dependent. A tolerance stopping criterion ``tol`` is not directly
 data dependent (although the optimal value according to some scoring
 function probably is).
 
-Any attribute that ends with ``_`` is expected to be overridden when
+Estimated Attributes
+^^^^^^^^^^^^^^^^^^^^
+
+Attributes that have been estimated from the data must always have a name
+ending with trailing underscore, for example the coefficients of
+some regression estimator would be stored in a `coef_` attribute after
+`fit()` has been called.
+
+The last-mentioned attributes are expected to be overridden when
 you call ``fit`` a second time without taking any previous value into
 account: **fit should be idempotent**.
 

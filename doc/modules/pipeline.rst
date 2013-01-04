@@ -37,8 +37,8 @@ is an estimator object::
     >>> clf # doctest: +NORMALIZE_WHITESPACE
     Pipeline(steps=[('reduce_dim', PCA(copy=True, n_components=None,
         whiten=False)), ('svm', SVC(C=1.0, cache_size=200, class_weight=None,
-        coef0=0.0, degree=3, gamma=0.0, kernel='rbf', probability=False,
-        shrinking=True, tol=0.001, verbose=False))])
+        coef0=0.0, degree=3, gamma=0.0, kernel='rbf', max_iter=-1,
+        probability=False, shrinking=True, tol=0.001, verbose=False))])
 
 The estimators of the pipeline are stored as a list in the ``steps`` attribute::
 
@@ -53,10 +53,11 @@ and as a ``dict`` in ``named_steps``::
 Parameters of the estimators in the pipeline can be accessed using the
 ``<estimator>__<parameter>`` syntax::
 
-    >>> clf.set_params(svm__C=10) # NORMALIZE_WHITESPACE
-    Pipeline(steps=[('reduce_dim', PCA(copy=True, n_components=None, whiten=False)), ('svm', SVC(C=10, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
-      kernel='rbf', probability=False, shrinking=True, tol=0.001,
-      verbose=False))])
+    >>> clf.set_params(svm__C=10) # doctest: +NORMALIZE_WHITESPACE
+    Pipeline(steps=[('reduce_dim', PCA(copy=True, n_components=None,
+        whiten=False)), ('svm', SVC(C=10, cache_size=200, class_weight=None,
+        coef0=0.0, degree=3, gamma=0.0, kernel='rbf', max_iter=-1,
+        probability=False, shrinking=True, tol=0.001, verbose=False))])
 
 This is particularly important for doing grid searches::
 
@@ -88,9 +89,9 @@ pipeline.
 
 .. _feature_union:
 
-======================================
-FeatureUnion: Concatenating features
-======================================
+==========================================
+FeatureUnion: Combining feature extractors
+==========================================
 
 .. currentmodule:: sklearn.pipeline
 
@@ -98,8 +99,8 @@ FeatureUnion: Concatenating features
 transformer that combines their output. A :class:`FeatureUnion` takes
 a list of transformer objects. During fitting, each of these
 is fit to the data independently. For transforming data, the
-transformers are applied in parallel, and their output combined into a
-single output array or matrix.
+transformers are applied in parallel, and the sample vectors they output
+are concatenated end-to-end into larger vectors.
 
 :class:`FeatureUnion` serves the same purposes as :class:`Pipeline` -
 convenience and joint parameter estimation and validation.
@@ -107,13 +108,19 @@ convenience and joint parameter estimation and validation.
 :class:`FeatureUnion` and :class:`Pipeline` can be combined to
 create complex models.
 
+(A :class:`FeatureUnion` has no way of checking whether two transformers
+might produce identical features. It only produces a union when the
+feature sets are disjoint, and making sure they are is the caller's
+responsibility.)
+
 
 Usage
 =====
 
-The :class:`FeatureUnion` is build using a list of ``(key, value)`` pairs, where
-the ``key`` a string containing the name you want to give to a given transformation and ``value``
-is an estimator object::
+A :class:`FeatureUnion` is built using a list of ``(key, value)`` pairs,
+where the ``key`` is the name you want to give to a given transformation
+(an arbitrary string; it only serves as an identifier)
+and ``value`` is an estimator object::
 
     >>> from sklearn.pipeline import FeatureUnion
     >>> from sklearn.decomposition import PCA
