@@ -223,6 +223,9 @@ API changes summary
      :class:`cross_validation.ShuffleSplit` and
      :class:`cross_validation.StratifiedShuffleSplit`.
 
+   - Renamed function :func:`sklearn.metrics.zero_one` to
+     :func:`sklearn.metrics.zero_one_loss`.
+
 .. _changes_0_12.1:
 
 0.12.1

@@ -536,14 +536,11 @@ def confusion_matrix(y_true, y_pred, labels=None):
 ###############################################################################
 # Multiclass loss function
 ###############################################################################
-def zero_one(y_true, y_pred, normalize=False):
+def zero_one_loss(y_true, y_pred, normalize=True):
     """Zero-One classification loss
 
-    Positive integer (number of misclassifications) or float (fraction of
-    misclassifications, only when normalize != False).
     The best performance is 0.
 
-    Return the number of errors
 
     Parameters
     ----------
@@ -554,6 +551,44 @@ def zero_one(y_true, y_pred, normalize=False):
     normalize : bool, optional
         If False (default), return the number of misclassifications.
         Otherwise, return the fraction of misclassifications.
+
+    Returns
+    -------
+    loss : float or int,
+        If normalize is True, return the fraction of misclassifications
+        (float), else it returns the number of misclassifications (int).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import zero_one
+    >>> y_pred = [2, 1, 3, 4]
+    >>> y_true = [1, 2, 3, 4]
+    >>> zero_one_loss(y_true, y_pred)
+    0.5
+    >>> zero_one_loss(y_true, y_pred, normalize=False)
+    2
+
+    """
+    y_true, y_pred = check_arrays(y_true, y_pred)
+    if not normalize:
+        return np.sum(y_pred != y_true)
+    else:
+        return np.mean(y_pred != y_true)
+
+
+def zero_one(y_true, y_pred, normalize=False):
+    """Zero-One classification loss
+
+    Positive integer (number of misclassifications). The best performance
+    is 0.
+
+    Return the number of errors
+
+    Parameters
+    ----------
+    y_true : array-like
+
+    y_pred : array-like
 
     Returns
     -------
@@ -570,11 +605,12 @@ def zero_one(y_true, y_pred, normalize=False):
     0.5
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred)
-    if not normalize:
-        return np.sum(y_pred != y_true)
-    else:
-        return np.mean(y_pred != y_true)
+    warnings.warn(
+        "Function zero_one has been renamed to "
+        'zero_one_loss'" and will be removed in release 0.15."
+        "Default behavior change from normalize=False to normalize=True",
+        DeprecationWarning, stacklevel=2)
+    return zero_one_loss(y_true, y_pred, normalize)
 
 
 ###############################################################################

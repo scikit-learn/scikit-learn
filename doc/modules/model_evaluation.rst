@@ -48,7 +48,7 @@ Others have been extended to the multiclass case:
   precision_recall_fscore_support
   precision_score
   zero_one_score
-  zero_one
+  zero_one_loss
 
 In the following sub-sections, we will describe each of those functions.
 
@@ -318,7 +318,7 @@ The following figure shows an example of ROC curve.
 
 Zero one loss
 --------------
-The :func:`zero_one` function computes the 0-1 classification loss over
+The :func:`zero_one_loss` function computes the 0-1 classification loss over
 :math:`n_{\text{samples}}`. If :math:`\hat{y}_i` is the predicted value of
 the :math:`i`-th sample and :math:`y_i` is the corresponding true value,
 then the 0-1 loss :math:`L_{0-1}` is defined as:
@@ -331,7 +331,7 @@ where :math:`1(x)` is the indicator function.
 
 Zero one score, the accuraccy
 -----------------------------
-The :func:`zero_one` function computes the
+The :func:`zero_one_score` function computes the
 `accuracy <http://en.wikipedia.org/wiki/Accuracy_and_precision>`_, the fraction
 of correct`predictions.
 

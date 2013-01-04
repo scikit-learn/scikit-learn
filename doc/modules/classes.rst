@@ -683,7 +683,7 @@ Classification metrics
    metrics.recall_score
    metrics.roc_curve
    metrics.zero_one_score
-   metrics.zero_one
+   metrics.zero_one_loss
 
 Regression metrics
 ------------------

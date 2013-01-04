@@ -27,6 +27,7 @@ from sklearn.metrics import roc_curve
 from sklearn.metrics import auc_score
 from sklearn.metrics import average_precision_score
 from sklearn.metrics import zero_one
+from sklearn.metrics import zero_one_loss
 from sklearn.metrics import hinge_loss
 
 
@@ -481,10 +482,19 @@ def test_losses():
     assert_equal(zero_one(y_true, y_pred), 13)
     assert_almost_equal(zero_one(y_true, y_pred, normalize=True),
                         13 / float(n), 2)
+
+    assert_equal(zero_one_loss(y_true, y_pred, normalize=False), 13)
+    assert_almost_equal(zero_one_loss(y_true, y_pred, normalize=True),
+                        13 / float(n), 2)
+    assert_almost_equal(zero_one_loss(y_true, y_true),
+                        0.0, 2)
+    assert_almost_equal(zero_one_loss(y_true, y_true, normalize=False),
+                        0, 2)
+
     assert_almost_equal(mean_squared_error(y_true, y_pred), 12.999 / n, 2)
     assert_almost_equal(mean_squared_error(y_true, y_true), 0.00, 2)
 
-    # mean_absolute_error and mean_squared_error are equal because of
+    # mean_absolute_error and mean_squared_error are equal because
     # it is a binary problem.
     assert_almost_equal(mean_absolute_error(y_true, y_pred), 12.999 / n, 2)
     assert_almost_equal(mean_absolute_error(y_true, y_true), 0.00, 2)
@@ -521,7 +531,16 @@ def test_symmetry():
                  zero_one(y_pred, y_true))
 
     assert_almost_equal(zero_one(y_true, y_pred, normalize=True),
-                 zero_one(y_pred, y_true, normalize=True), 2)
+                        zero_one(y_pred, y_true, normalize=True), 2)
+
+    assert_almost_equal(zero_one(y_true, y_pred, normalize=False),
+                        zero_one(y_pred, y_true, normalize=False), 2)
+
+    assert_equal(zero_one_loss(y_true, y_pred),
+                 zero_one_loss(y_pred, y_true))
+
+    assert_equal(zero_one_loss(y_true, y_pred, normalize=False),
+                 zero_one_loss(y_pred, y_true, normalize=False))
 
     assert_almost_equal(mean_squared_error(y_true, y_pred),
                         mean_squared_error(y_pred, y_true))
@@ -582,6 +601,8 @@ def test_multioutput_regression():
     error = mean_squared_error(y_true, y_pred)
     assert_almost_equal(error, (1. / 3 + 2. / 3 + 2. / 3) / 4.)
 
+    # mean_absolute_error and mean_squared_error are equal because
+    # it is a binary problem.
     error = mean_absolute_error(y_true, y_pred)
     assert_almost_equal(error, (1. / 3 + 2. / 3 + 2. / 3) / 4.)
 

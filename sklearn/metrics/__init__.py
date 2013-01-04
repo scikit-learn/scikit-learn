@@ -7,9 +7,12 @@ from .metrics import (confusion_matrix, roc_curve, auc, precision_score,
                       recall_score, fbeta_score, f1_score, zero_one_score,
                       precision_recall_fscore_support, classification_report,
                       precision_recall_curve, explained_variance_score,
-                      r2_score, zero_one, hinge_loss, matthews_corrcoef,
+                      r2_score, zero_one_loss, hinge_loss, matthews_corrcoef,
                       mean_squared_error, mean_absolute_error,
                       average_precision_score, auc_score)
+
+# Will be removed in 0.15
+from .metrics import zero_one
 
 from . import cluster
 from .cluster import adjusted_rand_score
@@ -54,5 +57,5 @@ __all__ = ['adjusted_mutual_info_score',
            'roc_curve',
            'silhouette_score',
            'v_measure_score',
-           'zero_one',
+           'zero_one_loss',
            'zero_one_score']
