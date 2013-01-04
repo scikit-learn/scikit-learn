@@ -94,7 +94,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self.n_particles = n_particles
         self.n_iter = n_iter
         self.verbose = verbose
-        self.random_state = check_random_state(random_state)
+        self.random_state = random_state
 
     def _sample_binomial(self, p):
         """
@@ -296,6 +296,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self
         """
         X = array2d(X)
+        self.random_state = check_random_state(self.random_state)
 
         self.components_ = np.asarray(self.random_state.normal(0, 0.01,
             (self.n_components, X.shape[1])), dtype=X.dtype, order='fortran')
