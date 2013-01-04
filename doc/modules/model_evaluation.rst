@@ -43,6 +43,7 @@ Others have been extended to the multiclass case:
    :template: function.rst
 
   accuraccy_sscore
+  classification_report
   confusion_matrix
   f1_score
   fbeta_score
@@ -69,6 +70,10 @@ defined as
 
 where :math:`1(x)` is the indicator function.
 
+.. topic:: Example:
+  * See :ref:`example_plot_permutation_test_for_classification.py`
+    for an example of accuraccy score usage to assess with permutations the
+    significance of a classification score.
 
 Area under the curve (AUC)
 --------------------------
@@ -101,6 +106,41 @@ By definition a confusion matrix :math:`cm` is such that :math:`cm[i, j]` is
 equal to the number of observations known to be in group :math:`i` but
 predicted to be in group :math:`j`.
 
+.. topic:: Example:
+
+  * See :ref:`example_plot_confusion_matrix.py`
+    for an example of confusion matrix usage to evaluate the quality of the
+    output of a classifier.
+
+  * See :ref:`example_plot_digits_classification.py`
+    for an example of confusion matrix usage in the classification of the
+    hand-written digits.
+
+  * See :ref:`example_document_classification_20newsgroups.py`
+    for an example of confusion matrix usage in the classification of text
+    documents.
+
+
+Clasification report
+--------------------
+The :func:`classification_report` function build a text report showing the main
+ classification metrics.
+
+.. topic:: Example:
+
+  * See :ref:`example_plot_digits_classification.py`
+    for an example of classification report usage in the classification of the
+    hand-written digits.
+
+  * See :ref:`example_document_classification_20newsgroups.py`
+    for an example of classification report usage in the classification of text
+    documents.
+
+  * See :ref:`example_grid_search_digits.py`
+    for an example of classification report usage in parameter estimation using
+    grid search with a nested cross-validation
+
+
 .. _precision_recall_f_measure_metrics:
 
 Precision, recall and F-measures
@@ -123,6 +163,17 @@ score:
     for an example of precision-Recall metric to evaluate the quality of the
     output of a classifier with :func:`precision_recall_curve`.
 
+  * See :ref:`example_document_classification_20newsgroups.py`
+    for an example of f1 score usage with classification of text
+    documents.
+
+  * See :ref:`example_grid_search_digits.py`
+    for an example of precision and recall score usage in parameter estimation
+    using grid search with a nested cross-validation
+
+  * See :ref:`example_plot_sparse_recovery.py`
+    for an example of :func:`precision_recall_curve` usage in feature selection
+    for sparse linear models
 
 Binary classification
 ^^^^^^^^^^^^^^^^^^^^^
@@ -333,6 +384,9 @@ The following figure shows an example of ROC curve.
     for an example of receiver operating characteristic (ROC) metric to
     evaluate the quality of the output of a classifier using cross-validation.
 
+  * See :ref:`example_plot_species_distribution_modeling.py`
+    for an example of receiver operating characteristic (ROC) metric usage to
+    model species distribution.
 
 Zero one loss
 --------------
@@ -347,6 +401,12 @@ then the 0-1 loss :math:`L_{0-1}` is defined as:
 
 where :math:`1(x)` is the indicator function.
 
+
+.. topic:: Example:
+
+  * See :ref:`example_plot_rfe_with_cross_validation.py`
+    for an example of zero one loss usage to perform recursive feature
+    elimination with cross-validation.
 
 
 .. _regression_metrics:
@@ -393,6 +453,7 @@ and :math:`y_i` is the corresponding true value, then the mean absolute error
 
   \text{MAE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \left| y_i - \hat{y}_i \right|.
 
+
 Mean squared error
 ------------------
 The :func:`mean_squared_error` function computes the `mean square
@@ -407,6 +468,12 @@ and :math:`y_i` is the corresponding true value, then the mean squared error
 .. math::
 
   \text{MSE}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (y_i - \hat{y}_i)^2.
+
+.. topic:: Examples:
+
+  * See :ref:`example_plot_gradient_boosting_regression.py`
+    for an example of mean squared error usage to
+    evaluate gradient boosting regression.
 
 
 R² score, the coefficient of determination
@@ -426,6 +493,11 @@ over :math:`n_{\text{samples}}` is defined as
 
 where :math:`\bar{y} =  \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}} y_i`.
 
+.. topic:: Examples:
+
+  * See :ref:`example_plot_lasso_and_elasticnet.py`
+    for an example of R² score usage to
+    evaluate Lasso and Elastic Net on sparse signals.
 
 Clustering metrics
 ======================
