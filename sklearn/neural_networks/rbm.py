@@ -129,6 +129,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         -------
         h: array-like, shape (n_samples, n_components)
         """
+        X = array2d(X)
         return self.mean_hiddens(X)
 
     def mean_hiddens(self, v):
