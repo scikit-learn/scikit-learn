@@ -574,7 +574,7 @@ def test_sample_weight():
 
     # Test that sample weighting is the same as having dupplicates
     X = iris.data
-    y = iris.data
+    y = iris.target
 
     dupplicates = rng.randint(0, X.shape[0], 1000)
 
