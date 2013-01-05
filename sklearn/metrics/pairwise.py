@@ -45,6 +45,7 @@ from ..utils import atleast2d_or_csr
 from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import array2d
+from ..preprocessing import normalize
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.joblib.parallel import cpu_count
@@ -372,7 +373,6 @@ def cosine_kernel(X, Y=None):
         An array with shape (n_samples_X, n_samples_Y).
     """
     # to avoid recursive import
-    from ..preprocessing import normalize
 
     X, Y = check_pairwise_arrays(X, Y)
 
