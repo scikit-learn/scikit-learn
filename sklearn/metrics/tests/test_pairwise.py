@@ -230,7 +230,7 @@ def test_kernel_symmetry():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     for kernel in (linear_kernel, polynomial_kernel, rbf_kernel,
-                   sigmoid_kernel):
+                   sigmoid_kernel, cosine_kernel):
         K = kernel(X, X)
         assert_array_almost_equal(K, K.T, 15)
 
@@ -240,7 +240,7 @@ def test_kernel_sparse():
     X = rng.random_sample((5, 4))
     X_sparse = csr_matrix(X)
     for kernel in (linear_kernel, polynomial_kernel, rbf_kernel,
-                   sigmoid_kernel):
+                   sigmoid_kernel, cosine_kernel):
         K = kernel(X, X)
         K2 = kernel(X_sparse, X_sparse)
         assert_array_almost_equal(K, K2)
@@ -268,7 +268,8 @@ def test_cosine_kernel():
     X = np.array([[3., 0.], [0., 4.], [-2., 0.], [0., -1.]])
     X_sparse = csr_matrix(X)
     Y = np.array(
-        [[np.sqrt(3.) / 2., .5], [-np.sqrt(2.) / 2., np.sqrt(2.) / 2.], [0., -.5]])
+        [[np.sqrt(3.) / 2., .5],
+         [-np.sqrt(2.) / 2., np.sqrt(2.) / 2.], [0., -.5]])
     Y_sparse = csr_matrix(Y)
 
     # Test with Y=None
