@@ -15,7 +15,6 @@ ctypedef np.int8_t BOOL_t
 # =============================================================================
 
 cdef class Criterion:
-
     cdef int n_outputs
     cdef int n_samples
     cdef double weighted_n_samples
@@ -103,7 +102,7 @@ cdef class Tree:
                                   int depth,
                                   int parent,
                                   int is_left_child,
-                                  double* buffer_value)
+                                  double* buffer_value) except *
 
     cdef int add_split_node(self, int parent, int is_left_child, int feature,
                                   double threshold, double* value,

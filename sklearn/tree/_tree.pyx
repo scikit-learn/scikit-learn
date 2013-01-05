@@ -454,7 +454,7 @@ cdef class Tree:
                                   int depth,
                                   int parent,
                                   int is_left_child,
-                                  double* buffer_value):
+                                  double* buffer_value) except *:
         """Recursive partition algorithm for the tree construction."""
         # Variables
         cdef Criterion criterion = self.criterion
@@ -492,7 +492,11 @@ cdef class Tree:
         # Count samples
         if n_node_samples == 0:
             raise ValueError("Attempting to find a split "
-                             "with an empty sample_mask")
+                             "with an empty sample_mask.")
+
+        if weighted_n_node_samples < 0.0:
+            raise ValueError("Attempting to find a split with a negative "
+                             "weighted number of samples.")
 
         # Split samples
         if depth < self.max_depth and \
@@ -792,7 +796,7 @@ cdef class Tree:
                     (n_node_samples - n_left) < min_samples_leaf):
                     a = b
                     continue
-                
+
                 if (weighted_n_left <= 0 or
                     (weighted_n_node_samples - weighted_n_left) <= 0):
                     # skip splits that result in nodes with net 0 or negative
@@ -821,7 +825,6 @@ cdef class Tree:
 
             if visited_features >= max_features:
                 break
-
 
         _best_i[0] = best_i
         _best_t[0] = best_t
