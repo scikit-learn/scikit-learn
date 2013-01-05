@@ -53,6 +53,7 @@ necessary to get a good convergence.
 from __future__ import print_function
 
 from sklearn.datasets import fetch_20newsgroups
+from sklearn.decomposition import TruncatedSVD
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
@@ -75,6 +76,9 @@ logging.basicConfig(level=logging.INFO,
 
 # parse commandline arguments
 op = OptionParser()
+op.add_option("--lsa",
+              dest="n_components", type="int",
+              help="Preprocess documents with latent semantic analysis.")
 op.add_option("--no-minibatch",
               action="store_false", dest="minibatch", default=True,
               help="Use ordinary k-means algorithm (in batch mode).")
@@ -87,6 +91,9 @@ op.add_option("--use-hashing",
 op.add_option("--n-features", type=int, default=10000,
               help="Maximum number of features (dimensions)"
                    "to extract from text.")
+op.add_option("--verbose",
+              action="store_true", dest="verbose", default=False,
+              help="Print progress reports inside k-means algorithm.")
 
 print(__doc__)
 op.print_help()
@@ -147,17 +154,25 @@ print("done in %fs" % (time() - t0))
 print("n_samples: %d, n_features: %d" % X.shape)
 print()
 
+if opts.n_components:
+    print("Performing dimensionality reduction using LSA")
+    t0 = time()
+    lsa = LatentSemanticAnalysis(opts.n_components)
+    X = lsa.fit_transform(X)
+
+    print("done in %fs" % (time() - t0))
+    print()
+
 
 ###############################################################################
 # Do the actual clustering
 
 if opts.minibatch:
     km = MiniBatchKMeans(n_clusters=true_k, init='k-means++', n_init=1,
-                         init_size=1000,
-                         batch_size=1000, verbose=1)
+                         init_size=1000, batch_size=1000, verbose=opts.verbose)
 else:
     km = KMeans(n_clusters=true_k, init='k-means++', max_iter=100, n_init=1,
-                verbose=1)
+                verbose=opts.verbose)
 
 print("Clustering sparse data with %s" % km)
 t0 = time()

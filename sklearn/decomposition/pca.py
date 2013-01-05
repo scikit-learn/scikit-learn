@@ -173,6 +173,7 @@ class PCA(BaseEstimator, TransformerMixin):
     RandomizedPCA
     KernelPCA
     SparsePCA
+    TruncatedSVD
     """
     def __init__(self, n_components=None, copy=True, whiten=False):
         self.n_components = n_components
