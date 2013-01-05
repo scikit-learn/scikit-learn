@@ -2,6 +2,7 @@ import os
 import shutil
 import tempfile
 import nose
+import numpy
 
 from sklearn.datasets import get_data_home
 from sklearn.datasets import clear_data_home
@@ -12,6 +13,8 @@ from sklearn.datasets import load_sample_image
 from sklearn.datasets import load_digits
 from sklearn.datasets import load_diabetes
 from sklearn.datasets import load_linnerud
+from sklearn.datasets import load_iris
+from sklearn.datasets import load_boston
 
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
@@ -108,26 +111,29 @@ def test_load_files_wo_load_content():
     assert_equal(res.get('data'), None)
 
 
-def test_load_sample_images():    
+def test_load_sample_images():
     res = load_sample_images()
-    assert_true(res.images)
-    assert_true(res.filenames)
+    assert_equal(len(res.images), 2)
+    assert_equal(len(res.filenames), 2)
     assert_true(res.DESCR)
 
 
 def test_load_digits():
     digits = load_digits()
-    assert_true(digits.data.any())
+    assert_equal(digits.data.shape, (1797, 64))
+    assert_equal(numpy.unique(digits.target).size, 10)
 
 
 def test_load_digits_n_class_lt_10():
     digits = load_digits(9)
-    assert_true(digits.data.any())
+    assert_equal(digits.data.shape, (1617, 64))
+    assert_equal(numpy.unique(digits.target).size, 9)
 
 
 def test_load_sample_image():
     china = load_sample_image('china.jpg')
     assert_equal(china.dtype, 'uint8')
+    assert_equal(china.shape, (427, 640, 3))
 
 
 def test_load_missing_sample_image_error():
@@ -137,13 +143,29 @@ def test_load_missing_sample_image_error():
 
 def test_load_diabetes():
     res = load_diabetes()
-    assert_true(res.data.any())
-    assert_true(res.target.any())
+    assert_equal(res.data.shape, (442, 10))
+    assert_true(res.target.size, 442)
 
 
 def test_load_linnerud():
     res = load_linnerud()
-    assert_true(res.data.any())
-    assert_true(res.target.any())
-    assert_true(res.target_names)
+    assert_equal(res.data.shape, (20, 3))
+    assert_equal(res.target.shape, (20, 3))
+    assert_equal(len(res.target_names), 3)
+    assert_true(res.DESCR)
+
+
+def test_load_iris():
+    res = load_iris()
+    assert_equal(res.data.shape, (150, 4))
+    assert_equal(res.target.size, 150)
+    assert_equal(res.target_names.size, 3)
+    assert_true(res.DESCR)
+
+
+def test_load_boston():
+    res = load_boston()
+    assert_equal(res.data.shape, (506, 13))
+    assert_equal(res.target.size, 506)
+    assert_equal(res.feature_names.size, 14)
     assert_true(res.DESCR)
