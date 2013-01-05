@@ -1171,7 +1171,6 @@ class MiniBatchKMeans(KMeans):
         X: array-like, shape = [n_samples, n_features]
             Coordinates of the data points to cluster.
         """
-        random_state = check_random_state(self.random_state)
 
         X = check_arrays(X, sparse_format="csr", copy=False)[0]
         n_samples, n_features = X.shape
@@ -1187,6 +1186,7 @@ class MiniBatchKMeans(KMeans):
                 or not hasattr(self, 'cluster_centers_')):
             # this is the first call partial_fit on this object:
             # initialize the cluster centers
+            random_state = check_random_state(self.random_state)
             self.cluster_centers_ = _init_centroids(
                 X, self.n_clusters, self.init, random_state=random_state,
                 x_squared_norms=x_squared_norms, init_size=self.init_size)
