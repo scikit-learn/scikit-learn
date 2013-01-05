@@ -96,7 +96,7 @@ People
 
   * `Gilles Louppe <http://www.montefiore.ulg.ac.be/~glouppe>`_
 
-  * `Andreas Müller <http://www.ais.uni-bonn.de/~amueller/>`_ (release manager)
+  * `Andreas Müller <http://peekaboo-vision.blogspot.com>`_ (release manager)
 
   * `Satra Ghosh <http://www.mit.edu/~satra>`_
 
@@ -105,5 +105,5 @@ People
   * `Arnaud Joly <http://www.ajoly.org>`_
 
 
-If I forgot anyone, do not hesitate to send me an email to
-fabian.pedregosa@inria.fr and I'll include you in the list.
+If we forgot anyone, do not hesitate to send me an email to
+amueller@ais.uni-bonn.de and I'll include you in the list.
