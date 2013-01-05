@@ -282,7 +282,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         self : object
             Returns self.
         """
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
 
         # Precompute some data
         X, y = check_arrays(X, y, sparse_format="dense")
@@ -358,7 +358,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                 sample_weight,
                 sample_mask,
                 X_argsorted,
-                self.random_state.randint(MAX_INT),
+                random_state.randint(MAX_INT),
                 verbose=self.verbose)
             for i in xrange(n_jobs))
 

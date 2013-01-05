@@ -451,7 +451,8 @@ class BaseGradientBoosting(BaseEnsemble):
         self.verbose = verbose
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
-    def _fit_stage(self, i, X, X_argsorted, y, y_pred, sample_mask):
+    def _fit_stage(self, i, X, X_argsorted, y, y_pred, sample_mask,
+                   random_state):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
         loss = self.loss_
         original_y = y
@@ -471,7 +472,7 @@ class BaseGradientBoosting(BaseEnsemble):
                 min_density=self.min_density,
                 max_features=self.max_features,
                 compute_importances=False,
-                random_state=self.random_state)
+                random_state=random_state)
 
             tree.fit(X, residual, sample_mask, X_argsorted, check_input=False)
 
@@ -557,7 +558,7 @@ class BaseGradientBoosting(BaseEnsemble):
         if not (0.0 < self.alpha and self.alpha < 1.0):
             raise ValueError("alpha must be in (0.0, 1.0)")
 
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
 
         # use default min_density (0.1) only for deep trees
         self.min_density = 0.0 if self.max_depth < 6 else 0.1
@@ -580,7 +581,6 @@ class BaseGradientBoosting(BaseEnsemble):
 
         sample_mask = np.ones((n_samples,), dtype=np.bool)
         n_inbag = max(1, int(self.subsample * n_samples))
-        self.random_state = check_random_state(self.random_state)
         # perform boosting iterations
         for i in range(self.n_estimators):
 
@@ -588,9 +588,10 @@ class BaseGradientBoosting(BaseEnsemble):
             if self.subsample < 1.0:
                 # TODO replace with ``np.choice`` if possible.
                 sample_mask = _random_sample_mask(n_samples, n_inbag,
-                                                  self.random_state)
+                                                  random_state)
             # fit next stage of trees
-            y_pred = self._fit_stage(i, X, X_argsorted, y, y_pred, sample_mask)
+            y_pred = self._fit_stage(i, X, X_argsorted, y, y_pred, sample_mask,
+                                     random_state)
 
             # track deviance (= loss)
             if self.subsample < 1.0:
