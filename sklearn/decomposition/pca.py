@@ -173,6 +173,7 @@ class PCA(BaseEstimator, TransformerMixin):
     ProbabilisticPCA
     RandomizedPCA
     KernelPCA
+    LSA
     SparsePCA
     """
     def __init__(self, n_components=None, copy=True, whiten=False):

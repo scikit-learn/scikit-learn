@@ -217,6 +217,7 @@ Samples generator
    decomposition.KernelPCA
    decomposition.FactorAnalysis
    decomposition.FastICA
+   decomposition.LSA
    decomposition.NMF
    decomposition.SparsePCA
    decomposition.MiniBatchSparsePCA

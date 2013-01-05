@@ -232,6 +232,49 @@ factorization, while larger values shrink many coefficients to zero.
      R. Jenatton, G. Obozinski, F. Bach, 2009
 
 
+.. _LSA:
+
+Latent semantic analysis
+========================
+
+:class:`LSA` implements latent semantic analysis,
+a transformation of term-document matrices
+(as returned by ``CountVectorizer`` or ``TfidfVectorizer``)
+to a "semantic" space of low dimensionality.
+
+.. note::
+    LSA is also known as latent semantic indexing, LSI,
+    though strictly that refers to its use in persistent indexes
+    for information retrieval purposes.
+
+Mathematically, LSA amounts to a truncated singular value decomposition (SVD)
+on the training samples :math:`X`:
+
+.. math::
+    X_k = U_k \Sigma_k V_k^\top
+
+After this operation, :math:`U_k \Sigma_k^\top`
+is the transformed training set with :math:`k` features.
+To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
+
+.. math::
+    X' = X V_k^\top
+
+LSA is very similar to PCA, but differs
+in that it works on sample matrices :math:`X` directly
+instead of their covariance matrices.
+In practical terms, this means :class:`LSA`'s methods
+accept ``scipy.sparse`` matrices without the need to densify them;
+densifying may fill up memory even for medium-sized document collections.
+
+While the :class:`LSA` transformer works with any (sparse) feature matrix,
+using it on tf-idf matrices is recommended.
+In particular, sublinear scaling and inverse document frequency
+should be turned on (``sublinear_tf=True, use_idf=True``)
+to bring the tf-idf values closer to a Gaussian distribution,
+compensating for LSA's erroneous assumptions about textual data.
+
+
 .. _DictionaryLearning:
 
 Dictionary Learning
