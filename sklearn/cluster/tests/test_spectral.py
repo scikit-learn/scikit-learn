@@ -43,8 +43,6 @@ def test_spectral_clustering():
                 model_copy = loads(dumps(model))
                 assert_equal(model_copy.n_clusters, model.n_clusters)
                 assert_equal(model_copy.eigen_solver, model.eigen_solver)
-                assert_array_equal(model_copy.random_state.get_state()[1],
-                                   model.random_state.get_state()[1])
                 assert_array_equal(model_copy.labels_, model.labels_)
 
 

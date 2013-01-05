@@ -430,11 +430,11 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
                              "'nearest_neighbors' or 'precomputed', got '%s'."
                              % self.affinity)
 
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         self.labels_ = spectral_clustering(self.affinity_matrix_,
                                            n_clusters=self.n_clusters,
                                            eigen_solver=self.eigen_solver,
-                                           random_state=self.random_state,
+                                           random_state=random_state,
                                            n_init=self.n_init,
                                            eigen_tol=self.eigen_tol,
                                            assign_labels=self.assign_labels)
