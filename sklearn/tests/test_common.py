@@ -17,6 +17,7 @@ from scipy import sparse
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
+#from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import all_estimators
@@ -739,3 +740,28 @@ def test_class_weight_auto_classifies():
             y_pred_auto = clf.predict(X_test)
             assert_greater(f1_score(y_test, y_pred_auto),
                            f1_score(y_test, y_pred))
+
+
+def test_classifiers_overwrite_params():
+    # test whether any classifier overwrites his init parameters during fit
+    classifiers = all_estimators(type_filter="classifier")
+    X, y = make_blobs(random_state=0)
+    # some want non-negative input
+    X -= X.min()
+    for name, Clf in classifiers:
+        with warnings.catch_warnings(record=True):
+            # catch deprecation warnings
+            clf = Clf()
+        params = clf.get_params()
+        params = clf.get_params()
+        clf.fit(X, y)
+        new_params = clf.get_params()
+        for k, v in params.items():
+            #assert_false(np.any(new_params[k] != v),
+                         #"Estimator %s changes its parameter %s"
+                         #"from %s to %s during fit."
+                         #% (name, k, v, new_params[k]))
+            if np.any(new_params[k] != v):
+                print("%s changes %s"
+                      " from %s to %s during fit."
+                      % (name, k, v, new_params[k]))
