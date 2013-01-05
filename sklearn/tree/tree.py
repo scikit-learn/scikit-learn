@@ -268,20 +268,6 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         else:
             criterion = REGRESSION[self.criterion](self.n_outputs_)
 
-        if sample_weight is not None:
-            if (getattr(sample_weight, "dtype", None) != DOUBLE or
-                    not sample_weight.flags.contiguous):
-                sample_weight = np.ascontiguousarray(
-                    sample_weight, dtype=DOUBLE)
-            if len(sample_weight.shape) > 1:
-                raise ValueError("Sample weights array has more "
-                                 "than one dimension: %d" %
-                                 len(sample_weight.shape))
-            if len(sample_weight) != n_samples:
-                raise ValueError("Number of weights=%d does not match "
-                                 "number of samples=%d" %
-                                 (len(sample_weight), n_samples))
-
         # Check parameters
         max_depth = np.inf if self.max_depth is None else self.max_depth
 
@@ -317,6 +303,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             raise ValueError("min_density must be in [0, 1]")
         if not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_features]")
+
         if sample_mask is not None:
             sample_mask = np.asarray(sample_mask, dtype=np.bool)
 
@@ -324,6 +311,20 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                 raise ValueError("Length of sample_mask=%d does not match "
                                  "number of samples=%d"
                                  % (sample_mask.shape[0], n_samples))
+
+        if sample_weight is not None:
+            if (getattr(sample_weight, "dtype", None) != DOUBLE or
+                    not sample_weight.flags.contiguous):
+                sample_weight = np.ascontiguousarray(
+                    sample_weight, dtype=DOUBLE)
+            if len(sample_weight.shape) > 1:
+                raise ValueError("Sample weights array has more "
+                                 "than one dimension: %d" %
+                                 len(sample_weight.shape))
+            if len(sample_weight) != n_samples:
+                raise ValueError("Number of weights=%d does not match "
+                                 "number of samples=%d" %
+                                 (len(sample_weight), n_samples))
 
         if X_argsorted is not None:
             X_argsorted = np.asarray(X_argsorted, dtype=np.int32,
@@ -352,6 +353,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
 
+        # Compute importances
         if self.compute_importances:
             self.feature_importances_ = \
                 self.tree_.compute_feature_importances()
