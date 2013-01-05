@@ -13,15 +13,13 @@ Restricted Boltzmann Machines
 =============================
 
 Restricted Boltzmann Machines (RBM) are unsupervised nonlinear feature learners
-based on a probabilistic model. The algorithm used in their training is an
-approximation that lowers the quality of the probability density estimation
-learned, but focuses on learning useful hidden representations.  Because of
-this, the features extracted by an RBM give good results when fed into a linear
-classifier such as a linear SVM or perceptron.
+based on a probabilistic model.  The features extracted by an RBM give good
+results when fed into a linear classifier such as a linear SVM or perceptron.
 
-The learning algorithm prevents the representations from straying far from the
-input data, which makes them capture interesting regularities, but makes the
-model less useful for small datasets.
+The training method is based on an approximation, for efficiency.  It prevents
+the representations from straying far from the input data, which makes them
+capture interesting regularities, but makes the model less useful for small
+datasets, and usually not useful for density estimation.
 
 Deep neural networks that are notoriously difficult to train from scratch can
 be simplified by initializing each layer's weights with the weights of an RBM.
@@ -94,5 +92,55 @@ where :math:`\sigma` is the logistic sigmoid function:
 
 .. math::
 
-  \sigma(x) = \frac{1}{1 + e^{-x}}
+   \sigma(x) = \frac{1}{1 + e^{-x}}
 
+Stochastic Maximum Likelihood Learning
+--------------------------------------
+
+The training algorithm implemented in :class:`BernoulliRBM` is known as
+Stochastic Maximum Likelihood (SML) or Persistent Contrastive Divergence
+(PCD).  Optimizing Maximum Likelihood directly is infeasible because of
+the shape of the data likelihood:
+
+.. math::
+
+   \log P(v) = \log \sum_h e^{-E(v, h)} - \log \sum_{x, y} e^{-E(x, y)}
+
+For simplicity the equation above is written for a single training example,
+but often in practice, as well as in this implementation, it is optimized by
+averaging over mini-batches.  The gradient with respect to the weights is
+formed of two terms corresponding to the ones above.  They are usually known as
+the positive gradient and the negative gradient, because of their respective
+signs.
+
+In maximizing the log likelihood, the positive gradient makes the model prefer
+hidden states that are compatible with the observed training data.  Because of
+the the bipartite structure of RBMs, it can be computed efficiently.  The
+negative gradient, however, is intractable.  Its goal is to lower the energy of
+joint states that the model prefers, therefore making it stay true to the data
+and not fantasize.  It can be approximated by Markov Chain Monte Carlo using
+block Gibbs sampling by iteratively sampling each of :math:`v` and :math:`h`
+given the other, until the chain mixes.  Samples generated in this way are
+sometimes refered as fantasy particles.  This is inefficient and it's difficult
+to determine whether the Markov chain mixes.
+
+The Contrastive Divergence method suggests to stop the chain after a small
+number of iterations, :math:`k`, usually even 1.  This method is fast and has
+low variance, but the samples are far from the true distribution.
+
+Persistent Contrastive Divergence addresses this.  Instead of starting a new
+chain each time the gradient is needed, and sampling after one Gibbs step, in
+PCD we keep a number of chains (fantasy particles) that are updated :math:`k`
+Gibbs steps after each weight update.  This allows the particles to explore the
+space more thoroughly.
+
+.. topic:: References:
+
+    * `"A fast learning algorithm for deep belief nets"
+      <http://www.cs.toronto.edu/~hinton/absps/fastnc.pdf>`_
+      G. Hinton, S. Osindero, Y.-W. Teh, 2006
+
+    * `"Training Restricted Boltzmann Machines using Approximations to
+      the Likelihood Gradient"
+      <http://www.cs.toronto.edu/~tijmen/pcd/pcd.pdf>`_
+      T. Tieleman, 2008
