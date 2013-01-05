@@ -7,8 +7,6 @@ import inspect
 import numpy as np
 from scipy import sparse
 
-from .metrics import r2_score
-
 
 ###############################################################################
 def clone(estimator, safe=True):
@@ -296,6 +294,8 @@ class RegressorMixin(object):
         -------
         z : float
         """
+
+        from .metrics import r2_score
         return r2_score(y, self.predict(X))
 
 

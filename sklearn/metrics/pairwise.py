@@ -45,6 +45,7 @@ from ..utils import atleast2d_or_csr
 from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import array2d
+from ..preprocessing import normalize
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.joblib.parallel import cpu_count
@@ -352,6 +353,40 @@ def rbf_kernel(X, Y=None, gamma=None):
     return K
 
 
+def cosine_kernel(X, Y=None):
+    """Compute the cosinus kernel between X and Y, also referred to as cosine
+    similarity.
+
+        K(X, Y) = <X, Y> / (||X||*||Y||)
+
+    Parameters
+    ----------
+    X : array_like, sparse matrix
+        with shape (n_samples_X, n_features).
+
+    Y : array_like, sparse matrix (optional)
+        with shape (n_samples_Y, n_features).
+
+    Returns
+    -------
+    kernel matrix : array_like
+        An array with shape (n_samples_X, n_samples_Y).
+    """
+    # to avoid recursive import
+
+    X, Y = check_pairwise_arrays(X, Y)
+
+    X_normalized = normalize(X, copy=True)
+    if X is Y:
+        Y_normalized = X_normalized
+    else:
+        Y_normalized = normalize(Y, copy=True)
+
+    K = linear_kernel(X_normalized, Y_normalized)
+
+    return K
+
+
 def additive_chi2_kernel(X, Y=None):
     """Computes the additive chi-squared kernel between observations in X and Y
 
@@ -483,7 +518,7 @@ pairwise_distance_functions = {
     'l2': euclidean_distances,
     'l1': manhattan_distances,
     'manhattan': manhattan_distances,
-    'cityblock': manhattan_distances}
+    'cityblock': manhattan_distances, }
 
 
 def distance_metrics():
@@ -653,7 +688,8 @@ pairwise_kernel_functions = {
     'polynomial': polynomial_kernel,
     'poly': polynomial_kernel,
     'rbf': rbf_kernel,
-    'sigmoid': sigmoid_kernel, }
+    'sigmoid': sigmoid_kernel,
+    'cosine': cosine_kernel, }
 
 
 def kernel_metrics():
@@ -674,6 +710,7 @@ def kernel_metrics():
       'polynomial'     sklearn.pairwise.polynomial_kernel
       'rbf'            sklearn.pairwise.rbf_kernel
       'sigmoid'        sklearn.pairwise.sigmoid_kernel
+      'cosine'         sklearn.pairwise.cosine_kernel
       ==============   ========================================
     """
     return pairwise_kernel_functions
@@ -687,7 +724,7 @@ kernel_params = {
     "sigmoid": set(("gamma", "coef0")),
     "polynomial": set(("gamma", "degree", "coef0")),
     "poly": set(("gamma", "degree", "coef0")),
-}
+    "cosine": set(), }
 
 
 def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
@@ -706,7 +743,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     kernel between the arrays from both X and Y.
 
     Valid values for metric are::
-        ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear']
+        ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear', 'cosine']
 
     Parameters
     ----------
@@ -760,8 +797,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         return X
     elif metric in pairwise_kernel_functions:
         if filter_params:
-            kwds = dict((k, kwds[k])
-                        for k in kwds
+            kwds = dict((k, kwds[k]) for k in kwds
                         if k in kernel_params[metric])
         func = pairwise_kernel_functions[metric]
         if n_jobs == 1:
