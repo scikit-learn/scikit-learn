@@ -1,6 +1,7 @@
 import os
 import shutil
 import tempfile
+import warnings
 import nose
 import numpy
 
@@ -112,10 +113,13 @@ def test_load_files_wo_load_content():
 
 
 def test_load_sample_images():
-    res = load_sample_images()
-    assert_equal(len(res.images), 2)
-    assert_equal(len(res.filenames), 2)
-    assert_true(res.DESCR)
+    try:
+        res = load_sample_images()
+        assert_equal(len(res.images), 2)
+        assert_equal(len(res.filenames), 2)
+        assert_true(res.DESCR)
+    except ImportError:
+        warnings.warn("Could not load sample images, PIL is not available.")
 
 
 def test_load_digits():
@@ -131,14 +135,28 @@ def test_load_digits_n_class_lt_10():
 
 
 def test_load_sample_image():
-    china = load_sample_image('china.jpg')
-    assert_equal(china.dtype, 'uint8')
-    assert_equal(china.shape, (427, 640, 3))
+    try:
+        china = load_sample_image('china.jpg')
+        assert_equal(china.dtype, 'uint8')
+        assert_equal(china.shape, (427, 640, 3))
+    except ImportError:
+        warnings.warn("Could not load sample images, PIL is not available.")
 
 
 def test_load_missing_sample_image_error():
-    assert_raises(AttributeError, load_sample_image,
-                  'blop.jpg')
+    have_PIL = True
+    try:
+        try:
+            from scipy.misc import imread
+        except ImportError:
+            from scipy.misc.pilutil import imread
+    except ImportError:
+        have_PIL = False
+    if have_PIL:
+        assert_raises(AttributeError, load_sample_image,
+                      'blop.jpg')
+    else:
+        warnings.warn("Could not load sample images, PIL is not available.")
 
 
 def test_load_diabetes():
