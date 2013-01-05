@@ -745,7 +745,7 @@ def test_class_weight_auto_classifies():
 def test_classifiers_overwrite_params():
     # test whether any classifier overwrites his init parameters during fit
     classifiers = all_estimators(type_filter="classifier")
-    X, y = make_blobs(random_state=0)
+    X, y = make_blobs(random_state=0, n_samples=6)
     # some want non-negative input
     X -= X.min()
     for name, Clf in classifiers:
