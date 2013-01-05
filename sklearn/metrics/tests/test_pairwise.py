@@ -106,6 +106,12 @@ def test_pairwise_parallel():
 
 def test_pairwise_kernels():
     """ Test the pairwise_kernels helper function. """
+
+    def callable_rbf_kernel(x, y, **kwds):
+        """ Callable version of pairwise.rbf_kernel. """
+        K = rbf_kernel(np.atleast_2d(x), np.atleast_2d(y), **kwds)
+        return K
+
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     Y = rng.random_sample((2, 4))
@@ -159,12 +165,6 @@ def test_pairwise_kernels_filter_param():
     assert_array_almost_equal(K, K2)
 
     assert_raises(TypeError, pairwise_kernels, X, Y, "rbf", **params)
-
-
-def callable_rbf_kernel(x, y, **kwds):
-    """ Callable version of pairwise.rbf_kernel. """
-    K = rbf_kernel(np.atleast_2d(x), np.atleast_2d(y), **kwds)
-    return K
 
 
 def test_euclidean_distances():
@@ -270,33 +270,21 @@ def test_rbf_kernel():
 def test_cosine_kernel():
     """ Test the cosine_kernels. """
 
-    X = np.array([[3., 0.], [0., 4.], [-2., 0.], [0., -1.]])
-    X_sparse = csr_matrix(X)
-    Y = np.array(
-        [[np.sqrt(3.) / 2., .5],
-         [-np.sqrt(2.) / 2., np.sqrt(2.) / 2.], [0., -.5]])
-    Y_sparse = csr_matrix(Y)
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+    Y = rng.random_sample((3, 4))
+    Xcsr = csr_matrix(X)
+    Ycsr = csr_matrix(Y)
 
-    # Test with Y=None
-    #   for numpy arrays
-    K1 = pairwise_kernels(X, metric="cosine")
-    K2 = pairwise_kernels(normalize(X), metric="linear")
-    assert_array_almost_equal(K1, K2)
-    #   for scipy.sparse inputs
-    K1 = pairwise_kernels(X_sparse, metric="cosine")
-    K2 = pairwise_kernels(normalize(X_sparse), metric="linear")
-    assert_array_almost_equal(K1, K2)
-
-    # Test with Y=Y
-    #   for numpy arrays
-    K1 = pairwise_kernels(X, Y=Y, metric="cosine")
-    K2 = pairwise_kernels(normalize(X), Y=normalize(Y), metric="linear")
-    assert_array_almost_equal(K1, K2)
-    #   for scipy.sparse inputs
-    K1 = pairwise_kernels(X_sparse, Y=Y_sparse, metric="cosine")
-    K2 = pairwise_kernels(
-        normalize(X_sparse), Y=normalize(Y_sparse), metric="linear")
-    assert_array_almost_equal(K1, K2)
+    for X_, Y_ in ((X, None), (X, Y),
+                   (Xcsr, None), (Xcsr, Ycsr)):
+        # Test that the cosine is kernel is equal to a linear kernel when data
+        # has been previously normalized by L2-norm.
+        K1 = pairwise_kernels(X_, Y=Y_, metric="cosine")
+        X_ = normalize(X_)
+        if Y_ is not None:
+            Y_ = normalize(Y_)
+        K2 = pairwise_kernels(X_, Y=Y_, metric="linear")
 
 
 def test_check_dense_matrices():
