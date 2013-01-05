@@ -8,7 +8,8 @@ from .metrics import (confusion_matrix, roc_curve, auc, precision_score,
                       precision_recall_fscore_support, classification_report,
                       precision_recall_curve, explained_variance_score,
                       r2_score, zero_one, hinge_loss, matthews_corrcoef,
-                      mean_squared_error, average_precision_score, auc_score)
+                      mean_squared_error, mean_absolute_error,
+                      average_precision_score, auc_score)
 
 from . import cluster
 from .cluster import adjusted_rand_score
@@ -39,8 +40,8 @@ __all__ = ['adjusted_mutual_info_score',
            'homogeneity_completeness_v_measure',
            'homogeneity_score',
            'matthews_corrcoef',
-           'mean_square_error',
            'mean_squared_error',
+           'mean_absolute_error',
            'mutual_info_score',
            'normalized_mutual_info_score',
            'pairwise_distances',

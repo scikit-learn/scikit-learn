@@ -102,7 +102,8 @@ n_features = 300
 
 # L1 data (only 5 informative features)
 X_1, y_1 = datasets.make_classification(n_samples=n_samples,
-           n_features=n_features, n_informative=5, random_state=1)
+                                        n_features=n_features, n_informative=5,
+                                        random_state=1)
 
 # L2 data: non sparse, but less features
 y_2 = np.sign(.5 - rnd.rand(n_samples))
@@ -127,8 +128,8 @@ for fignum, (clf, cs, X, y) in enumerate(clf_sets):
         # To get nice curve, we need a large number of iterations to
         # reduce the variance
         grid = GridSearchCV(clf, refit=False, param_grid=param_grid,
-                        cv=ShuffleSplit(n=n_samples, train_size=train_size,
-                                        n_iter=250, random_state=1))
+                            cv=ShuffleSplit(n=n_samples, train_size=train_size,
+                                            n_iter=250, random_state=1))
         grid.fit(X, y)
         scores = [x[1] for x in grid.grid_scores_]
 

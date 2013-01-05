@@ -132,7 +132,7 @@ transform_algorithms = [
     ('Orthogonal Matching Pursuit\n2 atoms', 'omp',
      {'transform_n_nonzero_coefs': 2}),
     ('Least-angle regression\n5 atoms', 'lars',
-                            {'transform_n_nonzero_coefs': 5}),
+     {'transform_n_nonzero_coefs': 5}),
     ('Thresholding\n alpha=0.1', 'threshold', {'transform_alpha': .1})]
 
 reconstructions = {}

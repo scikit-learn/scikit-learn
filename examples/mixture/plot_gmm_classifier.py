@@ -67,7 +67,7 @@ n_classes = len(np.unique(y_train))
 # Try GMMs using different types of covariances.
 classifiers = dict((covar_type, GMM(n_components=n_classes,
                     covariance_type=covar_type, init_params='wc', n_iter=20))
-                    for covar_type in ['spherical', 'diag', 'tied', 'full'])
+                   for covar_type in ['spherical', 'diag', 'tied', 'full'])
 
 n_classifiers = len(classifiers)
 
@@ -91,7 +91,7 @@ for index, (name, classifier) in enumerate(classifiers.iteritems()):
     for n, color in enumerate('rgb'):
         data = iris.data[iris.target == n]
         pl.scatter(data[:, 0], data[:, 1], 0.8, color=color,
-                    label=iris.target_names[n])
+                   label=iris.target_names[n])
     # Plot the test data with crosses
     for n, color in enumerate('rgb'):
         data = X_test[y_test == n]
@@ -100,12 +100,12 @@ for index, (name, classifier) in enumerate(classifiers.iteritems()):
     y_train_pred = classifier.predict(X_train)
     train_accuracy = np.mean(y_train_pred.ravel() == y_train.ravel()) * 100
     pl.text(0.05, 0.9, 'Train accuracy: %.1f' % train_accuracy,
-                    transform=h.transAxes)
+            transform=h.transAxes)
 
     y_test_pred = classifier.predict(X_test)
     test_accuracy = np.mean(y_test_pred.ravel() == y_test.ravel()) * 100
     pl.text(0.05, 0.8, 'Test accuracy: %.1f' % test_accuracy,
-                    transform=h.transAxes)
+            transform=h.transAxes)
 
     pl.xticks(())
     pl.yticks(())

@@ -184,12 +184,15 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             used for later scaling along the features axis.
         """
         X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
+        warn_if_not_float(X, estimator=self)
         feature_range = self.feature_range
         if feature_range[0] >= feature_range[1]:
             raise ValueError("Minimum of desired feature range must be smaller"
                              " than maximum. Got %s." % str(feature_range))
         min_ = np.min(X, axis=0)
         scale_ = np.max(X, axis=0) - min_
+        # Do not scale constant features
+        scale_[scale_ == 0.0] = 1.0
         self.scale_ = (feature_range[1] - feature_range[0]) / scale_
         self.min_ = feature_range[0] - min_ / scale_
         return self

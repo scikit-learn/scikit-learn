@@ -334,7 +334,7 @@ class RFECV(RFE, MetaEstimatorMixin):
                   verbose=self.verbose - 1)
 
         cv = check_cv(self.cv, X, y, is_classifier(self.estimator))
-        scores = {}
+        scores = np.zeros(X.shape[1])
 
         # Cross-validation
         n = 0
@@ -343,24 +343,21 @@ class RFECV(RFE, MetaEstimatorMixin):
             # Compute a full ranking of the features
             ranking_ = rfe.fit(X[train], y[train]).ranking_
             # Score each subset of features
-            for k in xrange(1, max(ranking_) + 1):
-                mask = np.where(ranking_ <= k)[0]
+            for k in xrange(0, max(ranking_)):
+                mask = np.where(ranking_ <= k + 1)[0]
                 estimator = clone(self.estimator)
                 estimator.fit(X[train][:, mask], y[train])
 
                 if self.loss_func is None:
-                    score_k = 1.0 - estimator.score(X[test][:, mask], y[test])
+                    loss_k = 1.0 - estimator.score(X[test][:, mask], y[test])
                 else:
-                    score_k = self.loss_func(
+                    loss_k = self.loss_func(
                         y[test], estimator.predict(X[test][:, mask]))
-
-                if not k in scores:
-                    scores[k] = 0.0
 
                 if self.verbose > 0:
                     print("Finished fold with %d / %d feature ranks, loss=%f"
-                          % (k, max(ranking_), score_k))
-                scores[k] += score_k
+                          % (k, max(ranking_), loss_k))
+                scores[k] += loss_k
 
             n += 1
 
@@ -368,10 +365,10 @@ class RFECV(RFE, MetaEstimatorMixin):
         best_score = np.inf
         best_k = None
 
-        for k, score in sorted(scores.iteritems()):
+        for k, score in enumerate(scores):
             if score < best_score:
                 best_score = score
-                best_k = k
+                best_k = k + 1
 
         # Re-execute an elimination with best_k over the whole set
         rfe = RFE(estimator=self.estimator,
@@ -388,8 +385,5 @@ class RFECV(RFE, MetaEstimatorMixin):
         self.support_ = rfe.support_
         self.ranking_ = rfe.ranking_
 
-        self.cv_scores_ = [0] * len(scores)
-        for k, score in scores.iteritems():
-            self.cv_scores_[k - 1] = score / n
-
+        self.cv_scores_ = scores / n
         return self

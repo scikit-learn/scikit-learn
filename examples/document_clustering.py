@@ -93,7 +93,7 @@ if opts.minibatch:
                          batch_size=1000, verbose=1)
 else:
     km = KMeans(n_clusters=true_k, init='random', max_iter=100, n_init=1,
-            verbose=1)
+                verbose=1)
 
 print "Clustering sparse data with %s" % km
 t0 = time()

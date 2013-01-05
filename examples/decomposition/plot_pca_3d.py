@@ -28,7 +28,7 @@ np.random.seed(4)
 
 def pdf(x):
     return 0.5 * (stats.norm(scale=0.25 / e).pdf(x)
-            + stats.norm(scale=4 / e).pdf(x))
+                  + stats.norm(scale=4 / e).pdf(x))
 
 y = np.random.normal(scale=0.5, size=(30000))
 x = np.random.normal(scale=0.5, size=(30000))
@@ -55,8 +55,7 @@ def plot_figs(fig_num, elev, azim):
     pl.clf()
     ax = Axes3D(fig, rect=[0, 0, .95, 1], elev=elev, azim=azim)
 
-    ax.scatter(a[::10], b[::10], c[::10], c=density, marker='+',
-            alpha=.4)
+    ax.scatter(a[::10], b[::10], c[::10], c=density, marker='+', alpha=.4)
     Y = np.c_[a, b, c]
     U, pca_score, V = linalg.svd(Y, full_matrices=False)
     x_pca_axis, y_pca_axis, z_pca_axis = V.T * pca_score / pca_score.min()

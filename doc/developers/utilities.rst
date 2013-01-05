@@ -256,6 +256,9 @@ Testing Functions
 - :class:`mock_urllib2`: Object which mocks the urllib2 module to fake
   requests of mldata.  Used in tests of :mod:`sklearn.datasets`.
 
+- :func:`testing.all_estimators` : returns a list of all estimators in
+  sklearn to test for consistent behavior and interfaces.
+
 
 Helper Functions
 ================

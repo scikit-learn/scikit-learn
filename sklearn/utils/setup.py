@@ -25,7 +25,7 @@ def configuration(parent_package='', top_path=None):
 
     config.add_extension('arrayfuncs',
                          sources=['arrayfuncs.c'],
-                         depends=[join('src', 'cholesky_delete.c')],
+                         depends=[join('src', 'cholesky_delete.h')],
                          libraries=cblas_libs,
                          include_dirs=[join('..', 'src', 'cblas'),
                                        numpy.get_include(),

@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 import numpy.linalg as la
 import scipy.sparse as sp
@@ -112,7 +113,7 @@ def test_scaler_2d_arrays():
     assert_true(X_scaled is not X)
 
 
-def test_min_max_scaler():
+def test_min_max_scaler_iris():
     X = iris.data
     scaler = MinMaxScaler()
     # default params
@@ -130,6 +131,39 @@ def test_min_max_scaler():
     # raises on invalid range
     scaler = MinMaxScaler(feature_range=(2, 1))
     assert_raises(ValueError, scaler.fit, X)
+
+
+def test_min_max_scaler_zero_variance_features():
+    """Check min max scaler on toy data with zero variance features"""
+    X = [[0.,  1.,  0.5],
+         [0.,  1., -0.1],
+         [0.,  1.,  1.1]]
+
+    X_new = [[+0.,  2.,  0.5],
+             [-1.,  1.,  0.0],
+             [+0.,  1.,  1.5]]
+
+    # default params
+    scaler = MinMaxScaler()
+    X_trans = scaler.fit_transform(X)
+    X_expected_0_1 = [[0.,  0.,  0.5],
+                      [0.,  0.,  0.0],
+                      [0.,  0.,  1.0]]
+    assert_array_almost_equal(X_trans, X_expected_0_1)
+
+    X_trans_new = scaler.transform(X_new)
+    X_expected_0_1_new = [[+0.,  1.,  0.500],
+                          [-1.,  0.,  0.083],
+                          [+0.,  0.,  1.333]]
+    assert_array_almost_equal(X_trans_new, X_expected_0_1_new, decimal=2)
+
+    # not default params
+    scaler = MinMaxScaler(feature_range=(1, 2))
+    X_trans = scaler.fit_transform(X)
+    X_expected_1_2 = [[1.,  1.,  1.5],
+                      [1.,  1.,  1.0],
+                      [1.,  1.,  2.0]]
+    assert_array_almost_equal(X_trans, X_expected_1_2)
 
 
 def test_scaler_without_centering():
@@ -246,6 +280,20 @@ def test_scale_function_without_centering():
     X_csr_scaled_mean, X_csr_scaled_std = mean_variance_axis0(X_csr_scaled)
     assert_array_almost_equal(X_csr_scaled_mean, X_scaled.mean(axis=0))
     assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
+
+
+def test_warning_scaling_integers():
+    """Check warning when scaling integer data"""
+    X = np.array([[1, 2, 0],
+                  [0, 0, 0]], dtype=np.uint8)
+
+    with warnings.catch_warnings(record=True) as w:
+        StandardScaler().fit(X)
+        assert_equal(len(w), 1)
+
+    with warnings.catch_warnings(record=True) as w:
+        MinMaxScaler().fit(X)
+        assert_equal(len(w), 1)
 
 
 def test_normalizer_l1():

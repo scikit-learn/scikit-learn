@@ -102,13 +102,12 @@ emp_cov_contour = subfig1.contour(xx, yy, np.sqrt(mahal_emp_cov),
 mahal_robust_cov = robust_cov.mahalanobis(zz)
 mahal_robust_cov = mahal_robust_cov.reshape(xx.shape)
 robust_contour = subfig1.contour(xx, yy, np.sqrt(mahal_robust_cov),
-                                cmap=pl.cm.YlOrBr_r,
-                                linestyles='dotted')
+                                 cmap=pl.cm.YlOrBr_r, linestyles='dotted')
 
-subfig1.legend([emp_cov_contour.collections[1],
-                robust_contour.collections[1], inlier_plot, outlier_plot],
-                ['MLE dist', 'robust dist', 'inliers', 'outliers'],
-                loc="upper right", borderaxespad=0)
+subfig1.legend([emp_cov_contour.collections[1], robust_contour.collections[1],
+                inlier_plot, outlier_plot],
+               ['MLE dist', 'robust dist', 'inliers', 'outliers'],
+               loc="upper right", borderaxespad=0)
 pl.xticks(())
 pl.yticks(())
 

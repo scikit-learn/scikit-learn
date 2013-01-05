@@ -132,7 +132,8 @@ def randomized_range_finder(A, size, n_iter, random_state=None,
 
 
 def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
-                   transpose='auto', random_state=0, n_iterations=None):
+                   transpose='auto', flip_sign=True, random_state=0,
+                   n_iterations=None):
     """Computes a truncated randomized SVD
 
     Parameters
@@ -158,6 +159,12 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
         trigger the transposition if M.shape[1] > M.shape[0] since this
         implementation of randomized SVD tend to be a little faster in that
         case).
+
+    flip_sign: boolean, (True by default)
+        The output of a singular value decomposition is only unique up to a
+        permutation of the signs of the singular vectors. If `flip_sign` is
+        set to `True`, the sign ambiguity is resolved by making the largest
+        loadings for each component in the left singular vectors positive.
 
     random_state: RandomState or an int seed (0 by default)
         A random number generator instance to make behavior
@@ -202,6 +209,9 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
     Uhat, s, V = linalg.svd(B, full_matrices=False)
     del B
     U = np.dot(Q, Uhat)
+
+    if flip_sign:
+        U, s, V = svd_flip(U, s, V)
 
     if transpose:
         # transpose back the results according to the input convention
@@ -420,3 +430,27 @@ def cartesian(arrays, out=None):
         for j in xrange(1, arrays[0].size):
             out[j * m:(j + 1) * m, 1:] = out[0:m, 1:]
     return out
+
+
+def svd_flip(u, s, v):
+    """Sign correction to ensure deterministic output from SVD
+
+    Adjusts the columns of u and the rows of v such that the loadings in the
+    columns in u that are largest in absolute value are always positive.
+
+    Parameters
+    ----------
+    u, s, v: arrays,
+        The output of `linalg.svd` or `sklearn.utils.extmath.randomized_svd`,
+        with matching inner dimensions so one can compute `np.dot(u * s, v)`.
+
+    Returns
+    -------
+    u_adjusted, s, v_adjusted: arrays with the same dimensions as the input.
+
+    """
+    max_abs_cols = np.argmax(np.abs(u), axis=0)
+    signs = np.sign(u[max_abs_cols, xrange(u.shape[1])])
+    u *= signs
+    v *= signs[:, np.newaxis]
+    return u, s, v

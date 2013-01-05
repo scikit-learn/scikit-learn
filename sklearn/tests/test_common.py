@@ -20,6 +20,7 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import all_estimators
+from sklearn.utils.testing import meta_estimators
 from sklearn.utils.testing import set_random_state
 from sklearn.utils.testing import assert_greater
 
@@ -28,20 +29,17 @@ from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
                           TransformerMixin, ClusterMixin)
 from sklearn.utils import shuffle
 from sklearn.preprocessing import StandardScaler, Scaler
-from sklearn.datasets import load_iris, load_boston, make_blobs
+from sklearn.datasets import (load_iris, load_boston, make_blobs,
+                              make_classification)
 from sklearn.metrics import zero_one_score, adjusted_rand_score
 from sklearn.lda import LDA
 from sklearn.svm.base import BaseLibSVM
 
 # import "special" estimators
-from sklearn.grid_search import GridSearchCV
 from sklearn.decomposition import SparseCoder
-from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.pls import _PLS, PLSCanonical, PLSRegression, CCA, PLSSVD
-from sklearn.ensemble import BaseEnsemble, RandomTreesEmbedding
-from sklearn.multiclass import (OneVsOneClassifier, OneVsRestClassifier,
-                                OutputCodeClassifier)
-from sklearn.feature_selection import RFE, RFECV, SelectKBest
+from sklearn.ensemble import RandomTreesEmbedding
+from sklearn.feature_selection import SelectKBest
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB
 from sklearn.covariance import EllipticEnvelope, EllipticEnvelop
@@ -55,20 +53,20 @@ from sklearn.cluster import (WardAgglomeration, AffinityPropagation,
 from sklearn.isotonic import IsotonicRegression
 from sklearn.random_projection import (GaussianRandomProjection,
                                        SparseRandomProjection)
+from sklearn.metrics import f1_score
 
-dont_test = [Pipeline, FeatureUnion, GridSearchCV, SparseCoder,
-             EllipticEnvelope, EllipticEnvelop, DictVectorizer, LabelBinarizer,
-             LabelEncoder, TfidfTransformer, IsotonicRegression, OneHotEncoder,
-             RandomTreesEmbedding, FeatureHasher, DummyClassifier,
-             DummyRegressor]
-meta_estimators = [BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
-                   OneVsRestClassifier, RFE, RFECV]
+from sklearn.cross_validation import train_test_split
+
+dont_test = [SparseCoder, EllipticEnvelope, EllipticEnvelop, DictVectorizer,
+             LabelBinarizer, LabelEncoder, TfidfTransformer,
+             IsotonicRegression, OneHotEncoder, RandomTreesEmbedding,
+             FeatureHasher, DummyClassifier, DummyRegressor]
 
 
 def test_all_estimators():
     # Test that estimators are default-constructible, clonable
     # and have working repr.
-    estimators = all_estimators()
+    estimators = all_estimators(include_meta_estimators=True)
     clf = LDA()
 
     for name, E in estimators:
@@ -78,7 +76,7 @@ def test_all_estimators():
         # test default-constructibility
         # get rid of deprecation warnings
         with warnings.catch_warnings(record=True):
-            if E in meta_estimators:
+            if name in meta_estimators:
                 e = E(clf)
             else:
                 e = E()
@@ -101,7 +99,7 @@ def test_all_estimators():
                 # true for mixins
                 continue
             params = e.get_params()
-            if E in meta_estimators:
+            if name in meta_estimators:
                 # they need a non-default argument
                 args = args[2:]
             else:
@@ -130,7 +128,7 @@ def test_estimators_sparse_data():
     estimators = [(name, E) for name, E in estimators
                   if issubclass(E, (ClassifierMixin, RegressorMixin))]
     for name, Clf in estimators:
-        if Clf in dont_test or Clf in meta_estimators:
+        if Clf in dont_test:
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -154,9 +152,7 @@ def test_estimators_sparse_data():
 def test_transformers():
     # test if transformers do something sensible on training set
     # also test all shapes / shape errors
-    estimators = all_estimators()
-    transformers = [(name, E) for name, E in estimators
-                    if issubclass(E, TransformerMixin)]
+    transformers = all_estimators(type_filter='transformer')
     X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
                       random_state=0, n_features=2, cluster_std=0.1)
     n_samples, n_features = X.shape
@@ -168,7 +164,7 @@ def test_transformers():
     for name, Trans in transformers:
         trans = None
 
-        if Trans in dont_test or Trans in meta_estimators:
+        if Trans in dont_test:
             continue
         # these don't actually fit the data:
         if Trans in [AdditiveChi2Sampler, Binarizer, Normalizer]:
@@ -244,11 +240,9 @@ def test_transformers_sparse_data():
     X[X < .8] = 0
     X = sparse.csr_matrix(X)
     y = (4 * rng.rand(40)).astype(np.int)
-    estimators = all_estimators()
-    estimators = [(name, E) for name, E in estimators
-                  if issubclass(E, TransformerMixin)]
+    estimators = all_estimators(type_filter='transformer')
     for name, Trans in estimators:
-        if Trans in dont_test or Trans in meta_estimators:
+        if Trans in dont_test:
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -302,7 +296,7 @@ def test_estimators_nan_inf():
                               " transform.")
     for X_train in [X_train_nan, X_train_inf]:
         for name, Est in estimators:
-            if Est in dont_test or Est in meta_estimators:
+            if Est in dont_test:
                 continue
             if Est in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
                 continue
@@ -383,14 +377,12 @@ def test_classifiers_one_label():
     X_train = rnd.uniform(size=(10, 3))
     X_test = rnd.uniform(size=(10, 3))
     y = np.ones(10)
-    estimators = all_estimators()
-    classifiers = [(name, E) for name, E in estimators
-                   if issubclass(E, ClassifierMixin)]
+    classifiers = all_estimators(type_filter='classifier')
     error_string_fit = "Classifier can't train when only one class is present."
     error_string_predict = ("Classifier can't predict when only one class is "
                             "present.")
     for name, Clf in classifiers:
-        if Clf in dont_test or Clf in meta_estimators:
+        if Clf in dont_test:
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -420,9 +412,7 @@ def test_classifiers_one_label():
 def test_clustering():
     # test if clustering algorithms do something sensible
     # also test all shapes / shape errors
-    estimators = all_estimators()
-    clustering = [(name, E) for name, E in estimators
-                  if issubclass(E, ClusterMixin)]
+    clustering = all_estimators(type_filter='cluster')
     iris = load_iris()
     X, y = iris.data, iris.target
     X, y = shuffle(X, y, random_state=7)
@@ -460,9 +450,7 @@ def test_clustering():
 def test_classifiers_train():
     # test if classifiers do something sensible on training set
     # also test all shapes / shape errors
-    estimators = all_estimators()
-    classifiers = [(name, E) for name, E in estimators
-                   if issubclass(E, ClassifierMixin)]
+    classifiers = all_estimators(type_filter='classifier')
     X_m, y_m = make_blobs(random_state=0)
     X_m, y_m = shuffle(X_m, y_m, random_state=7)
     X_m = StandardScaler().fit_transform(X_m)
@@ -475,7 +463,7 @@ def test_classifiers_train():
         n_classes = len(classes)
         n_samples, n_features = X.shape
         for name, Clf in classifiers:
-            if Clf in dont_test or Clf in meta_estimators:
+            if Clf in dont_test:
                 continue
             if Clf in [MultinomialNB, BernoulliNB]:
                 # TODO also test these!
@@ -488,6 +476,7 @@ def test_classifiers_train():
 
             # fit
             clf.fit(X, y)
+            assert_true(hasattr(clf, "classes_"))
             y_pred = clf.predict(X)
             assert_equal(y_pred.shape, (n_samples,))
             # training set performance
@@ -530,25 +519,19 @@ def test_classifiers_train():
                 except NotImplementedError:
                     pass
 
-            if hasattr(clf, "classes_"):
-                assert_array_equal(
-                    clf.classes_, classes,
-                    "Unexpected classes_ attribute for %r" % clf)
-
 
 def test_classifiers_classes():
     # test if classifiers can cope with non-consecutive classes
-    estimators = all_estimators()
-    classifiers = [(name, E) for name, E in estimators
-                   if issubclass(E, ClassifierMixin)]
+    classifiers = all_estimators(type_filter='classifier')
     X, y = make_blobs(random_state=12345)
     X, y = shuffle(X, y, random_state=7)
     X = StandardScaler().fit_transform(X)
     y = 2 * y + 1
+    classes = np.unique(y)
     # TODO: make work with next line :)
     #y = y.astype(np.str)
     for name, Clf in classifiers:
-        if Clf in dont_test or Clf in meta_estimators:
+        if Clf in dont_test:
             continue
         if Clf in [MultinomialNB, BernoulliNB]:
             # TODO also test these!
@@ -564,21 +547,22 @@ def test_classifiers_classes():
         assert_array_equal(np.unique(y), np.unique(y_pred))
         assert_greater(zero_one_score(y, y_pred), 0.78,
                        "accuracy of %s not greater than 0.78" % str(Clf))
+        assert_array_equal(
+            clf.classes_, classes,
+            "Unexpected classes_ attribute for %r" % clf)
 
 
 def test_regressors_int():
     # test if regressors can cope with integer labels (by converting them to
     # float)
-    estimators = all_estimators()
-    regressors = [(name, E) for name, E in estimators
-                  if issubclass(E, RegressorMixin)]
+    regressors = all_estimators(type_filter='regressor')
     boston = load_boston()
     X, y = boston.data, boston.target
     X, y = shuffle(X, y, random_state=0)
     X = StandardScaler().fit_transform(X)
     y = np.random.randint(2, size=X.shape[0])
     for name, Reg in regressors:
-        if Reg in dont_test or Reg in meta_estimators or Reg in (CCA,):
+        if Reg in dont_test or Reg in (CCA,):
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -603,9 +587,7 @@ def test_regressors_int():
 
 
 def test_regressors_train():
-    estimators = all_estimators()
-    regressors = [(name, E) for name, E in estimators
-                  if issubclass(E, RegressorMixin)]
+    regressors = all_estimators(type_filter='regressor')
     boston = load_boston()
     X, y = boston.data, boston.target
     X, y = shuffle(X, y, random_state=0)
@@ -615,7 +597,7 @@ def test_regressors_train():
     y = StandardScaler().fit_transform(y)
     succeeded = True
     for name, Reg in regressors:
-        if Reg in dont_test or Reg in meta_estimators:
+        if Reg in dont_test:
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -667,3 +649,91 @@ def test_configure():
     finally:
         sys.argv = old_argv
         os.chdir(cwd)
+
+
+def test_class_weight_classifiers():
+    # test that class_weight works and that the semantics are consistent
+    classifiers = all_estimators(type_filter='classifier')
+
+    with warnings.catch_warnings(record=True):
+        classifiers = [c for c in classifiers
+                       if 'class_weight' in c[1]().get_params().keys()]
+
+    for n_centers in [2, 3]:
+        # create a very noisy dataset
+        X, y = make_blobs(centers=n_centers, random_state=0, cluster_std=20)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5,
+                                                            random_state=0)
+        for name, Clf in classifiers:
+            if name == "NuSVC":
+                # the sparse version has a parameter that doesn't do anything
+                continue
+            if name.startswith("RidgeClassifier"):
+                # RidgeClassifier shows unexpected behavior
+                # FIXME!
+                continue
+            if name.endswith("NB"):
+                # NaiveBayes classifiers have a somewhat differnt interface.
+                # FIXME SOON!
+                continue
+            if n_centers == 2:
+                class_weight = {0: 1000, 1: 0.0001}
+            else:
+                class_weight = {0: 1000, 1: 0.0001, 2: 0.0001}
+
+            with warnings.catch_warnings(record=True):
+                clf = Clf(class_weight=class_weight)
+            if hasattr(clf, "n_iter"):
+                clf.set_params(n_iter=100)
+
+            set_random_state(clf)
+            clf.fit(X_train, y_train)
+            y_pred = clf.predict(X_test)
+            assert_greater(np.mean(y_pred == 0), 0.9)
+
+
+def test_class_weight_auto_classifies():
+    # test that class_weight="auto" improves f1-score
+    classifiers = all_estimators(type_filter='classifier')
+
+    with warnings.catch_warnings(record=True):
+        classifiers = [c for c in classifiers
+                       if 'class_weight' in c[1]().get_params().keys()]
+
+    for n_classes, weights in zip([2, 3], [[.8, .2], [.8, .1, .1]]):
+        # create unbalanced dataset
+        X, y = make_classification(n_classes=n_classes, n_samples=200,
+                                   n_features=10, weights=weights,
+                                   random_state=0, n_informative=n_classes)
+        X = StandardScaler().fit_transform(X)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.5,
+                                                            random_state=0)
+        for name, Clf in classifiers:
+            if name == "NuSVC":
+                # the sparse version has a parameter that doesn't do anything
+                continue
+
+            if name.startswith("RidgeClassifier"):
+                # RidgeClassifier behaves unexpected
+                # FIXME!
+                continue
+
+            if name.endswith("NB"):
+                # NaiveBayes classifiers have a somewhat differnt interface.
+                # FIXME SOON!
+                continue
+
+            with warnings.catch_warnings(record=True):
+                clf = Clf()
+            if hasattr(clf, "n_iter"):
+                clf.set_params(n_iter=100)
+
+            set_random_state(clf)
+            clf.fit(X_train, y_train)
+            y_pred = clf.predict(X_test)
+
+            clf.set_params(class_weight='auto')
+            clf.fit(X_train, y_train)
+            y_pred_auto = clf.predict(X_test)
+            assert_greater(f1_score(y_test, y_pred_auto),
+                           f1_score(y_test, y_pred))

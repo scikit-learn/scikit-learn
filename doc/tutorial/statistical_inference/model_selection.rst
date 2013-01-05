@@ -97,9 +97,9 @@ of the computer.
 
    *
 
-    - Split it K folds, train on K-1, test on left-out
+    - Split it K folds, train on K-1 and then test on left-out
 
-    - Make sure that all classes are even accross the folds
+    - It preserves the class ratios / label distribution within each fold. 
 
     - Leave one observation out
 
@@ -155,8 +155,8 @@ estimator during the construction and exposes an estimator API::
     0.94228356336260977
 
 
-By default the :class:`GridSearchCV` uses a 3-fold cross-validation. However, if
-it detects that a classifier is passed, rather than a regressor, it uses
+By default, the :class:`GridSearchCV` uses a 3-fold cross-validation. However, 
+if it detects that a classifier is passed, rather than a regressor, it uses
 a stratified 3-fold.
 
 .. topic:: Nested cross-validation
@@ -167,7 +167,7 @@ a stratified 3-fold.
 	array([ 0.97996661,  0.98163606,  0.98330551])
 
     Two cross-validation loops are performed in parallel: one by the
-    :class:`GridSearchCV` estimator to set `gamma`, the other one by
+    :class:`GridSearchCV` estimator to set `gamma` and the other one by
     `cross_val_score` to measure the prediction performance of the
     estimator. The resulting scores are unbiased estimates of the
     prediction score on new data.
@@ -183,8 +183,8 @@ Cross-validated estimators
 ----------------------------
 
 Cross-validation to set a parameter can be done more efficiently on an
-algorithm-by-algorithm basis. This is why, for certain estimators, the
-sklearn exposes :ref:`cross_validation` estimators, that set their parameter
+algorithm-by-algorithm basis. This is why for certain estimators the
+sklearn exposes :ref:`cross_validation` estimators that set their parameter
 automatically by cross-validation::
 
     >>> from sklearn import linear_model, datasets

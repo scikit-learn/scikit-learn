@@ -8,7 +8,8 @@ and a set of 'target' features, marginalizing over the
 values of all other features (the complement features). Due to the limits
 of human perception the size of the target feature set must be small (usually,
 one or two) thus the target features are usually chosen among the most
-important features (see :attr:`~sklearn.ensemble.GradientBoostingRegressor.feature_importances_`).
+important features
+(see :attr:`~sklearn.ensemble.GradientBoostingRegressor.feature_importances_`).
 
 This example shows how to obtain partial dependence plots from a
 :class:`~sklearn.ensemble.GradientBoostingRegressor` trained on the California
@@ -37,7 +38,8 @@ For an avg. occupancy greather than two, the house price is nearly independent
 of the house age, whereas for values less than two there is a strong dependence
 on age.
 
-.. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical Learning Ed. 2", Springer, 2009.
+.. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman,
+    "Elements of Statistical Learning Ed. 2", Springer, 2009.
 
 .. [1] For classification you can think of it as the regression score before
        the link function.
@@ -80,7 +82,7 @@ print
 features = [0, 5, 1, 2, (5, 1)]
 fig, axs = plot_partial_dependence(clf, X_train, features, feature_names=names,
                                    n_jobs=3, grid_resolution=50)
-fig.suptitle('Partial dependence of house value on nonlocation features\n' \
+fig.suptitle('Partial dependence of house value on nonlocation features\n'
              'for the California housing dataset')
 pl.subplots_adjust(top=0.9)  # tight_layout causes overlap with suptitle
 
@@ -102,7 +104,7 @@ ax.set_zlabel('Partial dependence')
 #  pretty init view
 ax.view_init(elev=22, azim=122)
 pl.colorbar(surf)
-pl.suptitle('Partial dependence of house value on median age and ' \
+pl.suptitle('Partial dependence of house value on median age and '
             'average occupancy')
 pl.subplots_adjust(top=0.9)
 
