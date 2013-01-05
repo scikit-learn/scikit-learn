@@ -1,25 +1,30 @@
 import numpy as np
 from numpy import linalg
-from numpy.testing import assert_array_almost_equal, assert_almost_equal
-from numpy.testing import assert_equal, assert_array_equal
-from nose.tools import assert_raises
-from nose.tools import assert_true
+
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cosine, cityblock, minkowski
 
 from sklearn.utils.testing import assert_greater
-from ..pairwise import euclidean_distances
-from ..pairwise import linear_kernel
-from ..pairwise import chi2_kernel, additive_chi2_kernel
-from ..pairwise import polynomial_kernel
-from ..pairwise import rbf_kernel
-from ..pairwise import sigmoid_kernel
-from ..pairwise import cosine_kernel
-from .. import pairwise_distances, pairwise_kernels
-from ..pairwise import pairwise_kernel_functions
-from ..pairwise import check_pairwise_arrays
-from ..pairwise import _parallel_pairwise
-from ...preprocessing import normalize
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
+
+from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.metrics.pairwise import linear_kernel
+from sklearn.metrics.pairwise import chi2_kernel, additive_chi2_kernel
+from sklearn.metrics.pairwise import polynomial_kernel
+from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.metrics.pairwise import sigmoid_kernel
+from sklearn.metrics.pairwise import cosine_kernel
+from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import pairwise_kernels
+from sklearn.metrics.pairwise import pairwise_kernel_functions
+from sklearn.metrics.pairwise import check_pairwise_arrays
+from sklearn.metrics.pairwise import _parallel_pairwise
+from sklearn.preprocessing import normalize
 
 
 def test_pairwise_distances():
@@ -300,7 +305,7 @@ def test_check_dense_matrices():
     XA = np.resize(np.arange(40), (5, 8))
     XA_checked, XB_checked = check_pairwise_arrays(XA, None)
     assert_true(XA_checked is XB_checked)
-    assert_equal(XA, XA_checked)
+    assert_array_equal(XA, XA_checked)
 
 
 def test_check_XB_returned():
@@ -310,8 +315,8 @@ def test_check_XB_returned():
     XA = np.resize(np.arange(40), (5, 8))
     XB = np.resize(np.arange(32), (4, 8))
     XA_checked, XB_checked = check_pairwise_arrays(XA, XB)
-    assert_equal(XA, XA_checked)
-    assert_equal(XB, XB_checked)
+    assert_array_equal(XA, XA_checked)
+    assert_array_equal(XB, XB_checked)
 
 
 def test_check_different_dimensions():
@@ -362,5 +367,5 @@ def test_check_tuple_input():
     XB = rng.random_sample((5, 4))
     XB_tuples = tuplify(XB)
     XA_checked, XB_checked = check_pairwise_arrays(XA_tuples, XB_tuples)
-    assert_equal(XA_tuples, XA_checked)
-    assert_equal(XB_tuples, XB_checked)
+    assert_array_equal(XA_tuples, XA_checked)
+    assert_array_equal(XB_tuples, XB_checked)
