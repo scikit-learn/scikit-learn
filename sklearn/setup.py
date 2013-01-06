@@ -44,8 +44,6 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage("tree")
     config.add_subpackage("tree/tests")
     config.add_subpackage('metrics/tests')
-    config.add_subpackage('metrics/cluster')
-    config.add_subpackage('metrics/cluster/tests')
 
     # add cython extension module for hmm
     config.add_extension(
@@ -62,11 +60,15 @@ def configuration(parent_package='', top_path=None):
         config.add_library('cblas',
                            sources=[join('src', 'cblas', '*.c')])
         warnings.warn(BlasNotFoundError.__doc__)
-
     # the following packages depend on cblas, so they have to be build
     # after the above.
     config.add_subpackage('linear_model')
     config.add_subpackage('utils')
+    # add parts of fdlibm
+    config.add_library('fdlibm', sources=[join('src', 'fdlibm', '*.c')])
+    # the following packages require the parts added above
+    config.add_subpackage('metrics/cluster')
+    config.add_subpackage('metrics/cluster/tests')
 
     # add the test directory
     config.add_subpackage('tests')
