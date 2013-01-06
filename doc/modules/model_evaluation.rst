@@ -23,8 +23,9 @@ Classification metrics
 .. currentmodule:: sklearn.metrics
 
 The :mod:`sklearn.metrics` implements several losses, scores and utility
-functions to measure classification performance. Some of these are restricted to
-the binary classification case:
+functions to measure classification performance.
+
+Some of these are restricted to the binary classification case:
 
 .. autosummary::
    :template: function.rst
@@ -37,7 +38,7 @@ the binary classification case:
    roc_curve
 
 
-Others have been extended to the multiclass case:
+Others also work in the multiclass case:
 
 .. autosummary::
    :template: function.rst
@@ -50,6 +51,9 @@ Others have been extended to the multiclass case:
   precision_recall_fscore_support
   precision_score
   zero_one_loss
+
+Some metrics might require probability estimates of the positive class,
+confidence values or binary decisions value.
 
 In the following sub-sections, we will describe each of those functions.
 
@@ -74,18 +78,24 @@ where :math:`1(x)` is the `indicator function
 .. topic:: Example:
 
   * See :ref:`example_plot_permutation_test_for_classification.py`
-    for an example of accuracy score usage to assess with permutations the
-    significance of a classification score.
+    for an example of accuracy score usage to assess using permutations of
+    the dataset.
 
 Area under the curve (AUC)
 --------------------------
-The :func:`auc_score` function computes the AUC which is
-the area under the receiver operating characteristic (ROC) curve.
+The :func:`auc_score` function computes the 'area under the curve' (AUC) which
+is the area under the receiver operating characteristic (ROC) curve.
+
+This function requires  the true binary value and the target scores, which can
+either be probability estimates of the positive class, confidence values, or
+binary decisions.
 
 For more information see the
 `Wikipedia article on AUC
 <http://en.wikipedia.org/wiki/Receiver_operating_characteristic#Area_under_curve>`_
 and the :ref:`roc_metrics` section.
+
+.. _average_precision_metrics:
 
 Average precision score
 -----------------------
@@ -106,7 +116,23 @@ the accuracy on a classification problem.
 
 By definition, a confusion matrix :math:`cm` is such that :math:`cm[i, j]` is
 equal to the number of observations known to be in group :math:`i` but
-predicted to be in group :math:`j`.
+predicted to be in group :math:`j`. Here an example of such confusion matrix::
+
+  >>> from sklearn.metrics import confusion_matrix
+  >>> y_true = [2, 0, 2, 2, 0, 1]
+  >>> y_pred = [0, 0, 2, 2, 0, 2]
+  >>> confusion_matrix(y_true, y_pred)
+  array([[2, 0, 0],
+         [0, 0, 1],
+         [1, 0, 2]])
+
+Here a visual representation of such confusion matrix (this figure comes
+from the :ref:`example_plot_confusion_matrix.py` example):
+
+.. image:: ../auto_examples/images/plot_confusion_matrix_1.png
+   :target: ../auto_examples/plot_confusion_matrix.html
+   :scale: 75
+   :align: center
 
 .. topic:: Example:
 
@@ -126,7 +152,21 @@ predicted to be in group :math:`j`.
 Classification report
 ---------------------
 The :func:`classification_report` function builds a text report showing the
-main classification metrics.
+main classification metrics. Here a small example with custom ``target_names``
+and infered labels::
+
+  >>> from sklearn.metrics import classification_report
+  >>> y_true = [0, 1, 2, 2, 0]
+  >>> y_pred = [0, 0, 2, 2, 0]
+  >>> target_names = ['class 0', 'class 1', 'class 2']
+  >>> print(classification_report(y_true, y_pred, target_names=target_names))
+               precision    recall  f1-score   support
+
+      class 0       0.67      1.00      0.80         2
+      class 1       0.00      0.00      0.00         1
+      class 2       1.00      1.00      1.00         2
+
+  avg / total       0.67      0.80      0.72         5
 
 .. topic:: Example:
 
@@ -147,6 +187,21 @@ main classification metrics.
 
 Precision, recall and F-measures
 --------------------------------
+
+The `precision <http://en.wikipedia.org/wiki/Precision_and_recall#Precision>`_
+is intuitively the ability of the classifier not to label as
+positive a sample that is negative.
+
+The `recall <http://en.wikipedia.org/wiki/Precision_and_recall#Recall>`_ is
+intuitively the ability of the classifier to find all the positive samples.
+
+The  `F-measure <http://en.wikipedia.org/wiki/F1_score>`_
+(:math:`F_\beta` and :math:`F_1` measures) can be interpreted as a weighted
+harmonic mean of the precision and recall. A
+:math:`F_\beta` measure reaches its best value at 1 and worst score at 0.
+With :math:`\beta = 1`, the :math:`F_\beta` measure leads to the
+:math:`F_1` measure, wheres the recall and the precsion are equally important.
+
 Several functions allow you to analyze the precision, recall and F-measures
 score:
 
@@ -160,7 +215,10 @@ score:
    precision_score
    recall_score
 
-.. topic:: Example:
+The average precision score might also interest you. See the
+:ref:`average_precision_metrics` section.
+
+.. topic:: Examples:
 
   * See :ref:`example_document_classification_20newsgroups.py`
     for an example of :func:`f1_score` usage with classification of text
@@ -197,39 +255,19 @@ following table:
 |                   | Missing result      | Correct absence of result|
 +-------------------+---------------------+--------------------------+
 
-In this context, we can define the notions of precision, recall and F-measure.
-
-The precision is intuitively the ability of the classifier not to label as
-positive a sample that is negative and is defined as
+In this context, we can define the notions of precision, recall and F-measure:
 
 .. math::
 
-   \text{precision} = \frac{tp}{tp + fp}.
-
-The recall is intuitively the ability of the classifier to find all the
-positive samples and is defined as
+   \text{precision} = \frac{tp}{tp + fp},
 
 .. math::
 
-   \text{recall} = \frac{tp}{tp + fn}.
-
-
-The :math:`F_\beta` measure can be interpreted as a weighted harmonic mean of
-the precision and recall
+   \text{recall} = \frac{tp}{tp + fn},
 
 .. math::
 
-   F_\beta = (1 + \beta^2) \frac{\text{precision} \times \text{recall}}{\text{precision} + \text{recall}}
-
-A :math:`F_\beta` measure reaches its best value at 1 and worst score at 0.
-With :math:`\beta = 1`, the :math:`F_\beta` measure leads to the
-:math:`F_1` measure, wheres the recall and the precsion are equally important.
-
-.. topic:: References:
-
-   * `Wikipedia article on precision and recall
-     <http://en.wikipedia.org/wiki/Precision_and_recall>`_
-   * `Wikipedia article on F-measure <http://en.wikipedia.org/wiki/F1_score>`_
+   F_\beta = (1 + \beta^2) \frac{\text{precision} \times \text{recall}}{\beta^2 \text{precision} + \text{recall}}.
 
 Multiclass and multilabels classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -250,7 +288,7 @@ Moreover, these notions can be further extended. The functions
 .. warning::
 
   Currently those functions support only the multiclass case. However the
-  following definitions will be general and will remain valid in the multilabel
+  following definitions are general and remain valid in the multilabel
   case.
 
 Let's define some notations:
@@ -294,7 +332,7 @@ The micro precision, recall and :math:`F_\beta` are averaged over all instances
 
 .. math::
 
-  \texttt{micro\_{}F\_{}beta} = (1 + \beta^2) \frac{\texttt{micro\_{}precision} \times  \texttt{micro\_{}recall}}{\texttt{micro\_{}precision} +  \texttt{micro\_{}recall}}.
+  \texttt{micro\_{}F\_{}beta} = (1 + \beta^2) \frac{\texttt{micro\_{}precision} \times  \texttt{micro\_{}recall}}{\beta^2 \texttt{micro\_{}precision} +  \texttt{micro\_{}recall}}.
 
 
 The weighted precision, recall and :math:`F_\beta` are averaged weighted by
@@ -310,7 +348,7 @@ their support
 
 .. math::
 
-  \texttt{weighted\_{}F\_{}beta}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (1 + \beta^2)\frac{|y_i \cap \hat{y}_i|}{|y_i| + |\hat{y}_i|}.
+  \texttt{weighted\_{}F\_{}beta}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (1 + \beta^2)\frac{|y_i \cap \hat{y}_i|}{\beta^2 |\hat{y}_i| + |y_i|}.
 
 
 Hinge loss
@@ -370,6 +408,17 @@ wikipedia) <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_:
   positive rate), at various threshold settings. TPR is also known as
   sensitivity, and FPR is one minus the specificity or true negative rate."
 
+Here a small example of how to use the :func:`roc_curve` function::
+
+    >>> import numpy as np
+    >>> from sklearn import metrics
+    >>> y = np.array([1, 1, 2, 2])
+    >>> scores = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> fpr, tpr, thresholds = metrics.roc_curve(y, scores, pos_label=2)
+    >>> fpr
+    array([ 0. ,  0.5,  0.5,  1. ])
+
+
 The following figure shows an example of such ROC curve.
 
 .. image:: ../auto_examples/images/plot_roc_1.png
@@ -394,7 +443,9 @@ The following figure shows an example of such ROC curve.
 Zero one loss
 --------------
 The :func:`zero_one_loss` function computes the 0-1 classification loss over
-:math:`n_{\text{samples}}`. If :math:`\hat{y}_i` is the predicted value of
+:math:`n_{\text{samples}}`. This function isn't normalized over the samples.
+
+If :math:`\hat{y}_i` is the predicted value of
 the :math:`i`-th sample and :math:`y_i` is the corresponding true value,
 then the 0-1 loss :math:`L_{0-1}` is defined as:
 
@@ -404,6 +455,7 @@ then the 0-1 loss :math:`L_{0-1}` is defined as:
 
 where :math:`1(x)` is the `indicator function
 <http://en.wikipedia.org/wiki/Indicator_function>`_.
+
 
 
 .. topic:: Example:
@@ -497,7 +549,7 @@ over :math:`n_{\text{samples}}` is defined as
 
 where :math:`\bar{y} =  \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}} - 1} y_i`.
 
-.. topic:: Examples:
+.. topic:: Example:
 
   * See :ref:`example_linear_model_plot_lasso_and_elasticnet.py`
     for an example of R² score usage to
@@ -506,7 +558,7 @@ where :math:`\bar{y} =  \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{sample
 Clustering metrics
 ======================
 The :mod:`sklearn.metrics` implements several losses, scores and utility
-for more information see the :ref:`clustering_evaluation` section.
+function for more information see the :ref:`clustering_evaluation` section.
 
 
 Dummy estimators
