@@ -237,7 +237,7 @@ factorization, while larger values shrink many coefficients to zero.
 Latent semantic analysis
 ========================
 
-:class:`LatentSemanticAnalysis` implements LSA
+:class:`LatentSemanticAnalysis` implements LSA,
 a transformation of term-document matrices
 (as returned by ``CountVectorizer`` or ``TfidfVectorizer``)
 to a "semantic" space of low dimensionality.
@@ -251,29 +251,50 @@ Mathematically, LSA amounts to a truncated singular value decomposition (SVD)
 on the training samples :math:`X`:
 
 .. math::
-    X_k = U_k \Sigma_k V_k^\top
+    X \approx X_k = U_k \Sigma_k V_k^\top
 
 After this operation, :math:`U_k \Sigma_k^\top`
-is the transformed training set with :math:`k` features.
+is the transformed training set with :math:`k` features
+(called ``n_components`` in the API).
+
 To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
 
 .. math::
     X' = X V_k^\top
 
+.. note::
+    Most treatments of LSA in the natural language processing (NLP)
+    and information retrieval (IR) literature
+    swap the axis of the matrix :math:`X` so that it has shape
+    ``n_features`` × ``n_samples``.
+    We present LSA in a different way that matches the scikit-learn API better,
+    but the singular values found are the same.
+
 LSA is very similar to PCA, but differs
 in that it works on sample matrices :math:`X` directly
 instead of their covariance matrices.
-In practical terms, this means :class:`LatentSemanticAnalysis`'s methods
-accept ``scipy.sparse`` matrices without the need to densify them;
-densifying may fill up memory even for medium-sized document collections.
+When the columnwise (per-feature) means of :math:`X`
+are subtracted from the feature values,
+LSA on the resulting matrix is equivalent to PCA.
+In practical terms, this means
+that the :class:`LatentSemanticAnalysis` transformer
+accepts ``scipy.sparse`` matrices without the need to densify them,
+as densifying may fill up memory even for medium-sized document collections.
 
 While the :class:`LatentSemanticAnalysis` transformer
 works with any (sparse) feature matrix,
-using it on tf-idf matrices is recommended.
+using it on tf–idf matrices is recommended over raw frequency counts.
 In particular, sublinear scaling and inverse document frequency
 should be turned on (``sublinear_tf=True, use_idf=True``)
-to bring the tf-idf values closer to a Gaussian distribution,
+to bring the feature values closer to a Gaussian distribution,
 compensating for LSA's erroneous assumptions about textual data.
+
+.. topic:: References:
+
+  * Christopher D. Manning, Prabhakar Raghavan and Hinrich Schütze (2008),
+    *Introduction to Information Retrieval*, Cambridge University Press,
+    chapter 18: `Matrix decompositions & latent semantic indexing
+    <http://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
 
 
 .. _DictionaryLearning:
