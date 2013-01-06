@@ -334,13 +334,13 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                                  "the shape of X")
 
         # Set min_samples_split sensibly
-        self.min_samples_split = max(self.min_samples_split,
-                                     2 * self.min_samples_leaf)
+        min_samples_split = max(self.min_samples_split,
+                                2 * self.min_samples_leaf)
 
         # Build tree
         self.tree_ = _tree.Tree(self.n_features_, self.n_classes_,
                                 self.n_outputs_, criterion, max_depth,
-                                self.min_samples_split, self.min_samples_leaf,
+                                min_samples_split, self.min_samples_leaf,
                                 self.min_density, max_features,
                                 self.find_split_, self.random_state)
 
