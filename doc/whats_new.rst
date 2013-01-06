@@ -117,6 +117,7 @@ Changelog
     of ``class_weight`` was reversed as erroneously higher weight meant less
     positives of a given class in earlier releases.
 
+
 API changes summary
 -------------------
    - Renamed all occurences of ``n_atoms`` to ``n_components`` for consistency.
@@ -206,7 +207,9 @@ API changes summary
      ``y`` during ``fit`` (used to be ``np.float``).
 
    - Changed default test_size in :func:`cross_validation.train_test_split`
-     to None.
+     to None, added possibility to infer ``test_size`` from ``train_size`` in
+     :class:`cross_validation.ShuffleSplit` and
+     :class:`cross_validation.StratifiedShuffleSplit`.
 
 .. _changes_0_12.1:
 
