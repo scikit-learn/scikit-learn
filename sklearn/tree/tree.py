@@ -442,7 +442,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
 
-    min_samples_split : integer, optional (default=1)
+    min_samples_split : integer, optional (default=2)
         The minimum number of samples required to split an internal node.
 
     min_samples_leaf : integer, optional (default=1)
@@ -523,7 +523,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     def __init__(self,
                  criterion="gini",
                  max_depth=None,
-                 min_samples_split=1,
+                 min_samples_split=2,
                  min_samples_leaf=1,
                  min_density=0.1,
                  max_features=None,
@@ -639,7 +639,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         all leaves are pure or until all leaves contain less than
         min_samples_split samples.
 
-    min_samples_split : integer, optional (default=1)
+    min_samples_split : integer, optional (default=2)
         The minimum number of samples required to split an internal node.
 
     min_samples_leaf : integer, optional (default=1)
@@ -714,7 +714,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     def __init__(self,
                  criterion="mse",
                  max_depth=None,
-                 min_samples_split=1,
+                 min_samples_split=2,
                  min_samples_leaf=1,
                  min_density=0.1,
                  max_features=None,
@@ -755,7 +755,7 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     def __init__(self,
                  criterion="gini",
                  max_depth=None,
-                 min_samples_split=1,
+                 min_samples_split=2,
                  min_samples_leaf=1,
                  min_density=0.1,
                  max_features="auto",
@@ -802,7 +802,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     def __init__(self,
                  criterion="mse",
                  max_depth=None,
-                 min_samples_split=1,
+                 min_samples_split=2,
                  min_samples_leaf=1,
                  min_density=0.1,
                  max_features="auto",
