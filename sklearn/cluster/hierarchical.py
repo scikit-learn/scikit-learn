@@ -317,6 +317,9 @@ class Ward(BaseEstimator, ClusterMixin):
     `n_leaves_` : int
         Number of leaves in the hiearchical tree.
 
+    `n_components_` : sparse matrix.
+        The estimated number of connected components in the graph.
+
     """
 
     def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
@@ -370,7 +373,7 @@ class Ward(BaseEstimator, ClusterMixin):
             n_clusters = None
 
         # Construct the tree
-        self.children_, self.n_components, self.n_leaves_, parents = \
+        self.children_, self.n_components_, self.n_leaves_, parents = \
             memory.cache(ward_tree)(X, self.connectivity,
                                     n_components=self.n_components,
                                     copy=self.copy, n_clusters=n_clusters)
