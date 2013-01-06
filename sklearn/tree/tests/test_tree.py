@@ -572,7 +572,7 @@ def test_sample_weight():
     clf.fit(X, y, sample_weight=sample_weight)
     assert_equal(clf.tree_.threshold[0], 49.5) # Threshold should have moved
 
-    # Test that sample weighting is the same as having dupplicates
+    # Test that sample weighting is the same as having duplicates
     X = iris.data
     y = iris.target
 
@@ -602,6 +602,13 @@ def test_sample_weight():
     sample_weight[0] = -1
     clf = tree.DecisionTreeClassifier(random_state=1)
     clf.fit(X, y, sample_weight=sample_weight)
+
+    sample_weight = np.random.normal(.5, 1.0, X.shape[0])
+    assert sample_weight[sample_weight < 0].shape[0] > 0
+    clf = tree.DecisionTreeClassifier(random_state=1)
+    clf.fit(X, y, sample_weight=sample_weight)
+    proba = clf.predict_proba(X)
+    assert (proba >= 0).all() and (proba <= 1).all()
 
 
 if __name__ == "__main__":
