@@ -118,6 +118,23 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
     ----------
     http://en.wikipedia.org/wiki/Hinge_loss
 
+    Examples
+    --------
+    >>> from sklearn import svm
+    >>> from sklearn.metrics import hinge_loss
+    >>> X = [[0], [1]]
+    >>> y = [-1, 1]
+    >>> est = svm.LinearSVC(random_state=0)
+    >>> est.fit(X, y)
+    LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
+         intercept_scaling=1, loss='l2', multi_class='ovr', penalty='l2',
+         random_state=0, tol=0.0001, verbose=0)
+    >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
+    >>> pred_decision
+    array([-2.18177944,  2.36355888,  0.09088972])
+    >>> hinge_loss([-1, 1, 1], pred_decision)
+    0.30303676038544258
+
     """
     # TODO: multi-class hinge-loss
 
@@ -147,7 +164,6 @@ def average_precision_score(y_true, y_score):
 
     Parameters
     ----------
-
     y_true : array, shape = [n_samples]
         True binary labels.
 
@@ -163,10 +179,19 @@ def average_precision_score(y_true, y_score):
     ----------
     http://en.wikipedia.org/wiki/Information_retrieval#Average_precision
 
-
     See also
     --------
     auc_score: Area under the ROC curve
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import average_precision_score
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> average_precision_score(y_true, y_scores)
+    0.79166666666666663
+
     """
     precision, recall, thresholds = precision_recall_curve(y_true, y_score)
     return auc(recall, precision)
@@ -199,6 +224,16 @@ def auc_score(y_true, y_score):
     See also
     --------
     average_precision_score: Area under the precision-recall curve
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import auc_score
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> auc_score(y_true, y_scores)
+    0.75
+
     """
 
     fpr, tpr, tresholds = roc_curve(y_true, y_score)
@@ -239,6 +274,14 @@ def matthews_corrcoef(y_true, y_pred):
     http://en.wikipedia.org/wiki/Matthews_correlation_coefficient
 
     http://dx.doi.org/10.1093/bioinformatics/16.5.412
+
+    Examples
+    --------
+    >>> from sklearn.metrics import matthews_corrcoef
+    >>> y_true = [+1, +1, +1, -1]
+    >>> y_pred = [+1, -1, +1, +1]
+    >>> matthews_corrcoef(y_true, y_pred)
+    -0.33333333333333331
 
     """
     mcc = np.corrcoef(y_true, y_pred)[0, 1]
@@ -287,6 +330,20 @@ def precision_recall_curve(y_true, probas_pred):
 
     thresholds : array, shape = [n]
         Thresholds on y_score used to compute precision and recall.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import precision_recall_curve
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> precision, recall, threshold = precision_recall_curve(y_true, y_scores)
+    >>> precision
+    array([ 0.66666667,  0.5       ,  1.        ,  1.        ])
+    >>> recall
+    array([ 1. ,  0.5,  0.5,  0. ])
+    >>> threshold
+    array([ 0.35,  0.4 ,  0.8 ])
 
     """
     y_true = np.ravel(y_true)
@@ -384,6 +441,9 @@ def roc_curve(y_true, y_score, pos_label=None):
         correspond to both fpr and tpr, which are sorted in reversed order
         during their calculation.
 
+    References
+    ----------
+    http://en.wikipedia.org/wiki/Receiver_operating_characteristic
 
     Examples
     --------
@@ -394,10 +454,6 @@ def roc_curve(y_true, y_score, pos_label=None):
     >>> fpr, tpr, thresholds = metrics.roc_curve(y, scores, pos_label=2)
     >>> fpr
     array([ 0. ,  0.5,  0.5,  1. ])
-
-    References
-    ----------
-    http://en.wikipedia.org/wiki/Receiver_operating_characteristic
 
     """
     y_true = np.ravel(y_true)
@@ -570,13 +626,13 @@ def zero_one_loss(y_true, y_pred, normalize=True):
 
     Examples
     --------
-    >>> from sklearn.metrics import zero_one
-    >>> y_pred = [2, 1, 3, 4]
-    >>> y_true = [1, 2, 3, 4]
+    >>> from sklearn.metrics import zero_one_loss
+    >>> y_pred = [1, 2, 3, 4]
+    >>> y_true = [2, 2, 3, 4]
     >>> zero_one_loss(y_true, y_pred)
-    0.5
+    0.25
     >>> zero_one_loss(y_true, y_pred, normalize=False)
-    2
+    1
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
@@ -604,15 +660,17 @@ def zero_one(y_true, y_pred, normalize=False):
         If normalize is True, return the fraction of misclassifications
         (float), else it returns the number of misclassifications (int).
 
+
     Examples
     --------
     >>> from sklearn.metrics import zero_one
-    >>> y_pred = [2, 1, 3, 4]
-    >>> y_true = [1, 2, 3, 4]
+    >>> y_pred = [1, 2, 3, 4]
+    >>> y_true = [2, 2, 3, 4]
     >>> zero_one(y_true, y_pred)
-    2
+    1
     >>> zero_one(y_true, y_pred, normalize=True)
-    0.5
+    0.25
+
     """
     warnings.warn(
         "Function zero_one has been renamed to "
@@ -626,7 +684,7 @@ def zero_one(y_true, y_pred, normalize=False):
 # Multiclass score function
 ###############################################################################
 def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
-    """Compute the f1 score of a prediction.
+    """Compute the f1 score
 
     The F1 score can be interpreted as a weighted average of the precision
     and recall, where an F1 score reaches its best value at 1 and worst
@@ -680,6 +738,28 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     ----------
     http://en.wikipedia.org/wiki/F1_score
 
+    Examples
+    --------
+    Here an example in the binary case:
+    >>> from sklearn.metrics import f1_score
+    >>> y_pred = [0, 1, 0, 0]
+    >>> y_true = [0, 1, 0, 1]
+    >>> f1_score(y_true, y_pred)
+    0.66666666666666663
+
+    Here an example in the multiclass case:
+    >>> from sklearn.metrics import f1_score
+    >>> y_true = [0, 1, 2, 0, 1, 2]
+    >>> y_pred = [0, 2, 1, 0, 0, 1]
+    >>> f1_score(y_true, y_pred, average='macro')
+    0.26666666666666666
+    >>> f1_score(y_true, y_pred, average='micro')
+    0.33333333333333331
+    >>> f1_score(y_true, y_pred, average='weighted')
+    0.26666666666666666
+    >>> f1_score(y_true, y_pred, average=None)
+    array([ 0.8,  0. ,  0. ])
+
     """
     return fbeta_score(y_true, y_pred, 1, labels=labels,
                        pos_label=pos_label, average=average)
@@ -687,7 +767,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
 
 def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
                 average='weighted'):
-    """Compute fbeta score
+    """Compute the fbeta score
 
     The F_beta score is the weighted harmonic mean of precision and recall,
     reaching its optimal value at 1 and its worst value at 0.
@@ -742,6 +822,32 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     Addison Wesley, pp. 327-328.
 
     http://en.wikipedia.org/wiki/F1_score
+
+    Examples
+    --------
+    Here an example in the binary case:
+    >>> from sklearn.metrics import fbeta_score
+    >>> y_pred = [0, 1, 0, 0]
+    >>> y_true = [0, 1, 0, 1]
+    >>> fbeta_score(y_true, y_pred, beta=0.5)
+    0.83333333333333337
+    >>> fbeta_score(y_true, y_pred, beta=1)
+    0.66666666666666663
+    >>> fbeta_score(y_true, y_pred, beta=2)
+    0.55555555555555558
+
+    Here an example in the multiclass case:
+    >>> from sklearn.metrics import fbeta_score
+    >>> y_true = [0, 1, 2, 0, 1, 2]
+    >>> y_pred = [0, 2, 1, 0, 0, 1]
+    >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)
+    0.23809523809523805
+    >>> fbeta_score(y_true, y_pred, average='micro', beta=0.5)
+    0.33333333333333337
+    >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
+    0.23809523809523805
+    >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
+    array([ 0.71428571,  0.        ,  0.        ])
 
     """
     _, _, f, _ = precision_recall_fscore_support(y_true, y_pred,
@@ -823,6 +929,33 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     References
     ----------
     http://en.wikipedia.org/wiki/Precision_and_recall
+
+    Examples
+    --------
+    Here an example in the binary case:
+    >>> from sklearn.metrics import precision_recall_fscore_support
+    >>> y_pred = [0, 1, 0, 0]
+    >>> y_true = [0, 1, 0, 1]
+    >>> p, r, f, s = precision_recall_fscore_support(y_true, y_pred, beta=0.5)
+    >>> p
+    array([ 0.66666667,  1.        ])
+    >>> r
+    array([ 1. ,  0.5])
+    >>> f
+    array([ 0.71428571,  0.83333333])
+    >>> s
+    array([2, 2], dtype=int64)
+
+    Here an example in the multiclass case:
+    >>> from sklearn.metrics import precision_recall_fscore_support
+    >>> y_true = np.array([0, 1, 2, 0, 1, 2])
+    >>> y_pred = np.array([0, 2, 1, 0, 0, 1])
+    >>> precision_recall_fscore_support(y_true, y_pred, average='macro')
+    (0.22222222222222221, 0.33333333333333331, 0.26666666666666666, None)
+    >>> precision_recall_fscore_support(y_true, y_pred, average='micro')
+    (0.33333333333333331, 0.33333333333333331, 0.33333333333333331, None)
+    >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
+    (0.22222222222222221, 0.33333333333333331, 0.26666666666666666, None)
 
     """
     if beta <= 0:
@@ -949,6 +1082,28 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
         weighted average of the precision of each class for the
         multiclass task.
 
+    Examples
+    --------
+    Here an example in the binary case:
+    >>> from sklearn.metrics import precision_score
+    >>> y_pred = [0, 1, 0, 0]
+    >>> y_true = [0, 1, 0, 1]
+    >>> precision_score(y_true, y_pred)
+    1.0
+
+    Here an example in the multiclass case:
+    >>> from sklearn.metrics import precision_score
+    >>> y_true = [0, 1, 2, 0, 1, 2]
+    >>> y_pred = [0, 2, 1, 0, 0, 1]
+    >>> precision_score(y_true, y_pred, average='macro')
+    0.22222222222222221
+    >>> precision_score(y_true, y_pred, average='micro')
+    0.33333333333333331
+    >>> precision_score(y_true, y_pred, average='weighted')
+    0.22222222222222221
+    >>> precision_score(y_true, y_pred, average=None)
+    array([ 0.66666667,  0.        ,  0.        ])
+
     """
     p, _, _, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  labels=labels,
@@ -1002,6 +1157,28 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
         Recall of the positive class in binary classification or weighted
         average of the recall of each class for the multiclass task.
 
+    Examples
+    --------
+    Here an example in the binary case:
+    >>> from sklearn.metrics import recall_score
+    >>> y_pred = [0, 1, 0, 0]
+    >>> y_true = [0, 1, 0, 1]
+    >>> recall_score(y_true, y_pred)
+    0.5
+
+    Here an example in the multiclass case:
+    >>> from sklearn.metrics import recall_score
+    >>> y_true = [0, 1, 2, 0, 1, 2]
+    >>> y_pred = [0, 2, 1, 0, 0, 1]
+    >>> recall_score(y_true, y_pred, average='macro')
+    0.33333333333333331
+    >>> recall_score(y_true, y_pred, average='micro')
+    0.33333333333333331
+    >>> recall_score(y_true, y_pred, average='weighted')
+    0.33333333333333331
+    >>> recall_score(y_true, y_pred, average=None)
+    array([ 1.,  0.,  0.])
+
     """
     _, r, _, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  labels=labels,
@@ -1030,6 +1207,15 @@ def accuracy_score(y_true, y_pred):
     See also
     --------
     zero_one_loss Zero-One classification loss
+
+    Examples
+    --------
+    >>> from sklearn.metrics import accuracy_score
+    >>> y_pred = [0, 2, 1, 3]
+    >>> y_true = [0, 1, 2, 3]
+    >>> accuracy_score(y_true, y_pred)
+    0.5
+
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
     return np.mean(y_pred == y_true)
@@ -1093,12 +1279,13 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
     >>> target_names = ['class 0', 'class 1', 'class 2']
     >>> print(classification_report(y_true, y_pred, target_names=target_names))
                  precision    recall  f1-score   support
-
+    <BLANKLINE>
         class 0       0.67      1.00      0.80         2
         class 1       0.00      0.00      0.00         1
         class 2       1.00      1.00      1.00         2
-
+    <BLANKLINE>
     avg / total       0.67      0.80      0.72         5
+    <BLANKLINE>
 
     """
 
@@ -1168,6 +1355,19 @@ def mean_absolute_error(y_true, y_pred):
     -------
     loss : float
         A positive floating point value (the best value is 0.0).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import mean_absolute_error
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> mean_absolute_error(y_true, y_pred)
+    0.5
+    >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
+    >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
+    >>> mean_absolute_error(y_true, y_pred)
+    0.75
+
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
     return np.mean(np.abs(y_pred - y_true))
@@ -1188,6 +1388,19 @@ def mean_squared_error(y_true, y_pred):
     -------
     loss : float
         A positive floating point value (the best value is 0.0).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import mean_squared_error
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> mean_squared_error(y_true, y_pred)
+    0.375
+    >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
+    >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
+    >>> mean_squared_error(y_true, y_pred)
+    0.70833333333333337
+
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
     return np.mean((y_pred - y_true) ** 2)
@@ -1217,6 +1430,14 @@ def explained_variance_score(y_true, y_pred):
     Notes
     -----
     This is not a symmetric function.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import explained_variance_score
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> explained_variance_score(y_true, y_pred)
+    0.95717344753747324
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
@@ -1257,6 +1478,19 @@ def r2_score(y_true, y_pred):
     References
     ----------
     http://en.wikipedia.org/wiki/Coefficient_of_determination
+
+    Examples
+    --------
+    >>> from sklearn.metrics import r2_score
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> r2_score(y_true, y_pred)
+    0.94860813704496794
+    >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
+    >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
+    >>> r2_score(y_true, y_pred)
+    0.93825665859564167
+
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
     if len(y_true) == 1:

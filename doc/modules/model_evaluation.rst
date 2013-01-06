@@ -75,10 +75,16 @@ defined as
 where :math:`1(x)` is the `indicator function
 <http://en.wikipedia.org/wiki/Indicator_function>`_.
 
+  >>> from sklearn.metrics import accuracy_score
+  >>> y_pred = [0, 2, 1, 3]
+  >>> y_true = [0, 1, 2, 3]
+  >>> accuracy_score(y_true, y_pred)
+  0.5
+
 .. topic:: Example:
 
   * See :ref:`example_plot_permutation_test_for_classification.py`
-    for an example of accuracy score usage to assess using permutations of
+    for an example of accuracy score usage using permutations of
     the dataset.
 
 Area under the curve (AUC)
@@ -89,6 +95,13 @@ is the area under the receiver operating characteristic (ROC) curve.
 This function requires  the true binary value and the target scores, which can
 either be probability estimates of the positive class, confidence values, or
 binary decisions.
+
+  >>> import numpy as np
+  >>> from sklearn.metrics import auc_score
+  >>> y_true = np.array([0, 0, 1, 1])
+  >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
+  >>> auc_score(y_true, y_scores)
+  0.75
 
 For more information see the
 `Wikipedia article on AUC
@@ -103,10 +116,18 @@ The :func:`average_precision_score` function computes the average precision
 (AP) from prediction scores. This score corresponds to the area under the
 precision-recall curve.
 
+  >>> import numpy as np
+  >>> from sklearn.metrics import average_precision_score
+  >>> y_true = np.array([0, 0, 1, 1])
+  >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
+  >>> average_precision_score(y_true, y_scores)
+  0.79166666666666663
+
 For more information see the
 `Wikipedia article on average precision
 <http://en.wikipedia.org/wiki/Information_retrieval#Average_precision>`_
 and the :ref:`precision_recall_f_measure_metrics` section.
+
 
 Confusion matrix
 ----------------
@@ -153,20 +174,21 @@ Classification report
 ---------------------
 The :func:`classification_report` function builds a text report showing the
 main classification metrics. Here a small example with custom ``target_names``
-and infered labels::
+and infered labels:
 
-  >>> from sklearn.metrics import classification_report
-  >>> y_true = [0, 1, 2, 2, 0]
-  >>> y_pred = [0, 0, 2, 2, 0]
-  >>> target_names = ['class 0', 'class 1', 'class 2']
-  >>> print(classification_report(y_true, y_pred, target_names=target_names))
-               precision    recall  f1-score   support
-
-      class 0       0.67      1.00      0.80         2
-      class 1       0.00      0.00      0.00         1
-      class 2       1.00      1.00      1.00         2
-
-  avg / total       0.67      0.80      0.72         5
+   >>> from sklearn.metrics import classification_report
+   >>> y_true = [0, 1, 2, 2, 0]
+   >>> y_pred = [0, 0, 2, 2, 0]
+   >>> target_names = ['class 0', 'class 1', 'class 2']
+   >>> print(classification_report(y_true, y_pred, target_names=target_names))
+                precision    recall  f1-score   support
+   <BLANKLINE>
+       class 0       0.67      1.00      0.80         2
+       class 1       0.00      0.00      0.00         1
+       class 2       1.00      1.00      1.00         2
+   <BLANKLINE>
+   avg / total       0.67      0.80      0.72         5
+   <BLANKLINE>
 
 .. topic:: Example:
 
@@ -214,6 +236,9 @@ score:
    precision_recall_fscore_support
    precision_score
    recall_score
+
+Note that the :func:`precision_recall_curve` function is restricted to the
+binary case.
 
 The average precision score might also interest you. See the
 :ref:`average_precision_metrics` section.
@@ -269,6 +294,40 @@ In this context, we can define the notions of precision, recall and F-measure:
 
    F_\beta = (1 + \beta^2) \frac{\text{precision} \times \text{recall}}{\beta^2 \text{precision} + \text{recall}}.
 
+Here some small examples in binary classification:
+
+  >>> from sklearn import metrics
+  >>> y_pred = [0, 1, 0, 0]
+  >>> y_true = [0, 1, 0, 1]
+  >>> metrics.precision_score(y_true, y_pred)
+  1.0
+  >>> metrics.recall_score(y_true, y_pred)
+  0.5
+  >>> metrics.f1_score(y_true, y_pred)
+  0.66666666666666663
+  >>> metrics.fbeta_score(y_true, y_pred, beta=0.5)
+  0.83333333333333337
+  >>> metrics.fbeta_score(y_true, y_pred, beta=1)
+  0.66666666666666663
+  >>> metrics.fbeta_score(y_true, y_pred, beta=2)
+  0.55555555555555558
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)
+  (array([ 0.66666667,  1.        ]), array([ 1. ,  0.5]), array([ 0.71428571,  0.83333333]), array([2, 2], dtype=int64))
+
+
+  >>> import numpy as np
+  >>> from sklearn.metrics import precision_recall_curve
+  >>> y_true = np.array([0, 0, 1, 1])
+  >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
+  >>> precision, recall, threshold = precision_recall_curve(y_true, y_scores)
+  >>> precision
+  array([ 0.66666667,  0.5       ,  1.        ,  1.        ])
+  >>> recall
+  array([ 1. ,  0.5,  0.5,  0. ])
+  >>> threshold
+  array([ 0.35,  0.4 ,  0.8 ])
+
+
 Multiclass and multilabels classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In multiclass and multilabels classification task, the notions of precision,
@@ -319,7 +378,6 @@ The macro precision, recall and :math:`F_\beta` are averaged over all labels
 
   \texttt{macro\_{}F\_{}beta} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} {F_\beta}_j.
 
-
 The micro precision, recall and :math:`F_\beta` are averaged over all instances
 
 .. math::
@@ -350,6 +408,72 @@ their support
 
   \texttt{weighted\_{}F\_{}beta}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (1 + \beta^2)\frac{|y_i \cap \hat{y}_i|}{\beta^2 |\hat{y}_i| + |y_i|}.
 
+Let's show several example on how you can use those functions.
+Here an example when you set ``average`` to ``macro``:
+
+  >>> from sklearn import metrics
+  >>> y_true = [0, 1, 2, 0, 1, 2]
+  >>> y_pred = [0, 2, 1, 0, 0, 1]
+  >>> metrics.precision_score(y_true, y_pred, average='macro')
+  0.22222222222222221
+  >>> metrics.recall_score(y_true, y_pred, average='macro')
+  0.33333333333333331
+  >>> metrics.fbeta_score(y_true, y_pred, average='macro', beta=0.5)
+  0.23809523809523805
+  >>> metrics.f1_score(y_true, y_pred, average='macro')
+  0.26666666666666666
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='macro')
+  (0.22222222222222221, 0.33333333333333331, 0.26666666666666666, None)
+
+Here an example when you set ``average`` to ``micro``:
+
+  >>> from sklearn import metrics
+  >>> y_true = [0, 1, 2, 0, 1, 2]
+  >>> y_pred = [0, 2, 1, 0, 0, 1]
+  >>> metrics.precision_score(y_true, y_pred, average='micro')
+  0.33333333333333331
+  >>> metrics.recall_score(y_true, y_pred, average='micro')
+  0.33333333333333331
+  >>> metrics.f1_score(y_true, y_pred, average='micro')
+  0.33333333333333331
+  >>> metrics.fbeta_score(y_true, y_pred, average='micro', beta=0.5)
+  0.33333333333333337
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='micro')
+  (0.33333333333333331, 0.33333333333333331, 0.33333333333333331, None)
+
+Here an example when you set ``average`` to ``weighted``:
+
+  >>> from sklearn import metrics
+  >>> y_true = [0, 1, 2, 0, 1, 2]
+  >>> y_pred = [0, 2, 1, 0, 0, 1]
+  >>> metrics.precision_score(y_true, y_pred, average='weighted')
+  0.22222222222222221
+  >>> metrics.recall_score(y_true, y_pred, average='weighted')
+  0.33333333333333331
+  >>> metrics.fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
+  0.23809523809523805
+  >>> metrics.f1_score(y_true, y_pred, average='weighted')
+  0.26666666666666666
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='weighted')
+  (0.22222222222222221, 0.33333333333333331, 0.26666666666666666, None)
+
+Here an example
+when you set ``average`` to ``None``:
+
+  >>> from sklearn import metrics
+  >>> y_true = [0, 1, 2, 0, 1, 2]
+  >>> y_pred = [0, 2, 1, 0, 0, 1]
+  >>> metrics.precision_score(y_true, y_pred, average=None)
+  array([ 0.66666667,  0.        ,  0.        ])
+  >>> metrics.recall_score(y_true, y_pred, average=None)
+  array([ 1.,  0.,  0.])
+  >>> metrics.f1_score(y_true, y_pred, average=None)
+  array([ 0.8,  0. ,  0. ])
+  >>> metrics.fbeta_score(y_true, y_pred, average=None, beta=0.5)
+  array([ 0.71428571,  0.        ,  0.        ])
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)
+  (array([ 0.66666667,  0.        ,  0.        ]), array([ 1.,  0.,  0.]), array([ 0.71428571,  0.        ,  0.        ]), array([2, 2, 2], dtype=int64))
+
 
 Hinge loss
 ----------
@@ -365,6 +489,24 @@ value and :math:`w` is the predicted decisions as output by
 .. math::
 
   L_\text{Hinge}(y, w) = \max\left\{1 - wy, 0\right\} = \left|1 - wy\right|_+
+
+Here a small example demontrating the use of the :func:`hinge_loss` function
+with a svm classifier:
+
+  >>> from sklearn import svm
+  >>> from sklearn.metrics import hinge_loss
+  >>> X = [[0], [1]]
+  >>> y = [-1, 1]
+  >>> est = svm.LinearSVC(random_state=0)
+  >>> est.fit(X, y)
+  LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
+       intercept_scaling=1, loss='l2', multi_class='ovr', penalty='l2',
+       random_state=0, tol=0.0001, verbose=0)
+  >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
+  >>> pred_decision
+  array([-2.18177944,  2.36355888,  0.09088972])
+  >>> hinge_loss([-1, 1, 1], pred_decision)
+  0.30303676038544258
 
 
 Matthews correlation coefficient
@@ -390,6 +532,15 @@ the MCC coefficient is defined as
 .. math::
 
   MCC = \frac{tp \times tn - fp \times fn}{\sqrt{(tp + fp)(tp + fn)(tn + fp)(tn + fn)}}.
+
+Here a small example illlustring the usage of the :func:`matthews_corrcoef`
+function:
+
+    >>> from sklearn.metrics import matthews_corrcoef
+    >>> y_true = [+1, +1, +1, -1]
+    >>> y_pred = [+1, -1, +1, +1]
+    >>> matthews_corrcoef(y_true, y_pred)
+    -0.33333333333333331
 
 .. _roc_metrics:
 
@@ -442,8 +593,10 @@ The following figure shows an example of such ROC curve.
 
 Zero one loss
 --------------
-The :func:`zero_one_loss` function computes the 0-1 classification loss over
-:math:`n_{\text{samples}}`. This function isn't normalized over the samples.
+The :func:`zero_one_loss` function computes the sum or the average of the 0-1
+classification loss (:math:`L_{0-1}`) over :math:`n_{\text{samples}}`. By
+defaults, the function normalizes over the sample. To get the sum of the
+:math:`L_{0-1}`, set ``normalize``  to ``False``.
 
 If :math:`\hat{y}_i` is the predicted value of
 the :math:`i`-th sample and :math:`y_i` is the corresponding true value,
@@ -456,7 +609,13 @@ then the 0-1 loss :math:`L_{0-1}` is defined as:
 where :math:`1(x)` is the `indicator function
 <http://en.wikipedia.org/wiki/Indicator_function>`_.
 
-
+  >>> from sklearn.metrics import zero_one_loss
+  >>> y_pred = [1, 2, 3, 4]
+  >>> y_true = [2, 2, 3, 4]
+  >>> zero_one_loss(y_true, y_pred)
+  0.25
+  >>> zero_one_loss(y_true, y_pred, normalize=False)
+  1
 
 .. topic:: Example:
 
@@ -493,6 +652,13 @@ variance is  estimated  as follow:
 
 The best possible score is 1.0, lower values are worse.
 
+Here a small example of usage of the :func:`explained_variance_scoreé` function:
+
+    >>> from sklearn.metrics import explained_variance_score
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> explained_variance_score(y_true, y_pred)
+    0.95717344753747324
 
 Mean absolute error
 -------------------
@@ -508,6 +674,19 @@ and :math:`y_i` is the corresponding true value, then the mean absolute error
 .. math::
 
   \text{MAE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \left| y_i - \hat{y}_i \right|.
+
+Here a small example of usage of the :func:`mean_absolute_error` function:
+
+  >>> from sklearn.metrics import mean_absolute_error
+  >>> y_true = [3, -0.5, 2, 7]
+  >>> y_pred = [2.5, 0.0, 2, 8]
+  >>> mean_absolute_error(y_true, y_pred)
+  0.5
+  >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
+  >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
+  >>> mean_absolute_error(y_true, y_pred)
+  0.75
+
 
 
 Mean squared error
@@ -525,12 +704,23 @@ and :math:`y_i` is the corresponding true value, then the mean squared error
 
   \text{MSE}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (y_i - \hat{y}_i)^2.
 
+Here a small example of usage of the :func:`mean_squared_error` function:
+
+  >>> from sklearn.metrics import mean_squared_error
+  >>> y_true = [3, -0.5, 2, 7]
+  >>> y_pred = [2.5, 0.0, 2, 8]
+  >>> mean_squared_error(y_true, y_pred)
+  0.375
+  >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
+  >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
+  >>> mean_squared_error(y_true, y_pred)
+  0.70833333333333337
+
 .. topic:: Examples:
 
   * See :ref:`example_ensemble_plot_gradient_boosting_regression.py`
     for an example of mean squared error usage to
     evaluate gradient boosting regression.
-
 
 R² score, the coefficient of determination
 ------------------------------------------
@@ -548,6 +738,19 @@ over :math:`n_{\text{samples}}` is defined as
   R^2(y, \hat{y}) = 1 - \frac{\sum_{i=0}^{n_{\text{samples}} - 1} (y_i - \hat{y}_i)^2}{\sum_{i=0}^{n_\text{samples} - 1} (y_i - \bar{y})^2}
 
 where :math:`\bar{y} =  \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}} - 1} y_i`.
+
+Here a small example of usage of the :func:`r2_score` function:
+
+  >>> from sklearn.metrics import r2_score
+  >>> y_true = [3, -0.5, 2, 7]
+  >>> y_pred = [2.5, 0.0, 2, 8]
+  >>> r2_score(y_true, y_pred)
+  0.94860813704496794
+  >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
+  >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
+  >>> r2_score(y_true, y_pred)
+  0.93825665859564167
+
 
 .. topic:: Example:
 

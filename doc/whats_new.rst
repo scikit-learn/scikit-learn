@@ -127,14 +127,9 @@ Changelog
      of ``class_weight`` was reversed as erroneously higher weight meant less
      positives of a given class in earlier releases.
 
-<<<<<<< HEAD
-   - Improve narrative documentation for :mod:`sklearn.metrics`: regression
-     and classification metrics by `Arnaud Joly`_.
-=======
    - Improve narrative documentation and consistency in
      :mod:`sklearn.metrics` for regression and classification metrics
      by `Arnaud Joly`_.
->>>>>>> ENH rename zero_loss_score to accuracy_score
 
 API changes summary
 -------------------
