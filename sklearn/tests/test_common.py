@@ -719,8 +719,7 @@ def test_class_weight_auto_classifies():
                 continue
 
             if name.endswith("NB"):
-                # NaiveBayes classifiers have a somewhat differnt interface.
-                # FIXME SOON!
+                # naive bayes classifiers don't work on this kind of data :(
                 continue
 
             with warnings.catch_warnings(record=True):
