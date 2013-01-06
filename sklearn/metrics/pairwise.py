@@ -40,7 +40,6 @@ from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 
-from ..utils import safe_asarray
 from ..utils import atleast2d_or_csr
 from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
@@ -84,17 +83,10 @@ def check_pairwise_arrays(X, Y):
 
     """
     if Y is X or Y is None:
-        X = safe_asarray(X)
         X = Y = atleast2d_or_csr(X, dtype=np.float)
     else:
-        X = safe_asarray(X)
-        Y = safe_asarray(Y)
         X = atleast2d_or_csr(X, dtype=np.float)
         Y = atleast2d_or_csr(Y, dtype=np.float)
-    if len(X.shape) < 2:
-        raise ValueError("X is required to be at least two dimensional.")
-    if len(Y.shape) < 2:
-        raise ValueError("Y is required to be at least two dimensional.")
     if X.shape[1] != Y.shape[1]:
         raise ValueError("Incompatible dimension for X and Y matrices: "
                          "X.shape[1] == %d while Y.shape[1] == %d" % (
@@ -237,6 +229,9 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
     array([[ 1.,  1.],
            [ 1.,  1.]]...)
     """
+    if issparse(X) or issparse(Y):
+        raise ValueError("manhattan_distance does not support sparse"
+                         " matrices.")
     X, Y = check_pairwise_arrays(X, Y)
     D = np.abs(X[:, np.newaxis, :] - Y[np.newaxis, :, :])
     if sum_over_features:
@@ -433,7 +428,9 @@ def additive_chi2_kernel(X, Y=None):
     sklearn.kernel_approximation.AdditiveChi2Sampler : A Fourier approximation
         to this kernel.
     """
-    ### once we support sparse matrices, we can use check_pairwise
+    if issparse(X) or issparse(Y):
+        raise ValueError("additive_chi2 does not support sparse matrices.")
+    ### we don't use check_pairwise to preserve float32.
 
     if Y is None:
         # optimize this case!

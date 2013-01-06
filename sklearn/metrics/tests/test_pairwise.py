@@ -57,6 +57,9 @@ def test_pairwise_distances():
     assert_equal(S.shape[0], X.shape[0])
     assert_equal(S.shape[1], Y.shape[0])
     assert_array_almost_equal(S, S2)
+    # manhattan does not support sparse matrices atm.
+    assert_raises(ValueError, pairwise_distances, csr_matrix(X),
+                  metric="manhattan")
     # Test cosine as a string metric versus cosine callable
     S = pairwise_distances(X, Y, metric="cosine")
     S2 = pairwise_distances(X, Y, metric=cosine)
@@ -228,6 +231,9 @@ def test_chi_square_kernel():
 
     # different n_features in X and Y
     assert_raises(ValueError, chi2_kernel, [[0, 1]], [[.2, .2, .6]])
+
+    # sparse matrices
+    assert_raises(ValueError, chi2_kernel, csr_matrix(X), csr_matrix(Y))
 
 
 def test_kernel_symmetry():
