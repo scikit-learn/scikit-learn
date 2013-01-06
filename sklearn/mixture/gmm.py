@@ -162,7 +162,7 @@ class GMM(BaseEstimator):
         Covariance parameters for each mixture component.  The shape
         depends on `covariance_type`::
 
-            (n_components,)                        if 'spherical',
+            (n_components, n_features)             if 'spherical',
             (n_features, n_features)               if 'tied',
             (n_components, n_features)             if 'diag',
             (n_components, n_features, n_features) if 'full'
