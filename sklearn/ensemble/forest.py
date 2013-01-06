@@ -700,7 +700,7 @@ class RandomForestClassifier(ForestClassifier):
         min_samples_split samples.
         Note: this parameter is tree-specific.
 
-    min_samples_split : integer, optional (default=1)
+    min_samples_split : integer, optional (default=2)
         The minimum number of samples required to split an internal node.
         Note: this parameter is tree-specific.
 
@@ -781,7 +781,7 @@ class RandomForestClassifier(ForestClassifier):
                  n_estimators=10,
                  criterion="gini",
                  max_depth=None,
-                 min_samples_split=1,
+                 min_samples_split=2,
                  min_samples_leaf=1,
                  min_density=0.1,
                  max_features="auto",
@@ -845,7 +845,7 @@ class RandomForestRegressor(ForestRegressor):
         min_samples_split samples.
         Note: this parameter is tree-specific.
 
-    min_samples_split : integer, optional (default=1)
+    min_samples_split : integer, optional (default=2)
         The minimum number of samples required to split an internal node.
         Note: this parameter is tree-specific.
 
@@ -917,7 +917,7 @@ class RandomForestRegressor(ForestRegressor):
                  n_estimators=10,
                  criterion="mse",
                  max_depth=None,
-                 min_samples_split=1,
+                 min_samples_split=2,
                  min_samples_leaf=1,
                  min_density=0.1,
                  max_features="auto",
@@ -982,7 +982,7 @@ class ExtraTreesClassifier(ForestClassifier):
         min_samples_split samples.
         Note: this parameter is tree-specific.
 
-    min_samples_split : integer, optional (default=1)
+    min_samples_split : integer, optional (default=2)
         The minimum number of samples required to split an internal node.
         Note: this parameter is tree-specific.
 
@@ -1066,7 +1066,7 @@ class ExtraTreesClassifier(ForestClassifier):
                  n_estimators=10,
                  criterion="gini",
                  max_depth=None,
-                 min_samples_split=1,
+                 min_samples_split=2,
                  min_samples_leaf=1,
                  min_density=0.1,
                  max_features="auto",
@@ -1131,7 +1131,7 @@ class ExtraTreesRegressor(ForestRegressor):
         min_samples_split samples.
         Note: this parameter is tree-specific.
 
-    min_samples_split : integer, optional (default=1)
+    min_samples_split : integer, optional (default=2)
         The minimum number of samples required to split an internal node.
         Note: this parameter is tree-specific.
 
@@ -1206,7 +1206,7 @@ class ExtraTreesRegressor(ForestRegressor):
                  n_estimators=10,
                  criterion="mse",
                  max_depth=None,
-                 min_samples_split=1,
+                 min_samples_split=2,
                  min_samples_leaf=1,
                  min_density=0.1,
                  max_features="auto",
@@ -1256,7 +1256,7 @@ class RandomTreesEmbedding(BaseForest):
     max_depth : int
         Maximum depth of each tree.
 
-    min_samples_split : integer, optional (default=1)
+    min_samples_split : integer, optional (default=2)
         The minimum number of samples required to split an internal node.
         Note: this parameter is tree-specific.
 
@@ -1307,7 +1307,7 @@ class RandomTreesEmbedding(BaseForest):
     def __init__(self,
                  n_estimators=10,
                  max_depth=5,
-                 min_samples_split=1,
+                 min_samples_split=2,
                  min_samples_leaf=1,
                  min_density=0.1,
                  n_jobs=1,
