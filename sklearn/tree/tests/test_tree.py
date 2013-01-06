@@ -603,7 +603,10 @@ def test_sample_weight():
     clf = tree.DecisionTreeClassifier(random_state=1)
     clf.fit(X, y, sample_weight=sample_weight)
 
+    # Check that predict_proba returns valid probabilities in the presence of
+    # samples with negative weight
     sample_weight = np.random.normal(.5, 1.0, X.shape[0])
+    # sanity check
     assert sample_weight[sample_weight < 0].shape[0] > 0
     clf = tree.DecisionTreeClassifier(random_state=1)
     clf.fit(X, y, sample_weight=sample_weight)

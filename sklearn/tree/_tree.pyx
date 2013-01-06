@@ -13,6 +13,7 @@
 # =============================================================================
 
 cimport cython
+from cpython cimport bool
 
 import numpy as np
 cimport numpy as np
@@ -717,8 +718,7 @@ cdef class Tree:
         cdef int i, a, b, best_i = -1
         cdef np.int32_t feature_idx = -1
         cdef int n_left = 0
-        cdef double weighted_n_left = 0.0
-
+        
         cdef double t, initial_error, error
         cdef double best_error = INFINITY, best_t = INFINITY
 
@@ -784,25 +784,20 @@ cdef class Tree:
                     break
 
                 # Better split than the best so far?
-                criterion.update(a, b, y_ptr, y_stride,
+                if not criterion.update(a, b, y_ptr, y_stride,
                                  X_argsorted_i,
                                  sample_weight_ptr,
-                                 sample_mask_ptr)
-                n_left = criterion.n_left
-                weighted_n_left = criterion.weighted_n_left
-
+                                 sample_mask_ptr):
+                    a = b
+                    continue
+                
                 # Only consider splits that respect min_leaf
+                n_left = criterion.n_left
                 if (n_left < min_samples_leaf or
                     (n_node_samples - n_left) < min_samples_leaf):
                     a = b
                     continue
-
-                if (weighted_n_left <= 0 or
-                    (weighted_n_node_samples - weighted_n_left) <= 0):
-                    # skip splits that result in nodes with net 0 or negative
-                    # weights
-                    continue
-
+                
                 error = criterion.eval()
 
                 if error < best_error:
@@ -854,7 +849,6 @@ cdef class Tree:
         cdef int i, a, b, c, best_i = -1
         cdef np.int32_t feature_idx = -1
         cdef int n_left = 0
-        cdef double weighted_n_left = 0.0
         cdef double random
 
         cdef double t, initial_error, error
@@ -932,21 +926,16 @@ cdef class Tree:
                 c += 1
 
             # Better than the best so far?
-            criterion.update(0, c, y_ptr, y_stride,
+            if not criterion.update(0, c, y_ptr, y_stride,
                              X_argsorted_i,
                              sample_weight_ptr,
-                             sample_mask_ptr)
+                             sample_mask_ptr):
+                continue
+
             n_left = criterion.n_left
-            weighted_n_left = criterion.weighted_n_left
 
             if (n_left < min_samples_leaf or
                 (n_node_samples - n_left) < min_samples_leaf):
-                continue
-
-            if (weighted_n_left <= 0 or
-                (weighted_n_node_samples - weighted_n_left) <= 0):
-                # skip splits that result in nodes with net 0 or negative
-                # weights
                 continue
 
             error = criterion.eval()
@@ -1092,7 +1081,7 @@ cdef class Criterion:
         """Reset the criterion for a new feature index."""
         pass
 
-    cdef void update(self, int a, int b,
+    cdef bool update(self, int a, int b,
                       DOUBLE_t* y, int y_stride,
                       int* X_argsorted_i,
                       DOUBLE_t* sample_weight,
@@ -1288,7 +1277,7 @@ cdef class ClassificationCriterion(Criterion):
                 # Reset right label counts to the initial counts
                 label_count_right[k * label_count_stride + c] = label_count_init[k * label_count_stride + c]
 
-    cdef void update(self, int a, int b,
+    cdef bool update(self, int a, int b,
                            DOUBLE_t* y, int y_stride,
                            int* X_argsorted_i,
                            DOUBLE_t* sample_weight,
@@ -1296,6 +1285,7 @@ cdef class ClassificationCriterion(Criterion):
         """Update the criteria for each value in interval [a,b) (where a and b
            are indices in `X_argsorted_i`)."""
         cdef int n_outputs = self.n_outputs
+        cdef int* n_classes = self.n_classes
         cdef int label_count_stride = self.label_count_stride
         cdef double* label_count_left = self.label_count_left
         cdef double* label_count_right = self.label_count_right
@@ -1330,6 +1320,20 @@ cdef class ClassificationCriterion(Criterion):
         self.n_right = n_right
         self.weighted_n_left = weighted_n_left
         self.weighted_n_right = weighted_n_right
+        
+        # Skip splits that result in nodes with net 0 or negative weight
+        if (weighted_n_left <= 0 or
+            (self.weighted_n_samples - weighted_n_left) <= 0):
+            return False
+    
+        # Prevent any single class from having a net negative weight 
+        for k from 0 <= k < n_outputs:
+            for c from 0 <= c < n_classes[k]:
+                if (label_count_left[k * label_count_stride + c] < 0 or 
+                    label_count_right[k * label_count_stride + c] < 0):
+                    return False
+
+        return True
 
     cdef double eval(self):
         """Evaluate the criteria (aka the split error)."""
@@ -1683,7 +1687,7 @@ cdef class RegressionCriterion(Criterion):
             var_right[k] = (sq_sum_right[k] -
                 weighted_n_samples * (mean_right[k] * mean_right[k]))
 
-    cdef void update(self, int a, int b,
+    cdef bool update(self, int a, int b,
                           DOUBLE_t* y, int y_stride,
                           int* X_argsorted_i,
                           DOUBLE_t* sample_weight,
@@ -1741,6 +1745,13 @@ cdef class RegressionCriterion(Criterion):
             for k from 0 <= k < n_outputs:
                 var_left[k] = sq_sum_left[k] - weighted_n_left * (mean_left[k] * mean_left[k])
                 var_right[k] = sq_sum_right[k] - weighted_n_right * (mean_right[k] * mean_right[k])
+        
+        # Skip splits that result in nodes with net 0 or negative weight
+        if (weighted_n_left <= 0 or
+            (self.weighted_n_samples - weighted_n_left) <= 0):
+            return False
+        
+        return True
 
     cdef double eval(self):
         """Evaluate the criteria (aka the split error)."""
