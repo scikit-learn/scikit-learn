@@ -1,4 +1,5 @@
 import os
+from os.path import join
 
 import numpy
 from numpy.distutils.misc_util import Configuration
@@ -11,8 +12,9 @@ def configuration(parent_package="", top_path=None):
         libraries.append('m')
     config.add_extension("expected_mutual_info_fast",
                          sources=["expected_mutual_info_fast.c"],
-                         include_dirs=[numpy.get_include()],
-                         libraries=libraries)
+                         include_dirs=[join('..', '..', 'src', 'fdlibm'),
+                                       numpy.get_include()],
+                         libraries=libraries + ['fdlibm'])
 
     config.add_subpackage("tests")
 
