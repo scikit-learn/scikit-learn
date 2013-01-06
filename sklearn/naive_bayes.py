@@ -291,12 +291,17 @@ class MultinomialNB(BaseDiscreteNB):
 
     Parameters
     ----------
-    alpha: float, optional (default=1.0)
+    alpha : float, optional (default=1.0)
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
-    fit_prior: boolean
+
+    fit_prior : boolean
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
+
+    class_weight : array-like, size=[n_classes,]
+        Prior probabilities of the classes. If specified the priors are not
+        adjusted according to the data.
 
     Attributes
     ----------
@@ -360,15 +365,21 @@ class BernoulliNB(BaseDiscreteNB):
 
     Parameters
     ----------
-    alpha: float, optional (default=1.0)
+    alpha : float, optional (default=1.0)
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
-    binarize: float or None, optional
+
+    binarize : float or None, optional
         Threshold for binarizing (mapping to booleans) of sample features.
         If None, input is presumed to already consist of binary vectors.
-    fit_prior: boolean
+
+    fit_prior : boolean
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
+
+    class_weight : array-like, size=[n_classes,]
+        Prior probabilities of the classes. If specified the priors are not
+        adjusted according to the data.
 
     Attributes
     ----------
