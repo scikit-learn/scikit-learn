@@ -43,7 +43,7 @@ def f_oneway(*args):
     """Performs a 1-way ANOVA.
 
     The one-way ANOVA tests the null hypothesis that 2 or more groups have
-    the same population mean.  The test is applied to samples from two or
+    the same population mean. The test is applied to samples from two or
     more groups, possibly with differing sizes.
 
     Parameters
@@ -54,9 +54,9 @@ def f_oneway(*args):
     Returns
     -------
     F-value : float
-        The computed F-value of the test
+        The computed F-value of the test.
     p-value : float
-        The associated p-value from the F-distribution
+        The associated p-value from the F-distribution.
 
     Notes
     -----
@@ -119,16 +119,18 @@ def f_classif(X, y):
     Parameters
     ----------
     X : {array-like, sparse matrix} shape = [n_samples, n_features]
-        The set of regressors that will tested sequentially
+        The set of regressors that will tested sequentially.
+
     y : array of shape(n_samples)
-        The data matrix
+        The data matrix.
 
     Returns
     -------
     F : array, shape = [n_features,]
-        The set of F values
+        The set of F values.
+
     pval : array, shape = [n_features,]
-        The set of p-values
+        The set of p-values.
     """
     X, y = check_arrays(X, y)
     args = [X[safe_mask(X, y == k)] for k in np.unique(y)]
@@ -203,6 +205,7 @@ def f_regression(X, y, center=True):
     ----------
     X : {array-like, sparse matrix}  shape = (n_samples, n_features)
         The set of regressors that will tested sequentially.
+
     y : array of shape(n_samples).
         The data matrix
 
@@ -213,6 +216,7 @@ def f_regression(X, y, center=True):
     -------
     F : array, shape=(n_features,)
         F values of features.
+
     pval : array, shape=(n_features,)
         p-values of F-scores.
     """
