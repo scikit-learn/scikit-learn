@@ -4,6 +4,7 @@
 # See _tree.pyx for details.
 
 cimport numpy as np
+from cpython cimport bool
 
 ctypedef np.float32_t DTYPE_t
 ctypedef np.float64_t DOUBLE_t
@@ -34,7 +35,7 @@ cdef class Criterion:
 
     cdef void reset(self)
 
-    cdef void update(self, int a,
+    cdef bool update(self, int a,
                      int b,
                      DOUBLE_t* y, int y_stride,
                      int* X_argsorted_i,
