@@ -408,8 +408,7 @@ their support
 
   \texttt{weighted\_{}F\_{}beta}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (1 + \beta^2)\frac{|y_i \cap \hat{y}_i|}{\beta^2 |\hat{y}_i| + |y_i|}.
 
-Let's show several example on how you can use those functions.
-Here an example when you set ``average`` to ``macro``:
+Here an example where ``average`` is set to ``average`` to ``macro``:
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
@@ -425,7 +424,7 @@ Here an example when you set ``average`` to ``macro``:
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='macro')
   (0.22222222222222221, 0.33333333333333331, 0.26666666666666666, None)
 
-Here an example when you set ``average`` to ``micro``:
+Here an example where ``average`` is set to to ``micro``:
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
@@ -441,7 +440,7 @@ Here an example when you set ``average`` to ``micro``:
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='micro')
   (0.33333333333333331, 0.33333333333333331, 0.33333333333333331, None)
 
-Here an example when you set ``average`` to ``weighted``:
+Here an example where ``average`` is set to to ``weighted``:
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
@@ -457,8 +456,7 @@ Here an example when you set ``average`` to ``weighted``:
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='weighted')
   (0.22222222222222221, 0.33333333333333331, 0.26666666666666666, None)
 
-Here an example
-when you set ``average`` to ``None``:
+Here an example where ``average`` is set to ``None``:
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
