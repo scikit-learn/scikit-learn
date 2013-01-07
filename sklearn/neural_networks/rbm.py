@@ -28,9 +28,9 @@ def logistic_sigmoid(x):
     return 1. / (1. + np.exp(-np.clip(x, -30, 30)))
 
 
-class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
+class BernoulliRBM(BaseEstimator, TransformerMixin):
     """
-    Restricted Boltzmann Machine (RBM)
+    Bernoulli Restricted Boltzmann Machine (RBM)
 
     A Restricted Boltzmann Machine with binary visible units and
     binary hiddens. Parameters are estimated using Stochastic Maximum
@@ -72,10 +72,13 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
     --------
 
     >>> import numpy as np
-    >>> from sklearn.neural_networks import RestrictedBolzmannMachine
+    >>> from sklearn.neural_networks import BernoulliRBM
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
-    >>> model = RestrictedBolzmannMachine(n_components=2)
-    >>> model.fit(X)
+    >>> model = BernoulliRBM(n_components=2)
+    >>> model.fit(X)  # doctest: +ELLIPSIS
+    BernoulliRBM(learning_rate=0.1, n_components=2, n_iter=10, n_particles=10,
+           random_state=...,
+           verbose=False)
 
     References
     ----------
@@ -91,7 +94,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         self.n_particles = n_particles
         self.n_iter = n_iter
         self.verbose = verbose
-        self.random_state = check_random_state(random_state)
+        self.random_state = random_state
 
     def _sample_binomial(self, p):
         """
@@ -126,6 +129,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         -------
         h: array-like, shape (n_samples, n_components)
         """
+        X = array2d(X)
         return self.mean_hiddens(X)
 
     def mean_hiddens(self, v):
@@ -293,6 +297,7 @@ class RestrictedBolzmannMachine(BaseEstimator, TransformerMixin):
         self
         """
         X = array2d(X)
+        self.random_state = check_random_state(self.random_state)
 
         self.components_ = np.asarray(self.random_state.normal(0, 0.01,
             (self.n_components, X.shape[1])), dtype=X.dtype, order='fortran')

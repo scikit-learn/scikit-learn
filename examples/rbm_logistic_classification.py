@@ -6,14 +6,14 @@
 Pipelining: chaining a RBM and a logistic regression
 =========================================================
 
-The RestrictedBolzmannMachine does unsupervised feature extraction,
+The BernoulliRBM does unsupervised feature extraction,
 while the logistic regression does the prediction.
 
 We use a GridSearchCV to set the number of hidden units and the learning rate
-of the RestrictedBolzmannMachine.
+of the Bernoulli Restricted Boltzmann Machine.
 
 We also train a simple logistic regression for comparison. The example shows
-that the features extracted by the RestrictedBolzmannMachine help improve
+that the features extracted by the BernoulliRBM help improve
 the classification accuracy.
 
 """
@@ -28,7 +28,7 @@ import numpy as np
 
 from sklearn import linear_model, datasets, metrics, preprocessing
 from sklearn.cross_validation import train_test_split
-from sklearn.neural_networks import RestrictedBolzmannMachine
+from sklearn.neural_networks import BernoulliRBM
 from sklearn.pipeline import Pipeline
 from sklearn.grid_search import GridSearchCV
 
@@ -46,7 +46,7 @@ X_train, X_test, Y_train, Y_test = train_test_split(X, Y,
 
 # Models we will use
 logistic = linear_model.LogisticRegression()
-rbm = RestrictedBolzmannMachine()
+rbm = BernoulliRBM()
 
 pipe = Pipeline(steps=[('rbm', rbm), ('logistic', logistic)])
 

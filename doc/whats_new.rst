@@ -117,6 +117,9 @@ Changelog
     of ``class_weight`` was reversed as erroneously higher weight meant less
     positives of a given class in earlier releases.
 
+   - New transformer :ref:`neural_networks.BernoulliRBM`
+     by `Yann Dauphin`_.
+
 API changes summary
 -------------------
    - Renamed all occurences of ``n_atoms`` to ``n_components`` for consistency.
