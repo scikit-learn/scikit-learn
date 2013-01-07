@@ -22,7 +22,7 @@ from ..utils import check_arrays
 
 
 ###############################################################################
-# General Utilities
+# General utilities
 ###############################################################################
 def auc(x, y, reorder=False):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
@@ -153,7 +153,7 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
 
 
 ###############################################################################
-# Binary classification score
+# Binary classification scores
 ###############################################################################
 def average_precision_score(y_true, y_score):
     """Compute average precision (AP) from prediction scores.
@@ -291,9 +291,6 @@ def matthews_corrcoef(y_true, y_pred):
         return mcc
 
 
-###############################################################################
-# Binary classification score
-###############################################################################
 def precision_recall_curve(y_true, probas_pred):
     """Compute precision-recall pairs for different probability thresholds.
 
@@ -681,8 +678,42 @@ def zero_one(y_true, y_pred, normalize=False):
 
 
 ###############################################################################
-# Multiclass score function
+# Multiclass score functions
 ###############################################################################
+def accuracy_score(y_true, y_pred):
+    """Accuracy classification score
+
+    Parameters
+    ----------
+    y_true : array-like, shape = n_samples
+        Ground truth (correct) labels.
+
+    y_pred : array-like, shape = n_samples
+        Predicted labels, as returned by a classifier.
+
+    Returns
+    -------
+    score : float
+        The fraction of correct predictions in y_pred.
+        The best performance is 1.
+
+    See also
+    --------
+    zero_one_loss Zero-One classification loss
+
+    Examples
+    --------
+    >>> from sklearn.metrics import accuracy_score
+    >>> y_pred = [0, 2, 1, 3]
+    >>> y_true = [0, 1, 2, 3]
+    >>> accuracy_score(y_true, y_pred)
+    0.5
+
+    """
+    y_true, y_pred = check_arrays(y_true, y_pred)
+    return np.mean(y_pred == y_true)
+
+
 def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     """Compute the f1 score
 
@@ -1187,40 +1218,6 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     return r
 
 
-def accuracy_score(y_true, y_pred):
-    """Accuracy classification score
-
-    Parameters
-    ----------
-    y_true : array-like, shape = n_samples
-        Ground truth (correct) labels.
-
-    y_pred : array-like, shape = n_samples
-        Predicted labels, as returned by a classifier.
-
-    Returns
-    -------
-    score : float
-        The fraction of correct predictions in y_pred.
-        The best performance is 1.
-
-    See also
-    --------
-    zero_one_loss Zero-One classification loss
-
-    Examples
-    --------
-    >>> from sklearn.metrics import accuracy_score
-    >>> y_pred = [0, 2, 1, 3]
-    >>> y_true = [0, 1, 2, 3]
-    >>> accuracy_score(y_true, y_pred)
-    0.5
-
-    """
-    y_true, y_pred = check_arrays(y_true, y_pred)
-    return np.mean(y_pred == y_true)
-
-
 def zero_one_score(y_true, y_pred):
     """Zero-one classification score (accuracy)
 
@@ -1338,7 +1335,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
 
 
 ###############################################################################
-# Regresssion loss function
+# Regression loss functions
 ###############################################################################
 def mean_absolute_error(y_true, y_pred):
     """Mean absolute error regression loss
@@ -1407,7 +1404,7 @@ def mean_squared_error(y_true, y_pred):
 
 
 ###############################################################################
-# Regrsssion score function
+# Regression score functions
 ###############################################################################
 def explained_variance_score(y_true, y_pred):
     """Explained variance regression score function
