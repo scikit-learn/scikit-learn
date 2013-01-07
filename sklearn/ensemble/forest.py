@@ -271,7 +271,11 @@ class BaseForest(BaseEnsemble, SelectorMixin):
             classification, real numbers in regression).
 
         sample_weight : array-like, shape = [n_samples] or None
-            Sample weights. If None, then samples are equally weighted.
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node. In the case of
+            classification, splits are also ignored if they would result in any
+            single class carrying a negative weight in either child node.
 
         Returns
         -------

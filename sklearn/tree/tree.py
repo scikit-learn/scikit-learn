@@ -209,11 +209,11 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             tree ensembles. For maximum efficiency use dtype np.int32.
 
         sample_weight : array-like, shape = [n_samples] or None
-            Sample weights. If None, then samples are equally weighted.
-            Splits that would create child nodes with net zero or negative
-            weight are ignored while searching for a split in each node. In the
-            case of classification, splits are also ignored that would result
-            in any single class carrying a negative weight in either child node.
+            Sample weights. If None, then samples are equally weighted. Splits
+            that would create child nodes with net zero or negative weight are
+            ignored while searching for a split in each node. In the case of
+            classification, splits are also ignored if they would result in any
+            single class carrying a negative weight in either child node.
 
         check_input: boolean, (default=True)
             Allow to bypass several input checking.
