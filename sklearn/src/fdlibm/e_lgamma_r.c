@@ -174,10 +174,10 @@ static double zero=  0.00000000000000000000e+00;
      * argument reduction, make sure inexact flag not raised if input
      * is an integer
      */
-	z = floor(y);
+	z = _floor(y);
 	if(z!=y) {				/* inexact anyway */
 	    y  *= 0.5;
-	    y   = 2.0*(y - floor(y));		/* y = |x| mod 2.0 */
+	    y   = 2.0*(y - _floor(y));		/* y = |x| mod 2.0 */
 	    n   = (int) (y*4.0);
 	} else {
             if(ix>=0x43400000) {

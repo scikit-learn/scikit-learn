@@ -134,7 +134,7 @@ extern double sqrt __P((double));
 extern double ceil __P((double));
 */
 extern double _fabs __P((double));
-extern double floor __P((double));
+extern double _floor __P((double));
 /*
 extern double fmod __P((double, double));
 
