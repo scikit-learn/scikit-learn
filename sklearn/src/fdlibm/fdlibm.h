@@ -168,10 +168,9 @@ extern double scalb __P((double, int));
 #else
 extern double scalb __P((double, double));
 #endif
-
-extern int matherr __P((struct exception *));
-
 */
+extern int _matherr __P((struct fdlibm_exception *));
+
 /*
  * IEEE Test Vector
  */
