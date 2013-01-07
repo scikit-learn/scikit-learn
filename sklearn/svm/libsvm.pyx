@@ -36,6 +36,11 @@ cimport numpy as np
 cimport libsvm
 from libc.stdlib cimport free
 
+cdef extern from *:
+    ctypedef char* const_char_p "const char *"
+
+np.import_array()
+
 
 ################################################################################
 # Internal variables
@@ -130,7 +135,7 @@ def fit(
     cdef svm_parameter param
     cdef svm_problem problem
     cdef svm_model *model
-    cdef char *error_msg
+    cdef const_char_p error_msg
     cdef np.npy_intp SV_len
     cdef np.npy_intp nr
 
@@ -510,7 +515,7 @@ def cross_validation(
     cdef svm_parameter param
     cdef svm_problem problem
     cdef svm_model *model
-    cdef char *error_msg
+    cdef const_char_p error_msg
     cdef np.npy_intp SV_len
     cdef np.npy_intp nr
 

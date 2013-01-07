@@ -12,6 +12,8 @@ import scipy.sparse as sp
 
 from ..utils.arraybuilder import ArrayBuilder
 
+np.import_array()
+
 
 # csr_matrix.indices and .indptr's dtypes are undocumented. We derive them
 # empirically.
