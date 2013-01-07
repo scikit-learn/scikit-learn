@@ -232,7 +232,7 @@ static double zero=  0.00000000000000000000e+00;
 		return one/zero;
 	    t = sin_pi(x);
 	    if(t==zero) return one/zero; /* -integer */
-	    nadj = __ieee754_log(pi/fabs(t*x));
+	    nadj = __ieee754_log(pi/_fabs(t*x));
 	    if(t<zero) *signgamp = -1;
 	    x = -x;
 	}

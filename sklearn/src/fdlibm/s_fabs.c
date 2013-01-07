@@ -18,9 +18,9 @@
 #include "fdlibm.h"
 
 #ifdef __STDC__
-	double fabs(double x)
+	double _fabs(double x)
 #else
-	double fabs(x)
+	double _fabs(x)
 	double x;
 #endif
 {
