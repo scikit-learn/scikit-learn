@@ -344,6 +344,10 @@ class MDS(BaseEstimator):
     def _pairwise(self):
         return self.kernel == "precomputed"
 
+    @property
+    def _pairwise(self):
+        return self.kernel == "precomputed"
+
     def fit(self, X, init=None, y=None):
         """
         Computes the position of the points in the embedding space
