@@ -3,6 +3,10 @@
 Lasso and Elastic Net for Sparse Signals
 ========================================
 
+Estimates Lasso and Elastic-Net regression models on a manually generated
+sparse signal corrupted with an additive noise. Estimated coefficients are
+compared with the ground-truth.
+
 """
 print __doc__
 
