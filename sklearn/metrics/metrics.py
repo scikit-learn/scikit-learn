@@ -85,12 +85,9 @@ def auc(x, y, reorder=False):
 
 def unique_labels(*lists_of_labels):
     """Extract an ordered array of unique labels"""
-    labels = set()
-    for l in lists_of_labels:
-        if hasattr(l, 'ravel'):
-            l = l.ravel()
-        labels |= set(l)
-    return np.unique(sorted(labels))
+    labels = set().union(*(l.ravel() if hasattr(l, "ravel") else l
+                           for l in lists_of_labels))
+    return np.asarray(sorted(labels))
 
 
 ###############################################################################
