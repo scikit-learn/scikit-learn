@@ -532,7 +532,8 @@ def zero_one(y_true, y_pred, normalize=False):
     """Zero-One classification loss
 
     Positive integer (number of misclassifications) or float (fraction of
-    misclassifications). The best performance is 0.
+    misclassifications, only when normalize != False).
+    The best performance is 0.
 
     Return the number of errors
 
@@ -550,9 +551,19 @@ def zero_one(y_true, y_pred, normalize=False):
     -------
     loss : float
 
+    Examples
+    --------
+    >>> from sklearn.metrics import zero_one
+    >>> y_pred = [0, 2, 1, 3, 4]
+    >>> y_true = [0, 1, 2, 3, 4]
+    >>> zero_one(y_true, y_pred)
+    2
+    >>> round(zero_one(y_true, y_pred, normalize=True),5)
+    0.4
+
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
-    if normalize == False:
+    if not normalize:
         return np.sum(y_pred != y_true)
     else:
         return np.mean(y_pred != y_true)

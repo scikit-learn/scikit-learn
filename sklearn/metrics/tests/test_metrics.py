@@ -479,6 +479,8 @@ def test_losses():
     n = y_true.shape[0]
 
     assert_equal(zero_one(y_true, y_pred), 13)
+    assert_almost_equal(zero_one(y_true, y_pred, normalize=True), 
+                        13 / float(n), 2)
     assert_almost_equal(mean_squared_error(y_true, y_pred), 12.999 / n, 2)
     assert_almost_equal(mean_squared_error(y_true, y_true), 0.00, 2)
 
@@ -517,6 +519,10 @@ def test_symmetry():
     # symmetric
     assert_equal(zero_one(y_true, y_pred),
                  zero_one(y_pred, y_true))
+
+    assert_almost_equal(zero_one(y_true, y_pred, normalize=True),
+                 zero_one(y_pred, y_true, normalize=True), 2)
+
     assert_almost_equal(mean_squared_error(y_true, y_pred),
                         mean_squared_error(y_pred, y_true))
 
