@@ -576,13 +576,13 @@ def test_sample_weight():
     X = iris.data
     y = iris.target
 
-    dupplicates = rng.randint(0, X.shape[0], 1000)
+    duplicates = rng.randint(0, X.shape[0], 1000)
 
     clf = tree.DecisionTreeClassifier(random_state=1)
-    clf.fit(X[dupplicates], y[dupplicates])
+    clf.fit(X[duplicates], y[duplicates])
 
     from sklearn.utils.fixes import bincount
-    sample_weight = bincount(dupplicates, minlength=X.shape[0])
+    sample_weight = bincount(duplicates, minlength=X.shape[0])
     clf2 = tree.DecisionTreeClassifier(random_state=1)
     clf2.fit(X, y, sample_weight=sample_weight)
 
