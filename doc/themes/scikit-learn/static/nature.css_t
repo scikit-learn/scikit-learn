@@ -32,6 +32,17 @@ div.header-wrapper {
     margin-top: 10px
 }
 
+/* -------- warning header for old versions --------------------------------*/
+
+div.warning-wrapper {
+    background-color: #ffaaaa;
+    max-width: auto;
+    text-align: center;
+}
+div.warning-wrapper p {
+    margin: 0;
+}
+
 ul.horizontal, ul.horizontal li {
     display: inline;
     list-style: none;
@@ -544,17 +555,6 @@ th.field-name {
     white-space: nowrap;
 }
 
-
-/* -------- warning header for old versions --------------------------------*/
-
-div.warning-wrapper {
-    background-color: #ffaaaa;
-    max-width: auto;
-    text-align: center;
-}
-div.warning-wrapper p {
-    margin: 0;
-}
 
 /* ------- Fix maximum size of thumbnails in example gallery -------------- */
 div#examples.section .figure img {

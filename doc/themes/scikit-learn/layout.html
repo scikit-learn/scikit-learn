@@ -39,7 +39,7 @@
 {%- endif %}
 
 {% block header %}
-    {%- if theme_oldversion|tobool %}
+    {%- if theme_oldversion == true %}
      <div class="warning-wrapper">
        <p>Warning: This documentation is
          for {{project}} <strong>version {{ release|e }}</strong>.
@@ -205,7 +205,7 @@
         <div class="clearer"></div>
       </div>
     </div>
-  
+
 {% endblock %}
 
 
@@ -246,7 +246,7 @@
     <div class="{{ loop.cycle('buttonPrevious', 'buttonNext') }}">
       <a href="{{ pathto(rellink[0]) }}">
         {{loop.cycle('Previous', 'Next')}}
-      </a>  
+      </a>
     </div>
     {%- endfor %}
     {% endif %}
