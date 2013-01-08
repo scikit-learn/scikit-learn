@@ -291,12 +291,12 @@ reasonable (please see  the :ref:`reference documentation
 
   >>> vectorizer = CountVectorizer(min_df=1)
   >>> vectorizer                            # doctest: +NORMALIZE_WHITESPACE
-  CountVectorizer(analyzer=u'word', binary=False, charset=u'utf-8',
-          charset_error=u'strict', dtype=<type 'long'>, input=u'content',
-          lowercase=True, max_df=1.0, max_features=None, min_df=1,
-          ngram_range=(1, 1), preprocessor=None, stop_words=None,
-          strip_accents=None, token_pattern=u'(?u)\\b\\w\\w+\\b',
-          tokenizer=None, vocabulary=None)
+  CountVectorizer(analyzer='word', binary=False, charset='utf-8',
+          charset_error='strict', dtype=<type 'long'>, input='content',
+          lowercase=True, max_df=1.0, max_features=None, min_df=1, 
+          ngram_range=(1, 1), preprocessor=None, stop_words=None, 
+          strip_accents=None, token_pattern=u'(?u)\\b\\w\\w+\\b', 
+          token_processor=None, tokenizer=None, vocabulary=None)
 
 Let's use it to tokenize and count the word occurrences of a minimalistic
 corpus of text documents::
@@ -376,6 +376,7 @@ last document::
   >>> feature_index = bigram_vectorizer.vocabulary_.get(u'is this')
   >>> X_2[:, feature_index]     # doctest: +ELLIPSIS
   array([0, 0, 0, 1]...)
+
 
 
 .. _tfidf:
@@ -676,14 +677,18 @@ In particular we name:
   * ``tokenizer`` a callable that takes a string as input and output a
     sequence of feature occurrences (a.k.a. the tokens).
 
+  * ``token_processor`` a callable that takes a token as 
+    input and outputs a processed version of it (useful, e.g., for 
+    integrating stemming).
+
   * ``analyzer`` a callable that wraps calls to the preprocessor and
     tokenizer and further perform some filtering or n-grams extractions
     on the tokens.
 
 To make the preprocessor, tokenizer and analyzers aware of the model
 parameters it is possible to derive from the class and override the
-``build_preprocessor``, ``build_tokenizer``` and ``build_analyzer``
-factory method instead.
+``build_preprocessor``, ``build_tokenizer``, ``build_token_processor`` 
+and ``build_analyzer`` factory method instead.
 
 Customizing the vectorizer can be very useful to handle Asian languages
 that do not use an explicit word separator such as whitespace.
