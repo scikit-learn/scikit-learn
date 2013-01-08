@@ -542,7 +542,7 @@ def zero_one(y_true, y_pred, normalize=False):
 
     y_pred : array-like
 
-    normalize : bool
+    normalize : bool, optional
         If False (default), return the number of misclassifications.
         Otherwise, return the fraction of misclassifications.
 
