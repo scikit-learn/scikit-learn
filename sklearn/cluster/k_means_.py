@@ -1209,6 +1209,11 @@ class MiniBatchKMeans(KMeans):
                 X[minibatch_indices], x_squared_norms[minibatch_indices],
                 self.cluster_centers_, self.counts_,
                 old_center_buffer, tol > 0.0, distances=distances,
+                # Here we randomly choose whether to perform
+                # random reassignment: the choice is done as a function
+                # of the iteration index, and the minimum number of
+                # counts, in order to force this reassignment to happen
+                # every once in a while
                 random_reassign=(iteration_idx + 1) % (10 +
                                                 self.counts_.min()) == 0,
                 random_state=self.random_state,
@@ -1261,8 +1266,8 @@ class MiniBatchKMeans(KMeans):
             random_reassign = False
         else:
             # The lower the minimum count is, the more we do random
-            # reassignement, however, we don't want to do random
-            # reassignement too often, to allow for building up counts
+            # reassignment, however, we don't want to do random
+            # reassignment too often, to allow for building up counts
             random_reassign = self.random_state.randint(10 * (1 +
                                         self.counts_.min())) == 0
 
