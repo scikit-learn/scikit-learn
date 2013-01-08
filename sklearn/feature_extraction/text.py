@@ -141,6 +141,10 @@ class CountVectorizer(BaseEstimator):
         Override the string tokenization step while preserving the
         preprocessing and n-grams generation steps.
 
+    token_processor: callable or None (default)
+        Override the token processing step while preserving the
+        preprocessing, tokenizing and n-grams generation steps.
+
     ngram_range: tuple (min_n, max_n)
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
@@ -216,7 +220,8 @@ class CountVectorizer(BaseEstimator):
 
     def __init__(self, input='content', charset='utf-8',
                  charset_error='strict', strip_accents=None,
-                 lowercase=True, preprocessor=None, tokenizer=None,
+                 lowercase=True, 
+		 preprocessor=None, tokenizer=None, token_processor=None,
                  stop_words=None, token_pattern=ur"(?u)\b\w\w+\b",
                  ngram_range=(1, 1),
                  min_n=None, max_n=None, analyzer='word',
@@ -228,6 +233,7 @@ class CountVectorizer(BaseEstimator):
         self.strip_accents = strip_accents
         self.preprocessor = preprocessor
         self.tokenizer = tokenizer
+        self.token_processor = token_processor
         self.analyzer = analyzer
         self.lowercase = lowercase
         self.token_pattern = token_pattern
@@ -365,6 +371,14 @@ class CountVectorizer(BaseEstimator):
         token_pattern = re.compile(self.token_pattern)
         return lambda doc: token_pattern.findall(doc)
 
+    def build_token_processor(self):
+        """Return a function that processes the tokens.
+        This can be useful, e.g., for introducing stemming, etc.
+        """
+        if self.token_processor is not None:
+            return self.token_processor
+        return lambda tok: tok
+
     def get_stop_words(self):
         """Build or fetch the effective stop words list"""
         return _check_stop_list(self.stop_words)
@@ -386,9 +400,10 @@ class CountVectorizer(BaseEstimator):
         elif self.analyzer == 'word':
             stop_words = self.get_stop_words()
             tokenize = self.build_tokenizer()
+            process_token = self.build_token_processor()
 
             return lambda doc: self._word_ngrams(
-                tokenize(preprocess(self.decode(doc))), stop_words)
+                [process_token(tok) for tok in tokenize(preprocess(self.decode(doc)))], stop_words)
 
         else:
             raise ValueError('%s is not a valid tokenization scheme/analyzer' %
@@ -774,6 +789,9 @@ class TfidfVectorizer(CountVectorizer):
         Override the string tokenization step while preserving the
         preprocessing and n-grams generation steps.
 
+    token_processor: callable or None (default)
+        Override the token processing step while preserving the
+        preprocessing, tokenizing and n-grams generation steps.
 
     ngram_range: tuple (min_n, max_n)
         The lower and upper boundary of the range of n-values for different
@@ -863,7 +881,7 @@ class TfidfVectorizer(CountVectorizer):
 
     def __init__(self, input='content', charset='utf-8',
                  charset_error='strict', strip_accents=None, lowercase=True,
-                 preprocessor=None, tokenizer=None, analyzer='word',
+                 preprocessor=None, tokenizer=None, token_processor=None, analyzer='word',
                  stop_words=None, token_pattern=ur"(?u)\b\w\w+\b", min_n=None,
                  max_n=None, ngram_range=(1, 1), max_df=1.0, min_df=2,
                  max_features=None, vocabulary=None, binary=False, dtype=long,
@@ -872,7 +890,8 @@ class TfidfVectorizer(CountVectorizer):
         super(TfidfVectorizer, self).__init__(
             input=input, charset=charset, charset_error=charset_error,
             strip_accents=strip_accents, lowercase=lowercase,
-            preprocessor=preprocessor, tokenizer=tokenizer, analyzer=analyzer,
+            preprocessor=preprocessor, tokenizer=tokenizer, token_processor=token_processor,
+            analyzer=analyzer,
             stop_words=stop_words, token_pattern=token_pattern, min_n=min_n,
             max_n=max_n, ngram_range=ngram_range, max_df=max_df, min_df=min_df,
             max_features=max_features, vocabulary=vocabulary, binary=False,
