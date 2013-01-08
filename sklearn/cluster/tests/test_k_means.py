@@ -321,7 +321,15 @@ def test_sparse_mb_k_means_callable_init():
     def test_init(X, k, random_state):
         return centers
 
-    mb_k_means = MiniBatchKMeans(init=test_init, random_state=42).fit(X_csr)
+    # Small test to check that giving the wrong number of centers
+    # raises a meaningful error
+    assert_raises(ValueError,
+                MiniBatchKMeans(init=test_init, random_state=42).fit,
+                X_csr)
+
+    # Now check that the fit actually works
+    mb_k_means = MiniBatchKMeans(n_clusters=3, init=test_init,
+                                 random_state=42).fit(X_csr)
     _check_fitted_model(mb_k_means)
 
 
