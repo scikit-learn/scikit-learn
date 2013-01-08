@@ -50,7 +50,7 @@ def test_thresholded_scores():
     assert_almost_equal(score1, score2)
     assert_almost_equal(score1, score3)
 
-    #same for an estimator without decision_function
+    # same for an estimator without decision_function
     clf = DecisionTreeClassifier()
     clf.fit(X_train, y_train)
     score1 = scorers['roc_auc'](clf, X_test, y_test)
