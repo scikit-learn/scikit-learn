@@ -553,8 +553,8 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
 
     if len(centers) != k:
         raise ValueError('The shape of the inital centers (%s) '
-            'does not match the number of clusters %i'
-            % (centers.shape, k))
+                         'does not match the number of clusters %i'
+                         % (centers.shape, k))
 
     return centers
 
@@ -845,7 +845,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
         random_state = check_random_state(random_state)
         # Reassign clusters that have very low counts
         to_reassign = np.logical_or((counts <= 1),
-                                     counts <= .001 * counts.max())
+                                    counts <= .001 * counts.max())
         # Pick new clusters amongst observations with a probability
         # proportional to their closeness to their center
         distance_to_centers = np.asarray(centers[nearest_center] - X)
@@ -860,7 +860,6 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
                                       rand_vals)
         new_centers = X[new_centers]
         centers[to_reassign] = new_centers
-
 
     # implementation for the sparse CSR reprensation completely written in
     # cython
@@ -1175,8 +1174,8 @@ class MiniBatchKMeans(KMeans):
                 self.cluster_centers_, self.counts_,
                 old_center_buffer, tol > 0.0, distances=distances,
                 random_reassign=(iteration_idx + 1) % (10 +
-                                        self.counts_.min()) == 0,
-                random_state=self.random_state)
+                                                self.counts_.min()) == 0,
+                                 random_state=self.random_state)
 
             # Monitor convergence and do early stopping if necessary
             if _mini_batch_convergence(
@@ -1226,7 +1225,7 @@ class MiniBatchKMeans(KMeans):
             # The lower the minimum count is, the more we do random
             # reassignement, however, we don't want to do random
             # reassignement to often, to allow for building up counts
-            random_reassign = self.random_state.randint(10*(1 +
+            random_reassign = self.random_state.randint(10 * (1 +
                                         self.counts_.min())) == 0
 
         _mini_batch_step(X, x_squared_norms, self.cluster_centers_,
