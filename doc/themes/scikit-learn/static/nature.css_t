@@ -57,7 +57,18 @@ span.legend {
 div.navbar {
     padding-top: 15px;
     margin-left: 200px;
-}    
+}
+
+/* -------- warning header for old versions --------------------------------*/
+
+div.warning-wrapper {
+    background-color: #ffaaaa;
+    max-width: auto;
+    text-align: center;
+}
+div.warning-wrapper p {
+    margin: 0;
+}
 
 div.navbar ul {
     background-color: #ff9c34;
@@ -73,8 +84,8 @@ div.navbar ul, div.navbar li {
     padding: 4px 10px 5px 10px;
 }
 
-div.navbar ul li a, 
-div.navbar ul li a:link, 
+div.navbar ul li a,
+div.navbar ul li a:link,
 div.navbar ul li a:visited,
 div.navbar ul li a:hover {
     color: white;
