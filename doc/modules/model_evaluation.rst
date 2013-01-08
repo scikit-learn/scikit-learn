@@ -488,7 +488,7 @@ value and :math:`w` is the predicted decisions as output by
 
   L_\text{Hinge}(y, w) = \max\left\{1 - wy, 0\right\} = \left|1 - wy\right|_+
 
-Here a small example demontrating the use of the :func:`hinge_loss` function
+Here a small example demonstrating the use of the :func:`hinge_loss` function
 with a svm classifier:
 
   >>> from sklearn import svm
@@ -531,7 +531,7 @@ the MCC coefficient is defined as
 
   MCC = \frac{tp \times tn - fp \times fn}{\sqrt{(tp + fp)(tp + fn)(tn + fp)(tn + fn)}}.
 
-Here a small example illlustring the usage of the :func:`matthews_corrcoef`
+Here a small example illustrating the usage of the :func:`matthews_corrcoef`
 function:
 
     >>> from sklearn.metrics import matthews_corrcoef
@@ -547,7 +547,7 @@ Receiver operating characteristic (ROC)
 
 The function :func:`roc_curve` computes the `receiver operating characteristic
 curve, or ROC curve (quoting
-wikipedia) <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_:
+Wikipedia) <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_:
 
   "A receiver operating characteristic (ROC), or simply ROC curve, is a
   graphical plot which illustrates the performance of a binary classifier
@@ -769,7 +769,8 @@ Dummy estimators
 
 When doing supervised learning, a simple sanity check consists in comparing one's
 estimator against simple rules of thumb.
-:class:`DummyClassifier` implements three such simple strategies for classification:
+:class:`DummyClassifier` implements three such simple strategies for
+classification:
 
 - `stratified` generates randomly predictions by respecting the training
   set's class distribution,
@@ -783,34 +784,43 @@ To illustrate :class:`DummyClassifier`, first let's create an imbalanced
 dataset::
 
   >>> from sklearn.datasets import load_iris
+  >>> from sklearn.cross_validation import train_test_split
   >>> iris = load_iris()
   >>> X, y = iris.data, iris.target
   >>> y[y != 1] = -1
+  >>> X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
 Next, let's compare the accuracy of `SVC` and `most_frequent`::
 
   >>> from sklearn.dummy import DummyClassifier
   >>> from sklearn.svm import SVC
-  >>> clf = SVC(kernel='linear', C=1).fit(X, y)
-  >>> clf.score(X, y)  # doctest: +ELLIPSIS
-  0.73...
-  >>> clf = DummyClassifier(strategy='most_frequent', random_state=0).fit(X, y)
-  >>> clf.score(X, y)  # doctest: +ELLIPSIS
-  0.66...
+  >>> clf = SVC(kernel='linear', C=1).fit(X_train, y_train)
+  >>> clf.score(X_test, y_test) # doctest: +ELLIPSIS
+  0.63...
+  >>> clf = DummyClassifier(strategy='most_frequent',random_state=0)
+  >>> clf.fit(X_train, y_train)
+  DummyClassifier(random_state=0, strategy='most_frequent')
+  >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS
+  0.57...
 
-We see that `SVC` doesn't do much better than a dummy classifier. Now, let's change
-the kernel::
+We see that `SVC` doesn't do much better than a dummy classifier. Now, let's
+change the kernel::
 
-  >>> clf = SVC(kernel='rbf', C=1).fit(X, y)
-  >>> clf.score(X, y)  # doctest: +ELLIPSIS
-  0.99...
+  >>> clf = SVC(kernel='rbf', C=1).fit(X_train, y_train)
+  >>> clf.score(X_test, y_test)  # doctest: +ELLIPSIS
+  0.97...
 
-We see that the accuracy was boosted to almost 100%.
+We see that the accuracy was boosted to almost 100%. For a better estimate
+of the accuracy, it is recommended to use a cross validation strategy, if it
+is not too CPU costly. For more information see the :ref:`cross_validation`
+section. Moreover if you want to optimize over the parameter space, it is
+highly recommended to use an appropriate methodology see the :ref:`grid_search`
+section.
 
-More generally, when the accuracy of a classifier is too close to random classification, it
-probably means that something went wrong: features are not helpful, a
-hyper parameter is not correctly tuned, the classifier is suffering from class
-imbalance, etc...
+More generally, when the accuracy of a classifier is too close to random
+classification, it probably means that something went wrong: features are not
+helpful, a hyper parameter is not correctly tuned, the classifier is suffering
+from class imbalance, etc...
 
 :class:`DummyRegressor` implements a simple rule of thumb for regression:
 always predict the mean of the training targets.
