@@ -252,9 +252,6 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    X: {array-like, sparse matrix}, shape = [n_samples, n_features]
-        Data the model will be fit to.
-
     n_components: int or None
         Number of components, if n_components is not set all components
         are kept
