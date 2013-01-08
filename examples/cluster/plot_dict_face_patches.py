@@ -32,7 +32,7 @@ data = faces.data
 
 print 'Learning the dictionary... '
 rng = np.random.RandomState(0)
-kmeans = MiniBatchKMeans(n_clusters=100)
+kmeans = MiniBatchKMeans(n_clusters=81)
 patch_size = (20, 20)
 
 buffer = []
@@ -63,7 +63,7 @@ print 'done in %.2fs.' % dt
 # Plot the results
 pl.figure(figsize=(4.2, 4))
 for i, patch in enumerate(kmeans.cluster_centers_):
-    pl.subplot(10, 10, i + 1)
+    pl.subplot(9, 9, i + 1)
     pl.imshow(patch.reshape(patch_size), cmap=pl.cm.gray,
               interpolation='nearest')
     pl.xticks(())
