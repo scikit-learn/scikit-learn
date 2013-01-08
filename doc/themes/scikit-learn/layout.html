@@ -39,7 +39,7 @@
 {%- endif %}
 
 {% block header %}
-   {%- if theme_oldversion == true %}
+    {%- if theme_oldversion|tobool %}
      <div class="warning-wrapper">
        <p>Warning: This documentation is
          for {{project}} <strong>version {{ release|e }}</strong>.
