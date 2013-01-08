@@ -1,5 +1,5 @@
 """
-Test the feature extraction module
+Test the CountVectorizer feature extractor
 """
 
 from sklearn.utils.testing import assert_raises
