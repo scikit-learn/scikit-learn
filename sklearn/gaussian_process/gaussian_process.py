@@ -271,7 +271,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Force data to 2D numpy.array
         X = array2d(X)
-        y = np.asarray(y).ravel()[:, np.newaxis]
+        y = array2d(y)
+        #y = np.asarray(y).ravel()[:, np.newaxis]
 
         # Check shapes of DOE & observations
         n_samples_X, n_features = X.shape
@@ -449,7 +450,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             y_ = np.dot(f, self.beta) + np.dot(r, self.gamma)
 
             # Predictor
-            y = (self.y_mean + self.y_std * y_).ravel()
+            y = (self.y_mean + self.y_std * y_)
+            #y = (self.y_mean + self.y_std * y_).ravel()
 
             # Mean Squared Error
             if eval_MSE:
