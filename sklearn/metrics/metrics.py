@@ -554,12 +554,12 @@ def zero_one(y_true, y_pred, normalize=False):
     Examples
     --------
     >>> from sklearn.metrics import zero_one
-    >>> y_pred = [0, 2, 1, 3, 4]
-    >>> y_true = [0, 1, 2, 3, 4]
+    >>> y_pred = [2, 1, 3, 4]
+    >>> y_true = [1, 2, 3, 4]
     >>> zero_one(y_true, y_pred)
     2
-    >>> round(zero_one(y_true, y_pred, normalize=True),5)
-    0.4
+    >>> zero_one(y_true, y_pred, normalize=True)
+    0.5
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)

@@ -479,7 +479,7 @@ def test_losses():
     n = y_true.shape[0]
 
     assert_equal(zero_one(y_true, y_pred), 13)
-    assert_almost_equal(zero_one(y_true, y_pred, normalize=True), 
+    assert_almost_equal(zero_one(y_true, y_pred, normalize=True),
                         13 / float(n), 2)
     assert_almost_equal(mean_squared_error(y_true, y_pred), 12.999 / n, 2)
     assert_almost_equal(mean_squared_error(y_true, y_true), 0.00, 2)
