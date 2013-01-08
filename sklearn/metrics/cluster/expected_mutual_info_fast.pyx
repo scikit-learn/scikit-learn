@@ -13,6 +13,8 @@ cimport cython
 
 cdef extern from "math.h":
     cdef extern double exp(double x)
+
+cdef extern from "fdlibm.h":
     cdef extern double lgamma(double x)
 
 @cython.boundscheck(False)
