@@ -550,6 +550,12 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
 
     if sp.issparse(centers):
         centers = centers.toarray()
+
+    if len(centers) != k:
+        raise ValueError('The shape of the inital centers (%s) '
+            'does not match the number of clusters %i'
+            % (centers.shape, k))
+
     return centers
 
 
@@ -842,8 +848,8 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
                                      counts <= .001 * counts.max())
         # Pick new clusters amongst observations with a probability
         # proportional to their closeness to their center
-        distance_to_centers = (centers[nearest_center] - X)
-        distance_to_centers **=2
+        distance_to_centers = np.asarray(centers[nearest_center] - X)
+        distance_to_centers **= 2
         distance_to_centers = distance_to_centers.sum(axis=1)
         # Flip the ordering of the distances
         distance_to_centers -= distance_to_centers.max()
