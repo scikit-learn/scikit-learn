@@ -815,7 +815,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 def _mini_batch_step(X, x_squared_norms, centers, counts,
                      old_center_buffer, compute_squared_diff,
                      distances=None, random_reassign=False,
-                     random_state=None):
+                     random_state=None, reassignment_ratio=.01,
+                     verbose=False):
     """Incremental update of the centers for the Minibatch K-Means algorithm
 
     Parameters
@@ -837,6 +838,26 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
     distances: array, dtype float64, shape (n_samples), optional
         If not None, should be a pre-allocated array that will be used to store
         the distances of each sample to it's closest center.
+
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
+
+    random_reassign: boolean, optional
+        If True, centers with very low counts are
+        randomly-reassigned to observations in dense areas.
+
+    reassignment_ratio: float, optional
+        Control the fraction of the maximum number of counts for a
+        center to be reassigned. A higher value means that low count
+        centers are more easily reassigned, which means that the
+        model will take longer to converge, but should converge in a
+        better clustering.
+
+    verbose: bool, optional
+        Controls the verbosity
+
     """
     # Perform label assignement to nearest centers
     nearest_center, inertia = _labels_inertia(X, x_squared_norms, centers,
@@ -845,7 +866,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
         random_state = check_random_state(random_state)
         # Reassign clusters that have very low counts
         to_reassign = np.logical_or((counts <= 1),
-                                    counts <= .001 * counts.max())
+                            counts <= reassignment_ratio * counts.max())
         # Pick new clusters amongst observations with a probability
         # proportional to their closeness to their center
         distance_to_centers = np.asarray(centers[nearest_center] - X)
@@ -859,6 +880,11 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
         new_centers = np.searchsorted(distance_to_centers.cumsum(),
                                       rand_vals)
         new_centers = X[new_centers]
+        if verbose:
+            n_reassigns = to_reassign.sum()
+            if n_reassigns:
+                print("[_mini_batch_step] Reassigning %i cluster centers."
+                      % n_reassigns)
         centers[to_reassign] = new_centers
 
     # implementation for the sparse CSR reprensation completely written in
@@ -1030,6 +1056,14 @@ class MiniBatchKMeans(KMeans):
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
+    reassignment_ratio: float, optional
+        Control the fraction of the maximum number of counts for a
+        center to be reassigned. A higher value means that low count
+        centers are more easily reassigned, which means that the
+        model will take longer to converge, but should converge in a
+        better clustering.
+
+
     Attributes
     ----------
 
@@ -1053,7 +1087,8 @@ class MiniBatchKMeans(KMeans):
     def __init__(self, n_clusters=8, init='k-means++', max_iter=100,
                  batch_size=100, verbose=0, compute_labels=True,
                  random_state=None, tol=0.0, max_no_improvement=10,
-                 init_size=None, n_init=3, k=None):
+                 init_size=None, n_init=3, k=None,
+                 reassignment_ratio=0.01):
 
         super(MiniBatchKMeans, self).__init__(
             n_clusters=n_clusters, init=init, max_iter=max_iter,
@@ -1064,6 +1099,7 @@ class MiniBatchKMeans(KMeans):
         self.batch_size = batch_size
         self.compute_labels = compute_labels
         self.init_size = init_size
+        self.reassignment_ratio = reassignment_ratio
 
     def fit(self, X, y=None):
         """Compute the centroids on X by chunking it into mini-batches.
@@ -1143,7 +1179,7 @@ class MiniBatchKMeans(KMeans):
             batch_inertia, centers_squared_diff = _mini_batch_step(
                 X_valid, x_squared_norms[validation_indices],
                 cluster_centers, counts, old_center_buffer, False,
-                distances=distances)
+                distances=distances, verbose=self.verbose)
 
             # Keep only the best cluster centers across independent inits on
             # the common validation set
@@ -1175,7 +1211,9 @@ class MiniBatchKMeans(KMeans):
                 old_center_buffer, tol > 0.0, distances=distances,
                 random_reassign=(iteration_idx + 1) % (10 +
                                                 self.counts_.min()) == 0,
-                                 random_state=self.random_state)
+                random_state=self.random_state,
+                reassignment_ratio=self.reassignment_ratio,
+                verbose=self.verbose)
 
             # Monitor convergence and do early stopping if necessary
             if _mini_batch_convergence(
@@ -1224,14 +1262,16 @@ class MiniBatchKMeans(KMeans):
         else:
             # The lower the minimum count is, the more we do random
             # reassignement, however, we don't want to do random
-            # reassignement to often, to allow for building up counts
+            # reassignement too often, to allow for building up counts
             random_reassign = self.random_state.randint(10 * (1 +
                                         self.counts_.min())) == 0
 
         _mini_batch_step(X, x_squared_norms, self.cluster_centers_,
                          self.counts_, np.zeros(0, np.double), 0,
                          random_reassign=random_reassign,
-                         random_state=self.random_state)
+                         random_state=self.random_state,
+                         reassignment_ratio=self.reassignment_ratio,
+                         verbose=self.verbose)
 
         if self.compute_labels:
             self.labels_, self.inertia_ = _labels_inertia(
