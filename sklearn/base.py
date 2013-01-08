@@ -215,7 +215,7 @@ class BaseEstimator(object):
         """
         if not params:
             # Simple optimisation to gain speed (inspect is slow)
-            return
+            return self
         valid_params = self.get_params(deep=True)
         for key, value in params.iteritems():
             split = key.split('__', 1)

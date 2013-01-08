@@ -84,6 +84,7 @@ class BaseSGD(BaseEstimator):
     def set_params(self, *args, **kwargs):
         super(BaseSGD, self).set_params(*args, **kwargs)
         self._validate_params()
+        return self
 
     @abstractmethod
     def fit(self, X, y):
