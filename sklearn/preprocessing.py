@@ -521,9 +521,8 @@ def binarize(X, threshold=0.0, copy=True):
         cond = X.data > threshold
         not_cond = np.logical_not(cond)
         X.data[cond] = 1
-        # FIXME: if enough values became 0, it may be worth changing
-        #        the sparsity structure
         X.data[not_cond] = 0
+        X.eliminate_zeros()
     else:
         cond = X > threshold
         not_cond = np.logical_not(cond)
