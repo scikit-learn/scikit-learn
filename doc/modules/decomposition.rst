@@ -376,7 +376,7 @@ does not fit into the memory.
 
    Note that when using dictionary learning to extract a representation
    (e.g. for sparse coding) clustering can be a good proxy to learn the
-   dictionary. For instance the :ref:`MiniBatchKMeans` estimator is
+   dictionary. For instance the :class:`MiniBatchKMeans` estimator is
    computationally efficient and implements on-line learning
    `partial_fit` method.
 
