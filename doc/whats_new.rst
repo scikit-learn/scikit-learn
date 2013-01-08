@@ -8,6 +8,10 @@
 Changelog
 ---------
 
+   - zero_one loss has option for normalized output that reports the fraction
+     of misclassifications, rather than the raw number of misclassifications.
+     By `Kyle Beauchamp`_.
+
    - Partial dependence plots for :mod:`ensemble.gradient_boosting` by
      `Peter Prettenhofer`_.
 
