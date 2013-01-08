@@ -198,6 +198,8 @@ the :class:`KMeans` algorithm.
  * :ref:`example_document_clustering.py`: Document clustering using sparse
    MiniBatchKMeans
 
+ * :ref:`example_cluster_plot_dict_face_patches.py`
+
 
 .. topic:: References:
 
