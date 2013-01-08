@@ -528,10 +528,10 @@ def confusion_matrix(y_true, y_pred, labels=None):
 ###############################################################################
 # Multiclass loss function
 ###############################################################################
-def zero_one(y_true, y_pred,normalize=False):
+def zero_one(y_true, y_pred, normalize=False):
     """Zero-One classification loss
 
-    Positive integer (number of misclassifications) or float (fraction of 
+    Positive integer (number of misclassifications) or float (fraction of
     misclassifications). The best performance is 0.
 
     Return the number of errors
@@ -543,7 +543,7 @@ def zero_one(y_true, y_pred,normalize=False):
     y_pred : array-like
 
     normalize : bool
-        If False (default), return the number of misclassifications.  
+        If False (default), return the number of misclassifications.
         Otherwise, return the fraction of misclassifications.
 
     Returns
