@@ -725,7 +725,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         for best performance; the best value depends on the interaction
         of the input variables.
 
-    min_samples_split : integer, optional (default=1)
+    min_samples_split : integer, optional (default=2)
         The minimum number of samples required to split an internal node.
 
     min_samples_leaf : integer, optional (default=1)
@@ -804,7 +804,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     """
 
     def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
-                 subsample=1.0, min_samples_split=1, min_samples_leaf=1,
+                 subsample=1.0, min_samples_split=2, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
                  max_features=None, verbose=0, learn_rate=None):
 
@@ -957,7 +957,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         for best performance; the best value depends on the interaction
         of the input variables.
 
-    min_samples_split : integer, optional (default=1)
+    min_samples_split : integer, optional (default=2)
         The minimum number of samples required to split an internal node.
 
     min_samples_leaf : integer, optional (default=1)
@@ -1041,7 +1041,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     """
 
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
-                 subsample=1.0, min_samples_split=1, min_samples_leaf=1,
+                 subsample=1.0, min_samples_split=2, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0, learn_rate=None):
 
