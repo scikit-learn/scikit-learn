@@ -25,8 +25,6 @@ import numpy as np
 
 from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin
-from ..base import WeightedClassifierMixin, WeightedRegressorMixin
-from ..metrics import weighted_r2_score
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..tree._tree import DTYPE
 from ..utils import array2d, check_arrays
@@ -301,7 +299,7 @@ class BaseWeightBoosting(BaseEnsemble):
                 yield weighted_r2_score(y, y_pred, weights=sample_weight)
 
 
-class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
+class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     """An AdaBoost classifier.
 
     An AdaBoost classifier is a meta-estimator that begins by fitting a
@@ -585,7 +583,7 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
         return np.log(self.predict_proba(X, n_estimators=n_estimators))
 
 
-class AdaBoostRegressor(BaseWeightBoosting, WeightedRegressorMixin):
+class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     """An AdaBoost regressor.
 
     An AdaBoost regressor is a meta-estimator that begins by fitting a

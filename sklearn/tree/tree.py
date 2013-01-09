@@ -15,8 +15,7 @@ from __future__ import division
 import numpy as np
 from abc import ABCMeta, abstractmethod
 
-from ..base import BaseEstimator, ClassifierMixin, \
-                   WeightedClassifierMixin, WeightedRegressorMixin
+from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..utils import array2d, check_random_state
 from ..utils.validation import check_arrays
@@ -422,7 +421,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                 return proba[:, :, 0]
 
 
-class DecisionTreeClassifier(BaseDecisionTree, WeightedClassifierMixin):
+class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     """A decision tree classifier.
 
     Parameters
@@ -619,7 +618,7 @@ class DecisionTreeClassifier(BaseDecisionTree, WeightedClassifierMixin):
             return proba
 
 
-class DecisionTreeRegressor(BaseDecisionTree, WeightedRegressorMixin):
+class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     """A tree regressor.
 
     Parameters

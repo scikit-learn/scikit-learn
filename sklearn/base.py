@@ -276,32 +276,6 @@ class ClassifierMixin(object):
         return np.mean(self.predict(X) == y)
 
 
-class WeightedClassifierMixin(ClassifierMixin):
-    """Mixin class for classifiers that support sample weights"""
-
-    def score(self, X, y, sample_weight=None):
-        """Returns the weighted mean accuracy on the given test data and
-           labels.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training set.
-
-        y : array-like, shape = [n_samples]
-            Labels for X.
-
-        sample_weight : array-like, shape = [n_samples], optional
-            Sample weights.
-
-        Returns
-        -------
-        z : float
-
-        """
-        return np.average((self.predict(X) == y), weights=sample_weight)
-
-
 ###############################################################################
 class RegressorMixin(object):
     """Mixin class for all regression estimators in scikit-learn"""
@@ -328,38 +302,6 @@ class RegressorMixin(object):
 
         from .metrics import r2_score
         return r2_score(y, self.predict(X))
-
-
-class WeightedRegressorMixin(RegressorMixin):
-    """Mixin class for all regression estimators that support sample weights"""
-
-    def score(self, X, y, sample_weight=None):
-        """Returns the weighted coefficient of determination R^2 of the
-           prediction.
-
-        The weighted coefficient R^2 is defined as (1 - u/v), where u is the
-        regression weighted sum of squares (w * (y - y_pred) ** 2).sum() and v
-        is the residual weighted sum of squares
-        (w * (y_true - y_true.mean()) ** 2).sum(). Best possible score is 1.0,
-        lower values are worse.
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            Training set.
-
-        y : array-like, shape = [n_samples]
-
-        sample_weight : array-like, shape = [n_samples], optional
-            Sample weights.
-
-        Returns
-        -------
-        z : float
-        """
-
-        from .metrics import weighted_r2_score
-        return weighted_r2_score(y, self.predict(X), weights=sample_weight)
 
 
 ###############################################################################
