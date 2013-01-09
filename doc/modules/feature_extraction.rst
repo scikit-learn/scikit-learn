@@ -568,6 +568,12 @@ datasets**:
 - the larger the corpus, the larger the vocabulary will grow and hence the
   memory use too,
 
+- fitting requires the allocation of intermediate data-structures with a size
+  comparable to the original dataset.
+
+- building the word-mapping requires a full path over the dataset hence it is
+  not possible to fit text classifier in a stric online manner.
+
 - pickling and un-pickling vectorizers with a large ``vocabulary_`` can be very
   slow (typically much slower than pickling / un-pickling flat data-structures
   such as a NumPy array of the same size),
@@ -582,9 +588,11 @@ datasets**:
 It is possible to overcome those limitations by combining the "hashing trick"
 (:ref:`Feature_hashing`) implemented by the
 :class:`sklearn.feature_extraction.FeatureHasher` class and the text
-preprocessing and tokenization features of the :class:`CountVectorizer`.  This
-is done in a stateless model (no need to call the ``fit`` method) called
-:class:`HashingVectorizer`::
+preprocessing and tokenization features of the :class:`CountVectorizer`.
+
+This is done in a stateless model (no need to call the ``fit`` method) called
+:class:`HashingVectorizer` mostly API compatible with
+:class:`CountVectorizer`::
 
   >>> from sklearn.feature_extraction.text import HashingVectorizer
   >>> hv = HashingVectorizer(n_features=10)
@@ -599,10 +607,18 @@ output: this is less than the 19 non-zeros extracted previously by the
 hash function collisions because of the low value of the ``n_features`` parameter.
 
 In a real world setting, the ``n_features`` parameter can be left to its
-default value of ``2 ** 20`` (roughly one million features). If memory or
-downstream models size is an issue selecting a lower value such as ``2 ** 18``
-might help without introducing too many additional collisions on typical text
-classification tasks. Let's try again with the default setting::
+default value of ``2 ** 20`` (roughly one million possible features). If memory
+or downstream models size is an issue selecting a lower value such as ``2 **
+18`` might help without introducing too many additional collisions on typical
+text classification tasks.
+
+Note that the dimensionality does not affect the CPU training time of
+algorithms which operate on CSR matrices (``LinearSVC(dual=True)``,
+``Perceptron``, ``SGDClassifier``, ``PassiveAggressive``) but it does for
+algorithm that work with CSC matrices (``LinearSVC(dual=False)``, ``Lasso()``,
+etc).
+
+Let's try again with the default setting::
 
   >>> hv = HashingVectorizer()
   >>> hv.transform(corpus)
