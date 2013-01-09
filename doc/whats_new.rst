@@ -155,6 +155,10 @@ Changelog
    - Fixed a bug in :class:`sklearn.svm.SVC` when using csr-matrices with
      unsorted indices by Xinfan Meng and `Andreas Müller`_.
 
+  - :class:`MiniBatchKMeans`: Add random reassignment of cluster centers
+    with little observations attached to them, by `Gael Varoquaux`_.
+
+
 API changes summary
 -------------------
    - Renamed all occurences of ``n_atoms`` to ``n_components`` for consistency.
