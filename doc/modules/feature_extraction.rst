@@ -564,11 +564,11 @@ memory mapping from the string tokens to the integer feature indices** (the
 datasets**:
 
 - the larger the corpus, the larger the vocabulary will grow and hence the
-  memory use too
+  memory use too,
 
 - pickling and un-pickling vectorizers with a large ``vocabulary_`` can be very
   slow (typically much slower than pickling / un-pickling flat data-structures
-  such as a NumPy array of the same size).
+  such as a NumPy array of the same size),
 
 - it is not easily possible to split the vectorization work into concurrent sub
   tasks as the ``vocabulary_`` attribute would have to be a shared state with a
@@ -579,10 +579,47 @@ datasets**:
 
 It is possible to overcome those limitations by combining the "hashing trick"
 (:ref:`Feature_hashing`) implemented by the
-:class:`sklearn.feature_extraction.FeatureHasher` class and the document
-preprocessing tokenization features of the :class:`CountVectorizer` class.
+:class:`sklearn.feature_extraction.FeatureHasher` class and the text
+preprocessing and tokenization features of the :class:`CountVectorizer`.  This
+is done a stateless model (no need to call the ``fit`` method) called
+:class:`HashingVectorizer`::
 
-TODO: short usage example
+  >>> from sklearn.feature_extraction.text import HashingVectorizer
+  >>> hv = HashingVectorizer(n_features=10)
+  >>> hv.fit_transform(corpus)
+  ...                                       # doctest: +NORMALIZE_WHITESPACE
+  <4x10 sparse matrix of type '<type 'numpy.float64'>'
+      with 16 stored elements in Compressed Sparse Row format>
+
+You can see that 16 non-zero feature tokens where extracted in the vector
+output: this is less than the 19 non-zeros extracted previously by the
+:class:`CountVectorizer` on the same toy corpus. The discrepancy comes from
+hash function collisions because of the low value of the ``n_features`` parameter.
+
+In a real world setting, the ``n_features`` parameter can be left to its
+default value of ``2 ** 20`` (roughly one million features). If memory or
+downstream models size is an issue selecting a lower value such as ``2 ** 18``
+might help without introducing too many additional collisions on typical text
+classification tasks. Let's try again with the default setting::
+
+  >>> hv = HashingVectorizer()
+  >>> hv.fit_transform(corpus)
+  ...                                       # doctest: +NORMALIZE_WHITESPACE
+  <4x1048576 sparse matrix of type '<type 'numpy.float64'>'
+      with 19 stored elements in Compressed Sparse Row format>
+
+We non-longer get the collisions but at the expense of a much larger
+dimensional output space.
+
+The :class:`HashingVectorizer` also comes with some limitations though:
+
+- it is not possible to invert the model (no ``inverse_transform`` method) nor
+  getting access to the original string representation of the feature because
+  of the one-way nature of the hash function that is used to perform the mapping.
+
+- it does not provide IDF weighting as that would introduce statefulness in the
+  model. A :class:`TfidfTransformer` can be appended to it in a pipeline if
+  required.
 
 
 Customizing the vectorizer classes
