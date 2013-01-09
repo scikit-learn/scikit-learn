@@ -225,8 +225,10 @@ API changes summary
      :class:`cross_validation.StratifiedShuffleSplit`.
 
    - Renamed function :func:`sklearn.metrics.zero_one` to
-     :func:`sklearn.metrics.zero_one_loss`. The default behavior
-     ``normalize=False`` is changed to ``normalize=True``.
+     :func:`sklearn.metrics.zero_one_loss`. Be aware that the default behavior
+     in :func:`sklearn.metrics.zero_one_loss` is different from
+     :func:`sklearn.metrics.zero_one`: ``normalize=False`` is changed to
+     ``normalize=True``.
 
    - Renamed function :func:`sklearn.metrics.zero_one_score` to
      :func:`sklearn.metrics.accuracy_score`.
