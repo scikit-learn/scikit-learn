@@ -488,24 +488,30 @@ def test_losses():
     y_true, y_pred, _ = make_prediction(binary=True)
     n_samples = y_true.shape[0]
 
-    assert_equal(zero_one(y_true, y_pred), 13)
-    assert_almost_equal(zero_one(y_true, y_pred, normalize=True),
-                        13 / float(n_samples), 2)
+    # Classification
+    # --------------
+    with warnings.catch_warnings(True):
+    # Throw deprecated warning
+        assert_equal(zero_one(y_true, y_pred), 13)
+        assert_almost_equal(zero_one(y_true, y_pred, normalize=True),
+                            13 / float(n_samples), 2)
 
-    assert_equal(zero_one_loss(y_true, y_pred, normalize=False), 13)
-    assert_almost_equal(zero_one_loss(y_true, y_pred, normalize=True),
+    assert_almost_equal(zero_one_loss(y_true, y_pred),
                         13 / float(n_samples), 2)
-    assert_almost_equal(zero_one_loss(y_true, y_true),
-                        0.0, 2)
-    assert_almost_equal(zero_one_loss(y_true, y_true, normalize=False),
-                        0, 2)
+    assert_equal(zero_one_loss(y_true, y_pred, normalize=False), 13)
+    assert_almost_equal(zero_one_loss(y_true, y_true), 0.0, 2)
+    assert_almost_equal(zero_one_loss(y_true, y_true, normalize=False), 0, 2)
 
     assert_equal(accuracy_score(y_true, y_pred),
                  1 - zero_one_loss(y_true, y_pred))
 
-    assert_equal(zero_one_score(y_true, y_pred),
-                 1 - zero_one_loss(y_true, y_pred))
+    with warnings.catch_warnings(True):
+    # Throw deprecated warning
+        assert_equal(zero_one_score(y_true, y_pred),
+                     1 - zero_one_loss(y_true, y_pred))
 
+    # Regression
+    # ----------
     assert_almost_equal(mean_squared_error(y_true, y_pred),
                         12.999 / n_samples, 2)
     assert_almost_equal(mean_squared_error(y_true, y_true),
@@ -548,14 +554,13 @@ def test_symmetry():
     assert_equal(accuracy_score(y_true, y_pred),
                  accuracy_score(y_pred, y_true))
 
-    assert_equal(zero_one(y_true, y_pred),
-                 zero_one(y_pred, y_true))
+    with warnings.catch_warnings(True):
+        # Throw deprecated warning
+        assert_equal(zero_one(y_true, y_pred),
+                     zero_one(y_pred, y_true))
 
-    assert_almost_equal(zero_one(y_true, y_pred, normalize=True),
-                        zero_one(y_pred, y_true, normalize=True), 2)
-
-    assert_almost_equal(zero_one(y_true, y_pred, normalize=False),
-                        zero_one(y_pred, y_true, normalize=False), 2)
+        assert_almost_equal(zero_one(y_true, y_pred, normalize=False),
+                            zero_one(y_pred, y_true, normalize=False), 2)
 
     assert_equal(zero_one_loss(y_true, y_pred),
                  zero_one_loss(y_pred, y_true))
@@ -563,8 +568,10 @@ def test_symmetry():
     assert_equal(zero_one_loss(y_true, y_pred, normalize=False),
                  zero_one_loss(y_pred, y_true, normalize=False))
 
-    assert_equal(zero_one_score(y_true, y_pred),
-                 zero_one_score(y_pred, y_true))
+    with warnings.catch_warnings(True):
+    # Throw deprecated warning
+        assert_equal(zero_one_score(y_true, y_pred),
+                     zero_one_score(y_pred, y_true))
 
     assert_almost_equal(mean_squared_error(y_true, y_pred),
                         mean_squared_error(y_pred, y_true))
