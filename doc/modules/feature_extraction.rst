@@ -581,12 +581,12 @@ It is possible to overcome those limitations by combining the "hashing trick"
 (:ref:`Feature_hashing`) implemented by the
 :class:`sklearn.feature_extraction.FeatureHasher` class and the text
 preprocessing and tokenization features of the :class:`CountVectorizer`.  This
-is done a stateless model (no need to call the ``fit`` method) called
+is done in a stateless model (no need to call the ``fit`` method) called
 :class:`HashingVectorizer`::
 
   >>> from sklearn.feature_extraction.text import HashingVectorizer
   >>> hv = HashingVectorizer(n_features=10)
-  >>> hv.fit_transform(corpus)
+  >>> hv.transform(corpus)
   ...                                       # doctest: +NORMALIZE_WHITESPACE
   <4x10 sparse matrix of type '<type 'numpy.float64'>'
       with 16 stored elements in Compressed Sparse Row format>
@@ -603,15 +603,15 @@ might help without introducing too many additional collisions on typical text
 classification tasks. Let's try again with the default setting::
 
   >>> hv = HashingVectorizer()
-  >>> hv.fit_transform(corpus)
+  >>> hv.transform(corpus)
   ...                                       # doctest: +NORMALIZE_WHITESPACE
   <4x1048576 sparse matrix of type '<type 'numpy.float64'>'
       with 19 stored elements in Compressed Sparse Row format>
 
-We non-longer get the collisions but at the expense of a much larger
+We no longer get the collisions but this is at the expense of a much larger
 dimensional output space.
 
-The :class:`HashingVectorizer` also comes with some limitations though:
+The :class:`HashingVectorizer` also comes with the following limitations:
 
 - it is not possible to invert the model (no ``inverse_transform`` method) nor
   getting access to the original string representation of the feature because
