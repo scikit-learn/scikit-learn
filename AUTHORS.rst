@@ -24,25 +24,9 @@ People
 
   * David Cournapeau
 
-  * Fred Mailhot
-
-  * David Cooke
-
-  * David Huard
-
-  * Dave Morrill
-
-  * Ed Schofield
-
-  * Eric Jones
-
   * Jarrod Millman
 
   * `Matthieu Brucher <http://matt.eifelle.com/>`_
-
-  * Travis Oliphant
-
-  * Pearu Peterson
 
   * `Fabian Pedregosa <http://fseoane.net/blog/>`_
 
