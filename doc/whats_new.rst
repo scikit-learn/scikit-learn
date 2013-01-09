@@ -1587,6 +1587,11 @@ of commits):
     *  1  Chris Filo Gorgolewski
 
 
+Earlier versions
+================
+
+Earlier versions included contributions by Fred Mailhot, David Cooke,
+David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Olivier Grisel: http://twitter.com/ogrisel
 
