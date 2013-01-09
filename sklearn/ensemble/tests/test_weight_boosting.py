@@ -171,7 +171,8 @@ def test_importances():
                                         shuffle=False,
                                         random_state=1)
 
-    clf = AdaBoostClassifier(compute_importances=True, n_estimators=50)
+    clf = AdaBoostClassifier(compute_importances=True,
+                             n_estimators=50)
     clf.fit(X, y)
     importances = clf.feature_importances_
     n_important = sum(importances > 0.1)
@@ -194,30 +195,22 @@ def test_error():
 
 def test_base_estimator():
     """Test different base estimators."""
-    from sklearn.tree import DecisionTreeClassifier
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.svm import SVC
 
-    clf = AdaBoostClassifier(base_estimator=DecisionTreeClassifier())
+    clf = AdaBoostClassifier(RandomForestClassifier())
     clf.fit(X, y)
 
-    clf = AdaBoostClassifier(base_estimator=RandomForestClassifier())
+    clf = AdaBoostClassifier(SVC())
     clf.fit(X, y)
 
-    clf = AdaBoostClassifier(base_estimator=SVC())
-    clf.fit(X, y)
-
-    from sklearn.tree import DecisionTreeRegressor
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.svm import SVR
 
-    clf = AdaBoostRegressor(base_estimator=DecisionTreeRegressor())
+    clf = AdaBoostRegressor(RandomForestRegressor())
     clf.fit(X, y)
 
-    clf = AdaBoostRegressor(base_estimator=RandomForestRegressor())
-    clf.fit(X, y)
-
-    clf = AdaBoostRegressor(base_estimator=SVR())
+    clf = AdaBoostRegressor(SVR())
     clf.fit(X, y)
 
 

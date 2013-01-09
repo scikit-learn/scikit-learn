@@ -7,8 +7,6 @@ import inspect
 import numpy as np
 from scipy import sparse
 
-from .metrics import r2_score, weighted_r2_score
-
 
 ###############################################################################
 def clone(estimator, safe=True):
@@ -359,6 +357,8 @@ class WeightedRegressorMixin(RegressorMixin):
         -------
         z : float
         """
+
+        from .metrics import weighted_r2_score
         return weighted_r2_score(y, self.predict(X), weights=sample_weight)
 
 

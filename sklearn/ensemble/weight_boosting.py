@@ -19,6 +19,8 @@ The module structure is the following:
 # Authors: Noel Dawe, Gilles Louppe
 # License: BSD Style
 
+from abc import ABCMeta, abstractmethod
+
 import numpy as np
 
 from .base import BaseEnsemble
@@ -37,38 +39,24 @@ __all__ = [
 
 
 class BaseWeightBoosting(BaseEnsemble):
-    """Base class for weight boosting.
+    """Abstract base class for weight boosting. """
 
-    Warning: This class should not be used directly. Use derived classes
-    instead.
-    """
-    def __init__(self, base_estimator=None,
-                 n_estimators=50,
-                 learning_rate=0.1,
-                 compute_importances=False):
+    __metaclass__ = ABCMeta
+
+    @abstractmethod
+    def __init__(self, base_estimator,
+                 n_estimators,
+                 learning_rate,
+                 compute_importances):
         self.weights_ = []
         self.errors_ = []
         self.learning_rate = learning_rate
         self.compute_importances = compute_importances
         self.feature_importances_ = None
 
-        if base_estimator is None:
-            if isinstance(self, ClassifierMixin):
-                base_estimator = DecisionTreeClassifier(max_depth=3)
-            else:
-                base_estimator = DecisionTreeRegressor(max_depth=3)
-        elif (isinstance(self, ClassifierMixin)
-              and not isinstance(base_estimator, ClassifierMixin)):
-            raise TypeError("``base_estimator`` must be a "
-                            "subclass of ``ClassifierMixin``")
-        elif (isinstance(self, RegressorMixin)
-              and not isinstance(base_estimator, RegressorMixin)):
-            raise TypeError("``base_estimator`` must be a "
-                            "subclass of ``RegressorMixin``")
-
         super(BaseWeightBoosting, self).__init__(
-            base_estimator=base_estimator,
-            n_estimators=n_estimators)
+                base_estimator,
+                n_estimators)
 
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier/regressor from the training set (X, y).
@@ -125,11 +113,9 @@ class BaseWeightBoosting(BaseEnsemble):
                 p = estimator.fit(X, y, sample_weight=sample_weight).predict(X)
 
             if iboost == 0:
-                if hasattr(estimator, 'classes_'):
-                    self.classes_ = estimator.classes_
-                    self.n_classes_ = estimator.n_classes_
-                else:
-                    self.n_classes_ = 1
+                self.classes_ = getattr(estimator, 'classes_', None)
+                self.n_classes_ = getattr(estimator, 'n_classes_',
+                        getattr(estimator, 'n_classes', 1))
 
             sample_weight, weight, error = self._boost(sample_weight, p, y,
                     iboost == self.n_estimators - 1)
@@ -226,9 +212,9 @@ class BaseWeightBoosting(BaseEnsemble):
         The predicted class or regression value of an input sample is computed
         as the weighted mean prediction of the classifiers in the ensemble.
 
-        This generator method yields the ensemble prediction after each boost
-        and therefore allows monitoring, such as to determine the prediction on
-        a test set after each boost.
+        This generator method yields the ensemble prediction after each
+        iteration of boosting and therefore allows monitoring, such as to
+        determine the prediction on a test set after each boost.
 
         Parameters
         ----------
@@ -288,9 +274,9 @@ class BaseWeightBoosting(BaseEnsemble):
     def staged_score(self, X, y, sample_weight=None, n_estimators=-1):
         """Return staged scores for X, y.
 
-        This generator method yields the ensemble score after each boost
-        and therefore allows monitoring, such as to determine the score on a
-        test set after each boost.
+        This generator method yields the ensemble score after each iteration of
+        boosting and therefore allows monitoring, such as to determine the
+        score on a test set after each boost.
 
         Parameters
         ----------
@@ -331,11 +317,11 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
     base_estimator : object, optional (default=DecisionTreeClassifier)
         The base estimator from which the boosted ensemble is built.
         Support for sample weighting is required, as well as proper `classes_`
-        and `n_classes_` attributes in case of classification.
+        and `n_classes_` attributes.
 
     n_estimators : integer, optional (default=50)
         The maximum number of estimators at which boosting is terminated.
-        In case of perfect fit, the learning procedure is early stopped.
+        In case of perfect fit, the learning procedure is stopped early.
 
     learning_rate : float, optional (default=0.1)
         Learning rate shrinks the contribution of each classifier by
@@ -343,7 +329,7 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
         ``n_estimators``.
 
     compute_importances : boolean, optional (default=False)
-        Whether feature importances are computed and stored into the
+        Whether feature importances are computed and stored in the
         ``feature_importances_`` attribute when calling fit.
 
     Attributes
@@ -351,10 +337,10 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
     `estimators_` : list of classifiers
         The collection of fitted sub-estimators.
 
-    `classes_`: array of shape = [n_classes]
+    `classes_` : array of shape = [n_classes]
         The classes labels.
 
-    `n_classes_`: int
+    `n_classes_` : int
         The number of classes.
 
     `weights_` : list of floats
@@ -366,6 +352,7 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
 
     `feature_importances_` : array of shape = [n_features]
         The feature importances if supported by the ``base_estimator``.
+        Only computed if ``compute_importances=True``.
 
     See also
     --------
@@ -381,6 +368,21 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
     .. [2] Ji Zhu, Hui Zou, Saharon Rosset, Trevor Hastie.
            "Multi-class AdaBoost", 2009.
     """
+    def __init__(self, base_estimator=DecisionTreeClassifier(max_depth=3),
+                 n_estimators=50,
+                 learning_rate=0.1,
+                 compute_importances=False):
+
+        if not isinstance(base_estimator, ClassifierMixin):
+            raise TypeError("``base_estimator`` must be a "
+                            "subclass of ``ClassifierMixin``")
+
+        super(AdaBoostClassifier, self).__init__(
+            base_estimator=base_estimator,
+            n_estimators=n_estimators,
+            learning_rate=learning_rate,
+            compute_importances=compute_importances)
+
     def _boost(self, sample_weight, y_predict, y_true, is_last):
         """Implement a single boost
 
@@ -511,8 +513,9 @@ class AdaBoostClassifier(BaseWeightBoosting, WeightedClassifierMixin):
         of the classifiers in the ensemble.
 
         This generator method yields the ensemble predicted class probabilities
-        after each boost and therefore allows monitoring, such as to determine
-        the predicted class probabilities on a test set after each boost.
+        after each iteration of boosting and therefore allows monitoring, such
+        as to determine the predicted class probabilities on a test set after
+        each boost.
 
         Parameters
         ----------
@@ -597,12 +600,11 @@ class AdaBoostRegressor(BaseWeightBoosting, WeightedRegressorMixin):
     ----------
     base_estimator : object, optional (default=DecisionTreeClassifier)
         The base estimator from which the boosted ensemble is built.
-        Support for sample weighting is required, as well as proper `classes_`
-        and `n_classes_` attributes in case of classification.
+        Support for sample weighting is required.
 
     n_estimators : integer, optional (default=50)
         The maximum number of estimators at which boosting is terminated.
-        In case of perfect fit, the learning procedure is early stopped.
+        In case of perfect fit, the learning procedure is stopped early.
 
     learning_rate : float, optional (default=0.1)
         Learning rate shrinks the contribution of each regressor by
@@ -610,7 +612,7 @@ class AdaBoostRegressor(BaseWeightBoosting, WeightedRegressorMixin):
         ``n_estimators``.
 
     compute_importances : boolean, optional (default=False)
-        Whether feature importances are computed and stored into the
+        Whether feature importances are computed and stored in the
         ``feature_importances_`` attribute when calling fit.
 
     Attributes
@@ -626,6 +628,7 @@ class AdaBoostRegressor(BaseWeightBoosting, WeightedRegressorMixin):
 
     `feature_importances_` : array of shape = [n_features]
         The feature importances if supported by the ``base_estimator``.
+        Only computed if ``compute_importances=True``.
 
     See also
     --------
@@ -641,6 +644,21 @@ class AdaBoostRegressor(BaseWeightBoosting, WeightedRegressorMixin):
     .. [2] Harris Drucker. "Improving Regressor using Boosting Techniques",
            1997.
     """
+    def __init__(self, base_estimator=DecisionTreeRegressor(max_depth=3),
+                 n_estimators=50,
+                 learning_rate=0.1,
+                 compute_importances=False):
+
+        if not isinstance(base_estimator, RegressorMixin):
+            raise TypeError("``base_estimator`` must be a "
+                            "subclass of ``RegressorMixin``")
+
+        super(AdaBoostRegressor, self).__init__(
+            base_estimator=base_estimator,
+            n_estimators=n_estimators,
+            learning_rate=learning_rate,
+            compute_importances=compute_importances)
+
     def _boost(self, sample_weight, y_predict, y_true, is_last):
         """Implement a single boost for regression
 
