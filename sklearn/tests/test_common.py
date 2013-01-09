@@ -84,6 +84,8 @@ def test_all_estimators():
             clone(e)
             # test __repr__
             repr(e)
+            # test that set_params returns self
+            assert_true(isinstance(e.set_params(), E))
 
             # test if init does nothing but set parameters
             # this is important for grid_search etc.
