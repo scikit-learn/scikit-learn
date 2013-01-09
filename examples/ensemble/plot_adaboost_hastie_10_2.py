@@ -26,11 +26,10 @@ ada = AdaBoostClassifier(base_estimator=dt_stump,
                          n_estimators=400)
 ada.fit(X_train, y_train)
 
-
 # plot test error
 import pylab as plt
 
-fig = plt.figure(figsize=(12,7), facecolor='w')
+fig = plt.figure(figsize=(12, 7), facecolor='w')
 ax = fig.add_subplot(111)
 
 ax.plot([1, 400], [dt_stump_err] * 2, 'k-', label='Decision Stump Error')
@@ -44,14 +43,18 @@ ada_err_t = np.zeros((ada.n_estimators,))
 for i, y_pred in enumerate(ada.staged_predict(X_train)):
     ada_err_t[i] = (y_pred != y_train).mean()
 
-ax.plot(np.arange(ada.n_estimators) + 1, ada_err, label='AdaBoost Test Error',
-         color='orange')
-ax.plot(np.arange(ada.n_estimators) + 1, ada_err_t, label='AdaBoost Train Error',
-         color='blue')
-ax.plot(np.arange(ada.n_estimators) + 1, ada.weights_, label='AdaBoost Weights',
-         color='red')
-ax.plot(np.arange(ada.n_estimators) + 1, ada.errors_, label='AdaBoost Errors',
-         color='green')
+ax.plot(np.arange(ada.n_estimators) + 1, ada_err,
+        label='AdaBoost Test Error',
+        color='orange')
+ax.plot(np.arange(ada.n_estimators) + 1, ada_err_t,
+        label='AdaBoost Train Error',
+        color='blue')
+ax.plot(np.arange(ada.n_estimators) + 1, ada.weights_,
+        label='AdaBoost Weights',
+        color='red')
+ax.plot(np.arange(ada.n_estimators) + 1, ada.errors_,
+        label='AdaBoost Errors',
+        color='green')
 
 ax.set_ylim((0.0, 0.5))
 ax.set_xlabel('n_estimators')
