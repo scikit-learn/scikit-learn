@@ -555,6 +555,8 @@ into account. Many such models will thus be casted as "Structured output"
 problems which are currently outside of the scope of scikit-learn.
 
 
+.. _hashing_vectorizer:
+
 Vectorizing a large text corpus with the hashing trick
 ------------------------------------------------------
 
