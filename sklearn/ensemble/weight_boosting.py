@@ -95,8 +95,8 @@ class BaseWeightBoosting(BaseEnsemble):
 
         # Clear any previous fit results
         self.estimators_ = []
-        self.weights_ = np.empty(self.n_estimators, dtype=np.float)
-        self.errors_ = np.empty(self.n_estimators, dtype=np.float)
+        self.weights_ = np.zeros(self.n_estimators, dtype=np.float)
+        self.errors_ = np.ones(self.n_estimators, dtype=np.float)
 
         for iboost in xrange(self.n_estimators):
             estimator = self._make_estimator()
@@ -120,9 +120,6 @@ class BaseWeightBoosting(BaseEnsemble):
 
             # early termination
             if sample_weight is None:
-                # fill remainder of weights_ and errors_
-                self.weights_[iboost:] = 0.
-                self.errors_[iboost:] = 1.
                 break
 
             self.weights_[iboost] = weight
@@ -130,8 +127,6 @@ class BaseWeightBoosting(BaseEnsemble):
 
             # stop if error is zero
             if error == 0:
-                self.weights_[iboost + 1:] = 0.
-                self.errors_[iboost + 1:] = 1.
                 break
 
             if iboost < self.n_estimators - 1:
