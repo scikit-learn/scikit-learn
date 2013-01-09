@@ -112,10 +112,10 @@ Changelog
      by Wei Li.
 
    - New transformers :class:`random_projection.GaussianRandomProjection`,
-    :class:`random_projection.SparseRandomProjection` and the function
-    :func:`random_projection.johnson_lindenstrauss_min_dim`, implementing
-    Gaussian and sparse random projection matrix
-    by `Olivier Grisel`_ and `Arnaud Joly`_.
+     :class:`random_projection.SparseRandomProjection` and the function
+     :func:`random_projection.johnson_lindenstrauss_min_dim`, implementing
+     Gaussian and sparse random projection matrix
+     by `Olivier Grisel`_ and `Arnaud Joly`_.
 
    - Add the :fun:`metrics.mean_absolute_error` function which computes the
      mean absolute error. The :fun:`metrics.mean_squared_error`,
@@ -1639,3 +1639,5 @@ of commits):
 .. _Christian Osendorfer: http://osdf.github.com
 
 .. _Noel Dawe: http://noel.dawe.me
+
+.. _Arnaud Joly: http://www.ajoly.org
