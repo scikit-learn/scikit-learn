@@ -251,6 +251,15 @@ def test_ovo_fit_predict():
     assert_equal(len(ovo.estimators_), n_classes * (n_classes - 1) / 2)
 
 
+def test_ovo_fit_decision_function():
+    # A classifier which implements decision_function.
+    ovo = OneVsOneClassifier(LinearSVC(random_state=0))
+    ovo.fit(iris.data, iris.target)
+    decision = ovo.decision_function(iris.data)
+    n_samples = len(iris.target)
+    assert_equal(decision.shape, (n_samples, n_classes * (n_classes - 1) / 2))
+
+
 def test_ovo_gridsearch():
     ovo = OneVsOneClassifier(LinearSVC(random_state=0))
     Cs = [0.1, 0.5, 0.8]

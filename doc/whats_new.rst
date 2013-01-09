@@ -8,6 +8,9 @@
 Changelog
 ---------
 
+   - Added decision function for :class:`multiclass.OneVsOneClassifier` by
+     `Kyle Beauchamp`_.
+
    - Partial dependence plots for :mod:`ensemble.gradient_boosting` by
      `Peter Prettenhofer`_.
 

@@ -287,6 +287,12 @@ def fit_ovo(estimator, X, y):
 
 def predict_ovo(estimators, classes, X):
     """Make predictions using the one-vs-one strategy."""
+    votes = decision_function_ovo(estimators, classes, X)
+    return classes[votes.argmax(axis=1)]
+
+
+def decision_function_ovo(estimators, classes, X):
+    """Predict decision function (votes) using the one-vs-one strategy."""
     n_samples = X.shape[0]
     n_classes = classes.shape[0]
     votes = np.zeros((n_samples, n_classes))
@@ -299,7 +305,7 @@ def predict_ovo(estimators, classes, X):
             votes[pred == 1, j] += 1
             k += 1
 
-    return classes[votes.argmax(axis=1)]
+    return votes
 
 
 class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
@@ -367,6 +373,24 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
             raise ValueError("The object hasn't been fitted yet!")
 
         return predict_ovo(self.estimators_, self.classes_, X)
+
+    def decision_function(self, X):
+        """Distance (votes) of the samples X to the separating hyperplanes.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        D : array-like, shape = [n_samples, n_class * (n_class-1) / 2]
+            Returns the decision function of the sample for each class
+            in the model.
+        """
+        if not hasattr(self, "estimators_"):
+            raise ValueError("The object hasn't been fitted yet!")
+
+        return decision_function_ovo(self.estimators_, self.classes_, X)
 
 
 def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None):
