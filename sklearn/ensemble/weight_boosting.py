@@ -188,14 +188,14 @@ class BaseWeightBoosting(BaseEnsemble):
                 break
 
             if isinstance(self, ClassifierMixin):
-                current_pred = estimator.predict_proba(X) * weight
+                current_pred = estimator.predict_proba(X)
             else:
-                current_pred = estimator.predict(X) * weight
+                current_pred = estimator.predict(X)
 
             if pred is None:
-                pred = current_pred
+                pred = current_pred * weight
             else:
-                pred += current_pred
+                pred += current_pred * weight
 
         pred /= self.weights_.sum()
 
@@ -249,14 +249,14 @@ class BaseWeightBoosting(BaseEnsemble):
                 break
 
             if isinstance(self, ClassifierMixin):
-                current_pred = estimator.predict_proba(X) * weight
+                current_pred = estimator.predict_proba(X)
             else:
-                current_pred = estimator.predict(X) * weight
+                current_pred = estimator.predict(X)
 
             if pred is None:
-                pred = current_pred
+                pred = current_pred * weight
             else:
-                pred += current_pred
+                pred += current_pred * weight
 
             norm += weight
             normed_pred = pred / norm
