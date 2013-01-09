@@ -7,7 +7,6 @@ import inspect
 import numpy as np
 from scipy import sparse
 
-
 ###############################################################################
 def clone(estimator, safe=True):
     """Constructs a new estimator with the same parameters.
@@ -267,7 +266,8 @@ class ClassifierMixin(object):
         z : float
 
         """
-        return np.mean(self.predict(X) == y)
+        from .metrics import accuracy_score
+        return accuracy_score(y, self.predict(X))
 
 
 ###############################################################################
