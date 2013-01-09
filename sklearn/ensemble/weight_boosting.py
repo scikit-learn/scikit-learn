@@ -28,6 +28,7 @@ from ..base import ClassifierMixin, RegressorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..tree._tree import DTYPE
 from ..utils import array2d, check_arrays
+from ..metrics import weighted_r2_score
 
 
 __all__ = [
