@@ -1119,9 +1119,6 @@ cdef class ClassificationCriterion(Criterion):
     weighted_n_samples : double
         The weighted number of samples.
 
-    weighted_n_samples : double
-        The weighted number of samples.
-
     label_count_stride : int
         The stride between outputs in label_count_* arrays.
 

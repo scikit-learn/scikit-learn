@@ -262,9 +262,6 @@ class ClassifierMixin(object):
         y : array-like, shape = [n_samples]
             Labels for X.
 
-        sample_weight : array-like, shape = [n_samples], optional
-            Sample weights.
-
         Returns
         -------
         z : float
@@ -284,6 +281,7 @@ class RegressorMixin(object):
         regression sum of squares ((y - y_pred) ** 2).sum() and v is the
         residual sum of squares ((y_true - y_true.mean()) ** 2).sum().
         Best possible score is 1.0, lower values are worse.
+
 
         Parameters
         ----------

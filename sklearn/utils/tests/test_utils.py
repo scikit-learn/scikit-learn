@@ -5,7 +5,7 @@ import scipy.sparse as sp
 from scipy.linalg import pinv2
 
 from nose.tools import assert_equal, assert_raises, assert_true
-from numpy.testing import assert_almost_equal, assert_array_equal
+from numpy.testing import assert_almost_equal
 
 from sklearn.utils import check_random_state
 from sklearn.utils import deprecated
