@@ -18,7 +18,7 @@ import warnings
 import numpy as np
 from scipy.sparse import coo_matrix
 
-from ..utils import check_arrays
+from ..utils import check_arrays, deprecated
 
 
 ###############################################################################
@@ -639,6 +639,10 @@ def zero_one_loss(y_true, y_pred, normalize=True):
         return np.mean(y_pred != y_true)
 
 
+@deprecated("Function 'zero_one' has been renamed to "
+            "'zero_one_loss' and will be removed in release 0.15."
+            "Default behavior is changed from 'normalize=False' to "
+            "'normalize=True'")
 def zero_one(y_true, y_pred, normalize=False):
     """Zero-One classification loss
 
@@ -669,11 +673,6 @@ def zero_one(y_true, y_pred, normalize=False):
     0.25
 
     """
-    warnings.warn(
-        "Function zero_one has been renamed to "
-        'zero_one_loss'" and will be removed in release 0.15."
-        "Default behavior change from normalize=False to normalize=True",
-        DeprecationWarning, stacklevel=2)
     return zero_one_loss(y_true, y_pred, normalize)
 
 
@@ -1218,6 +1217,8 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     return r
 
 
+@deprecated("Function zero_one_score has been renamed to "
+            'accuracy_score'" and will be removed in release 0.15.")
 def zero_one_score(y_true, y_pred):
     """Zero-one classification score (accuracy)
 
@@ -1236,10 +1237,6 @@ def zero_one_score(y_true, y_pred):
         The best performance is 1.
 
     """
-    warnings.warn(
-        "Function zero_one_score has been renamed to "
-        'accuracy_score'" and will be removed in release 0.15.",
-        DeprecationWarning, stacklevel=2)
     return accuracy_score(y_true, y_pred)
 
 
