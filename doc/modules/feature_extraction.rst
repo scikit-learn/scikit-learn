@@ -183,7 +183,7 @@ tokens are only processed on demand from the hasher.
 Implementation details
 ----------------------
 
-:class:`FeatureHasher` uses the signed 32-bit variant of Murmurhash3.
+:class:`FeatureHasher` uses the signed 32-bit variant of MurmurHash3.
 As a result (and because of limitations in ``scipy.sparse``),
 the maximum number of features supported is currently :math:`2^{31} - 1`.
 
@@ -200,7 +200,7 @@ that the sign bit of MurmurHash3 is independent of its other bits.
    Josh Attenberg (2009). `Feature hashing for large scale multitask learning
    <http://alex.smola.org/papers/2009/Weinbergeretal09.pdf>`_. Proc. ICML.
 
- * `MurmurHash3 <http://code.google.com/p/smhasher/wiki/MurmurHash3>`.
+ * `MurmurHash3 <http://code.google.com/p/smhasher/wiki/MurmurHash3>`_.
 
 
 .. _text_feature_extraction:
