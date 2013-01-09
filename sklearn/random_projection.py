@@ -610,5 +610,5 @@ class SparseRandomProjection(BaseRandomProjection):
         self.density_ = _check_density(self.density, n_features)
         return sparse_random_matrix(n_components,
                                     n_features,
-                                    density=self.density,
+                                    density=self.density_,
                                     random_state=random_state)
