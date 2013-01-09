@@ -67,13 +67,9 @@ Changelog
 
    - New :class:`feature_extraction.FeatureHasher`, implementing the "hashing
      trick" for fast, low-memory feature extraction from string fields by `Lars
-     Buitinck`_.
-
-   - New :class:`feature_extraction.text.HashingVectorizer`, implementing the
-     "hashing trick" for fast, low-memory feature extraction from text documents
-     by `Olivier Grisel`_ as a wrapper of
-     :class:`feature_extraction.FeatureHasher` and the text tokenization
-     utilities.
+     Buitinck`_ and :class:`feature_extraction.text.HashingVectorizer` for text
+     documents by `Olivier Grisel`_  See :ref:`feature_hashing` and
+     :ref:`hashing_vectorizer` for the documentation and sample usage.
 
    - New dummy estimators :class:`dummy.DummyClassifiers` and
      :class:`DummyRegressor` by `Mathieu Blondel`_. Useful to sanity-check your
