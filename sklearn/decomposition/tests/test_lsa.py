@@ -3,7 +3,7 @@
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.decomposition import LSA
+from sklearn.decomposition import LatentSemanticAnalysis
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_equal, assert_raises
 
@@ -20,21 +20,21 @@ X.data[:] = 1 + np.log(X.data)
 
 def test_attributes():
     for n_components in (10, 25, 41):
-        lsa = LSA(n_components).fit(X)
+        lsa = LatentSemanticAnalysis(n_components).fit(X)
         assert_equal(lsa.n_components, n_components)
         assert_equal(lsa.components_.shape, (n_components, n_features))
 
 
 def test_too_many_components():
     for n_components in (n_features, n_features+1):
-        lsa = LSA(n_components=n_components)
+        lsa = LatentSemanticAnalysis(n_components=n_components)
         assert_raises(ValueError, lsa.fit, X)
 
 
 def test_sparse_formats():
     for fmt in ("array", "csr", "csc", "coo", "lil"):
         Xfmt = getattr(X, "to" + fmt)()
-        lsa = LSA(n_components=11)
+        lsa = LatentSemanticAnalysis(n_components=11)
         Xtrans = lsa.fit_transform(Xfmt)
         assert_equal(Xtrans.shape, (n_samples, 11))
         Xtrans = lsa.transform(Xfmt)
@@ -43,6 +43,6 @@ def test_sparse_formats():
 
 def test_integers():
     Xint = X.astype(np.int64)
-    lsa = LSA(n_components=6)
+    lsa = LatentSemanticAnalysis(n_components=6)
     Xtrans = lsa.fit_transform(Xint)
     assert_equal(Xtrans.shape, (n_samples, lsa.n_components))

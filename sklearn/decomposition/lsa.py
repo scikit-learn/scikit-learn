@@ -11,10 +11,10 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import as_float_array, atleast2d_or_csr
 from ..utils.extmath import safe_sparse_dot
 
-__all__ = ["LSA"]
+__all__ = ["LatentSemanticAnalysis"]
 
 
-class LSA(BaseEstimator, TransformerMixin):
+class LatentSemanticAnalysis(BaseEstimator, TransformerMixin):
     """Dimensionality reduction using latent semantic analysis (LSA, aka LSI).
 
     LSA performs linear dimensionality reduction by means of truncated

@@ -17,7 +17,7 @@ k-means.
 # License: Simplified BSD
 
 from sklearn.datasets import fetch_20newsgroups
-from sklearn.decomposition import LSA
+from sklearn.decomposition import LatentSemanticAnalysis
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn import metrics
 
@@ -92,7 +92,7 @@ print
 if opts.n_components:
     print "Performing dimensionality reduction using LSA"
     t0 = time()
-    lsa = LSA(opts.n_components)
+    lsa = LatentSemanticAnalysis(opts.n_components)
     X = lsa.fit_transform(X)
 
     print "done in %fs" % (time() - t0)

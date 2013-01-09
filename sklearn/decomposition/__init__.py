@@ -4,7 +4,7 @@ algorithms, including among others PCA, NMF or ICA. Most of the algorithms of
 this module can be regarded as dimensionality reduction techniques.
 """
 
-from .lsa import LSA
+from .lsa import LatentSemanticAnalysis
 from .nmf import NMF, ProjectedGradientNMF
 from .pca import PCA, RandomizedPCA, ProbabilisticPCA
 from .kernel_pca import KernelPCA

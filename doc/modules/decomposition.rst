@@ -237,7 +237,7 @@ factorization, while larger values shrink many coefficients to zero.
 Latent semantic analysis
 ========================
 
-:class:`LSA` implements latent semantic analysis,
+:class:`LatentSemanticAnalysis` implements LSA
 a transformation of term-document matrices
 (as returned by ``CountVectorizer`` or ``TfidfVectorizer``)
 to a "semantic" space of low dimensionality.
@@ -263,11 +263,12 @@ To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
 LSA is very similar to PCA, but differs
 in that it works on sample matrices :math:`X` directly
 instead of their covariance matrices.
-In practical terms, this means :class:`LSA`'s methods
+In practical terms, this means :class:`LatentSemanticAnalysis`'s methods
 accept ``scipy.sparse`` matrices without the need to densify them;
 densifying may fill up memory even for medium-sized document collections.
 
-While the :class:`LSA` transformer works with any (sparse) feature matrix,
+While the :class:`LatentSemanticAnalysis` transformer
+works with any (sparse) feature matrix,
 using it on tf-idf matrices is recommended.
 In particular, sublinear scaling and inverse document frequency
 should be turned on (``sublinear_tf=True, use_idf=True``)
