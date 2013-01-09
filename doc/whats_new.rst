@@ -127,6 +127,9 @@ Changelog
      of ``class_weight`` was reversed as erroneously higher weight meant less
      positives of a given class in earlier releases.
 
+  - :class:`MiniBatchKMeans`: Add random reassignment of cluster centers
+    with little observations attached to them, by `Gael Varoquaux`_.
+
 
 API changes summary
 -------------------
