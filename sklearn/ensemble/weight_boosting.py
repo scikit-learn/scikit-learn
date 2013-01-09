@@ -28,7 +28,7 @@ from ..base import ClassifierMixin, RegressorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..tree._tree import DTYPE
 from ..utils import array2d, check_arrays
-from ..metrics import weighted_r2_score
+from ..metrics import r2_score
 
 
 __all__ = [
@@ -270,7 +270,7 @@ class BaseWeightBoosting(BaseEnsemble):
             else:
                 yield normed_pred
 
-    def staged_score(self, X, y, sample_weight=None, n_estimators=-1):
+    def staged_score(self, X, y, n_estimators=-1):
         """Return staged scores for X, y.
 
         This generator method yields the ensemble score after each iteration of
@@ -285,9 +285,6 @@ class BaseWeightBoosting(BaseEnsemble):
         y : array-like, shape = [n_samples]
             Labels for X.
 
-        sample_weight : array-like, shape = [n_samples], optional
-            Sample weights.
-
         Returns
         -------
         z : float
@@ -295,9 +292,9 @@ class BaseWeightBoosting(BaseEnsemble):
         """
         for y_pred in self.staged_predict(X, n_estimators=n_estimators):
             if isinstance(self, ClassifierMixin):
-                yield np.average((y_pred == y), weights=sample_weight)
+                yield np.mean(y_pred == y)
             else:
-                yield weighted_r2_score(y, y_pred, weights=sample_weight)
+                yield r2_score(y, y_pred)
 
 
 class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
