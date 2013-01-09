@@ -135,7 +135,7 @@ The :func:`confusion_matrix` function computes the `confusion matrix
 <http://en.wikipedia.org/wiki/Confusion_matrix>`_ to evaluate
 the accuracy on a classification problem.
 
-By definition, a confusion matrix :math:`cm` is such that :math:`cm[i, j]` is
+By definition, a confusion matrix :math:`C` is such that :math:`C_{i, j}` is
 equal to the number of observations known to be in group :math:`i` but
 predicted to be in group :math:`j`. Here an example of such confusion matrix::
 
