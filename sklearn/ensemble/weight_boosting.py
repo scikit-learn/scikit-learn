@@ -26,8 +26,7 @@ import numpy as np
 from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..tree._tree import DTYPE
-from ..utils import array2d, check_arrays
+from ..utils import check_arrays
 from ..metrics import r2_score
 
 
@@ -47,15 +46,14 @@ class BaseWeightBoosting(BaseEnsemble):
                  n_estimators,
                  learning_rate,
                  compute_importances):
-        self.weights_ = []
-        self.errors_ = []
+        self.weights_ = None
+        self.errors_ = None
         self.learning_rate = learning_rate
         self.compute_importances = compute_importances
         self.feature_importances_ = None
 
-        super(BaseWeightBoosting, self).__init__(
-                base_estimator,
-                n_estimators)
+        super(BaseWeightBoosting, self).__init__(base_estimator,
+                                                 n_estimators)
 
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier/regressor from the training set (X, y).
@@ -89,7 +87,7 @@ class BaseWeightBoosting(BaseEnsemble):
 
         if sample_weight is None:
             # initialize weights to 1 / n_samples
-            sample_weight = np.ones(X.shape[0], dtype=np.float64) / X.shape[0]
+            sample_weight = np.ones(X.shape[0], dtype=np.float) / X.shape[0]
         else:
             sample_weight = np.copy(sample_weight)
             # normalize
@@ -97,8 +95,8 @@ class BaseWeightBoosting(BaseEnsemble):
 
         # Clear any previous fit results
         self.estimators_ = []
-        self.weights_ = []
-        self.errors_ = []
+        self.weights_ = np.empty(self.n_estimators, dtype=np.float)
+        self.errors_ = np.empty(self.n_estimators, dtype=np.float)
 
         for iboost in xrange(self.n_estimators):
             estimator = self._make_estimator()
@@ -114,17 +112,27 @@ class BaseWeightBoosting(BaseEnsemble):
             if iboost == 0:
                 self.classes_ = getattr(estimator, 'classes_', None)
                 self.n_classes_ = getattr(estimator, 'n_classes_',
-                        getattr(estimator, 'n_classes', 1))
+                                          getattr(estimator, 'n_classes', 1))
 
-            sample_weight, weight, error = self._boost(sample_weight, p, y,
-                    iboost == self.n_estimators - 1)
+            sample_weight, weight, error = self._boost(
+                sample_weight, p, y,
+                is_last=iboost == self.n_estimators - 1)
 
             # early termination
             if sample_weight is None:
+                # fill remainder of weights_ and errors_
+                self.weights_[iboost:] = 0.
+                self.errors_[iboost:] = 1.
                 break
 
-            self.weights_.append(weight)
-            self.errors_.append(error)
+            self.weights_[iboost] = weight
+            self.errors_[iboost] = error
+
+            # stop if error is zero
+            if error == 0:
+                self.weights_[iboost + 1:] = 0.
+                self.errors_[iboost + 1:] = 1.
+                break
 
             if iboost < self.n_estimators - 1:
                 # normalize
@@ -133,16 +141,16 @@ class BaseWeightBoosting(BaseEnsemble):
         # Sum the importances
         try:
             if self.compute_importances:
-                norm = sum(self.weights_)
+                norm = self.weights_.sum()
                 self.feature_importances_ = (
                     sum(weight * clf.feature_importances_ for weight, clf
-                      in zip(self.weights_, self.estimators_))
+                        in zip(self.weights_, self.estimators_))
                     / norm)
         except AttributeError:
             raise AttributeError(
-                    "Unable to compute feature importances "
-                    "since base_estimator does not have a "
-                    "``feature_importances_`` attribute")
+                "Unable to compute feature importances "
+                "since base_estimator does not have a "
+                "``feature_importances_`` attribute")
 
         return self
 
@@ -159,8 +167,8 @@ class BaseWeightBoosting(BaseEnsemble):
 
         n_estimators : int, optional (default=-1)
             Use only the first ``n_estimators`` classifiers for the prediction.
-            This is useful for grid searching the ``n_estimators`` parameter since
-            it is not necessary to fit separately for all choices of
+            This is useful for grid searching the ``n_estimators`` parameter
+            since it is not necessary to fit separately for all choices of
             ``n_estimators``, but only the highest ``n_estimators``. Any
             negative value will result in all estimators being used.
 
@@ -174,11 +182,8 @@ class BaseWeightBoosting(BaseEnsemble):
 
         if not self.estimators_:
             raise RuntimeError(
-                    ("{0} is not initialized. "
-                     "Perform a fit first").format(self.__class__.__name__))
-
-        X = array2d(X)
-        n_samples, n_features = X.shape
+                ("{0} is not initialized. "
+                 "Perform a fit first").format(self.__class__.__name__))
 
         pred = None
 
@@ -197,7 +202,7 @@ class BaseWeightBoosting(BaseEnsemble):
             else:
                 pred += current_pred
 
-        pred /= sum(self.weights_)
+        pred /= self.weights_.sum()
 
         if isinstance(self, ClassifierMixin):
             return self.classes_.take(np.argmax(pred, axis=1), axis=0)
@@ -222,8 +227,8 @@ class BaseWeightBoosting(BaseEnsemble):
 
         n_estimators : int, optional (default=-1)
             Use only the first ``n_estimators`` classifiers for the prediction.
-            This is useful for grid searching the ``n_estimators`` parameter since
-            it is not necessary to fit separately for all choices of
+            This is useful for grid searching the ``n_estimators`` parameter
+            since it is not necessary to fit separately for all choices of
             ``n_estimators``, but only the highest ``n_estimators``. Any
             negative value will result in all estimators being used.
 
@@ -237,11 +242,8 @@ class BaseWeightBoosting(BaseEnsemble):
 
         if not self.estimators_:
             raise RuntimeError(
-                    ("{0} is not initialized. "
-                     "Perform a fit first").format(self.__class__.__name__))
-
-        X = array2d(X)
-        n_samples, n_features = X.shape
+                ("{0} is not initialized. "
+                 "Perform a fit first").format(self.__class__.__name__))
 
         pred = None
         norm = 0.
@@ -421,9 +423,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         # stop if classification is perfect
         if error == 0:
-            self.weights_.append(1.)
-            self.errors_.append(error)
-            return None, None, None
+            return sample_weight, 1., 0.
 
         # negative sample weights can yield an overall negative error...
         if error < 0:
@@ -441,8 +441,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         # boost weight using multi-class AdaBoost SAMME alg
         weight = self.learning_rate * (
-                np.log((1. - error) / error) +
-                np.log(n_classes - 1.))
+            np.log((1. - error) / error) +
+            np.log(n_classes - 1.))
 
         # only boost the weights if I will fit again
         if not is_last:
@@ -467,8 +467,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         n_estimators : int, optional (default=-1)
             Use only the first ``n_estimators`` classifiers for the prediction.
-            This is useful for grid searching the ``n_estimators`` parameter since
-            it is not necessary to fit separately for all choices of
+            This is useful for grid searching the ``n_estimators`` parameter
+            since it is not necessary to fit separately for all choices of
             ``n_estimators``, but only the highest ``n_estimators``. Any
             negative value will result in all estimators being used.
 
@@ -520,8 +520,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         n_estimators : int, optional (default=-1)
             Use only the first ``n_estimators`` classifiers for the prediction.
-            This is useful for grid searching the ``n_estimators`` parameter since
-            it is not necessary to fit separately for all choices of
+            This is useful for grid searching the ``n_estimators`` parameter
+            since it is not necessary to fit separately for all choices of
             ``n_estimators``, but only the highest ``n_estimators``. Any
             negative value will result in all estimators being used.
 
@@ -567,8 +567,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         n_estimators : int, optional (default=-1)
             Use only the first ``n_estimators`` classifiers for the prediction.
-            This is useful for grid searching the ``n_estimators`` parameter since
-            it is not necessary to fit separately for all choices of
+            This is useful for grid searching the ``n_estimators`` parameter
+            since it is not necessary to fit separately for all choices of
             ``n_estimators``, but only the highest ``n_estimators``. Any
             negative value will result in all estimators being used.
 
@@ -699,9 +699,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         # stop if fit is perfect
         if error == 0:
-            self.weights_.append(1.)
-            self.errors_.append(error)
-            return None, None, None
+            return sample_weight, 1., 0.
 
         # negative sample weights can yield an overall negative error...
         if error < 0:
@@ -715,6 +713,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         # boost weight using AdaBoost.R2 alg
         weight = self.learning_rate * np.log(1. / beta)
         if not is_last:
-            sample_weight *= np.power(beta, (1. - error_vect) * self.learning_rate)
+            sample_weight *= np.power(beta,
+                                      (1. - error_vect) * self.learning_rate)
 
         return sample_weight, weight, error
