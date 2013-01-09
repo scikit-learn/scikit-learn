@@ -87,7 +87,3 @@ People
   * `Wei Li <http://kuantkid.github.com>`_
 
   * `Arnaud Joly <http://www.ajoly.org>`_
-
-
-If we forgot anyone, do not hesitate to send me an email to
-amueller@ais.uni-bonn.de and I'll include you in the list.
