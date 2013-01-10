@@ -130,10 +130,10 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
          intercept_scaling=1, loss='l2', multi_class='ovr', penalty='l2',
          random_state=0, tol=0.0001, verbose=0)
     >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
-    >>> pred_decision
-    array([-2.18177944,  2.36355888,  0.09088972])
-    >>> hinge_loss([-1, 1, 1], pred_decision)
-    0.30303676038544258
+    >>> pred_decision  # doctest: +ELLIPSIS
+    array([-2.18...,  2.36...,  0.09...])
+    >>> hinge_loss([-1, 1, 1], pred_decision)  # doctest: +ELLIPSIS
+    0.30...
 
     """
     # TODO: multi-class hinge-loss
@@ -189,8 +189,8 @@ def average_precision_score(y_true, y_score):
     >>> from sklearn.metrics import average_precision_score
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> average_precision_score(y_true, y_scores)
-    0.79166666666666663
+    >>> average_precision_score(y_true, y_scores)  # doctest: +ELLIPSIS
+    0.79...
 
     """
     precision, recall, thresholds = precision_recall_curve(y_true, y_score)
@@ -280,8 +280,8 @@ def matthews_corrcoef(y_true, y_pred):
     >>> from sklearn.metrics import matthews_corrcoef
     >>> y_true = [+1, +1, +1, -1]
     >>> y_pred = [+1, -1, +1, +1]
-    >>> matthews_corrcoef(y_true, y_pred)
-    -0.33333333333333331
+    >>> matthews_corrcoef(y_true, y_pred)  # doctest: +ELLIPSIS
+    -0.33...
 
     """
     mcc = np.corrcoef(y_true, y_pred)[0, 1]
@@ -335,8 +335,8 @@ def precision_recall_curve(y_true, probas_pred):
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
     >>> precision, recall, threshold = precision_recall_curve(y_true, y_scores)
-    >>> precision
-    array([ 0.66666667,  0.5       ,  1.        ,  1.        ])
+    >>> precision  # doctest: +ELLIPSIS
+    array([ 0.66...,  0.5       ,  1.        ,  1.        ])
     >>> recall
     array([ 1. ,  0.5,  0.5,  0. ])
     >>> threshold
@@ -774,19 +774,19 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     >>> from sklearn.metrics import f1_score
     >>> y_pred = [0, 1, 0, 0]
     >>> y_true = [0, 1, 0, 1]
-    >>> f1_score(y_true, y_pred)
-    0.66666666666666663
+    >>> f1_score(y_true, y_pred)  # doctest: +ELLIPSIS
+    0.666...
 
     Here an example in the multiclass case:
     >>> from sklearn.metrics import f1_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
-    >>> f1_score(y_true, y_pred, average='macro')
-    0.26666666666666666
-    >>> f1_score(y_true, y_pred, average='micro')
-    0.33333333333333331
-    >>> f1_score(y_true, y_pred, average='weighted')
-    0.26666666666666666
+    >>> f1_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+    0.26...
+    >>> f1_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+    0.33...
+    >>> f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+    0.26...
     >>> f1_score(y_true, y_pred, average=None)
     array([ 0.8,  0. ,  0. ])
 
@@ -859,25 +859,29 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     >>> from sklearn.metrics import fbeta_score
     >>> y_pred = [0, 1, 0, 0]
     >>> y_true = [0, 1, 0, 1]
-    >>> fbeta_score(y_true, y_pred, beta=0.5)
-    0.83333333333333337
-    >>> fbeta_score(y_true, y_pred, beta=1)
-    0.66666666666666663
-    >>> fbeta_score(y_true, y_pred, beta=2)
-    0.55555555555555558
+    >>> fbeta_score(y_true, y_pred, beta=0.5)  # doctest: +ELLIPSIS
+    0.83...
+    >>> fbeta_score(y_true, y_pred, beta=1)  # doctest: +ELLIPSIS
+    0.66...
+    >>> fbeta_score(y_true, y_pred, beta=2)  # doctest: +ELLIPSIS
+    0.55...
 
     Here an example in the multiclass case:
     >>> from sklearn.metrics import fbeta_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
-    >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)
-    0.23809523809523805
-    >>> fbeta_score(y_true, y_pred, average='micro', beta=0.5)
-    0.33333333333333337
-    >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
-    0.23809523809523805
-    >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
-    array([ 0.71428571,  0.        ,  0.        ])
+    >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)\
+        # doctest: +ELLIPSIS
+    0.23...
+    >>> fbeta_score(y_true, y_pred, average='micro', beta=0.5)\
+        # doctest: +ELLIPSIS
+    0.33...
+    >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)\
+        # doctest: +ELLIPSIS
+    0.23...
+    >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)\
+        # doctest: +ELLIPSIS
+    array([ 0.71...,  0.        ,  0.        ])
 
     """
     _, _, f, _ = precision_recall_fscore_support(y_true, y_pred,
@@ -967,12 +971,12 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     >>> y_pred = [0, 1, 0, 0]
     >>> y_true = [0, 1, 0, 1]
     >>> p, r, f, s = precision_recall_fscore_support(y_true, y_pred, beta=0.5)
-    >>> p
-    array([ 0.66666667,  1.        ])
+    >>> p  # doctest: +ELLIPSIS
+    array([ 0.66...,  1.        ])
     >>> r
     array([ 1. ,  0.5])
-    >>> f
-    array([ 0.71428571,  0.83333333])
+    >>> f  # doctest: +ELLIPSIS
+    array([ 0.71...,  0.83...])
     >>> s
     array([2, 2], dtype=int64)
 
@@ -980,12 +984,15 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     >>> from sklearn.metrics import precision_recall_fscore_support
     >>> y_true = np.array([0, 1, 2, 0, 1, 2])
     >>> y_pred = np.array([0, 2, 1, 0, 0, 1])
-    >>> precision_recall_fscore_support(y_true, y_pred, average='macro')
-    (0.22222222222222221, 0.33333333333333331, 0.26666666666666666, None)
-    >>> precision_recall_fscore_support(y_true, y_pred, average='micro')
-    (0.33333333333333331, 0.33333333333333331, 0.33333333333333331, None)
-    >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
-    (0.22222222222222221, 0.33333333333333331, 0.26666666666666666, None)
+    >>> precision_recall_fscore_support(y_true, y_pred, average='macro')\
+        # doctest: +ELLIPSIS
+    (0.22..., 0.33..., 0.26..., None)
+    >>> precision_recall_fscore_support(y_true, y_pred, average='micro')\
+        # doctest: +ELLIPSIS
+    (0.33..., 0.33..., 0.33..., None)
+    >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')\
+        # doctest: +ELLIPSIS
+    (0.22..., 0.33..., 0.26..., None)
 
     """
     if beta <= 0:
@@ -1125,14 +1132,15 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     >>> from sklearn.metrics import precision_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
-    >>> precision_score(y_true, y_pred, average='macro')
-    0.22222222222222221
-    >>> precision_score(y_true, y_pred, average='micro')
-    0.33333333333333331
-    >>> precision_score(y_true, y_pred, average='weighted')
-    0.22222222222222221
-    >>> precision_score(y_true, y_pred, average=None)
-    array([ 0.66666667,  0.        ,  0.        ])
+    >>> precision_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+    0.22...
+    >>> precision_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+    0.33...
+    >>> precision_score(y_true, y_pred, average='weighted')\
+        # doctest: +ELLIPSIS
+    0.22...
+    >>> precision_score(y_true, y_pred, average=None)  # doctest: +ELLIPSIS
+    array([ 0.66...,  0.        ,  0.        ])
 
     """
     p, _, _, _ = precision_recall_fscore_support(y_true, y_pred,
@@ -1200,12 +1208,12 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     >>> from sklearn.metrics import recall_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
-    >>> recall_score(y_true, y_pred, average='macro')
-    0.33333333333333331
-    >>> recall_score(y_true, y_pred, average='micro')
-    0.33333333333333331
-    >>> recall_score(y_true, y_pred, average='weighted')
-    0.33333333333333331
+    >>> recall_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+    0.33...
+    >>> recall_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+    0.33...
+    >>> recall_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+    0.33...
     >>> recall_score(y_true, y_pred, average=None)
     array([ 1.,  0.,  0.])
 
@@ -1392,8 +1400,8 @@ def mean_squared_error(y_true, y_pred):
     0.375
     >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
-    >>> mean_squared_error(y_true, y_pred)
-    0.70833333333333337
+    >>> mean_squared_error(y_true, y_pred)  # doctest: +ELLIPSIS
+    0.708...
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
@@ -1430,8 +1438,8 @@ def explained_variance_score(y_true, y_pred):
     >>> from sklearn.metrics import explained_variance_score
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> explained_variance_score(y_true, y_pred)
-    0.95717344753747324
+    >>> explained_variance_score(y_true, y_pred)  # doctest: +ELLIPSIS
+    0.957...
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
@@ -1478,12 +1486,12 @@ def r2_score(y_true, y_pred):
     >>> from sklearn.metrics import r2_score
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> r2_score(y_true, y_pred)
-    0.94860813704496794
+    >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
+    0.948...
     >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
     >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
-    >>> r2_score(y_true, y_pred)
-    0.93825665859564167
+    >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
+    0.938...
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)

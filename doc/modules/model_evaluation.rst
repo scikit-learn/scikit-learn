@@ -120,8 +120,8 @@ precision-recall curve.
   >>> from sklearn.metrics import average_precision_score
   >>> y_true = np.array([0, 0, 1, 1])
   >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-  >>> average_precision_score(y_true, y_scores)
-  0.79166666666666663
+  >>> average_precision_score(y_true, y_scores)  # doctest: +ELLIPSIS
+  0.79...
 
 For more information see the
 `Wikipedia article on average precision
@@ -303,16 +303,16 @@ Here some small examples in binary classification:
   1.0
   >>> metrics.recall_score(y_true, y_pred)
   0.5
-  >>> metrics.f1_score(y_true, y_pred)
-  0.66666666666666663
-  >>> metrics.fbeta_score(y_true, y_pred, beta=0.5)
-  0.83333333333333337
-  >>> metrics.fbeta_score(y_true, y_pred, beta=1)
-  0.66666666666666663
-  >>> metrics.fbeta_score(y_true, y_pred, beta=2)
-  0.55555555555555558
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)
-  (array([ 0.66666667,  1.        ]), array([ 1. ,  0.5]), array([ 0.71428571,  0.83333333]), array([2, 2], dtype=int64))
+  >>> metrics.f1_score(y_true, y_pred)  # doctest: +ELLIPSIS
+  0.66...
+  >>> metrics.fbeta_score(y_true, y_pred, beta=0.5)  # doctest: +ELLIPSIS
+  0.83...
+  >>> metrics.fbeta_score(y_true, y_pred, beta=1)  # doctest: +ELLIPSIS
+  0.66...
+  >>> metrics.fbeta_score(y_true, y_pred, beta=2) # doctest: +ELLIPSIS
+  0.55...
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)  # doctest: +ELLIPSIS
+  (array([ 0.66...,  1.        ]), array([ 1. ,  0.5]), array([ 0.71...,  0.83...]), array([2, 2], dtype=int64))
 
 
   >>> import numpy as np
@@ -320,8 +320,8 @@ Here some small examples in binary classification:
   >>> y_true = np.array([0, 0, 1, 1])
   >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
   >>> precision, recall, threshold = precision_recall_curve(y_true, y_scores)
-  >>> precision
-  array([ 0.66666667,  0.5       ,  1.        ,  1.        ])
+  >>> precision  # doctest: +ELLIPSIS
+  array([ 0.66...,  0.5       ,  1.        ,  1.        ])
   >>> recall
   array([ 1. ,  0.5,  0.5,  0. ])
   >>> threshold
@@ -413,64 +413,64 @@ Here an example where ``average`` is set to ``average`` to ``macro``:
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
   >>> y_pred = [0, 2, 1, 0, 0, 1]
-  >>> metrics.precision_score(y_true, y_pred, average='macro')
-  0.22222222222222221
-  >>> metrics.recall_score(y_true, y_pred, average='macro')
-  0.33333333333333331
-  >>> metrics.fbeta_score(y_true, y_pred, average='macro', beta=0.5)
-  0.23809523809523805
-  >>> metrics.f1_score(y_true, y_pred, average='macro')
-  0.26666666666666666
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='macro')
-  (0.22222222222222221, 0.33333333333333331, 0.26666666666666666, None)
+  >>> metrics.precision_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+  0.22...
+  >>> metrics.recall_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+  0.33...
+  >>> metrics.fbeta_score(y_true, y_pred, average='macro', beta=0.5)  # doctest: +ELLIPSIS
+  0.23...
+  >>> metrics.f1_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+  0.26...
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+  (0.22..., 0.33..., 0.26..., None)
 
 Here an example where ``average`` is set to to ``micro``:
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
   >>> y_pred = [0, 2, 1, 0, 0, 1]
-  >>> metrics.precision_score(y_true, y_pred, average='micro')
-  0.33333333333333331
-  >>> metrics.recall_score(y_true, y_pred, average='micro')
-  0.33333333333333331
-  >>> metrics.f1_score(y_true, y_pred, average='micro')
-  0.33333333333333331
-  >>> metrics.fbeta_score(y_true, y_pred, average='micro', beta=0.5)
-  0.33333333333333337
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='micro')
-  (0.33333333333333331, 0.33333333333333331, 0.33333333333333331, None)
+  >>> metrics.precision_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+  0.33...
+  >>> metrics.recall_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+  0.33...
+  >>> metrics.f1_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+  0.33...
+  >>> metrics.fbeta_score(y_true, y_pred, average='micro', beta=0.5)  # doctest: +ELLIPSIS
+  0.33...
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+  (0.33..., 0.33..., 0.33..., None)
 
 Here an example where ``average`` is set to to ``weighted``:
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
   >>> y_pred = [0, 2, 1, 0, 0, 1]
-  >>> metrics.precision_score(y_true, y_pred, average='weighted')
-  0.22222222222222221
-  >>> metrics.recall_score(y_true, y_pred, average='weighted')
-  0.33333333333333331
-  >>> metrics.fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
-  0.23809523809523805
-  >>> metrics.f1_score(y_true, y_pred, average='weighted')
-  0.26666666666666666
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='weighted')
-  (0.22222222222222221, 0.33333333333333331, 0.26666666666666666, None)
+  >>> metrics.precision_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+  0.22...
+  >>> metrics.recall_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+  0.33...
+  >>> metrics.fbeta_score(y_true, y_pred, average='weighted', beta=0.5)  # doctest: +ELLIPSIS
+  0.23...
+  >>> metrics.f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+  0.26...
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+  (0.22..., 0.33..., 0.26..., None)
 
 Here an example where ``average`` is set to ``None``:
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
   >>> y_pred = [0, 2, 1, 0, 0, 1]
-  >>> metrics.precision_score(y_true, y_pred, average=None)
-  array([ 0.66666667,  0.        ,  0.        ])
+  >>> metrics.precision_score(y_true, y_pred, average=None)  # doctest: +ELLIPSIS
+  array([ 0.66...,  0.        ,  0.        ])
   >>> metrics.recall_score(y_true, y_pred, average=None)
   array([ 1.,  0.,  0.])
-  >>> metrics.f1_score(y_true, y_pred, average=None)
+  >>> metrics.f1_score(y_true, y_pred, average=None)  # doctest: +ELLIPSIS
   array([ 0.8,  0. ,  0. ])
-  >>> metrics.fbeta_score(y_true, y_pred, average=None, beta=0.5)
-  array([ 0.71428571,  0.        ,  0.        ])
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)
-  (array([ 0.66666667,  0.        ,  0.        ]), array([ 1.,  0.,  0.]), array([ 0.71428571,  0.        ,  0.        ]), array([2, 2, 2], dtype=int64))
+  >>> metrics.fbeta_score(y_true, y_pred, average=None, beta=0.5)  # doctest: +ELLIPSIS
+  array([ 0.71...,  0.        ,  0.        ])
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)  # doctest: +ELLIPSIS
+  (array([ 0.66...,  0.        ,  0.        ]), array([ 1.,  0.,  0.]), array([ 0.71...,  0.        ,  0.        ]), array([2, 2, 2], dtype=int64))
 
 
 Hinge loss
@@ -501,10 +501,10 @@ with a svm classifier:
        intercept_scaling=1, loss='l2', multi_class='ovr', penalty='l2',
        random_state=0, tol=0.0001, verbose=0)
   >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
-  >>> pred_decision
-  array([-2.18177944,  2.36355888,  0.09088972])
-  >>> hinge_loss([-1, 1, 1], pred_decision)
-  0.30303676038544258
+  >>> pred_decision  # doctest: +ELLIPSIS
+  array([-2.18...,  2.36...,  0.09...])
+  >>> hinge_loss([-1, 1, 1], pred_decision)  # doctest: +ELLIPSIS
+  0.30...
 
 
 Matthews correlation coefficient
@@ -537,8 +537,8 @@ function:
     >>> from sklearn.metrics import matthews_corrcoef
     >>> y_true = [+1, +1, +1, -1]
     >>> y_pred = [+1, -1, +1, +1]
-    >>> matthews_corrcoef(y_true, y_pred)
-    -0.33333333333333331
+    >>> matthews_corrcoef(y_true, y_pred)  # doctest: +ELLIPSIS
+    -0.33...
 
 .. _roc_metrics:
 
@@ -655,8 +655,8 @@ Here a small example of usage of the :func:`explained_variance_scoreé` function
     >>> from sklearn.metrics import explained_variance_score
     >>> y_true = [3, -0.5, 2, 7]
     >>> y_pred = [2.5, 0.0, 2, 8]
-    >>> explained_variance_score(y_true, y_pred)
-    0.95717344753747324
+    >>> explained_variance_score(y_true, y_pred)  # doctest: +ELLIPSIS
+    0.957...
 
 Mean absolute error
 -------------------
@@ -711,8 +711,8 @@ Here a small example of usage of the :func:`mean_squared_error` function:
   0.375
   >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
   >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
-  >>> mean_squared_error(y_true, y_pred)
-  0.70833333333333337
+  >>> mean_squared_error(y_true, y_pred)  # doctest: +ELLIPSIS
+  0.7083...
 
 .. topic:: Examples:
 
@@ -742,12 +742,12 @@ Here a small example of usage of the :func:`r2_score` function:
   >>> from sklearn.metrics import r2_score
   >>> y_true = [3, -0.5, 2, 7]
   >>> y_pred = [2.5, 0.0, 2, 8]
-  >>> r2_score(y_true, y_pred)
-  0.94860813704496794
+  >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
+  0.948...
   >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
   >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
-  >>> r2_score(y_true, y_pred)
-  0.93825665859564167
+  >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
+  0.938...
 
 
 .. topic:: Example:
