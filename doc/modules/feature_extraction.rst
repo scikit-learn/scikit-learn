@@ -568,21 +568,21 @@ datasets**:
 - the larger the corpus, the larger the vocabulary will grow and hence the
   memory use too,
 
-- fitting requires the allocation of intermediate data-structures with a size
-  comparable to the original dataset.
+- fitting requires the allocation of intermediate data structures
+  of size proportional to that of the original dataset.
 
 - building the word-mapping requires a full pass over the dataset hence it is
   not possible to fit text classifiers in a strictly online manner.
 
 - pickling and un-pickling vectorizers with a large ``vocabulary_`` can be very
-  slow (typically much slower than pickling / un-pickling flat data-structures
+  slow (typically much slower than pickling / un-pickling flat data structures
   such as a NumPy array of the same size),
 
 - it is not easily possible to split the vectorization work into concurrent sub
   tasks as the ``vocabulary_`` attribute would have to be a shared state with a
   fine grained synchronization barrier: the mapping from token string to
   feature index is dependent on ordering of the first occurrence of each token
-  hence would have to be shared, potentially harming the concurrent workers
+  hence would have to be shared, potentially harming the concurrent workers'
   performance to the point of making them slower than the sequential variant.
 
 It is possible to overcome those limitations by combining the "hashing trick"
@@ -590,9 +590,10 @@ It is possible to overcome those limitations by combining the "hashing trick"
 :class:`sklearn.feature_extraction.FeatureHasher` class and the text
 preprocessing and tokenization features of the :class:`CountVectorizer`.
 
-This is done in a stateless model (no need to call the ``fit`` method) called
-:class:`HashingVectorizer` mostly API compatible with
-:class:`CountVectorizer`::
+This combination is implementing in :class:`HashingVectorizer`,
+a transformer class that is mostly API compatible with :class:`CountVectorizer`.
+:class:`HashingVectorizer` is stateless,
+meaning that you don't have to call ``fit`` on it::
 
   >>> from sklearn.feature_extraction.text import HashingVectorizer
   >>> hv = HashingVectorizer(n_features=10)
@@ -626,14 +627,16 @@ Let's try again with the default setting::
   <4x1048576 sparse matrix of type '<type 'numpy.float64'>'
       with 19 stored elements in Compressed Sparse Row format>
 
-We no longer get the collisions but this is at the expense of a much larger
-dimensional output space.
+We no longer get the collisions, but this comes at the expense of a much larger
+dimensionality of the output space.
+Of course, other terms than the 19 used here
+might still collide with each other.
 
 The :class:`HashingVectorizer` also comes with the following limitations:
 
-- it is not possible to invert the model (no ``inverse_transform`` method) nor
-  getting access to the original string representation of the feature because
-  of the one-way nature of the hash function that is used to perform the mapping.
+- it is not possible to invert the model (no ``inverse_transform`` method),
+  nor to access the original string representation of the features,
+  because of the one-way nature of the hash function that performs the mapping.
 
 - it does not provide IDF weighting as that would introduce statefulness in the
   model. A :class:`TfidfTransformer` can be appended to it in a pipeline if
