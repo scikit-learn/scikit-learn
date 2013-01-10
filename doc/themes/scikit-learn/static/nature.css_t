@@ -184,6 +184,17 @@ div.rel {
     margin-top: 20px;
 }
 
+/* -------- warning header for old versions --------------------------------*/
+
+div.warning-wrapper {
+    background-color: #ffaaaa;
+    max-width: auto;
+    text-align: center;
+}
+div.warning-wrapper p {
+    margin: 0;
+}
+
 div.sphinxsidebar h3,
 div.sphinxsidebar h4 {
     padding: 5px 10px;
