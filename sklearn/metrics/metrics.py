@@ -977,8 +977,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     array([ 1. ,  0.5])
     >>> f  # doctest: +ELLIPSIS
     array([ 0.71...,  0.83...])
-    >>> s
-    array([2, 2], dtype=int64)
+    >>> s  # doctest: +ELLIPSIS
+    array([2, 2]...)
 
     Here an example in the multiclass case:
     >>> from sklearn.metrics import precision_recall_fscore_support
@@ -1365,8 +1365,8 @@ def mean_absolute_error(y_true, y_pred):
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> mean_absolute_error(y_true, y_pred)
     0.5
-    >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
-    >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
+    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> mean_absolute_error(y_true, y_pred)
     0.75
 
@@ -1488,8 +1488,8 @@ def r2_score(y_true, y_pred):
     >>> y_pred = [2.5, 0.0, 2, 8]
     >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
     0.948...
-    >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
-    >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
+    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
     >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
     0.938...
 

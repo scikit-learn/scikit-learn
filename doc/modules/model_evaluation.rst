@@ -312,7 +312,7 @@ Here some small examples in binary classification:
   >>> metrics.fbeta_score(y_true, y_pred, beta=2) # doctest: +ELLIPSIS
   0.55...
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)  # doctest: +ELLIPSIS
-  (array([ 0.66...,  1.        ]), array([ 1. ,  0.5]), array([ 0.71...,  0.83...]), array([2, 2], dtype=int64))
+  (array([ 0.66...,  1.        ]), array([ 1. ,  0.5]), array([ 0.71...,  0.83...]), array([2, 2]...))
 
 
   >>> import numpy as np
@@ -470,7 +470,7 @@ Here an example where ``average`` is set to ``None``:
   >>> metrics.fbeta_score(y_true, y_pred, average=None, beta=0.5)  # doctest: +ELLIPSIS
   array([ 0.71...,  0.        ,  0.        ])
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)  # doctest: +ELLIPSIS
-  (array([ 0.66...,  0.        ,  0.        ]), array([ 1.,  0.,  0.]), array([ 0.71...,  0.        ,  0.        ]), array([2, 2, 2], dtype=int64))
+  (array([ 0.66...,  0.        ,  0.        ]), array([ 1.,  0.,  0.]), array([ 0.71...,  0.        ,  0.        ]), array([2, 2, 2]...))
 
 
 Hinge loss
@@ -680,8 +680,8 @@ Here a small example of usage of the :func:`mean_absolute_error` function:
   >>> y_pred = [2.5, 0.0, 2, 8]
   >>> mean_absolute_error(y_true, y_pred)
   0.5
-  >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
-  >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
+  >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+  >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
   >>> mean_absolute_error(y_true, y_pred)
   0.75
 
@@ -709,8 +709,8 @@ Here a small example of usage of the :func:`mean_squared_error` function:
   >>> y_pred = [2.5, 0.0, 2, 8]
   >>> mean_squared_error(y_true, y_pred)
   0.375
-  >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
-  >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
+  >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+  >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
   >>> mean_squared_error(y_true, y_pred)  # doctest: +ELLIPSIS
   0.7083...
 
@@ -744,8 +744,8 @@ Here a small example of usage of the :func:`r2_score` function:
   >>> y_pred = [2.5, 0.0, 2, 8]
   >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
   0.948...
-  >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
-  >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
+  >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+  >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
   >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
   0.938...
 
