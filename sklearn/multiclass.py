@@ -81,14 +81,18 @@ def fit_ovr(estimator, X, y, n_jobs):
 
     lb = LabelBinarizer()
     Y = lb.fit_transform(y)
+    classes = []
+    for i in range(Y.shape[1]):
+        classes.append(["not %s" % i, i])
+
     if n_jobs == 1:
         estimators = [_fit_binary(estimator, X, Y[:, i],
-                                  classes=["not %s" % str(i), i])
+                                  classes=classes[i])
                       for i in range(Y.shape[1])]
     else:
         estimators = Parallel(n_jobs=n_jobs)(
             delayed(_fit_binary)(estimator, X, Y[:, i], 
-                     classes=["not %s" % str(i), i])
+                     classes=classes[i])
             for i in range(Y.shape[1]))
     return estimators, lb
 
@@ -158,14 +162,10 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     n_jobs : int, optional, default: 1
 
-        The number of jobs to use for the computation. This works by breaking
-        down the pairwise matrix into n_jobs even slices and computing them in
-        parallel.
-
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debuging. For n_jobs below -1,
-        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
+        The number of jobs to use for the computation. If -1 all CPUs are used.
+        If 1 is given, no parallel computing code is used at all, which is
+        useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
+        used. Thus for n_jobs = -2, all CPUs but one are used.
 
     Attributes
     ----------
@@ -348,14 +348,10 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     n_jobs : int, optional, default: 1
 
-        The number of jobs to use for the computation. This works by breaking
-        down the pairwise matrix into n_jobs even slices and computing them in
-        parallel.
-
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debuging. For n_jobs below -1,
-        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
+        The number of jobs to use for the computation. If -1 all CPUs are used.
+        If 1 is given, no parallel computing code is used at all, which is
+        useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
+        used. Thus for n_jobs = -2, all CPUs but one are used.
 
     Attributes
     ----------
@@ -507,14 +503,10 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     n_jobs : int, optional, default: 1
 
-        The number of jobs to use for the computation. This works by breaking
-        down the pairwise matrix into n_jobs even slices and computing them in
-        parallel.
-
-        If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debuging. For n_jobs below -1,
-        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
-        are used.
+        The number of jobs to use for the computation. If -1 all CPUs are used.
+        If 1 is given, no parallel computing code is used at all, which is
+        useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
+        used. Thus for n_jobs = -2, all CPUs but one are used.
 
     Attributes
     ----------
