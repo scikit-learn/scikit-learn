@@ -1,9 +1,11 @@
-
 import warnings
 import  numpy as np
 cimport numpy as np
 from scipy import sparse
 from ..utils import ConvergenceWarning
+
+cdef extern from *:
+    ctypedef char* const_char_p "const char*"
 
 ################################################################################
 # Includes
@@ -58,6 +60,9 @@ cdef extern from "libsvm_sparse_helper.c":
     void set_verbosity(int)
 
 
+np.import_array()
+
+
 def libsvm_sparse_train ( int n_features,
                      np.ndarray[np.float64_t, ndim=1, mode='c'] values,
                      np.ndarray[np.int32_t,   ndim=1, mode='c'] indices,
@@ -95,7 +100,7 @@ def libsvm_sparse_train ( int n_features,
     cdef svm_parameter *param
     cdef svm_csr_problem *problem
     cdef svm_csr_model *model
-    cdef char *error_msg
+    cdef const_char_p error_msg
 
     if len(sample_weight) == 0:
         sample_weight = np.ones(Y.shape[0], dtype=np.float64)
