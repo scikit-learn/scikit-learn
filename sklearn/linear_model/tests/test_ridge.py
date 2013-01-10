@@ -231,7 +231,7 @@ def _test_ridge_loo(filter_):
     assert_array_almost_equal(np.vstack((y_pred, y_pred)).T,
                               Y_pred, decimal=5)
 
-    return ret
+    yield ret
 
 
 def _test_ridge_cv(filter_):
@@ -256,7 +256,7 @@ def _test_ridge_cv(filter_):
 def _test_ridge_diabetes(filter_):
     ridge = Ridge(fit_intercept=False)
     ridge.fit(filter_(X_diabetes), y_diabetes)
-    return np.round(ridge.score(filter_(X_diabetes), y_diabetes), 5)
+    yield np.round(ridge.score(filter_(X_diabetes), y_diabetes), 5)
 
 
 def _test_multi_ridge_diabetes(filter_):
@@ -303,20 +303,39 @@ def _test_tolerance(filter_):
     assert_true(score >= score2)
 
 
+def _test_intercept_values(filter_):
+    """Tests that the learned model doesn't change if the array is sparse
+
+    Issue #1389
+    """
+    for n_samples, n_features in ((5, 3), (3, 5)):  # Test both tall and wide
+        rng = np.random.RandomState(0)
+        X = rng.randn(n_samples, n_features)
+        y = rng.randn(n_samples)
+        for normalize in (False, True):
+            ridge = Ridge(alpha=1e-10, fit_intercept=True, normalize=normalize)
+            # almost no regularization, but not singular
+            ridge.fit(filter_(X), y)
+            yield ridge.coef_
+            yield ridge.intercept_
+
+
 def test_dense_sparse():
     for test_func in (_test_ridge_loo,
                       _test_ridge_cv,
                       _test_ridge_diabetes,
                       _test_multi_ridge_diabetes,
                       _test_ridge_classifiers,
-                      _test_tolerance):
+                      _test_tolerance,
+                      _test_intercept_values):
         # test dense matrix
-        ret_dense = test_func(DENSE_FILTER)
+        dense_returns = test_func(DENSE_FILTER)
         # test sparse matrix
-        ret_sparse = test_func(SPARSE_FILTER)
+        sparse_returns = test_func(SPARSE_FILTER)
         # test that the outputs are the same
-        if ret_dense is not None and ret_sparse is not None:
-            assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
+        if dense_returns is not None:
+            for ret_dense, ret_sparse in zip(dense_returns, sparse_returns):
+                assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
 
 
 def test_class_weights():
