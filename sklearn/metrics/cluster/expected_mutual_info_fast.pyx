@@ -6,14 +6,14 @@
 #           Corey Lynch <coreylynch9@gmail.com>
 # License: BSD Style.
 
+from libc.math cimport exp, lgamma
 from scipy.special import gammaln
 import numpy as np
 cimport numpy as np
 cimport cython
 
-cdef extern from "math.h":
-    cdef extern double exp(double x)
-    cdef extern double lgamma(double x)
+np.import_array()
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)

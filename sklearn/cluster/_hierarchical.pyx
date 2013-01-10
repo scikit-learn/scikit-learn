@@ -5,6 +5,8 @@ ctypedef np.float64_t DOUBLE
 ctypedef np.int_t INT
 ctypedef np.int8_t INT8
 
+np.import_array()
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
