@@ -34,7 +34,18 @@ div.header-wrapper {
 div.header {
     /* for the logo to correctly expand when showing results
        but remain cut when not */
-    overflow: hidden; 
+    overflow: hidden;
+}
+
+/* -------- warning header for old versions --------------------------------*/
+
+div.warning-wrapper {
+    background-color: #ffaaaa;
+    max-width: auto;
+    text-align: center;
+}
+div.warning-wrapper p {
+    margin: 0;
 }
 
 
