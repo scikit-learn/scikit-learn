@@ -571,8 +571,8 @@ datasets**:
 - fitting requires the allocation of intermediate data-structures with a size
   comparable to the original dataset.
 
-- building the word-mapping requires a full path over the dataset hence it is
-  not possible to fit text classifier in a stric online manner.
+- building the word-mapping requires a full pass over the dataset hence it is
+  not possible to fit text classifiers in a strictly online manner.
 
 - pickling and un-pickling vectorizers with a large ``vocabulary_`` can be very
   slow (typically much slower than pickling / un-pickling flat data-structures
