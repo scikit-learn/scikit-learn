@@ -111,8 +111,16 @@ print 'data loaded'
 
 categories = data_train.target_names    # for case categories == None
 
-print "%d documents (training set)" % len(data_train.data)
-print "%d documents (testing set)" % len(data_test.data)
+def size_mb(docs):
+    return sum(len(s.encode('utf-8')) for s in docs) / 1e6
+
+data_train_size_mb = size_mb(data_train.data)
+data_test_size_mb = size_mb(data_test.data)
+
+print("%d documents - %0.3fMB (training set)" % (
+    len(data_train.data) , data_train_size_mb))
+print("%d documents - %0.3fMB (training set)" % (
+    len(data_test.data) , data_test_size_mb))
 print "%d categories" % len(categories)
 print
 
@@ -129,14 +137,16 @@ else:
     vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5,
                                  stop_words='english')
     X_train = vectorizer.fit_transform(data_train.data)
-print "done in %fs" % (time() - t0)
+duration = time() - t0
+print("done in %fs at %0.3fMB/s" % (duration, data_train_size_mb / duration))
 print "n_samples: %d, n_features: %d" % X_train.shape
 print
 
 print "Extracting features from the test dataset using the same vectorizer"
 t0 = time()
 X_test = vectorizer.transform(data_test.data)
-print "done in %fs" % (time() - t0)
+duration = time() - t0
+print("done in %fs at %0.3fMB/s" % (duration, data_test_size_mb / duration))
 print "n_samples: %d, n_features: %d" % X_test.shape
 print
 
