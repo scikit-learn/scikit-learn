@@ -193,38 +193,31 @@ class _BaseRidge(LinearModel):
         y = np.asarray(y, dtype=np.float)
 
         is_sparse = not hasattr(X, '__array__')
-        if self.fit_intercept:
-            if is_sparse:
-                if self.normalize:
-                    scaler = StandardScaler(with_mean=False, with_std=True,
-                                            copy=False)
-                    X = scaler.fit_transform(X)
-                    X_std = scaler.std_
-                X = add_dummy_feature(X, value=1.0)  # TODO: intercept weight
+        if self.fit_intercept and is_sparse:
+            if self.normalize:
+                scaler = StandardScaler(with_mean=False, with_std=True,
+                                        copy=False)
+                X = scaler.fit_transform(X)
+                X_std = scaler.std_
             else:
-                X, y, X_mean, y_mean, X_std = self._center_data(
-                    X, y, True, self.normalize, self.copy_X)
+                X_std = np.ones(X.shape[1])
+            X_mean = np.zeros(X.shape[1])
+            y_mean = 0.
+            X = add_dummy_feature(X, value=1.0)  # TODO: intercept weight
+        else:
+            X, y, X_mean, y_mean, X_std = self._center_data(
+                X, y, self.fit_intercept, self.normalize, self.copy_X)
         self.coef_ = ridge_regression(X, y,
                                       alpha=self.alpha,
                                       sample_weight=sample_weight,
                                       solver=solver,
                                       max_iter=self.max_iter,
                                       tol=self.tol)
-        if self.fit_intercept:
-            if is_sparse:
-                self.coef_ = np.atleast_2d(self.coef_)
-                self.intercept_ = self.coef_[:, 0]
-                self.coef_ = self.coef_[:, 1:]
-                self.intercept_ = np.squeeze(self.intercept_)
-                self.coef_ = np.squeeze(self.coef_)
-                if self.intercept_.ndim == 0:
-                    self.intercept_ = np.float64(self.intercept_)
-                if self.normalize:
-                    self.coef_ /= X_std
-            else:
-                self._set_intercept(X_mean, y_mean, X_std)
-        else:
-            self.intercept_ = 0.0
+        if self.fit_intercept and is_sparse:
+            coef = np.atleast_2d(self.coef_)
+            self.coef_ = coef[:, 1:].squeeze()
+            y_mean = coef[:, 0].squeeze()
+        self._set_intercept(X_mean, y_mean, X_std)
         return self
 
 
