@@ -20,7 +20,7 @@ from .base import LinearClassifierMixin, LinearModel
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils import safe_asarray
-from ..preprocessing import LabelBinarizer
+from ..preprocessing import LabelBinarizer, StandardScaler, add_dummy_feature
 from ..grid_search import GridSearchCV
 
 
@@ -192,16 +192,39 @@ class _BaseRidge(LinearModel):
         X = safe_asarray(X, dtype=np.float)
         y = np.asarray(y, dtype=np.float)
 
-        X, y, X_mean, y_mean, X_std = self._center_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X)
-
+        is_sparse = not hasattr(X, '__array__')
+        if self.fit_intercept:
+            if is_sparse:
+                if self.normalize:
+                    scaler = StandardScaler(with_mean=False, with_std=True,
+                                            copy=False)
+                    X = scaler.fit_transform(X)
+                    X_std = scaler.std_
+                X = add_dummy_feature(X, value=1.0)  # TODO: intercept weight
+            else:
+                X, y, X_mean, y_mean, X_std = self._center_data(
+                    X, y, True, self.normalize, self.copy_X)
         self.coef_ = ridge_regression(X, y,
                                       alpha=self.alpha,
                                       sample_weight=sample_weight,
                                       solver=solver,
                                       max_iter=self.max_iter,
                                       tol=self.tol)
-        self._set_intercept(X_mean, y_mean, X_std)
+        if self.fit_intercept:
+            if is_sparse:
+                self.coef_ = np.atleast_2d(self.coef_)
+                self.intercept_ = self.coef_[:, 0]
+                self.coef_ = self.coef_[:, 1:]
+                self.intercept_ = np.squeeze(self.intercept_)
+                self.coef_ = np.squeeze(self.coef_)
+                if self.intercept_.ndim == 0:
+                    self.intercept_ = np.float64(self.intercept_)
+                if self.normalize:
+                    self.coef_ /= X_std
+            else:
+                self._set_intercept(X_mean, y_mean, X_std)
+        else:
+            self.intercept_ = 0.0
         return self
 
 
