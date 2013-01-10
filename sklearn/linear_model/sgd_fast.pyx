@@ -12,19 +12,15 @@ import numpy as np
 import sys
 from time import time
 
+from libc.math cimport exp, log, sqrt, pow, fabs
 cimport numpy as np
 cimport cython
 
 from sklearn.utils.weight_vector cimport WeightVector
 from sklearn.utils.seq_dataset cimport SequentialDataset
 
+np.import_array()
 
-cdef extern from "math.h":
-    cdef extern double exp(double x)
-    cdef extern double log(double x)
-    cdef extern double sqrt(double x)
-    cdef extern double pow(double x, double y)
-    cdef extern double fabs(double x)
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INTEGER

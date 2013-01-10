@@ -1,10 +1,10 @@
 """Utilities to evaluate the predictive performance of models
 
-Functions named as *_score return a scalar value to maximize: the higher the
-better
+Functions named as ``*_score`` return a scalar value to maximize: the higher
+the better
 
-Function named as *_loss return a scalar value to minimize: the lower the
-better
+Function named as ``*_error`` or ``*_loss`` return a scalar value to minimize:
+the lower the better
 """
 
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -18,11 +18,11 @@ import warnings
 import numpy as np
 from scipy.sparse import coo_matrix
 
-from ..utils import check_arrays
+from ..utils import check_arrays, deprecated
 
 
 ###############################################################################
-# General Utilities
+# General utilities
 ###############################################################################
 def auc(x, y, reorder=False):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
@@ -33,15 +33,15 @@ def auc(x, y, reorder=False):
     Parameters
     ----------
     x : array, shape = [n]
-        x coordinates
+        x coordinates.
 
     y : array, shape = [n]
-        y coordinates
+        y coordinates.
 
     reorder : boolean, optional
         If True, assume that the curve is ascending in the case of ties,
         as for an ROC curve. With descending curve, you will get false
-        results
+        results.
 
     Returns
     -------
@@ -94,22 +94,46 @@ def unique_labels(*lists_of_labels):
 # Binary classification loss
 ###############################################################################
 def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
-    """
-    Cumulated hinge loss (non-regularized).
+    """Average hinge loss (non-regularized).
 
     Assuming labels in y_true are encoded with +1 and -1,
     when a prediction mistake is made, margin = y_true * pred_decision
     is always negative (since the signs disagree), therefore 1 - margin
-    is always greater than 1. The cumulated hinge loss therefore
+    is always greater than 1. The cumulated hinge loss is therefore
     upperbounds the number of mistakes made by the classifier.
 
     Parameters
     ----------
     y_true : array, shape = [n_samples]
-        True target (integers)
+        True target (integers).
 
     pred_decision : array, shape = [n_samples] or [n_samples, n_classes]
-        Predicted decisions, as output by decision_function (floats)
+        Predicted decisions, as output by decision_function (floats).
+
+    Returns
+    -------
+    loss : float
+
+    References
+    ----------
+    http://en.wikipedia.org/wiki/Hinge_loss
+
+    Examples
+    --------
+    >>> from sklearn import svm
+    >>> from sklearn.metrics import hinge_loss
+    >>> X = [[0], [1]]
+    >>> y = [-1, 1]
+    >>> est = svm.LinearSVC(random_state=0)
+    >>> est.fit(X, y)
+    LinearSVC(C=1.0, class_weight=None, dual=True, fit_intercept=True,
+         intercept_scaling=1, loss='l2', multi_class='ovr', penalty='l2',
+         random_state=0, tol=0.0001, verbose=0)
+    >>> pred_decision = est.decision_function([[-2], [3], [0.5]])
+    >>> pred_decision  # doctest: +ELLIPSIS
+    array([-2.18...,  2.36...,  0.09...])
+    >>> hinge_loss([-1, 1, 1], pred_decision)  # doctest: +ELLIPSIS
+    0.30...
 
     """
     # TODO: multi-class hinge-loss
@@ -129,7 +153,7 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
 
 
 ###############################################################################
-# Binary classification score
+# Binary classification scores
 ###############################################################################
 def average_precision_score(y_true, y_score):
     """Compute average precision (AP) from prediction scores.
@@ -140,7 +164,6 @@ def average_precision_score(y_true, y_score):
 
     Parameters
     ----------
-
     y_true : array, shape = [n_samples]
         True binary labels.
 
@@ -156,10 +179,19 @@ def average_precision_score(y_true, y_score):
     ----------
     http://en.wikipedia.org/wiki/Information_retrieval#Average_precision
 
-
     See also
     --------
     auc_score: Area under the ROC curve
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import average_precision_score
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> average_precision_score(y_true, y_scores)  # doctest: +ELLIPSIS
+    0.79...
+
     """
     precision, recall, thresholds = precision_recall_curve(y_true, y_score)
     return auc(recall, precision)
@@ -192,6 +224,16 @@ def auc_score(y_true, y_score):
     See also
     --------
     average_precision_score: Area under the precision-recall curve
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import auc_score
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> auc_score(y_true, y_scores)
+    0.75
+
     """
 
     fpr, tpr, tresholds = roc_curve(y_true, y_score)
@@ -230,7 +272,16 @@ def matthews_corrcoef(y_true, y_pred):
     References
     ----------
     http://en.wikipedia.org/wiki/Matthews_correlation_coefficient
+
     http://dx.doi.org/10.1093/bioinformatics/16.5.412
+
+    Examples
+    --------
+    >>> from sklearn.metrics import matthews_corrcoef
+    >>> y_true = [+1, +1, +1, -1]
+    >>> y_pred = [+1, -1, +1, +1]
+    >>> matthews_corrcoef(y_true, y_pred)  # doctest: +ELLIPSIS
+    -0.33...
 
     """
     mcc = np.corrcoef(y_true, y_pred)[0, 1]
@@ -240,9 +291,6 @@ def matthews_corrcoef(y_true, y_pred):
         return mcc
 
 
-###############################################################################
-# Binary classification score
-###############################################################################
 def precision_recall_curve(y_true, probas_pred):
     """Compute precision-recall pairs for different probability thresholds.
 
@@ -279,6 +327,20 @@ def precision_recall_curve(y_true, probas_pred):
 
     thresholds : array, shape = [n]
         Thresholds on y_score used to compute precision and recall.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import precision_recall_curve
+    >>> y_true = np.array([0, 0, 1, 1])
+    >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
+    >>> precision, recall, threshold = precision_recall_curve(y_true, y_scores)
+    >>> precision  # doctest: +ELLIPSIS
+    array([ 0.66...,  0.5       ,  1.        ,  1.        ])
+    >>> recall
+    array([ 1. ,  0.5,  0.5,  0. ])
+    >>> threshold
+    array([ 0.35,  0.4 ,  0.8 ])
 
     """
     y_true = np.ravel(y_true)
@@ -342,7 +404,7 @@ def precision_recall_curve(y_true, probas_pred):
 
 
 def roc_curve(y_true, y_score, pos_label=None):
-    """compute Receiver operating characteristic (ROC)
+    """Compute Receiver operating characteristic (ROC)
 
     Note: this implementation is restricted to the binary classification task.
 
@@ -376,6 +438,9 @@ def roc_curve(y_true, y_score, pos_label=None):
         correspond to both fpr and tpr, which are sorted in reversed order
         during their calculation.
 
+    References
+    ----------
+    http://en.wikipedia.org/wiki/Receiver_operating_characteristic
 
     Examples
     --------
@@ -386,10 +451,6 @@ def roc_curve(y_true, y_score, pos_label=None):
     >>> fpr, tpr, thresholds = metrics.roc_curve(y, scores, pos_label=2)
     >>> fpr
     array([ 0. ,  0.5,  0.5,  1. ])
-
-    References
-    ----------
-    http://en.wikipedia.org/wiki/Receiver_operating_characteristic
 
     """
     y_true = np.ravel(y_true)
@@ -477,9 +538,9 @@ def roc_curve(y_true, y_score, pos_label=None):
 def confusion_matrix(y_true, y_pred, labels=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 
-    By definition a confusion matrix cm is such that cm[i, j] is equal
-    to the number of observations known to be in group i but predicted
-    to be in group j.
+    By definition a confusion matrix :math:`cm` is such that :math:`cm[i, j]`
+    is equal to the number of observations known to be in group :math:`i` but
+    predicted to be in group :math:`j`..
 
     Parameters
     ----------
@@ -502,6 +563,17 @@ def confusion_matrix(y_true, y_pred, labels=None):
     References
     ----------
     http://en.wikipedia.org/wiki/Confusion_matrix
+
+    Examples
+    --------
+    >>> from sklearn.metrics import confusion_matrix
+    >>> y_true = [2, 0, 2, 2, 0, 1]
+    >>> y_pred = [0, 0, 2, 2, 0, 2]
+    >>> confusion_matrix(y_true, y_pred)
+    array([[2, 0, 0],
+           [0, 0, 1],
+           [1, 0, 2]])
+
     """
     if labels is None:
         labels = unique_labels(y_true, y_pred)
@@ -528,13 +600,54 @@ def confusion_matrix(y_true, y_pred, labels=None):
 ###############################################################################
 # Multiclass loss function
 ###############################################################################
-def zero_one(y_true, y_pred):
+def zero_one_loss(y_true, y_pred, normalize=True):
+    """Zero-One classification loss
+
+    The best performance is 0.
+
+    Parameters
+    ----------
+    y_true : array-like
+
+    y_pred : array-like
+
+    normalize : bool, optional
+        If False (default), return the number of misclassifications.
+        Otherwise, return the fraction of misclassifications.
+
+    Returns
+    -------
+    loss : float or int,
+        If normalize is True, return the fraction of misclassifications
+        (float), else it returns the number of misclassifications (int).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import zero_one_loss
+    >>> y_pred = [1, 2, 3, 4]
+    >>> y_true = [2, 2, 3, 4]
+    >>> zero_one_loss(y_true, y_pred)
+    0.25
+    >>> zero_one_loss(y_true, y_pred, normalize=False)
+    1
+
+    """
+    y_true, y_pred = check_arrays(y_true, y_pred)
+    if not normalize:
+        return np.sum(y_pred != y_true)
+    else:
+        return np.mean(y_pred != y_true)
+
+
+@deprecated("Function 'zero_one' has been renamed to "
+            "'zero_one_loss' and will be removed in release 0.15."
+            "Default behavior is changed from 'normalize=False' to "
+            "'normalize=True'")
+def zero_one(y_true, y_pred, normalize=False):
     """Zero-One classification loss
 
     Positive integer (number of misclassifications). The best performance
     is 0.
-
-    Return the number of errors
 
     Parameters
     ----------
@@ -545,17 +658,63 @@ def zero_one(y_true, y_pred):
     Returns
     -------
     loss : float
+        If normalize is True, return the fraction of misclassifications
+        (float), else it returns the number of misclassifications (int).
+
+
+    Examples
+    --------
+    >>> from sklearn.metrics import zero_one
+    >>> y_pred = [1, 2, 3, 4]
+    >>> y_true = [2, 2, 3, 4]
+    >>> zero_one(y_true, y_pred)
+    1
+    >>> zero_one(y_true, y_pred, normalize=True)
+    0.25
+
+    """
+    return zero_one_loss(y_true, y_pred, normalize)
+
+
+###############################################################################
+# Multiclass score functions
+###############################################################################
+def accuracy_score(y_true, y_pred):
+    """Accuracy classification score
+
+    Parameters
+    ----------
+    y_true : array-like, shape = n_samples
+        Ground truth (correct) labels.
+
+    y_pred : array-like, shape = n_samples
+        Predicted labels, as returned by a classifier.
+
+    Returns
+    -------
+    score : float
+        The fraction of correct predictions in y_pred.
+        The best performance is 1.
+
+    See also
+    --------
+    zero_one_loss Zero-One classification loss
+
+    Examples
+    --------
+    >>> from sklearn.metrics import accuracy_score
+    >>> y_pred = [0, 2, 1, 3]
+    >>> y_true = [0, 1, 2, 3]
+    >>> accuracy_score(y_true, y_pred)
+    0.5
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
-    return np.sum(y_pred != y_true)
+    return np.mean(y_pred == y_true)
 
 
-###############################################################################
-# Multiclass score function
-###############################################################################
 def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
-    """Compute the f1 score of a prediction.
+    """Compute the f1 score
 
     The F1 score can be interpreted as a weighted average of the precision
     and recall, where an F1 score reaches its best value at 1 and worst
@@ -578,7 +737,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
         Estimated targets as returned by a classifier.
 
     labels : array
-        Integer array of labels
+        Integer array of labels.
 
     pos_label : int
         In the binary classification case, give the label of the positive
@@ -594,7 +753,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
             Average over classes (does not take imbalance into account).
         micro:
             Average over instances (takes imbalance into account).
-            This implies that ``precision == recall == f1``
+            This implies that ``precision == recall == f1``.
         weighted:
             Average weighted by support (takes imbalance into account).
             Can result in f1 score that is not between precision and recall.
@@ -603,11 +762,33 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     -------
     f1_score : float
         f1_score of the positive class in binary classification or weighted
-        average of the f1_scores of each class for the multiclass task
+        average of the f1_scores of each class for the multiclass task.
 
     References
     ----------
     http://en.wikipedia.org/wiki/F1_score
+
+    Examples
+    --------
+    Here an example in the binary case:
+    >>> from sklearn.metrics import f1_score
+    >>> y_pred = [0, 1, 0, 0]
+    >>> y_true = [0, 1, 0, 1]
+    >>> f1_score(y_true, y_pred)  # doctest: +ELLIPSIS
+    0.666...
+
+    Here an example in the multiclass case:
+    >>> from sklearn.metrics import f1_score
+    >>> y_true = [0, 1, 2, 0, 1, 2]
+    >>> y_pred = [0, 2, 1, 0, 0, 1]
+    >>> f1_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+    0.26...
+    >>> f1_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+    0.33...
+    >>> f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+    0.26...
+    >>> f1_score(y_true, y_pred, average=None)
+    array([ 0.8,  0. ,  0. ])
 
     """
     return fbeta_score(y_true, y_pred, 1, labels=labels,
@@ -616,7 +797,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
 
 def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
                 average='weighted'):
-    """Compute fbeta score
+    """Compute the fbeta score
 
     The F_beta score is the weighted harmonic mean of precision and recall,
     reaching its optimal value at 1 and its worst value at 0.
@@ -654,7 +835,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
             Average over classes (does not take imbalance into account).
         micro:
             Average over instances (takes imbalance into account).
-            This implies that ``precision == recall == f1``
+            This implies that ``precision == recall == f1``.
         weighted:
             Average weighted by support (takes imbalance into account).
             Can result in f1 score that is not between precision and recall.
@@ -671,6 +852,36 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     Addison Wesley, pp. 327-328.
 
     http://en.wikipedia.org/wiki/F1_score
+
+    Examples
+    --------
+    Here an example in the binary case:
+    >>> from sklearn.metrics import fbeta_score
+    >>> y_pred = [0, 1, 0, 0]
+    >>> y_true = [0, 1, 0, 1]
+    >>> fbeta_score(y_true, y_pred, beta=0.5)  # doctest: +ELLIPSIS
+    0.83...
+    >>> fbeta_score(y_true, y_pred, beta=1)  # doctest: +ELLIPSIS
+    0.66...
+    >>> fbeta_score(y_true, y_pred, beta=2)  # doctest: +ELLIPSIS
+    0.55...
+
+    Here an example in the multiclass case:
+    >>> from sklearn.metrics import fbeta_score
+    >>> y_true = [0, 1, 2, 0, 1, 2]
+    >>> y_pred = [0, 2, 1, 0, 0, 1]
+    >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)\
+        # doctest: +ELLIPSIS
+    0.23...
+    >>> fbeta_score(y_true, y_pred, average='micro', beta=0.5)\
+        # doctest: +ELLIPSIS
+    0.33...
+    >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)\
+        # doctest: +ELLIPSIS
+    0.23...
+    >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)\
+        # doctest: +ELLIPSIS
+    array([ 0.71...,  0.        ,  0.        ])
 
     """
     _, _, f, _ = precision_recall_fscore_support(y_true, y_pred,
@@ -718,7 +929,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         The strength of recall versus precision in the f-score.
 
     labels : array
-        Integer array of labels
+        Integer array of labels.
 
     pos_label : int
         In the binary classification case, give the label of the positive
@@ -734,7 +945,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             Average over classes (does not take imbalance into account).
         micro:
             Average over instances (takes imbalance into account).
-            This implies that ``precision == recall == f1``
+            This implies that ``precision == recall == f1``.
         weighted:
             Average weighted by support (takes imbalance into account).
             Can result in f1 score that is not between precision and recall.
@@ -742,13 +953,46 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     Returns
     -------
     precision: array, shape = [n_unique_labels], dtype = np.double
+
     recall: array, shape = [n_unique_labels], dtype = np.double
+
     f1_score: array, shape = [n_unique_labels], dtype = np.double
+
     support: array, shape = [n_unique_labels], dtype = np.long
 
     References
     ----------
     http://en.wikipedia.org/wiki/Precision_and_recall
+
+    Examples
+    --------
+    Here an example in the binary case:
+    >>> from sklearn.metrics import precision_recall_fscore_support
+    >>> y_pred = [0, 1, 0, 0]
+    >>> y_true = [0, 1, 0, 1]
+    >>> p, r, f, s = precision_recall_fscore_support(y_true, y_pred, beta=0.5)
+    >>> p  # doctest: +ELLIPSIS
+    array([ 0.66...,  1.        ])
+    >>> r
+    array([ 1. ,  0.5])
+    >>> f  # doctest: +ELLIPSIS
+    array([ 0.71...,  0.83...])
+    >>> s  # doctest: +ELLIPSIS
+    array([2, 2]...)
+
+    Here an example in the multiclass case:
+    >>> from sklearn.metrics import precision_recall_fscore_support
+    >>> y_true = np.array([0, 1, 2, 0, 1, 2])
+    >>> y_pred = np.array([0, 2, 1, 0, 0, 1])
+    >>> precision_recall_fscore_support(y_true, y_pred, average='macro')\
+        # doctest: +ELLIPSIS
+    (0.22..., 0.33..., 0.26..., None)
+    >>> precision_recall_fscore_support(y_true, y_pred, average='micro')\
+        # doctest: +ELLIPSIS
+    (0.33..., 0.33..., 0.33..., None)
+    >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')\
+        # doctest: +ELLIPSIS
+    (0.22..., 0.33..., 0.26..., None)
 
     """
     if beta <= 0:
@@ -863,7 +1107,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
             Average over classes (does not take imbalance into account).
         micro:
             Average over instances (takes imbalance into account).
-            This implies that ``precision == recall == f1``
+            This implies that ``precision == recall == f1``.
         weighted:
             Average weighted by support (takes imbalance into account).
             Can result in f1 score that is not between precision and recall.
@@ -873,7 +1117,30 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     precision : float
         Precision of the positive class in binary classification or
         weighted average of the precision of each class for the
-        multiclass task
+        multiclass task.
+
+    Examples
+    --------
+    Here an example in the binary case:
+    >>> from sklearn.metrics import precision_score
+    >>> y_pred = [0, 1, 0, 0]
+    >>> y_true = [0, 1, 0, 1]
+    >>> precision_score(y_true, y_pred)
+    1.0
+
+    Here an example in the multiclass case:
+    >>> from sklearn.metrics import precision_score
+    >>> y_true = [0, 1, 2, 0, 1, 2]
+    >>> y_pred = [0, 2, 1, 0, 0, 1]
+    >>> precision_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+    0.22...
+    >>> precision_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+    0.33...
+    >>> precision_score(y_true, y_pred, average='weighted')\
+        # doctest: +ELLIPSIS
+    0.22...
+    >>> precision_score(y_true, y_pred, average=None)  # doctest: +ELLIPSIS
+    array([ 0.66...,  0.        ,  0.        ])
 
     """
     p, _, _, _ = precision_recall_fscore_support(y_true, y_pred,
@@ -917,7 +1184,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
             Average over classes (does not take imbalance into account).
         micro:
             Average over instances (takes imbalance into account).
-            This implies that ``precision == recall == f1``
+            This implies that ``precision == recall == f1``.
         weighted:
             Average weighted by support (takes imbalance into account).
             Can result in f1 score that is not between precision and recall.
@@ -928,6 +1195,28 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
         Recall of the positive class in binary classification or weighted
         average of the recall of each class for the multiclass task.
 
+    Examples
+    --------
+    Here an example in the binary case:
+    >>> from sklearn.metrics import recall_score
+    >>> y_pred = [0, 1, 0, 0]
+    >>> y_true = [0, 1, 0, 1]
+    >>> recall_score(y_true, y_pred)
+    0.5
+
+    Here an example in the multiclass case:
+    >>> from sklearn.metrics import recall_score
+    >>> y_true = [0, 1, 2, 0, 1, 2]
+    >>> y_pred = [0, 2, 1, 0, 0, 1]
+    >>> recall_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+    0.33...
+    >>> recall_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+    0.33...
+    >>> recall_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+    0.33...
+    >>> recall_score(y_true, y_pred, average=None)
+    array([ 1.,  0.,  0.])
+
     """
     _, r, _, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  labels=labels,
@@ -936,13 +1225,10 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     return r
 
 
+@deprecated("Function zero_one_score has been renamed to "
+            'accuracy_score'" and will be removed in release 0.15.")
 def zero_one_score(y_true, y_pred):
     """Zero-one classification score (accuracy)
-
-    Positive integer (number of good classifications).
-    The best performance is 1.
-
-    Return the fraction of correct predictions in y_pred.
 
     Parameters
     ----------
@@ -955,10 +1241,11 @@ def zero_one_score(y_true, y_pred):
     Returns
     -------
     score : float
+        fraction of correct predictions in y_pred.
+        The best performance is 1.
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred)
-    return np.mean(y_pred == y_true)
+    return accuracy_score(y_true, y_pred)
 
 
 ###############################################################################
@@ -984,7 +1271,23 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
     Returns
     -------
     report : string
-        Text summary of the precision, recall, f1-score for each class
+        Text summary of the precision, recall, f1-score for each class.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import classification_report
+    >>> y_true = [0, 1, 2, 2, 0]
+    >>> y_pred = [0, 0, 2, 2, 0]
+    >>> target_names = ['class 0', 'class 1', 'class 2']
+    >>> print(classification_report(y_true, y_pred, target_names=target_names))
+                 precision    recall  f1-score   support
+    <BLANKLINE>
+        class 0       0.67      1.00      0.80         2
+        class 1       0.00      0.00      0.00         1
+        class 2       1.00      1.00      1.00         2
+    <BLANKLINE>
+    avg / total       0.67      0.80      0.72         5
+    <BLANKLINE>
 
     """
 
@@ -1037,12 +1340,10 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
 
 
 ###############################################################################
-# Regresssion loss function
+# Regression loss functions
 ###############################################################################
 def mean_absolute_error(y_true, y_pred):
     """Mean absolute error regression loss
-
-    Return a a positive floating point value (the best value is 0.0).
 
     Parameters
     ----------
@@ -1055,6 +1356,19 @@ def mean_absolute_error(y_true, y_pred):
     Returns
     -------
     loss : float
+        A positive floating point value (the best value is 0.0).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import mean_absolute_error
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> mean_absolute_error(y_true, y_pred)
+    0.5
+    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+    >>> mean_absolute_error(y_true, y_pred)
+    0.75
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
@@ -1064,8 +1378,6 @@ def mean_absolute_error(y_true, y_pred):
 def mean_squared_error(y_true, y_pred):
     """Mean squared error regression loss
 
-    Return a a positive floating point value (the best value is 0.0).
-
     Parameters
     ----------
     y_true : array-like of shape = [n_samples] or [n_samples, n_outputs]
@@ -1077,6 +1389,19 @@ def mean_squared_error(y_true, y_pred):
     Returns
     -------
     loss : float
+        A positive floating point value (the best value is 0.0).
+
+    Examples
+    --------
+    >>> from sklearn.metrics import mean_squared_error
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> mean_squared_error(y_true, y_pred)
+    0.375
+    >>> y_true = [[0.5, 1],[-1, 1],[7, -6]]
+    >>> y_pred = [[0, 2],[-1, 2],[8, -5]]
+    >>> mean_squared_error(y_true, y_pred)  # doctest: +ELLIPSIS
+    0.708...
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
@@ -1084,14 +1409,12 @@ def mean_squared_error(y_true, y_pred):
 
 
 ###############################################################################
-# Regrsssion score function
+# Regression score functions
 ###############################################################################
 def explained_variance_score(y_true, y_pred):
     """Explained variance regression score function
 
     Best possible score is 1.0, lower values are worse.
-
-    Note: the explained variance is not a symmetric function.
 
     Parameters
     ----------
@@ -1104,8 +1427,19 @@ def explained_variance_score(y_true, y_pred):
     Returns
     -------
     score : float
-        explained variance
+        The explained variance.
 
+    Notes
+    -----
+    This is not a symmetric function.
+
+    Examples
+    --------
+    >>> from sklearn.metrics import explained_variance_score
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> explained_variance_score(y_true, y_pred)  # doctest: +ELLIPSIS
+    0.957...
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
@@ -1146,6 +1480,19 @@ def r2_score(y_true, y_pred):
     References
     ----------
     http://en.wikipedia.org/wiki/Coefficient_of_determination
+
+    Examples
+    --------
+    >>> from sklearn.metrics import r2_score
+    >>> y_true = [3, -0.5, 2, 7]
+    >>> y_pred = [2.5, 0.0, 2, 8]
+    >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
+    0.948...
+    >>> y_true = [[0.5, 1], [-1, 1], [7, -6]]
+    >>> y_pred = [[0, 2], [-1, 2], [8, -5]]
+    >>> r2_score(y_true, y_pred)  # doctest: +ELLIPSIS
+    0.938...
+
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
     if len(y_true) == 1:

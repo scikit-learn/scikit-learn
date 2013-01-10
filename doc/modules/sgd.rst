@@ -346,8 +346,8 @@ size of the weights (this assuming that the norm of the training samples is
 approx. 1). The exact definition can be found in ``_init_t`` in :class:`BaseSGD`.
 
 
-For regression, the default learning rate schedule, inverse scaling
-(``learning_rate='invscaling'``), is given by
+For regression the default learning rate schedule is inverse scaling
+(``learning_rate='invscaling'``), given by
 
 .. math::
 

@@ -31,7 +31,8 @@ from sklearn.utils import shuffle
 from sklearn.preprocessing import StandardScaler, Scaler
 from sklearn.datasets import (load_iris, load_boston, make_blobs,
                               make_classification)
-from sklearn.metrics import zero_one_score, adjusted_rand_score
+from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
+
 from sklearn.lda import LDA
 from sklearn.svm.base import BaseLibSVM
 
@@ -53,7 +54,6 @@ from sklearn.cluster import (WardAgglomeration, AffinityPropagation,
 from sklearn.isotonic import IsotonicRegression
 from sklearn.random_projection import (GaussianRandomProjection,
                                        SparseRandomProjection)
-from sklearn.metrics import f1_score
 
 from sklearn.cross_validation import train_test_split
 
@@ -84,6 +84,8 @@ def test_all_estimators():
             clone(e)
             # test __repr__
             repr(e)
+            # test that set_params returns self
+            assert_true(isinstance(e.set_params(), E))
 
             # test if init does nothing but set parameters
             # this is important for grid_search etc.
@@ -480,7 +482,7 @@ def test_classifiers_train():
             y_pred = clf.predict(X)
             assert_equal(y_pred.shape, (n_samples,))
             # training set performance
-            assert_greater(zero_one_score(y, y_pred), 0.85)
+            assert_greater(accuracy_score(y, y_pred), 0.85)
 
             # raises error on malformed input for predict
             assert_raises(ValueError, clf.predict, X.T)
@@ -545,7 +547,7 @@ def test_classifiers_classes():
         y_pred = clf.predict(X)
         # training set performance
         assert_array_equal(np.unique(y), np.unique(y_pred))
-        assert_greater(zero_one_score(y, y_pred), 0.78,
+        assert_greater(accuracy_score(y, y_pred), 0.78,
                        "accuracy of %s not greater than 0.78" % str(Clf))
         assert_array_equal(
             clf.classes_, classes,
