@@ -588,7 +588,7 @@ class SGDClassifier(BaseSGDClassifier, SelectorMixin):
         The initial learning rate [default 0.01].
 
     power_t : double
-        The exponent for inverse scaling learning rate [default 0.25].
+        The exponent for inverse scaling learning rate [default 0.5].
 
     class_weight : dict, {class_label : weight} or "auto" or None, optional
         Preset for the class_weight fit parameter.
