@@ -99,8 +99,8 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
     Assuming labels in y_true are encoded with +1 and -1,
     when a prediction mistake is made, margin = y_true * pred_decision
     is always negative (since the signs disagree), therefore 1 - margin
-    is always greater than 1. The cumulated hinge loss is therefore
-    upperbounds the number of mistakes made by the classifier.
+    is always greater than 1. The cumulated hinge loss is therefore an
+    upper bound on the number of mistakes made by the classifier.
 
     Parameters
     ----------
