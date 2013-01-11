@@ -374,8 +374,7 @@ class DiscreteAdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                 break
 
             current_pred = estimator.predict(X)
-            current_pred = np.array([
-                current_pred == c for c in classes]).T * weight
+            current_pred = (current_pred == classes[:, np.newaxis]).T * weight
 
             if pred is None:
                 pred = current_pred
@@ -430,8 +429,7 @@ class DiscreteAdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                 break
 
             current_pred = estimator.predict(X)
-            current_pred = np.array([
-                current_pred == c for c in classes]).T * weight
+            current_pred = (current_pred == classes[:, np.newaxis]).T * weight
 
             if pred is None:
                 pred = current_pred
