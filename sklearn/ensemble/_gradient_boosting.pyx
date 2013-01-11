@@ -11,6 +11,7 @@ cimport cython
 
 import numpy as np
 cimport numpy as np
+np.import_array()
 
 from sklearn.tree._tree cimport Tree
 

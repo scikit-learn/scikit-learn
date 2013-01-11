@@ -24,25 +24,9 @@ People
 
   * David Cournapeau
 
-  * Fred Mailhot
-
-  * David Cooke
-
-  * David Huard
-
-  * Dave Morrill
-
-  * Ed Schofield
-
-  * Eric Jones
-
   * Jarrod Millman
 
   * `Matthieu Brucher <http://matt.eifelle.com/>`_
-
-  * Travis Oliphant
-
-  * Pearu Peterson
 
   * `Fabian Pedregosa <http://fseoane.net/blog/>`_
 
@@ -103,7 +87,3 @@ People
   * `Wei Li <http://kuantkid.github.com>`_
 
   * `Arnaud Joly <http://www.ajoly.org>`_
-
-
-If we forgot anyone, do not hesitate to send me an email to
-amueller@ais.uni-bonn.de and I'll include you in the list.

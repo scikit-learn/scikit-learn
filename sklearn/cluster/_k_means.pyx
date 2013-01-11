@@ -7,23 +7,22 @@
 #
 # License: BSD Style.
 
+from libc.math cimport sqrt
 import numpy as np
 import scipy.sparse as sp
-from ..utils.extmath import norm
-from ..utils.fixes import bincount
 cimport numpy as np
 cimport cython
+
+from ..utils.extmath import norm
+from ..utils.fixes import bincount
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INT
 
-
-cdef extern from "math.h":
-    double sqrt(double f)
-
-
 cdef extern from "cblas.h":
     double ddot "cblas_ddot"(int N, double *X, int incX, double *Y, int incY)
+
+np.import_array()
 
 
 @cython.boundscheck(False)
