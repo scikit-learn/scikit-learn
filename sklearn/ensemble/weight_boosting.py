@@ -32,8 +32,7 @@ from ..metrics import r2_score
 
 
 __all__ = [
-    'DiscreteAdaBoostClassifier',
-    'RealAdaBoostClassifier',
+    'AdaBoostClassifier',
     'AdaBoostRegressor',
 ]
 
@@ -57,7 +56,7 @@ class BaseWeightBoosting(BaseEnsemble):
         super(BaseWeightBoosting, self).__init__(base_estimator,
                                                  n_estimators)
 
-    def fit(self, X, y, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, boost_method=None):
         """Build a boosted classifier/regressor from the training set (X, y).
 
         Parameters
@@ -100,9 +99,12 @@ class BaseWeightBoosting(BaseEnsemble):
         self.weights_ = np.zeros(self.n_estimators, dtype=np.float)
         self.errors_ = np.ones(self.n_estimators, dtype=np.float)
 
+        if boost_method is None:
+            boost_method = self._boost
+
         for iboost in xrange(self.n_estimators):
 
-            sample_weight, weight, error = self._boost(
+            sample_weight, weight, error = boost_method(
                 iboost,
                 X, y,
                 sample_weight)
@@ -165,7 +167,7 @@ class BaseWeightBoosting(BaseEnsemble):
                 yield r2_score(y, y_pred)
 
 
-class DiscreteAdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
+class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     """An AdaBoost classifier.
 
     An AdaBoost classifier is a meta-estimator that begins by fitting a
@@ -235,19 +237,141 @@ class DiscreteAdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     def __init__(self, base_estimator=DecisionTreeClassifier(max_depth=3),
                  n_estimators=50,
                  learning_rate=0.5,
+                 real=True,
                  compute_importances=False):
 
         if not isinstance(base_estimator, ClassifierMixin):
             raise TypeError("``base_estimator`` must be a "
                             "subclass of ``ClassifierMixin``")
 
-        super(DiscreteAdaBoostClassifier, self).__init__(
+        if real and not hasattr(base_estimator, 'predict_proba'):
+            raise TypeError(
+                "The real AdaBoost algorithm requires that the weak learner "
+                "supports the calculation of class probabilities")
+
+        self.real = real
+
+        super(AdaBoostClassifier, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             learning_rate=learning_rate,
             compute_importances=compute_importances)
 
-    def _boost(self, iboost, X, y, sample_weight):
+    def fit(self, X, y, sample_weight=None):
+        """Build a boosted classifier from the training set (X, y).
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The training input samples.
+
+        y : array-like of shape = [n_samples]
+            The target values (integers that correspond to classes in
+            classification, real numbers in regression).
+
+        sample_weight : array-like of shape = [n_samples], optional
+            Sample weights.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        if self.real:
+            return super(AdaBoostClassifier, self).fit(
+                X, y, sample_weight, self._boost_real)
+        return super(AdaBoostClassifier, self).fit(
+                X, y, sample_weight, self._boost_discrete)
+
+    def _boost_real(self, iboost, X, y, sample_weight):
+        """Implement a single boost using the real algorithm.
+
+        Perform a single boost according to the real multi-class SAMME.R
+        algorithm and return the updated sample weights.
+
+        Parameters
+        ----------
+        iboost : int
+            The index of the current boost iteration.
+
+        X : array-like of shape = [n_samples, n_features]
+            The training input samples.
+
+        y : array-like of shape = [n_samples]
+            The target values (integers that correspond to classes).
+
+        sample_weight : array-like of shape = [n_samples]
+            The current sample weights.
+
+        Returns
+        -------
+        sample_weight : array-like of shape = [n_samples] or None
+            The reweighted sample weights.
+            If None then boosting has terminated early.
+
+        weight : float
+            The weight for the current boost.
+            If None then boosting has terminated early.
+
+        error : float
+            The classification error for the current boost.
+            If None then boosting has terminated early.
+        """
+        estimator = self._make_estimator()
+
+        if hasattr(estimator, 'fit_predict_proba'):
+            # optim for estimators that are able to save redundant
+            # computations when calling fit + predict_proba
+            # on the same input X
+            y_predict_proba = estimator.fit_predict_proba(
+                X, y, sample_weight=sample_weight)
+        else:
+            y_predict_proba = estimator.fit(
+                X, y, sample_weight=sample_weight).predict_proba(X)
+
+        if iboost == 0:
+            self.classes_ = getattr(estimator, 'classes_', None)
+            self.n_classes_ = getattr(estimator, 'n_classes_',
+                                      getattr(estimator, 'n_classes', 1))
+
+        y_predict = np.array(self.classes_.take(
+            np.argmax(y_predict_proba, axis=1), axis=0))
+
+        # instances incorrectly classified
+        incorrect = y_predict != y
+
+        # error fraction
+        error = np.mean(np.average(incorrect, weights=sample_weight, axis=0))
+
+        # stop if classification is perfect
+        if error == 0:
+            return sample_weight, 1., 0.
+
+        # negative sample weights can yield an overall negative error...
+        if error < 0:
+            # use the absolute value
+            # if you have a better idea of how to handle negative
+            # sample weights let me know
+            error = abs(error)
+
+        # construct y coding
+        n_classes = self.n_classes_
+        classes = np.array(self.classes_)
+        y_codes = np.array([-1. / (n_classes - 1), 1.])
+        y_coding = y_codes.take(classes == y.reshape(y.shape[0], 1))
+
+        # boost weight using multi-class AdaBoost SAMME.R alg
+        weight = -1. * self.learning_rate * (
+            ((n_classes - 1.) / n_classes) *
+            inner1d(y_coding, np.log(y_predict_proba + 1e-200)))
+
+        # only boost the weights if I will fit again
+        if not iboost == self.n_estimators - 1:
+            sample_weight *= np.exp(weight)
+
+        return sample_weight, 1., error
+
+    def _boost_discrete(self, iboost, X, y, sample_weight):
         """Implement a single boost using the discrete algorithm.
 
         Perform a single boost according to the discrete multi-class SAMME
@@ -364,6 +488,7 @@ class DiscreteAdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                 ("{0} is not initialized. "
                  "Perform a fit first").format(self.__class__.__name__))
 
+        n_classes = self.n_classes_
         classes = self.classes_
         pred = None
 
@@ -373,8 +498,16 @@ class DiscreteAdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             if i == n_estimators:
                 break
 
-            current_pred = estimator.predict(X)
-            current_pred = (current_pred == classes[:, np.newaxis]).T * weight
+            if self.real:
+                current_pred = estimator.predict_proba(X) + 1e-200
+                current_pred = (n_classes - 1) * (
+                    np.log(current_pred) -
+                    (1. / n_classes) *
+                    np.log(current_pred).sum(axis=1)[:, np.newaxis])
+            else:
+                current_pred = estimator.predict(X)
+                current_pred = (
+                    current_pred == classes[:, np.newaxis]).T * weight
 
             if pred is None:
                 pred = current_pred
@@ -419,6 +552,7 @@ class DiscreteAdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                 ("{0} is not initialized. "
                  "Perform a fit first").format(self.__class__.__name__))
 
+        n_classes = self.n_classes_
         classes = self.classes_
         pred = None
 
@@ -428,8 +562,16 @@ class DiscreteAdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             if i == n_estimators:
                 break
 
-            current_pred = estimator.predict(X)
-            current_pred = (current_pred == classes[:, np.newaxis]).T * weight
+            if self.real:
+                current_pred = estimator.predict_proba(X) + 1e-200
+                current_pred = (n_classes - 1) * (
+                    np.log(current_pred) -
+                    (1. / n_classes) *
+                    np.log(current_pred).sum(axis=1)[:, np.newaxis])
+            else:
+                current_pred = estimator.predict(X)
+                current_pred = (
+                    current_pred == classes[:, np.newaxis]).T * weight
 
             if pred is None:
                 pred = current_pred
@@ -437,289 +579,6 @@ class DiscreteAdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                 pred += current_pred
 
             yield np.array(classes.take(
-                np.argmax(pred, axis=1), axis=0))
-
-
-class RealAdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
-    """An AdaBoost classifier.
-
-    An AdaBoost classifier is a meta-estimator that begins by fitting a
-    classifier on the original dataset and then fits additional copies of the
-    classifer on the same dataset but where the weights of incorrectly
-    classified instances are adjusted such that subsequent classifiers focus
-    more on difficult cases.
-
-    This class implements the algorithm known as AdaBoost-SAMME [2].
-
-    Parameters
-    ----------
-    base_estimator : object, optional (default=DecisionTreeClassifier)
-        The base estimator from which the boosted ensemble is built.
-        Support for sample weighting is required, as well as proper `classes_`
-        and `n_classes_` attributes.
-
-    n_estimators : integer, optional (default=50)
-        The maximum number of estimators at which boosting is terminated.
-        In case of perfect fit, the learning procedure is stopped early.
-
-    learning_rate : float, optional (default=0.1)
-        Learning rate shrinks the contribution of each classifier by
-        ``learning_rate``. There is a trade-off between ``learning_rate`` and
-        ``n_estimators``.
-
-    compute_importances : boolean, optional (default=False)
-        Whether feature importances are computed and stored in the
-        ``feature_importances_`` attribute when calling fit.
-
-    Attributes
-    ----------
-    `estimators_` : list of classifiers
-        The collection of fitted sub-estimators.
-
-    `classes_` : array of shape = [n_classes]
-        The classes labels.
-
-    `n_classes_` : int
-        The number of classes.
-
-    `weights_` : list of floats
-        Weights for each estimator in the boosted ensemble.
-
-    `errors_` : list of floats
-        Classification error for each estimator in the boosted
-        ensemble.
-
-    `feature_importances_` : array of shape = [n_features]
-        The feature importances if supported by the ``base_estimator``.
-        Only computed if ``compute_importances=True``.
-
-    See also
-    --------
-    AdaBoostRegressor, GradientBoostingClassifier, DecisionTreeClassifier
-
-    References
-    ----------
-
-    .. [1] Yoav Freund, Robert E. Schapire. "A Decision-Theoretic
-           Generalization of on-Line Learning and an Application
-           to Boosting", 1995.
-
-    .. [2] Ji Zhu, Hui Zou, Saharon Rosset, Trevor Hastie.
-           "Multi-class AdaBoost", 2009.
-    """
-    def __init__(self, base_estimator=DecisionTreeClassifier(max_depth=3),
-                 n_estimators=50,
-                 learning_rate=0.5,
-                 compute_importances=False):
-
-        if not isinstance(base_estimator, ClassifierMixin):
-            raise TypeError("``base_estimator`` must be a "
-                            "subclass of ``ClassifierMixin``")
-
-        super(RealAdaBoostClassifier, self).__init__(
-            base_estimator=base_estimator,
-            n_estimators=n_estimators,
-            learning_rate=learning_rate,
-            compute_importances=compute_importances)
-
-    def _boost(self, iboost, X, y, sample_weight):
-        """Implement a single boost using the real algorithm.
-
-        Perform a single boost according to the real multi-class SAMME.R
-        algorithm and return the updated sample weights.
-
-        Parameters
-        ----------
-        iboost : int
-            The index of the current boost iteration.
-
-        X : array-like of shape = [n_samples, n_features]
-            The training input samples.
-
-        y : array-like of shape = [n_samples]
-            The target values (integers that correspond to classes).
-
-        sample_weight : array-like of shape = [n_samples]
-            The current sample weights.
-
-        Returns
-        -------
-        sample_weight : array-like of shape = [n_samples] or None
-            The reweighted sample weights.
-            If None then boosting has terminated early.
-
-        weight : float
-            The weight for the current boost.
-            If None then boosting has terminated early.
-
-        error : float
-            The classification error for the current boost.
-            If None then boosting has terminated early.
-        """
-        estimator = self._make_estimator()
-
-        if hasattr(estimator, 'fit_predict_proba'):
-            # optim for estimators that are able to save redundant
-            # computations when calling fit + predict_proba
-            # on the same input X
-            y_predict_proba = estimator.fit_predict_proba(
-                X, y, sample_weight=sample_weight)
-        else:
-            y_predict_proba = estimator.fit(
-                X, y, sample_weight=sample_weight).predict_proba(X)
-
-        if iboost == 0:
-            self.classes_ = getattr(estimator, 'classes_', None)
-            self.n_classes_ = getattr(estimator, 'n_classes_',
-                                      getattr(estimator, 'n_classes', 1))
-
-        y_predict = np.array(self.classes_.take(
-            np.argmax(y_predict_proba, axis=1), axis=0))
-
-        # instances incorrectly classified
-        incorrect = y_predict != y
-
-        # error fraction
-        error = np.mean(np.average(incorrect, weights=sample_weight, axis=0))
-
-        # stop if classification is perfect
-        if error == 0:
-            return sample_weight, 1., 0.
-
-        # negative sample weights can yield an overall negative error...
-        if error < 0:
-            # use the absolute value
-            # if you have a better idea of how to handle negative
-            # sample weights let me know
-            error = abs(error)
-
-        # construct y coding
-        n_classes = self.n_classes_
-        classes = np.array(self.classes_)
-        y_codes = np.array([-1. / (n_classes - 1), 1.])
-        y_coding = y_codes.take(classes == y.reshape(y.shape[0], 1))
-
-        # boost weight using multi-class AdaBoost SAMME.R alg
-        weight = -1. * self.learning_rate * (
-            ((n_classes - 1.) / n_classes) *
-            inner1d(y_coding, np.log(y_predict_proba + 1e-200)))
-
-        # only boost the weights if I will fit again
-        if not iboost == self.n_estimators - 1:
-            sample_weight *= np.exp(weight)
-
-        return sample_weight, 1., error
-
-    def predict(self, X, n_estimators=-1):
-        """Predict classes for X.
-
-        The predicted class of an input sample is computed
-        as the weighted mean prediction of the classifiers in the ensemble.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        n_estimators : int, optional (default=-1)
-            Use only the first ``n_estimators`` classifiers for the prediction.
-            This is useful for grid searching the ``n_estimators`` parameter
-            since it is not necessary to fit separately for all choices of
-            ``n_estimators``, but only the highest ``n_estimators``. Any
-            negative value will result in all estimators being used.
-
-        Returns
-        -------
-        y : array of shape = [n_samples]
-            The predicted classes.
-        """
-        if n_estimators == 0:
-            raise ValueError("``n_estimators`` must not equal zero")
-
-        if not self.estimators_:
-            raise RuntimeError(
-                ("{0} is not initialized. "
-                 "Perform a fit first").format(self.__class__.__name__))
-
-        n_classes = self.n_classes_
-        pred = None
-
-        for i, (weight, estimator) in enumerate(
-                zip(self.weights_, self.estimators_)):
-
-            if i == n_estimators:
-                break
-
-            current_pred = estimator.predict_proba(X) + 1e-200
-            current_pred = (n_classes - 1) * (
-                np.log(current_pred) -
-                (1. / n_classes) *
-                np.log(current_pred).sum(axis=1)[:, np.newaxis])
-
-            if pred is None:
-                pred = current_pred
-            else:
-                pred += current_pred
-
-        return np.array(self.classes_.take(
-            np.argmax(pred, axis=1), axis=0))
-
-    def staged_predict(self, X, n_estimators=-1):
-        """Return staged predictions for X.
-
-        The predicted class of an input sample is computed
-        as the weighted mean prediction of the classifiers in the ensemble.
-
-        This generator method yields the ensemble prediction after each
-        iteration of boosting and therefore allows monitoring, such as to
-        determine the prediction on a test set after each boost.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        n_estimators : int, optional (default=-1)
-            Use only the first ``n_estimators`` classifiers for the prediction.
-            This is useful for grid searching the ``n_estimators`` parameter
-            since it is not necessary to fit separately for all choices of
-            ``n_estimators``, but only the highest ``n_estimators``. Any
-            negative value will result in all estimators being used.
-
-        Returns
-        -------
-        y : array of shape = [n_samples]
-            The predicted classes.
-        """
-        if n_estimators == 0:
-            raise ValueError("``n_estimators`` must not equal zero")
-
-        if not self.estimators_:
-            raise RuntimeError(
-                ("{0} is not initialized. "
-                 "Perform a fit first").format(self.__class__.__name__))
-
-        n_classes = self.n_classes_
-        pred = None
-
-        for i, (weight, estimator) in enumerate(
-                zip(self.weights_, self.estimators_)):
-
-            if i == n_estimators:
-                break
-
-            current_pred = estimator.predict_proba(X) + 1e-200
-            current_pred = (n_classes - 1) * (
-                np.log(current_pred) -
-                (1. / n_classes) *
-                np.log(current_pred).sum(axis=1)[:, np.newaxis])
-
-            if pred is None:
-                pred = current_pred
-            else:
-                pred += current_pred
-
-            yield np.array(self.classes_.take(
                 np.argmax(pred, axis=1), axis=0))
 
     def predict_proba(self, X, n_estimators=-1):
@@ -750,6 +609,11 @@ class RealAdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The class probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
+        if not self.real:
+            raise TypeError(
+                "Prediction of class probabilities is only supported with the "
+                "real AdaBoost algorithm (``real=True``)")
+
         if n_estimators == 0:
             raise ValueError("``n_estimators`` must not equal zero")
 
@@ -804,6 +668,11 @@ class RealAdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The class probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
+        if not self.real:
+            raise TypeError(
+                "Prediction of class probabilities is only supported with the "
+                "real AdaBoost algorithm (``real=True``)")
+
         if n_estimators == 0:
             raise ValueError("``n_estimators`` must not equal zero")
 
