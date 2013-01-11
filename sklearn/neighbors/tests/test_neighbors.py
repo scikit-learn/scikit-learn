@@ -514,42 +514,21 @@ def test_kneighbors_graph():
         [[1, 1, 1], [1, 1, 1], [1, 1, 1]])
 
 
-def test_kneighbors_graph_sparse():
+def test_kneighbors_graph_sparse(seed=36):
     """Test kneighbors_graph to build the k-Nearest Neighbor graph
     for sparse input."""
-    X = csr_matrix([[0, 1], [1.01, 1.], [2, 0]])
+    rng = np.random.RandomState(seed)
 
-    # n_neighbors = 1
-    A = neighbors.kneighbors_graph(X, 1, mode='connectivity')
-    assert_array_equal(A.todense(), np.eye(A.shape[0]))
-
-    A = neighbors.kneighbors_graph(X, 1, mode='distance')
-    assert_array_almost_equal(
-        A.todense(),
-        [[0.00,  1.01,        0.],
-         [1.01,  0.,          0.],
-         [0.00,  1.40716026,  0.]])
-
-    # n_neighbors = 2
-    A = neighbors.kneighbors_graph(X, 2, mode='connectivity')
-    assert_array_equal(
-        A.todense(),
-        [[1.,  1.,  0.],
-         [1.,  1.,  0.],
-         [0.,  1.,  1.]])
-
-    A = neighbors.kneighbors_graph(X, 2, mode='distance')
-    assert_array_almost_equal(
-        A.todense(),
-        [[0.,          1.01,        2.23606798],
-         [1.01,        0.,          1.40716026],
-         [2.23606798,  1.40716026,  0.]])
-
-    # n_neighbors = 3
-    A = neighbors.kneighbors_graph(X, 3, mode='connectivity')
-    assert_array_almost_equal(
-        A.todense(),
-        [[1, 1, 1], [1, 1, 1], [1, 1, 1]])
+    for n_neighbors in [1, 2, 3]:
+        for mode in ["connectivity", "distance"]:
+            X = rng.randn(10, 10)
+            assert_array_almost_equal(
+                neighbors.kneighbors_graph(X,
+                                           n_neighbors,
+                                           mode=mode).todense(),
+                neighbors.kneighbors_graph(csr_matrix(X),
+                                           n_neighbors,
+                                           mode=mode).todense())
 
 
 def test_radius_neighbors_graph():
@@ -571,24 +550,21 @@ def test_radius_neighbors_graph():
          [0.,   1.40716026, 0.]])
 
 
-def test_radius_neighbors_graph_sparse():
+def test_radius_neighbors_graph_sparse(seed=36):
     """Test radius_neighbors_graph to build the Nearest Neighbor graph
     for sparse input."""
-    X = csr_matrix([[0, 1], [1.01, 1.], [2, 0]])
+    rng = np.random.RandomState(seed)
 
-    A = neighbors.radius_neighbors_graph(X, 1.5, mode='connectivity')
-    assert_array_equal(
-        A.todense(),
-        [[1.,  1.,  0.],
-         [1.,  1.,  1.],
-         [0.,  1.,  1.]])
-
-    A = neighbors.radius_neighbors_graph(X, 1.5, mode='distance')
-    assert_array_almost_equal(
-        A.todense(),
-        [[0.,   1.01,       0.],
-         [1.01, 0.,         1.40716026],
-         [0.,   1.40716026, 0.]])
+    for n_neighbors in [1, 2, 3]:
+        for mode in ["connectivity", "distance"]:
+            X = rng.randn(10, 10)
+            assert_array_almost_equal(
+                neighbors.radius_neighbors_graph(X,
+                                                 n_neighbors,
+                                                 mode=mode).todense(),
+                neighbors.radius_neighbors_graph(csr_matrix(X),
+                                                 n_neighbors,
+                                                 mode=mode).todense())
 
 
 def test_neighbors_badargs():
