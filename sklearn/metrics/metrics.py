@@ -28,7 +28,7 @@ def auc(x, y, reorder=False):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
     This is a general fuction, given points on a curve.  For computing the area
-    under the ROC-curve, see auc_score.
+    under the ROC-curve, see :func:`auc_score`.
 
     Parameters
     ----------
@@ -40,7 +40,7 @@ def auc(x, y, reorder=False):
 
     reorder : boolean, optional
         If True, assume that the curve is ascending in the case of ties, as for
-        an ROC curve. With descending curve, you will get false results.
+        an ROC curve. If the curve is non-ascending, the result will be wrong.
 
     Returns
     -------
@@ -96,10 +96,10 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
     """Average hinge loss (non-regularized)
 
     Assuming labels in y_true are encoded with +1 and -1, when a prediction
-    mistake is made, margin = y_true * pred_decision is always negative (since
-    the signs disagree), therefore 1 - margin is always greater than 1. The
-    cumulated hinge loss is therefore upperbounds the number of mistakes made
-    by the classifier.
+    mistake is made, ``margin = y_true * pred_decision`` is always negative
+    (since the signs disagree), implying ``1 - margin`` is always greater than
+    1.  The cumulated hinge loss is therefore an upper bound of the number of
+    mistakes made by the classifier.
 
     Parameters
     ----------
@@ -239,7 +239,7 @@ def auc_score(y_true, y_score):
 
 
 def matthews_corrcoef(y_true, y_pred):
-    """Compute the Matthews correlation coefficient for binary classes
+    """Compute the Matthews correlation coefficient (MCC) for binary classes
 
     The Matthews correlation coefficient is used in machine learning as a
     measure of the quality of binary (two-class) classifications. It takes into
@@ -270,9 +270,13 @@ def matthews_corrcoef(y_true, y_pred):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/Matthews_correlation_coefficient
 
-    http://dx.doi.org/10.1093/bioinformatics/16.5.412
+    .. [1] `Baldi, Brunak, Chauvin, Andersen and Nielsen, (2000). Assessing the
+       accuracy of prediction algorithms for classification: an overview
+       <http://dx.doi.org/10.1093/bioinformatics/16.5.412>`_
+
+    .. [2] `Wikipedia entry for the Matthews Correlation Coefficient
+       <http://en.wikipedia.org/wiki/Matthews_correlation_coefficient>`_
 
     Examples
     --------
@@ -295,13 +299,13 @@ def precision_recall_curve(y_true, probas_pred):
 
     Note: this implementation is restricted to the binary classification task.
 
-    The precision is the ratio :math:`tp / (tp + fp)` where tp is the number of
-    true positives and fp the number of false positives. The precision is
+    The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
+    true positives and ``fp`` the number of false positives. The precision is
     intuitively the ability of the classifier not to label as positive a sample
     that is negative.
 
-    The recall is the ratio :math:`tp / (tp + fn)` where tp is the number of
-    true positives and fn the number of false negatives. The recall is
+    The recall is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
+    true positives and ``fn`` the number of false negatives. The recall is
     intuitively the ability of the classifier to find all the positive samples.
 
     The last precision and recall values are 1. and 0. respectively and do not
@@ -359,7 +363,7 @@ def precision_recall_curve(y_true, probas_pred):
     probas_pred = probas_pred[decreasing_probas_indices]
     y_true = y_true[decreasing_probas_indices]
 
-    # Probas_pred typically has many tied values. Here we extract
+    # probas_pred typically has many tied values. Here we extract
     # the indices associated with the distinct values. We also
     # concatenate values for the beginning and end of the curve.
     distinct_value_indices = np.where(np.diff(probas_pred))[0] + 1
@@ -395,7 +399,7 @@ def precision_recall_curve(y_true, probas_pred):
         if tp_count == total_positive:
             break
 
-    # Sklearn expects these in reverse order
+    # sklearn expects these in reverse order
     thresholds = np.array(thresholds)[::-1]
     precision = np.array(precision)[::-1]
     recall = np.array(recall)[::-1]
@@ -430,11 +434,13 @@ def roc_curve(y_true, y_score, pos_label=None):
         True Positive Rates.
 
     thresholds : array, shape = [>2]
-        Thresholds on y_score used to compute fpr and tpr.
+        Thresholds on ``y_score`` used to compute ``fpr`` and ``fpr``.
 
-        *Note*: Since the thresholds are sorted from low to high values, they
-        are reversed upon returning them to ensure they correspond to both fpr
-        and tpr, which are sorted in reversed order during their calculation.
+    Notes
+    -----
+    Since the thresholds are sorted from low to high values, they
+    are reversed upon returning them to ensure they correspond to both ``fpr``
+    and ``tpr``, which are sorted in reversed order during their calculation.
 
     References
     ----------
@@ -536,7 +542,7 @@ def roc_curve(y_true, y_score, pos_label=None):
 def confusion_matrix(y_true, y_pred, labels=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 
-    By definition a confusion matrix :math:`cm` is such that :math:`cm[i, j]`
+    By definition a confusion matrix :math:`C` is such that :math:`C_{i, j}`
     is equal to the number of observations known to be in group :math:`i` but
     predicted to be in group :math:`j`.
 
@@ -551,11 +557,11 @@ def confusion_matrix(y_true, y_pred, labels=None):
     labels : array, shape = [n_classes]
         List of all labels occuring in the dataset.
         If none is given, those that appear at least once
-        in y_true or y_pred are used.
+        in ``y_true`` or ``y_pred`` are used.
 
     Returns
     -------
-    CM : array, shape = [n_classes, n_classes]
+    C : array, shape = [n_classes, n_classes]
         Confusion matrix
 
     References
@@ -601,7 +607,9 @@ def confusion_matrix(y_true, y_pred, labels=None):
 def zero_one_loss(y_true, y_pred, normalize=True):
     """Zero-One classification loss
 
-    The best performance is 0.
+    If normalize is ``True``, return the fraction of misclassifications
+    (float), else it returns the number of misclassifications (int). The best
+    performance is 0.
 
     Parameters
     ----------
@@ -610,13 +618,13 @@ def zero_one_loss(y_true, y_pred, normalize=True):
     y_pred : array-like
 
     normalize : bool, optional
-        If False (default), return the number of misclassifications.
+        If ``False`` (default), return the number of misclassifications.
         Otherwise, return the fraction of misclassifications.
 
     Returns
     -------
     loss : float or int,
-        If normalize is True, return the fraction of misclassifications
+        If ``normalize == True``, return the fraction of misclassifications
         (float), else it returns the number of misclassifications (int).
 
     Examples
@@ -644,13 +652,19 @@ def zero_one_loss(y_true, y_pred, normalize=True):
 def zero_one(y_true, y_pred, normalize=False):
     """Zero-One classification loss
 
-    Positive integer (number of misclassifications). The best performance is 0.
+    If normalize is ``True``, return the fraction of misclassifications
+    (float), else it returns the number of misclassifications (int). The best
+    performance is 0.
 
     Parameters
     ----------
     y_true : array-like
 
     y_pred : array-like
+
+    normalize : bool, optional
+        If ``False`` (default), return the number of misclassifications.
+        Otherwise, return the fraction of misclassifications.
 
     Returns
     -------
@@ -690,7 +704,7 @@ def accuracy_score(y_true, y_pred):
     Returns
     -------
     score : float
-        The fraction of correct predictions in y_pred.
+        The fraction of correct predictions in ``y_pred``.
         The best performance is 1.
 
     See also
@@ -718,9 +732,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     The relative contribution of precision and recall to the F1 score are
     equal. The formula for the F1 score is::
 
-        F_1 = 2 * (precision * recall) / (precision + recall)
-
-    See: http://en.wikipedia.org/wiki/F1_score
+        F1 = 2 * (precision * recall) / (precision + recall)
 
     In the multi-class case, this is the weighted average of the F1 score of
     each class.
@@ -738,8 +750,8 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
 
     pos_label : int
         In the binary classification case, give the label of the positive class
-        (default is 1). Everything else but 'pos_label' is considered to belong
-        to the negative class.  Set to None in the case of multiclass
+        (default is 1). Everything else but ``pos_label`` is considered to
+        belong to the negative class.  Set to None in the case of multiclass
         classification.
 
     average : string, [None, 'micro', 'macro', 'weighted' (default)]
@@ -750,7 +762,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
             Average over classes (does not take imbalance into account).
         micro:
             Average over instances (takes imbalance into account).  This
-            implies that ``precision == recall == f1``.
+            implies that ``precision == recall == F1``.
         weighted:
             Average weighted by support (takes imbalance into account).  Can
             result in F1 score that is not between precision and recall.
@@ -767,14 +779,16 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
 
     Examples
     --------
-    Here an example in the binary case:
+    In the binary case:
+
     >>> from sklearn.metrics import f1_score
     >>> y_pred = [0, 1, 0, 0]
     >>> y_true = [0, 1, 0, 1]
     >>> f1_score(y_true, y_pred)
     0.66666666666666663
 
-    Here an example in the multiclass case:
+    In the multiclass case:
+
     >>> from sklearn.metrics import f1_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
@@ -820,8 +834,8 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     pos_label : int
         In the binary classification case, give the label of the positive class
-        (default is 1). Everything else but 'pos_label' is considered to belong
-        to the negative class.  Set to None in the case of multiclass
+        (default is 1). Everything else but ``pos_label`` is considered to
+        belong to the negative class.  Set to None in the case of multiclass
         classification.
 
     average : string, [None, 'micro', 'macro', 'weighted' (default)]
@@ -832,7 +846,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
             Average over classes (does not take imbalance into account).
         micro:
             Average over instances (takes imbalance into account).  This
-            implies that ``precision == recall == fbeta``.
+            implies that ``precision == recall == F-beta``.
         weighted:
             Average weighted by support (takes imbalance into account).  Can
             result in F score that is not between precision and recall.
@@ -852,7 +866,8 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     Examples
     --------
-    Here an example in the binary case:
+    In the binary case:
+
     >>> from sklearn.metrics import fbeta_score
     >>> y_pred = [0, 1, 0, 0]
     >>> y_true = [0, 1, 0, 1]
@@ -863,7 +878,8 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     >>> fbeta_score(y_true, y_pred, beta=2)
     0.55555555555555558
 
-    Here an example in the multiclass case:
+    In the multiclass case:
+
     >>> from sklearn.metrics import fbeta_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
@@ -889,26 +905,26 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                                     pos_label=1, average=None):
     """Compute precision, recall, F-measure and support for each class
 
-    The precision is the ratio :math:`tp / (tp + fp)` where tp is the number of
-    true positives and fp the number of false positives. The precision is
+    The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
+    true positives and ``fp`` the number of false positives. The precision is
     intuitively the ability of the classifier not to label as positive a sample
     that is negative.
 
-    The recall is the ratio :math:`tp / (tp + fn)` where tp is the number of
-    true positives and fn the number of false negatives. The recall is
+    The recall is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
+    true positives and ``fn`` the number of false negatives. The recall is
     intuitively the ability of the classifier to find all the positive samples.
 
-    The F_beta score can be interpreted as a weighted harmonic mean of
-    the precision and recall, where an F_beta score reaches its best
+    The F-beta score can be interpreted as a weighted harmonic mean of
+    the precision and recall, where an F-beta score reaches its best
     value at 1 and worst score at 0.
 
-    The F_beta score weights recall beta as much as precision. beta = 1.0 means
-    recall and precsion are equally important.
+    The F-beta score weights recall more than precision by a factor of
+    ``beta``. ``beta == 1.0`` means recall and precsion are equally important.
 
-    The support is the number of occurrences of each class in y_true.
+    The support is the number of occurrences of each class in ``y_true``.
 
-    If `pos_label` is `None`, this function returns the average precision,
-    recall and F-measure if `average` is one of `'micro'`, `'macro'`,
+    If ``pos_label is None``, this function returns the average precision,
+    recall and F-measure if ``average`` is one of ``'micro'``, ``'macro'``,
     ``'weighted'``.
 
     Parameters
@@ -927,8 +943,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     pos_label : int
         In the binary classification case, give the label of the positive class
-        (default is 1). Everything else but 'pos_label' is considered to belong
-        to the negative class.  Set to None in the case of multiclass
+        (default is 1). Everything else but ``pos_label`` is considered to
+        belong to the negative class.  Set to ``None`` in the case of multiclass
         classification.
 
     average : string, [None, 'micro', 'macro', 'weighted' (default)]
@@ -939,7 +955,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             Average over classes (does not take imbalance into account).
         micro:
             Average over instances (takes imbalance into account).  This
-            implies that ``precision == recall == f1``.
+            implies that ``precision == recall == F1``.
         weighted:
             Average weighted by support (takes imbalance into account).  Can
             result in F-score that is not between precision and recall.
@@ -960,7 +976,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     Examples
     --------
-    Here an example in the binary case:
+    In the binary case:
+
     >>> from sklearn.metrics import precision_recall_fscore_support
     >>> y_pred = [0, 1, 0, 0]
     >>> y_true = [0, 1, 0, 1]
@@ -974,7 +991,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     >>> s
     array([2, 2], dtype=int64)
 
-    Here an example in the multiclass case:
+    In the multiclass case:
+
     >>> from sklearn.metrics import precision_recall_fscore_support
     >>> y_true = np.array([0, 1, 2, 0, 1, 2])
     >>> y_pred = np.array([0, 2, 1, 0, 0, 1])
@@ -1066,8 +1084,8 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
                     average='weighted'):
     """Compute the precision
 
-    The precision is the ratio :math:`tp / (tp + fp)` where tp is the number of
-    true positives and fp the number of false positives. The precision is
+    The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
+    true positives and ``fp`` the number of false positives. The precision is
     intuitively the ability of the classifier not to label as positive a sample
     that is negative.
 
@@ -1086,9 +1104,9 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
 
     pos_label : int
         In the binary classification case, give the label of the positive class
-        (default is 1). Everything else but 'pos_label' is considered to belong
-        to the negative class.  Set to None in the case of multiclass
-        classification.
+        (default is 1). Everything else but ``pos_label`` is considered to
+        belong to the negative class.  Set to ``None`` in the case of
+        multiclass classification.
 
     average : string, [None, 'micro', 'macro', 'weighted'(default)]
         In the multiclass classification case, this determines the type of
@@ -1098,10 +1116,10 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
             Average over classes (does not take imbalance into account).
         micro:
             Average over instances (takes imbalance into account).
-            This implies that ``precision == recall == f1``.
+            This implies that ``precision == recall == F1``.
         weighted:
             Average weighted by support (takes imbalance into account).
-            Can result in f1 score that is not between precision and recall.
+            Can result in F-score that is not between precision and recall.
 
     Returns
     -------
@@ -1112,14 +1130,16 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
 
     Examples
     --------
-    Here an example in the binary case:
+    In the binary case:
+
     >>> from sklearn.metrics import precision_score
     >>> y_pred = [0, 1, 0, 0]
     >>> y_true = [0, 1, 0, 1]
     >>> precision_score(y_true, y_pred)
     1.0
 
-    Here an example in the multiclass case:
+    In the multiclass case:
+
     >>> from sklearn.metrics import precision_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
@@ -1143,8 +1163,8 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
 def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     """Compute the recall
 
-    The recall is the ratio :math:`tp / (tp + fn)` where tp is the number of
-    true positives and fn the number of false negatives. The recall is
+    The recall is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
+    true positives and ``fn`` the number of false negatives. The recall is
     intuitively the ability of the classifier to find all the positive samples.
 
     The best value is 1 and the worst value is 0.
@@ -1162,11 +1182,11 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
 
     pos_label : int
         In the binary classification case, give the label of the positive class
-        (default is 1). Everything else but 'pos_label' is considered to belong
-        to the negative class.  Set to None in the case of multiclass
-        classification.
+        (default is 1). Everything else but ``pos_label`` is considered to
+        belong to the negative class.  Set to ``None`` in the case of
+        multiclass classification.
 
-    average : string, [None, 'micro', 'macro', 'weighted'(default)]
+    average : string, [None, 'micro', 'macro', 'weighted' (default)]
         In the multiclass classification case, this determines the type of
         averaging performed on the data.
 
@@ -1174,10 +1194,10 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
             Average over classes (does not take imbalance into account).
         micro:
             Average over instances (takes imbalance into account).
-            This implies that ``precision == recall == f1``.
+            This implies that ``precision == recall == F1``.
         weighted:
             Average weighted by support (takes imbalance into account).
-            Can result in F1 score that is not between precision and recall.
+            Can result in F-score that is not between precision and recall.
 
     Returns
     -------
@@ -1187,14 +1207,16 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
 
     Examples
     --------
-    Here an example in the binary case:
+    In the binary case:
+
     >>> from sklearn.metrics import recall_score
     >>> y_pred = [0, 1, 0, 0]
     >>> y_true = [0, 1, 0, 1]
     >>> recall_score(y_true, y_pred)
     0.5
 
-    Here an example in the multiclass case:
+    In the multiclass case:
+
     >>> from sklearn.metrics import recall_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
@@ -1231,7 +1253,8 @@ def zero_one_score(y_true, y_pred):
     Returns
     -------
     score : float
-        Fraction of correct predictions in y_pred. The best performance is 1.
+        Fraction of correct predictions in ``y_pred``. The best performance is
+        1.
 
     """
     return accuracy_score(y_true, y_pred)
