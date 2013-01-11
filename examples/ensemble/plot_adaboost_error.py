@@ -29,9 +29,10 @@ test_errors = []
 train_errors = []
 
 bdt = AdaBoostClassifier(DecisionTreeClassifier(min_samples_leaf=100),
-                         n_estimators=100, learning_rate=1.)
+                         n_estimators=100, learning_rate=.05)
 
 bdt.fit(X_train, y_train)
+
 
 for y_test_predict, y_train_predict in izip(bdt.staged_predict(X_test),
                                             bdt.staged_predict(X_train)):
