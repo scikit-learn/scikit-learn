@@ -38,34 +38,30 @@ boston.data, boston.target = shuffle(boston.data, boston.target, random_state=rn
 
 def test_classification_toy():
     """Check classification on a toy dataset."""
-    clf = AdaBoostClassifier(n_estimators=10)
+    clf = AdaBoostClassifier()
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
 
 
 def test_regression_toy():
     """Check classification on a toy dataset."""
-    clf = AdaBoostRegressor(n_estimators=10)
+    clf = AdaBoostRegressor()
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
 
 
 def test_iris():
     """Check consistency on dataset iris."""
-    for c in ("gini", "entropy"):
-        # AdaBoost classification
-        clf = AdaBoostClassifier(
-            DecisionTreeClassifier(criterion=c),
-            n_estimators=1)
-        clf.fit(iris.data, iris.target)
-        score = clf.score(iris.data, iris.target)
-        assert score > 0.9, "Failed with criterion %s and score = %f" % (c,
-                                                                         score)
+    clf = AdaBoostClassifier()
+    clf.fit(iris.data, iris.target)
+    score = clf.score(iris.data, iris.target)
+    assert score > 0.9, "Failed with criterion %s and score = %f" % (c,
+                                                                     score)
 
 
 def test_boston():
     """Check consistency on dataset boston house prices."""
-    clf = AdaBoostRegressor(n_estimators=50)
+    clf = AdaBoostRegressor()
     clf.fit(boston.data, boston.target)
     score = clf.score(boston.data, boston.target)
     assert score > 0.85
@@ -160,9 +156,7 @@ def test_importances():
                                         shuffle=False,
                                         random_state=1)
 
-    clf = AdaBoostClassifier(compute_importances=True,
-                             n_estimators=50,
-                             learning_rate=0.01)
+    clf = AdaBoostClassifier(compute_importances=True)
 
     clf.fit(X, y)
     importances = clf.feature_importances_

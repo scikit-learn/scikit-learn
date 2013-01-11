@@ -47,7 +47,7 @@ class BaseWeightBoosting(BaseEnsemble):
                  base_estimator,
                  n_estimators=50,
                  estimator_params=tuple(),
-                 learning_rate=0.1,
+                 learning_rate=0.5,
                  compute_importances=False):
         super(BaseWeightBoosting, self).__init__(
             base_estimator=base_estimator,
@@ -143,7 +143,7 @@ class BaseWeightBoosting(BaseEnsemble):
             raise AttributeError(
                 "Unable to compute feature importances "
                 "since base_estimator does not have a "
-                "`feature_importances_` attribute")
+                "``feature_importances_`` attribute")
 
         return self
 
@@ -247,9 +247,9 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
            "Multi-class AdaBoost", 2009.
     """
     def __init__(self,
-                 base_estimator=DecisionTreeClassifier(max_depth=3),
+                 base_estimator=DecisionTreeClassifier(max_depth=1),
                  n_estimators=50,
-                 learning_rate=0.1,
+                 learning_rate=0.5,
                  real=True,
                  compute_importances=False):
         super(AdaBoostClassifier, self).__init__(
