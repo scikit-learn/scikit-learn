@@ -112,21 +112,24 @@ Changelog
      by Wei Li.
 
    - New transformers :class:`random_projection.GaussianRandomProjection`,
-    :class:`random_projection.SparseRandomProjection` and the function
-    :func:`random_projection.johnson_lindenstrauss_min_dim`, implementing
-    Gaussian and sparse random projection matrix
-    by `Olivier Grisel`_ and `Arnaud Joly`_.
+     :class:`random_projection.SparseRandomProjection` and the function
+     :func:`random_projection.johnson_lindenstrauss_min_dim`, implementing
+     Gaussian and sparse random projection matrix
+     by `Olivier Grisel`_ and `Arnaud Joly`_.
 
-   - Add the :fun:`metrics.mean_absolute_error` function which computes the
-     mean absolute error. The :fun:`metrics.mean_squared_error`,
-     :fun:`metrics.mean_absolute_error` and
-     :fun:`metrics.r2_score` metrics support multioutput by `Arnaud Joly`_.
+   - Add the :func:`metrics.mean_absolute_error` function which computes the
+     mean absolute error. The :func:`metrics.mean_squared_error`,
+     :func:`metrics.mean_absolute_error` and
+     :func:`metrics.r2_score` metrics support multioutput by `Arnaud Joly`_.
 
    - Fixed ``class_weight`` support in :class:`svm.LinearSVC` and
      :class:`linear_model.LogisticRegression` by `Andreas Müller`_. The meaning
      of ``class_weight`` was reversed as erroneously higher weight meant less
      positives of a given class in earlier releases.
 
+   - Improve narrative documentation and consistency in
+     :mod:`sklearn.metrics` for regression and classification metrics
+     by `Arnaud Joly`_.
 
 API changes summary
 -------------------
@@ -220,6 +223,15 @@ API changes summary
      to None, added possibility to infer ``test_size`` from ``train_size`` in
      :class:`cross_validation.ShuffleSplit` and
      :class:`cross_validation.StratifiedShuffleSplit`.
+
+   - Renamed function :func:`sklearn.metrics.zero_one` to
+     :func:`sklearn.metrics.zero_one_loss`. Be aware that the default behavior
+     in :func:`sklearn.metrics.zero_one_loss` is different from
+     :func:`sklearn.metrics.zero_one`: ``normalize=False`` is changed to
+     ``normalize=True``.
+
+   - Renamed function :func:`sklearn.metrics.zero_one_score` to
+     :func:`sklearn.metrics.accuracy_score`.
 
 .. _changes_0_12.1:
 
@@ -1575,6 +1587,11 @@ of commits):
     *  1  Chris Filo Gorgolewski
 
 
+Earlier versions
+================
+
+Earlier versions included contributions by Fred Mailhot, David Cooke,
+David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 
 .. _Olivier Grisel: http://twitter.com/ogrisel
 
@@ -1639,3 +1656,5 @@ of commits):
 .. _Christian Osendorfer: http://osdf.github.com
 
 .. _Noel Dawe: http://noel.dawe.me
+
+.. _Arnaud Joly: http://www.ajoly.org

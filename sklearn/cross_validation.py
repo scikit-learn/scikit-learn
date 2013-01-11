@@ -1246,8 +1246,8 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
 
     pvalue : float
         The returned value equals p-value if `score_func` returns bigger
-        numbers for better scores (e.g., zero_one). If `score_func` is rather a
-        loss function (i.e. when lower is better such as with
+        numbers for better scores (e.g., accuracy_score). If `score_func` is
+        rather a loss function (i.e. when lower is better such as with
         `mean_squared_error`) then this is actually the complement of the
         p-value:  1 - p-value.
 

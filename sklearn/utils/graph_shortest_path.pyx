@@ -18,6 +18,8 @@ cimport cython
 
 from libc.stdlib cimport malloc, free
 
+np.import_array()
+
 DTYPE = np.float64
 ctypedef np.float64_t DTYPE_t
 
