@@ -19,11 +19,10 @@ X, y = make_classification(n_samples=1000,
                            n_features=2,
                            n_classes=2,
                            n_informative=2,
-                           n_redundant=0)
+                           n_redundant=0,
+                           random_state=0)
 
-bdt = AdaBoostClassifier(DecisionTreeClassifier(min_samples_leaf=100),
-                         n_estimators=50,
-                         learning_rate=.5)
+bdt = AdaBoostClassifier()
 
 bdt.fit(X, y)
 

@@ -178,9 +178,20 @@ def test_importances():
 
 def test_error():
     """Test that it gives proper exception on deficient input."""
+    from sklearn.dummy import DummyClassifier
+    from sklearn.dummy import DummyRegressor
+
     # Invalid values for parameters
     assert_raises(ValueError,
                   AdaBoostClassifier(learning_rate=-1).fit,
+                  X, y)
+
+    assert_raises(TypeError,
+                  AdaBoostClassifier(base_estimator=DummyRegressor()).fit,
+                  X, y)
+
+    assert_raises(TypeError,
+                  AdaBoostRegressor(base_estimator=DummyClassifier()).fit,
                   X, y)
 
 

@@ -43,18 +43,22 @@ class BaseWeightBoosting(BaseEnsemble):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __init__(self, base_estimator,
-                 n_estimators,
-                 learning_rate,
-                 compute_importances):
+    def __init__(self,
+                 base_estimator,
+                 n_estimators=50,
+                 estimator_params=tuple(),
+                 learning_rate=0.1,
+                 compute_importances=False):
+        super(BaseWeightBoosting, self).__init__(
+            base_estimator=base_estimator,
+            n_estimators=n_estimators,
+            estimator_params=estimator_params)
+
         self.weights_ = None
         self.errors_ = None
         self.learning_rate = learning_rate
         self.compute_importances = compute_importances
         self.feature_importances_ = None
-
-        super(BaseWeightBoosting, self).__init__(base_estimator,
-                                                 n_estimators)
 
     def fit(self, X, y, sample_weight=None, boost_method=None):
         """Build a boosted classifier/regressor from the training set (X, y).
@@ -71,6 +75,9 @@ class BaseWeightBoosting(BaseEnsemble):
         sample_weight : array-like of shape = [n_samples], optional
             Sample weights.
 
+        boost_method : function, optional
+            The boosting step.
+
         Returns
         -------
         self : object
@@ -84,15 +91,14 @@ class BaseWeightBoosting(BaseEnsemble):
             self.base_estimator.set_params(compute_importances=True)
 
         # Check data
-        X, y = check_arrays(X, y, sparse_format='dense')
+        X, y = check_arrays(X, y, sparse_format="dense")
 
         if sample_weight is None:
             # initialize weights to 1 / n_samples
             sample_weight = np.ones(X.shape[0], dtype=np.float) / X.shape[0]
         else:
-            sample_weight = np.copy(sample_weight)
-            # normalize
-            sample_weight /= sample_weight.sum()
+            # or normalize them
+            sample_weight = np.copy(sample_weight) / sample_weight.sum()
 
         # Clear any previous fit results
         self.estimators_ = []
@@ -103,20 +109,20 @@ class BaseWeightBoosting(BaseEnsemble):
             boost_method = self._boost
 
         for iboost in xrange(self.n_estimators):
-
+            # Boosting step
             sample_weight, weight, error = boost_method(
                 iboost,
                 X, y,
                 sample_weight)
 
-            # early termination
+            # Early termination
             if sample_weight is None:
                 break
 
             self.weights_[iboost] = weight
             self.errors_[iboost] = error
 
-            # stop if error is zero
+            # Stop if error is zero
             if error == 0:
                 break
 
@@ -132,11 +138,12 @@ class BaseWeightBoosting(BaseEnsemble):
                     sum(weight * clf.feature_importances_ for weight, clf
                         in zip(self.weights_, self.estimators_))
                     / norm)
+
         except AttributeError:
             raise AttributeError(
                 "Unable to compute feature importances "
                 "since base_estimator does not have a "
-                "``feature_importances_`` attribute")
+                "`feature_importances_` attribute")
 
         return self
 
@@ -239,28 +246,19 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     .. [2] Ji Zhu, Hui Zou, Saharon Rosset, Trevor Hastie.
            "Multi-class AdaBoost", 2009.
     """
-    def __init__(self, base_estimator=DecisionTreeClassifier(max_depth=3),
+    def __init__(self,
+                 base_estimator=DecisionTreeClassifier(max_depth=3),
                  n_estimators=50,
                  learning_rate=0.1,
                  real=True,
                  compute_importances=False):
-
-        if not isinstance(base_estimator, ClassifierMixin):
-            raise TypeError("``base_estimator`` must be a "
-                            "subclass of ``ClassifierMixin``")
-
-        if real and not hasattr(base_estimator, 'predict_proba'):
-            raise TypeError(
-                "The real AdaBoost algorithm requires that the weak learner "
-                "supports the calculation of class probabilities")
-
-        self.real = real
-
         super(AdaBoostClassifier, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             learning_rate=learning_rate,
             compute_importances=compute_importances)
+
+        self.real = real
 
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier from the training set (X, y).
@@ -271,8 +269,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The training input samples.
 
         y : array-like of shape = [n_samples]
-            The target values (integers that correspond to classes in
-            classification, real numbers in regression).
+            The target values (integers that correspond to classes).
 
         sample_weight : array-like of shape = [n_samples], optional
             Sample weights.
@@ -282,11 +279,25 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         self : object
             Returns self.
         """
+        # Check that the base estimator is a classifier
+        if not isinstance(self.base_estimator, ClassifierMixin):
+            raise TypeError("``base_estimator`` must be a "
+                            "subclass of ``ClassifierMixin``")
+
+        # 'Real' boosting step
         if self.real:
+            if not hasattr(self.base_estimator, "predict_proba"):
+                raise TypeError(
+                    "The real AdaBoost algorithm requires that the weak"
+                    "learner supports the calculation of class probabilities")
+
             return super(AdaBoostClassifier, self).fit(
                 X, y, sample_weight, self._boost_real)
-        return super(AdaBoostClassifier, self).fit(
-                X, y, sample_weight, self._boost_discrete)
+
+        # 'Discrete' boosting step
+        else:
+            return super(AdaBoostClassifier, self).fit(
+                    X, y, sample_weight, self._boost_discrete)
 
     def _boost_real(self, iboost, X, y, sample_weight):
         """Implement a single boost using the real algorithm.
@@ -788,20 +799,43 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     .. [2] Harris Drucker. "Improving Regressor using Boosting Techniques",
            1997.
     """
-    def __init__(self, base_estimator=DecisionTreeRegressor(max_depth=3),
+    def __init__(self,
+                 base_estimator=DecisionTreeRegressor(max_depth=3),
                  n_estimators=50,
                  learning_rate=0.1,
                  compute_importances=False):
-
-        if not isinstance(base_estimator, RegressorMixin):
-            raise TypeError("``base_estimator`` must be a "
-                            "subclass of ``RegressorMixin``")
-
         super(AdaBoostRegressor, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             learning_rate=learning_rate,
             compute_importances=compute_importances)
+
+    def fit(self, X, y, sample_weight=None):
+        """Build a boosted regressor from the training set (X, y).
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The training input samples.
+
+        y : array-like of shape = [n_samples]
+            The target values (real numbers).
+
+        sample_weight : array-like of shape = [n_samples], optional
+            Sample weights.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        # Check that the base estimator is a regressor
+        if not isinstance(self.base_estimator, RegressorMixin):
+            raise TypeError("``base_estimator`` must be a "
+                            "subclass of ``RegressorMixin``")
+
+        # Fit
+        return super(AdaBoostRegressor, self).fit(X, y, sample_weight)
 
     def _boost(self, iboost, X, y, sample_weight):
         """Implement a single boost for regression
@@ -873,6 +907,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         # boost weight using AdaBoost.R2 alg
         weight = self.learning_rate * np.log(1. / beta)
+
         if not iboost == self.n_estimators - 1:
             sample_weight *= np.power(
                 beta,

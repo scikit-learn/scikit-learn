@@ -33,7 +33,6 @@ bdt = AdaBoostClassifier(DecisionTreeClassifier(min_samples_leaf=100),
 
 bdt.fit(X_train, y_train)
 
-
 for y_test_predict, y_train_predict in izip(bdt.staged_predict(X_test),
                                             bdt.staged_predict(X_train)):
     test_errors.append((y_test_predict != y_test).sum() /
