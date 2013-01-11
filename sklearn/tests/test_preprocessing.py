@@ -408,7 +408,7 @@ def test_normalize_errors():
 def test_binarizer():
     X_ = np.array([[1, 0, 5], [2, 3, 0]])
 
-    for init in (np.array, sp.csr_matrix):
+    for init in (np.array, sp.csr_matrix, sp.csc_matrix):
 
         X = init(X_.copy())
 
@@ -416,6 +416,8 @@ def test_binarizer():
         X_bin = toarray(binarizer.transform(X))
         assert_equal(np.sum(X_bin == 0), 4)
         assert_equal(np.sum(X_bin == 1), 2)
+        X_bin = binarizer.transform(X)
+        assert_equal(type(X), type(X_bin))
 
         binarizer = Binarizer(copy=True).fit(X)
         X_bin = toarray(binarizer.transform(X))
