@@ -22,5 +22,6 @@ from . import partial_dependence
 __all__ = ["BaseEnsemble", "RandomForestClassifier", "RandomForestRegressor",
            "RandomTreesEmbedding", "ExtraTreesClassifier",
            "ExtraTreesRegressor", "GradientBoostingClassifier",
-           "GradientBoostingRegressor", "forest", "gradient_boosting",
-           "partial_dependence", "AdaBoostClassifier", "AdaBoostRegressor"]
+           "GradientBoostingRegressor", "AdaBoostClassifier",
+           "AdaBoostRegressor", "forest", "gradient_boosting",
+           "partial_dependence", ]
