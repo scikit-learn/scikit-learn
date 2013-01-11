@@ -46,6 +46,16 @@ div.header {
     overflow: hidden;
 }
 
+/* -------- warning header for old versions --------------------------------*/
+
+div.warning-wrapper {
+    background-color: #ffaaaa;
+    max-width: auto;
+    text-align: center;
+}
+div.warning-wrapper p {
+    margin: 0;
+}
 
 p.logo {
     margin-top: auto;
