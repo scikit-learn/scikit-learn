@@ -194,6 +194,11 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         ``learning_rate``. There is a trade-off between ``learning_rate`` and
         ``n_estimators``.
 
+    real : boolean, optional (default=True)
+        If True then use the real SAMME.R boosting algorithm.
+        ``base_estimator`` must support calculation of class probabilities.
+        If False then use the discrete SAMME boosting algorithm.
+
     compute_importances : boolean, optional (default=False)
         Whether feature importances are computed and stored in the
         ``feature_importances_`` attribute when calling fit.
