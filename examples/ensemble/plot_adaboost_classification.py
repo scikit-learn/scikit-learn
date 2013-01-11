@@ -52,16 +52,21 @@ for i, c in zip(xrange(2), plot_colors):
 pl.axis("tight")
 pl.xlabel("Decision Surfaces")
 
+a_prob = bdt.predict_proba(X[y == 0])[:, -1]
+b_prob = bdt.predict_proba(X[y == 1])[:, -1]
+hist_range = (min(a_prob.min(), b_prob.min()),
+              max(a_prob.max(), b_prob.max()))
+
 # plot the class probabilities
 pl.subplot(122)
-pl.hist(bdt.predict_proba(X[y == 0])[:, -1],
+pl.hist(a_prob,
         bins=20,
-        range=(0, 1),
+        range=hist_range,
         facecolor=plot_colors[0],
         label='Class A')
-pl.hist(bdt.predict_proba(X[y == 1])[:, -1],
+pl.hist(b_prob,
         bins=20,
-        range=(0, 1),
+        range=hist_range,
         facecolor=plot_colors[1],
         label='Class B')
 pl.legend()
