@@ -10,7 +10,8 @@ from nose.tools import assert_true
 from nose.tools import assert_raises
 
 from sklearn.grid_search import GridSearchCV
-from sklearn.ensemble import AdaBoostClassifier, AdaBoostRegressor
+from sklearn.ensemble import DiscreteAdaBoostClassifier, RealAdaBoostClassifier
+from sklearn.ensemble import AdaBoostRegressor
 from sklearn.tree import DecisionTreeClassifier
 from sklearn import datasets
 
@@ -38,7 +39,11 @@ boston.target = boston.target[perm]
 
 def test_classification_toy():
     """Check classification on a toy dataset."""
-    clf = AdaBoostClassifier(n_estimators=10)
+    clf = DiscreteAdaBoostClassifier(n_estimators=10)
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+
+    clf = RealAdaBoostClassifier(n_estimators=10)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
 
@@ -54,8 +59,9 @@ def test_iris():
     """Check consistency on dataset iris."""
     for c in ("gini", "entropy"):
         # AdaBoost classification
-        clf = AdaBoostClassifier(DecisionTreeClassifier(criterion=c),
-                                 n_estimators=1)
+        clf = DiscreteAdaBoostClassifier(
+            DecisionTreeClassifier(criterion=c),
+            n_estimators=1)
         clf.fit(iris.data, iris.target)
         score = clf.score(iris.data, iris.target)
         assert score > 0.9, "Failed with criterion %s and score = %f" % (c,
@@ -73,7 +79,7 @@ def test_boston():
 def test_probability():
     """Predict probabilities."""
     # AdaBoost classification
-    clf = AdaBoostClassifier(n_estimators=10)
+    clf = RealAdaBoostClassifier(n_estimators=10)
     clf.fit(iris.data, iris.target)
 
     assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1),
@@ -85,7 +91,7 @@ def test_probability():
 def test_staged_predict():
     """Check staged predictions."""
     # AdaBoost classification
-    clf = AdaBoostClassifier(n_estimators=10)
+    clf = RealAdaBoostClassifier(n_estimators=10)
     clf.fit(iris.data, iris.target)
 
     predictions = clf.predict(iris.data)
@@ -120,7 +126,7 @@ def test_staged_predict():
 def test_gridsearch():
     """Check that base trees can be grid-searched."""
     # AdaBoost classification
-    boost = AdaBoostClassifier()
+    boost = RealAdaBoostClassifier()
     parameters = {'n_estimators': (1, 2),
                   'base_estimator__max_depth': (1, 2)}
     clf = GridSearchCV(boost, parameters)
@@ -139,7 +145,17 @@ def test_pickle():
     import pickle
 
     # Adaboost classifier
-    obj = AdaBoostClassifier()
+    obj = DiscreteAdaBoostClassifier()
+    obj.fit(iris.data, iris.target)
+    score = obj.score(iris.data, iris.target)
+    s = pickle.dumps(obj)
+
+    obj2 = pickle.loads(s)
+    assert_equal(type(obj2), obj.__class__)
+    score2 = obj2.score(iris.data, iris.target)
+    assert score == score2
+
+    obj = RealAdaBoostClassifier()
     obj.fit(iris.data, iris.target)
     score = obj.score(iris.data, iris.target)
     s = pickle.dumps(obj)
@@ -171,8 +187,8 @@ def test_importances():
                                         shuffle=False,
                                         random_state=1)
 
-    clf = AdaBoostClassifier(compute_importances=True,
-                             n_estimators=50)
+    clf = DiscreteAdaBoostClassifier(compute_importances=True,
+                                     n_estimators=50)
     clf.fit(X, y)
     importances = clf.feature_importances_
     n_important = sum(importances > 0.1)
@@ -180,7 +196,7 @@ def test_importances():
     assert_equal(importances.shape[0], 10)
     assert_equal(n_important, 3)
 
-    clf = AdaBoostClassifier()
+    clf = RealAdaBoostClassifier()
     clf.fit(X, y)
     assert_true(clf.feature_importances_ is None)
 
@@ -189,7 +205,7 @@ def test_error():
     """Test that it gives proper exception on deficient input."""
     # Invalid values for parameters
     assert_raises(ValueError,
-                  AdaBoostClassifier(learning_rate=-1).fit,
+                  RealAdaBoostClassifier(learning_rate=-1).fit,
                   X, y)
 
 
@@ -198,10 +214,10 @@ def test_base_estimator():
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.svm import SVC
 
-    clf = AdaBoostClassifier(RandomForestClassifier())
+    clf = RealAdaBoostClassifier(RandomForestClassifier())
     clf.fit(X, y)
 
-    clf = AdaBoostClassifier(SVC())
+    clf = DiscreteAdaBoostClassifier(SVC())
     clf.fit(X, y)
 
     from sklearn.ensemble import RandomForestRegressor

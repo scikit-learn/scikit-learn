@@ -6,7 +6,7 @@
 import numpy as np
 from sklearn import datasets
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import AdaBoostClassifier
+from sklearn.ensemble import DiscreteAdaBoostClassifier, RealAdaBoostClassifier
 import pylab as plt
 
 
@@ -25,16 +25,16 @@ dt = DecisionTreeClassifier(max_depth=9, min_samples_leaf=1)
 dt.fit(X_train, y_train)
 dt_err = 1.0 - dt.score(X_test, y_test)
 
-ada_discrete = AdaBoostClassifier(base_estimator=dt_stump,
+ada_discrete = DiscreteAdaBoostClassifier(
+    base_estimator=dt_stump,
     learning_rate=learning_rate,
-    n_estimators=n_estimators,
-    real=False)
+    n_estimators=n_estimators)
 ada_discrete.fit(X_train, y_train)
 
-ada_real = AdaBoostClassifier(base_estimator=dt_stump,
+ada_real = RealAdaBoostClassifier(
+    base_estimator=dt_stump,
     learning_rate=learning_rate,
-    n_estimators=n_estimators,
-    real=True)
+    n_estimators=n_estimators)
 ada_real.fit(X_train, y_train)
 
 fig = plt.figure(facecolor='w')
