@@ -210,6 +210,19 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X += self.min_
         return X
 
+    def inverse_transform(self, X):
+        """Undo the scaling of X according to feature_range.
+
+        Parameters
+        ----------
+        X : array-like with shape [n_samples, n_features]
+            Input data that will be transformed.
+        """
+        X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
+        X -= self.min_
+        X /= self.scale_
+        return X
+
 
 class StandardScaler(BaseEstimator, TransformerMixin):
     """Standardize features by removing the mean and scaling to unit variance
