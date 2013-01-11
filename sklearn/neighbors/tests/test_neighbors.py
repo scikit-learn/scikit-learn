@@ -514,9 +514,67 @@ def test_kneighbors_graph():
         [[1, 1, 1], [1, 1, 1], [1, 1, 1]])
 
 
+def test_kneighbors_graph_sparse():
+    """Test kneighbors_graph to build the k-Nearest Neighbor graph
+    for sparse input."""
+    X = csr_matrix([[0, 1], [1.01, 1.], [2, 0]])
+
+    # n_neighbors = 1
+    A = neighbors.kneighbors_graph(X, 1, mode='connectivity')
+    assert_array_equal(A.todense(), np.eye(A.shape[0]))
+
+    A = neighbors.kneighbors_graph(X, 1, mode='distance')
+    assert_array_almost_equal(
+        A.todense(),
+        [[0.00,  1.01,        0.],
+         [1.01,  0.,          0.],
+         [0.00,  1.40716026,  0.]])
+
+    # n_neighbors = 2
+    A = neighbors.kneighbors_graph(X, 2, mode='connectivity')
+    assert_array_equal(
+        A.todense(),
+        [[1.,  1.,  0.],
+         [1.,  1.,  0.],
+         [0.,  1.,  1.]])
+
+    A = neighbors.kneighbors_graph(X, 2, mode='distance')
+    assert_array_almost_equal(
+        A.todense(),
+        [[0.,          1.01,        2.23606798],
+         [1.01,        0.,          1.40716026],
+         [2.23606798,  1.40716026,  0.]])
+
+    # n_neighbors = 3
+    A = neighbors.kneighbors_graph(X, 3, mode='connectivity')
+    assert_array_almost_equal(
+        A.todense(),
+        [[1, 1, 1], [1, 1, 1], [1, 1, 1]])
+
+
 def test_radius_neighbors_graph():
     """Test radius_neighbors_graph to build the Nearest Neighbor graph."""
     X = np.array([[0, 1], [1.01, 1.], [2, 0]])
+
+    A = neighbors.radius_neighbors_graph(X, 1.5, mode='connectivity')
+    assert_array_equal(
+        A.todense(),
+        [[1.,  1.,  0.],
+         [1.,  1.,  1.],
+         [0.,  1.,  1.]])
+
+    A = neighbors.radius_neighbors_graph(X, 1.5, mode='distance')
+    assert_array_almost_equal(
+        A.todense(),
+        [[0.,   1.01,       0.],
+         [1.01, 0.,         1.40716026],
+         [0.,   1.40716026, 0.]])
+
+
+def test_radius_neighbors_graph_sparse():
+    """Test radius_neighbors_graph to build the Nearest Neighbor graph
+    for sparse input."""
+    X = csr_matrix([[0, 1], [1.01, 1.], [2, 0]])
 
     A = neighbors.radius_neighbors_graph(X, 1.5, mode='connectivity')
     assert_array_equal(
