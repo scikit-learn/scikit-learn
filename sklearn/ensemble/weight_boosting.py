@@ -22,6 +22,7 @@ The module structure is the following:
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
+from numpy.core.umath_tests import inner1d
 
 from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin
@@ -99,24 +100,11 @@ class BaseWeightBoosting(BaseEnsemble):
         self.errors_ = np.ones(self.n_estimators, dtype=np.float)
 
         for iboost in xrange(self.n_estimators):
-            estimator = self._make_estimator()
-
-            if hasattr(estimator, 'fit_predict'):
-                # optim for estimators that are able to save redundant
-                # computations when calling fit + predict
-                # on the same input X
-                p = estimator.fit_predict(X, y, sample_weight=sample_weight)
-            else:
-                p = estimator.fit(X, y, sample_weight=sample_weight).predict(X)
-
-            if iboost == 0:
-                self.classes_ = getattr(estimator, 'classes_', None)
-                self.n_classes_ = getattr(estimator, 'n_classes_',
-                                          getattr(estimator, 'n_classes', 1))
 
             sample_weight, weight, error = self._boost(
-                sample_weight, p, y,
-                is_last=iboost == self.n_estimators - 1)
+                iboost,
+                X, y,
+                sample_weight)
 
             # early termination
             if sample_weight is None:
@@ -148,124 +136,6 @@ class BaseWeightBoosting(BaseEnsemble):
                 "``feature_importances_`` attribute")
 
         return self
-
-    def predict(self, X, n_estimators=-1):
-        """Predict class or regression value for X.
-
-        The predicted class or regression value of an input sample is computed
-        as the weighted mean prediction of the classifiers in the ensemble.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        n_estimators : int, optional (default=-1)
-            Use only the first ``n_estimators`` classifiers for the prediction.
-            This is useful for grid searching the ``n_estimators`` parameter
-            since it is not necessary to fit separately for all choices of
-            ``n_estimators``, but only the highest ``n_estimators``. Any
-            negative value will result in all estimators being used.
-
-        Returns
-        -------
-        y : array of shape = [n_samples]
-            The predicted classes.
-        """
-        if n_estimators == 0:
-            raise ValueError("``n_estimators`` must not equal zero")
-
-        if not self.estimators_:
-            raise RuntimeError(
-                ("{0} is not initialized. "
-                 "Perform a fit first").format(self.__class__.__name__))
-
-        pred = None
-
-        for i, (weight, estimator) in enumerate(
-                zip(self.weights_, self.estimators_)):
-            if i == n_estimators:
-                break
-
-            if isinstance(self, ClassifierMixin):
-                current_pred = estimator.predict_proba(X)
-            else:
-                current_pred = estimator.predict(X)
-
-            if pred is None:
-                pred = current_pred * weight
-            else:
-                pred += current_pred * weight
-
-        pred /= self.weights_.sum()
-
-        if isinstance(self, ClassifierMixin):
-            return self.classes_.take(np.argmax(pred, axis=1), axis=0)
-
-        else:
-            return pred
-
-    def staged_predict(self, X, n_estimators=-1):
-        """Return staged predictions for X.
-
-        The predicted class or regression value of an input sample is computed
-        as the weighted mean prediction of the classifiers in the ensemble.
-
-        This generator method yields the ensemble prediction after each
-        iteration of boosting and therefore allows monitoring, such as to
-        determine the prediction on a test set after each boost.
-
-        Parameters
-        ----------
-        X : array-like of shape = [n_samples, n_features]
-            The input samples.
-
-        n_estimators : int, optional (default=-1)
-            Use only the first ``n_estimators`` classifiers for the prediction.
-            This is useful for grid searching the ``n_estimators`` parameter
-            since it is not necessary to fit separately for all choices of
-            ``n_estimators``, but only the highest ``n_estimators``. Any
-            negative value will result in all estimators being used.
-
-        Returns
-        -------
-        y : array of shape = [n_samples]
-            The predicted classes.
-        """
-        if n_estimators == 0:
-            raise ValueError("``n_estimators`` must not equal zero")
-
-        if not self.estimators_:
-            raise RuntimeError(
-                ("{0} is not initialized. "
-                 "Perform a fit first").format(self.__class__.__name__))
-
-        pred = None
-        norm = 0.
-
-        for i, (weight, estimator) in enumerate(
-                zip(self.weights_, self.estimators_)):
-            if i == n_estimators:
-                break
-
-            if isinstance(self, ClassifierMixin):
-                current_pred = estimator.predict_proba(X)
-            else:
-                current_pred = estimator.predict(X)
-
-            if pred is None:
-                pred = current_pred * weight
-            else:
-                pred += current_pred * weight
-
-            norm += weight
-            normed_pred = pred / norm
-
-            if isinstance(self, ClassifierMixin):
-                yield self.classes_.take(np.argmax(normed_pred, axis=1),
-                                         axis=0)
-            else:
-                yield normed_pred
 
     def staged_score(self, X, y, n_estimators=-1):
         """Return staged scores for X, y.
@@ -363,12 +233,15 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     """
     def __init__(self, base_estimator=DecisionTreeClassifier(max_depth=3),
                  n_estimators=50,
-                 learning_rate=0.1,
+                 learning_rate=0.5,
+                 real=False,
                  compute_importances=False):
 
         if not isinstance(base_estimator, ClassifierMixin):
             raise TypeError("``base_estimator`` must be a "
                             "subclass of ``ClassifierMixin``")
+
+        self.real = real
 
         super(AdaBoostClassifier, self).__init__(
             base_estimator=base_estimator,
@@ -376,25 +249,55 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             learning_rate=learning_rate,
             compute_importances=compute_importances)
 
-    def _boost(self, sample_weight, y_predict, y_true, is_last):
-        """Implement a single boost
-
-        Perform a single boost according to the multi-class SAMME algorithm and
-        return the updated sample weights.
+    def fit(self, X, y, sample_weight=None):
+        """Build a boosted classifier from the training set (X, y).
 
         Parameters
         ----------
+        X : array-like of shape = [n_samples, n_features]
+            The training input samples.
+
+        y : array-like of shape = [n_samples]
+            The target values (integers that correspond to classes in
+            classification, real numbers in regression).
+
+        sample_weight : array-like of shape = [n_samples], optional
+            Sample weights.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        if self.real:
+            if not hasattr(self.base_estimator, 'predict_proba'):
+                raise TypeError(
+                    "``base_estimator`` must support calculating class "
+                    "probabilities to use the real-valued boosting algorithm")
+            self._boost = self._boost_real
+        else:
+            self._boost = self._boost_discrete
+        return super(AdaBoostClassifier, self).fit(X, y, sample_weight)
+
+    def _boost_discrete(self, iboost, X, y, sample_weight):
+        """Implement a single boost using the discrete algorithm.
+
+        Perform a single boost according to the discrete multi-class SAMME
+        algorithm and return the updated sample weights.
+
+        Parameters
+        ----------
+        iboost : int
+            The index of the current boost iteration.
+
+        X : array-like of shape = [n_samples, n_features]
+            The training input samples.
+
+        y : array-like of shape = [n_samples]
+            The target values (integers that correspond to classes).
+
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.
-
-        y_predict : array-like of shape = [n_samples]
-            The predicted class labels.
-
-        y_true : array-like of shape = [n_samples]
-            The true class labels.
-
-        is_last : Boolean
-            True if this is the last boost.
 
         Returns
         -------
@@ -410,8 +313,25 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The classification error for the current boost.
             If None then boosting has terminated early.
         """
+        estimator = self._make_estimator()
+
+        if hasattr(estimator, 'fit_predict'):
+            # optim for estimators that are able to save redundant
+            # computations when calling fit + predict
+            # on the same input X
+            y_predict = estimator.fit_predict(
+                X, y, sample_weight=sample_weight)
+        else:
+            y_predict = estimator.fit(
+                X, y, sample_weight=sample_weight).predict(X)
+
+        if iboost == 0:
+            self.classes_ = getattr(estimator, 'classes_', None)
+            self.n_classes_ = getattr(estimator, 'n_classes_',
+                                      getattr(estimator, 'n_classes', 1))
+
         # instances incorrectly classified
-        incorrect = y_predict != y_true
+        incorrect = y_predict != y
 
         # error fraction
         error = np.mean(np.average(incorrect, weights=sample_weight, axis=0))
@@ -440,10 +360,224 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             np.log(n_classes - 1.))
 
         # only boost the weights if I will fit again
-        if not is_last:
+        if not iboost == self.n_estimators - 1:
             sample_weight *= np.exp(weight * incorrect)
 
         return sample_weight, weight, error
+
+    def _boost_real(self, iboost, X, y, sample_weight):
+        """Implement a single boost using the real algorithm.
+
+        Perform a single boost according to the real multi-class SAMME.R
+        algorithm and return the updated sample weights.
+
+        Parameters
+        ----------
+        iboost : int
+            The index of the current boost iteration.
+
+        X : array-like of shape = [n_samples, n_features]
+            The training input samples.
+
+        y : array-like of shape = [n_samples]
+            The target values (integers that correspond to classes).
+
+        sample_weight : array-like of shape = [n_samples]
+            The current sample weights.
+
+        Returns
+        -------
+        sample_weight : array-like of shape = [n_samples] or None
+            The reweighted sample weights.
+            If None then boosting has terminated early.
+
+        weight : float
+            The weight for the current boost.
+            If None then boosting has terminated early.
+
+        error : float
+            The classification error for the current boost.
+            If None then boosting has terminated early.
+        """
+        estimator = self._make_estimator()
+
+        if hasattr(estimator, 'fit_predict_proba'):
+            # optim for estimators that are able to save redundant
+            # computations when calling fit + predict_proba
+            # on the same input X
+            y_predict_proba = estimator.fit_predict_proba(
+                X, y, sample_weight=sample_weight)
+        else:
+            y_predict_proba = estimator.fit(
+                X, y, sample_weight=sample_weight).predict_proba(X)
+
+        if iboost == 0:
+            self.classes_ = getattr(estimator, 'classes_', None)
+            self.n_classes_ = getattr(estimator, 'n_classes_',
+                                      getattr(estimator, 'n_classes', 1))
+
+        y_predict = np.array(self.classes_.take(
+            np.argmax(y_predict_proba, axis=1), axis=0))
+
+        # instances incorrectly classified
+        incorrect = y_predict != y
+
+        # error fraction
+        error = np.mean(np.average(incorrect, weights=sample_weight, axis=0))
+
+        # stop if classification is perfect
+        if error == 0:
+            return sample_weight, 1., 0.
+
+        # negative sample weights can yield an overall negative error...
+        if error < 0:
+            # use the absolute value
+            # if you have a better idea of how to handle negative
+            # sample weights let me know
+            error = abs(error)
+
+        # construct y coding
+        n_classes = self.n_classes_
+        classes = np.array(self.classes_)
+        y_codes = np.array([-1. / (n_classes - 1), 1.])
+        y_coding = y_codes.take(classes == y.reshape(y.shape[0], 1))
+
+        # boost weight using multi-class AdaBoost SAMME.R alg
+        weight = -1. * self.learning_rate * (
+            ((n_classes - 1.) / n_classes) *
+            inner1d(y_coding, np.log(y_predict_proba + 1e-200)))
+
+        # only boost the weights if I will fit again
+        if not iboost == self.n_estimators - 1:
+            sample_weight *= np.exp(weight)
+
+        return sample_weight, 1., error
+
+    def predict(self, X, n_estimators=-1):
+        """Predict classes for X.
+
+        The predicted class of an input sample is computed
+        as the weighted mean prediction of the classifiers in the ensemble.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        n_estimators : int, optional (default=-1)
+            Use only the first ``n_estimators`` classifiers for the prediction.
+            This is useful for grid searching the ``n_estimators`` parameter
+            since it is not necessary to fit separately for all choices of
+            ``n_estimators``, but only the highest ``n_estimators``. Any
+            negative value will result in all estimators being used.
+
+        Returns
+        -------
+        y : array of shape = [n_samples]
+            The predicted classes.
+        """
+        if n_estimators == 0:
+            raise ValueError("``n_estimators`` must not equal zero")
+
+        if not self.estimators_:
+            raise RuntimeError(
+                ("{0} is not initialized. "
+                 "Perform a fit first").format(self.__class__.__name__))
+
+        n_classes = self.n_classes_
+        classes = self.classes_
+        pred = None
+
+        for i, (weight, estimator) in enumerate(
+                zip(self.weights_, self.estimators_)):
+
+            if i == n_estimators:
+                break
+
+            if self.real:
+                current_pred = estimator.predict_proba(X) + 1e-200
+                current_pred = (n_classes - 1) * (
+                    np.log(current_pred) -
+                    (1. / n_classes) *
+                    np.log(current_pred).sum(axis=1)[:, np.newaxis])
+
+            else:
+                current_pred = estimator.predict(X)
+                current_pred = np.array([
+                    current_pred == c for c in classes]).T * weight
+
+            if pred is None:
+                pred = current_pred
+            else:
+                pred += current_pred
+
+        return np.array(self.classes_.take(
+            np.argmax(pred, axis=1), axis=0))
+
+    def staged_predict(self, X, n_estimators=-1):
+        """Return staged predictions for X.
+
+        The predicted class of an input sample is computed
+        as the weighted mean prediction of the classifiers in the ensemble.
+
+        This generator method yields the ensemble prediction after each
+        iteration of boosting and therefore allows monitoring, such as to
+        determine the prediction on a test set after each boost.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        n_estimators : int, optional (default=-1)
+            Use only the first ``n_estimators`` classifiers for the prediction.
+            This is useful for grid searching the ``n_estimators`` parameter
+            since it is not necessary to fit separately for all choices of
+            ``n_estimators``, but only the highest ``n_estimators``. Any
+            negative value will result in all estimators being used.
+
+        Returns
+        -------
+        y : array of shape = [n_samples]
+            The predicted classes.
+        """
+        if n_estimators == 0:
+            raise ValueError("``n_estimators`` must not equal zero")
+
+        if not self.estimators_:
+            raise RuntimeError(
+                ("{0} is not initialized. "
+                 "Perform a fit first").format(self.__class__.__name__))
+
+        n_classes = self.n_classes_
+        classes = self.classes_
+        pred = None
+
+        for i, (weight, estimator) in enumerate(
+                zip(self.weights_, self.estimators_)):
+
+            if i == n_estimators:
+                break
+
+            if self.real:
+                current_pred = estimator.predict_proba(X) + 1e-200
+                current_pred = (n_classes - 1) * (
+                    np.log(current_pred) -
+                    (1. / n_classes) *
+                    np.log(current_pred).sum(axis=1)[:, np.newaxis])
+
+            else:
+                current_pred = estimator.predict(X)
+                current_pred = np.array([
+                    current_pred == c for c in classes]).T * weight
+
+            if pred is None:
+                pred = current_pred
+            else:
+                pred += current_pred
+
+            yield np.array(self.classes_.take(
+                np.argmax(pred, axis=1), axis=0))
 
     def predict_proba(self, X, n_estimators=-1):
         """Predict class probabilities for X.
@@ -473,6 +607,13 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The class probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
+        if not self.real:
+            raise ValueError(
+                "``predict_proba`` is only supported if "
+                "``base_estimator`` supports calculation of class "
+                "probabilities and was boosted using the real-valued "
+                "algorithm with ``real=True``")
+
         if n_estimators == 0:
             raise ValueError("``n_estimators`` must not equal zero")
 
@@ -526,6 +667,13 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The class probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
+        if not self.real:
+            raise ValueError(
+                "``staged_predict_proba`` is only supported if "
+                "``base_estimator`` supports calculation of class "
+                "probabilities and was boosted using the real-valued "
+                "algorithm with ``real=True``")
+
         if n_estimators == 0:
             raise ValueError("``n_estimators`` must not equal zero")
 
@@ -589,7 +737,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
     Parameters
     ----------
-    base_estimator : object, optional (default=DecisionTreeClassifier)
+    base_estimator : object, optional (default=DecisionTreeRegressor)
         The base estimator from which the boosted ensemble is built.
         Support for sample weighting is required.
 
@@ -650,7 +798,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             learning_rate=learning_rate,
             compute_importances=compute_importances)
 
-    def _boost(self, sample_weight, y_predict, y_true, is_last):
+    def _boost(self, iboost, X, y, sample_weight):
         """Implement a single boost for regression
 
         Perform a single boost according to the AdaBoost.R2 algorithm and
@@ -658,17 +806,18 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         Parameters
         ----------
+        iboost : int
+            The index of the current boost iteration.
+
+        X : array-like of shape = [n_samples, n_features]
+            The training input samples.
+
+        y : array-like of shape = [n_samples]
+            The target values (integers that correspond to classes in
+            classification, real numbers in regression).
+
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.
-
-        y_predict : array-like of shape = [n_samples]
-            The predicted class labels.
-
-        y_true : array-like of shape = [n_samples]
-            The true class labels.
-
-        is_last : Boolean
-            True if this is the last boost.
 
         Returns
         -------
@@ -684,7 +833,19 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The regression error for the current boost.
             If None then boosting has terminated early.
         """
-        error_vect = np.abs(y_predict - y_true)
+        estimator = self._make_estimator()
+
+        if hasattr(estimator, 'fit_predict'):
+            # optim for estimators that are able to save redundant
+            # computations when calling fit + predict
+            # on the same input X
+            y_predict = estimator.fit_predict(
+                X, y, sample_weight=sample_weight)
+        else:
+            y_predict = estimator.fit(
+                X, y, sample_weight=sample_weight).predict(X)
+
+        error_vect = np.abs(y_predict - y)
         error_max = error_vect.max()
 
         if error_max != 0.:
@@ -707,8 +868,113 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         # boost weight using AdaBoost.R2 alg
         weight = self.learning_rate * np.log(1. / beta)
-        if not is_last:
-            sample_weight *= np.power(beta,
-                                      (1. - error_vect) * self.learning_rate)
+        if not iboost == self.n_estimators - 1:
+            sample_weight *= np.power(
+                beta,
+                (1. - error_vect) * self.learning_rate)
 
         return sample_weight, weight, error
+
+    def predict(self, X, n_estimators=-1):
+        """Predict regression value for X.
+
+        The predicted regression value of an input sample is computed
+        as the weighted mean prediction of the classifiers in the ensemble.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        n_estimators : int, optional (default=-1)
+            Use only the first ``n_estimators`` classifiers for the prediction.
+            This is useful for grid searching the ``n_estimators`` parameter
+            since it is not necessary to fit separately for all choices of
+            ``n_estimators``, but only the highest ``n_estimators``. Any
+            negative value will result in all estimators being used.
+
+        Returns
+        -------
+        y : array of shape = [n_samples]
+            The predicted regression values.
+        """
+        if n_estimators == 0:
+            raise ValueError("``n_estimators`` must not equal zero")
+
+        if not self.estimators_:
+            raise RuntimeError(
+                ("{0} is not initialized. "
+                 "Perform a fit first").format(self.__class__.__name__))
+
+        pred = None
+
+        for i, (weight, estimator) in enumerate(
+                zip(self.weights_, self.estimators_)):
+            if i == n_estimators:
+                break
+
+            current_pred = estimator.predict(X)
+
+            if pred is None:
+                pred = current_pred * weight
+            else:
+                pred += current_pred * weight
+
+        pred /= self.weights_.sum()
+
+        return pred
+
+    def staged_predict(self, X, n_estimators=-1):
+        """Return staged predictions for X.
+
+        The predicted regression value of an input sample is computed
+        as the weighted mean prediction of the classifiers in the ensemble.
+
+        This generator method yields the ensemble prediction after each
+        iteration of boosting and therefore allows monitoring, such as to
+        determine the prediction on a test set after each boost.
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        n_estimators : int, optional (default=-1)
+            Use only the first ``n_estimators`` classifiers for the prediction.
+            This is useful for grid searching the ``n_estimators`` parameter
+            since it is not necessary to fit separately for all choices of
+            ``n_estimators``, but only the highest ``n_estimators``. Any
+            negative value will result in all estimators being used.
+
+        Returns
+        -------
+        y : array of shape = [n_samples]
+            The predicted regression values.
+        """
+        if n_estimators == 0:
+            raise ValueError("``n_estimators`` must not equal zero")
+
+        if not self.estimators_:
+            raise RuntimeError(
+                ("{0} is not initialized. "
+                 "Perform a fit first").format(self.__class__.__name__))
+
+        pred = None
+        norm = 0.
+
+        for i, (weight, estimator) in enumerate(
+                zip(self.weights_, self.estimators_)):
+            if i == n_estimators:
+                break
+
+            current_pred = estimator.predict(X)
+
+            if pred is None:
+                pred = current_pred * weight
+            else:
+                pred += current_pred * weight
+
+            norm += weight
+            normed_pred = pred / norm
+
+            yield normed_pred
