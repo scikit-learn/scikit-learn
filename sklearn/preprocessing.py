@@ -507,7 +507,7 @@ def binarize(X, threshold=0.0, copy=True):
     ----------
     X : array or scipy.sparse matrix with shape [n_samples, n_features]
         The data to binarize, element by element.
-        scipy.sparse matrices should be in CSR format to avoid an
+        scipy.sparse matrices should be in CSR or CSC format to avoid an
         un-necessary copy.
 
     threshold : float, optional (0.0 by default)
@@ -515,7 +515,7 @@ def binarize(X, threshold=0.0, copy=True):
 
     copy : boolean, optional, default is True
         set to False to perform inplace binarization and avoid a copy
-        (if the input is already a numpy array or a scipy.sparse CSR
+        (if the input is already a numpy array or a scipy.sparse CSR / CSC
         matrix and if axis is 1).
 
     See also
@@ -524,14 +524,18 @@ def binarize(X, threshold=0.0, copy=True):
     using the ``Transformer`` API (e.g. as part of a preprocessing
     :class:`sklearn.pipeline.Pipeline`)
     """
-    X = check_arrays(X, sparse_format='csr', copy=copy)[0]
+    sparse_format = "csr"  # We force sparse format to be either csr or csc.
+    if hasattr(X, "format"):
+        if X.format in ["csr", "csc"]:
+            sparse_format = X.format
+
+    X = check_arrays(X, sparse_format=sparse_format, copy=copy)[0]
     if sp.issparse(X):
         cond = X.data > threshold
         not_cond = np.logical_not(cond)
         X.data[cond] = 1
-        # FIXME: if enough values became 0, it may be worth changing
-        #        the sparsity structure
         X.data[not_cond] = 0
+        X.eliminate_zeros()
     else:
         cond = X > threshold
         not_cond = np.logical_not(cond)
