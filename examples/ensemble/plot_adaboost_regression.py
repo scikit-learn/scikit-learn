@@ -25,8 +25,8 @@ y[::5] += 3 * (0.5 - rng.rand(16))
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import AdaBoostRegressor
 
-clf_1 = AdaBoostRegressor(DecisionTreeRegressor(max_depth=3), n_estimators=1)
-clf_2 = AdaBoostRegressor(DecisionTreeRegressor(max_depth=3), n_estimators=10)
+clf_1 = AdaBoostRegressor(DecisionTreeRegressor(max_depth=3), n_estimators=1, learning_rate=1.)
+clf_2 = AdaBoostRegressor(DecisionTreeRegressor(max_depth=3), n_estimators=10,  learning_rate=1.)
 
 clf_1.fit(X, y)
 clf_2.fit(X, y)

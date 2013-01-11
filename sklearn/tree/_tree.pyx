@@ -14,6 +14,10 @@
 
 cimport cython
 from cpython cimport bool
+from libc.float cimport DBL_MAX
+from libc.math cimport log, pow
+from libc.stdlib cimport calloc, free, malloc, realloc
+from libc.string cimport memcpy
 
 import numpy as np
 cimport numpy as np
@@ -24,22 +28,6 @@ from numpy import ones as np_ones
 from numpy import bool as np_bool
 from numpy import float32 as np_float32
 from numpy import float64 as np_float64
-
-cdef extern from "stdlib.h":
-    void* malloc(size_t size)
-    void* calloc(size_t nmemb, size_t size)
-    void* realloc(void* ptr, size_t size)
-    void free(void* ptr)
-
-cdef extern from "string.h":
-    void* memcpy(void* dest, void* src, size_t n)
-
-cdef extern from "math.h":
-    cdef extern double log(double x)
-    cdef extern double pow(double base, double exponent)
-
-cdef extern from "float.h":
-    cdef extern double DBL_MAX
 
 
 # =============================================================================

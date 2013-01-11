@@ -363,7 +363,7 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
             elif self.n_components > n_features:
                 warnings.warn(
                     "The number of components is higher than the number of"
-                    " features: n_features > n_components (%s > %s)."
+                    " features: n_features < n_components (%s < %s)."
                     "The dimensionality of the problem will not be reduced."
                     % (n_features, self.n_components))
 
@@ -610,5 +610,5 @@ class SparseRandomProjection(BaseRandomProjection):
         self.density_ = _check_density(self.density, n_features)
         return sparse_random_matrix(n_components,
                                     n_features,
-                                    density=self.density,
+                                    density=self.density_,
                                     random_state=random_state)

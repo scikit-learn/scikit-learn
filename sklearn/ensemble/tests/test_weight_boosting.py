@@ -13,28 +13,27 @@ from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import AdaBoostRegressor
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.utils import shuffle
 from sklearn import datasets
 
-# toy sample
+
+# Common random state
+rng = np.random.RandomState(0)
+
+# Toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
 y = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
 true_result = [-1, 1, 1]
 
-# also load the iris dataset
-# and randomly permute it
+# Load the iris dataset and randomly permute it
 iris = datasets.load_iris()
-rng = np.random.RandomState(0)
 perm = rng.permutation(iris.target.size)
-iris.data = iris.data[perm]
-iris.target = iris.target[perm]
+iris.data, iris.target = shuffle(iris.data, iris.target, random_state=rng)
 
-# also load the boston dataset
-# and randomly permute it
+# Load the boston dataset and randomly permute it
 boston = datasets.load_boston()
-perm = rng.permutation(boston.target.size)
-boston.data = boston.data[perm]
-boston.target = boston.target[perm]
+boston.data, boston.target = shuffle(boston.data, boston.target, random_state=rng)
 
 
 def test_classification_toy():
@@ -72,18 +71,6 @@ def test_boston():
     assert score > 0.85
 
 
-def test_probability():
-    """Predict probabilities."""
-    # AdaBoost classification
-    clf = AdaBoostClassifier(n_estimators=10)
-    clf.fit(iris.data, iris.target)
-
-    assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1),
-                              np.ones(iris.data.shape[0]))
-    assert_array_almost_equal(clf.predict_proba(iris.data),
-                              np.exp(clf.predict_log_proba(iris.data)))
-
-
 def test_staged_predict():
     """Check staged predictions."""
     # AdaBoost classification
@@ -98,11 +85,11 @@ def test_staged_predict():
     staged_scores = [s for s in clf.staged_score(iris.data, iris.target)]
 
     assert_equal(len(staged_predictions), 10)
-    assert_array_equal(predictions, staged_predictions[-1])
+    assert_array_almost_equal(predictions, staged_predictions[-1])
     assert_equal(len(staged_probas), 10)
-    assert_array_equal(proba, staged_probas[-1])
+    assert_array_almost_equal(proba, staged_probas[-1])
     assert_equal(len(staged_scores), 10)
-    assert_array_equal(score, staged_scores[-1])
+    assert_array_almost_equal(score, staged_scores[-1])
 
     # AdaBoost regression
     clf = AdaBoostRegressor(n_estimators=10)
@@ -114,9 +101,9 @@ def test_staged_predict():
     staged_scores = [s for s in clf.staged_score(boston.data, boston.target)]
 
     assert_equal(len(staged_predictions), 10)
-    assert_array_equal(predictions, staged_predictions[-1])
+    assert_array_almost_equal(predictions, staged_predictions[-1])
     assert_equal(len(staged_scores), 10)
-    assert_array_equal(score, staged_scores[-1])
+    assert_array_almost_equal(score, staged_scores[-1])
 
 
 def test_gridsearch():
@@ -174,7 +161,9 @@ def test_importances():
                                         random_state=1)
 
     clf = AdaBoostClassifier(compute_importances=True,
-                             n_estimators=50)
+                             n_estimators=50,
+                             learning_rate=0.01)
+
     clf.fit(X, y)
     importances = clf.feature_importances_
     n_important = sum(importances > 0.1)
@@ -189,9 +178,20 @@ def test_importances():
 
 def test_error():
     """Test that it gives proper exception on deficient input."""
+    from sklearn.dummy import DummyClassifier
+    from sklearn.dummy import DummyRegressor
+
     # Invalid values for parameters
     assert_raises(ValueError,
                   AdaBoostClassifier(learning_rate=-1).fit,
+                  X, y)
+
+    assert_raises(TypeError,
+                  AdaBoostClassifier(base_estimator=DummyRegressor()).fit,
+                  X, y)
+
+    assert_raises(TypeError,
+                  AdaBoostRegressor(base_estimator=DummyClassifier()).fit,
                   X, y)
 
 

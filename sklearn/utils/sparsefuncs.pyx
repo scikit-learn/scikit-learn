@@ -3,15 +3,14 @@
 #
 # License: BSD Style.
 
+from libc.math cimport fabs, sqrt
 cimport numpy as np
 import numpy as np
 import scipy.sparse as sp
 cimport cython
 
+np.import_array()
 
-cdef extern from "math.h":
-    double fabs(double f)
-    double sqrt(double f)
 
 ctypedef np.float64_t DOUBLE
 
@@ -274,4 +273,5 @@ def mean_variance_axis0(X):
     elif isinstance(X, sp.csc_matrix):
         return csc_mean_variance_axis0(X)
     else:
-        raise TypeError("Unsupported matrix type. Expected a CSR or CSC sparse matrix.")
+        raise TypeError(
+                "Unsupported type; expected a CSR or CSC sparse matrix.")
