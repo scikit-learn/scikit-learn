@@ -241,7 +241,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     """
     def __init__(self, base_estimator=DecisionTreeClassifier(max_depth=3),
                  n_estimators=50,
-                 learning_rate=0.5,
+                 learning_rate=0.1,
                  real=True,
                  compute_importances=False):
 

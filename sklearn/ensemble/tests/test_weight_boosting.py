@@ -174,7 +174,9 @@ def test_importances():
                                         random_state=1)
 
     clf = AdaBoostClassifier(compute_importances=True,
-                             n_estimators=50)
+                             n_estimators=50,
+                             learning_rate=0.01)
+
     clf.fit(X, y)
     importances = clf.feature_importances_
     n_important = sum(importances > 0.1)
