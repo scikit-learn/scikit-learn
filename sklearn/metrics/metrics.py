@@ -751,8 +751,8 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     pos_label : int
         In the binary classification case, give the label of the positive class
         (default is 1). Everything else but ``pos_label`` is considered to
-        belong to the negative class.  Set to None in the case of multiclass
-        classification.
+        belong to the negative class.  Set to ``None`` in the case of
+        multiclass classification.
 
     average : string, [None, 'micro', 'macro', 'weighted' (default)]
         In the multiclass classification case, this determines the type of
@@ -765,7 +765,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
             implies that ``precision == recall == F1``.
         weighted:
             Average weighted by support (takes imbalance into account).  Can
-            result in F1 score that is not between precision and recall.
+            result in F-score that is not between precision and recall.
 
     Returns
     -------
@@ -835,8 +835,8 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     pos_label : int
         In the binary classification case, give the label of the positive class
         (default is 1). Everything else but ``pos_label`` is considered to
-        belong to the negative class.  Set to None in the case of multiclass
-        classification.
+        belong to the negative class.  Set to ``None`` in the case of
+        multiclass classification.
 
     average : string, [None, 'micro', 'macro', 'weighted' (default)]
         In the multiclass classification case, this determines the type of
@@ -846,10 +846,10 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
             Average over classes (does not take imbalance into account).
         micro:
             Average over instances (takes imbalance into account).  This
-            implies that ``precision == recall == F-beta``.
+            implies that ``precision == recall == F1``.
         weighted:
             Average weighted by support (takes imbalance into account).  Can
-            result in F score that is not between precision and recall.
+            result in F-score that is not between precision and recall.
 
     Returns
     -------
@@ -948,8 +948,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     pos_label : int
         In the binary classification case, give the label of the positive class
         (default is 1). Everything else but ``pos_label`` is considered to
-        belong to the negative class.  Set to ``None`` in the case of multiclass
-        classification.
+        belong to the negative class.  Set to ``None`` in the case of
+        multiclass classification.
 
     average : string, [None, 'micro', 'macro', 'weighted' (default)]
         In the multiclass classification case, this determines the type of
@@ -1115,25 +1115,24 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
         belong to the negative class.  Set to ``None`` in the case of
         multiclass classification.
 
-    average : string, [None, 'micro', 'macro', 'weighted'(default)]
+    average : string, [None, 'micro', 'macro', 'weighted' (default)]
         In the multiclass classification case, this determines the type of
         averaging performed on the data.
 
         macro:
             Average over classes (does not take imbalance into account).
         micro:
-            Average over instances (takes imbalance into account).
-            This implies that ``precision == recall == F1``.
+            Average over instances (takes imbalance into account).  This
+            implies that ``precision == recall == F1``.
         weighted:
-            Average weighted by support (takes imbalance into account).
-            Can result in F-score that is not between precision and recall.
+            Average weighted by support (takes imbalance into account).  Can
+            result in F-score that is not between precision and recall.
 
     Returns
     -------
     precision : float
-        Precision of the positive class in binary classification or
-        weighted average of the precision of each class for the
-        multiclass task.
+        Precision of the positive class in binary classification or weighted
+        average of the precision of each class for the multiclass task.
 
     Examples
     --------
@@ -1201,11 +1200,11 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
         macro:
             Average over classes (does not take imbalance into account).
         micro:
-            Average over instances (takes imbalance into account).
-            This implies that ``precision == recall == F1``.
+            Average over instances (takes imbalance into account).  This
+            implies that ``precision == recall == F1``.
         weighted:
-            Average weighted by support (takes imbalance into account).
-            Can result in F-score that is not between precision and recall.
+            Average weighted by support (takes imbalance into account).  Can
+            result in F-score that is not between precision and recall.
 
     Returns
     -------
