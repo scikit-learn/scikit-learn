@@ -1,6 +1,6 @@
 import numpy as np
 
-from . import (r2_score, mean_squared_error, zero_one_score, f1_score,
+from . import (r2_score, mean_squared_error, accuracy_score, f1_score,
                auc_score, average_precision_score, precision_score,
                recall_score)
 
@@ -88,7 +88,7 @@ R2Scorer = AsScorer(r2_score)
 MSEScorer = AsScorer(mean_squared_error, greater_is_better=False)
 
 # Standard Classification Scores
-ZeroOneScorer = AsScorer(zero_one_score)
+AccuracyScorer = AsScorer(accuracy_score)
 F1Scorer = AsScorer(f1_score)
 
 # Score functions that need decision values
@@ -101,6 +101,7 @@ RecallScorer = AsScorer(recall_score)
 # Clustering scores
 ARIScorer = AsScorer(adjusted_rand_score)
 
-scorers = dict(r2=R2Scorer, mse=MSEScorer, zero_one=ZeroOneScorer, f1=F1Scorer,
-               roc_auc=AUCScorer, average_precision=AveragePrecisionScorer,
+scorers = dict(r2=R2Scorer, mse=MSEScorer, accuracy=AccuracyScorer,
+               f1=F1Scorer, roc_auc=AUCScorer,
+               average_precision=AveragePrecisionScorer,
                precision=PrecisionScorer, recall=RecallScorer, ari=ARIScorer)
