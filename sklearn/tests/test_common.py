@@ -17,7 +17,7 @@ from scipy import sparse
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
-#from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import all_estimators
@@ -757,14 +757,10 @@ def test_estimators_overwrite_params():
             est.fit(X, y)
             new_params = est.get_params()
             for k, v in params.items():
-                #assert_false(np.any(new_params[k] != v),
-                             #"Estimator %s changes its parameter %s"
-                             #"from %s to %s during fit."
-                             #% (name, k, v, new_params[k]))
-                if np.any(new_params[k] != v):
-                    print("%s changes %s"
-                          " from %s to %s during fit."
-                          % (name, k, v, new_params[k]))
+                assert_false(np.any(new_params[k] != v),
+                             "Estimator %s changes its parameter %s"
+                             "from %s to %s during fit."
+                             % (name, k, v, new_params[k]))
 
 
 def test_cluster_overwrite_params():
@@ -781,11 +777,7 @@ def test_cluster_overwrite_params():
         clt.fit(X)
         new_params = clt.get_params()
         for k, v in params.items():
-            #assert_false(np.any(new_params[k] != v),
-                         #"Estimator %s changes its parameter %s"
-                         #"from %s to %s during fit."
-                         #% (name, k, v, new_params[k]))
-            if np.any(new_params[k] != v):
-                print("%s changes %s"
-                      " from %s to %s during fit."
-                      % (name, k, v, new_params[k]))
+            assert_false(np.any(new_params[k] != v),
+                         "Estimator %s changes its parameter %s"
+                         "from %s to %s during fit."
+                         % (name, k, v, new_params[k]))
