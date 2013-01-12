@@ -307,7 +307,7 @@ class KNeighborsMixin(object):
         --------
         NearestNeighbors.radius_neighbors_graph
         """
-        X = np.asarray(X)
+        X = safe_asarray(X)
 
         if n_neighbors is None:
             n_neighbors = self.n_neighbors
@@ -516,7 +516,7 @@ class RadiusNeighborsMixin(object):
         --------
         kneighbors_graph
         """
-        X = np.asarray(X)
+        X = safe_asarray(X)
 
         if radius is None:
             radius = self.radius
