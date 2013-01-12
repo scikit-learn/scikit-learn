@@ -190,7 +190,7 @@ def _partition_features(forest, n_total_features):
         n_jobs = min(forest.n_jobs, n_total_features)
 
     # Partition features between jobs
-    n_features = [n_total_features / n_jobs] * n_jobs
+    n_features = [int(n_total_features / n_jobs)] * n_jobs
 
     for i in xrange(n_total_features % n_jobs):
         n_features[i] += 1
