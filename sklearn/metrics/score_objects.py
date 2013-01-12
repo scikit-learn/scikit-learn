@@ -11,7 +11,7 @@ class AsScorer(object):
     """Flexible scores for any estimator.
 
     This class wraps estimator scoring functions for the use in GridSearchCV
-    and cross_val_score. It takes a score function, such as ``zero_one_score``,
+    and cross_val_score. It takes a score function, such as ``accuracy_score``,
     ``mean_squared_error``, ``adjusted_rand_index`` or ``average_precision``
     and provides a call method.
 
