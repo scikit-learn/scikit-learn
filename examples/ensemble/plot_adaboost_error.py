@@ -17,10 +17,10 @@ from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.datasets.samples_generator import make_gaussian_quantiles
 
-X, y = make_gaussian_quantiles(n_samples=2000, n_features=10,
-                               n_classes=3)
+X, y = make_gaussian_quantiles(n_samples=13000, n_features=10,
+                               n_classes=3, random_state=1)
 
-n_split = 1000
+n_split = 3000
 
 X_train, X_test = X[:n_split], X[n_split:]
 y_train, y_test = y[:n_split], y[n_split:]
@@ -28,8 +28,8 @@ y_train, y_test = y[:n_split], y[n_split:]
 test_errors = []
 train_errors = []
 
-bdt = AdaBoostClassifier(DecisionTreeClassifier(min_samples_leaf=100),
-                         n_estimators=100, learning_rate=.05)
+bdt = AdaBoostClassifier(DecisionTreeClassifier(max_depth=2),
+                         n_estimators=600, learning_rate=1)
 
 bdt.fit(X_train, y_train)
 
@@ -43,29 +43,23 @@ for y_test_predict, y_train_predict in izip(bdt.staged_predict(X_test),
 
 n_trees = xrange(1, len(bdt) + 1)
 
-pl.figure(figsize=(15, 5))
+pl.figure(figsize=(10, 5))
 
-pl.subplot(1, 3, 1)
+pl.subplot(1, 2, 1)
 pl.plot(n_trees, test_errors, "b", label='test')
 pl.plot(n_trees, train_errors, "r", label='train')
 pl.legend()
+pl.ylim(0.18, 0.62)
 pl.ylabel('Error')
 pl.xlabel('Number of Trees')
 
-pl.subplot(1, 3, 2)
+pl.subplot(1, 2, 2)
 pl.plot(n_trees, bdt.errors_, "b")
 pl.ylabel('Error')
 pl.xlabel('Tree')
 pl.ylim((.2, max(bdt.errors_) * 1.2))
 pl.xlim((-20, len(bdt) + 20))
 
-pl.subplot(1, 3, 3)
-pl.plot(n_trees, bdt.weights_, "b")
-pl.ylabel('Weight')
-pl.xlabel('Tree')
-pl.ylim((0, max(bdt.weights_) * 1.2))
-pl.xlim((-20, len(bdt) + 20))
-
 # prevent overlapping y-axis labels
-pl.subplots_adjust(wspace=0.4)
+pl.subplots_adjust(wspace=0.25)
 pl.show()
