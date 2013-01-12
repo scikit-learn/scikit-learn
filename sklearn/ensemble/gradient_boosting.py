@@ -524,7 +524,13 @@ class BaseGradientBoosting(BaseEnsemble):
         if self.loss not in LOSS_FUNCTIONS:
             raise ValueError("Loss '%s' not supported. " % self.loss)
 
-        loss_class = LOSS_FUNCTIONS[self.loss]
+        if self.loss == 'deviance':
+            loss_class = (MultinomialDeviance
+                          if len(self.classes_) > 2
+                          else BinomialDeviance)
+        else:
+            loss_class = LOSS_FUNCTIONS[self.loss]
+
         if self.loss in ('huber', 'quantile'):
             self.loss_ = loss_class(self.n_classes_, self.alpha)
         else:
@@ -540,9 +546,11 @@ class BaseGradientBoosting(BaseEnsemble):
             raise ValueError("subsample must be in (0,1]")
 
         if self.max_features is None:
-            self.max_features = n_features
+            max_features = n_features
+        else:
+            max_features = self.max_features
 
-        if not (0 < self.max_features <= n_features):
+        if not (0 < max_features <= n_features):
             raise ValueError("max_features must be in (0, n_features]")
 
         if self.max_depth <= 0:
@@ -552,8 +560,9 @@ class BaseGradientBoosting(BaseEnsemble):
             if (not hasattr(self.init, 'fit')
                     or not hasattr(self.init, 'predict')):
                 raise ValueError("init must be valid estimator")
+            self.init_ = self.init
         else:
-            self.init = self.loss_.init_estimator()
+            self.init_ = self.loss_.init_estimator()
 
         if not (0.0 < self.alpha and self.alpha < 1.0):
             raise ValueError("alpha must be in (0.0, 1.0)")
@@ -568,10 +577,10 @@ class BaseGradientBoosting(BaseEnsemble):
             np.argsort(X.T, axis=1).astype(np.int32).T)
 
         # fit initial model
-        self.init.fit(X, y)
+        self.init_.fit(X, y)
 
         # init predictions
-        y_pred = self.init.predict(X)
+        y_pred = self.init_.predict(X)
 
         self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
                                     dtype=np.object)
@@ -629,7 +638,7 @@ class BaseGradientBoosting(BaseEnsemble):
         if X.shape[1] != self.n_features:
             raise ValueError("X.shape[1] should be %d, not %d." %
                              (self.n_features, X.shape[1]))
-        score = self.init.predict(X).astype(np.float64)
+        score = self.init_.predict(X).astype(np.float64)
         return score
 
     def decision_function(self, X):
@@ -838,8 +847,6 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         self.classes_ = np.unique(y)
         self.n_classes_ = len(self.classes_)
         y = np.searchsorted(self.classes_, y)
-        if self.loss == 'deviance':
-            self.loss = 'mdeviance' if len(self.classes_) > 2 else 'bdeviance'
 
         return super(GradientBoostingClassifier, self).fit(X, y)
 
