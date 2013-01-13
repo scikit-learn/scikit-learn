@@ -146,12 +146,6 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.positive = positive
         self.intercept_ = 0.0
 
-    @property
-    @deprecated("rho was renamed to l1_ratio and will be removed "
-                "in 0.15")
-    def rho(self):
-        return self.l1_ratio
-
     def fit(self, X, y, Xy=None, coef_init=None):
         """Fit model with coordinate descent
 
@@ -1037,10 +1031,10 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.n_jobs = n_jobs
 
     @property
-    @deprecated("rho was renamed to l1_ratio and will be removed "
+    @deprecated("rho was renamed to l1_ratio_ and will be removed "
                 "in 0.15")
     def rho(self):
-        return self.l1_ratio
+        return self.l1_ratio_
 
 
 ###############################################################################
