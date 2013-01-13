@@ -195,7 +195,7 @@ class BaseLibSVM(BaseEstimator):
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function. Use self._intercept_ internally.
         self._intercept_ = self.intercept_.copy()
-        if len(self.label_) == 2 and self.impl != 'one_class':
+        if self.impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
             self.intercept_ *= -1
         return self
 
@@ -223,7 +223,7 @@ class BaseLibSVM(BaseEstimator):
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
         self.support_, self.support_vectors_, self.n_support_, \
-            self.dual_coef_, self.intercept_, self.label_, self.probA_, \
+            self.dual_coef_, self.intercept_, self._label, self.probA_, \
             self.probB_, self.fit_status_ = libsvm.fit(
                 X, y,
                 svm_type=solver_type, sample_weight=sample_weight,
@@ -244,7 +244,7 @@ class BaseLibSVM(BaseEstimator):
 
         libsvm_sparse.set_verbosity_wrap(self.verbose)
 
-        self.support_vectors_, dual_coef_data, self.intercept_, self.label_, \
+        self.support_vectors_, dual_coef_data, self.intercept_, self._label, \
             self.n_support_, self.probA_, self.probB_, self.fit_status_ = \
             libsvm_sparse.libsvm_sparse_train(
                 X.shape[1], X.data, X.indices, X.indptr, y, solver_type,
@@ -255,7 +255,7 @@ class BaseLibSVM(BaseEstimator):
 
         self._warn_from_fit_status()
 
-        n_class = len(self.label_) - 1
+        n_class = len(self._label) - 1
         n_SV = self.support_vectors_.shape[0]
 
         dual_coef_indices = np.tile(np.arange(n_SV), n_class)
@@ -311,7 +311,7 @@ class BaseLibSVM(BaseEstimator):
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self._intercept_,
-            self.label_, self.probA_, self.probB_,
+            self._label, self.probA_, self.probB_,
             svm_type=svm_type,
             kernel=kernel, C=C, nu=self.nu,
             probability=self.probability, degree=self.degree,
@@ -339,7 +339,7 @@ class BaseLibSVM(BaseEstimator):
             self.degree, self._gamma, self.coef0, self.tol,
             C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
-            self.probability, self.n_support_, self.label_,
+            self.probability, self.n_support_, self._label,
             self.probA_, self.probB_)
 
     def _compute_kernel(self, X):
@@ -380,7 +380,7 @@ class BaseLibSVM(BaseEstimator):
 
         dec_func = libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,
-            self.dual_coef_, self._intercept_, self.label_,
+            self.dual_coef_, self._intercept_, self._label,
             self.probA_, self.probB_,
             svm_type=LIBSVM_IMPL.index(self.impl),
             kernel=kernel, C=C, nu=self.nu,
@@ -390,7 +390,7 @@ class BaseLibSVM(BaseEstimator):
 
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function.
-        if len(self.label_) == 2 and self.impl != 'one_class':
+        if self.impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
             return -dec_func
 
         return dec_func
@@ -447,6 +447,12 @@ class BaseLibSVM(BaseEstimator):
             # regular dense array
             coef.flags.writeable = False
         return coef
+
+    @property
+    @deprecated("The ``labels_`` attribute has been renamed to ``classes_`` "
+                "for consistency and will be removed in 0.15.")
+    def label_(self):
+        return self.classes_
 
 
 class BaseSVC(BaseLibSVM, ClassifierMixin):
@@ -527,7 +533,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         svm_type = LIBSVM_IMPL.index(self.impl)
         pprob = libsvm.predict_proba(
             X, self.support_, self.support_vectors_, self.n_support_,
-            self.dual_coef_, self._intercept_, self.label_,
+            self.dual_coef_, self._intercept_, self._label,
             self.probA_, self.probB_,
             svm_type=svm_type, kernel=kernel, C=C, nu=self.nu,
             probability=self.probability, degree=self.degree,
@@ -555,7 +561,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             self.degree, self._gamma, self.coef0, self.tol,
             self.C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
-            self.probability, self.n_support_, self.label_,
+            self.probability, self.n_support_, self._label,
             self.probA_, self.probB_)
 
 
