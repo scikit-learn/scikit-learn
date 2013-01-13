@@ -18,9 +18,10 @@ from sklearn.datasets import make_classification
 X, y = make_classification(n_samples=1000,
                            n_features=2,
                            n_classes=2,
+                           n_clusters_per_class=1,
                            n_informative=2,
                            n_redundant=0,
-                           random_state=0)
+                           random_state=1)
 
 bdt = AdaBoostClassifier()
 
@@ -41,7 +42,7 @@ norm = sum(bdt.weights_)
 for weight, tree in zip(bdt.weights_, bdt.estimators_):
     Z = tree.predict(np.c_[xx.ravel(), yy.ravel()])
     Z = Z.reshape(xx.shape)
-    cs = pl.contourf(xx, yy, Z, alpha=weight / norm, cmap=pl.cm.Paired)
+    cs = pl.contourf(xx, yy, Z, alpha=0.2, cmap=pl.cm.Paired)
 pl.axis("tight")
 
 # Plot the training points
