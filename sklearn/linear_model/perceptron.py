@@ -101,4 +101,4 @@ class Perceptron(BaseSGDClassifier, SelectorMixin):
                                          power_t=0.5,
                                          warm_start=warm_start,
                                          class_weight=class_weight,
-                                         n_jobs=n_jobs, seed=None)
+                                         n_jobs=n_jobs, seed=seed)
