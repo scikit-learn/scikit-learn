@@ -38,6 +38,7 @@ from .cluster import (adjusted_rand_score,
                       mutual_info_score,
                       normalized_mutual_info_score,
                       silhouette_score,
+                      silhouette_samples,
                       v_measure_score)
 
 
@@ -77,5 +78,6 @@ __all__ = ['accuracy_score',
            'recall_score',
            'roc_curve',
            'silhouette_score',
+           'silhouette_samples',
            'v_measure_score',
            'zero_one_loss']
