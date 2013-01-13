@@ -566,12 +566,13 @@ cdef class Tree:
         cdef int max_features = self.max_features
         cdef int min_samples_leaf = self.min_samples_leaf
         cdef object random_state = self.random_state
+        cdef int n_cuts = 20
 
-        cdef int i, a, b, best_i = -1
+        cdef int i, a, b, c, best_i = -1
         cdef np.int32_t feature_idx = -1
         cdef int n_left = 0
 
-        cdef double t, initial_error, error
+        cdef double t, initial_error, error, cut
         cdef double best_error = INFINITY, best_t = INFINITY
 
         cdef np.ndarray[DTYPE_t, ndim=1, mode="c"] X_copy = X[:, 0].copy()
@@ -639,37 +640,81 @@ cdef class Tree:
             # Index of smallest sample in X_argsorted_i that is in the sample mask
             a = 0
 
-            # Consider splits between two consecutive samples
-            while True:
-                # Find the following larger sample
-                b = _smallest_sample_larger_than(a, X_i_ptr, X_argsorted_i_ptr, n_samples)
-                if b == -1:
-                    break
+            if n_samples < 100:
+                n_cuts = -1
 
-                # Better split than the best so far?
-                n_left = criterion.update(a, b, y_ptr, y_stride, X_argsorted_i_ptr)
-
-                # Only consider splits that respect min_leaf
-                if n_left < min_samples_leaf or (n_samples - n_left) < min_samples_leaf:
-                    a = b
-                    continue
-
-                error = criterion.eval()
-
-                if error < best_error:
-                    X_a = X_i_ptr[X_argsorted_i_ptr[a]]
-                    X_b = X_i_ptr[X_argsorted_i_ptr[b]]
-
-                    t = X_a + (X_b - X_a) / 2.0
+            if n_cuts == -1:
+ 
+                # Consider splits between two consecutive samples, checking every possible cut
+                while True:
+                    # Find the following larger sample
+                    
+                    b = _smallest_sample_larger_than(a, X_i_ptr, X_argsorted_i_ptr, n_samples)
+                    if b == -1:
+                        break
+    
+    
+                    # Better split than the best so far?
+                    n_left = criterion.update(a, b, y_ptr, y_stride, X_argsorted_i_ptr)
+    
+                    # Only consider splits that respect min_leaf
+                    if n_left < min_samples_leaf or (n_samples - n_left) < min_samples_leaf:
+                        a = b
+                        continue
+    
+                    error = criterion.eval()
+    
+                    if error < best_error:
+                        X_a = X_i_ptr[X_argsorted_i_ptr[a]]
+                        X_b = X_i_ptr[X_argsorted_i_ptr[b]]
+    
+                        t = X_a + (X_b - X_a) / 2.0
+                        if t == X_b:
+                            t = X_a
+    
+                        best_i = i
+                        best_t = t
+                        best_error = error
+    
+                    # Proceed to the next interval
+                    a = b           
+            
+            else:
+ 
+                X_a = X_i_ptr[X_argsorted_i_ptr[a]]
+    
+                b = n_samples - 1
+                X_b = X_i_ptr[X_argsorted_i_ptr[b]]
+                    
+                for cut from 0 <= cut < n_cuts:
+                    # move to the next cut
+                    t = X_a + (cut/n_cuts * (X_b - X_a))
                     if t == X_b:
                         t = X_a
+        
+                    # Find the sample just greater than t
+                    c = a + 1
+        
+                    while True:
+                        if c >= b or X_i_ptr[X_argsorted_i_ptr[c]] > (<DTYPE_t> t):
+                            break
+        
+                        c += 1            
+            
+                    # Better than the best so far?
+                    n_left = criterion.update(a, c, y_ptr, y_stride, X_argsorted_i_ptr)
+                    error = criterion.eval()
+        
+                    if n_left < min_samples_leaf or (n_samples - n_left) < min_samples_leaf:
+                        continue
+        
+                    if error < best_error:
+                        best_i = i
+                        best_t = t
+                        best_error = error                        
 
-                    best_i = i
-                    best_t = t
-                    best_error = error
-
-                # Proceed to the next interval
-                a = b
+                    # proceed to next interval
+                    a = c
 
         _best_i[0] = best_i
         _best_t[0] = best_t
