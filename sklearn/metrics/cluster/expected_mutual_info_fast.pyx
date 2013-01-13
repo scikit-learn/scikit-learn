@@ -13,6 +13,8 @@ cimport numpy as np
 cimport cython
 from sklearn.utils.lgamma cimport lgamma
 
+np.import_array()
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)

@@ -417,7 +417,7 @@ structure of the error covariance :math:`\Psi`:
 Both model essentially estimate a Gaussian with a low-rank covariance matrix.
 Because both models are probilistic they can be integrated in more complex
 models, e.g. Mixture of Factor Analysers. One gets very different models (e.g.
-:class:`ICA`) if non-Gaussian priors on the latent variables are assumed.
+:class:`FastICA`) if non-Gaussian priors on the latent variables are assumed.
 
 Factor Analysis `can` produce similar components (the columns of its loading
 matrix) to :class:`PCA`. However, one can not make any general statements
@@ -526,9 +526,9 @@ recommended in the dense case.
 passing an integer seed or a `RandomState` to :attr:`init`.
 
 In :class:`NMF`, sparseness can be enforced by setting the attribute
-:attr:`sparseness` to `data` or `components`. Sparse components lead to
-localized features, and sparse data leads to a more efficient representation
-of the data.
+:attr:`sparseness` to ``"data"`` or ``"components"``. Sparse components lead to
+localized features, and sparse data leads to a more efficient representation of
+the data.
 
 .. topic:: Examples:
 

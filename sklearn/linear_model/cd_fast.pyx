@@ -5,21 +5,23 @@
 #
 # License: BSD Style.
 
+from libc.math cimport fabs, sqrt
 cimport numpy as np
 import numpy as np
 import numpy.linalg as linalg
+
 cimport cython
 from cpython cimport bool
 import warnings
 
-cdef extern from "math.h":
-    double fabs(double f)
-    double sqrt(double f)
+np.import_array()
+
 
 cdef inline double fmax(double x, double y):
     if x > y:
         return x
     return y
+
 
 cdef inline double fsign(double f):
     if f == 0:
@@ -28,6 +30,7 @@ cdef inline double fsign(double f):
         return 1.0
     else:
         return -1.0
+
 
 cdef extern from "cblas.h":
     enum CBLAS_ORDER:
