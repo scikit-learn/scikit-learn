@@ -17,7 +17,7 @@ from scipy import sparse
 from .base import LinearModel
 from ..base import RegressorMixin
 from .base import sparse_center_data, center_data
-from ..utils import array2d, atleast2d_or_csc
+from ..utils import array2d, atleast2d_or_csc, deprecated
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 from ..utils.extmath import safe_sparse_dot
@@ -145,6 +145,12 @@ class ElasticNet(LinearModel, RegressorMixin):
         self.warm_start = warm_start
         self.positive = positive
         self.intercept_ = 0.0
+
+    @property
+    @deprecated("rho was renamed to l1_ratio and will be removed "
+                "in 0.15")
+    def rho(self):
+        return self.l1_ratio
 
     def fit(self, X, y, Xy=None, coef_init=None):
         """Fit model with coordinate descent
@@ -1029,6 +1035,12 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.copy_X = copy_X
         self.verbose = verbose
         self.n_jobs = n_jobs
+
+    @property
+    @deprecated("rho was renamed to l1_ratio and will be removed "
+                "in 0.15")
+    def rho(self):
+        return self.l1_ratio
 
 
 ###############################################################################
