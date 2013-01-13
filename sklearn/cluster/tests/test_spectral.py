@@ -57,7 +57,7 @@ def test_spectral_lobpcg_mode():
         [10., 10.],
     ])
     X, true_labels = make_blobs(n_samples=100, centers=centers,
-                                cluster_std=1., random_state=42)
+                                cluster_std=.1, random_state=42)
     D = pairwise_distances(X)  # Distance matrix
     S = np.max(D) - D  # Similarity matrix
     labels = spectral_clustering(S, n_clusters=len(centers),
