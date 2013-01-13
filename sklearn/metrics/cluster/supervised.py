@@ -188,7 +188,7 @@ def adjusted_rand_score(labels_true, labels_pred):
 
 
 def homogeneity_completeness_v_measure(labels_true, labels_pred):
-    """Compute the homogeneity and completeness and V-measure scores at once
+    """Compute the homogeneity and completeness and V-Measure scores at once
 
     Those metrics are based on normalized conditional entropy measures of
     the clustering labeling to evaluate given the knowledge of a Ground
@@ -464,7 +464,7 @@ def v_measure_score(labels_true, labels_pred):
 
     Labelings that have pure clusters with members coming from the same
     classes are homogeneous but un-necessary splits harms completeness
-    and thus penalize V-measure as well::
+    and thus penalize V-Measure as well::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 1, 2]))
       ...                                                  # doctest: +ELLIPSIS
@@ -474,7 +474,7 @@ def v_measure_score(labels_true, labels_pred):
       0.66...
 
     If classes members are completly splitted across different clusters,
-    the assignment is totally in-complete, hence the v-measure is null::
+    the assignment is totally incomplete, hence the V-Measure is null::
 
       >>> print("%.6f" % v_measure_score([0, 0, 0, 0], [0, 1, 2, 3]))
       ...                                                  # doctest: +ELLIPSIS

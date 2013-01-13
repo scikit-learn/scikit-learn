@@ -61,6 +61,8 @@ def auc(x, y, reorder=False):
     auc_score Computes the area under the ROC curve
 
     """
+    # XXX: Consider using  ``scipy.integrate`` instead, or moving to
+    # ``utils.extmath``
     x, y = check_arrays(x, y)
     if x.shape[0] < 2:
         raise ValueError('At least 2 points are needed to compute'
@@ -758,18 +760,20 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
         In the multiclass classification case, this determines the type of
         averaging performed on the data.
 
-        macro:
+        None:
+            Do not perform any averaging, return the score for each class.
+        'macro':
             Average over classes (does not take imbalance into account).
-        micro:
+        'micro':
             Average over instances (takes imbalance into account).  This
             implies that ``precision == recall == F1``.
-        weighted:
+        'weighted':
             Average weighted by support (takes imbalance into account).  Can
             result in F-score that is not between precision and recall.
 
     Returns
     -------
-    f1_score : float
+    f1_score : float or array of float, shape = [n_unique_labels]
         F1 score of the positive class in binary classification or weighted
         average of the F1 scores of each class for the multiclass task.
 
@@ -842,18 +846,22 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
         In the multiclass classification case, this determines the type of
         averaging performed on the data.
 
-        macro:
+        ``None``:
+            Do not perform any averaging, return the scores for each class.
+        ``'macro'``:
             Average over classes (does not take imbalance into account).
-        micro:
+        ``'micro'``:
             Average over instances (takes imbalance into account).  This
             implies that ``precision == recall == F1``.
-        weighted:
+        ``'weighted'``:
             Average weighted by support (takes imbalance into account).  Can
             result in F-score that is not between precision and recall.
+            Do not perform any averaging, return the score for each class.
 
     Returns
     -------
-    fbeta_score : float
+    fbeta_score : float (if average is not None) or array of float, shape =\
+        [n_unique_labels]
         F-beta score of the positive class in binary classification or weighted
         average of the F-beta score of each class for the multiclass task.
 
@@ -951,28 +959,34 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         belong to the negative class.  Set to ``None`` in the case of
         multiclass classification.
 
-    average : string, [None, 'micro', 'macro', 'weighted' (default)]
+    average : string, [None (default), 'micro', 'macro', 'weighted']
         In the multiclass classification case, this determines the type of
         averaging performed on the data.
 
-        macro:
+        ``None``:
+            Do not perform any averaging, return the scores for each class.
+        ``'macro'``:
             Average over classes (does not take imbalance into account).
-        micro:
+        ``'micro'``:
             Average over instances (takes imbalance into account).  This
             implies that ``precision == recall == F1``.
-        weighted:
+        ``'weighted'``:
             Average weighted by support (takes imbalance into account).  Can
             result in F-score that is not between precision and recall.
 
     Returns
     -------
-    precision: array, shape = [n_unique_labels], dtype = np.double
+    precision: float (if average is not None) or array of float, shape =\
+        [n_unique_labels]
 
-    recall: array, shape = [n_unique_labels], dtype = np.double
+    recall: float (if average is not None) or array of float, , shape =\
+        [n_unique_labels]
 
-    f1_score: array, shape = [n_unique_labels], dtype = np.double
+    f1_score: float (if average is not None) or array of float, shape =\
+        [n_unique_labels]
 
-    support: array, shape = [n_unique_labels], dtype = np.long
+    support: int (if average is not None) or array of int, shape =\
+        [n_unique_labels]
 
     References
     ----------
@@ -1119,18 +1133,21 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
         In the multiclass classification case, this determines the type of
         averaging performed on the data.
 
-        macro:
+        ``None``:
+            Do not perform any averaging, return the scores for each class.
+        ``'macro'``:
             Average over classes (does not take imbalance into account).
-        micro:
+        ``'micro'``:
             Average over instances (takes imbalance into account).  This
             implies that ``precision == recall == F1``.
-        weighted:
+        ``'weighted'``:
             Average weighted by support (takes imbalance into account).  Can
             result in F-score that is not between precision and recall.
 
     Returns
     -------
-    precision : float
+    precision : float (if average is not None) or array of float, shape =\
+        [n_unique_labels]
         Precision of the positive class in binary classification or weighted
         average of the precision of each class for the multiclass task.
 
@@ -1197,18 +1214,21 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
         In the multiclass classification case, this determines the type of
         averaging performed on the data.
 
-        macro:
+        ``None``:
+            Do not perform any averaging, return the scores for each class.
+        ``'macro'``:
             Average over classes (does not take imbalance into account).
-        micro:
+        ``'micro'``:
             Average over instances (takes imbalance into account).  This
             implies that ``precision == recall == F1``.
-        weighted:
+        ``'weighted'``:
             Average weighted by support (takes imbalance into account).  Can
             result in F-score that is not between precision and recall.
 
     Returns
     -------
-    recall : float
+    recall : float (if average is not None) or array of float, shape =\
+        [n_unique_labels]
         Recall of the positive class in binary classification or weighted
         average of the recall of each class for the multiclass task.
 
