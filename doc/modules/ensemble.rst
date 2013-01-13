@@ -291,20 +291,15 @@ learners::
     >>> from sklearn.ensemble import AdaBoostClassifier
 
     >>> iris = load_iris()
-    >>> clf = AdaBoostClassifier(n_estimators=100, learning_rate=0.01)
+    >>> clf = AdaBoostClassifier(n_estimators=100)
     >>> scores = cross_val_score(clf, iris.data, iris.target)
     >>> scores.mean()                             # doctest: +ELLIPSIS
-    0.959...
+    0.933...
 
 The number of weak learners is controlled by the parameter ``n_estimators``. The
 ``learning_rate`` parameter controls the contribution of the weak learners in
-the final combination. As with
-:ref:`Gradient Tree Boosting <gradient_boosting>`, a good practice is to use
-many weak learners with a small learning rate (e.g., ``learning_rate <= 0.1``).
-Empirical evidence indeed suggests that small values of ``learning_rate`` favor
-better test error. By default, weak learners are decision trees of
-``max_depth=3``. Different weak learners can be specified through the
-``base_estimator`` parameter.
+the final combination. By default, weak learners are decision stumps. Different
+weak learners can be specified through the ``base_estimator`` parameter.
 
 .. topic:: Examples:
 
