@@ -28,8 +28,10 @@ y_train, y_test = y[:n_split], y[n_split:]
 test_errors = []
 train_errors = []
 
-bdt = AdaBoostClassifier(DecisionTreeClassifier(max_depth=2),
-                         n_estimators=600, learning_rate=1)
+bdt = AdaBoostClassifier(
+    DecisionTreeClassifier(max_depth=2),
+    n_estimators=600,
+    learning_rate=1)
 
 bdt.fit(X_train, y_train)
 
@@ -49,7 +51,7 @@ pl.subplot(1, 2, 1)
 pl.plot(n_trees, test_errors, "b", label='test')
 pl.plot(n_trees, train_errors, "r", label='train')
 pl.legend()
-pl.ylim(0.18, 0.62)
+pl.ylim(0., 0.62)
 pl.ylabel('Error')
 pl.xlabel('Number of Trees')
 

@@ -379,7 +379,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         # boost weight using multi-class AdaBoost SAMME.R alg
         weight = -1. * self.learning_rate * (
             ((n_classes - 1.) / n_classes) *
-            inner1d(y_coding, np.log(y_predict_proba + 1e-200)))
+            inner1d(y_coding, np.log(y_predict_proba + 1e-10)))
 
         # only boost the weights if I will fit again
         if not iboost == self.n_estimators - 1:
@@ -515,7 +515,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                 break
 
             if self.real:
-                current_pred = estimator.predict_proba(X) + 1e-200
+                current_pred = estimator.predict_proba(X) + 1e-10
                 current_pred = (n_classes - 1) * (
                     np.log(current_pred) -
                     (1. / n_classes) *
@@ -579,7 +579,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                 break
 
             if self.real:
-                current_pred = estimator.predict_proba(X) + 1e-200
+                current_pred = estimator.predict_proba(X) + 1e-10
                 current_pred = (n_classes - 1) * (
                     np.log(current_pred) -
                     (1. / n_classes) *
