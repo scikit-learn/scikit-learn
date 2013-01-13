@@ -8,7 +8,7 @@ from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils import atleast2d_or_csr, array2d, check_random_state
-from ..utils import ConvergenceWarning, compute_class_weight
+from ..utils import ConvergenceWarning, compute_class_weight, deprecated
 from ..utils.fixes import unique
 from ..utils.extmath import safe_sparse_dot
 
@@ -700,6 +700,12 @@ class BaseLibLinear(BaseEstimator):
 
     @property
     def classes_(self):
+        return self._enc.classes_
+
+    @property
+    @deprecated("The ``labels_`` attribute has been renamed to ``classes_`` "
+                "for consistency and will be removed in 0.15.")
+    def label_(self):
         return self._enc.classes_
 
     def _get_bias(self):
