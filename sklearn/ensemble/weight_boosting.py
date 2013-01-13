@@ -625,14 +625,10 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The class probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
-        if not self.real:
-            raise TypeError(
-                "Prediction of class probabilities is only supported with the "
-                "real AdaBoost algorithm (``real=True``)")
-
         if n_estimators == 0:
             raise ValueError("``n_estimators`` must not equal zero")
 
+        n_classes = self.n_classes_
         proba = None
 
         for i, (weight, estimator) in enumerate(
@@ -641,13 +637,18 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             if i == n_estimators:
                 break
 
-            current_proba = estimator.predict_proba(X)
+            current_proba = estimator.predict_proba(X) + 1e-10
+            current_proba = (n_classes - 1) * (
+                np.log(current_proba) -
+                (1. / n_classes) *
+                np.log(current_proba).sum(axis=1)[:, np.newaxis])
 
             if proba is None:
                 proba = current_proba
             else:
                 proba += current_proba
 
+        proba = np.exp((1. / (n_classes - 1)) * proba)
         normalizer = proba.sum(axis=1)[:, np.newaxis]
         normalizer[normalizer == 0.0] = 1.0
         proba /= normalizer
@@ -684,14 +685,10 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The class probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
-        if not self.real:
-            raise TypeError(
-                "Prediction of class probabilities is only supported with the "
-                "real AdaBoost algorithm (``real=True``)")
-
         if n_estimators == 0:
             raise ValueError("``n_estimators`` must not equal zero")
 
+        n_classes = self.n_classes_
         proba = None
 
         for i, (weight, estimator) in enumerate(
@@ -700,17 +697,23 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             if i == n_estimators:
                 break
 
-            current_proba = estimator.predict_proba(X)
+            current_proba = estimator.predict_proba(X) + 1e-10
+            current_proba = (n_classes - 1) * (
+                np.log(current_proba) -
+                (1. / n_classes) *
+                np.log(current_proba).sum(axis=1)[:, np.newaxis])
 
             if proba is None:
                 proba = current_proba
             else:
                 proba += current_proba
 
-            normalizer = proba.sum(axis=1)[:, np.newaxis]
+            real_proba = np.exp((1. / (n_classes - 1)) * proba)
+            normalizer = real_proba.sum(axis=1)[:, np.newaxis]
             normalizer[normalizer == 0.0] = 1.0
+            real_proba /= normalizer
 
-            yield proba / normalizer
+            yield real_proba
 
     def predict_log_proba(self, X, n_estimators=-1):
         """Predict class log-probabilities for X.

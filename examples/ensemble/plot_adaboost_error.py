@@ -5,7 +5,7 @@ Testing and Training Error with Boosting
 
 This example shows the use of boosting to improve prediction accuracy. The
 error on the test and training sets after each boosting iteration is plotted on
-the left. The boost weights and error of each tree are also shown.
+the left. The classification error of each tree is shown on the right.
 """
 print __doc__
 
