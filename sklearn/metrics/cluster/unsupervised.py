@@ -39,8 +39,9 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
     metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
-        allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`. If X is
-        the distance array itself, use ``"precomputed"`` as the metric.
+        allowed by :func:`metrics.pairwise.pairwise_distances
+        <sklearn.metrics.pairwise.pairwise_distances>`. If X is the distance
+        array itself, use ``metric="precomputed"``.
 
     sample_size : int or None
         The size of the sample to use when computing the Silhouette
