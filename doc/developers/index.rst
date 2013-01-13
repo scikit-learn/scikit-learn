@@ -182,6 +182,15 @@ and Cython optimizations.
   on all new contributions will get the overall code base quality in the
   right direction.
 
+.. note::
+
+   For two very well documented and more detailed guides on development
+   workflow, please pay a visit to the `Scipy Development Workflow
+   <http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ -
+   and the `Astropy Workflow for Developers
+   <http://astropy.readthedocs.org/en/latest/development/workflow/development_workflow.html>`_
+   sections.
+
 Easy Issues
 -----------
 

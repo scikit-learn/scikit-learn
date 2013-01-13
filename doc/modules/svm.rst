@@ -67,15 +67,14 @@ slightly different sets of parameters and have different mathematical
 formulations (see section :ref:`svm_mathematical_formulation`). On the
 other hand, :class:`LinearSVC` is another implementation of Support
 Vector Classification for the case of a linear kernel. Note that
-:class:`LinearSVC` does not accept keyword 'kernel', as this is
+:class:`LinearSVC` does not accept keyword ``kernel``, as this is
 assumed to be linear. It also lacks some of the members of
-:class:`SVC` and :class:`NuSVC`, like support\_.
+:class:`SVC` and :class:`NuSVC`, like ``support_``.
 
 As other classifiers, :class:`SVC`, :class:`NuSVC` and
-:class:`LinearSVC` take as input two arrays: an array X of size
-[n_samples, n_features] holding the training samples, and an array Y
-of integer values, size [n_samples], holding the class labels for the
-training samples::
+:class:`LinearSVC` take as input two arrays: an array X of size ``[n_samples,
+n_features]`` holding the training samples, and an array Y of integer values,
+size ``[n_samples]``, holding the class labels for the training samples::
 
 
     >>> from sklearn import svm
@@ -94,8 +93,8 @@ After being fitted, the model can then be used to predict new values::
 
 SVMs decision function depends on some subset of the training data,
 called the support vectors. Some properties of these support vectors
-can be found in members `support_vectors_`, `support_` and
-`n_support`::
+can be found in members ``support_vectors_``, ``support_`` and
+``n_support``::
 
     >>> # get support vectors
     >>> clf.support_vectors_
@@ -115,7 +114,7 @@ Multi-class classification
 
 :class:`SVC` and :class:`NuSVC` implement the "one-against-one"
 approach (Knerr et al., 1990) for multi- class classification. If
-n_class is the number of classes, then n_class * (n_class - 1)/2
+``n_class`` is the number of classes, then ``n_class * (n_class - 1) / 2``
 classifiers are constructed and each one trains data from two classes::
 
     >>> X = [[0], [1], [2], [3]]
@@ -147,7 +146,7 @@ the decision function.
 
 Note that the :class:`LinearSVC` also implements an alternative multi-class
 strategy, the so-called multi-class SVM formulated by Crammer and Singer, by
-using the option "multi_class='crammer_singer'". This method is consistent,
+using the option ``multi_class='crammer_singer'``. This method is consistent,
 which is not true for one-vs-rest classification.
 In practice, on-vs-rest classification is usually preferred, since the results
 are mostly similar, but the runtime is significantly less.
@@ -161,9 +160,9 @@ order of the "one" class.
 In the case of "one-vs-one" :class:`SVC`, the layout of the attributes
 is a little more involved. In the case of having a linear kernel,
 The layout of ``coef_`` and ``intercept_`` is similar to the one
-described for :class:`LinearSVC` described above, except that
-the shape of ``coef_`` is ``[n_class * (n_class - 1) / 2``,
-corresponding to as many binary classifiers. The order for classes
+described for :class:`LinearSVC` described above, except that the shape of
+``coef_`` is ``[n_class * (n_class - 1) / 2, n_features]``, corresponding to as
+many binary classifiers. The order for classes
 0 to n is "0 vs 1", "0 vs 2" , ... "0 vs n", "1 vs 2", "1 vs 3", "1 vs n", . .
 . "n-1 vs n".
 
@@ -177,13 +176,13 @@ for these classifiers.
 
 This might be made more clear by an example:
 
-Consider a three class problem with with class 0 having 3 support vectors
-:math:`v^{0}_0, v^{1}_0, v^{2}_0` and class 1 and 2 having two support
-vectors :math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_1, v^{1}_1` respectively.
-For each support vector :math:`v^{j}_i`, there are 2 dual coefficients.
-Let's call the coefficient of support vector :math:`v^{j}_i` in the
-classifier between classes `i` and `k` :math:`\alpha^{j}_{i,k}`.
-Then ``dual_coef_`` looks like this:
+Consider a three class problem with with class 0 having three support vectors
+:math:`v^{0}_0, v^{1}_0, v^{2}_0` and class 1 and 2 having two support vectors
+:math:`v^{0}_1, v^{1}_1` and :math:`v^{0}_1, v^{1}_1` respectively.  For each
+support vector :math:`v^{j}_i`, there are two dual coefficients.  Let's call
+the coefficient of support vector :math:`v^{j}_i` in the classifier between
+classes `i` and `k` :math:`\alpha^{j}_{i,k}`.  Then ``dual_coef_`` looks like
+this:
 
 +------------------------+------------------------+------------------+
 |:math:`\alpha^{0}_{0,1}`|:math:`\alpha^{0}_{0,2}`|Coefficients      |
@@ -210,9 +209,9 @@ classes or certain individual samples keywords ``class_weight`` and
 ``sample_weight`` can be used.
 
 :class:`SVC` (but not :class:`NuSVC`) implement a keyword
-``class_weight`` in the fit method. It's a dictionary of the form
+``class_weight`` in the ``fit`` method. It's a dictionary of the form
 ``{class_label : value}``, where value is a floating point number > 0
-that sets the parameter C of class ``class_label`` to C * value.
+that sets the parameter ``C`` of class ``class_label`` to ``C * value``.
 
 .. figure:: ../auto_examples/svm/images/plot_separating_hyperplane_unbalanced_1.png
    :target: ../auto_examples/svm/plot_separating_hyperplane_unbalanced.html
@@ -222,7 +221,7 @@ that sets the parameter C of class ``class_label`` to C * value.
 
 :class:`SVC`, :class:`NuSVC`, :class:`SVR`, :class:`NuSVR` and
 :class:`OneClassSVM` implement also weights for individual samples in method
-``fit`` through keyword sample_weight.
+``fit`` through keyword ``sample_weight``.
 
 
 .. figure:: ../auto_examples/svm/images/plot_weighted_samples_1.png
@@ -331,29 +330,31 @@ Tips on Practical Use
 =====================
 
 
-  * **Avoiding data copy**: For SVC, SVR, NuSVC and NuSVR, if the data
-    passed to certain methods is not C-ordered contiguous, and double
-    precision, it will be copied before calling the underlying C
-    implementation. You can check whether a give numpy array is
+  * **Avoiding data copy**: For :class:`SVC`, :class:`SVR`, :class:`NuSVC` and
+    :class:`NuSVR`, if the data passed to certain methods is not C-ordered
+    contiguous, and double precision, it will be copied before calling the
+    underlying C implementation. You can check whether a give numpy array is
     C-contiguous by inspecting its `flags` attribute.
 
-    For LinearSVC (and LogisticRegression) any input passed as a
-    numpy array will be copied and converted to the liblinear
-    internal sparse data representation (double precision floats
-    and int32 indices of non-zero components). If you want to fit
-    a large-scale linear classifier without copying a dense numpy
-    C-contiguous double precision array as input we suggest to use
-    the SGDClassifier class instead. The objective function can be
-    configured to be almost the same as the LinearSVC model.
+    For :class:`LinearSVC` (and :class:`LogisticRegression
+    <sklearn.linear_model.LogisticRegression>`) any input passed as a numpy
+    array will be copied and converted to the liblinear internal sparse data
+    representation (double precision floats and int32 indices of non-zero
+    components). If you want to fit a large-scale linear classifier without
+    copying a dense numpy C-contiguous double precision array as input we
+    suggest to use the :class:`SGDClassifier
+    <sklearn.linear_model.SGDClassifier>` class instead.  The objective
+    function can be configured to be almost the same as the :class:`LinearSVC`
+    model.
 
-  * **Kernel cache size**: For SVC, SVR, nuSVC and NuSVR, the size of
-    the kernel cache has a strong impact on run times for larger
-    problems.  If you have enough RAM available, it is recommended to
-    set `cache_size` to a higher value than the default of 200(MB),
-    such as 500(MB) or 1000(MB).
+  * **Kernel cache size**: For :class:`SVC`, :class:`SVR`, :class:`nuSVC` and
+    :class:`NuSVR`, the size of the kernel cache has a strong impact on run
+    times for larger problems.  If you have enough RAM available, it is
+    recommended to set ``cache_size`` to a higher value than the default of
+    200(MB), such as 500(MB) or 1000(MB).
 
-  * **Setting C**: C is ``1`` by default and it's a reasonable default choice.
-    If you have a lot of noisy observations you should decrease it.
+  * **Setting C**: ``C`` is ``1`` by default and it's a reasonable default
+    choice.  If you have a lot of noisy observations you should decrease it.
     It corresponds to regularize more the estimation.
 
   * Support Vector Machine algorithms are not scale invariant, so **it
@@ -363,24 +364,24 @@ Tips on Practical Use
     applied to the test vector to obtain meaningful results. See section
     :ref:`preprocessing` for more details on scaling and normalization.
 
-  * Parameter nu in NuSVC/OneClassSVM/NuSVR approximates the fraction
-    of training errors and support vectors.
+  * Parameter ``nu`` in :class:`NuSVC`/:class:`OneClassSVM`/:class:`NuSVR`
+    approximates the fraction of training errors and support vectors.
 
-  * In SVC, if data for classification are unbalanced (e.g. many
-    positive and few negative), set class_weight='auto' and/or try
-    different penalty parameters C.
+  * In :class:`SVC`, if data for classification are unbalanced (e.g. many
+    positive and few negative), set ``class_weight='auto'`` and/or try
+    different penalty parameters ``C``.
 
   * The underlying :class:`LinearSVC` implementation uses a random
     number generator to select features when fitting the model. It is
     thus not uncommon, to have slightly different results for the same
     input data. If that happens, try with a smaller tol parameter.
 
-  * Using L1 penalization as provided by LinearSVC(loss='l2',
-    penalty='l1', dual=False) yields a sparse solution, i.e. only a subset of
-    feature weights is different from zero and contribute to the decision
-    function.  Increasing C yields a more complex model (more feature are
-    selected).  The C value that yields a "null" model (all weights equal to
-    zero) can be calculated using :func:`l1_min_c`.
+  * Using L1 penalization as provided by ``LinearSVC(loss='l2', penalty='l1',
+    dual=False)`` yields a sparse solution, i.e. only a subset of feature
+    weights is different from zero and contribute to the decision function.
+    Increasing ``C`` yields a more complex model (more feature are selected).
+    The ``C`` value that yields a "null" model (all weights equal to zero) can
+    be calculated using :func:`l1_min_c`.
 
 
 .. _svm_kernels:
@@ -420,20 +421,19 @@ python function or by precomputing the Gram matrix.
 Classifiers with custom kernels behave the same way as any other
 classifiers, except that:
 
-    * Field `support_vectors\_` is now empty, only indices of support
-      vectors are stored in `support_`
+    * Field ``support_vectors_`` is now empty, only indices of support
+      vectors are stored in ``support_``
 
-    * A reference (and not a copy) of the first argument in the fit()
-      method is stored for future reference. If that array changes
-      between the use of fit() and predict() you will have unexpected
-      results.
+    * A reference (and not a copy) of the first argument in the ``fit()``
+      method is stored for future reference. If that array changes between the
+      use of ``fit()`` and ``predict()`` you will have unexpected results.
 
 
-Using python functions as kernels
+Using Python functions as kernels
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 You can also use your own defined kernels by passing a function to the
-keyword `kernel` in the constructor.
+keyword ``kernel`` in the constructor.
 
 Your kernel must take as arguments two matrices and return a third matrix.
 
@@ -454,9 +454,9 @@ instance that will use that kernel::
 Using the Gram matrix
 ~~~~~~~~~~~~~~~~~~~~~
 
-Set kernel='precomputed' and pass the Gram matrix instead of X in the
-fit method. At the moment, the kernel values between `all` training
-vectors and the test vectors must be provided.
+Set ``kernel='precomputed'`` and pass the Gram matrix instead of X in the fit
+method. At the moment, the kernel values between `all` training vectors and the
+test vectors must be provided.
 
     >>> import numpy as np
     >>> from sklearn import svm
@@ -476,17 +476,16 @@ vectors and the test vectors must be provided.
 Parameters of the RBF Kernel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-When training an SVM with the *Radial Basis Function* (RBF) kernel,
-two parameters must be considered: `C` and `gamma`.  The parameter `C`,
-common to all SVM kernels, trades off misclassification of training
-examples against simplicity of the decision surface. A low `C` makes
-the decision surface smooth, while a high `C` aims at classifying all
-training examples correctly.  `gamma` defines how much influence a
-single training example has.  The larger `gamma` is, the closer other
-examples must be to be affected.
+When training an SVM with the *Radial Basis Function* (RBF) kernel, two
+parameters must be considered: ``C`` and ``gamma``.  The parameter ``C``,
+common to all SVM kernels, trades off misclassification of training examples
+against simplicity of the decision surface. A low ``C`` makes the decision
+surface smooth, while a high ``C`` aims at classifying all training examples
+correctly.  ``gamma`` defines how much influence a single training example has.
+The larger ``gamma`` is, the closer other examples must be to be affected.
 
-Proper choice of `C` and `gamma` is critical to the SVM's performance.
-One is advised to use :class:`GridSearchCV` with `C` and `gamma` spaced
+Proper choice of ``C`` and ``gamma`` is critical to the SVM's performance.  One
+is advised to use :class:`GridSearchCV` with ``C`` and ``gamma`` spaced
 exponentially far apart to choose good values.
 
 .. topic:: Examples:
@@ -514,9 +513,9 @@ generalization error of the classifier.
 SVC
 ---
 
-Given training vectors :math:`x_i \in R^p`, i=1,..., n, in two
-classes, and a vector :math:`y \in R^n` such that :math:`y_i \in {1,
--1}`, SVC solves the following primal problem:
+Given training vectors :math:`x_i \in R^p`, i=1,..., n, in two classes, and a
+vector :math:`y \in R^n` such that :math:`y_i \in \{1, -1\}`, SVC solves the
+following primal problem:
 
 
 .. math::
@@ -538,22 +537,22 @@ Its dual is
    \textrm {subject to } & y^T \alpha = 0\\
    & 0 \leq \alpha_i \leq C, i=1, ..., l
 
-where :math:`e` is the vector of all ones, C > 0 is the upper bound, Q
-is an n by n positive semidefinite matrix, :math:`Q_ij \equiv K(x_i,
-x_j)` and :math:`\phi (x_i)^T \phi (x)` is the kernel. Here training
-vectors are mapped into a higher (maybe infinite) dimensional space by
-the function :math:`\phi`.
+where :math:`e` is the vector of all ones, :math:`C > 0` is the upper bound,
+:math:`Q` is an `n` by `n` positive semidefinite matrix, :math:`Q_{ij} \equiv
+K(x_i, x_j)` and :math:`\phi (x_i)^T \phi (x)` is the kernel. Here training
+vectors are mapped into a higher (maybe infinite) dimensional space by the
+function :math:`\phi`.
 
 
 The decision function is:
 
-.. math:: sgn(\sum_{i=1}^n y_i \alpha_i K(x_i, x) + \rho)
+.. math:: \operatorname{sgn}(\sum_{i=1}^n y_i \alpha_i K(x_i, x) + \rho)
 
 .. note::
 
-    While SVM models derived from libsvm and liblinear use *C* as regularization
-    parameter, most other estimators use *alpha*. The relation between both is
-    :math:`C = \frac{n\_samples}{alpha}`.
+    While SVM models derived from `libsvm`_ and `liblinear`_ use ``C`` as
+    regularization parameter, most other estimators use ``alpha``. The relation
+    between both is :math:`C = \frac{n\_samples}{alpha}`.
 
 .. TODO multiclass case ?/
 
