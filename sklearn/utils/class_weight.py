@@ -38,17 +38,20 @@ def compute_class_weight(class_weight, classes, y):
         weight = np.array([1.0 / np.sum(y == i) for i in classes],
                           dtype=np.float64, order='C')
         weight *= classes.shape[0] / np.sum(weight)
-    else:
+    elif isinstance(class_weight, dict):
         # user-defined dictionary
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
-        if not isinstance(class_weight, dict):
-            raise ValueError("class_weight must be dict, 'auto', or None,"
-                             " got: %r" % class_weight)
         for c in class_weight:
             i = np.searchsorted(classes, c)
             if classes[i] != c:
                 raise ValueError("Class label %d not present." % c)
             else:
                 weight[i] = class_weight[c]
-
+    else:
+        # user-specified array or list
+        weight = np.array(class_weight)
+        if len(weight) != len(classes):
+            raise ValueError("The number of entries in class_weight is %d, "
+                             "which does not match the number of classes %d."
+                             % (len(weight), len(classes)))
     return weight

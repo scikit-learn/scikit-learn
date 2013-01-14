@@ -138,11 +138,10 @@ def test_discretenb_predict_proba():
 
 def test_discretenb_uniform_prior():
     """Test whether discrete NB classes fit a uniform prior
-       when fit_prior=False and class_prior=None"""
+       when class_weight=None"""
 
     for cls in [BernoulliNB, MultinomialNB]:
-        clf = cls()
-        clf.set_params(fit_prior=False)
+        clf = cls(class_weight=None)
         clf.fit([[0], [0], [1]], [0, 0, 1])
         prior = np.exp(clf.class_log_prior_)
         assert_array_equal(prior, np.array([.5, .5]))
@@ -152,8 +151,8 @@ def test_discretenb_provide_prior():
     """Test whether discrete NB classes use provided prior"""
 
     for cls in [BernoulliNB, MultinomialNB]:
-        clf = cls()
-        clf.fit([[0], [0], [1]], [0, 0, 1], class_prior=[0.5, 0.5])
+        clf = cls(class_weight=[.5, .5])
+        clf.fit([[0], [0], [1]], [0, 0, 1])
         prior = np.exp(clf.class_log_prior_)
         assert_array_equal(prior, np.array([.5, .5]))
 

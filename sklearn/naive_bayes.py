@@ -25,7 +25,7 @@ from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
 from .utils import array2d, atleast2d_or_csr
 from .utils.extmath import safe_sparse_dot, logsumexp
-from .utils import check_arrays
+from .utils import check_arrays, compute_class_weight
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB']
 
@@ -211,10 +211,6 @@ class BaseDiscreteNB(BaseNB):
         sample_weight : array-like, shape = [n_samples], optional
             Weights applied to individual samples (1. for unweighted).
 
-        class_prior : array, shape [n_classes]
-            Custom prior probability per class.
-            Overrides the fit_prior parameter.
-
         Returns
         -------
         self : object
@@ -225,7 +221,6 @@ class BaseDiscreteNB(BaseNB):
         labelbin = LabelBinarizer()
         Y = labelbin.fit_transform(y)
         self.classes_ = labelbin.classes_
-        n_classes = len(self.classes_)
         if Y.shape[1] == 1:
             Y = np.concatenate((1 - Y, Y), axis=1)
 
@@ -243,20 +238,22 @@ class BaseDiscreteNB(BaseNB):
             warnings.warn('class_prior is deprecated in fit function and will '
                           'be removed in version 0.15. Use the `__init__` '
                           'parameter  class_weight instead.')
+            class_weight = class_prior
         else:
-            class_prior = self.class_weight
+            class_weight = self.class_weight
 
-        if class_prior:
-            if len(class_prior) != n_classes:
-                raise ValueError("Number of priors must match number of"
-                                 " classes.")
-            self.class_log_prior_ = np.log(class_prior)
-        elif self.fit_prior:
-            # empirical prior, with sample_weight taken into account
-            y_freq = Y.sum(axis=0)
-            self.class_log_prior_ = np.log(y_freq) - np.log(y_freq.sum())
-        else:
-            self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
+        if self.fit_prior is not None:
+            warnings.warn('fit_prior is deprecated in fit function and will '
+                          'be removed in version 0.15. Use the `__init__` '
+                          'parameter  class_weight instead.')
+            if self.fit_prior is False:
+                class_prior = None
+            else:
+                class_prior = 'auto'
+
+        class_weight = compute_class_weight(class_weight, self.classes_, y)
+        class_weight /= class_weight.sum()
+        self.class_log_prior_ = np.log(class_weight)
 
         # N_c_i is the count of feature i in all samples of class c.
         # N_c is the denominator.
@@ -295,13 +292,12 @@ class MultinomialNB(BaseDiscreteNB):
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
 
-    fit_prior : boolean
-        Whether to learn class prior probabilities or not.
-        If false, a uniform prior will be used.
-
-    class_weight : array-like, size=[n_classes,]
-        Prior probabilities of the classes. If specified the priors are not
-        adjusted according to the data.
+    class_weight : 'auto', None or array-like. default='auto'
+        Prior probabilities of the classes. 'auto' means class priors
+        are estimated from the data, None means uniform priors
+        over all classes.
+        If an array is given, it must have shape [n_classes,] and
+        explicitly specifies the class priors.
 
     Attributes
     ----------
@@ -324,7 +320,7 @@ class MultinomialNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
     >>> clf.fit(X, Y)
-    MultinomialNB(alpha=1.0, class_weight=None, fit_prior=True)
+    MultinomialNB(alpha=1.0, class_weight='auto', fit_prior=None)
     >>> print(clf.predict(X[2]))
     [3]
 
@@ -335,7 +331,7 @@ class MultinomialNB(BaseDiscreteNB):
     Tackling the poor assumptions of naive Bayes text classifiers, ICML.
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_weight=None):
+    def __init__(self, alpha=1.0, fit_prior=None, class_weight='auto'):
         self.alpha = alpha
         self.fit_prior = fit_prior
         self.class_weight = class_weight
@@ -373,13 +369,12 @@ class BernoulliNB(BaseDiscreteNB):
         Threshold for binarizing (mapping to booleans) of sample features.
         If None, input is presumed to already consist of binary vectors.
 
-    fit_prior : boolean
-        Whether to learn class prior probabilities or not.
-        If false, a uniform prior will be used.
-
-    class_weight : array-like, size=[n_classes,]
-        Prior probabilities of the classes. If specified the priors are not
-        adjusted according to the data.
+    class_weight : 'auto', None or array-like. default='auto'
+        Prior probabilities of the classes. 'auto' means class priors
+        are estimated from the data, None means uniform priors
+        over all classes.
+        If an array is given, it must have shape [n_classes,] and
+        explicitly specifies the class priors.
 
     Attributes
     ----------
@@ -397,7 +392,7 @@ class BernoulliNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import BernoulliNB
     >>> clf = BernoulliNB()
     >>> clf.fit(X, Y)
-    BernoulliNB(alpha=1.0, binarize=0.0, class_weight=None, fit_prior=True)
+    BernoulliNB(alpha=1.0, binarize=0.0, class_weight='auto', fit_prior=None)
     >>> print(clf.predict(X[2]))
     [3]
 
@@ -415,8 +410,8 @@ class BernoulliNB(BaseDiscreteNB):
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
     """
 
-    def __init__(self, alpha=1.0, binarize=.0, fit_prior=True,
-                 class_weight=None):
+    def __init__(self, alpha=1.0, binarize=.0, fit_prior=None,
+                 class_weight='auto'):
         self.alpha = alpha
         self.binarize = binarize
         self.fit_prior = fit_prior
