@@ -35,6 +35,8 @@ Single and multi-output problems are both handled.
 # Authors: Gilles Louppe, Brian Holt
 # License: BSD 3
 
+from __future__ import division
+
 import itertools
 import numpy as np
 from warnings import warn
@@ -162,7 +164,7 @@ def _partition_trees(forest):
         n_jobs = min(forest.n_jobs, forest.n_estimators)
 
     # Partition trees between jobs
-    n_trees = [int(forest.n_estimators / n_jobs)] * n_jobs
+    n_trees = [forest.n_estimators // n_jobs] * n_jobs
 
     for i in xrange(forest.n_estimators % n_jobs):
         n_trees[i] += 1
@@ -190,7 +192,7 @@ def _partition_features(forest, n_total_features):
         n_jobs = min(forest.n_jobs, n_total_features)
 
     # Partition features between jobs
-    n_features = [int(n_total_features / n_jobs)] * n_jobs
+    n_features = [n_total_features // n_jobs] * n_jobs
 
     for i in xrange(n_total_features % n_jobs):
         n_features[i] += 1
