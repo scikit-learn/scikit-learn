@@ -588,6 +588,9 @@ def test_neighbors_badargs():
         assert_raises(ValueError,
                       nbrs.predict,
                       X)
+        assert_raises(ValueError,
+                      nbrs.predict,
+                      [])
 
     nbrs = neighbors.NearestNeighbors().fit(X)
 
