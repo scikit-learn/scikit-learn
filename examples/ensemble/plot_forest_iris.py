@@ -21,8 +21,8 @@ import pylab as pl
 
 from sklearn import clone
 from sklearn.datasets import load_iris
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier,\
-                             AdaBoostClassifier
+from sklearn.ensemble import (RandomForestClassifier, ExtraTreesClassifier,
+                              AdaBoostClassifier)
 from sklearn.tree import DecisionTreeClassifier
 
 # Parameters
@@ -40,8 +40,9 @@ for pair in ([0, 1], [0, 2], [2, 3]):
     for model in (DecisionTreeClassifier(),
                   RandomForestClassifier(n_estimators=n_estimators),
                   ExtraTreesClassifier(n_estimators=n_estimators),
-                  AdaBoostClassifier(n_estimators=n_estimators)):
-         # We only take the two corresponding features
+                  AdaBoostClassifier(DecisionTreeClassifier(),
+                                     n_estimators=n_estimators)):
+        # We only take the two corresponding features
         X = iris.data[:, pair]
         y = iris.target
 
@@ -91,7 +92,7 @@ for pair in ([0, 1], [0, 2], [2, 3]):
 
         plot_idx += 1
 
-pl.suptitle("Decision surfaces of DecisionTreeClassifier,"
-            "RandomForestClassifier, ExtraTreesClassifier"
+pl.suptitle("Decision surfaces of DecisionTreeClassifier, "
+            "RandomForestClassifier,\nExtraTreesClassifier"
             " and AdaBoostClassifier")
 pl.show()
