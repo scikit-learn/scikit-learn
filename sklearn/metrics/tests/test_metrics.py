@@ -33,7 +33,6 @@ from sklearn.metrics import (accuracy_score,
                              precision_score,
                              recall_score,
                              r2_score,
-                             weighted_r2_score,
                              roc_curve,
                              zero_one,
                              zero_one_score,
@@ -672,24 +671,3 @@ def test_multioutput_regression_invariance_to_dimension_shuffling():
             perm = np.random.permutation(n_dims)
             assert_almost_equal(error,
                                 metric(y_true[:, perm], y_pred[:, perm]))
-
-
-def test_weighted_r2_score():
-    """Test weighted score functions"""
-    y_true, y_pred, _ = make_prediction(binary=True)
-    n = y_true.shape[0]
-
-    assert_array_equal(r2_score(y_true, y_pred),
-                       weighted_r2_score(y_true, y_pred))
-
-    assert_array_equal(r2_score(y_true, y_pred),
-                       weighted_r2_score(np.r_[y_true, y_true],
-                                         np.r_[y_pred, y_pred],
-                                         weights=0.5 * np.ones((2 * n,))))
-
-
-def test_weighted_r2_score_check():
-    """Test input checks of weighted_r2_score"""
-    assert_raises(ValueError, weighted_r2_score, [1.0, 0.0, 1.0], [])
-    assert_raises(ValueError, weighted_r2_score, [], [])
-    assert_raises(ValueError, weighted_r2_score, [1.0], [1.0])
