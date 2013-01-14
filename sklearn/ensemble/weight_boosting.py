@@ -94,7 +94,7 @@ class BaseWeightBoosting(BaseEnsemble):
         X, y = check_arrays(X, y, sparse_format="dense")
 
         if sample_weight is None:
-            # initialize weights to 1 / n_samples
+            # Initialize weights to 1 / n_samples
             sample_weight = np.ones(X.shape[0], dtype=np.float) / X.shape[0]
         else:
             # or normalize them
@@ -126,8 +126,12 @@ class BaseWeightBoosting(BaseEnsemble):
             if error == 0:
                 break
 
+            # Stop if the sum of sample weights has become non-positive
+            if np.sum(sample_weight) <= 0:
+                break
+
             if iboost < self.n_estimators - 1:
-                # normalize
+                # Normalize
                 sample_weight /= sample_weight.sum()
 
         # Sum the importances
@@ -284,6 +288,13 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             raise TypeError("``base_estimator`` must be a "
                             "subclass of ``ClassifierMixin``")
 
+        # Check that the sample weights sum is positive
+        if sample_weight is not None:
+            if np.sum(sample_weight) <= 0:
+                raise ValueError(
+                    "Attempting to fit with a non-positive "
+                    "weighted number of samples.")
+
         # 'Real' boosting step
         if self.real:
             if not hasattr(self.base_estimator, "predict_proba"):
@@ -336,7 +347,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         estimator = self._make_estimator()
 
         if hasattr(estimator, 'fit_predict_proba'):
-            # optim for estimators that are able to save redundant
+            # Optimization for estimators that are able to save redundant
             # computations when calling fit + predict_proba
             # on the same input X
             y_predict_proba = estimator.fit_predict_proba(
@@ -353,24 +364,24 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         y_predict = np.array(self.classes_.take(
             np.argmax(y_predict_proba, axis=1), axis=0))
 
-        # instances incorrectly classified
+        # Instances incorrectly classified
         incorrect = y_predict != y
 
-        # error fraction
+        # Error fraction
         error = np.mean(np.average(incorrect, weights=sample_weight, axis=0))
 
-        # stop if classification is perfect
+        # Stop if classification is perfect
         if error == 0:
             return sample_weight, 1., 0.
 
-        # negative sample weights can yield an overall negative error...
+        # Negative sample weights can yield an overall negative error...
         if error < 0:
             # use the absolute value
             # if you have a better idea of how to handle negative
             # sample weights let me know
             error = abs(error)
 
-        # construct y coding
+        # Construct y coding
         n_classes = self.n_classes_
         classes = np.array(self.classes_)
         y_codes = np.array([-1. / (n_classes - 1), 1.])
@@ -379,16 +390,16 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         # Displace zero probabilities so the log is defined.
         # Also fix negative elements which may orrur with
         # negative sample weights.
-        y_predict_proba[y_predict_proba <= 0] = 1e-10
+        y_predict_proba[y_predict_proba <= 0] = 1e-5
 
-        # boost weight using multi-class AdaBoost SAMME.R alg
+        # Boost weight using multi-class AdaBoost SAMME.R alg
         weight = -1. * self.learning_rate * (
             ((n_classes - 1.) / n_classes) *
             inner1d(y_coding, np.log(y_predict_proba)))
 
-        # only boost the weights if I will fit again
+        # Only boost the weights if I will fit again
         if not iboost == self.n_estimators - 1:
-            # only boost positive weights
+            # Only boost positive weights
             sample_weight *= np.exp(weight *
                 ((sample_weight > 0) | (weight < 0)))
 
@@ -431,7 +442,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         estimator = self._make_estimator()
 
         if hasattr(estimator, 'fit_predict'):
-            # optim for estimators that are able to save redundant
+            # Optimization for estimators that are able to save redundant
             # computations when calling fit + predict
             # on the same input X
             y_predict = estimator.fit_predict(
@@ -445,38 +456,36 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             self.n_classes_ = getattr(estimator, 'n_classes_',
                                       getattr(estimator, 'n_classes', 1))
 
-        # instances incorrectly classified
+        # Instances incorrectly classified
         incorrect = y_predict != y
 
-        # error fraction
+        # Error fraction
         error = np.mean(np.average(incorrect, weights=sample_weight, axis=0))
 
-        # stop if classification is perfect
+        # Stop if classification is perfect
         if error == 0:
             return sample_weight, 1., 0.
 
-        # negative sample weights can yield an overall negative error...
+        # Negative sample weights can yield an overall negative error...
         if error < 0:
-            # use the absolute value
-            # if you have a better idea of how to handle negative
-            # sample weights let me know
+            # Use the absolute value
             error = abs(error)
 
         n_classes = self.n_classes_
 
-        # stop if the error is at least as bad as random guessing
+        # Stop if the error is at least as bad as random guessing
         if error >= 1. - (1. / n_classes):
             self.estimators_.pop(-1)
             return None, None, None
 
-        # boost weight using multi-class AdaBoost SAMME alg
+        # Boost weight using multi-class AdaBoost SAMME alg
         weight = self.learning_rate * (
             np.log((1. - error) / error) +
             np.log(n_classes - 1.))
 
-        # only boost the weights if I will fit again
+        # Only boost the weights if I will fit again
         if not iboost == self.n_estimators - 1:
-            # only boost positive weights
+            # Only boost positive weights
             sample_weight *= np.exp(weight * incorrect *
                 ((sample_weight > 0) | (weight < 0)))
 
@@ -529,7 +538,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                 # Displace zero probabilities so the log is defined.
                 # Also fix negative elements which may orrur with
                 # negative sample weights.
-                current_pred[current_pred <= 0] = 1e-10
+                current_pred[current_pred <= 0] = 1e-5
 
                 current_pred = (n_classes - 1) * (
                     np.log(current_pred) -
@@ -599,7 +608,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                 # Displace zero probabilities so the log is defined.
                 # Also fix negative elements which may orrur with
                 # negative sample weights.
-                current_pred[current_pred <= 0] = 1e-10
+                current_pred[current_pred <= 0] = 1e-5
 
                 current_pred = (n_classes - 1) * (
                     np.log(current_pred) -
@@ -663,7 +672,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             # Displace zero probabilities so the log is defined.
             # Also fix negative elements which may orrur with
             # negative sample weights.
-            current_proba[current_proba <= 0] = 1e-10
+            current_proba[current_proba <= 0] = 1e-5
 
             current_proba = (n_classes - 1) * (
                 np.log(current_proba) -
@@ -729,7 +738,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             # Displace zero probabilities so the log is defined.
             # Also fix negative elements which may orrur with
             # negative sample weights.
-            current_proba[current_proba <= 0] = 1e-10
+            current_proba[current_proba <= 0] = 1e-5
 
             current_proba = (n_classes - 1) * (
                 np.log(current_proba) -
@@ -870,6 +879,13 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             raise TypeError("``base_estimator`` must be a "
                             "subclass of ``RegressorMixin``")
 
+        # Check that the sample weights sum is positive
+        if sample_weight is not None:
+            if np.sum(sample_weight) <= 0:
+                raise ValueError(
+                    "Attempting to fit with a non-positive "
+                    "weighted number of samples.")
+
         # Fit
         return super(AdaBoostRegressor, self).fit(X, y, sample_weight)
 
@@ -911,7 +927,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         estimator = self._make_estimator()
 
         if hasattr(estimator, 'fit_predict'):
-            # optim for estimators that are able to save redundant
+            # Optimization for estimators that are able to save redundant
             # computations when calling fit + predict
             # on the same input X
             y_predict = estimator.fit_predict(
@@ -928,20 +944,18 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         error = (sample_weight * error_vect).sum()
 
-        # stop if fit is perfect
+        # Stop if fit is perfect
         if error == 0:
             return sample_weight, 1., 0.
 
-        # negative sample weights can yield an overall negative error...
+        # Negative sample weights can yield an overall negative error...
         if error < 0:
-            # use the absolute value
-            # if you have a better idea of how to handle negative
-            # sample weights let me know
+            # Use the absolute value
             error = abs(error)
 
         beta = error / (1. - error)
 
-        # boost weight using AdaBoost.R2 alg
+        # Boost weight using AdaBoost.R2 alg
         weight = self.learning_rate * np.log(1. / beta)
 
         if not iboost == self.n_estimators - 1:
