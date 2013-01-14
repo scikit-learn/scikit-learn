@@ -690,8 +690,26 @@ parameters it is possible to derive from the class and override the
 ``build_preprocessor``, ``build_tokenizer``, ``build_token_processor`` 
 and ``build_analyzer`` factory method instead.
 
-Customizing the vectorizer can be very useful to handle Asian languages
-that do not use an explicit word separator such as whitespace.
+Customizing the vectorizer can be very useful, for example, to handle Asian
+languages that do not use an explicit word separator such as whitespace or to
+remove grammatical variants of the same words (also known as "stemming").  
+Let us assume, we want to count variants of the same word stem together, such
+that occurrences of "look", "looks", "looking", etc. are treated the same..
+We can achieve this by setting ``token_processor`` to a simple function that
+takes a string and applies the stemming on it (e.g. by using NLTK's
+`SnowBallStemmer <http://nltk.org/api/nltk.stem.html>`_). For the sake of
+simplicity, the following example will remove all vowels before counting:
+
+
+  >>> def vowel_remover(word):
+  ...     for vowel in "aeiou": 
+  ...         word = word.replace(vowel, "")
+  ...     return word
+  ... 
+  >>> vectorizer = CountVectorizer(token_processor=vowel_remover)
+  >>> print vectorizer.build_analyzer()(u"color colour")
+  [u'clr', u'clr']
+
 
 
 Image feature extraction
