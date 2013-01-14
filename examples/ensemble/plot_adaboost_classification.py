@@ -30,6 +30,7 @@ bdt.fit(X, y)
 
 plot_colors = "br"
 plot_step = 0.02
+class_names = "AB"
 
 pl.figure(figsize=(15, 5))
 
@@ -46,30 +47,26 @@ cs = pl.contourf(xx, yy, Z, cmap=pl.cm.Paired)
 pl.axis("tight")
 
 # Plot the training points
-for i, c in zip(xrange(2), plot_colors):
+for i, n, c in zip(xrange(2), class_names, plot_colors):
     idx = np.where(y == i)
-    pl.scatter(X[idx, 0], X[idx, 1], c=c, cmap=pl.cm.Paired)
+    pl.scatter(X[idx, 0], X[idx, 1],
+               c=c, cmap=pl.cm.Paired,
+               label="Class %s" % n)
 pl.axis("tight")
+pl.legend(loc='upper right')
 pl.xlabel("Decision Boundary")
 
-a_prob = bdt.predict_proba(X[y == 0])[:, -1]
-b_prob = bdt.predict_proba(X[y == 1])[:, -1]
-hist_range = (min(a_prob.min(), b_prob.min()),
-              max(a_prob.max(), b_prob.max()))
+class_proba = bdt.predict_proba(X)[:, -1]
 
 # Plot the class probabilities
 pl.subplot(122)
-pl.hist(a_prob,
-        bins=20,
-        range=hist_range,
-        facecolor=plot_colors[0],
-        label='Class A')
-pl.hist(b_prob,
-        bins=20,
-        range=hist_range,
-        facecolor=plot_colors[1],
-        label='Class B')
-pl.legend()
+for i, n, c in zip(xrange(2), class_names, plot_colors):
+    pl.hist(class_proba[y == i],
+            bins=20,
+            range=(0, 1),
+            facecolor=c,
+            label='Class %s' % n)
+pl.legend(loc='upper center')
 pl.ylabel('Samples')
 pl.xlabel('Class Probability')
 
