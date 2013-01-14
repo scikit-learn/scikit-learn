@@ -626,6 +626,86 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             yield np.array(classes.take(
                 np.argmax(pred, axis=1), axis=0))
 
+    def predict_twoclass(self, X, n_estimators=-1):
+        """Predict specialized output for two-class X.
+
+        The predicted two-class output of an input sample is computed
+        as the weighted mean of the predicted class probabilities (purities)
+        over all estimators in the boosted ensemble.
+
+        This method may only be used if (X, y) is a two-class problem and if
+        the discrete AdaBoost algorithm was used to create the ensemble.
+
+        This method provides the same output as the default output of the
+        ``MethodBDT`` class in the TMVA package [1].
+
+        Parameters
+        ----------
+        X : array-like of shape = [n_samples, n_features]
+            The input samples.
+
+        n_estimators : int, optional (default=-1)
+            Use only the first ``n_estimators`` classifiers for the prediction.
+            This is useful for grid searching the ``n_estimators`` parameter
+            since it is not necessary to fit separately for all choices of
+            ``n_estimators``, but only the highest ``n_estimators``. Any
+            negative value will result in all estimators being used.
+
+        Returns
+        -------
+        y : array of shape = [n_samples]
+            The predicted two-class continuous output in the range [0, 1].
+            Closer to 0 means more like the first class in ``classes_``.
+            Closer to 1 means more like the second class in ``classes_``.
+
+        References
+        ----------
+
+        .. [1] A. Hoecker, P. Speckmayer, J. Stelzer,
+               J. Therhaag, E. von Toerne, and H. Voss,
+               TMVA - Toolkit for Multivariate Data Analysis,
+               PoS ACAT 040 (2007), arXiv:physics/0703039,
+               http://http://tmva.sourceforge.net
+
+        """
+        if self.real:
+            raise RuntimeError(
+                "Use of ``predict_twoclass`` is only valid "
+                "if the discrete boosting algorithm was used (``real=False``)")
+
+        if n_estimators == 0:
+            raise ValueError("``n_estimators`` must not equal zero")
+
+        if not self.estimators_:
+            raise RuntimeError(
+                ("{0} is not initialized. "
+                 "Perform a fit first").format(self.__class__.__name__))
+
+        if self.n_classes_ != 2:
+            raise RuntimeError(
+                "Use of ``predict_twoclass`` is only valid "
+                "for two-class problems")
+
+        output = None
+        norm = 0.
+
+        for i, (weight, estimator) in enumerate(
+                zip(self.weights_, self.estimators_)):
+
+            if i == n_estimators:
+                break
+
+            purities = estimator.predict_proba(X)[:, 0]
+            norm += weight
+
+            if output is None:
+                output = purities * weight
+            else:
+                output += purities * weight
+
+        output /= norm
+        return output
+
     def predict_proba(self, X, n_estimators=-1):
         """Predict class probabilities for X.
 

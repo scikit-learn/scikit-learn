@@ -1,10 +1,11 @@
 """
-==============================
-AdaBoosted Class Probabilities
-==============================
+==================
+Two-Class AdaBoost
+==================
 
 This example fits an AdaBoosted decision stump on a classification dataset and
-plots the decision boundary and class probabilities.
+plots the decision boundary, class probabilities, and continuous two-class
+output value.
 
 """
 print __doc__
@@ -24,7 +25,7 @@ X, y = make_classification(n_samples=1000,
                            n_redundant=0,
                            random_state=1)
 
-bdt = AdaBoostClassifier(DecisionTreeClassifier(max_depth=1))
+bdt = AdaBoostClassifier(DecisionTreeClassifier(max_depth=1), real=False)
 
 bdt.fit(X, y)
 
@@ -35,7 +36,7 @@ class_names = "AB"
 pl.figure(figsize=(15, 5))
 
 # Plot the decision boundaries
-pl.subplot(121)
+pl.subplot(131)
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
 y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
 xx, yy = np.meshgrid(np.arange(x_min, x_max, plot_step),
@@ -56,10 +57,9 @@ pl.axis("tight")
 pl.legend(loc='upper right')
 pl.xlabel("Decision Boundary")
 
-class_proba = bdt.predict_proba(X)[:, -1]
-
 # Plot the class probabilities
-pl.subplot(122)
+class_proba = bdt.predict_proba(X)[:, 0]
+pl.subplot(132)
 for i, n, c in zip(xrange(2), class_names, plot_colors):
     pl.hist(class_proba[y == i],
             bins=20,
@@ -70,4 +70,18 @@ pl.legend(loc='upper center')
 pl.ylabel('Samples')
 pl.xlabel('Class Probability')
 
+# Plot the two-class output
+twoclass_output = bdt.predict_twoclass(X)
+pl.subplot(133)
+for i, n, c in zip(xrange(2), class_names, plot_colors):
+    pl.hist(twoclass_output[y == i],
+            bins=20,
+            range=(0, 1),
+            facecolor=c,
+            label='Class %s' % n)
+pl.legend(loc='upper right')
+pl.ylabel('Samples')
+pl.xlabel('Two-Class Output')
+
+pl.subplots_adjust(wspace=0.25)
 pl.show()
