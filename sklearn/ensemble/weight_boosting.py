@@ -243,12 +243,11 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     References
     ----------
 
-    .. [1] Yoav Freund, Robert E. Schapire. "A Decision-Theoretic
-           Generalization of on-Line Learning and an Application
-           to Boosting", 1995.
+    .. [1] Y. Freund, R. Schapire, "A Decision-Theoretic Generalization of
+           on-Line Learning and an Application to Boosting", 1995.
 
-    .. [2] Ji Zhu, Hui Zou, Saharon Rosset, Trevor Hastie.
-           "Multi-class AdaBoost", 2009.
+    .. [2] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
+
     """
     def __init__(self,
                  base_estimator=DecisionTreeClassifier(max_depth=1),
@@ -837,12 +836,11 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     References
     ----------
 
-    .. [1] Yoav Freund, Robert E. Schapire. "A Decision-Theoretic
-           Generalization of on-Line Learning and an Application
-           to Boosting", 1995.
+    .. [1] Y. Freund, R. Schapire, "A Decision-Theoretic Generalization of
+           on-Line Learning and an Application to Boosting", 1995.
 
-    .. [2] Harris Drucker. "Improving Regressor using Boosting Techniques",
-           1997.
+    .. [2] H. Drucker, "Improving Regressor using Boosting Techniques", 1997.
+
     """
     def __init__(self,
                  base_estimator=DecisionTreeRegressor(max_depth=3),
