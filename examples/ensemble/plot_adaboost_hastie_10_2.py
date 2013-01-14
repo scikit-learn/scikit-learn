@@ -1,8 +1,28 @@
-"""Figure 10.2 from Elements of Statistical Learning, Ed. 2.
-
-.. author:: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-            Noel Dawe <noel.dawe@gmail.com>
 """
+=============================
+Discrete versus Real AdaBoost
+=============================
+
+This example is based on Figure 10.2 from Hastie et al 2009 [1] and illustrates
+the difference in performance between the discrete SAMME [2] boosting
+algorithm and real SAMME.R boosting algorithm.
+
+Discrete SAMME AdaBoost adapts based on errors in predicted class labels
+whereas real SAMME.R uses the predicted class probabilities.
+
+.. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
+    Learning Ed. 2", Springer, 2009.
+
+.. [2] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
+
+"""
+print __doc__
+
+# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>,
+#         Noel Dawe <noel.dawe@gmail.com>
+#
+# License: BSD
+
 import numpy as np
 from sklearn import datasets
 from sklearn.tree import DecisionTreeClassifier
@@ -39,7 +59,7 @@ ada_real = AdaBoostClassifier(
     real=True)
 ada_real.fit(X_train, y_train)
 
-fig = plt.figure(facecolor='w')
+fig = plt.figure()
 ax = fig.add_subplot(111)
 
 ax.plot([1, n_estimators], [dt_stump_err] * 2, 'k-',
