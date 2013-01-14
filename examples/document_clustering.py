@@ -17,6 +17,7 @@ k-means.
 # License: Simplified BSD
 
 from sklearn.datasets import fetch_20newsgroups
+from sklearn.decomposition import LatentSemanticAnalysis
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn import metrics
 
@@ -36,9 +37,15 @@ logging.basicConfig(level=logging.INFO,
 
 # parse commandline arguments
 op = OptionParser()
+op.add_option("--lsa",
+              dest="n_components", type="int",
+              help="Preprocess documents with latent semantic analysis.")
 op.add_option("--no-minibatch",
               action="store_false", dest="minibatch", default=True,
               help="Use ordinary k-means algorithm.")
+op.add_option("--verbose",
+              action="store_true", dest="verbose", default=False,
+              help="Print progress reports inside k-means algorithm.")
 
 print __doc__
 op.print_help()
@@ -80,6 +87,17 @@ vectorizer = TfidfVectorizer(max_df=0.5, max_features=10000,
 X = vectorizer.fit_transform(dataset.data)
 
 print "done in %fs" % (time() - t0)
+print
+
+if opts.n_components:
+    print "Performing dimensionality reduction using LSA"
+    t0 = time()
+    lsa = LatentSemanticAnalysis(opts.n_components)
+    X = lsa.fit_transform(X)
+
+    print "done in %fs" % (time() - t0)
+    print
+
 print "n_samples: %d, n_features: %d" % X.shape
 print
 
@@ -89,13 +107,12 @@ print
 
 if opts.minibatch:
     km = MiniBatchKMeans(n_clusters=true_k, init='k-means++', n_init=1,
-                         init_size=1000,
-                         batch_size=1000, verbose=1)
+                         init_size=1000, batch_size=1000, verbose=opts.verbose)
 else:
     km = KMeans(n_clusters=true_k, init='random', max_iter=100, n_init=1,
-                verbose=1)
+                verbose=opts.verbose)
 
-print "Clustering sparse data with %s" % km
+print "Clustering sparse data with\n    %r" % km
 t0 = time()
 km.fit(X)
 print "done in %0.3fs" % (time() - t0)
