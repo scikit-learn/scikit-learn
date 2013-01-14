@@ -376,10 +376,15 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         y_codes = np.array([-1. / (n_classes - 1), 1.])
         y_coding = y_codes.take(classes == y.reshape(y.shape[0], 1))
 
+        # Displace zero probabilities so the log is defined.
+        # Also fix negative elements which may orrur with
+        # negative sample weights.
+        y_predict_proba[y_predict_proba <= 0] = 1e-10
+
         # boost weight using multi-class AdaBoost SAMME.R alg
         weight = -1. * self.learning_rate * (
             ((n_classes - 1.) / n_classes) *
-            inner1d(y_coding, np.log(y_predict_proba + 1e-10)))
+            inner1d(y_coding, np.log(y_predict_proba)))
 
         # only boost the weights if I will fit again
         if not iboost == self.n_estimators - 1:
@@ -519,7 +524,13 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                 break
 
             if self.real:
-                current_pred = estimator.predict_proba(X) + 1e-10
+                current_pred = estimator.predict_proba(X)
+
+                # Displace zero probabilities so the log is defined.
+                # Also fix negative elements which may orrur with
+                # negative sample weights.
+                current_pred[current_pred <= 0] = 1e-10
+
                 current_pred = (n_classes - 1) * (
                     np.log(current_pred) -
                     (1. / n_classes) *
@@ -583,7 +594,13 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                 break
 
             if self.real:
-                current_pred = estimator.predict_proba(X) + 1e-10
+                current_pred = estimator.predict_proba(X)
+
+                # Displace zero probabilities so the log is defined.
+                # Also fix negative elements which may orrur with
+                # negative sample weights.
+                current_pred[current_pred <= 0] = 1e-10
+
                 current_pred = (n_classes - 1) * (
                     np.log(current_pred) -
                     (1. / n_classes) *
@@ -641,7 +658,13 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             if i == n_estimators:
                 break
 
-            current_proba = estimator.predict_proba(X) + 1e-10
+            current_proba = estimator.predict_proba(X)
+
+            # Displace zero probabilities so the log is defined.
+            # Also fix negative elements which may orrur with
+            # negative sample weights.
+            current_proba[current_proba <= 0] = 1e-10
+
             current_proba = (n_classes - 1) * (
                 np.log(current_proba) -
                 (1. / n_classes) *
@@ -701,7 +724,13 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             if i == n_estimators:
                 break
 
-            current_proba = estimator.predict_proba(X) + 1e-10
+            current_proba = estimator.predict_proba(X)
+
+            # Displace zero probabilities so the log is defined.
+            # Also fix negative elements which may orrur with
+            # negative sample weights.
+            current_proba[current_proba <= 0] = 1e-10
+
             current_proba = (n_classes - 1) * (
                 np.log(current_proba) -
                 (1. / n_classes) *
