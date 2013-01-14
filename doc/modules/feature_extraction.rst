@@ -670,19 +670,19 @@ to the vectorizer constructor::
 
 In particular we name:
 
-  * ``preprocessor`` a callable that takes a string as input and return
-    another string (removing HTML tags or converting to lower case for
-    instance)
+  * ``preprocessor`` a callable that takes the original document as a string as
+    input and returns another string (removing HTML tags or converting to lower
+    case for instance)
 
-  * ``tokenizer`` a callable that takes a string as input and output a
-    sequence of feature occurrences (a.k.a. the tokens).
+  * ``tokenizer`` a callable that takes the output from ``preprocessor`` as a
+    string and outputs a sequence of feature occurrences (a.k.a. the tokens).
 
   * ``token_processor`` a callable that takes a token as 
     input and outputs a processed version of it (useful, e.g., for 
     integrating stemming).
 
-  * ``analyzer`` a callable that wraps calls to the preprocessor and
-    tokenizer and further perform some filtering or n-grams extractions
+  * ``analyzer`` a callable that wraps calls to the preprocessor, tokenizer, and
+    token_processor and performs some further filtering or n-gram extraction
     on the tokens.
 
 To make the preprocessor, tokenizer and analyzers aware of the model
@@ -691,15 +691,14 @@ parameters it is possible to derive from the class and override the
 and ``build_analyzer`` factory method instead.
 
 Customizing the vectorizer can be very useful, for example, to handle Asian
-languages that do not use an explicit word separator such as whitespace or to
-remove grammatical variants of the same words (also known as "stemming").  
-Let us assume, we want to count variants of the same word stem together, such
-that occurrences of "look", "looks", "looking", etc. are treated the same..
-We can achieve this by setting ``token_processor`` to a simple function that
-takes a string and applies the stemming on it (e.g. by using NLTK's
-`SnowBallStemmer <http://nltk.org/api/nltk.stem.html>`_). For the sake of
-simplicity, the following example will remove all vowels before counting:
+languages that do not use an explicit word separator such as whitespace (you
+would use a ``tokenizer`` to achieve that). Or if you would like to count
+variants of the same word stem are counted together (e.g. "look", "looks",
+"looking"), you could set ``token_processor`` to a simple function that takes a
+string and applies the stemming on it (e.g. by using NLTK's `SnowBallStemmer
+<http://nltk.org/api/nltk.stem.html>`_).
 
+For the sake of simplicity, the following example will remove all vowels before counting:
 
   >>> def vowel_remover(word):
   ...     for vowel in "aeiou": 
