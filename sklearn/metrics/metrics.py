@@ -1547,4 +1547,5 @@ def r2_score(y_true, y_pred):
             # arbitary set to zero to avoid -inf scores, having a constant
             # y_true is not interesting for scoring a regression anyway
             return 0.0
+
     return 1 - numerator / denominator
