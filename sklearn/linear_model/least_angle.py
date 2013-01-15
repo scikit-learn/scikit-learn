@@ -440,15 +440,16 @@ class Lars(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    `coef_path_` : array, shape = [n_features, n_alpha]
+    `coef_path_` : array, shape = [n_features, n_alpha] | list of \
+            n_targets such arrays
         The varying values of the coefficients along the path. It is not \
     present if the fit_path parameter is False.
 
 
-    `coef_` : array, shape = [n_features]
+    `coef_` : array, shape = [n_features] | [n_targets, n_features]
         Parameter vector (w in the fomulation formula).
 
-    `intercept_` : float
+    `intercept_` : float | array of shape [n_targets]
         Independent term in decision function.
 
     Examples
@@ -501,10 +502,11 @@ class Lars(LinearModel, RegressorMixin):
         X : array-like, shape = [n_samples, n_features]
             Training data.
 
-        y : array-like, shape = [n_samples] or [n_samples, n_targets]
+        y : array-like, shape = [n_samples] | [n_samples, n_targets]
             Target values.
 
-        Xy : array-like, shape = [n_samples] or [n_samples, n_targets], optional
+        Xy : array-like, shape = [n_samples] | [n_samples, n_targets], \
+                optional
             Xy = np.dot(X.T, y) that can be precomputed. It is useful
             only when the Gram matrix is precomputed.
 
@@ -629,14 +631,15 @@ class LassoLars(Lars):
 
     Attributes
     ----------
-    `coef_path_` : array, shape = [n_features, n_alpha]
+    `coef_path_` : array, shape = [n_features, n_alpha] | list of \
+            n_targets such arrays
         The varying values of the coefficients along the path. It is not \
     present if fit_path parameter is False.
 
-    `coef_` : array, shape = [n_features]
+    `coef_` : array, shape = [n_features] | [n_targets, n_features]
         Parameter vector (w in the fomulation formula).
 
-    `intercept_` : float
+    `intercept_` : float | array of shape [n_targets]
         Independent term in decision function.
 
     Examples

@@ -103,20 +103,21 @@ class ElasticNet(LinearModel, RegressorMixin):
 
     Attributes
     ----------
-    `coef_` : array, shape = (n_features,)
+    `coef_` : array, shape = (n_features,) | (n_targets, n_features)
         parameter vector (w in the cost function formula)
 
-    `sparse_coef_` : scipy.sparse matrix, shape = (n_features, 1)
+    `sparse_coef_` : scipy.sparse matrix, shape = (n_features, 1) | \
+            (n_targets, n_features)
         `sparse_coef_` is a readonly property derived from `coef_`
 
     `intercept_` : float | array, shape = (n_targets,)
         independent term in decision function.
 
-    `dual_gap_` : float
+    `dual_gap_` : float | array, shape = (n_targets,)
         the current fit is guaranteed to be epsilon-suboptimal with
         epsilon := `dual_gap_`
 
-    `eps_` : float
+    `eps_` : float | array, shape = (n_targets,)
         `eps_` is used to check if the fit converged to the requested
         `tol`
 
@@ -394,20 +395,21 @@ class Lasso(ElasticNet):
 
     Attributes
     ----------
-    `coef_` : array, shape = (n_features,)
+    `coef_` : array, shape = (n_features,) | (n_targets, n_features)
         parameter vector (w in the cost function formula)
 
-    `sparse_coef_` : scipy.sparse matrix, shape = (n_features, 1)
+    `sparse_coef_` : scipy.sparse matrix, shape = (n_features, 1) | \
+            (n_targets, n_features)
         `sparse_coef_` is a readonly property derived from `coef_`
 
-    `intercept_` : float
+    `intercept_` : float | array, shape = (n_targets,)
         independent term in decision function.
 
-    `dual_gap_` : float
+    `dual_gap_` : float | array, shape = (n_targets,)
         the current fit is guaranteed to be epsilon-suboptimal with
         epsilon := `dual_gap_`
 
-    `eps_` : float
+    `eps_` : float | array, shape = (n_targets,)
         `eps_` is used to check if the fit converged to the requested
         `tol`
 
@@ -858,10 +860,10 @@ class LassoCV(LinearModelCV, RegressorMixin):
     `alpha_`: float
         The amount of penalization choosen by cross validation
 
-    `coef_` : array, shape = (n_features,)
+    `coef_` : array, shape = (n_features,) | (n_targets, n_features)
         parameter vector (w in the cost function formula)
 
-    `intercept_` : float
+    `intercept_` : float | array, shape = (n_targets,)
         independent term in decision function.
 
     `mse_path_`: array, shape = (n_alphas, n_folds)
@@ -965,10 +967,10 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         The compromise between l1 and l2 penalization choosen by
         cross validation
 
-    `coef_` : array, shape = (n_features,)
+    `coef_` : array, shape = (n_features,) | (n_targets, n_features)
         Parameter vector (w in the cost function formula),
 
-    `intercept_` : float
+    `intercept_` : float | array, shape = (n_targets, n_features)
         Independent term in the decision function.
 
     `mse_path_` : array, shape = (n_l1_ratio, n_alpha, n_folds)
