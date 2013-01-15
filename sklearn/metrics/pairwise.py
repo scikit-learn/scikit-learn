@@ -483,6 +483,9 @@ def chi2_kernel(X, Y=None, gamma=1.):
 
     Y : array of shape (n_samples_Y, n_features)
 
+    gamma : float, default=1.
+        Scaling parameter of the chi2 kernel.
+
     Returns
     -------
     kernel_matrix : array of shape (n_samples_X, n_samples_Y)
