@@ -695,7 +695,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             if i == n_estimators:
                 break
 
-            purities = estimator.predict_proba(X)[:, 0]
+            purities = estimator.predict_proba(X)[:, -1]
             norm += weight
 
             if output is None:

@@ -58,7 +58,7 @@ pl.legend(loc='upper right')
 pl.xlabel("Decision Boundary")
 
 # Plot the class probabilities
-class_proba = bdt.predict_proba(X)[:, 0]
+class_proba = bdt.predict_proba(X)[:, -1]
 pl.subplot(132)
 for i, n, c in zip(xrange(2), class_names, plot_colors):
     pl.hist(class_proba[y == i],
