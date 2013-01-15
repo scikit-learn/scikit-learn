@@ -58,73 +58,74 @@ class ElasticNet(LinearModel, RegressorMixin):
     alpha : float
         Constant that multiplies the penalty terms. Defaults to 1.0
         See the notes for the exact mathematical meaning of this
-        parameter
-        alpha = 0 is equivalent to an ordinary least square, solved
-        by the LinearRegression object in the scikit. For numerical
-        reasons, using alpha = 0 with the Lasso object is not advised
+        parameter.
+        ``alpha = 0`` is equivalent to an ordinary least square, solved
+        by the :class:`LinearRegression` object. For numerical
+        reasons, using ``alpha = 0`` with the Lasso object is not advised
         and you should prefer the LinearRegression object.
 
     l1_ratio : float
-        The ElasticNet mixing parameter, with 0 <= l1_ratio <= 1. For
-        l1_ratio = 0 the penalty is an L2 penalty. For l1_ratio = 1 it is an L1
-        penalty.  For 0 < l1_ratio < 1, the penalty is a combination of L1 and
-        L2.
+        The ElasticNet mixing parameter, with ``0 <= l1_ratio <= 1``. For
+        ``l1_ratio = 0`` the penalty is an L2 penalty. ``For l1_ratio = 1`` it
+        is an L1 penalty.  For ``0 < l1_ratio < 1``, the penalty is a
+        combination of L1 and L2.
 
     fit_intercept: bool
-        Whether the intercept should be estimated or not. If False, the
+        Whether the intercept should be estimated or not. If ``False``, the
         data is assumed to be already centered.
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
+        If ``True``, the regressors X will be normalized before regression.
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to 'auto' let us decide. The Gram
+        calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument. For sparse input
-        this option is always True to preserve sparsity.
+        this option is always ``True`` to preserve sparsity.
 
     max_iter: int, optional
         The maximum number of iterations
 
     copy_X : boolean, optional, default False
-        If True, X will be copied; else, it may be overwritten.
+        If ``True``, X will be copied; else, it may be overwritten.
 
     tol: float, optional
         The tolerance for the optimization: if the updates are
-        smaller than 'tol', the optimization code checks the
+        smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
-        than tol.
+        than ``tol``.
 
     warm_start : bool, optional
-        When set to True, reuse the solution of the previous call to fit as
+        When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
     positive: bool, optional
-        When set to True, forces the coefficients to be positive.
+        When set to ``True``, forces the coefficients to be positive.
 
     Attributes
     ----------
-    `coef_` : array, shape = (n_features,)
+    ``coef_`` : array, shape = (n_features,) | (n_targets, n_features)
         parameter vector (w in the cost function formula)
 
-    `sparse_coef_` : scipy.sparse matrix, shape = (n_features, 1)
-        `sparse_coef_` is a readonly property derived from `coef_`
+    ``sparse_coef_`` : scipy.sparse matrix, shape = (n_features, 1) | \
+            (n_targets, n_features)
+        ``sparse_coef_`` is a readonly property derived from ``coef_``
 
-    `intercept_` : float | array, shape = (n_targets,)
+    ``intercept_`` : float | array, shape = (n_targets,)
         independent term in decision function.
 
-    `dual_gap_` : float
+    ``dual_gap_`` : float | array, shape = (n_targets,)
         the current fit is guaranteed to be epsilon-suboptimal with
-        epsilon := `dual_gap_`
+        epsilon := ``dual_gap_``
 
-    `eps_` : float
-        `eps_` is used to check if the fit converged to the requested
-        `tol`
+    ``eps_`` : float | array, shape = (n_targets,)
+        ``eps_`` is used to check if the fit converged to the requested
+        ``tol``
 
     Notes
     -----
     To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a fortran contiguous numpy array.
+    should be directly passed as a Fortran-contiguous numpy array.
     """
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, precompute='auto', max_iter=1000,
@@ -167,7 +168,7 @@ class ElasticNet(LinearModel, RegressorMixin):
 
         Coordinate descent is an algorithm that considers each column of
         data at a time hence it will automatically convert the X input
-        as a fortran contiguous numpy array if necessary.
+        as a Fortran-contiguous numpy array if necessary.
 
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
@@ -351,15 +352,15 @@ class Lasso(ElasticNet):
         (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
 
     Technically the Lasso model is optimizing the same objective function as
-    the Elastic Net with l1_ratio=1.0 (no L2 penalty).
+    the Elastic Net with ``l1_ratio=1.0`` (no L2 penalty).
 
     Parameters
     ----------
     alpha : float, optional
-        Constant that multiplies the L1 term. Defaults to 1.0
-        alpha = 0 is equivalent to an ordinary least square, solved
-        by the LinearRegression object in the scikit. For numerical
-        reasons, using alpha = 0 is with the Lasso object is not advised
+        Constant that multiplies the L1 term. Defaults to 1.0.
+        ``alpha = 0`` is equivalent to an ordinary least square, solved
+        by the :class:`LinearRegression` object. For numerical
+        reasons, using ``alpha = 0`` is with the Lasso object is not advised
         and you should prefer the LinearRegression object.
 
     fit_intercept : boolean
@@ -368,52 +369,53 @@ class Lasso(ElasticNet):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
+        If ``True``, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
-        If True, X will be copied; else, it may be overwritten.
+        If ``True``, X will be copied; else, it may be overwritten.
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to 'auto' let us decide. The Gram
+        calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument. For sparse input
-        this option is always True to preserve sparsity.
+        this option is always ``True`` to preserve sparsity.
 
     max_iter: int, optional
         The maximum number of iterations
 
     tol : float, optional
         The tolerance for the optimization: if the updates are
-        smaller than 'tol', the optimization code checks the
+        smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
-        than tol.
+        than ``tol``.
 
     warm_start : bool, optional
         When set to True, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
     positive : bool, optional
-        When set to True, forces the coefficients to be positive.
+        When set to ``True``, forces the coefficients to be positive.
 
 
     Attributes
     ----------
-    `coef_` : array, shape = (n_features,)
+    ``coef_`` : array, shape = (n_features,) | (n_targets, n_features)
         parameter vector (w in the cost function formula)
 
-    `sparse_coef_` : scipy.sparse matrix, shape = (n_features, 1)
-        `sparse_coef_` is a readonly property derived from `coef_`
+    ``sparse_coef_`` : scipy.sparse matrix, shape = (n_features, 1) | \
+            (n_targets, n_features)
+        ``sparse_coef_`` is a readonly property derived from ``coef_``
 
-    `intercept_` : float
+    ``intercept_`` : float | array, shape = (n_targets,)
         independent term in decision function.
 
-    `dual_gap_` : float
+    ``dual_gap_`` : float | array, shape = (n_targets,)
         the current fit is guaranteed to be epsilon-suboptimal with
-        epsilon := `dual_gap_`
+        epsilon := ``dual_gap_``
 
-    `eps_` : float
-        `eps_` is used to check if the fit converged to the requested
-        `tol`
+    ``eps_`` : float | array, shape = (n_targets,)
+        ``eps_`` is used to check if the fit converged to the requested
+        ``tol``
 
     Examples
     --------
@@ -442,7 +444,7 @@ class Lasso(ElasticNet):
     The algorithm used to fit the model is coordinate descent.
 
     To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a fortran contiguous numpy array.
+    should be directly passed as a Fortran-contiguous numpy array.
     """
 
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
@@ -471,26 +473,26 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     Parameters
     ----------
     X : ndarray, shape = (n_samples, n_features)
-        Training data. Pass directly as fortran contiguous data to avoid
+        Training data. Pass directly as Fortran-contiguous data to avoid
         unnecessary memory duplication
 
     y : ndarray, shape = (n_samples,)
         Target values
 
     eps : float, optional
-        Length of the path. eps=1e-3 means that
-        alpha_min / alpha_max = 1e-3
+        Length of the path. ``eps=1e-3`` means that
+        ``alpha_min / alpha_max = 1e-3``
 
     n_alphas : int, optional
         Number of alphas along the regularization path
 
     alphas : ndarray, optional
         List of alphas where to compute the models.
-        If None alphas are set automatically
+        If ``None`` alphas are set automatically
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to 'auto' let us decide. The Gram
+        calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
     Xy : array-like, optional
@@ -501,10 +503,10 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
         Fit or not an intercept
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
+        If ``True``, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
-        If True, X will be copied; else, it may be overwritten.
+        If ``True``, X will be copied; else, it may be overwritten.
 
     verbose : bool or integer
         Amount of verbosity
@@ -522,7 +524,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     for an example.
 
     To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a fortran contiguous numpy array.
+    should be directly passed as a Fortran-contiguous numpy array.
 
     Note that in certain cases, the Lars solver may be significantly
     faster to implement this functionality. In particular, linear
@@ -583,7 +585,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     Parameters
     ----------
     X : ndarray, shape = (n_samples, n_features)
-        Training data. Pass directly as fortran contiguous data to avoid
+        Training data. Pass directly as Fortran-contiguous data to avoid
         unnecessary memory duplication
 
     y : ndarray, shape = (n_samples,)
@@ -591,11 +593,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     l1_ratio : float, optional
         float between 0 and 1 passed to ElasticNet (scaling between
-        l1 and l2 penalties). l1_ratio=1 corresponds to the Lasso
+        l1 and l2 penalties). ``l1_ratio=1`` corresponds to the Lasso
 
     eps : float
-        Length of the path. eps=1e-3 means that
-        alpha_min / alpha_max = 1e-3
+        Length of the path. ``eps=1e-3`` means that
+        ``alpha_min / alpha_max = 1e-3``
 
     n_alphas : int, optional
         Number of alphas along the regularization path
@@ -606,7 +608,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to 'auto' let us decide. The Gram
+        calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
     Xy : array-like, optional
@@ -617,10 +619,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         Fit or not an intercept
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
+        If ``True``, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
-        If True, X will be copied; else, it may be overwritten.
+        If ``True``, X will be copied; else, it may be overwritten.
 
     verbose : bool or integer
         Amount of verbosity
@@ -749,7 +751,7 @@ class LinearModelCV(LinearModel):
         ----------
 
         X : array-like, shape (n_samples, n_features)
-            Training data. Pass directly as fortran contiguous data to avoid
+            Training data. Pass directly as Fortran-contiguous data to avoid
             unnecessary memory duplication
 
         y : narray, shape (n_samples,) or (n_samples, n_targets)
@@ -846,19 +848,19 @@ class LassoCV(LinearModelCV, RegressorMixin):
     Parameters
     ----------
     eps : float, optional
-        Length of the path. eps=1e-3 means that
-        alpha_min / alpha_max = 1e-3.
+        Length of the path. ``eps=1e-3`` means that
+        ``alpha_min / alpha_max = 1e-3``.
 
     n_alphas : int, optional
         Number of alphas along the regularization path
 
     alphas : numpy array, optional
         List of alphas where to compute the models.
-        If None alphas are set automatically
+        If ``None`` alphas are set automatically
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to 'auto' let us decide. The Gram
+        calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
     max_iter: int, optional
@@ -866,33 +868,33 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
     tol: float, optional
         The tolerance for the optimization: if the updates are
-        smaller than 'tol', the optimization code checks the
+        smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
-        than tol.
+        than ``tol``.
 
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see
-        sklearn.cross_validation module for the list of possible objects
+        Specific crossvalidation objects can be passed, see the
+        :mod:`sklearn.cross_validation` module for the list of possible objects.
 
     verbose : bool or integer
         amount of verbosity
 
     Attributes
     ----------
-    `alpha_`: float
+    ``alpha_`` : float
         The amount of penalization choosen by cross validation
 
-    `coef_` : array, shape = (n_features,)
+    ``coef_`` : array, shape = (n_features,) | (n_targets, n_features)
         parameter vector (w in the cost function formula)
 
-    `intercept_` : float
+    ``intercept_`` : float | array, shape = (n_targets,)
         independent term in decision function.
 
-    `mse_path_`: array, shape = (n_alphas, n_folds)
+    ``mse_path_`` : array, shape = (n_alphas, n_folds)
         mean square error for the test set on each fold, varying alpha
 
-    `alphas_`: numpy array
+    ``alphas_`` : numpy array
         The grid of alphas used for fitting
 
     Notes
@@ -901,7 +903,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
     for an example.
 
     To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a fortran contiguous numpy array.
+    should be directly passed as a Fortran-contiguous numpy array.
 
     See also
     --------
@@ -933,19 +935,19 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     ----------
     l1_ratio : float, optional
         float between 0 and 1 passed to ElasticNet (scaling between
-        l1 and l2 penalties). For l1_ratio = 0
-        the penalty is an L2 penalty. For l1_ratio = 1 it is an L1 penalty.
-        For 0 < l1_ratio < 1, the penalty is a combination of L1 and L2
+        l1 and l2 penalties). For ``l1_ratio = 0``
+        the penalty is an L2 penalty. For ``l1_ratio = 1`` it is an L1 penalty.
+        For ``0 < l1_ratio < 1``, the penalty is a combination of L1 and L2
         This parameter can be a list, in which case the different
         values are tested by cross-validation and the one giving the best
         prediction score is used. Note that a good choice of list of
         values for l1_ratio is often to put more values close to 1
-        (i.e. Lasso) and less close to 0 (i.e. Ridge), as in [.1, .5, .7,
-        .9, .95, .99, 1]
+        (i.e. Lasso) and less close to 0 (i.e. Ridge), as in ``[.1, .5, .7,
+        .9, .95, .99, 1]``
 
     eps : float, optional
-        Length of the path. eps=1e-3 means that
-        alpha_min / alpha_max = 1e-3.
+        Length of the path. ``eps=1e-3`` means that
+        ``alpha_min / alpha_max = 1e-3``.
 
     n_alphas : int, optional
         Number of alphas along the regularization path
@@ -956,7 +958,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to 'auto' let us decide. The Gram
+        calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
     max_iter : int, optional
@@ -964,39 +966,39 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
     tol : float, optional
         The tolerance for the optimization: if the updates are
-        smaller than 'tol', the optimization code checks the
+        smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
-        than tol.
+        than ``tol``.
 
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see
-        sklearn.cross_validation module for the list of possible objects
+        Specific crossvalidation objects can be passed, see the
+        :mod:`sklearn.cross_validation` module for the list of possible objects.
 
     verbose : bool or integer
         amount of verbosity
 
     n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If '-1', use
+        Number of CPUs to use during the cross validation. If ``-1``, use
         all the CPUs. Note that this is used only if multiple values for
         l1_ratio are given.
 
     Attributes
     ----------
-    `alpha_` : float
+    ``alpha_`` : float
         The amount of penalization choosen by cross validation
 
-    `l1_ratio_` : float
+    ``l1_ratio_`` : float
         The compromise between l1 and l2 penalization choosen by
         cross validation
 
-    `coef_` : array, shape = (n_features,)
+    ``coef_`` : array, shape = (n_features,) | (n_targets, n_features)
         Parameter vector (w in the cost function formula),
 
-    `intercept_` : float
+    ``intercept_`` : float | array, shape = (n_targets, n_features)
         Independent term in the decision function.
 
-    `mse_path_` : array, shape = (n_l1_ratio, n_alpha, n_folds)
+    ``mse_path_`` : array, shape = (n_l1_ratio, n_alpha, n_folds)
         Mean square error for the test set on each fold, varying l1_ratio and
         alpha.
 
@@ -1006,7 +1008,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     for an example.
 
     To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a fortran contiguous numpy array.
+    should be directly passed as a Fortran-contiguous numpy array.
 
     The parameter l1_ratio corresponds to alpha in the glmnet R package
     while alpha corresponds to the lambda parameter in glmnet.
@@ -1089,7 +1091,7 @@ class MultiTaskElasticNet(Lasso):
         The ElasticNet mixing parameter, with 0 < l1_ratio <= 1.
         For l1_ratio = 0 the penalty is an L1/L2 penalty. For l1_ratio = 1 it
         is an L1 penalty.
-        For 0 < l1_ratio < 1, the penalty is a combination of L1/L2 and L2.
+        For ``0 < l1_ratio < 1``, the penalty is a combination of L1/L2 and L2.
 
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
@@ -1097,32 +1099,32 @@ class MultiTaskElasticNet(Lasso):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
+        If ``True``, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
-        If True, X will be copied; else, it may be overwritten.
+        If ``True``, X will be copied; else, it may be overwritten.
 
     max_iter : int, optional
         The maximum number of iterations
 
     tol : float, optional
         The tolerance for the optimization: if the updates are
-        smaller than 'tol', the optimization code checks the
+        smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
-        than tol.
+        than ``tol``.
 
     warm_start : bool, optional
-        When set to True, reuse the solution of the previous call to fit as
+        When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
     Attributes
     ----------
-    `intercept_` : array, shape = (n_tasks,)
+    ``intercept_`` : array, shape = (n_tasks,)
         Independent term in decision function.
 
-    `coef_` : array, shape = (n_tasks, n_features)
+    ``coef_`` : array, shape = (n_tasks, n_features)
         Parameter vector (W in the cost function formula). If a 1D y is \
-        passed in at fit (non multi-task usage), `coef_` is then a 1D array
+        passed in at fit (non multi-task usage), ``coef_`` is then a 1D array
 
     Examples
     --------
@@ -1148,7 +1150,7 @@ class MultiTaskElasticNet(Lasso):
     The algorithm used to fit the model is coordinate descent.
 
     To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a fortran contiguous numpy array.
+    should be directly passed as a Fortran-contiguous numpy array.
     """
     def __init__(self, alpha=1.0, l1_ratio=0.5, fit_intercept=True,
                  normalize=False, copy_X=True, max_iter=1000, tol=1e-4,
@@ -1184,7 +1186,7 @@ class MultiTaskElasticNet(Lasso):
 
         Coordinate descent is an algorithm that considers each column of
         data at a time hence it will automatically convert the X input
-        as a fortran contiguous numpy array if necessary.
+        as a Fortran-contiguous numpy array if necessary.
 
         To avoid memory re-allocation it is advised to allocate the
         initial data in memory directly using that format.
@@ -1260,30 +1262,30 @@ class MultiTaskLasso(MultiTaskElasticNet):
         (e.g. data is expected to be already centered).
 
     normalize : boolean, optional, default False
-        If True, the regressors X will be normalized before regression.
+        If ``True``, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
-        If True, X will be copied; else, it may be overwritten.
+        If ``True``, X will be copied; else, it may be overwritten.
 
     max_iter : int, optional
         The maximum number of iterations
 
     tol : float, optional
         The tolerance for the optimization: if the updates are
-        smaller than 'tol', the optimization code checks the
+        smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
-        than tol.
+        than ``tol``.
 
     warm_start : bool, optional
-        When set to True, reuse the solution of the previous call to fit as
+        When set to ``True``, reuse the solution of the previous call to fit as
         initialization, otherwise, just erase the previous solution.
 
     Attributes
     ----------
-    `coef_` : array, shape = (n_tasks, n_features)
+    ``coef_`` : array, shape = (n_tasks, n_features)
         parameter vector (W in the cost function formula)
 
-    `intercept_` : array, shape = (n_tasks,)
+    ``intercept_`` : array, shape = (n_tasks,)
         independent term in decision function.
 
     Examples
@@ -1308,7 +1310,7 @@ class MultiTaskLasso(MultiTaskElasticNet):
     The algorithm used to fit the model is coordinate descent.
 
     To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a fortran contiguous numpy array.
+    should be directly passed as a Fortran-contiguous numpy array.
     """
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
                  copy_X=True, max_iter=1000, tol=1e-4, warm_start=False):
