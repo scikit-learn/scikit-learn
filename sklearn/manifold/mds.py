@@ -182,7 +182,7 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
         used at all, which is useful for debuging. For n_jobs below -1,
-        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
     max_iter : int, optional, default: 300
@@ -292,7 +292,7 @@ class MDS(BaseEstimator):
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
         used at all, which is useful for debuging. For n_jobs below -1,
-        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
     random_state : integer or numpy.RandomState, optional

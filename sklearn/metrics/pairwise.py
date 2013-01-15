@@ -618,7 +618,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
         used at all, which is useful for debuging. For n_jobs below -1,
-        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
     `**kwds` : optional keyword parameters
@@ -768,7 +768,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
         used at all, which is useful for debuging. For n_jobs below -1,
-        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
     filter_params: boolean
