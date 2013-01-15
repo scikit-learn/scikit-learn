@@ -20,6 +20,10 @@ shown in the middle, and the boost weight of each tree is shown on the right.
 """
 print __doc__
 
+# Author: Noel Dawe <noel.dawe@gmail.com>
+#
+# License: BSD
+
 from itertools import izip
 
 import pylab as pl
