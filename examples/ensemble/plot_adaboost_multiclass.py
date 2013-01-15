@@ -61,10 +61,10 @@ discrete_test_errors = []
 
 for real_test_predict, discrete_train_predict in izip(
         bdt_real.staged_predict(X_test), bdt_discrete.staged_predict(X_test)):
-    real_test_errors.append(1. -
-        accuracy_score(real_test_predict, y_test))
-    discrete_test_errors.append(1. -
-        accuracy_score(discrete_train_predict, y_test))
+    real_test_errors.append(
+        1. - accuracy_score(real_test_predict, y_test))
+    discrete_test_errors.append(
+        1. - accuracy_score(discrete_train_predict, y_test))
 
 n_trees = xrange(1, len(bdt_discrete) + 1)
 
@@ -72,7 +72,8 @@ pl.figure(figsize=(15, 5))
 
 pl.subplot(131)
 pl.plot(n_trees, discrete_test_errors, c='black', label='SAMME')
-pl.plot(n_trees, real_test_errors, c='black', linestyle='dashed', label='SAMME.R')
+pl.plot(n_trees, real_test_errors, c='black',
+        linestyle='dashed', label='SAMME.R')
 pl.legend()
 pl.ylim(0.18, 0.62)
 pl.ylabel('Test Error')

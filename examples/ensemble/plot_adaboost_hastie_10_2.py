@@ -26,6 +26,7 @@ print __doc__
 import numpy as np
 from sklearn import datasets
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import accuracy_score
 from sklearn.ensemble import AdaBoostClassifier
 import pylab as plt
 
@@ -69,19 +70,19 @@ ax.plot([1, n_estimators], [dt_err] * 2, 'k--',
 
 ada_discrete_err = np.zeros((n_estimators,))
 for i, y_pred in enumerate(ada_discrete.staged_predict(X_test)):
-    ada_discrete_err[i] = (y_pred != y_test).mean()
+    ada_discrete_err[i] = 1. - accuracy_score(y_pred, y_test)
 
 ada_discrete_err_train = np.zeros((n_estimators,))
 for i, y_pred in enumerate(ada_discrete.staged_predict(X_train)):
-    ada_discrete_err_train[i] = (y_pred != y_train).mean()
+    ada_discrete_err_train[i] = 1. - accuracy_score(y_pred, y_train)
 
 ada_real_err = np.zeros((n_estimators,))
 for i, y_pred in enumerate(ada_real.staged_predict(X_test)):
-    ada_real_err[i] = (y_pred != y_test).mean()
+    ada_real_err[i] = 1. - accuracy_score(y_pred, y_test)
 
 ada_real_err_train = np.zeros((n_estimators,))
 for i, y_pred in enumerate(ada_real.staged_predict(X_train)):
-    ada_real_err_train[i] = (y_pred != y_train).mean()
+    ada_real_err_train[i] = 1. - accuracy_score(y_pred, y_train)
 
 ax.plot(np.arange(n_estimators) + 1, ada_discrete_err,
         label='Discrete AdaBoost Test Error',
