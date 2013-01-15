@@ -33,10 +33,9 @@ except:
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['gen_rst',
               'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
-              'sphinx.ext.pngmath',
+              'sphinx.ext.pngmath', 'numpy_ext.numpydoc'
               ]
 
-extensions.append('numpy_ext.numpydoc')
 autosummary_generate = True
 
 autodoc_default_flags = ['members', 'inherited-members']
