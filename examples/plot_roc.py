@@ -5,6 +5,11 @@ Receiver operating characteristic (ROC)
 
 Example of Receiver operating characteristic (ROC) metric to
 evaluate the quality of the output of a classifier.
+
+.. note::
+
+    See also :ref:`example_plot_roc_crossval.py`
+
 """
 print(__doc__)
 

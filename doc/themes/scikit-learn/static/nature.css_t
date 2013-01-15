@@ -601,6 +601,12 @@ div#examples.section .figure img {
     margin: auto;
 }
 
+div#examples.section .figure:hover img {
+    max-width: 167px;
+    max-height: 167px;
+    box-shadow:4px -4px 10px 3px #888, inset 4px -4px 10px 3px #888;
+}
+
 /* ------- Zoom plots to make them fit in layout -------------------------- */
 div.body img {
     max-width:805px;
