@@ -275,7 +275,7 @@ using the `l1_ratio` parameter.
 
 Elastic-net is useful when there are multiple features which are
 correlated with one another. Lasso is likely to pick one of these
-at random, while elastic-nets are likely to pick both.
+at random, while elastic-net is likely to pick both.
 
 A practical advantage of trading-off between Lasso and Ridge is it allows
 Elastic-Net to inherit some of Ridge's stability under rotation.
