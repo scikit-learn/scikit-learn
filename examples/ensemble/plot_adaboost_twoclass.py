@@ -1,6 +1,6 @@
 """
 ==================
-Two-Class AdaBoost
+Two-class AdaBoost
 ==================
 
 This example fits an AdaBoosted decision stump on a classification dataset and
