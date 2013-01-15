@@ -305,7 +305,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
                  class_weight=None, warm_start=False, rho=None, seed=None):
 
         if seed is not None:
-            warnings.warn("Parameter 'seed' war renamed to 'random_state' for"
+            warnings.warn("Parameter 'seed' was renamed to 'random_state' for"
                           " consistency and will be removed in 0.15",
                           DeprecationWarning)
             random_state = seed
