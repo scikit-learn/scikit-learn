@@ -1,6 +1,6 @@
 """
 =====================================
-Multi-Class AdaBoosted Decision Trees
+Multi-class AdaBoosted Decision Trees
 =====================================
 
 This example reproduces Figure 1 of Zhu et al [1] and shows how boosting can
