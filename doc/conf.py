@@ -35,14 +35,9 @@ extensions = ['gen_rst',
               'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
               'sphinx.ext.pngmath',
               ]
-try:
-    import numpy_ext.numpydoc
-    extensions.append('numpy_ext.numpydoc')
-    # With older versions of sphinx, this causes a crash
-    autosummary_generate = True
-except:
-    # Older version of sphinx
-    extensions.append('numpy_ext_old.numpydoc')
+
+extensions.append('numpy_ext.numpydoc')
+autosummary_generate = True
 
 autodoc_default_flags = ['members', 'inherited-members']
 
@@ -126,8 +121,8 @@ html_theme = 'scikit-learn'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {'oldversion':False, 'collapsiblesidebar': True,
-                      'google_analytics':True}
+html_theme_options = {'oldversion': False, 'collapsiblesidebar': True,
+                      'google_analytics': True}
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['themes']
