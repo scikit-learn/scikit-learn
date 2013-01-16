@@ -37,14 +37,12 @@ noise = noise + noise.T
 noise[np.arange(noise.shape[0]), np.arange(noise.shape[0])] = 0
 similarities += noise
 
-mds = manifold.MDS(n_components=2, max_iter=3000,
-                   eps=1e-9, random_state=seed,
+mds = manifold.MDS(n_components=2, max_iter=3000, eps=1e-9, random_state=seed,
                    dissimilarity="precomputed", n_jobs=1)
 pos = mds.fit(similarities).embedding_
 
-nmds = manifold.MDS(n_components=2, metric=False,
-                    max_iter=3000,
-                    eps=1e-12, random_state=seed, n_jobs=1)
+nmds = manifold.MDS(n_components=2, metric=False, max_iter=3000, eps=1e-12,
+                    dissimilarity="precomputed", random_state=seed, n_jobs=1)
 npos = nmds.fit_transform(similarities, init=pos)
 
 # Rescale the data
