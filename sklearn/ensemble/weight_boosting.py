@@ -95,7 +95,8 @@ class BaseWeightBoosting(BaseEnsemble):
 
         if sample_weight is None:
             # Initialize weights to 1 / n_samples
-            sample_weight = np.ones(X.shape[0], dtype=np.float) / X.shape[0]
+            sample_weight = np.empty(X.shape[0], dtype=np.float)
+            sample_weight[:] = 1. / X.shape[0]
         else:
             # or normalize them
             sample_weight = np.copy(sample_weight) / sample_weight.sum()
