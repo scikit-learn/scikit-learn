@@ -530,15 +530,15 @@ def distance_metrics():
 
     The valid distance metrics, and the function they map to, are:
 
-    ===========     ====================================
-    metric          Function
-    ===========     ====================================
-    'cityblock'     sklearn.pairwise.manhattan_distances
-    'euclidean'     sklearn.pairwise.euclidean_distances
-    'l1'            sklearn.pairwise.manhattan_distances
-    'l2'            sklearn.pairwise.euclidean_distances
-    'manhattan'     sklearn.pairwise.manhattan_distances
-    ===========     ====================================
+    ============     ====================================
+    metric           Function
+    ============     ====================================
+    'cityblock'      sklearn.pairwise.manhattan_distances
+    'euclidean'      sklearn.pairwise.euclidean_distances
+    'l1'             sklearn.pairwise.manhattan_distances
+    'l2'             sklearn.pairwise.euclidean_distances
+    'manhattan'      sklearn.pairwise.manhattan_distances
+    ============     ====================================
 
     """
     return pairwise_distance_functions
@@ -700,18 +700,18 @@ def kernel_metrics():
     each of the valid strings.
 
     The valid distance metrics, and the function they map to, are:
-      ==============   ========================================
-      metric           Function
-      ==============   ========================================
-      'additive_chi2'  sklearn.pairwise.additive_chi2_kernel
-      'chi2'           sklearn.pairwise.chi2_kernel
-      'linear'         sklearn.pairwise.linear_kernel
-      'poly'           sklearn.pairwise.polynomial_kernel
-      'polynomial'     sklearn.pairwise.polynomial_kernel
-      'rbf'            sklearn.pairwise.rbf_kernel
-      'sigmoid'        sklearn.pairwise.sigmoid_kernel
-      'cosine'         sklearn.pairwise.cosine_kernel
-      ==============   ========================================
+      ===============   ========================================
+      metric            Function
+      ===============   ========================================
+      'additive_chi2'   sklearn.pairwise.additive_chi2_kernel
+      'chi2'            sklearn.pairwise.chi2_kernel
+      'linear'          sklearn.pairwise.linear_kernel
+      'poly'            sklearn.pairwise.polynomial_kernel
+      'polynomial'      sklearn.pairwise.polynomial_kernel
+      'rbf'             sklearn.pairwise.rbf_kernel
+      'sigmoid'         sklearn.pairwise.sigmoid_kernel
+      'cosine'          sklearn.pairwise.cosine_kernel
+      ===============   ========================================
     """
     return pairwise_kernel_functions
 

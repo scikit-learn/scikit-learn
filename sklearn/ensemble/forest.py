@@ -696,6 +696,7 @@ class RandomForestClassifier(ForestClassifier):
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
+
         Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)
@@ -841,6 +842,7 @@ class RandomForestRegressor(ForestRegressor):
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
+
         Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)
@@ -978,6 +980,7 @@ class ExtraTreesClassifier(ForestClassifier):
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
+
         Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)
@@ -1127,6 +1130,7 @@ class ExtraTreesRegressor(ForestRegressor):
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
+
         Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)

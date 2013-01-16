@@ -147,6 +147,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     The standardization is given by::
         X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
         X_scaled = X_std / (max - min) + min
+
     where min, max = feature_range.
 
     This standardization is often used as an alternative to zero mean,
