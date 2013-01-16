@@ -355,7 +355,7 @@ class BaseLibSVM(BaseEstimator):
         X = self._validate_for_predict(X)
 
         if self._sparse:
-            dec_func = self._sparse_decision_function(X) 
+            dec_func = self._sparse_decision_function(X)
         else:
             dec_func = self._dense_decision_function(X)
 
