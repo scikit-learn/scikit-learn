@@ -1255,10 +1255,13 @@ def make_gaussian_quantiles(n_samples=100, n_features=2, n_classes=3,
 
     Notes
     -----
-    **References**:
+    The dataset is from Zhu et al [1].
 
-    .. [1] Ji Zhu, Hui Zou, Saharon Rosset, Trevor Hastie.
-           "Multi-class AdaBoost" 2009
+    References
+    ----------
+
+    .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
+
     """
     if n_samples < n_classes:
         raise ValueError("n_samples must be at least n_classes")
@@ -1269,24 +1272,14 @@ def make_gaussian_quantiles(n_samples=100, n_features=2, n_classes=3,
     X = list(generator.normal(0, 1, (n_samples, n_features)))
 
     # Sort by distance from origin
-    X.sort(key=lambda x: sum([x_i ** 2 for x_i in x]))
+    X.sort(key=lambda x: np.sum(x ** 2))
     X = np.array(X)
 
     # Label by quantile.
-    y = np.empty(n_samples, dtype=np.int)
     step = n_samples / n_classes
-    begin = 0
-
-    for i in xrange(n_classes):
-        if i == n_classes - 1:
-            end = n_samples
-        else:
-            end = begin + step
-
-        y[begin:end] = i
-        begin += step
-
-    y = np.array(y)
+    y = np.hstack([
+        np.repeat(np.arange(n_classes), step),
+        np.repeat(n_classes - 1, n_samples - step * n_classes)])
 
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
