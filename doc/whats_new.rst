@@ -131,7 +131,7 @@ Changelog
      :mod:`sklearn.metrics` for regression and classification metrics
      by `Arnaud Joly`_.
 
-   - Fixed a bug in :class:`sklearn.svm.SVC` when using csr-matricese with
+   - Fixed a bug in :class:`sklearn.svm.SVC` when using csr-matrices with
      unsorted indices by Meng Xinfan and `Andreas Müller`_.
 
 API changes summary

@@ -73,9 +73,9 @@ def test_unsorted_indices():
     # test that the result with sorted and unsorted indices in csr is the same
     # we use a subset of digits as iris, blobs or make_classification didn't
     # show the problem
-    iris = load_digits()
-    X, y = iris.data[:50], iris.target[:50]
-    X_test = sparse.csr_matrix(iris.data[50:100])
+    digits = load_digits()
+    X, y = digits.data[:50], digits.target[:50]
+    X_test = sparse.csr_matrix(digits.data[50:100])
 
     X_sparse = sparse.csr_matrix(X)
     coef_dense = svm.SVC(kernel='linear', probability=True).fit(X, y).coef_
