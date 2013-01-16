@@ -1276,7 +1276,7 @@ def make_gaussian_quantiles(n_samples=100, n_features=2, n_classes=3,
     X = X[idx, :]
 
     # Label by quantile
-    step = n_samples / n_classes
+    step = n_samples // n_classes
     y = np.hstack([
         np.repeat(np.arange(n_classes), step),
         np.repeat(n_classes - 1, n_samples - step * n_classes)])
