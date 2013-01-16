@@ -217,7 +217,9 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
     result = []
     for data, indices, indptr, y, query_values in r:
         shape = (indptr.shape[0] - 1, n_features)
-        result += sp.csr_matrix((data, indices, indptr), shape), y
+        X = sp.csr_matrix((data, indices, indptr), shape)
+        X.sort_indices()
+        result += X, y
         if query_id:
             result.append(query_values)
 
@@ -314,10 +316,20 @@ def dump_svmlight_file(X, y, f, zero_based=True, comment=None, query_id=None):
         raise ValueError("expected y of shape (n_samples,), got %r"
                          % (y.shape,))
 
-    X = atleast2d_or_csr(X)
-    if X.shape[0] != y.shape[0]:
-        raise ValueError("X.shape[0] and y.shape[0] should be the same, "
-                         "got: %r and %r instead." % (X.shape[0], y.shape[0]))
+    Xval = atleast2d_or_csr(X)
+    if Xval.shape[0] != y.shape[0]:
+        raise ValueError("X.shape[0] and y.shape[0] should be the same, got"
+                         " %r and %r instead." % (Xval.shape[0], y.shape[0]))
+
+    # We had some issues with CSR matrices with unsorted indices (e.g. #1501),
+    # so sort them here, but first make sure we don't modify the user's X.
+    # TODO We can do this cheaper; sorted_indices copies the whole matrix.
+    if Xval is X and hasattr(Xval, "sorted_indices"):
+        X = Xval.sorted_indices()
+    else:
+        X = Xval
+        if hasattr(X, "sort_indices"):
+            X.sort_indices()
 
     if query_id is not None:
         query_id = np.asarray(query_id)
