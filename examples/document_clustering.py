@@ -15,10 +15,11 @@ Two feature extraction methods can be used in this example:
     the Inverse Document Frequency (IDF) vector collected feature-wise over
     the corpus.
 
-  - HashingVectorizer hashes word occurrences to a fixed dimensional space,
-    possibly with collisions. The word count vectors are then normalized to each
-    have l2-norm equal to one (projected to the euclidean unit-ball) which seems
-    to be important for k-means to work in high dimensional space.
+  - HashingVectorizer hashes word occurrences to a space with fixed
+    dimensionality, possibly with collisions. The word count vectors are then
+    normalized to each have l2-norm equal to one (projected to the euclidean
+    unit-ball) which seems to be important for k-means to work in high
+    dimensional space.
 
     HashingVectorizer does not provide IDF weighting as this is a stateless
     model (the fit method does nothing). When IDF weighting is needed it can
@@ -37,7 +38,7 @@ for both as this measure seem to suffer from the phenomenom called
 "Concentration of Measure" or "Curse of Dimensionality" for high dimensional
 datasets such as text data. Other measures such as V-measure and Adjusted Rand
 Index are information theoretic based evaluation scores: as they are only based
-on cluster assignements rather than distances, hence not affected by the curse
+on cluster assignments rather than distances, hence not affected by the curse
 of dimensionality.
 
 Note: as k-means is optimizing a non convex objective function, it will likely

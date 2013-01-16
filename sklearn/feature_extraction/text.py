@@ -230,7 +230,7 @@ class VectorizerMixin(object):
 
 
 class HashingVectorizer(BaseEstimator, VectorizerMixin):
-    """Convert a collection of text documents to a matrix of token occurrences
+    """Convert a collection of text documents to a matrix of token occurrences.
 
     It turns a collection of text documents into a scipy.sparse matrix holding
     token occurrence counts (or binary occurrence information), possibly
@@ -240,15 +240,15 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     This text vectorizer implementation uses the hashing trick to find the
     token string name to feature integer index mapping.
 
-    This strategy has several advantage:
+    This strategy has several advantages:
 
-    - it is very low memory scalable to large datasets as there is no need to
-      store a vocabulary dictionary in memory
+    - It uses very few memory hence is scalable to large datasets. There is no
+      need to store a vocabulary dictionary in memory.
 
-    - it is fast to pickle and un-pickle has it holds no state besides the
-      constructor parameters
+    - It is fast to pickle and un-pickle as it holds no state besides the
+      constructor parameters.
 
-    - it can be used in a streaming (partial fit) or parallel pipeline as there
+    - It can be used in a streaming (partial fit) or parallel pipeline as there
       is no state computed during fit.
 
     There are also a couple of cons (vs using a CountVectorizer with an in-memory
@@ -274,11 +274,11 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         expected to be a list of filenames that need reading to fetch
         the raw content to analyze.
 
-        If 'file', the sequence items must have 'read' method (file-like
-        object) it is called to fetch the bytes in memory.
+        If 'file', the sequence items must have a 'read' method (file-like
+        object) that is called to fetch the bytes in memory.
 
-        Otherwise the input is expected to be the sequence strings or
-        bytes items are expected to be analyzed directly.
+        Otherwise the input is expected to be a sequence of unicode or
+        byte strings that are expected to be analyzed directly.
 
     charset: string, 'utf-8' by default.
         If bytes or files are given to analyze, this charset is used to
@@ -455,11 +455,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         expected to be a list of filenames that need reading to fetch
         the raw content to analyze.
 
-        If 'file', the sequence items must have 'read' method (file-like
-        object) it is called to fetch the bytes in memory.
+        If 'file', the sequence items must have a 'read' method (file-like
+        object) that is called to fetch the bytes in memory.
 
-        Otherwise the input is expected to be the sequence strings or
-        bytes items are expected to be analyzed directly.
+        Otherwise the input is expected to be a sequence of unicode or
+        byte strings that are expected to be analyzed directly.
 
     charset : string, 'utf-8' by default.
         If bytes or files are given to analyze, this charset is used to
@@ -956,11 +956,11 @@ class TfidfVectorizer(CountVectorizer):
         expected to be a list of filenames that need reading to fetch
         the raw content to analyze.
 
-        If 'file', the sequence items must have 'read' method (file-like
-        object) it is called to fetch the bytes in memory.
+        If 'file', the sequence items must have a 'read' method (file-like
+        object) that is called to fetch the bytes in memory.
 
-        Otherwise the input is expected to be the sequence strings or
-        bytes items are expected to be analyzed directly.
+        Otherwise the input is expected to be a sequence of unicode or
+        byte strings that are expected to be analyzed directly.
 
     charset : string, 'utf-8' by default.
         If bytes or files are given to analyze, this charset is used to
