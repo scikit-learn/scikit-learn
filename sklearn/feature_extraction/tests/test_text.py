@@ -13,6 +13,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 
 import numpy as np
+import scipy.sparse as sp
 from nose import SkipTest
 from nose.tools import assert_equal
 from nose.tools import assert_false
@@ -448,6 +449,29 @@ def test_hashing_vectorizer():
     # Check that the rows are normalized
     for i in range(X.shape[0]):
         assert_almost_equal(np.linalg.norm(X[0].data, 1), 1.0)
+
+
+def test_stateless_fit_for_hashing_vectorizer():
+    X1 = HashingVectorizer().transform(ALL_FOOD_DOCS)
+
+    X2 = HashingVectorizer().fit_transform(ALL_FOOD_DOCS)
+    assert_array_equal(X1.indices, X2.indices)
+    assert_array_almost_equal(X1.data, X2.data)
+    assert_array_equal(X1.indptr, X2.indptr)
+
+    X3 = HashingVectorizer().fit(ALL_FOOD_DOCS).transform(ALL_FOOD_DOCS)
+    assert_array_equal(X1.indices, X3.indices)
+    assert_array_almost_equal(X1.data, X3.data)
+    assert_array_equal(X1.indptr, X3.indptr)
+
+    hv = HashingVectorizer()
+    X4_1 = hv.partial_fit(ALL_FOOD_DOCS[:2]).transform(ALL_FOOD_DOCS[:2])
+    X4_2 = hv.partial_fit(ALL_FOOD_DOCS[2:4]).transform(ALL_FOOD_DOCS[2:4])
+    X4_3 = hv.partial_fit(ALL_FOOD_DOCS[4:]).transform(ALL_FOOD_DOCS[4:])
+    X4 = sp.vstack((X4_1, X4_2, X4_3)).tocsr()
+    assert_array_equal(X1.indices, X4.indices)
+    assert_array_almost_equal(X1.data, X4.data)
+    assert_array_equal(X1.indptr, X4.indptr)
 
 
 def test_feature_names():
