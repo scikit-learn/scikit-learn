@@ -12,6 +12,7 @@ from scipy.sparse.linalg import lobpcg
 from scipy.sparse.linalg.eigen.lobpcg.lobpcg import symeig
 
 from ..base import BaseEstimator, TransformerMixin
+from ..externals import six
 from ..utils import check_random_state
 from ..utils.validation import atleast2d_or_csr
 from ..utils.graph import graph_laplacian
@@ -449,7 +450,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
             Returns the instance itself.
         """
         self.random_state = check_random_state(self.random_state)
-        if isinstance(self.affinity, basestring):
+        if isinstance(self.affinity, six.string_types):
             if self.affinity not in set(("nearest_neighbors", "rbf",
                                          "precomputed")):
                 raise ValueError(("%s is not a valid affinity. Expected "

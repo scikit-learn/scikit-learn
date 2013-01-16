@@ -8,6 +8,7 @@ import numbers
 import numpy as np
 from scipy import sparse
 
+from ..externals import six
 from .fixes import safe_copy
 
 
@@ -223,7 +224,7 @@ def check_arrays(*arrays, **options):
 
 def warn_if_not_float(X, estimator='This algorithm'):
     """Warning utility function to check that data type is floating point"""
-    if not isinstance(estimator, basestring):
+    if not isinstance(estimator, six.string_types):
         estimator = estimator.__class__.__name__
     if X.dtype.kind != 'f':
         warnings.warn("%s assumes floating point values as input, "

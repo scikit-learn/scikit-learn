@@ -612,7 +612,8 @@ def _is_multilabel(y):
     # the explicit check for ndarray is for forward compatibility; future
     # versions of Numpy might want to register ndarray as a Sequence
     return (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) and
-            not isinstance(y[0], basestring) or _is_label_indicator_matrix(y))
+            not isinstance(y[0], six.string_types) or
+           _is_label_indicator_matrix(y))
 
 
 class OneHotEncoder(BaseEstimator, TransformerMixin):

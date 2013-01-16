@@ -207,7 +207,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
             for x in X:
                 for f, v in six.iteritems(x):
-                    if isinstance(v, basestring):
+                    if isinstance(v, six.string_types):
                         f = "%s%s%s" % (f, self.separator, v)
                         v = 1
                     try:
@@ -230,7 +230,7 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
             for i, x in enumerate(X):
                 for f, v in six.iteritems(x):
-                    if isinstance(v, basestring):
+                    if isinstance(v, six.string_types):
                         f = "%s%s%s" % (f, self.separator, v)
                         v = 1
                     try:

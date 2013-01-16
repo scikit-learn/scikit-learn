@@ -16,6 +16,7 @@ import numpy as np
 from abc import ABCMeta, abstractmethod
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..externals import six
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..utils import array2d, check_random_state
 from ..utils.validation import check_arrays
@@ -124,9 +125,13 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
             recurse(tree, right_child, node_id)
 
     if out_file is None:
-        out_file = open("tree.dot", "w")
-    elif isinstance(out_file, basestring):
-        out_file = open(out_file, "w")
+        out_file = "tree.dot"
+
+    if isinstance(out_file, six.string_types):
+        if six.PY3:
+            out_file = open(out_file, "w", encoding="utf-8")
+        else:
+            out_file = open(out_file, "wb")
 
     out_file.write("digraph Tree {\n")
     if isinstance(decision_tree, _tree.Tree):
@@ -273,7 +278,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         # Check parameters
         max_depth = np.inf if self.max_depth is None else self.max_depth
 
-        if isinstance(self.max_features, basestring):
+        if isinstance(self.max_features, six.string_types):
             if self.max_features == "auto":
                 if is_classification:
                     max_features = max(1, int(np.sqrt(self.n_features_)))
