@@ -73,7 +73,8 @@ class BaseWeightBoosting(BaseEnsemble):
             classification, real numbers in regression).
 
         sample_weight : array-like of shape = [n_samples], optional
-            Sample weights.
+            Sample weights. If None, the sample weights are initialized to
+            1 / n_samples.
 
         boost_method : function, optional
             The boosting step.
@@ -276,7 +277,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The target values (integers that correspond to classes).
 
         sample_weight : array-like of shape = [n_samples], optional
-            Sample weights.
+            Sample weights. If None, the sample weights are initialized to
+            1 / n_samples.
 
         Returns
         -------
@@ -946,7 +948,8 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The target values (real numbers).
 
         sample_weight : array-like of shape = [n_samples], optional
-            Sample weights.
+            Sample weights. If None, the sample weights are initialized to
+            1 / n_samples.
 
         Returns
         -------
