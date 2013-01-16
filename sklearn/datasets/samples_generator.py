@@ -1269,13 +1269,13 @@ def make_gaussian_quantiles(n_samples=100, n_features=2, n_classes=3,
     generator = check_random_state(random_state)
 
     # Build multivariate normal distribution
-    X = list(generator.normal(0, 1, (n_samples, n_features)))
+    X = generator.normal(0, 1, (n_samples, n_features))
 
     # Sort by distance from origin
-    X.sort(key=lambda x: np.sum(x ** 2))
-    X = np.array(X)
+    idx = np.argsort(np.sum(X ** 2, axis=1))
+    X = X[idx, :]
 
-    # Label by quantile.
+    # Label by quantile
     step = n_samples / n_classes
     y = np.hstack([
         np.repeat(np.arange(n_classes), step),
