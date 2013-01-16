@@ -590,7 +590,7 @@ It is possible to overcome those limitations by combining the "hashing trick"
 :class:`sklearn.feature_extraction.FeatureHasher` class and the text
 preprocessing and tokenization features of the :class:`CountVectorizer`.
 
-This combination is implementing in :class:`HashingVectorizer`,
+This combination is implemented in :class:`HashingVectorizer`,
 a transformer class that is mostly API compatible with :class:`CountVectorizer`.
 :class:`HashingVectorizer` is stateless,
 meaning that you don't have to call ``fit`` on it::
