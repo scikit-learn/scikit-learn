@@ -386,7 +386,7 @@ def libsvm_sparse_decision_function(
         n_class = get_nr(model)
         n_class = n_class * (n_class - 1) / 2
 
-    dec_values = np.empty((T_indptr.shape[0]-1, n_class), dtype=np.float64)
+    dec_values = np.empty((T_indptr.shape[0] - 1, n_class), dtype=np.float64)
     if csr_copy_predict_values(T_data.shape, T_data.data,
                         T_indices.shape, T_indices.data,
                         T_indptr.shape, T_indptr.data,

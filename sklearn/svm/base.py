@@ -353,9 +353,11 @@ class BaseLibSVM(BaseEstimator):
         """
 
         X = self._validate_for_predict(X)
-        dec_func = _sparse_decision_function if self._sparse \
-                                             else self._dense_decision_function
-        dec_func = dec_func(X)
+
+        if self._sparse:
+            dec_func = self._sparse_decision_function(X) 
+        else:
+            dec_func = self._dense_decision_function(X)
 
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function.
