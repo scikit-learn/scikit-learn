@@ -106,8 +106,8 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
         connectivity = connectivity.tolil()
 
     if n_components > 1:
-        warnings.warn("the number of connected components of the"
-                      "connectivity matrix is %d > 1. Completing it to avoid"
+        warnings.warn("the number of connected components of the "
+                      "connectivity matrix is %d > 1. Completing it to avoid "
                       "stopping the tree early." % n_components)
         connectivity = _fix_connectivity(X, connectivity, n_components, labels)
         n_components = 1
