@@ -99,8 +99,14 @@ class BaseWeightBoosting(BaseEnsemble):
             sample_weight = np.empty(X.shape[0], dtype=np.float)
             sample_weight[:] = 1. / X.shape[0]
         else:
-            # or normalize them
+            # Normalize existing weights
             sample_weight = np.copy(sample_weight) / sample_weight.sum()
+
+            # Check that the sample weights sum is positive
+            if sample_weight.sum() <= 0:
+                raise ValueError(
+                    "Attempting to fit with a non-positive "
+                    "weighted number of samples.")
 
         # Clear any previous fit results
         self.estimators_ = []
@@ -289,13 +295,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         if not isinstance(self.base_estimator, ClassifierMixin):
             raise TypeError("``base_estimator`` must be a "
                             "subclass of ``ClassifierMixin``")
-
-        # Check that the sample weights sum is positive
-        if sample_weight is not None:
-            if np.sum(sample_weight) <= 0:
-                raise ValueError(
-                    "Attempting to fit with a non-positive "
-                    "weighted number of samples.")
 
         # 'Real' boosting step
         if self.real:
@@ -960,13 +959,6 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         if not isinstance(self.base_estimator, RegressorMixin):
             raise TypeError("``base_estimator`` must be a "
                             "subclass of ``RegressorMixin``")
-
-        # Check that the sample weights sum is positive
-        if sample_weight is not None:
-            if np.sum(sample_weight) <= 0:
-                raise ValueError(
-                    "Attempting to fit with a non-positive "
-                    "weighted number of samples.")
 
         # Fit
         return super(AdaBoostRegressor, self).fit(X, y, sample_weight)
