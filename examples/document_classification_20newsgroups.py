@@ -76,7 +76,6 @@ op.add_option("--n_features",
               help="n_features when using the hashing vectorizer.")
 
 
-
 (opts, args) = op.parse_args()
 if len(args) > 0:
     op.error("this script takes no arguments.")
@@ -111,16 +110,18 @@ print 'data loaded'
 
 categories = data_train.target_names    # for case categories == None
 
+
 def size_mb(docs):
     return sum(len(s.encode('utf-8')) for s in docs) / 1e6
+
 
 data_train_size_mb = size_mb(data_train.data)
 data_test_size_mb = size_mb(data_test.data)
 
 print("%d documents - %0.3fMB (training set)" % (
-    len(data_train.data) , data_train_size_mb))
+    len(data_train.data), data_train_size_mb))
 print("%d documents - %0.3fMB (training set)" % (
-    len(data_test.data) , data_test_size_mb))
+    len(data_test.data), data_test_size_mb))
 print "%d categories" % len(categories)
 print
 
