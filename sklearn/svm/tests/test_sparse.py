@@ -121,6 +121,31 @@ def test_svc_iris():
         if k == 'linear':
             assert_array_almost_equal(clf.coef_, sp_clf.coef_.todense())
 
+def test_sparse_decision_function():
+    """
+    Test decision_function
+
+    Sanity check, test that decision_function implemented in python
+    returns the same as the one in libsvm
+
+    """
+    # multi class:
+    clf = svm.SVC(kernel='linear', C=0.1).fit(iris.data, iris.target)
+
+    dec = np.dot(iris.data, clf.coef_.T) + clf.intercept_
+
+    assert_array_almost_equal(dec, clf.decision_function(iris.data))
+
+    # binary:
+    clf.fit(X, Y)
+    dec = np.dot(X, clf.coef_.T) + clf.intercept_
+    prediction = clf.predict(X)
+    assert_array_almost_equal(dec, clf.decision_function(X))
+    assert_array_almost_equal(prediction, clf.label_[(clf.decision_function(X)
+        > 0).astype(np.int).ravel()])
+    expected = np.array([[-1.], [-0.66], [-1.], [0.66], [1.], [1.]])
+    assert_array_almost_equal(clf.decision_function(X), expected, 2)
+
 
 def test_error():
     """
