@@ -163,10 +163,10 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    min_ : ndarray, shape (n_features,)
+    `min_` : ndarray, shape (n_features,)
         Per feature adjustment for minimum.
 
-    scale_ : ndarray, shape (n_features,)
+    `scale_` : ndarray, shape (n_features,)
         Per feature relative scaling of the data.
     """
 
@@ -1172,7 +1172,7 @@ def add_dummy_feature(X, value=1.0):
     X : array or scipy.sparse matrix with shape [n_samples, n_features + 1]
         Same data with dummy feature added as first column.
 
-    Example
+    Examples
     --------
 
     >>> from sklearn.preprocessing import add_dummy_feature

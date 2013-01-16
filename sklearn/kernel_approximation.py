@@ -405,8 +405,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
         Samples a subset of training points, computes kernel
         on these and computes normalization matrix.
 
-        Parmeters
-        ---------
+        Parameters
+        ----------
         X : array-like, shape=(n_samples, n_feature)
             Training data.
         """

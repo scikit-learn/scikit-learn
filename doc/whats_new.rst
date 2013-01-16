@@ -10,7 +10,7 @@ Changelog
 
    - zero_one loss has option for normalized output that reports the fraction
      of misclassifications, rather than the raw number of misclassifications.
-     By `Kyle Beauchamp`_.
+     By Kyle Beauchamp.
 
    - :class:`tree.DecisionTreeClassifier` and all derived ensemble models now
      support sample weighting, by `Noel Dawe`_  and `Gilles Louppe`_.
