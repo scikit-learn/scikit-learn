@@ -409,7 +409,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         ----------
         X : iterable over raw text documents, length = n_samples
             Samples. Each sample must be a text document (either bytes or
-            unicode strings, filen ame or file object depending on the
+            unicode strings, filename or file object depending on the
             constructor argument) which will be tokenized and hashed.
 
         y : (ignored)
