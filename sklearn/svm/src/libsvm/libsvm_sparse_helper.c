@@ -280,6 +280,7 @@ int csr_copy_predict_values (npy_intp *data_size, char *data, npy_intp *index_si
                                ((double *) dec_values) + i*m);
         free(predict_nodes[i]);
     }
+    free(predict_nodes);
 
     return 0;
 }
