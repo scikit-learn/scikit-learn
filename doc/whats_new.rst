@@ -1,5 +1,17 @@
 .. currentmodule:: sklearn
 
+.. _changes_0_14:
+
+0.14
+====
+
+Changelog
+---------
+
+   - Hyperlinks to documentation in example code on the website by
+     `Martin Luessi`_.
+
+
 .. _changes_0_13:
 
 0.13
@@ -1763,3 +1775,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Arnaud Joly: http://www.ajoly.org
 
 .. _Rob Zinkov: http://zinkov.com
+
+.. _Martin Luessi: https://github.com/mluessi
