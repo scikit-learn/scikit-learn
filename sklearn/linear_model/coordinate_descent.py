@@ -172,7 +172,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         initial data in memory directly using that format.
         """
         if self.alpha == 0:
-            warnings.warn("With alpha=0, this aglorithm does not converge"
+            warnings.warn("With alpha=0, this algorithm does not converge "
                           "well. You are advised to use the LinearRegression "
                           "estimator", stacklevel=2)
         X = atleast2d_or_csc(X, dtype=np.float64, order='F',
