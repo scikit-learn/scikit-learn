@@ -5,9 +5,9 @@ from sklearn import datasets, svm, linear_model, base
 from numpy.testing import (assert_array_almost_equal, assert_array_equal,
                            assert_equal)
 
-from nose.tools import assert_raises, assert_true
+from nose.tools import assert_raises, assert_true, assert_false
 from nose.tools import assert_equal as nose_assert_equal
-from sklearn.datasets.samples_generator import make_classification
+from sklearn.datasets import make_classification, load_digits
 from sklearn.svm.tests import test_svm
 from sklearn.utils import ConvergenceWarning
 from sklearn.utils.extmath import safe_sparse_dot
@@ -67,6 +67,37 @@ def test_svc():
     assert_array_almost_equal(clf.predict(T2), sp_clf.predict(T2))
     assert_array_almost_equal(clf.predict_proba(T2),
                               sp_clf.predict_proba(T2), 4)
+
+
+def test_unsorted_indices():
+    # test that the result with sorted and unsorted indices in csr is the same
+    # we use a subset of digits as iris, blobs or make_classification didn't
+    # show the problem
+    digits = load_digits()
+    X, y = digits.data[:50], digits.target[:50]
+    X_test = sparse.csr_matrix(digits.data[50:100])
+
+    X_sparse = sparse.csr_matrix(X)
+    coef_dense = svm.SVC(kernel='linear', probability=True).fit(X, y).coef_
+    sparse_svc = svm.SVC(kernel='linear', probability=True).fit(X_sparse, y)
+    coef_sorted = sparse_svc.coef_
+    # make sure dense and sparse SVM give the same result
+    assert_array_almost_equal(coef_dense, coef_sorted.toarray())
+
+    X_sparse_unsorted = X_sparse[np.arange(X.shape[0])]
+    X_test_unsorted = X_test[np.arange(X_test.shape[0])]
+
+    # make sure we scramble the indices
+    assert_false(X_sparse_unsorted.has_sorted_indices)
+    assert_false(X_test_unsorted.has_sorted_indices)
+
+    unsorted_svc = svm.SVC(kernel='linear',
+                           probability=True).fit(X_sparse_unsorted, y)
+    coef_unsorted = unsorted_svc.coef_
+    # make sure unsorted indices give same result
+    assert_array_almost_equal(coef_unsorted.toarray(), coef_sorted.toarray())
+    assert_array_almost_equal(sparse_svc.predict_proba(X_test_unsorted),
+                              sparse_svc.predict_proba(X_test))
 
 
 def test_svc_with_custom_kernel():

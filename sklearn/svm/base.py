@@ -238,6 +238,7 @@ class BaseLibSVM(BaseEstimator):
 
     def _sparse_fit(self, X, y, sample_weight, solver_type, kernel):
         X.data = np.asarray(X.data, dtype=np.float64, order='C')
+        X.sort_indices()
 
         kernel_type = self._sparse_kernels.index(kernel)
 
@@ -398,6 +399,9 @@ class BaseLibSVM(BaseEstimator):
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         if self._sparse and not sp.isspmatrix(X):
             X = sp.csr_matrix(X)
+        if self._sparse:
+            X.sort_indices()
+
         if (sp.issparse(X) and not self._sparse and
                 not hasattr(self.kernel, '__call__')):
             raise ValueError(
