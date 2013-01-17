@@ -75,9 +75,11 @@ Changelog
    - Faster implementation of :func:`metrics.precision_recall_curve` by
      Conrad Lee.
 
-   - New :class:`feature_extraction.FeatureHasher`, implementing the
-     "hashing trick" for fast, low-memory feature extraction from string data
-     by `Lars Buitinck`_.
+   - New :class:`feature_extraction.FeatureHasher`, implementing the "hashing
+     trick" for fast, low-memory feature extraction from string fields by `Lars
+     Buitinck`_ and :class:`feature_extraction.text.HashingVectorizer` for text
+     documents by `Olivier Grisel`_  See :ref:`feature_hashing` and
+     :ref:`hashing_vectorizer` for the documentation and sample usage.
 
    - New dummy estimators :class:`dummy.DummyClassifiers` and
      :class:`DummyRegressor` by `Mathieu Blondel`_. Useful to sanity-check your

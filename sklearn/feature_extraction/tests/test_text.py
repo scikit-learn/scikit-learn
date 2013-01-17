@@ -3,6 +3,7 @@ from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
 from sklearn.feature_extraction.text import strip_accents_ascii
 
+from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
@@ -12,9 +13,13 @@ from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
 
 import numpy as np
+import scipy.sparse as sp
 from nose import SkipTest
-from nose.tools import (assert_equal, assert_equals, assert_false,
-                        assert_not_equal, assert_true)
+from nose.tools import assert_equal
+from nose.tools import assert_false
+from nose.tools import assert_not_equal
+from nose.tools import assert_true
+from nose.tools import assert_almost_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
@@ -105,37 +110,41 @@ def test_to_ascii():
 
 
 def test_word_analyzer_unigrams():
-    wa = CountVectorizer(strip_accents='ascii').build_analyzer()
-    text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
-    expected = [u'ai', u'mange', u'du', u'kangourou', u'ce', u'midi',
-                u'etait', u'pas', u'tres', u'bon']
-    assert_equal(wa(text), expected)
+    for Vectorizer in (CountVectorizer, HashingVectorizer):
+        wa = Vectorizer(strip_accents='ascii').build_analyzer()
+        text = (u"J'ai mang\xe9 du kangourou  ce midi, "
+                u"c'\xe9tait pas tr\xeas bon.")
+        expected = [u'ai', u'mange', u'du', u'kangourou', u'ce', u'midi',
+                    u'etait', u'pas', u'tres', u'bon']
+        assert_equal(wa(text), expected)
 
-    text = "This is a test, really.\n\n I met Harry yesterday."
-    expected = [u'this', u'is', u'test', u'really', u'met', u'harry',
-                u'yesterday']
-    assert_equal(wa(text), expected)
+        text = "This is a test, really.\n\n I met Harry yesterday."
+        expected = [u'this', u'is', u'test', u'really', u'met', u'harry',
+                    u'yesterday']
+        assert_equal(wa(text), expected)
 
-    wa = CountVectorizer(input='file').build_analyzer()
-    text = StringIO("This is a test with a file-like object!")
-    expected = [u'this', u'is', u'test', u'with', u'file', u'like',
-                u'object']
-    assert_equal(wa(text), expected)
+        wa = Vectorizer(input='file').build_analyzer()
+        text = StringIO("This is a test with a file-like object!")
+        expected = [u'this', u'is', u'test', u'with', u'file', u'like',
+                    u'object']
+        assert_equal(wa(text), expected)
 
-    # with custom preprocessor
-    wa = CountVectorizer(preprocessor=uppercase).build_analyzer()
-    text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
-    expected = [u'AI', u'MANGE', u'DU', u'KANGOUROU', u'CE', u'MIDI',
-                u'ETAIT', u'PAS', u'TRES', u'BON']
-    assert_equal(wa(text), expected)
+        # with custom preprocessor
+        wa = Vectorizer(preprocessor=uppercase).build_analyzer()
+        text = (u"J'ai mang\xe9 du kangourou  ce midi, "
+                u" c'\xe9tait pas tr\xeas bon.")
+        expected = [u'AI', u'MANGE', u'DU', u'KANGOUROU', u'CE', u'MIDI',
+                    u'ETAIT', u'PAS', u'TRES', u'BON']
+        assert_equal(wa(text), expected)
 
-    # with custom tokenizer
-    wa = CountVectorizer(tokenizer=split_tokenize,
-                         strip_accents='ascii').build_analyzer()
-    text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
-    expected = [u"j'ai", u'mange', u'du', u'kangourou', u'ce', u'midi,',
-                u"c'etait", u'pas', u'tres', u'bon.']
-    assert_equal(wa(text), expected)
+        # with custom tokenizer
+        wa = Vectorizer(tokenizer=split_tokenize,
+                        strip_accents='ascii').build_analyzer()
+        text = (u"J'ai mang\xe9 du kangourou  ce midi, "
+                u"c'\xe9tait pas tr\xeas bon.")
+        expected = [u"j'ai", u'mange', u'du', u'kangourou', u'ce', u'midi,',
+                    u"c'etait", u'pas', u'tres', u'bon.']
+        assert_equal(wa(text), expected)
 
 
 def test_word_analyzer_unigrams_and_bigrams():
@@ -143,8 +152,8 @@ def test_word_analyzer_unigrams_and_bigrams():
                          ngram_range=(1, 2)).build_analyzer()
 
     text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
-    expected = [u'ai', u'mange', u'du', u'kangourou', u'ce', u'midi', u'etait',
-                u'pas', u'tres', u'bon', u'ai mange', u'mange du',
+    expected = [u'ai', u'mange', u'du', u'kangourou', u'ce', u'midi',
+                u'etait', u'pas', u'tres', u'bon', u'ai mange', u'mange du',
                 u'du kangourou', u'kangourou ce', u'ce midi', u'midi etait',
                 u'etait pas', u'pas tres', u'tres bon']
     assert_equal(wa(text), expected)
@@ -404,6 +413,67 @@ def test_vectorizer():
     assert_raises(ValueError, v3.transform, train_data)
 
 
+def test_hashing_vectorizer():
+    v = HashingVectorizer()
+    X = v.transform(ALL_FOOD_DOCS)
+    token_nnz = X.nnz
+    assert_equal(X.shape, (len(ALL_FOOD_DOCS), v.n_features))
+    assert_equal(X.dtype, v.dtype)
+
+    # By default the hashed values receive a random sign and l2 normalization
+    # makes the feature values bounded
+    assert_true(np.min(X.data) > -1)
+    assert_true(np.min(X.data) < 0)
+    assert_true(np.max(X.data) > 0)
+    assert_true(np.max(X.data) < 1)
+
+    # Check that the rows are normalized
+    for i in range(X.shape[0]):
+        assert_almost_equal(np.linalg.norm(X[0].data, 2), 1.0)
+
+    # Check vectorization with some non-default parameters
+    v = HashingVectorizer(ngram_range=(1, 2), non_negative=True, norm='l1')
+    X = v.transform(ALL_FOOD_DOCS)
+    assert_equal(X.shape, (len(ALL_FOOD_DOCS), v.n_features))
+    assert_equal(X.dtype, v.dtype)
+
+    # ngrams generate more non zeros
+    ngrams_nnz = X.nnz
+    assert_true(ngrams_nnz > token_nnz)
+    assert_true(ngrams_nnz < 2 * token_nnz)
+
+    # makes the feature values bounded
+    assert_true(np.min(X.data) > 0)
+    assert_true(np.max(X.data) < 1)
+
+    # Check that the rows are normalized
+    for i in range(X.shape[0]):
+        assert_almost_equal(np.linalg.norm(X[0].data, 1), 1.0)
+
+
+def test_stateless_fit_for_hashing_vectorizer():
+    X1 = HashingVectorizer().transform(ALL_FOOD_DOCS)
+
+    X2 = HashingVectorizer().fit_transform(ALL_FOOD_DOCS)
+    assert_array_equal(X1.indices, X2.indices)
+    assert_array_almost_equal(X1.data, X2.data)
+    assert_array_equal(X1.indptr, X2.indptr)
+
+    X3 = HashingVectorizer().fit(ALL_FOOD_DOCS).transform(ALL_FOOD_DOCS)
+    assert_array_equal(X1.indices, X3.indices)
+    assert_array_almost_equal(X1.data, X3.data)
+    assert_array_equal(X1.indptr, X3.indptr)
+
+    hv = HashingVectorizer()
+    X4_1 = hv.partial_fit(ALL_FOOD_DOCS[:2]).transform(ALL_FOOD_DOCS[:2])
+    X4_2 = hv.partial_fit(ALL_FOOD_DOCS[2:4]).transform(ALL_FOOD_DOCS[2:4])
+    X4_3 = hv.partial_fit(ALL_FOOD_DOCS[4:]).transform(ALL_FOOD_DOCS[4:])
+    X4 = sp.vstack((X4_1, X4_2, X4_3)).tocsr()
+    assert_array_equal(X1.indices, X4.indices)
+    assert_array_almost_equal(X1.data, X4.data)
+    assert_array_equal(X1.indptr, X4.indptr)
+
+
 def test_feature_names():
     cv = CountVectorizer(max_df=0.5, min_df=1)
     X = cv.fit_transform(ALL_FOOD_DOCS)
@@ -433,7 +503,7 @@ def test_vectorizer_max_features():
         # test bounded number of extracted features
         vectorizer = vec_factory(max_df=0.6, max_features=4)
         vectorizer.fit(ALL_FOOD_DOCS)
-        assert_equals(set(vectorizer.vocabulary_), expected_vocabulary)
+        assert_equal(set(vectorizer.vocabulary_), expected_vocabulary)
 
 
 def test_vectorizer_max_df():
@@ -441,18 +511,18 @@ def test_vectorizer_max_df():
     vect = CountVectorizer(analyzer='char', max_df=1.0, min_df=1)
     vect.fit(test_data)
     assert_true(u'a' in vect.vocabulary_.keys())
-    assert_equals(len(vect.vocabulary_.keys()), 5)
+    assert_equal(len(vect.vocabulary_.keys()), 5)
 
     vect.max_df = 0.5
     vect.fit(test_data)
     assert_true(u'a' not in vect.vocabulary_.keys())  # 'a' is ignored
-    assert_equals(len(vect.vocabulary_.keys()), 4)  # the others remain
+    assert_equal(len(vect.vocabulary_.keys()), 4)  # the others remain
 
     # absolute count: if in more than one
     vect.max_df = 1
     vect.fit(test_data)
     assert_true(u'a' not in vect.vocabulary_.keys())  # 'a' is ignored
-    assert_equals(len(vect.vocabulary_.keys()), 4)  # the others remain
+    assert_equal(len(vect.vocabulary_.keys()), 4)  # the others remain
 
 
 def test_vectorizer_min_df():
@@ -460,20 +530,20 @@ def test_vectorizer_min_df():
     vect = CountVectorizer(analyzer='char', max_df=1.0, min_df=1)
     vect.fit(test_data)
     assert_true(u'a' in vect.vocabulary_.keys())
-    assert_equals(len(vect.vocabulary_.keys()), 6)
+    assert_equal(len(vect.vocabulary_.keys()), 6)
 
     vect.min_df = 2
     vect.fit(test_data)
     assert_true(u'c' not in vect.vocabulary_.keys())  # 'c' is ignored
-    assert_equals(len(vect.vocabulary_.keys()), 2)  # only e, a remain
+    assert_equal(len(vect.vocabulary_.keys()), 2)  # only e, a remain
 
     vect.min_df = .5
     vect.fit(test_data)
     assert_true(u'c' not in vect.vocabulary_.keys())  # 'c' is ignored
-    assert_equals(len(vect.vocabulary_.keys()), 2)  # only e, a remain
+    assert_equal(len(vect.vocabulary_.keys()), 2)  # only e, a remain
 
 
-def test_binary_occurrences():
+def test_count_binary_occurrences():
     # by default multiple occurrences are counted as longs
     test_data = [u'aaabc', u'abbde']
     vect = CountVectorizer(analyzer='char', max_df=1.0, min_df=1)
@@ -495,6 +565,31 @@ def test_binary_occurrences():
                            binary=True, dtype=np.float32)
     X_sparse = vect.fit_transform(test_data)
     assert_equal(X_sparse.dtype, np.float32)
+
+
+def test_hashed_binary_occurrences():
+    # by default multiple occurrences are counted as longs
+    test_data = [u'aaabc', u'abbde']
+    vect = HashingVectorizer(analyzer='char', non_negative=True,
+                             norm=None)
+    X = vect.transform(test_data)
+    assert_equal(np.max(X[0:1].data), 3)
+    assert_equal(np.max(X[1:2].data), 2)
+    assert_equal(X.dtype, np.float64)
+
+    # using boolean features, we can fetch the binary occurrence info
+    # instead.
+    vect = HashingVectorizer(analyzer='char', non_negative=True, binary=True,
+                             norm=None)
+    X = vect.transform(test_data)
+    assert_equal(np.max(X.data), 1)
+    assert_equal(X.dtype, np.float64)
+
+    # check the ability to change the dtype
+    vect = HashingVectorizer(analyzer='char', non_negative=True, binary=True,
+                             norm=None, dtype=np.float64)
+    X = vect.transform(test_data)
+    assert_equal(X.dtype, np.float64)
 
 
 def test_vectorizer_inverse_transform():
@@ -595,7 +690,7 @@ def test_vectorizer_pipeline_grid_selection():
     assert_false(best_vectorizer.fixed_vocabulary)
 
 
-def test_count_vectorizer_unicode():
+def test_vectorizer_unicode():
     # tests that the count vectorizer works with cyrillic.
     document = (
         u"\xd0\x9c\xd0\xb0\xd1\x88\xd0\xb8\xd0\xbd\xd0\xbd\xd0\xbe\xd0"
@@ -613,9 +708,21 @@ def test_count_vectorizer_unicode():
         u"\xd0\xbf\xd0\xbe\xd1\x81\xd0\xbe\xd0\xb1\xd0\xbd\xd1\x8b\xd1\x85 "
         u"\xd0\xbe\xd0\xb1\xd1\x83\xd1\x87\xd0\xb0\xd1\x82\xd1\x8c\xd1\x81\xd1"
         u"\x8f.")
+
     vect = CountVectorizer(min_df=1)
-    X = vect.fit_transform([document])
-    assert_equal(X.shape, (1, 15))
+    X_counted = vect.fit_transform([document])
+    assert_equal(X_counted.shape, (1, 15))
+
+    vect = HashingVectorizer(norm=None, non_negative=True)
+    X_hashed = vect.transform([document])
+    assert_equal(X_hashed.shape, (1, 2 ** 20))
+
+    # No collisions on such a small dataset
+    assert_equal(X_counted.nnz, X_hashed.nnz)
+
+    # When norm is None and non_negative, the tokens are counted up to
+    # collisions
+    assert_array_equal(np.sort(X_counted.data), np.sort(X_hashed.data))
 
 
 def test_tfidf_vectorizer_with_fixed_vocabulary():
@@ -631,6 +738,10 @@ def test_tfidf_vectorizer_with_fixed_vocabulary():
 
 def test_pickling_vectorizer():
     instances = [
+        HashingVectorizer(),
+        HashingVectorizer(norm='l1'),
+        HashingVectorizer(binary=True),
+        HashingVectorizer(ngram_range=(1, 2)),
         CountVectorizer(),
         CountVectorizer(preprocessor=strip_tags),
         CountVectorizer(analyzer=lazy_analyze),
@@ -645,6 +756,7 @@ def test_pickling_vectorizer():
         s = pickle.dumps(orig)
         copy = pickle.loads(s)
         assert_equal(type(copy), orig.__class__)
+        assert_equal(copy.get_params(), orig.get_params())
         assert_array_equal(
             copy.fit_transform(JUNK_FOOD_DOCS).toarray(),
             orig.fit_transform(JUNK_FOOD_DOCS).toarray())
