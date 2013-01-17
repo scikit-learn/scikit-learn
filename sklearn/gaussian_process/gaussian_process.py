@@ -272,11 +272,13 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         # Force data to 2D numpy.array
         X = array2d(X)
         y = array2d(y)
-        #y = np.asarray(y).ravel()[:, np.newaxis]
+
+        if y.shape[1] == X.shape[0] and y.shape[0] == 1:
+            y = y.T
 
         # Check shapes of DOE & observations
         n_samples_X, n_features = X.shape
-        n_samples_y = y.shape[0]
+        n_samples_y, n_outputs = y.shape
 
         if n_samples_X != n_samples_y:
             raise ValueError("X and y must have the same number of rows.")
@@ -450,8 +452,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             y_ = np.dot(f, self.beta) + np.dot(r, self.gamma)
 
             # Predictor
-            y = (self.y_mean + self.y_std * y_)
-            #y = (self.y_mean + self.y_std * y_).ravel()
+            y = (self.y_mean + self.y_std * y_).reshape(n_eval, self.y.shape[1])
+
+            if self.y.shape[1] == 1:
+                y = y.ravel()
 
             # Mean Squared Error
             if eval_MSE:
@@ -479,11 +483,14 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     u = np.zeros(y.shape)
 
                 MSE = self.sigma2 * (1. - (rt ** 2.).sum(axis=0)
-                                     + (u ** 2.).sum(axis=0))
+                                     + (u ** 2.).sum(axis=0)).reshape(n_eval, self.y_mean.size)
 
                 # Mean Squared Error might be slightly negative depending on
                 # machine precision: force to zero!
                 MSE[MSE < 0.] = 0.
+
+                if MSE.shape[1] == 1:
+                    MSE = MSE.ravel()
 
                 return y, MSE
 
