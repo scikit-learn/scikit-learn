@@ -198,6 +198,13 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                       DeprecationWarning)
         eigen_solver = mode
 
+    if eigen_solver is None:
+        eigen_solver = 'arpack'
+    elif not eigen_solver in ('arpack', 'lobpcg', 'amg'):
+        raise ValueError("Unknown value for eigen_solver: '%s'."
+                         "Should be 'amg', 'arpack', or 'lobpcg'"
+                         % eigen_solver)
+
     random_state = check_random_state(random_state)
 
     n_nodes = adjacency.shape[0]
@@ -218,12 +225,6 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         warnings.warn("Graph is not fully connected, spectral embedding"
                       " may not works as expected.")
 
-    if eigen_solver is None:
-        eigen_solver = 'arpack'
-    elif not eigen_solver in ('arpack', 'lobpcg', 'amg'):
-        raise ValueError("Unknown value for eigen_solver: '%s'."
-                         "Should be 'amg', 'arpack', or 'lobpcg'"
-                         % eigen_solver)
     laplacian, dd = graph_laplacian(adjacency,
                                     normed=norm_laplacian, return_diag=True)
     if (eigen_solver == 'arpack'
