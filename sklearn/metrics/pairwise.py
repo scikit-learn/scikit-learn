@@ -349,10 +349,14 @@ def rbf_kernel(X, Y=None, gamma=None):
 
 
 def cosine_similarity(X, Y=None):
-    """Compute the cosinus kernel between X and Y, also referred to as cosine
-    similarity.
+    """Compute cosine similarity between samples in X and Y.
+
+    Cosine similarity, or the cosine kernel, computes similarity as the
+    normalized dot product of X and Y:
 
         K(X, Y) = <X, Y> / (||X||*||Y||)
+
+    On L2-normalized data, this function is equivalent to linear_kernel.
 
     Parameters
     ----------
