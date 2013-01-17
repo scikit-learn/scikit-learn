@@ -613,11 +613,17 @@ or downstream models size is an issue selecting a lower value such as ``2 **
 18`` might help without introducing too many additional collisions on typical
 text classification tasks.
 
+
+
 Note that the dimensionality does not affect the CPU training time of
-algorithms which operate on CSR matrices (``LinearSVC(dual=True)``,
-``Perceptron``, ``SGDClassifier``, ``PassiveAggressive``) but it does for
-algorithm that work with CSC matrices (``LinearSVC(dual=False)``, ``Lasso()``,
-etc).
+algorithms which operate on CSR matrices
+(:class:`sklearn.svm.LinearSVC(dual=True) <sklearn.svm.LinearSVC>`,
+:class:`sklearn.linear_model.Perceptron`,
+:class:`sklearn.linear_model.SGDClassifier`,
+:class:`sklearn.linear_model.PassiveAggressiveClassifier`) but it does for
+algorithm that work with CSC matrices
+(:class:`sklearn.svm.LinearSVC(dual=False) <sklearn.svm.LinearSVC>`,
+:class:`sklearn.linear_model.Lasso`, etc).
 
 Let's try again with the default setting::
 
