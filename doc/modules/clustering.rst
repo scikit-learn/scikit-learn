@@ -224,7 +224,7 @@ is given.
 
 Affinity Propagation has a number of advantages over other algorithms. In many
 experiments it is shown to produce a lower error than other algorithms,
-specifically k-means, but it also works without any parameters, choosing the
+specifically k-means, and also works without any parameters, choosing the
 number of clusters based on the data provided.
 
 The messages sent between points belong to one of two categories. The first is
