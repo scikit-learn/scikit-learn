@@ -33,16 +33,10 @@ except:
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom ones.
 extensions = ['gen_rst',
               'sphinx.ext.autodoc', 'sphinx.ext.autosummary',
-              'sphinx.ext.pngmath',
+              'sphinx.ext.pngmath', 'numpy_ext.numpydoc'
               ]
-try:
-    import numpy_ext.numpydoc
-    extensions.append('numpy_ext.numpydoc')
-    # With older versions of sphinx, this causes a crash
-    autosummary_generate = True
-except:
-    # Older version of sphinx
-    extensions.append('numpy_ext_old.numpydoc')
+
+autosummary_generate = True
 
 autodoc_default_flags = ['members', 'inherited-members']
 
@@ -66,7 +60,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'scikit-learn'
-copyright = u'2010–2011, scikit-learn developers (BSD License)'
+copyright = u'2010–2013, scikit-learn developers (BSD License)'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -126,8 +120,8 @@ html_theme = 'scikit-learn'
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-html_theme_options = {'oldversion':False, 'collapsiblesidebar': True,
-                      'google_analytics':True}
+html_theme_options = {'oldversion': False, 'collapsiblesidebar': True,
+                      'google_analytics': True}
 
 # Add any paths that contain custom themes here, relative to this directory.
 html_theme_path = ['themes']

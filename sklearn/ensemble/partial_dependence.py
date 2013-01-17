@@ -188,7 +188,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         the name of the feature with index i.
     label : object
         The class label for which the PDPs should be computed.
-        Only if gbrt is a multi-class model. Must be in gbrt.classes_ .
+        Only if gbrt is a multi-class model. Must be in ``gbrt.classes_``.
     n_cols : int
         The number of columns in the grid plot (default: 3).
     percentiles : (low, high), default=(0.05, 0.95)
@@ -247,7 +247,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
             raise ValueError('label is not given for multi-class PDP')
         label_idx = np.searchsorted(gbrt.classes_, label)
         if gbrt.classes_[label_idx] != label:
-            raise ValueError('label %s not in gbrt.classes_' % str(label))
+            raise ValueError('label %s not in ``gbrt.classes_``' % str(label))
     else:
         # regression and binary classification
         label_idx = 0

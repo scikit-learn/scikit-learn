@@ -211,7 +211,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
         used at all, which is useful for debuging. For n_jobs below -1,
-        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
     Returns
@@ -598,7 +598,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
         used at all, which is useful for debuging. For n_jobs below -1,
-        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
     random_state: integer or numpy.RandomState, optional
@@ -709,14 +709,14 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         else:
             n_clusters = self.n_clusters
 
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         X = self._check_fit_data(X)
 
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(
             X, n_clusters=n_clusters, init=self.init, n_init=self.n_init,
             max_iter=self.max_iter, verbose=self.verbose,
             precompute_distances=self.precompute_distances,
-            tol=self.tol, random_state=self.random_state, copy_x=self.copy_x,
+            tol=self.tol, random_state=random_state, copy_x=self.copy_x,
             n_jobs=self.n_jobs)
         return self
 
@@ -1047,7 +1047,7 @@ class MiniBatchKMeans(KMeans):
         X: array-like, shape = [n_samples, n_features]
             Coordinates of the data points to cluster
         """
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         if self.k is not None:
             warnings.warn("Parameter k has been replaced by 'n_clusters'"
                           " and will be removed in release 0.14.",
@@ -1089,8 +1089,8 @@ class MiniBatchKMeans(KMeans):
             init_size = n_samples
         self.init_size_ = init_size
 
-        validation_indices = self.random_state.random_integers(0, n_samples -
-                                                               1, init_size)
+        validation_indices = random_state.random_integers(0, n_samples - 1,
+                                                          init_size)
         X_valid = X[validation_indices]
         x_squared_norms_valid = x_squared_norms[validation_indices]
 
@@ -1109,7 +1109,7 @@ class MiniBatchKMeans(KMeans):
             # expect n_samples to be very large when using MiniBatchKMeans
             cluster_centers = _init_centroids(
                 X, self.n_clusters, self.init,
-                random_state=self.random_state,
+                random_state=random_state,
                 x_squared_norms=x_squared_norms,
                 init_size=init_size)
 
@@ -1139,7 +1139,7 @@ class MiniBatchKMeans(KMeans):
         for iteration_idx in xrange(n_iter):
 
             # Sample a minibatch from the full dataset
-            minibatch_indices = self.random_state.random_integers(
+            minibatch_indices = random_state.random_integers(
                 0, n_samples - 1, self.batch_size)
 
             # Perform the actual update step on the minibatch data
@@ -1171,7 +1171,6 @@ class MiniBatchKMeans(KMeans):
         X: array-like, shape = [n_samples, n_features]
             Coordinates of the data points to cluster.
         """
-        self.random_state = check_random_state(self.random_state)
 
         X = check_arrays(X, sparse_format="csr", copy=False)[0]
         n_samples, n_features = X.shape
@@ -1187,8 +1186,9 @@ class MiniBatchKMeans(KMeans):
                 or not hasattr(self, 'cluster_centers_')):
             # this is the first call partial_fit on this object:
             # initialize the cluster centers
+            random_state = check_random_state(self.random_state)
             self.cluster_centers_ = _init_centroids(
-                X, self.n_clusters, self.init, random_state=self.random_state,
+                X, self.n_clusters, self.init, random_state=random_state,
                 x_squared_norms=x_squared_norms, init_size=self.init_size)
 
             self.counts_ = np.zeros(self.n_clusters, dtype=np.int32)

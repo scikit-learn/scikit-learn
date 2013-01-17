@@ -282,7 +282,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         self : object
             Returns self.
         """
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
 
         # Precompute some data
         X, y = check_arrays(X, y, sparse_format="dense")
@@ -358,7 +358,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                 sample_weight,
                 sample_mask,
                 X_argsorted,
-                self.random_state.randint(MAX_INT),
+                random_state.randint(MAX_INT),
                 verbose=self.verbose)
             for i in xrange(n_jobs))
 
@@ -696,6 +696,7 @@ class RandomForestClassifier(ForestClassifier):
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
+
         Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)
@@ -841,6 +842,7 @@ class RandomForestRegressor(ForestRegressor):
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
+
         Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)
@@ -978,6 +980,7 @@ class ExtraTreesClassifier(ForestClassifier):
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
+
         Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)
@@ -1127,6 +1130,7 @@ class ExtraTreesRegressor(ForestRegressor):
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
+
         Note: this parameter is tree-specific.
 
     max_depth : integer or None, optional (default=None)

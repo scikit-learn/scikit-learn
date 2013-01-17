@@ -17,6 +17,7 @@ from scipy import sparse
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import all_estimators
@@ -739,3 +740,44 @@ def test_class_weight_auto_classifies():
             y_pred_auto = clf.predict(X_test)
             assert_greater(f1_score(y_test, y_pred_auto),
                            f1_score(y_test, y_pred))
+
+
+def test_estimators_overwrite_params():
+    # test whether any classifier overwrites his init parameters during fit
+    for est_type in ["classifier", "regressor", "transformer"]:
+        estimators = all_estimators(type_filter="classifier")
+        X, y = make_blobs(random_state=0, n_samples=6)
+        # some want non-negative input
+        X -= X.min()
+        for name, Est in estimators:
+            with warnings.catch_warnings(record=True):
+                # catch deprecation warnings
+                est = Est()
+            params = est.get_params()
+            est.fit(X, y)
+            new_params = est.get_params()
+            for k, v in params.items():
+                assert_false(np.any(new_params[k] != v),
+                             "Estimator %s changes its parameter %s"
+                             "from %s to %s during fit."
+                             % (name, k, v, new_params[k]))
+
+
+def test_cluster_overwrite_params():
+    # test whether any classifier overwrites his init parameters during fit
+    clusterers = all_estimators(type_filter="cluster")
+    X, y = make_blobs(random_state=0, n_samples=9)
+    # some want non-negative input
+    X
+    for name, Clt in clusterers:
+        with warnings.catch_warnings(record=True):
+            # catch deprecation warnings
+            clt = Clt()
+        params = clt.get_params()
+        clt.fit(X)
+        new_params = clt.get_params()
+        for k, v in params.items():
+            assert_false(np.any(new_params[k] != v),
+                         "Estimator %s changes its parameter %s"
+                         "from %s to %s during fit."
+                         % (name, k, v, new_params[k]))

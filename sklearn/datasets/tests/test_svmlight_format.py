@@ -198,7 +198,10 @@ def test_dump():
         for zero_based in (True, False):
             for dtype in [np.float32, np.float64]:
                 f = BytesIO()
-                dump_svmlight_file(X.astype(dtype), y, f,
+                # we need to pass a comment to get the version info in;
+                # LibSVM doesn't grok comments so they're not put in by
+                # default anymore.
+                dump_svmlight_file(X.astype(dtype), y, f, comment="test",
                                    zero_based=zero_based)
                 f.seek(0)
 

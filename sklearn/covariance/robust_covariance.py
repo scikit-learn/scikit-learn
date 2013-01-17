@@ -557,7 +557,7 @@ class MinCovDet(EmpiricalCovariance):
           Returns self.
 
         """
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
         # check that the empirical covariance is full rank
         if (linalg.svdvals(np.dot(X.T, X)) > 1e-8).sum() != n_features:
@@ -567,7 +567,7 @@ class MinCovDet(EmpiricalCovariance):
         raw_location, raw_covariance, raw_support, raw_dist = fast_mcd(
             X, support_fraction=self.support_fraction,
             cov_computation_method=self._nonrobust_covariance,
-            random_state=self.random_state)
+            random_state=random_state)
         if self.assume_centered:
             raw_location = np.zeros(n_features)
             raw_covariance = self._nonrobust_covariance(X[raw_support],
