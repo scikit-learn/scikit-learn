@@ -470,7 +470,8 @@ class DPGMM(GMM):
 
     def _set_weights(self):
         for i in xrange(self.n_components):
-            self.weights_[i] = self.gamma_[i,1] / (self.gamma_[i,1] + self.gamma_[i, 2])
+            self.weights_[i] = self.gamma_[i, 1] / (self.gamma_[i, 1]
+                                                    + self.gamma_[i, 2])
         self.weights_ /= np.sum(self.weights_)
 
     def fit(self, X, **kwargs):
