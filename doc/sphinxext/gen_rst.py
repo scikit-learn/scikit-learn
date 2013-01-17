@@ -17,6 +17,7 @@ from StringIO import StringIO
 import cPickle
 import re
 import urllib2
+import gzip
 
 try:
     from PIL import Image
@@ -113,7 +114,17 @@ class SinglePageDocLinkResolver(DocLinkResolver):
         for url in doc_pages_url:
             try:
                 resp = urllib2.urlopen(url)
-                html = resp.read()
+                encoding = resp.headers.dict.get('content-encoding', 'plain')
+                data = resp.read()
+                if encoding == 'plain':
+                    html = resp.read()
+                elif encoding == 'gzip':
+                    data = StringIO(data)
+                    html = gzip.GzipFile(fileobj=data).read()
+                else:
+                    print '%s has unknown encoding %s' % (url, encoding)
+                    html = ''
+
                 doc_pages_html.append(html)
             except urllib2.HTTPError:
                 print 'error when retrieving %s' % url
@@ -601,7 +612,33 @@ def embed_code_links(app, exception):
 
     # matplotlib and mayavi document several items on the same page
     doc_resolvers['matplotlib'] = SinglePageDocLinkResolver(
-        ['http://matplotlib.org/api/pyplot_api.html'])
+        ['http://matplotlib.org/api/animation_api.html',
+         'http://matplotlib.org/api/artist_api.html',
+         'http://matplotlib.org/api/axes_api.html',
+         'http://matplotlib.org/api/axis_api.html',
+         'http://matplotlib.org/api/index_backend_api.html',
+         'http://matplotlib.org/api/cbook_api.html',
+         'http://matplotlib.org/api/cm_api.html',
+         'http://matplotlib.org/api/collections_api.html',
+         'http://matplotlib.org/api/colorbar_api.html',
+         'http://matplotlib.org/api/colors_api.html',
+         'http://matplotlib.org/api/dates_api.html',
+         'http://matplotlib.org/api/figure_api.html',
+         'http://matplotlib.org/api/font_manager_api.html',
+         'http://matplotlib.org/api/gridspec_api.html',
+         'http://matplotlib.org/api/legend_api.html',
+         'http://matplotlib.org/api/mathtext_api.html',
+         'http://matplotlib.org/api/mlab_api.html',
+         'http://matplotlib.org/api/nxutils_api.html',
+         'http://matplotlib.org/api/path_api.html',
+         'http://matplotlib.org/api/pyplot_api.html',
+         'http://matplotlib.org/api/sankey_api.html',
+         'http://matplotlib.org/api/spines_api.html',
+         'http://matplotlib.org/api/ticker_api.html',
+         'http://matplotlib.org/api/tight_layout_api.html',
+         'http://matplotlib.org/api/units_api.html',
+         'http://matplotlib.org/api/widgets_api.html',
+          'http://matplotlib.org/api/pyplot_api.html'])
 
     mayavi_base = 'http://docs.enthought.com/mayavi/mayavi/auto/'
     doc_resolvers['mayavi'] = SinglePageDocLinkResolver(

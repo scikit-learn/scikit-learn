@@ -8,6 +8,9 @@
 Changelog
 ---------
 
+   - Hyperlinks to documentation in example code on the website by
+     `Martin Luessi`_.
+
    - zero_one loss has option for normalized output that reports the fraction
      of misclassifications, rather than the raw number of misclassifications.
      By `Kyle Beauchamp`_.
@@ -1658,3 +1661,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Noel Dawe: http://noel.dawe.me
 
 .. _Arnaud Joly: http://www.ajoly.org
+
+.. _Martin Luessi: https://github.com/mluessi
