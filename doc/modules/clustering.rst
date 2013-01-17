@@ -208,7 +208,7 @@ the :class:`KMeans` algorithm.
 
 .. _affinity_propagation:
 
-Affinity propagation
+Affinity Propagation
 ====================
 
 :class:`AffinityPropagation` creates clusters by sending messages between
@@ -220,7 +220,7 @@ values from other pairs. This updating happens iteratively until convergence,
 at which point the final exemplars are chosen, and hence the final clustering
 is given.
 
-Affinity Propogation has a number of advantages over other algorithms. In many
+Affinity Propagation has a number of advantages over other algorithms. In many
 experiments it is shown to produce a lower error than other algorithms,
 specifically k-means, but it also works without any parameters, choosing the
 number of clusters based on the data provided.
@@ -251,12 +251,12 @@ availability of sample `k` to be the exemplar of sample `i` is given by:
 To begin with, all values for `r` and `a` are set to zero, and the calculation
 of each iterates until convergence.
 
-While effective, Affinity Propogation has some disadvantages. The most pressing
+While effective, Affinity Propagation has some disadvantages. The most pressing
 is its complexity. The algorithm has a time complexity of the order
 :math:`O(N^2 T)`, where `N` is the number of samples and `T` is the number of
 iterations until convergence. Further, the space complexity is of the order
-:math:`O(N^2)` if a dense similarity matrix is used, but reducable if a sparse
-similarity matrix is used. This makes Affinity Propogation most appropriate for
+:math:`O(N^2)` if a dense similarity matrix is used, but reducible if a sparse
+similarity matrix is used. This makes Affinity Propagation most appropriate for
 small to medium sized datasets.
 
 .. figure:: ../auto_examples/cluster/images/plot_affinity_propagation_1.png
