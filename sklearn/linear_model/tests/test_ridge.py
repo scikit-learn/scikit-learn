@@ -80,13 +80,14 @@ def test_ridge_sample_weights():
 
     for solver in ("sparse_cg", "dense_cholesky", "lsqr"):
         for n_samples, n_features in ((6, 5), (5, 10)):
-            n_samples, n_features = 6, 5
             y = rng.randn(n_samples)
             X = rng.randn(n_samples, n_features)
             sample_weight = 1 + rng.rand(n_samples)
 
             coefs = ridge_regression(X, y, alpha, sample_weight,
                                      solver=solver)
+            # Sample weight can be implemented via a simple rescaling
+            # for the square loss
             coefs2 = ridge_regression(
                             X * np.sqrt(sample_weight)[:, np.newaxis],
                             y * np.sqrt(sample_weight)[:, np.newaxis],
