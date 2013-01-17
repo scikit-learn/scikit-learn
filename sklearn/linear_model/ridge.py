@@ -159,10 +159,19 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         if n_features > n_samples or has_sw:
             # kernel ridge
             # w = X.T * inv(X X^t + alpha*Id) y
-            A = safe_sparse_dot(X, X.T, dense_output=True)
-            A.flat[::n_samples + 1] += alpha * sample_weight
-            Axy = linalg.solve(A, y, sym_pos=True, overwrite_a=True)
-            coef = safe_sparse_dot(X.T, Axy, dense_output=True)
+            K = safe_sparse_dot(X, X.T, dense_output=True)
+            if has_sw:
+                sw = np.sqrt(sample_weight)
+                if y.ndim == 1:
+                    y = y * sw
+                else:
+                    # Deal with multiple-output problems
+                    y = y * sw[:, np.newaxis]
+                K *= np.outer(sw, sw)
+            K.flat[::n_samples + 1] += alpha
+            dual_coef = linalg.solve(K, y,
+                                     sym_pos=True, overwrite_a=True)
+            coef = safe_sparse_dot(X.T, dual_coef, dense_output=True)
         else:
             # ridge
             # w = inv(X^t X + alpha*Id) * X.T y
