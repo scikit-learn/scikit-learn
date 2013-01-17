@@ -120,7 +120,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                        random_state=None, eigen_tol=0.0,
                        norm_laplacian=True, drop_first=True,
                        mode=None):
-    """Project the sample on the first eigen vectors of the graph Laplacian
+    """Project the sample on the first eigen vectors of the graph Laplacian.
 
     The adjacency matrix is used to compute a normalized graph Laplacian
     whose spectrum (especially the eigen vectors associated to the
@@ -154,11 +154,11 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         lobpcg eigen vectors decomposition when eigen_solver == 'amg'.
         By default, arpack is used.
 
-    eigen_tol : float, optional, default: 0.0
+    eigen_tol : float, optional, default=0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack eigen_solver.
 
-    drop_first : bool, optional, default: True
+    drop_first : bool, optional, default=True
         Whether to drop the first eigenvector. For spectral embedding, this
         should be True as the first eigenvector should be constant vector for
         connected graph, but for spectral clustering, this should be kept as
@@ -166,7 +166,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     Returns
     -------
-    embedding : array, shape: (n_samples, n_components)
+    embedding : array, shape=(n_samples, n_components)
         The reduced samples.
 
     Notes
@@ -177,11 +177,12 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     References
     ----------
-    [1] http://en.wikipedia.org/wiki/LOBPCG
-    [2] Toward the Optimal Preconditioned Eigensolver: Locally Optimal
-        Block Preconditioned Conjugate Gradient Method
-        Andrew V. Knyazev
-        http://dx.doi.org/10.1137%2FS1064827500366124
+    * http://en.wikipedia.org/wiki/LOBPCG
+
+    * Toward the Optimal Preconditioned Eigensolver: Locally Optimal
+      Block Preconditioned Conjugate Gradient Method
+      Andrew V. Knyazev
+      http://dx.doi.org/10.1137%2FS1064827500366124
     """
 
     try:
