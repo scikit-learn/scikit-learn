@@ -676,7 +676,7 @@ def test_class_weight_classifiers():
                 # FIXME!
                 continue
             if name.endswith("NB"):
-                # NaiveBayes classifiers have a somewhat differnt interface.
+                # NaiveBayes classifiers have a somewhat different interface.
                 # FIXME SOON!
                 continue
             if n_centers == 2:
@@ -722,7 +722,7 @@ def test_class_weight_auto_classifies():
                 continue
 
             if name.endswith("NB"):
-                # NaiveBayes classifiers have a somewhat differnt interface.
+                # NaiveBayes classifiers have a somewhat different interface.
                 # FIXME SOON!
                 continue
 
