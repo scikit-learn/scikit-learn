@@ -211,9 +211,36 @@ the :class:`KMeans` algorithm.
 Affinity propagation
 ====================
 
-:class:`AffinityPropagation` clusters data by diffusion in the similarity
-matrix. This algorithm automatically sets its numbers of cluster. It
-will have difficulties scaling to thousands of samples.
+:class:`AffinityPropagation` creates clusters by sending messages between
+pairs of samples until convergence. A dataset is then described using a small
+number of exemplars, which are identified as those most representative of other
+samples. The messages sent between pairs represent the suitability for one
+sample to be the exemplar of the other, which is updated in response to the
+values from other pairs. This updating happens iteratively until convergence,
+at which point the final exemplars are chosen, and hence the final clustering
+is given.
+
+Affinity Propogation has a number of advantages over other algorithms. In many
+experiments it is shown to produce a lower error than other algorithms,
+specifically k-means, but it also works without any parameters, choosing the
+number of clusters based on the data provided.
+
+The messages sent between points belong to one of two categories. The first is
+the responsibility `r(i, k)`, which is the accumulated evidence that sample `k`
+should be the exemplar for sample `i`. The second is the availability `a(i, k)`
+which is the accumulated evidence that sample `i` should choose sample `k` to
+be its exemplar, and considers the values for all other samples that `k` should
+be an exemplar. In this way, exemplars are chosen by samples if they are (1)
+similar enough to many samples and (2) chosen by many samples to be
+representative of themselves.
+
+While effective, Affinity Propogation has some disadvantages. The most pressing
+is its complexity. The algorithm has a time complexity of the order
+:math:`O(N^2 T)`, where `N` is the number of samples and `T` is the number of
+iterations until convergence. Further, the space complexity is of the order
+:math:`O(N^2)` if a dense similarity matrix is used, but reducable if a sparse
+similarity matrix is used. This makes Affinity Propogation most appropriate for
+small to medium sized datasets.
 
 .. figure:: ../auto_examples/cluster/images/plot_affinity_propagation_1.png
    :target: ../auto_examples/cluster/plot_affinity_propagation.html
