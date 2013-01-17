@@ -2,8 +2,8 @@
 
 |Travis|_
 
-.. |Travis| image:: https://secure.travis-ci.org/scikit-learn/scikit-learn.png?branch=master
-.. _Travis: https://secure.travis-ci.org/scikit-learn/scikit-learn
+.. |Travis| image:: https://api.travis-ci.org/scikit-learn/scikit-learn.png?branch=master
+.. _Travis: https://travis-ci.org/scikit-learn/scikit-learn
 
 scikit-learn
 ============
