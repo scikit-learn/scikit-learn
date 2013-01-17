@@ -194,7 +194,11 @@ def test_dump():
     Xs, y = load_svmlight_file(datafile)
     Xd = Xs.toarray()
 
-    for X in (Xs, Xd):
+    # slicing a csr_matrix can unsort its .indices, so test that we sort
+    # those correctly
+    Xsliced = Xs[np.arange(Xs.shape[0])]
+
+    for X in (Xs, Xd, Xsliced):
         for zero_based in (True, False):
             for dtype in [np.float32, np.float64]:
                 f = BytesIO()
@@ -213,6 +217,7 @@ def test_dump():
                 X2, y2 = load_svmlight_file(f, dtype=dtype,
                                             zero_based=zero_based)
                 assert_equal(X2.dtype, dtype)
+                assert_array_equal(X2.sorted_indices().indices, X2.indices)
                 if dtype == np.float32:
                     assert_array_almost_equal(
                         # allow a rounding error at the last decimal place
