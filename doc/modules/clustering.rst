@@ -234,6 +234,23 @@ be an exemplar. In this way, exemplars are chosen by samples if they are (1)
 similar enough to many samples and (2) chosen by many samples to be
 representative of themselves.
 
+More formally, the responsibility of a sample `k` to be the exemplar of sample
+`i` is given by:
+
+.. math::
+
+    r(i, k) \leftarrow s(i, k) - max [ a(i, \acute{k}) + s(i, \acute{k}) \forall \acute{k} \neq k ]
+
+Where :math:`s(i, k)` is the similarity between samples `i` and `k`. The
+availability of sample `k` to be the exemplar of sample `i` is given by:
+
+.. math::
+
+    a(i, k) \leftarrow min [0, r(k, k) + \sum_{\acute{i}~s.t.~\acute{i} \notin \{i, k\}}{r(\acute{i}, k)}]
+
+To begin with, all values for `r` and `a` are set to zero, and the calculation
+of each iterates until convergence.
+
 While effective, Affinity Propogation has some disadvantages. The most pressing
 is its complexity. The algorithm has a time complexity of the order
 :math:`O(N^2 T)`, where `N` is the number of samples and `T` is the number of
