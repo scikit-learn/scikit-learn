@@ -12,6 +12,7 @@ from sklearn import datasets
 from sklearn.metrics import mean_squared_error
 
 from sklearn.linear_model.base import LinearRegression
+from sklearn.linear_model.ridge import ridge_regression
 from sklearn.linear_model.ridge import Ridge
 from sklearn.linear_model.ridge import _RidgeGCV
 from sklearn.linear_model.ridge import RidgeCV
@@ -72,6 +73,25 @@ def test_ridge():
         ridge.fit(X, y, sample_weight=np.ones(n_samples))
         assert_greater(ridge.score(X, y), 0.9)
 
+
+def test_ridge_sample_weights():
+    rng = np.random.RandomState(0)
+    alpha = 1.0
+
+    for solver in ("sparse_cg", "dense_cholesky", "lsqr"):
+        for n_samples, n_features in ((6, 5), (5, 10)):
+            n_samples, n_features = 6, 5
+            y = rng.randn(n_samples)
+            X = rng.randn(n_samples, n_features)
+            sample_weight = 1 + rng.rand(n_samples)
+
+            coefs = ridge_regression(X, y, alpha, sample_weight,
+                                     solver=solver)
+            coefs2 = ridge_regression(
+                            X * np.sqrt(sample_weight)[:, np.newaxis],
+                            y * np.sqrt(sample_weight)[:, np.newaxis],
+                            alpha, solver=solver)
+            assert_array_almost_equal(coefs, coefs2)
 
 
 def test_ridge_shapes():
