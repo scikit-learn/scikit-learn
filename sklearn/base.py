@@ -7,6 +7,7 @@ import inspect
 import numpy as np
 from scipy import sparse
 
+
 ###############################################################################
 def clone(estimator, safe=True):
     """Constructs a new estimator with the same parameters.
