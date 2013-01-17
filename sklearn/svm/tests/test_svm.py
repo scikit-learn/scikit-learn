@@ -532,7 +532,7 @@ def test_liblinear_set_coef():
     clf.coef_ = clf.coef_.copy()
     clf.intercept_ = clf.intercept_.copy()
     values2 = clf.decision_function(iris.data)
-    assert_array_equal(values, values2)
+    assert_array_almost_equal(values, values2)
 
     # binary-class case
     X = [[2, 1],
