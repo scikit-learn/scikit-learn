@@ -27,8 +27,8 @@ Kernel:
   size O(k*N) which will run much faster. See the documentation for SVMs for
   more info on kernels.
 
-Example
--------
+Examples
+--------
 >>> from sklearn import datasets
 >>> from sklearn.semi_supervised import LabelPropagation
 >>> label_prop_model = LabelPropagation()

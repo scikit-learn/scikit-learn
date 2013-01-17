@@ -28,7 +28,7 @@ from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..utils import check_arrays
-from ..metrics import r2_score
+from ..metrics import accuracy_score, r2_score
 
 
 __all__ = [
@@ -181,7 +181,7 @@ class BaseWeightBoosting(BaseEnsemble):
         """
         for y_pred in self.staged_predict(X, n_estimators=n_estimators):
             if isinstance(self, ClassifierMixin):
-                yield np.mean(y_pred == y)
+                yield accuracy_score(y, y_pred)
             else:
                 yield r2_score(y, y_pred)
 

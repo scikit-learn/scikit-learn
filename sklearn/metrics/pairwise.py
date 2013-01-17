@@ -483,6 +483,9 @@ def chi2_kernel(X, Y=None, gamma=1.):
 
     Y : array of shape (n_samples_Y, n_features)
 
+    gamma : float, default=1.
+        Scaling parameter of the chi2 kernel.
+
     Returns
     -------
     kernel_matrix : array of shape (n_samples_X, n_samples_Y)
@@ -527,15 +530,15 @@ def distance_metrics():
 
     The valid distance metrics, and the function they map to, are:
 
-    ===========     ====================================
-    metric          Function
-    ===========     ====================================
-    'cityblock'     sklearn.pairwise.manhattan_distances
-    'euclidean'     sklearn.pairwise.euclidean_distances
-    'l1'            sklearn.pairwise.manhattan_distances
-    'l2'            sklearn.pairwise.euclidean_distances
-    'manhattan'     sklearn.pairwise.manhattan_distances
-    ===========     ====================================
+    ============     ====================================
+    metric           Function
+    ============     ====================================
+    'cityblock'      sklearn.pairwise.manhattan_distances
+    'euclidean'      sklearn.pairwise.euclidean_distances
+    'l1'             sklearn.pairwise.manhattan_distances
+    'l2'             sklearn.pairwise.euclidean_distances
+    'manhattan'      sklearn.pairwise.manhattan_distances
+    ============     ====================================
 
     """
     return pairwise_distance_functions
@@ -618,7 +621,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
         used at all, which is useful for debuging. For n_jobs below -1,
-        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
     `**kwds` : optional keyword parameters
@@ -697,18 +700,18 @@ def kernel_metrics():
     each of the valid strings.
 
     The valid distance metrics, and the function they map to, are:
-      ==============   ========================================
-      metric           Function
-      ==============   ========================================
-      'additive_chi2'  sklearn.pairwise.additive_chi2_kernel
-      'chi2'           sklearn.pairwise.chi2_kernel
-      'linear'         sklearn.pairwise.linear_kernel
-      'poly'           sklearn.pairwise.polynomial_kernel
-      'polynomial'     sklearn.pairwise.polynomial_kernel
-      'rbf'            sklearn.pairwise.rbf_kernel
-      'sigmoid'        sklearn.pairwise.sigmoid_kernel
-      'cosine'         sklearn.pairwise.cosine_kernel
-      ==============   ========================================
+      ===============   ========================================
+      metric            Function
+      ===============   ========================================
+      'additive_chi2'   sklearn.pairwise.additive_chi2_kernel
+      'chi2'            sklearn.pairwise.chi2_kernel
+      'linear'          sklearn.pairwise.linear_kernel
+      'poly'            sklearn.pairwise.polynomial_kernel
+      'polynomial'      sklearn.pairwise.polynomial_kernel
+      'rbf'             sklearn.pairwise.rbf_kernel
+      'sigmoid'         sklearn.pairwise.sigmoid_kernel
+      'cosine'          sklearn.pairwise.cosine_kernel
+      ===============   ========================================
     """
     return pairwise_kernel_functions
 
@@ -768,7 +771,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
         used at all, which is useful for debuging. For n_jobs below -1,
-        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
     filter_params: boolean

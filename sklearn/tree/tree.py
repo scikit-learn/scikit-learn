@@ -226,7 +226,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         """
         if check_input:
             X, y = check_arrays(X, y)
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
 
         # Convert data
         if (getattr(X, "dtype", None) != DTYPE or
@@ -344,7 +344,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                                 self.n_outputs_, criterion, max_depth,
                                 min_samples_split, self.min_samples_leaf,
                                 self.min_density, max_features,
-                                self.find_split_, self.random_state)
+                                self.find_split_, random_state)
 
         self.tree_.build(X, y,
                          sample_weight=sample_weight,
