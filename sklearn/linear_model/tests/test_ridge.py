@@ -21,10 +21,10 @@ from sklearn.linear_model.ridge import RidgeClassifierCV
 
 from sklearn.cross_validation import KFold
 
-rng = np.random.RandomState(0)
 diabetes = datasets.load_diabetes()
 X_diabetes, y_diabetes = diabetes.data, diabetes.target
 ind = np.arange(X_diabetes.shape[0])
+rng = np.random.RandomState(0)
 rng.shuffle(ind)
 ind = ind[:200]
 X_diabetes, y_diabetes = X_diabetes[ind], y_diabetes[ind]
@@ -44,6 +44,7 @@ def test_ridge():
     TODO: for this test to be robust, we should use a dataset instead
     of np.random.
     """
+    rng = np.random.RandomState(0)
     alpha = 1.0
 
     for solver in ("sparse_cg", "dense_cholesky", "lsqr"):
@@ -72,9 +73,11 @@ def test_ridge():
         assert_greater(ridge.score(X, y), 0.9)
 
 
+
 def test_ridge_shapes():
     """Test shape of coef_ and intercept_
     """
+    rng = np.random.RandomState(0)
     n_samples, n_features = 5, 10
     X = rng.randn(n_samples, n_features)
     y = rng.randn(n_samples)
@@ -99,6 +102,7 @@ def test_ridge_shapes():
 def test_ridge_intercept():
     """Test intercept with multiple targets GH issue #708
     """
+    rng = np.random.RandomState(0)
     n_samples, n_features = 5, 10
     X = rng.randn(n_samples, n_features)
     y = rng.randn(n_samples)
@@ -141,6 +145,7 @@ def test_toy_ridge_object():
 def test_ridge_vs_lstsq():
     """On alpha=0., Ridge and OLS yield the same solution."""
 
+    rng = np.random.RandomState(0)
     # we need more samples than features
     n_samples, n_features = 5, 4
     y = rng.randn(n_samples)
