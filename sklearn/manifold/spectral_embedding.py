@@ -147,7 +147,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
-        but may also lead to instabilities
+        but may also lead to instabilities.
 
     random_state : int seed, RandomState instance, or None (default)
         A pseudo random number generator used for the initialization of the
@@ -167,13 +167,13 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     Returns
     -------
     embedding : array, shape: (n_samples, n_components)
-        The reduced samples
+        The reduced samples.
 
     Notes
     -----
     Spectral embedding is most useful when the graph has one connected
-    component. If there graph has many components, the first few
-    eigenvectors will simply uncover the connected components of the graph.
+    component. If there graph has many components, the first few eigenvectors
+    will simply uncover the connected components of the graph.
 
     References
     ----------

@@ -215,7 +215,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             classification, splits are also ignored if they would result in any
             single class carrying a negative weight in either child node.
 
-        check_input: boolean, (default=True)
+        check_input : boolean, (default=True)
             Allow to bypass several input checking.
             Don't use this parameter unless you know what you do.
 
@@ -475,11 +475,11 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     `tree_` : Tree object
         The underlying Tree object.
 
-    `classes_`: array of shape = [n_classes] or a list of such arrays
+    `classes_` : array of shape = [n_classes] or a list of such arrays
         The classes labels (single output problem), or a list of arrays of
         class labels (multi-output problem).
 
-    `n_classes_`: int or list
+    `n_classes_` : int or list
         The number of classes (single output problem), or a list containing the
         number of classes for each output (multi-output problem).
 
