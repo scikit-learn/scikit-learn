@@ -74,6 +74,18 @@ def _verbosity_filter(index, verbose):
     next_scale = sqrt((index + 1) / verbose)
     return (int(next_scale) == int(scale))
 
+class ThreadSafe_Iter:
+    """Makes an iterator thread safe by using locking"""
+    def __init__(self,it):
+        self.it = it
+        self.lock = threading.Lock()
+
+    def __iter__(self):
+        return self
+    
+    def next(self):
+        with self.lock:
+            return self.it.next()
 
 ###############################################################################
 class WorkerInterrupt(Exception):
@@ -505,7 +517,7 @@ class Parallel(Logger):
             if hasattr(pre_dispatch, 'endswith'):
                 pre_dispatch = eval(pre_dispatch)
             self._pre_dispatch_amount = pre_dispatch = int(pre_dispatch)
-            iterable = itertools.islice(iterable, pre_dispatch)
+            iterable = ThreadSafe_Iter(itertools.islice(iterable, pre_dispatch))
 
         self._start_time = time.time()
         self.n_dispatched = 0
