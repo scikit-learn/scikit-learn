@@ -161,6 +161,8 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             # w = X.T * inv(X X^t + alpha*Id) y
             K = safe_sparse_dot(X, X.T, dense_output=True)
             if has_sw:
+                # We are doing a little danse with the sample weights to
+                # avoid copying the original X, which could be big
                 sw = np.sqrt(sample_weight)
                 if y.ndim == 1:
                     y = y * sw
@@ -171,6 +173,12 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             K.flat[::n_samples + 1] += alpha
             dual_coef = linalg.solve(K, y,
                                      sym_pos=True, overwrite_a=True)
+            if has_sw:
+                if dual_coef.ndim == 1:
+                    dual_coef *= sw
+                else:
+                    # Deal with multiple-output problems
+                    dual_coef *= sw[:, np.newaxis]
             coef = safe_sparse_dot(X.T, dual_coef, dense_output=True)
         else:
             # ridge
