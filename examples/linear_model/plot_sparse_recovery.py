@@ -43,6 +43,8 @@ print __doc__
 # Author: Alexandre Gramfort and Gael Varoquaux
 # License: BSD
 
+import warnings
+
 import pylab as pl
 import numpy as np
 from scipy import linalg
@@ -131,7 +133,11 @@ for conditionning in (1, 1e-4):
 
     # Use 6-fold cross-validation rather than the default 3-fold: it leads to
     # a better choice of alpha:
-    lars_cv = LassoLarsCV(cv=6).fit(X, y)
+    # Stop the user warnings outputs- they are not necessary for the example
+    # as it is specifically set up to be challenging.
+    with warnings.catch_warnings():
+        warnings.simplefilter('ignore', UserWarning)
+        lars_cv = LassoLarsCV(cv=6).fit(X, y)
 
     # Run the RandomizedLasso: we use a paths going down to .1*alpha_max
     # to avoid exploring the regime in which very noisy variables enter
