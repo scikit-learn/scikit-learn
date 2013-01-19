@@ -387,6 +387,10 @@ div.highlight{
     background-color: white;
 }
 
+div.highlight a {
+    text-decoration: underline;
+}
+
 div.note {
     background-color: #eee;
     border: 1px solid #ccc;
