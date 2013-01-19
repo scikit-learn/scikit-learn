@@ -476,18 +476,20 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The underlying Tree object.
 
     `classes_` : array of shape = [n_classes] or a list of such arrays
-        The classes labels (single output problem), or a list of arrays of
-        class labels (multi-output problem).
+        The classes labels (single output problem),
+        or a list of arrays of class labels (multi-output problem).
 
     `n_classes_` : int or list
-        The number of classes (single output problem), or a list containing the
-        number of classes for each output (multi-output problem).
+        The number of classes (for single output problems),
+        or a list containing the number of classes for each
+        output (for multi-output problems).
 
     `feature_importances_` : array of shape = [n_features]
-        The feature importances (the higher, the more important the feature).
-        The importance I(f) of a feature f is computed as the (normalized)
-        total reduction of error brought by that feature. It is also known as
-        the Gini importance [4]_.
+        The feature importances
+        (the higher, the more important the feature).
+        The importance of a feature is computed as the
+        (normalized) total reduction of error brought by that
+        feature.  It is also known as the Gini importance [4]_.
 
     See also
     --------
@@ -673,10 +675,11 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The underlying Tree object.
 
     `feature_importances_` : array of shape = [n_features]
-        The feature importances (the higher, the more important the feature).
-        The importance I(f) of a feature f is computed as the (normalized)
-        total reduction of error brought by that feature. It is also known as
-        the Gini importance [4]_.
+        The feature importances
+        (the higher, the more important the feature).
+        The importance of a feature is computed as the
+        (normalized) total reduction of error brought by that
+        feature.  It is also known as the Gini importance [4]_.
 
     See also
     --------

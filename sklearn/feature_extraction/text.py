@@ -207,9 +207,10 @@ class CountVectorizer(BaseEstimator):
         A mapping of terms to feature indices.
 
     `stop_words_` : set
-        Terms that were ignored because they occurred in either too
-        many (`max_df`) or in too few (`min_df`) documents.  This is
-        only available if no vocabulary was given.
+        Terms that were ignored because they occurred in either too many
+        (`max_df`) or in too few (`min_df`) documents.  This is only available
+        if no vocabulary was given.
+
     """
 
     _white_spaces = re.compile(ur"\s\s+")
