@@ -451,7 +451,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         return self.eigen_solver
 
     @property
-    @deprecated("'k' was renamed to eigen_solver and will be removed in"
+    @deprecated("'k' was renamed to n_clusters and will be removed in"
                 " 0.15.")
     def k(self):
-        return self.n_cluster
+        return self.n_clusters
