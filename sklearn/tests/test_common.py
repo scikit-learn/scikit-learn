@@ -113,14 +113,10 @@ def test_all_estimators():
             else:
                 continue
             for arg, default in zip(args, defaults):
-                # check if something is deprecated.
-                # in that case, it might change in init
-                # (because it is replaced with a property)
-                with warnings.catch_warnings(record=True) as w:
-                    e.get_params(arg)
-                    if len(w) > 0 and isinstance(w[0].category(),
-                                                 DeprecationWarning):
-                        continue
+                if arg not in params.keys():
+                    # deprecated parameter, not in get_params
+                    assert_true(default is None)
+                    continue
 
                 if isinstance(params[arg], np.ndarray):
                     assert_array_equal(params[arg], default)
