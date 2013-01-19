@@ -60,7 +60,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         parameter
         alpha = 0 is equivalent to an ordinary least square, solved
         by the LinearRegression object in the scikit. For numerical
-        reasons, using alpha = 0 is with the Lasso object is not advised
+        reasons, using alpha = 0 with the Lasso object is not advised
         and you should prefer the LinearRegression object.
 
     l1_ratio : float
