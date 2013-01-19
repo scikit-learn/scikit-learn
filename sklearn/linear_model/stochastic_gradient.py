@@ -15,7 +15,7 @@ from ..externals.joblib import Parallel, delayed
 from .base import LinearClassifierMixin
 from ..base import BaseEstimator, RegressorMixin
 from ..feature_selection.selector_mixin import SelectorMixin
-from ..utils import array2d, atleast2d_or_csr, check_arrays
+from ..utils import array2d, atleast2d_or_csr, check_arrays, deprecated
 from ..utils.extmath import safe_sparse_dot
 
 from .sgd_fast import plain_sgd as plain_sgd
@@ -298,11 +298,17 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
                                         DEFAULT_EPSILON),
     }
 
-    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
-                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1,
-                 random_state=None, learning_rate="optimal", eta0=0.0,
-                 power_t=0.5, class_weight=None, warm_start=False, rho=None):
+    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, l1_ratio=0.15,
+                 fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
+                 epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
+                 learning_rate="optimal", eta0=0.0, power_t=0.5,
+                 class_weight=None, warm_start=False, rho=None, seed=None):
+
+        if seed is not None:
+            warnings.warn("Parameter 'seed' was renamed to 'random_state' for"
+                          " consistency and will be removed in 0.15",
+                          DeprecationWarning)
+            random_state = seed
 
         super(BaseSGDClassifier, self).__init__(loss=loss, penalty=penalty,
                                                 alpha=alpha, l1_ratio=l1_ratio,
@@ -318,6 +324,12 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
         self.class_weight = class_weight
         self.classes_ = None
         self.n_jobs = int(n_jobs)
+
+    @property
+    @deprecated("Parameter 'seed' war renamed to 'random_state' for"
+                " consistency and will be removed in 0.15")
+    def seed(self):
+        return self.random_state
 
     def _partial_fit(self, X, y, alpha, C,
                      loss, learning_rate, n_iter,
@@ -624,8 +636,8 @@ class SGDClassifier(BaseSGDClassifier, SelectorMixin):
     SGDClassifier(alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
             fit_intercept=True, l1_ratio=0.15, learning_rate='optimal',
             loss='hinge', n_iter=5, n_jobs=1, penalty='l2', power_t=0.5,
-            random_state=None, rho=None, shuffle=False, verbose=0,
-            warm_start=False)
+            random_state=None, rho=None, shuffle=False,
+            verbose=0, warm_start=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
