@@ -1151,8 +1151,8 @@ class MiniBatchKMeans(KMeans):
             init_size = n_samples
         self.init_size_ = init_size
 
-        validation_indices = random_state.random_integers(0, n_samples - 1,
-                                                          init_size)
+        validation_indices = random_state.random_integers(0,
+                                            n_samples - 1, init_size)
         X_valid = X[validation_indices]
         x_squared_norms_valid = x_squared_norms[validation_indices]
 
@@ -1216,7 +1216,7 @@ class MiniBatchKMeans(KMeans):
                 # every once in a while
                 random_reassign=(iteration_idx + 1) % (10 +
                                                 self.counts_.min()) == 0,
-                random_state=self.random_state,
+                random_state=random_state,
                 reassignment_ratio=self.reassignment_ratio,
                 verbose=self.verbose)
 
@@ -1253,13 +1253,14 @@ class MiniBatchKMeans(KMeans):
             return self
 
         x_squared_norms = _squared_norms(X)
+        self.random_state_ = check_random_state(self.random_state)
         if (not hasattr(self, 'counts_')
                 or not hasattr(self, 'cluster_centers_')):
             # this is the first call partial_fit on this object:
             # initialize the cluster centers
-            random_state = check_random_state(self.random_state)
             self.cluster_centers_ = _init_centroids(
-                X, self.n_clusters, self.init, random_state=random_state,
+                X, self.n_clusters, self.init,
+                random_state=self.random_state_,
                 x_squared_norms=x_squared_norms, init_size=self.init_size)
 
             self.counts_ = np.zeros(self.n_clusters, dtype=np.int32)
@@ -1268,13 +1269,13 @@ class MiniBatchKMeans(KMeans):
             # The lower the minimum count is, the more we do random
             # reassignment, however, we don't want to do random
             # reassignment too often, to allow for building up counts
-            random_reassign = self.random_state.randint(10 * (1 +
+            random_reassign = self.random_state_.randint(10 * (1 +
                                         self.counts_.min())) == 0
 
         _mini_batch_step(X, x_squared_norms, self.cluster_centers_,
                          self.counts_, np.zeros(0, np.double), 0,
                          random_reassign=random_reassign,
-                         random_state=self.random_state,
+                         random_state=self.random_state_,
                          reassignment_ratio=self.reassignment_ratio,
                          verbose=self.verbose)
 
