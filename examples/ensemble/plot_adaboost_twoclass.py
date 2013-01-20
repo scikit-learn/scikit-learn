@@ -4,8 +4,7 @@ Two-class AdaBoost
 ==================
 
 This example fits an AdaBoosted decision stump on a classification dataset and
-plots the decision boundary, class probabilities, and continuous two-class
-output value.
+plots the decision boundary, class probabilities, and two-class decision score.
 
 """
 print __doc__
@@ -25,7 +24,10 @@ X, y = make_classification(n_samples=1000,
                            n_redundant=0,
                            random_state=1)
 
-bdt = AdaBoostClassifier(DecisionTreeClassifier(max_depth=1), real=False)
+bdt = AdaBoostClassifier(
+    DecisionTreeClassifier(max_depth=1),
+    real=False,
+    n_estimators=50)
 
 bdt.fit(X, y)
 
@@ -70,18 +72,18 @@ pl.legend(loc='upper center')
 pl.ylabel('Samples')
 pl.xlabel('Class Probability')
 
-# Plot the two-class output
-twoclass_output = bdt.predict_twoclass(X)
+# Plot the two-class decision scores
+twoclass_output = bdt.decision_function(X)
 pl.subplot(133)
 for i, n, c in zip(xrange(2), class_names, plot_colors):
     pl.hist(twoclass_output[y == i],
             bins=20,
-            range=(0, 1),
+            range=(-1, 1),
             facecolor=c,
             label='Class %s' % n)
 pl.legend(loc='upper right')
 pl.ylabel('Samples')
-pl.xlabel('Two-Class Output')
+pl.xlabel('Two-class Decision Scores')
 
 pl.subplots_adjust(wspace=0.25)
 pl.show()
