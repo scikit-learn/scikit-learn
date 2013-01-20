@@ -62,9 +62,10 @@ New Estimator Classes
 Changelog
 ---------
 
-   - zero_one loss has option for normalized output that reports the fraction
-     of misclassifications, rather than the raw number of misclassifications.
-     By Kyle Beauchamp.
+   - :func:`metrics.zero_one_loss` (formerly ``metrics.zero_one``) now has
+     option for normalized output that reports the fraction of
+     misclassifications, rather than the raw number of misclassifications. By
+     Kyle Beauchamp.
 
    - :class:`tree.DecisionTreeClassifier` and all derived ensemble models now
      support sample weighting, by `Noel Dawe`_  and `Gilles Louppe`_.
@@ -72,11 +73,13 @@ Changelog
    - Speedup improvement when using bootstrap samples in forests of randomized
      trees, by `Peter Prettenhofer`_  and `Gilles Louppe`_.
 
-   - Partial dependence plots for :mod:`ensemble.gradient_boosting` by
-     `Peter Prettenhofer`_.
+   - Partial dependence plots for :ref:`gradient_boosting` in
+     :func:`ensemble.partial_dependence.partial_dependence` by `Peter
+     Prettenhofer`_. See :ref:`example_ensemble_plot_partial_dependence.py` for an
+     example.
 
-   - The table of contents has now been made expandable (on the
-     index page) - by Jaques Grobler.
+   - The table of contents on the website has now been made expandable by
+     `Jaques Grobler`_.
 
    - :class:`feature_selection.SelectPercentile` now breaks ties
      deterministically instead of returning all equally ranked features.
@@ -117,16 +120,16 @@ Changelog
    - New kernel :class:`metrics.chi2_kernel` by `Andreas Müller`_, often used
      in computer vision applications.
 
-   - Longstanding bug in :class:`naive_bayes.BernoulliNB` fixed by
+   - Fix of longstanding bug in :class:`naive_bayes.BernoulliNB` fixed by
      Shaun Jackman.
 
    - Implement `predict_proba` in :class:`multiclass.OneVsRestClassifier`, by
      Andrew Winterman.
 
-   - Improve consistency in :mod:`ensemble.gradient_boosting`: estimators
-     :class:`ensemble.gradient_boosting.GradientBoostingRegressor` and
-     :class:`ensemble.gradient_boosting.GradientBoostingClassifier` use
-     the estimator :class:`tree.DecisionTreeRegressor` instead of the
+   - Improve consistency in gradient boosting: estimators
+     :class:`ensemble.GradientBoostingRegressor` and
+     :class:`ensemble.GradientBoostingClassifier` use the estimator
+     :class:`tree.DecisionTreeRegressor` instead of the
      :class:`tree._tree.Tree` datastructure by `Arnaud Joly`_.
 
    - Fixed a floating point exception in the :ref:`decision trees <tree>`
@@ -160,19 +163,17 @@ API changes summary
      :func:`decomposition.dict_learning`, :func:`decomposition.dict_learning_online`.
 
    - Renamed all occurrences of ``max_iters`` to ``max_iter`` for consistency.
-     This applies to :class:`label_propagation.BaseLabelPropagation`,
-     'label_propagation.LabelSpreading'
+     This applies to :class:`semi_supervised.LabelPropagation` and
+     :class:`semi_supervised.label_propagation.LabelSpreading`.
 
-   - Renamed all occurrences of ``learn_rate`` to ``learning_rate`` for consistency.
-     This applies to :class:`gradient_boosting.LossFunction`,
-     :class:`gradient_boosting.LeastSquaresError`,
-     :class:'gradient_boosting.BaseGradientBoosting',
-     :class:'gradient_boosting.GradientBoostingRegressor'
+   - Renamed all occurrences of ``learn_rate`` to ``learning_rate`` for
+     consistency in :class:'ensemble.BaseGradientBoosting' and
+     :class:'ensemble.GradientBoostingRegressor'.
 
    - The module ``sklearn.linear_model.sparse`` is gone. Sparse matrix support
      was already integrated into the "regular" linear models.
 
-   - ``sklearn.metrics.mean_square_error``, which incorrectly returned the
+   - :func:`sklearn.metrics.mean_square_error`, which incorrectly returned the
      accumulated error, was removed. Use ``mean_squared_error`` instead.
 
    - Passing ``class_weight`` parameters to ``fit`` methods is no longer
@@ -185,8 +186,8 @@ API changes summary
      deprecated and will be removed in v0.14. Use the constructor option
      instead.
 
-   - :class:`DictVectorizer` now returns sparse matrices in the CSR format,
-     instead of COO.
+   - :class:`feature_extraction.text.DictVectorizer` now returns sparse
+     matrices in the CSR format, instead of COO.
 
    - Renamed ``k`` in :class:`cross_validation.KFold` and
      :class:`cross_validation.StratifiedKFold` to ``n_folds``, renamed
@@ -251,8 +252,8 @@ API changes summary
      :func:`sklearn.metrics.zero_one`: ``normalize=False`` is changed to
      ``normalize=True``.
 
-   - Renamed function :func:`sklearn.metrics.zero_one_score` to
-     :func:`sklearn.metrics.accuracy_score`.
+   - Renamed function :func:`metrics.zero_one_score` to
+     :func:`metrics.accuracy_score`.
 
    - :func:`datasets.make_circles` now has the same number of inner and outer points.
 
