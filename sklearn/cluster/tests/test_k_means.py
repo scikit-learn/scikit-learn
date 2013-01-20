@@ -316,6 +316,24 @@ def test_minibatch_k_means_perfect_init_sparse_csr():
     _check_fitted_model(mb_k_means)
 
 
+def test_minibatch_reassign():
+    # Give a perfect initialization, but a large reassignment_ratio,
+    # as a result all the centers should be reassigned and the model
+    # should not longer be good
+    mb_k_means = MiniBatchKMeans(init=centers.copy(),
+                                 n_clusters=n_clusters, batch_size=1,
+                                 random_state=42)
+    mb_k_means.fit(X)
+    centers_before = mb_k_means.cluster_centers_.copy()
+    _mini_batch_step(X, (X ** 2).sum(axis=1), mb_k_means.cluster_centers_,
+                     mb_k_means.counts_, np.zeros(X.shape[1], np.double),
+                     True, random_state=42, reassignment_ratio=1)
+    centers_after = mb_k_means.cluster_centers_.copy()
+    # Check that all the centers have moved
+    assert_greater(((centers_before - centers_after)**2).sum(axis=1).min(),
+                   .2)
+
+
 def test_sparse_mb_k_means_callable_init():
 
     def test_init(X, k, random_state):
