@@ -5,6 +5,52 @@
 0.13
 ====
 
+New Estimator Classes
+---------------------
+
+   - :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor`, two
+     data-independent predictors by `Mathieu Blondel`_. Useful to sanity-check
+     your estimators. Multioutput support added by `Arnaud Joly`_.
+
+   - :class:`decomposition.FactorAnalysis`, a transformer implementing the
+     classical factor analysis, by `Christian Osendorfer`_ and `Alexandre
+     Gramfort`_.
+
+   - :class:`feature_extraction.FeatureHasher`, a transformer implementing the
+     "hashing trick" for fast, low-memory feature extraction from string fields
+     by `Lars Buitinck`_ and :class:`feature_extraction.text.HashingVectorizer`
+     for text documents by `Olivier Grisel`_  See :ref:`feature_hashing` and
+     :ref:`hashing_vectorizer` for the documentation and sample usage.
+
+   - :class:`pipeline.FeatureUnion`, a transformer that concatenates
+     results of several other transformers by `Andreas Müller`_.
+
+   - :class:`random_projection.GaussianRandomProjection`,
+     :class:`random_projection.SparseRandomProjection` and the function
+     :func:`random_projection.johnson_lindenstrauss_min_dim`. The first two are
+     transformers implementing Gaussian and sparse random projection matrix
+     by `Olivier Grisel`_ and `Arnaud Joly`_.
+
+   - :class:`kernel_approximation.Nystroem`, a transformer for approximating
+     arbitrary kernels by `Andreas Müller`_.
+
+   - :class:`preprocessing.OneHotEncoder`, a transformer that computes binary
+     encodings of categorical features by `Andreas Müller`_.
+
+   - :class:`linear_model.PassiveAggressiveClassifier` and
+     :class:`linear_model.PassiveAggressiveRegressor`, predictors implementing
+     an efficient stochastic optimization for linear models by `Rob Zinkov`
+     and `Mathieu Blondel`_.
+
+   - :class:`ensemble.RandomTreesEmbedding`, a transformer for creating high-dimensional
+     sparse representations using ensembles of totally random trees by  `Andreas Müller`_
+
+   - :class:`manifold.SpectralEmbedding` and function
+     :func:`manifold.spectral_embedding`, implementing the "laplacian
+     eigenmaps" transformation for nonlinear dimensionality reduction by Wei
+     Li.
+
+
 Changelog
 ---------
 
@@ -20,10 +66,6 @@ Changelog
 
    - Partial dependence plots for :mod:`ensemble.gradient_boosting` by
      `Peter Prettenhofer`_.
-
-   - New estimators :class:`linear_model.PassiveAggressiveClassifier` and
-     :class:`linear_model.PassiverAggressiveRegressor` by `Rob Zinkov` and
-     `Mathieu Blondel`_.
 
    - The table of contents has now been made expandable (on the
      index page) - by Jaques Grobler.
@@ -51,16 +93,8 @@ Changelog
      :func:`datasets.dump_svmlight_file` and
      :func:`datasets.load_svmlight_file` by `Fabian Pedregosa`_.
 
-   - New estimator :ref:`FeatureUnion <feature_union>` that concatenates results
-     of several transformers by `Andreas Müller`_.
-
    - Faster and more robust :func:`metrics.confusion_matrix` and
      :ref:`clustering_evaluation` by Wei Li.
-
-   - New estimator :class:`decomposition.FactorAnalysis` by
-     `Christian Osendorfer`_ and `Alexandre Gramfort`_
-
-   - :func:`datasets.make_circles` now has the same number of inner and outer points.
 
    - :func:`cross_validation.cross_val_score` now works with precomputed kernels
      and affinity matrices, by `Andreas Müller`_.
@@ -69,21 +103,8 @@ Changelog
      regressors too correlated as well as to stop the path when
      numerical noise becomes predominant, by `Gael Varoquaux`_.
 
-   - New estimator :class:`preprocessing.OneHotEncoder` to compute
-     binary encodings of categorical features by `Andreas Müller`_.
-
    - Faster implementation of :func:`metrics.precision_recall_curve` by
      Conrad Lee.
-
-   - New :class:`feature_extraction.FeatureHasher`, implementing the "hashing
-     trick" for fast, low-memory feature extraction from string fields by `Lars
-     Buitinck`_ and :class:`feature_extraction.text.HashingVectorizer` for text
-     documents by `Olivier Grisel`_  See :ref:`feature_hashing` and
-     :ref:`hashing_vectorizer` for the documentation and sample usage.
-
-   - New dummy estimators :class:`dummy.DummyClassifiers` and
-     :class:`DummyRegressor` by `Mathieu Blondel`_. Useful to sanity-check your
-     estimators. Multioutput support added by `Arnaud Joly`_.
 
    - New kernel :class:`metrics.chi2_kernel` by `Andreas Müller`_, often used
      in computer vision applications.
@@ -91,15 +112,8 @@ Changelog
    - Longstanding bug in :class:`naive_bayes.BernoulliNB` fixed by
      Shaun Jackman.
 
-   - New estimator :class:`manifold.SpectralEmbedding` and function
-     :func:`manifold.spectral_embedding`, implementing the
-     "laplacian eigenmaps" for nonlinear dimensionality reduction by Wei Li.
-
    - Implement `predict_proba` in :class:`multiclass.OneVsRestClassifier`, by
      Andrew Winterman.
-
-   - Added :class:`kernel_approximation.Nystrom` for approximating arbitrary
-     kernels to the :ref:`kernel_approximation` module by `Andreas Müller`_.
 
    - Improve consistency in :mod:`ensemble.gradient_boosting`: estimators
      :class:`ensemble.gradient_boosting.GradientBoostingRegressor` and
@@ -112,12 +126,6 @@ Changelog
 
    - Fix :func:`metrics.roc_curve` fails when y_true has only one class
      by Wei Li.
-
-   - New transformers :class:`random_projection.GaussianRandomProjection`,
-     :class:`random_projection.SparseRandomProjection` and the function
-     :func:`random_projection.johnson_lindenstrauss_min_dim`, implementing
-     Gaussian and sparse random projection matrix
-     by `Olivier Grisel`_ and `Arnaud Joly`_.
 
    - Add the :func:`metrics.mean_absolute_error` function which computes the
      mean absolute error. The :func:`metrics.mean_squared_error`,
@@ -195,7 +203,7 @@ API changes summary
    - The attribute ``gmm`` of :class:`hmm.GMMHMM` was renamed to ``gmm_``
      to adhere more strictly with the API.
 
-   - :func:`cluster.spectral_embedding` is now in
+   - :func:`cluster.spectral_embedding` was moved to
      :func:`manifold.spectral_embedding`.
 
    - Renamed ``eig_tol`` in :func:`manifold.spectral_embedding`,
@@ -237,6 +245,9 @@ API changes summary
 
    - Renamed function :func:`sklearn.metrics.zero_one_score` to
      :func:`sklearn.metrics.accuracy_score`.
+
+   - :func:`datasets.make_circles` now has the same number of inner and outer points.
+
 
 .. _changes_0_12.1:
 
