@@ -44,7 +44,7 @@ New Estimator Classes
 
    - :class:`linear_model.PassiveAggressiveClassifier` and
      :class:`linear_model.PassiveAggressiveRegressor`, predictors implementing
-     an efficient stochastic optimization for linear models by `Rob Zinkov` and
+     an efficient stochastic optimization for linear models by `Rob Zinkov`_ and
      `Mathieu Blondel`_. See :ref:`passive_aggressive` in the user
      guide.
 
@@ -259,6 +259,77 @@ API changes summary
 
    - In the Naive Bayes classifiers, the ``class_prior`` parmeter was moved
      from ``fit`` to ``__init__``.
+
+People
+------
+List of contributors for release 0.13 by number of commits.
+
+ * 362  `Andreas Müller`_
+ * 143  `Arnaud Joly`_
+ * 137  `Peter Prettenhofer`_
+ * 117  `Mathieu Blondel`_
+ * 110  `Gael Varoquaux`_
+ * 108  `Lars Buitinck`_
+ * 106  Wei Li
+ * 101  `Olivier Grisel`_
+ *  65  `Vlad Niculae`_
+ *  54  `Gilles Louppe`_
+ *  40  `Jaques Grobler`_
+ *  38  `Alexandre Gramfort`_
+ *  30  `Rob Zinkov`_
+ *  19  Aymeric Masurelle
+ *  18  Andrew Winterman
+ *  17  `Fabian Pedregosa`_
+ *  17  Nelle Varoquaux
+ *  16  `Christian Osendorfer`_
+ *  14  Daniel Nouri
+ *  13  `Virgile Fritsch`_
+ *  13  syhw
+ *  12  `Satrajit Ghosh`_
+ *  10  Corey Lynch
+ *  10  Kyle Beauchamp
+ *   9  Brian Cheung
+ *   9  Immanuel Bayer
+ *   9  mr.Shu
+ *   8  Conrad Lee
+ *   8  `James Bergstra`_
+ *   7  Tadej Janež
+ *   6  Brian Cajes
+ *   6  `Jake VanderPlas`_
+ *   6  Michael
+ *   6  Noel Dawe
+ *   6  Tiago Nunes
+ *   6  cow
+ *   5  Anze
+ *   5  Shiqiao Du
+ *   4  Christian Jauvin
+ *   4  Jacques Kvam
+ *   4  Richard T. Guy
+ *   4  `Robert Layton`_
+ *   3  Alexandre Abraham
+ *   3  Doug Coleman
+ *   3  Scott Dickerson
+ *   2  ApproximateIdentity
+ *   2  John Benediktsson
+ *   2  Mark Veronda
+ *   2  Matti Lyra
+ *   2  Mikhail Korobov
+ *   2  Xinfan Meng
+ *   1  Alejandro Weinstein
+ *   1  `Alexandre Passos`_
+ *   1  Christoph Deil
+ *   1  Eugene Nizhibitsky
+ *   1  Kenneth C. Arnold
+ *   1  Luis Pedro Coelho
+ *   1  Miroslav Batchkarov
+ *   1  Pavel
+ *   1  Sebastian Berg
+ *   1  Shaun Jackman
+ *   1  Subhodeep Moitra
+ *   1  bob
+ *   1  dengemann
+ *   1  emanuele
+ *   1  x006
 
 
 .. _changes_0_12.1:
@@ -723,7 +794,7 @@ People
    *   1  `Edouard Duchesnay`_
    *   1  Jan Hendrik Metzen
    *   1  Meng Xinfan
-   *   1  Rob Zinkov
+   *   1  `Rob Zinkov`_
    *   1  Shiqiao
    *   1  Udi Weinsberg
    *   1  Virgile Fritsch
@@ -1686,3 +1757,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Noel Dawe: http://noel.dawe.me
 
 .. _Arnaud Joly: http://www.ajoly.org
+
+.. _Rob Zinkov: http://zinkov.com
