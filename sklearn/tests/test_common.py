@@ -676,10 +676,6 @@ def test_class_weight_classifiers():
             if name == "NuSVC":
                 # the sparse version has a parameter that doesn't do anything
                 continue
-            if name.startswith("RidgeClassifier"):
-                # RidgeClassifier shows unexpected behavior
-                # FIXME!
-                continue
             if name.endswith("NB"):
                 # NaiveBayes classifiers have a somewhat different interface.
                 # FIXME SOON!

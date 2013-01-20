@@ -578,7 +578,8 @@ class _RidgeGCV(LinearModel):
         n_samples, n_features = X.shape
 
         X, y, X_mean, y_mean, X_std = LinearModel._center_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X)
+            X, y, self.fit_intercept, self.normalize, self.copy_X,
+            sample_weight=sample_weight)
 
         gcv_mode = self.gcv_mode
         with_sw = len(np.shape(sample_weight))
