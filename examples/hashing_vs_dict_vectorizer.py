@@ -1,4 +1,10 @@
-"""Compares FeatureHasher and DictVectorizer by using both to vectorize
+"""
+===================================================================
+Comparison of hashing-based and dictionary based text vectorization
+===================================================================
+
+
+Compares FeatureHasher and DictVectorizer by using both to vectorize
 text documents.
 
 The example demonstrates syntax and speed only; it doesn't actually do
@@ -76,7 +82,7 @@ except ValueError:
 print("Loading 20 newsgroups training data")
 raw_data = fetch_20newsgroups(subset='train', categories=categories).data
 data_size_mb = sum(len(s.encode('utf-8')) for s in raw_data) / 1e6
-print("%d documents - %0.3fMB" % (len(raw_data) , data_size_mb))
+print("%d documents - %0.3fMB" % (len(raw_data), data_size_mb))
 print()
 
 print("DictVectorizer")
