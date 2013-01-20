@@ -6,11 +6,12 @@
 #           Corey Lynch <coreylynch9@gmail.com>
 # License: BSD Style.
 
-from libc.math cimport exp, lgamma
+from libc.math cimport exp
 from scipy.special import gammaln
 import numpy as np
 cimport numpy as np
 cimport cython
+from sklearn.utils.lgamma cimport lgamma
 
 np.import_array()
 
