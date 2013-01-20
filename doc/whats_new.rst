@@ -257,6 +257,9 @@ API changes summary
 
    - :func:`datasets.make_circles` now has the same number of inner and outer points.
 
+   - In the Naive Bayes classifiers, the ``class_prior`` parmeter was moved
+     from ``fit`` to ``__init__``.
+
 
 .. _changes_0_12.1:
 
