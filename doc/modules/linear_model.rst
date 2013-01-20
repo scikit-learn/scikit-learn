@@ -701,6 +701,8 @@ The last characteristic implies that the Perceptron is slightly faster to
 train than SGD with the hinge loss and that the resulting models are
 sparser.
 
+.. _passive_aggressive:
+
 Passive Aggressive Algorithms
 =============================
 

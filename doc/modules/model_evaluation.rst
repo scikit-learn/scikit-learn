@@ -762,6 +762,7 @@ Clustering metrics
 The :mod:`sklearn.metrics` implements several losses, scores and utility
 function for more information see the :ref:`clustering_evaluation` section.
 
+.. _dummy_estimators:
 
 Dummy estimators
 =================

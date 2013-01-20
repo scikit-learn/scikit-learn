@@ -297,6 +297,7 @@ The overall complexity of standard HLLE is
      high-dimensional data" <http://www.pnas.org/content/100/10/5591>`_
      Donoho, D. & Grimes, C. Proc Natl Acad Sci USA. 100:5591 (2003)
 
+.. _spectral_embedding:
 
 Spectral Embedding
 ====================

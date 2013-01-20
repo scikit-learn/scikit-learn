@@ -10,11 +10,12 @@ New Estimator Classes
 
    - :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor`, two
      data-independent predictors by `Mathieu Blondel`_. Useful to sanity-check
-     your estimators. Multioutput support added by `Arnaud Joly`_.
+     your estimators. See :ref:`dummy_estimators` in the user guide.
+     Multioutput support added by `Arnaud Joly`_.
 
    - :class:`decomposition.FactorAnalysis`, a transformer implementing the
      classical factor analysis, by `Christian Osendorfer`_ and `Alexandre
-     Gramfort`_.
+     Gramfort`_. See :ref:`FA` in the user guide.
 
    - :class:`feature_extraction.FeatureHasher`, a transformer implementing the
      "hashing trick" for fast, low-memory feature extraction from string fields
@@ -23,32 +24,39 @@ New Estimator Classes
      :ref:`hashing_vectorizer` for the documentation and sample usage.
 
    - :class:`pipeline.FeatureUnion`, a transformer that concatenates
-     results of several other transformers by `Andreas Müller`_.
+     results of several other transformers by `Andreas Müller`_. See
+     :ref:`feature_union` in the user guide.
 
    - :class:`random_projection.GaussianRandomProjection`,
      :class:`random_projection.SparseRandomProjection` and the function
      :func:`random_projection.johnson_lindenstrauss_min_dim`. The first two are
      transformers implementing Gaussian and sparse random projection matrix
      by `Olivier Grisel`_ and `Arnaud Joly`_.
+     See :ref:`random_projection` in the user guide.
 
    - :class:`kernel_approximation.Nystroem`, a transformer for approximating
-     arbitrary kernels by `Andreas Müller`_.
+     arbitrary kernels by `Andreas Müller`_. See
+     :ref:`nystroem_kernel_approx` in the user guide.
 
    - :class:`preprocessing.OneHotEncoder`, a transformer that computes binary
-     encodings of categorical features by `Andreas Müller`_.
+     encodings of categorical features by `Andreas Müller`_. See
+     :ref:`preprocessing_categorical_features` in the user guide.
 
    - :class:`linear_model.PassiveAggressiveClassifier` and
      :class:`linear_model.PassiveAggressiveRegressor`, predictors implementing
-     an efficient stochastic optimization for linear models by `Rob Zinkov`
-     and `Mathieu Blondel`_.
+     an efficient stochastic optimization for linear models by `Rob Zinkov` and
+     `Mathieu Blondel`_. See :ref:`passive_aggressive` in the user
+     guide.
 
    - :class:`ensemble.RandomTreesEmbedding`, a transformer for creating high-dimensional
-     sparse representations using ensembles of totally random trees by  `Andreas Müller`_
+     sparse representations using ensembles of totally random trees by  `Andreas Müller`_.
+     See :ref:`random_trees_embedding` in the user guide.
+
 
    - :class:`manifold.SpectralEmbedding` and function
      :func:`manifold.spectral_embedding`, implementing the "laplacian
      eigenmaps" transformation for nonlinear dimensionality reduction by Wei
-     Li.
+     Li. See :ref:`spectral_embedding` in the user guide.
 
 
 Changelog
