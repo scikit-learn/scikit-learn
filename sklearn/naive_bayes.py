@@ -211,10 +211,6 @@ class BaseDiscreteNB(BaseNB):
         sample_weight : array-like, shape = [n_samples], optional
             Weights applied to individual samples (1. for unweighted).
 
-        class_prior : array, shape [n_classes]
-            Custom prior probability per class.
-            Overrides the fit_prior parameter.
-
         Returns
         -------
         self : object
@@ -240,11 +236,11 @@ class BaseDiscreteNB(BaseNB):
             Y *= array2d(sample_weight).T
 
         if class_prior is not None:
-            warnings.warn('class_prior is deprecated in fit function and will '
-                          'be removed in version 0.15. Use the `__init__` '
-                          'parameter  class_weight instead.')
+            warnings.warn('class_prior has been made an ``__init__`` parameter'
+                          ' and will be removed from fit in version 0.15.',
+                          DeprecationWarning)
         else:
-            class_prior = self.class_weight
+            class_prior = self.class_prior
 
         if class_prior:
             if len(class_prior) != n_classes:
@@ -299,7 +295,7 @@ class MultinomialNB(BaseDiscreteNB):
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
 
-    class_weight : array-like, size=[n_classes,]
+    class_prior : array-like, size=[n_classes,]
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
@@ -324,7 +320,7 @@ class MultinomialNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
     >>> clf.fit(X, Y)
-    MultinomialNB(alpha=1.0, class_weight=None, fit_prior=True)
+    MultinomialNB(alpha=1.0, class_prior=None, fit_prior=True)
     >>> print(clf.predict(X[2]))
     [3]
 
@@ -335,10 +331,10 @@ class MultinomialNB(BaseDiscreteNB):
     Tackling the poor assumptions of naive Bayes text classifiers, ICML.
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_weight=None):
+    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.fit_prior = fit_prior
-        self.class_weight = class_weight
+        self.class_prior = class_prior
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
@@ -377,7 +373,7 @@ class BernoulliNB(BaseDiscreteNB):
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
 
-    class_weight : array-like, size=[n_classes,]
+    class_prior : array-like, size=[n_classes,]
         Prior probabilities of the classes. If specified the priors are not
         adjusted according to the data.
 
@@ -397,7 +393,7 @@ class BernoulliNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import BernoulliNB
     >>> clf = BernoulliNB()
     >>> clf.fit(X, Y)
-    BernoulliNB(alpha=1.0, binarize=0.0, class_weight=None, fit_prior=True)
+    BernoulliNB(alpha=1.0, binarize=0.0, class_prior=None, fit_prior=True)
     >>> print(clf.predict(X[2]))
     [3]
 
@@ -416,11 +412,11 @@ class BernoulliNB(BaseDiscreteNB):
     """
 
     def __init__(self, alpha=1.0, binarize=.0, fit_prior=True,
-                 class_weight=None):
+                 class_prior=None):
         self.alpha = alpha
         self.binarize = binarize
         self.fit_prior = fit_prior
-        self.class_weight = class_weight
+        self.class_prior = class_prior
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
