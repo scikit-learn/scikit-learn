@@ -75,25 +75,16 @@ def _check_estimator(estimator):
                          "decision_function or predict_proba!")
 
 
-def fit_ovr(estimator, X, y, n_jobs):
+def fit_ovr(estimator, X, y, n_jobs=1):
     """Fit a one-vs-the-rest strategy."""
     _check_estimator(estimator)
 
     lb = LabelBinarizer()
     Y = lb.fit_transform(y)
-    classes = []
-    for i in range(Y.shape[1]):
-        classes.append(["not %s" % i, i])
 
-    if n_jobs == 1:
-        estimators = [_fit_binary(estimator, X, Y[:, i],
-                                  classes=classes[i])
-                      for i in range(Y.shape[1])]
-    else:
-        estimators = Parallel(n_jobs=n_jobs)(
-            delayed(_fit_binary)(estimator, X, Y[:, i], 
-                     classes=classes[i])
-            for i in range(Y.shape[1]))
+    estimators = Parallel(n_jobs=n_jobs)(
+        delayed(_fit_binary)(estimator, X, Y[:, i], classes=["not %s" % i, i])
+        for i in range(Y.shape[1]))
     return estimators, lb
 
 
@@ -296,15 +287,11 @@ def _fit_ovo_binary(estimator, X, y, i, j):
     return _fit_binary(estimator, X[ind[cond]], y, classes=[i, j])
 
 
-def fit_ovo(estimator, X, y, n_jobs):
+def fit_ovo(estimator, X, y, n_jobs=1):
     """Fit a one-vs-one strategy."""
     classes = np.unique(y)
     n_classes = classes.shape[0]
-    if n_jobs == 1:
-        estimators = [_fit_ovo_binary(estimator, X, y, classes[i], classes[j])
-                      for i in range(n_classes) for j in range(i + 1, n_classes)]
-    else:
-        estimators = Parallel(n_jobs=n_jobs)(
+    estimators = Parallel(n_jobs=n_jobs)(
             delayed(_fit_ovo_binary)(estimator, X, y, classes[i], classes[j])
             for i in range(n_classes) for j in range(i + 1, n_classes))
 
@@ -455,13 +442,9 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None, n_jobs=1):
     Y = np.array([code_book[cls_idx[y[i]]] for i in xrange(X.shape[0])],
                  dtype=np.int)
 
-    if n_jobs == 1:
-        estimators = [_fit_binary(estimator, X, Y[:, i])
-                      for i in range(Y.shape[1])]
-    else:
-        estimators = Parallel(n_jobs=n_jobs)(
-            delayed(_fit_binary)(estimator, X, Y[:, i])
-            for i in range(Y.shape[1]))
+    estimators = Parallel(n_jobs=n_jobs)(
+                        delayed(_fit_binary)(estimator, X, Y[:, i])
+                        for i in range(Y.shape[1]))
 
     return estimators, classes, code_book
 
