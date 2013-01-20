@@ -16,9 +16,9 @@ Two feature extraction methods can be used in this example:
     the corpus.
 
   - HashingVectorizer hashes word occurrences to a fixed dimensional space,
-    possibly with collisions. The word count vectors are then normalized to each
-    have l2-norm equal to one (projected to the euclidean unit-ball) which seems
-    to be important for k-means to work in high dimensional space.
+    possibly with collisions. The word count vectors are then normalized to
+    each have l2-norm equal to one (projected to the euclidean unit-ball) which
+    seems to be important for k-means to work in high dimensional space.
 
     HashingVectorizer does not provide IDF weighting as this is a stateless
     model (the fit method does nothing). When IDF weighting is needed it can
@@ -83,7 +83,8 @@ op.add_option("--use-hashing",
               action="store_true", default=False,
               help="Use a hashing feature vectorizer")
 op.add_option("--n-features", type=int, default=10000,
-              help="Maximum number of features (dimensions) to extract from text.")
+              help="Maximum number of features (dimensions)"
+                   "to extract from text.")
 
 print __doc__
 op.print_help()
@@ -132,8 +133,9 @@ if opts.use_hashing:
         ))
     else:
         vectorizer = HashingVectorizer(n_features=opts.n_features,
-                                   stop_words='english', non_negative=False,
-                                   norm='l2', binary=False)
+                                       stop_words='english',
+                                       non_negative=False, norm='l2',
+                                       binary=False)
 else:
     vectorizer = TfidfVectorizer(max_df=0.5, max_features=opts.n_features,
                                  stop_words='english', use_idf=opts.use_idf)

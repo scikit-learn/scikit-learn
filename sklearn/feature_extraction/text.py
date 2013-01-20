@@ -10,7 +10,6 @@ The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
 build feature vectors from text documents.
 """
 
-from abc import ABCMeta
 from collections import Mapping
 from operator import itemgetter
 import re
@@ -251,16 +250,16 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     - it can be used in a streaming (partial fit) or parallel pipeline as there
       is no state computed during fit.
 
-    There are also a couple of cons (vs using a CountVectorizer with an in-memory
-    vocabulary):
+    There are also a couple of cons (vs using a CountVectorizer with an
+    in-memory vocabulary):
 
     - there is no way to compute the inverse transform (from feature indices to
-      string feature names) which can be a problem when trying to introspect which
-      features are most important to a model.
+      string feature names) which can be a problem when trying to introspect
+      which features are most important to a model.
 
     - there can be collisions: distinct tokens can be mapped to the same
-      feature index. However in practice this is rarely an issue if n_features is
-      large enough (e.g. 2 ** 18 for text classification problems).
+      feature index. However in practice this is rarely an issue if n_features
+      is large enough (e.g. 2 ** 18 for text classification problems).
 
     - no IDF weighting as this would render the transformer stateful.
 
@@ -568,7 +567,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     --------
     HashingVectorizer, TfidfVectorizer
     """
-
 
     def __init__(self, input='content', charset='utf-8',
                  charset_error='strict', strip_accents=None,
