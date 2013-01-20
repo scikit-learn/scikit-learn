@@ -152,7 +152,7 @@ def test_discretenb_provide_prior():
     """Test whether discrete NB classes use provided prior"""
 
     for cls in [BernoulliNB, MultinomialNB]:
-        clf = cls(class_weight=[0.5, 0.5])
+        clf = cls(class_prior=[0.5, 0.5])
         clf.fit([[0], [0], [1]], [0, 0, 1])
         prior = np.exp(clf.class_log_prior_)
         assert_array_equal(prior, np.array([.5, .5]))
