@@ -210,7 +210,8 @@ class _BaseRidge(LinearModel):
         y = np.asarray(y, dtype=np.float)
 
         X, y, X_mean, y_mean, X_std = self._center_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X)
+            X, y, self.fit_intercept, self.normalize, self.copy_X,
+            sample_weight=sample_weight)
 
         self.coef_ = ridge_regression(X, y,
                                       alpha=self.alpha,
