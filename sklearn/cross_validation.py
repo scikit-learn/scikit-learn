@@ -649,7 +649,7 @@ class Bootstrap(object):
         self.n_iter = n_iter
         if (isinstance(train_size, numbers.Real) and train_size >= 0.0
                 and train_size <= 1.0):
-            self.train_size = ceil(train_size * n)
+            self.train_size = int(ceil(train_size * n))
         elif isinstance(train_size, numbers.Integral):
             self.train_size = train_size
         else:
@@ -660,7 +660,7 @@ class Bootstrap(object):
                              (self.train_size, n))
 
         if isinstance(test_size, numbers.Real) and 0.0 <= test_size <= 1.0:
-            self.test_size = ceil(test_size * n)
+            self.test_size = int(ceil(test_size * n))
         elif isinstance(test_size, numbers.Integral):
             self.test_size = test_size
         elif test_size is None:
@@ -881,7 +881,7 @@ def _validate_shuffle_split(n, test_size, train_size):
                          'samples %d. Reduce test_size and/or '
                          'train_size.' % (n_train + n_test, n))
 
-    return n_train, n_test
+    return int(n_train), int(n_test)
 
 
 def _validate_stratified_shuffle_split(y, test_size, train_size):
