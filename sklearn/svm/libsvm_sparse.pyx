@@ -151,10 +151,10 @@ def libsvm_sparse_train ( int n_features,
     cdef np.ndarray sv_coef_data
     sv_coef_data = np.empty((n_class-1)*SV_len, dtype=np.float64)
     copy_sv_coef (sv_coef_data.data, model)
-   
+
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] support
-    support = np.empty (SV_len, dtype=np.int32)
-    copy_support (support.data, model)
+    support = np.empty(SV_len, dtype=np.int32)
+    copy_support(support.data, model)
 
     # copy model.rho into the intercept
     # the intercept is just model.rho but with sign changed
