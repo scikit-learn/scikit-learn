@@ -36,7 +36,7 @@ y = digits.target
 
 # Split the dataset in two equal parts
 X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_fraction=0.5, random_state=0)
+    X, y, test_size=0.5, random_state=0)
 
 # Set the parameters by cross-validation
 tuned_parameters = [{'kernel': ['rbf'], 'gamma': [1e-3, 1e-4],

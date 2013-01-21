@@ -113,6 +113,11 @@ def test_all_estimators():
             else:
                 continue
             for arg, default in zip(args, defaults):
+                if arg not in params.keys():
+                    # deprecated parameter, not in get_params
+                    assert_true(default is None)
+                    continue
+
                 if isinstance(params[arg], np.ndarray):
                     assert_array_equal(params[arg], default)
                 else:
@@ -671,12 +676,8 @@ def test_class_weight_classifiers():
             if name == "NuSVC":
                 # the sparse version has a parameter that doesn't do anything
                 continue
-            if name.startswith("RidgeClassifier"):
-                # RidgeClassifier shows unexpected behavior
-                # FIXME!
-                continue
             if name.endswith("NB"):
-                # NaiveBayes classifiers have a somewhat differnt interface.
+                # NaiveBayes classifiers have a somewhat different interface.
                 # FIXME SOON!
                 continue
             if n_centers == 2:
@@ -722,7 +723,7 @@ def test_class_weight_auto_classifies():
                 continue
 
             if name.endswith("NB"):
-                # NaiveBayes classifiers have a somewhat differnt interface.
+                # NaiveBayes classifiers have a somewhat different interface.
                 # FIXME SOON!
                 continue
 

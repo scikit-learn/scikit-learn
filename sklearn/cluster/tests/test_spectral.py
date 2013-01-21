@@ -111,7 +111,7 @@ def test_spectral_unknown_mode():
 
 
 def test_spectral_unknown_assign_labels():
-    # Test that SpectralClustering fails with an unknown mode set.
+    # Test that SpectralClustering fails with an unknown assign_labels set.
     centers = np.array([
         [0., 0., 0.],
         [10., 10., 10.],

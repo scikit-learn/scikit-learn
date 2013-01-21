@@ -28,6 +28,8 @@ is advisable to compare results against exact kernel methods when possible.
 
 .. currentmodule:: sklearn.kernel_approximation
 
+.. _nystroem_kernel_approx:
+
 Nystroem Method for Kernel Approximation
 ----------------------------------------
 The Nystroem method, as implemented in :class:`Nystroem` is a general method

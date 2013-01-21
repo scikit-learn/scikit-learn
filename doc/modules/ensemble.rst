@@ -212,7 +212,7 @@ the matching feature to the prediction function.
  * :ref:`example_ensemble_plot_forest_importances_faces.py`
  * :ref:`example_ensemble_plot_forest_importances.py`
 
-.. _random_hashing:
+.. _random_trees_embedding:
 
 Totally Random Trees Embedding
 ------------------------------

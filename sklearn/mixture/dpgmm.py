@@ -468,6 +468,12 @@ class DPGMM(GMM):
 
         return c + self._logprior(z)
 
+    def _set_weights(self):
+        for i in xrange(self.n_components):
+            self.weights_[i] = self.gamma_[i, 1] / (self.gamma_[i, 1]
+                                                    + self.gamma_[i, 2])
+        self.weights_ /= np.sum(self.weights_)
+
     def fit(self, X, **kwargs):
         """Estimate model parameters with the variational
         algorithm.
@@ -580,6 +586,8 @@ class DPGMM(GMM):
 
             # Maximization step
             self._do_mstep(X, z, self.params)
+
+        self._set_weights()
 
         return self
 
@@ -742,3 +750,7 @@ class VBGMM(DPGMM):
             if end:
                 print "Cluster proportions:", self.gamma_
                 print "covariance_type:", self.covariance_type
+
+    def _set_weights(self):
+        self.weights_[:] = self.gamma_
+        self.weights_ /= np.sum(self.weights_)

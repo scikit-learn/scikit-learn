@@ -40,6 +40,11 @@ def configuration(parent_package='', top_path=None):
         sources=['murmurhash.c', join('src', 'MurmurHash3.cpp')],
         include_dirs=['src'])
 
+    config.add_extension('lgamma',
+                         sources=['lgamma.cpp', join('src', 'Gamma.cpp')],
+                         include_dirs=['src'],
+                         libraries=libraries)
+
     config.add_extension('graph_shortest_path',
                          sources=['graph_shortest_path.c'],
                          include_dirs=[numpy.get_include()])

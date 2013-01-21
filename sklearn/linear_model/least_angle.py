@@ -592,6 +592,13 @@ class LassoLars(Lars):
 
     Parameters
     ----------
+    alpha : float
+        Constant that multiplies the penalty term. Defaults to 1.0.
+        alpha = 0 is equivalent to an ordinary least square, solved
+        by the LinearRegression object in the scikit. For numerical
+        reasons, using alpha = 0 with the LassoLars object is not advised
+        and you should prefer the LinearRegression object.
+
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations

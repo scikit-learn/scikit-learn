@@ -469,7 +469,7 @@ def test_shufflesplit_errors():
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=8, train_size=3)
     assert_raises(ValueError, cval.ShuffleSplit, 10, train_size=1j)
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=None,
-                train_size=None)
+                  train_size=None)
 
 
 def test_shufflesplit_reproducible():

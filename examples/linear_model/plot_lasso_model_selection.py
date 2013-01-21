@@ -113,7 +113,7 @@ ymin, ymax = 2300, 3800
 pl.plot(m_log_alphas, model.mse_path_, ':')
 pl.plot(m_log_alphas, model.mse_path_.mean(axis=-1), 'k',
         label='Average across the folds', linewidth=2)
-pl.axvline(-np.log10(model.alpha), linestyle='--', color='k',
+pl.axvline(-np.log10(model.alpha_), linestyle='--', color='k',
            label='alpha: CV estimate')
 
 pl.legend()
@@ -141,7 +141,7 @@ pl.figure()
 pl.plot(m_log_alphas, model.cv_mse_path_, ':')
 pl.plot(m_log_alphas, model.cv_mse_path_.mean(axis=-1), 'k',
         label='Average across the folds', linewidth=2)
-pl.axvline(-np.log10(model.alpha), linestyle='--', color='k',
+pl.axvline(-np.log10(model.alpha_), linestyle='--', color='k',
            label='alpha CV')
 pl.legend()
 

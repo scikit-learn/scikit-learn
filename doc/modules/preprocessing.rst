@@ -306,6 +306,8 @@ to be used when the transformer API is not necessary.
   representation upstream.
 
 
+.. _preprocessing_categorical_features:
+
 Encoding categorical features
 =============================
 Often features are not given as continuous values but categorical.

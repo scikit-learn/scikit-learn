@@ -641,12 +641,15 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     `active_features_` : array
-        Indices for active features, meaning values that actually occur in the
-        training set. Only available when n_values is ``'auto'``.
+        Indices for active features, meaning values that actually occur
+        in the training set. Only available when n_values is ``'auto'``.
+
     `feature_indices_` : array of shape (n_features,)
-        Indices to feature ranges. Feature ``i`` in the original data is mapped
-        to features ``feature_indices_[i]`` to ``feature_indices_[i+1]``
-        (and potentially masked by `active_features_` afterwards)
+        Indices to feature ranges.
+        Feature ``i`` in the original data is mapped to features
+        from ``feature_indices_[i]`` to ``feature_indices_[i+1]``
+        (and then potentially masked by `active_features_` afterwards)
+
     `n_values_` : array of shape (n_features,)
         Maximum number of values per feature.
 

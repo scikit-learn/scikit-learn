@@ -136,7 +136,7 @@ def _check_param_grid(param_grid):
         param_grid = [param_grid]
 
     for p in param_grid:
-        for v in p.itervalues():
+        for v in p.values():
             if isinstance(v, np.ndarray) and v.ndim > 1:
                 raise ValueError("Parameter array should be one-dimensional.")
 
@@ -154,7 +154,7 @@ def _has_one_grid_point(param_grid):
         param_grid = [param_grid]
 
     for p in param_grid:
-        for v in p.itervalues():
+        for v in p.values():
             if len(v) > 1:
                 return False
 

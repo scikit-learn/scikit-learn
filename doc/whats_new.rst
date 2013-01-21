@@ -5,12 +5,67 @@
 0.13
 ====
 
+New Estimator Classes
+---------------------
+
+   - :class:`dummy.DummyClassifier` and :class:`dummy.DummyRegressor`, two
+     data-independent predictors by `Mathieu Blondel`_. Useful to sanity-check
+     your estimators. See :ref:`dummy_estimators` in the user guide.
+     Multioutput support added by `Arnaud Joly`_.
+
+   - :class:`decomposition.FactorAnalysis`, a transformer implementing the
+     classical factor analysis, by `Christian Osendorfer`_ and `Alexandre
+     Gramfort`_. See :ref:`FA` in the user guide.
+
+   - :class:`feature_extraction.FeatureHasher`, a transformer implementing the
+     "hashing trick" for fast, low-memory feature extraction from string fields
+     by `Lars Buitinck`_ and :class:`feature_extraction.text.HashingVectorizer`
+     for text documents by `Olivier Grisel`_  See :ref:`feature_hashing` and
+     :ref:`hashing_vectorizer` for the documentation and sample usage.
+
+   - :class:`pipeline.FeatureUnion`, a transformer that concatenates
+     results of several other transformers by `Andreas Müller`_. See
+     :ref:`feature_union` in the user guide.
+
+   - :class:`random_projection.GaussianRandomProjection`,
+     :class:`random_projection.SparseRandomProjection` and the function
+     :func:`random_projection.johnson_lindenstrauss_min_dim`. The first two are
+     transformers implementing Gaussian and sparse random projection matrix
+     by `Olivier Grisel`_ and `Arnaud Joly`_.
+     See :ref:`random_projection` in the user guide.
+
+   - :class:`kernel_approximation.Nystroem`, a transformer for approximating
+     arbitrary kernels by `Andreas Müller`_. See
+     :ref:`nystroem_kernel_approx` in the user guide.
+
+   - :class:`preprocessing.OneHotEncoder`, a transformer that computes binary
+     encodings of categorical features by `Andreas Müller`_. See
+     :ref:`preprocessing_categorical_features` in the user guide.
+
+   - :class:`linear_model.PassiveAggressiveClassifier` and
+     :class:`linear_model.PassiveAggressiveRegressor`, predictors implementing
+     an efficient stochastic optimization for linear models by `Rob Zinkov`_ and
+     `Mathieu Blondel`_. See :ref:`passive_aggressive` in the user
+     guide.
+
+   - :class:`ensemble.RandomTreesEmbedding`, a transformer for creating high-dimensional
+     sparse representations using ensembles of totally random trees by  `Andreas Müller`_.
+     See :ref:`random_trees_embedding` in the user guide.
+
+
+   - :class:`manifold.SpectralEmbedding` and function
+     :func:`manifold.spectral_embedding`, implementing the "laplacian
+     eigenmaps" transformation for nonlinear dimensionality reduction by Wei
+     Li. See :ref:`spectral_embedding` in the user guide.
+
+
 Changelog
 ---------
 
-   - zero_one loss has option for normalized output that reports the fraction
-     of misclassifications, rather than the raw number of misclassifications.
-     By Kyle Beauchamp.
+   - :func:`metrics.zero_one_loss` (formerly ``metrics.zero_one``) now has
+     option for normalized output that reports the fraction of
+     misclassifications, rather than the raw number of misclassifications. By
+     Kyle Beauchamp.
 
    - :class:`tree.DecisionTreeClassifier` and all derived ensemble models now
      support sample weighting, by `Noel Dawe`_  and `Gilles Louppe`_.
@@ -18,15 +73,13 @@ Changelog
    - Speedup improvement when using bootstrap samples in forests of randomized
      trees, by `Peter Prettenhofer`_  and `Gilles Louppe`_.
 
-   - Partial dependence plots for :mod:`ensemble.gradient_boosting` by
-     `Peter Prettenhofer`_.
+   - Partial dependence plots for :ref:`gradient_boosting` in
+     :func:`ensemble.partial_dependence.partial_dependence` by `Peter
+     Prettenhofer`_. See :ref:`example_ensemble_plot_partial_dependence.py` for an
+     example.
 
-   - New estimators :class:`linear_model.PassiveAggressiveClassifier` and
-     :class:`linear_model.PassiverAggressiveRegressor` by `Rob Zinkov` and
-     `Mathieu Blondel`_.
-
-   - The table of contents has now been made expandable (on the
-     index page) - by Jaques Grobler.
+   - The table of contents on the website has now been made expandable by
+     `Jaques Grobler`_.
 
    - :class:`feature_selection.SelectPercentile` now breaks ties
      deterministically instead of returning all equally ranked features.
@@ -51,16 +104,8 @@ Changelog
      :func:`datasets.dump_svmlight_file` and
      :func:`datasets.load_svmlight_file` by `Fabian Pedregosa`_.
 
-   - New estimator :ref:`FeatureUnion <feature_union>` that concatenates results
-     of several transformers by `Andreas Müller`_.
-
    - Faster and more robust :func:`metrics.confusion_matrix` and
      :ref:`clustering_evaluation` by Wei Li.
-
-   - New estimator :class:`decomposition.FactorAnalysis` by
-     `Christian Osendorfer`_ and `Alexandre Gramfort`_
-
-   - :func:`datasets.make_circles` now has the same number of inner and outer points.
 
    - :func:`cross_validation.cross_val_score` now works with precomputed kernels
      and affinity matrices, by `Andreas Müller`_.
@@ -69,40 +114,22 @@ Changelog
      regressors too correlated as well as to stop the path when
      numerical noise becomes predominant, by `Gael Varoquaux`_.
 
-   - New estimator :class:`preprocessing.OneHotEncoder` to compute
-     binary encodings of categorical features by `Andreas Müller`_.
-
    - Faster implementation of :func:`metrics.precision_recall_curve` by
      Conrad Lee.
-
-   - New :class:`feature_extraction.FeatureHasher`, implementing the
-     "hashing trick" for fast, low-memory feature extraction from string data
-     by `Lars Buitinck`_.
-
-   - New dummy estimators :class:`dummy.DummyClassifiers` and
-     :class:`DummyRegressor` by `Mathieu Blondel`_. Useful to sanity-check your
-     estimators. Multioutput support added by `Arnaud Joly`_.
 
    - New kernel :class:`metrics.chi2_kernel` by `Andreas Müller`_, often used
      in computer vision applications.
 
-   - Longstanding bug in :class:`naive_bayes.BernoulliNB` fixed by
+   - Fix of longstanding bug in :class:`naive_bayes.BernoulliNB` fixed by
      Shaun Jackman.
-
-   - New estimator :class:`manifold.SpectralEmbedding` and function
-     :func:`manifold.spectral_embedding`, implementing the
-     "laplacian eigenmaps" for nonlinear dimensionality reduction by Wei Li.
 
    - Implement `predict_proba` in :class:`multiclass.OneVsRestClassifier`, by
      Andrew Winterman.
 
-   - Added :class:`kernel_approximation.Nystrom` for approximating arbitrary
-     kernels to the :ref:`kernel_approximation` module by `Andreas Müller`_.
-
-   - Improve consistency in :mod:`ensemble.gradient_boosting`: estimators
-     :class:`ensemble.gradient_boosting.GradientBoostingRegressor` and
-     :class:`ensemble.gradient_boosting.GradientBoostingClassifier` use
-     the estimator :class:`tree.DecisionTreeRegressor` instead of the
+   - Improve consistency in gradient boosting: estimators
+     :class:`ensemble.GradientBoostingRegressor` and
+     :class:`ensemble.GradientBoostingClassifier` use the estimator
+     :class:`tree.DecisionTreeRegressor` instead of the
      :class:`tree._tree.Tree` datastructure by `Arnaud Joly`_.
 
    - Fixed a floating point exception in the :ref:`decision trees <tree>`
@@ -110,12 +137,6 @@ Changelog
 
    - Fix :func:`metrics.roc_curve` fails when y_true has only one class
      by Wei Li.
-
-   - New transformers :class:`random_projection.GaussianRandomProjection`,
-     :class:`random_projection.SparseRandomProjection` and the function
-     :func:`random_projection.johnson_lindenstrauss_min_dim`, implementing
-     Gaussian and sparse random projection matrix
-     by `Olivier Grisel`_ and `Arnaud Joly`_.
 
    - Add the :func:`metrics.mean_absolute_error` function which computes the
      mean absolute error. The :func:`metrics.mean_squared_error`,
@@ -131,6 +152,13 @@ Changelog
      :mod:`sklearn.metrics` for regression and classification metrics
      by `Arnaud Joly`_.
 
+   - Fixed a bug in :class:`sklearn.svm.SVC` when using csr-matrices with
+     unsorted indices by Xinfan Meng and `Andreas Müller`_.
+
+   - :class:`MiniBatchKMeans`: Add random reassignment of cluster centers
+     with little observations attached to them, by `Gael Varoquaux`_.
+
+
 API changes summary
 -------------------
    - Renamed all occurences of ``n_atoms`` to ``n_components`` for consistency.
@@ -139,19 +167,17 @@ API changes summary
      :func:`decomposition.dict_learning`, :func:`decomposition.dict_learning_online`.
 
    - Renamed all occurrences of ``max_iters`` to ``max_iter`` for consistency.
-     This applies to :class:`label_propagation.BaseLabelPropagation`,
-     'label_propagation.LabelSpreading'
+     This applies to :class:`semi_supervised.LabelPropagation` and
+     :class:`semi_supervised.label_propagation.LabelSpreading`.
 
-   - Renamed all occurrences of ``learn_rate`` to ``learning_rate`` for consistency.
-     This applies to :class:`gradient_boosting.LossFunction`,
-     :class:`gradient_boosting.LeastSquaresError`,
-     :class:'gradient_boosting.BaseGradientBoosting',
-     :class:'gradient_boosting.GradientBoostingRegressor'
+   - Renamed all occurrences of ``learn_rate`` to ``learning_rate`` for
+     consistency in :class:`ensemble.BaseGradientBoosting` and
+     :class:`ensemble.GradientBoostingRegressor`.
 
    - The module ``sklearn.linear_model.sparse`` is gone. Sparse matrix support
      was already integrated into the "regular" linear models.
 
-   - ``sklearn.metrics.mean_square_error``, which incorrectly returned the
+   - :func:`sklearn.metrics.mean_square_error`, which incorrectly returned the
      accumulated error, was removed. Use ``mean_squared_error`` instead.
 
    - Passing ``class_weight`` parameters to ``fit`` methods is no longer
@@ -164,8 +190,8 @@ API changes summary
      deprecated and will be removed in v0.14. Use the constructor option
      instead.
 
-   - :class:`DictVectorizer` now returns sparse matrices in the CSR format,
-     instead of COO.
+   - :class:`feature_extraction.text.DictVectorizer` now returns sparse
+     matrices in the CSR format, instead of COO.
 
    - Renamed ``k`` in :class:`cross_validation.KFold` and
      :class:`cross_validation.StratifiedKFold` to ``n_folds``, renamed
@@ -190,7 +216,7 @@ API changes summary
    - The attribute ``gmm`` of :class:`hmm.GMMHMM` was renamed to ``gmm_``
      to adhere more strictly with the API.
 
-   - :func:`cluster.spectral_embedding` is now in
+   - :func:`cluster.spectral_embedding` was moved to
      :func:`manifold.spectral_embedding`.
 
    - Renamed ``eig_tol`` in :func:`manifold.spectral_embedding`,
@@ -230,8 +256,85 @@ API changes summary
      :func:`sklearn.metrics.zero_one`: ``normalize=False`` is changed to
      ``normalize=True``.
 
-   - Renamed function :func:`sklearn.metrics.zero_one_score` to
-     :func:`sklearn.metrics.accuracy_score`.
+   - Renamed function :func:`metrics.zero_one_score` to
+     :func:`metrics.accuracy_score`.
+
+   - :func:`datasets.make_circles` now has the same number of inner and outer points.
+
+   - In the Naive Bayes classifiers, the ``class_prior`` parmeter was moved
+     from ``fit`` to ``__init__``.
+
+People
+------
+List of contributors for release 0.13 by number of commits.
+
+ * 364  `Andreas Müller`_
+ * 143  `Arnaud Joly`_
+ * 137  `Peter Prettenhofer`_
+ * 131  `Gael Varoquaux`_
+ * 117  `Mathieu Blondel`_
+ * 108  `Lars Buitinck`_
+ * 106  Wei Li
+ * 101  `Olivier Grisel`_
+ *  65  `Vlad Niculae`_
+ *  54  `Gilles Louppe`_
+ *  40  `Jaques Grobler`_
+ *  38  `Alexandre Gramfort`_
+ *  30  `Rob Zinkov`_
+ *  19  Aymeric Masurelle
+ *  18  Andrew Winterman
+ *  17  `Fabian Pedregosa`_
+ *  17  Nelle Varoquaux
+ *  16  `Christian Osendorfer`_
+ *  14  Daniel Nouri
+ *  13  `Virgile Fritsch`_
+ *  13  syhw
+ *  12  `Satrajit Ghosh`_
+ *  10  Corey Lynch
+ *  10  Kyle Beauchamp
+ *   9  Brian Cheung
+ *   9  Immanuel Bayer
+ *   9  mr.Shu
+ *   8  Conrad Lee
+ *   8  `James Bergstra`_
+ *   7  Tadej Janež
+ *   6  Brian Cajes
+ *   6  `Jake VanderPlas`_
+ *   6  Michael
+ *   6  Noel Dawe
+ *   6  Tiago Nunes
+ *   6  cow
+ *   5  Anze
+ *   5  Shiqiao Du
+ *   4  Christian Jauvin
+ *   4  Jacques Kvam
+ *   4  Richard T. Guy
+ *   4  `Robert Layton`_
+ *   3  Alexandre Abraham
+ *   3  Doug Coleman
+ *   3  Scott Dickerson
+ *   2  ApproximateIdentity
+ *   2  John Benediktsson
+ *   2  Mark Veronda
+ *   2  Matti Lyra
+ *   2  Mikhail Korobov
+ *   2  Xinfan Meng
+ *   1  Alejandro Weinstein
+ *   1  `Alexandre Passos`_
+ *   1  Christoph Deil
+ *   1  Eugene Nizhibitsky
+ *   1  Kenneth C. Arnold
+ *   1  Luis Pedro Coelho
+ *   1  Miroslav Batchkarov
+ *   1  Pavel
+ *   1  Sebastian Berg
+ *   1  Shaun Jackman
+ *   1  Subhodeep Moitra
+ *   1  bob
+ *   1  dengemann
+ *   1  emanuele
+ *   1  x006
+
 
 .. _changes_0_12.1:
 
@@ -695,7 +798,7 @@ People
    *   1  `Edouard Duchesnay`_
    *   1  Jan Hendrik Metzen
    *   1  Meng Xinfan
-   *   1  Rob Zinkov
+   *   1  `Rob Zinkov`_
    *   1  Shiqiao
    *   1  Udi Weinsberg
    *   1  Virgile Fritsch
@@ -1658,3 +1761,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Noel Dawe: http://noel.dawe.me
 
 .. _Arnaud Joly: http://www.ajoly.org
+
+.. _Rob Zinkov: http://zinkov.com

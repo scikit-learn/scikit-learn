@@ -132,6 +132,11 @@ and the new centroids is the inertia and the algorithm repeats these last two
 steps until this value is less than a threshold. In other words, it repeats
 until the centroids do not move significantly.
 
+.. image:: ../auto_examples/cluster/images/plot_kmeans_digits_1.png
+   :target: ../auto_examples/cluster/plot_kmeans_digits.html
+   :align: right
+   :scale: 35
+
 The algorithm can be identified through the concept of `Voronoi diagrams
 <https://en.wikipedia.org/wiki/Voronoi_diagram>`_. First the Voronoi diagram
 of the points is calculated using the current centroids. Each segment in the
@@ -198,6 +203,8 @@ the :class:`KMeans` algorithm.
  * :ref:`example_document_clustering.py`: Document clustering using sparse
    MiniBatchKMeans
 
+ * :ref:`example_cluster_plot_dict_face_patches.py`
+
 
 .. topic:: References:
 
@@ -208,17 +215,36 @@ the :class:`KMeans` algorithm.
 
 .. _affinity_propagation:
 
-Affinity propagation
+Affinity Propagation
 ====================
 
-:class:`AffinityPropagation` clusters data by diffusion in the similarity
-matrix. This algorithm automatically sets its numbers of cluster. It
-will have difficulties scaling to thousands of samples.
+:class:`AffinityPropagation` creates clusters by sending messages between
+pairs of samples until convergence. A dataset is then described using a small
+number of exemplars, which are identified as those most representative of other
+samples. The messages sent between pairs represent the suitability for one
+sample to be the exemplar of the other, which is updated in response to the
+values from other pairs. This updating happens iteratively until convergence,
+at which point the final exemplars are chosen, and hence the final clustering
+is given.
 
 .. figure:: ../auto_examples/cluster/images/plot_affinity_propagation_1.png
    :target: ../auto_examples/cluster/plot_affinity_propagation.html
    :align: center
    :scale: 50
+
+
+Affinity Propagation can be interesting as it chooses the number of
+clusters based on the data provided. For this purpose, the two important
+parameters are the `preference`, which controls how many examplars are
+used, and the `damping` factor.
+
+The main drawback of Affinity Propagation is its complexity. The
+algorithm has a time complexity of the order :math:`O(N^2 T)`, where `N`
+is the number of samples and `T` is the number of iterations until
+convergence. Further, the memory complexity is of the order
+:math:`O(N^2)` if a dense similarity matrix is used, but reducible if a
+sparse similarity matrix is used. This makes Affinity Propagation most
+appropriate for small to medium sized datasets.
 
 .. topic:: Examples:
 
@@ -228,6 +254,32 @@ will have difficulties scaling to thousands of samples.
  * :ref:`example_applications_plot_stock_market.py` Affinity Propagation on
    Financial time series to find groups of companies
 
+**Algorithm description:**
+The messages sent between points belong to one of two categories. The first is
+the responsibility `r(i, k)`, which is the accumulated evidence that sample `k`
+should be the exemplar for sample `i`. The second is the availability `a(i, k)`
+which is the accumulated evidence that sample `i` should choose sample `k` to
+be its exemplar, and considers the values for all other samples that `k` should
+be an exemplar. In this way, exemplars are chosen by samples if they are (1)
+similar enough to many samples and (2) chosen by many samples to be
+representative of themselves.
+
+More formally, the responsibility of a sample `k` to be the exemplar of sample
+`i` is given by:
+
+.. math::
+
+    r(i, k) \leftarrow s(i, k) - max [ a(i, \acute{k}) + s(i, \acute{k}) \forall \acute{k} \neq k ]
+
+Where :math:`s(i, k)` is the similarity between samples `i` and `k`. The
+availability of sample `k` to be the exemplar of sample `i` is given by:
+
+.. math::
+
+    a(i, k) \leftarrow min [0, r(k, k) + \sum_{\acute{i}~s.t.~\acute{i} \notin \{i, k\}}{r(\acute{i}, k)}]
+
+To begin with, all values for `r` and `a` are set to zero, and the calculation
+of each iterates until convergence.
 
 .. _mean_shift:
 

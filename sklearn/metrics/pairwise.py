@@ -348,11 +348,15 @@ def rbf_kernel(X, Y=None, gamma=None):
     return K
 
 
-def cosine_kernel(X, Y=None):
-    """Compute the cosinus kernel between X and Y, also referred to as cosine
-    similarity.
+def cosine_similarity(X, Y=None):
+    """Compute cosine similarity between samples in X and Y.
+
+    Cosine similarity, or the cosine kernel, computes similarity as the
+    normalized dot product of X and Y:
 
         K(X, Y) = <X, Y> / (||X||*||Y||)
+
+    On L2-normalized data, this function is equivalent to linear_kernel.
 
     Parameters
     ----------
@@ -689,7 +693,7 @@ pairwise_kernel_functions = {
     'poly': polynomial_kernel,
     'rbf': rbf_kernel,
     'sigmoid': sigmoid_kernel,
-    'cosine': cosine_kernel, }
+    'cosine': cosine_similarity, }
 
 
 def kernel_metrics():
@@ -710,7 +714,7 @@ def kernel_metrics():
       'polynomial'      sklearn.pairwise.polynomial_kernel
       'rbf'             sklearn.pairwise.rbf_kernel
       'sigmoid'         sklearn.pairwise.sigmoid_kernel
-      'cosine'          sklearn.pairwise.cosine_kernel
+      'cosine'          sklearn.pairwise.cosine_similarity
       ===============   ========================================
     """
     return pairwise_kernel_functions

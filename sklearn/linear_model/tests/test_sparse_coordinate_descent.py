@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import scipy.sparse as sp
 
@@ -56,7 +58,10 @@ def test_enet_toy_list_input():
 
     # this should be the same as unregularized least squares
     clf = ElasticNet(alpha=0, l1_ratio=1.0)
-    clf.fit(X, Y)
+    with warnings.catch_warnings(record=True):
+        # catch warning about alpha=0.
+        # this is discouraged but should work.
+        clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [1])
     assert_array_almost_equal(pred, [2, 3, 4])

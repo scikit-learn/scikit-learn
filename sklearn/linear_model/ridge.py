@@ -159,10 +159,27 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         if n_features > n_samples or has_sw:
             # kernel ridge
             # w = X.T * inv(X X^t + alpha*Id) y
-            A = safe_sparse_dot(X, X.T, dense_output=True)
-            A.flat[::n_samples + 1] += alpha * sample_weight
-            Axy = linalg.solve(A, y, sym_pos=True, overwrite_a=True)
-            coef = safe_sparse_dot(X.T, Axy, dense_output=True)
+            K = safe_sparse_dot(X, X.T, dense_output=True)
+            if has_sw:
+                # We are doing a little danse with the sample weights to
+                # avoid copying the original X, which could be big
+                sw = np.sqrt(sample_weight)
+                if y.ndim == 1:
+                    y = y * sw
+                else:
+                    # Deal with multiple-output problems
+                    y = y * sw[:, np.newaxis]
+                K *= np.outer(sw, sw)
+            K.flat[::n_samples + 1] += alpha
+            dual_coef = linalg.solve(K, y,
+                                     sym_pos=True, overwrite_a=True)
+            if has_sw:
+                if dual_coef.ndim == 1:
+                    dual_coef *= sw
+                else:
+                    # Deal with multiple-output problems
+                    dual_coef *= sw[:, np.newaxis]
+            coef = safe_sparse_dot(X.T, dual_coef, dense_output=True)
         else:
             # ridge
             # w = inv(X^t X + alpha*Id) * X.T y
@@ -193,7 +210,8 @@ class _BaseRidge(LinearModel):
         y = np.asarray(y, dtype=np.float)
 
         X, y, X_mean, y_mean, X_std = self._center_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X)
+            X, y, self.fit_intercept, self.normalize, self.copy_X,
+            sample_weight=sample_weight)
 
         self.coef_ = ridge_regression(X, y,
                                       alpha=self.alpha,
@@ -560,7 +578,8 @@ class _RidgeGCV(LinearModel):
         n_samples, n_features = X.shape
 
         X, y, X_mean, y_mean, X_std = LinearModel._center_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X)
+            X, y, self.fit_intercept, self.normalize, self.copy_X,
+            sample_weight=sample_weight)
 
         gcv_mode = self.gcv_mode
         with_sw = len(np.shape(sample_weight))
