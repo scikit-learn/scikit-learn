@@ -288,7 +288,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         neigh_dist, neigh_ind = self.radius_neighbors(X)
         pred_labels = [self._y[ind] for ind in neigh_ind]
 
-        if self.outlier_label:
+        if self.outlier_label is not None:
             outlier_label = np.array((self.outlier_label, ))
             small_value = np.array((1e-6, ))
             for i, pl in enumerate(pred_labels):
@@ -319,7 +319,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         mode = mode.flatten().astype(np.int)
         # map indices to classes
         prediction = self.classes_.take(mode)
-        if self.outlier_label:
+        if self.outlier_label is not None:
             # reset outlier label
             prediction[mode == outlier_label] = self.outlier_label
         return prediction
