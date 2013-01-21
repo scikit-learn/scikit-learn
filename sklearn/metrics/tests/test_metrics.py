@@ -38,6 +38,8 @@ from sklearn.metrics import (accuracy_score,
                              zero_one_score,
                              zero_one_loss)
 
+from sklearn.metrics.metrics import unique_labels
+
 
 def make_prediction(dataset=None, binary=False):
     """Make some classification predictions on a toy dataset using a SVC
@@ -682,3 +684,23 @@ def test_multioutput_regression_invariance_to_dimension_shuffling():
             perm = np.random.permutation(n_dims)
             assert_almost_equal(error,
                                 metric(y_true[:, perm], y_pred[:, perm]))
+
+
+def test_unique_labels():
+    # Empty iterable
+    assert_raises(ValueError, unique_labels)
+
+    # Multiclass problem
+    assert_array_equal(unique_labels(xrange(10)), np.arange(10))
+    assert_array_equal(unique_labels(np.arange(10)), np.arange(10))
+    assert_array_equal(unique_labels([4, 0, 2]), np.array([0, 2, 4]))
+
+    # Multilabels
+    assert_array_equal(unique_labels([(0, 1, 2), (0,), tuple(), (2, 1)]),
+                       np.arange(3))
+    assert_array_equal(unique_labels([[0, 1, 2], [0], list(), [2, 1]]),
+                       np.arange(3))
+    assert_array_equal(unique_labels(np.array([[0, 0, 1],
+                                               [1, 0, 1],
+                                               [0, 0, 0]])),
+                       np.arange(3))
