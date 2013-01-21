@@ -259,6 +259,18 @@ Testing Functions
 - :func:`testing.all_estimators` : returns a list of all estimators in
   sklearn to test for consistent behavior and interfaces.
 
+Multiclass and multilabel utility function
+==========================================
+
+- :func:`multiclass.is_multilabel`: Helper function to check if the task
+  is a multi-label classification one.
+
+- :func:`multiclass.is_label_indicator_matrix`: Helper function to check if
+  a classification output is in label indicator matrix format.
+
+- :func:`multiclass.unique_labels`: Helper function to extract an ordered
+  array of unique labels from a list of labels.
+
 
 Helper Functions
 ================

@@ -738,3 +738,6 @@ In linear models, coefficients are stored in an array called ``coef_``,
 and the independent term is stored in ``intercept_``.
 ``sklearn.linear_model.base`` contains a few base classes and mixins
 that implement common linear model patterns.
+
+The :mod:`sklearn.utils.multiclass` module contains useful functions
+for working with multiclass and multilabel problems.
