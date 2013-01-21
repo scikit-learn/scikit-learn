@@ -568,7 +568,7 @@ div.warning-wrapper p {
 div.survey-wrapper {
     background-color: #FF9C34;
     text-align: center;
-    position: fixed;
+    position: absolute;
     top: 0px;
     left: 0px;
     width: 100%;
