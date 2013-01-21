@@ -89,9 +89,9 @@ def test_ridge_sample_weights():
             # Sample weight can be implemented via a simple rescaling
             # for the square loss
             coefs2 = ridge_regression(
-                            X * np.sqrt(sample_weight)[:, np.newaxis],
-                            y * np.sqrt(sample_weight),
-                            alpha, solver=solver)
+                X * np.sqrt(sample_weight)[:, np.newaxis],
+                y * np.sqrt(sample_weight),
+                alpha, solver=solver)
             assert_array_almost_equal(coefs, coefs2)
 
 

@@ -292,8 +292,9 @@ def fit_ovo(estimator, X, y, n_jobs=1):
     classes = np.unique(y)
     n_classes = classes.shape[0]
     estimators = Parallel(n_jobs=n_jobs)(
-            delayed(_fit_ovo_binary)(estimator, X, y, classes[i], classes[j])
-            for i in range(n_classes) for j in range(i + 1, n_classes))
+        delayed(_fit_ovo_binary)(
+            estimator, X, y, classes[i], classes[j])
+        for i in range(n_classes) for j in range(i + 1, n_classes))
 
     return estimators, classes
 
@@ -443,8 +444,8 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None, n_jobs=1):
                  dtype=np.int)
 
     estimators = Parallel(n_jobs=n_jobs)(
-                        delayed(_fit_binary)(estimator, X, Y[:, i])
-                        for i in range(Y.shape[1]))
+        delayed(_fit_binary)(estimator, X, Y[:, i])
+        for i in range(Y.shape[1]))
 
     return estimators, classes, code_book
 

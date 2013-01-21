@@ -90,7 +90,7 @@ def center_data(X, y, fit_intercept, normalize=False, copy=True,
                 X_mean = X.mean(axis=0)
             else:
                 X_mean = (np.sum(X * sample_weight[:, np.newaxis], axis=0)
-                            / np.sum(sample_weight))
+                          / np.sum(sample_weight))
             X -= X_mean
             if normalize:
                 X_std = np.sqrt(np.sum(X ** 2, axis=0))
@@ -103,11 +103,11 @@ def center_data(X, y, fit_intercept, normalize=False, copy=True,
         else:
             if y.ndim <= 1:
                 y_mean = (np.sum(y * sample_weight, axis=0)
-                            / np.sum(sample_weight))
+                          / np.sum(sample_weight))
             else:
                 # cater for multi-output problems
                 y_mean = (np.sum(y * sample_weight[:, np.newaxis], axis=0)
-                            / np.sum(sample_weight))
+                          / np.sum(sample_weight))
         y = y - y_mean
     else:
         X_mean = np.zeros(X.shape[1])

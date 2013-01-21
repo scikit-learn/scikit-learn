@@ -865,8 +865,8 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
     if random_reassign:
         random_state = check_random_state(random_state)
         # Reassign clusters that have very low counts
-        to_reassign = np.logical_or((counts <= 1),
-                            counts <= reassignment_ratio * counts.max())
+        to_reassign = np.logical_or(
+            (counts <= 1), counts <= reassignment_ratio * counts.max())
         # Pick new clusters amongst observations with a probability
         # proportional to their closeness to their center
         distance_to_centers = np.asarray(centers[nearest_center] - X)
@@ -1151,8 +1151,8 @@ class MiniBatchKMeans(KMeans):
             init_size = n_samples
         self.init_size_ = init_size
 
-        validation_indices = random_state.random_integers(0,
-                                            n_samples - 1, init_size)
+        validation_indices = random_state.random_integers(
+            0, n_samples - 1, init_size)
         X_valid = X[validation_indices]
         x_squared_norms_valid = x_squared_norms[validation_indices]
 
@@ -1214,8 +1214,8 @@ class MiniBatchKMeans(KMeans):
                 # of the iteration index, and the minimum number of
                 # counts, in order to force this reassignment to happen
                 # every once in a while
-                random_reassign=(iteration_idx + 1) % (10 +
-                                                self.counts_.min()) == 0,
+                random_reassign=((iteration_idx + 1)
+                                 % (10 + self.counts_.min()) == 0),
                 random_state=random_state,
                 reassignment_ratio=self.reassignment_ratio,
                 verbose=self.verbose)
@@ -1269,8 +1269,8 @@ class MiniBatchKMeans(KMeans):
             # The lower the minimum count is, the more we do random
             # reassignment, however, we don't want to do random
             # reassignment too often, to allow for building up counts
-            random_reassign = self.random_state_.randint(10 * (1 +
-                                        self.counts_.min())) == 0
+            random_reassign = self.random_state_.randint(
+                10 * (1 + self.counts_.min())) == 0
 
         _mini_batch_step(X, x_squared_norms, self.cluster_centers_,
                          self.counts_, np.zeros(0, np.double), 0,
