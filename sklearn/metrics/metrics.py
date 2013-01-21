@@ -14,6 +14,8 @@ the lower the better
 #          Arnaud Joly <a.joly@ulg.ac.be>
 # License: BSD Style.
 
+from __future__ import division
+
 from itertools import izip
 import warnings
 import numpy as np
@@ -668,6 +670,10 @@ def zero_one_loss(y_true, y_pred, normalize=True):
         If ``normalize == True``, return the fraction of misclassifications
         (float), else it returns the number of misclassifications (int).
 
+    See also
+    --------
+    hamming_loss : Compute the average Hamming loss
+
     Examples
     --------
     >>> from sklearn.metrics import zero_one_loss
@@ -693,10 +699,10 @@ def zero_one_loss(y_true, y_pred, normalize=True):
                                              np.array(true))) > 0
                          for pred, true in izip(y_pred, y_true)])
 
-    if not normalize:
-        return np.sum(loss)
-    else:
+    if normalize:
         return np.mean(loss)
+    else:
+        return np.sum(loss)
 
 
 @deprecated("Function 'zero_one' has been renamed to "
@@ -1429,6 +1435,71 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
     report += fmt % tuple(values)
     return report
 
+
+###############################################################################
+# Multilabel loss function
+###############################################################################
+def hamming_loss(y_true, y_pred, labels=None):
+    """ Compute the average Hamming loss
+
+    The hamming loss is the fraction of labels that are incorrectly predict.
+
+    Parameters
+    ----------
+    y_true : array-like or list of labels or label binary matrix
+
+    y_pred : array-like or list of labels or label binary matrix
+
+    labels : array, shape = [n_labels], optional
+        Integer array of labels
+
+    Returns
+    -------
+    loss : float or int,
+        Return the average Hamming between element of ``y_true`` and
+        ``y_pred``.
+
+    See Also
+    --------
+    zero_one_loss : Zero-one classification loss
+
+    References
+    ----------
+    http://en.wikipedia.org/wiki/Hamming_distance
+
+    Examples
+    --------
+    >>> from sklearn.metrics import hamming_loss
+    >>> y_pred = [1, 2, 3, 4]
+    >>> y_true = [2, 2, 3, 4]
+    >>> hamming_loss(y_true, y_pred)
+    0.125
+    >>> hamming_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+    0.75
+    >>> hamming_loss([(1, 2), (3,)], [(1, 2), tuple()])  # doctest: +ELLIPSIS
+    0.166...
+
+    """
+    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
+
+    # Compute the number of label
+    if labels is None:
+        labels = unique_labels(y_true, y_pred)
+    else:
+        labels = np.asarray(labels, dtype=np.int)
+
+    n_labels = labels.size
+
+    # Compute the number of disagreeing labels
+    loss = None
+    if _is_label_indicator_matrix(y_true):
+        loss = (y_pred != y_true).sum(axis=1)
+    else:
+        loss = np.array([np.size(np.setxor1d(np.array(pred),
+                                             np.array(true)))
+                         for pred, true in izip(y_pred, y_true)])
+
+    return np.mean(loss) / n_labels
 
 ###############################################################################
 # Regression loss functions

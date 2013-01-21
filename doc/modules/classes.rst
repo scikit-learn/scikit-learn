@@ -687,6 +687,7 @@ Classification metrics
    metrics.confusion_matrix
    metrics.f1_score
    metrics.fbeta_score
+   metrics.hamming_loss
    metrics.hinge_loss
    metrics.matthews_corrcoef
    metrics.precision_recall_curve

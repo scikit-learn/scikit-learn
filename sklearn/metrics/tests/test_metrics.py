@@ -26,6 +26,7 @@ from sklearn.metrics import (accuracy_score,
                              confusion_matrix,
                              explained_variance_score,
                              f1_score,
+                             hamming_loss,
                              hinge_loss,
                              matthews_corrcoef,
                              mean_squared_error,
@@ -502,6 +503,7 @@ def test_losses():
     """Test loss functions"""
     y_true, y_pred, _ = make_prediction(binary=True)
     n_samples = y_true.shape[0]
+    n_classes = np.size(np.unique(y_true))
 
     # Classification
     # --------------
@@ -516,6 +518,9 @@ def test_losses():
     assert_equal(zero_one_loss(y_true, y_pred, normalize=False), 13)
     assert_almost_equal(zero_one_loss(y_true, y_true), 0.0, 2)
     assert_almost_equal(zero_one_loss(y_true, y_true, normalize=False), 0, 2)
+
+    assert_almost_equal(hamming_loss(y_true, y_pred),
+                        2 * 13. / (n_samples * n_classes), 2)
 
     assert_equal(accuracy_score(y_true, y_pred),
                  1 - zero_one_loss(y_true, y_pred))
@@ -582,6 +587,9 @@ def test_symmetry():
 
     assert_equal(zero_one_loss(y_true, y_pred, normalize=False),
                  zero_one_loss(y_pred, y_true, normalize=False))
+
+    assert_equal(hamming_loss(y_true, y_pred),
+                 hamming_loss(y_pred, y_true))
 
     with warnings.catch_warnings(True):
     # Throw deprecated warning
@@ -710,37 +718,57 @@ def test_unique_labels():
 
 def test_multilabel_zero_one_loss():
     # Dense label binary format
-    y_true = np.array([
+    y1 = np.array([
             [0.0, 1.0, 1.0],
             [1.0, 0.0, 1.0]
         ])
-    y_pred = np.array([
+    y2 = np.array([
             [0.0, 0.0, 1.0],
             [1.0, 0.0, 1.0]
         ])
 
-    assert_equal(0.5, zero_one_loss(y_true, y_pred))
-    assert_equal(0.0, zero_one_loss(y_true, y_true))
-    assert_equal(0.0, zero_one_loss(y_pred, y_pred))
-    assert_equal(1.0, zero_one_loss(y_pred, np.logical_not(y_pred)))
-    assert_equal(1.0, zero_one_loss(y_true, np.logical_not(y_true)))
-    assert_equal(1.0, zero_one_loss(y_true, np.zeros(y_true.shape)))
-    assert_equal(1.0, zero_one_loss(y_pred, np.zeros(y_true.shape)))
+    assert_equal(0.5, zero_one_loss(y1, y2))
+    assert_equal(0.0, zero_one_loss(y1, y1))
+    assert_equal(0.0, zero_one_loss(y2, y2))
+    assert_equal(1.0, zero_one_loss(y2, np.logical_not(y2)))
+    assert_equal(1.0, zero_one_loss(y1, np.logical_not(y1)))
+    assert_equal(1.0, zero_one_loss(y1, np.zeros(y1.shape)))
+    assert_equal(1.0, zero_one_loss(y2, np.zeros(y1.shape)))
 
     # List of tuple of label
-    y_true = [
+    y1 = [
         (1, 2,),
         (0, 2,),
     ]
 
-    y_pred = [
+    y2 = [
         (2,),
         (0, 2,),
     ]
 
-    assert_equal(0.5, zero_one_loss(y_true, y_pred))
-    assert_equal(0.0, zero_one_loss(y_true, y_true))
-    assert_equal(0.0, zero_one_loss(y_pred, y_pred))
-    assert_equal(1.0, zero_one_loss(y_pred, [(), ()]))
-    assert_equal(1.0, zero_one_loss(y_pred, [tuple(), (10, )]))
+    assert_equal(0.5, zero_one_loss(y1, y2))
+    assert_equal(0.0, zero_one_loss(y1, y1))
+    assert_equal(0.0, zero_one_loss(y2, y2))
+    assert_equal(1.0, zero_one_loss(y2, [(), ()]))
+    assert_equal(1.0, zero_one_loss(y2, [tuple(), (10, )]))
     assert_equal(0.0, zero_one_loss([(1, 2)], [(2, 1)]))
+
+
+def test_multilabel_hamming_loss():
+    # Dense label binary format
+    y1 = np.array([
+            [0.0, 1.0, 1.0],
+            [1.0, 0.0, 1.0]
+        ])
+    y2 = np.array([
+            [0.0, 0.0, 1.0],
+            [1.0, 0.0, 1.0]
+        ])
+
+    assert_equal(1 / 6., hamming_loss(y1, y2))
+    assert_equal(0.0, hamming_loss(y1, y1))
+    assert_equal(0.0, hamming_loss(y2, y2))
+    assert_equal(1.0, hamming_loss(y2, np.logical_not(y2)))
+    assert_equal(1.0, hamming_loss(y1, np.logical_not(y1)))
+    assert_equal(4. / 6, hamming_loss(y1, np.zeros(y1.shape)))
+    assert_equal(0.5, hamming_loss(y2, np.zeros(y1.shape)))

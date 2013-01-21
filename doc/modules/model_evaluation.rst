@@ -58,6 +58,8 @@ Or in the multilabel case:
 
 .. autosummary::
    :template: function.rst
+
+  hamming_loss
   zero_one_loss
 
 
@@ -79,7 +81,7 @@ defined as
 
 .. math::
 
-   \texttt{accuracy}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y} = y)
+   \texttt{accuracy}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i = y_i)
 
 where :math:`1(x)` is the `indicator function
 <http://en.wikipedia.org/wiki/Indicator_function>`_.
@@ -213,6 +215,35 @@ and infered labels:
     for an example of classification report usage in parameter estimation using
     grid search with a nested cross-validation.
 
+Hamming loss
+------------
+The :func:`hamming_loss` computes the average Hamming loss or `Hamming
+distance <http://en.wikipedia.org/wiki/Hamming_distance>`_ between two sets
+of samples.
+
+If :math:`\hat{y}_j` is the predicted value for the :math:`j`-th labels of
+a given sample, :math:`y_j` is the corresponding true value and
+:math:`n_\text{labels}` is the number of class or labels, then the
+Hamming loss :math:`L_{Hamming}` between two samples is defined as:
+
+.. math::
+
+   L_{Hamming}(y, \hat{y}) = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} 1(\hat{y}_j \not= y_j)
+
+where :math:`1(x)` is the `indicator function
+<http://en.wikipedia.org/wiki/Indicator_function>`_.
+
+::
+
+  >>> from sklearn.metrics import hamming_loss
+  >>> y_pred = [1, 2, 3, 4]
+  >>> y_true = [2, 2, 3, 4]
+  >>> hamming_loss(y_true, y_pred)
+  0.125
+  >>> hamming_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+  0.75
+  >>> hamming_loss([(1, 2), (3,)], [(1, 2), tuple()])  # doctest: +ELLIPSIS
+  0.166...
 
 .. _precision_recall_f_measure_metrics:
 
@@ -611,7 +642,7 @@ then the 0-1 loss :math:`L_{0-1}` is defined as:
 
 .. math::
 
-   L_{0-1}(y_i, \hat{y}_i) = 1(\hat{y} \not= y)
+   L_{0-1}(y_i, \hat{y}_i) = 1(\hat{y}_i \not= y_i)
 
 where :math:`1(x)` is the `indicator function
 <http://en.wikipedia.org/wiki/Indicator_function>`_.
