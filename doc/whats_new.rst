@@ -155,8 +155,8 @@ Changelog
    - Fixed a bug in :class:`sklearn.svm.SVC` when using csr-matrices with
      unsorted indices by Xinfan Meng and `Andreas Müller`_.
 
-  - :class:`MiniBatchKMeans`: Add random reassignment of cluster centers
-    with little observations attached to them, by `Gael Varoquaux`_.
+   - :class:`MiniBatchKMeans`: Add random reassignment of cluster centers
+     with little observations attached to them, by `Gael Varoquaux`_.
 
 
 API changes summary
@@ -171,8 +171,8 @@ API changes summary
      :class:`semi_supervised.label_propagation.LabelSpreading`.
 
    - Renamed all occurrences of ``learn_rate`` to ``learning_rate`` for
-     consistency in :class:'ensemble.BaseGradientBoosting' and
-     :class:'ensemble.GradientBoostingRegressor'.
+     consistency in :class:`ensemble.BaseGradientBoosting` and
+     :class:`ensemble.GradientBoostingRegressor`.
 
    - The module ``sklearn.linear_model.sparse`` is gone. Sparse matrix support
      was already integrated into the "regular" linear models.
