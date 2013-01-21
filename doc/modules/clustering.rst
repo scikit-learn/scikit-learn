@@ -222,11 +222,34 @@ values from other pairs. This updating happens iteratively until convergence,
 at which point the final exemplars are chosen, and hence the final clustering
 is given.
 
-Affinity Propagation has a number of advantages over other algorithms. In many
-experiments it is shown to produce a lower error than other algorithms,
-specifically k-means, and also works without any parameters, choosing the
-number of clusters based on the data provided.
+.. figure:: ../auto_examples/cluster/images/plot_affinity_propagation_1.png
+   :target: ../auto_examples/cluster/plot_affinity_propagation.html
+   :align: center
+   :scale: 50
 
+
+Affinity Propagation can be interesting as it chooses the number of
+clusters based on the data provided. For this purpose, the two important
+parameters are the `preference`, which controls how many examplars are
+used, and the `damping` factor.
+
+The main drawback of Affinity Propagation is its complexity. The
+algorithm has a time complexity of the order :math:`O(N^2 T)`, where `N`
+is the number of samples and `T` is the number of iterations until
+convergence. Further, the memory complexity is of the order
+:math:`O(N^2)` if a dense similarity matrix is used, but reducible if a
+sparse similarity matrix is used. This makes Affinity Propagation most
+appropriate for small to medium sized datasets.
+
+.. topic:: Examples:
+
+ * :ref:`example_cluster_plot_affinity_propagation.py`: Affinity
+   Propagation on a synthetic 2D datasets with 3 classes.
+
+ * :ref:`example_applications_plot_stock_market.py` Affinity Propagation on
+   Financial time series to find groups of companies
+
+**Algorithm description:**
 The messages sent between points belong to one of two categories. The first is
 the responsibility `r(i, k)`, which is the accumulated evidence that sample `k`
 should be the exemplar for sample `i`. The second is the availability `a(i, k)`
@@ -252,28 +275,6 @@ availability of sample `k` to be the exemplar of sample `i` is given by:
 
 To begin with, all values for `r` and `a` are set to zero, and the calculation
 of each iterates until convergence.
-
-While effective, Affinity Propagation has some disadvantages. The most pressing
-is its complexity. The algorithm has a time complexity of the order
-:math:`O(N^2 T)`, where `N` is the number of samples and `T` is the number of
-iterations until convergence. Further, the space complexity is of the order
-:math:`O(N^2)` if a dense similarity matrix is used, but reducible if a sparse
-similarity matrix is used. This makes Affinity Propagation most appropriate for
-small to medium sized datasets.
-
-.. figure:: ../auto_examples/cluster/images/plot_affinity_propagation_1.png
-   :target: ../auto_examples/cluster/plot_affinity_propagation.html
-   :align: center
-   :scale: 50
-
-.. topic:: Examples:
-
- * :ref:`example_cluster_plot_affinity_propagation.py`: Affinity
-   Propagation on a synthetic 2D datasets with 3 classes.
-
- * :ref:`example_applications_plot_stock_market.py` Affinity Propagation on
-   Financial time series to find groups of companies
-
 
 .. _mean_shift:
 
