@@ -67,7 +67,7 @@ copyright = u'2010–2013, scikit-learn developers (BSD License)'
 # built documents.
 #
 # The short X.Y version.
-version = '0.13-git'
+version = '0.14-git'
 # The full version, including alpha/beta/rc tags.
 import sklearn
 release = sklearn.__version__
@@ -198,11 +198,8 @@ htmlhelp_basename = 'scikit-learndoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass
 # [howto/manual]).
-latex_documents = [
-  ('index', 'user_guide.tex', u'scikit-learn user guide',
-   u'scikit-learn developers', 'manual'),
-
-]
+latex_documents = [('index', 'user_guide.tex', u'scikit-learn user guide',
+                    u'scikit-learn developers', 'manual'), ]
 
 # The name of an image file (relative to this directory) to place at the top of
 # the title page.
