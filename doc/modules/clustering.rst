@@ -132,6 +132,11 @@ and the new centroids is the inertia and the algorithm repeats these last two
 steps until this value is less than a threshold. In other words, it repeats
 until the centroids do not move significantly.
 
+.. image:: ../auto_examples/cluster/images/plot_kmeans_digits_1.png
+   :target: ../auto_examples/cluster/plot_kmeans_digits.html
+   :align: right
+   :scale: 35
+
 The algorithm can be identified through the concept of `Voronoi diagrams
 <https://en.wikipedia.org/wiki/Voronoi_diagram>`_. First the Voronoi diagram
 of the points is calculated using the current centroids. Each segment in the
