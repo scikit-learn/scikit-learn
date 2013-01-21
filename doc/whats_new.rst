@@ -268,11 +268,11 @@ People
 ------
 List of contributors for release 0.13 by number of commits.
 
- * 362  `Andreas Müller`_
+ * 364  `Andreas Müller`_
  * 143  `Arnaud Joly`_
  * 137  `Peter Prettenhofer`_
+ * 131  `Gael Varoquaux`_
  * 117  `Mathieu Blondel`_
- * 110  `Gael Varoquaux`_
  * 108  `Lars Buitinck`_
  * 106  Wei Li
  * 101  `Olivier Grisel`_
