@@ -568,7 +568,7 @@ div.warning-wrapper p {
 div.survey-wrapper {
     background-color: #FF9C34;
     text-align: center;
-    position: absolute;
+    position: fixed;
     top: 0px;
     left: 0px;
     width: 100%;
@@ -578,6 +578,7 @@ div.survey-wrapper {
 }
 div.survey-wrapper p {
     margin: 0;
+    white-space: nowrap;
 }
 
 {% if theme_surveybanner == true %}
