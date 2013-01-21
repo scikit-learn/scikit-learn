@@ -53,7 +53,13 @@ Others also work in the multiclass case:
   precision_recall_fscore_support
   precision_score
   recall_score
+
+Or in the multilabel case:
+
+.. autosummary::
+   :template: function.rst
   zero_one_loss
+
 
 Some metrics might require probability estimates of the positive class,
 confidence values or binary decisions value.
@@ -617,6 +623,10 @@ where :math:`1(x)` is the `indicator function
   0.25
   >>> zero_one_loss(y_true, y_pred, normalize=False)
   1
+  >>> zero_one_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+  1.0
+  >>> zero_one_loss([(1, 2), (3,)], [(1, 2), tuple()])
+  0.5
 
 .. topic:: Example:
 

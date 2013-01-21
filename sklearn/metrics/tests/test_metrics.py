@@ -4,6 +4,8 @@ import random
 import warnings
 import numpy as np
 
+from scipy.sparse import csr_matrix
+
 from sklearn import datasets
 from sklearn import svm
 
@@ -704,3 +706,41 @@ def test_unique_labels():
                                                [1, 0, 1],
                                                [0, 0, 0]])),
                        np.arange(3))
+
+
+def test_multilabel_zero_one_loss():
+    # Dense label binary format
+    y_true = np.array([
+            [0.0, 1.0, 1.0],
+            [1.0, 0.0, 1.0]
+        ])
+    y_pred = np.array([
+            [0.0, 0.0, 1.0],
+            [1.0, 0.0, 1.0]
+        ])
+
+    assert_equal(0.5, zero_one_loss(y_true, y_pred))
+    assert_equal(0.0, zero_one_loss(y_true, y_true))
+    assert_equal(0.0, zero_one_loss(y_pred, y_pred))
+    assert_equal(1.0, zero_one_loss(y_pred, np.logical_not(y_pred)))
+    assert_equal(1.0, zero_one_loss(y_true, np.logical_not(y_true)))
+    assert_equal(1.0, zero_one_loss(y_true, np.zeros(y_true.shape)))
+    assert_equal(1.0, zero_one_loss(y_pred, np.zeros(y_true.shape)))
+
+    # List of tuple of label
+    y_true = [
+        (1, 2,),
+        (0, 2,),
+    ]
+
+    y_pred = [
+        (2,),
+        (0, 2,),
+    ]
+
+    assert_equal(0.5, zero_one_loss(y_true, y_pred))
+    assert_equal(0.0, zero_one_loss(y_true, y_true))
+    assert_equal(0.0, zero_one_loss(y_pred, y_pred))
+    assert_equal(1.0, zero_one_loss(y_pred, [(), ()]))
+    assert_equal(1.0, zero_one_loss(y_pred, [tuple(), (10, )]))
+    assert_equal(0.0, zero_one_loss([(1, 2)], [(2, 1)]))

@@ -20,6 +20,7 @@ import numpy as np
 from scipy.sparse import coo_matrix
 
 from ..preprocessing import LabelBinarizer
+from ..preprocessing import _is_label_indicator_matrix
 from ..utils import check_arrays, deprecated
 
 
@@ -653,9 +654,9 @@ def zero_one_loss(y_true, y_pred, normalize=True):
 
     Parameters
     ----------
-    y_true : array-like
+    y_true : array-like or list of labels or label binary matrix
 
-    y_pred : array-like
+    y_pred : array-like or list of labels or label binary matrix
 
     normalize : bool, optional
         If ``False`` (default), return the number of misclassifications.
@@ -676,13 +677,26 @@ def zero_one_loss(y_true, y_pred, normalize=True):
     0.25
     >>> zero_one_loss(y_true, y_pred, normalize=False)
     1
+    >>> zero_one_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+    1.0
+    >>> zero_one_loss([(1, 2), (3,)], [(1, 2), tuple()])
+    0.5
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred)
-    if not normalize:
-        return np.sum(y_pred != y_true)
+    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
+
+    loss = None
+    if _is_label_indicator_matrix(y_true):
+        loss = (y_pred != y_true).sum(axis=1) > 0
     else:
-        return np.mean(y_pred != y_true)
+        loss = np.array([np.size(np.setxor1d(np.array(pred),
+                                             np.array(true))) > 0
+                         for pred, true in izip(y_pred, y_true)])
+
+    if not normalize:
+        return np.sum(loss)
+    else:
+        return np.mean(loss)
 
 
 @deprecated("Function 'zero_one' has been renamed to "
