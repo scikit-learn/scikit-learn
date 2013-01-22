@@ -4,8 +4,6 @@ import random
 import warnings
 import numpy as np
 
-from scipy.sparse import csr_matrix
-
 from sklearn import datasets
 from sklearn import svm
 
@@ -47,8 +45,8 @@ from sklearn.metrics import (accuracy_score,
 from sklearn.metrics.metrics import unique_labels
 
 
-MULTILABELS_METRICS = [zero_one_loss,
-                       hamming_loss]
+MULTILABELS_METRICS = [hamming_loss,
+                       zero_one_loss]
 
 
 def make_prediction(dataset=None, binary=False):
@@ -733,10 +731,10 @@ def test_multilabel_representation_invariance():
 
     # NOTE: The "sorted" trick is necessary to shuffle in place.
     py_random_state = random.Random(0)
-    y1_shuffle = [sorted(x, key=lambda *args: py_random_state.random())
-                  for x in y1]
-    y2_shuffle = [sorted(x, key=lambda *args: py_random_state.random())
-                  for x in y2]
+    shuffle = lambda x: sorted(x, key=lambda *args: py_random_state.random())
+
+    y1_shuffle = [shuffle(x) for x in y1]
+    y2_shuffle = [shuffle(x) for x in y2]
 
     lb = LabelBinarizer().fit([range(n_classes)])
 
@@ -796,7 +794,6 @@ def test_multilabel_zero_one_loss():
     assert_equal(0.0, zero_one_loss(y2, y2))
     assert_equal(1.0, zero_one_loss(y2, [(), ()]))
     assert_equal(1.0, zero_one_loss(y2, [tuple(), (10, )]))
-    assert_equal(0.0, zero_one_loss([(1, 2)], [(2, 1)]))
 
 
 def test_multilabel_hamming_loss():
@@ -817,3 +814,20 @@ def test_multilabel_hamming_loss():
     assert_equal(1.0, hamming_loss(y1, np.logical_not(y1)))
     assert_equal(4. / 6, hamming_loss(y1, np.zeros(y1.shape)))
     assert_equal(0.5, hamming_loss(y2, np.zeros(y1.shape)))
+
+    # List of tuple of label
+    y1 = [
+        (1, 2,),
+        (0, 2,),
+    ]
+
+    y2 = [
+        (2,),
+        (0, 2,),
+    ]
+
+    assert_equal(1 / 6., hamming_loss(y1, y2))
+    assert_equal(0.0, hamming_loss(y1, y1))
+    assert_equal(0.0, hamming_loss(y2, y2))
+    assert_equal(0.75, hamming_loss(y2, [(), ()]))
+    assert_equal(0.625, hamming_loss(y1, [tuple(), (10, )]))
