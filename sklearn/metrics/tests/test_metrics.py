@@ -9,6 +9,9 @@ from scipy.sparse import csr_matrix
 from sklearn import datasets
 from sklearn import svm
 
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.datasets import make_multilabel_classification
+
 from sklearn.utils.testing import (assert_true,
                                    assert_raises,
                                    assert_equal,
@@ -42,6 +45,10 @@ from sklearn.metrics import (accuracy_score,
                              zero_one_loss)
 
 from sklearn.metrics.metrics import unique_labels
+
+
+MULTILABELS_METRICS = [zero_one_loss,
+                       hamming_loss]
 
 
 def make_prediction(dataset=None, binary=False):
@@ -714,6 +721,44 @@ def test_unique_labels():
                                                [1, 0, 1],
                                                [0, 0, 0]])),
                        np.arange(3))
+
+
+def test_multilabel_representation_invariance():
+    # Generate some data
+    n_classes = 20
+    _, y1 = make_multilabel_classification(n_features=1, n_classes=n_classes,
+                                           random_state=0)
+    _, y2 = make_multilabel_classification(n_features=1, n_classes=n_classes,
+                                           random_state=1)
+
+    # NOTE: The "sorted" trick is necessary to shuffle in place.
+    py_random_state = random.Random(0)
+    y1_shuffle = [sorted(x, key=lambda *args: py_random_state.random())
+                  for x in y1]
+    y2_shuffle = [sorted(x, key=lambda *args: py_random_state.random())
+                  for x in y2]
+
+    lb = LabelBinarizer().fit([range(n_classes)])
+
+    # Check the invariance
+    for metric in MULTILABELS_METRICS:
+
+        # Representation invariance
+        # -------------------------
+        assert_equal(metric(y1, y2),
+                     metric(lb.transform(y1),
+                            lb.transform(y2)))
+
+        # Shuffling invariance
+        # --------------------
+        # List of labels
+        assert_equal(metric(y1, y2),
+                     metric(y1_shuffle, y2_shuffle))
+
+        # Dense binary matrix
+        assert_equal(metric(lb.transform(y1), lb.transform(y2)),
+                     metric(lb.transform(y1_shuffle),
+                            lb.transform(y2_shuffle)))
 
 
 def test_multilabel_zero_one_loss():
