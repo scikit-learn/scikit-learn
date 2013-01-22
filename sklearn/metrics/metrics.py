@@ -791,7 +791,7 @@ def accuracy_score(y_true, y_pred):
         score = (y_pred != y_true).sum(axis=1) == 0
     else:
         score = np.array([np.size(np.setxor1d(np.array(pred),
-                                             np.array(true))) == 0
+                                              np.array(true))) == 0
                          for pred, true in izip(y_pred, y_true)])
 
     return np.mean(score)
@@ -1513,6 +1513,7 @@ def hamming_loss(y_true, y_pred, labels=None):
                          for pred, true in izip(y_pred, y_true)])
 
     return np.mean(loss) / n_labels
+
 
 ###############################################################################
 # Regression loss functions

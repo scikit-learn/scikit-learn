@@ -762,14 +762,10 @@ def test_multilabel_representation_invariance():
 
 def test_multilabel_zero_one_loss():
     # Dense label binary format
-    y1 = np.array([
-            [0.0, 1.0, 1.0],
-            [1.0, 0.0, 1.0]
-        ])
-    y2 = np.array([
-            [0.0, 0.0, 1.0],
-            [1.0, 0.0, 1.0]
-        ])
+    y1 = np.array([[0.0, 1.0, 1.0],
+                   [1.0, 0.0, 1.0]])
+    y2 = np.array([[0.0, 0.0, 1.0],
+                   [1.0, 0.0, 1.0]])
 
     assert_equal(0.5, zero_one_loss(y1, y2))
     assert_equal(0.0, zero_one_loss(y1, y1))
@@ -780,15 +776,11 @@ def test_multilabel_zero_one_loss():
     assert_equal(1.0, zero_one_loss(y2, np.zeros(y1.shape)))
 
     # List of tuple of label
-    y1 = [
-        (1, 2,),
-        (0, 2,),
-    ]
+    y1 = [(1, 2,),
+          (0, 2,)]
 
-    y2 = [
-        (2,),
-        (0, 2,),
-    ]
+    y2 = [(2,),
+          (0, 2,)]
 
     assert_equal(0.5, zero_one_loss(y1, y2))
     assert_equal(0.0, zero_one_loss(y1, y1))
@@ -799,14 +791,10 @@ def test_multilabel_zero_one_loss():
 
 def test_multilabel_hamming_loss():
     # Dense label binary format
-    y1 = np.array([
-            [0.0, 1.0, 1.0],
-            [1.0, 0.0, 1.0]
-        ])
-    y2 = np.array([
-            [0.0, 0.0, 1.0],
-            [1.0, 0.0, 1.0]
-        ])
+    y1 = np.array([[0.0, 1.0, 1.0],
+                   [1.0, 0.0, 1.0]])
+    y2 = np.array([[0.0, 0.0, 1.0],
+                   [1.0, 0.0, 1.0]])
 
     assert_equal(1 / 6., hamming_loss(y1, y2))
     assert_equal(0.0, hamming_loss(y1, y1))
@@ -817,15 +805,11 @@ def test_multilabel_hamming_loss():
     assert_equal(0.5, hamming_loss(y2, np.zeros(y1.shape)))
 
     # List of tuple of label
-    y1 = [
-        (1, 2,),
-        (0, 2,),
-    ]
+    y1 = [(1, 2,),
+          (0, 2,)]
 
-    y2 = [
-        (2,),
-        (0, 2,),
-    ]
+    y2 = [(2,),
+          (0, 2,)]
 
     assert_equal(1 / 6., hamming_loss(y1, y2))
     assert_equal(0.0, hamming_loss(y1, y1))
@@ -838,14 +822,10 @@ def test_multilabel_hamming_loss():
 
 def test_multilabel_accuracy_score():
     # Dense label binary format
-    y1 = np.array([
-            [0.0, 1.0, 1.0],
-            [1.0, 0.0, 1.0]
-        ])
-    y2 = np.array([
-            [0.0, 0.0, 1.0],
-            [1.0, 0.0, 1.0]
-        ])
+    y1 = np.array([[0.0, 1.0, 1.0],
+                   [1.0, 0.0, 1.0]])
+    y2 = np.array([[0.0, 0.0, 1.0],
+                   [1.0, 0.0, 1.0]])
 
     assert_equal(0.5, accuracy_score(y1, y2))
     assert_equal(1.0, accuracy_score(y1, y1))
@@ -856,18 +836,13 @@ def test_multilabel_accuracy_score():
     assert_equal(0.0, accuracy_score(y2, np.zeros(y1.shape)))
 
     # List of tuple of label
-    y1 = [
-        (1, 2,),
-        (0, 2,),
-    ]
+    y1 = [(1, 2,),
+          (0, 2,)]
 
-    y2 = [
-        (2,),
-        (0, 2,),
-    ]
+    y2 = [(2,),
+          (0, 2,)]
 
     assert_equal(0.5, accuracy_score(y1, y2))
     assert_equal(1.0, accuracy_score(y1, y1))
     assert_equal(1.0, accuracy_score(y2, y2))
     assert_equal(0.0, accuracy_score(y2, [(), ()]))
-
