@@ -93,8 +93,10 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
     .. warning::
 
-        If it is found that two neighbors, neighbor `k+1` and `k`,
-        have the same distance, the results will depend on the data order.
+       Regarding the Nearest Neighbors algorithms, if it is found that two
+       neighbors, neighbor `k+1` and `k`, have identical distances but
+       but different labels, the results will depend on the odering of the
+       training data.
 
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
