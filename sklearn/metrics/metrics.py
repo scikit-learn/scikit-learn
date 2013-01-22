@@ -656,10 +656,10 @@ def zero_one_loss(y_true, y_pred, normalize=True):
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label binary matrix
+    y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like or list of labels or label binary matrix
+    y_pred : array-like or list of labels or label indicator matrix
         Predicted labels, as returned by a classifier.
 
     normalize : bool, optional
@@ -757,10 +757,10 @@ def accuracy_score(y_true, y_pred):
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label binary matrix
+    y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like or list of labels or label binary matrix
+    y_pred : array-like or list of labels or label indicator matrix
         Predicted labels, as returned by a classifier.
 
     Returns
@@ -1462,10 +1462,10 @@ def hamming_loss(y_true, y_pred, labels=None):
 
     Parameters
     ----------
-    y_true : array-like or list of labels or label binary matrix
+    y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like or list of labels or label binary matrix
+    y_pred : array-like or list of labels or label indicator matrix
         Predicted labels, as returned by a classifier.
 
     labels : array, shape = [n_labels], optional

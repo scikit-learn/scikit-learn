@@ -767,7 +767,7 @@ def test_multilabel_representation_invariance():
 
 
 def test_multilabel_zero_one_loss():
-    # Dense label binary format
+    # Dense label indicator matrix format
     y1 = np.array([[0.0, 1.0, 1.0],
                    [1.0, 0.0, 1.0]])
     y2 = np.array([[0.0, 0.0, 1.0],
@@ -796,7 +796,7 @@ def test_multilabel_zero_one_loss():
 
 
 def test_multilabel_hamming_loss():
-    # Dense label binary format
+    # Dense label indicator matrix format
     y1 = np.array([[0.0, 1.0, 1.0],
                    [1.0, 0.0, 1.0]])
     y2 = np.array([[0.0, 0.0, 1.0],
@@ -827,7 +827,7 @@ def test_multilabel_hamming_loss():
 
 
 def test_multilabel_accuracy_score():
-    # Dense label binary format
+    # Dense label indicator matrix format
     y1 = np.array([[0.0, 1.0, 1.0],
                    [1.0, 0.0, 1.0]])
     y2 = np.array([[0.0, 0.0, 1.0],
