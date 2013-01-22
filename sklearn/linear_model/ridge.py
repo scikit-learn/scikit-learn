@@ -205,7 +205,7 @@ class _BaseRidge(LinearModel):
         self.tol = tol
         self.solver = solver
 
-    def fit(self, X, y, sample_weight=1.0, solver=None):
+    def fit(self, X, y, sample_weight=1.0):
         X = safe_asarray(X, dtype=np.float)
         y = np.asarray(y, dtype=np.float)
 
@@ -216,7 +216,6 @@ class _BaseRidge(LinearModel):
         self.coef_ = ridge_regression(X, y,
                                       alpha=self.alpha,
                                       sample_weight=sample_weight,
-                                      solver=solver,
                                       max_iter=self.max_iter,
                                       tol=self.tol)
         self._set_intercept(X_mean, y_mean, X_std)
@@ -305,7 +304,7 @@ class Ridge(_BaseRidge, RegressorMixin):
                                     normalize=normalize, copy_X=copy_X,
                                     max_iter=max_iter, tol=tol, solver=solver)
 
-    def fit(self, X, y, sample_weight=1.0, solver=None):
+    def fit(self, X, y, sample_weight=1.0):
         """Fit Ridge regression model
 
         Parameters
@@ -323,16 +322,7 @@ class Ridge(_BaseRidge, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        if solver is None:
-            solver = self.solver
-        else:
-            # The fit method should be removed from Ridge when this warning is
-            # removed
-            warnings.warn("""solver option in fit is deprecated and will be
-                          removed in v0.14.""")
-
-        return _BaseRidge.fit(self, X, y, solver=solver,
-                              sample_weight=sample_weight)
+        return super(Ridge, self).fit(X, y, sample_weight=sample_weight)
 
 
 class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
@@ -401,7 +391,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver)
         self.class_weight = class_weight
 
-    def fit(self, X, y, solver=None):
+    def fit(self, X, y):
         """Fit Ridge regression model.
 
         Parameters
@@ -421,17 +411,11 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         else:
             class_weight = self.class_weight
 
-        if solver is None:
-            solver = self.solver
-        else:
-            warnings.warn("""solver option in fit is deprecated and will be
-                          removed in v0.14.""")
-
         sample_weight_classes = np.array([class_weight.get(k, 1.0) for k in y])
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
-        _BaseRidge.fit(self, X, Y, solver=solver,
-                       sample_weight=sample_weight_classes)
+        super(RidgeClassifier, self).fit(X, Y,
+                                         sample_weight=sample_weight_classes)
         return self
 
     @property
@@ -645,17 +629,8 @@ class _RidgeGCV(LinearModel):
 
         return self
 
-    @property
-    def best_alpha(self):
-        warnings.warn("Use alpha_. Using best_alpha is deprecated"
-                      "since version 0.12, and backward compatibility "
-                      "won't be maintained from version 0.14 onward. ",
-                      DeprecationWarning, stacklevel=2)
-        return self.alpha_
-
 
 class _BaseRidgeCV(LinearModel):
-
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]),
                  fit_intercept=True, normalize=False, score_func=None,
                  loss_func=None, cv=None, gcv_mode=None,

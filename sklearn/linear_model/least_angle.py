@@ -946,14 +946,6 @@ class LarsCV(Lars):
         # impedance matching for the above Lars.fit (should not be documented)
         return self.alpha_
 
-    @property
-    def cv_alphas(self):
-        warnings.warn("Use cv_alphas_. Using cv_alphas is deprecated"
-                      "since version 0.12, and backward compatibility "
-                      "won't be maintained from version 0.14 onward. ",
-                      DeprecationWarning, stacklevel=2)
-        return self.cv_alphas_
-
 
 class LassoLarsCV(LarsCV):
     """Cross-validated Lasso, using the LARS algorithm

@@ -220,14 +220,8 @@ class MiniBatchSparsePCA(SparsePCA):
     """
     def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
                  n_iter=100, callback=None, batch_size=3, verbose=False,
-                 shuffle=True, n_jobs=1, method='lars', random_state=None,
-                 chunk_size=None):
+                 shuffle=True, n_jobs=1, method='lars', random_state=None):
 
-        if chunk_size is not None:
-            chunk_size = batch_size
-            warnings.warn("Parameter chunk_size has been renamed to "
-                          "'batch_size' and will be removed in release 0.14.",
-                          DeprecationWarning, stacklevel=2)
         self.n_components = n_components
         self.alpha = alpha
         self.ridge_alpha = ridge_alpha
