@@ -65,7 +65,7 @@ word of interest.
 For example, suppose that we have a first algorithm that extracts Part of
 Speech (PoS) tags that we want to use as complementary tags for training
 a sequence classifier (e.g. a chunker). The following dict could be
-such a window of feature extracted around the word 'sat' in the sentence
+such a window of features extracted around the word 'sat' in the sentence
 'The cat sat on the mat.'::
 
   >>> pos_window = [
@@ -88,7 +88,7 @@ suitable for feeding into a classifier (maybe after being piped into a
   >>> pos_vectorized = vec.fit_transform(pos_window)
   >>> pos_vectorized                     # doctest: +NORMALIZE_WHITESPACE
   <1x6 sparse matrix of type '<type 'numpy.float64'>'
-      with 6 stored elements in COOrdinate format>
+      with 6 stored elements in Compressed Sparse Row format>
   >>> pos_vectorized.toarray()
   array([[ 1.,  1.,  1.,  1.,  1.,  1.]])
   >>> vec.get_feature_names()
@@ -100,6 +100,107 @@ word of a corpus of documents the resulting matrix will be very wide
 of the time. So as to make the resulting data structure able to fit in
 memory the ``DictVectorizer`` class uses a ``scipy.sparse`` matrix by
 default instead of a ``numpy.ndarray``.
+
+
+.. _feature_hashing:
+
+Feature hashing
+===============
+
+.. currentmodule:: sklearn.feature_extraction
+
+The class :class:`FeatureHasher` is a high-speed, low-memory vectorizer that
+uses a technique known as
+`feature hashing <https://en.wikipedia.org/wiki/Feature_hashing>`_,
+or the "hashing trick".
+Instead of building a hash table of the features encountered in training,
+as the vectorizers do, instances of :class:`FeatureHasher`
+apply a hash function to the features
+to determine their column index in sample matrices directly.
+The result is increased speed and reduced memory usage,
+at the expense of inspectability;
+the hasher does not remember what the input features looked like
+and has no ``inverse_transform`` method.
+
+Since the hash function might cause collisions between (unrelated) features,
+a signed hash function is used and the sign of the hash value
+determines the sign of the value stored in the output matrix for a feature;
+this way, collisions are likely to cancel out rather than accumulate error,
+and the expected mean of any output feature's value is zero
+
+If ``non_negative=True`` is passed to the constructor,
+the absolute value is taken.
+This undoes some of the collision handling,
+but allows the output to be passed to estimators like :class:`MultinomialNB`
+or ``chi2`` feature selectors that expect non-negative inputs.
+
+:class:`FeatureHasher` accepts either mappings
+(like Python's ``dict`` and its variants in the ``collections`` module),
+``(feature, value)`` pairs, or strings,
+depending on the constructor parameter ``input_type``.
+Mapping are treated as lists of ``(feature, value)`` pairs,
+while single strings have an implicit value of 1.
+If a feature occurs multiple times in a sample, the values will be summed.
+Feature hashing can be employed in document classification,
+but unlike :class:`text.CountVectorizer`,
+:class:`FeatureHasher` does not do word
+splitting or any other preprocessing except Unicode-to-UTF-8 encoding.
+The output from :class:`FeatureHasher` is always a ``scipy.sparse`` matrix
+in the CSR format.
+
+As an example, consider a word-level natural language processing task
+that needs features extracted from ``(token, part_of_speech)`` pairs.
+One could use a Python generator function to extract features::
+
+  def token_features(token, part_of_speech):
+      if token.isdigit():
+          yield "numeric"
+      else:
+          yield "token={}".format(token.lower())
+          yield "token,pos={},{}".format(token, part_of_speech)
+      if token[0].isupper():
+          yield "uppercase_initial"
+      if token.isupper():
+          yield "all_uppercase"
+      yield "pos={}".format(part_of_speech)
+
+Then, the ``raw_X`` to be fed to ``FeatureHasher.transform``
+can be constructed using::
+
+  raw_X = (token_features(tok, pos_tagger(tok)) for tok in corpus)
+
+and fed to a hasher with::
+
+  hasher = FeatureHasher(input_type=string)
+  X = hasher.transform(raw_X)
+
+to get a ``scipy.sparse`` matrix ``X``.
+
+Note the use of a generator comprehension,
+which introduces laziness into the feature extraction:
+tokens are only processed on demand from the hasher.
+
+Implementation details
+----------------------
+
+:class:`FeatureHasher` uses the signed 32-bit variant of MurmurHash3.
+As a result (and because of limitations in ``scipy.sparse``),
+the maximum number of features supported is currently :math:`2^{31} - 1`.
+
+The original formulation of the hashing trick by Weinberger et al.
+used two separate hash functions :math:`h` and :math:`\xi`
+to determine the column index and sign of a feature, respectively.
+The present implementation works under the assumption
+that the sign bit of MurmurHash3 is independent of its other bits.
+
+
+.. topic:: References:
+
+ * Kilian Weinberger, Anirban Dasgupta, John Langford, Alex Smola and
+   Josh Attenberg (2009). `Feature hashing for large scale multitask learning
+   <http://alex.smola.org/papers/2009/Weinbergeretal09.pdf>`_. Proc. ICML.
+
+ * `MurmurHash3 <http://code.google.com/p/smhasher/wiki/MurmurHash3>`_.
 
 
 .. _text_feature_extraction:
@@ -147,10 +248,6 @@ of text documents into numerical feature vectors. This specific stragegy
 or "Bag of n-grams" representation. Documents are described by word
 occurrences while completely ignoring the relative position information
 of the words in the document.
-
-When combined with :ref:`tfidf`, the bag of words encoding is also known
-as the `Vector Space Model
-<https://en.wikipedia.org/wiki/Vector_space_model>`_.
 
 
 Sparsity
@@ -273,8 +370,8 @@ last document::
 
 .. _tfidf:
 
-TF-IDF normalization
---------------------
+Tf–idf term weighting
+---------------------
 
 In a large text corpus, some words will be very present (e.g. "the", "a",
 "is" in English) hence carrying very little meaningul information about
@@ -352,7 +449,7 @@ be cases where the binary occurrence markers might offer better
 features. This can be achieved by using the ``binary`` parameter
 of :class:`CountVectorizer`. In particular, some estimators such as
 :ref:`bernoulli_naive_bayes` explicitly model discrete boolean random
-variables. Also very short text are likely to have noisy tf–idf values
+variables. Also, very short text are likely to have noisy tf–idf values
 while the binary occurrence info is more stable.
 
 As usual the only way how to best adjust the feature extraction parameters
@@ -458,11 +555,99 @@ into account. Many such models will thus be casted as "Structured output"
 problems which are currently outside of the scope of scikit-learn.
 
 
-Customizing the vectorizer classes
------------------------------------
+.. _hashing_vectorizer:
 
-It is possible to customize the behavior by passing some callable as
-parameters of the vectorizer::
+Vectorizing a large text corpus with the hashing trick
+------------------------------------------------------
+
+The above vectorization scheme is simple but the fact that it holds an **in-
+memory mapping from the string tokens to the integer feature indices** (the
+``vocabulary_`` attribute) causes several **problems when dealing with large
+datasets**:
+
+- the larger the corpus, the larger the vocabulary will grow and hence the
+  memory use too,
+
+- fitting requires the allocation of intermediate data structures
+  of size proportional to that of the original dataset.
+
+- building the word-mapping requires a full pass over the dataset hence it is
+  not possible to fit text classifiers in a strictly online manner.
+
+- pickling and un-pickling vectorizers with a large ``vocabulary_`` can be very
+  slow (typically much slower than pickling / un-pickling flat data structures
+  such as a NumPy array of the same size),
+
+- it is not easily possible to split the vectorization work into concurrent sub
+  tasks as the ``vocabulary_`` attribute would have to be a shared state with a
+  fine grained synchronization barrier: the mapping from token string to
+  feature index is dependent on ordering of the first occurrence of each token
+  hence would have to be shared, potentially harming the concurrent workers'
+  performance to the point of making them slower than the sequential variant.
+
+It is possible to overcome those limitations by combining the "hashing trick"
+(:ref:`Feature_hashing`) implemented by the
+:class:`sklearn.feature_extraction.FeatureHasher` class and the text
+preprocessing and tokenization features of the :class:`CountVectorizer`.
+
+This combination is implementing in :class:`HashingVectorizer`,
+a transformer class that is mostly API compatible with :class:`CountVectorizer`.
+:class:`HashingVectorizer` is stateless,
+meaning that you don't have to call ``fit`` on it::
+
+  >>> from sklearn.feature_extraction.text import HashingVectorizer
+  >>> hv = HashingVectorizer(n_features=10)
+  >>> hv.transform(corpus)
+  ...                                       # doctest: +NORMALIZE_WHITESPACE
+  <4x10 sparse matrix of type '<type 'numpy.float64'>'
+      with 16 stored elements in Compressed Sparse Row format>
+
+You can see that 16 non-zero feature tokens where extracted in the vector
+output: this is less than the 19 non-zeros extracted previously by the
+:class:`CountVectorizer` on the same toy corpus. The discrepancy comes from
+hash function collisions because of the low value of the ``n_features`` parameter.
+
+In a real world setting, the ``n_features`` parameter can be left to its
+default value of ``2 ** 20`` (roughly one million possible features). If memory
+or downstream models size is an issue selecting a lower value such as ``2 **
+18`` might help without introducing too many additional collisions on typical
+text classification tasks.
+
+Note that the dimensionality does not affect the CPU training time of
+algorithms which operate on CSR matrices (``LinearSVC(dual=True)``,
+``Perceptron``, ``SGDClassifier``, ``PassiveAggressive``) but it does for
+algorithm that work with CSC matrices (``LinearSVC(dual=False)``, ``Lasso()``,
+etc).
+
+Let's try again with the default setting::
+
+  >>> hv = HashingVectorizer()
+  >>> hv.transform(corpus)
+  ...                                       # doctest: +NORMALIZE_WHITESPACE
+  <4x1048576 sparse matrix of type '<type 'numpy.float64'>'
+      with 19 stored elements in Compressed Sparse Row format>
+
+We no longer get the collisions, but this comes at the expense of a much larger
+dimensionality of the output space.
+Of course, other terms than the 19 used here
+might still collide with each other.
+
+The :class:`HashingVectorizer` also comes with the following limitations:
+
+- it is not possible to invert the model (no ``inverse_transform`` method),
+  nor to access the original string representation of the features,
+  because of the one-way nature of the hash function that performs the mapping.
+
+- it does not provide IDF weighting as that would introduce statefulness in the
+  model. A :class:`TfidfTransformer` can be appended to it in a pipeline if
+  required.
+
+
+Customizing the vectorizer classes
+----------------------------------
+
+It is possible to customize the behavior by passing a callable
+to the vectorizer constructor::
 
   >>> def my_tokenizer(s):
   ...     return s.split()
@@ -490,8 +675,7 @@ parameters it is possible to derive from the class and override the
 factory method instead.
 
 Customizing the vectorizer can be very useful to handle Asian languages
-that do not use an explicit word separator such as the whitespace for
-instance.
+that do not use an explicit word separator such as whitespace.
 
 
 Image feature extraction

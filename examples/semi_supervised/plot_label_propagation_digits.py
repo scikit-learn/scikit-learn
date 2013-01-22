@@ -52,16 +52,15 @@ y_train[unlabeled_set] = -1
 
 ###############################################################################
 # Learn with LabelSpreading
-lp_model = label_propagation.LabelSpreading(gamma=0.25, max_iters=5)
+lp_model = label_propagation.LabelSpreading(gamma=0.25, max_iter=5)
 lp_model.fit(X, y_train)
 predicted_labels = lp_model.transduction_[unlabeled_set]
 true_labels = y[unlabeled_set]
 
-cm = confusion_matrix(true_labels, predicted_labels,
-        labels=lp_model.classes_)
+cm = confusion_matrix(true_labels, predicted_labels, labels=lp_model.classes_)
 
-print "Label Spreading model: %d labeled & %d unlabeled points (%d total)" % \
-        (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples)
+print("Label Spreading model: %d labeled & %d unlabeled points (%d total)" %
+      (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples))
 
 print metrics.classification_report(true_labels, predicted_labels)
 

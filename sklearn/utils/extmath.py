@@ -4,6 +4,7 @@ Extended math utilities.
 # Authors: G. Varoquaux, A. Gramfort, A. Passos, O. Grisel
 # License: BSD
 
+import warnings
 import numpy as np
 from scipy import linalg
 
@@ -59,8 +60,8 @@ def density(w, **kwargs):
 
     Return a value between 0 and 1
     """
-    if hasattr(w, "tocsr"):
-        d = float(w.data.size) / w.size
+    if hasattr(w, "toarray"):
+        d = float(w.nnz) / (w.shape[0] * w.shape[1])
     else:
         d = 0 if w is None else float((w != 0).sum()) / w.size
     return d
@@ -78,7 +79,8 @@ def safe_sparse_dot(a, b, dense_output=False):
         return np.dot(a, b)
 
 
-def randomized_range_finder(A, size, n_iterations, random_state=None):
+def randomized_range_finder(A, size, n_iter, random_state=None,
+                            n_iterations=None):
     """Computes an orthonormal matrix whose range approximates the range of A.
 
     Parameters
@@ -87,7 +89,7 @@ def randomized_range_finder(A, size, n_iterations, random_state=None):
         The input data matrix
     size: integer
         Size of the return array
-    n_iterations: integer
+    n_iter: integer
         Number of power iterations used to stabilize the result
     random_state: RandomState or an int seed (0 by default)
         A random number generator instance
@@ -106,6 +108,10 @@ def randomized_range_finder(A, size, n_iterations, random_state=None):
     approximate matrix decompositions
     Halko, et al., 2009 (arXiv:909) http://arxiv.org/pdf/0909.4061
     """
+    if n_iterations is not None:
+        warnings.warn("n_iterations was renamed to n_iter for consistency "
+                      "and will be removed in 0.16.", DeprecationWarning)
+        n_iter = n_iterations
     random_state = check_random_state(random_state)
 
     # generating random gaussian vectors r with shape: (A.shape[1], size)
@@ -117,7 +123,7 @@ def randomized_range_finder(A, size, n_iterations, random_state=None):
 
     # perform power iterations with Y to further 'imprint' the top
     # singular vectors of A in Y
-    for i in xrange(n_iterations):
+    for i in xrange(n_iter):
         Y = safe_sparse_dot(A, safe_sparse_dot(A.T, Y))
 
     # extracting an orthonormal basis of the A range samples
@@ -125,8 +131,9 @@ def randomized_range_finder(A, size, n_iterations, random_state=None):
     return Q
 
 
-def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
-                   transpose='auto', random_state=0):
+def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
+                   transpose='auto', flip_sign=True, random_state=0,
+                   n_iterations=None):
     """Computes a truncated randomized SVD
 
     Parameters
@@ -142,7 +149,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
         to ensure proper conditioning. The total number of random vectors
         used to find the range of M is n_components + n_oversamples.
 
-    n_iterations: int (default is 0)
+    n_iter: int (default is 0)
         Number of power iterations (can be used to deal with very noisy
         problems).
 
@@ -152,6 +159,12 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
         trigger the transposition if M.shape[1] > M.shape[0] since this
         implementation of randomized SVD tend to be a little faster in that
         case).
+
+    flip_sign: boolean, (True by default)
+        The output of a singular value decomposition is only unique up to a
+        permutation of the signs of the singular vectors. If `flip_sign` is
+        set to `True`, the sign ambiguity is resolved by making the largest
+        loadings for each component in the left singular vectors positive.
 
     random_state: RandomState or an int seed (0 by default)
         A random number generator instance to make behavior
@@ -172,6 +185,11 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
     * A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert
     """
+    if n_iterations is not None:
+        warnings.warn("n_iterations was renamed to n_iter for consistency "
+                      "and will be removed in 0.16.", DeprecationWarning)
+        n_iter = n_iterations
+
     random_state = check_random_state(random_state)
     n_random = n_components + n_oversamples
     n_samples, n_features = M.shape
@@ -182,7 +200,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
         # this implementation is a bit faster with smaller shape[1]
         M = M.T
 
-    Q = randomized_range_finder(M, n_random, n_iterations, random_state)
+    Q = randomized_range_finder(M, n_random, n_iter, random_state)
 
     # project M to the (k + p) dimensional space using the basis vectors
     B = safe_sparse_dot(Q.T, M)
@@ -191,6 +209,9 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iterations=0,
     Uhat, s, V = linalg.svd(B, full_matrices=False)
     del B
     U = np.dot(Q, Uhat)
+
+    if flip_sign:
+        U, s, V = svd_flip(U, s, V)
 
     if transpose:
         # transpose back the results according to the input convention
@@ -356,3 +377,80 @@ def pinvh(a, cond=None, rcond=None, lower=True):
     psigma_diag[above_cutoff] = 1.0 / s[above_cutoff]
 
     return np.dot(u * psigma_diag, np.conjugate(u).T)
+
+
+def cartesian(arrays, out=None):
+    """Generate a cartesian product of input arrays.
+
+    Parameters
+    ----------
+    arrays : list of array-like
+        1-D arrays to form the cartesian product of.
+    out : ndarray
+        Array to place the cartesian product in.
+
+    Returns
+    -------
+    out : ndarray
+        2-D array of shape (M, len(arrays)) containing cartesian products
+        formed of input arrays.
+
+    Examples
+    --------
+    >>> cartesian(([1, 2, 3], [4, 5], [6, 7]))
+    array([[1, 4, 6],
+           [1, 4, 7],
+           [1, 5, 6],
+           [1, 5, 7],
+           [2, 4, 6],
+           [2, 4, 7],
+           [2, 5, 6],
+           [2, 5, 7],
+           [3, 4, 6],
+           [3, 4, 7],
+           [3, 5, 6],
+           [3, 5, 7]])
+
+    References
+    ----------
+    http://stackoverflow.com/questions/1208118/using-numpy-to-build-an-array-of-all-combinations-of-two-arrays
+
+    """
+    arrays = [np.asarray(x).ravel() for x in arrays]
+    dtype = arrays[0].dtype
+
+    n = np.prod([x.size for x in arrays])
+    if out is None:
+        out = np.empty([n, len(arrays)], dtype=dtype)
+
+    m = n / arrays[0].size
+    out[:, 0] = np.repeat(arrays[0], m)
+    if arrays[1:]:
+        cartesian(arrays[1:], out=out[0:m, 1:])
+        for j in xrange(1, arrays[0].size):
+            out[j * m:(j + 1) * m, 1:] = out[0:m, 1:]
+    return out
+
+
+def svd_flip(u, s, v):
+    """Sign correction to ensure deterministic output from SVD
+
+    Adjusts the columns of u and the rows of v such that the loadings in the
+    columns in u that are largest in absolute value are always positive.
+
+    Parameters
+    ----------
+    u, s, v: arrays,
+        The output of `linalg.svd` or `sklearn.utils.extmath.randomized_svd`,
+        with matching inner dimensions so one can compute `np.dot(u * s, v)`.
+
+    Returns
+    -------
+    u_adjusted, s, v_adjusted: arrays with the same dimensions as the input.
+
+    """
+    max_abs_cols = np.argmax(np.abs(u), axis=0)
+    signs = np.sign(u[max_abs_cols, xrange(u.shape[1])])
+    u *= signs
+    v *= signs[:, np.newaxis]
+    return u, s, v

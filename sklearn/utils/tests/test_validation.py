@@ -1,21 +1,17 @@
-"""
-Tests for input validation functions
-"""
+"""Tests for input validation functions"""
 
 from tempfile import NamedTemporaryFile
 import numpy as np
 from numpy.testing import assert_array_equal
 import scipy.sparse as sp
-from nose.tools import assert_raises, assert_true, assert_false
+from nose.tools import assert_raises, assert_true, assert_false, assert_equal
 
 from sklearn.utils import (array2d, as_float_array, atleast2d_or_csr,
                            atleast2d_or_csc, check_arrays, safe_asarray)
 
 
 def test_as_float_array():
-    """
-    Test function for as_float_array
-    """
+    """Test function for as_float_array"""
     X = np.ones((3, 10), dtype=np.int32)
     X = X + np.arange(10, dtype=np.int32)
     # Checks that the return type is ok
@@ -46,9 +42,7 @@ def test_check_arrays_exceptions():
 
 
 def test_np_matrix():
-    """
-    Confirm that input validation code does not return np.matrix
-    """
+    """Confirm that input validation code does not return np.matrix"""
     X = np.arange(12).reshape(3, 4)
 
     assert_false(isinstance(as_float_array(X), np.matrix))
@@ -74,9 +68,7 @@ def test_np_matrix():
 
 
 def test_memmap():
-    """
-    Confirm that input validation code doesn't copy memory mapped arrays
-    """
+    """Confirm that input validation code doesn't copy memory mapped arrays"""
 
     asflt = lambda x: as_float_array(x, copy=False)
 
@@ -106,3 +98,55 @@ def test_ordering():
                 assert_true(B.flags['F_CONTIGUOUS'])
                 if copy:
                     assert_false(A is B)
+
+
+def test_check_arrays():
+    # check that error is raised on different length inputs
+    X = [0, 1]
+    Y = np.arange(3)
+    assert_raises(ValueError, check_arrays, X, Y)
+
+    # check error for sparse matrix and array
+    X = sp.csc_matrix(np.arange(4))
+    assert_raises(ValueError, check_arrays, X, Y)
+
+    # check they y=None pattern
+    X = [0, 1, 2]
+    X_, Y_, Z_ = check_arrays(X, Y, None)
+    assert_true(Z_ is None)
+
+    # check that lists are converted
+    X_, Y_ = check_arrays(X, Y)
+    assert_true(isinstance(X_, np.ndarray))
+    assert_true(isinstance(Y_, np.ndarray))
+
+    # check that Y was not copied:
+    assert_true(Y_ is Y)
+
+    # check copying
+    X_, Y_ = check_arrays(X, Y, copy=True)
+    assert_false(Y_ is Y)
+
+    # check forcing dtype
+    X_, Y_ = check_arrays(X, Y, dtype=np.int)
+    assert_equal(X_.dtype, np.int)
+    assert_equal(Y_.dtype, np.int)
+
+    X_, Y_ = check_arrays(X, Y, dtype=np.float)
+    assert_equal(X_.dtype, np.float)
+    assert_equal(Y_.dtype, np.float)
+
+    # test check_ccontiguous
+    Y = np.arange(6).reshape(3, 2).copy('F')
+    # if we don't specify it, it is not changed
+    X_, Y_ = check_arrays(X, Y)
+    assert_true(Y_.flags['F_CONTIGUOUS'])
+    assert_false(Y_.flags['C_CONTIGUOUS'])
+
+    X_, Y_ = check_arrays(X, Y, check_ccontiguous=True)
+    assert_true(Y_.flags['C_CONTIGUOUS'])
+    assert_false(Y_.flags['F_CONTIGUOUS'])
+
+    # check that lists are passed through if allow_lists is true
+    X_, Y_ = check_arrays(X, Y, allow_lists=True)
+    assert_true(isinstance(X_, list))

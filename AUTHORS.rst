@@ -13,7 +13,7 @@ this project as part of his thesis.
 
 In 2010 Fabian Pedregosa, Gael Varoquaux, Alexandre Gramfort and Vincent
 Michel of INRIA took leadership of the project and made the first public
-release, February the 1st 2010. Since then, several releases have appeard
+release, February the 1st 2010. Since then, several releases have appeared
 following a ~3 month cycle, and a striving international community has
 been leading the development.
 
@@ -24,25 +24,9 @@ People
 
   * David Cournapeau
 
-  * Fred Mailhot
-
-  * David Cooke
-
-  * David Huard
-
-  * Dave Morrill
-
-  * Ed Schofield
-
-  * Eric Jones
-
   * Jarrod Millman
 
   * `Matthieu Brucher <http://matt.eifelle.com/>`_
-
-  * Travis Oliphant
-
-  * Pearu Peterson
 
   * `Fabian Pedregosa <http://fseoane.net/blog/>`_
 
@@ -96,10 +80,10 @@ People
 
   * `Gilles Louppe <http://www.montefiore.ulg.ac.be/~glouppe>`_
 
-  * `Andreas Müller <http://www.ais.uni-bonn.de/~amueller/>`_ (release manager)
+  * `Andreas Müller <http://peekaboo-vision.blogspot.com>`_ (release manager)
 
   * `Satra Ghosh <http://www.mit.edu/~satra>`_
 
+  * `Wei Li <http://kuantkid.github.com>`_
 
-If I forgot anyone, do not hesitate to send me an email to
-fabian.pedregosa@inria.fr and I'll include you in the list.
+  * `Arnaud Joly <http://www.ajoly.org>`_

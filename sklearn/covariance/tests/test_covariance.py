@@ -4,11 +4,13 @@
 #
 # License: BSD Style.
 
-from numpy.testing import assert_almost_equal, assert_array_almost_equal, \
-    assert_equal, assert_raises
-
 import numpy as np
 import warnings
+
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_raises
 
 from sklearn import datasets
 from sklearn.covariance import empirical_covariance, EmpiricalCovariance, \
@@ -68,7 +70,7 @@ def test_covariance():
     # test centered case
     cov = EmpiricalCovariance(assume_centered=True)
     cov.fit(X)
-    assert_equal(cov.location_, np.zeros(X.shape[1]))
+    assert_array_equal(cov.location_, np.zeros(X.shape[1]))
 
 
 def test_shrunk_covariance():
@@ -118,12 +120,12 @@ def test_ledoit_wolf():
     assert_almost_equal(ledoit_wolf_shrinkage(X_centered,
                                               assume_centered=True),
                         shrinkage_)
-    assert_almost_equal(ledoit_wolf_shrinkage(X_centered,
-                                assume_centered=True, block_size=6),
+    assert_almost_equal(ledoit_wolf_shrinkage(X_centered, assume_centered=True,
+                                              block_size=6),
                         shrinkage_)
     # compare shrunk covariance obtained from data and from MLE estimate
     lw_cov_from_mle, lw_shinkrage_from_mle = ledoit_wolf(X_centered,
-                                                        assume_centered=True)
+                                                         assume_centered=True)
     assert_array_almost_equal(lw_cov_from_mle, lw.covariance_, 4)
     assert_almost_equal(lw_shinkrage_from_mle, lw.shrinkage_)
     # compare estimates given by LW and ShrunkCovariance

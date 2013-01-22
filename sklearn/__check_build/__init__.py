@@ -12,6 +12,7 @@ STANDARD_MSG = """
 If you have used an installer, please check that it is suited for your
 Python version, your operating system and your platform."""
 
+
 def raise_build_error(e):
     # Raise a comprehensible error and list the contents of the
     # directory to help debugging on the mailing list.

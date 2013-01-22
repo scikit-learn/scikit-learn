@@ -31,10 +31,13 @@ import pylab as pl
 
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
+from sklearn.linear_model import RidgeClassifier
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.linear_model import Perceptron
+from sklearn.linear_model import PassiveAggressiveClassifier
 from sklearn.naive_bayes import BernoulliNB, MultinomialNB
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.neighbors import NearestCentroid
@@ -65,6 +68,13 @@ op.add_option("--top10",
 op.add_option("--all_categories",
               action="store_true", dest="all_categories",
               help="Whether to use all categories or not.")
+op.add_option("--use_hashing",
+              action="store_true",
+              help="Use a hashing vectorizer.")
+op.add_option("--n_features",
+              action="store", type=int, default=2 ** 16,
+              help="n_features when using the hashing vectorizer.")
+
 
 (opts, args) = op.parse_args()
 if len(args) > 0:
@@ -92,16 +102,25 @@ print "Loading 20 newsgroups dataset for categories:"
 print categories if categories else "all"
 
 data_train = fetch_20newsgroups(subset='train', categories=categories,
-                               shuffle=True, random_state=42)
+                                shuffle=True, random_state=42)
 
 data_test = fetch_20newsgroups(subset='test', categories=categories,
-                              shuffle=True, random_state=42)
+                               shuffle=True, random_state=42)
 print 'data loaded'
 
 categories = data_train.target_names    # for case categories == None
 
-print "%d documents (training set)" % len(data_train.data)
-print "%d documents (testing set)" % len(data_test.data)
+
+def size_mb(docs):
+    return sum(len(s.encode('utf-8')) for s in docs) / 1e6
+
+data_train_size_mb = size_mb(data_train.data)
+data_test_size_mb = size_mb(data_test.data)
+
+print("%d documents - %0.3fMB (training set)" % (
+    len(data_train.data), data_train_size_mb))
+print("%d documents - %0.3fMB (training set)" % (
+    len(data_test.data), data_test_size_mb))
 print "%d categories" % len(categories)
 print
 
@@ -110,17 +129,24 @@ y_train, y_test = data_train.target, data_test.target
 
 print "Extracting features from the training dataset using a sparse vectorizer"
 t0 = time()
-vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5,
-                             stop_words='english')
-X_train = vectorizer.fit_transform(data_train.data)
-print "done in %fs" % (time() - t0)
+if opts.use_hashing:
+    vectorizer = HashingVectorizer(stop_words='english', non_negative=True,
+                                   n_features=opts.n_features)
+    X_train = vectorizer.transform(data_train.data)
+else:
+    vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5,
+                                 stop_words='english')
+    X_train = vectorizer.fit_transform(data_train.data)
+duration = time() - t0
+print("done in %fs at %0.3fMB/s" % (duration, data_train_size_mb / duration))
 print "n_samples: %d, n_features: %d" % X_train.shape
 print
 
 print "Extracting features from the test dataset using the same vectorizer"
 t0 = time()
 X_test = vectorizer.transform(data_test.data)
-print "done in %fs" % (time() - t0)
+duration = time() - t0
+print("done in %fs at %0.3fMB/s" % (duration, data_test_size_mb / duration))
 print "n_samples: %d, n_features: %d" % X_test.shape
 print
 
@@ -141,7 +167,10 @@ def trim(s):
 
 
 # mapping from integer feature name to original token string
-feature_names = vectorizer.get_feature_names()
+if opts.use_hashing:
+    feature_names = None
+else:
+    feature_names = np.asarray(vectorizer.get_feature_names())
 
 
 ###############################################################################
@@ -167,7 +196,7 @@ def benchmark(clf):
         print "dimensionality: %d" % clf.coef_.shape[1]
         print "density: %f" % density(clf.coef_)
 
-        if opts.print_top10:
+        if opts.print_top10 and feature_names is not None:
             print "top 10 keywords per class:"
             for i, category in enumerate(categories):
                 top10 = np.argsort(clf.coef_[i])[-10:]
@@ -190,8 +219,11 @@ def benchmark(clf):
 
 
 results = []
-for clf, name in ((Perceptron(n_iter=50), "Perceptron"),
-                  (KNeighborsClassifier(n_neighbors=10), "kNN")):
+for clf, name in (
+        (RidgeClassifier(tol=1e-2, solver="lsqr"), "Ridge Classifier"),
+        (Perceptron(n_iter=50), "Perceptron"),
+        (PassiveAggressiveClassifier(n_iter=50), "Passive-Aggressive"),
+        (KNeighborsClassifier(n_neighbors=10), "kNN")):
     print 80 * '='
     print name
     results.append(benchmark(clf))
@@ -205,13 +237,13 @@ for penalty in ["l2", "l1"]:
 
     # Train SGD model
     results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
-                                          penalty=penalty)))
+                                           penalty=penalty)))
 
 # Train SGD with Elastic Net penalty
 print 80 * '='
 print "Elastic-Net penalty"
 results.append(benchmark(SGDClassifier(alpha=.0001, n_iter=50,
-                                      penalty="elasticnet")))
+                                       penalty="elasticnet")))
 
 # Train NearestCentroid without threshold
 print 80 * '='
@@ -262,7 +294,7 @@ pl.yticks(())
 pl.legend(loc='best')
 pl.subplots_adjust(left=.25)
 
-for i, c in  zip(indices, clf_names):
+for i, c in zip(indices, clf_names):
     pl.text(-.3, i, c)
 
 pl.show()

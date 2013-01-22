@@ -5,7 +5,6 @@
 # License: BSD, (C) INRIA 2011
 
 import numpy as np
-import warnings
 from scipy.linalg import eigh, svd, qr, solve
 from scipy.sparse import eye, csr_matrix
 from ..base import BaseEstimator, TransformerMixin
@@ -178,10 +177,9 @@ def null_space(M, k, k_skip=1, eigen_solver='arpack', tol=1E-6, max_iter=100,
 
 
 def locally_linear_embedding(
-    X, n_neighbors, n_components, reg=1e-3, eigen_solver='auto',
-    tol=1e-6, max_iter=100, method='standard',
-    hessian_tol=1E-4, modified_tol=1E-12,
-    random_state=None, out_dim=None):
+        X, n_neighbors, n_components, reg=1e-3, eigen_solver='auto', tol=1e-6,
+        max_iter=100, method='standard', hessian_tol=1E-4, modified_tol=1E-12,
+        random_state=None):
     """Perform a Locally Linear Embedding analysis on the data.
 
     Parameters
@@ -275,12 +273,6 @@ def locally_linear_embedding(
     if method not in ('standard', 'hessian', 'modified', 'ltsa'):
         raise ValueError("unrecognized method '%s'" % method)
 
-    if out_dim:
-        warnings.warn("Parameter ``out_dim`` was renamed to ``n_components`` "
-                      "and is now deprecated. This will be removed in 0.13.",
-                      DeprecationWarning, stacklevel=2)
-        n_components = out_dim
-
     nbrs = NearestNeighbors(n_neighbors=n_neighbors + 1)
     nbrs.fit(X)
     X = nbrs._fit_X
@@ -316,7 +308,8 @@ def locally_linear_embedding(
 
         if n_neighbors <= n_components + dp:
             raise ValueError("for method='hessian', n_neighbors must be "
-                    "greater than [n_components * (n_components + 3) / 2]")
+                             "greater than "
+                             "[n_components * (n_components + 3) / 2]")
 
         neighbors = nbrs.kneighbors(X, n_neighbors=n_neighbors + 1,
                                     return_distance=False)
@@ -344,8 +337,8 @@ def locally_linear_embedding(
 
             j = 1 + n_components
             for k in range(n_components):
-                Yi[:, j:j + n_components - k] = \
-                        U[:, k:k + 1] * U[:, k:n_components]
+                Yi[:, j:j + n_components - k] = (U[:, k:k + 1]
+                                                 * U[:, k:n_components])
                 j += n_components - k
 
             Q, R = qr(Yi)
@@ -365,7 +358,7 @@ def locally_linear_embedding(
     elif method == 'modified':
         if n_neighbors < n_components:
             raise ValueError("modified LLE requires "
-                "n_neighbors >= n_components")
+                             "n_neighbors >= n_components")
 
         neighbors = nbrs.kneighbors(X, n_neighbors=n_neighbors + 1,
                                     return_distance=False)
@@ -540,7 +533,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         maximum number of iterations for the arpack solver.
         Not used if eigen_solver=='dense'.
 
-    method : string ['standard' | 'hessian' | 'modified']
+    method : string ['standard' | 'hessian' | 'modified' |'ltsa']
         standard : use the standard locally linear embedding algorithm.
                    see reference [1]
         hessian  : use the Hessian eigenmap method.  This method requires
@@ -596,16 +589,9 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_neighbors=5, n_components=2, reg=1E-3,
-            eigen_solver='auto', tol=1E-6, max_iter=100, method='standard',
-            hessian_tol=1E-4, modified_tol=1E-12, neighbors_algorithm='auto',
-            random_state=None, out_dim=None):
-
-        if out_dim:
-            warnings.warn("Parameter ``out_dim`` was renamed to "
-                          "``n_components`` and is now deprecated. This will "
-                          "be removed in 0.13.", DeprecationWarning,
-                          stacklevel=2)
-        self.out_dim = out_dim
+                 eigen_solver='auto', tol=1E-6, max_iter=100,
+                 method='standard', hessian_tol=1E-4, modified_tol=1E-12,
+                 neighbors_algorithm='auto', random_state=None):
 
         self.n_neighbors = n_neighbors
         self.n_components = n_components
@@ -621,14 +607,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
 
     def _fit_transform(self, X):
         self.nbrs_ = NearestNeighbors(self.n_neighbors,
-                algorithm=self.neighbors_algorithm)
-        if self.out_dim:
-            warnings.warn("Parameter ``out_dim`` was renamed to "
-                          "``n_components`` and is now deprecated. This will "
-                          "be removed in 0.13.", DeprecationWarning,
-                          stacklevel=3)
-            self.n_components = self.out_dim
-            self.out_dim = None
+                                      algorithm=self.neighbors_algorithm)
 
         self.random_state = check_random_state(self.random_state)
         X, = check_arrays(X, sparse_format='dense')

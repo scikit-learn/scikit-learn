@@ -25,12 +25,12 @@ import pylab as pl
 
 from sklearn.linear_model import LogisticRegression
 from sklearn import datasets
-from sklearn.preprocessing import Scaler
+from sklearn.preprocessing import StandardScaler
 
 digits = datasets.load_digits()
 
 X, y = digits.data, digits.target
-X = Scaler().fit_transform(X)
+X = StandardScaler().fit_transform(X)
 
 # classify small against large digits
 y = (y > 4).astype(np.int)
@@ -66,9 +66,9 @@ for i, C in enumerate(10. ** np.arange(1, 4)):
         l2_plot.set_title("L2 penalty")
 
     l1_plot.imshow(np.abs(coef_l1_LR.reshape(8, 8)), interpolation='nearest',
-            cmap='binary', vmax=1, vmin=0)
+                   cmap='binary', vmax=1, vmin=0)
     l2_plot.imshow(np.abs(coef_l2_LR.reshape(8, 8)), interpolation='nearest',
-            cmap='binary', vmax=1, vmin=0)
+                   cmap='binary', vmax=1, vmin=0)
     pl.text(-8, 3, "C = %d" % C)
 
     l1_plot.set_xticks(())

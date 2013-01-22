@@ -5,13 +5,15 @@ import warnings
 
 import numpy as np
 
-from nose.tools import assert_raises, assert_true
-from numpy.testing import assert_equal, assert_array_almost_equal
-
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_greater
 
-from sklearn.linear_model import orthogonal_mp, orthogonal_mp_gram, \
-                                 OrthogonalMatchingPursuit
+from sklearn.linear_model import (orthogonal_mp, orthogonal_mp_gram,
+                                  OrthogonalMatchingPursuit)
 from sklearn.utils.fixes import count_nonzero
 from sklearn.datasets import make_sparse_coded_signal
 
@@ -41,7 +43,7 @@ def test_n_nonzero_coefs():
     assert_true(count_nonzero(orthogonal_mp(X, y[:, 0],
                               n_nonzero_coefs=5)) <= 5)
     assert_true(count_nonzero(orthogonal_mp(X, y[:, 0], n_nonzero_coefs=5,
-                                       precompute_gram=True)) <= 5)
+                                            precompute_gram=True)) <= 5)
 
 
 def test_tol():
@@ -94,8 +96,8 @@ def test_perfect_signal_recovery():
     idx, = gamma[:, 0].nonzero()
     gamma_rec = orthogonal_mp(X, y[:, 0], 5)
     gamma_gram = orthogonal_mp_gram(G, Xy[:, 0], 5)
-    assert_equal(idx, np.flatnonzero(gamma_rec))
-    assert_equal(idx, np.flatnonzero(gamma_gram))
+    assert_array_equal(idx, np.flatnonzero(gamma_rec))
+    assert_array_equal(idx, np.flatnonzero(gamma_gram))
     assert_array_almost_equal(gamma[:, 0], gamma_rec, decimal=2)
     assert_array_almost_equal(gamma[:, 0], gamma_gram, decimal=2)
 
@@ -171,8 +173,8 @@ def test_swapped_regressors():
     new_Xy = np.dot(X.T, new_y)
     gamma_hat = orthogonal_mp(X, new_y, 2)
     gamma_hat_gram = orthogonal_mp_gram(G, new_Xy, 2)
-    assert_equal(np.flatnonzero(gamma_hat), [0, 21])
-    assert_equal(np.flatnonzero(gamma_hat_gram), [0, 21])
+    assert_array_equal(np.flatnonzero(gamma_hat), [0, 21])
+    assert_array_equal(np.flatnonzero(gamma_hat_gram), [0, 21])
 
 
 def test_no_atoms():

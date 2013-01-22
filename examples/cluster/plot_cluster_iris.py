@@ -41,8 +41,7 @@ y = iris.target
 estimators = {'k_means_iris_3': KMeans(n_clusters=3),
               'k_means_iris_8': KMeans(n_clusters=8),
               'k_means_iris_bad_init': KMeans(n_clusters=3, n_init=1,
-                                              init='random'),
-             }
+                                              init='random')}
 
 
 fignum = 1
@@ -79,8 +78,7 @@ for name, label in [('Setosa', 0),
               X[y == label, 0].mean() + 1.5,
               X[y == label, 2].mean(), name,
               horizontalalignment='center',
-              bbox=dict(alpha=.5, edgecolor='w', facecolor='w'),
-             )
+              bbox=dict(alpha=.5, edgecolor='w', facecolor='w'))
 # Reorder the labels to have colors matching the cluster results
 y = np.choose(y, [1, 2, 0]).astype(np.float)
 ax.scatter(X[:, 3], X[:, 0], X[:, 2], c=y)

@@ -47,14 +47,14 @@ for i in range(5):
     y_train = np.copy(y)
     y_train[unlabeled_indices] = -1
 
-    lp_model = label_propagation.LabelSpreading(gamma=0.25, max_iters=5)
+    lp_model = label_propagation.LabelSpreading(gamma=0.25, max_iter=5)
     lp_model.fit(X, y_train)
 
     predicted_labels = lp_model.transduction_[unlabeled_indices]
     true_labels = y[unlabeled_indices]
 
     cm = confusion_matrix(true_labels, predicted_labels,
-            labels=lp_model.classes_)
+                          labels=lp_model.classes_)
 
     print ('Iteration %i ' + 70 * '_') % i
     print "Label Spreading model: %d labeled & %d unlabeled (%d total)" %\
@@ -67,7 +67,7 @@ for i in range(5):
 
     # compute the entropies of transduced label distributions
     pred_entropies = stats.distributions.entropy(
-                            lp_model.label_distributions_.T)
+        lp_model.label_distributions_.T)
 
     # select five digit examples that the classifier is most uncertain about
     uncertainty_index = uncertainty_index = np.argsort(pred_entropies)[-5:]

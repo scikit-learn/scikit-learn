@@ -100,9 +100,8 @@ def benchmark(clf_class, params, name):
     print "done in %fs" % (time() - t0)
 
     if hasattr(clf, 'coef_'):
-        print "Percentage of non zeros coef: %f" % (
-          np.mean(clf.coef_ != 0) * 100)
-
+        print("Percentage of non zeros coef: %f"
+              % (np.mean(clf.coef_ != 0) * 100))
     print "Predicting the outcomes of the testing set"
     t0 = time()
     pred = clf.predict(X_test)
@@ -112,7 +111,7 @@ def benchmark(clf_class, params, name):
     print clf
     print
     print classification_report(y_test, pred,
-       target_names=news_test.target_names)
+                                target_names=news_test.target_names)
 
     cm = confusion_matrix(y_test, pred)
     print "Confusion matrix:"

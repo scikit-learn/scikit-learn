@@ -102,7 +102,7 @@ It is also possible to use othe cross validation strategies by passing a cross
 validation iterator instead, for instance::
 
   >>> n_samples = iris.data.shape[0]
-  >>> cv = cross_validation.ShuffleSplit(n_samples, n_iterations=3,
+  >>> cv = cross_validation.ShuffleSplit(n_samples, n_iter=3,
   ...     test_size=0.3, random_state=0)
 
   >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=cv)
@@ -156,9 +156,9 @@ Example of 2-fold::
   >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
   >>> Y = np.array([0, 1, 0, 1])
 
-  >>> kf = KFold(len(Y), 2, indices=False)
+  >>> kf = KFold(len(Y), n_folds=2, indices=False)
   >>> print kf
-  sklearn.cross_validation.KFold(n=4, k=2)
+  sklearn.cross_validation.KFold(n=4, n_folds=2)
 
   >>> for train, test in kf:
   ...     print train, test
@@ -178,7 +178,7 @@ when creating the cross-validation procedure::
   >>> X = np.array([[0., 0.], [1., 1.], [-1., -1.], [2., 2.]])
   >>> Y = np.array([0, 1, 0, 1])
 
-  >>> kf = KFold(len(Y), 2, indices=True)
+  >>> kf = KFold(len(Y), n_folds=2, indices=True)
   >>> for train, test in kf:
   ...    print train, test
   [2 3] [0 1]
@@ -206,7 +206,7 @@ Example of stratified 2-fold::
 
   >>> skf = StratifiedKFold(Y, 2)
   >>> print skf
-  sklearn.cross_validation.StratifiedKFold(labels=[0 0 0 1 1 1 0], k=2)
+  sklearn.cross_validation.StratifiedKFold(labels=[0 0 0 1 1 1 0], n_folds=2)
 
   >>> for train, test in skf:
   ...     print train, test
@@ -339,12 +339,12 @@ generator.
 
 Here is a usage example::
 
-  >>> ss = cross_validation.ShuffleSplit(5, n_iterations=3, test_size=0.25,
+  >>> ss = cross_validation.ShuffleSplit(5, n_iter=3, test_size=0.25,
   ...     random_state=0)
   >>> len(ss)
   3
   >>> print ss                                            # doctest: +ELLIPSIS
-  ShuffleSplit(5, n_iterations=3, test_size=0.25, indices=True, ...)
+  ShuffleSplit(5, n_iter=3, test_size=0.25, indices=True, ...)
 
   >>> for train_index, test_index in ss:
   ...    print train_index, test_index
@@ -390,7 +390,7 @@ smaller than the total dataset if it is very large.
   >>> len(bs)
   3
   >>> print bs
-  Bootstrap(9, n_bootstraps=3, train_size=5, test_size=4, random_state=0)
+  Bootstrap(9, n_iter=3, train_size=5, test_size=4, random_state=0)
 
   >>> for train_index, test_index in bs:
   ...    print train_index, test_index

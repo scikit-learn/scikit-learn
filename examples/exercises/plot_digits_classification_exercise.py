@@ -25,7 +25,6 @@ y_test = y_digits[.9 * n_samples:]
 knn = neighbors.KNeighborsClassifier()
 logistic = linear_model.LogisticRegression()
 
-print('KNN score: %f' %
-        knn.fit(X_train, y_train).score(X_test, y_test))
-print('LogisticRegression score: %f' %
-        logistic.fit(X_train, y_train).score(X_test, y_test))
+print('KNN score: %f' % knn.fit(X_train, y_train).score(X_test, y_test))
+print('LogisticRegression score: %f'
+      % logistic.fit(X_train, y_train).score(X_test, y_test))

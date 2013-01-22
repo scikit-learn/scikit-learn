@@ -1,13 +1,17 @@
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
+#          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD
+
 from collections import Sequence
+import warnings
+import numbers
 
 import numpy as np
 import scipy.sparse as sp
 
-from .utils import check_arrays, array2d
+from .utils import check_arrays, array2d, atleast2d_or_csr, safe_asarray
 from .utils import warn_if_not_float
 from .utils.fixes import unique
 from .base import BaseEstimator, TransformerMixin
@@ -22,14 +26,14 @@ __all__ = ['Binarizer',
            'LabelBinarizer',
            'LabelEncoder',
            'Normalizer',
-           'Scaler',
+           'StandardScaler',
            'binarize',
            'normalize',
            'scale']
 
 
 def _mean_and_std(X, axis=0, with_mean=True, with_std=True):
-    """Compute mean and std dev for centering, scaling
+    """Compute mean and std deviation for centering, scaling.
 
     Zero valued std components are reset to 1.0 to avoid NaNs when scaling.
     """
@@ -95,7 +99,7 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
 
     See also
     --------
-    :class:`sklearn.preprocessing.Scaler` to perform centering and
+    :class:`sklearn.preprocessing.StandardScaler` to perform centering and
     scaling using the ``Transformer`` API (e.g. as part of a preprocessing
     :class:`sklearn.pipeline.Pipeline`)
     """
@@ -133,7 +137,95 @@ def scale(X, axis=0, with_mean=True, with_std=True, copy=True):
     return X
 
 
-class Scaler(BaseEstimator, TransformerMixin):
+class MinMaxScaler(BaseEstimator, TransformerMixin):
+    """Standardizes features by scaling each feature to a given range.
+
+    This estimator scales and translates each feature individually such
+    that it is in the given range on the training set, i.e. between
+    zero and one.
+
+    The standardization is given by::
+        X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
+        X_scaled = X_std / (max - min) + min
+
+    where min, max = feature_range.
+
+    This standardization is often used as an alternative to zero mean,
+    unit variance scaling.
+
+    Parameters
+    ----------
+    feature_range: tuple (min, max), default=(0, 1)
+        Desired range of transformed data.
+
+    copy : boolean, optional, default is True
+        Set to False to perform inplace row normalization and avoid a
+        copy (if the input is already a numpy array).
+
+    Attributes
+    ----------
+    `min_` : ndarray, shape (n_features,)
+        Per feature adjustment for minimum.
+
+    `scale_` : ndarray, shape (n_features,)
+        Per feature relative scaling of the data.
+    """
+
+    def __init__(self, feature_range=(0, 1), copy=True):
+        self.feature_range = feature_range
+        self.copy = copy
+
+    def fit(self, X, y=None):
+        """Compute the minimum and maximum to be used for later scaling.
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_features]
+            The data used to compute the per-feature minimum and maximum
+            used for later scaling along the features axis.
+        """
+        X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
+        warn_if_not_float(X, estimator=self)
+        feature_range = self.feature_range
+        if feature_range[0] >= feature_range[1]:
+            raise ValueError("Minimum of desired feature range must be smaller"
+                             " than maximum. Got %s." % str(feature_range))
+        min_ = np.min(X, axis=0)
+        scale_ = np.max(X, axis=0) - min_
+        # Do not scale constant features
+        scale_[scale_ == 0.0] = 1.0
+        self.scale_ = (feature_range[1] - feature_range[0]) / scale_
+        self.min_ = feature_range[0] - min_ / scale_
+        return self
+
+    def transform(self, X):
+        """Scaling features of X according to feature_range.
+
+        Parameters
+        ----------
+        X : array-like with shape [n_samples, n_features]
+            Input data that will be transformed.
+        """
+        X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
+        X *= self.scale_
+        X += self.min_
+        return X
+
+    def inverse_transform(self, X):
+        """Undo the scaling of X according to feature_range.
+
+        Parameters
+        ----------
+        X : array-like with shape [n_samples, n_features]
+            Input data that will be transformed.
+        """
+        X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
+        X -= self.min_
+        X /= self.scale_
+        return X
+
+
+class StandardScaler(BaseEstimator, TransformerMixin):
     """Standardize features by removing the mean and scaling to unit variance
 
     Centering and scaling happen indepently on each feature by computing
@@ -164,7 +256,7 @@ class Scaler(BaseEstimator, TransformerMixin):
         unit standard deviation).
 
     copy : boolean, optional, default is True
-        set to False to perform inplace row normalization and avoid a
+        Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array or a scipy.sparse
         CSR matrix and if axis is 1).
 
@@ -191,7 +283,7 @@ class Scaler(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     def fit(self, X, y=None):
-        """Compute the mean and std to be used for later scaling
+        """Compute the mean and std to be used for later scaling.
 
         Parameters
         ----------
@@ -199,25 +291,19 @@ class Scaler(BaseEstimator, TransformerMixin):
             The data used to compute the mean and standard deviation
             used for later scaling along the features axis.
         """
+        X = check_arrays(X, copy=self.copy, sparse_format="csr")[0]
         if sp.issparse(X):
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
                     "instead See docstring for motivation and alternatives.")
             warn_if_not_float(X, estimator=self)
-            copy = self.copy
-            if not sp.isspmatrix_csr(X):
-                X = X.tocsr()
-                copy = False
-            if copy:
-                X = X.copy()
             self.mean_ = None
-            _, var = mean_variance_axis0(X)
+            var = mean_variance_axis0(X)[1]
             self.std_ = np.sqrt(var)
             self.std_[var == 0.0] = 1.0
             return self
         else:
-            X = np.asarray(X)
             warn_if_not_float(X, estimator=self)
             self.mean_, self.std_ = _mean_and_std(
                 X, axis=0, with_mean=self.with_mean, with_std=self.with_std)
@@ -232,23 +318,16 @@ class Scaler(BaseEstimator, TransformerMixin):
             The data used to scale along the features axis.
         """
         copy = copy if copy is not None else self.copy
+        X = check_arrays(X, copy=copy, sparse_format="csr")[0]
         if sp.issparse(X):
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
                     "instead See docstring for motivation and alternatives.")
             warn_if_not_float(X, estimator=self)
-            if not sp.isspmatrix_csr(X):
-                X = X.tocsr()
-                copy = False
-            if copy:
-                X = X.copy()
             inplace_csr_column_scale(X, 1 / self.std_)
         else:
-            X = np.asarray(X)
             warn_if_not_float(X, estimator=self)
-            if copy:
-                X = X.copy()
             if self.with_mean:
                 X -= self.mean_
             if self.with_std:
@@ -284,6 +363,13 @@ class Scaler(BaseEstimator, TransformerMixin):
             if self.with_mean:
                 X += self.mean_
         return X
+
+
+class Scaler(StandardScaler):
+    def __init__(self, copy=True, with_mean=True, with_std=True):
+        warnings.warn("Scaler was renamed to StandardScaler. The old name "
+                      " will be removed in 0.15.", DeprecationWarning)
+        super(Scaler, self).__init__(copy, with_mean, with_std)
 
 
 def normalize(X, norm='l2', axis=1, copy=True):
@@ -398,6 +484,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
         This method is just there to implement the usual API and hence
         work in pipelines.
         """
+        atleast2d_or_csr(X)
         return self
 
     def transform(self, X, y=None, copy=None):
@@ -410,6 +497,7 @@ class Normalizer(BaseEstimator, TransformerMixin):
             in CSR format to avoid an un-necessary copy.
         """
         copy = copy if copy is not None else self.copy
+        atleast2d_or_csr(X)
         return normalize(X, norm=self.norm, axis=1, copy=copy)
 
 
@@ -420,7 +508,7 @@ def binarize(X, threshold=0.0, copy=True):
     ----------
     X : array or scipy.sparse matrix with shape [n_samples, n_features]
         The data to binarize, element by element.
-        scipy.sparse matrices should be in CSR format to avoid an
+        scipy.sparse matrices should be in CSR or CSC format to avoid an
         un-necessary copy.
 
     threshold : float, optional (0.0 by default)
@@ -428,7 +516,7 @@ def binarize(X, threshold=0.0, copy=True):
 
     copy : boolean, optional, default is True
         set to False to perform inplace binarization and avoid a copy
-        (if the input is already a numpy array or a scipy.sparse CSR
+        (if the input is already a numpy array or a scipy.sparse CSR / CSC
         matrix and if axis is 1).
 
     See also
@@ -437,14 +525,18 @@ def binarize(X, threshold=0.0, copy=True):
     using the ``Transformer`` API (e.g. as part of a preprocessing
     :class:`sklearn.pipeline.Pipeline`)
     """
-    X = check_arrays(X, sparse_format='csr', copy=copy)[0]
+    sparse_format = "csr"  # We force sparse format to be either csr or csc.
+    if hasattr(X, "format"):
+        if X.format in ["csr", "csc"]:
+            sparse_format = X.format
+
+    X = check_arrays(X, sparse_format=sparse_format, copy=copy)[0]
     if sp.issparse(X):
         cond = X.data > threshold
         not_cond = np.logical_not(cond)
         X.data[cond] = 1
-        # FIXME: if enough values became 0, it may be worth changing
-        #        the sparsity structure
         X.data[not_cond] = 0
+        X.eliminate_zeros()
     else:
         cond = X > threshold
         not_cond = np.logical_not(cond)
@@ -495,6 +587,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         This method is just there to implement the usual API and hence
         work in pipelines.
         """
+        atleast2d_or_csr(X)
         return self
 
     def transform(self, X, y=None, copy=None):
@@ -518,9 +611,174 @@ def _is_label_indicator_matrix(y):
 def _is_multilabel(y):
     # the explicit check for ndarray is for forward compatibility; future
     # versions of Numpy might want to register ndarray as a Sequence
-    return not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) \
-       and not isinstance(y[0], basestring) \
-        or _is_label_indicator_matrix(y)
+    return (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) and
+            not isinstance(y[0], basestring) or _is_label_indicator_matrix(y))
+
+
+class OneHotEncoder(BaseEstimator, TransformerMixin):
+    """Encode categorical integer features using a one-hot aka one-of-K scheme.
+
+    The input to this transformer should be a matrix of integers, denoting
+    the values taken on by categorical (discrete) features. The output will be
+    a sparse matrix were each column corresponds to one possible value of one
+    feature. It is assumed that input features take on values in the range
+    [0, n_values).
+
+    This encoding is needed for feeding categorical data to scikit-learn
+    estimators.
+
+    Parameters
+    ----------
+    n_values : 'auto', int or array of int
+        Number of values per feature.
+        'auto' : determine value range from training data.
+        int : maximum value for all features.
+        array : maximum value per feature.
+
+    dtype : number type, default=np.float
+        Desired dtype of output.
+
+    Attributes
+    ----------
+    `active_features_` : array
+        Indices for active features, meaning values that actually occur
+        in the training set. Only available when n_values is ``'auto'``.
+
+    `feature_indices_` : array of shape (n_features,)
+        Indices to feature ranges.
+        Feature ``i`` in the original data is mapped to features
+        from ``feature_indices_[i]`` to ``feature_indices_[i+1]``
+        (and then potentially masked by `active_features_` afterwards)
+
+    `n_values_` : array of shape (n_features,)
+        Maximum number of values per feature.
+
+    Examples
+    --------
+    Given a dataset with three features and two samples, we let the encoder
+    find the maximum value per feature and transform the data to a binary
+    one-hot encoding.
+
+    >>> from sklearn.preprocessing import OneHotEncoder
+    >>> enc = OneHotEncoder()
+    >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])
+    OneHotEncoder(dtype=<type 'float'>, n_values='auto')
+    >>> enc.n_values_
+    array([2, 3, 4])
+    >>> enc.feature_indices_
+    array([0, 2, 5, 9])
+    >>> enc.transform([[0, 1, 1]]).toarray()
+    array([[ 1.,  0.,  0.,  1.,  0.,  0.,  1.,  0.,  0.]])
+
+    See also
+    --------
+    LabelEncoder : performs a one-hot encoding on arbitrary class labels.
+    sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
+      dictionary items (also handles string-valued features).
+    """
+    def __init__(self, n_values="auto", dtype=np.float):
+        self.n_values = n_values
+        self.dtype = dtype
+
+    def fit(self, X, y=None):
+        """Fit OneHotEncoder to X.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, n_feature)
+            Input array of type int.
+
+        Returns
+        -------
+        self
+        """
+        self.fit_transform(X)
+        return self
+
+    def fit_transform(self, X, y=None):
+        """Fit OneHotEncoder to X, then transform X.
+
+        Equivalent to self.fit(X).transform(X), but more convenient and more
+        efficient. See fit for the parameters, transform for the return value.
+        """
+        X = check_arrays(X, sparse_format='dense', dtype=np.int)[0]
+        if np.any(X < 0):
+            raise ValueError("X needs to contain only non-negative integers.")
+        n_samples, n_features = X.shape
+        if self.n_values == 'auto':
+            n_values = np.max(X, axis=0) + 1
+        elif isinstance(self.n_values, numbers.Integral):
+            n_values = np.empty(n_features, dtype=np.int)
+            n_values.fill(self.n_values)
+        else:
+            try:
+                n_values = np.asarray(self.n_values, dtype=int)
+            except (ValueError, TypeError):
+                raise TypeError("Wrong type for parameter `n_values`. Expected"
+                                " 'auto', int or array of ints, got %r"
+                                % type(X))
+            if n_values.ndim < 1 or n_values.shape[0] != X.shape[1]:
+                raise ValueError("Shape mismatch: if n_values is an array,"
+                                 " it has to be of shape (n_features,).")
+        self.n_values_ = n_values
+        n_values = np.hstack([[0], n_values])
+        indices = np.cumsum(n_values)
+        self.feature_indices_ = indices
+
+        column_indices = (X + indices[:-1]).ravel()
+        row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
+                                n_features)
+        data = np.ones(n_samples * n_features)
+        out = sp.coo_matrix((data, (row_indices, column_indices)),
+                            shape=(n_samples, indices[-1]),
+                            dtype=self.dtype).tocsr()
+
+        if self.n_values == 'auto':
+            mask = np.array(out.sum(axis=0)).ravel() != 0
+            active_features = np.where(mask)[0]
+            out = out[:, active_features]
+            self.active_features_ = active_features
+
+        return out
+
+    def transform(self, X):
+        """Transform X using one-hot encoding.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, feature_indices_[-1])
+            Input array of type int.
+
+        Returns
+        -------
+        X_out : sparse matrix, dtype=int
+            Transformed input.
+        """
+        X = check_arrays(X, sparse_format='dense', dtype=np.int)[0]
+        if np.any(X < 0):
+            raise ValueError("X needs to contain only non-negative integers.")
+        n_samples, n_features = X.shape
+
+        indices = self.feature_indices_
+        if n_features != indices.shape[0] - 1:
+            raise ValueError("X has different shape than during fitting."
+                             " Expected %d, got %d."
+                             % (indices.shape[0] - 1, n_features))
+
+        n_values_check = np.max(X, axis=0) + 1
+        if (n_values_check > self.n_values_).any():
+            raise ValueError("Feature out of bounds. Try setting n_values.")
+
+        column_indices = (X + indices[:-1]).ravel()
+        row_indices = np.repeat(np.arange(n_samples, dtype=np.int32),
+                                n_features)
+        data = np.ones(n_samples * n_features)
+        out = sp.coo_matrix((data, (row_indices, column_indices)),
+                            shape=(n_samples, indices[-1]),
+                            dtype=self.dtype).tocsr()
+        if self.n_values == 'auto':
+            out = out[:, self.active_features_]
+        return out
 
 
 class LabelEncoder(BaseEstimator, TransformerMixin):
@@ -752,8 +1010,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         y_is_multilabel = _is_multilabel(y)
 
         if y_is_multilabel and not self.multilabel:
-            raise ValueError("The object was not " +
-                    "fitted with multilabel input!")
+            raise ValueError("The object was not fitted with multilabel"
+                             " input!")
 
         elif self.multilabel:
             if not _is_multilabel(y):
@@ -847,8 +1105,11 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 class KernelCenterer(BaseEstimator, TransformerMixin):
     """Center a kernel matrix
 
-    This is equivalent to centering phi(X) with
-    sklearn.preprocessing.Scaler(with_std=False).
+    Let K(x_i, x_j) be a kernel defined by K(x_i, x_j) = phi(x_i)^T phi(x_j),
+    where phi(x) is a function mapping x to a hilbert space. KernelCenterer is
+    a class to center (i.e., normalize to have zero-mean) the data without
+    explicitly computing phi(x). It is equivalent equivalent to centering
+    phi(x) with sklearn.preprocessing.StandardScaler(with_std=False).
     """
 
     def fit(self, K, y=None):
@@ -893,3 +1154,87 @@ class KernelCenterer(BaseEstimator, TransformerMixin):
         K += self.K_fit_all_
 
         return K
+
+
+def add_dummy_feature(X, value=1.0):
+    """Augment dataset with an additional dummy feature.
+
+    This is useful for fitting an intercept term with implementations which
+    cannot otherwise fit it directly.
+
+    Parameters
+    ----------
+    X : array or scipy.sparse matrix with shape [n_samples, n_features]
+        Data.
+
+    value : float
+        Value to use for the dummy feature.
+
+    Returns
+    -------
+
+    X : array or scipy.sparse matrix with shape [n_samples, n_features + 1]
+        Same data with dummy feature added as first column.
+
+    Examples
+    --------
+
+    >>> from sklearn.preprocessing import add_dummy_feature
+    >>> add_dummy_feature([[0, 1], [1, 0]])
+    array([[ 1.,  0.,  1.],
+           [ 1.,  1.,  0.]])
+    """
+    X = safe_asarray(X)
+    n_samples, n_features = X.shape
+    shape = (n_samples, n_features + 1)
+    if sp.issparse(X):
+        if sp.isspmatrix_coo(X):
+            # Shift columns to the right.
+            col = X.col + 1
+            # Column indices of dummy feature are 0 everywhere.
+            col = np.concatenate((np.zeros(n_samples), col))
+            # Row indices of dummy feature are 0, ..., n_samples-1.
+            row = np.concatenate((np.arange(n_samples), X.row))
+            # Prepend the dummy feature n_samples times.
+            data = np.concatenate((np.ones(n_samples) * value, X.data))
+            return sp.coo_matrix((data, (row, col)), shape)
+        elif sp.isspmatrix_csc(X):
+            # Shift index pointers since we need to add n_samples elements.
+            indptr = X.indptr + n_samples
+            # indptr[0] must be 0.
+            indptr = np.concatenate((np.array([0]), indptr))
+            # Row indices of dummy feature are 0, ..., n_samples-1.
+            indices = np.concatenate((np.arange(n_samples), X.indices))
+            # Prepend the dummy feature n_samples times.
+            data = np.concatenate((np.ones(n_samples) * value, X.data))
+            return sp.csc_matrix((data, indices, indptr), shape)
+        else:
+            klass = X.__class__
+            X = klass(add_dummy_feature(X.tocoo(), value))
+            return klass(X)
+    else:
+        return np.hstack((np.ones((n_samples, 1)) * value, X))
+
+
+def balance_weights(y):
+    """Compute sample weights such that the class distribution of y becomes
+       balanced.
+
+    Parameters
+    ----------
+    y : array-like
+        Labels for the samples.
+
+    Returns
+    -------
+    weights : array-like
+        The sample weights.
+    """
+    y = safe_asarray(y)
+    y = np.searchsorted(np.unique(y), y)
+    bins = np.bincount(y)
+
+    weights = 1. / bins.take(y)
+    weights *= bins.min()
+
+    return weights

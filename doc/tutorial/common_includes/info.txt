@@ -1,1 +1,3 @@
-Meant to share common RST file snippets that we want to reuse by inclusion in the real tutorial to lower the maintenance burden of redundant sections.
+Meant to share common RST file snippets that we want to reuse by inclusion 
+in the real tutorial in order to lower the maintenance burden 
+of redundant sections.

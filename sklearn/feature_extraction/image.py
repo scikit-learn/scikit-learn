@@ -10,8 +10,10 @@ extract features from images.
 # License: BSD
 
 from itertools import product
+import numbers
 import numpy as np
 from scipy import sparse
+from numpy.lib.stride_tricks import as_strided
 
 from ..utils.fixes import in1d
 from ..utils import array2d, check_random_state
@@ -52,11 +54,11 @@ def _make_edges_3d(n_x, n_y, n_z=1):
 def _compute_gradient_3d(edges, img):
     n_x, n_y, n_z = img.shape
     gradient = np.abs(img[edges[0] // (n_y * n_z),
-                                (edges[0] % (n_y * n_z)) // n_z,
-                                (edges[0] % (n_y * n_z)) % n_z] -
-                                img[edges[1] // (n_y * n_z),
-                                (edges[1] % (n_y * n_z)) // n_z,
-                                (edges[1] % (n_y * n_z)) % n_z])
+                      (edges[0] % (n_y * n_z)) // n_z,
+                      (edges[0] % (n_y * n_z)) % n_z] -
+                      img[edges[1] // (n_y * n_z),
+                      (edges[1] % (n_y * n_z)) // n_z,
+                      (edges[1] % (n_y * n_z)) % n_z])
     return gradient
 
 
@@ -179,6 +181,61 @@ def grid_to_graph(n_x, n_y, n_z=1, mask=None, return_as=sparse.coo_matrix,
 ###############################################################################
 # From an image to a set of small image patches
 
+def extract_patches(arr, patch_shape=8, extraction_step=1):
+    """Extracts patches of any n-dimensional array in place using strides.
+
+    Given an n-dimensional array it will return a 2n-dimensional array with
+    the first n dimensions indexing patch position and the last n indexing
+    the patch content. This operation is immediate (O(1)). A reshape
+    performed on the first n dimensions will cause numpy to copy data, leading
+    to a list of extracted patches.
+
+    Parameters
+    ----------
+    arr: ndarray
+        n-dimensional array of which patches are to be extracted
+
+    patch_shape: integer or tuple of length arr.ndim
+        Indicates the shape of the patches to be extracted. If an
+        integer is given, the shape will be a hypercube of
+        sidelength given by its value.
+
+    extraction_step: integer or tuple of length arr.ndim
+        Indicates step size at which extraction shall be performed.
+        If integer is given, then the step is uniform in all dimensions.
+
+
+    Returns
+    -------
+    patches: strided ndarray
+        2n-dimensional array indexing patches on first n dimensions and
+        containing patches on the last n dimensions. These dimensions
+        are fake, but this way no data is copied. A simple reshape invokes
+        a copying operation to obtain a list of patches:
+        result.reshape([-1] + list(patch_shape))
+    """
+
+    arr_ndim = arr.ndim
+
+    if isinstance(patch_shape, numbers.Number):
+        patch_shape = tuple([patch_shape] * arr_ndim)
+    if isinstance(extraction_step, numbers.Number):
+        extraction_step = tuple([extraction_step] * arr_ndim)
+
+    patch_strides = arr.strides
+
+    slices = [slice(None, None, st) for st in extraction_step]
+    indexing_strides = arr[slices].strides
+
+    patch_indices_shape = ((np.array(arr.shape) - np.array(patch_shape)) /
+                           np.array(extraction_step)) + 1
+
+    shape = tuple(list(patch_indices_shape) + list(patch_shape))
+    strides = tuple(list(indexing_strides) + list(patch_strides))
+
+    patches = as_strided(arr, shape=shape, strides=strides)
+    return patches
+
 
 def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     """Reshape a 2D image into a collection of patches
@@ -248,28 +305,28 @@ def extract_patches_2d(image, patch_size, max_patches=None, random_state=None):
     n_w = i_w - p_w + 1
     all_patches = n_h * n_w
 
+    extracted_patches = extract_patches(image,
+                                        patch_shape=(p_h, p_w, n_colors),
+                                        extraction_step=1)
     if max_patches:
-        if (isinstance(max_patches, (int, np.integer))
+        if (isinstance(max_patches, (numbers.Integral))
                 and max_patches < all_patches):
             n_patches = max_patches
-        elif (isinstance(max_patches, (float, np.floating))
+        elif (isinstance(max_patches, (numbers.Real))
                 and 0 < max_patches < 1):
             n_patches = int(max_patches * all_patches)
         else:
             raise ValueError("Invalid value for max_patches: %r" % max_patches)
 
         rng = check_random_state(random_state)
-        patches = np.empty((n_patches, p_h, p_w, n_colors), dtype=image.dtype)
         i_s = rng.randint(n_h, size=n_patches)
         j_s = rng.randint(n_w, size=n_patches)
-        for p, i, j in zip(patches, i_s, j_s):
-            p[:] = image[i:i + p_h, j:j + p_w, :]
+        patches = extracted_patches[i_s, j_s, 0]
     else:
         n_patches = all_patches
-        patches = np.empty((n_patches, p_h, p_w, n_colors), dtype=image.dtype)
-        for p, (i, j) in zip(patches, product(xrange(n_h), xrange(n_w))):
-            p[:] = image[i:i + p_h, j:j + p_w, :]
+        patches = extracted_patches
 
+    patches = patches.reshape(-1, p_h, p_w, n_colors)
     # remove the color dimension if useless
     if patches.shape[-1] == 1:
         return patches.reshape((n_patches, p_h, p_w))

@@ -22,7 +22,7 @@ import pylab as pl
 from sklearn.svm import SVC
 from sklearn.cross_validation import StratifiedKFold, permutation_test_score
 from sklearn import datasets
-from sklearn.metrics import zero_one_score
+from sklearn.metrics import accuracy_score
 
 
 ##############################################################################
@@ -42,9 +42,8 @@ X = np.c_[X, E]
 svm = SVC(kernel='linear')
 cv = StratifiedKFold(y, 2)
 
-score, permutation_scores, pvalue = permutation_test_score(svm, X, y,
-                                            zero_one_score, cv=cv,
-                                            n_permutations=100, n_jobs=1)
+score, permutation_scores, pvalue = permutation_test_score(
+    svm, X, y, accuracy_score, cv=cv, n_permutations=100, n_jobs=1)
 
 print "Classification score %s (pvalue : %s)" % (score, pvalue)
 

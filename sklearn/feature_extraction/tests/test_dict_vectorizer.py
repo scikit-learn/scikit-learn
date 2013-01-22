@@ -30,7 +30,7 @@ def test_dictvectorizer():
             assert_equal(v.inverse_transform(X), D)
 
             if sparse:
-                # COO matrices can't be compared for equality
+                # CSR matrices can't be compared for equality
                 assert_array_equal(X.A, v.transform(D).A)
             else:
                 assert_array_equal(X, v.transform(D))
