@@ -707,7 +707,7 @@ Passive Aggressive Algorithms
 =============================
 
 The passive-aggressive algorithms are a family of algorithms for large-scale
-learning. They are similar to the Pereptron in that they do not require a
+learning. They are similar to the Perceptron in that they do not require a
 learning rate. However, contrary to the Perceptron, they include a
 regularization parameter ``C``.
 
