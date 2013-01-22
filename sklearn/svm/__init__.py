@@ -23,5 +23,4 @@ __all__ = ['LinearSVC',
            'l1_min_c',
            'liblinear',
            'libsvm',
-           'libsvm_sparse',
-           'sparse']
+           'libsvm_sparse']

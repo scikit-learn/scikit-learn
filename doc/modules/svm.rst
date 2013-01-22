@@ -41,11 +41,6 @@ an SVM to make predictions for sparse data, it must have been fit on such
 data. For optimal performance, use C-ordered ``numpy.ndarray`` (dense) or
 ``scipy.sparse.csr_matrix`` (sparse) with ``dtype=float64``.
 
-In previous versions of scikit-learn, sparse input support existed only
-in the ``sklearn.svm.sparse`` module which duplicated the ``sklearn.svm``
-interface. This module still exists for backward compatibility, but is
-deprecated and will be removed in scikit-learn 0.12.
-
 .. TODO: add reference to probability estimates
 
 .. _svm_classification:
