@@ -44,40 +44,6 @@ def _weight_func(dist):
     return retval ** 2
 
 
-def test_warn_on_equidistant(n_samples=100, n_features=3, k=3):
-    """test the production of a warning if equidistant points are discarded"""
-    X = rng.random_sample(size=(n_samples, n_features))
-    q = rng.random_sample(size=n_features)
-
-    neigh = neighbors.NearestNeighbors(n_neighbors=k)
-    neigh.fit(X[:-1])
-    ind = neigh.kneighbors(q, return_distance=False)
-
-    # make the last point identical to the furthest neighbor
-    # querying this should set warning_flag to True
-    X[-1] = X[ind[0, k - 1]]
-
-    y = np.zeros(X.shape[0])
-
-    expected_message = ("kneighbors: neighbor k+1 and neighbor k "
-                        "have the same distance: results will be "
-                        "dependent on data order.")
-
-    algorithms = ('ball_tree', 'brute')
-    estimators = (neighbors.KNeighborsClassifier,
-                  neighbors.KNeighborsRegressor)
-
-    for algorithm in algorithms:
-        for estimator in estimators:
-            with warnings.catch_warnings(record=True) as warn_queue:
-                neigh = estimator(n_neighbors=k, algorithm=algorithm)
-                neigh.fit(X, y)
-                neigh.predict(q)
-
-            assert_equal(len(warn_queue), 1)
-            assert_equal(str(warn_queue[0].message), expected_message)
-
-
 def test_unsupervised_kneighbors(n_samples=20, n_features=5,
                                  n_query_pts=2, n_neighbors=5,
                                  random_state=0):
@@ -438,8 +404,7 @@ def test_neighbors_iris():
 
     for algorithm in ALGORITHMS:
         clf = neighbors.KNeighborsClassifier(n_neighbors=1,
-                                             algorithm=algorithm,
-                                             warn_on_equidistant=False)
+                                             algorithm=algorithm)
         clf.fit(iris.data, iris.target)
         assert_array_equal(clf.predict(iris.data), iris.target)
 
@@ -447,8 +412,7 @@ def test_neighbors_iris():
         clf.fit(iris.data, iris.target)
         assert_true(np.mean(clf.predict(iris.data) == iris.target) > 0.95)
 
-        rgs = neighbors.KNeighborsRegressor(n_neighbors=5, algorithm=algorithm,
-                                            warn_on_equidistant=False)
+        rgs = neighbors.KNeighborsRegressor(n_neighbors=5, algorithm=algorithm)
         rgs.fit(iris.data, iris.target)
         assert_true(np.mean(rgs.predict(iris.data).round() == iris.target)
                     > 0.95)
@@ -469,8 +433,7 @@ def test_neighbors_digits():
     test = np.arange(train_test_boundary, n_samples)
     (X_train, Y_train, X_test, Y_test) = X[train], Y[train], X[test], Y[test]
 
-    clf = neighbors.KNeighborsClassifier(n_neighbors=1, algorithm='brute',
-                                         warn_on_equidistant=False)
+    clf = neighbors.KNeighborsClassifier(n_neighbors=1, algorithm='brute')
     score_uint8 = clf.fit(X_train, Y_train).score(X_test, Y_test)
     score_float = clf.fit(X_train.astype(float), Y_train).score(
         X_test.astype(float), Y_test)

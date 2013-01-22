@@ -60,14 +60,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    warn_on_equidistant : boolean, optional.  Defaults to True.
-        Generate a warning if equidistant neighbors are discarded.
-        For classification or regression based on k-neighbors, if
-        neighbor k and neighbor k+1 have identical distances but
-        different labels, then the result will be dependent on the
-        ordering of the training data.
-        If the fit method is ``'kd_tree'``, no warnings will be generated.
-
     p: integer, optional (default = 2)
         Parameter for the Minkowski metric from
         sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
@@ -109,13 +101,10 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
     def __init__(self, n_neighbors=5,
                  weights='uniform',
-                 algorithm='auto', leaf_size=30,
-                 warn_on_equidistant=True, p=2):
+                 algorithm='auto', leaf_size=30, p=2):
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
-                          leaf_size=leaf_size,
-                          warn_on_equidistant=warn_on_equidistant,
-                          p=p)
+                          leaf_size=leaf_size, p=p)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
