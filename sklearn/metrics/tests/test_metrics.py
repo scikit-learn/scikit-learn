@@ -832,6 +832,8 @@ def test_multilabel_hamming_loss():
     assert_equal(0.0, hamming_loss(y2, y2))
     assert_equal(0.75, hamming_loss(y2, [(), ()]))
     assert_equal(0.625, hamming_loss(y1, [tuple(), (10, )]))
+    assert_almost_equal(0.1818, hamming_loss(y2, [tuple(), (10, )],
+                                             labels=np.arange(11)), 2)
 
 
 def test_multilabel_accuracy_score():
@@ -868,4 +870,4 @@ def test_multilabel_accuracy_score():
     assert_equal(1.0, accuracy_score(y1, y1))
     assert_equal(1.0, accuracy_score(y2, y2))
     assert_equal(0.0, accuracy_score(y2, [(), ()]))
-    assert_equal(0.0, accuracy_score(y2, [tuple(), (10, )]))
+
