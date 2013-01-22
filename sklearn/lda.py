@@ -184,13 +184,6 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         return self
 
     @property
-    def classes(self):
-        warnings.warn("LDA.classes is deprecated and will be removed in 0.14. "
-                      "Use LDA.classes_ instead.", DeprecationWarning,
-                      stacklevel=2)
-        return self.classes_
-
-    @property
     def scaling(self):  # pragma: no cover
         warnings.warn("LDA.scaling is deprecated and will be removed in 0.15."
                       " Use LDA.scalings_ instead.", DeprecationWarning,
