@@ -8,6 +8,9 @@
 Changelog
 ---------
 
+   - Hyperlinks to documentation in example code on the website by
+     `Martin Luessi`_.
+
    - :class:`grid_search.GridSearchCV` and
      :func:`cross_validation.cross_val_score` now support the use of advanced
      scoring function such as area under the ROC curve and f-beta scores.
@@ -26,6 +29,7 @@ Changelog
      attribute. Setting ``compute_importances=True`` is no longer required.
      By `Gilles Louppe`_.
 
+<<<<<<< HEAD
    - :class:`LinearSVC`, :class:`SGDClassifier` and :class:`SGDRegressor`
      now have a ``sparsify`` method that converts their ``coef_`` into a
      sparse matrix, meaning stored models trained using these estimators
@@ -80,6 +84,11 @@ List of contributors for release 0.13.1 by number of commits.
  *  1  `Vlad Niculae`_
  *  1  `Yaroslav Halchenko`_
 
+=======
+   - :func:`metrics.accuracy_score` and :func:`metrics.zero_one_loss` support
+     multi-label classification.  A new metric :func:`metrics.hamming_loss` is
+     added with mullti-label support.
+>>>>>>> Update what's new
 
 .. _changes_0_13:
 
