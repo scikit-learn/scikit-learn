@@ -566,6 +566,7 @@ div.warning-wrapper p {
 /* -------- banner for advertising the survey ------------------------------*/
 
 div.survey-wrapper {
+    z-index: 10;
     background-color: #FF9C34;
     text-align: center;
     position: fixed;

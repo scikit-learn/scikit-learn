@@ -130,13 +130,6 @@ class QDA(BaseEstimator, ClassifierMixin):
         return self
 
     @property
-    def classes(self):  # pragma: no cover
-        warnings.warn("QDA.classes is deprecated and will be removed in 0.14. "
-                      "Use QDA.classes_ instead.", DeprecationWarning,
-                      stacklevel=2)
-        return self.classes_
-
-    @property
     def scalings(self):  # pragma: no cover
         warnings.warn("QDA.scalings is deprecated and will be removed in 0.15."
                       " Use QDA.scalings_ instead.", DeprecationWarning,
