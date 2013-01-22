@@ -56,7 +56,7 @@ y = f(X).ravel()
 x = np.atleast_2d(np.linspace(0, 10, 1000)).T
 
 # Instanciate a Gaussian Process model
-gp = GaussianProcess(corr='cubic', theta0=1e-2, thetaL=1e-4, thetaU=1e-1, \
+gp = GaussianProcess(corr='cubic', theta0=1e-2, thetaL=1e-4, thetaU=1e-1,
                      random_start=100)
 
 # Fit to data using Maximum Likelihood Estimation of the parameters
@@ -72,9 +72,9 @@ fig = pl.figure()
 pl.plot(x, f(x), 'r:', label=u'$f(x) = x\,\sin(x)$')
 pl.plot(X, y, 'r.', markersize=10, label=u'Observations')
 pl.plot(x, y_pred, 'b-', label=u'Prediction')
-pl.fill(np.concatenate([x, x[::-1]]), \
+pl.fill(np.concatenate([x, x[::-1]]),
         np.concatenate([y_pred - 1.9600 * sigma,
-                       (y_pred + 1.9600 * sigma)[::-1]]), \
+                       (y_pred + 1.9600 * sigma)[::-1]]),
         alpha=.5, fc='b', ec='None', label='95% confidence interval')
 pl.xlabel('$x$')
 pl.ylabel('$f(x)$')
@@ -115,9 +115,9 @@ fig = pl.figure()
 pl.plot(x, f(x), 'r:', label=u'$f(x) = x\,\sin(x)$')
 pl.errorbar(X.ravel(), y, dy, fmt='r.', markersize=10, label=u'Observations')
 pl.plot(x, y_pred, 'b-', label=u'Prediction')
-pl.fill(np.concatenate([x, x[::-1]]), \
+pl.fill(np.concatenate([x, x[::-1]]),
         np.concatenate([y_pred - 1.9600 * sigma,
-                       (y_pred + 1.9600 * sigma)[::-1]]), \
+                       (y_pred + 1.9600 * sigma)[::-1]]),
         alpha=.5, fc='b', ec='None', label='95% confidence interval')
 pl.xlabel('$x$')
 pl.ylabel('$f(x)$')

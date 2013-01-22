@@ -49,7 +49,7 @@ pl.figure(figsize=(5, 5))
 pl.imshow(lena, cmap=pl.cm.gray)
 for l in range(n_clusters):
     pl.contour(label == l, contours=1,
-            colors=[pl.cm.spectral(l / float(n_clusters)), ])
+               colors=[pl.cm.spectral(l / float(n_clusters)), ])
 pl.xticks(())
 pl.yticks(())
 pl.show()

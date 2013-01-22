@@ -8,8 +8,8 @@ Putting it all together
 Pipelining
 ============
 
-We have seen that some estimators can transform data, and some estimators
-can predict variables. We can create combined estimators:
+We have seen that some estimators can transform data and that some estimators
+can predict variables. We can also create combined estimators:
 
 .. image:: ../../auto_examples/images/plot_digits_pipe_1.png
    :target: ../../auto_examples/plot_digits_pipe.html
@@ -26,7 +26,7 @@ Face recognition with eigenfaces
 =================================
 
 The dataset used in this example is a preprocessed excerpt of the
-"Labeled Faces in the Wild", aka LFW_:
+"Labeled Faces in the Wild", also known as LFW_:
 
   http://vis-www.cs.umass.edu/lfw/lfw-funneled.tgz (233MB)
 
@@ -71,10 +71,6 @@ Expected results for the top 5 most represented people in the dataset::
 Open problem: Stock Market Structure
 =====================================
 
-Can we predict the variation in stock prices for Google?
+Can we predict the variation in stock prices for Google over a given time frame?
 
 :ref:`stock_market`
-
-
-
-

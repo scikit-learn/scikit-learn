@@ -25,7 +25,7 @@ import numpy as np
 import pylab as pl
 
 from sklearn.svm import SVC
-from sklearn.preprocessing import Scaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris
 from sklearn.cross_validation import StratifiedKFold
 from sklearn.grid_search import GridSearchCV
@@ -49,7 +49,7 @@ Y_2d -= 1
 # instead of fitting the transformation on the training set and
 # just applying it on the test set.
 
-scaler = Scaler()
+scaler = StandardScaler()
 
 X = scaler.fit_transform(X)
 X_2d = scaler.fit_transform(X_2d)
@@ -64,8 +64,8 @@ X_2d = scaler.fit_transform(X_2d)
 C_range = 10.0 ** np.arange(-2, 9)
 gamma_range = 10.0 ** np.arange(-5, 4)
 param_grid = dict(gamma=gamma_range, C=C_range)
-
-grid = GridSearchCV(SVC(), param_grid=param_grid, cv=StratifiedKFold(y=Y, k=3))
+cv = StratifiedKFold(y=Y, n_folds=3)
+grid = GridSearchCV(SVC(), param_grid=param_grid, cv=cv)
 grid.fit(X, Y)
 
 print("The best classifier is: ", grid.best_estimator_)
@@ -95,7 +95,7 @@ for (k, (C, gamma, clf)) in enumerate(classifiers):
     # visualize decision function for these parameters
     pl.subplot(len(C_2d_range), len(gamma_2d_range), k + 1)
     pl.title("gamma 10^%d, C 10^%d" % (np.log10(gamma), np.log10(C)),
-        size='medium')
+             size='medium')
 
     # visualize parameter's effect on decision function
     pl.pcolormesh(xx, yy, -Z, cmap=pl.cm.jet)

@@ -108,9 +108,9 @@ class BayesianRidge(LinearModel, RegressorMixin):
     """
 
     def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
-                lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
-                fit_intercept=True, normalize=False,
-                copy_X=True, verbose=False):
+                 lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
+                 fit_intercept=True, normalize=False, copy_X=True,
+                 verbose=False):
         self.n_iter = n_iter
         self.tol = tol
         self.alpha_1 = alpha_1
@@ -139,8 +139,8 @@ class BayesianRidge(LinearModel, RegressorMixin):
         """
         X, y = check_arrays(X, y, sparse_format='dense',
                             dtype=np.float)
-        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-                self.fit_intercept, self.normalize, self.copy_X)
+        X, y, X_mean, y_mean, X_std = self._center_data(
+            X, y, self.fit_intercept, self.normalize, self.copy_X)
         n_samples, n_features = X.shape
 
         ### Initialization of the values of the parameters
@@ -175,7 +175,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
                         np.log(lambda_ + alpha_ * eigen_vals_))
             else:
                 coef_ = np.dot(X.T, np.dot(
-                        U / (eigen_vals_ + lambda_ / alpha_)[None, :], U.T))
+                    U / (eigen_vals_ + lambda_ / alpha_)[None, :], U.T))
                 coef_ = np.dot(coef_, y)
                 if self.compute_score:
                     logdet_sigma_ = lambda_ * np.ones(n_features)
@@ -185,22 +185,22 @@ class BayesianRidge(LinearModel, RegressorMixin):
             ### Update alpha and lambda
             rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
             gamma_ = (np.sum((alpha_ * eigen_vals_)
-                            / (lambda_ + alpha_ * eigen_vals_)))
+                      / (lambda_ + alpha_ * eigen_vals_)))
             lambda_ = ((gamma_ + 2 * lambda_1)
-                            / (np.sum(coef_ ** 2) + 2 * lambda_2))
+                       / (np.sum(coef_ ** 2) + 2 * lambda_2))
             alpha_ = ((n_samples - gamma_ + 2 * alpha_1)
-                            / (rmse_ + 2 * alpha_2))
+                      / (rmse_ + 2 * alpha_2))
 
             ### Compute the objective function
             if self.compute_score:
                 s = lambda_1 * log(lambda_) - lambda_2 * lambda_
                 s += alpha_1 * log(alpha_) - alpha_2 * alpha_
                 s += 0.5 * (n_features * log(lambda_)
-                               + n_samples * log(alpha_)
-                               - alpha_ * rmse_
-                               - (lambda_ * np.sum(coef_ ** 2))
-                               - logdet_sigma_
-                               - n_samples * log(2 * np.pi))
+                            + n_samples * log(alpha_)
+                            - alpha_ * rmse_
+                            - (lambda_ * np.sum(coef_ ** 2))
+                            - logdet_sigma_
+                            - n_samples * log(2 * np.pi))
                 self.scores_.append(s)
 
             ### Check for convergence
@@ -320,9 +320,9 @@ class ARDRegression(LinearModel, RegressorMixin):
     """
 
     def __init__(self, n_iter=300, tol=1.e-3, alpha_1=1.e-6, alpha_2=1.e-6,
-                  lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
-                  threshold_lambda=1.e+4, fit_intercept=True,
-                  normalize=False, copy_X=True, verbose=False):
+                 lambda_1=1.e-6, lambda_2=1.e-6, compute_score=False,
+                 threshold_lambda=1.e+4, fit_intercept=True, normalize=False,
+                 copy_X=True, verbose=False):
         self.n_iter = n_iter
         self.tol = tol
         self.fit_intercept = fit_intercept
@@ -360,8 +360,8 @@ class ARDRegression(LinearModel, RegressorMixin):
         n_samples, n_features = X.shape
         coef_ = np.zeros(n_features)
 
-        X, y, X_mean, y_mean, X_std = self._center_data(X, y,
-                self.fit_intercept, self.normalize, self.copy_X)
+        X, y, X_mean, y_mean, X_std = self._center_data(
+            X, y, self.fit_intercept, self.normalize, self.copy_X)
 
         ### Launch the convergence loop
         keep_lambda = np.ones(n_features, dtype=bool)
@@ -383,29 +383,29 @@ class ARDRegression(LinearModel, RegressorMixin):
         for iter_ in range(self.n_iter):
             ### Compute mu and sigma (using Woodbury matrix identity)
             sigma_ = pinvh(np.eye(n_samples) / alpha_ +
-                          np.dot(X[:, keep_lambda] *
-                          np.reshape(1. / lambda_[keep_lambda], [1, -1]),
-                          X[:, keep_lambda].T))
+                           np.dot(X[:, keep_lambda] *
+                           np.reshape(1. / lambda_[keep_lambda], [1, -1]),
+                           X[:, keep_lambda].T))
             sigma_ = np.dot(sigma_, X[:, keep_lambda]
-                          * np.reshape(1. / lambda_[keep_lambda], [1, -1]))
+                            * np.reshape(1. / lambda_[keep_lambda], [1, -1]))
             sigma_ = - np.dot(np.reshape(1. / lambda_[keep_lambda], [-1, 1])
-                                                * X[:, keep_lambda].T, sigma_)
-            sigma_.flat[::(sigma_.shape[1] + 1)] += \
-                          1. / lambda_[keep_lambda]
+                              * X[:, keep_lambda].T, sigma_)
+            sigma_.flat[::(sigma_.shape[1] + 1)] += 1. / lambda_[keep_lambda]
             coef_[keep_lambda] = alpha_ * np.dot(
-                                        sigma_, np.dot(X[:, keep_lambda].T, y))
+                sigma_, np.dot(X[:, keep_lambda].T, y))
 
             ### Update alpha and lambda
             rmse_ = np.sum((y - np.dot(X, coef_)) ** 2)
             gamma_ = 1. - lambda_[keep_lambda] * np.diag(sigma_)
-            lambda_[keep_lambda] = (gamma_ + 2. * lambda_1) \
-                            / ((coef_[keep_lambda]) ** 2 + 2. * lambda_2)
-            alpha_ = (n_samples - gamma_.sum() + 2. * alpha_1) \
-                            / (rmse_ + 2. * alpha_2)
+            lambda_[keep_lambda] = ((gamma_ + 2. * lambda_1)
+                                    / ((coef_[keep_lambda]) ** 2
+                                       + 2. * lambda_2))
+            alpha_ = ((n_samples - gamma_.sum() + 2. * alpha_1)
+                      / (rmse_ + 2. * alpha_2))
 
             ### Prune the weights with a precision over a threshold
             keep_lambda = lambda_ < self.threshold_lambda
-            coef_[keep_lambda == False] = 0
+            coef_[~keep_lambda] = 0
 
             ### Compute the objective function
             if self.compute_score:

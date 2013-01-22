@@ -3,12 +3,11 @@ from io import BytesIO
 import numpy as np
 import scipy.sparse
 
-from cStringIO import StringIO
-from numpy.testing import assert_almost_equal
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_equal
-from nose.tools import assert_raises
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_raises
 
 from sklearn.naive_bayes import GaussianNB, BernoulliNB, MultinomialNB
 
@@ -92,15 +91,11 @@ def test_discretenb_pickle():
         clf = cls().fit(X2, y2)
         y_pred = clf.predict(X2)
 
-        store = StringIO()
+        store = BytesIO()
         pickle.dump(clf, store)
-        clf = pickle.load(StringIO(store.getvalue()))
+        clf = pickle.load(BytesIO(store.getvalue()))
 
         assert_array_equal(y_pred, clf.predict(X2))
-
-    store = BytesIO()
-    pickle.dump(clf, store)
-    clf = pickle.load(BytesIO(store.getvalue()))
 
 
 def test_input_check():
@@ -157,8 +152,8 @@ def test_discretenb_provide_prior():
     """Test whether discrete NB classes use provided prior"""
 
     for cls in [BernoulliNB, MultinomialNB]:
-        clf = cls()
-        clf.fit([[0], [0], [1]], [0, 0, 1], class_prior=[0.5, 0.5])
+        clf = cls(class_prior=[0.5, 0.5])
+        clf.fit([[0], [0], [1]], [0, 0, 1])
         prior = np.exp(clf.class_log_prior_)
         assert_array_equal(prior, np.array([.5, .5]))
 

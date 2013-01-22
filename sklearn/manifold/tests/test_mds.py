@@ -5,16 +5,6 @@ from nose.tools import assert_raises
 from sklearn.manifold import mds
 
 
-def test_pool_adjacent_violators():
-    distances = np.array([10., 8, 11, 5, 13, 11, 9, 14, 6, 16])
-    similarities = np.arange(10)
-    distances_fit = mds.pool_adjacent_violators(distances, similarities)
-
-    assert_array_almost_equal(distances_fit,
-                       np.array([8.5, 8.5, 8.5, 8.5, 10.6, 10.6, 10.6, 10.6,
-                                 10.6, 16]))
-
-
 def test_smacof():
     # test metric smacof using the data of "Modern Multidimensional Scaling",
     # Borg & Groenen, p 154
@@ -67,5 +57,5 @@ def test_MDS():
                     [5, 0, 2, 2],
                     [3, 2, 0, 1],
                     [4, 2, 1, 0]])
-    mds_clf = mds.MDS(metric=False, n_jobs=3)
+    mds_clf = mds.MDS(metric=False, n_jobs=3, dissimilarity="precomputed")
     mds_clf.fit(sim)

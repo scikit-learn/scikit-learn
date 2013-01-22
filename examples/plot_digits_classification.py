@@ -55,7 +55,7 @@ print "Classification report for classifier %s:\n%s\n" % (
 print "Confusion matrix:\n%s" % metrics.confusion_matrix(expected, predicted)
 
 for index, (image, prediction) in enumerate(
-    zip(digits.images[n_samples / 2:], predicted)[:4]):
+        zip(digits.images[n_samples / 2:], predicted)[:4]):
     pl.subplot(2, 4, index + 5)
     pl.axis('off')
     pl.imshow(image, cmap=pl.cm.gray_r, interpolation='nearest')

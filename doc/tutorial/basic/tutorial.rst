@@ -1,7 +1,7 @@
 .. _introduction:
 
-An Introduction to machine learning with scikit-learn
-=======================================================================
+An introduction to machine learning with scikit-learn
+=====================================================
 
 .. topic:: Section contents
 
@@ -12,22 +12,21 @@ An Introduction to machine learning with scikit-learn
 
 
 Machine learning: the problem setting
----------------------------------------
+-------------------------------------
 
 In general, a learning problem considers a set of n 
 `samples <http://en.wikipedia.org/wiki/Sample_(statistics)>`_ of
-data and try to predict properties of unknown data. If each sample is
-more than a single number, and for instance a multi-dimensional entry
+data and then tries to predict properties of unknown data. If each sample is
+more than a single number and, for instance, a multi-dimensional entry
 (aka `multivariate <http://en.wikipedia.org/wiki/Multivariate_random_variable>`_ 
-data), is it said to have several attributes,
-or **features**.
+data), is it said to have several attributes or **features**.
 
 We can separate learning problems in a few large categories:
 
  * `supervised learning <http://en.wikipedia.org/wiki/Supervised_learning>`_, 
    in which the data comes with additional attributes that we want to predict 
    (:ref:`Click here <supervised-learning>`
-   to go to the Scikit-Learn supervised learning page).This problem 
+   to go to the scikit-learn supervised learning page).This problem 
    can be either:
 
     * `classification 
@@ -35,9 +34,12 @@ We can separate learning problems in a few large categories:
       samples belong to two or more classes and we
       want to learn from already labeled data how to predict the class
       of unlabeled data. An example of classification problem would
-      be the digit recognition example, in which the aim is to assign
-      each input vector to one of a finite number of discrete
-      categories.
+      be the handwritten digit recognition example, in which the aim is 
+      to assign each input vector to one of a finite number of discrete
+      categories.  Another way to think of classification is as a discrete 
+      (as opposed to continuous) form of supervised learning where one has a 
+      limited number of categories and for each of the n samples provided,
+      one is to try to label them with the correct category or class.
 
     * `regression <http://en.wikipedia.org/wiki/Regression_analysis>`_:
       if the desired output consists of one or more
@@ -52,7 +54,7 @@ We can separate learning problems in a few large categories:
    it is called `clustering <http://en.wikipedia.org/wiki/Cluster_analysis>`_, 
    or to determine the distribution of data within the input space, known as 
    `density estimation <http://en.wikipedia.org/wiki/Density_estimation>`_, or 
-   to project the data from a high-dimensional space down to two or thee 
+   to project the data from a high-dimensional space down to two or three 
    dimensions for the purpose of *visualization* 
    (:ref:`Click here <unsupervised-learning>` 
    to go to the Scikit-Learn unsupervised learning page).
@@ -62,8 +64,8 @@ We can separate learning problems in a few large categories:
     Machine learning is about learning some properties of a data set
     and applying them to new data. This is why a common practice in
     machine learning to evaluate an algorithm is to split the data
-    at hand in two sets, one that we call a **training set** on which
-    we learn data properties, and one that we call a **testing set**,
+    at hand into two sets, one that we call the **training set** on which
+    we learn data properties and one that we call the **testing set**
     on which we test these properties.
 
 .. _loading_example_dataset:
@@ -130,20 +132,20 @@ learn::
     the `scikit-learn`.
 
 
-Learning and Predicting
+Learning and predicting
 ------------------------
 
-In the case of the digits dataset, the task is to predict the value of a
-hand-written digit from an image. We are given samples of each of the 10
-possible classes on which we *fit* an 
+In the case of the digits dataset, the task is to predict, given an image,
+which digit it represents. We are given samples of each of the 10
+possible classes (the digits zero through nine) on which we *fit* an 
 `estimator <http://en.wikipedia.org/wiki/Estimator>`_ to be able to *predict*
-the labels corresponding to new data.
+the classes to which unseen samples belong.
 
-In `scikit-learn`, an **estimator** is just a plain Python class that
-implements the methods `fit(X, Y)` and `predict(T)`.
+In `scikit-learn`, an estimator for classification is a Python object that
+implements the methods `fit(X, y)` and `predict(T)`.
 
-An example of estimator is the class ``sklearn.svm.SVC`` that
-implements `Support Vector Classification
+An example of an estimator is the class ``sklearn.svm.SVC`` that
+implements `support vector classification
 <http://en.wikipedia.org/wiki/Support_vector_machine>`_. The
 constructor of an estimator takes as arguments the parameters of the
 model, but for the time being, we will consider the estimator as a black
@@ -165,17 +167,17 @@ done by passing our training set to the ``fit`` method. As a training
 set, let us use all the images of our dataset apart from the last
 one::
 
-  >>> clf.fit(digits.data[:-1], digits.target[:-1])
+  >>> clf.fit(digits.data[:-1], digits.target[:-1])  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=100.0, cache_size=200, class_weight=None, coef0=0.0, degree=3,
-    gamma=0.001, kernel='rbf', probability=False, shrinking=True, tol=0.001,
-    verbose=False)
+    gamma=0.001, kernel='rbf', max_iter=-1, probability=False, shrinking=True,
+    tol=0.001, verbose=False)
 
 Now you can predict new values, in particular, we can ask to the
 classifier what is the digit of our last image in the `digits` dataset,
 which we have not used to train the classifier::
 
   >>> clf.predict(digits.data[-1])
-  array([ 8.])
+  array([8])
 
 The corresponding image is the following:
 
@@ -203,16 +205,16 @@ persistence model, namely `pickle <http://docs.python.org/library/pickle.html>`_
   >>> clf = svm.SVC()
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
-  >>> clf.fit(X, y)
+  >>> clf.fit(X, y)  # doctest: +NORMALIZE_WHITESPACE
   SVC(C=1.0, cache_size=200, class_weight=None, coef0=0.0, degree=3, gamma=0.0,
-    kernel='rbf', probability=False, shrinking=True, tol=0.001,
+    kernel='rbf', max_iter=-1, probability=False, shrinking=True, tol=0.001,
     verbose=False)
 
   >>> import pickle
   >>> s = pickle.dumps(clf)
   >>> clf2 = pickle.loads(s)
   >>> clf2.predict(X[0])
-  array([ 0.])
+  array([0])
   >>> y[0]
   0
 

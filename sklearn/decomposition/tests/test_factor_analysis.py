@@ -1,0 +1,52 @@
+# Author: Christian Osendorfer <osendorf@gmail.com>
+#         Alexandre Gramfort <alexandre.gramfort@inria.fr>
+# Licence: BSD3
+
+import numpy as np
+
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_almost_equal
+
+from sklearn.decomposition import FactorAnalysis
+
+
+def test_factor_analysis():
+    """Test FactorAnalysis ability to recover the data covariance structure
+    """
+    rng = np.random.RandomState(0)
+    n_samples, n_features, n_components = 20, 5, 3
+
+    # Some random settings for the generative model
+    W = rng.randn(n_components, n_features)
+    # latent variable of dim 3, 20 of it
+    h = rng.randn(n_samples, n_components)
+    # using gamma to model different noise variance
+    # per component
+    noise = rng.gamma(1, size=n_features) * rng.randn(n_samples, n_features)
+
+    # generate observations
+    # wlog, mean is 0
+    X = np.dot(h, W) + noise
+
+    fa = FactorAnalysis(n_components=n_components)
+    fa.fit(X)
+    X_t = fa.transform(X)
+    assert_true(X_t.shape == (n_samples, n_components))
+
+    assert_almost_equal(fa.loglike_[-1], fa.score(X).sum())
+
+    # Make log likelihood increases at each iteration
+    assert_true(np.all(np.diff(fa.loglike_) > 0.))
+
+    # Sample Covariance
+    scov = np.cov(X, rowvar=0., bias=1.)
+
+    # Model Covariance
+    mcov = fa.get_covariance()
+    diff = np.sum(np.abs(scov - mcov)) / W.size
+    assert_true(diff < 0.1, "Mean absolute difference is %f" % diff)
+
+    fa = FactorAnalysis(n_components=n_components,
+                        noise_variance_init=np.ones(n_features))
+    assert_raises(ValueError, fa.fit, X[:, :2])

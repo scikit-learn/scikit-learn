@@ -16,8 +16,8 @@ from ..metrics import euclidean_distances
 
 
 def affinity_propagation(S, preference=None, p=None, convergence_iter=15,
-        convit=None, max_iter=200,
-        damping=0.5, copy=True, verbose=False):
+                         convit=None, max_iter=200, damping=0.5, copy=True,
+                         verbose=False):
     """Perform Affinity Propagation Clustering of data
 
     Parameters
@@ -80,16 +80,15 @@ def affinity_propagation(S, preference=None, p=None, convergence_iter=15,
     n_samples = S.shape[0]
 
     if S.shape[0] != S.shape[1]:
-        raise ValueError("S must be a square array (shape=%r)" % S.shape)
+        raise ValueError("S must be a square array (shape=%s)" % repr(S.shape))
 
     if not p is None:
         warnings.warn("p is deprecated and will be removed in version 0.14."
-                " Use ``preference`` instead.", DeprecationWarning)
+                      "Use ``preference`` instead.", DeprecationWarning)
         preference = p
 
     if preference is None:
         preference = np.median(S)
-
     if damping < 0.5 or damping >= 1:
         raise ValueError('damping must be >= 0.5 and < 1')
 
@@ -102,8 +101,8 @@ def affinity_propagation(S, preference=None, p=None, convergence_iter=15,
     R = np.zeros((n_samples, n_samples))  # Initialize messages
 
     # Remove degeneracies
-    S += (np.finfo(np.double).eps * S + np.finfo(np.double).tiny * 100) * \
-         random_state.randn(n_samples, n_samples)
+    S += ((np.finfo(np.double).eps * S + np.finfo(np.double).tiny * 100) *
+          random_state.randn(n_samples, n_samples))
 
     # Execute parallel affinity propagation updates
     e = np.zeros((n_samples, convergence_iter))
@@ -148,15 +147,15 @@ def affinity_propagation(S, preference=None, p=None, convergence_iter=15,
 
         if it >= convergence_iter:
             se = np.sum(e, axis=1)
-            unconverged = np.sum((se == convergence_iter) +\
-                                 (se == 0)) != n_samples
+            unconverged = (np.sum((se == convergence_iter) + (se == 0))
+                           != n_samples)
             if (not unconverged and (K > 0)) or (it == max_iter):
                 if verbose:
                     print "Converged after %d iterations." % it
                 break
     else:
         if verbose:
-            print "Did not converged"
+            print "Did not converge"
 
     I = np.where(np.diag(A + R) > 0)[0]
     K = I.size  # Identify exemplars
@@ -246,8 +245,8 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, damping=.5, max_iter=200, convergence_iter=15,
-            convit=None, copy=True,
-            preference=None, p=None, affinity='euclidean', verbose=False):
+                 convit=None, copy=True, preference=None, p=None,
+                 affinity='euclidean', verbose=False):
 
         if convit is not None:
             warnings.warn("``convit`` is deprectaed and will be removed in "
@@ -262,7 +261,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         self.verbose = verbose
         if not p is None:
             warnings.warn("p is deprecated and will be removed in version 0.14"
-                    ". Use ``preference`` instead.", DeprecationWarning)
+                          ". Use ``preference`` instead.", DeprecationWarning)
             preference = p
 
         self.preference = preference
@@ -286,20 +285,20 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
         if X.shape[0] == X.shape[1] and not self._pairwise:
             warnings.warn("The API of AffinityPropagation has changed."
-                "Now ``fit`` constructs an affinity matrix from the data."
-                "To use a custom affinity matrix, set "
-                "``affinity=precomputed``.")
+                          "Now ``fit`` constructs an affinity matrix from the"
+                          " data. To use a custom affinity matrix, set "
+                          "``affinity=precomputed``.")
         if self.affinity is "precomputed":
             self.affinity_matrix_ = X
         elif self.affinity is "euclidean":
             self.affinity_matrix_ = -euclidean_distances(X, squared=True)
         else:
             raise ValueError("Affinity must be 'precomputed' or "
-                "'euclidean'. Got %s instead" % str(self.affinity))
+                             "'euclidean'. Got %s instead"
+                             % str(self.affinity))
 
         self.cluster_centers_indices_, self.labels_ = affinity_propagation(
-                self.affinity_matrix_, self.preference,
-                max_iter=self.max_iter,
-                convergence_iter=self.convergence_iter,
-                damping=self.damping, copy=self.copy, verbose=self.verbose)
+            self.affinity_matrix_, self.preference, max_iter=self.max_iter,
+            convergence_iter=self.convergence_iter, damping=self.damping,
+            copy=self.copy, verbose=self.verbose)
         return self

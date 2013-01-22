@@ -1,12 +1,16 @@
+import warnings
 import numpy as np
 from scipy import sparse
 from sklearn import datasets, svm, linear_model, base
-from numpy.testing import assert_array_almost_equal, \
-     assert_array_equal, assert_equal
+from numpy.testing import (assert_array_almost_equal, assert_array_equal,
+                           assert_equal)
 
-from nose.tools import assert_raises, assert_true
-from sklearn.datasets.samples_generator import make_classification
+from nose.tools import assert_raises, assert_true, assert_false
+from nose.tools import assert_equal as nose_assert_equal
+from sklearn.datasets import make_classification, load_digits
 from sklearn.svm.tests import test_svm
+from sklearn.utils import ConvergenceWarning
+from sklearn.utils.extmath import safe_sparse_dot
 
 # test sample 1
 X = np.array([[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]])
@@ -37,14 +41,14 @@ iris.data = sparse.csr_matrix(iris.data)
 def test_svc():
     """Check that sparse SVC gives the same result as SVC"""
 
-    clf = svm.SVC(kernel='linear').fit(X, Y)
-    sp_clf = svm.SVC(kernel='linear').fit(X_sp, Y)
+    clf = svm.SVC(kernel='linear', probability=True).fit(X, Y)
+    sp_clf = svm.SVC(kernel='linear', probability=True).fit(X_sp, Y)
 
     assert_array_equal(sp_clf.predict(T), true_result)
 
     assert_true(sparse.issparse(sp_clf.support_vectors_))
     assert_array_almost_equal(clf.support_vectors_,
-            sp_clf.support_vectors_.todense())
+                              sp_clf.support_vectors_.todense())
 
     assert_true(sparse.issparse(sp_clf.dual_coef_))
     assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
@@ -57,10 +61,50 @@ def test_svc():
     clf.fit(X2, Y2)
     sp_clf.fit(X2_sp, Y2)
     assert_array_almost_equal(clf.support_vectors_,
-            sp_clf.support_vectors_.todense())
+                              sp_clf.support_vectors_.todense())
     assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
     assert_array_almost_equal(clf.coef_, sp_clf.coef_.todense())
     assert_array_almost_equal(clf.predict(T2), sp_clf.predict(T2))
+    assert_array_almost_equal(clf.predict_proba(T2),
+                              sp_clf.predict_proba(T2), 4)
+
+
+def test_unsorted_indices():
+    # test that the result with sorted and unsorted indices in csr is the same
+    # we use a subset of digits as iris, blobs or make_classification didn't
+    # show the problem
+    digits = load_digits()
+    X, y = digits.data[:50], digits.target[:50]
+    X_test = sparse.csr_matrix(digits.data[50:100])
+
+    X_sparse = sparse.csr_matrix(X)
+    coef_dense = svm.SVC(kernel='linear', probability=True).fit(X, y).coef_
+    sparse_svc = svm.SVC(kernel='linear', probability=True).fit(X_sparse, y)
+    coef_sorted = sparse_svc.coef_
+    # make sure dense and sparse SVM give the same result
+    assert_array_almost_equal(coef_dense, coef_sorted.toarray())
+
+    X_sparse_unsorted = X_sparse[np.arange(X.shape[0])]
+    X_test_unsorted = X_test[np.arange(X_test.shape[0])]
+
+    # make sure we scramble the indices
+    assert_false(X_sparse_unsorted.has_sorted_indices)
+    assert_false(X_test_unsorted.has_sorted_indices)
+
+    unsorted_svc = svm.SVC(kernel='linear',
+                           probability=True).fit(X_sparse_unsorted, y)
+    coef_unsorted = unsorted_svc.coef_
+    # make sure unsorted indices give same result
+    assert_array_almost_equal(coef_unsorted.toarray(), coef_sorted.toarray())
+    assert_array_almost_equal(sparse_svc.predict_proba(X_test_unsorted),
+                              sparse_svc.predict_proba(X_test))
+
+
+def test_svc_with_custom_kernel():
+    kfunc = lambda x, y: safe_sparse_dot(x, y.T)
+    clf_lin = svm.SVC(kernel='linear').fit(X_sp, Y)
+    clf_mylin = svm.SVC(kernel=kfunc).fit(X_sp, Y)
+    assert_array_equal(clf_lin.predict(X_sp), clf_mylin.predict(X_sp))
 
 
 def test_svc_iris():
@@ -70,7 +114,7 @@ def test_svc_iris():
         clf = svm.SVC(kernel=k).fit(iris.data.todense(), iris.target)
 
         assert_array_almost_equal(clf.support_vectors_,
-                sp_clf.support_vectors_.todense())
+                                  sp_clf.support_vectors_.todense())
         assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
         assert_array_almost_equal(
             clf.predict(iris.data.todense()), sp_clf.predict(iris.data))
@@ -122,7 +166,6 @@ def test_linearsvc_iris():
     sp_clf = svm.LinearSVC().fit(iris.data, iris.target)
     clf = svm.LinearSVC().fit(iris.data.todense(), iris.target)
 
-    assert_array_almost_equal(clf.label_, sp_clf.label_)
     assert_equal(clf.fit_intercept, sp_clf.fit_intercept)
 
     assert_array_almost_equal(clf.raw_coef_, sp_clf.raw_coef_, decimal=1)
@@ -189,12 +232,12 @@ def test_sparse_realdata():
     X = sparse.csr_matrix((data, indices, indptr))
     y = np.array(
         [1.,  0.,  2.,  2.,  1.,  1.,  1.,  2.,  2.,  0.,  1.,  2.,  2.,
-        0.,  2.,  0.,  3.,  0.,  3.,  0.,  1.,  1.,  3.,  2.,  3.,  2.,
-        0.,  3.,  1.,  0.,  2.,  1.,  2.,  0.,  1.,  0.,  2.,  3.,  1.,
-        3.,  0.,  1.,  0.,  0.,  2.,  0.,  1.,  2.,  2.,  2.,  3.,  2.,
-        0.,  3.,  2.,  1.,  2.,  3.,  2.,  2.,  0.,  1.,  0.,  1.,  2.,
-        3.,  0.,  0.,  2.,  2.,  1.,  3.,  1.,  1.,  0.,  1.,  2.,  1.,
-        1.,  3.])
+         0.,  2.,  0.,  3.,  0.,  3.,  0.,  1.,  1.,  3.,  2.,  3.,  2.,
+         0.,  3.,  1.,  0.,  2.,  1.,  2.,  0.,  1.,  0.,  2.,  3.,  1.,
+         3.,  0.,  1.,  0.,  0.,  2.,  0.,  1.,  2.,  2.,  2.,  3.,  2.,
+         0.,  3.,  2.,  1.,  2.,  3.,  2.,  2.,  0.,  1.,  0.,  1.,  2.,
+         3.,  0.,  0.,  2.,  2.,  1.,  3.,  1.,  1.,  0.,  1.,  2.,  1.,
+         1.,  3.])
 
     clf = svm.SVC(kernel='linear').fit(X.todense(), y)
     sp_clf = svm.SVC(kernel='linear').fit(sparse.coo_matrix(X), y)
@@ -206,7 +249,8 @@ def test_sparse_realdata():
 def test_sparse_svc_clone_with_callable_kernel():
     # first, test that we raise a value error for "sparse kernels"
     # this test is only relevant for the deprecated sparse.SVC class.
-    sp = svm.sparse.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True)
+    with warnings.catch_warnings(record=True):
+        sp = svm.sparse.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True)
     assert_raises(ValueError, sp.fit, X_sp, Y)
 
     # Test that the "dense_fit" is called even though we use sparse input
@@ -219,10 +263,20 @@ def test_sparse_svc_clone_with_callable_kernel():
     b.predict_proba(X_sp)
 
     dense_svm = svm.SVC(C=1, kernel=lambda x, y: np.dot(x, y.T),
-            probability=True)
+                        probability=True)
     pred_dense = dense_svm.fit(X, Y).predict(X)
     assert_array_equal(pred_dense, pred)
     # b.decision_function(X_sp)  # XXX : should be supported
+
+
+def test_timeout():
+    sp = svm.SVC(C=1, kernel=lambda x, y: x * y.T, probability=True,
+                 max_iter=1)
+    with warnings.catch_warnings(record=True) as foo:
+        sp.fit(X_sp, Y)
+        nose_assert_equal(len(foo), 1, msg=foo)
+        nose_assert_equal(foo[0].category, ConvergenceWarning,
+                          msg=foo[0].category)
 
 
 if __name__ == '__main__':

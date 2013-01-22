@@ -24,10 +24,10 @@ except ImportError:
 from sklearn.datasets import load_lfw_pairs
 from sklearn.datasets import load_lfw_people
 
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_equal
-from nose import SkipTest
-from nose.tools import raises
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import SkipTest
+from sklearn.utils.testing import raises
 
 
 SCIKIT_LEARN_DATA = tempfile.mkdtemp(prefix="scikit_learn_lfw_test_")
@@ -141,8 +141,8 @@ def test_load_fake_lfw_people():
     assert_array_equal(lfw_people.target,
                        [0, 0, 1, 6, 5, 6, 3, 6, 0, 3, 6, 1, 2, 4, 5, 1, 2])
     assert_array_equal(lfw_people.target_names,
-                      ['Abdelatif Smith', 'Abhati Kepler', 'Camara Alvaro',
-                       'Chen Dupont', 'John Lee', 'Lin Bauman', 'Onur Lopez'])
+                       ['Abdelatif Smith', 'Abhati Kepler', 'Camara Alvaro',
+                        'Chen Dupont', 'John Lee', 'Lin Bauman', 'Onur Lopez'])
 
 
 @raises(ValueError)

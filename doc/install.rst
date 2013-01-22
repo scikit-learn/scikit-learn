@@ -5,8 +5,8 @@ Installing `scikit-learn`
 There are different ways to get scikit-learn installed:
 
   * Install the version of scikit-learn provided by your
-    :ref:`operating system distribution <install_by_distribution>` . This
-    is the quickest option for those who have operating systems that
+    :ref:`operating system or Python distribution <install_by_distribution>`.
+    This is the quickest option for those who have operating systems that
     distribute scikit-learn.
 
   * :ref:`Install an official release <install_official_release>`. This
@@ -24,32 +24,55 @@ There are different ways to get scikit-learn installed:
     If you wish to contribute to the project, it's recommended you
     :ref:`install the latest development version<install_bleeding_edge>`.
 
+
 .. _install_official_release:
 
 Installing an official release
 ==============================
 
 
-Installing from source
-----------------------
+Getting the dependencies
+------------------------
 
-Installing from source requires you to have installed python (>= 2.6), numpy
-(>= 1.3), scipy (>= 0.7), setuptools, python development headers and a working
-C++ compiler. Under Debian-based systems you can get all this by executing with
-root privileges::
+Installing from source requires you to have installed Python (>= 2.6),
+NumPy (>= 1.3), SciPy (>= 0.7), setuptools, Python development headers
+and a working C++ compiler.
+Under Debian-based operating systems, which include Ubuntu,
+you can install all these requirements by issuing::
 
-    sudo apt-get install python-dev python-numpy python-numpy-dev python-setuptools python-numpy-dev python-scipy libatlas-dev g++
+    sudo apt-get install build-essential python-dev python-numpy python-setuptools python-scipy libatlas-dev
 
 .. note::
 
-    In Order to build the documentation and run the example code contains in
+    In order to build the documentation and run the example code contains in
     this documentation you will need matplotlib::
 
         sudo apt-get install python-matplotlib
 
 .. note::
 
-    On Ubuntu LTS (10.04) the package `libatlas-dev` is called `libatlas-headers`
+    On older versions of Ubuntu,
+    you might need to ``apt-get install python-numpy-dev``
+    to get the header files for NumPy.
+
+    On Ubuntu 10.04 LTS, the package `libatlas-dev` is called `libatlas-headers`.
+
+.. note::
+
+    The above installs the ATLAS implementation of BLAS
+    (the Basic Linear Algebra Subprograms library).
+    Ubuntu 11.10 and later, and recent (testing) versions of Debian,
+    offer an alternative implementation called OpenBLAS.
+    While this implementation has some issues
+    (please don't file bug reports about this),
+    it may offer a significant speedup to some modules of scikit-learn,
+    especially on multicore hardware.
+    Replacing ATLAS with OpenBLAS only requires two commands::
+
+        # NumPy may not run when both ATLAS and OpenBLAS are installed,
+        # so remove the former.
+        sudo apt-get remove libatlas3gf-base libatlas-dev
+        sudo apt-get install libopenblas-dev
 
 Easy install
 ~~~~~~~~~~~~
@@ -72,7 +95,7 @@ From source package
 ~~~~~~~~~~~~~~~~~~~
 
 Download the package from http://pypi.python.org/pypi/scikit-learn/
-, unpack the sources and cd into archive.
+, unpack the sources and cd into the source directory.
 
 This packages uses distutils, which is the default way of installing
 python modules. The install command is::
@@ -83,16 +106,16 @@ python modules. The install command is::
 Windows installer
 -----------------
 
-You can download a windows installer from `downloads
+You can download a Windows installer from `downloads
 <https://sourceforge.net/projects/scikit-learn/files/>`_ in the
 project's web page. Note that must also have installed the packages
 numpy and setuptools.
 
 This package is also expected to work with python(x,y) as of 2.6.5.5.
 
-.. topic:: **Installing on Windows 64bit**
+.. topic:: **Installing on Windows 64-bit**
 
-   To install a 64bit version of the scikit, you can download the
+   To install a 64-bit version of scikit-learn, you can download the
    binaries from http://www.lfd.uci.edu/~gohlke/pythonlibs/#scikit-learn
    Note that this will require a compatible version of numpy, scipy and
    matplotlib. The easiest option is to also download them from the same
@@ -103,7 +126,7 @@ Building on windows
 
 To build scikit-learn on windows you will need a C/C++ compiler in
 addition to numpy, scipy and setuptools. At least
-`MinGW <http://www.mingw.org>`_ (a port of GCC to Windows OS) and the
+`MinGW <http://www.mingw.org>`_ (a port of GCC to Windows OS) and
 Microsoft Visual C++ 2008 should work out of the box. To force the use
 of a particular compiler, write a file named ``setup.cfg`` in the
 source directory with the content::
@@ -146,8 +169,8 @@ These can make installation and upgrading much easier for users since
 the integration includes the ability to automatically install
 dependencies (numpy, scipy) that scikit-learn requires.
 
-The following is a list of Linux distributions that provide their own
-version of scikit-learn:
+The following is an imcomplete list of Python and OS distributions
+that provide their own version of scikit-learn:
 
 
 Debian and derivatives (Ubuntu)
@@ -196,6 +219,24 @@ or::
 depending on the version of Python you want to use.
 
 
+Archlinux
+---------
+
+Archlinux's package is provided at 
+`Arch User Repository (AUR) <https://aur.archlinux.org/>`_ with name
+`python2-scikit-learn` for latest stable version and `python2-scikit-learn-git`
+for building from git version. If `yaourt` is available, it can be installed
+by typing the following command::
+
+     sudo yaourt -S python2-scikit-learn
+
+or::
+
+     sudo yaourt -S python2-scikit-learn-git
+
+depending on the version of scikit-learn you want to use.
+
+
 NetBSD
 ------
 
@@ -224,12 +265,12 @@ source directory::
     nosetests sklearn --exe
 
 This should give you a lot of output (and some warnings) but
-eventually should finish with the a text similar to::
+eventually should finish with a message similar to::
 
            Ran 601 tests in 27.920s
            OK (SKIP=2)
 
-otherwise please consider posting an issue into the `bug tracker
+Otherwise, please consider posting an issue into the `bug tracker
 <https://github.com/scikit-learn/scikit-learn/issues>`_ or to the
 :ref:`mailing_lists`.
 
@@ -252,7 +293,7 @@ Test can now be run using nosetests::
 
     nosetests sklearn/
 
-This is automated in the commands::
+This is automated by the commands::
 
     make in
 

@@ -51,6 +51,6 @@ for k, col in zip(range(n_clusters_), colors):
     cluster_center = cluster_centers[k]
     pl.plot(X[my_members, 0], X[my_members, 1], col + '.')
     pl.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
-                                    markeredgecolor='k', markersize=14)
+            markeredgecolor='k', markersize=14)
 pl.title('Estimated number of clusters: %d' % n_clusters_)
 pl.show()

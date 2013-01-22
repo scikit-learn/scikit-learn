@@ -1,21 +1,30 @@
 import numpy as np
 from numpy import linalg
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_equal
-from nose.tools import assert_raises
-from nose.tools import assert_true
+
 from scipy.sparse import csr_matrix
 from scipy.spatial.distance import cosine, cityblock, minkowski
 
-from ..pairwise import euclidean_distances
-from ..pairwise import linear_kernel
-from ..pairwise import polynomial_kernel
-from ..pairwise import rbf_kernel
-from ..pairwise import sigmoid_kernel
-from .. import pairwise_distances, pairwise_kernels
-from ..pairwise import pairwise_kernel_functions
-from ..pairwise import check_pairwise_arrays
-from ..pairwise import _parallel_pairwise
+from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
+
+from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.metrics.pairwise import linear_kernel
+from sklearn.metrics.pairwise import chi2_kernel, additive_chi2_kernel
+from sklearn.metrics.pairwise import polynomial_kernel
+from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.metrics.pairwise import sigmoid_kernel
+from sklearn.metrics.pairwise import cosine_similarity
+from sklearn.metrics.pairwise import pairwise_distances
+from sklearn.metrics.pairwise import pairwise_kernels
+from sklearn.metrics.pairwise import pairwise_kernel_functions
+from sklearn.metrics.pairwise import check_pairwise_arrays
+from sklearn.metrics.pairwise import _parallel_pairwise
+from sklearn.preprocessing import normalize
 
 
 def test_pairwise_distances():
@@ -48,6 +57,9 @@ def test_pairwise_distances():
     assert_equal(S.shape[0], X.shape[0])
     assert_equal(S.shape[1], Y.shape[0])
     assert_array_almost_equal(S, S2)
+    # manhattan does not support sparse matrices atm.
+    assert_raises(ValueError, pairwise_distances, csr_matrix(X),
+                  metric="manhattan")
     # Test cosine as a string metric versus cosine callable
     S = pairwise_distances(X, Y, metric="cosine")
     S2 = pairwise_distances(X, Y, metric=cosine)
@@ -68,6 +80,11 @@ def test_pairwise_distances():
     kwds = {"p": 2.0}
     S = pairwise_distances(X, Y, metric="minkowski", **kwds)
     S2 = pairwise_distances(X, Y, metric=minkowski, **kwds)
+    assert_array_almost_equal(S, S2)
+    # same with Y = None
+    kwds = {"p": 2.0}
+    S = pairwise_distances(X, metric="minkowski", **kwds)
+    S2 = pairwise_distances(X, metric=minkowski, **kwds)
     assert_array_almost_equal(S, S2)
     # Test that scipy distance metrics throw an error if sparse matrix given
     assert_raises(TypeError, pairwise_distances, X_sparse, metric="minkowski")
@@ -92,11 +109,18 @@ def test_pairwise_parallel():
 
 def test_pairwise_kernels():
     """ Test the pairwise_kernels helper function. """
+
+    def callable_rbf_kernel(x, y, **kwds):
+        """ Callable version of pairwise.rbf_kernel. """
+        K = rbf_kernel(np.atleast_2d(x), np.atleast_2d(y), **kwds)
+        return K
+
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     Y = rng.random_sample((2, 4))
     # Test with all metrics that should be in pairwise_kernel_functions.
-    test_metrics = ["rbf", "sigmoid", "polynomial", "linear"]
+    test_metrics = ["rbf", "sigmoid", "polynomial", "linear", "chi2",
+                    "additive_chi2"]
     for metric in test_metrics:
         function = pairwise_kernel_functions[metric]
         # Test with Y=None
@@ -112,6 +136,9 @@ def test_pairwise_kernels():
         Y_tuples = tuple([tuple([v for v in row]) for row in Y])
         K2 = pairwise_kernels(X_tuples, Y_tuples, metric=metric)
         assert_array_almost_equal(K1, K2)
+        if metric in ["chi2", "additive_chi2"]:
+            # these don't support sparse matrices yet
+            continue
         # Test with sparse X and Y
         X_sparse = csr_matrix(X)
         Y_sparse = csr_matrix(Y)
@@ -120,9 +147,14 @@ def test_pairwise_kernels():
     # Test with a callable function, with given keywords.
     metric = callable_rbf_kernel
     kwds = {}
-    kwds['gamma'] = 0.
+    kwds['gamma'] = 0.1
     K1 = pairwise_kernels(X, Y=Y, metric=metric, **kwds)
     K2 = rbf_kernel(X, Y=Y, **kwds)
+    assert_array_almost_equal(K1, K2)
+
+    # callable function, X=Y
+    K1 = pairwise_kernels(X, Y=X, metric=metric, **kwds)
+    K2 = rbf_kernel(X, Y=X, **kwds)
     assert_array_almost_equal(K1, K2)
 
 
@@ -138,12 +170,6 @@ def test_pairwise_kernels_filter_param():
     assert_raises(TypeError, pairwise_kernels, X, Y, "rbf", **params)
 
 
-def callable_rbf_kernel(x, y, **kwds):
-    """ Callable version of pairwise.rbf_kernel. """
-    K = rbf_kernel(np.atleast_2d(x), np.atleast_2d(y), **kwds)
-    return K
-
-
 def test_euclidean_distances():
     """ Check the pairwise Euclidean distances computation"""
     X = [[0]]
@@ -157,12 +183,65 @@ def test_euclidean_distances():
     assert_array_almost_equal(D, [[1., 2.]])
 
 
+def test_chi_square_kernel():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+    Y = rng.random_sample((10, 4))
+    K_add = additive_chi2_kernel(X, Y)
+    gamma = 0.1
+    K = chi2_kernel(X, Y, gamma=gamma)
+    assert_equal(K.dtype, np.float)
+    for i, x in enumerate(X):
+        for j, y in enumerate(Y):
+            chi2 = -np.sum((x - y) ** 2 / (x + y))
+            chi2_exp = np.exp(gamma * chi2)
+            assert_almost_equal(K_add[i, j], chi2)
+            assert_almost_equal(K[i, j], chi2_exp)
+
+    # check diagonal is ones for data with itself
+    K = chi2_kernel(Y)
+    assert_array_equal(np.diag(K), 1)
+    # check off-diagonal is < 1 but > 0:
+    assert_true(np.all(K > 0))
+    assert_true(np.all(K - np.diag(np.diag(K)) < 1))
+    # check that float32 is preserved
+    X = rng.random_sample((5, 4)).astype(np.float32)
+    Y = rng.random_sample((10, 4)).astype(np.float32)
+    K = chi2_kernel(X, Y)
+    assert_equal(K.dtype, np.float32)
+
+    # check integer type gets converted,
+    # check that zeros are handled
+    X = rng.random_sample((10, 4)).astype(np.int32)
+    K = chi2_kernel(X, X)
+    assert_true(np.isfinite(K).all())
+    assert_equal(K.dtype, np.float)
+
+    # check that kernel of similar things is greater than dissimilar ones
+    X = [[.3, .7], [1., 0]]
+    Y = [[0,   1], [.9, .1]]
+    K = chi2_kernel(X, Y)
+    assert_greater(K[0, 0], K[0, 1])
+    assert_greater(K[1, 1], K[1, 0])
+
+    # test negative input
+    assert_raises(ValueError, chi2_kernel, [[0, -1]])
+    assert_raises(ValueError, chi2_kernel, [[0, -1]], [[-1, -1]])
+    assert_raises(ValueError, chi2_kernel, [[0, 1]], [[-1, -1]])
+
+    # different n_features in X and Y
+    assert_raises(ValueError, chi2_kernel, [[0, 1]], [[.2, .2, .6]])
+
+    # sparse matrices
+    assert_raises(ValueError, chi2_kernel, csr_matrix(X), csr_matrix(Y))
+
+
 def test_kernel_symmetry():
     """ Valid kernels should be symmetric"""
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     for kernel in (linear_kernel, polynomial_kernel, rbf_kernel,
-                   sigmoid_kernel):
+                   sigmoid_kernel, cosine_similarity):
         K = kernel(X, X)
         assert_array_almost_equal(K, K.T, 15)
 
@@ -172,7 +251,7 @@ def test_kernel_sparse():
     X = rng.random_sample((5, 4))
     X_sparse = csr_matrix(X)
     for kernel in (linear_kernel, polynomial_kernel, rbf_kernel,
-                   sigmoid_kernel):
+                   sigmoid_kernel, cosine_similarity):
         K = kernel(X, X)
         K2 = kernel(X_sparse, X_sparse)
         assert_array_almost_equal(K, K2)
@@ -194,13 +273,34 @@ def test_rbf_kernel():
     assert_array_almost_equal(K.flat[::6], np.ones(5))
 
 
+def test_cosine_similarity():
+    """ Test the cosine_similarity. """
+
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((5, 4))
+    Y = rng.random_sample((3, 4))
+    Xcsr = csr_matrix(X)
+    Ycsr = csr_matrix(Y)
+
+    for X_, Y_ in ((X, None), (X, Y),
+                   (Xcsr, None), (Xcsr, Ycsr)):
+        # Test that the cosine is kernel is equal to a linear kernel when data
+        # has been previously normalized by L2-norm.
+        K1 = pairwise_kernels(X_, Y=Y_, metric="cosine")
+        X_ = normalize(X_)
+        if Y_ is not None:
+            Y_ = normalize(Y_)
+        K2 = pairwise_kernels(X_, Y=Y_, metric="linear")
+        assert_array_almost_equal(K1, K2)
+
+
 def test_check_dense_matrices():
     """ Ensure that pairwise array check works for dense matrices."""
     # Check that if XB is None, XB is returned as reference to XA
     XA = np.resize(np.arange(40), (5, 8))
     XA_checked, XB_checked = check_pairwise_arrays(XA, None)
     assert_true(XA_checked is XB_checked)
-    assert_equal(XA, XA_checked)
+    assert_array_equal(XA, XA_checked)
 
 
 def test_check_XB_returned():
@@ -210,8 +310,8 @@ def test_check_XB_returned():
     XA = np.resize(np.arange(40), (5, 8))
     XB = np.resize(np.arange(32), (4, 8))
     XA_checked, XB_checked = check_pairwise_arrays(XA, XB)
-    assert_equal(XA, XA_checked)
-    assert_equal(XB, XB_checked)
+    assert_array_equal(XA, XA_checked)
+    assert_array_equal(XB, XB_checked)
 
 
 def test_check_different_dimensions():
@@ -262,5 +362,5 @@ def test_check_tuple_input():
     XB = rng.random_sample((5, 4))
     XB_tuples = tuplify(XB)
     XA_checked, XB_checked = check_pairwise_arrays(XA_tuples, XB_tuples)
-    assert_equal(XA_tuples, XA_checked)
-    assert_equal(XB_tuples, XB_checked)
+    assert_array_equal(XA_tuples, XA_checked)
+    assert_array_equal(XB_tuples, XB_checked)

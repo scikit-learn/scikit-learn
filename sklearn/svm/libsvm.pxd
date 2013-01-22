@@ -24,6 +24,7 @@ cdef extern from "svm.h":
         double p	# for EPSILON_SVR
         int shrinking	# use the shrinking heuristics
         int probability # do probability estimates
+        int max_iter  # ceiling on Solver runtime
 
     cdef struct svm_problem:
         int l
@@ -32,7 +33,7 @@ cdef extern from "svm.h":
         double *W # instance weights
 
     char *svm_check_parameter(svm_problem *, svm_parameter *)
-    svm_model *svm_train(svm_problem *, svm_parameter *)
+    svm_model *svm_train(svm_problem *, svm_parameter *, int *)
     void svm_free_and_destroy_model(svm_model** model_ptr_ptr)
     void svm_cross_validation(svm_problem *, svm_parameter *, int nr_fold, double *target)
 
@@ -42,7 +43,7 @@ cdef extern from "libsvm_helper.c":
     svm_node **dense_to_sparse (char *, np.npy_intp *)
     void set_parameter (svm_parameter *, int , int , int , double, double ,
                                   double , double , double , double,
-                                  double, int, int, int, char *, char *)
+                                  double, int, int, int, char *, char *, int)
     void set_problem (svm_problem *, char *, char *, char *, np.npy_intp *, int)
 
     svm_model *set_model (svm_parameter *, int, char *, np.npy_intp *,

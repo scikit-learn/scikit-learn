@@ -1,12 +1,11 @@
 import numpy as np
 
-from ..base import ClassifierMixin
+from .base import LinearClassifierMixin
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..svm.base import BaseLibLinear
-from ..svm.liblinear import csr_predict_prob_wrap, predict_prob_wrap
 
 
-class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
+class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin):
     """Logistic Regression (aka logit, MaxEnt) classifier.
 
     In the multiclass case, the training algorithm uses a one-vs.-all (OvA)
@@ -20,7 +19,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
     Parameters
     ----------
     penalty : string, 'l1' or 'l2'
-        Used to specify the norm used in the penalization
+        Used to specify the norm used in the penalization.
 
     dual : boolean
         Dual or primal formulation. Dual formulation is only
@@ -33,7 +32,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
 
     fit_intercept : bool, default: True
         Specifies if a constant (a.k.a. bias or intercept) should be
-        added the decision function
+        added the decision function.
 
     intercept_scaling : float, default: 1
         when self.fit_intercept is True, instance vector x becomes
@@ -54,7 +53,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
         class frequencies.
 
     tol: float, optional
-        tolerance for stopping criteria
+        Tolerance for stopping criteria.
 
     Attributes
     ----------
@@ -65,8 +64,8 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
         follows the internal memory layout of liblinear.
 
     `intercept_` : array, shape = [n_classes-1]
-        intercept (a.k.a. bias) added to the decision function.
-        It is available only when parameter intercept is set to True
+        Intercept (a.k.a. bias) added to the decision function.
+        It is available only when parameter intercept is set to True.
 
     See also
     --------
@@ -91,11 +90,13 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
-            fit_intercept=True, intercept_scaling=1, class_weight=None):
+                 fit_intercept=True, intercept_scaling=1, class_weight=None,
+                 random_state=None):
 
-        super(LogisticRegression, self).__init__(penalty=penalty, dual=dual,
-                loss='lr', tol=tol, C=C, fit_intercept=fit_intercept,
-                intercept_scaling=intercept_scaling, class_weight=class_weight)
+        super(LogisticRegression, self).__init__(
+            penalty=penalty, dual=dual, loss='lr', tol=tol, C=C,
+            fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
+            class_weight=class_weight, random_state=None)
 
     def predict_proba(self, X):
         """Probability estimates.
@@ -110,23 +111,24 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
         Returns
         -------
         T : array-like, shape = [n_samples, n_classes]
-            Returns the probability of the sample for each class in
-            the model, where classes are ordered by arithmetical
-            order.
+            Returns the probability of the sample for each class in the model,
+            where classes are ordered as they are in ``self.classes_``.
         """
-        X = self._validate_for_predict(X)
-
-        C = 0.0  # C is not useful here
-
-        prob_wrap = (csr_predict_prob_wrap if self._sparse else
-                predict_prob_wrap)
-        probas = prob_wrap(X, self.raw_coef_, self._get_solver_type(),
-                           self.tol, C, self.class_weight_label_,
-                           self.class_weight_, self.label_, self._get_bias())
-        return probas[:, np.argsort(self.label_)]
+        # 1. / (1. + np.exp(-scores)), computed in-place
+        prob = self.decision_function(X)
+        prob *= -1
+        np.exp(prob, prob)
+        prob += 1
+        np.reciprocal(prob, prob)
+        if len(prob.shape) == 1:
+            return np.vstack([1 - prob, prob]).T
+        else:
+            # OvR, not softmax, like Liblinear's predict_probability
+            prob /= prob.sum(axis=1).reshape((prob.shape[0], -1))
+            return prob
 
     def predict_log_proba(self, X):
-        """Log of Probability estimates.
+        """Log of probability estimates.
 
         The returned estimates for all classes are ordered by the
         label of classes.
@@ -138,8 +140,7 @@ class LogisticRegression(BaseLibLinear, ClassifierMixin, SelectorMixin):
         Returns
         -------
         T : array-like, shape = [n_samples, n_classes]
-            Returns the log-probabilities of the sample for each class in
-            the model, where classes are ordered by arithmetical
-            order.
+            Returns the log-probability of the sample for each class in the
+            model, where classes are ordered as they are in ``self.classes_``.
         """
         return np.log(self.predict_proba(X))

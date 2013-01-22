@@ -36,8 +36,8 @@ t0 = time()
 dense_lasso.fit(X, y)
 print "Dense Lasso done in %fs" % (time() - t0)
 
-print "Distance between coefficients : %s" % linalg.norm(sparse_lasso.coef_
-                                                        - dense_lasso.coef_)
+print("Distance between coefficients : %s"
+      % linalg.norm(sparse_lasso.coef_ - dense_lasso.coef_))
 
 ###############################################################################
 # The two Lasso implementations on Sparse data
@@ -62,5 +62,5 @@ t0 = time()
 dense_lasso.fit(Xs.todense(), y)
 print "Dense Lasso done in %fs" % (time() - t0)
 
-print "Distance between coefficients : %s" % linalg.norm(sparse_lasso.coef_
-                                                        - dense_lasso.coef_)
+print("Distance between coefficients : %s"
+      % linalg.norm(sparse_lasso.coef_ - dense_lasso.coef_))
