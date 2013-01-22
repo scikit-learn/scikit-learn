@@ -994,8 +994,8 @@ class SGDRegressor(BaseSGDRegressor, SelectorMixin):
     >>> clf.fit(X, y)
     SGDRegressor(alpha=0.0001, epsilon=0.1, eta0=0.01, fit_intercept=True,
            l1_ratio=0.15, learning_rate='invscaling', loss='squared_loss',
-           n_iter=5, p=None, penalty='l2', power_t=0.25, random_state=None,
-           rho=None, shuffle=False, verbose=0, warm_start=False)
+           n_iter=5, penalty='l2', power_t=0.25, random_state=None, rho=None,
+           shuffle=False, verbose=0, warm_start=False)
 
     See also
     --------
