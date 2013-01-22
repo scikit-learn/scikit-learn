@@ -99,6 +99,11 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
+    .. warning::
+
+        If it is found that two neighbors, neighbor `k+1` and `k`,
+        have the same distance, the results will depend on the data order.
+
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
