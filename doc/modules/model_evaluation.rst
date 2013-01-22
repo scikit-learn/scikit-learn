@@ -87,6 +87,7 @@ defined as
 where :math:`1(x)` is the `indicator function
 <http://en.wikipedia.org/wiki/Indicator_function>`_.
 
+  >>> import numpy as np
   >>> from sklearn.metrics import accuracy_score
   >>> y_pred = [0, 2, 1, 3]
   >>> y_true = [0, 1, 2, 3]
