@@ -721,6 +721,12 @@ def test_unique_labels():
                                                [0, 0, 0]])),
                        np.arange(3))
 
+    # Several arrays passed
+    assert_array_equal(unique_labels([4, 0, 2], xrange(5)),
+                       np.arange(5))
+    assert_array_equal(unique_labels((0, 1, 2), (0,), (2, 1)),
+                       np.arange(3))
+
 
 def test_multilabel_representation_invariance():
     # Generate some data
