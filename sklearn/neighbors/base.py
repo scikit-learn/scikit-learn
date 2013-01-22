@@ -26,12 +26,6 @@ class NeighborsWarning(UserWarning):
 warnings.simplefilter("always", NeighborsWarning)
 
 
-def warn_equidistant():
-    msg = ("kneighbors: neighbor k+1 and neighbor k have the same "
-           "distance: results will be dependent on data order.")
-    warnings.warn(msg, NeighborsWarning, stacklevel=3)
-
-
 def _check_weights(weights):
     """Check to make sure weights are valid"""
     if weights in (None, 'uniform', 'distance'):
