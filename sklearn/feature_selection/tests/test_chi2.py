@@ -4,10 +4,12 @@ specifically to work with sparse matrices.
 """
 
 import numpy as np
-from numpy.testing import assert_equal
 from scipy.sparse import coo_matrix, csr_matrix
 
 from .. import SelectKBest, chi2
+
+from nose.tools import assert_raises
+from numpy.testing import assert_equal
 
 # Feature 0 is highly informative for class 1;
 # feature 1 is the same everywhere;
@@ -55,3 +57,10 @@ def test_chi2_coo():
     Xcoo = coo_matrix(X)
     mkchi2(k=2).fit_transform(Xcoo, y)
     # if we got here without an exception, we're safe
+
+
+def test_chi2_negative():
+    """Check for proper error on negative numbers in the input X."""
+    X, y = [[0, 1], [-1e-20, 1]], [0, 1]
+    for X in (X, np.array(X), csr_matrix(X)):
+        assert_raises(ValueError, chi2, X, y)

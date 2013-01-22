@@ -195,6 +195,8 @@ from libc cimport stdlib
 
 from ..utils import array2d
 
+np.import_array()
+
 ######################################################################
 # global definitions
 #

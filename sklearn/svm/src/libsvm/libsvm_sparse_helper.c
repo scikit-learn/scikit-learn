@@ -44,7 +44,7 @@ struct svm_csr_node **csr_to_libsvm (double *values, int* indices, int* indptr, 
 struct svm_parameter * set_parameter(int svm_type, int kernel_type, int degree,
 		double gamma, double coef0, double nu, double cache_size, double C,
 		double eps, double p, int shrinking, int probability, int nr_weight,
-		char *weight_label, char *weight)
+		char *weight_label, char *weight, int max_iter)
 {
     struct svm_parameter *param;
     param = malloc(sizeof(struct svm_parameter));
@@ -64,6 +64,7 @@ struct svm_parameter * set_parameter(int svm_type, int kernel_type, int degree,
     param->weight_label = (int *) weight_label;
     param->weight = (double *) weight;
     param->gamma = gamma;
+    param->max_iter = max_iter;
     return param;
 }
 
@@ -406,11 +407,6 @@ int free_model_SV(struct svm_csr_model *model)
 }
 
 
-/* rely on built-in facility to control verbose output
- * in the versions of libsvm >= 2.89
- */
-#if LIBSVM_VERSION && LIBSVM_VERSION >= 289
-
 /* borrowed from original libsvm code */
 static void print_null(const char *s) {}
 
@@ -423,14 +419,7 @@ static void print_string_stdout(const char *s)
 /* provide convenience wrapper */
 void set_verbosity(int verbosity_flag){
 	if (verbosity_flag)
-# if LIBSVM_VERSION < 291
-		svm_print_string = &print_string_stdout;
-	else
-		svm_print_string = &print_null;
-# else
 		svm_set_print_string_function(&print_string_stdout);
 	else
 		svm_set_print_string_function(&print_null);
-# endif
 }
-#endif

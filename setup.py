@@ -33,22 +33,26 @@ DOWNLOAD_URL = 'http://sourceforge.net/projects/scikit-learn/files/'
 import sklearn
 VERSION = sklearn.__version__
 
-from numpy.distutils.core import setup
-
 ###############################################################################
 # Optional setuptools features
+# We need to import setuptools early, if we want setuptools features,
+# as it monkey-patches the 'setup' function
 
 # For some commands, use setuptools
 if len(set(('develop', 'release', 'bdist_egg', 'bdist_rpm',
            'bdist_wininst', 'install_egg_info', 'build_sphinx',
            'egg_info', 'easy_install', 'upload',
             )).intersection(sys.argv)) > 0:
+    import setuptools
     extra_setuptools_args = dict(
-            zip_safe=False, # the package can run out of an .egg file
+            zip_safe=False,  # the package can run out of an .egg file
             include_package_data=True,
         )
 else:
     extra_setuptools_args = dict()
+
+###############################################################################
+from numpy.distutils.core import setup
 
 def configuration(parent_package='', top_path=None):
     if os.path.exists('MANIFEST'):
@@ -94,12 +98,27 @@ if __name__ == "__main__":
         _old_stdout = sys.stdout
         try:
             sys.stdout = StringIO()  # supress noisy output
-            res = lib2to3.main.main("lib2to3.fixes", ['-x', 'import', '-w', local_path])
+            res = lib2to3.main.main("lib2to3.fixes",
+                                    ['-x', 'import', '-w', local_path])
         finally:
             sys.stdout = _old_stdout
 
         if res != 0:
             raise Exception('2to3 failed, exiting ...')
+
+        # Ugly hack to make pip work with Python 3, see
+        # http://projects.scipy.org/numpy/ticket/1857.
+        # Explanation: pip messes with __file__ which interacts badly with the
+        # change in directory due to the 2to3 conversion.  Therefore we restore
+        # __file__ to what it would have been otherwise.
+        global __file__
+        __file__ = os.path.join(os.curdir, os.path.basename(__file__))
+        if '--egg-base' in sys.argv: 
+            # Change pip-egg-info entry to absolute path, so pip can find it 
+            # after changing directory. 
+            idx = sys.argv.index('--egg-base')
+            if sys.argv[idx + 1] == 'pip-egg-info': 
+                sys.argv[idx + 1] = os.path.join(old_path, 'pip-egg-info') 
 
     os.chdir(local_path)
     sys.path.insert(0, local_path)

@@ -12,7 +12,7 @@ import numpy as np
 
 from .base import BaseEstimator, ClassifierMixin
 from .utils.fixes import unique
-from .utils import check_arrays
+from .utils import check_arrays, array2d
 
 __all__ = ['QDA']
 
@@ -34,12 +34,23 @@ class QDA(BaseEstimator, ClassifierMixin):
 
     Attributes
     ----------
-    `means_` : array-like, shape = [n_classes, n_features]
-        Class means
-    `priors_` : array-like, shape = [n_classes]
-        Class priors (sum to 1)
     `covariances_` : list of array-like, shape = [n_features, n_features]
-        Covariance matrices of each class
+        Covariance matrices of each class.
+
+    `means_` : array-like, shape = [n_classes, n_features]
+        Class means.
+
+    `priors_` : array-like, shape = [n_classes]
+        Class priors (sum to 1).
+
+    `rotations_` : list of arrays
+        For each class an array of shape [n_samples, n_samples], the
+        rotation of the Gaussian distribution, i.e. its principal axis.
+
+    `scalings_` : array-like, shape = [n_classes, n_features]
+        Contains the scaling of the Gaussian
+        distributions along the principal axes for each
+        class, i.e. the variance in the rotated coordinate system.
 
     Examples
     --------
@@ -70,8 +81,10 @@ class QDA(BaseEstimator, ClassifierMixin):
         X : array-like, shape = [n_samples, n_features]
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
+
         y : array, shape = [n_samples]
             Target values (integers)
+
         store_covariances : boolean
             If True the covariance matrices are computed and stored in the
             `self.covariances_` attribute.
@@ -112,28 +125,42 @@ class QDA(BaseEstimator, ClassifierMixin):
         if store_covariances:
             self.covariances_ = cov
         self.means_ = np.asarray(means)
-        self.scalings = np.asarray(scalings)
-        self.rotations = rotations
+        self.scalings_ = np.asarray(scalings)
+        self.rotations_ = rotations
         return self
 
     @property
-    def classes(self):
+    def classes(self):  # pragma: no cover
         warnings.warn("QDA.classes is deprecated and will be removed in 0.14. "
                       "Use QDA.classes_ instead.", DeprecationWarning,
                       stacklevel=2)
         return self.classes_
 
+    @property
+    def scalings(self):  # pragma: no cover
+        warnings.warn("QDA.scalings is deprecated and will be removed in 0.15."
+                      " Use QDA.scalings_ instead.", DeprecationWarning,
+                      stacklevel=2)
+        return self.scalings_
+
+    @property
+    def rotations(self):  # pragma: no cover
+        warnings.warn("QDA.rotations is deprecated and will be removed in "
+                      "0.15. Use QDA.rotations_ instead.", DeprecationWarning,
+                      stacklevel=2)
+        return self.rotations_
+
     def _decision_function(self, X):
-        X = np.asarray(X)
+        X = array2d(X)
         norm2 = []
         for i in range(len(self.classes_)):
-            R = self.rotations[i]
-            S = self.scalings[i]
+            R = self.rotations_[i]
+            S = self.scalings_[i]
             Xm = X - self.means_[i]
             X2 = np.dot(Xm, R * (S ** (-0.5)))
             norm2.append(np.sum(X2 ** 2, 1))
         norm2 = np.array(norm2).T   # shape = [len(X), n_classes]
-        return (-0.5 * (norm2 + np.sum(np.log(self.scalings), 1))
+        return (-0.5 * (norm2 + np.sum(np.log(self.scalings_), 1))
                 + np.log(self.priors_))
 
     def decision_function(self, X):

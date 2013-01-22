@@ -29,7 +29,9 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
         new base estimator. If none are given, default parameters are used.
     """
 
-    def __init__(self, base_estimator, n_estimators=10, estimator_params=[]):
+    def __init__(self, base_estimator, n_estimators=10,
+                 estimator_params=tuple()):
+
         # Check parameters
         if not isinstance(base_estimator, BaseEstimator):
             raise TypeError("estimator must be a subclass of BaseEstimator")
@@ -68,3 +70,7 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
     def __getitem__(self, index):
         """Returns the index'th estimator in the ensemble."""
         return self.estimators_[index]
+
+    def __iter__(self):
+        """Returns iterator over estimators in the ensemble."""
+        return iter(self.estimators_)

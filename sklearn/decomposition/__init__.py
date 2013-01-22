@@ -9,9 +9,10 @@ from .pca import PCA, RandomizedPCA, ProbabilisticPCA
 from .kernel_pca import KernelPCA
 from .sparse_pca import SparsePCA, MiniBatchSparsePCA
 from .fastica_ import FastICA, fastica
-from .dict_learning import dict_learning, dict_learning_online, sparse_encode,\
-                           DictionaryLearning, MiniBatchDictionaryLearning,\
-                           SparseCoder
+from .dict_learning import (dict_learning, dict_learning_online, sparse_encode,
+                            DictionaryLearning, MiniBatchDictionaryLearning,
+                            SparseCoder)
+from .factor_analysis import FactorAnalysis
 
 __all__ = ['DictionaryLearning',
            'FastICA',
@@ -28,4 +29,5 @@ __all__ = ['DictionaryLearning',
            'dict_learning',
            'dict_learning_online',
            'fastica',
-           'sparse_encode']
+           'sparse_encode',
+           'FactorAnalysis']

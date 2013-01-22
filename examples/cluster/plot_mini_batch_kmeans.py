@@ -79,7 +79,7 @@ for k, col in zip(range(n_clusters), colors):
     ax.plot(X[my_members, 0], X[my_members, 1], 'w',
             markerfacecolor=col, marker='.')
     ax.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
-                                    markeredgecolor='k', markersize=6)
+            markeredgecolor='k', markersize=6)
 ax.set_title('KMeans')
 ax.set_xticks(())
 ax.set_yticks(())
@@ -94,7 +94,7 @@ for k, col in zip(range(n_clusters), colors):
     ax.plot(X[my_members, 0], X[my_members, 1], 'w',
             markerfacecolor=col, marker='.')
     ax.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
-                                    markeredgecolor='k', markersize=6)
+            markeredgecolor='k', markersize=6)
 ax.set_title('MiniBatchKMeans')
 ax.set_xticks(())
 ax.set_yticks(())

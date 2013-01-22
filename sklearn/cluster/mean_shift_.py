@@ -18,23 +18,23 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
 
     Parameters
     ----------
-    X: array [n_samples, n_features]
-        Input points
+    X : array [n_samples, n_features]
+        Input points.
 
-    quantile: float, default 0.3
+    quantile : float, default 0.3
         should be between [0, 1]
-        0.5 means that the median is all pairwise distances is used
+        0.5 means that the median is all pairwise distances is used.
 
-    n_samples: int
+    n_samples : int
         The number of samples to use. If None, all samples are used.
 
-    random_state: int or RandomState
+    random_state : int or RandomState
         Pseudo number generator state used for random sampling.
 
     Returns
     -------
-    bandwidth: float
-        The bandwidth parameter
+    bandwidth : float
+        The bandwidth parameter.
     """
     random_state = check_random_state(random_state)
     if n_samples is not None:
@@ -57,27 +57,27 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     Parameters
     ----------
 
-    X : array [n_samples, n_features]
-        Input points
+    X : array-like shape=[n_samples, n_features]
+        Input data.
 
     bandwidth : float, optional
-        kernel bandwidth
+        Kernel bandwidth.
         If bandwidth is not defined, it is set using
-        a heuristic given by the median of all pairwise distances
+        a heuristic given by the median of all pairwise distances.
 
-    seeds: array [n_seeds, n_features]
-        point used as initial kernel locations
+    seeds : array [n_seeds, n_features]
+        Point used as initial kernel locations.
 
-    bin_seeding: boolean
+    bin_seeding : boolean
         If true, initial kernel locations are not locations of all
         points, but rather the location of the discretized version of
         points, where points are binned onto a grid whose coarseness
         corresponds to the bandwidth. Setting this option to True will speed
         up the algorithm because fewer seeds will be initialized.
         default value: False
-        Ignored if seeds argument is not None
+        Ignored if seeds argument is not None.
 
-    min_bin_freq: int, optional
+    min_bin_freq : int, optional
        To speed up the algorithm, accept only those bins with at least
        min_bin_freq points as seeds. If not defined, set to 1.
 
@@ -85,10 +85,10 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     -------
 
     cluster_centers : array [n_clusters, n_features]
-        Coordinates of cluster centers
+        Coordinates of cluster centers.
 
     labels : array [n_samples]
-        cluster labels for each point
+        Cluster labels for each point.
 
     Notes
     -----
@@ -120,8 +120,8 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
             my_old_mean = my_mean  # save the old mean
             my_mean = np.mean(points_within, axis=0)
             # If converged or at max_iterations, addS the cluster
-            if extmath.norm(my_mean - my_old_mean) < stop_thresh or \
-                   completed_iterations == max_iterations:
+            if (extmath.norm(my_mean - my_old_mean) < stop_thresh or
+                    completed_iterations == max_iterations):
                 center_intensity_dict[tuple(my_mean)] = len(points_within)
                 break
             completed_iterations += 1
@@ -166,24 +166,24 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     Parameters
     ----------
 
-    X : array [n_samples, n_features]
-        Input points, the same points that will be used in mean_shift
+    X : array-like, shape=[n_samples, n_features]
+        Input points, the same points that will be used in mean_shift.
 
-    bin_size: float
+    bin_size : float
         Controls the coarseness of the binning. Smaller values lead
         to more seeding (which is computationally more expensive). If you're
         not sure how to set this, set it to the value of the bandwidth used
-        in clustering.mean_shift
+        in clustering.mean_shift.
 
-    min_bin_freq: integer, default 1
+    min_bin_freq : integer, default 1
         Only bins with at least min_bin_freq will be selected as seeds.
         Raising this value decreases the number of seeds found, which
         makes mean_shift computationally cheaper.
 
     Returns
     -------
-    bin_seeds : array [n_samples, n_features]
-        points used as initial kernel posistions in clustering.mean_shift
+    bin_seeds : array-like, shape=[n_samples, n_features]
+        Points used as initial kernel posistions in clustering.mean_shift.
     """
 
     # Bin points
@@ -193,7 +193,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
         bin_sizes[tuple(binned_point)] += 1
 
     # Select only those bins as seeds which have enough members
-    bin_seeds = np.array([point for point, freq in bin_sizes.iteritems() if \
+    bin_seeds = np.array([point for point, freq in bin_sizes.iteritems() if
                           freq >= min_bin_freq], dtype=np.float32)
     bin_seeds = bin_seeds * bin_size
     return bin_seeds
@@ -204,18 +204,18 @@ class MeanShift(BaseEstimator, ClusterMixin):
 
     Parameters
     ----------
-    bandwidth: float, optional
+    bandwidth : float, optional
         Bandwith used in the RBF kernel
         If not set, the bandwidth is estimated.
-        See clustering.estimate_bandwidth
+        See clustering.estimate_bandwidth.
 
-    seeds: array [n_samples, n_features], optional
+    seeds : array [n_samples, n_features], optional
         Seeds used to initialize kernels. If not set,
         the seeds are calculated by clustering.get_bin_seeds
         with bandwidth as the grid size and default values for
         other parameters.
 
-    cluster_all: boolean, default True
+    cluster_all : boolean, default True
         If true, then all points are clustered, even those orphans that are
         not within any kernel. Orphans are assigned to the nearest kernel.
         If false, then orphans are given cluster label -1.
@@ -223,10 +223,10 @@ class MeanShift(BaseEstimator, ClusterMixin):
     Attributes
     ----------
     `cluster_centers_` : array, [n_clusters, n_features]
-        Coordinates of cluster centers
+        Coordinates of cluster centers.
 
     `labels_` :
-        Labels of each point
+        Labels of each point.
 
     Notes
     -----
@@ -267,13 +267,11 @@ class MeanShift(BaseEstimator, ClusterMixin):
 
         Parameters
         -----------
-        X : array [n_samples, n_features]
-            Input points
+        X : array-like, shape=[n_samples, n_features]
+            Input points.
         """
         self.cluster_centers_, self.labels_ = \
-                               mean_shift(X,
-                                          bandwidth=self.bandwidth,
-                                          seeds=self.seeds,
-                                          bin_seeding=self.bin_seeding,
-                                          cluster_all=self.cluster_all)
+            mean_shift(X, bandwidth=self.bandwidth, seeds=self.seeds,
+                       bin_seeding=self.bin_seeding,
+                       cluster_all=self.cluster_all)
         return self

@@ -5,6 +5,8 @@ cimport cython
 cimport numpy as np
 import numpy as np
 
+np.import_array()
+
 
 cdef class ArrayBuilder(object):
     """Helper class to incrementally build a 1-d numpy.ndarray"""

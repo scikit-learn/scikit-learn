@@ -7,21 +7,22 @@
 #
 # License: BSD Style.
 
+from libc.math cimport sqrt
 import numpy as np
-from ..utils.extmath import norm
+import scipy.sparse as sp
 cimport numpy as np
 cimport cython
+
+from ..utils.extmath import norm
+from ..utils.fixes import bincount
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INT
 
-
-cdef extern from "math.h":
-    double sqrt(double f)
-
-
 cdef extern from "cblas.h":
     double ddot "cblas_ddot"(int N, double *X, int incX, double *Y, int incY)
+
+np.import_array()
 
 
 @cython.boundscheck(False)
@@ -243,7 +244,7 @@ def csr_row_norm_l2(X, squared=True):
     """Get L2 norm of each row in CSR matrix X.
 
     TODO: refactor me in the sklearn.utils.sparsefuncs module once the CSR
-    sklearn.preprocessing.Scaler has been refactored as well.
+    sklearn.preprocessing.StandardScaler has been refactored as well.
     """
     cdef:
         unsigned int n_samples = X.shape[0]
@@ -270,3 +271,111 @@ def csr_row_norm_l2(X, squared=True):
 
         norms[i] = sum_
     return norms
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def _centers_dense(np.ndarray[DOUBLE, ndim=2] X,
+        np.ndarray[INT, ndim=1] labels, int n_clusters,
+        np.ndarray[DOUBLE, ndim=1] distances):
+    """M step of the K-means EM algorithm
+
+    Computation of cluster centers / means.
+
+    Parameters
+    ----------
+    X: array-like, shape (n_samples, n_features)
+
+    labels: array of integers, shape (n_samples)
+        Current label assignment
+
+    n_clusters: int
+        Number of desired clusters
+
+    distances: array-like, shape (n_samples)
+        Distance to closest cluster for each sample.
+
+    Returns
+    -------
+    centers: array, shape (n_clusters, n_features)
+        The resulting centers
+    """
+    ## TODO: add support for CSR input
+    cdef int n_samples, n_features
+    n_samples = X.shape[0]
+    n_features = X.shape[1]
+    cdef int i, j, c
+    cdef np.ndarray[DOUBLE, ndim=2] centers = np.zeros((n_clusters, n_features))
+    n_samples_in_cluster = bincount(labels, minlength=n_clusters)
+    empty_clusters = np.where(n_samples_in_cluster == 0)[0]
+    # maybe also relocate small clusters?
+
+    if len(empty_clusters):
+        # find points to reassign empty clusters to
+        far_from_centers = distances.argsort()[::-1]
+
+    for i, cluster_id in enumerate(empty_clusters):
+        # XXX two relocated clusters could be close to each other
+        new_center = X[far_from_centers[i]]
+        centers[cluster_id] = new_center
+        n_samples_in_cluster[cluster_id] = 1
+
+    for i in range(n_samples):
+        for j in range(n_features):
+            centers[labels[i], j] += X[i, j]
+
+    centers /= n_samples_in_cluster[:, np.newaxis]
+
+    return centers
+
+
+def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
+        np.ndarray[DOUBLE, ndim=1] distances):
+    """M step of the K-means EM algorithm
+
+    Computation of cluster centers / means.
+
+    Parameters
+    ----------
+    X: sparse matrix, shape (n_samples, n_features)
+
+    labels: array of integers, shape (n_samples)
+        Current label assignment
+
+    n_clusters: int
+        Number of desired clusters
+
+    distances: array-like, shape (n_samples)
+        Distance to closest cluster for each sample.
+
+    Returns
+    -------
+    centers: array, shape (n_clusters, n_features)
+        The resulting centers
+    """
+    ## TODO: add support for CSR input
+    n_features = X.shape[1]
+
+    centers = np.zeros((n_clusters, n_features), dtype=X.dtype)
+    n_samples_in_cluster = bincount(labels, minlength=n_clusters)
+    empty_clusters = np.where(n_samples_in_cluster == 0)[0]
+    # maybe also relocate small clusters?
+
+    if len(empty_clusters):
+        # find points to reassign empty clusters to
+        far_from_centers = distances.argsort()[::-1]
+
+    for i, cluster_id in enumerate(empty_clusters):
+        # XXX two relocated clusters could be close to each other
+        new_center = X[far_from_centers[i]]
+        new_center = new_center.todense().ravel()
+        centers[cluster_id] = new_center
+        n_samples_in_cluster[cluster_id] = 1
+
+    for label, sample in zip(labels, X):
+        centers[label, :] += sample.toarray().ravel()
+
+    centers /= n_samples_in_cluster[:, np.newaxis]
+
+    return centers

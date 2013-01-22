@@ -8,9 +8,13 @@ estimator, as a chain of transforms and estimators.
 #         Alexandre Gramfort
 # Licence: BSD
 
-from .base import BaseEstimator
+import numpy as np
+from scipy import sparse
 
-__all__ = ['Pipeline']
+from .base import BaseEstimator, TransformerMixin
+from .externals.joblib import Parallel, delayed
+
+__all__ = ['Pipeline', 'FeatureUnion']
 
 
 # One round of beers on me if someone finds out why the backslash
@@ -35,12 +39,6 @@ class Pipeline(BaseEstimator):
         List of (name, transform) tuples (implementing fit/transform) that are
         chained, in the order in which they are chained, with the last object
         an estimator.
-
-    Attributes
-    ----------
-    `steps` : list of (name, object)
-        List of the named object that compose the pipeline, in the \
-        order that they are applied on the data.
 
     Examples
     --------
@@ -84,15 +82,16 @@ class Pipeline(BaseEstimator):
         estimator = estimators[-1]
 
         for t in transforms:
-            if not (hasattr(t, "fit") or hasattr(t, "fit_transform")) \
-              or not hasattr(t, "transform"):
+            if (not (hasattr(t, "fit") or hasattr(t, "fit_transform")) or not
+                    hasattr(t, "transform")):
                 raise TypeError("All intermediate steps a the chain should "
-                        "be transforms and implement fit and transform"
-                        "'%s' (type %s) doesn't)" % (t, type(t)))
+                                "be transforms and implement fit and transform"
+                                "'%s' (type %s) doesn't)" % (t, type(t)))
 
         if not hasattr(estimator, "fit"):
             raise TypeError("Last step of chain should implement fit "
-                "'%s' (type %s) doesn't)" % (estimator, type(estimator)))
+                            "'%s' (type %s) doesn't)"
+                            % (estimator, type(estimator)))
 
     def get_params(self, deep=True):
         if not deep:
@@ -131,10 +130,12 @@ class Pipeline(BaseEstimator):
     def fit_transform(self, X, y=None, **fit_params):
         """Fit all the transforms one after the other and transform the
         data, then use fit_transform on transformed data using the final
-        estimator. Valid only if the final estimator implements
-        fit_transform."""
+        estimator."""
         Xt, fit_params = self._pre_transform(X, y, **fit_params)
-        return self.steps[-1][-1].fit_transform(Xt, y, **fit_params)
+        if hasattr(self.steps[-1][-1], 'fit_transform'):
+            return self.steps[-1][-1].fit_transform(Xt, y, **fit_params)
+        else:
+            return self.steps[-1][-1].fit(Xt, y, **fit_params).transform(Xt)
 
     def predict(self, X):
         """Applies transforms to the data, and the predict method of the
@@ -174,15 +175,15 @@ class Pipeline(BaseEstimator):
         final estimator. Valid only if the final estimator implements
         transform."""
         Xt = X
-        for name, transform in self.steps[:-1]:
+        for name, transform in self.steps:
             Xt = transform.transform(Xt)
-        return self.steps[-1][-1].transform(Xt)
+        return Xt
 
     def inverse_transform(self, X):
         if X.ndim == 1:
             X = X[None, :]
         Xt = X
-        for name, step in self.steps[:-1][::-1]:
+        for name, step in self.steps[::-1]:
             Xt = step.inverse_transform(Xt)
         return Xt
 
@@ -199,3 +200,144 @@ class Pipeline(BaseEstimator):
     def _pairwise(self):
         # check if first estimator expects pairwise input
         return getattr(self.steps[0][1], '_pairwise', False)
+
+
+def _fit_one_transformer(transformer, X, y):
+    transformer.fit(X, y)
+
+
+def _transform_one(transformer, name, X, transformer_weights):
+    if transformer_weights is not None and name in transformer_weights:
+        # if we have a weight for this transformer, muliply output
+        return transformer.transform(X) * transformer_weights[name]
+    return transformer.transform(X)
+
+
+def _fit_transform_one(transformer, name, X, y, transformer_weights,
+                       **fit_params):
+    if transformer_weights is not None and name in transformer_weights:
+        # if we have a weight for this transformer, muliply output
+        if hasattr(transformer, 'fit_transform'):
+            return (transformer.fit_transform(X, y, **fit_params)
+                    * transformer_weights[name])
+        else:
+            return (transformer.fit(X, y, **fit_params).transform(X)
+                    * transformer_weights[name])
+    if hasattr(transformer, 'fit_transform'):
+        return transformer.fit_transform(X, y, **fit_params)
+    else:
+        return transformer.fit(X, y, **fit_params).transform(X)
+
+
+class FeatureUnion(BaseEstimator, TransformerMixin):
+    """Concatenates results of multiple transformer objects.
+
+    This estimator applies a list of transformer objects in parallel to the
+    input data, then concatenates the results. This is useful to combine
+    several feature extraction mechanisms into a single transformer.
+
+    Parameters
+    ----------
+    transformers: list of (name, transformer)
+        List of transformer objects to be applied to the data.
+
+    n_jobs: int, optional
+        Number of jobs to run in parallel (default 1).
+
+    transformer_weights: dict, optional
+        Multiplicative weights for features per transformer.
+        Keys are transformer names, values the weights.
+
+    """
+    def __init__(self, transformer_list, n_jobs=1, transformer_weights=None):
+        self.transformer_list = transformer_list
+        self.n_jobs = n_jobs
+        self.transformer_weights = transformer_weights
+
+    def get_feature_names(self):
+        """Get feature names from all transformers.
+
+        Returns
+        -------
+        feature_names : list of strings
+            Names of the features produced by transform.
+        """
+        feature_names = []
+        for name, trans in self.transformer_list:
+            if not hasattr(trans, 'get_feature_names'):
+                raise AttributeError("Transformer %s does not provide"
+                                     " get_feature_names." % str(name))
+            feature_names.extend([name + "__" + f for f in
+                                  trans.get_feature_names()])
+        return feature_names
+
+    def fit(self, X, y=None):
+        """Fit all transformers using X.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            Input data, used to fit transformers.
+        """
+        Parallel(n_jobs=self.n_jobs)(
+            delayed(_fit_one_transformer)(trans, X, y)
+            for name, trans in self.transformer_list)
+        return self
+
+    def fit_transform(self, X, y=None, **fit_params):
+        """Fit all tranformers using X, transform the data and concatenate
+        results.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            Input data to be transformed.
+
+        Returns
+        -------
+        X_t : array-like or sparse matrix, shape (n_samples, sum_n_components)
+            hstack of results of transformers. sum_n_components is the
+            sum of n_components (output dimension) over transformers.
+        """
+        Xs = Parallel(n_jobs=self.n_jobs)(
+            delayed(_fit_transform_one)(trans, name, X, y,
+                                        self.transformer_weights, **fit_params)
+            for name, trans in self.transformer_list)
+        if any(sparse.issparse(f) for f in Xs):
+            Xs = sparse.hstack(Xs).tocsr()
+        else:
+            Xs = np.hstack(Xs)
+        return Xs
+
+    def transform(self, X):
+        """Transform X separately by each transformer, concatenate results.
+
+        Parameters
+        ----------
+        X : array-like or sparse matrix, shape (n_samples, n_features)
+            Input data to be transformed.
+
+        Returns
+        -------
+        X_t : array-like or sparse matrix, shape (n_samples, sum_n_components)
+            hstack of results of transformers. sum_n_components is the
+            sum of n_components (output dimension) over transformers.
+        """
+        Xs = Parallel(n_jobs=self.n_jobs)(
+            delayed(_transform_one)(trans, name, X, self.transformer_weights)
+            for name, trans in self.transformer_list)
+        if any(sparse.issparse(f) for f in Xs):
+            Xs = sparse.hstack(Xs).tocsr()
+        else:
+            Xs = np.hstack(Xs)
+        return Xs
+
+    def get_params(self, deep=True):
+        if not deep:
+            return super(FeatureUnion, self).get_params(deep=False)
+        else:
+            out = dict(self.transformer_list)
+            for name, trans in self.transformer_list:
+                for key, value in trans.get_params(deep=True).iteritems():
+                    out['%s__%s' % (name, key)] = value
+            return out

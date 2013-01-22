@@ -66,7 +66,7 @@ plot_rst_template = """
 .. literalinclude:: %(fname)s
     :lines: %(end_row)s-
 
-**Total running time of the example:** %(time_elapsed) 4i seconds
+**Total running time of the example:** %(time_elapsed) .2f seconds
     """
 
 # The following strings are used when we have several pictures: we use

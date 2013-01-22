@@ -12,6 +12,7 @@ from sklearn.metrics.cluster import expected_mutual_information
 from sklearn.metrics.cluster import contingency_matrix
 from sklearn.metrics.cluster import entropy
 
+from sklearn.utils.testing import assert_raise_message
 from nose.tools import assert_almost_equal
 from nose.tools import assert_equal
 from numpy.testing import assert_array_almost_equal
@@ -25,16 +26,6 @@ score_funcs = [
     adjusted_mutual_info_score,
     normalized_mutual_info_score,
 ]
-
-
-def assert_raise_message(exception, message_start, callable, *args, **kwargs):
-    """Helper function to test error messages in exceptions"""
-    try:
-        callable(*args, **kwargs)
-        raise AssertionError("Should have raised %r..." %
-                             exception(message_start))
-    except exception as e:
-        assert str(e).startswith(message_start)
 
 
 def test_error_messages_on_wrong_input():
@@ -168,3 +159,38 @@ def test_adjusted_mutual_info_score():
 def test_entropy():
     ent = entropy([0, 0, 42.])
     assert_almost_equal(ent, 0.6365141, 5)
+    assert_almost_equal(entropy([]), 1)
+
+
+def test_contingency_matrix():
+    labels_a = np.array([1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3])
+    labels_b = np.array([1, 1, 1, 1, 2, 1, 2, 2, 2, 2, 3, 1, 3, 3, 3, 2, 2])
+    C = contingency_matrix(labels_a, labels_b)
+    C2 = np.histogram2d(labels_a, labels_b,
+                        bins=(np.arange(1, 5),
+                              np.arange(1, 5)))[0]
+    assert_array_almost_equal(C, C2)
+    C = contingency_matrix(labels_a, labels_b, eps=.1)
+    assert_array_almost_equal(C, C2 + .1)
+
+
+def test_exactly_zero_info_score():
+    """Check numerical stabability when information is exactly zero"""
+    for i in np.logspace(1, 4, 4):
+        labels_a, labels_b = np.ones(i, dtype=np.int),\
+            np.arange(i, dtype=np.int)
+        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
+        assert_equal(v_measure_score(labels_a, labels_b), 0.0)
+        assert_equal(adjusted_mutual_info_score(labels_a, labels_b), 0.0)
+        assert_equal(normalized_mutual_info_score(labels_a, labels_b), 0.0)
+
+
+def test_v_measure_and_mutual_information(seed=36):
+    """Check relation between v_measure, entropy and mutual information"""
+    for i in np.logspace(1, 4, 4):
+        random_state = np.random.RandomState(seed)
+        labels_a, labels_b = random_state.random_integers(0, 10, i),\
+            random_state.random_integers(0, 10, i)
+        assert_almost_equal(v_measure_score(labels_a, labels_b),
+                            2.0 * mutual_info_score(labels_a, labels_b) /
+                            (entropy(labels_a) + entropy(labels_b)), 0)

@@ -20,3 +20,6 @@ scipy.sparse.
 
 from .classes import SVC, NuSVC, SVR, NuSVR, OneClassSVM, LinearSVC
 from .. import libsvm_sparse as libsvm
+
+__all__ = ["SVC", "NuSVC", "SVR", "NuSVR", "OneClassSVM", "LinearSVC",
+           "libsvm"]

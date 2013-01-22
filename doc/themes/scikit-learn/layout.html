@@ -19,6 +19,8 @@
 {% endif %}
 
 {% block extrahead %}
+
+{% if theme_google_analytics|tobool %}
 <script type="text/javascript">
 
   var _gaq = _gaq || [];
@@ -32,6 +34,8 @@
   })();
 
 </script>
+{% endif %}
+
 {% endblock %}
 
 {%- if pagename == 'index' %}
@@ -45,6 +49,14 @@
          for {{project}} <strong>version {{ release|e }}</strong>.
          &mdash; <a href="http://scikit-learn.org/stable/">
            Latest stable version</a></p></p>
+     </div>
+   {%- endif %}
+   {%- if theme_surveybanner == true %}
+     <div class="survey-wrapper">
+       <p>Please help us to improve <b>scikit-learn</b>
+	 by completing this quick survey.
+         &mdash; <a href="https://docs.google.com/spreadsheet/viewform?formkey=dFdyeGNhMzlCRWZUdldpMEZlZ1B1YkE6MQ#gid=0">
+           Click here..</a></p></p>
      </div>
    {%- endif %}
 
@@ -150,18 +162,18 @@
     for {{project}} <strong>version {{ release|e }}</strong>
     &mdash; <a href="http://scikit-learn.org/stable/support.html#documentation-resources">Other versions</a></p>
     {% else %}
-    <h3>News</h3>
+    <h3><a href="{{pathto('whats_new')}}">News</a></h3>
 
-    <p>scikit-learn 0.12 is available
+    <p>scikit-learn 0.13 is available
     for <a href="https://sourceforge.net/projects/scikit-learn/files/">download</a>.
     See <a href="{{pathto('whats_new')}}">what's new</a> and tips
     on <a href="{{pathto('install')}}">installing</a>.</p>
 
 
-    <h3>Presentations</h3>
+    <h3><a href="{{pathto('presentations')}}">Presentations</a></h3>
     <p>Get into the spirit with <a href="{{pathto('presentations')}}">videos</a> from Scikit-Learn tutorials.</p>
 
-    <h3>Participate</h3>
+    <h3><a href="{{pathto('developers/index')}}">Participate</a></h3>
 
     <p>Fork
     the <a href="http://github.com/scikit-learn/scikit-learn">source
@@ -173,7 +185,7 @@
     <a href="http://github.com/scikit-learn/scikit-learn/wiki/Upcoming-events">coding sprint</a>. <a href="{{pathto('developers/index')}}">Read More...</a>
     </p>
 
-    <h3>Funding</h3>
+    <h3><a href="{{pathto('about')}}">Funding</a></h3>
     <p>Generous funding provided
     by <a href="http://www.inria.fr">INRIA</a>,
     <a href="http://code.google.com/opensource/">Google</a>
@@ -186,7 +198,7 @@
     <p><a href="{{pathto('about')}}">Read more ...</a></p>
 
     {% endif %}
-    <h3>Citing</h3>
+    <h3><a href="{{pathto('about')}}#citing-scikit-learn">Citing</a></h3>
     <p>If you use the software, please consider
     <a href="{{pathto('about')}}#citing-scikit-learn">citing scikit-learn</a>.</p>
 
@@ -205,7 +217,6 @@
         <div class="clearer"></div>
       </div>
     </div>
-  
 {% endblock %}
 
 
@@ -246,7 +257,7 @@
     <div class="{{ loop.cycle('buttonPrevious', 'buttonNext') }}">
       <a href="{{ pathto(rellink[0]) }}">
         {{loop.cycle('Previous', 'Next')}}
-      </a>  
+      </a>
     </div>
     {%- endfor %}
     {% endif %}
@@ -260,6 +271,11 @@
                $(this).css('background-color', '#A7D6E2');
            }
        );
+       var bodywrapper = $('.bodywrapper');
+   	var sidebarbutton = $('#sidebarbutton');
+        sidebarbutton.css({
+	    'height': '900px'
+       });
      </script>
 {%- endblock %}
 

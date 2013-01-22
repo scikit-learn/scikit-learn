@@ -30,8 +30,9 @@ def test_l1_min_c():
                 for intercept_label, intercept_params in intercepts.items():
                     check = lambda: check_l1_min_c(X, Y, loss,
                                                    **intercept_params)
-                    check.description = 'Test l1_min_c loss=%r %s %s %s' % \
-                                      (loss, X_label, Y_label, intercept_label)
+                    check.description = ('Test l1_min_c loss=%r %s %s %s' %
+                                         (loss, X_label, Y_label,
+                                          intercept_label))
                     yield check
 
 
@@ -53,7 +54,7 @@ def check_l1_min_c(X, y, loss, fit_intercept=True, intercept_scaling=None):
 
     clf.C = min_c * 1.01
     clf.fit(X, y)
-    assert_true((np.asarray(clf.coef_) != 0).any() or \
+    assert_true((np.asarray(clf.coef_) != 0).any() or
                 (np.asarray(clf.intercept_) != 0).any())
 
 

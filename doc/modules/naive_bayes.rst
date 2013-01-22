@@ -143,7 +143,7 @@ distributions; i.e., there may be multiple features but each one is assumed
 to be a binary-valued (Bernoulli, boolean) variable.
 Therefore, this class requires samples to be represented as binary-valued
 feature vectors; if handed any other kind of data, a ``BernoulliNB`` instance
-may binarizes its input (depending on the ``binarize`` parameter).
+may binarize its input (depending on the ``binarize`` parameter).
 
 The decision rule for Bernoulli Naive Bayes is based on
 

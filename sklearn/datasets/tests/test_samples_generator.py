@@ -1,24 +1,26 @@
 import numpy as np
-from numpy.testing import assert_equal, assert_approx_equal, \
-                          assert_array_almost_equal
-from nose.tools import assert_true
 
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 
-from .. import make_classification
-from .. import make_multilabel_classification
-from .. import make_hastie_10_2
-from .. import make_regression
-from .. import make_blobs
-from .. import make_friedman1
-from .. import make_friedman2
-from .. import make_friedman3
-from .. import make_low_rank_matrix
-from .. import make_sparse_coded_signal
-from .. import make_sparse_uncorrelated
-from .. import make_spd_matrix
-from .. import make_swiss_roll
-from .. import make_s_curve
+from sklearn.datasets import make_classification
+from sklearn.datasets import make_multilabel_classification
+from sklearn.datasets import make_hastie_10_2
+from sklearn.datasets import make_regression
+from sklearn.datasets import make_blobs
+from sklearn.datasets import make_friedman1
+from sklearn.datasets import make_friedman2
+from sklearn.datasets import make_friedman3
+from sklearn.datasets import make_low_rank_matrix
+from sklearn.datasets import make_sparse_coded_signal
+from sklearn.datasets import make_sparse_uncorrelated
+from sklearn.datasets import make_spd_matrix
+from sklearn.datasets import make_swiss_roll
+from sklearn.datasets import make_s_curve
 
 
 def test_make_classification():
@@ -66,7 +68,7 @@ def test_make_regression():
     assert_equal(sum(c != 0.0), 3, "Unexpected number of informative features")
 
     # Test that y ~= np.dot(X, c) + bias + N(0, 1.0)
-    assert_approx_equal(np.std(y - np.dot(X, c)), 1.0, significant=2)
+    assert_almost_equal(np.std(y - np.dot(X, c)), 1.0, decimal=1)
 
 
 def test_make_regression_multitarget():
@@ -76,10 +78,11 @@ def test_make_regression_multitarget():
     assert_equal(X.shape, (100, 10), "X shape mismatch")
     assert_equal(y.shape, (100, 3), "y shape mismatch")
     assert_equal(c.shape, (10, 3), "coef shape mismatch")
-    assert_equal(sum(c != 0.0), 3, "Unexpected number of informative features")
+    assert_array_equal(sum(c != 0.0), 3,
+                       "Unexpected number of informative features")
 
     # Test that y ~= np.dot(X, c) + bias + N(0, 1.0)
-    assert_approx_equal(np.std(y - np.dot(X, c)), 1.0, significant=2)
+    assert_almost_equal(np.std(y - np.dot(X, c)), 1.0, decimal=1)
 
 
 def test_make_blobs():
@@ -99,9 +102,10 @@ def test_make_friedman1():
     assert_equal(X.shape, (5, 10), "X shape mismatch")
     assert_equal(y.shape, (5,), "y shape mismatch")
 
-    assert_array_almost_equal(y, 10 * np.sin(np.pi * X[:, 0] * X[:, 1])
-                                 + 20 * (X[:, 2] - 0.5) ** 2 \
-                                 + 10 * X[:, 3] + 5 * X[:, 4])
+    assert_array_almost_equal(y,
+                              10 * np.sin(np.pi * X[:, 0] * X[:, 1])
+                              + 20 * (X[:, 2] - 0.5) ** 2
+                              + 10 * X[:, 3] + 5 * X[:, 4])
 
 
 def test_make_friedman2():
@@ -110,9 +114,10 @@ def test_make_friedman2():
     assert_equal(X.shape, (5, 4), "X shape mismatch")
     assert_equal(y.shape, (5,), "y shape mismatch")
 
-    assert_array_almost_equal(y, (X[:, 0] ** 2
-                                 + (X[:, 1] * X[:, 2]
-                                    - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5)
+    assert_array_almost_equal(y,
+                              (X[:, 0] ** 2
+                               + (X[:, 1] * X[:, 2] - 1
+                                  / (X[:, 1] * X[:, 3])) ** 2) ** 0.5)
 
 
 def test_make_friedman3():
@@ -139,14 +144,14 @@ def test_make_low_rank_matrix():
 
 def test_make_sparse_coded_signal():
     Y, D, X = make_sparse_coded_signal(n_samples=5, n_components=8,
-                                           n_features=10, n_nonzero_coefs=3,
-                                           random_state=0)
+                                       n_features=10, n_nonzero_coefs=3,
+                                       random_state=0)
     assert_equal(Y.shape, (10, 5), "Y shape mismatch")
     assert_equal(D.shape, (10, 8), "D shape mismatch")
     assert_equal(X.shape, (8, 5), "X shape mismatch")
     for col in X.T:
         assert_equal(len(np.flatnonzero(col)), 3, 'Non-zero coefs mismatch')
-    assert_equal(np.dot(D, X), Y)
+    assert_array_equal(np.dot(D, X), Y)
     assert_array_almost_equal(np.sqrt((D ** 2).sum(axis=0)),
                               np.ones(D.shape[1]))
 
@@ -166,8 +171,8 @@ def test_make_spd_matrix():
 
     from numpy.linalg import eig
     eigenvalues, _ = eig(X)
-    assert_equal(eigenvalues > 0, np.array([True] * 5),
-                 "X is not positive-definite")
+    assert_array_equal(eigenvalues > 0, np.array([True] * 5),
+                       "X is not positive-definite")
 
 
 def test_make_swiss_roll():
@@ -175,8 +180,8 @@ def test_make_swiss_roll():
 
     assert_equal(X.shape, (5, 3), "X shape mismatch")
     assert_equal(t.shape, (5,), "t shape mismatch")
-    assert_equal(X[:, 0], t * np.cos(t))
-    assert_equal(X[:, 2], t * np.sin(t))
+    assert_array_equal(X[:, 0], t * np.cos(t))
+    assert_array_equal(X[:, 2], t * np.sin(t))
 
 
 def test_make_s_curve():
@@ -184,5 +189,5 @@ def test_make_s_curve():
 
     assert_equal(X.shape, (5, 3), "X shape mismatch")
     assert_equal(t.shape, (5,), "t shape mismatch")
-    assert_equal(X[:, 0], np.sin(t))
-    assert_equal(X[:, 2], np.sign(t) * (np.cos(t) - 1))
+    assert_array_equal(X[:, 0], np.sin(t))
+    assert_array_equal(X[:, 2], np.sign(t) * (np.cos(t) - 1))

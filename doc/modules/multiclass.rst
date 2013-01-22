@@ -64,7 +64,7 @@ default choice. Below is an example::
   >>> from sklearn.svm import LinearSVC
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
-  >>> OneVsRestClassifier(LinearSVC()).fit(X, y).predict(X)
+  >>> OneVsRestClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X)
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -110,7 +110,7 @@ dataset is used `n_classes` times. Below is an example::
   >>> from sklearn.svm import LinearSVC
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
-  >>> OneVsOneClassifier(LinearSVC()).fit(X, y).predict(X)
+  >>> OneVsOneClassifier(LinearSVC(random_state=0)).fit(X, y).predict(X)
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
@@ -139,8 +139,8 @@ At fitting time, one binary classifier per bit in the code book is fitted.
 At prediction time, the classifiers are used to project new points in the
 class space and the class closest to the points is chosen.
 
-In :class:`OutputCodeClassifier`, the `code_size` attribute allows the user to control
-the number of classifiers which will be used. It is a percentage of the
+In :class:`OutputCodeClassifier`, the `code_size` attribute allows the user to
+control the number of classifiers which will be used. It is a percentage of the
 total number of classes.
 
 A number between 0 and 1 will require fewer classifiers than
@@ -162,7 +162,9 @@ Example::
   >>> from sklearn.svm import LinearSVC
   >>> iris = datasets.load_iris()
   >>> X, y = iris.data, iris.target
-  >>> OutputCodeClassifier(LinearSVC(), code_size=2, random_state=0).fit(X, y).predict(X)
+  >>> clf = OutputCodeClassifier(LinearSVC(random_state=0),
+  ...                            code_size=2, random_state=0)
+  >>> clf.fit(X, y).predict(X)
   array([0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
          0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 1, 1,
@@ -170,7 +172,6 @@ Example::
          1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2,
          2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 1, 2, 2, 2,
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
-
 
 .. topic:: References:
 
