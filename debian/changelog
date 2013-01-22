@@ -1,3 +1,10 @@
+scikit-learn (0.13-1) experimental; urgency=low
+
+  * Fresh upstream release
+    - dropping CP-ed changesets and deb_disable_test_spectral_old_scipy patch 
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 22 Jan 2013 18:44:47 -0500
+
 scikit-learn (0.12.1-1) experimental; urgency=low
 
   * Fresh upstream bugfix release
