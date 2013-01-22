@@ -46,7 +46,8 @@ from sklearn.metrics.metrics import unique_labels
 
 
 MULTILABELS_METRICS = [hamming_loss,
-                       zero_one_loss]
+                       zero_one_loss,
+                       accuracy_score]
 
 
 def make_prediction(dataset=None, binary=False):
@@ -831,3 +832,40 @@ def test_multilabel_hamming_loss():
     assert_equal(0.0, hamming_loss(y2, y2))
     assert_equal(0.75, hamming_loss(y2, [(), ()]))
     assert_equal(0.625, hamming_loss(y1, [tuple(), (10, )]))
+
+
+def test_multilabel_accuracy_score():
+    # Dense label binary format
+    y1 = np.array([
+            [0.0, 1.0, 1.0],
+            [1.0, 0.0, 1.0]
+        ])
+    y2 = np.array([
+            [0.0, 0.0, 1.0],
+            [1.0, 0.0, 1.0]
+        ])
+
+    assert_equal(0.5, accuracy_score(y1, y2))
+    assert_equal(1.0, accuracy_score(y1, y1))
+    assert_equal(1.0, accuracy_score(y2, y2))
+    assert_equal(0.0, accuracy_score(y2, np.logical_not(y2)))
+    assert_equal(0.0, accuracy_score(y1, np.logical_not(y1)))
+    assert_equal(0.0, accuracy_score(y1, np.zeros(y1.shape)))
+    assert_equal(0.0, accuracy_score(y2, np.zeros(y1.shape)))
+
+    # List of tuple of label
+    y1 = [
+        (1, 2,),
+        (0, 2,),
+    ]
+
+    y2 = [
+        (2,),
+        (0, 2,),
+    ]
+
+    assert_equal(0.5, accuracy_score(y1, y2))
+    assert_equal(1.0, accuracy_score(y1, y1))
+    assert_equal(1.0, accuracy_score(y2, y2))
+    assert_equal(0.0, accuracy_score(y2, [(), ()]))
+    assert_equal(0.0, accuracy_score(y2, [tuple(), (10, )]))

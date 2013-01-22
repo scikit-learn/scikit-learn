@@ -778,10 +778,23 @@ def accuracy_score(y_true, y_pred):
     >>> y_true = [0, 1, 2, 3]
     >>> accuracy_score(y_true, y_pred)
     0.5
+    >>> accuracy_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+    0.0
+    >>> accuracy_score([(1, 2), (3,)], [(1, 2), tuple()])
+    0.5
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred)
-    return np.mean(y_pred == y_true)
+    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
+
+    # Compute accuraccy for each possible representation
+    if _is_label_indicator_matrix(y_true):
+        score = (y_pred != y_true).sum(axis=1) == 0
+    else:
+        score = np.array([np.size(np.setxor1d(np.array(pred),
+                                             np.array(true))) == 0
+                         for pred, true in izip(y_pred, y_true)])
+
+    return np.mean(score)
 
 
 def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):

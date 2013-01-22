@@ -45,7 +45,6 @@ Others also work in the multiclass case:
 .. autosummary::
    :template: function.rst
 
-  accuracy_score
   classification_report
   confusion_matrix
   f1_score
@@ -59,6 +58,7 @@ Or in the multilabel case:
 .. autosummary::
    :template: function.rst
 
+  accuracy_score
   hamming_loss
   zero_one_loss
 
@@ -72,7 +72,8 @@ Accuracy score
 ---------------
 The :func:`accuracy_score` function computes the
 `accuracy <http://en.wikipedia.org/wiki/Accuracy_and_precision>`_, the fraction
-of correct predictions.
+of correct predictions. In multi-label classification, the accuracy is also
+called subset accuracy (which is different of label-based accuracy).
 
 If :math:`\hat{y}_i` is the predicted value of
 the :math:`i`-th sample and :math:`y_i` is the corresponding true value,
@@ -90,6 +91,10 @@ where :math:`1(x)` is the `indicator function
   >>> y_pred = [0, 2, 1, 3]
   >>> y_true = [0, 1, 2, 3]
   >>> accuracy_score(y_true, y_pred)
+  0.5
+  >>> accuracy_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+  0.0
+  >>> accuracy_score([(1, 2), (3,)], [(1, 2), tuple()])
   0.5
 
 .. topic:: Example:
