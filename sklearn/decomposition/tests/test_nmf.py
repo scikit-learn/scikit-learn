@@ -123,7 +123,6 @@ def test_projgrad_nmf_sparseness():
     Test that sparsity contraints actually increase sparseness in the
     part where they are applied.
     """
-
     A = np.abs(random_state.randn(10, 10))
     m = nmf.ProjectedGradientNMF(n_components=5).fit(A)
     data_sp = nmf.ProjectedGradientNMF(
@@ -144,8 +143,11 @@ def test_sparse_input():
                                   random_state=999).fit_transform(A)
 
     A_sparse = csr_matrix(A)
-    T2 = nmf.ProjectedGradientNMF(n_components=5, init='random',
-                                  random_state=999).fit_transform(A_sparse)
+    pg_nmf = nmf.ProjectedGradientNMF(n_components=5, init='random',
+                                      random_state=999)
+    T2 = pg_nmf.fit_transform(A_sparse)
+    assert_array_almost_equal(pg_nmf.reconstruction_err_,
+                  np.linalg.norm(A - np.dot(T2, pg_nmf.components_), 'fro'))
     assert_array_almost_equal(T1, T2)
 
     # same with sparseness
