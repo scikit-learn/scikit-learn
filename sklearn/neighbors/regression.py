@@ -7,6 +7,8 @@
 #
 # License: BSD, (C) INRIA, University of Amsterdam
 
+import warnings
+
 import numpy as np
 
 from .base import \
@@ -102,7 +104,13 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
     """
 
     def __init__(self, n_neighbors=5, weights='uniform',
-                 algorithm='auto', leaf_size=30, p=2):
+                 algorithm='auto', leaf_size=30, p=2, **kwargs):
+        if kwargs:
+            if 'warn_on_equidistant' in kwargs:
+                warnings.warn("The warn_on_equidistant parameter is "
+                              "deprecated and will be removed in the future",
+                              DeprecationWarning,
+                              stacklevel=2)
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
                           leaf_size=leaf_size, p=p)
