@@ -29,14 +29,14 @@ Changelog
      attribute. Setting ``compute_importances=True`` is no longer required.
      By `Gilles Louppe`_.
 
-<<<<<<< HEAD
    - :class:`LinearSVC`, :class:`SGDClassifier` and :class:`SGDRegressor`
      now have a ``sparsify`` method that converts their ``coef_`` into a
      sparse matrix, meaning stored models trained using these estimators
      can be made much more compact.
 
-   - Hyperlinks to documentation in example code on the website by
-     `Martin Luessi`_.
+   - :func:`metrics.accuracy_score`, :func:`metrics.zero_one_loss` support
+     multi-label classification and a new metric :func:`metrics.hamming_loss`
+     is added with multi-label support by `Arnaud Joly`_.
 
 
 .. _changes_0_13_1:
@@ -84,11 +84,6 @@ List of contributors for release 0.13.1 by number of commits.
  *  1  `Vlad Niculae`_
  *  1  `Yaroslav Halchenko`_
 
-=======
-   - :func:`metrics.accuracy_score` and :func:`metrics.zero_one_loss` support
-     multi-label classification.  A new metric :func:`metrics.hamming_loss` is
-     added with mullti-label support.
->>>>>>> Update what's new
 
 .. _changes_0_13:
 
