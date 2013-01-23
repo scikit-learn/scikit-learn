@@ -39,6 +39,32 @@ from .externals.joblib import Parallel
 from .externals.joblib import delayed
 
 
+def unique_labels(*lists_of_labels):
+    """Extract an ordered array of unique labels
+
+    Parameters
+    ----------
+    lists_of_labels : list of labels,
+        Each list of labels have to be in a format supported by
+        ``sklearn.preprocessing.LabelBinarizer``: .
+
+    Returns
+    -------
+    out : numpy array of shape [n_unique_labels]
+        An ordered array of unique labels.
+
+    """
+    def _unique_labels(labels):
+        lb = LabelBinarizer()
+        lb.fit(labels)
+        return lb.classes_
+
+    if not lists_of_labels:
+        raise ValueError('No list of labels has been passed.')
+
+    return np.unique(np.hstack(_unique_labels(y) for y in lists_of_labels))
+
+
 def _fit_binary(estimator, X, y, classes=None):
     """Fit a single binary estimator."""
     unique_y = np.unique(y)

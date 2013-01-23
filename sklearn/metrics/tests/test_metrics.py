@@ -9,7 +9,7 @@ from sklearn import svm
 
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.datasets import make_multilabel_classification
-
+from sklearn.multiclass import unique_labels
 from sklearn.utils.testing import (assert_true,
                                    assert_raises,
                                    assert_equal,
@@ -41,8 +41,6 @@ from sklearn.metrics import (accuracy_score,
                              zero_one,
                              zero_one_score,
                              zero_one_loss)
-
-from sklearn.metrics.metrics import unique_labels
 
 
 MULTILABELS_METRICS = [hamming_loss,
@@ -509,7 +507,7 @@ def test_losses():
     """Test loss functions"""
     y_true, y_pred, _ = make_prediction(binary=True)
     n_samples = y_true.shape[0]
-    n_classes = np.size(np.unique(y_true))
+    n_classes = np.size(unique_labels(y_true))
 
     # Classification
     # --------------
@@ -700,32 +698,6 @@ def test_multioutput_regression_invariance_to_dimension_shuffling():
             perm = np.random.permutation(n_dims)
             assert_almost_equal(error,
                                 metric(y_true[:, perm], y_pred[:, perm]))
-
-
-def test_unique_labels():
-    # Empty iterable
-    assert_raises(ValueError, unique_labels)
-
-    # Multiclass problem
-    assert_array_equal(unique_labels(xrange(10)), np.arange(10))
-    assert_array_equal(unique_labels(np.arange(10)), np.arange(10))
-    assert_array_equal(unique_labels([4, 0, 2]), np.array([0, 2, 4]))
-
-    # Multilabels
-    assert_array_equal(unique_labels([(0, 1, 2), (0,), tuple(), (2, 1)]),
-                       np.arange(3))
-    assert_array_equal(unique_labels([[0, 1, 2], [0], list(), [2, 1]]),
-                       np.arange(3))
-    assert_array_equal(unique_labels(np.array([[0, 0, 1],
-                                               [1, 0, 1],
-                                               [0, 0, 0]])),
-                       np.arange(3))
-
-    # Several arrays passed
-    assert_array_equal(unique_labels([4, 0, 2], xrange(5)),
-                       np.arange(5))
-    assert_array_equal(unique_labels((0, 1, 2), (0,), (2, 1)),
-                       np.arange(3))
 
 
 def test_multilabel_representation_invariance():
