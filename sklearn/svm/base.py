@@ -448,12 +448,6 @@ class BaseLibSVM(BaseEstimator):
             coef.flags.writeable = False
         return coef
 
-    @property
-    @deprecated("The ``labels_`` attribute has been renamed to ``classes_`` "
-                "for consistency and will be removed in 0.15.")
-    def label_(self):
-        return self.classes_
-
 
 class BaseSVC(BaseLibSVM, ClassifierMixin):
     """ABC for LibSVM-based classifiers."""
@@ -563,6 +557,12 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             self.nu, self.epsilon, self.shrinking,
             self.probability, self.n_support_, self._label,
             self.probA_, self.probB_)
+
+    @property
+    @deprecated("The ``label_`` attribute has been renamed to ``classes_`` "
+                "for consistency and will be removed in 0.15.")
+    def label_(self):
+        return self.classes_
 
 
 class BaseLibLinear(BaseEstimator):
@@ -709,7 +709,7 @@ class BaseLibLinear(BaseEstimator):
         return self._enc.classes_
 
     @property
-    @deprecated("The ``labels_`` attribute has been renamed to ``classes_`` "
+    @deprecated("The ``label_`` attribute has been renamed to ``classes_`` "
                 "for consistency and will be removed in 0.15.")
     def label_(self):
         return self._enc.classes_
