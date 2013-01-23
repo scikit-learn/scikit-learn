@@ -8,7 +8,8 @@ PYVERS = $(shell pyversions -vr)
 PYVER = $(shell pyversions  -vd)
 
 # Some tests are known to fail randomly so need to be excluded ATM
-NOSEARGS := --exclude='test_(sparse_svc_clone_with_callable_kernel|spectral_clustering_sparse|ovr_fit_predict)'
+NOSEARGS := 
+# --exclude='test_(sparse_svc_clone_with_callable_kernel|spectral_clustering_sparse|ovr_fit_predict)'
 
 # Mega rule
 %:

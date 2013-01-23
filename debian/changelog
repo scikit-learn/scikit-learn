@@ -2,8 +2,10 @@ scikit-learn (0.13-1) experimental; urgency=low
 
   * Fresh upstream release
     - dropping CP-ed changesets and deb_disable_test_spectral_old_scipy patch 
+  * debian/rules
+    - removing exclusion of tests previously failed
 
- -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 22 Jan 2013 18:44:47 -0500
+ -- Yaroslav Halchenko <debian@onerussian.com>  Tue, 22 Jan 2013 21:37:24 -0500
 
 scikit-learn (0.12.1-1) experimental; urgency=low
 
