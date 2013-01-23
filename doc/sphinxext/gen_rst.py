@@ -104,6 +104,15 @@ class SphinxDocLinkResolver(object):
         else:
             self._searchindex_url = os.path.join(doc_url, searchindex)
 
+        # detect if we are using relative links on a Windows system
+        if doc_url.find('\\') >= 0:
+            if not relative:
+                raise ValueError('You have to use relative=True for the local'
+                                 'package on a Windows system.')
+            self._is_windows = True
+        else:
+            self._is_windows = False
+
         self._init_searchindex()
 
     def _init_searchindex(self):
@@ -205,17 +214,16 @@ class SphinxDocLinkResolver(object):
         if fname_idx is not None:
             fname = self._searchindex['filenames'][fname_idx] + '.html'
 
-            link = posixpath.join(self.doc_url, fname)
-            # get a link that works on the local system
-            if self.doc_url.startswith('http://'):
-                local_link = link
+            if self._is_windows:
+                fname = fname.replace('/', '\\')
+                link = os.path.join(self.doc_url, fname)
             else:
-                local_link = os.path.join(self.doc_url, fname)
+                link = posixpath.join(self.doc_url, fname)
 
             if link in self._page_cache:
                 html = self._page_cache[link]
             else:
-                html = get_data(local_link)
+                html = get_data(link)
                 self._page_cache[link] = html
 
             # test if cobj appears in page
@@ -223,36 +231,35 @@ class SphinxDocLinkResolver(object):
             if self.extra_modules_test is not None:
                 for mod in self.extra_modules_test:
                     comb_names.append(mod + '.' + cobj['name'])
-            url, local_url = False, False
+            url = False
             for comb_name in comb_names:
                 if html.find(comb_name) >= 0:
                     url = link + '#' + comb_name
-                    local_url = local_link + '#' + comb_name
             link = url
-            local_link = local_url
         else:
-            link, local_link = False, False
+            link = False
 
-        return link, local_link
+        return link
 
     def resolve(self, cobj, this_url):
         """Resolve the link to the documentation, returns None if not found"""
         full_name = cobj['module_short'] + '.' + cobj['name']
-        link, local_link = self._link_cache.get(full_name, (None, None))
+        link = self._link_cache.get(full_name, None)
         if link is None:
             # we don't have it cached
-            link, local_link = self.get_link(cobj)
+            link = self.get_link(cobj)
             # cache it for the future
-            self._link_cache[full_name] = (link, local_link)
+            self._link_cache[full_name] = link
 
         if link is False or link is None:
             # failed to resolve
             return None
 
         if self.relative:
-            link = os.path.relpath(local_link, start=this_url)
-            # replace '\' with '/' so it works on Windows systems
-            link = link.replace('\\', '/')
+            link = os.path.relpath(link, start=this_url)
+            if self._is_windows:
+                # replace '\' with '/' so it on the web
+                link = link.replace('\\', '/')
 
             # for some reason, the relative link goes one directory too high up
             link = link[3:]
