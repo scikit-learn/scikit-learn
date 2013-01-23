@@ -40,14 +40,8 @@ improves.
       :class:`sklearn.linear_model.SGDClassifier`,
       :class:`sklearn.linear_model.RidgeClassifier`.
 
-The :mod:`sklearn.multiclass` also contains several usefull functions when
-working with multiclass and multilabel problem.
-
-.. autosummary::
-   :template: function.rst
-
-   unique_labels
-
+The :mod:`sklearn.utils.multiclass` module contains usefull functions
+when working with multiclass and multilabel problem.
 
 
 One-Vs-The-Rest

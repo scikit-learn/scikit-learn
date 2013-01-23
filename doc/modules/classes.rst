@@ -819,7 +819,6 @@ Pairwise metrics
     multiclass.predict_ovo
     multiclass.fit_ecoc
     multiclass.predict_ecoc
-    multiclass.unique_labels
 
 .. _naive_bayes_ref:
 

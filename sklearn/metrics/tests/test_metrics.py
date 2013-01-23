@@ -9,7 +9,7 @@ from sklearn import svm
 
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.datasets import make_multilabel_classification
-from sklearn.multiclass import unique_labels
+from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.testing import (assert_true,
                                    assert_raises,
                                    assert_equal,

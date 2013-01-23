@@ -4,7 +4,6 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD
 
-from collections import Sequence
 import warnings
 import numbers
 
@@ -16,6 +15,10 @@ from .externals.six import string_types
 from .utils import check_arrays, array2d, atleast2d_or_csr, safe_asarray
 from .utils import warn_if_not_float
 from .utils.fixes import unique
+
+from .utils.multiclass import unique_labels
+from .utils.multiclass import is_multilabel
+from .utils.multiclass import is_label_indicator_matrix
 
 from .utils.sparsefuncs import inplace_csr_row_normalize_l1
 from .utils.sparsefuncs import inplace_csr_row_normalize_l2
@@ -610,78 +613,6 @@ class Binarizer(BaseEstimator, TransformerMixin):
         return binarize(X, threshold=self.threshold, copy=copy)
 
 
-def _is_label_indicator_matrix(y):
-    """ Check if ``y`` is in the label indicator matrix format (multilabel).
-
-    Parameters
-    ----------
-    y : numpy array of shape [n_samples] or sequence of sequences
-        Target values. In the multilabel case the nested sequences can
-        have variable lengths.
-
-    Returns
-    -------
-    out : bool,
-        Return ``True``, if ``y`` is in a label indicator matrix format,
-        else ``False``.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.preprocessing import _is_label_indicator_matrix
-    >>> _is_label_indicator_matrix([0, 1, 0, 1])
-    False
-    >>> _is_label_indicator_matrix([[1], [0, 2], []])
-    False
-    >>> _is_label_indicator_matrix(np.array([[1, 0], [0, 0]]))
-    True
-    >>> _is_label_indicator_matrix(np.array([[1], [0], [0]]))
-    False
-    >>> _is_label_indicator_matrix(np.array([[1], [0], [0]]))
-    False
-
-    """
-    return (hasattr(y, "shape") and len(y.shape) == 2 and y.shape[1] > 1 and
-            y.size > y.shape[0] and np.size(np.unique(y)) <= 2)
-
-
-def _is_multilabel(y):
-    """ Check if ``y`` is in a multilabel format.
-
-    Parameters
-    ----------
-    y : numpy array of shape [n_samples] or sequence of sequences
-        Target values. In the multilabel case the nested sequences can
-        have variable lengths.
-
-    Returns
-    -------
-    out : bool,
-        Return ``True``, if ``y`` is in a multilabel format, else ```False``.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.preprocessing import _is_multilabel
-    >>> _is_multilabel([0, 1, 0, 1])
-    False
-    >>> _is_multilabel([[1], [0, 2], []])
-    True
-    >>> _is_multilabel(np.array([[1, 0], [0, 0]]))
-    True
-    >>> _is_multilabel(np.array([[1], [0], [0]]))
-    False
-    >>> _is_multilabel(np.array([[1], [0], [0]]))
-    False
-
-    """
-    # the explicit check for ndarray is for forward compatibility; future
-    # versions of Numpy might want to register ndarray as a Sequence
-    return (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) and
-            not isinstance(y[0], string_types) or
-            _is_label_indicator_matrix(y))
-
-
 class OneHotEncoder(BaseEstimator, TransformerMixin):
     """Encode categorical integer features using a one-hot aka one-of-K scheme.
 
@@ -1034,15 +965,12 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         -------
         self : returns an instance of self.
         """
-        self.multilabel = _is_multilabel(y)
+        self.multilabel = is_multilabel(y)
         if self.multilabel:
-            self.indicator_matrix_ = _is_label_indicator_matrix(y)
-            if self.indicator_matrix_:
-                self.classes_ = np.arange(y.shape[1])
-            else:
-                self.classes_ = np.array(sorted(set.union(*map(set, y))))
-        else:
-            self.classes_ = np.unique(y)
+            self.indicator_matrix_ = is_label_indicator_matrix(y)
+
+        self.classes_ = unique_labels(y)
+
         return self
 
     def transform(self, y):
@@ -1064,7 +992,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         self._check_fitted()
 
         if self.multilabel or len(self.classes_) > 2:
-            if _is_label_indicator_matrix(y):
+            if is_label_indicator_matrix(y):
                 # nothing to do as y is already a label indicator matrix
                 return y
 
@@ -1074,14 +1002,14 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Y += self.neg_label
 
-        y_is_multilabel = _is_multilabel(y)
+        yis_multilabel = is_multilabel(y)
 
-        if y_is_multilabel and not self.multilabel:
+        if yis_multilabel and not self.multilabel:
             raise ValueError("The object was not fitted with multilabel"
                              " input!")
 
         elif self.multilabel:
-            if not _is_multilabel(y):
+            if not is_multilabel(y):
                 raise ValueError("y should be a list of label lists/tuples,"
                                  "got %r" % (y,))
 

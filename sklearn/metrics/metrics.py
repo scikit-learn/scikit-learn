@@ -21,9 +21,9 @@ import warnings
 import numpy as np
 from scipy.sparse import coo_matrix
 
-from ..multiclass import unique_labels
-from ..preprocessing import _is_label_indicator_matrix
 from ..utils import check_arrays, deprecated
+from ..utils.multiclass import is_label_indicator_matrix
+from ..utils.multiclass import unique_labels
 
 
 ###############################################################################
@@ -668,7 +668,7 @@ def zero_one_loss(y_true, y_pred, normalize=True):
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
 
     loss = None
-    if _is_label_indicator_matrix(y_true):
+    if is_label_indicator_matrix(y_true):
         loss = (y_pred != y_true).sum(axis=1) > 0
     else:
         loss = np.array([np.size(np.setxor1d(np.array(pred),
@@ -764,7 +764,7 @@ def accuracy_score(y_true, y_pred):
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
 
     # Compute accuraccy for each possible representation
-    if _is_label_indicator_matrix(y_true):
+    if is_label_indicator_matrix(y_true):
         score = (y_pred != y_true).sum(axis=1) == 0
     else:
         score = np.array([np.size(np.setxor1d(np.array(pred),
@@ -1484,7 +1484,7 @@ def hamming_loss(y_true, y_pred, labels=None):
 
     # Compute the number of disagreeing labels
     loss = None
-    if _is_label_indicator_matrix(y_true):
+    if is_label_indicator_matrix(y_true):
         loss = (y_pred != y_true).sum(axis=1)
     else:
         loss = np.array([np.size(np.setxor1d(np.array(pred),

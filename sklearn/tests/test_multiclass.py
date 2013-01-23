@@ -12,7 +12,6 @@ from sklearn.utils.testing import assert_greater
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
-from sklearn.multiclass import unique_labels
 
 from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import MultinomialNB
@@ -54,32 +53,6 @@ def multilabel_recall(Y_true, Y_pred):
             if label in Y_true[i]:
                 n_correct += 1
     return float(n_correct) / n_labels
-
-
-def test_unique_labels():
-    # Empty iterable
-    assert_raises(ValueError, unique_labels)
-
-    # Multiclass problem
-    assert_array_equal(unique_labels(xrange(10)), np.arange(10))
-    assert_array_equal(unique_labels(np.arange(10)), np.arange(10))
-    assert_array_equal(unique_labels([4, 0, 2]), np.array([0, 2, 4]))
-
-    # Multilabels
-    assert_array_equal(unique_labels([(0, 1, 2), (0,), tuple(), (2, 1)]),
-                       np.arange(3))
-    assert_array_equal(unique_labels([[0, 1, 2], [0], list(), [2, 1]]),
-                       np.arange(3))
-    assert_array_equal(unique_labels(np.array([[0, 0, 1],
-                                               [1, 0, 1],
-                                               [0, 0, 0]])),
-                       np.arange(3))
-
-    # Several arrays passed
-    assert_array_equal(unique_labels([4, 0, 2], xrange(5)),
-                       np.arange(5))
-    assert_array_equal(unique_labels((0, 1, 2), (0,), (2, 1)),
-                       np.arange(3))
 
 
 def test_ovr_exceptions():
