@@ -89,11 +89,11 @@ pl.ylim((.2, max(bdt_real.errors_.max(), bdt_discrete.errors_.max()) * 1.2))
 pl.xlim((-20, len(bdt_discrete) + 20))
 
 pl.subplot(133)
-pl.plot(n_trees, bdt_discrete.weights_, "b", label='SAMME')
+pl.plot(n_trees, bdt_discrete.estimator_weights_, "b", label='SAMME')
 pl.legend()
 pl.ylabel('Weight')
 pl.xlabel('Tree')
-pl.ylim((0, bdt_discrete.weights_.max() * 1.2))
+pl.ylim((0, bdt_discrete.estimator_weights_.max() * 1.2))
 pl.xlim((-20, len(bdt_discrete) + 20))
 
 # prevent overlapping y-axis labels

@@ -57,7 +57,7 @@ class BaseWeightBoosting(BaseEnsemble):
             n_estimators=n_estimators,
             estimator_params=estimator_params)
 
-        self.weights_ = None
+        self.estimator_weights_ = None
         self.errors_ = None
         self.learning_rate = learning_rate
         self.compute_importances = compute_importances
@@ -110,7 +110,7 @@ class BaseWeightBoosting(BaseEnsemble):
 
         # Clear any previous fit results
         self.estimators_ = []
-        self.weights_ = np.zeros(self.n_estimators, dtype=np.float)
+        self.estimator_weights_ = np.zeros(self.n_estimators, dtype=np.float)
         self.errors_ = np.ones(self.n_estimators, dtype=np.float)
 
         for iboost in xrange(self.n_estimators):
@@ -124,7 +124,7 @@ class BaseWeightBoosting(BaseEnsemble):
             if sample_weight is None:
                 break
 
-            self.weights_[iboost] = weight
+            self.estimator_weights_[iboost] = weight
             self.errors_[iboost] = error
 
             # Stop if error is zero
@@ -142,10 +142,10 @@ class BaseWeightBoosting(BaseEnsemble):
         # Sum the importances
         try:
             if self.compute_importances:
-                norm = self.weights_.sum()
+                norm = self.estimator_weights_.sum()
                 self.feature_importances_ = (
                     sum(weight * clf.feature_importances_ for weight, clf
-                        in zip(self.weights_, self.estimators_))
+                        in zip(self.estimator_weights_, self.estimators_))
                     / norm)
 
         except AttributeError:
@@ -285,7 +285,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     `n_classes_` : int
         The number of classes.
 
-    `weights_` : list of floats
+    `estimator_weights_` : list of floats
         Weights for each estimator in the boosted ensemble.
 
     `errors_` : list of floats
@@ -399,7 +399,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         """
         if self.algorithm == "SAMME.R":
             return self._boost_real(iboost, X, y, sample_weight)
-        else: # elif self.algorithm == "SAMME":
+        else:  # elif self.algorithm == "SAMME":
             return self._boost_discrete(iboost, X, y, sample_weight)
 
     def _boost_real(self, iboost, X, y, sample_weight):
@@ -622,7 +622,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         norm = 0.
 
         for i, (weight, estimator) in enumerate(
-                zip(self.weights_, self.estimators_)):
+                zip(self.estimator_weights_, self.estimators_)):
 
             if i == n_estimators:
                 break
@@ -631,7 +631,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
             if self.algorithm == "SAMME.R":
                 current_pred = _samme_proba(estimator, n_classes, X)
-            else: # elif self.algorithm == "SAMME":
+            else:  # elif self.algorithm == "SAMME":
                 current_pred = estimator.predict(X)
                 current_pred = (current_pred == classes).T * weight
 
@@ -687,7 +687,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         norm = 0.
 
         for i, (weight, estimator) in enumerate(
-                zip(self.weights_, self.estimators_)):
+                zip(self.estimator_weights_, self.estimators_)):
 
             if i == n_estimators:
                 break
@@ -696,7 +696,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
             if self.algorithm == "SAMME.R":
                 current_pred = _samme_proba(estimator, n_classes, X)
-            else: # elif self.algorithm == "SAMME":
+            else:  # elif self.algorithm == "SAMME":
                 current_pred = estimator.predict(X)
                 current_pred = (current_pred == classes).T * weight
 
@@ -744,7 +744,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         proba = None
 
         for i, (weight, estimator) in enumerate(
-                zip(self.weights_, self.estimators_)):
+                zip(self.estimator_weights_, self.estimators_)):
 
             if i == n_estimators:
                 break
@@ -800,7 +800,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         proba = None
 
         for i, (weight, estimator) in enumerate(
-                zip(self.weights_, self.estimators_)):
+                zip(self.estimator_weights_, self.estimators_)):
 
             if i == n_estimators:
                 break
@@ -882,7 +882,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     `estimators_` : list of classifiers
         The collection of fitted sub-estimators.
 
-    `weights_` : list of floats
+    `estimator_weights_` : list of floats
         Weights for each estimator in the boosted ensemble.
 
     `errors_` : list of floats
@@ -1054,7 +1054,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         pred = None
 
         for i, (weight, estimator) in enumerate(
-                zip(self.weights_, self.estimators_)):
+                zip(self.estimator_weights_, self.estimators_)):
             if i == n_estimators:
                 break
 
@@ -1065,7 +1065,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             else:
                 pred += current_pred * weight
 
-        pred /= self.weights_.sum()
+        pred /= self.estimator_weights_.sum()
 
         return pred
 
@@ -1108,7 +1108,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         norm = 0.
 
         for i, (weight, estimator) in enumerate(
-                zip(self.weights_, self.estimators_)):
+                zip(self.estimator_weights_, self.estimators_)):
             if i == n_estimators:
                 break
 
