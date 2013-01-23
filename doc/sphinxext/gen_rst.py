@@ -684,13 +684,12 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
 
         # generate thumb file
         this_template = plot_rst_template
-        from matplotlib import image
         if os.path.exists(first_image_file):
             make_thumbnail(first_image_file, thumb_file, 180, 120)
 
     if not os.path.exists(thumb_file):
-        # create something not to replace the thumbnail
-        shutil.copy('images/blank_image.png', thumb_file)
+        # create something to replace the thumbnail
+        make_thumbnail('images/no_image.png', thumb_file, 180, 120)
 
     docstring, short_desc, end_row = extract_docstring(example_file)
 
