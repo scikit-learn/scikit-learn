@@ -24,7 +24,7 @@ high-dimensional space, unlike other manifold-learning algorithms,
 it does not seeks an isotropic representation of the data in
 the low-dimensional space. Here the manifold problem matches fairly
 that of representing a flat map of the Earth, as with
-`map projection<http://en.wikipedia.org/wiki/Map_projection>`_
+`map projection <http://en.wikipedia.org/wiki/Map_projection>`_
 """
 
 # Author: Jaques Grobler <jaques.grobler@inria.fr>
@@ -40,7 +40,6 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.ticker import NullFormatter
 
 from sklearn import manifold
-from sklearn.metrics import euclidean_distances
 from sklearn.utils import check_random_state
 
 # Next line to silence pyflakes.

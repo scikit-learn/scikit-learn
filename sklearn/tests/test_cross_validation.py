@@ -9,22 +9,22 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
+
 from sklearn.utils.fixes import unique
 
 from sklearn import cross_validation as cval
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_iris
-from sklearn.metrics import zero_one_score
+from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import mean_squared_error
 from sklearn.metrics import r2_score
 from sklearn.metrics import explained_variance_score
 from sklearn.svm import SVC
 from sklearn.linear_model import Ridge
-
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_equal
 
 
 class MockListClassifier(BaseEstimator):
@@ -335,7 +335,7 @@ def test_cross_val_score_with_score_func_classification():
     # Correct classification score (aka. zero / one score) - should be the
     # same as the default estimator score
     zo_scores = cval.cross_val_score(clf, iris.data, iris.target,
-                                     score_func=zero_one_score, cv=5)
+                                     score_func=accuracy_score, cv=5)
     assert_array_almost_equal(zo_scores, [1., 0.97, 0.90, 0.97, 1.], 2)
 
     # F1 score (class are balanced so f1_score should be equal to zero/one
@@ -380,13 +380,13 @@ def test_permutation_score():
     cv = cval.StratifiedKFold(y, 2)
 
     score, scores, pvalue = cval.permutation_test_score(
-        svm, X, y, zero_one_score, cv)
+        svm, X, y, accuracy_score, cv)
 
     assert_greater(score, 0.9)
     np.testing.assert_almost_equal(pvalue, 0.0, 1)
 
     score_label, _, pvalue_label = cval.permutation_test_score(
-        svm, X, y, zero_one_score, cv, labels=np.ones(y.size), random_state=0)
+        svm, X, y, accuracy_score, cv, labels=np.ones(y.size), random_state=0)
 
     assert_true(score_label == score)
     assert_true(pvalue_label == pvalue)
@@ -395,7 +395,7 @@ def test_permutation_score():
     svm_sparse = SVC(kernel='linear')
     cv_sparse = cval.StratifiedKFold(y, 2, indices=True)
     score_label, _, pvalue_label = cval.permutation_test_score(
-        svm_sparse, X_sparse, y, zero_one_score, cv_sparse,
+        svm_sparse, X_sparse, y, accuracy_score, cv_sparse,
         labels=np.ones(y.size), random_state=0)
 
     assert_true(score_label == score)
@@ -405,7 +405,7 @@ def test_permutation_score():
     y = np.mod(np.arange(len(y)), 3)
 
     score, scores, pvalue = cval.permutation_test_score(svm, X, y,
-                                                        zero_one_score, cv)
+                                                        accuracy_score, cv)
 
     assert_less(score, 0.5)
     assert_greater(pvalue, 0.4)
@@ -469,7 +469,7 @@ def test_shufflesplit_errors():
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=8, train_size=3)
     assert_raises(ValueError, cval.ShuffleSplit, 10, train_size=1j)
     assert_raises(ValueError, cval.ShuffleSplit, 10, test_size=None,
-                train_size=None)
+                  train_size=None)
 
 
 def test_shufflesplit_reproducible():

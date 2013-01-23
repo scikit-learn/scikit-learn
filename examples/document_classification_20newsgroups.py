@@ -31,6 +31,7 @@ import pylab as pl
 
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_selection import SelectKBest, chi2
 from sklearn.linear_model import RidgeClassifier
 from sklearn.svm import LinearSVC
@@ -67,6 +68,13 @@ op.add_option("--top10",
 op.add_option("--all_categories",
               action="store_true", dest="all_categories",
               help="Whether to use all categories or not.")
+op.add_option("--use_hashing",
+              action="store_true",
+              help="Use a hashing vectorizer.")
+op.add_option("--n_features",
+              action="store", type=int, default=2 ** 16,
+              help="n_features when using the hashing vectorizer.")
+
 
 (opts, args) = op.parse_args()
 if len(args) > 0:
@@ -102,8 +110,17 @@ print 'data loaded'
 
 categories = data_train.target_names    # for case categories == None
 
-print "%d documents (training set)" % len(data_train.data)
-print "%d documents (testing set)" % len(data_test.data)
+
+def size_mb(docs):
+    return sum(len(s.encode('utf-8')) for s in docs) / 1e6
+
+data_train_size_mb = size_mb(data_train.data)
+data_test_size_mb = size_mb(data_test.data)
+
+print("%d documents - %0.3fMB (training set)" % (
+    len(data_train.data), data_train_size_mb))
+print("%d documents - %0.3fMB (training set)" % (
+    len(data_test.data), data_test_size_mb))
 print "%d categories" % len(categories)
 print
 
@@ -112,17 +129,24 @@ y_train, y_test = data_train.target, data_test.target
 
 print "Extracting features from the training dataset using a sparse vectorizer"
 t0 = time()
-vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5,
-                             stop_words='english')
-X_train = vectorizer.fit_transform(data_train.data)
-print "done in %fs" % (time() - t0)
+if opts.use_hashing:
+    vectorizer = HashingVectorizer(stop_words='english', non_negative=True,
+                                   n_features=opts.n_features)
+    X_train = vectorizer.transform(data_train.data)
+else:
+    vectorizer = TfidfVectorizer(sublinear_tf=True, max_df=0.5,
+                                 stop_words='english')
+    X_train = vectorizer.fit_transform(data_train.data)
+duration = time() - t0
+print("done in %fs at %0.3fMB/s" % (duration, data_train_size_mb / duration))
 print "n_samples: %d, n_features: %d" % X_train.shape
 print
 
 print "Extracting features from the test dataset using the same vectorizer"
 t0 = time()
 X_test = vectorizer.transform(data_test.data)
-print "done in %fs" % (time() - t0)
+duration = time() - t0
+print("done in %fs at %0.3fMB/s" % (duration, data_test_size_mb / duration))
 print "n_samples: %d, n_features: %d" % X_test.shape
 print
 
@@ -143,7 +167,10 @@ def trim(s):
 
 
 # mapping from integer feature name to original token string
-feature_names = np.asarray(vectorizer.get_feature_names())
+if opts.use_hashing:
+    feature_names = None
+else:
+    feature_names = np.asarray(vectorizer.get_feature_names())
 
 
 ###############################################################################
@@ -169,7 +196,7 @@ def benchmark(clf):
         print "dimensionality: %d" % clf.coef_.shape[1]
         print "density: %f" % density(clf.coef_)
 
-        if opts.print_top10:
+        if opts.print_top10 and feature_names is not None:
             print "top 10 keywords per class:"
             for i, category in enumerate(categories):
                 top10 = np.argsort(clf.coef_[i])[-10:]

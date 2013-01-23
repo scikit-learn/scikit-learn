@@ -27,6 +27,7 @@ div.header-wrapper {
     min-height: 50px;
     margin-left: auto;
     margin-right: auto;
+    margin-top: 0px;
     border-radius: 0px 0px 15px 15px;
     -moz-border-radius: 0px 0px 15px 15px;
 }
@@ -561,6 +562,32 @@ div.warning-wrapper {
 div.warning-wrapper p {
     margin: 0;
 }
+
+/* -------- banner for advertising the survey ------------------------------*/
+
+div.survey-wrapper {
+    z-index: 10;
+    background-color: #FF9C34;
+    text-align: center;
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    padding-top: 1px;
+    height: 21px;
+    box-shadow: 4px -4px 10px 3px #8AA, inset 4px 0px 13px 3px #FF9E6D;
+}
+div.survey-wrapper p {
+    margin: 0;
+    white-space: nowrap;
+}
+
+{% if theme_surveybanner == true %}
+/* for survey banner */
+div.header-wrapper {
+    margin-top: 21px;
+}
+{% endif %}
 
 /* ------- Fix maximum size of thumbnails in example gallery -------------- */
 div#examples.section .figure img {

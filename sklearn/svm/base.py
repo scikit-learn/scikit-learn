@@ -8,7 +8,7 @@ from . import libsvm_sparse
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelEncoder
 from ..utils import atleast2d_or_csr, array2d, check_random_state
-from ..utils import ConvergenceWarning, compute_class_weight
+from ..utils import ConvergenceWarning, compute_class_weight, deprecated
 from ..utils.fixes import unique
 from ..utils.extmath import safe_sparse_dot
 
@@ -69,13 +69,6 @@ class BaseLibSVM(BaseEstimator):
         if not impl in LIBSVM_IMPL:  # pragma: no cover
             raise ValueError("impl should be one of %s, %s was given" % (
                 LIBSVM_IMPL, impl))
-
-        if C is None:  # pragma: no cover
-            warnings.warn("Using 'None' for C of BaseLibSVM is deprecated "
-                          "since version 0.12, and backward compatibility "
-                          "won't be maintained from version 0.14 onward. "
-                          "Setting C=1.0.", DeprecationWarning, stacklevel=2)
-            C = 1.0
 
         self.impl = impl
         self.kernel = kernel
@@ -195,7 +188,7 @@ class BaseLibSVM(BaseEstimator):
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function. Use self._intercept_ internally.
         self._intercept_ = self.intercept_.copy()
-        if len(self.label_) == 2 and self.impl != 'one_class':
+        if self.impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
             self.intercept_ *= -1
         return self
 
@@ -223,7 +216,7 @@ class BaseLibSVM(BaseEstimator):
         # we don't pass **self.get_params() to allow subclasses to
         # add other parameters to __init__
         self.support_, self.support_vectors_, self.n_support_, \
-            self.dual_coef_, self.intercept_, self.label_, self.probA_, \
+            self.dual_coef_, self.intercept_, self._label, self.probA_, \
             self.probB_, self.fit_status_ = libsvm.fit(
                 X, y,
                 svm_type=solver_type, sample_weight=sample_weight,
@@ -238,12 +231,13 @@ class BaseLibSVM(BaseEstimator):
 
     def _sparse_fit(self, X, y, sample_weight, solver_type, kernel):
         X.data = np.asarray(X.data, dtype=np.float64, order='C')
+        X.sort_indices()
 
         kernel_type = self._sparse_kernels.index(kernel)
 
         libsvm_sparse.set_verbosity_wrap(self.verbose)
 
-        self.support_vectors_, dual_coef_data, self.intercept_, self.label_, \
+        self.support_vectors_, dual_coef_data, self.intercept_, self._label, \
             self.n_support_, self.probA_, self.probB_, self.fit_status_ = \
             libsvm_sparse.libsvm_sparse_train(
                 X.shape[1], X.data, X.indices, X.indptr, y, solver_type,
@@ -254,7 +248,7 @@ class BaseLibSVM(BaseEstimator):
 
         self._warn_from_fit_status()
 
-        n_class = len(self.label_) - 1
+        n_class = len(self._label) - 1
         n_SV = self.support_vectors_.shape[0]
 
         dual_coef_indices = np.tile(np.arange(n_SV), n_class)
@@ -310,7 +304,7 @@ class BaseLibSVM(BaseEstimator):
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self._intercept_,
-            self.label_, self.probA_, self.probB_,
+            self._label, self.probA_, self.probB_,
             svm_type=svm_type,
             kernel=kernel, C=C, nu=self.nu,
             probability=self.probability, degree=self.degree,
@@ -338,7 +332,7 @@ class BaseLibSVM(BaseEstimator):
             self.degree, self._gamma, self.coef0, self.tol,
             C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
-            self.probability, self.n_support_, self.label_,
+            self.probability, self.n_support_, self._label,
             self.probA_, self.probB_)
 
     def _compute_kernel(self, X):
@@ -379,7 +373,7 @@ class BaseLibSVM(BaseEstimator):
 
         dec_func = libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,
-            self.dual_coef_, self._intercept_, self.label_,
+            self.dual_coef_, self._intercept_, self._label,
             self.probA_, self.probB_,
             svm_type=LIBSVM_IMPL.index(self.impl),
             kernel=kernel, C=C, nu=self.nu,
@@ -389,7 +383,7 @@ class BaseLibSVM(BaseEstimator):
 
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function.
-        if len(self.label_) == 2 and self.impl != 'one_class':
+        if self.impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
             return -dec_func
 
         return dec_func
@@ -398,6 +392,9 @@ class BaseLibSVM(BaseEstimator):
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         if self._sparse and not sp.isspmatrix(X):
             X = sp.csr_matrix(X)
+        if self._sparse:
+            X.sort_indices()
+
         if (sp.issparse(X) and not self._sparse and
                 not hasattr(self.kernel, '__call__')):
             raise ValueError(
@@ -443,6 +440,12 @@ class BaseLibSVM(BaseEstimator):
             # regular dense array
             coef.flags.writeable = False
         return coef
+
+    @property
+    @deprecated("The ``labels_`` attribute has been renamed to ``classes_`` "
+                "for consistency and will be removed in 0.15.")
+    def label_(self):
+        return self.classes_
 
 
 class BaseSVC(BaseLibSVM, ClassifierMixin):
@@ -523,7 +526,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         svm_type = LIBSVM_IMPL.index(self.impl)
         pprob = libsvm.predict_proba(
             X, self.support_, self.support_vectors_, self.n_support_,
-            self.dual_coef_, self._intercept_, self.label_,
+            self.dual_coef_, self._intercept_, self._label,
             self.probA_, self.probB_,
             svm_type=svm_type, kernel=kernel, C=C, nu=self.nu,
             probability=self.probability, degree=self.degree,
@@ -551,7 +554,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             self.degree, self._gamma, self.coef0, self.tol,
             self.C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
-            self.probability, self.n_support_, self.label_,
+            self.probability, self.n_support_, self._label,
             self.probA_, self.probB_)
 
 
@@ -572,13 +575,6 @@ class BaseLibLinear(BaseEstimator):
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
                  multi_class='ovr', fit_intercept=True, intercept_scaling=1,
                  class_weight=None, verbose=0, random_state=None):
-
-        if C is None:  # pragma: no cover
-            warnings.warn("Using 'None' for C of BaseLibLinear is deprecated "
-                          "since version 0.12, and backward compatibility "
-                          "won't be maintained from version 0.14 onward. "
-                          "Setting C=1.0.", DeprecationWarning, stacklevel=2)
-            C = 1.0
 
         self.penalty = penalty
         self.loss = loss
@@ -696,6 +692,12 @@ class BaseLibLinear(BaseEstimator):
 
     @property
     def classes_(self):
+        return self._enc.classes_
+
+    @property
+    @deprecated("The ``labels_`` attribute has been renamed to ``classes_`` "
+                "for consistency and will be removed in 0.15.")
+    def label_(self):
         return self._enc.classes_
 
     def _get_bias(self):

@@ -17,7 +17,7 @@ from scipy import sparse
 from .base import LinearModel
 from ..base import RegressorMixin
 from .base import sparse_center_data, center_data
-from ..utils import array2d, atleast2d_or_csc
+from ..utils import array2d, atleast2d_or_csc, deprecated
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 from ..utils.extmath import safe_sparse_dot
@@ -60,7 +60,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         parameter
         alpha = 0 is equivalent to an ordinary least square, solved
         by the LinearRegression object in the scikit. For numerical
-        reasons, using alpha = 0 is with the Lasso object is not advised
+        reasons, using alpha = 0 with the Lasso object is not advised
         and you should prefer the LinearRegression object.
 
     l1_ratio : float
@@ -172,7 +172,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         initial data in memory directly using that format.
         """
         if self.alpha == 0:
-            warnings.warn("With alpha=0, this aglorithm does not converge"
+            warnings.warn("With alpha=0, this algorithm does not converge "
                           "well. You are advised to use the LinearRegression "
                           "estimator", stacklevel=2)
         X = atleast2d_or_csc(X, dtype=np.float64, order='F',
@@ -796,17 +796,9 @@ class LinearModelCV(LinearModel):
 
     @property
     def rho_(self):
-        warnings.warn("rho was renamed to l1_ratio and will be removed "
+        warnings.warn("rho was renamed to ``l1_ratio_`` and will be removed "
                       "in 0.15", DeprecationWarning)
         return self.l1_ratio_
-
-    @property
-    def alpha(self):
-        warnings.warn("Use alpha_. Using alpha is deprecated "
-                      "since version 0.12, and backward compatibility "
-                      "won't be maintained from version 0.14 onward. ",
-                      DeprecationWarning, stacklevel=1)
-        return self.alpha_
 
 
 class LassoCV(LinearModelCV, RegressorMixin):
@@ -1029,6 +1021,12 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.copy_X = copy_X
         self.verbose = verbose
         self.n_jobs = n_jobs
+
+    @property
+    @deprecated("rho was renamed to ``l1_ratio_`` and will be removed "
+                "in 0.15")
+    def rho(self):
+        return self.l1_ratio_
 
 
 ###############################################################################

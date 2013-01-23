@@ -342,14 +342,6 @@ class ProbabilisticPCA(PCA):
             self.covariance_ += self.explained_variance_[k] * add_cov
         return self
 
-    @property
-    def dim(self):
-        warnings.warn("Using dim is deprecated "
-                      "since version 0.12, and backward compatibility "
-                      "won't be maintained from version 0.14 onward. ",
-                      DeprecationWarning, stacklevel=2)
-        return self._dim
-
     def score(self, X, y=None):
         """Return a score associated to new data
 

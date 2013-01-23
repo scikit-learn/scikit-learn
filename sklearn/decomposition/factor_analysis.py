@@ -200,7 +200,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
     def get_covariance(self):
         """Compute data covariance with the FactorAnalysis model.
 
-        cov = components_.T * components_ + diag(noise_variance)
+        ``cov = components_.T * components_ + diag(noise_variance)``
 
         Returns
         -------

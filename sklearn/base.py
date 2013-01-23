@@ -4,6 +4,8 @@
 
 import copy
 import inspect
+import warnings
+
 import numpy as np
 from scipy import sparse
 
@@ -193,7 +195,13 @@ class BaseEstimator(object):
         """
         out = dict()
         for key in self._get_param_names():
-            value = getattr(self, key, None)
+            # catch deprecation warnings
+            with warnings.catch_warnings(record=True) as w:
+                value = getattr(self, key, None)
+            if len(w) and w[0].category == DeprecationWarning:
+                # if the parameter is deprecated, don't show it
+                continue
+
             # XXX: should we rather test if instance of estimator?
             if deep and hasattr(value, 'get_params'):
                 deep_items = value.get_params().items()
@@ -215,7 +223,7 @@ class BaseEstimator(object):
         """
         if not params:
             # Simple optimisation to gain speed (inspect is slow)
-            return
+            return self
         valid_params = self.get_params(deep=True)
         for key, value in params.iteritems():
             split = key.split('__', 1)
@@ -267,7 +275,8 @@ class ClassifierMixin(object):
         z : float
 
         """
-        return np.mean(self.predict(X) == y)
+        from .metrics import accuracy_score
+        return accuracy_score(y, self.predict(X))
 
 
 ###############################################################################

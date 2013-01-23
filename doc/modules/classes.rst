@@ -362,6 +362,7 @@ From text
    :template: class.rst
 
    feature_extraction.text.CountVectorizer
+   feature_extraction.text.HashingVectorizer
    feature_extraction.text.TfidfTransformer
    feature_extraction.text.TfidfVectorizer
 
@@ -668,6 +669,7 @@ Classification metrics
    :toctree: generated/
    :template: function.rst
 
+   metrics.accuracy_score
    metrics.auc
    metrics.auc_score
    metrics.average_precision_score
@@ -676,13 +678,13 @@ Classification metrics
    metrics.f1_score
    metrics.fbeta_score
    metrics.hinge_loss
+   metrics.matthews_corrcoef
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
    metrics.precision_score
    metrics.recall_score
    metrics.roc_curve
-   metrics.zero_one_score
-   metrics.zero_one
+   metrics.zero_one_loss
 
 Regression metrics
 ------------------
@@ -694,6 +696,7 @@ details.
    :toctree: generated/
    :template: function.rst
 
+   metrics.explained_variance_score
    metrics.mean_absolute_error
    metrics.mean_squared_error
    metrics.r2_score
@@ -702,7 +705,8 @@ details.
 Clustering metrics
 ------------------
 
-See the :ref:`clustering` section of the user guide for further details.
+See the :ref:`clustering_evaluation` section of the user guide for further
+details.
 
 .. automodule:: sklearn.metrics.cluster
    :no-members:
@@ -722,6 +726,7 @@ See the :ref:`clustering` section of the user guide for further details.
    metrics.mutual_info_score
    metrics.normalized_mutual_info_score
    metrics.silhouette_score
+   metrics.silhouette_samples
    metrics.v_measure_score
 
 Pairwise metrics

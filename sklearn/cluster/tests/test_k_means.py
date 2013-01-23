@@ -1,7 +1,9 @@
 """Testing for K-means"""
+from cStringIO import StringIO
+import sys
+import warnings
 
 import numpy as np
-import warnings
 from scipy import sparse as sp
 
 from sklearn.utils.testing import assert_equal
@@ -265,12 +267,12 @@ def test_mb_k_means_plus_plus_init_dense_array():
 def test_mb_kmeans_verbose():
     mb_k_means = MiniBatchKMeans(init="k-means++", n_clusters=n_clusters,
                                  random_state=42, verbose=1)
-    from cStringIO import StringIO
-    import sys
     old_stdout = sys.stdout
     sys.stdout = StringIO()
-    mb_k_means.fit(X)
-    sys.stdout = old_stdout
+    try:
+        mb_k_means.fit(X)
+    finally:
+        sys.stdout = old_stdout
 
 
 def test_mb_k_means_plus_plus_init_sparse_matrix():
@@ -316,12 +318,44 @@ def test_minibatch_k_means_perfect_init_sparse_csr():
     _check_fitted_model(mb_k_means)
 
 
+def test_minibatch_reassign():
+    # Give a perfect initialization, but a large reassignment_ratio,
+    # as a result all the centers should be reassigned and the model
+    # should not longer be good
+    mb_k_means = MiniBatchKMeans(init=centers.copy(),
+                                 n_clusters=n_clusters, batch_size=1,
+                                 random_state=42)
+    mb_k_means.fit(X)
+    centers_before = mb_k_means.cluster_centers_.copy()
+    try:
+        old_stdout = sys.stdout
+        sys.stdout = StringIO()
+        # Turn on verbosity to smoke test the display code
+        _mini_batch_step(X, (X ** 2).sum(axis=1), mb_k_means.cluster_centers_,
+                         mb_k_means.counts_, np.zeros(X.shape[1], np.double),
+                         False, random_reassign=True, random_state=42,
+                         reassignment_ratio=1, verbose=True)
+    finally:
+        sys.stdout = old_stdout
+    centers_after = mb_k_means.cluster_centers_.copy()
+    # Check that all the centers have moved
+    assert_greater(((centers_before - centers_after)**2).sum(axis=1).min(),
+                   .2)
+
+
 def test_sparse_mb_k_means_callable_init():
 
     def test_init(X, k, random_state):
         return centers
 
-    mb_k_means = MiniBatchKMeans(init=test_init, random_state=42).fit(X_csr)
+    # Small test to check that giving the wrong number of centers
+    # raises a meaningful error
+    assert_raises(ValueError,
+                  MiniBatchKMeans(init=test_init, random_state=42).fit, X_csr)
+
+    # Now check that the fit actually works
+    mb_k_means = MiniBatchKMeans(n_clusters=3, init=test_init,
+                                 random_state=42).fit(X_csr)
     _check_fitted_model(mb_k_means)
 
 
@@ -537,13 +571,13 @@ def test_n_init():
 def test_k_means_function():
     # test calling the k_means function directly
     # catch output
-    from cStringIO import StringIO
-    import sys
     old_stdout = sys.stdout
     sys.stdout = StringIO()
-    cluster_centers, labels, inertia = k_means(X, n_clusters=n_clusters,
-                                               verbose=True)
-    sys.stdout = old_stdout
+    try:
+        cluster_centers, labels, inertia = k_means(X, n_clusters=n_clusters,
+                                                   verbose=True)
+    finally:
+        sys.stdout = old_stdout
     centers = cluster_centers
     assert_equal(centers.shape, (n_clusters, n_features))
 

@@ -18,7 +18,7 @@ from sklearn.metrics.pairwise import chi2_kernel, additive_chi2_kernel
 from sklearn.metrics.pairwise import polynomial_kernel
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.metrics.pairwise import sigmoid_kernel
-from sklearn.metrics.pairwise import cosine_kernel
+from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.pairwise import pairwise_kernels
 from sklearn.metrics.pairwise import pairwise_kernel_functions
@@ -241,7 +241,7 @@ def test_kernel_symmetry():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     for kernel in (linear_kernel, polynomial_kernel, rbf_kernel,
-                   sigmoid_kernel, cosine_kernel):
+                   sigmoid_kernel, cosine_similarity):
         K = kernel(X, X)
         assert_array_almost_equal(K, K.T, 15)
 
@@ -251,7 +251,7 @@ def test_kernel_sparse():
     X = rng.random_sample((5, 4))
     X_sparse = csr_matrix(X)
     for kernel in (linear_kernel, polynomial_kernel, rbf_kernel,
-                   sigmoid_kernel, cosine_kernel):
+                   sigmoid_kernel, cosine_similarity):
         K = kernel(X, X)
         K2 = kernel(X_sparse, X_sparse)
         assert_array_almost_equal(K, K2)
@@ -273,8 +273,8 @@ def test_rbf_kernel():
     assert_array_almost_equal(K.flat[::6], np.ones(5))
 
 
-def test_cosine_kernel():
-    """ Test the cosine_kernels. """
+def test_cosine_similarity():
+    """ Test the cosine_similarity. """
 
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
@@ -291,6 +291,7 @@ def test_cosine_kernel():
         if Y_ is not None:
             Y_ = normalize(Y_)
         K2 = pairwise_kernels(X_, Y=Y_, metric="linear")
+        assert_array_almost_equal(K1, K2)
 
 
 def test_check_dense_matrices():

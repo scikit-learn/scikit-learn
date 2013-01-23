@@ -468,7 +468,13 @@ class DPGMM(GMM):
 
         return c + self._logprior(z)
 
-    def fit(self, X, **kwargs):
+    def _set_weights(self):
+        for i in xrange(self.n_components):
+            self.weights_[i] = self.gamma_[i, 1] / (self.gamma_[i, 1]
+                                                    + self.gamma_[i, 2])
+        self.weights_ /= np.sum(self.weights_)
+
+    def fit(self, X):
         """Estimate model parameters with the variational
         algorithm.
 
@@ -488,19 +494,6 @@ class DPGMM(GMM):
             corresponds to a single data point.
         """
         self.random_state = check_random_state(self.random_state)
-        if kwargs:
-            warnings.warn("Setting parameters in the 'fit' method is"
-                          "deprecated and will be removed in 0.14. Set it on"
-                          "initialization instead.",
-                          DeprecationWarning)
-            # initialisations for in case the user still adds parameters to fit
-            # so things don't break
-            if 'n_iter' in kwargs:
-                self.n_iter = kwargs['n_iter']
-            if 'params' in kwargs:
-                self.params = kwargs['params']
-            if 'init_params' in kwargs:
-                self.init_params = kwargs['init_params']
 
         ## initialization step
         X = np.asarray(X)
@@ -580,6 +573,8 @@ class DPGMM(GMM):
 
             # Maximization step
             self._do_mstep(X, z, self.params)
+
+        self._set_weights()
 
         return self
 
@@ -742,3 +737,7 @@ class VBGMM(DPGMM):
             if end:
                 print "Cluster proportions:", self.gamma_
                 print "covariance_type:", self.covariance_type
+
+    def _set_weights(self):
+        self.weights_[:] = self.gamma_
+        self.weights_ /= np.sum(self.weights_)

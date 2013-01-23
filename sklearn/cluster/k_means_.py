@@ -150,7 +150,7 @@ def _tolerance(X, tol):
 
 def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
             n_init=10, max_iter=300, verbose=False,
-            tol=1e-4, random_state=None, copy_x=True, n_jobs=1, k=None):
+            tol=1e-4, random_state=None, copy_x=True, n_jobs=1):
     """K-means clustering algorithm.
 
     Parameters
@@ -211,7 +211,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
         used at all, which is useful for debuging. For n_jobs below -1,
-        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
     Returns
@@ -229,12 +229,6 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
 
     """
     random_state = check_random_state(random_state)
-
-    if not k is None:
-        n_clusters = k
-        warnings.warn("Parameter k has been renamed to 'n_clusters'"
-                      " and will be removed in release 0.14.",
-                      DeprecationWarning, stacklevel=2)
 
     best_inertia = np.infty
     X = as_float_array(X, copy=copy_x)
@@ -550,6 +544,12 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
 
     if sp.issparse(centers):
         centers = centers.toarray()
+
+    if len(centers) != k:
+        raise ValueError('The shape of the inital centers (%s) '
+                         'does not match the number of clusters %i'
+                         % (centers.shape, k))
+
     return centers
 
 
@@ -598,7 +598,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
         used at all, which is useful for debuging. For n_jobs below -1,
-        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
     random_state: integer or numpy.RandomState, optional
@@ -699,24 +699,14 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
         """
-
-        if not self.k is None:
-            n_clusters = self.k
-            warnings.warn("Parameter k has been renamed by 'n_clusters'"
-                          " and will be removed in release 0.14.",
-                          DeprecationWarning, stacklevel=2)
-            self.n_clusters = n_clusters
-        else:
-            n_clusters = self.n_clusters
-
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         X = self._check_fit_data(X)
 
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(
-            X, n_clusters=n_clusters, init=self.init, n_init=self.n_init,
+            X, n_clusters=self.n_clusters, init=self.init, n_init=self.n_init,
             max_iter=self.max_iter, verbose=self.verbose,
             precompute_distances=self.precompute_distances,
-            tol=self.tol, random_state=self.random_state, copy_x=self.copy_x,
+            tol=self.tol, random_state=random_state, copy_x=self.copy_x,
             n_jobs=self.n_jobs)
         return self
 
@@ -808,7 +798,9 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
 def _mini_batch_step(X, x_squared_norms, centers, counts,
                      old_center_buffer, compute_squared_diff,
-                     distances=None):
+                     distances=None, random_reassign=False,
+                     random_state=None, reassignment_ratio=.01,
+                     verbose=False):
     """Incremental update of the centers for the Minibatch K-Means algorithm
 
     Parameters
@@ -830,10 +822,54 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
     distances: array, dtype float64, shape (n_samples), optional
         If not None, should be a pre-allocated array that will be used to store
         the distances of each sample to it's closest center.
+
+    random_state: integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
+
+    random_reassign: boolean, optional
+        If True, centers with very low counts are
+        randomly-reassigned to observations in dense areas.
+
+    reassignment_ratio: float, optional
+        Control the fraction of the maximum number of counts for a
+        center to be reassigned. A higher value means that low count
+        centers are more easily reassigned, which means that the
+        model will take longer to converge, but should converge in a
+        better clustering.
+
+    verbose: bool, optional
+        Controls the verbosity
+
     """
     # Perform label assignement to nearest centers
     nearest_center, inertia = _labels_inertia(X, x_squared_norms, centers,
                                               distances=distances)
+    if random_reassign:
+        random_state = check_random_state(random_state)
+        # Reassign clusters that have very low counts
+        to_reassign = np.logical_or(
+            (counts <= 1), counts <= reassignment_ratio * counts.max())
+        # Pick new clusters amongst observations with a probability
+        # proportional to their closeness to their center
+        distance_to_centers = np.asarray(centers[nearest_center] - X)
+        distance_to_centers **= 2
+        distance_to_centers = distance_to_centers.sum(axis=1)
+        # Flip the ordering of the distances
+        distance_to_centers -= distance_to_centers.max()
+        distance_to_centers *= -1
+        rand_vals = random_state.rand(to_reassign.sum())
+        rand_vals *= distance_to_centers.sum()
+        new_centers = np.searchsorted(distance_to_centers.cumsum(),
+                                      rand_vals)
+        new_centers = X[new_centers]
+        if verbose:
+            n_reassigns = to_reassign.sum()
+            if n_reassigns:
+                print("[_mini_batch_step] Reassigning %i cluster centers."
+                      % n_reassigns)
+        centers[to_reassign] = new_centers
 
     # implementation for the sparse CSR reprensation completely written in
     # cython
@@ -1004,6 +1040,14 @@ class MiniBatchKMeans(KMeans):
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
+    reassignment_ratio: float, optional
+        Control the fraction of the maximum number of counts for a
+        center to be reassigned. A higher value means that low count
+        centers are more easily reassigned, which means that the
+        model will take longer to converge, but should converge in a
+        better clustering.
+
+
     Attributes
     ----------
 
@@ -1027,7 +1071,8 @@ class MiniBatchKMeans(KMeans):
     def __init__(self, n_clusters=8, init='k-means++', max_iter=100,
                  batch_size=100, verbose=0, compute_labels=True,
                  random_state=None, tol=0.0, max_no_improvement=10,
-                 init_size=None, n_init=3, k=None):
+                 init_size=None, n_init=3, k=None,
+                 reassignment_ratio=0.01):
 
         super(MiniBatchKMeans, self).__init__(
             n_clusters=n_clusters, init=init, max_iter=max_iter,
@@ -1038,6 +1083,7 @@ class MiniBatchKMeans(KMeans):
         self.batch_size = batch_size
         self.compute_labels = compute_labels
         self.init_size = init_size
+        self.reassignment_ratio = reassignment_ratio
 
     def fit(self, X, y=None):
         """Compute the centroids on X by chunking it into mini-batches.
@@ -1047,12 +1093,7 @@ class MiniBatchKMeans(KMeans):
         X: array-like, shape = [n_samples, n_features]
             Coordinates of the data points to cluster
         """
-        self.random_state = check_random_state(self.random_state)
-        if self.k is not None:
-            warnings.warn("Parameter k has been replaced by 'n_clusters'"
-                          " and will be removed in release 0.14.",
-                          DeprecationWarning, stacklevel=2)
-            self.n_clusters = self.k
+        random_state = check_random_state(self.random_state)
         X = check_arrays(X, sparse_format="csr", copy=False,
                          check_ccontiguous=True, dtype=np.float64)[0]
         n_samples, n_features = X.shape
@@ -1089,8 +1130,8 @@ class MiniBatchKMeans(KMeans):
             init_size = n_samples
         self.init_size_ = init_size
 
-        validation_indices = self.random_state.random_integers(0, n_samples -
-                                                               1, init_size)
+        validation_indices = random_state.random_integers(
+            0, n_samples - 1, init_size)
         X_valid = X[validation_indices]
         x_squared_norms_valid = x_squared_norms[validation_indices]
 
@@ -1109,7 +1150,7 @@ class MiniBatchKMeans(KMeans):
             # expect n_samples to be very large when using MiniBatchKMeans
             cluster_centers = _init_centroids(
                 X, self.n_clusters, self.init,
-                random_state=self.random_state,
+                random_state=random_state,
                 x_squared_norms=x_squared_norms,
                 init_size=init_size)
 
@@ -1117,7 +1158,7 @@ class MiniBatchKMeans(KMeans):
             batch_inertia, centers_squared_diff = _mini_batch_step(
                 X_valid, x_squared_norms[validation_indices],
                 cluster_centers, counts, old_center_buffer, False,
-                distances=distances)
+                distances=distances, verbose=self.verbose)
 
             # Keep only the best cluster centers across independent inits on
             # the common validation set
@@ -1139,14 +1180,24 @@ class MiniBatchKMeans(KMeans):
         for iteration_idx in xrange(n_iter):
 
             # Sample a minibatch from the full dataset
-            minibatch_indices = self.random_state.random_integers(
+            minibatch_indices = random_state.random_integers(
                 0, n_samples - 1, self.batch_size)
 
             # Perform the actual update step on the minibatch data
             batch_inertia, centers_squared_diff = _mini_batch_step(
                 X[minibatch_indices], x_squared_norms[minibatch_indices],
                 self.cluster_centers_, self.counts_,
-                old_center_buffer, tol > 0.0, distances=distances)
+                old_center_buffer, tol > 0.0, distances=distances,
+                # Here we randomly choose whether to perform
+                # random reassignment: the choice is done as a function
+                # of the iteration index, and the minimum number of
+                # counts, in order to force this reassignment to happen
+                # every once in a while
+                random_reassign=((iteration_idx + 1)
+                                 % (10 + self.counts_.min()) == 0),
+                random_state=random_state,
+                reassignment_ratio=self.reassignment_ratio,
+                verbose=self.verbose)
 
             # Monitor convergence and do early stopping if necessary
             if _mini_batch_convergence(
@@ -1171,7 +1222,6 @@ class MiniBatchKMeans(KMeans):
         X: array-like, shape = [n_samples, n_features]
             Coordinates of the data points to cluster.
         """
-        self.random_state = check_random_state(self.random_state)
 
         X = check_arrays(X, sparse_format="csr", copy=False)[0]
         n_samples, n_features = X.shape
@@ -1182,19 +1232,31 @@ class MiniBatchKMeans(KMeans):
             return self
 
         x_squared_norms = _squared_norms(X)
-
+        self.random_state_ = check_random_state(self.random_state)
         if (not hasattr(self, 'counts_')
                 or not hasattr(self, 'cluster_centers_')):
             # this is the first call partial_fit on this object:
             # initialize the cluster centers
             self.cluster_centers_ = _init_centroids(
-                X, self.n_clusters, self.init, random_state=self.random_state,
+                X, self.n_clusters, self.init,
+                random_state=self.random_state_,
                 x_squared_norms=x_squared_norms, init_size=self.init_size)
 
             self.counts_ = np.zeros(self.n_clusters, dtype=np.int32)
+            random_reassign = False
+        else:
+            # The lower the minimum count is, the more we do random
+            # reassignment, however, we don't want to do random
+            # reassignment too often, to allow for building up counts
+            random_reassign = self.random_state_.randint(
+                10 * (1 + self.counts_.min())) == 0
 
         _mini_batch_step(X, x_squared_norms, self.cluster_centers_,
-                         self.counts_, np.zeros(0, np.double), 0)
+                         self.counts_, np.zeros(0, np.double), 0,
+                         random_reassign=random_reassign,
+                         random_state=self.random_state_,
+                         reassignment_ratio=self.reassignment_ratio,
+                         verbose=self.verbose)
 
         if self.compute_labels:
             self.labels_, self.inertia_ = _labels_inertia(

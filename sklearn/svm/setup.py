@@ -14,7 +14,7 @@ def configuration(parent_package='', top_path=None):
 
     # Section LibSVM
 
-    # we compile both libsvm and lisvm_sparse
+    # we compile both libsvm and libsvm_sparse
     config.add_library('libsvm-skl',
                        sources=[join('src', 'libsvm', 'libsvm_template.cpp')],
                        depends=[join('src', 'libsvm', 'svm.cpp'),
@@ -75,8 +75,6 @@ def configuration(parent_package='', top_path=None):
                          depends=[join("src", "libsvm", "svm.h"),
                                   join("src", "libsvm",
                                        "libsvm_sparse_helper.c")])
-
-    config.add_subpackage('sparse')
 
     return config
 

@@ -8,6 +8,8 @@ import  numpy as np
 cimport numpy as np
 cimport liblinear
 
+np.import_array()
+
 
 def train_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
                np.ndarray[np.float64_t, ndim=1, mode='c'] Y,

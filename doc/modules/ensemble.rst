@@ -218,7 +218,7 @@ the matching feature to the prediction function.
  * :ref:`example_ensemble_plot_forest_importances_faces.py`
  * :ref:`example_ensemble_plot_forest_importances.py`
 
-.. _random_hashing:
+.. _random_trees_embedding:
 
 Totally Random Trees Embedding
 ------------------------------
@@ -242,8 +242,8 @@ the transformation performs an implicit, non-parametric density estimation.
 
  * :ref:`example_ensemble_plot_random_forest_embedding.py`
 
-  * :ref:`example_manifold_plot_lle_digits.py` compares non-linear
-    dimensionality reduction technics on handwritten digits.
+ * :ref:`example_manifold_plot_lle_digits.py` compares non-linear
+   dimensionality reduction technics on handwritten digits.
 
 .. seealso::
 

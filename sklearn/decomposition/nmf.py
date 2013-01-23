@@ -75,9 +75,8 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
     X: array, [n_samples, n_features]
         The data matrix to be decomposed.
 
-    n_components:
-        The number of components desired in the
-        approximation.
+    n_components: array, [n_components, n_features]
+        The number of components desired in the approximation.
 
     variant: None | 'a' | 'ar'
         The variant of the NNDSVD algorithm.
@@ -87,7 +86,7 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
         'ar': Fills the zero entries with standard normal random variates.
         Default: None
 
-    eps:
+    eps: float
         Truncate all values less then this in output to zero.
 
     random_state: numpy.RandomState | int, optional
@@ -252,9 +251,6 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    X: {array-like, sparse matrix}, shape = [n_samples, n_features]
-        Data the model will be fit to.
-
     n_components: int or None
         Number of components, if n_components is not set all components
         are kept

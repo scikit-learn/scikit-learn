@@ -17,6 +17,7 @@ from scipy import sparse
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import all_estimators
@@ -31,7 +32,8 @@ from sklearn.utils import shuffle
 from sklearn.preprocessing import StandardScaler, Scaler
 from sklearn.datasets import (load_iris, load_boston, make_blobs,
                               make_classification)
-from sklearn.metrics import zero_one_score, adjusted_rand_score
+from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
+
 from sklearn.lda import LDA
 from sklearn.svm.base import BaseLibSVM
 
@@ -53,7 +55,6 @@ from sklearn.cluster import (WardAgglomeration, AffinityPropagation,
 from sklearn.isotonic import IsotonicRegression
 from sklearn.random_projection import (GaussianRandomProjection,
                                        SparseRandomProjection)
-from sklearn.metrics import f1_score
 
 from sklearn.cross_validation import train_test_split
 
@@ -84,6 +85,8 @@ def test_all_estimators():
             clone(e)
             # test __repr__
             repr(e)
+            # test that set_params returns self
+            assert_true(isinstance(e.set_params(), E))
 
             # test if init does nothing but set parameters
             # this is important for grid_search etc.
@@ -110,6 +113,11 @@ def test_all_estimators():
             else:
                 continue
             for arg, default in zip(args, defaults):
+                if arg not in params.keys():
+                    # deprecated parameter, not in get_params
+                    assert_true(default is None)
+                    continue
+
                 if isinstance(params[arg], np.ndarray):
                     assert_array_equal(params[arg], default)
                 else:
@@ -480,7 +488,7 @@ def test_classifiers_train():
             y_pred = clf.predict(X)
             assert_equal(y_pred.shape, (n_samples,))
             # training set performance
-            assert_greater(zero_one_score(y, y_pred), 0.85)
+            assert_greater(accuracy_score(y, y_pred), 0.85)
 
             # raises error on malformed input for predict
             assert_raises(ValueError, clf.predict, X.T)
@@ -545,7 +553,7 @@ def test_classifiers_classes():
         y_pred = clf.predict(X)
         # training set performance
         assert_array_equal(np.unique(y), np.unique(y_pred))
-        assert_greater(zero_one_score(y, y_pred), 0.78,
+        assert_greater(accuracy_score(y, y_pred), 0.78,
                        "accuracy of %s not greater than 0.78" % str(Clf))
         assert_array_equal(
             clf.classes_, classes,
@@ -668,12 +676,8 @@ def test_class_weight_classifiers():
             if name == "NuSVC":
                 # the sparse version has a parameter that doesn't do anything
                 continue
-            if name.startswith("RidgeClassifier"):
-                # RidgeClassifier shows unexpected behavior
-                # FIXME!
-                continue
             if name.endswith("NB"):
-                # NaiveBayes classifiers have a somewhat differnt interface.
+                # NaiveBayes classifiers have a somewhat different interface.
                 # FIXME SOON!
                 continue
             if n_centers == 2:
@@ -719,7 +723,7 @@ def test_class_weight_auto_classifies():
                 continue
 
             if name.endswith("NB"):
-                # NaiveBayes classifiers have a somewhat differnt interface.
+                # NaiveBayes classifiers have a somewhat different interface.
                 # FIXME SOON!
                 continue
 
@@ -737,3 +741,44 @@ def test_class_weight_auto_classifies():
             y_pred_auto = clf.predict(X_test)
             assert_greater(f1_score(y_test, y_pred_auto),
                            f1_score(y_test, y_pred))
+
+
+def test_estimators_overwrite_params():
+    # test whether any classifier overwrites his init parameters during fit
+    for est_type in ["classifier", "regressor", "transformer"]:
+        estimators = all_estimators(type_filter="classifier")
+        X, y = make_blobs(random_state=0, n_samples=6)
+        # some want non-negative input
+        X -= X.min()
+        for name, Est in estimators:
+            with warnings.catch_warnings(record=True):
+                # catch deprecation warnings
+                est = Est()
+            params = est.get_params()
+            est.fit(X, y)
+            new_params = est.get_params()
+            for k, v in params.items():
+                assert_false(np.any(new_params[k] != v),
+                             "Estimator %s changes its parameter %s"
+                             "from %s to %s during fit."
+                             % (name, k, v, new_params[k]))
+
+
+def test_cluster_overwrite_params():
+    # test whether any classifier overwrites his init parameters during fit
+    clusterers = all_estimators(type_filter="cluster")
+    X, y = make_blobs(random_state=0, n_samples=9)
+    # some want non-negative input
+    X
+    for name, Clt in clusterers:
+        with warnings.catch_warnings(record=True):
+            # catch deprecation warnings
+            clt = Clt()
+        params = clt.get_params()
+        clt.fit(X)
+        new_params = clt.get_params()
+        for k, v in params.items():
+            assert_false(np.any(new_params[k] != v),
+                         "Estimator %s changes its parameter %s"
+                         "from %s to %s during fit."
+                         % (name, k, v, new_params[k]))

@@ -26,7 +26,6 @@ import pylab as pl
 from matplotlib import offsetbox
 from sklearn import (manifold, datasets, decomposition, ensemble, lda,
                      random_projection)
-from sklearn.metrics import euclidean_distances
 
 digits = datasets.load_digits(n_class=6)
 X = digits.data

@@ -79,7 +79,9 @@ def test_default_empty_load_files():
 
 
 def test_deprecated_load_filenames():
-    res = load_filenames(LOAD_FILES_ROOT)
+    with warnings.catch_warnings(record=True):
+        # catch deprecation warning
+        res = load_filenames(LOAD_FILES_ROOT)
     assert_true(res)
 
 

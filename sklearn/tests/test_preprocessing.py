@@ -23,6 +23,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import scale
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import add_dummy_feature
+from sklearn.preprocessing import balance_weights
 
 from sklearn import datasets
 from sklearn.linear_model.stochastic_gradient import SGDClassifier
@@ -120,12 +121,16 @@ def test_min_max_scaler_iris():
     assert_array_equal(X_trans.min(axis=0), 0)
     assert_array_equal(X_trans.min(axis=0), 0)
     assert_array_equal(X_trans.max(axis=0), 1)
+    X_trans_inv = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
 
     # not default params
     scaler = MinMaxScaler(feature_range=(1, 2))
     X_trans = scaler.fit_transform(X)
     assert_array_equal(X_trans.min(axis=0), 1)
     assert_array_equal(X_trans.max(axis=0), 2)
+    X_trans_inv = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
 
     # raises on invalid range
     scaler = MinMaxScaler(feature_range=(2, 1))
@@ -149,6 +154,8 @@ def test_min_max_scaler_zero_variance_features():
                       [0.,  0.,  0.0],
                       [0.,  0.,  1.0]]
     assert_array_almost_equal(X_trans, X_expected_0_1)
+    X_trans_inv = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
 
     X_trans_new = scaler.transform(X_new)
     X_expected_0_1_new = [[+0.,  1.,  0.500],
@@ -401,7 +408,7 @@ def test_normalize_errors():
 def test_binarizer():
     X_ = np.array([[1, 0, 5], [2, 3, 0]])
 
-    for init in (np.array, sp.csr_matrix):
+    for init in (np.array, sp.csr_matrix, sp.csc_matrix):
 
         X = init(X_.copy())
 
@@ -409,6 +416,8 @@ def test_binarizer():
         X_bin = toarray(binarizer.transform(X))
         assert_equal(np.sum(X_bin == 0), 4)
         assert_equal(np.sum(X_bin == 1), 2)
+        X_bin = binarizer.transform(X)
+        assert_equal(type(X), type(X_bin))
 
         binarizer = Binarizer(copy=True).fit(X)
         X_bin = toarray(binarizer.transform(X))
@@ -700,3 +709,14 @@ def test_add_dummy_feature_csr():
     X = add_dummy_feature(X)
     assert_true(sp.isspmatrix_csr(X), X)
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
+
+
+def test_balance_weights():
+    weights = balance_weights([0, 0, 1, 1])
+    assert_array_equal(weights, [1., 1., 1., 1.])
+
+    weights = balance_weights([0, 1, 1, 1, 1])
+    assert_array_equal(weights, [1., 0.25, 0.25, 0.25, 0.25])
+
+    weights = balance_weights([0, 0])
+    assert_array_equal(weights, [1., 1.])

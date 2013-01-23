@@ -9,6 +9,8 @@ cimport cython
 
 from libc.float cimport DBL_MAX, FLT_MAX
 
+np.import_array()
+
 cdef extern from "cblas.h":
    enum CBLAS_ORDER:
        CblasRowMajor=101

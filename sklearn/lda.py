@@ -43,10 +43,10 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
     Attributes
     ----------
     `coef_` : array-like, shape = [rank, n_classes - 1]
-        Coefficients of the features in the linear decision function.
-        rank is min(rank_features, n_classes) where rank_features
-        is the dimensionality of the spaces spanned by the features
-        (i.e. excluding redundant features).
+        Coefficients of the features in the linear decision
+        function. rank is min(rank_features, n_classes) where
+        rank_features is the dimensionality of the spaces spanned
+        by the features (i.e. n_features excluding redundant features).
 
     `covariance_` : array-like, shape = [n_features, n_features]
         Covariance matrix (shared by all classes).
@@ -182,13 +182,6 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         self.intercept_ = (-0.5 * np.sum(self.coef_ ** 2, axis=1) +
                            np.log(self.priors_))
         return self
-
-    @property
-    def classes(self):
-        warnings.warn("LDA.classes is deprecated and will be removed in 0.14. "
-                      "Use LDA.classes_ instead.", DeprecationWarning,
-                      stacklevel=2)
-        return self.classes_
 
     @property
     def scaling(self):  # pragma: no cover

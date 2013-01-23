@@ -54,7 +54,12 @@ def test_libsvm_iris():
         clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
         assert_greater(np.mean(clf.predict(iris.data) == iris.target), 0.9)
 
-    assert_array_equal(clf.label_, np.sort(clf.label_))
+    # check deprecated ``label_`` attribute:
+    with warnings.catch_warnings(record=True):
+        # catch deprecation warning
+        assert_array_equal(clf.label_, np.sort(clf.label_))
+
+    assert_array_equal(clf.classes_, np.sort(clf.classes_))
 
     # check also the low-level API
     model = svm.libsvm.fit(iris.data, iris.target.astype(np.float64))
@@ -532,7 +537,7 @@ def test_liblinear_set_coef():
     clf.coef_ = clf.coef_.copy()
     clf.intercept_ = clf.intercept_.copy()
     values2 = clf.decision_function(iris.data)
-    assert_array_equal(values, values2)
+    assert_array_almost_equal(values, values2)
 
     # binary-class case
     X = [[2, 1],

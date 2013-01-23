@@ -365,6 +365,25 @@ iterating only once over a mini-batch. This can be used for online learning
 when the data is not readily available from the start, or for when the data
 does not fit into the memory.
 
+.. currentmodule:: sklearn.cluster
+
+.. image:: ../auto_examples/cluster/images/plot_dict_face_patches_1.png
+    :target: ../auto_examples/cluster/plot_dict_face_patches.html
+    :scale: 50%
+    :align: right
+
+.. topic:: **Clustering for dictionary learning**
+
+   Note that when using dictionary learning to extract a representation
+   (e.g. for sparse coding) clustering can be a good proxy to learn the
+   dictionary. For instance the :class:`MiniBatchKMeans` estimator is
+   computationally efficient and implements on-line learning
+   `partial_fit` method.
+
+    Example: :ref:`example_cluster_plot_dict_face_patches.py`
+
+.. currentmodule:: sklearn.decomposition
+
 .. _FA:
 
 Factor Analysis
@@ -417,7 +436,7 @@ structure of the error covariance :math:`\Psi`:
 Both model essentially estimate a Gaussian with a low-rank covariance matrix.
 Because both models are probilistic they can be integrated in more complex
 models, e.g. Mixture of Factor Analysers. One gets very different models (e.g.
-:class:`ICA`) if non-Gaussian priors on the latent variables are assumed.
+:class:`FastICA`) if non-Gaussian priors on the latent variables are assumed.
 
 Factor Analysis `can` produce similar components (the columns of its loading
 matrix) to :class:`PCA`. However, one can not make any general statements
@@ -526,9 +545,9 @@ recommended in the dense case.
 passing an integer seed or a `RandomState` to :attr:`init`.
 
 In :class:`NMF`, sparseness can be enforced by setting the attribute
-:attr:`sparseness` to `data` or `components`. Sparse components lead to
-localized features, and sparse data leads to a more efficient representation
-of the data.
+:attr:`sparseness` to ``"data"`` or ``"components"``. Sparse components lead to
+localized features, and sparse data leads to a more efficient representation of
+the data.
 
 .. topic:: Examples:
 
