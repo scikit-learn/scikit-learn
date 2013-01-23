@@ -102,7 +102,7 @@ class BaseLibSVM(BaseEstimator):
             and n_features is the number of features.
 
         y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
+            Target values (class labels in classification, real numbers in
             regression)
 
         sample_weight : array-like, shape = [n_samples], optional
@@ -259,11 +259,7 @@ class BaseLibSVM(BaseEstimator):
             (n_class, n_SV))
 
     def predict(self, X):
-        """Perform classification or regression samples in X.
-
-        For a classification model, the predicted class for each
-        sample in X is returned.  For a regression model, the function
-        value of X calculated is returned.
+        """Perform regression on samples in X.
 
         For an one-class model, +1 or -1 is returned.
 
@@ -277,11 +273,7 @@ class BaseLibSVM(BaseEstimator):
         """
         X = self._validate_for_predict(X)
         predict = self._sparse_predict if self._sparse else self._dense_predict
-        y = predict(X)
-        if self.impl in ['c_svc', 'nu_svc']:
-            # classification
-            y = self.classes_.take(y.astype(np.int))
-        return y
+        return predict(X)
 
     def _dense_predict(self, X):
         n_samples, n_features = X.shape
@@ -444,6 +436,23 @@ class BaseLibSVM(BaseEstimator):
 
 class BaseSVC(BaseLibSVM, ClassifierMixin):
     """ABC for LibSVM-based classifiers."""
+
+    def predict(self, X):
+        """Perform classification on samples in X.
+
+        For an one-class model, +1 or -1 is returned.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        y_pred : array, shape = [n_samples]
+            Class labels for samples in X.
+        """
+        y = super(BaseSVC, self).predict(X)
+        return self.classes_.take(y.astype(np.int))
 
     def predict_proba(self, X):
         """Compute probabilities of possible outcomes for samples in X.
