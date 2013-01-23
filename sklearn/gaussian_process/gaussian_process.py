@@ -255,8 +255,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             observations were made.
 
         y : double array_like
-            An array with shape (n_samples, ) with the observations of the
-            scalar output to be predicted.
+            An array with shape (n_samples, ) or shape (n_samples, n_outputs) 
+            with the observations of the output to be predicted.
 
         Returns
         -------
@@ -410,11 +410,15 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         Returns
         -------
         y : array_like
-            An array with shape (n_eval, ) with the Best Linear Unbiased
+            An array with shape (n_eval, ) if the Gaussian Process was trained 
+            on an array of shape (n_samples, ) or and array with shape
+            (n_eval, n_outputs) if the Gaussian Process was trained on an array
+            of shape (n_samples, n_outputs) with the Best Linear Unbiased 
             Prediction at x.
 
         MSE : array_like, optional (if eval_MSE == True)
-            An array with shape (n_eval, ) with the Mean Squared Error at x.
+            An array with shape (n_eval, ) or (n_eval, n_outputs) as with y, 
+            with the Mean Squared Error at x.
         """
 
         # Check input shapes
