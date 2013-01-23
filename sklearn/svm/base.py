@@ -238,7 +238,7 @@ class BaseLibSVM(BaseEstimator):
         libsvm_sparse.set_verbosity_wrap(self.verbose)
 
         self.support_, self.support_vectors_, dual_coef_data, \
-            self.intercept_, self.label_, self.n_support_, \
+            self.intercept_, self._label, self.n_support_, \
             self.probA_, self.probB_, self.fit_status_ = \
             libsvm_sparse.libsvm_sparse_train(
                 X.shape[1], X.data, X.indices, X.indptr, y, solver_type,
