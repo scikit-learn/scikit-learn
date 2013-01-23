@@ -745,23 +745,20 @@ def test_multilabel_representation_invariance():
 
     lb = LabelBinarizer().fit([range(n_classes)])
 
-    # Check the invariance
     for metric in MULTILABELS_METRICS:
 
-        # Representation invariance
-        # -------------------------
+        # Check representation invariance
         assert_equal(metric(y1, y2),
                      metric(lb.transform(y1),
                             lb.transform(y2)))
 
-        # Shuffling invariance
-        # --------------------
-        # List of labels
+        # Check shuffling invariance with list of labels
         assert_equal(metric(y1, y2),
                      metric(y1_shuffle, y2_shuffle))
 
-        # Dense binary matrix
-        assert_equal(metric(lb.transform(y1), lb.transform(y2)),
+        # Check shuffling invariance with dense binary indicator matrix
+        assert_equal(metric(lb.transform(y1),
+                            lb.transform(y2)),
                      metric(lb.transform(y1_shuffle),
                             lb.transform(y2_shuffle)))
 
