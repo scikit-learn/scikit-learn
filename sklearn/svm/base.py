@@ -402,7 +402,7 @@ class BaseLibSVM(BaseEstimator):
             self.dual_coef_.data, self._intercept_,
             LIBSVM_IMPL.index(self.impl), kernel_type,
             self.degree, self.gamma, self.coef0, self.tol,
-            self.C, self.class_weight_label_, self.class_weight_,
+            self.C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
             self.probability, self.n_support_, self.label_,
             self.probA_, self.probB_)

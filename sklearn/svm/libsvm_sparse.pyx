@@ -349,8 +349,7 @@ def libsvm_sparse_decision_function(
     intercept, int svm_type, int kernel_type, int
     degree, double gamma, double coef0, double
     eps, double C,
-    np.ndarray[np.int32_t, ndim=1] weight_label,
-    np.ndarray[np.float64_t, ndim=1] weight,
+    np.ndarray[np.float64_t, ndim=1] class_weight,
     double nu, double p, int shrinking, int probability,
     np.ndarray[np.int32_t, ndim=1, mode='c'] nSV,
     np.ndarray[np.int32_t, ndim=1, mode='c'] label,
@@ -367,12 +366,14 @@ def libsvm_sparse_decision_function(
     cdef np.npy_intp n_class
 
     cdef svm_csr_model *model
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
+        class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
     param = set_parameter(svm_type, kernel_type, degree, gamma,
                           coef0, nu,
                           100., # cache size has no effect on predict
                           C, eps, p, shrinking,
-                          probability, <int> weight.shape[0], weight_label.data,
-                          weight.data)
+                          probability, <int> class_weight.shape[0],
+                          class_weight_label.data, class_weight.data, -1)
 
     model = csr_set_model(param, <int> nSV.shape[0], SV_data.data,
                           SV_indices.shape, SV_indices.data,
