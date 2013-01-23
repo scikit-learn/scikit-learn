@@ -517,7 +517,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             if not sp.issparse(X):
                 self.reconstruction_err_ = norm(X - np.dot(W, H))
             else:
-                norm2X = np.sum(X.data ** 2)  # XXX: must be a cleaner way
+                norm2X = np.sum(X.data ** 2)  # Ok because X is CSR
                 normWHT = np.trace(np.dot(np.dot(H.T, np.dot(W.T, W)), H))
                 cross_prod = np.trace(np.dot((X * H.T).T, W))
                 self.reconstruction_err_ = sqrt(norm2X + normWHT
