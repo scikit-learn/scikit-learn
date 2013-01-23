@@ -611,10 +611,70 @@ class Binarizer(BaseEstimator, TransformerMixin):
 
 
 def _is_label_indicator_matrix(y):
-    return hasattr(y, "shape") and len(y.shape) == 2
+    """ Check if ``y`` is in the label indicator matrix format (multilabel).
+
+    Parameters
+    ----------
+    y : numpy array of shape [n_samples] or sequence of sequences
+        Target values. In the multilabel case the nested sequences can
+        have variable lengths.
+
+    Returns
+    -------
+    out : bool,
+        Return ``True``, if ``y`` is in a label indicator matrix format,
+        else ``False``.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import _is_label_indicator_matrix
+    >>> _is_label_indicator_matrix([0, 1, 0, 1])
+    False
+    >>> _is_label_indicator_matrix([[1], [0, 2], []])
+    False
+    >>> _is_label_indicator_matrix(np.array([[1, 0], [0, 0]]))
+    True
+    >>> _is_label_indicator_matrix(np.array([[1], [0], [0]]))
+    False
+    >>> _is_label_indicator_matrix(np.array([[1], [0], [0]]))
+    False
+
+    """
+    return (hasattr(y, "shape") and len(y.shape) == 2 and y.shape[1] > 1 and
+            y.size > y.shape[0] and np.size(np.unique(y)) <= 2)
 
 
 def _is_multilabel(y):
+    """ Check if ``y`` is in a multilabel format.
+
+    Parameters
+    ----------
+    y : numpy array of shape [n_samples] or sequence of sequences
+        Target values. In the multilabel case the nested sequences can
+        have variable lengths.
+
+    Returns
+    -------
+    out : bool,
+        Return ``True``, if ``y`` is in a multilabel format, else ```False``.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import _is_multilabel
+    >>> _is_multilabel([0, 1, 0, 1])
+    False
+    >>> _is_multilabel([[1], [0, 2], []])
+    True
+    >>> _is_multilabel(np.array([[1, 0], [0, 0]]))
+    True
+    >>> _is_multilabel(np.array([[1], [0], [0]]))
+    False
+    >>> _is_multilabel(np.array([[1], [0], [0]]))
+    False
+
+    """
     # the explicit check for ndarray is for forward compatibility; future
     # versions of Numpy might want to register ndarray as a Sequence
     return (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) and

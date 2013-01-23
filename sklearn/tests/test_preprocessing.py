@@ -24,6 +24,8 @@ from sklearn.preprocessing import scale
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import add_dummy_feature
 from sklearn.preprocessing import balance_weights
+from sklearn.preprocessing import _is_multilabel as is_multilabel
+from sklearn.preprocessing import _is_label_indicator_matrix as is_label_indicator_matrix
 
 from sklearn import datasets
 from sklearn.linear_model.stochastic_gradient import SGDClassifier
@@ -720,3 +722,32 @@ def test_balance_weights():
 
     weights = balance_weights([0, 0])
     assert_array_equal(weights, [1., 1.])
+
+
+def test_is_multilabel():
+    assert_true(is_multilabel([[1], [2], [0, 1]]))
+    assert_true(is_multilabel([[1], [2]]))
+    assert_true(is_multilabel([[1], [2], []]))
+    assert_true(is_multilabel([[1], [0, 2], []]))
+    assert_true(is_multilabel(np.random.randint(2, size=(10, 10))))
+
+    assert_false(is_multilabel(range(10)))
+    assert_false(is_multilabel(np.arange(10)))
+    assert_false(is_multilabel(np.reshape(np.arange(10), (-1, 1))))
+    assert_false(is_multilabel(np.random.randint(2, size=(10, ))))
+    assert_false(is_multilabel(np.random.randint(2, size=(10, 1))))
+
+
+def test_is_label_indicator_matrix():
+    assert_true(is_label_indicator_matrix(np.random.randint(2, size=(10, 10))))
+
+    assert_false(is_label_indicator_matrix([[1], [2], [0, 1]]))
+    assert_false(is_label_indicator_matrix([[1], [2]]))
+    assert_false(is_label_indicator_matrix([[1], [2], []]))
+    assert_false(is_label_indicator_matrix([[1], [0, 2], []]))
+    assert_false(is_multilabel(range(10)))
+    assert_false(is_multilabel(np.arange(10)))
+    assert_false(is_label_indicator_matrix(np.reshape(np.arange(9), (3, 3))))
+    assert_false(is_multilabel(np.reshape(np.arange(10), (-1, 1))))
+    assert_false(is_multilabel(np.random.randint(2, size=(10, ))))
+    assert_false(is_multilabel(np.random.randint(2, size=(10, 1))))
