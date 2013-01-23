@@ -38,8 +38,11 @@ __all__ = [
 
 
 class BaseWeightBoosting(BaseEnsemble):
-    """Abstract base class for weight boosting. """
+    """Base class for AdaBoost estimators.
 
+    Warning: This class should not be used directly. Use derived classes
+    instead.
+    """
     __metaclass__ = ABCMeta
 
     @abstractmethod
@@ -60,7 +63,7 @@ class BaseWeightBoosting(BaseEnsemble):
         self.compute_importances = compute_importances
         self.feature_importances_ = None
 
-    def fit(self, X, y, sample_weight=None, boost_method=None):
+    def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier/regressor from the training set (X, y).
 
         Parameters
@@ -75,9 +78,6 @@ class BaseWeightBoosting(BaseEnsemble):
         sample_weight : array-like of shape = [n_samples], optional
             Sample weights. If None, the sample weights are initialized to
             1 / n_samples.
-
-        boost_method : function, optional
-            The boosting step.
 
         Returns
         -------
@@ -113,12 +113,9 @@ class BaseWeightBoosting(BaseEnsemble):
         self.weights_ = np.zeros(self.n_estimators, dtype=np.float)
         self.errors_ = np.ones(self.n_estimators, dtype=np.float)
 
-        if boost_method is None:
-            boost_method = self._boost
-
         for iboost in xrange(self.n_estimators):
             # Boosting step
-            sample_weight, weight, error = boost_method(
+            sample_weight, weight, error = self._boost(
                 iboost,
                 X, y,
                 sample_weight)
@@ -158,6 +155,42 @@ class BaseWeightBoosting(BaseEnsemble):
                 "``feature_importances_`` attribute")
 
         return self
+
+    @abstractmethod
+    def _boost(self, iboost, X, y, sample_weight):
+        """Implement a single boost.
+
+        Warning: This method needs to be overriden by subclasses.
+
+        Parameters
+        ----------
+        iboost : int
+            The index of the current boost iteration.
+
+        X : array-like of shape = [n_samples, n_features]
+            The training input samples.
+
+        y : array-like of shape = [n_samples]
+            The target values (integers that correspond to classes).
+
+        sample_weight : array-like of shape = [n_samples]
+            The current sample weights.
+
+        Returns
+        -------
+        sample_weight : array-like of shape = [n_samples] or None
+            The reweighted sample weights.
+            If None then boosting has terminated early.
+
+        weight : float
+            The weight for the current boost.
+            If None then boosting has terminated early.
+
+        error : float
+            The classification error for the current boost.
+            If None then boosting has terminated early.
+        """
+        pass
 
     def staged_score(self, X, y, n_estimators=-1):
         """Return staged scores for X, y.
@@ -232,10 +265,10 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         ``learning_rate``. There is a trade-off between ``learning_rate`` and
         ``n_estimators``.
 
-    real : boolean, optional (default=True)
-        If True then use the real SAMME.R boosting algorithm.
+    algorithm : string, optional (default="SAMME.R")
+        If "SAMME.R" then use the SAMME.R real boosting algorithm.
         ``base_estimator`` must support calculation of class probabilities.
-        If False then use the discrete SAMME boosting algorithm.
+        If "SAMME" then use the SAMME discrete boosting algorithm.
 
     compute_importances : boolean, optional (default=False)
         Whether feature importances are computed and stored in the
@@ -280,7 +313,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                  base_estimator=DecisionTreeClassifier(max_depth=1),
                  n_estimators=50,
                  learning_rate=0.5,
-                 real=True,
+                 algorithm="SAMME.R",
                  compute_importances=False):
         super(AdaBoostClassifier, self).__init__(
             base_estimator=base_estimator,
@@ -288,7 +321,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             learning_rate=learning_rate,
             compute_importances=compute_importances)
 
-        self.real = real
+        self.algorithm = algorithm
 
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier from the training set (X, y).
@@ -315,26 +348,26 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             raise TypeError("``base_estimator`` must be a "
                             "subclass of ``ClassifierMixin``")
 
-        # 'Real' boosting step
-        if self.real:
+        # Check that algorithm is supported
+        if self.algorithm != "SAMME" and self.algorithm != "SAMME.R":
+            raise ValueError("``algorithm`` %s is not supported"
+                             % self.algorithm)
+
+        #  SAMME-R requires predict_proba-enabled base estimators
+        if self.algorithm == "SAMME.R":
             if not hasattr(self.base_estimator, "predict_proba"):
                 raise TypeError(
                     "The real AdaBoost algorithm requires that the weak"
                     "learner supports the calculation of class probabilities")
 
-            return super(AdaBoostClassifier, self).fit(
-                X, y, sample_weight, self._boost_real)
+        return super(AdaBoostClassifier, self).fit(X, y, sample_weight)
 
-        # 'Discrete' boosting step
-        else:
-            return super(AdaBoostClassifier, self).fit(
-                    X, y, sample_weight, self._boost_discrete)
-
-    def _boost_real(self, iboost, X, y, sample_weight):
-        """Implement a single boost using the real algorithm.
+    def _boost(self, iboost, X, y, sample_weight):
+        """Implement a single boost.
 
         Perform a single boost according to the real multi-class SAMME.R
-        algorithm and return the updated sample weights.
+        algorithm or to the discrete SAMME algorithm and return the updated
+        sample weights.
 
         Parameters
         ----------
@@ -364,6 +397,13 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The classification error for the current boost.
             If None then boosting has terminated early.
         """
+        if self.algorithm == "SAMME.R":
+            return self._boost_real(iboost, X, y, sample_weight)
+        else: # elif self.algorithm == "SAMME":
+            return self._boost_discrete(iboost, X, y, sample_weight)
+
+    def _boost_real(self, iboost, X, y, sample_weight):
+        """Implement a single boost using the SAMME.R real algorithm."""
         estimator = self._make_estimator()
 
         if hasattr(estimator, 'fit_predict_proba'):
@@ -426,39 +466,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         return sample_weight, 1., error
 
     def _boost_discrete(self, iboost, X, y, sample_weight):
-        """Implement a single boost using the discrete algorithm.
-
-        Perform a single boost according to the discrete multi-class SAMME
-        algorithm and return the updated sample weights.
-
-        Parameters
-        ----------
-        iboost : int
-            The index of the current boost iteration.
-
-        X : array-like of shape = [n_samples, n_features]
-            The training input samples.
-
-        y : array-like of shape = [n_samples]
-            The target values (integers that correspond to classes).
-
-        sample_weight : array-like of shape = [n_samples]
-            The current sample weights.
-
-        Returns
-        -------
-        sample_weight : array-like of shape = [n_samples] or None
-            The reweighted sample weights.
-            If None then boosting has terminated early.
-
-        weight : float
-            The weight for the current boost.
-            If None then boosting has terminated early.
-
-        error : float
-            The classification error for the current boost.
-            If None then boosting has terminated early.
-        """
+        """Implement a single boost using the SAMME discrete algorithm."""
         estimator = self._make_estimator()
 
         if hasattr(estimator, 'fit_predict'):
@@ -621,10 +629,9 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
             norm += weight
 
-            if self.real:
+            if self.algorithm == "SAMME.R":
                 current_pred = _samme_proba(estimator, n_classes, X)
-
-            else:
+            else: # elif self.algorithm == "SAMME":
                 current_pred = estimator.predict(X)
                 current_pred = (current_pred == classes).T * weight
 
@@ -687,10 +694,9 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
             norm += weight
 
-            if self.real:
+            if self.algorithm == "SAMME.R":
                 current_pred = _samme_proba(estimator, n_classes, X)
-
-            else:
+            else: # elif self.algorithm == "SAMME":
                 current_pred = estimator.predict(X)
                 current_pred = (current_pred == classes).T * weight
 

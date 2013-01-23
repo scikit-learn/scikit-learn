@@ -51,7 +51,7 @@ bdt_discrete = AdaBoostClassifier(
     DecisionTreeClassifier(max_depth=2),
     n_estimators=600,
     learning_rate=1.5,
-    real=False)
+    algorithm="SAMME")
 
 bdt_real.fit(X_train, y_train)
 bdt_discrete.fit(X_train, y_train)
