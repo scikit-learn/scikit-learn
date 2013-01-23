@@ -26,7 +26,7 @@ X, y = make_classification(n_samples=1000,
 
 bdt = AdaBoostClassifier(
     DecisionTreeClassifier(max_depth=1),
-    real=False,
+    algorithm="SAMME",
     n_estimators=50)
 
 bdt.fit(X, y)

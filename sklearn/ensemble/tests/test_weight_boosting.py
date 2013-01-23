@@ -180,6 +180,10 @@ def test_error():
                   AdaBoostClassifier(learning_rate=-1).fit,
                   X, y)
 
+    assert_raises(ValueError,
+                  AdaBoostClassifier(algorithm="foo").fit,
+                  X, y)
+
     assert_raises(TypeError,
                   AdaBoostClassifier(base_estimator=DummyRegressor()).fit,
                   X, y)
@@ -197,7 +201,7 @@ def test_base_estimator():
     clf = AdaBoostClassifier(RandomForestClassifier())
     clf.fit(X, y)
 
-    clf = AdaBoostClassifier(SVC(), real=False)
+    clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
     clf.fit(X, y)
 
     from sklearn.ensemble import RandomForestRegressor

@@ -50,14 +50,14 @@ ada_discrete = AdaBoostClassifier(
     base_estimator=dt_stump,
     learning_rate=learning_rate,
     n_estimators=n_estimators,
-    real=False)
+    algorithm="SAMME")
 ada_discrete.fit(X_train, y_train)
 
 ada_real = AdaBoostClassifier(
     base_estimator=dt_stump,
     learning_rate=learning_rate,
     n_estimators=n_estimators,
-    real=True)
+    algorithm="SAMME.R")
 ada_real.fit(X_train, y_train)
 
 fig = plt.figure()
