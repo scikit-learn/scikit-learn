@@ -53,6 +53,20 @@ def unique_labels(*lists_of_labels):
     out : numpy array of shape [n_unique_labels]
         An ordered array of unique labels.
 
+    Examples
+    --------
+    >>> from sklearn.multiclass import unique_labels
+    >>> unique_labels([3, 5, 5, 5, 7, 7])
+    array([3, 5, 7])
+    >>> unique_labels([1, 2, 3, 4], [2, 2, 3, 4])
+    array([1, 2, 3, 4])
+    >>> unique_labels([1, 2, 10], [5, 11])
+    array([ 1,  2,  5, 10, 11])
+    >>> unique_labels(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+    array([0, 1])
+    >>> unique_labels([(1, 2), (3,)], [(1, 2), tuple()])
+    array([1, 2, 3])
+
     """
     def _unique_labels(labels):
         lb = LabelBinarizer()
