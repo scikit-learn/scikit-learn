@@ -702,11 +702,12 @@ def test_multilabel_representation_invariance():
                            accuracy_score]
 
     # Generate some data
-    n_classes = 20
+    n_classes = 4
+    n_samples = 50
     _, y1 = make_multilabel_classification(n_features=1, n_classes=n_classes,
-                                           random_state=0)
+                                           random_state=0, n_samples=n_samples)
     _, y2 = make_multilabel_classification(n_features=1, n_classes=n_classes,
-                                           random_state=1)
+                                           random_state=1, n_samples=n_samples)
 
     # NOTE: The "sorted" trick is necessary to shuffle labels in place.
     py_random_state = random.Random(0)
