@@ -58,7 +58,7 @@ class BaseWeightBoosting(BaseEnsemble):
             estimator_params=estimator_params)
 
         self.estimator_weights_ = None
-        self.errors_ = None
+        self.estimator_errors_ = None
         self.learning_rate = learning_rate
         self.compute_importances = compute_importances
         self.feature_importances_ = None
@@ -111,11 +111,11 @@ class BaseWeightBoosting(BaseEnsemble):
         # Clear any previous fit results
         self.estimators_ = []
         self.estimator_weights_ = np.zeros(self.n_estimators, dtype=np.float)
-        self.errors_ = np.ones(self.n_estimators, dtype=np.float)
+        self.estimator_errors_ = np.ones(self.n_estimators, dtype=np.float)
 
         for iboost in xrange(self.n_estimators):
             # Boosting step
-            sample_weight, estimator_weight, error = self._boost(
+            sample_weight, estimator_weight, estimator_error = self._boost(
                 iboost,
                 X, y,
                 sample_weight)
@@ -125,10 +125,10 @@ class BaseWeightBoosting(BaseEnsemble):
                 break
 
             self.estimator_weights_[iboost] = estimator_weight
-            self.errors_[iboost] = error
+            self.estimator_errors_[iboost] = estimator_error
 
             # Stop if error is zero
-            if error == 0:
+            if estimator_error == 0:
                 break
 
             # Stop if the sum of sample weights has become non-positive
@@ -287,10 +287,10 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     `n_classes_` : int
         The number of classes.
 
-    `estimator_weights_` : list of floats
+    `estimator_weights_` : array of floats
         Weights for each estimator in the boosted ensemble.
 
-    `errors_` : list of floats
+    `estimator_errors_` : array of floats
         Classification error for each estimator in the boosted
         ensemble.
 
@@ -316,6 +316,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                  learning_rate=0.5,
                  algorithm="SAMME.R",
                  compute_importances=False):
+
         super(AdaBoostClassifier, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
@@ -394,7 +395,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The weight for the current boost.
             If None then boosting has terminated early.
 
-        error : float
+        estimator_error : float
             The classification error for the current boost.
             If None then boosting has terminated early.
         """
@@ -430,18 +431,12 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         incorrect = y_predict != y
 
         # Error fraction
-        error = np.mean(np.average(incorrect, weights=sample_weight, axis=0))
+        estimator_error = np.mean(
+            np.average(incorrect, weights=sample_weight, axis=0))
 
         # Stop if classification is perfect
-        if error == 0:
+        if estimator_error <= 0:
             return sample_weight, 1., 0.
-
-        # Negative sample weights can yield an overall negative error...
-        if error < 0:
-            # use the absolute value
-            # if you have a better idea of how to handle negative
-            # sample weights let me know
-            error = abs(error)
 
         # Construct y coding
         n_classes = self.n_classes_
@@ -462,10 +457,11 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         # Only boost the weights if it will fit again
         if not iboost == self.n_estimators - 1:
             # Only boost positive weights
-            sample_weight *= np.exp(estimator_weight * ((sample_weight > 0) |
-                                                        (estimator_weight < 0)))
+            sample_weight *= np.exp(estimator_weight *
+                                    ((sample_weight > 0) |
+                                     (estimator_weight < 0)))
 
-        return sample_weight, 1., error
+        return sample_weight, 1., estimator_error
 
     def _boost_discrete(self, iboost, X, y, sample_weight):
         """Implement a single boost using the SAMME discrete algorithm."""
@@ -490,36 +486,33 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         incorrect = y_predict != y
 
         # Error fraction
-        error = np.mean(np.average(incorrect, weights=sample_weight, axis=0))
+        estimator_error = np.mean(
+            np.average(incorrect, weights=sample_weight, axis=0))
 
         # Stop if classification is perfect
-        if error == 0:
+        if estimator_error <= 0:
             return sample_weight, 1., 0.
-
-        # Negative sample weights can yield an overall negative error...
-        if error < 0:
-            # Use the absolute value
-            error = abs(error)
 
         n_classes = self.n_classes_
 
         # Stop if the error is at least as bad as random guessing
-        if error >= 1. - (1. / n_classes):
+        if estimator_error >= 1. - (1. / n_classes):
             self.estimators_.pop(-1)
             return None, None, None
 
         # Boost weight using multi-class AdaBoost SAMME alg
-        estimator_weight = self.learning_rate * (np.log((1. - error) / error) +
-                                                 np.log(n_classes - 1.))
+        estimator_weight = self.learning_rate * (
+            np.log((1. - estimator_error) / estimator_error) +
+            np.log(n_classes - 1.))
 
         # Only boost the weights if I will fit again
         if not iboost == self.n_estimators - 1:
             # Only boost positive weights
-            sample_weight *= np.exp(estimator_weight * incorrect
-                                                     * ((sample_weight > 0) |
-                                                        (estimator_weight < 0)))
+            sample_weight *= np.exp(estimator_weight * incorrect *
+                                    ((sample_weight > 0) |
+                                     (estimator_weight < 0)))
 
-        return sample_weight, estimator_weight, error
+        return sample_weight, estimator_weight, estimator_error
 
     def predict(self, X, n_estimators=-1):
         """Predict classes for X.
@@ -888,10 +881,10 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     `estimators_` : list of classifiers
         The collection of fitted sub-estimators.
 
-    `estimator_weights_` : list of floats
+    `estimator_weights_` : array of floats
         Weights for each estimator in the boosted ensemble.
 
-    `errors_` : list of floats
+    `estimator_errors_` : array of floats
         Regression error for each estimator in the boosted ensemble.
 
     `feature_importances_` : array of shape = [n_features]
@@ -913,8 +906,9 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     def __init__(self,
                  base_estimator=DecisionTreeRegressor(max_depth=3),
                  n_estimators=50,
-                 learning_rate=0.1,
+                 learning_rate=1,
                  compute_importances=False):
+
         super(AdaBoostRegressor, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
@@ -980,7 +974,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The weight for the current boost.
             If None then boosting has terminated early.
 
-        error : float
+        estimator_error : float
             The regression error for the current boost.
             If None then boosting has terminated early.
         """
@@ -1002,18 +996,19 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         if error_max != 0.:
             error_vect /= error_vect.max()
 
-        error = (sample_weight * error_vect).sum()
+        estimator_error = (sample_weight * error_vect).sum()
 
-        # Stop if fit is perfect
-        if error == 0:
+        if estimator_error <= 0:
+            # Stop if fit is perfect
             return sample_weight, 1., 0.
 
-        # Negative sample weights can yield an overall negative error...
-        if error < 0:
-            # Use the absolute value
-            error = abs(error)
+        elif estimator_error >= 0.5:
+            # Discard current estimator only if it isn't the only one
+            if len(self.estimators_) > 1:
+                self.estimators_.pop(-1)
+            return None, None, None
 
-        beta = error / (1. - error)
+        beta = estimator_error / (1. - estimator_error)
 
         # Boost weight using AdaBoost.R2 alg
         estimator_weight = self.learning_rate * np.log(1. / beta)
@@ -1023,7 +1018,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
                 beta,
                 (1. - error_vect) * self.learning_rate)
 
-        return sample_weight, estimator_weight, error
+        return sample_weight, estimator_weight, estimator_error
 
     def predict(self, X, n_estimators=-1):
         """Predict regression value for X.
@@ -1125,6 +1120,5 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
                 pred += current_pred * weight
 
             norm += weight
-            normed_pred = pred / norm
 
-            yield normed_pred
+            yield pred / norm

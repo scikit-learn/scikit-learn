@@ -1,6 +1,6 @@
 """
 ===================================================================
-Boosted Decision Tree Regression
+Decision Tree Regression with AdaBoost
 ===================================================================
 
 1D regression with boosted :ref:`decision trees <tree>`: the decision tree is
@@ -26,20 +26,18 @@ from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import AdaBoostRegressor
 
 clf_1 = AdaBoostRegressor(
-    DecisionTreeRegressor(max_depth=3),
-    n_estimators=1,
-    learning_rate=1.)
+    DecisionTreeRegressor(max_depth=4),
+    n_estimators=1)
 
 clf_2 = AdaBoostRegressor(
-    DecisionTreeRegressor(max_depth=3),
-    n_estimators=100,
-    learning_rate=1.)
+    DecisionTreeRegressor(max_depth=4),
+    n_estimators=10)
 
 clf_1.fit(X, y)
 clf_2.fit(X, y)
 
 # Predict
-X_test = np.arange(0.0, 5.0, 0.01)[:, np.newaxis]
+X_test = np.arange(0.0, 6.0, 0.01)[:, np.newaxis]
 y_1 = clf_1.predict(X_test)
 y_2 = clf_2.predict(X_test)
 

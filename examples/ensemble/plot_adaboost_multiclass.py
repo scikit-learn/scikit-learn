@@ -80,12 +80,14 @@ pl.ylabel('Test Error')
 pl.xlabel('Number of Trees')
 
 pl.subplot(132)
-pl.plot(n_trees, bdt_discrete.errors_, "b", label='SAMME')
-pl.plot(n_trees, bdt_real.errors_, "r", label='SAMME.R')
+pl.plot(n_trees, bdt_discrete.estimator_errors_, "b", label='SAMME')
+pl.plot(n_trees, bdt_real.estimator_errors_, "r", label='SAMME.R')
 pl.legend()
 pl.ylabel('Error')
 pl.xlabel('Tree')
-pl.ylim((.2, max(bdt_real.errors_.max(), bdt_discrete.errors_.max()) * 1.2))
+pl.ylim((.2,
+        max(bdt_real.estimator_errors_.max(),
+            bdt_discrete.estimator_errors_.max()) * 1.2))
 pl.xlim((-20, len(bdt_discrete) + 20))
 
 pl.subplot(133)
