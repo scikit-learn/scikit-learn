@@ -361,7 +361,7 @@ class BaseLibSVM(BaseEstimator):
 
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function.
-        if len(self.classes_) == 2 and self.impl != 'one_class':
+        if self.impl != 'one_class' and len(self.classes_) == 2: 
             return -dec_func
 
         return dec_func
@@ -404,7 +404,7 @@ class BaseLibSVM(BaseEstimator):
             self.degree, self.gamma, self.coef0, self.tol,
             self.C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
-            self.probability, self.n_support_, self.label_,
+            self.probability, self.n_support_, self._label,
             self.probA_, self.probB_)
 
     def _validate_for_predict(self, X):
