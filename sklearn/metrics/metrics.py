@@ -646,8 +646,15 @@ def zero_one_loss(y_true, y_pred, normalize=True):
         If ``normalize == True``, return the fraction of misclassifications
         (float), else it returns the number of misclassifications (int).
 
+    Notes
+    -----
+    In multi-labels classification, the zero_one_loss function corresponds to
+    the subset zero one loss: the subset of labels must be correctly
+    predicted.
+
     See also
     --------
+    accuracy_score : Compute the accuracy score
     hamming_loss : Compute the average Hamming loss
 
     Examples
@@ -745,7 +752,13 @@ def accuracy_score(y_true, y_pred):
 
     See also
     --------
-    zero_one_loss Zero-One classification loss
+    zero_one_loss : zero-one classification loss
+
+    Notes
+    -----
+    In multi-labels classification, the accuracy_score function corresponds to
+    the subset accuracy: the subset of labels must be correctly
+    predicted.
 
     Examples
     --------
@@ -763,7 +776,7 @@ def accuracy_score(y_true, y_pred):
     """
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
 
-    # Compute accuraccy for each possible representation
+    # Compute accuracy for each possible representation
     if is_label_indicator_matrix(y_true):
         score = (y_pred != y_true).sum(axis=1) == 0
     else:
@@ -1450,6 +1463,15 @@ def hamming_loss(y_true, y_pred, labels=None):
     loss : float or int,
         Return the average Hamming between element of ``y_true`` and
         ``y_pred``.
+
+    Notes
+    -----
+    There is a strong connection between the zero-one loss and the Hamming
+    loss. The zero-one loss will penalize any classifier that don't predict
+    correctly the all subset of labels. The hamming loss will penalize only
+    the fraction of label incorrectly predict.
+
+    In general, the hamming loss is smaller than the zero one loss.
 
     See Also
     --------
