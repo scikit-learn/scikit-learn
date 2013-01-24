@@ -66,11 +66,103 @@ def get_data(url):
         else:
             raise RuntimeError('unknown encoding')
     else:
-        fid = open(url, 'r')
-        data = fid.read()
+        with open(url, 'r') as fid:
+            data = fid.read()
         fid.close()
 
     return data
+
+
+def parse_sphinx_searchindex(searchindex):
+    """Parse a Sphinx search index
+
+    Parameters
+    ----------
+    searchindex : str
+        The Sphinx search index (contents of searchindex.js)
+
+    Returns
+    -------
+    filenames : list of str
+        The file names parsed from the search index.
+    objects : dict
+        The objects parsed from the search index.
+    """
+    def _select_block(str_in, start_tag, end_tag):
+        """Select first block delimited by start_tag and end_tag"""
+        start_pos = str_in.find(start_tag)
+        if start_pos < 0:
+            raise ValueError('start_tag not found')
+        depth = 0
+        for pos in range(start_pos, len(str_in)):
+            if str_in[pos] == start_tag:
+                depth += 1
+            elif str_in[pos] == end_tag:
+                depth -= 1
+
+            if depth == 0:
+                break
+        sel = str_in[start_pos + 1:pos]
+        return sel
+
+    def _parse_dict_recursive(dict_str):
+        """Parse a dictionary from the search index"""
+        dict_out = dict()
+        pos_last = 0
+        pos = dict_str.find(':')
+        while pos >= 0:
+            key = dict_str[pos_last:pos]
+            if dict_str[pos + 1] == '[':
+                # value is a list
+                pos_tmp = dict_str.find(']', pos + 1)
+                if pos_tmp < 0:
+                    raise RuntimeError('error when parsing dict')
+                value = dict_str[pos + 2: pos_tmp].split(',')
+                # try to convert elements to int
+                for i in range(len(value)):
+                    try:
+                        value[i] = int(value[i])
+                    except ValueError:
+                        pass
+            elif dict_str[pos + 1] == '{':
+                # value is another dictionary
+                subdict_str = _select_block(dict_str[pos:], '{', '}')
+                value = _parse_dict_recursive(subdict_str)
+                pos_tmp = pos + len(subdict_str)
+            else:
+                raise ValueError('error when parsing dict: unknown elem')
+
+            key = key.strip('"')
+            if len(key) > 0:
+                dict_out[key] = value
+
+            pos_last = dict_str.find(',', pos_tmp)
+            if pos_last < 0:
+                break
+            pos_last += 1
+            pos = dict_str.find(':', pos_last)
+
+        return dict_out
+
+    # parse objects
+    query = 'objects:'
+    pos = searchindex.find(query)
+    if pos < 0:
+        raise ValueError('"objects:" not found in search index')
+
+    sel = _select_block(searchindex[pos:], '{', '}')
+    objects = _parse_dict_recursive(sel)
+
+    # parse filenames
+    query = 'filenames:'
+    pos = searchindex.find(query)
+    if pos < 0:
+        raise ValueError('"filenames:" not found in search index')
+    filenames = searchindex[pos + len(query) + 1:]
+    filenames = filenames[:filenames.find(']')]
+    filenames = [f.strip('"') for f in filenames.split(',')]
+
+    return filenames, objects
 
 
 class SphinxDocLinkResolver(object):
@@ -88,6 +180,7 @@ class SphinxDocLinkResolver(object):
         Return relative links (only useful for links to documentation of this
         package).
     """
+
     def __init__(self, doc_url, searchindex='searchindex.js',
                  extra_modules_test=None, relative=False):
         self.doc_url = doc_url
@@ -100,12 +193,12 @@ class SphinxDocLinkResolver(object):
             if relative:
                 raise ValueError('Relative links are only supported for local '
                                  'URLs (doc_url cannot start with "http://)"')
-            self._searchindex_url = doc_url + '/' + searchindex
+            searchindex_url = doc_url + '/' + searchindex
         else:
-            self._searchindex_url = os.path.join(doc_url, searchindex)
+            searchindex_url = os.path.join(doc_url, searchindex)
 
         # detect if we are using relative links on a Windows system
-        if doc_url.find('\\') >= 0:
+        if os.name.lower() == 'nt' and not doc_url.startswith('http://'):
             if not relative:
                 raise ValueError('You have to use relative=True for the local'
                                  'package on a Windows system.')
@@ -113,90 +206,13 @@ class SphinxDocLinkResolver(object):
         else:
             self._is_windows = False
 
-        self._init_searchindex()
-
-    def _init_searchindex(self):
-        """Download and parse the Sphinx search index"""
-        def _select_block(str_in, start_tag, end_tag):
-            """Select first block delimited by start_tag and end_tag"""
-            start_pos = str_in.find(start_tag)
-            if start_pos < 0:
-                raise ValueError('start_tag not found')
-            depth = 0
-            for pos in range(start_pos, len(str_in)):
-                if str_in[pos] == start_tag:
-                    depth += 1
-                elif str_in[pos] == end_tag:
-                    depth -= 1
-
-                if depth == 0:
-                    break
-            sel = str_in[start_pos + 1:pos]
-            return sel
-
-        def _parse_dict_recursive(dict_str):
-            """Parse a dictionary from the search index"""
-            dict_out = dict()
-            pos_last = 0
-            pos = dict_str.find(':')
-            while pos >= 0:
-                key = dict_str[pos_last:pos]
-                if dict_str[pos + 1] == '[':
-                    # value is a list
-                    pos_tmp = dict_str.find(']', pos + 1)
-                    if pos_tmp < 0:
-                        raise RuntimeError('error when parsing dict')
-                    value = dict_str[pos + 2: pos_tmp].split(',')
-                    # try to convert elements to int
-                    for i in range(len(value)):
-                        try:
-                            value[i] = int(value[i])
-                        except ValueError:
-                            pass
-                elif dict_str[pos + 1] == '{':
-                    # value is another dictionary
-                    subdict_str = _select_block(dict_str[pos:], '{', '}')
-                    value = _parse_dict_recursive(subdict_str)
-                    pos_tmp = pos + len(subdict_str)
-                else:
-                    raise ValueError('error when parsing dict: unknown elem')
-
-                key = key.strip('"')
-                if len(key) > 0:
-                    dict_out[key] = value
-
-                pos_last = dict_str.find(',', pos_tmp)
-                if pos_last < 0:
-                    break
-                pos_last += 1
-                pos = dict_str.find(':', pos_last)
-
-            return dict_out
-
-        # download the search index
-        sindex = get_data(self._searchindex_url)
-
-        # parse objects
-        query = 'objects:'
-        pos = sindex.find(query)
-        if pos < 0:
-            raise ValueError('"objects:" not found in search index')
-
-        sel = _select_block(sindex[pos:], '{', '}')
-        objects = _parse_dict_recursive(sel)
-
-        # parse filenames
-        query = 'filenames:'
-        pos = sindex.find(query)
-        if pos < 0:
-            raise ValueError('"filenames:" not found in search index')
-        filenames = sindex[pos + len(query) + 1:]
-        filenames = filenames[:filenames.find(']')]
-        filenames = [f.strip('"') for f in filenames.split(',')]
+        # download and initialize the search index
+        sindex = get_data(searchindex_url)
+        filenames, objects = parse_sphinx_searchindex(sindex)
 
         self._searchindex = dict(filenames=filenames, objects=objects)
 
-    def get_link(self, cobj):
+    def _get_link(self, cobj):
         """Get a valid link, False if not found"""
 
         fname_idx = None
@@ -242,12 +258,30 @@ class SphinxDocLinkResolver(object):
         return link
 
     def resolve(self, cobj, this_url):
-        """Resolve the link to the documentation, returns None if not found"""
+        """Resolve the link to the documentation, returns None if not found
+
+        Parameters
+        ----------
+        cobj : dict
+            Dict with information about the "code object" for which we are
+            resolving a link.
+            cobi['name'] : function or class name (str)
+            cobj['module_short'] : shortened module name (str)
+            cobj['module'] : module name (str)
+        this_url: str
+            URL of the current page. Needed to construct relative URLs
+            (only used if relative=True in constructor).
+
+        Returns
+        -------
+        link : str | None
+            The link (URL) to the documentation.
+        """
         full_name = cobj['module_short'] + '.' + cobj['name']
         link = self._link_cache.get(full_name, None)
         if link is None:
             # we don't have it cached
-            link = self.get_link(cobj)
+            link = self._get_link(cobj)
             # cache it for the future
             self._link_cache[full_name] = link
 
@@ -468,7 +502,7 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
     """)  # clear at the end of the section
 
 # modules for which we embed links into example code
-DOCMODULES = ['sklearn', 'matplotlib', 'numpy']
+DOCMODULES = ['sklearn', 'matplotlib', 'numpy', 'scipy']
 
 
 def make_thumbnail(in_fname, out_fname, width, height):
@@ -607,45 +641,47 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
 
                 # find functions so we can later add links to the documentation
                 funregex = re.compile('[\w.]+\(')
-                fid = open(src_file, 'rt')
-                for line in fid.readlines():
-                    if line.startswith('#'):
-                        continue
-                    for match in funregex.findall(line):
-                        fun_name = match[:-1]
-                        try:
-                            exec('this_fun = %s' % fun_name, my_globals)
-                        except Exception as err:
-                            print 'extracting function failed'
-                            print err
+                with open(src_file, 'rt') as fid:
+                    for line in fid.readlines():
+                        if line.startswith('#'):
                             continue
-                        this_fun = my_globals['this_fun']
-                        if not callable(this_fun):
-                            continue
-                        if not hasattr(this_fun, '__module__'):
-                            continue
-                        if not isinstance(this_fun.__module__, basestring):
-                            continue
-                        if this_fun.__module__.split('.')[0] not in DOCMODULES:
-                            continue
+                        for match in funregex.findall(line):
+                            fun_name = match[:-1]
+                            try:
+                                exec('this_fun = %s' % fun_name, my_globals)
+                            except Exception as err:
+                                print 'extracting function failed'
+                                print err
+                                continue
+                            this_fun = my_globals['this_fun']
+                            if not callable(this_fun):
+                                continue
+                            if not hasattr(this_fun, '__module__'):
+                                continue
+                            if not isinstance(this_fun.__module__, basestring):
+                                continue
+                            if (this_fun.__module__.split('.')[0]
+                                    not in DOCMODULES):
+                                continue
 
-                        # get shortened module name
-                        fun_name_short = fun_name.split('.')[-1]
-                        module_short = get_short_module_name(
-                            this_fun.__module__, fun_name_short)
-                        cobj = {'name': fun_name_short,
-                                'module': this_fun.__module__,
-                                'module_short': module_short,
-                                'obj_type': 'function'}
-                        example_code_obj[fun_name] = cobj
-
+                            # get shortened module name
+                            fun_name_short = fun_name.split('.')[-1]
+                            module_short = get_short_module_name(
+                                this_fun.__module__, fun_name_short)
+                            cobj = {'name': fun_name_short,
+                                    'module': this_fun.__module__,
+                                    'module_short': module_short,
+                                    'obj_type': 'function'}
+                            example_code_obj[fun_name] = cobj
                 fid.close()
+
                 if len(example_code_obj) > 0:
                     # save the dictionary, so we can later add hyperlinks
                     codeobj_fname = example_file[:-3] + '_codeobj.pickle'
-                    fid = open(codeobj_fname, 'wb')
-                    cPickle.dump(example_code_obj, fid,
-                                 cPickle.HIGHEST_PROTOCOL)
+                    with open(codeobj_fname, 'wb') as fid:
+                        cPickle.dump(example_code_obj, fid,
+                                     cPickle.HIGHEST_PROTOCOL)
+                    fid.close()
 
                 if '__doc__' in my_globals:
                     # The __doc__ is often printed in the example, we
@@ -726,14 +762,18 @@ def embed_code_links(app, exception):
     doc_resolvers['sklearn'] = SphinxDocLinkResolver(app.builder.outdir,
                                                      relative=True)
 
-    doc_resolvers['numpy'] = SphinxDocLinkResolver(
-        'http://docs.scipy.org/doc/numpy-1.6.0')
-
     doc_resolvers['matplotlib'] = SphinxDocLinkResolver(
         'http://matplotlib.org')
 
+    doc_resolvers['numpy'] = SphinxDocLinkResolver(
+        'http://docs.scipy.org/doc/numpy-1.6.0')
+
+    doc_resolvers['scipy'] = SphinxDocLinkResolver(
+        'http://docs.scipy.org/doc/scipy-0.11.0/reference')
+
     example_dir = os.path.join(app.builder.srcdir, 'auto_examples')
-    html_example_dir = os.path.abspath(app.builder.outdir + '/auto_examples')
+    html_example_dir = os.path.abspath(os.path.join(app.builder.outdir,
+                                                    'auto_examples'))
 
     # patterns for replacement
     link_pattern = '<a href="%s">%s</a>'
@@ -744,20 +784,23 @@ def embed_code_links(app, exception):
         for fname in filenames:
             print '\tprocessing: %s' % fname
             full_fname = os.path.join(html_example_dir, dirpath, fname)
-            subpath = dirpath[len(html_example_dir):]
-            pickle_fname = (example_dir + '/' + subpath + '/' + fname[:-5]
-                            + '_codeobj.pickle')
+            subpath = dirpath[len(html_example_dir) + 1:]
+            pickle_fname = os.path.join(example_dir, subpath,
+                                        fname[:-5] + '_codeobj.pickle')
+
             if os.path.exists(pickle_fname):
                 # we have a pickle file with the objects to embed links for
-                fid = open(pickle_fname, 'rb')
-                example_code_obj = cPickle.load(fid)
+                with open(pickle_fname, 'rb') as fid:
+                    example_code_obj = cPickle.load(fid)
                 fid.close()
                 str_repl = {}
                 # generate replacement strings with the links
                 for name, cobj in example_code_obj.iteritems():
                     this_module = cobj['module'].split('.')[0]
+
                     if this_module not in doc_resolvers:
                         continue
+
                     link = doc_resolvers[this_module].resolve(cobj,
                                                               full_fname)
                     if link is not None:
@@ -768,14 +811,14 @@ def embed_code_links(app, exception):
                         str_repl[name_html] = link_pattern % (link, name_html)
                 # do the replacement in the html file
                 if len(str_repl) > 0:
-                    fid = open(full_fname, 'rt')
-                    lines_in = fid.readlines()
+                    with open(full_fname, 'rt') as fid:
+                        lines_in = fid.readlines()
                     fid.close()
-                    fid = open(full_fname, 'wt')
-                    for line in lines_in:
-                        for name, link in str_repl.iteritems():
-                            line = line.replace(name, link)
-                        fid.write(line)
+                    with open(full_fname, 'wt') as fid:
+                        for line in lines_in:
+                            for name, link in str_repl.iteritems():
+                                line = line.replace(name, link)
+                            fid.write(line)
                     fid.close()
     print '[done]'
 
