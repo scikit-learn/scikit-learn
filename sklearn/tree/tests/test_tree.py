@@ -128,14 +128,17 @@ def test_graphviz_toy():
     tree.export_graphviz(clf, out_file=out)
     contents1 = out.getvalue()
 
-    tree_toy = StringIO("digraph Tree {\n"
-    "0 [label=\"X[0] <= 0.0000\\nerror = 0.5"
-    "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
-    "1 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 3.  0.]\", shape=\"box\"] ;\n"
-    "0 -> 1 ;\n"
-    "2 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 0.  3.]\", shape=\"box\"] ;\n"
-    "0 -> 2 ;\n"
-    "}")
+    tree_toy = StringIO(
+        "digraph Tree {\n"
+        "0 [label=\"X[0] <= 0.0000\\nerror = 0.5"
+        "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
+        "1 [label=\"error = 0.0000\\nsamples = 3\\n"
+        "value = [ 3.  0.]\", shape=\"box\"] ;\n"
+        "0 -> 1 ;\n"
+        "2 [label=\"error = 0.0000\\nsamples = 3\\n"
+        "value = [ 0.  3.]\", shape=\"box\"] ;\n"
+        "0 -> 2 ;\n"
+        "}")
     contents2 = tree_toy.getvalue()
 
     assert contents1 == contents2, \
@@ -147,14 +150,17 @@ def test_graphviz_toy():
                                feature_names=["feature1", ""])
     contents1 = out.getvalue()
 
-    tree_toy = StringIO("digraph Tree {\n"
-    "0 [label=\"feature1 <= 0.0000\\nerror = 0.5"
-    "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
-    "1 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 3.  0.]\", shape=\"box\"] ;\n"
-    "0 -> 1 ;\n"
-    "2 [label=\"error = 0.0000\\nsamples = 3\\nvalue = [ 0.  3.]\", shape=\"box\"] ;\n"
-    "0 -> 2 ;\n"
-    "}")
+    tree_toy = StringIO(
+        "digraph Tree {\n"
+        "0 [label=\"feature1 <= 0.0000\\nerror = 0.5"
+        "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
+        "1 [label=\"error = 0.0000\\nsamples = 3\\n"
+        "value = [ 3.  0.]\", shape=\"box\"] ;\n"
+        "0 -> 1 ;\n"
+        "2 [label=\"error = 0.0000\\nsamples = 3\\n"
+        "value = [ 0.  3.]\", shape=\"box\"] ;\n"
+        "0 -> 2 ;\n"
+        "}")
     contents2 = tree_toy.getvalue()
 
     assert contents1 == contents2, \
@@ -562,15 +568,15 @@ def test_sample_weight():
 
     sample_weight = np.ones(200)
 
-    sample_weight[y == 2] = .51 # Samples of class '2' are still weightier
+    sample_weight[y == 2] = .51  # Samples of class '2' are still weightier
     clf = tree.DecisionTreeClassifier(max_depth=1)
     clf.fit(X, y, sample_weight=sample_weight)
     assert_equal(clf.tree_.threshold[0], 149.5)
 
-    sample_weight[y == 2] = .50 # Samples of class '2' are no longer weightier
+    sample_weight[y == 2] = .50  # Samples of class '2' are no longer weightier
     clf = tree.DecisionTreeClassifier(max_depth=1)
     clf.fit(X, y, sample_weight=sample_weight)
-    assert_equal(clf.tree_.threshold[0], 49.5) # Threshold should have moved
+    assert_equal(clf.tree_.threshold[0], 49.5)  # Threshold should have moved
 
     # Test that sample weighting is the same as having duplicates
     X = iris.data

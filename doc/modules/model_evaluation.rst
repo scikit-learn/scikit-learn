@@ -50,6 +50,7 @@ Others also work in the multiclass case:
   fbeta_score
   precision_recall_fscore_support
   precision_score
+  recall_score
   zero_one_loss
 
 Some metrics might require probability estimates of the positive class,
@@ -761,6 +762,7 @@ Clustering metrics
 The :mod:`sklearn.metrics` implements several losses, scores and utility
 function for more information see the :ref:`clustering_evaluation` section.
 
+.. _dummy_estimators:
 
 Dummy estimators
 =================

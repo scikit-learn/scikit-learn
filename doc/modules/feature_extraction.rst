@@ -283,10 +283,10 @@ reasonable (please see  the :ref:`reference documentation
   >>> vectorizer                            # doctest: +NORMALIZE_WHITESPACE
   CountVectorizer(analyzer='word', binary=False, charset='utf-8',
           charset_error='strict', dtype=<type 'long'>, input='content',
-          lowercase=True, max_df=1.0, max_features=None, max_n=None, min_df=1,
-          min_n=None, ngram_range=(1, 1), preprocessor=None, stop_words=None,
-          strip_accents=None, token_pattern=u'(?u)\\b\\w\\w+\\b', tokenizer=None,
-          vocabulary=None)
+          lowercase=True, max_df=1.0, max_features=None, min_df=1,
+          ngram_range=(1, 1), preprocessor=None, stop_words=None,
+          strip_accents=None, token_pattern=u'(?u)\\b\\w\\w+\\b',
+          tokenizer=None, vocabulary=None)
 
 Let's use it to tokenize and count the word occurrences of a minimalistic
 corpus of text documents::
@@ -555,8 +555,96 @@ into account. Many such models will thus be casted as "Structured output"
 problems which are currently outside of the scope of scikit-learn.
 
 
+.. _hashing_vectorizer:
+
+Vectorizing a large text corpus with the hashing trick
+------------------------------------------------------
+
+The above vectorization scheme is simple but the fact that it holds an **in-
+memory mapping from the string tokens to the integer feature indices** (the
+``vocabulary_`` attribute) causes several **problems when dealing with large
+datasets**:
+
+- the larger the corpus, the larger the vocabulary will grow and hence the
+  memory use too,
+
+- fitting requires the allocation of intermediate data structures
+  of size proportional to that of the original dataset.
+
+- building the word-mapping requires a full pass over the dataset hence it is
+  not possible to fit text classifiers in a strictly online manner.
+
+- pickling and un-pickling vectorizers with a large ``vocabulary_`` can be very
+  slow (typically much slower than pickling / un-pickling flat data structures
+  such as a NumPy array of the same size),
+
+- it is not easily possible to split the vectorization work into concurrent sub
+  tasks as the ``vocabulary_`` attribute would have to be a shared state with a
+  fine grained synchronization barrier: the mapping from token string to
+  feature index is dependent on ordering of the first occurrence of each token
+  hence would have to be shared, potentially harming the concurrent workers'
+  performance to the point of making them slower than the sequential variant.
+
+It is possible to overcome those limitations by combining the "hashing trick"
+(:ref:`Feature_hashing`) implemented by the
+:class:`sklearn.feature_extraction.FeatureHasher` class and the text
+preprocessing and tokenization features of the :class:`CountVectorizer`.
+
+This combination is implementing in :class:`HashingVectorizer`,
+a transformer class that is mostly API compatible with :class:`CountVectorizer`.
+:class:`HashingVectorizer` is stateless,
+meaning that you don't have to call ``fit`` on it::
+
+  >>> from sklearn.feature_extraction.text import HashingVectorizer
+  >>> hv = HashingVectorizer(n_features=10)
+  >>> hv.transform(corpus)
+  ...                                       # doctest: +NORMALIZE_WHITESPACE
+  <4x10 sparse matrix of type '<type 'numpy.float64'>'
+      with 16 stored elements in Compressed Sparse Row format>
+
+You can see that 16 non-zero feature tokens where extracted in the vector
+output: this is less than the 19 non-zeros extracted previously by the
+:class:`CountVectorizer` on the same toy corpus. The discrepancy comes from
+hash function collisions because of the low value of the ``n_features`` parameter.
+
+In a real world setting, the ``n_features`` parameter can be left to its
+default value of ``2 ** 20`` (roughly one million possible features). If memory
+or downstream models size is an issue selecting a lower value such as ``2 **
+18`` might help without introducing too many additional collisions on typical
+text classification tasks.
+
+Note that the dimensionality does not affect the CPU training time of
+algorithms which operate on CSR matrices (``LinearSVC(dual=True)``,
+``Perceptron``, ``SGDClassifier``, ``PassiveAggressive``) but it does for
+algorithm that work with CSC matrices (``LinearSVC(dual=False)``, ``Lasso()``,
+etc).
+
+Let's try again with the default setting::
+
+  >>> hv = HashingVectorizer()
+  >>> hv.transform(corpus)
+  ...                                       # doctest: +NORMALIZE_WHITESPACE
+  <4x1048576 sparse matrix of type '<type 'numpy.float64'>'
+      with 19 stored elements in Compressed Sparse Row format>
+
+We no longer get the collisions, but this comes at the expense of a much larger
+dimensionality of the output space.
+Of course, other terms than the 19 used here
+might still collide with each other.
+
+The :class:`HashingVectorizer` also comes with the following limitations:
+
+- it is not possible to invert the model (no ``inverse_transform`` method),
+  nor to access the original string representation of the features,
+  because of the one-way nature of the hash function that performs the mapping.
+
+- it does not provide IDF weighting as that would introduce statefulness in the
+  model. A :class:`TfidfTransformer` can be appended to it in a pipeline if
+  required.
+
+
 Customizing the vectorizer classes
------------------------------------
+----------------------------------
 
 It is possible to customize the behavior by passing a callable
 to the vectorizer constructor::

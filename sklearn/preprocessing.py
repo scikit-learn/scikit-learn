@@ -147,6 +147,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     The standardization is given by::
         X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
         X_scaled = X_std / (max - min) + min
+
     where min, max = feature_range.
 
     This standardization is often used as an alternative to zero mean,
@@ -163,10 +164,10 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    min_ : ndarray, shape (n_features,)
+    `min_` : ndarray, shape (n_features,)
         Per feature adjustment for minimum.
 
-    scale_ : ndarray, shape (n_features,)
+    `scale_` : ndarray, shape (n_features,)
         Per feature relative scaling of the data.
     """
 
@@ -640,12 +641,15 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     `active_features_` : array
-        Indices for active features, meaning values that actually occur in the
-        training set. Only available when n_values is ``'auto'``.
+        Indices for active features, meaning values that actually occur
+        in the training set. Only available when n_values is ``'auto'``.
+
     `feature_indices_` : array of shape (n_features,)
-        Indices to feature ranges. Feature ``i`` in the original data is mapped
-        to features ``feature_indices_[i]`` to ``feature_indices_[i+1]``
-        (and potentially masked by `active_features_` afterwards)
+        Indices to feature ranges.
+        Feature ``i`` in the original data is mapped to features
+        from ``feature_indices_[i]`` to ``feature_indices_[i+1]``
+        (and then potentially masked by `active_features_` afterwards)
+
     `n_values_` : array of shape (n_features,)
         Maximum number of values per feature.
 
@@ -1172,7 +1176,7 @@ def add_dummy_feature(X, value=1.0):
     X : array or scipy.sparse matrix with shape [n_samples, n_features + 1]
         Same data with dummy feature added as first column.
 
-    Example
+    Examples
     --------
 
     >>> from sklearn.preprocessing import add_dummy_feature

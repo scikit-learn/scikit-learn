@@ -106,8 +106,8 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
         connectivity = connectivity.tolil()
 
     if n_components > 1:
-        warnings.warn("the number of connected components of the"
-                      "connectivity matrix is %d > 1. Completing it to avoid"
+        warnings.warn("the number of connected components of the "
+                      "connectivity matrix is %d > 1. Completing it to avoid "
                       "stopping the tree early." % n_components)
         connectivity = _fix_connectivity(X, connectivity, n_components, labels)
         n_components = 1
@@ -317,6 +317,9 @@ class Ward(BaseEstimator, ClusterMixin):
     `n_leaves_` : int
         Number of leaves in the hiearchical tree.
 
+    `n_components_` : sparse matrix.
+        The estimated number of connected components in the graph.
+
     """
 
     def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
@@ -370,7 +373,7 @@ class Ward(BaseEstimator, ClusterMixin):
             n_clusters = None
 
         # Construct the tree
-        self.children_, self.n_components, self.n_leaves_, parents = \
+        self.children_, self.n_components_, self.n_leaves_, parents = \
             memory.cache(ward_tree)(X, self.connectivity,
                                     n_components=self.n_components,
                                     copy=self.copy, n_clusters=n_clusters)

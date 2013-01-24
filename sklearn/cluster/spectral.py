@@ -9,7 +9,7 @@ import warnings
 import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import check_random_state, as_float_array
+from ..utils import check_random_state, as_float_array, deprecated
 from ..utils.extmath import norm
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
@@ -430,11 +430,11 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
                              "'nearest_neighbors' or 'precomputed', got '%s'."
                              % self.affinity)
 
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         self.labels_ = spectral_clustering(self.affinity_matrix_,
                                            n_clusters=self.n_clusters,
                                            eigen_solver=self.eigen_solver,
-                                           random_state=self.random_state,
+                                           random_state=random_state,
                                            n_init=self.n_init,
                                            eigen_tol=self.eigen_tol,
                                            assign_labels=self.assign_labels)
@@ -443,3 +443,15 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     @property
     def _pairwise(self):
         return self.affinity == "precomputed"
+
+    @property
+    @deprecated("'mode' was renamed to eigen_solver and will be removed in"
+                " 0.15.")
+    def mode(self):
+        return self.eigen_solver
+
+    @property
+    @deprecated("'k' was renamed to n_clusters and will be removed in"
+                " 0.15.")
+    def k(self):
+        return self.n_clusters

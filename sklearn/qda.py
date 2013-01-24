@@ -44,13 +44,13 @@ class QDA(BaseEstimator, ClassifierMixin):
         Class priors (sum to 1).
 
     `rotations_` : list of arrays
-        For each class an array of shape [n_samples, n_samples], the rotation
-        of the Gaussian distribution, i.e.  its principal axis.
+        For each class an array of shape [n_samples, n_samples], the
+        rotation of the Gaussian distribution, i.e. its principal axis.
 
     `scalings_` : array-like, shape = [n_classes, n_features]
-        For each class contains the scaling of the Gaussian distribution along
-        its principal axes, i.e.  the variances in the rotated coordinate
-        system.
+        Contains the scaling of the Gaussian
+        distributions along the principal axes for each
+        class, i.e. the variance in the rotated coordinate system.
 
     Examples
     --------
@@ -128,13 +128,6 @@ class QDA(BaseEstimator, ClassifierMixin):
         self.scalings_ = np.asarray(scalings)
         self.rotations_ = rotations
         return self
-
-    @property
-    def classes(self):  # pragma: no cover
-        warnings.warn("QDA.classes is deprecated and will be removed in 0.14. "
-                      "Use QDA.classes_ instead.", DeprecationWarning,
-                      stacklevel=2)
-        return self.classes_
 
     @property
     def scalings(self):  # pragma: no cover

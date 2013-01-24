@@ -592,6 +592,13 @@ class LassoLars(Lars):
 
     Parameters
     ----------
+    alpha : float
+        Constant that multiplies the penalty term. Defaults to 1.0.
+        alpha = 0 is equivalent to an ordinary least square, solved
+        by the LinearRegression object in the scikit. For numerical
+        reasons, using alpha = 0 with the LassoLars object is not advised
+        and you should prefer the LinearRegression object.
+
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
@@ -938,14 +945,6 @@ class LarsCV(Lars):
     def alpha(self):
         # impedance matching for the above Lars.fit (should not be documented)
         return self.alpha_
-
-    @property
-    def cv_alphas(self):
-        warnings.warn("Use cv_alphas_. Using cv_alphas is deprecated"
-                      "since version 0.12, and backward compatibility "
-                      "won't be maintained from version 0.14 onward. ",
-                      DeprecationWarning, stacklevel=2)
-        return self.cv_alphas_
 
 
 class LassoLarsCV(LarsCV):

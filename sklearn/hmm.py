@@ -381,7 +381,7 @@ class _BaseHMM(BaseEstimator):
 
         return np.array(obs), np.array(hidden_states, dtype=int)
 
-    def fit(self, obs, **kwargs):
+    def fit(self, obs):
         """Estimate model parameters.
 
         An initialization step is performed before entering the EM
@@ -407,17 +407,6 @@ class _BaseHMM(BaseEstimator):
         deprecated and will be removed in the next release.
         Set it on initialization instead.**
         """
-
-        if kwargs:
-            warnings.warn("Setting parameters in the 'fit' method is"
-                          "deprecated and will be removed in 0.14. Set it on "
-                          "initialization instead.", DeprecationWarning,
-                          stacklevel=2)
-            # initialisations for in case the user still adds parameters to fit
-            # so things don't break
-            for name in ('n_iter', 'thresh', 'params', 'init_params'):
-                if name in kwargs:
-                    setattr(self, name, kwargs[name])
 
         if self.algorithm not in decoder_algorithms:
             self._algorithm = "viterbi"

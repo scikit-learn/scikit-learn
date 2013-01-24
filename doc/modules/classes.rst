@@ -362,6 +362,7 @@ From text
    :template: class.rst
 
    feature_extraction.text.CountVectorizer
+   feature_extraction.text.HashingVectorizer
    feature_extraction.text.TfidfTransformer
    feature_extraction.text.TfidfVectorizer
 
@@ -725,6 +726,7 @@ details.
    metrics.mutual_info_score
    metrics.normalized_mutual_info_score
    metrics.silhouette_score
+   metrics.silhouette_samples
    metrics.v_measure_score
 
 Pairwise metrics
