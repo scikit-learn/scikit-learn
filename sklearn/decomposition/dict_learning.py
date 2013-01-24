@@ -328,8 +328,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
 
 def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
                   method='lars', n_jobs=1, dict_init=None, code_init=None,
-                  callback=None, verbose=False, random_state=None,
-                  n_atoms=None):
+                  callback=None, verbose=False, random_state=None):
     """Solves a dictionary learning matrix factorization problem.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -403,14 +402,9 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     MiniBatchSparsePCA
     """
 
-    if not n_atoms is None:
-        n_components = n_atoms
-        warnings.warn("Parameter n_atoms has been renamed to"
-                      "'n_components' and will be removed in release 0.14.",
-                      DeprecationWarning, stacklevel=2)
-
     if method not in ('lars', 'cd'):
-        raise ValueError('Coding method not supported as a fit algorithm.')
+        raise ValueError('Coding method %r not supported as a fit algorithm.'
+                         % method)
     method = 'lasso_' + method
 
     t0 = time.time()
@@ -491,8 +485,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
 def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
                          return_code=True, dict_init=None, callback=None,
                          batch_size=3, verbose=False, shuffle=True, n_jobs=1,
-                         method='lars', iter_offset=0, random_state=None,
-                         n_atoms=None, chunk_size=None):
+                         method='lars', iter_offset=0, random_state=None):
     """Solves a dictionary learning matrix factorization problem online.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -572,18 +565,6 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     MiniBatchSparsePCA
 
     """
-
-    if n_atoms is not None:
-        n_components = n_atoms
-        warnings.warn("Parameter n_atoms has been renamed to "
-                      "'n_components' and will be removed in release 0.14.",
-                      DeprecationWarning, stacklevel=2)
-
-    if chunk_size is not None:
-        chunk_size = batch_size
-        warnings.warn("Parameter chunk_size has been renamed to "
-                      "'batch_size' and will be removed in release 0.14.",
-                      DeprecationWarning, stacklevel=2)
 
     if method not in ('lars', 'cd'):
         raise ValueError('Coding method not supported as a fit algorithm.')
@@ -921,13 +902,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
                  fit_algorithm='lars', transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  n_jobs=1, code_init=None, dict_init=None, verbose=False,
-                 split_sign=False, random_state=None, n_atoms=None):
-
-        if n_atoms is not None:
-            n_components = n_atoms
-            warnings.warn("Parameter n_atoms has been renamed to "
-                          "'n_components' and will be removed in release"
-                          " 0.14.", DeprecationWarning, stacklevel=2)
+                 split_sign=False, random_state=None):
 
         self._set_sparse_coding_params(n_components, transform_algorithm,
                                        transform_n_nonzero_coefs,
@@ -1078,20 +1053,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
                  fit_algorithm='lars', n_jobs=1, batch_size=3,
                  shuffle=True, dict_init=None, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
-                 verbose=False, split_sign=False, random_state=None,
-                 n_atoms=None, chunk_size=None):
-
-        if n_atoms is not None:
-            n_components = n_atoms
-            warnings.warn("Parameter n_atoms has been renamed to"
-                          "'n_components' and will be removed in release"
-                          " 0.14.", DeprecationWarning, stacklevel=2)
-
-        if chunk_size is not None:
-            chunk_size = batch_size
-            warnings.warn("Parameter chunk_size has been renamed to"
-                          "'batch_size' and will be removed in release"
-                          " 0.14.", DeprecationWarning, stacklevel=2)
+                 verbose=False, split_sign=False, random_state=None):
 
         self._set_sparse_coding_params(n_components, transform_algorithm,
                                        transform_n_nonzero_coefs,

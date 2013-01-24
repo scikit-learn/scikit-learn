@@ -428,14 +428,7 @@ class BaseGradientBoosting(BaseEnsemble):
     @abstractmethod
     def __init__(self, loss, learning_rate, n_estimators, min_samples_split,
                  min_samples_leaf, max_depth, init, subsample, max_features,
-                 random_state, alpha=0.9, verbose=0, learn_rate=None):
-
-        if not learn_rate is None:
-            learning_rate = learn_rate
-            warnings.warn(
-                "Parameter learn_rate has been renamed to "
-                'learning_rate'" and will be removed in release 0.14.",
-                DeprecationWarning, stacklevel=2)
+                 random_state, alpha=0.9, verbose=0):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
@@ -816,12 +809,12 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
-                 max_features=None, verbose=0, learn_rate=None):
+                 max_features=None, verbose=0):
 
         super(GradientBoostingClassifier, self).__init__(
             loss, learning_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state, verbose=verbose, learn_rate=learn_rate)
+            random_state, verbose=verbose)
 
     def fit(self, X, y):
         """Fit the gradient boosting model.
@@ -1051,12 +1044,12 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,
                  max_depth=3, init=None, random_state=None,
-                 max_features=None, alpha=0.9, verbose=0, learn_rate=None):
+                 max_features=None, alpha=0.9, verbose=0):
 
         super(GradientBoostingRegressor, self).__init__(
             loss, learning_rate, n_estimators, min_samples_split,
             min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state, alpha, verbose, learn_rate=learn_rate)
+            random_state, alpha, verbose)
 
     def fit(self, X, y):
         """Fit the gradient boosting model.

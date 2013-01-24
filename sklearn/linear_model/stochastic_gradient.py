@@ -719,16 +719,9 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, epsilon=DEFAULT_EPSILON, p=None, random_state=None,
+                 verbose=0, epsilon=DEFAULT_EPSILON, random_state=None,
                  learning_rate="invscaling", eta0=0.01, power_t=0.25,
                  warm_start=False, rho=None):
-        if p is not None:
-            warnings.warn("Using 'p' is deprecated and will be removed in "
-                          "scikit-learn 0.14, use epsilon instead.",
-                          DeprecationWarning, stacklevel=2)
-            self.p = float(p)
-            epsilon = p
-
         super(BaseSGDRegressor, self).__init__(loss=loss, penalty=penalty,
                                                alpha=alpha, l1_ratio=l1_ratio,
                                                fit_intercept=fit_intercept,
@@ -1001,8 +994,8 @@ class SGDRegressor(BaseSGDRegressor, SelectorMixin):
     >>> clf.fit(X, y)
     SGDRegressor(alpha=0.0001, epsilon=0.1, eta0=0.01, fit_intercept=True,
            l1_ratio=0.15, learning_rate='invscaling', loss='squared_loss',
-           n_iter=5, p=None, penalty='l2', power_t=0.25, random_state=None,
-           rho=None, shuffle=False, verbose=0, warm_start=False)
+           n_iter=5, penalty='l2', power_t=0.25, random_state=None, rho=None,
+           shuffle=False, verbose=0, warm_start=False)
 
     See also
     --------

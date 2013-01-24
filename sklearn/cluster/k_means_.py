@@ -150,7 +150,7 @@ def _tolerance(X, tol):
 
 def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
             n_init=10, max_iter=300, verbose=False,
-            tol=1e-4, random_state=None, copy_x=True, n_jobs=1, k=None):
+            tol=1e-4, random_state=None, copy_x=True, n_jobs=1):
     """K-means clustering algorithm.
 
     Parameters
@@ -229,12 +229,6 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
 
     """
     random_state = check_random_state(random_state)
-
-    if not k is None:
-        n_clusters = k
-        warnings.warn("Parameter k has been renamed to 'n_clusters'"
-                      " and will be removed in release 0.14.",
-                      DeprecationWarning, stacklevel=2)
 
     best_inertia = np.infty
     X = as_float_array(X, copy=copy_x)
@@ -705,21 +699,11 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
         """
-
-        if not self.k is None:
-            n_clusters = self.k
-            warnings.warn("Parameter k has been renamed by 'n_clusters'"
-                          " and will be removed in release 0.14.",
-                          DeprecationWarning, stacklevel=2)
-            self.n_clusters = n_clusters
-        else:
-            n_clusters = self.n_clusters
-
         random_state = check_random_state(self.random_state)
         X = self._check_fit_data(X)
 
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(
-            X, n_clusters=n_clusters, init=self.init, n_init=self.n_init,
+            X, n_clusters=self.n_clusters, init=self.init, n_init=self.n_init,
             max_iter=self.max_iter, verbose=self.verbose,
             precompute_distances=self.precompute_distances,
             tol=self.tol, random_state=random_state, copy_x=self.copy_x,
@@ -1110,11 +1094,6 @@ class MiniBatchKMeans(KMeans):
             Coordinates of the data points to cluster
         """
         random_state = check_random_state(self.random_state)
-        if self.k is not None:
-            warnings.warn("Parameter k has been replaced by 'n_clusters'"
-                          " and will be removed in release 0.14.",
-                          DeprecationWarning, stacklevel=2)
-            self.n_clusters = self.k
         X = check_arrays(X, sparse_format="csr", copy=False,
                          check_ccontiguous=True, dtype=np.float64)[0]
         n_samples, n_features = X.shape
