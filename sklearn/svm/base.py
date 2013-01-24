@@ -361,7 +361,7 @@ class BaseLibSVM(BaseEstimator):
 
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function.
-        if len(self.label_) == 2 and self.impl != 'one_class':
+        if len(self.classes_) == 2 and self.impl != 'one_class':
             return -dec_func
 
         return dec_func
