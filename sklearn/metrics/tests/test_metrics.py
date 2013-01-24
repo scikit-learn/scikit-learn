@@ -43,11 +43,6 @@ from sklearn.metrics import (accuracy_score,
                              zero_one_loss)
 
 
-MULTILABELS_METRICS = [hamming_loss,
-                       zero_one_loss,
-                       accuracy_score]
-
-
 def make_prediction(dataset=None, binary=False):
     """Make some classification predictions on a toy dataset using a SVC
 
@@ -701,6 +696,11 @@ def test_multioutput_regression_invariance_to_dimension_shuffling():
 
 
 def test_multilabel_representation_invariance():
+
+    MULTILABELS_METRICS = [hamming_loss,
+                           zero_one_loss,
+                           accuracy_score]
+
     # Generate some data
     n_classes = 20
     _, y1 = make_multilabel_classification(n_features=1, n_classes=n_classes,
@@ -708,29 +708,41 @@ def test_multilabel_representation_invariance():
     _, y2 = make_multilabel_classification(n_features=1, n_classes=n_classes,
                                            random_state=1)
 
-    # NOTE: The "sorted" trick is necessary to shuffle in place.
+    # NOTE: The "sorted" trick is necessary to shuffle labels in place.
     py_random_state = random.Random(0)
     shuffle = lambda x: sorted(x, key=lambda *args: py_random_state.random())
-
     y1_shuffle = [shuffle(x) for x in y1]
     y2_shuffle = [shuffle(x) for x in y2]
+
+    # Let's have
+    y1_redundant = [x * py_random_state.randint(1, 3) for x in y1]
+    y2_redundant = [x * py_random_state.randint(1, 3) for x in y2]
 
     lb = LabelBinarizer().fit([range(n_classes)])
 
     for metric in MULTILABELS_METRICS:
+        measure = metric(y1, y2)
 
         # Check representation invariance
-        assert_equal(metric(y1, y2),
-                     metric(lb.transform(y1),
-                            lb.transform(y2)))
+        assert_equal(measure,
+                     metric(lb.transform(y1), lb.transform(y2)))
+
+        # Check invariance with redundant labels with list of labels
+        assert_equal(measure,
+                     metric(y1, y2_redundant))
+
+        assert_equal(measure,
+                     metric(y1_redundant, y2_redundant))
+
+        assert_equal(measure,
+                     metric(y1_redundant, y2))
 
         # Check shuffling invariance with list of labels
-        assert_equal(metric(y1, y2),
+        assert_equal(measure,
                      metric(y1_shuffle, y2_shuffle))
 
         # Check shuffling invariance with dense binary indicator matrix
-        assert_equal(metric(lb.transform(y1),
-                            lb.transform(y2)),
+        assert_equal(measure,
                      metric(lb.transform(y1_shuffle),
                             lb.transform(y2_shuffle)))
 
