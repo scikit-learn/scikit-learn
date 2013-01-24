@@ -289,25 +289,30 @@ def test_radius_neighbors_classifier_outlier_labeling():
     are labeled. """
 
     X = np.array([[1.0, 1.0], [2.0, 2.0]])
-    y = np.array([1, 2])
+    y = np.array([2, 3])
     radius = 0.1
+    outlier_labels = [-1, 0, 1]
 
     z1 = np.array([[1.01, 1.01], [2.01, 2.01]])  # no outliers
     z2 = np.array([[1.01, 1.01], [1.4, 1.4]])    # one outlier
-    correct_labels1 = np.array([1, 2])
-    correct_labels2 = np.array([1, -1])
+    correct_labels1 = np.array([2, 3])
 
-    weight_func = _weight_func
+    for outlier_label in outlier_labels:
 
-    for algorithm in ALGORITHMS:
-        for weights in ['uniform', 'distance', weight_func]:
-            clf = neighbors.RadiusNeighborsClassifier(radius=radius,
-                                                      weights=weights,
-                                                      algorithm=algorithm,
-                                                      outlier_label=-1)
-            clf.fit(X, y)
-            assert_array_equal(correct_labels1, clf.predict(z1))
-            assert_array_equal(correct_labels2, clf.predict(z2))
+        correct_labels2 = np.array([2, outlier_label])
+
+        weight_func = _weight_func
+
+        for algorithm in ALGORITHMS:
+            for weights in ['uniform', 'distance', weight_func]:
+                clf = neighbors.RadiusNeighborsClassifier(
+                        radius=radius,
+                        weights=weights,
+                        algorithm=algorithm,
+                        outlier_label=outlier_label)
+                clf.fit(X, y)
+                assert_array_equal(correct_labels1, clf.predict(z1))
+                assert_array_equal(correct_labels2, clf.predict(z2))
 
 
 def test_radius_neighbors_classifier_zero_distance():
