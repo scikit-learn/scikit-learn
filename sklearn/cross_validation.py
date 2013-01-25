@@ -1368,3 +1368,5 @@ def train_test_split(*arrays, **options):
         splitted.append(a[train])
         splitted.append(a[test])
     return splitted
+
+train_test_split.__test__ = False  # to avoid a pb with nosetests

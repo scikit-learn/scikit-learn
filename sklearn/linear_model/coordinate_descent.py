@@ -800,14 +800,6 @@ class LinearModelCV(LinearModel):
                       "in 0.15", DeprecationWarning)
         return self.l1_ratio_
 
-    @property
-    def alpha(self):
-        warnings.warn("Use alpha_. Using alpha is deprecated "
-                      "since version 0.12, and backward compatibility "
-                      "won't be maintained from version 0.14 onward. ",
-                      DeprecationWarning, stacklevel=1)
-        return self.alpha_
-
 
 class LassoCV(LinearModelCV, RegressorMixin):
     """Lasso linear model with iterative fitting along a regularization path

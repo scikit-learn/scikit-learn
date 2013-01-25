@@ -70,13 +70,6 @@ class BaseLibSVM(BaseEstimator):
             raise ValueError("impl should be one of %s, %s was given" % (
                 LIBSVM_IMPL, impl))
 
-        if C is None:  # pragma: no cover
-            warnings.warn("Using 'None' for C of BaseLibSVM is deprecated "
-                          "since version 0.12, and backward compatibility "
-                          "won't be maintained from version 0.14 onward. "
-                          "Setting C=1.0.", DeprecationWarning, stacklevel=2)
-            C = 1.0
-
         self.impl = impl
         self.kernel = kernel
         self.degree = degree
@@ -109,7 +102,7 @@ class BaseLibSVM(BaseEstimator):
             and n_features is the number of features.
 
         y : array-like, shape = [n_samples]
-            Target values (integers in classification, real numbers in
+            Target values (class labels in classification, real numbers in
             regression)
 
         sample_weight : array-like, shape = [n_samples], optional
@@ -204,7 +197,7 @@ class BaseLibSVM(BaseEstimator):
         if self.fit_status_ == 1:
             warnings.warn('Solver terminated early (max_iter=%i).'
                           '  Consider pre-processing your data with'
-                          ' StandardScalar or MinMaxScalar.'
+                          ' StandardScaler or MinMaxScaler.'
                           % self.max_iter, ConvergenceWarning)
 
     def _dense_fit(self, X, y, sample_weight, solver_type, kernel):
@@ -266,11 +259,7 @@ class BaseLibSVM(BaseEstimator):
             (n_class, n_SV))
 
     def predict(self, X):
-        """Perform classification or regression samples in X.
-
-        For a classification model, the predicted class for each
-        sample in X is returned.  For a regression model, the function
-        value of X calculated is returned.
+        """Perform regression on samples in X.
 
         For an one-class model, +1 or -1 is returned.
 
@@ -284,11 +273,7 @@ class BaseLibSVM(BaseEstimator):
         """
         X = self._validate_for_predict(X)
         predict = self._sparse_predict if self._sparse else self._dense_predict
-        y = predict(X)
-        if self.impl in ['c_svc', 'nu_svc']:
-            # classification
-            y = self.classes_.take(y.astype(np.int))
-        return y
+        return predict(X)
 
     def _dense_predict(self, X):
         n_samples, n_features = X.shape
@@ -448,15 +433,26 @@ class BaseLibSVM(BaseEstimator):
             coef.flags.writeable = False
         return coef
 
-    @property
-    @deprecated("The ``labels_`` attribute has been renamed to ``classes_`` "
-                "for consistency and will be removed in 0.15.")
-    def label_(self):
-        return self.classes_
-
 
 class BaseSVC(BaseLibSVM, ClassifierMixin):
     """ABC for LibSVM-based classifiers."""
+
+    def predict(self, X):
+        """Perform classification on samples in X.
+
+        For an one-class model, +1 or -1 is returned.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        y_pred : array, shape = [n_samples]
+            Class labels for samples in X.
+        """
+        y = super(BaseSVC, self).predict(X)
+        return self.classes_.take(y.astype(np.int))
 
     def predict_proba(self, X):
         """Compute probabilities of possible outcomes for samples in X.
@@ -564,6 +560,12 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             self.probability, self.n_support_, self._label,
             self.probA_, self.probB_)
 
+    @property
+    @deprecated("The ``label_`` attribute has been renamed to ``classes_`` "
+                "for consistency and will be removed in 0.15.")
+    def label_(self):
+        return self.classes_
+
 
 class BaseLibLinear(BaseEstimator):
     """Base for classes binding liblinear (dense and sparse versions)"""
@@ -582,13 +584,6 @@ class BaseLibLinear(BaseEstimator):
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
                  multi_class='ovr', fit_intercept=True, intercept_scaling=1,
                  class_weight=None, verbose=0, random_state=None):
-
-        if C is None:  # pragma: no cover
-            warnings.warn("Using 'None' for C of BaseLibLinear is deprecated "
-                          "since version 0.12, and backward compatibility "
-                          "won't be maintained from version 0.14 onward. "
-                          "Setting C=1.0.", DeprecationWarning, stacklevel=2)
-            C = 1.0
 
         self.penalty = penalty
         self.loss = loss
@@ -709,7 +704,7 @@ class BaseLibLinear(BaseEstimator):
         return self._enc.classes_
 
     @property
-    @deprecated("The ``labels_`` attribute has been renamed to ``classes_`` "
+    @deprecated("The ``label_`` attribute has been renamed to ``classes_`` "
                 "for consistency and will be removed in 0.15.")
     def label_(self):
         return self._enc.classes_
