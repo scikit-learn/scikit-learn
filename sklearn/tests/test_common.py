@@ -40,6 +40,7 @@ from sklearn.svm.base import BaseLibSVM
 # import "special" estimators
 from sklearn.decomposition import SparseCoder
 from sklearn.pls import _PLS, PLSCanonical, PLSRegression, CCA, PLSSVD
+from sklearn.NIPALS import PCA
 from sklearn.ensemble import RandomTreesEmbedding
 from sklearn.feature_selection import SelectKBest
 from sklearn.dummy import DummyClassifier, DummyRegressor
@@ -307,6 +308,8 @@ def test_estimators_nan_inf():
             if Est in dont_test:
                 continue
             if Est in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
+                continue
+            if Est in (sklearn.NIPALS.PCA,):
                 continue
 
             # catch deprecation warnings

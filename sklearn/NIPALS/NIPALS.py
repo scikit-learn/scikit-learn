@@ -1,18 +1,16 @@
 # -*- coding: utf-8 -*-
 """
-The :mod:`sklearn.sNIPALS` module implements sparse (L1 penalised)
-NIPALS based methods.
+The :mod:`sklearn.NIPALS` module includes several different projection based
+latent variable methods that all are computed using the NIPALS algorithm.
 """
 
 # Author: Tommy Löfstedt <tommy.loefstedt@cea.fr>
 # License: BSD Style.
 
-if __name__ == "__main__":
-    from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin
-    from sklearn.utils import check_arrays
-else:
-    from .base import BaseEstimator, RegressorMixin, TransformerMixin
-    from .utils import check_arrays
+__all__ = ['PCA']
+
+from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin
+from sklearn.utils import check_arrays
 
 import abc
 import warnings
@@ -21,29 +19,27 @@ import numpy as np
 from numpy.linalg import norm
 from numpy import dot
 
-__all__ = ['PCA']
-
 # Settings
 _MAXITER    = 500
 _TOLERANCE  = 5e-7
 
 # NIPALS mode
-_NEWA      = "NewA"
-_A         = "A"
-_B         = "B"
+_NEWA       = "NewA"
+_A          = "A"
+_B          = "B"
 
 # Inner weighting schemes
-_HORST     = "Horst"
-_CENTROID  = "Centroid"
-_FACTORIAL = "Factorial"
+_HORST      = "Horst"
+_CENTROID   = "Centroid"
+_FACTORIAL  = "Factorial"
 
 # Deflation strategies
-_P = "P"
-_W = "W"
+_P          = "P"
+_W          = "W"
 
 # Available algorithms
-_RGCCA  = "RGCCA"
-_NIPALS = "NIPALS"
+_RGCCA      = "RGCCA"
+_NIPALS     = "NIPALS"
 
 def _make_list(a, n, default = None):
     # If a list, but empty
@@ -57,7 +53,7 @@ def _make_list(a, n, default = None):
         a = [default for i in xrange(n)]
     return a
 
-# TODO: Make private method of _PLS!
+# TODO: Make a private method of BasePLS!
 def _NIPALS(X, C = None, mode = _NEWA, scheme = _HORST,
             max_iter = _MAXITER, tolerance = _TOLERANCE, not_normed = [],
             soft_threshold = 0, **kwargs):
@@ -195,7 +191,7 @@ def _NIPALS(X, C = None, mode = _NEWA, scheme = _HORST,
     return W
 
 
-# TODO: Make private method of _PLS!
+# TODO: Make a private method of BasePLS!
 def _RGCCA(X, C = None, tau = 0.5, scheme = None,
            max_iter = _MAXITER, tolerance = _TOLERANCE, not_normed = None):
     """Inner loop of the RGCCA algorithm.
@@ -352,6 +348,42 @@ def _soft_threshold(w, l, copy = True):
     return np.multiply(sign,w)
 
 
+def _sign(v):
+    if v < 0:
+        return -1
+    else:
+        return 1
+
+
+def _corr(a,b):
+    ma = np.mean(a)
+    mb = np.mean(b)
+
+    a_ = a - ma
+    b_ = b - mb
+
+    norma = norm(a_)
+    normb = norm(b_)
+
+    if norma < _TOLERANCE or normb < _TOLERANCE:
+        return 0
+
+    ip = dot(a_.T, b_)
+    return ip / (norma * normb)
+
+
+def _cov(a,b):
+    ma = np.mean(a)
+    mb = np.mean(b)
+
+    a_ = a - ma
+    b_ = b - mb
+
+    ip = np.dot(a_.T, b_)
+
+    return ip[0,0] / (a_.shape[0] - 1)
+
+
 def _center(X, return_means = False, copy = False):
     """ Centers the numpy array(s) in X
 
@@ -389,6 +421,7 @@ def _center(X, return_means = False, copy = False):
     else:
         return X
 
+
 def _scale(X, centered = True, return_stds = False, copy = False):
     """ Scales the numpy arrays in arrays to standard deviation 1
     Returns
@@ -425,42 +458,6 @@ def _scale(X, centered = True, return_stds = False, copy = False):
         return X
 
 
-def _sign(v):
-    if v < 0:
-        return -1
-    else:
-        return 1
-
-
-def _corr(a,b):
-    ma = np.mean(a)
-    mb = np.mean(b)
-
-    a_ = a - ma
-    b_ = b - mb
-
-    norma = norm(a_)
-    normb = norm(b_)
-
-    if norma < _TOLERANCE or normb < _TOLERANCE:
-        return 0
-
-    ip = dot(a_.T, b_)
-    return ip / (norma * normb)
-
-
-def _cov(a,b):
-    ma = np.mean(a)
-    mb = np.mean(b)
-
-    a_ = a - ma
-    b_ = b - mb
-
-    ip = np.dot(a_.T, b_)
-
-    return ip[0,0] / (a_.shape[0] - 1)
-
-
 def _direct(W, T = None, P = None):
     for j in xrange(W.shape[1]):
         w = W[:,[j]]
@@ -487,7 +484,7 @@ def _direct(W, T = None, P = None):
         return W
 
 
-class _PLS(BaseEstimator, TransformerMixin):
+class BasePLS(BaseEstimator, TransformerMixin):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, C = None, num_comp = 2, tau = 0.5,
@@ -510,18 +507,19 @@ class _PLS(BaseEstimator, TransformerMixin):
             not_normed = ()
 
         # Supplied by the user
-        self.C          = C
-        self.num_comp   = num_comp
-        self.tau        = tau
-        self.center     = center
-        self.scale      = scale
-        self.modes      = modes
-        self.scheme     = scheme
-        self.not_normed = not_normed
-        self.copy       = copy
-        self.max_iter   = max_iter
-        self.tolerance  = tolerance
-        self.normal_dir = normalise_directions
+        self.C              = C
+        self.num_comp       = num_comp
+        self.tau            = tau
+        self.center         = center
+        self.scale          = scale
+        self.modes          = modes
+        self.scheme         = scheme
+        self.not_normed     = not_normed
+        self.copy           = copy
+        self.max_iter       = max_iter
+        self.tolerance      = tolerance
+        self.normal_dir     = normalise_directions
+        self.soft_threshold = soft_threshold
 
         # Method dependent
         self.deflation  = _P
@@ -561,7 +559,7 @@ class _PLS(BaseEstimator, TransformerMixin):
             if X[i].ndim == 1:
                 X[i] = X[i].reshape((X[i].size, 1))
             if X[i].ndim != 2:
-                raise ValueError('The matrices in X must be 1- or 2D arrays')
+                raise ValueError('The matrices in X must be 1- or 2D arrays ')
 
             if X[i].shape[0] != M:
                 raise ValueError('Incompatible shapes: X[%d] has %d samples, '
@@ -701,13 +699,13 @@ class _PLS(BaseEstimator, TransformerMixin):
         return T
 
 
-class PCA(_PLS):
+class PCA(BasePLS):
 
     def __init__(self, num_comp = 2, center = True, scale = True,
              copy = True, max_iter = _MAXITER, tolerance = _TOLERANCE,
              soft_threshold = 0):
 
-        _PLS.__init__(self, C = np.ones((1,1)), num_comp = num_comp,
+        BasePLS.__init__(self, C = np.ones((1,1)), num_comp = num_comp,
                          center = center, scale = scale,
                          modes = [_NEWA], scheme = [_HORST], copy = copy,
                          max_iter = max_iter, tolerance = tolerance,
@@ -716,93 +714,32 @@ class PCA(_PLS):
     def _get_transform(self, index = 0):
         return self.P
 
-    def fit(self, X):
-        _PLS.fit(self, X)
+    def fit(self, *X, **kwargs):
+#        y = kwargs.get('y', None)
+        BasePLS.fit(self, X[0])
         self.W = self.W[0]
         self.T = self.T[0]
         self.P = self.P[0]
 
+        return self
+
     def transform(self, *X, **kwargs):
-        T = _PLS.transform(self, *X, **kwargs)
+        T = BasePLS.transform(self, X[0], **kwargs)
         return T[0]
 
-    def fit_transform(self, X, **fit_params):
-        return self.fit(X, **fit_params).transform(X)
+    def fit_transform(self, *X, **fit_params):
+        return self.fit(X[0], **fit_params).transform(X[0])
 
 
-class Enum(object):
-    def __init__(self, *sequential, **named):
-        enums = dict(zip(sequential, range(len(sequential))), **named)
-        for k, v in enums.items():
-            setattr(self, k, v)
+#class Enum(object):
+#    def __init__(self, *sequential, **named):
+#        enums = dict(zip(sequential, range(len(sequential))), **named)
+#        for k, v in enums.items():
+#            setattr(self, k, v)
+#
+#    def __setattr__(self, name, value): # Read-only
+#        raise TypeError("Enum attributes are read-only.")
+#
+#    def __str__(self):
+#        return "Enum: "+str(self.__dict__)
 
-    def __setattr__(self, name, value): # Read-only
-        raise TypeError("Enum attributes are read-only.")
-
-    def __str__(self):
-        return "Enum: "+str(self.__dict__)
-
-def main():
-
-    Xtr = np.random.rand(5,5)
-    Xte = np.random.rand(2,5)
-    num_comp = 3
-
-    Xtr, m = _center(Xtr, return_means = True)
-    Xtr, s = _scale(Xtr, return_stds = True)
-    Xte = (Xte - m) / s
-
-    pca = PCA(center = False, scale = False, num_comp = num_comp,
-              tolerance=5e-12, max_iter=1000, soft_threshold = 0.2)
-    pca.fit(Xtr)
-    pca.P, pca.T = _direct(pca.P, pca.T)
-    Tte = pca.transform(Xte)
-
-    print pca.P
-    print pca.T
-
-    print Tte
-
-    return
-
-    from sklearn.utils.testing import assert_array_almost_equal
-
-    Xtr = np.random.rand(50,50)
-    Xte = np.random.rand(20,50)
-    num_comp = 3
-
-    Xtr, m = _center(Xtr, return_means = True)
-    Xtr, s = _scale(Xtr, return_stds = True)
-    Xte = (Xte - m) / s
-
-    pca = PCA(center = False, scale = False, num_comp = num_comp, tolerance=5e-12, max_iter=1000)
-    pca.fit(Xtr)
-    pca.P, pca.T = _direct(pca.P, pca.T)
-    Tte = pca.transform(Xte)
-
-    U, S, V = np.linalg.svd(Xtr)
-    V = V.T
-    US = dot(U,np.diag(S))
-    US = US[:,0:num_comp]
-    V  = V[:,0:num_comp]
-    V, US = _direct(V, US)
-    SVDte = dot(Xte, V)
-
-    assert_array_almost_equal(pca.P, V, decimal=2, err_msg="NIPALS PCA and "
-            "numpy.linalg.svd implementations lead to different loadings")
-    print "Comparing loadings of NIPALS PCA and numpy.linalg.svd... OK! "\
-          "(max diff = %.4f)" % np.max(np.abs(V - pca.P))
-
-    assert_array_almost_equal(pca.T, US, decimal=2, err_msg="NIPALS PCA and "
-            "numpy.linalg.svd implementations lead to different scores")
-    print "Comparing scores of NIPALS PCA and numpy.linalg.svd...   OK! "\
-          "(max diff = %.4f)" % np.max(np.abs(US - pca.T))
-
-    assert_array_almost_equal(Tte, SVDte, decimal=2, err_msg="NIPALS PCA and "
-            "numpy.linalg.svd implementations lead to different scores")
-    print "Comparing test set of NIPALS PCA and numpy.linalg.svd... OK! "\
-          "(max diff = %.4f)" % np.max(np.abs(Tte - SVDte))
-
-
-if __name__ == "__main__":
-    main()

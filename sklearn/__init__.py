@@ -70,7 +70,7 @@ else:
                'gaussian_process', 'grid_search', 'hmm', 'lda', 'linear_model',
                'metrics', 'mixture', 'naive_bayes', 'neighbors', 'pipeline',
                'preprocessing', 'qda', 'svm', 'test', 'clone', 'pls',
-               'isotonic']
+               'isotonic','NIPALS']
 
 
 def setup_module(module):
