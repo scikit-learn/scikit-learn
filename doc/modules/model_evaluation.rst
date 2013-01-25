@@ -239,6 +239,11 @@ Hamming loss :math:`L_{Hamming}` between two samples is defined as:
 where :math:`1(x)` is the `indicator function
 <http://en.wikipedia.org/wiki/Indicator_function>`_.
 
+The zero-one loss is related to the Hamming loss. The zero-one loss
+penalizes any classifiers that don't predict correctly the subset of
+labels. The hamming loss penalizes only the fraction of labels incorrectly
+predicted. In general, the hamming loss is smaller than the zero one loss.
+
 ::
 
   >>> from sklearn.metrics import hamming_loss
@@ -641,6 +646,9 @@ The :func:`zero_one_loss` function computes the sum or the average of the 0-1
 classification loss (:math:`L_{0-1}`) over :math:`n_{\text{samples}}`. By
 defaults, the function normalizes over the sample. To get the sum of the
 :math:`L_{0-1}`, set ``normalize``  to ``False``.
+
+In multi-labels classification, the :func:`zero_one_loss` function corresponds
+to the subset zero one loss: the subset of labels must be correctly predict.
 
 If :math:`\hat{y}_i` is the predicted value of
 the :math:`i`-th sample and :math:`y_i` is the corresponding true value,

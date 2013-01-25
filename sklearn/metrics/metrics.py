@@ -1445,7 +1445,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
 def hamming_loss(y_true, y_pred, labels=None):
     """ Compute the average Hamming loss
 
-    The hamming loss is the fraction of labels that are incorrectly predict.
+    The hamming loss is the fraction of labels that are incorrectly predicted.
 
     Parameters
     ----------
@@ -1466,10 +1466,10 @@ def hamming_loss(y_true, y_pred, labels=None):
 
     Notes
     -----
-    There is a strong connection between the zero-one loss and the Hamming
-    loss. The zero-one loss will penalize any classifier that don't predict
-    correctly the all subset of labels. The hamming loss will penalize only
-    the fraction of label incorrectly predict.
+    The zero-one loss is related to the Hamming loss. The zero-one loss
+    penalizes any classifiers that don't predict correctly the subset of
+    labels. The hamming loss penalizes only the fraction of labels incorrectly
+    predicted.
 
     In general, the hamming loss is smaller than the zero one loss.
 
