@@ -27,6 +27,7 @@ from sklearn.metrics import (accuracy_score,
                              confusion_matrix,
                              explained_variance_score,
                              f1_score,
+                             fbeta_score,
                              hamming_loss,
                              hinge_loss,
                              matthews_corrcoef,
@@ -569,44 +570,42 @@ def test_symmetry():
     """Test the symmetry of score and loss functions"""
     y_true, y_pred, _ = make_prediction(binary=True)
 
-    # symmetric
-    assert_equal(accuracy_score(y_true, y_pred),
-                 accuracy_score(y_pred, y_true))
+    # Symmetric metric
+    for metric in [accuracy_score,
+                   zero_one_loss,
+                   lambda y1, y2: zero_one_loss(y1, y2, normalize=False),
+                   hamming_loss,
+                   f1_score,
+                   matthews_corrcoef,
+                   mean_squared_error,
+                   mean_absolute_error]:
 
+        assert_equal(metric(y_true, y_pred),
+                     metric(y_pred, y_true),
+                     msg="%s is not symetric" % metric)
+
+    # Not symmetric metrics
+    for metric in [precision_score,
+                   recall_score,
+                   lambda y1, y2: fbeta_score(y1, y2, beta=0.5),
+                   lambda y1, y2: fbeta_score(y1, y2, beta=2),
+                   explained_variance_score,
+                   r2_score]:
+
+        assert_true(metric(y_true, y_pred) != metric(y_pred, y_true),
+                    msg="%s seems to be symetric" % metric)
+
+    # Deprecated metrics
     with warnings.catch_warnings(True):
         # Throw deprecated warning
         assert_equal(zero_one(y_true, y_pred),
                      zero_one(y_pred, y_true))
 
-        assert_almost_equal(zero_one(y_true, y_pred, normalize=False),
-                            zero_one(y_pred, y_true, normalize=False), 2)
+        assert_equal(zero_one(y_true, y_pred, normalize=False),
+                     zero_one(y_pred, y_true, normalize=False))
 
-    assert_equal(zero_one_loss(y_true, y_pred),
-                 zero_one_loss(y_pred, y_true))
-
-    assert_equal(zero_one_loss(y_true, y_pred, normalize=False),
-                 zero_one_loss(y_pred, y_true, normalize=False))
-
-    assert_equal(hamming_loss(y_true, y_pred),
-                 hamming_loss(y_pred, y_true))
-
-    with warnings.catch_warnings(True):
-    # Throw deprecated warning
         assert_equal(zero_one_score(y_true, y_pred),
                      zero_one_score(y_pred, y_true))
-
-    assert_almost_equal(mean_squared_error(y_true, y_pred),
-                        mean_squared_error(y_pred, y_true))
-
-    assert_almost_equal(mean_absolute_error(y_true, y_pred),
-                        mean_absolute_error(y_pred, y_true))
-
-    # not symmetric
-    assert_true(explained_variance_score(y_true, y_pred) !=
-                explained_variance_score(y_pred, y_true))
-    assert_true(r2_score(y_true, y_pred) !=
-                r2_score(y_pred, y_true))
-    # FIXME: precision and recall aren't symmetric either
 
 
 def test_hinge_loss_binary():
