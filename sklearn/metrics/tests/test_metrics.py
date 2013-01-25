@@ -9,6 +9,7 @@ from sklearn import svm
 
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.datasets import make_multilabel_classification
+from sklearn.utils import check_random_state
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.testing import (assert_true,
                                    assert_raises,
@@ -606,6 +607,34 @@ def test_symmetry():
 
         assert_equal(zero_one_score(y_true, y_pred),
                      zero_one_score(y_pred, y_true))
+
+
+def test_sample_order_invariance():
+    y_true, y_pred, _ = make_prediction(binary=True)
+
+    rng = check_random_state(0)
+    idx = rng.permutation(np.size(y_true))
+    y_true_shuffle = y_true[idx]
+    y_pred_shuffle = y_pred[idx]
+
+    for metric in [accuracy_score,
+                   hamming_loss,
+                   zero_one_loss,
+                   lambda y1, y2: zero_one_loss(y1, y2, normalize=False),
+                   precision_score,
+                   recall_score,
+                   f1_score,
+                   lambda y1, y2: fbeta_score(y1, y2, beta=2),
+                   lambda y1, y2: fbeta_score(y1, y2, beta=0.5),
+                   matthews_corrcoef,
+                   mean_absolute_error,
+                   mean_squared_error,
+                   explained_variance_score,
+                   r2_score]:
+
+        assert_equal(metric(y_true, y_pred),
+                     metric(y_true_shuffle, y_pred_shuffle),
+                     msg="%s is not sample order invariant" % metric)
 
 
 def test_hinge_loss_binary():
