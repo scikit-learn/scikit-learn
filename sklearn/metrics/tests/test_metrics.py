@@ -709,13 +709,17 @@ def test_multilabel_representation_invariance():
     _, y2 = make_multilabel_classification(n_features=1, n_classes=n_classes,
                                            random_state=1, n_samples=n_samples)
 
+    # Be sure to have at least one empty label
+    y1 += ([], )
+    y2 += ([], )
+
     # NOTE: The "sorted" trick is necessary to shuffle labels in place.
     py_random_state = random.Random(0)
     shuffle = lambda x: sorted(x, key=lambda *args: py_random_state.random())
     y1_shuffle = [shuffle(x) for x in y1]
     y2_shuffle = [shuffle(x) for x in y2]
 
-    # Let's have
+    # Let's have redundant label
     y1_redundant = [x * py_random_state.randint(1, 3) for x in y1]
     y2_redundant = [x * py_random_state.randint(1, 3) for x in y2]
 
