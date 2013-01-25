@@ -53,9 +53,9 @@ of each option, see `Nearest Neighbor Algorithms`_.
 
     .. warning::
 
-        Regarding the Nearest Neighbors algorithms, if it is found that two
+        Regarding the Nearest Neighbors algorithms, if two
         neighbors, neighbor `k+1` and `k`, have identical distances but
-        but different labels, the results will depend on the odering of the
+        but different labels, the results will depend on the ordering of the
         training data.
 
 .. _classification:

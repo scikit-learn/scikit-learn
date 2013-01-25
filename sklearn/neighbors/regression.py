@@ -16,7 +16,8 @@ from .base import \
     NeighborsBase, KNeighborsMixin, \
     RadiusNeighborsMixin, SupervisedFloatMixin
 from ..base import RegressorMixin
-from ..utils import atleast2d_or_csr
+from ..utils import atleast2d_or_csr, deprecated
+
 
 
 class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
