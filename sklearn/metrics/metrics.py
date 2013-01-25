@@ -1471,7 +1471,7 @@ def hamming_loss(y_true, y_pred, labels=None):
     labels. The hamming loss penalizes only the fraction of labels incorrectly
     predicted.
 
-    In general, the hamming loss is smaller than the zero one loss.
+    The hamming loss is upperbounded by the zero one loss.
 
     See Also
     --------

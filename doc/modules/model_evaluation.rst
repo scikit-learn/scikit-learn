@@ -242,9 +242,7 @@ where :math:`1(x)` is the `indicator function
 The zero-one loss is related to the Hamming loss. The zero-one loss
 penalizes any classifiers that don't predict correctly the subset of
 labels. The hamming loss penalizes only the fraction of labels incorrectly
-predicted. In general, the hamming loss is smaller than the zero one loss.
-
-::
+predicted. The hamming loss is upperbounded by the zero one loss.
 
   >>> from sklearn.metrics import hamming_loss
   >>> y_pred = [1, 2, 3, 4]
