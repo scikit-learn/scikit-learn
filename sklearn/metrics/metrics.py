@@ -63,7 +63,7 @@ def auc(x, y, reorder=False):
 
     See also
     --------
-    auc_score Computes the area under the ROC curve
+    auc_score : Computes the area under the ROC curve
 
     """
     # XXX: Consider using  ``scipy.integrate`` instead, or moving to
@@ -115,7 +115,8 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/Hinge_loss
+    .. [1] `Wikipedia entry on the Hinge loss
+            <http://en.wikipedia.org/wiki/Hinge_loss>`_
 
     Examples
     --------
@@ -176,11 +177,15 @@ def average_precision_score(y_true, y_score):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/Information_retrieval#Average_precision
+    .. [1] `Wikipedia entry for the Average precision
+            <http://en.wikipedia.org/wiki/Information_retrieval#Average_precision>`_
 
     See also
     --------
-    auc_score: Area under the ROC curve
+    auc_score : Area under the ROC curve
+
+    precision_recall_curve :
+        Compute precision-recall pairs for different probability thresholds
 
     Examples
     --------
@@ -217,11 +222,14 @@ def auc_score(y_true, y_score):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/Receiver_operating_characteristic
+    .. [1] `Wikipedia entry for the Receiver operating characteristic
+            <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
 
     See also
     --------
-    average_precision_score: Area under the precision-recall curve
+    average_precision_score : Area under the precision-recall curve
+
+    roc_curve : Compute Receiver operating characteristic (ROC)
 
     Examples
     --------
@@ -270,7 +278,6 @@ def matthews_corrcoef(y_true, y_pred):
 
     References
     ----------
-
     .. [1] `Baldi, Brunak, Chauvin, Andersen and Nielsen, (2000). Assessing the
        accuracy of prediction algorithms for classification: an overview
        <http://dx.doi.org/10.1093/bioinformatics/16.5.412>`_
@@ -436,6 +443,10 @@ def roc_curve(y_true, y_score, pos_label=None):
     thresholds : array, shape = [>2]
         Thresholds on ``y_score`` used to compute ``fpr`` and ``fpr``.
 
+    See also
+    --------
+    auc_score : Compute Area Under the Curve (AUC) from prediction scores
+
     Notes
     -----
     Since the thresholds are sorted from low to high values, they
@@ -444,7 +455,9 @@ def roc_curve(y_true, y_score, pos_label=None):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/Receiver_operating_characteristic
+    .. [1] `Wikipedia entry for the Receiver operating characteristic
+            <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
+
 
     Examples
     --------
@@ -583,7 +596,8 @@ def confusion_matrix(y_true, y_pred, labels=None):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/Confusion_matrix
+    .. [2] `Wikipedia entry for the Confusion matrix
+           <http://en.wikipedia.org/wiki/Confusion_matrix>`_
 
     Examples
     --------
@@ -840,7 +854,8 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/F1_score
+    .. [1] `Wikipedia entry for the F1-score
+           <http://en.wikipedia.org/wiki/F1_score>`_
 
     Examples
     --------
@@ -928,10 +943,11 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     References
     ----------
-    R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern Information Retrieval.
-    Addison Wesley, pp. 327-328.
+    .. [1] R. Baeza-Yates and B. Ribeiro-Neto (2011).
+           Modern Information Retrieval. Addison Wesley, pp. 327-328.
 
-    http://en.wikipedia.org/wiki/F1_score
+    .. [2] `Wikipedia entry for the F1-score
+           <http://en.wikipedia.org/wiki/F1_score>`_
 
     Examples
     --------
@@ -1051,7 +1067,12 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     References
     ----------
-    http://en.wikipedia.org/wiki/Precision_and_recall
+    .. [1] `Wikipedia entry for the Precision and recall
+           <http://en.wikipedia.org/wiki/Precision_and_recall>`_
+
+    .. [2] `Wikipedia entry for the F1-score
+           <http://en.wikipedia.org/wiki/F1_score>`_
+
 
     Examples
     --------
@@ -1464,6 +1485,10 @@ def hamming_loss(y_true, y_pred, labels=None):
         Return the average Hamming between element of ``y_true`` and
         ``y_pred``.
 
+    See Also
+    --------
+    zero_one_loss : Zero-one classification loss
+
     Notes
     -----
     The zero-one loss is related to the Hamming loss. The zero-one loss
@@ -1473,13 +1498,14 @@ def hamming_loss(y_true, y_pred, labels=None):
 
     The hamming loss is upperbounded by the zero one loss.
 
-    See Also
-    --------
-    zero_one_loss : Zero-one classification loss
-
     References
     ----------
-    http://en.wikipedia.org/wiki/Hamming_distance
+    .. [1] Grigorios Tsoumakas, Ioannis Katakis. Multi-Label Classification:
+           An Overview. International Journal of Data Warehousing & Mining,
+           3(3), 1-13, July-September 2007.
+
+    .. [2] `Wikipedia entry on the Hamming distance
+           <http://en.wikipedia.org/wiki/Hamming_distance>`_
 
     Examples
     --------
@@ -1659,8 +1685,11 @@ def r2_score(y_true, y_pred):
 
     References
     ----------
-    https://en.wikipedia.org/wiki/Coefficient_of_determination
-    http://stats.stackexchange.com/a/12991/8517
+    .. [1] `Wikipedia entry on the Coefficient of determination
+            <http://en.wikipedia.org/wiki/Coefficient_of_determination>`_
+
+    .. [2] `When is R squared negative?
+            <http://stats.stackexchange.com/a/12991/8517>`_
 
     Examples
     --------
