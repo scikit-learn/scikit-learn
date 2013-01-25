@@ -20,6 +20,7 @@ from itertools import izip
 import warnings
 import numpy as np
 from scipy.sparse import coo_matrix
+from scipy.spatial.distance import hamming
 
 from ..utils import check_arrays, deprecated
 from ..utils.multiclass import is_label_indicator_matrix
@@ -1522,24 +1523,23 @@ def hamming_loss(y_true, y_pred, labels=None):
     """
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
 
-    # Compute the number of label
-    if labels is None:
-        labels = unique_labels(y_true, y_pred)
-    else:
-        labels = np.asarray(labels, dtype=np.int)
-
-    n_labels = labels.size
-
-    # Compute the number of disagreeing labels
-    loss = None
     if is_label_indicator_matrix(y_true):
-        loss = (y_pred != y_true).sum(axis=1)
+        return np.mean(y_true != y_pred)
     else:
-        loss = np.array([np.size(np.setxor1d(np.array(pred),
-                                             np.array(true)))
+        # Compute the number of label
+        if labels is None:
+            labels = unique_labels(y_true, y_pred)
+        else:
+            labels = np.asarray(labels, dtype=np.int)
+
+        n_labels = labels.size
+
+        # Compute the number of disagreeing labels
+        loss = np.array([np.size(np.setxor1d(np.asarray(pred),
+                                             np.asarray(true)))
                          for pred, true in izip(y_pred, y_true)])
 
-    return np.mean(loss) / n_labels
+        return np.mean(loss) / n_labels
 
 
 ###############################################################################
