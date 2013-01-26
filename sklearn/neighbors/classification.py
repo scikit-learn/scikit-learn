@@ -285,22 +285,24 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         pred_labels = [self._y[ind] for ind in neigh_ind]
 
         if self.outlier_label is not None:
-            outlier_label = np.array((self.outlier_label, ))
-            small_value = np.array((1e-6, ))
+            outlier_label = np.array([self.outlier_label])
+            small_value = np.array([1e-6])
             for i, pl in enumerate(pred_labels):
                 # Check that all have at least 1 neighbor
                 if len(pl) < 1:
                     pred_labels[i] = outlier_label
                     neigh_dist[i] = small_value
         else:
-            for pl in pred_labels:
+            for i, pl in enumerate(pred_labels):
                 # Check that all have at least 1 neighbor
+                # TODO we should gather all outliers, or the first k,
+                # before constructing the error message.
                 if len(pl) < 1:
-                    raise ValueError('no neighbors found for a test sample, '
+                    raise ValueError('No neighbors found for test sample %d, '
                                      'you can try using larger radius, '
                                      'give a label for outliers, '
-                                     'or consider removing them in your '
-                                     'dataset')
+                                     'or consider removing it from your '
+                                     'dataset.' % i)
 
         weights = _get_weights(neigh_dist, self.weights)
 
@@ -312,10 +314,10 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                              for (pl, w) in zip(pred_labels, weights)],
                             dtype=np.int)
 
-        mode = mode.flatten().astype(np.int)
+        mode = mode.ravel().astype(np.int)
         # map indices to classes
         prediction = self.classes_.take(mode)
         if self.outlier_label is not None:
             # reset outlier label
-            prediction[mode == outlier_label] = self.outlier_label
+            prediction[prediction == outlier_label] = self.outlier_label
         return prediction
