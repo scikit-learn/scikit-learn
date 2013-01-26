@@ -561,6 +561,7 @@ def test_neighbors_badargs():
                   nbrs.radius_neighbors_graph,
                   X, mode='blah')
 
+
 def test_neighbors_deprecation_arg():
     """Test that passing the deprecated parameter will cause a
     warning to be raised, as well as not crash the estimator."""
@@ -568,7 +569,7 @@ def test_neighbors_deprecation_arg():
                 neighbors.KNeighborsRegressor):
         with warnings.catch_warnings(record=True) as w:
             warnings.simplefilter("always")
-            A = cls(warn_on_equidistant=True)
+            cls(warn_on_equidistant=True)
             assert_equal(len(w), 1)
 
 

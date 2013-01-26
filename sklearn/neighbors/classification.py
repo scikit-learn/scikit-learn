@@ -18,7 +18,7 @@ from .base import \
     NeighborsBase, KNeighborsMixin,\
     RadiusNeighborsMixin, SupervisedIntegerMixin
 from ..base import ClassifierMixin
-from ..utils import atleast2d_or_csr, deprecated
+from ..utils import atleast2d_or_csr
 
 
 class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
