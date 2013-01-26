@@ -66,7 +66,7 @@ fig = pl.figure(figsize=(15, 8))
 pl.suptitle("Manifold Learning with %i points, %i neighbors"
             % (1000, n_neighbors), fontsize=14)
 
-ax = fig.add_subplot(241, projection='3d')
+ax = fig.add_subplot(251, projection='3d')
 ax.scatter(x, y, z, c=p[indices], cmap=pl.cm.rainbow)
 try:
     # compatibility matplotlib < 1.0
@@ -88,7 +88,7 @@ for i, method in enumerate(methods):
     t1 = time()
     print("%s: %.2g sec" % (methods[i], t1 - t0))
 
-    ax = fig.add_subplot(242 + i)
+    ax = fig.add_subplot(252 + i)
     pl.scatter(trans_data[0], trans_data[1], c=colors, cmap=pl.cm.rainbow)
     pl.title("%s (%.2g sec)" % (labels[i], t1 - t0))
     ax.xaxis.set_major_formatter(NullFormatter())
@@ -102,7 +102,7 @@ trans_data = manifold.Isomap(n_neighbors, n_components=2)\
 t1 = time()
 print("%s: %.2g sec" % ('ISO', t1 - t0))
 
-ax = fig.add_subplot(246)
+ax = fig.add_subplot(256)
 pl.scatter(trans_data[0], trans_data[1],  c=colors, cmap=pl.cm.rainbow)
 pl.title("%s (%.2g sec)" % ('Isomap', t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
@@ -116,7 +116,7 @@ trans_data = mds.fit_transform(sphere_data).T
 t1 = time()
 print("MDS: %.2g sec" % (t1 - t0))
 
-ax = fig.add_subplot(247)
+ax = fig.add_subplot(257)
 pl.scatter(trans_data[0], trans_data[1],  c=colors, cmap=pl.cm.rainbow)
 pl.title("MDS (%.2g sec)" % (t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
@@ -131,7 +131,7 @@ trans_data = se.fit_transform(sphere_data).T
 t1 = time()
 print("Spectral Embedding: %.2g sec" % (t1 - t0))
 
-ax = fig.add_subplot(248)
+ax = fig.add_subplot(258)
 pl.scatter(trans_data[0], trans_data[1],  c=colors, cmap=pl.cm.rainbow)
 pl.title("Spectral Embedding (%.2g sec)" % (t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
@@ -145,7 +145,7 @@ trans_data = lpp.fit_transform(sphere_data).T
 t1 = time()
 print "LPP: %.2g sec" % (t1 - t0)
 
-ax = fig.add_subplot(248)
+ax = fig.add_subplot(259)
 pl.scatter(trans_data[0], trans_data[1],  c=colors, cmap=pl.cm.rainbow)
 pl.title("LPP (%.2g sec)" % (t1 - t0))
 ax.xaxis.set_major_formatter(NullFormatter())
