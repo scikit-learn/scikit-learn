@@ -340,14 +340,22 @@ class BinomialDeviance(LossFunction):
         """Compute the deviance (= negative log-likelihood). """
         # logaddexp(0, v) == log(1.0 + exp(v))
         pred = pred.ravel()
-        return np.sum(np.logaddexp(0.0, -2 * y * pred)) / y.shape[0]
+        return -2.0 * np.mean((y * pred) - np.logaddexp(0.0, pred))
 
     def negative_gradient(self, y, pred, **kargs):
+        """Compute the residual (= negative gradient). """
         return y - 1.0 / (1.0 + np.exp(-pred.ravel()))
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, pred):
-        """Make a single Newton-Raphson step. """
+        """Make a single Newton-Raphson step.
+
+        our node estimate is given by:
+
+            sum(y - prob) / sum(prob * (1 - prob))
+
+        we take advantage that: y - prob = residual
+        """
         terminal_region = np.where(terminal_regions == leaf)[0]
         residual = residual.take(terminal_region, axis=0)
         y = y.take(terminal_region, axis=0)
