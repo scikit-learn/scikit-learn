@@ -340,7 +340,7 @@ class BinomialDeviance(LossFunction):
         return LogOddsEstimator()
 
     def __call__(self, y, pred):
-        """Compute the deviance (= negative log-likelihood). """
+        """Compute the deviance (= 2 * negative log-likelihood). """
         # logaddexp(0, v) == log(1.0 + exp(v))
         pred = pred.ravel()
         return -2.0 * np.mean((y * pred) - np.logaddexp(0.0, pred))
