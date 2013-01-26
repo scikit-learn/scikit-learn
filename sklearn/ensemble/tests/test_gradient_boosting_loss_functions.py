@@ -4,7 +4,6 @@ Testing for the gradient boosting loss functions and initial estimators.
 
 import numpy as np
 from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
 
@@ -13,10 +12,6 @@ from nose.tools import assert_raises
 
 from sklearn.ensemble.gradient_boosting import BinomialDeviance
 from sklearn.ensemble.gradient_boosting import LogOddsEstimator
-
-from sklearn.ensemble.gradient_boosting import HuberLossFunction
-from sklearn.ensemble.gradient_boosting import LeastAbsoluteError
-from sklearn.ensemble.gradient_boosting import LeastSquaresError
 
 
 def test_binomial_deviance():
@@ -27,10 +22,12 @@ def test_binomial_deviance():
     bd = BinomialDeviance(2)
 
     # pred has the same BD for y in {0, 1}
-    assert (bd(np.array([0.0]), np.array([0.0])) ==
-            bd(np.array([1.0]), np.array([0.0])))
+    assert_equal(bd(np.array([0.0]), np.array([0.0])),
+                 bd(np.array([1.0]), np.array([0.0])))
 
-    assert bd(np.array([1.0, 1.0, 1.0]), np.array([100.0, 100.0, 100.0])) == 0
+    assert_almost_equal(bd(np.array([1.0, 1.0, 1.0]),
+                           np.array([100.0, 100.0, 100.0])),
+                        0.0)
     assert_almost_equal(bd(np.array([1.0, 0.0, 0.0]),
                            np.array([100.0, -100.0, -100.0])), 0)
 
@@ -57,6 +54,6 @@ def test_log_odds_estimator():
     assert_raises(ValueError, est.fit, None, np.array([1]))
 
     est.fit(None, np.array([1.0, 0.0]))
-    assert est.prior == 0.0
-    assert_array_equal(est.predict(np.array([[1.0],[1.0]])),
-                       np.array([[0.0],[0.0]]))
+    assert_equal(est.prior, 0.0)
+    assert_array_equal(est.predict(np.array([[1.0], [1.0]])),
+                       np.array([[0.0], [0.0]]))
