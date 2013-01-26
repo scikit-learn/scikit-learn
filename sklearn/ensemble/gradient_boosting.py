@@ -77,7 +77,10 @@ class LogOddsEstimator(BaseEstimator):
     """An estimator predicting the log odds ratio."""
     def fit(self, X, y):
         n_pos = np.sum(y)
-        self.prior = np.log(n_pos / (y.shape[0] - n_pos))
+        n_neg = y.shape[0] - n_pos
+        if n_neg == 0 or n_pos == 0:
+            raise ValueError('y contains non binary labels.')
+        self.prior = np.log(n_pos / n_neg)
 
     def predict(self, X):
         y = np.empty((X.shape[0], 1), dtype=np.float64)
