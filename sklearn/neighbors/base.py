@@ -26,12 +26,6 @@ class NeighborsWarning(UserWarning):
 warnings.simplefilter("always", NeighborsWarning)
 
 
-def warn_equidistant():
-    msg = ("kneighbors: neighbor k+1 and neighbor k have the same "
-           "distance: results will be dependent on data order.")
-    warnings.warn(msg, NeighborsWarning, stacklevel=3)
-
-
 def _check_weights(weights):
     """Check to make sure weights are valid"""
     if weights in (None, 'uniform', 'distance'):
@@ -83,13 +77,11 @@ class NeighborsBase(BaseEstimator):
     # this can be passed directly to BallTree and cKDTree.  Brute-force will
     # rely on soon-to-be-updated functionality in the pairwise module.
     def _init_params(self, n_neighbors=None, radius=None,
-                     algorithm='auto', leaf_size=30,
-                     warn_on_equidistant=True, p=2):
+                     algorithm='auto', leaf_size=30, p=2):
         self.n_neighbors = n_neighbors
         self.radius = radius
         self.algorithm = algorithm
         self.leaf_size = leaf_size
-        self.warn_on_equidistant = warn_on_equidistant
         self.p = p
 
         if algorithm not in ['auto', 'brute', 'kd_tree', 'ball_tree']:
@@ -232,12 +224,6 @@ class KNeighborsMixin(object):
                                           p=self.p)
             # XXX: should be implemented with a partial sort
             neigh_ind = dist.argsort(axis=1)
-            if self.warn_on_equidistant and n_neighbors < self._fit_X.shape[0]:
-                ii = np.arange(dist.shape[0])
-                ind_k = neigh_ind[:, n_neighbors - 1]
-                ind_k1 = neigh_ind[:, n_neighbors]
-                if np.any(dist[ii, ind_k] == dist[ii, ind_k1]):
-                    warn_equidistant()
             neigh_ind = neigh_ind[:, :n_neighbors]
             if return_distance:
                 j = np.arange(neigh_ind.shape[0])[:, None]
@@ -250,8 +236,6 @@ class KNeighborsMixin(object):
         elif self._fit_method == 'ball_tree':
             result = self._tree.query(X, n_neighbors,
                                       return_distance=return_distance)
-            if self.warn_on_equidistant and self._tree.warning_flag:
-                warn_equidistant()
             return result
         elif self._fit_method == 'kd_tree':
             dist, ind = self._tree.query(X, n_neighbors, p=self.p)
