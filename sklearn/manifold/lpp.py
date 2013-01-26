@@ -1,5 +1,8 @@
 '''
-Locality Preserving Projection (LPP)
+Locality Preserving Projection (LPP) based on
+[1] "X. He and P. Niyogi. Locality preserving projections. Advances in Neural
+Information Processing Systems 16 (NIPS 2003), 2003. Vancouver, Canada."
+
 Created on 2012/11/27
 @author: du
 '''
@@ -17,6 +20,27 @@ from ..decomposition import PCA
 from .lpp_util import toSymmetrixMat
 
 def adjacency_matrix(X, n_neighbors, mode='distance', use_ext=True):
+    """Compute weighted adjacency matrix by k-nearest search
+
+    Parameters
+    ----------
+    X : array-like, shape: (n_samples, n_features)
+        Input data, each column is an edge of a graph
+
+    n_neighbors : int
+        number of neighbors to define whether two edges are connected or not
+
+    mode : string
+        mode of kneighbors_graph calculation
+        
+    use_ext : bool
+        flags to use cython extension
+        
+    Returns
+    -------
+    adjacency matrix : LIL sparse matrix, shape: (n_samples, n_samples)
+        (i, j) component of it is defined in the section 2.2 of [1]
+    """
     X = np.asanyarray(X)
     G = kneighbors_graph(X, n_neighbors, mode)
     G = G.tolil()
@@ -30,6 +54,24 @@ def adjacency_matrix(X, n_neighbors, mode='distance', use_ext=True):
     return G
 
 def affinity_matrix(adj_mat, kernel_func="heat", kernel_param=1.0):
+    """Compute the affinity matrix from adjacency matrix
+    
+    Parameters
+    ----------
+    adj_mat : array-like, shape(n_samples, n_samples)
+        the adjacency matrix
+        
+    kernel_func : string or callable
+        kernel function to compute affinity matrix
+        
+    kernel_param : float
+        parameter for heat kernel
+        
+    Returns
+    -------
+    affinity matrix : CSR sparse matrix, shape(n_samples, n_samples)
+        (i, j) component W(i,j) is defined in [1] section 2.2 2 (a)
+    """ 
     W = csr_matrix(adj_mat)
     if kernel_func == "heat":
         np.exp(-W.data ** 2 / kernel_param, W.data)
@@ -38,20 +80,38 @@ def affinity_matrix(adj_mat, kernel_func="heat", kernel_param=1.0):
     return W
 
 def laplacian_matrix(afn_mat):
+    """Compute the affinity matrix from adjacency matrix
+    
+    Parameters
+    ----------
+    afn_mat : CSR sparse matrix, shape(n_samples, n_samples)
+        the affinity matrix
+        
+    Returns
+    -------
+    Laplacian matrix : CSR sparse matrix, shape(n_samples, n_samples)
+        (i, j) component L(i,j) is defined in [1] section 2.2 3
+    
+    col_sum : ndarray, shape(n_samples)
+        diagonal matrix whose entries are column sums of the affnity matrix    
+    """    
     col_sum = np.asarray(afn_mat.sum(0)).flatten()
-    afn_mat = (-afn_mat).tolil()
-    afn_mat.setdiag(col_sum)
-    return afn_mat.tocsr(), col_sum
+    lap_mat = (-afn_mat).tolil()
+    lap_mat.setdiag(col_sum)
+    return lap_mat.tocsr(), col_sum
 
 def auto_dsygv(M, N, k, k_skip=0, eigen_solver='auto', tol=1E-6,
                   max_iter=100, random_state=None):
     """
-    Find the null space of a matrix M.
+    Helper function for solving Generalized Eigen Problem M x = a N x
 
     Parameters
     ----------
     M : {array, matrix, sparse matrix, LinearOperator}
-        Input covariance matrix: should be symmetric positive semi-definite
+        Left hand side input matrix: should be symmetric positive semi-definite
+
+    N : {array, matrix, sparse matrix, LinearOperator}
+        Right hand side input matrix: should be symmetric positive semi-definite
 
     k : integer
         Number of eigenvalues/vectors to return
@@ -97,7 +157,7 @@ def auto_dsygv(M, N, k, k_skip=0, eigen_solver='auto', tol=1E-6,
                                                 tol=tol, maxiter=max_iter,
                                                 v0=v0)
         except RuntimeError as msg:
-            raise ValueError("Error in determining null-space with ARPACK. "
+            raise ValueError("Error in solving eigen problem with ARPACK. "
                              "Error message: '%s'. "
                              "Note that method='arpack' can fail when the "
                              "weight matrix is singular or otherwise "
