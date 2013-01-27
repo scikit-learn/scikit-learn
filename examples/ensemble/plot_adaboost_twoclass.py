@@ -70,7 +70,7 @@ for i, n, c in zip(xrange(2), class_names, plot_colors):
             label='Class %s' % n)
 pl.legend(loc='upper center')
 pl.ylabel('Samples')
-pl.xlabel('Probability of being from the red class')
+pl.xlabel('Probability of being from class B')
 
 # Plot the two-class decision scores
 twoclass_output = bdt.decision_function(X)
