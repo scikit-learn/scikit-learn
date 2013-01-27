@@ -140,7 +140,8 @@ pl.axis('tight')
 
 # Perform Locality Preserving Projection.
 t0 = time()
-lpp = manifold.LPP(n_components=2, n_neighbors=n_neighbors)
+lpp = manifold.LocalityPreservingProjection(n_components=2,
+                                           n_neighbors=n_neighbors)
 trans_data = lpp.fit_transform(sphere_data).T
 t1 = time()
 print "LPP: %.2g sec" % (t1 - t0)

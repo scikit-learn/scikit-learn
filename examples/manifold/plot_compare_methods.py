@@ -109,8 +109,9 @@ ax.yaxis.set_major_formatter(NullFormatter())
 pl.axis('tight')
 
 t0 = time()
-se = manifold.LPP(n_components=n_components, n_neighbors=n_neighbors)
-Y = se.fit_transform(X)
+lpp = manifold.LocalityPreservingProjection(n_components=n_components, 
+                                           n_neighbors=n_neighbors)
+Y = lpp.fit_transform(X)
 t1 = time()
 print("LPP: %.2g sec" % (t1 - t0))
 ax = fig.add_subplot(259)
