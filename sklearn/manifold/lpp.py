@@ -55,6 +55,7 @@ def adjacency_matrix(X, n_neighbors, mode='distance', use_ext=True):
         for xx, yy in zip(nzx, nzy):
             if G[yy, xx] == 0:
                 G[yy, xx] = G[xx, yy]
+
     return G
 
 
@@ -79,7 +80,7 @@ def affinity_matrix(adj_mat, kernel_func="heat", kernel_param=1.0):
     """
     W = csr_matrix(adj_mat)
     if kernel_func == "heat":
-        np.exp(-W.data ** 2 / kernel_param, W.data)
+        np.exp(-W.data * W.data / kernel_param, W.data)
     else:
         W.data = kernel_func(W.data)
     return W
@@ -186,6 +187,7 @@ def auto_dsygv(M, N, k, k_skip=0, eigen_solver='auto', tol=1E-6,
             N = N.toarray()
         eigen_values, eigen_vectors = eigh(
             M, N, eigvals=(k_skip, k + k_skip - 1), overwrite_a=True)
+
 #        index = np.argsort(np.abs(eigen_values))
 #        return eigen_vectors[:, index], eigen_values
         return eigen_vectors, eigen_values
@@ -193,9 +195,9 @@ def auto_dsygv(M, N, k, k_skip=0, eigen_solver='auto', tol=1E-6,
         raise ValueError("Unrecognized eigen_solver '%s'" % eigen_solver)
 
 
-def lpp(X, n_neighbors, mode="distance", kernel_func="heat", kernel_param=10.0,
-        k=2, eigen_solver='auto', tol=1E-6, max_iter=100,
-               random_state=None, use_ext=True):
+def locality_preserving_projection(X, n_neighbors, mode="distance",
+        kernel_func="heat", kernel_param=10.0, k=2, eigen_solver='auto',
+        tol=1E-6, max_iter=100, random_state=None, use_ext=True):
     """Perform Locality Linear Projection
 
     Parameters
@@ -255,13 +257,12 @@ def lpp(X, n_neighbors, mode="distance", kernel_func="heat", kernel_param=10.0,
     W = affinity_matrix(W, kernel_func, kernel_param)
     # making laplacian matrix
     L, D = laplacian_matrix(W)
-    # eigen map
     L = safe_sparse_dot(X.T, safe_sparse_dot(L, X))
     D = np.dot(X.T, D[:, np.newaxis] * X)
     return auto_dsygv(L, D, k, 0, eigen_solver, tol, max_iter, random_state)
 
 
-class LPP(BaseEstimator, TransformerMixin):
+class LocalityPreservingProjection(BaseEstimator, TransformerMixin):
     """Locality Preserving Projection (LPP) find the optimal linear embedding
     for Graph Laplacian Matrix. LPP can be considered as a linear approximation
     to the Laplacian Eigen Mapping (LEM). While lower dimensional mapping of
@@ -334,14 +335,17 @@ class LPP(BaseEstimator, TransformerMixin):
 
     def fit(self, X, y=None):
         if self._pca_preprocess:
-            _pca = PCA(n_components=0.9)
+            # PCA preprocess for removing singularity
+            target_dim = int(min(X.shape) * 0.9)
+            _pca = PCA(n_components=target_dim)
             X = _pca.fit_transform(X)
 
         if self._kernel_func == "heat" and self._kernel_param is None:
             self._kernel_param = 1.0 / X.shape[1]
         if self._n_neighbors is None:
             self._n_neighbors = max(int(X.shape[0] / 10), 1)
-        self._components, _ = lpp(X, self._n_neighbors, self._mode,
+        self._components, _ = locality_preserving_projection(X, 
+                                  self._n_neighbors, self._mode,
                                   self._kernel_func, self._kernel_param,
                                   self._n_components, self._eigen_solver,
                                   self._tol, self._max_iter,

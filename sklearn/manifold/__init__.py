@@ -6,7 +6,8 @@ from .locally_linear import locally_linear_embedding, LocallyLinearEmbedding
 from .isomap import Isomap
 from .mds import MDS
 from .spectral_embedding import SpectralEmbedding, spectral_embedding
-from .lpp import LPP
+from .lpp import locality_preserving_projection, LocalityPreservingProjection
 
 __all__ = ['locally_linear_embedding', 'LocallyLinearEmbedding', 'Isomap',
-           'MDS', 'SpectralEmbedding', 'spectral_embedding', 'LPP']
+           'MDS', 'SpectralEmbedding', 'spectral_embedding', 
+           'locality_preserving_projection', 'LocalityPreservingProjection']
