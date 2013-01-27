@@ -398,9 +398,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         # Classification
         if isinstance(self, ClassifierMixin):
             if self.n_outputs_ == 1:
-                return np.array(self.classes_.take(
-                    np.argmax(proba[:, 0], axis=1),
-                    axis=0))
+                return self.classes_.take(np.argmax(proba[:, 0], axis=1),
+                                          axis=0)
 
             else:
                 predictions = np.zeros((n_samples, self.n_outputs_))

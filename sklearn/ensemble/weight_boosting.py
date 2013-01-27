@@ -421,8 +421,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             self.n_classes_ = getattr(estimator, 'n_classes_',
                                       getattr(estimator, 'n_classes', 1))
 
-        y_predict = np.array(self.classes_.take(
-            np.argmax(y_predict_proba, axis=1), axis=0))
+        y_predict = self.classes_.take(np.argmax(y_predict_proba, axis=1),
+                                       axis=0)
 
         # Instances incorrectly classified
         incorrect = y_predict != y
@@ -443,7 +443,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         # Construct y coding
         n_classes = self.n_classes_
-        classes = np.array(self.classes_)
+        classes = self.classes_
         y_codes = np.array([-1. / (n_classes - 1), 1.])
         y_coding = y_codes.take(classes == y.reshape(y.shape[0], 1))
 
@@ -543,9 +543,11 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The predicted classes.
         """
         pred = self.decision_function(X, n_estimators)
+
         if self.n_classes_ == 2:
-            return np.array(self.classes_.take(pred > 0, axis=0))
-        return np.array(self.classes_.take(np.argmax(pred, axis=1), axis=0))
+            return self.classes_.take(pred > 0, axis=0)
+
+        return self.classes_.take(np.argmax(pred, axis=1), axis=0)
 
     def staged_predict(self, X, n_estimators=-1):
         """Return staged predictions for X.
@@ -576,9 +578,11 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         """
         n_classes = self.n_classes_
         classes = self.classes_
+
         if n_classes == 2:
             for pred in self.staged_decision_function(X, n_estimators):
                 yield np.array(classes.take(pred > 0, axis=0))
+
         else:
             for pred in self.staged_decision_function(X, n_estimators):
                 yield np.array(classes.take(
