@@ -517,7 +517,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             # Only boost positive weights
             sample_weight *= np.exp(estimator_weight * incorrect
                                                      * ((sample_weight > 0) |
-                                                        (weight < 0)))
+                                                        (estimator_weight < 0)))
 
         return sample_weight, estimator_weight, error
 
