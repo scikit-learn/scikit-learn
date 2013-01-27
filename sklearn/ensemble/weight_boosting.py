@@ -182,7 +182,7 @@ class BaseWeightBoosting(BaseEnsemble):
             The reweighted sample weights.
             If None then boosting has terminated early.
 
-        weight : float
+        estimator_weight : float
             The weight for the current boost.
             If None then boosting has terminated early.
 
@@ -390,7 +390,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The reweighted sample weights.
             If None then boosting has terminated early.
 
-        weight : float
+        estimator_weight : float
             The weight for the current boost.
             If None then boosting has terminated early.
 
@@ -400,6 +400,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         """
         if self.algorithm == "SAMME.R":
             return self._boost_real(iboost, X, y, sample_weight)
+
         else:  # elif self.algorithm == "SAMME":
             return self._boost_discrete(iboost, X, y, sample_weight)
 
@@ -454,15 +455,15 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         y_predict_proba[y_predict_proba <= 0] = 1e-5
 
         # Boost weight using multi-class AdaBoost SAMME.R alg
-        weight = -1. * self.learning_rate * (
-            ((n_classes - 1.) / n_classes) *
-            inner1d(y_coding, np.log(y_predict_proba)))
+        estimator_weight = (-1. * self.learning_rate
+                                * (((n_classes - 1.) / n_classes) *
+                                   inner1d(y_coding, np.log(y_predict_proba))))
 
-        # Only boost the weights if I will fit again
+        # Only boost the weights if it will fit again
         if not iboost == self.n_estimators - 1:
             # Only boost positive weights
-            sample_weight *= np.exp(weight * ((sample_weight > 0) |
-                                              (weight < 0)))
+            sample_weight *= np.exp(estimator_weight * ((sample_weight > 0) |
+                                                        (estimator_weight < 0)))
 
         return sample_weight, 1., error
 
@@ -508,17 +509,17 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             return None, None, None
 
         # Boost weight using multi-class AdaBoost SAMME alg
-        weight = self.learning_rate * (
-            np.log((1. - error) / error) +
-            np.log(n_classes - 1.))
+        estimator_weight = self.learning_rate * (np.log((1. - error) / error) +
+                                                 np.log(n_classes - 1.))
 
         # Only boost the weights if I will fit again
         if not iboost == self.n_estimators - 1:
             # Only boost positive weights
-            sample_weight *= np.exp(weight * incorrect * ((sample_weight > 0) |
-                                                          (weight < 0)))
+            sample_weight *= np.exp(estimator_weight * incorrect
+                                                     * ((sample_weight > 0) |
+                                                        (weight < 0)))
 
-        return sample_weight, weight, error
+        return sample_weight, estimator_weight, error
 
     def predict(self, X, n_estimators=-1):
         """Predict classes for X.
@@ -975,7 +976,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The reweighted sample weights.
             If None then boosting has terminated early.
 
-        weight : float
+        estimator_weight : float
             The weight for the current boost.
             If None then boosting has terminated early.
 
@@ -1015,14 +1016,14 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         beta = error / (1. - error)
 
         # Boost weight using AdaBoost.R2 alg
-        weight = self.learning_rate * np.log(1. / beta)
+        estimator_weight = self.learning_rate * np.log(1. / beta)
 
         if not iboost == self.n_estimators - 1:
             sample_weight *= np.power(
                 beta,
                 (1. - error_vect) * self.learning_rate)
 
-        return sample_weight, weight, error
+        return sample_weight, estimator_weight, error
 
     def predict(self, X, n_estimators=-1):
         """Predict regression value for X.
