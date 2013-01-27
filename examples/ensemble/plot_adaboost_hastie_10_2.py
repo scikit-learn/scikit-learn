@@ -99,6 +99,7 @@ ax.plot(np.arange(n_estimators) + 1, ada_real_err_train,
 
 ax.set_ylim((0.0, 0.5))
 ax.set_xlabel('n_estimators')
+ax.set_ylabel('error rate')
 
 leg = ax.legend(loc='upper right', fancybox=True)
 leg.get_frame().set_alpha(0.7)

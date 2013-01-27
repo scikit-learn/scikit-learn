@@ -303,9 +303,10 @@ weak learners can be specified through the ``base_estimator`` parameter.
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_adaboost_classification.py`
+ * :ref:`example_ensemble_plot_adaboost_hastie_10_2.py`
+ * :ref:`example_ensemble_plot_adaboost_multiclass.py`
  * :ref:`example_ensemble_plot_adaboost_regression.py`
- * :ref:`example_ensemble_plot_adaboost_error.py`
+ * :ref:`example_ensemble_plot_adaboost_twoclass.py`
 
 .. topic:: References
 

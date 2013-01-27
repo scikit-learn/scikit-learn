@@ -115,7 +115,7 @@ class BaseWeightBoosting(BaseEnsemble):
 
         for iboost in xrange(self.n_estimators):
             # Boosting step
-            sample_weight, weight, error = self._boost(
+            sample_weight, estimator_weight, error = self._boost(
                 iboost,
                 X, y,
                 sample_weight)
@@ -124,7 +124,7 @@ class BaseWeightBoosting(BaseEnsemble):
             if sample_weight is None:
                 break
 
-            self.estimator_weights_[iboost] = weight
+            self.estimator_weights_[iboost] = estimator_weight
             self.errors_[iboost] = error
 
             # Stop if error is zero
@@ -182,7 +182,7 @@ class BaseWeightBoosting(BaseEnsemble):
             The reweighted sample weights.
             If None then boosting has terminated early.
 
-        weight : float
+        estimator_weight : float
             The weight for the current boost.
             If None then boosting has terminated early.
 
@@ -220,22 +220,24 @@ class BaseWeightBoosting(BaseEnsemble):
 
 
 def _samme_proba(estimator, n_classes, X):
-        """
-        Calculate algorithm 4, step 2, equation c) of Zhu et al [1]
+    """
+    Calculate algorithm 4, step 2, equation c) of Zhu et al [1]
 
-        .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie,
-           "Multi-class AdaBoost", 2009.
-        """
-        proba = estimator.predict_proba(X)
+    References
+    ----------
+    .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
 
-        # Displace zero probabilities so the log is defined.
-        # Also fix negative elements which may occur with
-        # negative sample weights.
-        proba[proba <= 0] = 1e-5
-        log_proba = np.log(proba)
+    """
+    proba = estimator.predict_proba(X)
 
-        return (n_classes - 1) * (log_proba -
-            (1. / n_classes) * log_proba.sum(axis=1)[:, np.newaxis])
+    # Displace zero probabilities so the log is defined.
+    # Also fix negative elements which may occur with
+    # negative sample weights.
+    proba[proba <= 0] = 1e-5
+    log_proba = np.log(proba)
+
+    return (n_classes - 1) * (log_proba - (1. / n_classes)
+                           * log_proba.sum(axis=1)[:, np.newaxis])
 
 
 class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
@@ -302,7 +304,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
     References
     ----------
-
     .. [1] Y. Freund, R. Schapire, "A Decision-Theoretic Generalization of
            on-Line Learning and an Application to Boosting", 1995.
 
@@ -389,7 +390,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The reweighted sample weights.
             If None then boosting has terminated early.
 
-        weight : float
+        estimator_weight : float
             The weight for the current boost.
             If None then boosting has terminated early.
 
@@ -399,6 +400,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         """
         if self.algorithm == "SAMME.R":
             return self._boost_real(iboost, X, y, sample_weight)
+
         else:  # elif self.algorithm == "SAMME":
             return self._boost_discrete(iboost, X, y, sample_weight)
 
@@ -421,8 +423,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             self.n_classes_ = getattr(estimator, 'n_classes_',
                                       getattr(estimator, 'n_classes', 1))
 
-        y_predict = np.array(self.classes_.take(
-            np.argmax(y_predict_proba, axis=1), axis=0))
+        y_predict = self.classes_.take(np.argmax(y_predict_proba, axis=1),
+                                       axis=0)
 
         # Instances incorrectly classified
         incorrect = y_predict != y
@@ -443,7 +445,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         # Construct y coding
         n_classes = self.n_classes_
-        classes = np.array(self.classes_)
+        classes = self.classes_
         y_codes = np.array([-1. / (n_classes - 1), 1.])
         y_coding = y_codes.take(classes == y.reshape(y.shape[0], 1))
 
@@ -453,15 +455,15 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         y_predict_proba[y_predict_proba <= 0] = 1e-5
 
         # Boost weight using multi-class AdaBoost SAMME.R alg
-        weight = -1. * self.learning_rate * (
-            ((n_classes - 1.) / n_classes) *
-            inner1d(y_coding, np.log(y_predict_proba)))
+        estimator_weight = (-1. * self.learning_rate
+                                * (((n_classes - 1.) / n_classes) *
+                                   inner1d(y_coding, np.log(y_predict_proba))))
 
-        # Only boost the weights if I will fit again
+        # Only boost the weights if it will fit again
         if not iboost == self.n_estimators - 1:
             # Only boost positive weights
-            sample_weight *= np.exp(weight *
-                ((sample_weight > 0) | (weight < 0)))
+            sample_weight *= np.exp(estimator_weight * ((sample_weight > 0) |
+                                                        (estimator_weight < 0)))
 
         return sample_weight, 1., error
 
@@ -507,17 +509,17 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             return None, None, None
 
         # Boost weight using multi-class AdaBoost SAMME alg
-        weight = self.learning_rate * (
-            np.log((1. - error) / error) +
-            np.log(n_classes - 1.))
+        estimator_weight = self.learning_rate * (np.log((1. - error) / error) +
+                                                 np.log(n_classes - 1.))
 
         # Only boost the weights if I will fit again
         if not iboost == self.n_estimators - 1:
             # Only boost positive weights
-            sample_weight *= np.exp(weight * incorrect *
-                ((sample_weight > 0) | (weight < 0)))
+            sample_weight *= np.exp(estimator_weight * incorrect
+                                                     * ((sample_weight > 0) |
+                                                        (estimator_weight < 0)))
 
-        return sample_weight, weight, error
+        return sample_weight, estimator_weight, error
 
     def predict(self, X, n_estimators=-1):
         """Predict classes for X.
@@ -543,9 +545,11 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The predicted classes.
         """
         pred = self.decision_function(X, n_estimators)
+
         if self.n_classes_ == 2:
-            return np.array(self.classes_.take(pred > 0, axis=0))
-        return np.array(self.classes_.take(np.argmax(pred, axis=1), axis=0))
+            return self.classes_.take(pred > 0, axis=0)
+
+        return self.classes_.take(np.argmax(pred, axis=1), axis=0)
 
     def staged_predict(self, X, n_estimators=-1):
         """Return staged predictions for X.
@@ -576,9 +580,11 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         """
         n_classes = self.n_classes_
         classes = self.classes_
+
         if n_classes == 2:
             for pred in self.staged_decision_function(X, n_estimators):
                 yield np.array(classes.take(pred > 0, axis=0))
+
         else:
             for pred in self.staged_decision_function(X, n_estimators):
                 yield np.array(classes.take(
@@ -898,7 +904,6 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
     References
     ----------
-
     .. [1] Y. Freund, R. Schapire, "A Decision-Theoretic Generalization of
            on-Line Learning and an Application to Boosting", 1995.
 
@@ -971,7 +976,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The reweighted sample weights.
             If None then boosting has terminated early.
 
-        weight : float
+        estimator_weight : float
             The weight for the current boost.
             If None then boosting has terminated early.
 
@@ -1011,14 +1016,14 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         beta = error / (1. - error)
 
         # Boost weight using AdaBoost.R2 alg
-        weight = self.learning_rate * np.log(1. / beta)
+        estimator_weight = self.learning_rate * np.log(1. / beta)
 
         if not iboost == self.n_estimators - 1:
             sample_weight *= np.power(
                 beta,
                 (1. - error_vect) * self.learning_rate)
 
-        return sample_weight, weight, error
+        return sample_weight, estimator_weight, error
 
     def predict(self, X, n_estimators=-1):
         """Predict regression value for X.
