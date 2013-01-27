@@ -115,7 +115,7 @@ class BaseWeightBoosting(BaseEnsemble):
 
         for iboost in xrange(self.n_estimators):
             # Boosting step
-            sample_weight, weight, error = self._boost(
+            sample_weight, estimator_weight, error = self._boost(
                 iboost,
                 X, y,
                 sample_weight)
@@ -124,7 +124,7 @@ class BaseWeightBoosting(BaseEnsemble):
             if sample_weight is None:
                 break
 
-            self.estimator_weights_[iboost] = weight
+            self.estimator_weights_[iboost] = estimator_weight
             self.errors_[iboost] = error
 
             # Stop if error is zero
