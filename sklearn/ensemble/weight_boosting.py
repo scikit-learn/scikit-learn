@@ -220,22 +220,24 @@ class BaseWeightBoosting(BaseEnsemble):
 
 
 def _samme_proba(estimator, n_classes, X):
-        """
-        Calculate algorithm 4, step 2, equation c) of Zhu et al [1]
+    """
+    Calculate algorithm 4, step 2, equation c) of Zhu et al [1]
 
-        .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie,
-           "Multi-class AdaBoost", 2009.
-        """
-        proba = estimator.predict_proba(X)
+    References
+    ----------
+    .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
 
-        # Displace zero probabilities so the log is defined.
-        # Also fix negative elements which may occur with
-        # negative sample weights.
-        proba[proba <= 0] = 1e-5
-        log_proba = np.log(proba)
+    """
+    proba = estimator.predict_proba(X)
 
-        return (n_classes - 1) * (log_proba -
-            (1. / n_classes) * log_proba.sum(axis=1)[:, np.newaxis])
+    # Displace zero probabilities so the log is defined.
+    # Also fix negative elements which may occur with
+    # negative sample weights.
+    proba[proba <= 0] = 1e-5
+    log_proba = np.log(proba)
+
+    return (n_classes - 1) * (log_proba -
+        (1. / n_classes) * log_proba.sum(axis=1)[:, np.newaxis])
 
 
 class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
@@ -302,7 +304,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
     References
     ----------
-
     .. [1] Y. Freund, R. Schapire, "A Decision-Theoretic Generalization of
            on-Line Learning and an Application to Boosting", 1995.
 
@@ -902,7 +903,6 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
     References
     ----------
-
     .. [1] Y. Freund, R. Schapire, "A Decision-Theoretic Generalization of
            on-Line Learning and an Application to Boosting", 1995.
 
