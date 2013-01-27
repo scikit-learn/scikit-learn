@@ -236,8 +236,8 @@ def _samme_proba(estimator, n_classes, X):
     proba[proba <= 0] = 1e-5
     log_proba = np.log(proba)
 
-    return (n_classes - 1) * (log_proba -
-        (1. / n_classes) * log_proba.sum(axis=1)[:, np.newaxis])
+    return (n_classes - 1) * (log_proba - (1. / n_classes)
+                           * log_proba.sum(axis=1)[:, np.newaxis])
 
 
 class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
@@ -461,8 +461,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         # Only boost the weights if I will fit again
         if not iboost == self.n_estimators - 1:
             # Only boost positive weights
-            sample_weight *= np.exp(weight *
-                ((sample_weight > 0) | (weight < 0)))
+            sample_weight *= np.exp(weight * ((sample_weight > 0) |
+                                              (weight < 0)))
 
         return sample_weight, 1., error
 
@@ -515,8 +515,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         # Only boost the weights if I will fit again
         if not iboost == self.n_estimators - 1:
             # Only boost positive weights
-            sample_weight *= np.exp(weight * incorrect *
-                ((sample_weight > 0) | (weight < 0)))
+            sample_weight *= np.exp(weight * incorrect * ((sample_weight > 0) |
+                                                          (weight < 0)))
 
         return sample_weight, weight, error
 
