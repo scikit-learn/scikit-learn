@@ -29,14 +29,14 @@ import numpy as np
 import pylab as pl
 from sklearn import ensemble
 from sklearn import datasets
+from sklearn.utils.fixes import unique
 
 
 X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
 X = X.astype(np.float32)
 
 # map labels from {-1, 1} to {0, 1}
-labels = np.unique(y)
-y = np.searchsorted(labels, y)
+labels, y = unique(y, return_inverse=True)
 
 X_train, X_test = X[:2000], X[2000:]
 y_train, y_test = y[:2000], y[2000:]
