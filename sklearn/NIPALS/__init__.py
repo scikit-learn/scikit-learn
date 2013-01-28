@@ -4,5 +4,10 @@ latent variable methods that all are computed using the NIPALS algorithm.
 """
 
 from .NIPALS import PCA
+from .NIPALS import SVD
+from .NIPALS import PLSR
+from .NIPALS import center
+from .NIPALS import scale
+from .NIPALS import direct
 
-__all__ = ['PCA']
+__all__ = ['PCA', 'SVD', 'PLSR', 'center', 'scale', 'direct']

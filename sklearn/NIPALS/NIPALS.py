@@ -7,7 +7,7 @@ latent variable methods that all are computed using the NIPALS algorithm.
 # Author: Tommy Löfstedt <tommy.loefstedt@cea.fr>
 # License: BSD Style.
 
-__all__ = ['PCA']
+__all__ = ['PCA', 'SVD', 'PLSR', 'center', 'scale', 'direct']
 
 from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin
 from sklearn.utils import check_arrays
@@ -32,10 +32,6 @@ _B          = "B"
 _HORST      = "Horst"
 _CENTROID   = "Centroid"
 _FACTORIAL  = "Factorial"
-
-# Deflation strategies
-_P          = "P"
-_W          = "W"
 
 # Available algorithms
 _RGCCA      = "RGCCA"
@@ -150,7 +146,8 @@ def _NIPALS(X, C = None, mode = _NEWA, scheme = _HORST,
 
             # External estimation
             if mode[i] == _NEWA or mode[i] == _A:
-                wi = np.dot(Xi.T, ui)
+                # TODO: Ok with division here?
+                wi = np.dot(Xi.T, ui) / dot(ui.T, ui)
             elif mode[i] == _B:
                 wi = np.dot(np.pinv(Xi), ui) # Precompute to speed up!
 
@@ -166,8 +163,6 @@ def _NIPALS(X, C = None, mode = _NEWA, scheme = _HORST,
                 # Normalise score vector ti to unit variance
                 wi /= norm(np.dot(Xi, wi))
                 wi *= np.sqrt(wi.shape[0])
-
-            
 
             # Check convergence for each weight vector. They all have to leave
             # converged = True in order for the algorithm to stop.
@@ -384,7 +379,7 @@ def _cov(a,b):
     return ip[0,0] / (a_.shape[0] - 1)
 
 
-def _center(X, return_means = False, copy = False):
+def center(X, return_means = False, copy = False):
     """ Centers the numpy array(s) in X
 
     Arguments
@@ -422,7 +417,7 @@ def _center(X, return_means = False, copy = False):
         return X
 
 
-def _scale(X, centered = True, return_stds = False, copy = False):
+def scale(X, centered = True, return_stds = False, copy = False):
     """ Scales the numpy arrays in arrays to standard deviation 1
     Returns
     -------
@@ -458,7 +453,7 @@ def _scale(X, centered = True, return_stds = False, copy = False):
         return X
 
 
-def _direct(W, T = None, P = None):
+def direct(W, T = None, P = None):
     for j in xrange(W.shape[1]):
         w = W[:,[j]]
         if dot(w.T,np.ones(w.shape)) < 0:
@@ -495,10 +490,15 @@ class BasePLS(BaseEstimator, TransformerMixin):
 
         if scheme == None:
             scheme = [_HORST]
-        for s in scheme:
-            if not s in (_HORST, _CENTROID, _FACTORIAL):
-                raise ValueError('The scheme must be either "%s", "%s" or "%s"'
-                        % (_HORST, _CENTROID, _FACTORIAL))
+        if not isinstance(scheme, (tuple, list)) and \
+                not scheme in (_HORST, _CENTROID, _FACTORIAL):
+            raise ValueError('The scheme must be either "%s", "%s" or "%s"'
+                    % (_HORST, _CENTROID, _FACTORIAL))
+        elif isinstance(scheme, (tuple, list)):
+            for s in scheme:
+                if not s in (_HORST, _CENTROID, _FACTORIAL):
+                    raise ValueError('The scheme must be either "%s", "%s"' \
+                            ' or "%s"' % (_HORST, _CENTROID, _FACTORIAL))
 
         if not isinstance(tau, (float)) and tau != None:
             raise ValueError('The shrinking factor tau must be of type float')
@@ -521,9 +521,6 @@ class BasePLS(BaseEstimator, TransformerMixin):
         self.normal_dir     = normalise_directions
         self.soft_threshold = soft_threshold
 
-        # Method dependent
-        self.deflation  = _P
-
 
     @abc.abstractmethod
     def _get_transform(self, index = 0):
@@ -532,6 +529,10 @@ class BasePLS(BaseEstimator, TransformerMixin):
 
     def _algorithm(self, *args, **kwargs):
         return _NIPALS(**kwargs)
+
+
+    def _deflate(self, X, w, t, p, index = None):
+        return X - np.dot(t, p.T) # Default is deflations with loadings p
 
 
     def _check_inputs(self, X):
@@ -559,7 +560,7 @@ class BasePLS(BaseEstimator, TransformerMixin):
             if X[i].ndim == 1:
                 X[i] = X[i].reshape((X[i].size, 1))
             if X[i].ndim != 2:
-                raise ValueError('The matrices in X must be 1- or 2D arrays ')
+                raise ValueError('The matrices in X must be 1- or 2D arrays')
 
             if X[i].shape[0] != M:
                 raise ValueError('Incompatible shapes: X[%d] has %d samples, '
@@ -590,13 +591,13 @@ class BasePLS(BaseEstimator, TransformerMixin):
         self.stds  = []
         for i in xrange(self.n):
             if self.center[i]:
-                X[i], means = _center(X[i], return_means = True)
+                X[i], means = center(X[i], return_means = True)
             else:
                 means = np.zeros((1, X[i].shape[1]))
             self.means.append(means)
 
             if self.scale[i]:
-                X[i], stds = _scale(X[i], centered=self.center, return_stds = True)
+                X[i], stds = scale(X[i], centered=self.center, return_stds = True)
             else:
                 stds = np.ones((1, X[i].shape[1]))
             self.stds.append(stds)
@@ -607,7 +608,7 @@ class BasePLS(BaseEstimator, TransformerMixin):
     def fit(self, *X):
         # Copy since this will contain the residual (deflated) matrices
         X = check_arrays(*X, dtype = np.float, copy = self.copy,
-                            sparse_format = 'dense')
+                         sparse_format = 'dense')
         # Number of matrices
         self.n = len(X)
 
@@ -615,17 +616,20 @@ class BasePLS(BaseEstimator, TransformerMixin):
         X = self._preprocess(X)
 
         # Results matrices
-        self.W = []
-        self.T = []
-        self.P = []
+        self.W  = []
+        self.T  = []
+        self.P  = []
+        self.Ws = []
         for i in xrange(self.n):
             M, N = X[i].shape
-            w = np.zeros((N, self.num_comp))
-            t = np.zeros((M, self.num_comp))
-            p = np.zeros((N, self.num_comp))
+            w  = np.zeros((N, self.num_comp))
+            t  = np.zeros((M, self.num_comp))
+            p  = np.zeros((N, self.num_comp))
+            ws = np.zeros((N, self.num_comp))
             self.W.append(w)
             self.T.append(t)
             self.P.append(p)
+            self.Ws.append(ws)
 
         # Outer loop, over components
         for a in xrange(self.num_comp):
@@ -637,14 +641,15 @@ class BasePLS(BaseEstimator, TransformerMixin):
                                 scheme = self.scheme,
                                 max_iter = self.max_iter,
                                 tolerance = self.tolerance,
-                                not_normed = self.not_normed)
+                                not_normed = self.not_normed,
+                                soft_threshold = self.soft_threshold)
 
             # Compute scores and loadings
             for i in xrange(self.n):
 
                 # If we should make all weights correlate with np.ones((N,1))
                 if self.normal_dir:
-                    w[i] = _direct(w[i])
+                    w[i] = direct(w[i])
 
                 # Score vector
                 t  = dot(X[i], w[i]) / dot(w[i].T, w[i])
@@ -661,15 +666,13 @@ class BasePLS(BaseEstimator, TransformerMixin):
                 self.T[i][:,a] = t.ravel()
                 self.P[i][:,a] = p.ravel()
 
-                if self.deflation == _W:
-                    X[i] -= np.dot(t, w[i].T)
-                else: # self.deflation == _P
-                    X[i] -= np.dot(t, p.T)
+                # Generic deflation method. Overload for specific deflation!
+                X[i] = self._deflate(X[i], w[i], t, p, i)
 
         # Compute W*, the rotation from input space X to transformed space T
         # such that T = XW(P'W)^-1 = XW*
         for i in xrange(self.n):
-            self.Ws = dot(self.W[i], np.linalg.inv(dot(self.P[i].T,self.W[i])))
+            self.Ws[i] = dot(self.W[i], np.linalg.inv(dot(self.P[i].T,self.W[i])))
 
         return self
 
@@ -717,9 +720,9 @@ class PCA(BasePLS):
     def fit(self, *X, **kwargs):
 #        y = kwargs.get('y', None)
         BasePLS.fit(self, X[0])
-        self.W = self.W[0]
         self.T = self.T[0]
-        self.P = self.P[0]
+        self.P = self.W[0]
+        del self.W
 
         return self
 
@@ -729,6 +732,114 @@ class PCA(BasePLS):
 
     def fit_transform(self, *X, **fit_params):
         return self.fit(X[0], **fit_params).transform(X[0])
+
+
+class SVD(BasePLS):
+
+    def __init__(self, num_comp = 2, center = False, scale = False,
+             copy = True, max_iter = _MAXITER, tolerance = _TOLERANCE,
+             soft_threshold = 0):
+
+        BasePLS.__init__(self, C = np.ones((1,1)), num_comp = num_comp,
+                         center = center, scale = scale,
+                         modes = [_NEWA], scheme = [_HORST], copy = copy,
+                         max_iter = max_iter, tolerance = tolerance,
+                         soft_threshold = soft_threshold)
+
+    def _get_transform(self, index = 0):
+        return self.V
+
+    def fit(self, *X, **kwargs):
+#        y = kwargs.get('y', None)
+        BasePLS.fit(self, X[0])
+        self.U = self.T[0]
+        # Move norms of U to the diagonal matrix S
+        norms = np.sum(self.U**2,axis=0)**(0.5)
+        self.U /= norms
+        self.S = np.diag(norms)
+        self.V = self.W[0]
+        del self.W
+        del self.T
+        del self.P
+
+        return self
+
+    def transform(self, *X, **kwargs):
+        U = BasePLS.transform(self, X[0], **kwargs)
+        return U[0]
+
+    def fit_transform(self, *X, **fit_params):
+        return self.fit(X[0], **fit_params).transform(X[0])
+
+
+class PLSR(BasePLS, RegressorMixin):
+
+    def __init__(self, num_comp = 2, center = True, scale = True,
+             copy = True, max_iter = _MAXITER, tolerance = _TOLERANCE,
+             soft_threshold = 0):
+
+        C = np.ones((2,2)) - np.eye(2)
+        BasePLS.__init__(self, C = C, num_comp = num_comp,
+                         center = center, scale = scale,
+                         modes = _NEWA, scheme = _HORST, copy = copy,
+                         max_iter = max_iter, tolerance = tolerance,
+                         soft_threshold = soft_threshold, not_normed = [1])
+
+
+    def _get_transform(self, index = 0):
+        if index < 0 or index > 1:
+            raise ValueError("Index must be 0 or 1")
+        if index == 0:
+            return self.Ws
+        else:
+            return self.C
+
+    def _deflate(self, X, w, t, p, index = None):
+        if index == 0:
+            return X - np.dot(t, p.T) # Deflate X using its loadings
+        else:
+            return X # Do not deflate Y
+
+
+    def fit(self, *X, **kwargs):
+        BasePLS.fit(self, *X)
+        self.C  = self.W[1]
+        self.U  = self.T[1]
+        self.Q  = self.P[1]
+        self.W  = self.W[0]
+        self.T  = self.T[0]
+        self.P  = self.P[0]
+        self.Ws = self.Ws[0]
+
+        self.B = dot(self.Ws, self.C.T)
+
+        return self
+
+
+    def predict(self, X, copy = True):
+        if copy:
+            X = (np.asarray(X) - self.means[0])
+        else:
+            X = np.asarray(X)
+            X -= self.means[0]
+            X /= self.stds[0]
+
+        Ypred = np.dot(X, self.B)
+
+        return (Ypred*self.stds[1]) + self.means[1]
+
+
+    def transform(self, X, Y = None, **kwargs):
+        if Y != None:
+            T = BasePLS.transform(self, X, Y, **kwargs)
+        else:
+            T = BasePLS.transform(self, X, **kwargs)
+            return T[0]
+        return T
+
+
+    def fit_transform(self, X, Y = None, **fit_params):
+        return self.fit(X, Y, **fit_params).transform(X, Y)
 
 
 #class Enum(object):
