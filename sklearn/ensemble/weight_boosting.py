@@ -192,7 +192,7 @@ class BaseWeightBoosting(BaseEnsemble):
         """
         pass
 
-    def staged_score(self, X, y, n_estimators=-1):
+    def staged_score(self, X, y):
         """Return staged scores for X, y.
 
         This generator method yields the ensemble score after each iteration of
@@ -212,7 +212,7 @@ class BaseWeightBoosting(BaseEnsemble):
         z : float
 
         """
-        for y_pred in self.staged_predict(X, n_estimators=n_estimators):
+        for y_pred in self.staged_predict(X):
             if isinstance(self, ClassifierMixin):
                 yield accuracy_score(y, y_pred)
             else:
@@ -514,7 +514,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         return sample_weight, estimator_weight, estimator_error
 
-    def predict(self, X, n_estimators=-1):
+    def predict(self, X):
         """Predict classes for X.
 
         The predicted class of an input sample is computed
@@ -525,26 +525,19 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         X : array-like of shape = [n_samples, n_features]
             The input samples.
 
-        n_estimators : int, optional (default=-1)
-            Use only the first ``n_estimators`` classifiers for the prediction.
-            This is useful for grid searching the ``n_estimators`` parameter
-            since it is not necessary to fit separately for all choices of
-            ``n_estimators``, but only the highest ``n_estimators``. Any
-            negative value will result in all estimators being used.
-
         Returns
         -------
         y : array of shape = [n_samples]
             The predicted classes.
         """
-        pred = self.decision_function(X, n_estimators)
+        pred = self.decision_function(X)
 
         if self.n_classes_ == 2:
             return self.classes_.take(pred > 0, axis=0)
 
         return self.classes_.take(np.argmax(pred, axis=1), axis=0)
 
-    def staged_predict(self, X, n_estimators=-1):
+    def staged_predict(self, X):
         """Return staged predictions for X.
 
         The predicted class of an input sample is computed
@@ -559,13 +552,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         X : array-like of shape = [n_samples, n_features]
             The input samples.
 
-        n_estimators : int, optional (default=-1)
-            Use only the first ``n_estimators`` classifiers for the prediction.
-            This is useful for grid searching the ``n_estimators`` parameter
-            since it is not necessary to fit separately for all choices of
-            ``n_estimators``, but only the highest ``n_estimators``. Any
-            negative value will result in all estimators being used.
-
         Returns
         -------
         y : generator of array, shape = [n_samples]
@@ -575,28 +561,21 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         classes = self.classes_
 
         if n_classes == 2:
-            for pred in self.staged_decision_function(X, n_estimators):
+            for pred in self.staged_decision_function(X):
                 yield np.array(classes.take(pred > 0, axis=0))
 
         else:
-            for pred in self.staged_decision_function(X, n_estimators):
+            for pred in self.staged_decision_function(X):
                 yield np.array(classes.take(
                     np.argmax(pred, axis=1), axis=0))
 
-    def decision_function(self, X, n_estimators=-1):
+    def decision_function(self, X):
         """Compute the decision function of ``X``.
 
         Parameters
         ----------
         X : array-like of shape = [n_samples, n_features]
             The input samples.
-
-        n_estimators : int, optional (default=-1)
-            Use only the first ``n_estimators`` classifiers for the prediction.
-            This is useful for grid searching the ``n_estimators`` parameter
-            since it is not necessary to fit separately for all choices of
-            ``n_estimators``, but only the highest ``n_estimators``. Any
-            negative value will result in all estimators being used.
 
         Returns
         -------
@@ -607,9 +586,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             For binary classification, values closer to -1 or 1 mean more
             like the first or second class in ``classes_``, respectively.
         """
-        if n_estimators == 0:
-            raise ValueError("``n_estimators`` must not equal zero")
-
         if not self.estimators_:
             raise RuntimeError(
                 ("{0} is not initialized. "
@@ -622,9 +598,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         for i, (weight, estimator) in enumerate(
                 zip(self.estimator_weights_, self.estimators_)):
-
-            if i == n_estimators:
-                break
 
             norm += weight
 
@@ -645,7 +618,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             return pred.sum(axis=1)
         return pred
 
-    def staged_decision_function(self, X, n_estimators=-1):
+    def staged_decision_function(self, X):
         """Compute decision function of ``X`` for each boosting iteration.
 
         This method allows monitoring (i.e. determine error on testing set)
@@ -656,13 +629,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         X : array-like of shape = [n_samples, n_features]
             The input samples.
 
-        n_estimators : int, optional (default=-1)
-            Use only the first ``n_estimators`` classifiers for the prediction.
-            This is useful for grid searching the ``n_estimators`` parameter
-            since it is not necessary to fit separately for all choices of
-            ``n_estimators``, but only the highest ``n_estimators``. Any
-            negative value will result in all estimators being used.
-
         Returns
         -------
         score : generator of array, shape = [n_samples, k]
@@ -672,9 +638,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             For binary classification, values closer to -1 or 1 mean more
             like the first or second class in ``classes_``, respectively.
         """
-        if n_estimators == 0:
-            raise ValueError("``n_estimators`` must not equal zero")
-
         if not self.estimators_:
             raise RuntimeError(
                 ("{0} is not initialized. "
@@ -687,9 +650,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         for i, (weight, estimator) in enumerate(
                 zip(self.estimator_weights_, self.estimators_)):
-
-            if i == n_estimators:
-                break
 
             norm += weight
 
@@ -711,7 +671,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             else:
                 yield pred / norm
 
-    def predict_proba(self, X, n_estimators=-1):
+    def predict_proba(self, X):
         """Predict class probabilities for X.
 
         The predicted class probabilities of an input sample is computed as
@@ -723,30 +683,17 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         X : array-like of shape = [n_samples, n_features]
             The input samples.
 
-        n_estimators : int, optional (default=-1)
-            Use only the first ``n_estimators`` classifiers for the prediction.
-            This is useful for grid searching the ``n_estimators`` parameter
-            since it is not necessary to fit separately for all choices of
-            ``n_estimators``, but only the highest ``n_estimators``. Any
-            negative value will result in all estimators being used.
-
         Returns
         -------
         p : array of shape = [n_samples]
             The class probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
-        if n_estimators == 0:
-            raise ValueError("``n_estimators`` must not equal zero")
-
         n_classes = self.n_classes_
         proba = None
 
         for i, (weight, estimator) in enumerate(
                 zip(self.estimator_weights_, self.estimators_)):
-
-            if i == n_estimators:
-                break
 
             current_proba = _samme_proba(estimator, n_classes, X)
 
@@ -762,7 +709,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         return proba
 
-    def staged_predict_proba(self, X, n_estimators=-1):
+    def staged_predict_proba(self, X):
         """Predict class probabilities for X.
 
         The predicted class probabilities of an input sample is computed as
@@ -779,30 +726,17 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         X : array-like of shape = [n_samples, n_features]
             The input samples.
 
-        n_estimators : int, optional (default=-1)
-            Use only the first ``n_estimators`` classifiers for the prediction.
-            This is useful for grid searching the ``n_estimators`` parameter
-            since it is not necessary to fit separately for all choices of
-            ``n_estimators``, but only the highest ``n_estimators``. Any
-            negative value will result in all estimators being used.
-
         Returns
         -------
         p : generator of array, shape = [n_samples]
             The class probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
-        if n_estimators == 0:
-            raise ValueError("``n_estimators`` must not equal zero")
-
         n_classes = self.n_classes_
         proba = None
 
         for i, (weight, estimator) in enumerate(
                 zip(self.estimator_weights_, self.estimators_)):
-
-            if i == n_estimators:
-                break
 
             current_proba = _samme_proba(estimator, n_classes, X)
 
@@ -818,7 +752,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
             yield real_proba
 
-    def predict_log_proba(self, X, n_estimators=-1):
+    def predict_log_proba(self, X):
         """Predict class log-probabilities for X.
 
         The predicted class log-probabilities of an input sample is computed as
@@ -830,20 +764,13 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         X : array-like of shape = [n_samples, n_features]
             The input samples.
 
-        n_estimators : int, optional (default=-1)
-            Use only the first ``n_estimators`` classifiers for the prediction.
-            This is useful for grid searching the ``n_estimators`` parameter
-            since it is not necessary to fit separately for all choices of
-            ``n_estimators``, but only the highest ``n_estimators``. Any
-            negative value will result in all estimators being used.
-
         Returns
         -------
         p : array of shape = [n_samples]
             The class log-probabilities of the input samples. Classes are
             ordered by arithmetical order.
         """
-        return np.log(self.predict_proba(X, n_estimators=n_estimators))
+        return np.log(self.predict_proba(X))
 
 
 class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
@@ -1020,7 +947,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         return sample_weight, estimator_weight, estimator_error
 
-    def predict(self, X, n_estimators=-1):
+    def predict(self, X):
         """Predict regression value for X.
 
         The predicted regression value of an input sample is computed
@@ -1031,21 +958,11 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         X : array-like of shape = [n_samples, n_features]
             The input samples.
 
-        n_estimators : int, optional (default=-1)
-            Use only the first ``n_estimators`` classifiers for the prediction.
-            This is useful for grid searching the ``n_estimators`` parameter
-            since it is not necessary to fit separately for all choices of
-            ``n_estimators``, but only the highest ``n_estimators``. Any
-            negative value will result in all estimators being used.
-
         Returns
         -------
         y : array of shape = [n_samples]
             The predicted regression values.
         """
-        if n_estimators == 0:
-            raise ValueError("``n_estimators`` must not equal zero")
-
         if not self.estimators_:
             raise RuntimeError(
                 ("{0} is not initialized. "
@@ -1055,8 +972,6 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         for i, (weight, estimator) in enumerate(
                 zip(self.estimator_weights_, self.estimators_)):
-            if i == n_estimators:
-                break
 
             current_pred = estimator.predict(X)
 
@@ -1069,7 +984,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         return pred
 
-    def staged_predict(self, X, n_estimators=-1):
+    def staged_predict(self, X):
         """Return staged predictions for X.
 
         The predicted regression value of an input sample is computed
@@ -1084,21 +999,11 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         X : array-like of shape = [n_samples, n_features]
             The input samples.
 
-        n_estimators : int, optional (default=-1)
-            Use only the first ``n_estimators`` classifiers for the prediction.
-            This is useful for grid searching the ``n_estimators`` parameter
-            since it is not necessary to fit separately for all choices of
-            ``n_estimators``, but only the highest ``n_estimators``. Any
-            negative value will result in all estimators being used.
-
         Returns
         -------
         y : generator of array, shape = [n_samples]
             The predicted regression values.
         """
-        if n_estimators == 0:
-            raise ValueError("``n_estimators`` must not equal zero")
-
         if not self.estimators_:
             raise RuntimeError(
                 ("{0} is not initialized. "
@@ -1109,8 +1014,6 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         for i, (weight, estimator) in enumerate(
                 zip(self.estimator_weights_, self.estimators_)):
-            if i == n_estimators:
-                break
 
             current_pred = estimator.predict(X)
 
