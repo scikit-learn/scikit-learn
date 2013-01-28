@@ -10,6 +10,7 @@
 
 from __future__ import division
 
+from math import sqrt
 import warnings
 import numbers
 
@@ -301,8 +302,6 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         Frobenius norm of the matrix difference between the
         training data and the reconstructed data from the
         fit produced by the model. ``|| X - WH ||_2``
-        Not computed for sparse input matrices because it is
-        too expensive in terms of memory.
 
     Examples
     --------
@@ -517,6 +516,12 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
             if not sp.issparse(X):
                 self.reconstruction_err_ = norm(X - np.dot(W, H))
+            else:
+                norm2X = np.sum(X.data ** 2)  # Ok because X is CSR
+                normWHT = np.trace(np.dot(np.dot(H.T, np.dot(W.T, W)), H))
+                cross_prod = np.trace(np.dot((X * H.T).T, W))
+                self.reconstruction_err_ = sqrt(norm2X + normWHT
+                                                - 2. * cross_prod)
 
             self.components_ = H
 
