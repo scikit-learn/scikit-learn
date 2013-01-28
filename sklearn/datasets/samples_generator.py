@@ -1222,8 +1222,10 @@ def make_gaussian_quantiles(n_samples=100, n_features=2, n_classes=3,
                             shuffle=True, random_state=None):
     """Generate isotropic Gaussian and label samples by quantile
 
-    The decision boundaries separating successive classes are
-    nested concentric ten-dimensional spheres [1].
+    This classification dataset is constructed by taking a multi-dimensional
+    standard normal distribution and defining classes separated by nested
+    concentric multi-dimensional spheres such that roughly equal numbers of
+    samples are in each class (quantiles of the :math:`\Chi^2` distribution).
 
     Parameters
     ----------
