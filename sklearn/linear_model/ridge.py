@@ -251,8 +251,8 @@ class Ridge(_BaseRidge, RegressorMixin):
         Maximum number of iterations for conjugate gradient solver.
         The default value is determined by scipy.sparse.linalg.
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     solver : {'auto', 'dense_cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational routines:
@@ -353,8 +353,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Maximum number of iterations for conjugate gradient solver.
         The default value is determined by scipy.sparse.linalg.
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     solver : {'auto', 'dense_cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational
@@ -715,8 +715,8 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     score_func: callable, optional
         function that takes 2 arguments and compares them in
@@ -794,8 +794,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     score_func: callable, optional
         function that takes 2 arguments and compares them in
