@@ -125,12 +125,12 @@ def _NIPALS(X, C = None, mode = _NEWA, scheme = _HORST,
         converged = True
         for i in range(n):
             Xi = X[i]
-            ti = np.dot(Xi, W[i])
+            ti = dot(Xi, W[i])
             ui = np.zeros(ti.shape)
             for j in range(n):
                 Xj = X[j]
                 wj = W[j]
-                tj = np.dot(Xj, wj)
+                tj = dot(Xj, wj)
 
                 # Determine weighting scheme and compute weight
                 if scheme[i] == _HORST:
@@ -147,9 +147,9 @@ def _NIPALS(X, C = None, mode = _NEWA, scheme = _HORST,
             # External estimation
             if mode[i] == _NEWA or mode[i] == _A:
                 # TODO: Ok with division here?
-                wi = np.dot(Xi.T, ui) / dot(ui.T, ui)
+                wi = dot(Xi.T, ui) / dot(ui.T, ui)
             elif mode[i] == _B:
-                wi = np.dot(np.pinv(Xi), ui) # Precompute to speed up!
+                wi = dot(np.pinv(Xi), ui) # Precompute to speed up!
 
             # Apply soft thresholding if greater-than-zero value supplied
             if soft_threshold[i] > 0:
@@ -161,13 +161,13 @@ def _NIPALS(X, C = None, mode = _NEWA, scheme = _HORST,
                 wi /= norm(wi)
             elif (mode[i] == _A or mode[i] == _B) and not i in not_normed:
                 # Normalise score vector ti to unit variance
-                wi /= norm(np.dot(Xi, wi))
+                wi /= norm(dot(Xi, wi))
                 wi *= np.sqrt(wi.shape[0])
 
             # Check convergence for each weight vector. They all have to leave
             # converged = True in order for the algorithm to stop.
             diff = wi - W[i]
-            if np.dot(diff.T, diff) > tolerance:
+            if dot(diff.T, diff) > tolerance:
                 converged = False
 
             # Save updated weight vector
@@ -333,14 +333,31 @@ def _RGCCA(X, C = None, tau = 0.5, scheme = None,
 
 
 def _soft_threshold(w, l, copy = True):
-    sign = np.sign(w)
-    if copy:
-        w = np.absolute(w) - l
-    else:
-        np.absolute(w, w)
-        w -= l
-    w[w < 0] = 0
-    return np.multiply(sign,w)
+    worig = w.copy()
+    lorig = l
+
+    warn = False
+    while True:
+        sign = np.sign(worig)
+        if copy:
+            w = np.absolute(worig) - l
+        else:
+            np.absolute(worig, w)
+            w -= l
+            w[w < 0] = 0
+        w = np.multiply(sign,w)
+
+        if np.linalg.norm(w) > _TOLERANCE:
+            break
+        else:
+            warn = True
+            # TODO: Can this be improved?
+            l *= 0.9 # Reduce by 10 % until at least one variable is significant
+
+    if warn:
+        warnings.warn('Soft threshold was too large (all variables purged).'\
+                ' Threshold reset to %f (was %f)' % (l, lorig))
+    return w
 
 
 def _sign(v):
@@ -374,7 +391,7 @@ def _cov(a,b):
     a_ = a - ma
     b_ = b - mb
 
-    ip = np.dot(a_.T, b_)
+    ip = dot(a_.T, b_)
 
     return ip[0,0] / (a_.shape[0] - 1)
 
@@ -532,7 +549,7 @@ class BasePLS(BaseEstimator, TransformerMixin):
 
 
     def _deflate(self, X, w, t, p, index = None):
-        return X - np.dot(t, p.T) # Default is deflations with loadings p
+        return X - dot(t, p.T) # Default is deflations with loadings p
 
 
     def _check_inputs(self, X):
@@ -597,7 +614,7 @@ class BasePLS(BaseEstimator, TransformerMixin):
             self.means.append(means)
 
             if self.scale[i]:
-                X[i], stds = scale(X[i], centered=self.center, return_stds = True)
+                X[i], stds = scale(X[i], centered=self.center[i], return_stds = True)
             else:
                 stds = np.ones((1, X[i].shape[1]))
             self.stds.append(stds)
@@ -655,7 +672,7 @@ class BasePLS(BaseEstimator, TransformerMixin):
                 t  = dot(X[i], w[i]) / dot(w[i].T, w[i])
 
                 # Test for null variance
-                if np.dot(t.T, t) < self.tolerance:
+                if dot(t.T, t) < self.tolerance:
                     warnings.warn('Scores of block X[%d] are too small at '
                                   'iteration %d' % (i, a))
 
@@ -796,7 +813,7 @@ class PLSR(BasePLS, RegressorMixin):
 
     def _deflate(self, X, w, t, p, index = None):
         if index == 0:
-            return X - np.dot(t, p.T) # Deflate X using its loadings
+            return X - dot(t, p.T) # Deflate X using its loadings
         else:
             return X # Do not deflate Y
 
@@ -818,13 +835,13 @@ class PLSR(BasePLS, RegressorMixin):
 
     def predict(self, X, copy = True):
         if copy:
-            X = (np.asarray(X) - self.means[0])
+            X = (np.asarray(X) - self.means[0]) / self.stds[0]
         else:
             X = np.asarray(X)
             X -= self.means[0]
             X /= self.stds[0]
 
-        Ypred = np.dot(X, self.B)
+        Ypred = dot(X, self.B)
 
         return (Ypred*self.stds[1]) + self.means[1]
 

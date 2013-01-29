@@ -5,7 +5,7 @@ from sklearn.datasets import load_linnerud
 
 import sklearn.NIPALS as pls
 from math import log
-from numpy import dot
+from sklearn.pls import PLSRegression
 
 def test_NIPALS():
 
@@ -242,160 +242,129 @@ def test_scale():
 
 def main():
 
+    
+
+    # Compare sparse sklearn.NIPALS.PLSR and sklearn.pls.PLSRegression
+
     d = load_linnerud()
     X = np.asarray(d.data)
     Y = d.target
     num_comp = 3
     tol = 5e-12
 
-    X, mX = pls.center(X, return_means = True)
-    X, sX = pls.scale(X, return_stds = True)
-    Y, mY = pls.center(Y, return_means = True)
-    Y, sY = pls.scale(Y, return_stds = True)
-    Xorig = X.copy()
+    for st in [0.1, 0.01, 0.001, 0.0001, 0]:
 
-    plsr = pls.PLSR(num_comp = num_comp, center = False, scale = False,
+        plsr = pls.PLSR(num_comp = num_comp, center = True, scale = True,
+                        tolerance=tol, max_iter=1000, soft_threshold = st)
+        plsr.fit(X, Y)
+        Yhat = plsr.predict(X)
+
+        pls2 = PLSRegression(n_components=num_comp, scale=True,
+                     max_iter=1000, tol=tol, copy=True)
+        pls2.fit(X, Y)
+        Yhat_ = pls2.predict(X)
+
+        SSY     = np.sum(Y**2)
+        SSYdiff = np.sum((Y-Yhat)**2)
+#        print np.sum(1 - (SSYdiff/SSY))
+        SSY     = np.sum(Y**2)
+        SSYdiff = np.sum((Y-Yhat_)**2)
+#        print np.sum(1 - (SSYdiff/SSY))
+
+        if st < tol:
+            num_decimals = 5
+        else:
+            num_decimals = int(log(1./st, 10) + 0.5)
+        assert_array_almost_equal(Yhat, Yhat_, decimal=num_decimals-2,
+                err_msg="NIPALS SVD and numpy.linalg.svd implementations " \
+                "lead to different loadings")
+        print "Comparing loadings of NIPALS PLSR and sklearn.pls ... OK!" \
+                " (Yhat diff = %.4f, threshold = %0.4f)" % (np.sum((Yhat-Yhat_)**2), st)
+
+    return
+
+    # Compare PLSR in sklearn.NIPALS and sklearn.pls
+
+    d = load_linnerud()
+    X = np.asarray(d.data)
+    Y = d.target
+    num_comp = 3
+    tol = 5e-12
+
+    plsr = pls.PLSR(num_comp = num_comp, center = True, scale = True,
                     tolerance=tol, max_iter=1000, soft_threshold = 0)
     plsr.fit(X, Y)
-    Yhat = np.dot(Xorig, plsr.B)
+    Yhat = plsr.predict(X)
 
-#    plsr.W, plsr.T, plsr.P = pls.direct(plsr.W, plsr.T, plsr.P)
-#    plsr.C, plsr.U, plsr.Q = pls.direct(plsr.C, plsr.U, plsr.Q)
-#    plsr.Ws = dot(plsr.W, np.linalg.inv(dot(plsr.P.T,plsr.W)))
+    Xorig = X.copy()
+    Yorig = Y.copy()
+    X, mX = pls.center(X, return_means = True)
+    X, sX = pls.scale(X, return_stds = True, centered = True)
+    Y, mY = pls.center(Y, return_means = True)
+    Y, sY = pls.scale(Y, return_stds = True, centered = True)
+    W = np.zeros((X.shape[1],num_comp))
+    P = np.zeros((X.shape[1],num_comp))
+    C = np.zeros((Y.shape[1],num_comp))
+    Xuv = X.copy()
+#    Yuv = Y.copy()
 
     XY = dot(X.T, Y)
-    W, S, C = np.linalg.svd(XY)
-    w1 = W[:,[0]]
+    W_, S_, C_ = np.linalg.svd(XY)
+    w1 = W_[:,[0]]
+    W[:,0] = w1.ravel()
     t1 = dot(X, w1)
     p1 = dot(X.T, t1) / dot(t1.T, t1)
+    P[:,0] = p1.ravel()
     c1 = dot(Y.T, t1) / dot(t1.T, t1)
+    C[:,0] = c1.ravel()
     X -= dot(t1,p1.T)
-#    w1, t1, p1 = pls.direct(w1, t1, p1)
 
     if num_comp >= 2:
         XY = dot(X.T, Y)
-        W, S, C = np.linalg.svd(XY)
-        w2 = W[:,[0]]
+        W_, S_, C_ = np.linalg.svd(XY)
+        w2 = W_[:,[0]]
+        W[:,1] = w2.ravel()
         t2 = dot(X, w2)
         p2 = dot(X.T, t2) / dot(t2.T, t2)
+        P[:,1] = p2.ravel()
         c2 = dot(Y.T, t2) / dot(t2.T, t2)
+        C[:,1] = c2.ravel()
         X -= dot(t2,p2.T)
-#        w2, t2, p2 = pls.direct(w2, t2, p2)
 
     if num_comp >= 3:
         XY = dot(X.T, Y)
-        W, S, C = np.linalg.svd(XY)
-        w3 = W[:,[0]]
+        W_, S_, C_ = np.linalg.svd(XY)
+        w3 = W_[:,[0]]
+        W[:,2] = w3.ravel()
         t3 = dot(X, w3)
         p3 = dot(X.T, t3) / dot(t3.T, t3)
-        c3 = dot(Y.T, t3) / dot(t3.T, t3)
-        X -= dot(t3,p3.T)
-#        w3, t3, p3 = pls.direct(w3, t3, p3)
-
-    W = np.zeros((X.shape[1],num_comp))
-    W[:,0] = w1.ravel()
-    if num_comp >= 2:
-        W[:,1] = w2.ravel()
-    if num_comp >= 3:
-        W[:,2] = w3.ravel()
-    T = np.zeros((X.shape[0],num_comp))
-    T[:,0] = t1.ravel()
-    if num_comp >= 2:
-        T[:,1] = t2.ravel()
-    if num_comp >= 3:
-        T[:,2] = t3.ravel()
-    P = np.zeros((X.shape[1],num_comp))
-    P[:,0] = p1.ravel()
-    if num_comp >= 2:
-        P[:,1] = p2.ravel()
-    if num_comp >= 3:
         P[:,2] = p3.ravel()
-    C = np.zeros((Y.shape[1],num_comp))
-    C[:,0] = c1.ravel()
-    if num_comp >= 2:
-        C[:,1] = c2.ravel()
-    if num_comp >= 3:
+        c3 = dot(Y.T, t3) / dot(t3.T, t3)
         C[:,2] = c3.ravel()
+        X -= dot(t3,p3.T)
 
     Ws  = dot(W, np.linalg.inv(dot(P.T, W)))
-    ws1 = Ws[:,[0]]
-    ws2 = Ws[:,[1]]
-    ws3 = Ws[:,[2]]
     B   = dot(Ws, C.T)
-    Yhat_ = dot(Xorig, B)
+    Yhat_ = (dot(Xuv, B) * sY) + mY
 
-    print Y
-    print Yhat
-    print Yhat_
+    pls2 = PLSRegression(n_components=num_comp, scale=True,
+                 max_iter=1000, tol=tol, copy=True)
+    pls2.fit(Xorig, Yorig)
+    Yhat__ = pls2.predict(Xorig)
 
-    print "diff w1:", np.sum((w1 - plsr.W[:,[0]])**2)
-    if num_comp >= 2:
-        if dot(w2.T, plsr.W[:,[1]]) < 0:
-            w2 *= -1
-        print "diff w2:", np.sum((w2 - plsr.W[:,[1]])**2)
-    if num_comp >= 3:
-        if dot(w3.T, plsr.W[:,[2]]) < 0:
-            w3 *= -1
-        print "diff w3:", np.sum((w3 - plsr.W[:,[2]])**2)
-
-    print "diff t1:", np.sum((t1 - plsr.T[:,[0]])**2)
-    if num_comp >= 2:
-        if dot(t2.T, plsr.T[:,[1]]) < 0:
-            t2 *= -1
-        print "diff t2:", np.sum((t2 - plsr.T[:,[1]])**2)
-    if num_comp >= 3:
-        if dot(t3.T, plsr.T[:,[2]]) < 0:
-            t3 *= -1
-        print "diff t3:", np.sum((t3 - plsr.T[:,[2]])**2)
-
-    print "diff p1:", np.sum((p1 - plsr.P[:,[0]])**2)
-    if num_comp >= 2:
-        if dot(p2.T, plsr.P[:,[1]]) < 0:
-            p2 *= -1
-        print "diff p2:", np.sum((p2 - plsr.P[:,[1]])**2)
-    if num_comp >= 3:
-        if dot(p3.T, plsr.P[:,[2]]) < 0:
-            p3 *= -1
-        print "diff p3:", np.sum((p3 - plsr.P[:,[2]])**2)
-
-    print "diff ws1:", np.sum((ws1 - plsr.Ws[:,[0]])**2)
-    if num_comp >= 2:
-        if dot(ws2.T, plsr.Ws[:,[1]]) < 0:
-            ws2 *= -1
-        print "diff ws2:", np.sum((ws2 - plsr.Ws[:,[1]])**2)
-    if num_comp >= 3:
-        if dot(ws3.T, plsr.Ws[:,[2]]) < 0:
-            ws3 *= -1
-        print "diff ws3:", np.sum((ws3 - plsr.Ws[:,[2]])**2)
-
-    print "diff c1:", np.sum((c1 - plsr.C[:,[0]])**2), np.linalg.norm(c1), np.linalg.norm(plsr.C[:,[0]])
-    if num_comp >= 2:
-        if dot(c2.T, plsr.C[:,[1]]) < 0:
-            c2 *= -1
-        print "diff c2:", np.sum((c2 - plsr.C[:,[1]])**2)
-    if num_comp >= 3:
-        if dot(c3.T, plsr.C[:,[2]]) < 0:
-            c3 *= -1
-        print "diff c3:", np.sum((c3 - plsr.C[:,[2]])**2)
-
-    print "diff b1:", np.sum((B[:,[0]] - plsr.B[:,[0]])**2)
-    if num_comp >= 2:
-        print "diff b1:", np.sum((B[:,[1]] - plsr.B[:,[1]])**2)
-    if num_comp >= 3:
-        print "diff b1:", np.sum((B[:,[2]] - plsr.B[:,[2]])**2)
-
-    print B
-    print plsr.B
-
-    print "ss left:", np.sum(X**2)
-
-    SSY     = np.sum(Y**2)
-    SSYdiff = np.sum((Y-Yhat_)**2)
-    print "Comparing original and predicted Y... OK!"\
+    SSY     = np.sum(Yorig**2)
+    SSYdiff = np.sum((Yorig-Yhat)**2)
+    print "NIPALS  Comparing original and predicted Y ... OK!"\
             " (R2Yhat = %.4f)" % (1 - (SSYdiff / SSY))
-    SSYdiff = np.sum((Y-Yhat)**2)
-    print "Comparing original and predicted Y... OK!"\
+    SSYdiff = np.sum((Yorig-Yhat_)**2)
+    print "Manual  Comparing original and predicted Y ... OK!"\
             " (R2Yhat = %.4f)" % (1 - (SSYdiff / SSY))
+    SSYdiff = np.sum((Yorig-Yhat__)**2)
+    print "Edouard Comparing original and predicted Y ... OK!"\
+            " (R2Yhat = %.4f)" % (1 - (SSYdiff / SSY))
+    assert_array_almost_equal(Yhat__, Yhat, decimal=5,
+            err_msg="NIPALS and pls implementations lead to different" \
+            " predictions")
 
     return
 
