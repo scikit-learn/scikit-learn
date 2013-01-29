@@ -1,5 +1,6 @@
 import numpy as np
 from numpy import dot
+from numpy.linalg import norm
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.datasets import load_linnerud
 
@@ -9,10 +10,11 @@ from sklearn.pls import PLSRegression
 
 def test_NIPALS():
 
-    pass
-#    d = load_linnerud()
-#    X = d.data
-#    Y = d.target
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+    tol = 5e-12
+
 #    # 1) Canonical (symetric) PLS (PLS 2 blocks canonical mode A)
 #    # ===========================================================
 #    # Compare 2 algo.: nipals vs. svd
@@ -105,37 +107,68 @@ def test_NIPALS():
 #         [+0.77134053, -0.70791757,  0.19786539],
 #         [-0.23887670, -0.00343595,  0.94162826]])
 #    assert_array_almost_equal(pls_ca.y_rotations_, y_rotations)
-#
-#    # 2) Regression PLS (PLS2): "Non regression test"
-#    # ===============================================
-#    # The results were checked against the R-packages plspm, misOmics and pls
-#    pls_2 = pls.PLSRegression(n_components=X.shape[1])
-#    pls_2.fit(X, Y)
-#
-#    x_weights = np.array(
-#        [[-0.61330704, -0.00443647,  0.78983213],
-#         [-0.74697144, -0.32172099, -0.58183269],
-#         [-0.25668686,  0.94682413, -0.19399983]])
-#    assert_array_almost_equal(pls_2.x_weights_, x_weights)
-#
-#    x_loadings = np.array(
-#        [[-0.61470416, -0.24574278,  0.78983213],
-#         [-0.65625755, -0.14396183, -0.58183269],
-#         [-0.51733059,  1.00609417, -0.19399983]])
-#    assert_array_almost_equal(pls_2.x_loadings_, x_loadings)
-#
-#    y_weights = np.array(
-#        [[+0.32456184,  0.29892183,  0.20316322],
-#         [+0.42439636,  0.61970543,  0.19320542],
-#         [-0.13143144, -0.26348971, -0.17092916]])
-#    assert_array_almost_equal(pls_2.y_weights_, y_weights)
-#
-#    y_loadings = np.array(
-#        [[+0.32456184,  0.29892183,  0.20316322],
-#         [+0.42439636,  0.61970543,  0.19320542],
-#         [-0.13143144, -0.26348971, -0.17092916]])
-#    assert_array_almost_equal(pls_2.y_loadings_, y_loadings)
-#
+
+    # 2) Regression PLS (PLS2): "Non regression test"
+    # ===============================================
+    # The results were checked against the R-packages plspm, misOmics and pls
+    pls_2 = PLSRegression(n_components=X.shape[1])
+    pls_2.fit(X, Y)
+
+    pls_NIPALS = pls.PLSR(num_comp = X.shape[1],
+                          center = True, scale = True,
+                          tolerance=tol, max_iter=1000)
+    pls_NIPALS.fit(X, Y)
+
+    x_weights = np.array(
+        [[-0.61330704, -0.00443647,  0.78983213],
+         [-0.74697144, -0.32172099, -0.58183269],
+         [-0.25668686,  0.94682413, -0.19399983]])
+    x_weights, pls_NIPALS.W = pls.direct(x_weights, pls_NIPALS.W, compare = True)
+    assert_array_almost_equal(pls_NIPALS.W, x_weights, decimal=5,
+            err_msg="sklearn.NIPALS.PLSR and sklearn.pls.PLSRegression " \
+                    "implementations lead to different X weights")
+    print "Comparing X weights of sklearn.NIPALS.PLSR and " \
+            "sklearn.pls.PLSRegression ... OK!"
+
+    x_loadings = np.array(
+        [[-0.61470416, -0.24574278,  0.78983213],
+         [-0.65625755, -0.14396183, -0.58183269],
+         [-0.51733059,  1.00609417, -0.19399983]])
+    x_loadings, pls_NIPALS.P = pls.direct(x_loadings, pls_NIPALS.P, compare = True)
+    assert_array_almost_equal(pls_NIPALS.P, x_loadings, decimal=5,
+            err_msg="sklearn.NIPALS.PLSR and sklearn.pls.PLSRegression " \
+                    "implementations lead to different X loadings")
+    print "Comparing X loadings of sklearn.NIPALS.PLSR and " \
+            "sklearn.pls.PLSRegression ... OK!"
+
+    y_weights = np.array(
+        [[+0.32456184,  0.29892183,  0.20316322],
+         [+0.42439636,  0.61970543,  0.19320542],
+         [-0.13143144, -0.26348971, -0.17092916]])
+    y_weights, pls_NIPALS.C = pls.direct(y_weights, pls_NIPALS.C, compare = True)
+    assert_array_almost_equal(pls_NIPALS.C, y_weights, decimal=5,
+            err_msg="sklearn.NIPALS.PLSR and sklearn.pls.PLSRegression " \
+                    "implementations lead to different Y weights")
+    print "Comparing Y weights of sklearn.NIPALS.PLSR and " \
+            "sklearn.pls.PLSRegression ... OK!"
+
+    X_, m = pls.center(X, return_means = True)
+    X_, s = pls.scale(X, return_stds = True, centered = True)
+    t1 = dot(X_, x_weights[:,[0]])
+    t1, pls_NIPALS.T[:,[0]] = pls.direct(t1, pls_NIPALS.T[:,[0]], compare = True)
+    assert_array_almost_equal(t1, pls_NIPALS.T[:,[0]], decimal=5,
+            err_msg="sklearn.NIPALS.PLSR and sklearn.pls.PLSRegression " \
+                    "implementations lead to different X scores")
+    print "Comparing scores of sklearn.NIPALS.PLSR and " \
+            "sklearn.pls.PLSRegression ... OK!"
+
+    y_loadings = np.array(
+        [[+0.32456184,  0.29892183,  0.20316322],
+         [+0.42439636,  0.61970543,  0.19320542],
+         [-0.13143144, -0.26348971, -0.17092916]])
+    y_loadings, pls_NIPALS.C = pls.direct(y_loadings, pls_NIPALS.C, compare = True)
+    assert_array_almost_equal(pls_NIPALS.C, y_loadings)
+
 #    # 3) Another non-regression test of Canonical PLS on random dataset
 #    # =================================================================
 #    # The results were checked against the R-package plspm
@@ -243,6 +276,8 @@ def test_scale():
 def main():
 
     
+
+    return
 
     # Compare sparse sklearn.NIPALS.PLSR and sklearn.pls.PLSRegression
 
@@ -469,4 +504,4 @@ def main():
           "(max diff = %.4f)" % np.max(np.abs(Tte - SVDte))
 
 if __name__ == "__main__":
-    main()
+    test_NIPALS()

@@ -470,20 +470,32 @@ def scale(X, centered = True, return_stds = False, copy = False):
         return X
 
 
-def direct(W, T = None, P = None):
+def direct(W, T = None, P = None, compare = False):
+    if compare and T == None:
+        raise ValueError("In order to compare you need to supply two arrays")
+
     for j in xrange(W.shape[1]):
         w = W[:,[j]]
-        if dot(w.T,np.ones(w.shape)) < 0:
-            w *= -1
-            if T != None:
-                t = T[:,[j]]
+        if compare:
+            t = T[:,[j]]
+            cov = dot(w.T, t)
+        else:
+            cov = dot(w.T, np.ones(w.shape))
+        if cov < 0:
+            if not compare:
+                w *= -1
+                if T != None:
+                    t = T[:,[j]]
+                    t *= -1
+                    T[:,j] = t.ravel()
+                if P != None:
+                    p = P[:,[j]]
+                    p *= -1
+                    P[:,j] = p.ravel()
+            else:
                 t *= -1
                 T[:,j] = t.ravel()
-            if P != None:
-                p = P[:,[j]]
-                p *= -1
-                P[:,j] = p.ravel()
-                
+
             W[:,j] = w.ravel()
 
     if T != None and P != None:
@@ -815,6 +827,7 @@ class PLSR(BasePLS, RegressorMixin):
         if index == 0:
             return X - dot(t, p.T) # Deflate X using its loadings
         else:
+#            return X - dot(t, w.T)
             return X # Do not deflate Y
 
 
