@@ -197,7 +197,7 @@ class BaseLibSVM(BaseEstimator):
         if self.fit_status_ == 1:
             warnings.warn('Solver terminated early (max_iter=%i).'
                           '  Consider pre-processing your data with'
-                          ' StandardScalar or MinMaxScalar.'
+                          ' StandardScaler or MinMaxScaler.'
                           % self.max_iter, ConvergenceWarning)
 
     def _dense_fit(self, X, y, sample_weight, solver_type, kernel):

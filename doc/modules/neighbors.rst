@@ -33,7 +33,7 @@ handwritten digits or satellite image scenes. It is often successful
 in classification situations where the decision boundary is very irregular.
 
 The classes in :mod:`sklearn.neighbors` can handle either Numpy arrays or
-`scipy.sparse` matrices as input.  Arbitrary Minkowski metrics are supported 
+`scipy.sparse` matrices as input.  Arbitrary Minkowski metrics are supported
 for searches.
 
 
@@ -50,6 +50,13 @@ The choice of neighbors search algorithm is controlled through the keyword
 ``'auto'`` is passed, the algorithm attempts to determine the best approach
 from the training data.  For a discussion of the strengths and weaknesses
 of each option, see `Nearest Neighbor Algorithms`_.
+
+    .. warning::
+
+        Regarding the Nearest Neighbors algorithms, if two
+        neighbors, neighbor `k+1` and `k`, have identical distances but
+        but different labels, the results will depend on the ordering of the
+        training data.
 
 .. _classification:
 

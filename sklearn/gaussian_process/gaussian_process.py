@@ -11,7 +11,6 @@ from scipy import linalg, optimize, rand
 from ..base import BaseEstimator, RegressorMixin
 from ..metrics.pairwise import manhattan_distances
 from ..utils import array2d, check_random_state
-from ..utils import deprecated
 from . import regression_models as regression
 from . import correlation_models as correlation
 

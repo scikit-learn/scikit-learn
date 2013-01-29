@@ -10,7 +10,6 @@ Dirichlet Process Gaussian Mixture Models"""
 #
 
 import numpy as np
-import warnings
 from scipy.special import digamma as _digamma, gammaln as _gammaln
 from scipy import linalg
 from scipy.spatial.distance import cdist
