@@ -7,6 +7,10 @@ from sklearn.datasets import load_linnerud
 import sklearn.NIPALS as pls
 from math import log
 from sklearn.pls import PLSRegression
+from sklearn.pls import PLSCanonical
+from sklearn.pls import CCA
+from sklearn.pls import PLSSVD
+from sklearn.pls import _center_scale_xy
 
 def test_NIPALS():
 
@@ -14,99 +18,180 @@ def test_NIPALS():
     X = d.data
     Y = d.target
     tol = 5e-12
+    Xorig = X.copy()
+    Yorig = Y.copy()
 
-#    # 1) Canonical (symetric) PLS (PLS 2 blocks canonical mode A)
-#    # ===========================================================
-#    # Compare 2 algo.: nipals vs. svd
-#    # ------------------------------
-#    pls_bynipals = pls.PLSCanonical(n_components=X.shape[1])
-#    pls_bynipals.fit(X, Y)
-#    pls_bysvd = pls.PLSCanonical(algorithm="svd", n_components=X.shape[1])
-#    pls_bysvd.fit(X, Y)
-#    # check equalities of loading (up to the sign of the second column)
-#    assert_array_almost_equal(
-#        pls_bynipals.x_loadings_,
-#        np.multiply(pls_bysvd.x_loadings_, np.array([1, -1, 1])), decimal=5,
-#        err_msg="nipals and svd implementation lead to different x loadings")
-#
-#    assert_array_almost_equal(
-#        pls_bynipals.y_loadings_,
-#        np.multiply(pls_bysvd.y_loadings_, np.array([1, -1, 1])), decimal=5,
-#        err_msg="nipals and svd implementation lead to different y loadings")
-#
-#    # Check PLS properties (with n_components=X.shape[1])
-#    # ---------------------------------------------------
-#    plsca = pls.PLSCanonical(n_components=X.shape[1])
-#    plsca.fit(X, Y)
-#    T = plsca.x_scores_
-#    P = plsca.x_loadings_
-#    Wx = plsca.x_weights_
-#    U = plsca.y_scores_
-#    Q = plsca.y_loadings_
-#    Wy = plsca.y_weights_
-#
-#    def check_ortho(M, err_msg):
-#        K = np.dot(M.T, M)
-#        assert_array_almost_equal(K, np.diag(np.diag(K)), err_msg=err_msg)
-#
-#    # Orthogonality of weights
-#    # ~~~~~~~~~~~~~~~~~~~~~~~~
-#    check_ortho(Wx, "x weights are not orthogonal")
-#    check_ortho(Wy, "y weights are not orthogonal")
-#
-#    # Orthogonality of latent scores
-#    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#    check_ortho(T, "x scores are not orthogonal")
-#    check_ortho(U, "y scores are not orthogonal")
-#
-#    # Check X = TP' and Y = UQ' (with (p == q) components)
-#    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#    # center scale X, Y
-#    Xc, Yc, x_mean, y_mean, x_std, y_std =\
-#        pls._center_scale_xy(X.copy(), Y.copy(), scale=True)
-#    assert_array_almost_equal(Xc, np.dot(T, P.T), err_msg="X != TP'")
-#    assert_array_almost_equal(Yc, np.dot(U, Q.T), err_msg="Y != UQ'")
-#
-#    # Check that rotations on training data lead to scores
-#    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#    Xr = plsca.transform(X)
-#    assert_array_almost_equal(Xr, plsca.x_scores_,
-#                              err_msg="rotation on X failed")
-#    Xr, Yr = plsca.transform(X, Y)
-#    assert_array_almost_equal(Xr, plsca.x_scores_,
-#                              err_msg="rotation on X failed")
-#    assert_array_almost_equal(Yr, plsca.y_scores_,
-#                              err_msg="rotation on Y failed")
-#
-#    # "Non regression test" on canonical PLS
-#    # --------------------------------------
-#    # The results were checked against the R-package plspm
-#    pls_ca = pls.PLSCanonical(n_components=X.shape[1])
-#    pls_ca.fit(X, Y)
-#
-#    x_weights = np.array(
-#        [[-0.61330704,  0.25616119, -0.74715187],
-#         [-0.74697144,  0.11930791,  0.65406368],
-#         [-0.25668686, -0.95924297, -0.11817271]])
-#    assert_array_almost_equal(pls_ca.x_weights_, x_weights)
-#
-#    x_rotations = np.array(
-#        [[-0.61330704,  0.41591889, -0.62297525],
-#         [-0.74697144,  0.31388326,  0.77368233],
-#         [-0.25668686, -0.89237972, -0.24121788]])
-#    assert_array_almost_equal(pls_ca.x_rotations_, x_rotations)
-#
-#    y_weights = np.array(
-#        [[+0.58989127,  0.7890047,   0.1717553],
-#         [+0.77134053, -0.61351791,  0.16920272],
-#         [-0.23887670, -0.03267062,  0.97050016]])
-#    assert_array_almost_equal(pls_ca.y_weights_, y_weights)
-#
-#    y_rotations = np.array(
-#        [[+0.58989127,  0.7168115,  0.30665872],
-#         [+0.77134053, -0.70791757,  0.19786539],
-#         [-0.23887670, -0.00343595,  0.94162826]])
-#    assert_array_almost_equal(pls_ca.y_rotations_, y_rotations)
+    # 1) Canonical (symetric) PLS (PLS 2 blocks canonical mode A)
+    # ===========================================================
+    # Compare 2 algo.: nipals vs. svd
+    # ------------------------------
+    pls_bynipals = PLSCanonical(n_components = X.shape[1])
+    pls_bynipals.fit(X, Y)
+    pls_bysvd = PLSCanonical(algorithm = "svd", n_components = X.shape[1])
+    pls_bysvd.fit(X, Y)
+    pls_byNIPALS = pls.PLSC(num_comp=X.shape[1], tolerance=tol, max_iter=1000)
+    pls_byNIPALS.fit(X, Y)
+
+    # check equalities of loading (up to the sign of the second column)
+    pls_bynipals.x_loadings_, pls_bysvd.x_loadings_ = \
+            pls.direct(pls_bynipals.x_loadings_, pls_bysvd.x_loadings_, compare = True)
+    assert_array_almost_equal(
+        pls_bynipals.x_loadings_, pls_bysvd.x_loadings_, decimal=5,
+        err_msg="NIPALS and svd implementations lead to different X loadings")
+    pls_bynipals.x_loadings_, pls_byNIPALS.P = \
+            pls.direct(pls_bynipals.x_loadings_, pls_byNIPALS.P, compare = True)
+    assert_array_almost_equal(
+        pls_bynipals.x_loadings_, pls_byNIPALS.P, decimal=5,
+        err_msg="The two NIPALS implementations lead to different X loadings")
+    print "Testing equality of X loadings ... OK!"
+
+    pls_bynipals.y_loadings_, pls_bysvd.y_loadings_ = \
+            pls.direct(pls_bynipals.y_loadings_, pls_bysvd.y_loadings_, compare = True)
+    assert_array_almost_equal(
+        pls_bynipals.y_loadings_, pls_bysvd.y_loadings_, decimal = 5,
+        err_msg="nipals and svd implementation lead to different Y loadings")
+    pls_bynipals.y_loadings_, pls_byNIPALS.Q = \
+            pls.direct(pls_bynipals.y_loadings_, pls_byNIPALS.Q, compare = True)
+    assert_array_almost_equal(
+        pls_bynipals.y_loadings_, pls_byNIPALS.Q, decimal = 5,
+        err_msg="The two NIPALS implementations lead to different Y loadings")
+    print "Testing equality of Y loadings ... OK!"
+
+    # Check PLS properties (with n_components=X.shape[1])
+    # ---------------------------------------------------
+    plsca = PLSCanonical(n_components=X.shape[1])
+    plsca.fit(X, Y)
+    pls_byNIPALS = pls.PLSC(num_comp=X.shape[1], tolerance=tol, max_iter=1000)
+    pls_byNIPALS.fit(X, Y)
+
+    T = plsca.x_scores_
+    P = plsca.x_loadings_
+    Wx = plsca.x_weights_
+    U = plsca.y_scores_
+    Q = plsca.y_loadings_
+    Wy = plsca.y_weights_
+
+    def check_ortho(M, err_msg):
+        K = np.dot(M.T, M)
+        assert_array_almost_equal(K, np.diag(np.diag(K)), err_msg=err_msg)
+
+    # Orthogonality of weights
+    # ~~~~~~~~~~~~~~~~~~~~~~~~
+    check_ortho(Wx, "X weights are not orthogonal")
+    check_ortho(Wy, "Y weights are not orthogonal")
+    check_ortho(pls_byNIPALS.W, "X weights are not orthogonal")
+    check_ortho(pls_byNIPALS.C, "Y weights are not orthogonal")
+    print "Testing orthogonality of weights ... OK!"
+
+    # Orthogonality of latent scores
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    check_ortho(T, "X scores are not orthogonal")
+    check_ortho(U, "Y scores are not orthogonal")
+    check_ortho(pls_byNIPALS.T, "X scores are not orthogonal")
+    check_ortho(pls_byNIPALS.U, "Y scores are not orthogonal")
+    print "Testing orthogonality of scores ... OK!"
+
+
+    # Check X = TP' and Y = UQ' (with (p == q) components)
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    # center scale X, Y
+    Xc, Yc, x_mean, y_mean, x_std, y_std = \
+        _center_scale_xy(X.copy(), Y.copy(), scale=True)
+    assert_array_almost_equal(Xc, dot(T, P.T), err_msg="X != TP'")
+    assert_array_almost_equal(Yc, dot(U, Q.T), err_msg="Y != UQ'")
+    print "Testing equality of matriecs and their models ... OK!"
+
+    Xc, mX = pls.center(X, return_means = True)
+    Xc, sX = pls.scale(Xc, return_stds = True)
+    Yc, mY = pls.center(Y, return_means = True)
+    Yc, sY = pls.scale(Yc, return_stds = True)
+
+    assert_array_almost_equal(Xc, dot(pls_byNIPALS.T, pls_byNIPALS.P.T), err_msg="X != TP'")
+    assert_array_almost_equal(Yc, dot(pls_byNIPALS.U, pls_byNIPALS.Q.T), err_msg="Y != UQ'")
+    print "Testing equality of matriecs and their models ... OK!"
+
+
+    # Check that rotations on training data lead to scores
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    plsca = PLSCanonical(n_components=X.shape[1])
+    plsca.fit(X, Y)
+    pls_byNIPALS = pls.PLSC(num_comp=X.shape[1], tolerance=tol, max_iter=1000)
+    pls_byNIPALS.fit(X, Y)
+
+    Xr = plsca.transform(X)
+    assert_array_almost_equal(Xr, plsca.x_scores_,
+                              err_msg="Rotation of X failed")
+    Xr = pls_byNIPALS.transform(X)
+    assert_array_almost_equal(Xr, pls_byNIPALS.T,
+                              err_msg="Rotation of X failed")
+    print "Testing equality of computed X scores and the transform ... OK!"
+    Xr, Yr = plsca.transform(X, Y)
+    assert_array_almost_equal(Xr, plsca.x_scores_,
+                              err_msg="Rotation of X failed")
+    assert_array_almost_equal(Yr, plsca.y_scores_,
+                              err_msg="Rotation of Y failed")
+    print "Testing equality of computed X and Y scores and the transform ... OK!"
+
+
+    # "Non regression test" on canonical PLS
+    # --------------------------------------
+    # The results were checked against the R-package plspm
+    pls_ca = PLSCanonical(n_components=X.shape[1])
+    pls_ca.fit(X, Y)
+    pls_byNIPALS = pls.PLSC(num_comp=X.shape[1], tolerance=tol, max_iter=1000)
+    pls_byNIPALS.fit(X, Y)
+
+    x_weights = np.array(
+        [[-0.61330704,  0.25616119, -0.74715187],
+         [-0.74697144,  0.11930791,  0.65406368],
+         [-0.25668686, -0.95924297, -0.11817271]])
+    x_weights, pls_ca.x_weights_ = \
+            pls.direct(x_weights, pls_ca.x_weights_, compare = True)
+    assert_array_almost_equal(x_weights, pls_ca.x_weights_, decimal = 5)
+    x_weights, pls_byNIPALS.W = \
+            pls.direct(x_weights, pls_byNIPALS.W, compare = True)
+    assert_array_almost_equal(x_weights, pls_byNIPALS.W, decimal = 5)
+    print "Testing equality of X weights ... OK!"
+
+    x_rotations = np.array(
+        [[-0.61330704,  0.41591889, -0.62297525],
+         [-0.74697144,  0.31388326,  0.77368233],
+         [-0.25668686, -0.89237972, -0.24121788]])
+    x_rotations, pls_ca.x_rotations_ = \
+            pls.direct(x_rotations, pls_ca.x_rotations_, compare = True)
+    assert_array_almost_equal(x_rotations, pls_ca.x_rotations_, decimal = 5)
+    x_rotations, pls_byNIPALS.Ws = \
+            pls.direct(x_rotations, pls_byNIPALS.Ws, compare = True)
+    assert_array_almost_equal(x_rotations, pls_byNIPALS.Ws, decimal = 5)
+    print "Testing equality of X loadings weights ... OK!"
+
+    y_weights = np.array(
+        [[+0.58989127,  0.7890047,   0.1717553],
+         [+0.77134053, -0.61351791,  0.16920272],
+         [-0.23887670, -0.03267062,  0.97050016]])
+    y_weights, pls_ca.y_weights_ = \
+            pls.direct(y_weights, pls_ca.y_weights_, compare = True)
+    assert_array_almost_equal(y_weights, pls_ca.y_weights_, decimal = 5)
+    y_weights, pls_byNIPALS.C = \
+            pls.direct(y_weights, pls_byNIPALS.C, compare = True)
+    assert_array_almost_equal(y_weights, pls_byNIPALS.C, decimal = 5)
+    print "Testing equality of Y weights ... OK!"
+
+    y_rotations = np.array(
+        [[+0.58989127,  0.7168115,  0.30665872],
+         [+0.77134053, -0.70791757,  0.19786539],
+         [-0.23887670, -0.00343595,  0.94162826]])
+    pls_ca.y_rotations_, y_rotations = \
+            pls.direct(pls_ca.y_rotations_, y_rotations, compare = True)
+    assert_array_almost_equal(pls_ca.y_rotations_, y_rotations)
+    y_rotations, pls_byNIPALS.Cs = \
+            pls.direct(y_rotations, pls_byNIPALS.Cs, compare = True)
+    assert_array_almost_equal(y_rotations, pls_byNIPALS.Cs, decimal = 5)
+    print "Testing equality of Y loadings weights ... OK!"
+
+    assert_array_almost_equal(X, Xorig, decimal = 5, err_msg = "X and Xorig are not equal!!")
+    assert_array_almost_equal(Y, Yorig, decimal = 5, err_msg = "Y and Yorig are not equal!!")
+
 
     # 2) Regression PLS (PLS2): "Non regression test"
     # ===============================================
@@ -153,7 +238,7 @@ def test_NIPALS():
             "sklearn.pls.PLSRegression ... OK!"
 
     X_, m = pls.center(X, return_means = True)
-    X_, s = pls.scale(X, return_stds = True, centered = True)
+    X_, s = pls.scale(X_, return_stds = True, centered = True)
     t1 = dot(X_, x_weights[:,[0]])
     t1, pls_NIPALS.T[:,[0]] = pls.direct(t1, pls_NIPALS.T[:,[0]], compare = True)
     assert_array_almost_equal(t1, pls_NIPALS.T[:,[0]], decimal=5,
@@ -169,109 +254,177 @@ def test_NIPALS():
     y_loadings, pls_NIPALS.C = pls.direct(y_loadings, pls_NIPALS.C, compare = True)
     assert_array_almost_equal(pls_NIPALS.C, y_loadings)
 
-#    # 3) Another non-regression test of Canonical PLS on random dataset
-#    # =================================================================
-#    # The results were checked against the R-package plspm
-#    n = 500
-#    p_noise = 10
-#    q_noise = 5
-#    # 2 latents vars:
-#    np.random.seed(11)
-#    l1 = np.random.normal(size=n)
-#    l2 = np.random.normal(size=n)
-#    latents = np.array([l1, l1, l2, l2]).T
-#    X = latents + np.random.normal(size=4 * n).reshape((n, 4))
-#    Y = latents + np.random.normal(size=4 * n).reshape((n, 4))
-#    X = np.concatenate(
-#        (X, np.random.normal(size=p_noise * n).reshape(n, p_noise)), axis=1)
-#    Y = np.concatenate(
-#        (Y, np.random.normal(size=q_noise * n).reshape(n, q_noise)), axis=1)
-#    np.random.seed(None)
-#    pls_ca = pls.PLSCanonical(n_components=3)
-#    pls_ca.fit(X, Y)
-#
-#    x_weights = np.array(
-#        [[0.65803719,  0.19197924,  0.21769083],
-#         [0.7009113,  0.13303969, -0.15376699],
-#         [0.13528197, -0.68636408,  0.13856546],
-#         [0.16854574, -0.66788088, -0.12485304],
-#         [-0.03232333, -0.04189855,  0.40690153],
-#         [0.1148816, -0.09643158,  0.1613305],
-#         [0.04792138, -0.02384992,  0.17175319],
-#         [-0.06781, -0.01666137, -0.18556747],
-#         [-0.00266945, -0.00160224,  0.11893098],
-#         [-0.00849528, -0.07706095,  0.1570547],
-#         [-0.00949471, -0.02964127,  0.34657036],
-#         [-0.03572177,  0.0945091,  0.3414855],
-#         [0.05584937, -0.02028961, -0.57682568],
-#         [0.05744254, -0.01482333, -0.17431274]])
-#    assert_array_almost_equal(pls_ca.x_weights_, x_weights)
-#
-#    x_loadings = np.array(
-#        [[0.65649254,  0.1847647,  0.15270699],
-#         [0.67554234,  0.15237508, -0.09182247],
-#         [0.19219925, -0.67750975,  0.08673128],
-#         [0.2133631, -0.67034809, -0.08835483],
-#         [-0.03178912, -0.06668336,  0.43395268],
-#         [0.15684588, -0.13350241,  0.20578984],
-#         [0.03337736, -0.03807306,  0.09871553],
-#         [-0.06199844,  0.01559854, -0.1881785],
-#         [0.00406146, -0.00587025,  0.16413253],
-#         [-0.00374239, -0.05848466,  0.19140336],
-#         [0.00139214, -0.01033161,  0.32239136],
-#         [-0.05292828,  0.0953533,  0.31916881],
-#         [0.04031924, -0.01961045, -0.65174036],
-#         [0.06172484, -0.06597366, -0.1244497]])
-#    assert_array_almost_equal(pls_ca.x_loadings_, x_loadings)
-#
-#    y_weights = np.array(
-#        [[0.66101097,  0.18672553,  0.22826092],
-#         [0.69347861,  0.18463471, -0.23995597],
-#         [0.14462724, -0.66504085,  0.17082434],
-#         [0.22247955, -0.6932605, -0.09832993],
-#         [0.07035859,  0.00714283,  0.67810124],
-#         [0.07765351, -0.0105204, -0.44108074],
-#         [-0.00917056,  0.04322147,  0.10062478],
-#         [-0.01909512,  0.06182718,  0.28830475],
-#         [0.01756709,  0.04797666,  0.32225745]])
-#    assert_array_almost_equal(pls_ca.y_weights_, y_weights)
-#
-#    y_loadings = np.array(
-#        [[0.68568625,  0.1674376,  0.0969508],
-#         [0.68782064,  0.20375837, -0.1164448],
-#         [0.11712173, -0.68046903,  0.12001505],
-#         [0.17860457, -0.6798319, -0.05089681],
-#         [0.06265739, -0.0277703,  0.74729584],
-#         [0.0914178,  0.00403751, -0.5135078],
-#         [-0.02196918, -0.01377169,  0.09564505],
-#         [-0.03288952,  0.09039729,  0.31858973],
-#         [0.04287624,  0.05254676,  0.27836841]])
-#    assert_array_almost_equal(pls_ca.y_loadings_, y_loadings)
-#
-#    # Orthogonality of weights
-#    # ~~~~~~~~~~~~~~~~~~~~~~~~
-#    check_ortho(pls_ca.x_weights_, "x weights are not orthogonal")
-#    check_ortho(pls_ca.y_weights_, "y weights are not orthogonal")
-#
-#    # Orthogonality of latent scores
-#    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-#    check_ortho(pls_ca.x_scores_, "x scores are not orthogonal")
-#    check_ortho(pls_ca.y_scores_, "y scores are not orthogonal")
-#
-#
+
+    # 3) Another non-regression test of Canonical PLS on random dataset
+    # =================================================================
+    # The results were checked against the R-package plspm
+    #
+    # Warning! This example is not stable, and the reference weights have
+    # not converged properly!
+    #
+    n = 500
+    p_noise = 10
+    q_noise = 5
+    # 2 latents vars:
+    np.random.seed(11)
+    l1 = np.random.normal(size=n)
+    l2 = np.random.normal(size=n)
+    latents = np.array([l1, l1, l2, l2]).T
+    X = latents + np.random.normal(size=4 * n).reshape((n, 4))
+    Y = latents + np.random.normal(size=4 * n).reshape((n, 4))
+    X = np.concatenate(
+        (X, np.random.normal(size=p_noise * n).reshape(n, p_noise)), axis=1)
+    Y = np.concatenate(
+        (Y, np.random.normal(size=q_noise * n).reshape(n, q_noise)), axis=1)
+    np.random.seed(None)
+    x_weights = np.array(
+        [[ 0.65803719,  0.19197924,  0.21769083],
+         [ 0.7009113,   0.13303969, -0.15376699],
+         [ 0.13528197, -0.68636408,  0.13856546],
+         [ 0.16854574, -0.66788088, -0.12485304],
+         [-0.03232333, -0.04189855,  0.40690153],
+         [ 0.1148816,  -0.09643158,  0.1613305 ],
+         [ 0.04792138, -0.02384992,  0.17175319],
+         [-0.06781,    -0.01666137, -0.18556747],
+         [-0.00266945, -0.00160224,  0.11893098],
+         [-0.00849528, -0.07706095,  0.1570547 ],
+         [-0.00949471, -0.02964127,  0.34657036],
+         [-0.03572177,  0.0945091,   0.3414855 ],
+         [ 0.05584937, -0.02028961, -0.57682568],
+         [ 0.05744254, -0.01482333, -0.17431274]])
+    tols = [1e0, 1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6]#, 5e-7, 5e-8, 5e-9, 5e-10, 5e-11]
+    for i in tols:
+        pls_ca = PLSCanonical(n_components=3, max_iter=1000, tol=i)
+        pls_ca.fit(X, Y)
+
+        x_weights, pls_ca.x_weights_ = pls.direct(x_weights, pls_ca.x_weights_, compare = True)
+        print "tolerance: "+str(i).rjust(6)+", error:", np.max(pls_ca.x_weights_ - x_weights)
+
+    assert_array_almost_equal(pls_ca.x_weights_, x_weights, decimal = 4,
+            err_msg="sklearn.pls.PLSCanonical does not give the same " \
+                    "X weights as the reference model")
+    print "Comparing X weights of sklearn.pls.PLSCanonical ... OK!"
+
+    for i in tols:
+        pls_NIPALS = pls.PLSC(num_comp=3, tolerance=i, max_iter=1000)
+        pls_NIPALS.fit(X, Y)
+
+        x_weights, pls_NIPALS.W = pls.direct(x_weights, pls_NIPALS.W, compare = True)
+        print "tolerance: "+str(i).rjust(6)+", error:", np.max(x_weights - pls_NIPALS.W)
+
+    assert_array_almost_equal(pls_NIPALS.W, x_weights, decimal = 4,
+            err_msg="sklearn.NIPALS.PLSC does not give the same " \
+                    "X weights as the reference model")
+    print "Comparing X weights of sklearn.NIPALS.PLSC ... OK! "
+
+    x_loadings = np.array(
+        [[ 0.65649254,  0.1847647,   0.15270699],
+         [ 0.67554234,  0.15237508, -0.09182247],
+         [ 0.19219925, -0.67750975,  0.08673128],
+         [ 0.2133631,  -0.67034809, -0.08835483],
+         [-0.03178912, -0.06668336,  0.43395268],
+         [ 0.15684588, -0.13350241,  0.20578984],
+         [ 0.03337736, -0.03807306,  0.09871553],
+         [-0.06199844,  0.01559854, -0.1881785 ],
+         [ 0.00406146, -0.00587025,  0.16413253],
+         [-0.00374239, -0.05848466,  0.19140336],
+         [ 0.00139214, -0.01033161,  0.32239136],
+         [-0.05292828,  0.0953533,   0.31916881],
+         [ 0.04031924, -0.01961045, -0.65174036],
+         [ 0.06172484, -0.06597366, -0.1244497]])
+    pls_ca.x_loadings_, x_loadings = pls.direct(pls_ca.x_loadings_, x_loadings, compare = True)
+    assert_array_almost_equal(pls_ca.x_loadings_, x_loadings, decimal = 4,
+            err_msg="sklearn.pls.PLSCanonical does not give the same " \
+                    "X loadings as the reference model")
+    print "Comparing X loadings of sklearn.pls.PLSCanonical ... OK!"
+
+    pls_NIPALS.P, x_loadings = pls.direct(pls_NIPALS.P, x_loadings, compare = True)
+    assert_array_almost_equal(pls_NIPALS.P, x_loadings, decimal = 4,
+            err_msg="sklearn.NIPALS.PLSC does not give the same " \
+                    "loadings as the reference model")
+    print "Comparing X loadings of sklearn.NIPALS.PLSC ... OK! "
+
+    y_weights = np.array(
+        [[0.66101097,  0.18672553,  0.22826092],
+         [0.69347861,  0.18463471, -0.23995597],
+         [0.14462724, -0.66504085,  0.17082434],
+         [0.22247955, -0.6932605, -0.09832993],
+         [0.07035859,  0.00714283,  0.67810124],
+         [0.07765351, -0.0105204, -0.44108074],
+         [-0.00917056,  0.04322147,  0.10062478],
+         [-0.01909512,  0.06182718,  0.28830475],
+         [0.01756709,  0.04797666,  0.32225745]])
+    pls_ca.y_weights_, y_weights = pls.direct(pls_ca.y_weights_, y_weights, compare = True)
+    assert_array_almost_equal(pls_ca.y_weights_, y_weights, decimal = 4,
+            err_msg="sklearn.pls.PLSCanonical does not give the same " \
+                    "Y weights as the reference model")
+    print "Comparing Y weights of sklearn.pls.PLSCanonical ... OK!"
+
+    pls_NIPALS.C, y_weights = pls.direct(pls_NIPALS.C, y_weights, compare = True)
+    assert_array_almost_equal(pls_NIPALS.C, y_weights, decimal = 4,
+            err_msg="sklearn.NIPALS.PLSC does not give the same " \
+                    "loadings as the reference model")
+    print "Comparing Y weights of sklearn.NIPALS.PLSC ... OK! "
+
+    y_loadings = np.array(
+        [[0.68568625,   0.1674376,   0.0969508 ],
+         [0.68782064,   0.20375837, -0.1164448 ],
+         [0.11712173,  -0.68046903,  0.12001505],
+         [0.17860457,  -0.6798319,  -0.05089681],
+         [0.06265739,  -0.0277703,   0.74729584],
+         [0.0914178,    0.00403751, -0.5135078 ],
+         [-0.02196918, -0.01377169,  0.09564505],
+         [-0.03288952,  0.09039729,  0.31858973],
+         [0.04287624,   0.05254676,  0.27836841]])
+    pls_ca.y_loadings_, y_loadings = pls.direct(pls_ca.y_loadings_, y_loadings, compare = True)
+    assert_array_almost_equal(pls_ca.y_loadings_, y_loadings, decimal = 4,
+            err_msg="sklearn.pls.PLSCanonical does not give the same " \
+                    "Y loadings as the reference model")
+    print "Comparing Y loadings of sklearn.pls.PLSCanonical ... OK!"
+
+    pls_NIPALS.Q, y_loadings = pls.direct(pls_NIPALS.Q, y_loadings, compare = True)
+    assert_array_almost_equal(pls_NIPALS.Q, y_loadings, decimal = 4,
+            err_msg="sklearn.NIPALS.PLSC does not give the same " \
+                    "Y loadings as the reference model")
+    print "Comparing Y loadings of sklearn.NIPALS.PLSC ... OK!"
+
+    # Orthogonality of weights
+    # ~~~~~~~~~~~~~~~~~~~~~~~~
+    check_ortho(pls_ca.x_weights_, "X weights are not orthogonal in sklearn.pls.PLSCanonical")
+    check_ortho(pls_ca.y_weights_, "Y weights are not orthogonal in sklearn.pls.PLSCanonical")
+    print "Confirming orthogonality of weights in sklearn.pls.PLSCanonical ... OK!"
+    check_ortho(pls_NIPALS.W, "X weights are not orthogonal in sklearn.NIPALS.PLSC")
+    check_ortho(pls_NIPALS.C, "Y weights are not orthogonal in sklearn.NIPALS.PLSC")
+    print "Confirming orthogonality of weights in sklearn.NIPALS.PLSC ... OK!"
+
+    # Orthogonality of latent scores
+    # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    check_ortho(pls_ca.x_scores_, "X scores are not orthogonal in sklearn.pls.PLSCanonical")
+    check_ortho(pls_ca.y_scores_, "Y scores are not orthogonal in sklearn.pls.PLSCanonical")
+    print "Confirming orthogonality of scores in sklearn.pls.PLSCanonical ... OK!"
+    check_ortho(pls_NIPALS.T, "X scores are not orthogonal in sklearn.NIPALS.PLSC")
+    check_ortho(pls_NIPALS.U, "Y scores are not orthogonal in sklearn.NIPALS.PLSC")
+    print "Confirming orthogonality of scores in sklearn.NIPALS.PLSC ... OK!"
+
+
 def test_scale():
-    pass
-#    d = load_linnerud()
-#    X = d.data
-#    Y = d.target
-#
-#    # causes X[:, -1].std() to be zero
-#    X[:, -1] = 1.0
-#
-#    for clf in [pls.PLSCanonical(), pls.PLSRegression(), pls.CCA(),
-#                pls.PLSSVD()]:
-#        clf.set_params(scale=True)
-#        clf.fit(X, Y)
+
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+
+    # causes X[:, -1].std() to be zero
+    X[:, -1] = 1.0
+
+    methods = [PLSCanonical(), PLSRegression(), CCA(), PLSSVD(),
+               pls.PCA(), pls.SVD(), pls.PLSR(), pls.PLSC()]
+    names   = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD",
+               "pls.PCA", "pls.SVD", "pls.PLSR", "pls.PLSC"]
+    for i in xrange(len(methods)):
+        clf = methods[i]
+        print "Testing scale of "+names[i]
+        clf.set_params(scale=True)
+        clf.fit(X, Y)
 
 def main():
 
@@ -505,3 +658,4 @@ def main():
 
 if __name__ == "__main__":
     test_NIPALS()
+    test_scale()

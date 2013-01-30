@@ -7,7 +7,7 @@ latent variable methods that all are computed using the NIPALS algorithm.
 # Author: Tommy Löfstedt <tommy.loefstedt@cea.fr>
 # License: BSD Style.
 
-__all__ = ['PCA', 'SVD', 'PLSR', 'center', 'scale', 'direct']
+__all__ = ['PCA', 'SVD', 'PLSR', 'PLSC', 'center', 'scale', 'direct']
 
 from sklearn.base import BaseEstimator, RegressorMixin, TransformerMixin
 from sklearn.utils import check_arrays
@@ -48,6 +48,20 @@ def _make_list(a, n, default = None):
     else: # None or empty list supplied, create a list with the default value
         a = [default for i in xrange(n)]
     return a
+
+
+def _start_vector(X, random = True, ones = False, largest = False):
+    if largest: # Using row with largest sum of squares
+        idx = np.argmax(np.sum(X**2, axis=1))
+        w = X[[idx],:].T
+    elif ones:
+        w = np.ones((X.shape[1],1))
+    else: # random start vector
+        w = np.random.rand(X.shape[1],1)
+
+    w /= norm(w)
+    return w
+
 
 # TODO: Make a private method of BasePLS!
 def _NIPALS(X, C = None, mode = _NEWA, scheme = _HORST,
@@ -115,8 +129,9 @@ def _NIPALS(X, C = None, mode = _NEWA, scheme = _HORST,
 
     W = []
     for Xi in X:
-        w = np.random.rand(Xi.shape[1],1)
-        w /= norm(w)
+        w = _start_vector(Xi, largest = True)
+#        w = np.random.rand(Xi.shape[1],1)
+#        w /= norm(w)
         W.append(w)
 
     # Main NIPALS loop
@@ -245,8 +260,10 @@ def _RGCCA(X, C = None, tau = 0.5, scheme = None,
         Xi = X[i]
         XX = dot(Xi.T, Xi)
         I  = np.eye(XX.shape[0])
-        w  = np.random.rand(Xi.shape[1],1)
-        w /= np.linalg.norm(w)
+
+        w  = _start_vector(Xi, largest = True)
+#        w  = np.random.rand(Xi.shape[1],1)
+#        w /= norm(w)
 
         invIXX.append(np.linalg.pinv(tau[i]*I + ((1-tau[i])/w.shape[0])*XX))
         invIXXw  = dot(invIXX[i], w)
@@ -396,7 +413,7 @@ def _cov(a,b):
     return ip[0,0] / (a_.shape[0] - 1)
 
 
-def center(X, return_means = False, copy = False):
+def center(X, return_means = False, copy = True):
     """ Centers the numpy array(s) in X
 
     Arguments
@@ -417,6 +434,7 @@ def center(X, return_means = False, copy = False):
 
     means = []
     for i in xrange(len(X)):
+        X[i] = np.asarray(X[i])
         mean = X[i].mean(axis = 0)
         if copy:
             X[i] = X[i] - mean
@@ -434,7 +452,7 @@ def center(X, return_means = False, copy = False):
         return X
 
 
-def scale(X, centered = True, return_stds = False, copy = False):
+def scale(X, centered = True, return_stds = False, copy = True):
     """ Scales the numpy arrays in arrays to standard deviation 1
     Returns
     -------
@@ -453,7 +471,7 @@ def scale(X, centered = True, return_stds = False, copy = False):
         else:
             ddof = 0
         std = X[i].std(axis = 0, ddof = ddof)
-        std[std == 0.0] = 1.0
+        std[std < _TOLERANCE] = 1.0
         if copy:
             X[i] = X[i] / std
         else:
@@ -716,16 +734,18 @@ class BasePLS(BaseEstimator, TransformerMixin):
 
         T  = []
         for i in xrange(n):
+            X_ = np.asarray(X[i])
+            # TODO: Use center() and scale() instead! (Everywhere!)
             # Center and scale
             if copy:
-                X_ = (np.asarray(X[i]) - self.means[i]) / self.stds[i]
+                X_ = (X_ - self.means[i]) / self.stds[i]
             else:
-                X_  = np.asarray(X[i])
                 X_ -= self.means[i]
                 X_ /= self.stds[i]
 
             # Apply rotation
             t = dot(X_, self._get_transform(i))
+
             T.append(t)
 
         return T
@@ -823,6 +843,7 @@ class PLSR(BasePLS, RegressorMixin):
         else:
             return self.C
 
+
     def _deflate(self, X, w, t, p, index = None):
         if index == 0:
             return X - dot(t, p.T) # Deflate X using its loadings
@@ -847,10 +868,10 @@ class PLSR(BasePLS, RegressorMixin):
 
 
     def predict(self, X, copy = True):
+        X = np.asarray(X)
         if copy:
-            X = (np.asarray(X) - self.means[0]) / self.stds[0]
+            X = (X - self.means[0]) / self.stds[0]
         else:
-            X = np.asarray(X)
             X -= self.means[0]
             X /= self.stds[0]
 
@@ -864,7 +885,77 @@ class PLSR(BasePLS, RegressorMixin):
             T = BasePLS.transform(self, X, Y, **kwargs)
         else:
             T = BasePLS.transform(self, X, **kwargs)
-            return T[0]
+            T = T[0]
+        return T
+
+
+    def fit_transform(self, X, Y = None, **fit_params):
+        return self.fit(X, Y, **fit_params).transform(X, Y)
+
+
+class PLSC(BasePLS, RegressorMixin):
+
+    def __init__(self, num_comp = 2, center = True, scale = True,
+             copy = True, max_iter = _MAXITER, tolerance = _TOLERANCE,
+             soft_threshold = 0):
+
+        C = np.ones((2,2)) - np.eye(2)
+        BasePLS.__init__(self, C = C, num_comp = num_comp,
+                         center = center, scale = scale,
+                         modes = _NEWA, scheme = _HORST, copy = copy,
+                         max_iter = max_iter, tolerance = tolerance,
+                         soft_threshold = soft_threshold)
+
+
+    def _get_transform(self, index = 0):
+        if index < 0 or index > 1:
+            raise ValueError("Index must be 0 or 1")
+        if index == 0:
+            return self.Ws
+        else: # index == 1
+            return self.Cs
+
+
+    def _deflate(self, X, w, t, p, index = None):
+        return X - dot(t, p.T) # Deflate each block using their loadings
+
+
+    def fit(self, *X, **kwargs):
+        BasePLS.fit(self, *X)
+        self.C  = self.W[1]
+        self.U  = self.T[1]
+        self.Q  = self.P[1]
+        self.Cs = self.Ws[1]
+        self.W  = self.W[0]
+        self.T  = self.T[0]
+        self.P  = self.P[0]
+        self.Ws = self.Ws[0]
+
+        self.Bx = dot(self.Ws, self.C.T)
+        self.By = dot(self.Cs, self.W.T)
+
+        return self
+
+
+    def predict(self, X, copy = True):
+        X = np.asarray(X)
+        if copy:
+            X = (X - self.means[0]) / self.stds[0]
+        else:
+            X -= self.means[0]
+            X /= self.stds[0]
+
+        Ypred = dot(X, self.Bx)
+
+        return (Ypred*self.stds[1]) + self.means[1]
+
+
+    def transform(self, X, Y = None, **kwargs):
+        if Y != None:
+            T = BasePLS.transform(self, X, Y, **kwargs)
+        else:
+            T = BasePLS.transform(self, X, **kwargs)
+            T = T[0]
         return T
 
 
@@ -883,4 +974,3 @@ class PLSR(BasePLS, RegressorMixin):
 #
 #    def __str__(self):
 #        return "Enum: "+str(self.__dict__)
-
