@@ -30,7 +30,7 @@ import pylab as pl
 
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.datasets.samples_generator import make_gaussian_quantiles
+from sklearn.datasets import make_gaussian_quantiles
 from sklearn.metrics import accuracy_score
 
 

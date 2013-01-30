@@ -1218,7 +1218,8 @@ def make_s_curve(n_samples=100, noise=0.0, random_state=None):
     return X, t
 
 
-def make_gaussian_quantiles(n_samples=100, n_features=2, n_classes=3,
+def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
+                            n_features=2, n_classes=3,
                             shuffle=True, random_state=None):
     """Generate isotropic Gaussian and label samples by quantile
 
@@ -1229,6 +1230,14 @@ def make_gaussian_quantiles(n_samples=100, n_features=2, n_classes=3,
 
     Parameters
     ----------
+    mean : array of shape [n_features], optional (default=None)
+        The mean of the multi-dimensional normal distribution.
+        If None then use the origin (0, 0, ...).
+
+    cov : float, optional (default=1.)
+        The covariance matrix will be this value times the unit matrix. This
+        dataset only produces symmetric normal distributions.
+
     n_samples : int, optional (default=100)
         The total number of points equally divided among classes.
 
@@ -1270,11 +1279,17 @@ def make_gaussian_quantiles(n_samples=100, n_features=2, n_classes=3,
 
     generator = check_random_state(random_state)
 
+    if mean is None:
+        mean = np.zeros(n_features)
+    else:
+        mean = np.array(mean)
+
     # Build multivariate normal distribution
-    X = generator.normal(0, 1, (n_samples, n_features))
+    X = generator.multivariate_normal(mean, cov * np.identity(n_features),
+                                      (n_samples,))
 
     # Sort by distance from origin
-    idx = np.argsort(np.sum(X ** 2, axis=1))
+    idx = np.argsort(np.sum((X - mean[np.newaxis, :]) ** 2, axis=1))
     X = X[idx, :]
 
     # Label by quantile

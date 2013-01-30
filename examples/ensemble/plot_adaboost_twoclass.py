@@ -14,20 +14,24 @@ import numpy as np
 
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.datasets import make_classification
+from sklearn.datasets import make_gaussian_quantiles
 
-X, y = make_classification(n_samples=1000,
-                           n_features=2,
-                           n_classes=2,
-                           n_clusters_per_class=1,
-                           n_informative=2,
-                           n_redundant=0,
-                           random_state=1)
 
+# Construct dataset
+X1, y1 = make_gaussian_quantiles(cov=2.,
+                                 n_samples=200, n_features=2,
+                                 n_classes=2, random_state=1)
+X2, y2 = make_gaussian_quantiles(mean=(3, 3), cov=1.5,
+                                 n_samples=300, n_features=2,
+                                 n_classes=2, random_state=1)
+X = np.concatenate((X1, X2))
+y = np.concatenate((y1, - y2 + 1))
+
+# Create and fit an AdaBoosted decision tree
 bdt = AdaBoostClassifier(
     DecisionTreeClassifier(max_depth=1),
     algorithm="SAMME",
-    n_estimators=50)
+    n_estimators=200)
 
 bdt.fit(X, y)
 
@@ -64,23 +68,28 @@ class_proba = bdt.predict_proba(X)[:, -1]
 pl.subplot(132)
 for i, n, c in zip(xrange(2), class_names, plot_colors):
     pl.hist(class_proba[y == i],
-            bins=20,
+            bins=10,
             range=(0, 1),
             facecolor=c,
-            label='Class %s' % n)
+            label='Class %s' % n,
+            alpha=.5)
 pl.legend(loc='upper center')
 pl.ylabel('Samples')
 pl.xlabel('Probability of being from class B')
 
 # Plot the two-class decision scores
 twoclass_output = bdt.decision_function(X)
+plot_range = (twoclass_output.min(), twoclass_output.max())
 pl.subplot(133)
 for i, n, c in zip(xrange(2), class_names, plot_colors):
     pl.hist(twoclass_output[y == i],
-            bins=20,
-            range=(-1, 1),
+            bins=10,
+            range=plot_range,
             facecolor=c,
-            label='Class %s' % n)
+            label='Class %s' % n,
+            alpha=.5)
+x1, x2, y1, y2 = pl.axis()
+pl.axis((x1, x2, y1, y2 * 1.5))
 pl.legend(loc='upper right')
 pl.ylabel('Samples')
 pl.xlabel('Two-class Decision Scores')
