@@ -262,7 +262,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
 
-    learning_rate : float, optional (default=0.1)
+    learning_rate : float, optional (default=0.5)
         Learning rate shrinks the contribution of each classifier by
         ``learning_rate``. There is a trade-off between ``learning_rate`` and
         ``n_estimators``.
@@ -794,7 +794,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
 
-    learning_rate : float, optional (default=0.1)
+    learning_rate : float, optional (default=1.)
         Learning rate shrinks the contribution of each regressor by
         ``learning_rate``. There is a trade-off between ``learning_rate`` and
         ``n_estimators``.
