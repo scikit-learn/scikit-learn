@@ -86,7 +86,7 @@ class BaseWeightBoosting(BaseEnsemble):
         """
         # Check parameters
         if self.learning_rate <= 0:
-            raise ValueError("``learning_rate`` must be greater than zero")
+            raise ValueError("learning_rate must be greater than zero")
 
         if self.compute_importances:
             self.base_estimator.set_params(compute_importances=True)
@@ -154,7 +154,7 @@ class BaseWeightBoosting(BaseEnsemble):
             raise AttributeError(
                 "Unable to compute feature importances "
                 "since base_estimator does not have a "
-                "``feature_importances_`` attribute")
+                "feature_importances_ attribute")
 
         return self
 
@@ -349,23 +349,23 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         """
         # Check that the base estimator is a classifier
         if not isinstance(self.base_estimator, ClassifierMixin):
-            raise TypeError("``base_estimator`` must be a "
-                            "subclass of ``ClassifierMixin``")
+            raise TypeError("base_estimator must be a "
+                            "subclass of ClassifierMixin")
 
         # Check that algorithm is supported
         if self.algorithm != "SAMME" and self.algorithm != "SAMME.R":
-            raise ValueError("``algorithm`` %s is not supported"
+            raise ValueError("algorithm %s is not supported"
                              % self.algorithm)
 
         #  SAMME-R requires predict_proba-enabled base estimators
         if self.algorithm == "SAMME.R":
             if not hasattr(self.base_estimator, "predict_proba"):
                 raise TypeError(
-                    "AdaBoostClassifier with ``algorithm='SAMME.R'`` requires "
+                    "AdaBoostClassifier with algorithm='SAMME.R' requires "
                     "that the weak learner supports the calculation of class "
-                    "probabilities with a ``predict_proba`` method.\n"
+                    "probabilities with a predict_proba method.\n"
                     "Please change the base estimator or set "
-                    "``algorithm='SAMME'`` instead.")
+                    "algorithm='SAMME' instead.")
 
         return super(AdaBoostClassifier, self).fit(X, y, sample_weight)
 
@@ -867,8 +867,8 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         """
         # Check that the base estimator is a regressor
         if not isinstance(self.base_estimator, RegressorMixin):
-            raise TypeError("``base_estimator`` must be a "
-                            "subclass of ``RegressorMixin``")
+            raise TypeError("base_estimator must be a "
+                            "subclass of RegressorMixin")
 
         # Fit
         return super(AdaBoostRegressor, self).fit(X, y, sample_weight)
