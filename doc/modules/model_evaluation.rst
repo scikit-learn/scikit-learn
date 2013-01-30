@@ -849,14 +849,27 @@ For scoring functions that take no additional parameters (which are most of
 them), you can simply provide a string as the ``scoring`` parameter. Possible
 values are:
 
-- ``r2``, corresponding to :func:`sklearn.metrics.r2_score`.
-- ``mse``, corresponding to :func:`sklearn.metrics.mean_squared_error`.
-- ``zero_one``, corresponding to :func:`sklearn.metrics.accuracy_score`.
-- ``f1``, corresponding to :func:`sklearn.metrics.f1_score`.
-- ``roc_auc``, corresponding to :func:`sklearn.metrics.auc_score`, the area under the ROC curve.
-- ``average_precision``, corresponding to :func:`sklearn.metrics.average_precision_score`, the area under the Precision-Recall curve.
-- ``precision``, corresponding to :func:`sklearn.metrics.precision_score`.
-- ``recall``, corresponding to :func:`sklearn.metrics.recall_score`.
+===============     ====================================
+scoring             Function
+===============     ====================================
+Classification
+--------------      ------------------------------------
+'accuracy'          sklearn.metrics.accuracy_score
+'average_precision' sklearn.metrics.average_precision_score
+'f1'                sklearn.metrics.f1_score
+'precision'         sklearn.metrics.precision_score
+'recall'            sklearn.metrics.recall_score
+'roc_auc'           sklearn.merrics.auc_score
+
+Clustering
+--------------      ------------------------------------
+'ari'`              sklearn.metrics.adjusted_rand_score
+
+Regression
+--------------      ------------------------------------
+'mse'               sklearn.metrics.mean_squared_error
+'r2'                sklearn.metrics.r2_score
+===============     ====================================
 
 Creating Scoring Objects From Score Functions
 ---------------------------------------------
