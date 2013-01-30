@@ -262,7 +262,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         The maximum number of estimators at which boosting is terminated.
         In case of perfect fit, the learning procedure is stopped early.
 
-    learning_rate : float, optional (default=0.5)
+    learning_rate : float, optional (default=1.)
         Learning rate shrinks the contribution of each classifier by
         ``learning_rate``. There is a trade-off between ``learning_rate`` and
         ``n_estimators``.
@@ -313,7 +313,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     def __init__(self,
                  base_estimator=DecisionTreeClassifier(max_depth=1),
                  n_estimators=50,
-                 learning_rate=0.5,
+                 learning_rate=1.,
                  algorithm="SAMME.R",
                  compute_importances=False):
 
@@ -424,8 +424,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         if iboost == 0:
             self.classes_ = getattr(estimator, 'classes_', None)
-            self.n_classes_ = getattr(estimator, 'n_classes_',
-                                      getattr(estimator, 'n_classes', 1))
+            self.n_classes_ = len(self.classes_)
 
         y_predict = self.classes_.take(np.argmax(y_predict_proba, axis=1),
                                        axis=0)
@@ -482,8 +481,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         if iboost == 0:
             self.classes_ = getattr(estimator, 'classes_', None)
-            self.n_classes_ = getattr(estimator, 'n_classes_',
-                                      getattr(estimator, 'n_classes', 1))
+            self.n_classes_ = len(self.classes_)
 
         # Instances incorrectly classified
         incorrect = y_predict != y
