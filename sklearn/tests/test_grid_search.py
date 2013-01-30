@@ -22,7 +22,7 @@ from sklearn.datasets.samples_generator import make_classification, make_blobs
 from sklearn.svm import LinearSVC, SVC
 from sklearn.cluster import KMeans, MeanShift
 from sklearn.metrics import f1_score
-from sklearn.metrics.score_objects import AsScorer, ARIScorer
+from sklearn.metrics.score_objects import AsScorer
 from sklearn.cross_validation import KFold, StratifiedKFold
 
 
@@ -322,7 +322,7 @@ def test_unsupervised_grid_search():
     X, y = make_blobs(random_state=0)
     km = KMeans(random_state=0)
     grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]),
-                               scoring=ARIScorer)
+                               scoring='ari')
     grid_search.fit(X, y)
     # ARI can find the right number :)
     assert_equal(grid_search.best_params_["n_clusters"], 3)
@@ -338,7 +338,7 @@ def test_bad_estimator():
     ms = MeanShift()
     assert_raises(TypeError, GridSearchCV, ms,
                   param_grid=dict(gamma=[.1, 1, 10]),
-                  scoring=ARIScorer)
+                  scoring='ari')
 
 
 def test_score_func_string():

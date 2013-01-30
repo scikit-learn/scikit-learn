@@ -84,24 +84,27 @@ class AsScorer(object):
 
 
 # Standard regression scores
-R2Scorer = AsScorer(r2_score)
-MSEScorer = AsScorer(mean_squared_error, greater_is_better=False)
+r2_scorer = AsScorer(r2_score)
+mse_scorer = AsScorer(mean_squared_error, greater_is_better=False)
 
 # Standard Classification Scores
-AccuracyScorer = AsScorer(accuracy_score)
-F1Scorer = AsScorer(f1_score)
+accuracy_scorer = AsScorer(accuracy_score)
+f1_scorer = AsScorer(f1_score)
 
 # Score functions that need decision values
-AUCScorer = AsScorer(auc_score, True, True)
-AveragePrecisionScorer = AsScorer(average_precision_score,
-                                  needs_threshold=True)
-PrecisionScorer = AsScorer(precision_score)
-RecallScorer = AsScorer(recall_score)
+auc_scorer = AsScorer(auc_score, True, True)
+average_precision_scorer = AsScorer(average_precision_score,
+                                    needs_threshold=True)
+precision_scorer = AsScorer(precision_score)
+recall_scorer = AsScorer(recall_score)
 
 # Clustering scores
-ARIScorer = AsScorer(adjusted_rand_score)
+ari_scorer = AsScorer(adjusted_rand_score)
 
-scorers = dict(r2=R2Scorer, mse=MSEScorer, accuracy=AccuracyScorer,
-               f1=F1Scorer, roc_auc=AUCScorer,
-               average_precision=AveragePrecisionScorer,
-               precision=PrecisionScorer, recall=RecallScorer, ari=ARIScorer)
+scorers = dict(r2=r2_scorer, mse=mse_scorer, accuracy=accuracy_scorer,
+               f1=f1_scorer, roc_auc=auc_scorer,
+               average_precision=average_precision_scorer,
+               precision=precision_scorer, recall=recall_scorer,
+               ari=ari_scorer)
+
+
