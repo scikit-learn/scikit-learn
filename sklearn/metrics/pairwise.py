@@ -526,10 +526,10 @@ pairwise_distance_functions = {
 
 
 def distance_metrics():
-    """ Valid metrics for pairwise_distances
+    """Valid metrics for pairwise_distances.
 
     This function simply returns the valid pairwise distance metrics.
-    It exists, however, to allow for a verbose description of the mapping for
+    It exists to allow for a description of the mapping for
     each of the valid strings.
 
     The valid distance metrics, and the function they map to, are:
@@ -537,11 +537,11 @@ def distance_metrics():
     ============     ====================================
     metric           Function
     ============     ====================================
-    'cityblock'      sklearn.pairwise.manhattan_distances
-    'euclidean'      sklearn.pairwise.euclidean_distances
-    'l1'             sklearn.pairwise.manhattan_distances
-    'l2'             sklearn.pairwise.euclidean_distances
-    'manhattan'      sklearn.pairwise.manhattan_distances
+    'cityblock'      metrics.pairwise.manhattan_distances
+    'euclidean'      metrics.pairwise.euclidean_distances
+    'l1'             metrics.pairwise.manhattan_distances
+    'l2'             metrics.pairwise.euclidean_distances
+    'manhattan'      metrics.pairwise.manhattan_distances
     ============     ====================================
 
     """
