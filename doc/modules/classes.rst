@@ -662,13 +662,19 @@ user guide for further details.
 
 .. currentmodule:: sklearn
 
-Grid Search Interface
----------------------
+Model Selection Interface
+-------------------------
 .. autosummary::
    :toctree: generated/
    :template: class_with_call.rst
 
    metrics.AsScorer
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+    metrics.score_objects
 
 Classification metrics
 ----------------------
