@@ -359,8 +359,11 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         if self.algorithm == "SAMME.R":
             if not hasattr(self.base_estimator, "predict_proba"):
                 raise TypeError(
-                    "The real AdaBoost algorithm requires that the weak"
-                    "learner supports the calculation of class probabilities")
+                    "AdaBoostClassifier with ``algorithm='SAMME.R'`` requires "
+                    "that the weak learner supports the calculation of class "
+                    "probabilities with a ``predict_proba`` method.\n"
+                    "Please change the base estimator or set "
+                    "``algorithm='SAMME'`` instead.")
 
         return super(AdaBoostClassifier, self).fit(X, y, sample_weight)
 
