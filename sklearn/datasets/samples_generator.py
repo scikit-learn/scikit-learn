@@ -1226,7 +1226,7 @@ def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
     This classification dataset is constructed by taking a multi-dimensional
     standard normal distribution and defining classes separated by nested
     concentric multi-dimensional spheres such that roughly equal numbers of
-    samples are in each class (quantiles of the :math:`\Chi^2` distribution).
+    samples are in each class (quantiles of the :math:`\chi^2` distribution).
 
     Parameters
     ----------

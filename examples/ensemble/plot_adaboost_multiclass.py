@@ -8,12 +8,14 @@ improve prediction accuracy on a multi-class problem. The classification
 dataset is constructed by taking a ten-dimensional standard normal distribution
 and defining three classes separated by nested concentric ten-dimensional
 spheres such that roughly equal numbers of samples are in each class (quantiles
-of the :math:`\Chi^2` distribution).
+of the :math:`\chi^2` distribution).
 
 The performance of the SAMME and SAMME.R [1] algorithms are compared.
 The error of each algorithm on the test set after each boosting iteration is
 shown on the left, the classification error on the test set of each tree is
 shown in the middle, and the boost weight of each tree is shown on the right.
+All trees have a weight of one in the SAMME.R algorithm and therefore are not
+shown.
 
 .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
 
@@ -80,8 +82,8 @@ pl.ylabel('Test Error')
 pl.xlabel('Number of Trees')
 
 pl.subplot(132)
-pl.plot(n_trees, bdt_discrete.estimator_errors_, "b", label='SAMME')
-pl.plot(n_trees, bdt_real.estimator_errors_, "r", label='SAMME.R')
+pl.plot(n_trees, bdt_discrete.estimator_errors_, "b", label='SAMME', alpha=.5)
+pl.plot(n_trees, bdt_real.estimator_errors_, "r", label='SAMME.R', alpha=.5)
 pl.legend()
 pl.ylabel('Error')
 pl.xlabel('Tree')
