@@ -91,7 +91,7 @@ scoring function::
   ...                                                     # doctest: +ELLIPSIS
   array([ 1.  ...,  0.96...,  0.89...,  0.96...,  1.        ])
 
-See :ref:`scoring_functions` for details.
+See :ref:`score_func_objects` for details.
 In the case of the Iris dataset, the samples are balanced across target
 classes hence the accuracy and the F1-score are almost equal.
 

@@ -49,7 +49,7 @@ combinations is retained.
   This can be done by using the :func:`cross_validation.train_test_split`
   utility function.
 
-.. _scoring_functions:
+.. _gridsearch_scoring:
 
 .. currentmodule:: sklearn.grid_search
 
@@ -73,7 +73,7 @@ that can be selected by giving a string argument:
 - ``recall``, corresponding to :func:`sklearn.metrics.recall_score`.
 
 Custom scoring functions can be specified by passing any callable that can be called by :class:`GridSearchCV` as
-``scoring(estimator, X, y)``. An easy way to create such a callable is via :class:`sklearn.metrics.AsScorer`.
+``scoring(estimator, X, y)``. See :ref:`score_func_objects` for more details.
 
 Examples
 ========
