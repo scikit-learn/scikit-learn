@@ -131,13 +131,15 @@ class BaseWeightBoosting(BaseEnsemble):
             if estimator_error == 0:
                 break
 
+            sample_weight_sum = np.sum(sample_weight)
+
             # Stop if the sum of sample weights has become non-positive
-            if np.sum(sample_weight) <= 0:
+            if sample_weight_sum <= 0:
                 break
 
             if iboost < self.n_estimators - 1:
                 # Normalize
-                sample_weight /= sample_weight.sum()
+                sample_weight /= sample_weight_sum
 
         # Sum the importances
         try:
