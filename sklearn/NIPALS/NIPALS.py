@@ -64,9 +64,8 @@ def _start_vector(X, random = True, ones = False, largest = False):
 
 
 # TODO: Make a private method of BasePLS!
-def _NIPALS(X, C = None, mode = _NEWA, scheme = _HORST,
-            max_iter = _MAXITER, tolerance = _TOLERANCE, not_normed = [],
-            soft_threshold = 0, **kwargs):
+def _NIPALS(X, C, mode, scheme, not_normed = [], soft_threshold = 0,
+            max_iter = _MAXITER, tolerance = _TOLERANCE, **kwargs):
     """Inner loop of the NIPALS algorithm.
 
     Performs the NIPALS algorithm on the supplied tuple or list of numpy arrays
@@ -156,7 +155,7 @@ def _NIPALS(X, C = None, mode = _NEWA, scheme = _HORST,
                     eij = _corr(ti, tj)
 
                 # Internal estimation usin connected matrices' score vectors
-                if C[i,j] != 0:
+                if C[i,j] != 0 or C[j,i] != 0:
                     ui += eij*tj
 
             # External estimation
@@ -202,8 +201,8 @@ def _NIPALS(X, C = None, mode = _NEWA, scheme = _HORST,
 
 
 # TODO: Make a private method of BasePLS!
-def _RGCCA(X, C = None, tau = 0.5, scheme = None,
-           max_iter = _MAXITER, tolerance = _TOLERANCE, not_normed = None):
+def _RGCCA(X, C, tau, scheme, not_normed = [],
+           max_iter = _MAXITER, tolerance = _TOLERANCE):
     """Inner loop of the RGCCA algorithm.
 
     Performs the RGCCA algorithm on the supplied tuple or list of numpy arrays
@@ -274,28 +273,28 @@ def _RGCCA(X, C = None, tau = 0.5, scheme = None,
 
     # Main RGCCA loop
     iterations = 0
-    h = []
+#    h = []
     while True:
 
-        h_ = 0
-        for i in range(n):
-            Xi = X[i]
-            ti = dot(Xi, W[i])
-            for j in range(n):
-                tj = dot(X[j], W[j])
-
-                c = _cov(ti, tj)
-
-                # Determine weighting scheme and compute weight
-                if scheme == _HORST:
-                    pass
-                elif scheme == _CENTROID:
-                    c = np.abs(c)
-                elif scheme == _FACTORIAL:
-                    c = c*c
-
-                h_ += C[i,j]*c
-        h.append(h_)
+#        h_ = 0
+#        for i in range(n):
+#            Xi = X[i]
+#            ti = dot(Xi, W[i])
+#            for j in range(n):
+#                tj = dot(X[j], W[j])
+#
+#                c = _cov(ti, tj)
+#
+#                # Determine weighting scheme and compute weight
+#                if scheme == _HORST:
+#                    pass
+#                elif scheme == _CENTROID:
+#                    c = np.abs(c)
+#                elif scheme == _FACTORIAL:
+#                    c = c*c
+#
+#                h_ += C[i,j]*c
+#        h.append(h_)
 
         converged = True
         for i in range(n):
@@ -314,7 +313,7 @@ def _RGCCA(X, C = None, tau = 0.5, scheme = None,
                     eij = _cov(ti, tj)
 
                 # Internal estimation using connected matrices' score vectors
-                if C[i,j] != 0:
+                if C[i,j] != 0 or C[j,i] != 0:
                     ui += eij*tj
 
             # Outer estimation for block i
@@ -529,29 +528,11 @@ def direct(W, T = None, P = None, compare = False):
 class BasePLS(BaseEstimator, TransformerMixin):
     __metaclass__ = abc.ABCMeta
 
-    def __init__(self, C = None, num_comp = 2, tau = 0.5,
-                 center = True, scale = True, modes = None, scheme = None,
+    def __init__(self, C = None, num_comp = 2, tau = None,
+                 center = True, scale = True, mode = None, scheme = None,
                  not_normed = None, copy = True, normalise_directions = False,
                  max_iter = _MAXITER, tolerance = _TOLERANCE,
                  soft_threshold = 0):
-
-        if scheme == None:
-            scheme = [_HORST]
-        if not isinstance(scheme, (tuple, list)) and \
-                not scheme in (_HORST, _CENTROID, _FACTORIAL):
-            raise ValueError('The scheme must be either "%s", "%s" or "%s"'
-                    % (_HORST, _CENTROID, _FACTORIAL))
-        elif isinstance(scheme, (tuple, list)):
-            for s in scheme:
-                if not s in (_HORST, _CENTROID, _FACTORIAL):
-                    raise ValueError('The scheme must be either "%s", "%s"' \
-                            ' or "%s"' % (_HORST, _CENTROID, _FACTORIAL))
-
-        if not isinstance(tau, (float)) and tau != None:
-            raise ValueError('The shrinking factor tau must be of type float')
-
-        if not_normed == None:
-            not_normed = ()
 
         # Supplied by the user
         self.C              = C
@@ -559,7 +540,7 @@ class BasePLS(BaseEstimator, TransformerMixin):
         self.tau            = tau
         self.center         = center
         self.scale          = scale
-        self.modes          = modes
+        self.mode           = mode
         self.scheme         = scheme
         self.not_normed     = not_normed
         self.copy           = copy
@@ -586,18 +567,70 @@ class BasePLS(BaseEstimator, TransformerMixin):
 
         if self.n < 1:
             raise ValueError('At least one matrix must be given')
-        if self.modes == None:
-            # Default mode is New A
-            self.modes = [_NEWA for i in xrange(self.n)]
-        elif ((not isinstance(self.modes, (tuple, list))) and
-                isinstance(self.modes, str)):
-            # If only one mode is given, all matrices gets this mode
-            self.modes = [self.modes for i in xrange(self.n)]
 
-        if ((not isinstance(self.tau, (tuple, list))) and
-                isinstance(self.tau, (float, int))):
-            # If only one tau value is give, all matrices will use this value
-            self.tau = [self.tau for i in xrange(self.n)]
+        err_msg = 'The mode must be either "%s", "%s" or "%s"' \
+                    % (_NEWA, _A, _B)
+        if self.mode == None:
+            self.mode = [_NEWA]*self.n # Default mode is New A
+        if not isinstance(self.mode, (tuple, list)):
+            if not self.mode in (_NEWA, _A, _B):
+                raise ValueError(err_msg)
+            self.mode = [self.mode]*self.n # If only one mode is given, all matrices gets this mode
+        for m in self.mode:
+            if not m in (_NEWA, _A, _B):
+                raise ValueError(err_msg)
+
+        err_msg = 'The scheme must be either "%s", "%s" or "%s"' \
+                    % (_HORST, _CENTROID, _FACTORIAL)
+        if self.scheme == None:
+            self.scheme = [_HORST]*self.n # Default scheme is Horst
+        if not isinstance(self.scheme, (tuple, list)):
+            if not self.scheme in (_HORST, _CENTROID, _FACTORIAL):
+                raise ValueError(err_msg)
+            self.scheme = [self.scheme]*self.n
+        for s in self.scheme:
+            if not s in (_HORST, _CENTROID, _FACTORIAL):
+                raise ValueError(err_msg)
+
+        # TODO: Add Schäfer and Strimmer's method here if tau == None!
+        err_msg = 'The shrinking factor tau must be of type float or a ' \
+                  'list or tuple with floats'
+        if self.tau == None:
+            self.tau = [0.5]*self.n
+        if not isinstance(self.tau, (tuple, list)):
+            if not isinstance(self.tau, (float, int)):
+                raise ValueError(err_msg)
+            self.tau = [float(self.tau)]*self.n
+        for t in self.tau:
+            if not isinstance(t, (float,int)):
+                raise ValueError(err_msg)
+
+        err_msg = 'The argument center must be of type bool or a ' \
+                  'list or tuple with bools'
+        if self.center == None:
+            self.center = [True]*self.n
+        if not isinstance(self.center, (tuple, list)):
+            if not isinstance(self.center, (bool,)):
+                raise ValueError(err_msg)
+            self.center = [self.center]*self.n
+        for c in self.center:
+            if not isinstance(c, (bool,)):
+                raise ValueError(err_msg)
+
+        err_msg = 'The argument scale must be of type bool or a ' \
+                  'list or tuple with bools'
+        if self.scale == None:
+            self.scale = [True]*self.n
+        if not isinstance(self.scale, (tuple, list)):
+            if not isinstance(self.scale, (bool,)):
+                raise ValueError(err_msg)
+            self.scale = [self.scale]*self.n
+        for s in self.scale:
+            if not isinstance(s, (bool,)):
+                raise ValueError(err_msg)
+
+        if self.not_normed == None:
+            self.not_normed = ()
 
         # Number of rows
         M = X[0].shape[0]
@@ -622,15 +655,6 @@ class BasePLS(BaseEstimator, TransformerMixin):
             self.C = np.ones((1,1))
         elif self.C == None and self.n > 1:
             self.C = np.ones((self.n,self.n)) - np.eye(self.n)
-
-        if self.center == None:
-            self.center = True
-        if self.center != None and not isinstance(self.center, (tuple, list)):
-            self.center = [self.center for i in xrange(self.n)]
-        if self.scale == None:
-            self.scale = True
-        if self.scale != None and not isinstance(self.scale, (tuple, list)):
-            self.scale = [self.scale for i in xrange(self.n)]
 
 
     def _preprocess(self, X):
@@ -684,7 +708,7 @@ class BasePLS(BaseEstimator, TransformerMixin):
             w = self._algorithm(X = X,
                                 C = self.C,
                                 tau = self.tau,
-                                modes = self.modes,
+                                mode = self.mode,
                                 scheme = self.scheme,
                                 max_iter = self.max_iter,
                                 tolerance = self.tolerance,
@@ -757,15 +781,9 @@ class BasePLS(BaseEstimator, TransformerMixin):
 
 class PCA(BasePLS):
 
-    def __init__(self, num_comp = 2, center = True, scale = True,
-             copy = True, max_iter = _MAXITER, tolerance = _TOLERANCE,
-             soft_threshold = 0):
+    def __init__(self, **kwargs):
 
-        BasePLS.__init__(self, C = np.ones((1,1)), num_comp = num_comp,
-                         center = center, scale = scale,
-                         modes = [_NEWA], scheme = [_HORST], copy = copy,
-                         max_iter = max_iter, tolerance = tolerance,
-                         soft_threshold = soft_threshold)
+        BasePLS.__init__(self, C = np.ones((1,1)), **kwargs)
 
     def _get_transform(self, index = 0):
         return self.P
@@ -794,7 +812,7 @@ class SVD(BasePLS):
 
         BasePLS.__init__(self, C = np.ones((1,1)), num_comp = num_comp,
                          center = center, scale = scale,
-                         modes = [_NEWA], scheme = [_HORST], copy = copy,
+                         mode = [_NEWA], scheme = [_HORST], copy = copy,
                          max_iter = max_iter, tolerance = tolerance,
                          soft_threshold = soft_threshold)
 
@@ -833,7 +851,7 @@ class PLSR(BasePLS, RegressorMixin):
         C = np.ones((2,2)) - np.eye(2)
         BasePLS.__init__(self, C = C, num_comp = num_comp,
                          center = center, scale = scale,
-                         modes = _NEWA, scheme = _HORST, copy = copy,
+                         mode = _NEWA, scheme = _HORST, copy = copy,
                          max_iter = max_iter, tolerance = tolerance,
                          soft_threshold = soft_threshold, not_normed = [1])
 
@@ -898,16 +916,8 @@ class PLSR(BasePLS, RegressorMixin):
 
 class PLSC(BasePLS, RegressorMixin):
 
-    def __init__(self, num_comp = 2, center = True, scale = True,
-             copy = True, max_iter = _MAXITER, tolerance = _TOLERANCE,
-             soft_threshold = 0):
-
-        C = np.ones((2,2)) - np.eye(2)
-        BasePLS.__init__(self, C = C, num_comp = num_comp,
-                         center = center, scale = scale,
-                         modes = _NEWA, scheme = _HORST, copy = copy,
-                         max_iter = max_iter, tolerance = tolerance,
-                         soft_threshold = soft_threshold)
+    def __init__(self, **kwargs):
+        BasePLS.__init__(self, **kwargs)
 
 
     def _get_transform(self, index = 0):
@@ -917,10 +927,6 @@ class PLSC(BasePLS, RegressorMixin):
             return self.Ws
         else: # index == 1
             return self.Cs
-
-
-    def _deflate(self, X, w, t, p, index = None):
-        return X - dot(t, p.T) # Deflate each block using their loadings
 
 
     def fit(self, *X, **kwargs):
@@ -962,23 +968,24 @@ class PLSC(BasePLS, RegressorMixin):
         return T
 
 
-    def fit_transform(self, X, Y = None, **fit_params):
-        return self.fit(X, Y, **fit_params).transform(X, Y)
-
-
 class CCA(BasePLS):
 
     def __init__(self, **kwargs):
-        BasePLS.__init__(self, **kwargs)
+        BasePLS.__init__(self, mode=(_B, _B), scheme=(_FACTORIAL,_FACTORIAL),
+                         tau = (0, 0), **kwargs)
 
 
     def _get_transform(self, index = 0):
-        if index < 0 or index > 1:
-            raise ValueError("Index must be 0 or 1")
         if index == 0:
             return self.Ws
-        else: # index == 1
+        elif index == 1:
             return self.Cs
+        else:
+            raise ValueError("Index must be 0 or 1")
+
+
+    def _algorithm(self, **kwargs):
+        return _RGCCA(**kwargs)
 
 
     def fit(self, *X, **kwargs):
@@ -992,23 +999,7 @@ class CCA(BasePLS):
         self.P  = self.P[0]
         self.Ws = self.Ws[0]
 
-        self.Bx = dot(self.Ws, self.C.T)
-        self.By = dot(self.Cs, self.W.T)
-
         return self
-
-
-#    def predict(self, X, copy = True):
-#        X = np.asarray(X)
-#        if copy:
-#            X = (X - self.means[0]) / self.stds[0]
-#        else:
-#            X -= self.means[0]
-#            X /= self.stds[0]
-#
-#        Ypred = dot(X, self.Bx)
-#
-#        return (Ypred*self.stds[1]) + self.means[1]
 
 
     def transform(self, X, Y = None, **kwargs):

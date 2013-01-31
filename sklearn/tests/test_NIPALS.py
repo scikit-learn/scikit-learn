@@ -658,8 +658,10 @@ def test_scale():
     for i in xrange(len(methods)):
         clf = methods[i]
         print "Testing scale of "+names[i]
-        clf.set_params(scale=True)
+#        clf.set_params(scale=True)
+        clf.scale = True
         clf.fit(X, Y)
+
 
 if __name__ == "__main__":
     test_NIPALS()
