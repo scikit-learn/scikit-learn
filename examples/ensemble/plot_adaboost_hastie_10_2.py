@@ -32,7 +32,9 @@ import pylab as plt
 
 
 n_estimators = 400
+# A learning rate of 1. may not be optimal for both SAMME and SAMME.R
 learning_rate = 1.
+
 X, y = datasets.make_hastie_10_2(n_samples=12000, random_state=1)
 
 X_test, y_test = X[2000:], y[2000:]
