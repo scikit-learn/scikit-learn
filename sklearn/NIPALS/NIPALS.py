@@ -767,7 +767,6 @@ class PCA(BasePLS):
         return self.P
 
     def fit(self, *X, **kwargs):
-#        y = kwargs.get('y', None)
         BasePLS.fit(self, X[0])
         self.T = self.T[0]
         self.P = self.W[0]

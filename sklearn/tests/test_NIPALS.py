@@ -407,31 +407,6 @@ def test_NIPALS():
     print "Confirming orthogonality of scores in sklearn.NIPALS.PLSC ... OK!"
 
 
-def test_scale():
-
-    d = load_linnerud()
-    X = d.data
-    Y = d.target
-
-    # causes X[:, -1].std() to be zero
-    X[:, -1] = 1.0
-
-    methods = [PLSCanonical(), PLSRegression(), CCA(), PLSSVD(),
-               pls.PCA(), pls.SVD(), pls.PLSR(), pls.PLSC()]
-    names   = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD",
-               "pls.PCA", "pls.SVD", "pls.PLSR", "pls.PLSC"]
-    for i in xrange(len(methods)):
-        clf = methods[i]
-        print "Testing scale of "+names[i]
-        clf.set_params(scale=True)
-        clf.fit(X, Y)
-
-def main():
-
-    
-
-    return
-
     # Compare sparse sklearn.NIPALS.PLSR and sklearn.pls.PLSRegression
 
     d = load_linnerud()
@@ -466,10 +441,9 @@ def main():
         assert_array_almost_equal(Yhat, Yhat_, decimal=num_decimals-2,
                 err_msg="NIPALS SVD and numpy.linalg.svd implementations " \
                 "lead to different loadings")
-        print "Comparing loadings of NIPALS PLSR and sklearn.pls ... OK!" \
-                " (Yhat diff = %.4f, threshold = %0.4f)" % (np.sum((Yhat-Yhat_)**2), st)
+        print "Comparing loadings of PLSR and sklearn.pls ... OK!" \
+                " (err=%.4f, threshold=%0.4f)" % (np.sum((Yhat-Yhat_)**2), st)
 
-    return
 
     # Compare PLSR in sklearn.NIPALS and sklearn.pls
 
@@ -542,19 +516,18 @@ def main():
 
     SSY     = np.sum(Yorig**2)
     SSYdiff = np.sum((Yorig-Yhat)**2)
-    print "NIPALS  Comparing original and predicted Y ... OK!"\
+    print "sklearn.NIPALS: Comparing original and predicted Y ... OK!"\
             " (R2Yhat = %.4f)" % (1 - (SSYdiff / SSY))
     SSYdiff = np.sum((Yorig-Yhat_)**2)
-    print "Manual  Comparing original and predicted Y ... OK!"\
+    print "Manual        : Comparing original and predicted Y ... OK!"\
             " (R2Yhat = %.4f)" % (1 - (SSYdiff / SSY))
     SSYdiff = np.sum((Yorig-Yhat__)**2)
-    print "Edouard Comparing original and predicted Y ... OK!"\
+    print "sklearn.pls   : Comparing original and predicted Y ... OK!"\
             " (R2Yhat = %.4f)" % (1 - (SSYdiff / SSY))
     assert_array_almost_equal(Yhat__, Yhat, decimal=5,
             err_msg="NIPALS and pls implementations lead to different" \
             " predictions")
 
-    return
 
     # Compare SVD with and without sparsity constraint to numpy.linalg.svd
 
@@ -589,31 +562,30 @@ def main():
         else:
             num_decimals = int(log(1./st, 10) + 0.5)
         assert_array_almost_equal(svd.V, V, decimal=num_decimals-1,
-                err_msg="NIPALS SVD and numpy.linalg.svd implementations " \
+                err_msg="sklearn.NIPALS.SVD and numpy.linalg.svd implementations " \
                 "lead to different loadings")
-        print "Comparing loadings of NIPALS SVD and numpy.linalg.svd... OK!"\
-                " (max diff = %.4f, threshold = %0.4f)" % (np.max(np.abs(V - svd.V)), st)
-
-    return
+        print "Comparing loadings of sklearn.NIPALS.SVD and numpy.linalg.svd... OK!"\
+                " (diff=%.4f, threshold=%0.4f)" % (np.max(np.abs(V - svd.V)), st)
 
 
     # Compare PCA with sparsity constraint to numpy.linalg.svd
 
     Xtr = np.random.rand(5,5)
-    Xte = np.random.rand(2,5)
+#    Xte = np.random.rand(2,5)
     num_comp = 3
 
     Xtr, m = pls.center(Xtr, return_means = True)
     Xtr, s = pls.scale(Xtr, return_stds = True)
-    Xte = (Xte - m) / s
+#    Xte = (Xte - m) / s
 
     pca = pls.PCA(center = False, scale = False, num_comp = num_comp,
-              tolerance=5e-12, max_iter=1000, soft_threshold = 0.1)
+              tolerance=5e-12, max_iter=1000, soft_threshold = 0)
     pca.fit(Xtr)
-    pca.P, pca.T = pls.direct(pca.P, pca.T)
-    Tte = pca.transform(Xte)
+    Tte = pca.transform(Xtr)
 
-    print pca.W
+    print Tte
+    print pca.T
+    print dot(Xtr, pca.P)
 
     return
 
@@ -655,6 +627,26 @@ def main():
             "numpy.linalg.svd implementations lead to different scores")
     print "Comparing test set of NIPALS PCA and numpy.linalg.svd... OK! "\
           "(max diff = %.4f)" % np.max(np.abs(Tte - SVDte))
+
+
+def test_scale():
+
+    d = load_linnerud()
+    X = d.data
+    Y = d.target
+
+    # causes X[:, -1].std() to be zero
+    X[:, -1] = 1.0
+
+    methods = [PLSCanonical(), PLSRegression(), CCA(), PLSSVD(),
+               pls.PCA(), pls.SVD(), pls.PLSR(), pls.PLSC()]
+    names   = ["PLSCanonical", "PLSRegression", "CCA", "PLSSVD",
+               "pls.PCA", "pls.SVD", "pls.PLSR", "pls.PLSC"]
+    for i in xrange(len(methods)):
+        clf = methods[i]
+        print "Testing scale of "+names[i]
+        clf.set_params(scale=True)
+        clf.fit(X, Y)
 
 if __name__ == "__main__":
     test_NIPALS()
