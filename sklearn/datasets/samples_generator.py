@@ -332,7 +332,7 @@ def make_hastie_10_2(n_samples=12000, random_state=None):
     The ten features are standard independent Gaussian and
     the target ``y`` is defined by::
 
-      y[i] = 1 if np.sum(X[i] > 9.34 else -1
+      y[i] = 1 if np.sum(X[i] > 9.34) else -1
 
     Parameters
     ----------
