@@ -23,6 +23,8 @@ import pylab as pl
 from sklearn.datasets import fetch_olivetti_faces
 from sklearn.cluster import MiniBatchKMeans
 from sklearn import decomposition
+from sklearn.manifold import LocalityPreservingProjection as LPP
+from sklearn.lda import LDA
 
 # Display progress logs on stdout
 logging.basicConfig(level=logging.INFO,
@@ -36,6 +38,7 @@ rng = RandomState(0)
 # Load faces data
 dataset = fetch_olivetti_faces(shuffle=True, random_state=rng)
 faces = dataset.data
+labels = dataset.target
 
 n_samples, n_features = faces.shape
 
@@ -100,8 +103,15 @@ estimators = [
     ('Factor Analysis components - FA',
      decomposition.FactorAnalysis(n_components=n_components, max_iter=2),
      True),
-]
 
+    ('Locality Preserving Projection - LPP',
+     LPP(5, n_components=n_components),
+     True),
+
+    ('Linear Discriminant Analysis - LDA',
+     LDA(n_components=n_components),
+     True),
+]
 
 ###############################################################################
 # Plot a sample of the input data
@@ -117,13 +127,18 @@ for name, estimator, center in estimators:
     data = faces
     if center:
         data = faces_centered
-    estimator.fit(data)
+    try:
+        estimator.fit(data)
+    except TypeError:
+        estimator.fit(data, labels)
     train_time = (time() - t0)
     print "done in %0.3fs" % train_time
     if hasattr(estimator, 'cluster_centers_'):
         components_ = estimator.cluster_centers_
     else:
         components_ = estimator.components_
+
+    
     if hasattr(estimator, 'noise_variance_'):
         plot_gallery("Pixelwise variance",
                      estimator.noise_variance_.reshape(1, -1), n_col=1,
