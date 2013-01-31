@@ -414,9 +414,25 @@ def generate_example_rst(app):
     .figure {
         float: left;
         margin: 10px;
-        width: auto;
-        height: 200px;
-        width: 180px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        -webkit-border-radius: 10px; /* Saf3-4, iOS 1-3.2, Android <1.6 */
+        -moz-border-radius: 10px; /* FF1-3.6 */
+        border-radius: 10px; /* Opera 10.5, IE9, Saf5, Chrome, FF4, iOS 4, Android 2.1+ */
+        border: 2px solid #fff;
+        -webkit-transition: all 0.15s ease-out;  /* Saf3.2+, Chrome */
+        -moz-transition: all 0.15s ease-out;  /* FF4+ */
+        -ms-transition: all 0.15s ease-out;  /* IE10? */
+        -o-transition: all 0.15s ease-out;  /* Opera 10.5+ */
+        transition: all 0.15s ease-out;
+        background-repeat: no-repeat;
+        /* --> Thumbnail image size */
+        width: 150px;
+        height: 100px;
+        -webkit-background-size: 150px 100px; /* Saf3-4 */
+        -moz-background-size: 150px 100px; /* FF3.6 */
+        background-size: 150px 100px; /* Opera, IE9, Saf5, Chrome, FF4 */
     }
 
     .figure img {
@@ -479,6 +495,15 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
             generate_file_rst(fname, target_dir, src_dir, plot_gallery)
             thumb = os.path.join(dir, 'images', 'thumb', fname[:-3] + '.png')
             link_name = os.path.join(dir, fname).replace(os.path.sep, '_')
+            fhindex.write("""
+
+.. raw:: html
+
+    <div class="thumbnailContainer">
+
+
+""")
+
             fhindex.write('.. figure:: %s\n' % thumb)
             if link_name.startswith('._'):
                 link_name = link_name[2:]
@@ -488,6 +513,12 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
             else:
                 fhindex.write('   :target: ./%s.html\n\n' % link_name[:-3])
             fhindex.write("""   :ref:`example_%s`
+
+
+.. raw:: html
+
+    </div>
+
 
 .. toctree::
    :hidden:
@@ -728,11 +759,11 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
         # generate thumb file
         this_template = plot_rst_template
         if os.path.exists(first_image_file):
-            make_thumbnail(first_image_file, thumb_file, 180, 120)
+            make_thumbnail(first_image_file, thumb_file, 200, 140)
 
     if not os.path.exists(thumb_file):
         # create something to replace the thumbnail
-        make_thumbnail('images/no_image.png', thumb_file, 180, 120)
+        make_thumbnail('images/no_image.png', thumb_file, 200, 140)
 
     docstring, short_desc, end_row = extract_docstring(example_file)
 

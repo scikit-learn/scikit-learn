@@ -593,6 +593,8 @@ div.header-wrapper {
 }
 {% endif %}
 
+/*-----------------------The Examples Gallery-------------------------------*/
+
 /* ------- Fix maximum size of thumbnails in example gallery -------------- */
 div#examples.section .figure img {
     max-width: 160px;
@@ -601,11 +603,62 @@ div#examples.section .figure img {
     margin: auto;
 }
 
-div#examples.section .figure:hover img {
-    max-width: 167px;
-    max-height: 167px;
-    box-shadow:4px -4px 10px 3px #888, inset 4px -4px 10px 3px #888;
+div#examples.section .thumbnailContainer {
+    position: relative;
+    float: left;
+    width: 160px;
+    height: 145px;
+    margin: 20px 20px 78px 0px
 }
+
+/* Standard browsers hover */
+
+div#examples.section .figure:hover img ,
+div#examples.section .figure:focus img,
+div#examples.section .figure:active img{
+  z-index: 100;
+  /* Bigger box shadow  */
+  -moz-box-shadow: 0px 0px 20px rgba(0, 0, 0, .5); /* FF3.5 - 3.6 */
+  -webkit-box-shadow: 0px 0px 20px rgba(0, 0, 0, .5); /* Saf3.0+, Chrome */
+  box-shadow: 0px 0px 20px rgba(0, 0, 0, .5); /* Opera 10.5, IE9, FF4+, Chrome 10+ */
+  /* --> Full image size */
+  width: 240px;
+  height: 132px;
+  -webkit-background-size: 240px 160px; /* Saf3-4 */
+  -moz-background-size: 240px 160px; /* FF3.6 */
+  background-size: 240px 160px; /* Opera, IE9, Saf5, Chrome, FF4 */
+  /* --> Half of height sutraction (Full image height - Thumbnail image height) */
+  margin-top: -27px;
+  /* IE6+IE7 does not hover because of z-index stacking context bug:
+     http://www.quirksmode.org/bugreports/archives/2006/01/Explorer_z_index_bug.html */
+  /* --> Thumbnail image size */
+  *width: 160px;
+  *height: 145px;
+  *margin-top: 0;
+  *margin-left: 0;
+}
+
+/* IE hover */
+
+.photos .photo:hover img,
+.photos .photo:focus img,
+.photos .photo:active img {
+  z-index: 100;
+  /* --> Full image size */
+  width: 240px;
+  height: 132px;
+  /* IE6+IE7 does not hover because of z-index stacking context bug:
+     http://www.quirksmode.org/bugreports/archives/2006/01/Explorer_z_index_bug.html */
+  /* --> Thumbnail image size */
+  *width: 160px;
+  *height: 145px;
+}
+
+/* The hover-effect for the examples gallery was adapted from Martin Michálek's
+/* example: http://www.vzhurudolu.cz/test/image-gallery-enlarge-on-hover/
+
+/*------------------------------------------------------------------------*/
+
 
 /* ------- Zoom plots to make them fit in layout -------------------------- */
 div.body img {
