@@ -869,7 +869,9 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
             if n_reassigns:
                 print("[_mini_batch_step] Reassigning %i cluster centers."
                       % n_reassigns)
-        centers[to_reassign] = new_centers.toarray()
+        if sp.issparse(new_centers) and not sp.issparse(centers):
+            new_centers = new_centers.toarray()
+        centers[to_reassign] = new_centers
 
     # implementation for the sparse CSR reprensation completely written in
     # cython
