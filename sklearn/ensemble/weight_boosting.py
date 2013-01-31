@@ -273,6 +273,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         If "SAMME.R" then use the SAMME.R real boosting algorithm.
         ``base_estimator`` must support calculation of class probabilities.
         If "SAMME" then use the SAMME discrete boosting algorithm.
+        The SAMME.R algorithm typically converges faster than SAMME,
+        achieving a lower test error with fewer boosting iterations.
 
     compute_importances : boolean, optional (default=False)
         Whether feature importances are computed and stored in the
