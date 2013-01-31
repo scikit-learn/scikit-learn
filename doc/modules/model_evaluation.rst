@@ -768,18 +768,18 @@ function for more information see the :ref:`clustering_evaluation` section.
 
 .. _score_func_objects:
 
-.. currentmodule:: sklearn.cross_validation
+.. currentmodule:: sklearn
 
 Flexible Scoring Objects
 ========================
 While the above functions provide a simple interface for most use-cases, they
 can not directly be used for model selection and evaluation using
-:class:`GridSearchCV` and
-:func:`cross_val_score`, as scoring functions have different
+:class:`grid_search.GridSearchCV` and
+:func:`cross_validation.cross_val_score`, as scoring functions have different
 signatures and might require additional parameters.
 
-Instead, :class:`GridSearchCV` and
-:func:`cross_val_score` both take callables that implement
+Instead, :class:`grid_search.GridSearchCV` and
+:func:`cross_validation.cross_val_score` both take callables that implement
 estimator dependent functions. That allows for very flexible evaluation of
 models, for example taking complexity of the model into account.
 
@@ -792,7 +792,6 @@ values are:
 Scoring                 Function
 ===================     =========================================
 **Classification**
--------------------     -----------------------------------------
 'accuracy'              sklearn.metrics.accuracy_score
 'average_precision'     sklearn.metrics.average_precision_score
 'f1'                    sklearn.metrics.f1_score
@@ -801,11 +800,9 @@ Scoring                 Function
 'roc_auc'               sklearn.merrics.auc_score
 
 **Clustering**
--------------------     -----------------------------------------
 'ari'`                  sklearn.metrics.adjusted_rand_score
 
 **Regression**
--------------------     -----------------------------------------
 'mse'                   sklearn.metrics.mean_squared_error
 'r2'                    sklearn.metrics.r2_score
 ===================     =========================================

@@ -674,7 +674,7 @@ Model Selection Interface
    :toctree: generated/
    :template: function.rst
 
-    metrics.score_objects
+   metrics.score_objects
 
 Classification metrics
 ----------------------

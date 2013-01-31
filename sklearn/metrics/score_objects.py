@@ -117,8 +117,7 @@ def score_objects():
     ===================     =========================================
     Scoring                 Function
     ===================     =========================================
-    Classification
-    -------------------     -----------------------------------------
+    **Classification**
     'accuracy'              sklearn.metrics.accuracy_score
     'average_precision'     sklearn.metrics.average_precision_score
     'f1'                    sklearn.metrics.f1_score
@@ -126,12 +125,10 @@ def score_objects():
     'recall'                sklearn.metrics.recall_score
     'roc_auc'               sklearn.merrics.auc_score
 
-    Clustering
-    -------------------     -----------------------------------------
+    **Clustering**
     'ari'`                  sklearn.metrics.adjusted_rand_score
 
-    Regression
-    -------------------     -----------------------------------------
+    **Regression**
     'mse'                   sklearn.metrics.mean_squared_error
     'r2'                    sklearn.metrics.r2_score
     ===================     =========================================

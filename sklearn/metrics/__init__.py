@@ -28,7 +28,7 @@ from .metrics import (accuracy_score,
 from .metrics import zero_one
 from .metrics import zero_one_score
 
-from .score_objects import AsScorer, scorers
+from .score_objects import AsScorer, scorers, score_objects
 
 from . import cluster
 from .cluster import (adjusted_rand_score,
@@ -82,4 +82,5 @@ __all__ = ['accuracy_score',
            'v_measure_score',
            'zero_one_loss',
            'AsScorer',
-           'scorers']
+           'scorers',
+           'score_objects']
