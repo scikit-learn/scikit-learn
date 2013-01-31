@@ -1,6 +1,5 @@
 import numpy as np
 from numpy import dot
-from numpy.linalg import norm
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.datasets import load_linnerud
 
@@ -545,7 +544,7 @@ def test_NIPALS():
         svd = pls.SVD(num_comp = num_comp,
                       tolerance=tol, max_iter=1000, soft_threshold = st)
         svd.fit(Xtr)
-        svd.V, svd.U = pls.direct(svd.V, svd.U)
+#        svd.V, svd.U = pls.direct(svd.V, svd.U)
 
         # numpy.lialg.svd
         U, S, V = np.linalg.svd(Xtr)
@@ -554,14 +553,15 @@ def test_NIPALS():
         U = U[:,0:num_comp]
         S = S[:,0:num_comp]
         V = V[:,0:num_comp]
-        V, U = pls.direct(V, U)
+#        V, U = pls.direct(V, U)
         SVDte = dot(Xte, V)
 
         if st < tol:
             num_decimals = 5
         else:
             num_decimals = int(log(1./st, 10) + 0.5)
-        assert_array_almost_equal(svd.V, V, decimal=num_decimals-1,
+        svd.V, V = pls.direct(svd.V, V, compare = True)
+        assert_array_almost_equal(svd.V, V, decimal=num_decimals-2,
                 err_msg="sklearn.NIPALS.SVD and numpy.linalg.svd implementations " \
                 "lead to different loadings")
         print "Comparing loadings of sklearn.NIPALS.SVD and numpy.linalg.svd... OK!"\
@@ -571,23 +571,36 @@ def test_NIPALS():
     # Compare PCA with sparsity constraint to numpy.linalg.svd
 
     Xtr = np.random.rand(5,5)
-#    Xte = np.random.rand(2,5)
-    num_comp = 3
+    num_comp = 5
+    tol = 5e-9
 
     Xtr, m = pls.center(Xtr, return_means = True)
     Xtr, s = pls.scale(Xtr, return_stds = True)
-#    Xte = (Xte - m) / s
 
-    pca = pls.PCA(center = False, scale = False, num_comp = num_comp,
-              tolerance=5e-12, max_iter=1000, soft_threshold = 0)
-    pca.fit(Xtr)
-    Tte = pca.transform(Xtr)
+    for st in [0.1, 0.01, 0.001, 0.0001, 0]:
+        pca = pls.PCA(center = False, scale = False, num_comp = num_comp,
+                  tolerance=tol, max_iter=500, soft_threshold = st)
+        pca.fit(Xtr)
+        Tte = pca.transform(Xtr)
+        U, S, V = np.linalg.svd(Xtr)
+        V = V.T
+        US = dot(U,np.diag(S))
+        US = US[:,0:num_comp]
+        V  = V[:,0:num_comp]
+    
+        err = np.max(np.abs(Xtr - dot(pca.T,pca.P.T)))
 
-    print Tte
-    print pca.T
-    print dot(Xtr, pca.P)
+        if st < tol:
+            num_decimals = 5
+        else:
+            num_decimals = int(log(1./st, 10) + 0.5)
+        assert_array_almost_equal(Xtr, dot(pca.T,pca.P.T), decimal = num_decimals-1,
+                err_msg="Model does not equal the matrices")
+        print "PCA: Testing equality of model and matrix ... OK! (err=%.5f, threshold=%.4f)" % (err, st)
+
 
     return
+
 
     # Compare PCA without the sparsity constraint to numpy.linalg.svd
 

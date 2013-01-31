@@ -575,11 +575,11 @@ class BasePLS(BaseEstimator, TransformerMixin):
 
 
     def _algorithm(self, *args, **kwargs):
-        return _NIPALS(**kwargs)
+        return _NIPALS(*args, **kwargs)
 
 
     def _deflate(self, X, w, t, p, index = None):
-        return X - dot(t, p.T) # Default is deflations with loadings p
+        return X - dot(t, p.T) # Default is deflation with loadings p
 
 
     def _check_inputs(self, X):
@@ -638,13 +638,13 @@ class BasePLS(BaseEstimator, TransformerMixin):
         self.stds  = []
         for i in xrange(self.n):
             if self.center[i]:
-                X[i], means = center(X[i], return_means = True)
+                X[i], means = center(X[i], return_means = True, copy = self.copy)
             else:
                 means = np.zeros((1, X[i].shape[1]))
             self.means.append(means)
 
             if self.scale[i]:
-                X[i], stds = scale(X[i], centered=self.center[i], return_stds = True)
+                X[i], stds = scale(X[i], centered=self.center[i], return_stds = True, copy = self.copy)
             else:
                 stds = np.ones((1, X[i].shape[1]))
             self.stds.append(stds)
@@ -749,6 +749,10 @@ class BasePLS(BaseEstimator, TransformerMixin):
             T.append(t)
 
         return T
+
+
+    def fit_transform(self, *X, **fit_params):
+        return self.fit(*X, **fit_params).transform(*X)
 
 
 class PCA(BasePLS):
@@ -960,6 +964,60 @@ class PLSC(BasePLS, RegressorMixin):
 
     def fit_transform(self, X, Y = None, **fit_params):
         return self.fit(X, Y, **fit_params).transform(X, Y)
+
+
+class CCA(BasePLS):
+
+    def __init__(self, **kwargs):
+        BasePLS.__init__(self, **kwargs)
+
+
+    def _get_transform(self, index = 0):
+        if index < 0 or index > 1:
+            raise ValueError("Index must be 0 or 1")
+        if index == 0:
+            return self.Ws
+        else: # index == 1
+            return self.Cs
+
+
+    def fit(self, *X, **kwargs):
+        BasePLS.fit(self, *X)
+        self.C  = self.W[1]
+        self.U  = self.T[1]
+        self.Q  = self.P[1]
+        self.Cs = self.Ws[1]
+        self.W  = self.W[0]
+        self.T  = self.T[0]
+        self.P  = self.P[0]
+        self.Ws = self.Ws[0]
+
+        self.Bx = dot(self.Ws, self.C.T)
+        self.By = dot(self.Cs, self.W.T)
+
+        return self
+
+
+#    def predict(self, X, copy = True):
+#        X = np.asarray(X)
+#        if copy:
+#            X = (X - self.means[0]) / self.stds[0]
+#        else:
+#            X -= self.means[0]
+#            X /= self.stds[0]
+#
+#        Ypred = dot(X, self.Bx)
+#
+#        return (Ypred*self.stds[1]) + self.means[1]
+
+
+    def transform(self, X, Y = None, **kwargs):
+        if Y != None:
+            T = BasePLS.transform(self, X, Y, **kwargs)
+        else:
+            T = BasePLS.transform(self, X, **kwargs)
+            T = T[0]
+        return T
 
 
 #class Enum(object):
