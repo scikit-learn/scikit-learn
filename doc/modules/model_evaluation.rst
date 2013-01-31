@@ -765,6 +765,93 @@ Clustering metrics
 The :mod:`sklearn.metrics` implements several losses, scores and utility
 function for more information see the :ref:`clustering_evaluation` section.
 
+
+.. _score_func_objects:
+
+.. currentmodule:: sklearn.cross_validation
+
+Flexible Scoring Objects
+========================
+While the above functions provide a simple interface for most use-cases, they
+can not directly be used for model selection and evaluation using
+:class:`GridSearchCV` and
+:func:`cross_val_score`, as scoring functions have different
+signatures and might require additional parameters.
+
+Instead, :class:`GridSearchCV` and
+:func:`cross_val_score` both take callables that implement
+estimator dependent functions. That allows for very flexible evaluation of
+models, for example taking complexity of the model into account.
+
+For scoring functions that take no additional parameters (which are most of
+them), you can simply provide a string as the ``scoring`` parameter. Possible
+values are:
+
+
+===================     =========================================
+Scoring                 Function
+===================     =========================================
+**Classification**
+-------------------     -----------------------------------------
+'accuracy'              sklearn.metrics.accuracy_score
+'average_precision'     sklearn.metrics.average_precision_score
+'f1'                    sklearn.metrics.f1_score
+'precision'             sklearn.metrics.precision_score
+'recall'                sklearn.metrics.recall_score
+'roc_auc'               sklearn.merrics.auc_score
+
+**Clustering**
+-------------------     -----------------------------------------
+'ari'`                  sklearn.metrics.adjusted_rand_score
+
+**Regression**
+-------------------     -----------------------------------------
+'mse'                   sklearn.metrics.mean_squared_error
+'r2'                    sklearn.metrics.r2_score
+===================     =========================================
+
+.. currentmodule:: sklearn.metrics
+
+Creating Scoring Objects From Score Functions
+---------------------------------------------
+If you want to use a scoring function that takes additional parameters, such as
+:func:`fbeta_score`, you need to generate an appropriate scoring object.  The
+simplest way to generate a callable object for scoring is by using
+:class:`AsScorer`.
+:class:`AsScorer` converts score functions as above into callables
+that can be used for model evaluation::
+
+    >>> from sklearn.metrics import fbeta_score, AsScorer
+    >>> ftwo_scorer = AsScorer(fbeta_score, beta=2)
+    >>> from sklearn.grid_search import GridSearchCV
+    >>> from sklearn.svm import LinearSVC
+    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=ftwo_scorer)
+
+:class:`AsScorer` takes as parameters the function you want to use,
+whether it is a score (``greater_is_better=True``) or a loss
+(``greater_is_better=False``), whether the function you provided takes
+predictions as input (``needs_threshold=False``) or needs confidence scores
+(``needs_threshold=True``) and any additional parameters, such as ``beta``
+in the example above.
+
+
+Implementing Your Own Scoring Object
+------------------------------------
+You can generate even more flexible model scores by constructing your own
+scoring object. The requirements that a callable can be used for model
+selection are as follows:
+
+- It can be called with parameters ``(estimator, X, y)``, where ``estimator``
+  it the model that should be evaluated, ``X`` is validation data and ``y``
+  is the ground truth target for ``X`` (in the supervised case) or ``None``
+  in the unsupervised case.
+
+- The call returns a number indicating the quality of estimator.
+
+- The callable has a boolean attribute ``greater_is_better`` which indicates whether
+  high or low values correspond to a better estimator.
+
+
 .. _dummy_estimators:
 
 Dummy estimators
@@ -829,84 +916,3 @@ from class imbalance, etc...
 
 :class:`DummyRegressor` implements a simple rule of thumb for regression:
 always predict the mean of the training targets.
-
-.. _score_func_objects:
-
-Flexible Scoring Objects
-========================
-While the above functions provide a simple interface for most use-cases, they
-can not directly be used for model selection and evaluation using
-:class:`cross_validation.GridSearchCV` and
-:func:`cross_validation.cross_val_score`, as scoring functions have different
-signatures and might require additional parameters.
-
-Instead, :class:`cross_validation.GridSearchCV` and
-:func:`cross_validation.cross_val_score` both take callables that implement
-estimator dependent functions. That allows for very flexible evaluation of
-models, for example taking complexity of the model into account.
-
-For scoring functions that take no additional parameters (which are most of
-them), you can simply provide a string as the ``scoring`` parameter. Possible
-values are:
-
-===============     ====================================
-scoring             Function
-===============     ====================================
-Classification
---------------      ------------------------------------
-'accuracy'          sklearn.metrics.accuracy_score
-'average_precision' sklearn.metrics.average_precision_score
-'f1'                sklearn.metrics.f1_score
-'precision'         sklearn.metrics.precision_score
-'recall'            sklearn.metrics.recall_score
-'roc_auc'           sklearn.merrics.auc_score
-
-Clustering
---------------      ------------------------------------
-'ari'`              sklearn.metrics.adjusted_rand_score
-
-Regression
---------------      ------------------------------------
-'mse'               sklearn.metrics.mean_squared_error
-'r2'                sklearn.metrics.r2_score
-===============     ====================================
-
-Creating Scoring Objects From Score Functions
----------------------------------------------
-If you want to use a scoring function that takes additional parameters,
-such as :func:`fbeta`, you need to generate an appropriate scoring object.
-The simplest way to generate a callable object for scoring is by
-using :class:`AsScorer`.
-:class:`AsScorer` converts score functions as above into callables
-that can be used for model evaluation::
-
-    >>> from sklearn.metrics import fbeta_score, AsScorer
-    >>> ftwo_scorer = AsScorer(fbeta_score, beta=2)
-    >>> from sklearn.grid_search import GridSearchCV
-    >>> from sklearn.svm import LinearSVC
-    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
-    ...                     scoring=ftwo_scorer)
-
-:class:`AsScorer` takes as parameters the function you want to use,
-whether it is a score (``greater_is_better=True``) or a loss
-(``greater_is_better=False``), whether the function you provided takes
-predictions as input (``needs_threshold=False``) or needs confidence scores
-(``needs_threshold=True``) and any additional parameters, such as ``beta``
-in the example above.
-
-
-Implementing Your Own Scoring Object
-------------------------------------
-You can generate even more flexible model scores by constructing your own
-scoring object. The requirements that a callable can be used for model
-selection are as follows:
-
-- It can be called with parameters ``(estimator, X, y)``, where ``estimator``
-  it the model that should be scored, ``X`` is some validation data and ``y``
-  is the ground truth target for ``X`` (in the supervised case) or ``None``
-  in the unsupervised case.
-
-- The call returns a number indicating the quality of estimator.
-
-- The callable has an attribute ``greater_is_better`` which indicates whether
-  high or low values correspond to a better estimator.

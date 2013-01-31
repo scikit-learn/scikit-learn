@@ -114,27 +114,27 @@ def score_objects():
     This function simply returns the valid score function callables. It exists
     to allow for a description of the mapping for each of the valid strings.
 
-    ===============     ====================================
-    scoring             Function
-    ===============     ====================================
+    ===================     =========================================
+    Scoring                 Function
+    ===================     =========================================
     Classification
-    --------------      ------------------------------------
-    'accuracy'          sklearn.metrics.accuracy_score
-    'average_precision' sklearn.metrics.average_precision_score
-    'f1'                sklearn.metrics.f1_score
-    'precision'         sklearn.metrics.precision_score
-    'recall'            sklearn.metrics.recall_score
-    'roc_auc'           sklearn.merrics.auc_score
+    -------------------     -----------------------------------------
+    'accuracy'              sklearn.metrics.accuracy_score
+    'average_precision'     sklearn.metrics.average_precision_score
+    'f1'                    sklearn.metrics.f1_score
+    'precision'             sklearn.metrics.precision_score
+    'recall'                sklearn.metrics.recall_score
+    'roc_auc'               sklearn.merrics.auc_score
 
     Clustering
-    --------------      ------------------------------------
-    'ari'`              sklearn.metrics.adjusted_rand_score
+    -------------------     -----------------------------------------
+    'ari'`                  sklearn.metrics.adjusted_rand_score
 
     Regression
-    --------------      ------------------------------------
-    'mse'               sklearn.metrics.mean_squared_error
-    'r2'                sklearn.metrics.r2_score
-    ===============     ====================================
+    -------------------     -----------------------------------------
+    'mse'                   sklearn.metrics.mean_squared_error
+    'r2'                    sklearn.metrics.r2_score
+    ===================     =========================================
 
     """
     return scorers
