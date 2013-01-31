@@ -323,9 +323,8 @@ def test_minibatch_reassign():
     # as a result all the centers should be reassigned and the model
     # should not longer be good
     for this_X in (X, X_csr):
-        mb_k_means = MiniBatchKMeans(init=centers.copy(),
-                                    n_clusters=n_clusters, batch_size=1,
-                                    random_state=42)
+        mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=1,
+                                     random_state=42)
         mb_k_means.fit(X)
         centers_before = mb_k_means.cluster_centers_.copy()
         try:
