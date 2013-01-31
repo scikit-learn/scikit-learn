@@ -181,6 +181,8 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         self.coef_ = np.dot(self.means_ - self.xbar_, self.scalings_)
         self.intercept_ = (-0.5 * np.sum(self.coef_ ** 2, axis=1) +
                            np.log(self.priors_))
+        self.components_ = np.dot(self.coef_, 
+                self.scalings_.T)[:self.n_components]
         return self
 
     @property
