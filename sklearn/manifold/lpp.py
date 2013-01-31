@@ -20,10 +20,9 @@ from scipy.linalg import eigh
 from ..utils.arpack import eigsh
 from ..decomposition import PCA
 
-from .lpp_util import toSymmetrixMat
 
 
-def adjacency_matrix(X, n_neighbors, mode='distance', use_ext=True):
+def adjacency_matrix(X, n_neighbors, mode='distance'):
     """Compute weighted adjacency matrix by k-nearest search
 
     Parameters
@@ -49,9 +48,10 @@ def adjacency_matrix(X, n_neighbors, mode='distance', use_ext=True):
     G = kneighbors_graph(X, n_neighbors, mode)
     G = G.tolil()
     nzx, nzy = G.nonzero()
-    if use_ext:
-        G = toSymmetrixMat(G, nzx, nzy)
-    else:
+    try:
+        from .lpp_util import to_symmetrix_matrix
+        G = to_symmetrix_matrix(G, nzx, nzy)
+    except ImportError:
         for xx, yy in zip(nzx, nzy):
             if G[yy, xx] == 0:
                 G[yy, xx] = G[xx, yy]
@@ -197,7 +197,7 @@ def auto_dsygv(M, N, k, k_skip=0, eigen_solver='auto', tol=1E-6,
 
 def locality_preserving_projection(X, n_neighbors, mode="distance",
         kernel_func="heat", kernel_param=10.0, k=2, eigen_solver='auto',
-        tol=1E-6, max_iter=100, random_state=None, use_ext=True):
+        tol=1E-6, max_iter=100, random_state=None):
     """Perform Locality Linear Projection
 
     Parameters
@@ -242,9 +242,6 @@ def locality_preserving_projection(X, n_neighbors, mode="distance",
     random_state: numpy.RandomState or int, optional
         The generator or seed used to determine the starting vector for arpack
         iterations.  Defaults to numpy.random.
-
-    use_ext : bool
-        whether use cython extension or not
 
     Returns
     -------
@@ -312,14 +309,16 @@ class LocalityPreservingProjection(BaseEstimator, TransformerMixin):
     use_ext : bool
         whether use cython extension or not for constructing adjacency matrix
 
-    pca_preprocess : bool
-        whether use PCA to reduce dimension in advance to avoid singularity
+    pca_preprocess : int, float 
+        n_components parameter of PCA class for preprocessing to reduce
+        dimension in advance to avoid singularity.
+        If `None` is passed, preprocessing will be passed.  
     """
 
     def __init__(self, n_neighbors=None, n_components=2, mode="distance",
                  kernel_func="heat", kernel_param=10.0, eigen_solver='auto',
-                 tol=1E-6, max_iter=100, random_state=None, use_ext=True,
-                 pca_preprocess=True):
+                 tol=1E-6, max_iter=100, random_state=None,
+                 pca_preprocess=0.9):
         self._n_neighbors = n_neighbors
         self._n_components = n_components
         self._mode = mode
@@ -329,33 +328,33 @@ class LocalityPreservingProjection(BaseEstimator, TransformerMixin):
         self._tol = tol
         self._max_iter = max_iter
         self._random_state = random_state
-        self._use_ext = use_ext
-        self._components = None
         self._pca_preprocess = pca_preprocess
 
     def fit(self, X, y=None):
         if self._pca_preprocess:
             # PCA preprocess for removing singularity
-            target_dim = int(min(X.shape) * 0.9)
-            _pca = PCA(n_components=target_dim)
+            _pca = PCA(n_components=self._pca_preprocess)
             X = _pca.fit_transform(X)
 
         if self._kernel_func == "heat" and self._kernel_param is None:
             self._kernel_param = 1.0 / X.shape[1]
         if self._n_neighbors is None:
             self._n_neighbors = max(int(X.shape[0] / 10), 1)
-        self._components, _ = locality_preserving_projection(X, 
+        self.components_, _ = locality_preserving_projection(X, 
                                   self._n_neighbors, self._mode,
                                   self._kernel_func, self._kernel_param,
                                   self._n_components, self._eigen_solver,
-                                  self._tol, self._max_iter,
-                                  self._random_state, self._use_ext)
+                                  self._tol, self._max_iter, 
+                                  self._random_state)
 
         if self._pca_preprocess:
-            self._components = safe_sparse_dot(_pca.components_.T,
-                                               self._components)
+            self.components_ = safe_sparse_dot(_pca.components_.T,
+                                               self.components_)
+            
+        self.components_ = self.components_.T
+
 
         return self
 
     def transform(self, X):
-        return safe_sparse_dot(X, self._components)
+        return safe_sparse_dot(X, self.components_.T)
