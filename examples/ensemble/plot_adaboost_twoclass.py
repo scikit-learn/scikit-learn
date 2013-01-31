@@ -3,8 +3,10 @@
 Two-class AdaBoost
 ==================
 
-This example fits an AdaBoosted decision stump on a classification dataset and
-plots the decision boundary, class probabilities, and two-class decision score.
+This example fits an AdaBoosted decision stump on a non-linearly separable
+classification dataset composed of two "Gaussian quantiles" clusters
+(see :func:`sklearn.datasets.make_gaussian_quantiles`) and plots the decision
+boundary, class probabilities, and two-class decision scores.
 
 """
 print __doc__
