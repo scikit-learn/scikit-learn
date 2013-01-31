@@ -444,11 +444,19 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         if estimator_error <= 0:
             return sample_weight, 1., 0.
 
-        # Construct y coding
+        """
+        Construct y coding as described in Zhu et al [2]::
+
+            y_k = 1 if c == k else -1 / (K - 1)
+
+        where K == n_classes_ and c, k in [0, K) are indices along the second
+        axis of the y coding with c being the index corresponding to the true
+        class label.
+        """
         n_classes = self.n_classes_
         classes = self.classes_
         y_codes = np.array([-1. / (n_classes - 1), 1.])
-        y_coding = y_codes.take(classes == y.reshape(y.shape[0], 1))
+        y_coding = y_codes.take(classes == y[:, np.newaxis])
 
         # Displace zero probabilities so the log is defined.
         # Also fix negative elements which may occur with
