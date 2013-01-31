@@ -753,73 +753,83 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
 
 def embed_code_links(app, exception):
     """Embed hyperlinks to documentation into example code"""
-    if exception is not None:
-        return
-    print 'Embedding documentation hyperlinks in examples..'
+    try:
+        if exception is not None:
+            return
+        print 'Embedding documentation hyperlinks in examples..'
 
-    # Add resolvers for the packages for which we want to show links
-    doc_resolvers = {}
-    doc_resolvers['sklearn'] = SphinxDocLinkResolver(app.builder.outdir,
-                                                     relative=True)
+        # Add resolvers for the packages for which we want to show links
+        doc_resolvers = {}
+        doc_resolvers['sklearn'] = SphinxDocLinkResolver(app.builder.outdir,
+                                                         relative=True)
 
-    doc_resolvers['matplotlib'] = SphinxDocLinkResolver(
-        'http://matplotlib.org')
+        doc_resolvers['matplotlib'] = SphinxDocLinkResolver(
+            'http://matplotlib.org')
 
-    doc_resolvers['numpy'] = SphinxDocLinkResolver(
-        'http://docs.scipy.org/doc/numpy-1.6.0')
+        doc_resolvers['numpy'] = SphinxDocLinkResolver(
+            'http://docs.scipy.org/doc/numpy-1.6.0')
 
-    doc_resolvers['scipy'] = SphinxDocLinkResolver(
-        'http://docs.scipy.org/doc/scipy-0.11.0/reference')
+        doc_resolvers['scipy'] = SphinxDocLinkResolver(
+            'http://docs.scipy.org/doc/scipy-0.11.0/reference')
 
-    example_dir = os.path.join(app.builder.srcdir, 'auto_examples')
-    html_example_dir = os.path.abspath(os.path.join(app.builder.outdir,
-                                                    'auto_examples'))
+        example_dir = os.path.join(app.builder.srcdir, 'auto_examples')
+        html_example_dir = os.path.abspath(os.path.join(app.builder.outdir,
+                                                        'auto_examples'))
 
-    # patterns for replacement
-    link_pattern = '<a href="%s">%s</a>'
-    orig_pattern = '<span class="n">%s</span>'
-    period = '<span class="o">.</span>'
+        # patterns for replacement
+        link_pattern = '<a href="%s">%s</a>'
+        orig_pattern = '<span class="n">%s</span>'
+        period = '<span class="o">.</span>'
 
-    for dirpath, _, filenames in os.walk(html_example_dir):
-        for fname in filenames:
-            print '\tprocessing: %s' % fname
-            full_fname = os.path.join(html_example_dir, dirpath, fname)
-            subpath = dirpath[len(html_example_dir) + 1:]
-            pickle_fname = os.path.join(example_dir, subpath,
-                                        fname[:-5] + '_codeobj.pickle')
+        for dirpath, _, filenames in os.walk(html_example_dir):
+            for fname in filenames:
+                print '\tprocessing: %s' % fname
+                full_fname = os.path.join(html_example_dir, dirpath, fname)
+                subpath = dirpath[len(html_example_dir) + 1:]
+                pickle_fname = os.path.join(example_dir, subpath,
+                                            fname[:-5] + '_codeobj.pickle')
 
-            if os.path.exists(pickle_fname):
-                # we have a pickle file with the objects to embed links for
-                with open(pickle_fname, 'rb') as fid:
-                    example_code_obj = cPickle.load(fid)
-                fid.close()
-                str_repl = {}
-                # generate replacement strings with the links
-                for name, cobj in example_code_obj.iteritems():
-                    this_module = cobj['module'].split('.')[0]
-
-                    if this_module not in doc_resolvers:
-                        continue
-
-                    link = doc_resolvers[this_module].resolve(cobj,
-                                                              full_fname)
-                    if link is not None:
-                        parts = name.split('.')
-                        name_html = orig_pattern % parts[0]
-                        for part in parts[1:]:
-                            name_html += period + orig_pattern % part
-                        str_repl[name_html] = link_pattern % (link, name_html)
-                # do the replacement in the html file
-                if len(str_repl) > 0:
-                    with open(full_fname, 'rt') as fid:
-                        lines_in = fid.readlines()
+                if os.path.exists(pickle_fname):
+                    # we have a pickle file with the objects to embed links for
+                    with open(pickle_fname, 'rb') as fid:
+                        example_code_obj = cPickle.load(fid)
                     fid.close()
-                    with open(full_fname, 'wt') as fid:
-                        for line in lines_in:
-                            for name, link in str_repl.iteritems():
-                                line = line.replace(name, link)
-                            fid.write(line)
-                    fid.close()
+                    str_repl = {}
+                    # generate replacement strings with the links
+                    for name, cobj in example_code_obj.iteritems():
+                        this_module = cobj['module'].split('.')[0]
+
+                        if this_module not in doc_resolvers:
+                            continue
+
+                        link = doc_resolvers[this_module].resolve(cobj,
+                                                                  full_fname)
+                        if link is not None:
+                            parts = name.split('.')
+                            name_html = orig_pattern % parts[0]
+                            for part in parts[1:]:
+                                name_html += period + orig_pattern % part
+                            str_repl[name_html] = link_pattern % (link, name_html)
+                    # do the replacement in the html file
+                    if len(str_repl) > 0:
+                        with open(full_fname, 'rt') as fid:
+                            lines_in = fid.readlines()
+                        fid.close()
+                        with open(full_fname, 'wt') as fid:
+                            for line in lines_in:
+                                for name, link in str_repl.iteritems():
+                                    line = line.replace(name, link)
+                                fid.write(line)
+                        fid.close()
+    except urllib2.HTTPError, e:
+        print ("The following HTTP Error has occurred:\n")
+        print e.code
+    except urllib2.URLError, e:
+        print ("\n...\n"
+               "Warning: Embedding the documentation hyperlinks requires "
+               "internet access.\nPlease check your network connection.\n"
+               "Unable to continue embedding due to a URL Error: \n")
+        print e.args
     print '[done]'
 
 
