@@ -230,7 +230,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                               'i.e. alpha=%.3e, '
                               'with an active set of %i regressors, and '
                               'the smallest cholesky pivot element being %.3e'
-                              % (n_iter, alphas[n_iter], n_active, diag))
+                              % (n_iter, alpha, n_active, diag))
                 # XXX: need to figure a 'drop for good' way
                 Cov = Cov_not_shortened
                 Cov[0] = 0
