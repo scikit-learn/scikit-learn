@@ -3,17 +3,19 @@
 ===================
 Model evaluation
 ===================
-The :mod:`sklearn.metrics` implements score functions, performance metrics,
-pairwise metrics and distance computations. Those functions are usefull to
-assess the performance of an estimator under a specific criterion. Note that
-in many cases, the ``score`` method of the underlying estimator is sufficient
-and appropriate.
 
-In this module, functions named as
+The :mod:`sklearn.metrics` module implements useful functions for assessing the
+performance of an estimator under a specific criterion.  Functions whose name
+ends with ``_score`` return a scalar value to maximize (the higher the better).
+Functions whose name ends with  ``_error`` or ``_loss`` return a scalar value
+to minimize (the lower the better).
 
-  * ``*_score`` return a scalar value to maximize: the higher the better;
-  * ``*_error`` or ``*_loss`` return a scalar value to minimize: the lower the
-    better.
+.. note::
+
+    Estimators usually define a ``score`` method which provides a suitable evaluation
+    score for this estimator.
+
+For pairwise metrics, see the :ref:`metrics` section.
 
 .. _classification_metrics:
 
@@ -759,6 +761,7 @@ Here a small example of usage of the :func:`r2_score` function:
 
 Clustering metrics
 ======================
+
 The :mod:`sklearn.metrics` implements several losses, scores and utility
 function for more information see the :ref:`clustering_evaluation` section.
 
