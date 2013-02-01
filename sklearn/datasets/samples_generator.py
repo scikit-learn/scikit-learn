@@ -103,7 +103,6 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
     References
     ----------
-
     .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable
            selection benchmark", 2003.
     """
@@ -332,12 +331,13 @@ def make_hastie_10_2(n_samples=12000, random_state=None):
     The ten features are standard independent Gaussian and
     the target ``y`` is defined by::
 
-      y[i] = 1 if np.sum(X[i] > 9.34) else -1
+      y[i] = 1 if np.sum(X[i]**2) > 9.34 else -1
 
     Parameters
     ----------
     n_samples : int, optional (default=12000)
         The number of samples.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -352,16 +352,18 @@ def make_hastie_10_2(n_samples=12000, random_state=None):
     y : array of shape [n_samples]
         The output values.
 
-    **References**:
-
+    References
+    ----------
     .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
-    Learning Ed. 2", Springer, 2009.
+           Learning Ed. 2", Springer, 2009.
     """
     rs = check_random_state(random_state)
+
     shape = (n_samples, 10)
     X = rs.normal(size=shape).reshape(shape)
     y = ((X ** 2.0).sum(axis=1) > 9.34).astype(np.float64)
     y[y == 0.0] = -1.0
+
     return X, y
 
 
@@ -716,7 +718,6 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
 
     References
     ----------
-
     .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
            of Statistics 19 (1), pages 1-67, 1991.
 
@@ -777,7 +778,6 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
 
     References
     ----------
-
     .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
            of Statistics 19 (1), pages 1-67, 1991.
 
@@ -842,7 +842,6 @@ def make_friedman3(n_samples=100, noise=0.0, random_state=None):
 
     References
     ----------
-
     .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
            of Statistics 19 (1), pages 1-67, 1991.
 
@@ -1026,7 +1025,6 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
 
     References
     ----------
-
     .. [1] G. Celeux, M. El Anbari, J.-M. Marin, C. P. Robert,
            "Regularization in regression: comparing Bayesian and frequentist
            methods in a poorly informative situation", 2009.
@@ -1157,7 +1155,6 @@ def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
 
     References
     ----------
-
     .. [1] S. Marsland, "Machine Learning: An Algorithmic Perpsective",
            Chapter 10, 2009.
            http://www-ist.massey.ac.nz/smarsland/Code/10/lle.py
@@ -1270,7 +1267,6 @@ def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
 
     References
     ----------
-
     .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
 
     """
