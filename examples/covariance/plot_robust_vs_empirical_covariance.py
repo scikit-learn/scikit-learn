@@ -41,7 +41,7 @@ gaussian distributed data sets:
     Graphical Statistics. December 1, 2005, 14(4): 928-946.
 
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

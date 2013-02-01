@@ -14,7 +14,7 @@ In the first row, the classifiers are built using the sepal width and the sepal
 length features only, on the second row using the petal length and sepal length
 only, and on the third row using the petal width and the petal length only.
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

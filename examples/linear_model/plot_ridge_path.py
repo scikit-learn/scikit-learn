@@ -18,7 +18,7 @@ exhibit big oscillations.
 # Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
 # License: BSD Style.
 
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

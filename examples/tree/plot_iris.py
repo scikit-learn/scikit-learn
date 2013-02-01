@@ -10,7 +10,7 @@ For each pair of iris features, the decision tree learns decision
 boundaries made of combinations of simple thresholding rules inferred from
 the training samples.
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

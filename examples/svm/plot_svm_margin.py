@@ -15,7 +15,7 @@ A small value of `C` includes more/all the observations, allowing
 the margins to be calculated using all the data in the area.
 
 """
-print __doc__
+print(__doc__)
 
 
 # Code source: Gael Varoqueux

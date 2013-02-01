@@ -19,7 +19,7 @@ The plots show training points in solid colors and testing points
 semi-transparent. The lower right shows the classification accuracy on the test
 set.
 """
-print __doc__
+print(__doc__)
 
 
 # Code source: Gael Varoqueux

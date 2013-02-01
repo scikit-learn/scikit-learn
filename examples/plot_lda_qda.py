@@ -5,7 +5,7 @@ Linear and Quadratic Discriminant Analysis with confidence ellipsoid
 
 Plot the confidence ellipsoids of each class and decision boundary
 """
-print __doc__
+print(__doc__)
 
 from scipy import linalg
 import numpy as np

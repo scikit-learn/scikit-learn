@@ -76,7 +76,7 @@ is not scaled.
     behind this is the `L1` case works better on sparse data, while `L2`
     is better suited to the non-sparse case.
 """
-print __doc__
+print(__doc__)
 
 
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>

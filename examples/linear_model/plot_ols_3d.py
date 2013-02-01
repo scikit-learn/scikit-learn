@@ -12,7 +12,7 @@ has a strong coefficient on the full model, it does not
 give us much regarding `y` when compared to just feautre 1
 
 """
-print __doc__
+print(__doc__)
 
 
 # Code source: Gael Varoqueux

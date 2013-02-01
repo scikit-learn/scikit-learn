@@ -41,7 +41,7 @@ evaluate the performance of a method for which a parameter is chosen by
 cross-validation: this choice of parameter may not be optimal for unseen
 data.
 """
-print __doc__
+print(__doc__)
 
 # Author: Olivier Grisel, Gael Varoquaux, Alexandre Gramfort
 # License: BSD Style.
@@ -100,7 +100,7 @@ pl.title('Information-criterion for model selection (training time %.3fs)'
 # LassoCV: coordinate descent
 
 # Compute paths
-print "Computing regularization path using the coordinate descent lasso..."
+print("Computing regularization path using the coordinate descent lasso...")
 t1 = time.time()
 model = LassoCV(cv=20).fit(X, y)
 t_lasso_cv = time.time() - t1
@@ -129,7 +129,7 @@ pl.ylim(ymin, ymax)
 # LassoLarsCV: least angle regression
 
 # Compute paths
-print "Computing regularization path using the Lars lasso..."
+print("Computing regularization path using the Lars lasso...")
 t1 = time.time()
 model = LassoLarsCV(cv=20).fit(X, y)
 t_lasso_lars_cv = time.time() - t1

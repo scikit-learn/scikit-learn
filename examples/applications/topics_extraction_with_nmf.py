@@ -38,6 +38,8 @@ edu reply pain health david article medical medicine 16
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simplified BSD
 
+from __future__ import print_function
+
 from time import time
 from sklearn.feature_extraction import text
 from sklearn import decomposition
@@ -52,25 +54,25 @@ n_top_words = 20
 # frequency with TF-IDF weighting (without top 5% stop words)
 
 t0 = time()
-print "Loading dataset and extracting TF-IDF features..."
+print("Loading dataset and extracting TF-IDF features...")
 dataset = datasets.fetch_20newsgroups(shuffle=True, random_state=1)
 
 vectorizer = text.CountVectorizer(max_df=0.95, max_features=n_features)
 counts = vectorizer.fit_transform(dataset.data[:n_samples])
 tfidf = text.TfidfTransformer().fit_transform(counts)
-print "done in %0.3fs." % (time() - t0)
+print("done in %0.3fs." % (time() - t0))
 
 # Fit the NMF model
-print "Fitting the NMF model on with n_samples=%d and n_features=%d..." % (
-    n_samples, n_features)
+print("Fitting the NMF model on with n_samples=%d and n_features=%d..."
+      % (n_samples, n_features))
 nmf = decomposition.NMF(n_components=n_topics).fit(tfidf)
-print "done in %0.3fs." % (time() - t0)
+print("done in %0.3fs." % (time() - t0))
 
 # Inverse the vectorizer vocabulary to be able
 feature_names = vectorizer.get_feature_names()
 
 for topic_idx, topic in enumerate(nmf.components_):
-    print "Topic #%d:" % topic_idx
-    print " ".join([feature_names[i]
-                    for i in topic.argsort()[:-n_top_words - 1:-1]])
-    print
+    print("Topic #%d:" % topic_idx)
+    print(" ".join([feature_names[i]
+                    for i in topic.argsort()[:-n_top_words - 1:-1]]))
+    print()

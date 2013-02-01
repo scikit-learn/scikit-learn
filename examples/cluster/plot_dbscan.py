@@ -7,7 +7,7 @@ Demo of DBSCAN clustering algorithm
 Finds core samples of high density and expands clusters from them.
 
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 from scipy.spatial import distance
@@ -35,16 +35,16 @@ labels = db.labels_
 # Number of clusters in labels, ignoring noise if present.
 n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
 
-print 'Estimated number of clusters: %d' % n_clusters_
-print "Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels)
-print "Completeness: %0.3f" % metrics.completeness_score(labels_true, labels)
-print "V-measure: %0.3f" % metrics.v_measure_score(labels_true, labels)
-print "Adjusted Rand Index: %0.3f" % \
-    metrics.adjusted_rand_score(labels_true, labels)
-print "Adjusted Mutual Information: %0.3f" % \
-    metrics.adjusted_mutual_info_score(labels_true, labels)
-print ("Silhouette Coefficient: %0.3f" %
-       metrics.silhouette_score(D, labels, metric='precomputed'))
+print('Estimated number of clusters: %d' % n_clusters_)
+print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels))
+print("Completeness: %0.3f" % metrics.completeness_score(labels_true, labels))
+print("V-measure: %0.3f" % metrics.v_measure_score(labels_true, labels))
+print("Adjusted Rand Index: %0.3f"
+      % metrics.adjusted_rand_score(labels_true, labels))
+print("Adjusted Mutual Information: %0.3f"
+      % metrics.adjusted_mutual_info_score(labels_true, labels))
+print("Silhouette Coefficient: %0.3f"
+      % metrics.silhouette_score(D, labels, metric='precomputed'))
 
 ##############################################################################
 # Plot result

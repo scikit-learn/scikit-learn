@@ -45,7 +45,7 @@ a good compromise between the shape of the data scatter matrix and the
 risk of over-fitting the data.
 
 """
-print __doc__
+print(__doc__)
 
 # Author: Virgile Fritsch <virgile.fritsch@inria.fr>
 # License: BSD

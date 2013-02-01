@@ -23,7 +23,7 @@ Thus rather than using the 'predict' method of the objects, we set the
 threshold on the decision_function to separate out the corresponding
 fraction.
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

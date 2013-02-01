@@ -10,7 +10,7 @@ This demonstrates Label Propagation learning a good boundary
 even with a small amount of labeled data.
 
 """
-print __doc__
+print(__doc__)
 
 # Authors: Clay Woolam <clay@woolam.org>
 # Licence: BSD

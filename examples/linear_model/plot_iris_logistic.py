@@ -10,7 +10,7 @@ Show below is a logistic-regression classifiers decision boundaries on the
 datapoints are colored according to their labels.
 
 """
-print __doc__
+print(__doc__)
 
 
 # Code source: Gael Varoqueux
