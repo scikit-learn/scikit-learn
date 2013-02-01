@@ -829,8 +829,11 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     corpus.
 
     In the SMART notation used in IR, this class implements several tf–idf
-    variants. Tf is always "n" (natural), idf is "t" iff use_idf is given,
-    "n" otherwise, and normalization is "c" iff norm='l2', "n" iff norm=None.
+    variants:
+
+    Tf is "n" (natural) by default, "l" (logarithmic) when sublinear_tf=True.
+    Idf is "t" idf is "t" when use_idf is given, "n" (none) otherwise.
+    Normalization is "c" (cosine) when norm='l2', "n" (none) when norm=None.
 
     Parameters
     ----------
