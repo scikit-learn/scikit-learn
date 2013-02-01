@@ -623,7 +623,7 @@ class BaseLibLinear(BaseEstimator):
                                 "and loss='l1' is not supported.")
             elif self.penalty.upper() == 'L2' and self.loss.upper() == 'L1':
                 # this has to be in primal
-                error_string = ("loss='l2' and penalty='l1' is "
+                error_string = ("penalty='l2' and ploss='l1' is "
                                 "only supported when dual='true'.")
             else:
                 # only PL1 in dual remains
