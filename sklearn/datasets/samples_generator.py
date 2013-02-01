@@ -331,12 +331,13 @@ def make_hastie_10_2(n_samples=12000, random_state=None):
     The ten features are standard independent Gaussian and
     the target ``y`` is defined by::
 
-      y[i] = 1 if np.sum(X[i] > 9.34) else -1
+      y[i] = 1 if np.sum(X[i]**2) > 9.34 else -1
 
     Parameters
     ----------
     n_samples : int, optional (default=12000)
         The number of samples.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -357,10 +358,12 @@ def make_hastie_10_2(n_samples=12000, random_state=None):
            Learning Ed. 2", Springer, 2009.
     """
     rs = check_random_state(random_state)
+
     shape = (n_samples, 10)
     X = rs.normal(size=shape).reshape(shape)
     y = ((X ** 2.0).sum(axis=1) > 9.34).astype(np.float64)
     y[y == 0.0] = -1.0
+
     return X, y
 
 
