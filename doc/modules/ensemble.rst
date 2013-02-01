@@ -273,6 +273,11 @@ ever-increasing influence. Each subsequent weak learner is thereby forced to
 concentrate on the examples that are missed by the previous ones in the sequence
 [HTF2009]_.
 
+.. figure:: ../auto_examples/ensemble/images/plot_adaboost_hastie_10_2_1.png
+   :target: ../auto_examples/ensemble/plot_adaboost_hastie_10_2.html
+   :align: center
+   :scale: 75
+
 AdaBoost can be used both for classification and regression problems:
 
   - For multi-class classification, :class:`AdaBoostClassifier` implements
@@ -300,6 +305,9 @@ The number of weak learners is controlled by the parameter ``n_estimators``. The
 ``learning_rate`` parameter controls the contribution of the weak learners in
 the final combination. By default, weak learners are decision stumps. Different
 weak learners can be specified through the ``base_estimator`` parameter.
+The main parameters to tune to obtain good results are ``n_estimators`` and
+the complexity of the base estimators (e.g., its depth ``max_depth`` in case
+of decision trees).
 
 .. topic:: Examples:
 

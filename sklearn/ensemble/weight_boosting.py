@@ -50,7 +50,7 @@ class BaseWeightBoosting(BaseEnsemble):
                  base_estimator,
                  n_estimators=50,
                  estimator_params=tuple(),
-                 learning_rate=0.5,
+                 learning_rate=1.,
                  compute_importances=False):
         super(BaseWeightBoosting, self).__init__(
             base_estimator=base_estimator,
@@ -846,7 +846,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     def __init__(self,
                  base_estimator=DecisionTreeRegressor(max_depth=3),
                  n_estimators=50,
-                 learning_rate=1,
+                 learning_rate=1.,
                  compute_importances=False):
 
         super(AdaBoostRegressor, self).__init__(
