@@ -1,4 +1,3 @@
-#!python
 #cython: boundscheck=False
 #cython: cdivision=True
 #cython: wraparound=False
@@ -9,6 +8,7 @@ from libc.stdint cimport uint64_t
 
 cimport numpy as np
 import numpy as np
+import scipy.sparse as sp
 
 from ..utils.extmath import safe_sparse_dot
 from sklearn.utils.seq_dataset cimport SequentialDataset
@@ -26,6 +26,19 @@ cdef void dot(double *x_data_ptr, int *x_ind_ptr, int nnz, double[:, :] w,
         idx = x_ind_ptr[j]
         for i in xrange(n_hidden):
             z[i] += w[i, idx] + x_data_ptr[j]
+
+
+cdef void get_row(Py_ssize_t i, double[:] data, int[:] indices, int[:] indptr,
+                  double **data_i, int **indices_i, int *nnz):
+    """Fetch the i'th row from a CSR matrix."""
+
+    cdef int start = indptr[i]
+    cdef int end = indptr[i + 1]
+    cdef int n = end - start
+
+    data_i[0] = &(data[start:end][0])
+    indices_i[0] = &(indices[start:end][0])
+    nnz[0] = n
 
 
 cdef void logistic(double[:] z) nogil:
@@ -47,7 +60,7 @@ cdef void softplus(double[:] z) nogil:
 
 
 cdef inline void softplus_deriv(double[:] z) nogil:
-    return logistic(z)
+    logistic(z)
 
 
 cdef void tanh_act(double[:] z) nogil:
@@ -109,23 +122,26 @@ cdef double log_loss_multiclass(double[:, :] output, uint64_t[:, :] T) nogil:
     return -(total / output.shape[0])
 
 
-def backprop_sgd(self, SequentialDataset X, np.ndarray[np.int64_t, ndim=2] Y):
+def backprop_sgd(self, X, np.ndarray[np.int64_t, ndim=2] Y):
     cdef double alpha, alpha2
     cdef double loss, penalty, prev_loss, tol
     cdef double lr, momentum
     cdef double sqrt_n_features, sqrt_n_hidden
 
-    cdef bint multiclass, use_tanh, verbose
+    cdef bint shuffle, multiclass, use_tanh, verbose
     cdef np.int32_t batchsize, epoch, n_features, n_hidden, n_samples, \
                     n_targets, samples_left
 
-    cdef double x_weight
-    cdef double *x_data_ptr
-    cdef int *x_ind_ptr
-    cdef int nnz
+    cdef bint sparse
+    cdef double[:] X_data
+    cdef double *data_i = None
+    cdef int[:] X_indices
+    cdef int *indices_i = None
+    cdef int[:] X_indptr
+    cdef int nnz = 0
 
     cdef np.ndarray[np.float64_t, ndim=2] \
-        w_hidden, w_output, output_grad, \
+        X_, w_hidden, w_output, output_grad, \
         v_hidden, v_output, log_y_output, y_output, z_output
     # XXX fix mode on these
     cdef np.ndarray[np.float64_t, ndim=2] hidden_grad
@@ -133,9 +149,15 @@ def backprop_sgd(self, SequentialDataset X, np.ndarray[np.int64_t, ndim=2] Y):
         bias_hidden, bias_output, bias_hidden_grad, bias_output_grad, \
         v_bias_hidden, v_bias_output
 
-    #n_samples, n_features = X.shape
-    n_samples = X.n_samples
-    n_features = self.coef_hidden_.shape[1]
+    sparse = sp.issparse(X)
+    if sparse:
+        X_data = X.data
+        X_indices = X.indices
+        X_indptr = X.indptr
+    else:
+        X_ = X
+
+    n_samples, n_features = X.shape
     n_hidden = self.n_hidden
     n_targets = Y.shape[1]
 
@@ -149,12 +171,15 @@ def backprop_sgd(self, SequentialDataset X, np.ndarray[np.int64_t, ndim=2] Y):
 
     alpha = self.alpha
     alpha2 = .5 * alpha
+    batchsize = self.batchsize
     lr = self.learning_rate
-
     momentum = self.momentum
-    prev_loss = np.inf
+    rng = self.random_state
+    shuffle = self.shuffle
     tol = self.tol
     verbose = self.verbose
+
+    prev_loss = np.inf
 
     # scale the learning rate by the number of features for faster convergence
     sqrt_n_features = sqrt(n_features)
@@ -174,19 +199,27 @@ def backprop_sgd(self, SequentialDataset X, np.ndarray[np.int64_t, ndim=2] Y):
     v_bias_hidden = np.zeros(self.intercept_hidden_.shape)
     v_bias_output = np.zeros(self.intercept_output_.shape)
 
+    rowind = np.arange(n_samples)
+
     for epoch in xrange(self.max_iter):
         if shuffle:
-            X.shuffle()
+            rng.shuffle(rowind)
         samples_left = n_samples
 
         while samples_left:
+            # Process one minibatch.
             batchsize = min(samples_left, batchsize)
 
             #y_hidden = safe_sparse_dot(X, w_hidden.T) + bias_hidden
-            for i in xrange(batchsize):
-                X.next(&x_data_ptr, &x_ind_ptr, &nnz, &Y, &x_weight)
-                dot(x_data_ptr, x_ind_ptr, nnz, w_hidden, y_hidden[i, :])
-                samples_left -= 1
+            if sparse:
+                for i in xrange(samples_left, samples_left - batchsize):
+                    get_row(rowind[i], X_data, X_indices, X_indptr,
+                            &data_i, &indices_i, &nnz)
+                    dot(data_i, indices_i, nnz, w_hidden, y_hidden[i, :])
+                    samples_left -= 1
+            else:
+                for i in xrange(samples_left, samples_left - batchsize):
+                    np.dot(X[i, :], w_hidden[:, i], out=y_hidden[i, :])
             y_hidden = y_hidden[:batchsize]
             y_hidden += bias_hidden
 
@@ -218,7 +251,6 @@ def backprop_sgd(self, SequentialDataset X, np.ndarray[np.int64_t, ndim=2] Y):
             delta_output = y_output - Y
             delta_hidden = np.dot(delta_output, w_output) * y_hidden_deriv
 
-            #output_grad = np.dot(delta_output.T, y_hidden)
             np.dot(delta_output.T, y_hidden, out=output_grad)
             for i in xrange(n_targets):
                 for j in xrange(n_hidden):
