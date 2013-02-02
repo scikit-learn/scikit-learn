@@ -827,6 +827,15 @@ with non default value for its parameters such as the beta parameter for the
     >>> from sklearn.svm import LinearSVC
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=ftwo_scorer)
 
+The second use case is to help build a completely new and custom scorer object from a simple python function::
+
+    >>> def my_custom_loss_func(ground_truth, predictions):
+    ...     diff = np.abs(ground_truth - predictions).max()
+    ...     return np.log(1 + diff)
+    ...
+    >>> my_custom_scorer = AsScorer(my_custom_loss_func, greater_is_better=False)
+    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=my_custom_scorer)
+
 :class:`AsScorer` takes as parameters the function you want to use,
 whether it is a score (``greater_is_better=True``) or a loss
 (``greater_is_better=False``), whether the function you provided takes
