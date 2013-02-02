@@ -816,7 +816,10 @@ If you want to use a scoring function that takes additional parameters, such as
 simplest way to generate a callable object for scoring is by using
 :class:`AsScorer`.
 :class:`AsScorer` converts score functions as above into callables
-that can be used for model evaluation::
+that can be used for model evaluation.
+One typical use case is to wrap an existing scoring function from the library
+with non default value for its parameters such as the beta parameter for the
+:func:fbeta_score function::
 
     >>> from sklearn.metrics import fbeta_score, AsScorer
     >>> ftwo_scorer = AsScorer(fbeta_score, beta=2)
@@ -835,8 +838,9 @@ in the example above.
 Implementing Your Own Scoring Object
 ------------------------------------
 You can generate even more flexible model scores by constructing your own
-scoring object. The requirements that a callable can be used for model
-selection are as follows:
+scoring object from scratch, without using the :class:`AsScorer` helper class.
+The requirements that a callable can be used for model selection are as
+follows:
 
 - It can be called with parameters ``(estimator, X, y)``, where ``estimator``
   it the model that should be evaluated, ``X`` is validation data and ``y``

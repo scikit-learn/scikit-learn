@@ -92,7 +92,7 @@ accuracy_scorer = AsScorer(accuracy_score)
 f1_scorer = AsScorer(f1_score)
 
 # Score functions that need decision values
-auc_scorer = AsScorer(auc_score, True, True)
+auc_scorer = AsScorer(auc_score, greater_is_better=True, needs_threshold=True)
 average_precision_scorer = AsScorer(average_precision_score,
                                     needs_threshold=True)
 precision_scorer = AsScorer(precision_score)
