@@ -1,3 +1,5 @@
+import pickle
+
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 
@@ -27,6 +29,11 @@ def test_classification_scores():
     score1 = scorer(clf, X_test, y_test)
     score2 = fbeta_score(y_test, clf.predict(X_test), beta=2)
     assert_almost_equal(score1, score2)
+
+    # test that custom scorer can be pickled
+    unpickled_scorer = pickle.loads(pickle.dumps(scorer))
+    score3 = unpickled_scorer(clf, X_test, y_test)
+    assert_almost_equal(score1, score3)
 
 
 def test_regression_scores():
