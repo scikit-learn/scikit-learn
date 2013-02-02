@@ -33,14 +33,16 @@ iris.data, iris.target = shuffle(iris.data, iris.target, random_state=rng)
 
 # Load the boston dataset and randomly permute it
 boston = datasets.load_boston()
-boston.data, boston.target = shuffle(boston.data, boston.target, random_state=rng)
+boston.data, boston.target = shuffle(boston.data, boston.target,
+                                     random_state=rng)
 
 
 def test_classification_toy():
     """Check classification on a toy dataset."""
-    clf = AdaBoostClassifier()
-    clf.fit(X, y)
-    assert_array_equal(clf.predict(T), true_result)
+    for alg in ['SAMME', 'SAMME.R']:
+        clf = AdaBoostClassifier(algorithm=alg)
+        clf.fit(X, y)
+        assert_array_equal(clf.predict(T), true_result)
 
 
 def test_regression_toy():
@@ -52,11 +54,12 @@ def test_regression_toy():
 
 def test_iris():
     """Check consistency on dataset iris."""
-    clf = AdaBoostClassifier()
-    clf.fit(iris.data, iris.target)
-    score = clf.score(iris.data, iris.target)
-    assert score > 0.9, "Failed with criterion %s and score = %f" % (c,
-                                                                     score)
+    for alg in ['SAMME', 'SAMME.R']:
+        clf = AdaBoostClassifier(algorithm=alg)
+        clf.fit(iris.data, iris.target)
+        score = clf.score(iris.data, iris.target)
+        assert score > 0.9, "Failed with criterion %s and score = %f" % \
+            (c, score)
 
 
 def test_boston():
@@ -70,22 +73,23 @@ def test_boston():
 def test_staged_predict():
     """Check staged predictions."""
     # AdaBoost classification
-    clf = AdaBoostClassifier(n_estimators=10)
-    clf.fit(iris.data, iris.target)
+    for alg in ['SAMME', 'SAMME.R']:
+        clf = AdaBoostClassifier(algorithm=alg, n_estimators=10)
+        clf.fit(iris.data, iris.target)
 
-    predictions = clf.predict(iris.data)
-    staged_predictions = [p for p in clf.staged_predict(iris.data)]
-    proba = clf.predict_proba(iris.data)
-    staged_probas = [p for p in clf.staged_predict_proba(iris.data)]
-    score = clf.score(iris.data, iris.target)
-    staged_scores = [s for s in clf.staged_score(iris.data, iris.target)]
+        predictions = clf.predict(iris.data)
+        staged_predictions = [p for p in clf.staged_predict(iris.data)]
+        proba = clf.predict_proba(iris.data)
+        staged_probas = [p for p in clf.staged_predict_proba(iris.data)]
+        score = clf.score(iris.data, iris.target)
+        staged_scores = [s for s in clf.staged_score(iris.data, iris.target)]
 
-    assert_equal(len(staged_predictions), 10)
-    assert_array_almost_equal(predictions, staged_predictions[-1])
-    assert_equal(len(staged_probas), 10)
-    assert_array_almost_equal(proba, staged_probas[-1])
-    assert_equal(len(staged_scores), 10)
-    assert_array_almost_equal(score, staged_scores[-1])
+        assert_equal(len(staged_predictions), 10)
+        assert_array_almost_equal(predictions, staged_predictions[-1])
+        assert_equal(len(staged_probas), 10)
+        assert_array_almost_equal(proba, staged_probas[-1])
+        assert_equal(len(staged_scores), 10)
+        assert_array_almost_equal(score, staged_scores[-1])
 
     # AdaBoost regression
     clf = AdaBoostRegressor(n_estimators=10)
@@ -107,7 +111,8 @@ def test_gridsearch():
     # AdaBoost classification
     boost = AdaBoostClassifier()
     parameters = {'n_estimators': (1, 2),
-                  'base_estimator__max_depth': (1, 2)}
+                  'base_estimator__max_depth': (1, 2),
+                  'algorithm': ('SAMME', 'SAMME.R')}
     clf = GridSearchCV(boost, parameters)
     clf.fit(iris.data, iris.target)
 
@@ -124,15 +129,16 @@ def test_pickle():
     import pickle
 
     # Adaboost classifier
-    obj = AdaBoostClassifier()
-    obj.fit(iris.data, iris.target)
-    score = obj.score(iris.data, iris.target)
-    s = pickle.dumps(obj)
+    for alg in ['SAMME', 'SAMME.R']:
+        obj = AdaBoostClassifier(algorithm=alg)
+        obj.fit(iris.data, iris.target)
+        score = obj.score(iris.data, iris.target)
+        s = pickle.dumps(obj)
 
-    obj2 = pickle.loads(s)
-    assert_equal(type(obj2), obj.__class__)
-    score2 = obj2.score(iris.data, iris.target)
-    assert score == score2
+        obj2 = pickle.loads(s)
+        assert_equal(type(obj2), obj.__class__)
+        score2 = obj2.score(iris.data, iris.target)
+        assert_equal(score, score2)
 
     # Adaboost regressor
     obj = AdaBoostRegressor()
@@ -143,7 +149,7 @@ def test_pickle():
     obj2 = pickle.loads(s)
     assert_equal(type(obj2), obj.__class__)
     score2 = obj2.score(boston.data, boston.target)
-    assert score == score2
+    assert_equal(score, score2)
 
 
 def test_importances():
@@ -156,14 +162,15 @@ def test_importances():
                                         shuffle=False,
                                         random_state=1)
 
-    clf = AdaBoostClassifier(compute_importances=True)
+    for alg in ['SAMME', 'SAMME.R']:
+        clf = AdaBoostClassifier(algorithm=alg, compute_importances=True)
 
-    clf.fit(X, y)
-    importances = clf.feature_importances_
-    n_important = sum(importances > 0.1)
+        clf.fit(X, y)
+        importances = clf.feature_importances_
 
-    assert_equal(importances.shape[0], 10)
-    assert_equal(n_important, 3)
+        assert_equal(importances.shape[0], 10)
+        assert_equal((importances[:3, np.newaxis] >= importances[3:]).all(),
+                     True)
 
     clf = AdaBoostClassifier()
     clf.fit(X, y)
