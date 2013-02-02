@@ -653,7 +653,8 @@ variance is  estimated  as follow:
 
 The best possible score is 1.0, lower values are worse.
 
-Here a small example of usage of the :func:`explained_variance_scoreé` function:
+Here a small example of usage of the :func:`explained_variance_scoreé`
+function::
 
     >>> from sklearn.metrics import explained_variance_score
     >>> y_true = [3, -0.5, 2, 7]
@@ -676,7 +677,7 @@ and :math:`y_i` is the corresponding true value, then the mean absolute error
 
   \text{MAE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \left| y_i - \hat{y}_i \right|.
 
-Here a small example of usage of the :func:`mean_absolute_error` function:
+Here a small example of usage of the :func:`mean_absolute_error` function::
 
   >>> from sklearn.metrics import mean_absolute_error
   >>> y_true = [3, -0.5, 2, 7]
@@ -705,7 +706,8 @@ and :math:`y_i` is the corresponding true value, then the mean squared error
 
   \text{MSE}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (y_i - \hat{y}_i)^2.
 
-Here a small example of usage of the :func:`mean_squared_error` function:
+Here a small example of usage of the :func:`mean_squared_error`
+function::
 
   >>> from sklearn.metrics import mean_squared_error
   >>> y_true = [3, -0.5, 2, 7]
@@ -740,7 +742,7 @@ over :math:`n_{\text{samples}}` is defined as
 
 where :math:`\bar{y} =  \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}} - 1} y_i`.
 
-Here a small example of usage of the :func:`r2_score` function:
+Here a small example of usage of the :func:`r2_score` function::
 
   >>> from sklearn.metrics import r2_score
   >>> y_true = [3, -0.5, 2, 7]
