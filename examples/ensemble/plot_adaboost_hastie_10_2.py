@@ -30,7 +30,7 @@ from sklearn import datasets
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.metrics import zero_one_loss
 from sklearn.ensemble import AdaBoostClassifier
-import pylab as plt
+import pylab as pl
 
 
 n_estimators = 400
@@ -64,7 +64,7 @@ ada_real = AdaBoostClassifier(
     algorithm="SAMME.R")
 ada_real.fit(X_train, y_train)
 
-fig = plt.figure()
+fig = pl.figure()
 ax = fig.add_subplot(111)
 
 ax.plot([1, n_estimators], [dt_stump_err] * 2, 'k-',
@@ -108,4 +108,4 @@ ax.set_ylabel('error rate')
 leg = ax.legend(loc='upper right', fancybox=True)
 leg.get_frame().set_alpha(0.7)
 
-plt.show()
+pl.show()
