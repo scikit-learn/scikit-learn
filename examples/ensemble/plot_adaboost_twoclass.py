@@ -6,7 +6,7 @@ Two-class AdaBoost
 This example fits an AdaBoosted decision stump on a non-linearly separable
 classification dataset composed of two "Gaussian quantiles" clusters
 (see :func:`sklearn.datasets.make_gaussian_quantiles`) and plots the decision
-boundary, class probabilities, and two-class decision scores.
+boundary and two-class decision scores.
 
 """
 print __doc__
@@ -41,10 +41,10 @@ plot_colors = "br"
 plot_step = 0.02
 class_names = "AB"
 
-pl.figure(figsize=(15, 5))
+pl.figure(figsize=(10, 5))
 
 # Plot the decision boundaries
-pl.subplot(131)
+pl.subplot(121)
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
 y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
 xx, yy = np.meshgrid(np.arange(x_min, x_max, plot_step),
@@ -65,24 +65,10 @@ pl.axis("tight")
 pl.legend(loc='upper right')
 pl.xlabel("Decision Boundary")
 
-# Plot the class probabilities
-class_proba = bdt.predict_proba(X)[:, -1]
-pl.subplot(132)
-for i, n, c in zip(xrange(2), class_names, plot_colors):
-    pl.hist(class_proba[y == i],
-            bins=10,
-            range=(0, 1),
-            facecolor=c,
-            label='Class %s' % n,
-            alpha=.5)
-pl.legend(loc='upper center')
-pl.ylabel('Samples')
-pl.xlabel('Probability of being from class B')
-
 # Plot the two-class decision scores
 twoclass_output = bdt.decision_function(X)
 plot_range = (twoclass_output.min(), twoclass_output.max())
-pl.subplot(133)
+pl.subplot(122)
 for i, n, c in zip(xrange(2), class_names, plot_colors):
     pl.hist(twoclass_output[y == i],
             bins=10,
@@ -91,7 +77,7 @@ for i, n, c in zip(xrange(2), class_names, plot_colors):
             label='Class %s' % n,
             alpha=.5)
 x1, x2, y1, y2 = pl.axis()
-pl.axis((x1, x2, y1, y2 * 1.5))
+pl.axis((x1, x2, y1, y2 * 1.2))
 pl.legend(loc='upper right')
 pl.ylabel('Samples')
 pl.xlabel('Two-class Decision Scores')
