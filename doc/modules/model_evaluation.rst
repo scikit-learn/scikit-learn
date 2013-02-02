@@ -297,7 +297,7 @@ In this context, we can define the notions of precision, recall and F-measure:
 
    F_\beta = (1 + \beta^2) \frac{\text{precision} \times \text{recall}}{\beta^2 \text{precision} + \text{recall}}.
 
-Here some small examples in binary classification:
+Here some small examples in binary classification::
 
   >>> from sklearn import metrics
   >>> y_pred = [0, 1, 0, 0]
@@ -411,7 +411,7 @@ their support
 
   \texttt{weighted\_{}F\_{}beta}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (1 + \beta^2)\frac{|y_i \cap \hat{y}_i|}{\beta^2 |\hat{y}_i| + |y_i|}.
 
-Here an example where ``average`` is set to ``average`` to ``macro``:
+Here an example where ``average`` is set to ``average`` to ``macro``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
@@ -427,7 +427,7 @@ Here an example where ``average`` is set to ``average`` to ``macro``:
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
   (0.22..., 0.33..., 0.26..., None)
 
-Here an example where ``average`` is set to to ``micro``:
+Here an example where ``average`` is set to to ``micro``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
@@ -443,7 +443,7 @@ Here an example where ``average`` is set to to ``micro``:
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
   (0.33..., 0.33..., 0.33..., None)
 
-Here an example where ``average`` is set to to ``weighted``:
+Here an example where ``average`` is set to to ``weighted``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
@@ -459,7 +459,7 @@ Here an example where ``average`` is set to to ``weighted``:
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
   (0.22..., 0.33..., 0.26..., None)
 
-Here an example where ``average`` is set to ``None``:
+Here an example where ``average`` is set to ``None``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
@@ -492,7 +492,7 @@ value and :math:`w` is the predicted decisions as output by
   L_\text{Hinge}(y, w) = \max\left\{1 - wy, 0\right\} = \left|1 - wy\right|_+
 
 Here a small example demonstrating the use of the :func:`hinge_loss` function
-with a svm classifier:
+with a svm classifier::
 
   >>> from sklearn import svm
   >>> from sklearn.metrics import hinge_loss
@@ -822,7 +822,7 @@ that can be used for model evaluation.
 
 One typical use case is to wrap an existing scoring function from the library
 with non default value for its parameters such as the beta parameter for the
-:func:fbeta_score function::
+:func:`fbeta_score` function::
 
     >>> from sklearn.metrics import fbeta_score, Scorer
     >>> ftwo_scorer = Scorer(fbeta_score, beta=2)

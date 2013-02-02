@@ -49,9 +49,9 @@ combinations is retained.
   This can be done by using the :func:`cross_validation.train_test_split`
   utility function.
 
-.. _gridsearch_scoring:
-
 .. currentmodule:: sklearn.grid_search
+
+.. _gridsearch_scoring:
 
 Scoring functions for GridSearchCV
 ----------------------------------
