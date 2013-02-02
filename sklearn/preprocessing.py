@@ -928,6 +928,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     classes : ndarray if int or None (default)
         Array of possible classes.
 
+    multilabel : bool or None (default)
+        Whether or not data will be multilabel.
+        If None, it will be inferred during fitting.
+
     Attributes
     ----------
     `classes_` : array of shape [n_class]
