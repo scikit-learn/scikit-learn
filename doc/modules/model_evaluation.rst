@@ -772,8 +772,8 @@ function for more information see the :ref:`clustering_evaluation` section.
 
 .. currentmodule:: sklearn
 
-Flexible Scoring Objects
-========================
+`Scoring` objects: defining your scoring rules
+===============================================
 While the above functions provide a simple interface for most use-cases, they
 can not directly be used for model selection and evaluation using
 :class:`grid_search.GridSearchCV` and
@@ -790,28 +790,28 @@ them), you can simply provide a string as the ``scoring`` parameter. Possible
 values are:
 
 
-===================     =========================================
+===================     ===============================================
 Scoring                 Function
-===================     =========================================
+===================     ===============================================
 **Classification**
-'accuracy'              sklearn.metrics.accuracy_score
-'average_precision'     sklearn.metrics.average_precision_score
-'f1'                    sklearn.metrics.f1_score
-'precision'             sklearn.metrics.precision_score
-'recall'                sklearn.metrics.recall_score
-'roc_auc'               sklearn.merrics.auc_score
+'accuracy'              :func:`sklearn.metrics.accuracy_score`
+'average_precision'     :func:`sklearn.metrics.average_precision_score`
+'f1'                    :func:`sklearn.metrics.f1_score`
+'precision'             :func:`sklearn.metrics.precision_score`
+'recall'                :func:`sklearn.metrics.recall_score`
+'roc_auc'               :func:`sklearn.metrics.auc_score`
 
 **Clustering**
-'ari'`                  sklearn.metrics.adjusted_rand_score
+'ari'`                  :func:`sklearn.metrics.adjusted_rand_score`
 
 **Regression**
-'mse'                   sklearn.metrics.mean_squared_error
-'r2'                    sklearn.metrics.r2_score
-===================     =========================================
+'mse'                   :func:`sklearn.metrics.mean_squared_error`
+'r2'                    :func:`sklearn.metrics.r2_score`
+===================     ===============================================
 
 .. currentmodule:: sklearn.metrics
 
-Creating Scoring Objects From Score Functions
+Creating scoring objects from score functions
 ---------------------------------------------
 If you want to use a scoring function that takes additional parameters, such as
 :func:`fbeta_score`, you need to generate an appropriate scoring object.  The
@@ -819,6 +819,7 @@ simplest way to generate a callable object for scoring is by using
 :class:`Scorer`.
 :class:`Scorer` converts score functions as above into callables
 that can be used for model evaluation.
+
 One typical use case is to wrap an existing scoring function from the library
 with non default value for its parameters such as the beta parameter for the
 :func:fbeta_score function::
@@ -846,7 +847,7 @@ predictions as input (``needs_threshold=False``) or needs confidence scores
 in the example above.
 
 
-Implementing Your Own Scoring Object
+Implementing your own scoring object
 ------------------------------------
 You can generate even more flexible model scores by constructing your own
 scoring object from scratch, without using the :class:`Scorer` helper class.
