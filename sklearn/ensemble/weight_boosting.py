@@ -245,7 +245,7 @@ def _samme_proba(estimator, n_classes, X):
 class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     """An AdaBoost classifier.
 
-    An AdaBoost classifier is a meta-estimator that begins by fitting a
+    An AdaBoost [1] classifier is a meta-estimator that begins by fitting a
     classifier on the original dataset and then fits additional copies of the
     classifer on the same dataset but where the weights of incorrectly
     classified instances are adjusted such that subsequent classifiers focus
@@ -775,7 +775,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     """An AdaBoost regressor.
 
-    An AdaBoost regressor is a meta-estimator that begins by fitting a
+    An AdaBoost [1] regressor is a meta-estimator that begins by fitting a
     regressor on the original dataset and then fits additional copies of the
     regressor on the same dataset but where the weights of instances are
     adjusted according to the error of the current prediction. As such,
@@ -826,7 +826,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
     .. [1] Y. Freund, R. Schapire, "A Decision-Theoretic Generalization of
            on-Line Learning and an Application to Boosting", 1995.
 
-    .. [2] H. Drucker, "Improving Regressor using Boosting Techniques", 1997.
+    .. [2] H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
 
     """
     def __init__(self,

@@ -6,7 +6,8 @@ Two-class AdaBoost
 This example fits an AdaBoosted decision stump on a non-linearly separable
 classification dataset composed of two "Gaussian quantiles" clusters
 (see :func:`sklearn.datasets.make_gaussian_quantiles`) and plots the decision
-boundary and decision scores.
+boundary and decision scores. Samples with decision scores greater than zero
+are classified as B, and are otherwise classified as A.
 
 """
 print __doc__
