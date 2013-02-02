@@ -148,7 +148,8 @@ def test_sparse_input():
                                       random_state=999)
     T2 = pg_nmf.fit_transform(A_sparse)
     assert_array_almost_equal(pg_nmf.reconstruction_err_,
-                  linalg.norm(A - np.dot(T2, pg_nmf.components_), 'fro'))
+                              linalg.norm(A - np.dot(T2, pg_nmf.components_),
+                                          'fro'))
     assert_array_almost_equal(T1, T2)
 
     # same with sparseness
