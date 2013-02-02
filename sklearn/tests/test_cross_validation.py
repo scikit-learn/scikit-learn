@@ -7,6 +7,7 @@ from scipy.sparse import coo_matrix
 
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_less
@@ -22,6 +23,9 @@ from sklearn.datasets import load_iris
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import explained_variance_score
+from sklearn.metrics import fbeta_score
+from sklearn.metrics import AsScorer
+
 from sklearn.svm import SVC
 from sklearn.linear_model import Ridge
 
@@ -378,13 +382,20 @@ def test_permutation_score():
     score, scores, pvalue = cval.permutation_test_score(
         svm, X, y, "accuracy", cv)
     assert_greater(score, 0.9)
-    np.testing.assert_almost_equal(pvalue, 0.0, 1)
+    assert_almost_equal(pvalue, 0.0, 1)
 
     score_label, _, pvalue_label = cval.permutation_test_score(
         svm, X, y, "accuracy", cv, labels=np.ones(y.size), random_state=0)
-
     assert_true(score_label == score)
     assert_true(pvalue_label == pvalue)
+
+    # test with custom scoring object
+    scorer = AsScorer(fbeta_score, beta=2)
+    score_label, _, pvalue_label = cval.permutation_test_score(
+        svm, X, y, scoring=scorer, cv=cv, labels=np.ones(y.size),
+        random_state=0)
+    assert_almost_equal(score_label, .95, 2)
+    assert_almost_equal(pvalue_label, 0.01, 3)
 
     # check that we obtain the same results with a sparse representation
     svm_sparse = SVC(kernel='linear')
