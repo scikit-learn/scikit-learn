@@ -63,14 +63,24 @@ unbalanced classification, the accuracy score is often non-informative). An alte
 can be specified via the ``scoring`` parameter to :class:`GridSearchCV`. There are several build-in scores available,
 that can be selected by giving a string argument:
 
-- ``r2``, corresponding to :func:`sklearn.metrics.r2_score`.
-- ``mse``, corresponding to :func:`sklearn.metrics.mean_squared_error`.
-- ``zero_one``, corresponding to :func:`sklearn.metrics.accuracy_score`.
-- ``f1``, corresponding to :func:`sklearn.metrics.f1_score`.
-- ``roc_auc``, corresponding to :func:`sklearn.metrics.auc_score`, the area under the ROC curve.
-- ``average_precision``, corresponding to :func:`sklearn.metrics.average_precision_score`, the area under the Precision-Recall curve.
-- ``precision``, corresponding to :func:`sklearn.metrics.precision_score`.
-- ``recall``, corresponding to :func:`sklearn.metrics.recall_score`.
+===================     =========================================
+Scoring                 Function
+===================     =========================================
+**Classification**
+'accuracy'              sklearn.metrics.accuracy_score
+'average_precision'     sklearn.metrics.average_precision_score
+'f1'                    sklearn.metrics.f1_score
+'precision'             sklearn.metrics.precision_score
+'recall'                sklearn.metrics.recall_score
+'roc_auc'               sklearn.merrics.auc_score
+
+**Clustering**
+'ari'`                  sklearn.metrics.adjusted_rand_score
+
+**Regression**
+'mse'                   sklearn.metrics.mean_squared_error
+'r2'                    sklearn.metrics.r2_score
+===================     =========================================
 
 Custom scoring functions can be specified by passing any callable that can be called by :class:`GridSearchCV` as
 ``scoring(estimator, X, y)``. See :ref:`score_func_objects` for more details.
