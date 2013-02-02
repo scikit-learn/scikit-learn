@@ -416,15 +416,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         """Implement a single boost using the SAMME.R real algorithm."""
         estimator = self._make_estimator()
 
-        if hasattr(estimator, 'fit_predict_proba'):
-            # Optimization for estimators that are able to save redundant
-            # computations when calling fit + predict_proba
-            # on the same input X
-            y_predict_proba = estimator.fit_predict_proba(
-                X, y, sample_weight=sample_weight)
-        else:
-            y_predict_proba = estimator.fit(
-                X, y, sample_weight=sample_weight).predict_proba(X)
+        y_predict_proba = estimator.fit(
+            X, y, sample_weight=sample_weight).predict_proba(X)
 
         if iboost == 0:
             self.classes_ = getattr(estimator, 'classes_', None)
@@ -481,15 +474,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         """Implement a single boost using the SAMME discrete algorithm."""
         estimator = self._make_estimator()
 
-        if hasattr(estimator, 'fit_predict'):
-            # Optimization for estimators that are able to save redundant
-            # computations when calling fit + predict
-            # on the same input X
-            y_predict = estimator.fit_predict(
-                X, y, sample_weight=sample_weight)
-        else:
-            y_predict = estimator.fit(
-                X, y, sample_weight=sample_weight).predict(X)
+        y_predict = estimator.fit(
+            X, y, sample_weight=sample_weight).predict(X)
 
         if iboost == 0:
             self.classes_ = getattr(estimator, 'classes_', None)
@@ -920,15 +906,8 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         """
         estimator = self._make_estimator()
 
-        if hasattr(estimator, 'fit_predict'):
-            # Optimization for estimators that are able to save redundant
-            # computations when calling fit + predict
-            # on the same input X
-            y_predict = estimator.fit_predict(
-                X, y, sample_weight=sample_weight)
-        else:
-            y_predict = estimator.fit(
-                X, y, sample_weight=sample_weight).predict(X)
+        y_predict = estimator.fit(
+            X, y, sample_weight=sample_weight).predict(X)
 
         error_vect = np.abs(y_predict - y)
         error_max = error_vect.max()
