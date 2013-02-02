@@ -24,7 +24,7 @@ from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import explained_variance_score
 from sklearn.metrics import fbeta_score
-from sklearn.metrics import AsScorer
+from sklearn.metrics import Scorer
 
 from sklearn.svm import SVC
 from sklearn.linear_model import Ridge
@@ -395,7 +395,7 @@ def test_permutation_score():
     assert_true(pvalue_label == pvalue)
 
     # test with custom scoring object
-    scorer = AsScorer(fbeta_score, beta=2)
+    scorer = Scorer(fbeta_score, beta=2)
     score_label, _, pvalue_label = cval.permutation_test_score(
         svm, X, y, scoring=scorer, cv=cv, labels=np.ones(y.size),
         random_state=0)

@@ -20,7 +20,7 @@ from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
 from .utils.validation import _num_samples
 from .utils import check_arrays, safe_mask
-from .metrics import scorers, AsScorer
+from .metrics import scorers, Scorer
 
 __all__ = ['GridSearchCV', 'IterGrid', 'fit_grid_point']
 
@@ -368,12 +368,12 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
             warnings.warn("Passing a loss function is "
                           "deprecated and will be removed in 0.15. "
                           "Either use strings or score objects.")
-            scorer = AsScorer(self.loss_func, greater_is_better=False)
+            scorer = Scorer(self.loss_func, greater_is_better=False)
         elif self.score_func is not None:
             warnings.warn("Passing function as ``score_func`` is "
                           "deprecated and will be removed in 0.15. "
                           "Either use strings or score objects.")
-            scorer = AsScorer(self.score_func)
+            scorer = Scorer(self.score_func)
         elif isinstance(self.scoring, basestring):
             scorer = scorers[self.scoring]
         else:

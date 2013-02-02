@@ -668,7 +668,7 @@ Model Selection Interface
    :toctree: generated/
    :template: class_with_call.rst
 
-   metrics.AsScorer
+   metrics.Scorer
 
 .. autosummary::
    :toctree: generated/

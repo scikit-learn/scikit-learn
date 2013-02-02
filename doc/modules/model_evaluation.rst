@@ -814,15 +814,15 @@ Creating Scoring Objects From Score Functions
 If you want to use a scoring function that takes additional parameters, such as
 :func:`fbeta_score`, you need to generate an appropriate scoring object.  The
 simplest way to generate a callable object for scoring is by using
-:class:`AsScorer`.
-:class:`AsScorer` converts score functions as above into callables
+:class:`Scorer`.
+:class:`Scorer` converts score functions as above into callables
 that can be used for model evaluation.
 One typical use case is to wrap an existing scoring function from the library
 with non default value for its parameters such as the beta parameter for the
 :func:fbeta_score function::
 
-    >>> from sklearn.metrics import fbeta_score, AsScorer
-    >>> ftwo_scorer = AsScorer(fbeta_score, beta=2)
+    >>> from sklearn.metrics import fbeta_score, Scorer
+    >>> ftwo_scorer = Scorer(fbeta_score, beta=2)
     >>> from sklearn.grid_search import GridSearchCV
     >>> from sklearn.svm import LinearSVC
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=ftwo_scorer)
@@ -833,10 +833,10 @@ The second use case is to help build a completely new and custom scorer object f
     ...     diff = np.abs(ground_truth - predictions).max()
     ...     return np.log(1 + diff)
     ...
-    >>> my_custom_scorer = AsScorer(my_custom_loss_func, greater_is_better=False)
+    >>> my_custom_scorer = Scorer(my_custom_loss_func, greater_is_better=False)
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=my_custom_scorer)
 
-:class:`AsScorer` takes as parameters the function you want to use,
+:class:`Scorer` takes as parameters the function you want to use,
 whether it is a score (``greater_is_better=True``) or a loss
 (``greater_is_better=False``), whether the function you provided takes
 predictions as input (``needs_threshold=False``) or needs confidence scores
@@ -847,7 +847,7 @@ in the example above.
 Implementing Your Own Scoring Object
 ------------------------------------
 You can generate even more flexible model scores by constructing your own
-scoring object from scratch, without using the :class:`AsScorer` helper class.
+scoring object from scratch, without using the :class:`Scorer` helper class.
 The requirements that a callable can be used for model selection are as
 follows:
 

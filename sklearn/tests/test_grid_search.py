@@ -22,7 +22,7 @@ from sklearn.datasets.samples_generator import make_classification, make_blobs
 from sklearn.svm import LinearSVC, SVC
 from sklearn.cluster import KMeans, MeanShift
 from sklearn.metrics import f1_score
-from sklearn.metrics.score_objects import AsScorer
+from sklearn.metrics.score_objects import Scorer
 from sklearn.cross_validation import KFold, StratifiedKFold
 
 
@@ -183,7 +183,7 @@ def test_grid_search_sparse_scoring():
     # test loss where greater is worse
     def f1_loss(y_true_, y_pred_):
         return -f1_score(y_true_, y_pred_)
-    F1Loss = AsScorer(f1_loss, greater_is_better=False)
+    F1Loss = Scorer(f1_loss, greater_is_better=False)
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, scoring=F1Loss)
     cv.fit(X_[:180], y_[:180])
     y_pred3 = cv.predict(X_[180:])

@@ -5,7 +5,7 @@ from sklearn.utils.testing import assert_raises
 
 from sklearn.metrics import f1_score, r2_score, auc_score, fbeta_score
 from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.metrics.score_objects import scorers, AsScorer
+from sklearn.metrics.score_objects import scorers, Scorer
 from sklearn.svm import LinearSVC
 from sklearn.cluster import KMeans
 from sklearn.linear_model import Ridge, LogisticRegression
@@ -25,7 +25,7 @@ def test_classification_scores():
     assert_almost_equal(score1, score2)
 
     # test fbeta score that takes an argument
-    scorer = AsScorer(fbeta_score, beta=2)
+    scorer = Scorer(fbeta_score, beta=2)
     score1 = scorer(clf, X_test, y_test)
     score2 = fbeta_score(y_test, clf.predict(X_test), beta=2)
     assert_almost_equal(score1, score2)
@@ -87,7 +87,7 @@ def test_unsupervised_scores():
 def test_raises_on_score_list():
     # test that when a list of scores is returned, we raise proper errors.
     X, y = make_blobs(random_state=0)
-    f1_scorer_no_average = AsScorer(f1_score, average=None)
+    f1_scorer_no_average = Scorer(f1_score, average=None)
     clf = DecisionTreeClassifier()
     assert_raises(ValueError, cross_val_score, clf, X, y,
                   scoring=f1_scorer_no_average)

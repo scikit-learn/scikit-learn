@@ -7,7 +7,7 @@ from . import (r2_score, mean_squared_error, accuracy_score, f1_score,
 from .cluster import adjusted_rand_score
 
 
-class AsScorer(object):
+class Scorer(object):
     """Flexible scores for any estimator.
 
     This class wraps estimator scoring functions for the use in GridSearchCV
@@ -33,8 +33,8 @@ class AsScorer(object):
 
     Examples
     --------
-    >>> from sklearn.metrics import fbeta_score, AsScorer
-    >>> ftwo_scorer = AsScorer(fbeta_score, beta=2)
+    >>> from sklearn.metrics import fbeta_score, Scorer
+    >>> ftwo_scorer = Scorer(fbeta_score, beta=2)
     >>> from sklearn.grid_search import GridSearchCV
     >>> from sklearn.svm import LinearSVC
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
@@ -84,22 +84,22 @@ class AsScorer(object):
 
 
 # Standard regression scores
-r2_scorer = AsScorer(r2_score)
-mse_scorer = AsScorer(mean_squared_error, greater_is_better=False)
+r2_scorer = Scorer(r2_score)
+mse_scorer = Scorer(mean_squared_error, greater_is_better=False)
 
 # Standard Classification Scores
-accuracy_scorer = AsScorer(accuracy_score)
-f1_scorer = AsScorer(f1_score)
+accuracy_scorer = Scorer(accuracy_score)
+f1_scorer = Scorer(f1_score)
 
 # Score functions that need decision values
-auc_scorer = AsScorer(auc_score, greater_is_better=True, needs_threshold=True)
-average_precision_scorer = AsScorer(average_precision_score,
-                                    needs_threshold=True)
-precision_scorer = AsScorer(precision_score)
-recall_scorer = AsScorer(recall_score)
+auc_scorer = Scorer(auc_score, greater_is_better=True, needs_threshold=True)
+average_precision_scorer = Scorer(average_precision_score,
+                                  needs_threshold=True)
+precision_scorer = Scorer(precision_score)
+recall_scorer = Scorer(recall_score)
 
 # Clustering scores
-ari_scorer = AsScorer(adjusted_rand_score)
+ari_scorer = Scorer(adjusted_rand_score)
 
 scorers = dict(r2=r2_scorer, mse=mse_scorer, accuracy=accuracy_scorer,
                f1=f1_scorer, roc_auc=auc_scorer,
