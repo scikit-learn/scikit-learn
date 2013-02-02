@@ -9,7 +9,8 @@ from sklearn.cluster import KMeans
 from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.datasets import make_blobs, load_diabetes
-from sklearn.cross_validation import train_test_split
+from sklearn.cross_validation import train_test_split, cross_val_score
+from sklearn.grid_search import GridSearchCV
 
 
 def test_classification_scores():
@@ -74,3 +75,15 @@ def test_unsupervised_scores():
     score1 = scorers['ari'](km, X_test, y_test)
     score2 = adjusted_rand_score(y_test, km.predict(X_test))
     assert_almost_equal(score1, score2)
+
+
+def test_raises_on_score_list():
+    # test that when a list of scores is returned, we raise proper errors.
+    X, y = make_blobs(random_state=0)
+    f1_scorer_no_average = AsScorer(f1_score, average=None)
+    clf = DecisionTreeClassifier()
+    assert_raises(ValueError, cross_val_score, clf, X, y,
+                  scoring=f1_scorer_no_average)
+    grid_search = GridSearchCV(clf, scoring=f1_scorer_no_average,
+                               param_grid={'max_depth': [1, 2]})
+    assert_raises(ValueError, grid_search.fit, X, y)

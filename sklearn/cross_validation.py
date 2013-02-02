@@ -1067,6 +1067,9 @@ def _cross_val_score(estimator, X, y, scorer, train, test, verbose,
         score = estimator.score(X_test, y_test)
     else:
         score = scorer(estimator, X_test, y_test)
+        if not isinstance(score, numbers.Number):
+            raise ValueError("scoring must return a number, got %s (%s)"
+                             " instead." % (str(score), type(score)))
     if verbose > 1:
         print("score: %f" % score)
     return score

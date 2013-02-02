@@ -10,6 +10,7 @@ of an estimator.
 from itertools import product
 import time
 import warnings
+import numbers
 
 import numpy as np
 
@@ -122,6 +123,10 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
             this_score = scorer(clf, X_test)
         else:
             this_score = clf.score(X_test)
+
+    if not isinstance(this_score, numbers.Number):
+        raise ValueError("scoring must return a number, got %s (%s)"
+                         " instead." % (str(this_score), type(this_score)))
 
     if verbose > 2:
         msg += ", score=%f" % this_score
