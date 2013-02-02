@@ -60,7 +60,7 @@ to evaluate a parameter setting. These are the :func:`sklearn.metrics.accuracy_s
 and :func:`sklearn.metrics.r2_score` for regression.
 For some applications, other scoring function are better suited (for example in
 unbalanced classification, the accuracy score is often non-informative). An alternative scoring function
-can be specified via the ``scoring`` parameter to :class:`GridSearchCV`. There are several build-in scores available,
+can be specified via the ``scoring`` parameter to :class:`GridSearchCV`. There are several built-in scores available,
 that can be selected by giving a string argument:
 
 ===================     =========================================
