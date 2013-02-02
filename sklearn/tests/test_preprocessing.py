@@ -8,6 +8,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_raise_message
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 
@@ -638,6 +639,40 @@ def test_label_binarizer_iris():
     y_pred2 = SGDClassifier().fit(iris.data, iris.target).predict(iris.data)
     accuracy2 = np.mean(iris.target == y_pred2)
     assert_almost_equal(accuracy, accuracy2)
+
+
+def test_label_binarizer_classes():
+    # check that explictly giving classes works
+    lb = LabelBinarizer(classes=np.arange(3))
+    y = np.ones(10)
+    # if classes is specified, we don't need to fit
+    assert_equal(lb.transform(y).shape, (10, 3))
+    assert_array_equal(y, np.argmax(lb.transform(y), axis=1))
+
+    # check that fitting doesn't change the shape
+    assert_equal(lb.fit_transform(y).shape, (10, 3))
+
+    # also works with weird classes:
+    lb = LabelBinarizer(classes=['a', 'b', 'see'])
+    transformed = lb.transform(['see', 'see'])
+    assert_equal(transformed.shape, (2, 3))
+    assert_array_equal(np.argmax(transformed, axis=1), [2, 2])
+
+    # also works with multilabel data if we say so:
+    lb = LabelBinarizer(classes=np.arange(1, 3), multilabel=True)
+    y = [[1, 2], [1], []]
+    Y = np.array([[1, 1],
+                  [1, 0],
+                  [0, 0]])
+    assert_array_equal(lb.transform(y), Y)
+    assert_array_equal(lb.fit_transform(y), Y)
+
+    lb = LabelBinarizer(classes=np.arange(1, 3))
+    assert_raise_message(ValueError, "not fitted with multilabel",
+                         lb.transform, y)
+
+    # check that labels present at fit time that are not in 'classes'
+    # will be ignored but a warning will be shown
 
 
 def test_label_binarizer_multilabel_unlabeled():
