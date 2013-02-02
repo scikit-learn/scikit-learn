@@ -72,7 +72,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     --------
 
     >>> import numpy as np
-    >>> from sklearn.neural_networks import BernoulliRBM
+    >>> from sklearn.neural_network import BernoulliRBM
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> model = BernoulliRBM(n_components=2)
     >>> model.fit(X)  # doctest: +ELLIPSIS

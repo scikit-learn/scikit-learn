@@ -4,7 +4,7 @@ from numpy.testing import assert_almost_equal, assert_array_equal
 
 from sklearn.base import clone
 from sklearn.datasets import load_digits
-from sklearn.neural_networks import BernoulliRBM
+from sklearn.neural_network import BernoulliRBM
 
 np.seterr(all='warn')
 

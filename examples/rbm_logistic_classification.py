@@ -28,7 +28,7 @@ import numpy as np
 
 from sklearn import linear_model, datasets, metrics, preprocessing
 from sklearn.cross_validation import train_test_split
-from sklearn.neural_networks import BernoulliRBM
+from sklearn.neural_network import BernoulliRBM
 from sklearn.pipeline import Pipeline
 from sklearn.grid_search import GridSearchCV
 
