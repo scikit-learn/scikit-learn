@@ -63,24 +63,24 @@ unbalanced classification, the accuracy score is often non-informative). An alte
 can be specified via the ``scoring`` parameter to :class:`GridSearchCV`. There are several built-in scores available,
 that can be selected by giving a string argument:
 
-===================     =========================================
+===================     ===============================================
 Scoring                 Function
-===================     =========================================
+===================     ===============================================
 **Classification**
-'accuracy'              sklearn.metrics.accuracy_score
-'average_precision'     sklearn.metrics.average_precision_score
-'f1'                    sklearn.metrics.f1_score
-'precision'             sklearn.metrics.precision_score
-'recall'                sklearn.metrics.recall_score
-'roc_auc'               sklearn.merrics.auc_score
+'accuracy'              :func:`sklearn.metrics.accuracy_score`
+'average_precision'     :func:`sklearn.metrics.average_precision_score`
+'f1'                    :func:`sklearn.metrics.f1_score`
+'precision'             :func:`sklearn.metrics.precision_score`
+'recall'                :func:`sklearn.metrics.recall_score`
+'roc_auc'               :func:`sklearn.metrics.auc_score`
 
 **Clustering**
-'ari'`                  sklearn.metrics.adjusted_rand_score
+'ari'`                  :func:`sklearn.metrics.adjusted_rand_score`
 
 **Regression**
-'mse'                   sklearn.metrics.mean_squared_error
-'r2'                    sklearn.metrics.r2_score
-===================     =========================================
+'mse'                   :func:`sklearn.metrics.mean_squared_error`
+'r2'                    :func:`sklearn.metrics.r2_score`
+===================     ===============================================
 
 Custom scoring functions can be specified by passing any callable that can be called by :class:`GridSearchCV` as
 ``scoring(estimator, X, y)``. See :ref:`score_func_objects` for more details.
