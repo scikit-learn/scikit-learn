@@ -6,7 +6,7 @@ Two-class AdaBoost
 This example fits an AdaBoosted decision stump on a non-linearly separable
 classification dataset composed of two "Gaussian quantiles" clusters
 (see :func:`sklearn.datasets.make_gaussian_quantiles`) and plots the decision
-boundary and two-class decision scores.
+boundary and decision scores.
 
 """
 print __doc__
@@ -80,7 +80,7 @@ x1, x2, y1, y2 = pl.axis()
 pl.axis((x1, x2, y1, y2 * 1.2))
 pl.legend(loc='upper right')
 pl.ylabel('Samples')
-pl.xlabel('Two-class Decision Scores')
+pl.xlabel('Decision Scores')
 
 pl.subplots_adjust(wspace=0.25)
 pl.show()
