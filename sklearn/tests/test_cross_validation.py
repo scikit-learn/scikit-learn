@@ -257,6 +257,11 @@ def test_cross_val_score_precomputed():
     svm = SVC(kernel="precomputed")
     assert_raises(ValueError, cval.cross_val_score, svm, X, y)
 
+    # test error is raised when the precomputed kernel is not array-like
+    # or sparse
+    assert_raises(ValueError, cval.cross_val_score, svm,
+                  linear_kernel.tolist(), y)
+
 
 def test_cross_val_score_fit_params():
     clf = MockClassifier()
