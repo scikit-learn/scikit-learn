@@ -1,10 +1,10 @@
-.. _neural_networks:
+.. _neural_network:
 
 ====================================
 Neural network models (unsupervised)
 ====================================
 
-.. currentmodule:: sklearn.neural_networks
+.. currentmodule:: sklearn.neural_network
 
 
 .. _rbm:
