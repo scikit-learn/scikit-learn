@@ -673,6 +673,18 @@ def test_label_binarizer_classes():
 
     # check that labels present at fit time that are not in 'classes'
     # will be ignored but a warning will be shown
+    lb = LabelBinarizer(classes=[1, 2])
+    with warnings.catch_warnings(record=True) as w:
+        transformed = lb.fit_transform([0, 1, 2])
+
+    # warning was raised:
+    assert_equal(len(w), 1)
+    assert_true("not contained in parameter ``classes`` and will be ignored."
+                in str(w[0]))
+
+    # result is as for binary case
+    assert_equal(transformed.shape, (3, 1))
+    assert_array_equal(transformed.ravel(), [0, 0, 1])
 
 
 def test_label_binarizer_multilabel_unlabeled():

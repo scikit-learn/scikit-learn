@@ -1009,7 +1009,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
                 difference = set.difference(classes_set, self.classes)
                 warnings.warn("Found class(es) %s, which was not contained "
                               "in parameter ``classes`` and will be ignored."
-                              % str(difference))
+                              % str(list(difference)))
             self.classes_ = np.unique(self.classes)
         else:
             self.classes_ = classes
