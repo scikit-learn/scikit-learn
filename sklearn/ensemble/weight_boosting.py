@@ -270,10 +270,10 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         ``learning_rate``. There is a trade-off between ``learning_rate`` and
         ``n_estimators``.
 
-    algorithm : string, optional (default="SAMME.R")
-        If "SAMME.R" then use the SAMME.R real boosting algorithm.
+    algorithm : {'SAMME', 'SAMME.R'}, optional (default='SAMME.R')
+        If 'SAMME.R' then use the SAMME.R real boosting algorithm.
         ``base_estimator`` must support calculation of class probabilities.
-        If "SAMME" then use the SAMME discrete boosting algorithm.
+        If 'SAMME' then use the SAMME discrete boosting algorithm.
         The SAMME.R algorithm typically converges faster than SAMME,
         achieving a lower test error with fewer boosting iterations.
 
@@ -319,7 +319,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                  base_estimator=DecisionTreeClassifier(max_depth=1),
                  n_estimators=50,
                  learning_rate=1.,
-                 algorithm="SAMME.R",
+                 algorithm='SAMME.R',
                  compute_importances=False):
 
         super(AdaBoostClassifier, self).__init__(
@@ -356,13 +356,13 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                             "subclass of ClassifierMixin")
 
         # Check that algorithm is supported
-        if self.algorithm != "SAMME" and self.algorithm != "SAMME.R":
+        if self.algorithm != 'SAMME' and self.algorithm != 'SAMME.R':
             raise ValueError("algorithm %s is not supported"
                              % self.algorithm)
 
         #  SAMME-R requires predict_proba-enabled base estimators
-        if self.algorithm == "SAMME.R":
-            if not hasattr(self.base_estimator, "predict_proba"):
+        if self.algorithm == 'SAMME.R':
+            if not hasattr(self.base_estimator, 'predict_proba'):
                 raise TypeError(
                     "AdaBoostClassifier with algorithm='SAMME.R' requires "
                     "that the weak learner supports the calculation of class "
@@ -407,7 +407,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The classification error for the current boost.
             If None then boosting has terminated early.
         """
-        if self.algorithm == "SAMME.R":
+        if self.algorithm == 'SAMME.R':
             return self._boost_real(iboost, X, y, sample_weight)
 
         else:  # elif self.algorithm == "SAMME":
@@ -601,7 +601,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
             norm += weight
 
-            if self.algorithm == "SAMME.R":
+            if self.algorithm == 'SAMME.R':
                 current_pred = _samme_proba(estimator, n_classes, X)
             else:  # elif self.algorithm == "SAMME":
                 current_pred = estimator.predict(X)
@@ -653,7 +653,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
             norm += weight
 
-            if self.algorithm == "SAMME.R":
+            if self.algorithm == 'SAMME.R':
                 current_pred = _samme_proba(estimator, n_classes, X)
             else:  # elif self.algorithm == "SAMME":
                 current_pred = estimator.predict(X)
@@ -799,9 +799,9 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         ``learning_rate``. There is a trade-off between ``learning_rate`` and
         ``n_estimators``.
 
-    loss_function : string, optional (default="linear")
-        The loss function ("linear", "square", or "exponential") to use when
-        updating the weights after each boosting iteration.
+    loss : {'linear', 'square', 'exponential'}, optional (default='linear')
+        The loss function to use when updating the weights after each
+        boosting iteration.
 
     compute_importances : boolean, optional (default=False)
         Whether feature importances are computed and stored in the
@@ -844,7 +844,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
                  base_estimator=DecisionTreeRegressor(max_depth=3),
                  n_estimators=50,
                  learning_rate=1.,
-                 loss_function='linear',
+                 loss='linear',
                  compute_importances=False,
                  random_state=None):
 
@@ -854,7 +854,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             learning_rate=learning_rate,
             compute_importances=compute_importances)
 
-        self.loss_function = loss_function
+        self.loss = loss
         self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None):
@@ -882,9 +882,9 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             raise TypeError("base_estimator must be a "
                             "subclass of RegressorMixin")
 
-        if self.loss_function not in ('linear', 'square', 'exponential'):
+        if self.loss not in ('linear', 'square', 'exponential'):
             raise ValueError(
-                "loss_function must be 'linear', 'square', or 'exponential'")
+                "loss must be 'linear', 'square', or 'exponential'")
 
         # Fit
         return super(AdaBoostRegressor, self).fit(X, y, sample_weight)
@@ -948,9 +948,9 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         if error_max != 0.:
             error_vect /= error_vect.max()
 
-        if self.loss_function == 'square':
+        if self.loss == 'square':
             error_vect *= error_vect
-        elif self.loss_function == 'exponential':
+        elif self.loss == 'exponential':
             error_vect = 1. - np.exp(- error_vect)
 
         # Calculate the average loss
