@@ -37,10 +37,9 @@ X = np.concatenate((X1, X2))
 y = np.concatenate((y1, - y2 + 1))
 
 # Create and fit an AdaBoosted decision tree
-bdt = AdaBoostClassifier(
-    DecisionTreeClassifier(max_depth=1),
-    algorithm="SAMME",
-    n_estimators=200)
+bdt = AdaBoostClassifier(DecisionTreeClassifier(max_depth=1),
+                         algorithm="SAMME",
+                         n_estimators=200)
 
 bdt.fit(X, y)
 
@@ -68,7 +67,8 @@ for i, n, c in zip(xrange(2), class_names, plot_colors):
     pl.scatter(X[idx, 0], X[idx, 1],
                c=c, cmap=pl.cm.Paired,
                label="Class %s" % n)
-pl.axis("tight")
+pl.xlim(x_min, x_max)
+pl.ylim(y_min, y_max)
 pl.legend(loc='upper right')
 pl.xlabel("Decision Boundary")
 
