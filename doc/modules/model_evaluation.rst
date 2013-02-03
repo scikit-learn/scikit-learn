@@ -817,8 +817,8 @@ If you want to use a scoring function that takes additional parameters, such as
 :func:`fbeta_score`, you need to generate an appropriate scoring object.  The
 simplest way to generate a callable object for scoring is by using
 :class:`Scorer`.
-:class:`Scorer` converts score functions as above into callables
-that can be used for model evaluation.
+:class:`Scorer` converts score functions as above into callables that can be
+used for model evaluation.
 
 One typical use case is to wrap an existing scoring function from the library
 with non default value for its parameters such as the beta parameter for the
@@ -830,7 +830,8 @@ with non default value for its parameters such as the beta parameter for the
     >>> from sklearn.svm import LinearSVC
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=ftwo_scorer)
 
-The second use case is to help build a completely new and custom scorer object from a simple python function::
+The second use case is to help build a completely new and custom scorer object
+from a simple python function::
 
     >>> def my_custom_loss_func(ground_truth, predictions):
     ...     diff = np.abs(ground_truth - predictions).max()
@@ -839,12 +840,12 @@ The second use case is to help build a completely new and custom scorer object f
     >>> my_custom_scorer = Scorer(my_custom_loss_func, greater_is_better=False)
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=my_custom_scorer)
 
-:class:`Scorer` takes as parameters the function you want to use,
-whether it is a score (``greater_is_better=True``) or a loss
-(``greater_is_better=False``), whether the function you provided takes
-predictions as input (``needs_threshold=False``) or needs confidence scores
-(``needs_threshold=True``) and any additional parameters, such as ``beta``
-in the example above.
+:class:`Scorer` takes as parameters the function you want to use, whether it is
+a score (``greater_is_better=True``) or a loss (``greater_is_better=False``),
+whether the function you provided takes predictions as input
+(``needs_threshold=False``) or needs confidence scores
+(``needs_threshold=True``) and any additional parameters, such as ``beta`` in
+the example above.
 
 
 Implementing your own scoring object
@@ -855,9 +856,9 @@ The requirements that a callable can be used for model selection are as
 follows:
 
 - It can be called with parameters ``(estimator, X, y)``, where ``estimator``
-  it the model that should be evaluated, ``X`` is validation data and ``y``
-  is the ground truth target for ``X`` (in the supervised case) or ``None``
-  in the unsupervised case.
+  it the model that should be evaluated, ``X`` is validation data and ``y`` is
+  the ground truth target for ``X`` (in the supervised case) or ``None`` in the
+  unsupervised case.
 
 - The call returns a number indicating the quality of estimator.
 
@@ -875,10 +876,9 @@ Dummy estimators
 
 .. currentmodule:: sklearn.dummy
 
-When doing supervised learning, a simple sanity check consists in comparing one's
-estimator against simple rules of thumb.
-:class:`DummyClassifier` implements three such simple strategies for
-classification:
+When doing supervised learning, a simple sanity check consists in comparing
+one's estimator against simple rules of thumb. :class:`DummyClassifier`
+implements three such simple strategies for classification:
 
 - `stratified` generates randomly predictions by respecting the training
   set's class distribution,
