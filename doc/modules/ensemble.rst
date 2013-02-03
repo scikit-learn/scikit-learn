@@ -281,7 +281,7 @@ concentrate on the examples that are missed by the previous ones in the sequence
 AdaBoost can be used both for classification and regression problems:
 
   - For multi-class classification, :class:`AdaBoostClassifier` implements
-    AdaBoost-SAMME [ZZRH2009]_.
+    AdaBoost-SAMME and AdaBoost-SAMME.R [ZZRH2009]_.
 
   - For regression, :class:`AdaBoostRegressor` implements AdaBoost.R2 [D1997]_.
 

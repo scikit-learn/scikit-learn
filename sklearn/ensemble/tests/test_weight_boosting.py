@@ -9,6 +9,8 @@ from numpy.testing import assert_equal
 from nose.tools import assert_true
 from nose.tools import assert_raises
 
+from sklearn.dummy import DummyClassifier
+from sklearn.dummy import DummyRegressor
 from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import AdaBoostRegressor
@@ -179,10 +181,6 @@ def test_importances():
 
 def test_error():
     """Test that it gives proper exception on deficient input."""
-    from sklearn.dummy import DummyClassifier
-    from sklearn.dummy import DummyRegressor
-
-    # Invalid values for parameters
     assert_raises(ValueError,
                   AdaBoostClassifier(learning_rate=-1).fit,
                   X, y)
