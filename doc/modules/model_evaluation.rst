@@ -653,7 +653,7 @@ variance is  estimated  as follow:
 
 The best possible score is 1.0, lower values are worse.
 
-Here a small example of usage of the :func:`explained_variance_scoreé`
+Here a small example of usage of the :func:`explained_variance_score`
 function::
 
     >>> from sklearn.metrics import explained_variance_score
