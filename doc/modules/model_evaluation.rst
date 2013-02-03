@@ -864,6 +864,9 @@ follows:
 - The callable has a boolean attribute ``greater_is_better`` which indicates whether
   high or low values correspond to a better estimator.
 
+Objects that meet those conditions as said to implement the sklearn Scorer
+protocol.
+
 
 .. _dummy_estimators:
 

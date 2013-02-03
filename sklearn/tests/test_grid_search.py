@@ -341,7 +341,7 @@ def test_bad_estimator():
                   scoring='ari')
 
 
-def test_score_func_string():
+def test_grid_search_score_consistency():
     # test that correct scores are used
     from sklearn.metrics import auc_score
     clf = LinearSVC(random_state=0)
