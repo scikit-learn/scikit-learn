@@ -253,7 +253,7 @@ AdaBoost
 
 The module :mod:`sklearn.ensemble` implements the popular boosting algorithm
 known as AdaBoost. This algorithm was first introduced by Freud and Schapire
-[FS1995]_ back in 1995.
+[FS1995]_ in 1995.
 
 The core principle of AdaBoost is to fit a sequence of weak learners (i.e.,
 models that are only slightly better than random guessing, such as small
@@ -324,7 +324,7 @@ of decision trees).
  .. [ZZRH2009] J. Zhu, H. Zou, S. Rosset, T. Hastie. "Multi-class AdaBoost",
                2009.
 
- .. [D1997] H. Drucker. "Improving Regressor using Boosting Techniques", 1997.
+ .. [D1997] H. Drucker. "Improving Regressors using Boosting Techniques", 1997.
 
  .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, "Elements of
               Statistical Learning Ed. 2", Springer, 2009.
