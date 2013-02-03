@@ -299,7 +299,7 @@ learners::
     >>> clf = AdaBoostClassifier(n_estimators=100)
     >>> scores = cross_val_score(clf, iris.data, iris.target)
     >>> scores.mean()                             # doctest: +ELLIPSIS
-    0.939...
+    0.9...
 
 The number of weak learners is controlled by the parameter ``n_estimators``. The
 ``learning_rate`` parameter controls the contribution of the weak learners in
