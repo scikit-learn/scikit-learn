@@ -27,10 +27,8 @@ from sklearn.ensemble import AdaBoostRegressor
 
 clf_1 = DecisionTreeRegressor(max_depth=4)
 
-clf_2 = AdaBoostRegressor(
-    DecisionTreeRegressor(max_depth=4),
-    n_estimators=300,
-    random_state=rng)
+clf_2 = AdaBoostRegressor(DecisionTreeRegressor(max_depth=4),
+                          n_estimators=300, random_state=rng)
 
 clf_1.fit(X, y)
 clf_2.fit(X, y)
