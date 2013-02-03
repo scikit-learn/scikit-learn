@@ -10,12 +10,15 @@ and defining three classes separated by nested concentric ten-dimensional
 spheres such that roughly equal numbers of samples are in each class (quantiles
 of the :math:`\chi^2` distribution).
 
-The performance of the SAMME and SAMME.R [1] algorithms are compared.
-The error of each algorithm on the test set after each boosting iteration is
-shown on the left, the classification error on the test set of each tree is
-shown in the middle, and the boost weight of each tree is shown on the right.
-All trees have a weight of one in the SAMME.R algorithm and therefore are not
-shown.
+The performance of the SAMME and SAMME.R [1] algorithms are compared. SAMME.R
+uses the probability estimates to update the additive model, while SAMME  uses
+the classifications only. As the example illustrates, the SAMME.R algorithm
+typically converges faster than SAMME, achieving a lower test error with fewer
+boosting iterations. The error of each algorithm on the test set after each
+boosting iteration is shown on the left, the classification error on the test
+set of each tree is shown in the middle, and the boost weight of each tree is
+shown on the right. All trees have a weight of one in the SAMME.R algorithm and
+therefore are not shown.
 
 .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
 

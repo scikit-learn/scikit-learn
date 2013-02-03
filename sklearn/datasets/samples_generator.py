@@ -331,7 +331,7 @@ def make_hastie_10_2(n_samples=12000, random_state=None):
     The ten features are standard independent Gaussian and
     the target ``y`` is defined by::
 
-      y[i] = 1 if np.sum(X[i]**2) > 9.34 else -1
+      y[i] = 1 if np.sum(X[i] ** 2) > 9.34 else -1
 
     Parameters
     ----------
@@ -1291,9 +1291,8 @@ def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
     # Label by quantile
     step = n_samples // n_classes
 
-    y = np.hstack([
-        np.repeat(np.arange(n_classes), step),
-        np.repeat(n_classes - 1, n_samples - step * n_classes)])
+    y = np.hstack([np.repeat(np.arange(n_classes), step),
+                   np.repeat(n_classes - 1, n_samples - step * n_classes)])
 
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
