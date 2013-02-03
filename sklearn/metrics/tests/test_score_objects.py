@@ -5,7 +5,7 @@ from sklearn.utils.testing import assert_raises
 
 from sklearn.metrics import f1_score, r2_score, auc_score, fbeta_score
 from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.metrics.score_objects import SCORERS, Scorer
+from sklearn.metrics import SCORERS, Scorer
 from sklearn.svm import LinearSVC
 from sklearn.cluster import KMeans
 from sklearn.linear_model import Ridge, LogisticRegression

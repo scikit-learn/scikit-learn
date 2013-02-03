@@ -670,12 +670,6 @@ Model Selection Interface
 
    metrics.Scorer
 
-.. autosummary::
-   :toctree: generated/
-   :template: function.rst
-
-   metrics.score_objects
-
 Classification metrics
 ----------------------
 

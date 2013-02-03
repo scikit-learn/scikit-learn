@@ -22,7 +22,7 @@ from sklearn.datasets.samples_generator import make_classification, make_blobs
 from sklearn.svm import LinearSVC, SVC
 from sklearn.cluster import KMeans, MeanShift
 from sklearn.metrics import f1_score
-from sklearn.metrics.score_objects import Scorer
+from sklearn.metrics import Scorer
 from sklearn.cross_validation import KFold, StratifiedKFold
 
 
