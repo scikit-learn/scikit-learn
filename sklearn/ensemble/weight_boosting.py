@@ -27,7 +27,7 @@ from numpy.core.umath_tests import inner1d
 from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_arrays, array2d, check_random_state
+from ..utils import check_arrays, check_random_state
 from ..metrics import accuracy_score, r2_score
 
 
@@ -985,7 +985,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
                 ("{0} is not initialized. "
                  "Perform a fit first").format(self.__class__.__name__))
 
-        if limit < 0:
+        if limit < 1:
             limit = len(self.estimators_)
 
         # Evaluate predictions of all estimators
@@ -999,10 +999,10 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         weight_cdf = self.estimator_weights_[sorted_idx].cumsum(axis=1)
         median_or_above = weight_cdf >= 0.5 * weight_cdf[:, -1][:, np.newaxis]
         median_idx = median_or_above.argmax(axis=1)
-        median_estimators = sorted_idx[np.arange(X.shape[0]), median_idx]
+        median_estimators = sorted_idx[np.arange(len(X)), median_idx]
 
         # Return median predictions
-        return predictions[np.arange(X.shape[0]), median_estimators]
+        return predictions[np.arange(len(X)), median_estimators]
 
     def predict(self, X):
         """Predict regression value for X.
@@ -1043,4 +1043,4 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             The predicted regression values.
         """
         for i in xrange(len(self.estimators_)):
-            yield self._get_median_predict(X, limit=i)
+            yield self._get_median_predict(X, limit=i + 1)
