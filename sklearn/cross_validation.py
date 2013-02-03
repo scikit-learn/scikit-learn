@@ -1093,8 +1093,9 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
 
     scoring : string or callable, optional
         Either one of either a string ("zero_one", "f1", "roc_auc", ... for
-        classification, "mse", "r2",... for regression) or a callable.
-        See the user guide for details.
+        classification, "mse", "r2", ... for regression) or a callable.
+        See 'Scoring objects' in the model evaluation section of the user guide
+        for details.
 
     cv : cross-validation generator, optional
         A cross-validation generator. If None, a 3-fold cross
@@ -1221,9 +1222,10 @@ def permutation_test_score(estimator, X, y, scoring=None, cv=None,
         supervised learning.
 
     scoring : string or object, optional
-        Either one of ["zero_one", "f1", "auc"] for classification,
-        ["mse", "r2"] for regression or an object providing a
-        scoring method.
+        Either one of either a string ("zero_one", "f1", "roc_auc", ... for
+        classification, "mse", "r2", ... for regression) or a callable.
+        See 'Scoring objects' in the model evaluation section of the user guide
+        for details.
 
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).

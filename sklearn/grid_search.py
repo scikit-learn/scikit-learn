@@ -191,7 +191,8 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
     scoring : string or callable, optional
         Either one of either a string ("zero_one", "f1", "roc_auc", ... for
         classification, "mse", "r2",... for regression) or a callable.
-        See the user guide for details.
+        See 'Scoring objects' in the model evaluation section of the user guide
+        for details.
 
     fit_params : dict, optional
         parameters to pass to the fit method

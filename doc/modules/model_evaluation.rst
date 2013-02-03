@@ -809,6 +809,9 @@ Scoring                 Function
 'r2'                    :func:`sklearn.metrics.r2_score`
 ===================     ===============================================
 
+The corresponding scorer objects are stored in the dictionary
+``sklearn.metrics.SCORERS``.
+
 .. currentmodule:: sklearn.metrics
 
 Creating scoring objects from score functions

@@ -59,31 +59,10 @@ By default, :class:`GridSearchCV` uses the ``score`` function of the estimator
 to evaluate a parameter setting. These are the :func:`sklearn.metrics.accuracy_score` for classification
 and :func:`sklearn.metrics.r2_score` for regression.
 For some applications, other scoring function are better suited (for example in
-unbalanced classification, the accuracy score is often non-informative). An alternative scoring function
-can be specified via the ``scoring`` parameter to :class:`GridSearchCV`. There are several built-in scores available,
-that can be selected by giving a string argument:
-
-===================     ===============================================
-Scoring                 Function
-===================     ===============================================
-**Classification**
-'accuracy'              :func:`sklearn.metrics.accuracy_score`
-'average_precision'     :func:`sklearn.metrics.average_precision_score`
-'f1'                    :func:`sklearn.metrics.f1_score`
-'precision'             :func:`sklearn.metrics.precision_score`
-'recall'                :func:`sklearn.metrics.recall_score`
-'roc_auc'               :func:`sklearn.metrics.auc_score`
-
-**Clustering**
-'ari'`                  :func:`sklearn.metrics.adjusted_rand_score`
-
-**Regression**
-'mse'                   :func:`sklearn.metrics.mean_squared_error`
-'r2'                    :func:`sklearn.metrics.r2_score`
-===================     ===============================================
-
-Custom scoring functions can be specified by passing any callable that can be called by :class:`GridSearchCV` as
-``scoring(estimator, X, y)``. See :ref:`score_func_objects` for more details.
+unbalanced classification, the accuracy score is often non-informative). An
+alternative scoring function can be specified via the ``scoring`` parameter to
+:class:`GridSearchCV`. 
+See :ref:`score_func_objects` for more details.
 
 Examples
 ========
