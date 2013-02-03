@@ -20,7 +20,7 @@ from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
 from .utils.validation import _num_samples
 from .utils import check_arrays, safe_mask
-from .metrics import scorers, Scorer
+from .metrics import SCORERS, Scorer
 
 __all__ = ['GridSearchCV', 'IterGrid', 'fit_grid_point']
 
@@ -375,7 +375,7 @@ class GridSearchCV(BaseEstimator, MetaEstimatorMixin):
                           "Either use strings or score objects.")
             scorer = Scorer(self.score_func)
         elif isinstance(self.scoring, basestring):
-            scorer = scorers[self.scoring]
+            scorer = SCORERS[self.scoring]
         else:
             scorer = self.scoring
 
