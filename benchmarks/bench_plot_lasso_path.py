@@ -92,7 +92,7 @@ if __name__ == '__main__':
 
     fig = plt.figure()
     i = 1
-    for c, (label, timings) in zip('bcry', sorted(results.iteritems())):
+    for c, (label, timings) in zip('bcry', sorted(results.items())):
         ax = fig.add_subplot(2, 2, i, projection='3d')
         X, Y = np.meshgrid(samples_range, features_range)
         Z = np.asarray(timings).reshape(samples_range.shape[0],
