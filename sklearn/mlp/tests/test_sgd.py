@@ -75,11 +75,11 @@ def test_gradient():
         new_weights_h = w0[:n_features * n_hidden].reshape((n_features, n_hidden))
         new_weights_o = w0[n_features * n_hidden:].reshape((n_hidden, n_outs))
 
-        forward(X, new_weights_h, bias_hidden, new_weights_o, bias_output,
+        forward(X, 0, batch_size, new_weights_h, bias_hidden, new_weights_o, bias_output,
             x_hidden, x_output, output, Tanh())
 
         out = np.empty((batch_size, n_outs))
-        loss.loss(y, x_output, out)
+        loss.loss(y, 0, batch_size, x_output, out)
 
         return out
 
@@ -90,9 +90,9 @@ def test_gradient():
         new_bias_o = np.array(bias_output)
         new_bias_h = np.array(bias_hidden)
 
-        forward(X, new_weights_h, bias_hidden, new_weights_o, bias_output,
+        forward(X, 0, batch_size, new_weights_h, bias_hidden, new_weights_o, bias_output,
             x_hidden, x_output, output, Tanh())
-        backward(X, x_output, x_hidden, y, new_weights_o, new_bias_o,
+        backward(X, 0, batch_size, x_output, x_hidden, y, new_weights_o, new_bias_o,
             new_weights_h, new_bias_h, delta_o, delta_h, dx_output,
             dx_hidden, weights_moment_o, weights_moment_h, loss,
             output, Tanh(), 1, 0)
