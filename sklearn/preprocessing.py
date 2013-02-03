@@ -1124,7 +1124,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             half = (self.pos_label - self.neg_label) / 2.0
             threshold = self.neg_label + half
 
-        if self.multilabel:
+        if self.multilabel_:
             Y = np.array(Y > threshold, dtype=int)
             # Return the predictions in the same format as in fit
             if self.indicator_matrix_:
