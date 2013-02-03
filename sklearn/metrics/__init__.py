@@ -28,7 +28,7 @@ from .metrics import (accuracy_score,
 from .metrics import zero_one
 from .metrics import zero_one_score
 
-from .score_objects import Scorer, scorers, score_objects
+from .scorer import Scorer, scorers, score_objects
 
 from . import cluster
 from .cluster import (adjusted_rand_score,

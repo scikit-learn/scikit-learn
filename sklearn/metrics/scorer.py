@@ -1,3 +1,21 @@
+"""
+The :mod:`sklearn.metrics.scorer` submodule implements a flexible
+interface for model selection and evaluation using
+arbitrary score functions.
+
+A Scorer object is a callable that can be passed to
+:class:`sklearn.grid_search.GridSearchCV` or
+:func:`sklearn.cross_validation.cross_val_score` as the ``scoring`` parameter,
+to specify how a model should be evaluated.
+
+The signature of the call is ``(estimator, X, y)`` where ``estimator``
+is the model to be evaluated, ``X`` is the test data and ``y`` is the
+ground truth labeling (or ``None`` in the case of unsupervised models).
+"""
+
+# Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
+# Liscence: Simplified BSD
+
 import numpy as np
 
 from . import (r2_score, mean_squared_error, accuracy_score, f1_score,
