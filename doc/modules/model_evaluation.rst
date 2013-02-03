@@ -297,7 +297,7 @@ In this context, we can define the notions of precision, recall and F-measure:
 
    F_\beta = (1 + \beta^2) \frac{\text{precision} \times \text{recall}}{\beta^2 \text{precision} + \text{recall}}.
 
-Here some small examples in binary classification:
+Here some small examples in binary classification::
 
   >>> from sklearn import metrics
   >>> y_pred = [0, 1, 0, 0]
@@ -411,7 +411,7 @@ their support
 
   \texttt{weighted\_{}F\_{}beta}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (1 + \beta^2)\frac{|y_i \cap \hat{y}_i|}{\beta^2 |\hat{y}_i| + |y_i|}.
 
-Here an example where ``average`` is set to ``average`` to ``macro``:
+Here an example where ``average`` is set to ``average`` to ``macro``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
@@ -427,7 +427,7 @@ Here an example where ``average`` is set to ``average`` to ``macro``:
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
   (0.22..., 0.33..., 0.26..., None)
 
-Here an example where ``average`` is set to to ``micro``:
+Here an example where ``average`` is set to to ``micro``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
@@ -443,7 +443,7 @@ Here an example where ``average`` is set to to ``micro``:
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
   (0.33..., 0.33..., 0.33..., None)
 
-Here an example where ``average`` is set to to ``weighted``:
+Here an example where ``average`` is set to to ``weighted``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
@@ -459,7 +459,7 @@ Here an example where ``average`` is set to to ``weighted``:
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
   (0.22..., 0.33..., 0.26..., None)
 
-Here an example where ``average`` is set to ``None``:
+Here an example where ``average`` is set to ``None``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
@@ -492,7 +492,7 @@ value and :math:`w` is the predicted decisions as output by
   L_\text{Hinge}(y, w) = \max\left\{1 - wy, 0\right\} = \left|1 - wy\right|_+
 
 Here a small example demonstrating the use of the :func:`hinge_loss` function
-with a svm classifier:
+with a svm classifier::
 
   >>> from sklearn import svm
   >>> from sklearn.metrics import hinge_loss
@@ -653,7 +653,8 @@ variance is  estimated  as follow:
 
 The best possible score is 1.0, lower values are worse.
 
-Here a small example of usage of the :func:`explained_variance_scoreé` function:
+Here a small example of usage of the :func:`explained_variance_score`
+function::
 
     >>> from sklearn.metrics import explained_variance_score
     >>> y_true = [3, -0.5, 2, 7]
@@ -676,7 +677,7 @@ and :math:`y_i` is the corresponding true value, then the mean absolute error
 
   \text{MAE}(y, \hat{y}) = \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}}-1} \left| y_i - \hat{y}_i \right|.
 
-Here a small example of usage of the :func:`mean_absolute_error` function:
+Here a small example of usage of the :func:`mean_absolute_error` function::
 
   >>> from sklearn.metrics import mean_absolute_error
   >>> y_true = [3, -0.5, 2, 7]
@@ -705,7 +706,8 @@ and :math:`y_i` is the corresponding true value, then the mean squared error
 
   \text{MSE}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (y_i - \hat{y}_i)^2.
 
-Here a small example of usage of the :func:`mean_squared_error` function:
+Here a small example of usage of the :func:`mean_squared_error`
+function::
 
   >>> from sklearn.metrics import mean_squared_error
   >>> y_true = [3, -0.5, 2, 7]
@@ -740,7 +742,7 @@ over :math:`n_{\text{samples}}` is defined as
 
 where :math:`\bar{y} =  \frac{1}{n_{\text{samples}}} \sum_{i=0}^{n_{\text{samples}} - 1} y_i`.
 
-Here a small example of usage of the :func:`r2_score` function:
+Here a small example of usage of the :func:`r2_score` function::
 
   >>> from sklearn.metrics import r2_score
   >>> y_true = [3, -0.5, 2, 7]
@@ -765,6 +767,111 @@ Clustering metrics
 The :mod:`sklearn.metrics` implements several losses, scores and utility
 function for more information see the :ref:`clustering_evaluation` section.
 
+
+.. _score_func_objects:
+
+.. currentmodule:: sklearn
+
+`Scoring` objects: defining your scoring rules
+===============================================
+While the above functions provide a simple interface for most use-cases, they
+can not directly be used for model selection and evaluation using
+:class:`grid_search.GridSearchCV` and
+:func:`cross_validation.cross_val_score`, as scoring functions have different
+signatures and might require additional parameters.
+
+Instead, :class:`grid_search.GridSearchCV` and
+:func:`cross_validation.cross_val_score` both take callables that implement
+estimator dependent functions. That allows for very flexible evaluation of
+models, for example taking complexity of the model into account.
+
+For scoring functions that take no additional parameters (which are most of
+them), you can simply provide a string as the ``scoring`` parameter. Possible
+values are:
+
+
+===================     ===============================================
+Scoring                 Function
+===================     ===============================================
+**Classification**
+'accuracy'              :func:`sklearn.metrics.accuracy_score`
+'average_precision'     :func:`sklearn.metrics.average_precision_score`
+'f1'                    :func:`sklearn.metrics.f1_score`
+'precision'             :func:`sklearn.metrics.precision_score`
+'recall'                :func:`sklearn.metrics.recall_score`
+'roc_auc'               :func:`sklearn.metrics.auc_score`
+
+**Clustering**
+'ari'`                  :func:`sklearn.metrics.adjusted_rand_score`
+
+**Regression**
+'mse'                   :func:`sklearn.metrics.mean_squared_error`
+'r2'                    :func:`sklearn.metrics.r2_score`
+===================     ===============================================
+
+The corresponding scorer objects are stored in the dictionary
+``sklearn.metrics.SCORERS``.
+
+.. currentmodule:: sklearn.metrics
+
+Creating scoring objects from score functions
+---------------------------------------------
+If you want to use a scoring function that takes additional parameters, such as
+:func:`fbeta_score`, you need to generate an appropriate scoring object.  The
+simplest way to generate a callable object for scoring is by using
+:class:`Scorer`.
+:class:`Scorer` converts score functions as above into callables that can be
+used for model evaluation.
+
+One typical use case is to wrap an existing scoring function from the library
+with non default value for its parameters such as the beta parameter for the
+:func:`fbeta_score` function::
+
+    >>> from sklearn.metrics import fbeta_score, Scorer
+    >>> ftwo_scorer = Scorer(fbeta_score, beta=2)
+    >>> from sklearn.grid_search import GridSearchCV
+    >>> from sklearn.svm import LinearSVC
+    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=ftwo_scorer)
+
+The second use case is to help build a completely new and custom scorer object
+from a simple python function::
+
+    >>> def my_custom_loss_func(ground_truth, predictions):
+    ...     diff = np.abs(ground_truth - predictions).max()
+    ...     return np.log(1 + diff)
+    ...
+    >>> my_custom_scorer = Scorer(my_custom_loss_func, greater_is_better=False)
+    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=my_custom_scorer)
+
+:class:`Scorer` takes as parameters the function you want to use, whether it is
+a score (``greater_is_better=True``) or a loss (``greater_is_better=False``),
+whether the function you provided takes predictions as input
+(``needs_threshold=False``) or needs confidence scores
+(``needs_threshold=True``) and any additional parameters, such as ``beta`` in
+the example above.
+
+
+Implementing your own scoring object
+------------------------------------
+You can generate even more flexible model scores by constructing your own
+scoring object from scratch, without using the :class:`Scorer` helper class.
+The requirements that a callable can be used for model selection are as
+follows:
+
+- It can be called with parameters ``(estimator, X, y)``, where ``estimator``
+  it the model that should be evaluated, ``X`` is validation data and ``y`` is
+  the ground truth target for ``X`` (in the supervised case) or ``None`` in the
+  unsupervised case.
+
+- The call returns a number indicating the quality of estimator.
+
+- The callable has a boolean attribute ``greater_is_better`` which indicates whether
+  high or low values correspond to a better estimator.
+
+Objects that meet those conditions as said to implement the sklearn Scorer
+protocol.
+
+
 .. _dummy_estimators:
 
 Dummy estimators
@@ -772,10 +879,9 @@ Dummy estimators
 
 .. currentmodule:: sklearn.dummy
 
-When doing supervised learning, a simple sanity check consists in comparing one's
-estimator against simple rules of thumb.
-:class:`DummyClassifier` implements three such simple strategies for
-classification:
+When doing supervised learning, a simple sanity check consists in comparing
+one's estimator against simple rules of thumb. :class:`DummyClassifier`
+implements three such simple strategies for classification:
 
 - `stratified` generates randomly predictions by respecting the training
   set's class distribution,

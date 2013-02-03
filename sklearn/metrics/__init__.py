@@ -28,6 +28,8 @@ from .metrics import (accuracy_score,
 from .metrics import zero_one
 from .metrics import zero_one_score
 
+from .scorer import Scorer, SCORERS
+
 from . import cluster
 from .cluster import (adjusted_rand_score,
                       adjusted_mutual_info_score,
@@ -78,4 +80,6 @@ __all__ = ['accuracy_score',
            'silhouette_score',
            'silhouette_samples',
            'v_measure_score',
-           'zero_one_loss']
+           'zero_one_loss',
+           'Scorer',
+           'SCORERS']

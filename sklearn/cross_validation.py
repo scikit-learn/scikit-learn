@@ -22,6 +22,7 @@ from .base import is_classifier, clone
 from .utils import check_arrays, check_random_state, safe_mask
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
+from .metrics import SCORERS, Scorer
 
 __all__ = ['Bootstrap',
            'KFold',
@@ -1031,13 +1032,12 @@ class StratifiedShuffleSplit(object):
 
 ##############################################################################
 
-def _cross_val_score(estimator, X, y, score_func, train, test, verbose,
+def _cross_val_score(estimator, X, y, scorer, train, test, verbose,
                      fit_params):
     """Inner loop for cross validation"""
     n_samples = X.shape[0] if sp.issparse(X) else len(X)
     fit_params = dict([(k, np.asarray(v)[train]
-                        if hasattr(v, '__len__')
-                        and len(v) == n_samples else v)
+                       if hasattr(v, '__len__') and len(v) == n_samples else v)
                        for k, v in fit_params.items()])
     if not hasattr(X, "shape"):
         if getattr(estimator, "_pairwise", False):
@@ -1057,24 +1057,26 @@ def _cross_val_score(estimator, X, y, score_func, train, test, verbose,
             X_test = X[safe_mask(X, test)]
 
     if y is None:
-        estimator.fit(X_train, **fit_params)
-        if score_func is None:
-            score = estimator.score(X_test)
-        else:
-            score = score_func(X_test)
+        y_train = None
+        y_test = None
     else:
-        estimator.fit(X_train, y[train], **fit_params)
-        if score_func is None:
-            score = estimator.score(X_test, y[test])
-        else:
-            score = score_func(y[test], estimator.predict(X_test))
+        y_train = y[train]
+        y_test = y[test]
+    estimator.fit(X_train, y_train, **fit_params)
+    if scorer is None:
+        score = estimator.score(X_test, y_test)
+    else:
+        score = scorer(estimator, X_test, y_test)
+        if not isinstance(score, numbers.Number):
+            raise ValueError("scoring must return a number, got %s (%s)"
+                             " instead." % (str(score), type(score)))
     if verbose > 1:
         print("score: %f" % score)
     return score
 
 
-def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
-                    verbose=0, fit_params=None):
+def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
+                    verbose=0, fit_params=None, score_func=None):
     """Evaluate a score by cross-validation
 
     Parameters
@@ -1089,12 +1091,11 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
         The target variable to try to predict in the case of
         supervised learning.
 
-    score_func : callable, optional
-        Score function to use for evaluation.
-        Has priority over the score function in the estimator.
-        In a non-supervised setting, where y is None, it takes the test
-        data (X_test) as its only argument. In a supervised setting it takes
-        the test target (y_true) and the test prediction (y_pred) as arguments.
+    scoring : string or callable, optional
+        Either one of either a string ("zero_one", "f1", "roc_auc", ... for
+        classification, "mse", "r2", ... for regression) or a callable.
+        See 'Scoring objects' in the model evaluation section of the user guide
+        for details.
 
     cv : cross-validation generator, optional
         A cross-validation generator. If None, a 3-fold cross
@@ -1118,10 +1119,18 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
-    if score_func is None:
-        if not hasattr(estimator, 'score'):
+    if score_func is not None:
+        warnings.warn("Passing function as ``score_func`` is "
+                      "deprecated and will be removed in 0.15. "
+                      "Either use strings or score objects.", stacklevel=2)
+        scorer = Scorer(score_func)
+    elif isinstance(scoring, basestring):
+        scorer = SCORERS[scoring]
+    else:
+        scorer = scoring
+    if scorer is None and not hasattr(estimator, 'score'):
             raise TypeError(
-                "If no score_func is specified, the estimator passed "
+                "If no scoring is specified, the estimator passed "
                 "should have a 'score' method. The estimator %s "
                 "does not." % estimator)
     # We clone the estimator to make sure that all the folds are
@@ -1129,19 +1138,17 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
     fit_params = fit_params if fit_params is not None else {}
     scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(_cross_val_score)(
-            clone(estimator), X, y, score_func,
-            train, test, verbose, fit_params)
+            clone(estimator), X, y, scorer, train, test, verbose, fit_params)
         for train, test in cv)
     return np.array(scores)
 
 
-def _permutation_test_score(estimator, X, y, cv, score_func):
+def _permutation_test_score(estimator, X, y, cv, scorer):
     """Auxilary function for permutation_test_score"""
     avg_score = []
     for train, test in cv:
-        avg_score.append(score_func(y[test],
-                                    estimator.fit(X[train],
-                                                  y[train]).predict(X[test])))
+        estimator.fit(X[train], y[train])
+        avg_score.append(scorer(estimator, X[test], y[test]))
     return np.mean(avg_score)
 
 
@@ -1197,9 +1204,9 @@ def check_cv(cv, X=None, y=None, classifier=False):
     return cv
 
 
-def permutation_test_score(estimator, X, y, score_func, cv=None,
+def permutation_test_score(estimator, X, y, scoring=None, cv=None,
                            n_permutations=100, n_jobs=1, labels=None,
-                           random_state=0, verbose=0):
+                           random_state=0, verbose=0, score_func=None):
     """Evaluate the significance of a cross-validated score with permutations
 
     Parameters
@@ -1214,12 +1221,11 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
         The target variable to try to predict in the case of
         supervised learning.
 
-    score_func : callable
-        Callable taking as arguments the test targets (y_test) and
-        the predicted targets (y_pred) and returns a float. The score
-        functions are expected to return a bigger value for a better result
-        otherwise the returned value does not correspond to a p-value (see
-        Returns below for further details).
+    scoring : string or object, optional
+        Either one of either a string ("zero_one", "f1", "roc_auc", ... for
+        classification, "mse", "r2", ... for regression) or a callable.
+        See 'Scoring objects' in the model evaluation section of the user guide
+        for details.
 
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
@@ -1268,15 +1274,28 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     X, y = check_arrays(X, y, sparse_format='csr')
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
+    if score_func is not None:
+        warnings.warn("Passing function as ``score_func`` is "
+                      "deprecated and will be removed in 0.15. "
+                      "Either use strings or score objects.")
+        scorer = Scorer(score_func)
+    elif isinstance(scoring, basestring):
+        scorer = SCORERS[scoring]
+    else:
+        scorer = scoring
+
+    if scorer is None:
+        raise ValueError("No valid scoring provided.")
+
     random_state = check_random_state(random_state)
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
-    score = _permutation_test_score(clone(estimator), X, y, cv, score_func)
+    score = _permutation_test_score(clone(estimator), X, y, cv, scorer)
     permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
-        delayed(_permutation_test_score)(clone(estimator), X,
-                                         _shuffle(y, labels, random_state),
-                                         cv, score_func)
+        delayed(_permutation_test_score)(
+            clone(estimator), X, _shuffle(y, labels, random_state), cv,
+            scorer)
         for _ in range(n_permutations))
     permutation_scores = np.array(permutation_scores)
     pvalue = (np.sum(permutation_scores >= score) + 1.0) / (n_permutations + 1)
