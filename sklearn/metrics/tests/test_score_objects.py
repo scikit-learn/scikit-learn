@@ -35,6 +35,9 @@ def test_classification_scores():
     score3 = unpickled_scorer(clf, X_test, y_test)
     assert_almost_equal(score1, score3)
 
+    # smoke test the repr:
+    repr(fbeta_score)
+
 
 def test_regression_scores():
     diabetes = load_diabetes()
