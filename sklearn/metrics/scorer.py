@@ -49,6 +49,9 @@ class Scorer(object):
         can not be computed using predictions alone, but need the output of
         ``decision_function`` or ``predict_proba``.
 
+    **kwargs : additional arguments
+        Additional parameters to be passed to score_func.
+
     Examples
     --------
     >>> from sklearn.metrics import fbeta_score, Scorer
