@@ -1,53 +1,51 @@
 """
-===================================================================
+======================================
 Decision Tree Regression with AdaBoost
-===================================================================
+======================================
 
-1D regression with boosted :ref:`decision trees <tree>`: the decision tree is
-used to fit a sine curve with addition noisy observation. As a result, it
-learns local linear regressions approximating the sine curve.
+A decision tree is boosted using the AdaBoost.R2 [1] algorithm on a 1D
+sinusoidal dataset with a small amount of Gaussian noise.
+299 boosts (300 decision trees) is compared with a single decision tree
+regressor. As the number of boosts is increased the regressor can fit more
+detail.
 
-We can see that if the maximum number of boosts (controlled by the
-`n_estimators` parameter) is set too high, the ensemble learns too fine
-details of the training data and learn from the noise, i.e. they overfit.
+.. [1] H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
+
 """
 print __doc__
 
 import numpy as np
 
-# Create a random dataset
+# Create a the dataset
 rng = np.random.RandomState(1)
-X = np.sort(5 * rng.rand(80, 1), axis=0)
-y = np.sin(X).ravel()
-y[::5] += 3 * (0.5 - rng.rand(16))
+X = np.linspace(0, 6, 100)[:, np.newaxis]
+y = np.sin(X).ravel() + np.sin(6 * X).ravel() + rng.normal(0, 0.1, X.shape[0])
 
 # Fit regression model
 from sklearn.tree import DecisionTreeRegressor
 from sklearn.ensemble import AdaBoostRegressor
 
-clf_1 = AdaBoostRegressor(
-    DecisionTreeRegressor(max_depth=4),
-    n_estimators=1)
+clf_1 = DecisionTreeRegressor(max_depth=4)
 
 clf_2 = AdaBoostRegressor(
     DecisionTreeRegressor(max_depth=4),
-    n_estimators=10)
+    n_estimators=300,
+    random_state=rng)
 
 clf_1.fit(X, y)
 clf_2.fit(X, y)
 
 # Predict
-X_test = np.arange(0.0, 6.0, 0.01)[:, np.newaxis]
-y_1 = clf_1.predict(X_test)
-y_2 = clf_2.predict(X_test)
+y_1 = clf_1.predict(X)
+y_2 = clf_2.predict(X)
 
 # Plot the results
 import pylab as pl
 
 pl.figure()
 pl.scatter(X, y, c="k", label="data")
-pl.plot(X_test, y_1, c="g", label="n_estimators=1", linewidth=2)
-pl.plot(X_test, y_2, c="r", label="n_estimators=10", linewidth=2)
+pl.plot(X, y_1, c="g", label="n_estimators=1", linewidth=2)
+pl.plot(X, y_2, c="r", label="n_estimators=300", linewidth=2)
 pl.xlabel("data")
 pl.ylabel("target")
 pl.title("Boosted Decision Tree Regression")

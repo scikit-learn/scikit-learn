@@ -27,7 +27,7 @@ from numpy.core.umath_tests import inner1d
 from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
-from ..utils import check_arrays
+from ..utils import check_arrays, array2d, check_random_state
 from ..metrics import accuracy_score, r2_score
 
 
@@ -52,6 +52,7 @@ class BaseWeightBoosting(BaseEnsemble):
                  estimator_params=tuple(),
                  learning_rate=1.,
                  compute_importances=False):
+
         super(BaseWeightBoosting, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
@@ -802,6 +803,12 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         Whether feature importances are computed and stored in the
         ``feature_importances_`` attribute when calling fit.
 
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
     Attributes
     ----------
     `estimators_` : list of classifiers
@@ -833,13 +840,18 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
                  base_estimator=DecisionTreeRegressor(max_depth=3),
                  n_estimators=50,
                  learning_rate=1.,
-                 compute_importances=False):
+                 loss_function='linear',
+                 compute_importances=False,
+                 random_state=None):
 
         super(AdaBoostRegressor, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
             learning_rate=learning_rate,
             compute_importances=compute_importances)
+
+        self.loss_function = loss_function
+        self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None):
         """Build a boosted regressor from the training set (X, y).
@@ -865,6 +877,10 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         if not isinstance(self.base_estimator, RegressorMixin):
             raise TypeError("base_estimator must be a "
                             "subclass of RegressorMixin")
+
+        if self.loss_function not in ('linear', 'square', 'exponential'):
+            raise ValueError(
+                "loss_function must be 'linear', 'square', or 'exponential'")
 
         # Fit
         return super(AdaBoostRegressor, self).fit(X, y, sample_weight)
@@ -906,8 +922,21 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         """
         estimator = self._make_estimator()
 
+        generator = check_random_state(self.random_state)
+
+        # Weighted sampling of the training set with replacement
+        # For NumPy >= 1.7.0 use np.random.choice
+        cdf = sample_weight.cumsum()
+        cdf /= cdf[-1]
+        uniform_samples = generator.random_sample(X.shape[0])
+        bootstrap_idx = cdf.searchsorted(uniform_samples, side='right')
+        # searchsorted returns a scalar
+        bootstrap_idx = np.array(bootstrap_idx, copy=False)
+
+        # Fit on the bootstrapped sample and obtain a prediction
+        # for all samples in the training set
         y_predict = estimator.fit(
-            X, y, sample_weight=sample_weight).predict(X)
+            X[bootstrap_idx], y[bootstrap_idx]).predict(X)
 
         error_vect = np.abs(y_predict - y)
         error_max = error_vect.max()
@@ -915,6 +944,12 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         if error_max != 0.:
             error_vect /= error_vect.max()
 
+        if self.loss_function == 'square':
+            error_vect *= error_vect
+        elif self.loss_function == 'exponential':
+            error_vect = 1. - np.exp(- error_vect)
+
+        # Calculate the average loss
         estimator_error = (sample_weight * error_vect).sum()
 
         if estimator_error <= 0:
@@ -939,11 +974,38 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         return sample_weight, estimator_weight, estimator_error
 
+    def _get_median_predict(self, X, limit=-1):
+
+        if not self.estimators_:
+            raise RuntimeError(
+                ("{0} is not initialized. "
+                 "Perform a fit first").format(self.__class__.__name__))
+
+        if limit < 0:
+            limit = len(self.estimators_)
+
+        # Evaluate predictions of all estimators
+        predictions = np.array([
+            est.predict(X) for est in self.estimators_[:limit]]).T
+
+        # Sort the predictions
+        sorted_idx = np.argsort(predictions, axis=1)
+
+        # Find index of median prediction for each sample
+        weight_cdf = self.estimator_weights_[sorted_idx].cumsum(axis=1)
+        median_or_above = weight_cdf >= 0.5 * weight_cdf[:, -1][:, np.newaxis]
+        median_idx = median_or_above.argmax(axis=1)
+        median_estimators = sorted_idx[np.arange(X.shape[0]), median_idx]
+
+        # Return median predictions
+        return predictions[np.arange(X.shape[0]), median_estimators]
+
+
     def predict(self, X):
         """Predict regression value for X.
 
         The predicted regression value of an input sample is computed
-        as the weighted mean prediction of the classifiers in the ensemble.
+        as the weighted median prediction of the classifiers in the ensemble.
 
         Parameters
         ----------
@@ -955,32 +1017,13 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         y : array of shape = [n_samples]
             The predicted regression values.
         """
-        if not self.estimators_:
-            raise RuntimeError(
-                ("{0} is not initialized. "
-                 "Perform a fit first").format(self.__class__.__name__))
-
-        pred = None
-
-        for i, (weight, estimator) in enumerate(
-                zip(self.estimator_weights_, self.estimators_)):
-
-            current_pred = estimator.predict(X)
-
-            if pred is None:
-                pred = current_pred * weight
-            else:
-                pred += current_pred * weight
-
-        pred /= self.estimator_weights_.sum()
-
-        return pred
+        return self._get_median_predict(X)
 
     def staged_predict(self, X):
         """Return staged predictions for X.
 
         The predicted regression value of an input sample is computed
-        as the weighted mean prediction of the classifiers in the ensemble.
+        as the weighted median prediction of the classifiers in the ensemble.
 
         This generator method yields the ensemble prediction after each
         iteration of boosting and therefore allows monitoring, such as to
@@ -996,24 +1039,5 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         y : generator of array, shape = [n_samples]
             The predicted regression values.
         """
-        if not self.estimators_:
-            raise RuntimeError(
-                ("{0} is not initialized. "
-                 "Perform a fit first").format(self.__class__.__name__))
-
-        pred = None
-        norm = 0.
-
-        for i, (weight, estimator) in enumerate(
-                zip(self.estimator_weights_, self.estimators_)):
-
-            current_pred = estimator.predict(X)
-
-            if pred is None:
-                pred = current_pred * weight
-            else:
-                pred += current_pred * weight
-
-            norm += weight
-
-            yield pred / norm
+        for i in xrange(len(self.estimators_)):
+            yield self._get_median_predict(X, limit=i)
