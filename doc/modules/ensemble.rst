@@ -251,9 +251,9 @@ the transformation performs an implicit, non-parametric density estimation.
 AdaBoost
 ========
 
-The module :mod:`sklearn.ensemble` implements the popular boosting algorithm
-known as AdaBoost. This algorithm was first introduced by Freud and Schapire
-[FS1995]_ in 1995.
+The module :mod:`sklearn.ensemble.weight_boosting` implements the popular
+boosting algorithm known as AdaBoost introduced in 1995 by Freud and
+Schapire [FS1995]_.
 
 The core principle of AdaBoost is to fit a sequence of weak learners (i.e.,
 models that are only slightly better than random guessing, such as small
@@ -266,7 +266,7 @@ to each of the training samples. Initially, those weights are all set to
 original data. For each successive iteration, the sample weights are
 individually modified and the learning algorithm is reapplied to the reweighted
 data. At a given step, those training examples that were incorrectly predicted
-by the boosting model induced at the previous step have their weights increased,
+by the boosted model induced at the previous step have their weights increased,
 whereas the weights are decreased for those that were predicted correctly. As
 iterations proceed, examples that are difficult to predict receive
 ever-increasing influence. Each subsequent weak learner is thereby forced to
@@ -306,15 +306,25 @@ The number of weak learners is controlled by the parameter ``n_estimators``. The
 the final combination. By default, weak learners are decision stumps. Different
 weak learners can be specified through the ``base_estimator`` parameter.
 The main parameters to tune to obtain good results are ``n_estimators`` and
-the complexity of the base estimators (e.g., its depth ``max_depth`` in case
-of decision trees).
+the complexity of the base estimators (e.g., its depth ``max_depth`` or
+minimum required number of samples at a leaf ``min_samples_leaf`` in case of
+decision trees).
 
 .. topic:: Examples:
 
- * :ref:`example_ensemble_plot_adaboost_hastie_10_2.py`
- * :ref:`example_ensemble_plot_adaboost_multiclass.py`
- * :ref:`example_ensemble_plot_adaboost_regression.py`
- * :ref:`example_ensemble_plot_adaboost_twoclass.py`
+ * :ref:`example_ensemble_plot_adaboost_hastie_10_2.py` compares the
+   classification error of a decision stump, decision tree, and a boosted
+   decision stump using AdaBoost-SAMME and AdaBoost-SAMME.R.
+
+ * :ref:`example_ensemble_plot_adaboost_multiclass.py` shows the performance
+   of AdaBoost-SAMME and AdaBoost-SAMME.R on a multi-class problem.
+
+ * :ref:`example_ensemble_plot_adaboost_twoclass.py` shows the decision boundary
+   and decision function values for a non-linearly separable two-class problem
+   using AdaBoost-SAMME.
+
+ * :ref:`example_ensemble_plot_adaboost_regression.py` demonstrates regression
+   with the AdaBoost.R2 algorithm.
 
 .. topic:: References
 
