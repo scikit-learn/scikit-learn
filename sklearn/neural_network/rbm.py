@@ -46,8 +46,8 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     learning_rate : float, optional
         Learning rate to use during learning. It is *highly* recommended
         to tune this hyper-parameter. Possible values are 10**[0., -3.].
-    n_particles : int, optional
-        Number of MCMC particles to use during learning.
+    batch_size : int, optional
+        Number of examples per minibatch.
     n_iter : int, optional
         Number of iterations/sweeps over the training dataset to perform
         during training.
@@ -76,7 +76,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> model = BernoulliRBM(n_components=2)
     >>> model.fit(X)  # doctest: +ELLIPSIS
-    BernoulliRBM(learning_rate=0.1, n_components=2, n_iter=10, n_particles=10,
+    BernoulliRBM(batch_size=10, learning_rate=0.1, n_components=2, n_iter=10,
            random_state=...,
            verbose=False)
 
@@ -87,11 +87,11 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         deep belief nets. Neural Computation 18, pp 1527-1554.
         http://www.cs.toronto.edu/~hinton/absps/fastnc.pdf
     """
-    def __init__(self, n_components=256, learning_rate=0.1, n_particles=10,
+    def __init__(self, n_components=256, learning_rate=0.1, batch_size=10,
                        n_iter=10, verbose=False, random_state=None):
         self.n_components = n_components
         self.learning_rate = learning_rate
-        self.n_particles = n_particles
+        self.batch_size = batch_size
         self.n_iter = n_iter
         self.verbose = verbose
         self.random_state = random_state
@@ -248,7 +248,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         v_neg = self.sample_visibles(self.h_samples_)
         h_neg = self.mean_hiddens(v_neg)
 
-        lr = self.learning_rate / self.n_particles
+        lr = self.learning_rate / self.batch_size
         v_pos *= lr
         v_neg *= lr
         self.components_ += safe_sparse_dot(v_pos.T, h_pos).T
@@ -303,13 +303,13 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
             (self.n_components, X.shape[1])), dtype=X.dtype, order='fortran')
         self.intercept_hidden_ = np.zeros(self.n_components, dtype=X.dtype)
         self.intercept_visible_ = np.zeros(X.shape[1], dtype=X.dtype)
-        self.h_samples_ = np.zeros((self.n_particles, self.n_components),
+        self.h_samples_ = np.zeros((self.batch_size, self.n_components),
             dtype=X.dtype)
 
         inds = np.arange(X.shape[0])
         self.random_state.shuffle(inds)
 
-        n_batches = int(np.ceil(len(inds) / float(self.n_particles)))
+        n_batches = int(np.ceil(len(inds) / float(self.batch_size)))
 
         verbose = self.verbose
         for iteration in xrange(self.n_iter):
