@@ -799,6 +799,10 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         ``learning_rate``. There is a trade-off between ``learning_rate`` and
         ``n_estimators``.
 
+    loss_function : string, optional (default="linear")
+        The loss function ("linear", "square", or "exponential") to use when
+        updating the weights after each boosting iteration.
+
     compute_importances : boolean, optional (default=False)
         Whether feature importances are computed and stored in the
         ``feature_importances_`` attribute when calling fit.
@@ -999,7 +1003,6 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         # Return median predictions
         return predictions[np.arange(X.shape[0]), median_estimators]
-
 
     def predict(self, X):
         """Predict regression value for X.
