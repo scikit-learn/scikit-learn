@@ -43,6 +43,8 @@ class MLPClassifier(BaseEstimator, ClassifierMixin):
         1 / (1 + exp(x)), or "tanh" for the hyperbolic tangent.
     alpha : float, optional
         L2 penalty (weight decay) parameter.
+    batch_size : int, optional
+        Size of minibatches in SGD optimizer.
     learning_rate : float, optional
         Base learning rate. This will be scaled by sqrt(n_features) for the
         input-to-hidden weights, and by sqrt(n_hidden) for the hidden-to-output
@@ -53,24 +55,29 @@ class MLPClassifier(BaseEstimator, ClassifierMixin):
         Parameter for the momentum method. Set this somewhere between .5 and 1.
     random_state : int or RandomState, optional
         State of or seed for random number generator.
+    shuffle : bool, optional
+        Whether to shuffle samples in each iteration before extracting
+        minibatches.
     tol : float, optional
         Tolerance for the optimization. When the loss at iteration i+1 differs
         less than this amount from that at iteration i, convergence is
         considered to be reached.
     verbose : bool, optional
-        Whether to print progress messages to stderr.
+        Whether to print progress messages to stdout.
 
     """
-    def __init__(self, n_hidden, activation="tanh", alpha=0, learning_rate=.01,
-                 max_iter=100, momentum=.9, random_state=None, tol=1e-5,
-                 verbose=False):
+    def __init__(self, n_hidden, activation="tanh", alpha=0, batch_size=100,
+                 learning_rate=.01, max_iter=100, momentum=.9,
+                 random_state=None, shuffle=True, tol=1e-5, verbose=False):
         self.activation = activation
         self.alpha = alpha
+        self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.max_iter = max_iter
         self.momentum = momentum
         self.n_hidden = n_hidden
         self.random_state = check_random_state(random_state)
+        self.shuffle = shuffle
         self.tol = tol
         self.verbose = verbose
 
