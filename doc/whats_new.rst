@@ -18,6 +18,10 @@ Changelog
      Passing a function from :mod:`sklearn.metrics` as ``score_func`` is
      deprecated. 
 
+   - Added :class:`ensemble.AdaBoostClassifier` and 
+     :class:`ensemble.AdaBoostRegressor`, by `Noel Dawe`_  and `Gilles Louppe`_.
+     See the :ref:`AdaBoost <adaboost>` section of the user guide for
+     details and examples.
 
 .. _changes_0_13:
 
