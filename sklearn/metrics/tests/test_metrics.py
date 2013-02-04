@@ -1,7 +1,5 @@
 from __future__ import division
 
-import sys
-import traceback
 import random
 import warnings
 import numpy as np
@@ -634,9 +632,10 @@ def test_sample_order_invariance():
                    explained_variance_score,
                    r2_score]:
 
-        assert_equal(metric(y_true, y_pred),
-                     metric(y_true_shuffle, y_pred_shuffle),
-                     msg="%s is not sample order invariant" % metric)
+        assert_almost_equal(metric(y_true, y_pred),
+                            metric(y_true_shuffle, y_pred_shuffle),
+                            err_msg="%s is not sample order invariant"
+                                    % metric)
 
 
 def test_hinge_loss_binary():
@@ -765,55 +764,62 @@ def test_multilabel_representation_invariance():
         measure = metric(y1, y2)
 
         # Check representation invariance
-        assert_equal(measure,
-                     metric(y1_binary_indicator, y2_binary_indicator),
-                     msg="%s failed representation invariance between "
-                         "list of list of labels format and dense binary "
-                         "indicator format." % metric)
+        assert_almost_equal(measure,
+                            metric(y1_binary_indicator, y2_binary_indicator),
+                            err_msg="%s failed representation invariance  "
+                                    "between list of list of labels format "
+                                    "and dense binary indicator format."
+                                    % metric)
 
         # Check invariance with redundant labels with list of labels
-        assert_equal(measure,
-                     metric(y1, y2_redundant),
-                     msg="%s failed rendundant label invariance" % metric)
+        assert_almost_equal(measure,
+                            metric(y1, y2_redundant),
+                            err_msg="%s failed rendundant label invariance"
+                                    % metric)
 
-        assert_equal(measure,
-                     metric(y1_redundant, y2_redundant),
-                     msg="%s failed rendundant label invariance" % metric)
+        assert_almost_equal(measure,
+                            metric(y1_redundant, y2_redundant),
+                            err_msg="%s failed rendundant label invariance"
+                                    % metric)
 
-        assert_equal(measure,
-                     metric(y1_redundant, y2),
-                     msg="%s failed rendundant label invariance" % metric)
+        assert_almost_equal(measure,
+                            metric(y1_redundant, y2),
+                            err_msg="%s failed rendundant label invariance"
+                                    % metric)
 
         # Check shuffling invariance with list of labels
-        assert_equal(measure,
-                     metric(y1_shuffle, y2_shuffle),
-                     msg="%s failed shuffling invariance "
-                         "with list of list of labels format." % metric)
+        assert_almost_equal(measure,
+                            metric(y1_shuffle, y2_shuffle),
+                            err_msg="%s failed shuffling invariance "
+                                    "with list of list of labels format."
+                                    % metric)
 
         # Check shuffling invariance with dense binary indicator matrix
-        assert_equal(measure,
-                     metric(y1_shuffle_binary_indicator,
-                            y2_shuffle_binary_indicator),
-                     msg="%s failed shuffling invariance "
-                         " with dense binary indicator format." % metric)
+        assert_almost_equal(measure,
+                            metric(y1_shuffle_binary_indicator,
+                                   y2_shuffle_binary_indicator),
+                            err_msg="%s failed shuffling invariance "
+                                    " with dense binary indicator format."
+                                    % metric)
 
         # Check invariance with mix input representation
-        assert_equal(measure,
-                     metric(y1,
-                            y2_binary_indicator),
-                     msg="%s failed mix input representation invariance: "
-                         "y_true in list of list of labels format and "
-                         "y_pred in dense binary indicator format"
-                         % metric)
+        assert_almost_equal(measure,
+                            metric(y1,
+                                   y2_binary_indicator),
+                            err_msg="%s failed mix input representation"
+                                    "invariance: y_true in list of list of "
+                                    "labels format and y_pred in dense binary"
+                                    "indicator format"
+                                    % metric)
 
-        assert_equal(measure,
-                     metric(y1_binary_indicator,
-                            y2),
-                     msg="%s failed mix input representation invariance: "
-                         "y_true in dense binary indicator format and "
-                         "y_pred in list of list of labels format."
-                         % metric)
-
+        assert_almost_equal(measure,
+                            metric(y1_binary_indicator,
+                                   y2),
+                            err_msg="%s failed mix input representation"
+                                    "invariance: y_true in dense binary "
+                                    "indicator format and y_pred in list of "
+                                    "list of labels format."
+                                    % metric)
 
 
 def test_multilabel_zero_one_loss():
