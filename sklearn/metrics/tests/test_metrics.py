@@ -1,5 +1,7 @@
 from __future__ import division
 
+import sys
+import traceback
 import random
 import warnings
 import numpy as np
@@ -764,27 +766,36 @@ def test_multilabel_representation_invariance():
 
         # Check representation invariance
         assert_equal(measure,
-                     metric(y1_binary_indicator, y2_binary_indicator))
+                     metric(y1_binary_indicator, y2_binary_indicator),
+                     msg="%s failed representation invariance between "
+                         "list of list of labels format and dense binary "
+                         "indicator format." % metric)
 
         # Check invariance with redundant labels with list of labels
         assert_equal(measure,
-                     metric(y1, y2_redundant))
+                     metric(y1, y2_redundant),
+                     msg="%s failed rendundant label invariance" % metric)
 
         assert_equal(measure,
-                     metric(y1_redundant, y2_redundant))
+                     metric(y1_redundant, y2_redundant),
+                     msg="%s failed rendundant label invariance" % metric)
 
         assert_equal(measure,
-                     metric(y1_redundant, y2))
+                     metric(y1_redundant, y2),
+                     msg="%s failed rendundant label invariance" % metric)
 
         # Check shuffling invariance with list of labels
         assert_equal(measure,
-                     metric(y1_shuffle, y2_shuffle))
+                     metric(y1_shuffle, y2_shuffle),
+                     msg="%s failed shuffling invariance "
+                         "with list of list of labels format." % metric)
 
         # Check shuffling invariance with dense binary indicator matrix
         assert_equal(measure,
                      metric(y1_shuffle_binary_indicator,
-                            y2_shuffle_binary_indicator))
-
+                            y2_shuffle_binary_indicator),
+                     msg="%s failed shuffling invariance "
+                         " with dense binary indicator format." % metric)
 
 
 def test_multilabel_zero_one_loss():
