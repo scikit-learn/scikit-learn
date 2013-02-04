@@ -59,7 +59,7 @@ def adjacency_matrix(X, n_neighbors, mode='distance'):
     return G
 
 
-def affinity_matrix(adj_mat, kernel_func="heat", kernel_param=1.0):
+def affinity_matrix(adj_mat, kernel_func="heat", kernel_param="auto"):
     """Compute the affinity matrix from adjacency matrix
 
     Parameters
@@ -80,7 +80,14 @@ def affinity_matrix(adj_mat, kernel_func="heat", kernel_param=1.0):
     """
     W = csr_matrix(adj_mat)
     if kernel_func == "heat":
-        np.exp(-W.data * W.data / kernel_param, W.data)
+        W.data **= 2
+        
+        # Estimate kernel_param by the heuristics that it must correspond to
+        # the variance of Gaussian distribution.
+        if kernel_param == "auto":
+            kernel_param = np.mean(W.data)
+            
+        np.exp(-W.data / kernel_param, W.data)
     else:
         W.data = kernel_func(W.data)
     return W
@@ -196,7 +203,7 @@ def auto_dsygv(M, N, k, k_skip=0, eigen_solver='auto', tol=1E-6,
 
 
 def locality_preserving_projection(X, n_neighbors, mode="distance",
-        kernel_func="heat", kernel_param=10.0, k=2, eigen_solver='auto',
+        kernel_func="heat", kernel_param="auto", k=2, eigen_solver='auto',
         tol=1E-6, max_iter=100, random_state=None):
     """Perform Locality Linear Projection
 
@@ -316,7 +323,7 @@ class LocalityPreservingProjection(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_neighbors=None, n_components=2, mode="distance",
-                 kernel_func="heat", kernel_param=10.0, eigen_solver='auto',
+                 kernel_func="heat", kernel_param="auto", eigen_solver='auto',
                  tol=1E-6, max_iter=100, random_state=None,
                  pca_preprocess=0.9):
         self._n_neighbors = n_neighbors
@@ -337,7 +344,7 @@ class LocalityPreservingProjection(BaseEstimator, TransformerMixin):
             X = _pca.fit_transform(X)
 
         if self._kernel_func == "heat" and self._kernel_param is None:
-            self._kernel_param = 1.0 / X.shape[1]
+            self._kernel_param = "auto"
         if self._n_neighbors is None:
             self._n_neighbors = max(int(X.shape[0] / 10), 1)
         self.components_, _ = locality_preserving_projection(X, 

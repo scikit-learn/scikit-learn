@@ -92,8 +92,7 @@ print "n_features: %d" % n_features
 scores = [[], []]
 n_components = 50
 clfs = [EigenFace(n_components),
-#        LaplacianFace(3, n_components,kernel_param=1e2)] # for olivetti
-        LaplacianFace(5, n_components,kernel_param=1e7)] # for lfw_people
+        LaplacianFace(5, n_components,kernel_param="auto")]
 
 
 for i in xrange(10):

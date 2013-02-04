@@ -64,7 +64,6 @@ def plot_embedding(X, title=None):
     if title is not None:
         pl.title(title)
 
-
 #----------------------------------------------------------------------
 # Plot images of the digits
 n_img_per_row = 20
@@ -87,7 +86,6 @@ print("Computing random projection")
 rp = random_projection.SparseRandomProjection(n_components=2, random_state=42)
 X_projected = rp.fit_transform(X)
 plot_embedding(X_projected, "Random Projection of the digits")
-
 
 #----------------------------------------------------------------------
 # Projection on to the first 2 principal components
@@ -209,6 +207,18 @@ X_se = embedder.fit_transform(X)
 
 plot_embedding(X_se,
                "Spectral embedding of the digits (time %.2fs)" %
+               (time() - t0))
+
+#----------------------------------------------------------------------
+# Locality Preserving Projection of the digits dataset
+print("Computing Locality Preserving Projection")
+embedder = manifold.LocalityPreservingProjection(5, n_components=2,
+            kernel_param="auto", random_state=0, eigen_solver="arpack")
+t0 = time()
+X_lpp = embedder.fit_transform(X)
+
+plot_embedding(X_lpp,
+               "Locality Preserving Projection of the digits (time %.2fs)" %
                (time() - t0))
 
 pl.show()
