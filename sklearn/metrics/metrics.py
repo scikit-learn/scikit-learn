@@ -20,7 +20,6 @@ from itertools import izip
 import warnings
 import numpy as np
 from scipy.sparse import coo_matrix
-from scipy.spatial.distance import hamming
 
 from ..utils import check_arrays, deprecated
 from ..utils.multiclass import is_label_indicator_matrix
