@@ -5,7 +5,6 @@ from array import array
 from collections import Mapping, Sequence
 from operator import itemgetter
 
-import sys
 import numpy as np
 import scipy.sparse as sp
 

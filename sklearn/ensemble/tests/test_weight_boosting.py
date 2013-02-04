@@ -14,7 +14,6 @@ from sklearn.dummy import DummyRegressor
 from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import AdaBoostRegressor
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import shuffle
 from sklearn import datasets
 
@@ -60,8 +59,8 @@ def test_iris():
         clf = AdaBoostClassifier(algorithm=alg)
         clf.fit(iris.data, iris.target)
         score = clf.score(iris.data, iris.target)
-        assert score > 0.9, "Failed with criterion %s and score = %f" % \
-            (c, score)
+        assert score > 0.9, "Failed with algorithm %s and score = %f" % \
+            (alg, score)
 
 
 def test_boston():
