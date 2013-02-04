@@ -239,20 +239,29 @@ Hamming loss :math:`L_{Hamming}` between two samples is defined as:
 where :math:`1(x)` is the `indicator function
 <http://en.wikipedia.org/wiki/Indicator_function>`_.
 
-The zero-one loss is related to the Hamming loss. The zero-one loss
-penalizes any classifiers that don't predict correctly the subset of
-labels. The hamming loss penalizes only the fraction of labels incorrectly
-predicted. The hamming loss is upperbounded by the zero one loss.
-
   >>> from sklearn.metrics import hamming_loss
   >>> y_pred = [1, 2, 3, 4]
   >>> y_true = [2, 2, 3, 4]
   >>> hamming_loss(y_true, y_pred)
-  0.125
+  0.25
   >>> hamming_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
   0.75
   >>> hamming_loss([(1, 2), (3,)], [(1, 2), tuple()])  # doctest: +ELLIPSIS
   0.166...
+
+.. note::
+
+    In multiclass classification, the hamming loss correspond to the hamming
+    distance between ``y_true`` and ``y_pred`` which is equivalent to the
+    ``zero_one_loss``.
+
+    In multilabels classification, the Hamming loss loss is different from the
+    zero-one loss. The zero-one loss penalizes any classifiers that don't
+    predict correctly the subset of labels. The hamming loss penalizes only
+    the fraction of labels incorrectly predicted.
+
+    The hamming loss is upperbounded by the zero one loss.
+
 
 .. _precision_recall_f_measure_metrics:
 

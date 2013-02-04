@@ -19,10 +19,14 @@ from __future__ import division
 from itertools import izip
 import warnings
 import numpy as np
-from scipy.sparse import coo_matrix
 
+from scipy.sparse import coo_matrix
+from scipy.spatial.distance import hamming as sp_hamming
+
+from ..preprocessing import LabelBinarizer
 from ..utils import check_arrays, deprecated
 from ..utils.multiclass import is_label_indicator_matrix
+from ..utils.multiclass import is_multilabel
 from ..utils.multiclass import unique_labels
 
 
@@ -1491,10 +1495,14 @@ def hamming_loss(y_true, y_pred, labels=None):
 
     Notes
     -----
-    The zero-one loss is related to the Hamming loss. The zero-one loss
-    penalizes any classifiers that don't predict correctly the subset of
-    labels. The hamming loss penalizes only the fraction of labels incorrectly
-    predicted.
+    In multiclass classification, the hamming loss correspond to the hamming
+    distance between ``y_true`` and ``y_pred`` which is equivalent to the
+    ``zero_one_loss``.
+
+    In multilabels classification, the  Hamming loss loss is different from the
+    hamming loss. The zero-one loss penalizes any classifiers that don't
+    predict correctly the subset of labels. The hamming loss penalizes only
+    the fraction of labels incorrectly predicted.
 
     The hamming loss is upperbounded by the zero one loss.
 
@@ -1513,7 +1521,7 @@ def hamming_loss(y_true, y_pred, labels=None):
     >>> y_pred = [1, 2, 3, 4]
     >>> y_true = [2, 2, 3, 4]
     >>> hamming_loss(y_true, y_pred)
-    0.125
+    0.25
     >>> hamming_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
     0.75
     >>> hamming_loss([(1, 2), (3,)], [(1, 2), tuple()])  # doctest: +ELLIPSIS
@@ -1522,23 +1530,23 @@ def hamming_loss(y_true, y_pred, labels=None):
     """
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
 
-    if is_label_indicator_matrix(y_true):
-        return np.mean(y_true != y_pred)
+    if labels is None:
+        labels = unique_labels(y_true, y_pred)
     else:
-        # Compute the number of label
-        if labels is None:
-            labels = unique_labels(y_true, y_pred)
+        labels = np.asarray(labels, dtype=np.int)
+
+    if is_multilabel(y_true):
+        if is_label_indicator_matrix(y_true):
+            return np.mean(y_true != y_pred)
         else:
-            labels = np.asarray(labels, dtype=np.int)
+            loss = np.array([np.size(np.setxor1d(np.asarray(pred),
+                                                 np.asarray(true)))
+                             for pred, true in izip(y_pred, y_true)])
 
-        n_labels = labels.size
+            return np.mean(loss) / np.size(labels)
 
-        # Compute the number of disagreeing labels
-        loss = np.array([np.size(np.setxor1d(np.asarray(pred),
-                                             np.asarray(true)))
-                         for pred, true in izip(y_pred, y_true)])
-
-        return np.mean(loss) / n_labels
+    else:
+        return sp_hamming(y_true, y_pred)
 
 
 ###############################################################################
