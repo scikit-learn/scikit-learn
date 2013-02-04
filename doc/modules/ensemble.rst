@@ -23,7 +23,7 @@ Two families of ensemble methods are usually distinguished:
   tries to reduce the bias of the combined model. The motivation is to combine
   several weak models to produce a powerful ensemble.
 
-  **Examples:** AdaBoost, Least Squares Boosting, :ref:`Gradient Tree Boosting <gradient_boosting>`, ...
+  **Examples:** :ref:`AdaBoost <adaboost>`, :ref:`Gradient Tree Boosting <gradient_boosting>`, ...
 
 
 .. _forest:
@@ -54,7 +54,6 @@ Like :ref:`decision trees <tree>`, forests of trees also extend
 to :ref:`multi-output problems <tree_multioutput>`  (if Y is an array of size
 ``[n_samples, n_outputs]``).
 
-
 Random Forests
 --------------
 
@@ -73,7 +72,6 @@ increase in bias, hence yielding an overall better model.
 In contrast to the original publication [B2001]_, the scikit-learn
 implementation combines classifiers by averaging their probabilistic
 prediction, instead of letting each classifier vote for a single class.
-
 
 Extremely Randomized Trees
 --------------------------
@@ -146,7 +144,6 @@ are important, it might also be beneficial to adjust the ``min_density``
 parameter, that controls a heuristic for speeding up computations in
 each tree.  See :ref:`Complexity of trees<tree_complexity>` for details.
 
-
 Parallelization
 ---------------
 
@@ -167,16 +164,14 @@ amount of time (e.g., on large datasets).
  * :ref:`example_ensemble_plot_forest_importances_faces.py`
  * :ref:`example_ensemble_plot_forest_multioutput.py`
 
-
 .. topic:: References
 
- .. [B2001] Leo Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+ .. [B2001] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
- .. [B1998] Leo Breiman, "Arcing Classifiers", Annals of Statistics 1998.
+ .. [B1998] L. Breiman, "Arcing Classifiers", Annals of Statistics 1998.
 
- .. [GEW2006] Pierre Geurts, Damien Ernst., and Louis Wehenkel, "Extremely randomized
+ .. [GEW2006] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
    trees", Machine Learning, 63(1), 3-42, 2006.
-
 
 .. _random_forest_feature_importance:
 
@@ -203,7 +198,6 @@ a :class:`ExtraTreesClassifier` model.
    :target: ../auto_examples/ensemble/plot_forest_importances_faces.html
    :align: center
    :scale: 75
-
 
 In practice those estimates can be computed by explicitly passing
 ``compute_importances=True`` to the constructor of the decision trees,
@@ -250,6 +244,101 @@ the transformation performs an implicit, non-parametric density estimation.
    :ref:`manifold` techniques can also be useful to derive non-linear
    representations of feature space, also these approaches focus also on
    dimensionality reduction.
+
+
+.. _adaboost:
+
+AdaBoost
+========
+
+The module :mod:`sklearn.ensemble.weight_boosting` implements the popular
+boosting algorithm known as AdaBoost introduced in 1995 by Freud and
+Schapire [FS1995]_.
+
+The core principle of AdaBoost is to fit a sequence of weak learners (i.e.,
+models that are only slightly better than random guessing, such as small
+decision trees) on repeatedly modified versions of the data. The predictions
+from all of them are then combined through a weighted majority vote (or sum) to
+produce the final prediction. The data modifications at each so-called boosting
+iteration consist of applying weights :math:`w_1`, :math:`w_2`, ..., :math:`w_N`
+to each of the training samples. Initially, those weights are all set to
+:math:`w_i = 1/N`, so that the first step simply trains a weak learner on the
+original data. For each successive iteration, the sample weights are
+individually modified and the learning algorithm is reapplied to the reweighted
+data. At a given step, those training examples that were incorrectly predicted
+by the boosted model induced at the previous step have their weights increased,
+whereas the weights are decreased for those that were predicted correctly. As
+iterations proceed, examples that are difficult to predict receive
+ever-increasing influence. Each subsequent weak learner is thereby forced to
+concentrate on the examples that are missed by the previous ones in the sequence
+[HTF2009]_.
+
+.. figure:: ../auto_examples/ensemble/images/plot_adaboost_hastie_10_2_1.png
+   :target: ../auto_examples/ensemble/plot_adaboost_hastie_10_2.html
+   :align: center
+   :scale: 75
+
+AdaBoost can be used both for classification and regression problems:
+
+  - For multi-class classification, :class:`AdaBoostClassifier` implements
+    AdaBoost-SAMME and AdaBoost-SAMME.R [ZZRH2009]_.
+
+  - For regression, :class:`AdaBoostRegressor` implements AdaBoost.R2 [D1997]_.
+
+Usage
+-----
+
+The following example shows how to fit an AdaBoost classifier with 100 weak
+learners::
+
+    >>> from sklearn.cross_validation import cross_val_score
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.ensemble import AdaBoostClassifier
+
+    >>> iris = load_iris()
+    >>> clf = AdaBoostClassifier(n_estimators=100)
+    >>> scores = cross_val_score(clf, iris.data, iris.target)
+    >>> scores.mean()                             # doctest: +ELLIPSIS
+    0.9...
+
+The number of weak learners is controlled by the parameter ``n_estimators``. The
+``learning_rate`` parameter controls the contribution of the weak learners in
+the final combination. By default, weak learners are decision stumps. Different
+weak learners can be specified through the ``base_estimator`` parameter.
+The main parameters to tune to obtain good results are ``n_estimators`` and
+the complexity of the base estimators (e.g., its depth ``max_depth`` or
+minimum required number of samples at a leaf ``min_samples_leaf`` in case of
+decision trees).
+
+.. topic:: Examples:
+
+ * :ref:`example_ensemble_plot_adaboost_hastie_10_2.py` compares the
+   classification error of a decision stump, decision tree, and a boosted
+   decision stump using AdaBoost-SAMME and AdaBoost-SAMME.R.
+
+ * :ref:`example_ensemble_plot_adaboost_multiclass.py` shows the performance
+   of AdaBoost-SAMME and AdaBoost-SAMME.R on a multi-class problem.
+
+ * :ref:`example_ensemble_plot_adaboost_twoclass.py` shows the decision boundary
+   and decision function values for a non-linearly separable two-class problem
+   using AdaBoost-SAMME.
+
+ * :ref:`example_ensemble_plot_adaboost_regression.py` demonstrates regression
+   with the AdaBoost.R2 algorithm.
+
+.. topic:: References
+
+ .. [FS1995] Y. Freud, and R. Schapire, "A decision theoretic generalization of
+             online learning and an application to boosting", 1997.
+
+ .. [ZZRH2009] J. Zhu, H. Zou, S. Rosset, T. Hastie. "Multi-class AdaBoost",
+               2009.
+
+ .. [D1997] H. Drucker. "Improving Regressors using Boosting Techniques", 1997.
+
+ .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, "Elements of
+              Statistical Learning Ed. 2", Springer, 2009.
+
 
 .. _gradient_boosting:
 

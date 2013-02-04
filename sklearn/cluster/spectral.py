@@ -211,7 +211,9 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
         space.  There are two ways to assign labels after the laplacian
         embedding.  k-means can be applied and is a popular choice. But it can
         also be sensitive to initialization. Discretization is another
-        approach which is less sensitive to random initialization.
+        approach which is less sensitive to random initialization. See
+        the 'Multiclass spectral clustering' paper referenced below for
+        more details on the discretization approach.
 
     Returns
     -------

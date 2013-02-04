@@ -388,7 +388,7 @@ class Nystroem(BaseEstimator, TransformerMixin):
     RBFSampler : An approximation to the RBF kernel using random Fourier
                  features.
 
-    sklearn.metric.pairwise.kernel_metrics : List of build-in kernels.
+    sklearn.metric.pairwise.kernel_metrics : List of built-in kernels.
     """
     def __init__(self, kernel="rbf", gamma=None, coef0=1, degree=3,
                  n_components=100, random_state=None):

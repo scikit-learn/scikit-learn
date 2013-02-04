@@ -8,7 +8,7 @@ The hyperplanes corresponding to the three one-versus-all (OVA) classifiers
 are represented by the dashed lines.
 
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

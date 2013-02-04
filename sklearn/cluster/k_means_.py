@@ -846,7 +846,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
     # Perform label assignement to nearest centers
     nearest_center, inertia = _labels_inertia(X, x_squared_norms, centers,
                                               distances=distances)
-    if random_reassign:
+    if random_reassign and reassignment_ratio > 0:
         random_state = check_random_state(random_state)
         # Reassign clusters that have very low counts
         to_reassign = np.logical_or(
@@ -869,6 +869,8 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
             if n_reassigns:
                 print("[_mini_batch_step] Reassigning %i cluster centers."
                       % n_reassigns)
+        if sp.issparse(new_centers) and not sp.issparse(centers):
+            new_centers = new_centers.toarray()
         centers[to_reassign] = new_centers
 
     # implementation for the sparse CSR reprensation completely written in

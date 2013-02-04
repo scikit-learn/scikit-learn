@@ -61,7 +61,7 @@ is to position the labels minimizing overlap. For this we use an
 heuristic based on the direction of the nearest neighbor along each
 axis.
 """
-print __doc__
+print(__doc__)
 
 # Author: Gael Varoquaux gael.varoquaux@normalesup.org
 # License: BSD
@@ -174,7 +174,7 @@ _, labels = cluster.affinity_propagation(edge_model.covariance_)
 n_labels = labels.max()
 
 for i in range(n_labels + 1):
-    print 'Cluster %i: %s' % ((i + 1), ', '.join(names[labels == i]))
+    print('Cluster %i: %s' % ((i + 1), ', '.join(names[labels == i])))
 
 ###############################################################################
 # Find a low-dimension embedding for visualization: find the best position of

@@ -11,7 +11,7 @@ can be very flad in one direction - which is where PCA
 would come in to choose a direction that is not flat.
 
 """
-print __doc__
+print(__doc__)
 
 # Code source: Gael Varoquaux
 # Modified for Documentation merge by Jaques Grobler

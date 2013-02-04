@@ -279,6 +279,8 @@ Samples generator
    ensemble.RandomForestRegressor
    ensemble.ExtraTreesClassifier
    ensemble.ExtraTreesRegressor
+   ensemble.AdaBoostClassifier
+   ensemble.AdaBoostRegressor
    ensemble.GradientBoostingClassifier
    ensemble.GradientBoostingRegressor
 
@@ -661,6 +663,14 @@ user guide for further details.
    :no-inherited-members:
 
 .. currentmodule:: sklearn
+
+Model Selection Interface
+-------------------------
+.. autosummary::
+   :toctree: generated/
+   :template: class_with_call.rst
+
+   metrics.Scorer
 
 Classification metrics
 ----------------------

@@ -7,7 +7,6 @@
 # License: BSD Style.
 
 import numpy as np
-import warnings
 from scipy import linalg
 from math import log
 

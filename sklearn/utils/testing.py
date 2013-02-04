@@ -147,7 +147,8 @@ class mock_urllib2(object):
         dataset_name = urlname.split('/')[-1]
         if dataset_name in self.mock_datasets:
             resource_name = '_' + dataset_name
-            matfile = StringIO()
+            from io import BytesIO
+            matfile = BytesIO()
 
             dataset = self.mock_datasets[dataset_name]
             ordering = None

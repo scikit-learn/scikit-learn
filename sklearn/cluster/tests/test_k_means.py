@@ -322,25 +322,27 @@ def test_minibatch_reassign():
     # Give a perfect initialization, but a large reassignment_ratio,
     # as a result all the centers should be reassigned and the model
     # should not longer be good
-    mb_k_means = MiniBatchKMeans(init=centers.copy(),
-                                 n_clusters=n_clusters, batch_size=1,
-                                 random_state=42)
-    mb_k_means.fit(X)
-    centers_before = mb_k_means.cluster_centers_.copy()
-    try:
-        old_stdout = sys.stdout
-        sys.stdout = StringIO()
-        # Turn on verbosity to smoke test the display code
-        _mini_batch_step(X, (X ** 2).sum(axis=1), mb_k_means.cluster_centers_,
-                         mb_k_means.counts_, np.zeros(X.shape[1], np.double),
-                         False, random_reassign=True, random_state=42,
-                         reassignment_ratio=1, verbose=True)
-    finally:
-        sys.stdout = old_stdout
-    centers_after = mb_k_means.cluster_centers_.copy()
-    # Check that all the centers have moved
-    assert_greater(((centers_before - centers_after)**2).sum(axis=1).min(),
-                   .2)
+    for this_X in (X, X_csr):
+        mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=1,
+                                     random_state=42)
+        mb_k_means.fit(this_X)
+        centers_before = mb_k_means.cluster_centers_.copy()
+        try:
+            old_stdout = sys.stdout
+            sys.stdout = StringIO()
+            # Turn on verbosity to smoke test the display code
+            _mini_batch_step(this_X, (X ** 2).sum(axis=1),
+                             mb_k_means.cluster_centers_,
+                             mb_k_means.counts_,
+                             np.zeros(X.shape[1], np.double),
+                             False, random_reassign=True, random_state=42,
+                             reassignment_ratio=1, verbose=True)
+        finally:
+            sys.stdout = old_stdout
+        centers_after = mb_k_means.cluster_centers_.copy()
+        # Check that all the centers have moved
+        assert_greater(((centers_before - centers_after)**2).sum(axis=1).min(),
+                       .2)
 
 
 def test_sparse_mb_k_means_callable_init():

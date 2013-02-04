@@ -2,8 +2,6 @@
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD
 
-import warnings
-
 import numpy as np
 
 from ..utils import check_random_state, array2d

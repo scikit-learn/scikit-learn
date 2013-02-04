@@ -12,6 +12,7 @@ from nose.tools import assert_true
 
 from sklearn import tree
 from sklearn import datasets
+from sklearn.externals.six import StringIO
 from sklearn.preprocessing import balance_weights
 
 # toy sample
@@ -121,7 +122,6 @@ def test_graphviz_toy():
     """Check correctness of graphviz output on a toy dataset."""
     clf = tree.DecisionTreeClassifier(max_depth=3, min_samples_split=1)
     clf.fit(X, y)
-    from StringIO import StringIO
 
     # test export code
     out = StringIO()

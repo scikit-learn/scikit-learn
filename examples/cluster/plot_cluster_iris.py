@@ -16,7 +16,7 @@ The next plot displays what using eight clusters would deliver
 and finally the ground truth.
 
 """
-print __doc__
+print(__doc__)
 
 
 # Code source: Gael Varoqueux

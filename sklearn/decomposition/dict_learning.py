@@ -6,7 +6,6 @@
 import time
 import sys
 import itertools
-import warnings
 
 from math import sqrt, floor, ceil
 

@@ -16,7 +16,7 @@ The below plot uses the first two features.
 See `here <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_ for more
 information on this dataset.
 """
-print __doc__
+print(__doc__)
 
 
 # Code source: Gael Varoqueux

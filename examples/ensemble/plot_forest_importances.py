@@ -10,7 +10,7 @@ importances of the forest, along with their inter-trees variability.
 As expected, the plot suggests that 3 features are informative, while the
 remaining are not.
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 
@@ -39,17 +39,17 @@ std = np.std([tree.feature_importances_ for tree in forest.estimators_],
 indices = np.argsort(importances)[::-1]
 
 # Print the feature ranking
-print "Feature ranking:"
+print("Feature ranking:")
 
-for f in xrange(10):
-    print "%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]])
+for f in range(10):
+    print("%d. feature %d (%f)" % (f + 1, indices[f], importances[indices[f]]))
 
 # Plot the feature importances of the forest
 import pylab as pl
 pl.figure()
 pl.title("Feature importances")
-pl.bar(xrange(10), importances[indices],
+pl.bar(range(10), importances[indices],
        color="r", yerr=std[indices], align="center")
-pl.xticks(xrange(10), indices)
+pl.xticks(range(10), indices)
 pl.xlim([-1, 10])
 pl.show()

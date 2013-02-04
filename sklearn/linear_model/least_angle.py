@@ -230,7 +230,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                               'i.e. alpha=%.3e, '
                               'with an active set of %i regressors, and '
                               'the smallest cholesky pivot element being %.3e'
-                              % (n_iter, alphas[n_iter], n_active, diag))
+                              % (n_iter, alpha, n_active, diag))
                 # XXX: need to figure a 'drop for good' way
                 Cov = Cov_not_shortened
                 Cov[0] = 0
@@ -414,8 +414,8 @@ class Lars(LinearModel, RegressorMixin):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
@@ -607,8 +607,8 @@ class LassoLars(Lars):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -720,8 +720,8 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
     max_iter: integer, optional
         Maximum number of iterations to perform.
     eps: float, optional
@@ -791,8 +791,8 @@ class LarsCV(Lars):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -964,8 +964,8 @@ class LassoLarsCV(LarsCV):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
@@ -1065,8 +1065,8 @@ class LassoLarsIC(LassoLars):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.

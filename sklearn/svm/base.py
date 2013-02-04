@@ -197,7 +197,7 @@ class BaseLibSVM(BaseEstimator):
         if self.fit_status_ == 1:
             warnings.warn('Solver terminated early (max_iter=%i).'
                           '  Consider pre-processing your data with'
-                          ' StandardScalar or MinMaxScalar.'
+                          ' StandardScaler or MinMaxScaler.'
                           % self.max_iter, ConvergenceWarning)
 
     def _dense_fit(self, X, y, sample_weight, solver_type, kernel):
@@ -237,8 +237,9 @@ class BaseLibSVM(BaseEstimator):
 
         libsvm_sparse.set_verbosity_wrap(self.verbose)
 
-        self.support_vectors_, dual_coef_data, self.intercept_, self._label, \
-            self.n_support_, self.probA_, self.probB_, self.fit_status_ = \
+        self.support_, self.support_vectors_, dual_coef_data, \
+            self.intercept_, self._label, self.n_support_, \
+            self.probA_, self.probB_, self.fit_status_ = \
             libsvm_sparse.libsvm_sparse_train(
                 X.shape[1], X.data, X.indices, X.indptr, y, solver_type,
                 kernel_type, self.degree, self._gamma, self.coef0, self.tol,
@@ -650,7 +651,7 @@ class BaseLibLinear(BaseEstimator):
                                 "and loss='l1' is not supported.")
             elif self.penalty.upper() == 'L2' and self.loss.upper() == 'L1':
                 # this has to be in primal
-                error_string = ("loss='l2' and penalty='l1' is "
+                error_string = ("penalty='l2' and ploss='l1' is "
                                 "only supported when dual='true'.")
             else:
                 # only PL1 in dual remains

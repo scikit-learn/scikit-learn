@@ -10,7 +10,7 @@ The first row of images shows true faces. The second half illustrates
 how the forest completes the lower half of those faces.
 
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

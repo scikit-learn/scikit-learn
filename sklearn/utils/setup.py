@@ -41,7 +41,7 @@ def configuration(parent_package='', top_path=None):
         include_dirs=['src'])
 
     config.add_extension('lgamma',
-                         sources=['lgamma.cpp', join('src', 'Gamma.cpp')],
+                         sources=['lgamma.c', join('src', 'gamma.c')],
                          include_dirs=['src'],
                          libraries=libraries)
 

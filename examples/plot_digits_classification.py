@@ -10,7 +10,7 @@ This example is commented in the
 :ref:`tutorial section of the user manual <introduction>`.
 
 """
-print __doc__
+print(__doc__)
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # License: Simplified BSD
@@ -50,9 +50,9 @@ classifier.fit(data[:n_samples / 2], digits.target[:n_samples / 2])
 expected = digits.target[n_samples / 2:]
 predicted = classifier.predict(data[n_samples / 2:])
 
-print "Classification report for classifier %s:\n%s\n" % (
-    classifier, metrics.classification_report(expected, predicted))
-print "Confusion matrix:\n%s" % metrics.confusion_matrix(expected, predicted)
+print("Classification report for classifier %s:\n%s\n"
+      % (classifier, metrics.classification_report(expected, predicted)))
+print("Confusion matrix:\n%s" % metrics.confusion_matrix(expected, predicted))
 
 for index, (image, prediction) in enumerate(
         zip(digits.images[n_samples / 2:], predicted)[:4]):

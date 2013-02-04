@@ -16,12 +16,12 @@ from scipy.interpolate import interp1d
 
 from .base import center_data
 from ..base import BaseEstimator, TransformerMixin
+from ..externals import six
+from ..externals.joblib import Memory, Parallel, delayed
 from ..utils import (as_float_array, check_random_state, safe_asarray,
                      check_arrays, safe_mask)
-from ..externals.joblib import Parallel, delayed
 from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
-from ..externals.joblib import Memory
 
 
 ###############################################################################
@@ -96,7 +96,7 @@ class BaseRandomizedLinearModel(BaseEstimator, TransformerMixin):
 
         estimator_func, params = self._make_estimator_and_params(X, y)
         memory = self.memory
-        if isinstance(memory, basestring):
+        if isinstance(memory, six.string_types):
             memory = Memory(cachedir=memory)
 
         scores_ = memory.cache(
@@ -209,8 +209,8 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     precompute : True | False | 'auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -383,8 +383,8 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     tol : float, optional
          tolerance for stopping criteria of LogisticRegression

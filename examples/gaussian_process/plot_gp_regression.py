@@ -27,7 +27,7 @@ to a normalized variance:  That is
    \mathrm{nugget}_i = \left[\frac{\sigma_i}{y_i}\right]^2
 
 """
-print __doc__
+print(__doc__)
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         Jake Vanderplas <vanderplas@astro.washington.edu>

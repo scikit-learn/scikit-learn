@@ -44,7 +44,7 @@ on age.
 .. [1] For classification you can think of it as the regression score before
        the link function.
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

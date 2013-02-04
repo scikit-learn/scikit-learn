@@ -13,7 +13,7 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import array2d, as_float_array, check_random_state, deprecated
+from ..utils import array2d, as_float_array, check_random_state
 
 __all__ = ['fastica', 'FastICA']
 

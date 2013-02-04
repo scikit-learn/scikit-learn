@@ -12,7 +12,7 @@ shifted to avoid overlapping.
 # Author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
 # Licence: BSD
 
-print __doc__
+print(__doc__)
 import numpy as np
 
 from matplotlib import pyplot as plt
