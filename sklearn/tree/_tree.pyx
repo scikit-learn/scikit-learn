@@ -566,7 +566,14 @@ cdef class Tree:
                         sample_mask_right_ptr[i] = 1
                         n_node_samples_right += 1
                         weighted_n_node_samples_right += w
+            
+            # Make current node a leaf if no valid split was found
+            if (weighted_n_node_samples_left <= 0 or 
+                weighted_n_node_samples_right <= 0):
 
+                self.add_leaf(parent, is_left_child, buffer_value, init_error, n_node_samples)
+                return
+            
             node_id = self.add_split_node(parent, is_left_child, feature,
                                           threshold, buffer_value, best_error,
                                           init_error, n_node_samples)
