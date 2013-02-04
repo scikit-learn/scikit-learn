@@ -28,6 +28,14 @@ def softmax(X):
         return (exp_X.T / exp_X.sum(axis=1)).T
 
 
+def _tanh(X):
+    """Hyperbolic tangent with LeCun's magic constants."""
+    X *= 2/3.
+    np.tanh(X, X)
+    X *= 1.7159
+    return X
+
+
 class MLPClassifier(BaseEstimator, ClassifierMixin):
     """Multi-layer perceptron (feedforward neural network) classifier.
 
@@ -114,7 +122,7 @@ class MLPClassifier(BaseEstimator, ClassifierMixin):
         z_hidden = (safe_sparse_dot(X, self.coef_hidden_.T) +
                     self.intercept_hidden_)
         y_hidden = logistic(z_hidden) if self.activation == "logistic" \
-                                      else np.tanh(z_hidden)
+                                      else _tanh(z_hidden)
         y_output = (np.dot(y_hidden, self.coef_output_.T) +
                     self.intercept_output_)
         if y_output.shape[1] == 1:

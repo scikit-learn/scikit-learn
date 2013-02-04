@@ -10,7 +10,6 @@ cimport numpy as np
 import numpy as np
 import scipy.sparse as sp
 
-from ..utils.extmath import safe_sparse_dot
 from sklearn.utils.seq_dataset cimport SequentialDataset
 
 np.import_array()
@@ -50,38 +49,71 @@ cdef int *getintptr(np.ndarray[np.int32_t, ndim=1, mode='c'] ind):
     return <int *>(ind.data)
 
 
-cdef void logistic(double[:] z) nogil:
-    """Logistic sigmoid: 1. / (1. + np.exp(-x)), computed in-place."""
-    for i in xrange(z.shape[0]):
-        z[i] = 1. / (1. + exp(-z[i]))
+cdef class ActivationFunction:
+    """Base class for hidden layer activation functions."""
+    # Ideally, we'd replace these by tables of function pointers.
+
+    def __call__(self, np.ndarray[np.float64_t, ndim=2] z):
+        self.evaluate(<double *>z.data, z.size)
+        return z
+
+    cdef void evaluate(self, double *z, np.npy_intp n):
+        pass
+    cdef void deriv(self, double *y, double *d, np.npy_intp n):
+        pass
 
 
-#cdef void relu_act(double[:] z) nogil:
+cdef void logistic(double *z, double *d, np.npy_intp n) nogil:
+    for i in xrange(n):
+        d[i] = 1. / (1. + exp(-z[i]))
+
+
+cdef class Logistic(ActivationFunction):
+    """Logistic sigmoid: 1. / (1. + np.exp(-x))."""
+
+    cdef void evaluate(self, double *z, np.npy_intp n):
+        logistic(z, z, n)
+
+    cdef void deriv(self, double *y, double *d, np.npy_intp n):
+        for i in xrange(n):
+            d[i] = y[i] * (1 - y[i])
+
+
+#cdef class RectifiedLinear(ActivationFunction):
 #    """Rectified linear activation function."""
-#    for i in xrange(z.shape[0]):
-#        z[i] = max(0, z[i])
+#    cpdef void evaluate(double[:] z) nogil:
+#        for i in xrange(z.shape[0]):
+#            z[i] = max(0, z[i])
 
 
-#cdef void softplus(double[:] z) nogil:
-#    """Softplus activation function (smooth approx. to rectified linear)."""
-#    for i in xrange(z.shape[0]):
-#        z[i] = log1p(exp(z[i]))
+cdef class Softplus(ActivationFunction):
+    """Softplus activation function (smooth approx. to rectified linear)."""
+    cdef void evaluate(self, double *z, np.npy_intp n):
+        for i in xrange(n):
+            z[i] = log1p(exp(z[i]))
+
+    cdef void deriv(self, double *z, double *d, np.npy_intp n):
+        logistic(z, d, n)
 
 
-#cdef inline void softplus_deriv(double[:] z) nogil:
-#    logistic(z)
-
-
-cdef void tanh_act(double *z, np.npy_intp n) nogil:
+cdef class Tanh(ActivationFunction):
     """tanh activation function with LeCun's (1998) magic constants."""
-    for i in xrange(n):
-        z[i] = 1.7159 * tanh(2/3. * z[i])
+    cdef void evaluate(self, double *z, np.npy_intp n):
+        for i in xrange(n):
+            z[i] = 1.7159 * tanh(2/3. * z[i])
+
+    cdef void deriv(self, double *y, double *d, np.npy_intp n):
+        for i in xrange(n):
+            d[i] = 1.14393333333333 * (1 - tanh(2/3. * y[i]) ** 2)
 
 
-cdef void tanh_deriv(double *y, double *d, np.npy_intp n):
-    """Derivative of tanh activation function with LeCun's magic constants."""
-    for i in xrange(n):
-        d[i] = 1.14393333333333 * (1 - tanh(2/3. * y[i]) ** 2)
+activations = {"logistic": Logistic,
+               "softplus": Softplus,
+               "tanh": Tanh}
+
+
+cdef inline void logistic1(np.ndarray[np.float64_t, ndim=1, mode='c'] z):
+    logistic(<double *>z.data, <double *>z.data, z.shape[0])
 
 
 cdef inline double _logsumexp(double[:] x) nogil:
@@ -101,6 +133,22 @@ cdef inline double _logsumexp(double[:] x) nogil:
     for i in range(0, x.shape[0]):
         total += exp(x[i] - vmax)
     return log(total) + vmax
+
+
+#cdef class LossFunction:
+#    """Base class for convex loss functions."""
+#
+#    cpdef double loss(self, double[:, ::1] Y, double[:, ::1] T):
+#        """Evaluate loss function.
+#
+#        Parameters
+#        ----------
+#        Y
+#            Model prediction.
+#        T
+#            Ground truth.
+#        """
+#        raise NotImplementedError()
 
 
 cdef void log_softmax(double[:, :] X, double[:, :] log_y_output) nogil:
@@ -137,9 +185,8 @@ def backprop_sgd(self, X, np.ndarray Y):
     cdef double lr, momentum
     cdef double sqrt_n_features, sqrt_n_hidden
 
-    cdef np.npy_intp size
-
-    cdef bint shuffle, multiclass, use_tanh, verbose
+    cdef ActivationFunction activ
+    cdef bint shuffle, multiclass, verbose
     cdef np.int32_t batchsize, epoch, n_features, n_hidden, n_samples, \
                     n_targets, start, end, i, j, k
 
@@ -179,7 +226,7 @@ def backprop_sgd(self, X, np.ndarray Y):
 
     multiclass = n_targets > 1 and not self._lbin.multilabel
 
-    use_tanh = self.activation == "tanh"
+    activ = activations[self.activation]()
     w_hidden = self.coef_hidden_
     w_output = self.coef_output_
     bias_hidden = self.intercept_hidden_
@@ -242,7 +289,6 @@ def backprop_sgd(self, X, np.ndarray Y):
                 end = n_samples
                 start = n_samples - batchsize
 
-            #y_hidden = safe_sparse_dot(X, w_hidden.T) + bias_hidden
             if sparse:
                 for i in xrange(batchsize):
                     get_row(rowind[start + i], X_data, X_indices, X_indptr,
@@ -260,16 +306,12 @@ def backprop_sgd(self, X, np.ndarray Y):
                     y_hidden[i, j] += bias_hidden[j]
 
             # make predictions
-            if use_tanh:
-                # .size is not optimized by Cython
-                size = y_hidden.shape[0] * y_hidden.shape[1]
-                tanh_act(<double *>y_hidden.data, size)
-                tanh_deriv(<double *>y_hidden.data,
-                           <double *>y_hidden_deriv.data,
-                           size)
-            else:
-                logistic(y_hidden.ravel())
-                y_hidden_deriv = y_hidden * (1 - y_hidden)
+            # .size is not optimized by Cython
+            activ.evaluate(<double *>y_hidden.data,
+                           y_hidden.shape[0] * y_hidden.shape[1])
+            activ.deriv(<double *>y_hidden.data,
+                        <double *>y_hidden_deriv.data,
+                        y_hidden.shape[0] * y_hidden.shape[1])
 
             np.dot(y_hidden, w_output.T, out=z_output)
             for i in xrange(batchsize):
@@ -284,8 +326,8 @@ def backprop_sgd(self, X, np.ndarray Y):
                 log_y_output = np.empty((z_output.shape[0], z_output.shape[1]))
                 log_softmax(z_output, log_y_output)
             else:
-                logistic(z_output)
                 log_y_output = z_output
+                logistic1(z_output)
             for i in xrange(batchsize):
                 for j in xrange(n_targets):
                     y_output[i, j] = exp(log_y_output[i, j])
