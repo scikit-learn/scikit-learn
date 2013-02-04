@@ -751,14 +751,20 @@ def test_multilabel_representation_invariance():
     y1_redundant = [x * py_random_state.randint(1, 3) for x in y1]
     y2_redundant = [x * py_random_state.randint(1, 3) for x in y2]
 
+    # Binary indicator matrix format
     lb = LabelBinarizer().fit([range(n_classes)])
+    y1_binary_indicator = lb.transform(y1)
+    y2_binary_indicator = lb.transform(y2)
+
+    y1_shuffle_binary_indicator = lb.transform(y1_shuffle)
+    y2_shuffle_binary_indicator = lb.transform(y2_shuffle)
 
     for metric in MULTILABELS_METRICS:
         measure = metric(y1, y2)
 
         # Check representation invariance
         assert_equal(measure,
-                     metric(lb.transform(y1), lb.transform(y2)))
+                     metric(y1_binary_indicator, y2_binary_indicator))
 
         # Check invariance with redundant labels with list of labels
         assert_equal(measure,
@@ -776,8 +782,9 @@ def test_multilabel_representation_invariance():
 
         # Check shuffling invariance with dense binary indicator matrix
         assert_equal(measure,
-                     metric(lb.transform(y1_shuffle),
-                            lb.transform(y2_shuffle)))
+                     metric(y1_shuffle_binary_indicator,
+                            y2_shuffle_binary_indicator))
+
 
 
 def test_multilabel_zero_one_loss():
