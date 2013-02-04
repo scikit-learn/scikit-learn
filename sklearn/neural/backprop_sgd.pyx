@@ -17,7 +17,7 @@ np.import_array()
 
 
 # TODO get rid of these memoryviews, they're quite slow
-cdef void csr_dot(double *x_data_ptr, int *x_ind_ptr, int nnz, double[:, :] w,
+cdef void csr_dot(double *x_data_ptr, int *x_ind_ptr, int nnz, double[:, ::1] w,
                   double[:] z) nogil:
     """Compute dot product x*W.T and store the result in z."""
     cdef Py_ssize_t n_hidden = z.shape[0]
@@ -116,22 +116,22 @@ cdef void log_softmax(double[:, :] X, double[:, :] log_y_output) nogil:
             log_y_output[i, j] = X[i, j] - logsum
 
 
-#cdef double log_loss_multiclass(double[:, :] output, uint64_t[:, :] T) nogil:
-#    """Multiclass cross-entropy loss function."""
-#    #loss = -np.mean(np.sum(log_y_output * T, axis=1))
-#    cdef double total
-#
-#    log_softmax(output, output)
-#
-#    total = 0.
-#    for i in range(output.shape[0]):
-#        for j in range(output.shape[1]):
-#            total += output[i, j] * T[i, j]
-#
-#    return -(total / output.shape[0])
+cdef double log_loss_multiclass(double[:, ::1] output, double[:, ::1] T):
+    """Multiclass cross-entropy loss function."""
+    #loss = -np.mean(np.sum(log_y_output * T, axis=1))
+    cdef double total
+
+    log_softmax(output, output)
+
+    total = 0.
+    for i in range(output.shape[0]):
+        for j in range(output.shape[1]):
+            total += output[i, j] * T[i, j]
+
+    return -(total / output.shape[0])
 
 
-def backprop_sgd(self, X, np.ndarray[np.int64_t, ndim=2] Y):
+def backprop_sgd(self, X, np.ndarray Y):
     cdef double alpha, alpha2
     cdef double loss, penalty, prev_loss, tol
     cdef double lr, momentum
@@ -155,7 +155,8 @@ def backprop_sgd(self, X, np.ndarray[np.int64_t, ndim=2] Y):
         X_, w_hidden, w_output, output_grad, \
         y_hidden, y_hidden_deriv, \
         v_hidden, v_output, log_y_output, y_output, z_output, \
-        delta_hidden
+        delta_hidden, delta_output, \
+        Y_batch
     # XXX fix mode on these
     cdef np.ndarray[np.float64_t, ndim=2] hidden_grad
     cdef np.ndarray[np.float64_t, ndim=1] \
@@ -205,9 +206,12 @@ def backprop_sgd(self, X, np.ndarray[np.int64_t, ndim=2] Y):
     # set up output arrays to prevent allocation inside the loop
     y_hidden = np.empty((batchsize, n_hidden), dtype=np.float64)
     y_hidden_deriv = np.empty((batchsize, n_hidden), dtype=np.float64)
-    delta_hidden = np.empty((batchsize, n_hidden), dtype=np.float64)
     z_output = np.empty((batchsize, n_targets), dtype=np.float64)
     y_output = np.empty((batchsize, n_targets), dtype=np.float64)
+
+    delta_hidden = np.empty((batchsize, n_hidden), dtype=np.float64)
+    delta_output = np.empty((batchsize, n_targets), dtype=np.float64)
+
     hidden_grad = np.empty((n_hidden, n_features), dtype=np.float64)
     output_grad = np.empty((n_targets, n_hidden), dtype=np.float64)
     bias_hidden_grad = np.empty(n_hidden, dtype=np.float64)
@@ -219,6 +223,7 @@ def backprop_sgd(self, X, np.ndarray[np.int64_t, ndim=2] Y):
     v_bias_hidden = np.zeros(self.intercept_hidden_.shape)
     v_bias_output = np.zeros(self.intercept_output_.shape)
 
+    Y_batch = np.empty((batchsize, n_targets), dtype=np.float64)
     rowind = np.arange(n_samples, dtype=np.int32)
 
     for epoch in xrange(self.max_iter):
@@ -246,7 +251,10 @@ def backprop_sgd(self, X, np.ndarray[np.int64_t, ndim=2] Y):
             else:
                 for i in xrange(batchsize):
                     np.dot(X[start + i, :], w_hidden[:, i], out=y_hidden[i, :])
-            Y_batch = Y[start:end]
+
+            for i in xrange(batchsize):
+                for j in xrange(n_targets):
+                    Y_batch[i, j] = Y[rowind[start + i], j]
             for j in xrange(n_hidden):
                 for i in xrange(batchsize):
                     y_hidden[i, j] += bias_hidden[j]
@@ -282,7 +290,8 @@ def backprop_sgd(self, X, np.ndarray[np.int64_t, ndim=2] Y):
                 for j in xrange(n_targets):
                     y_output[i, j] = exp(log_y_output[i, j])
 
-            delta_output = y_output - Y_batch
+            delta_output[:] = y_output
+            delta_output -= Y_batch
             np.dot(delta_output, w_output, out=delta_hidden)
             delta_hidden *= y_hidden_deriv
 
@@ -342,7 +351,7 @@ def backprop_sgd(self, X, np.ndarray[np.int64_t, ndim=2] Y):
                 loss = -np.mean(Y_batch * log_y_output +
                                 (1 - Y_batch) * np.log(1 - y_output))
             else:
-                loss = -np.mean(np.sum(log_y_output * Y_batch, axis=1))
+                loss = log_loss_multiclass(log_y_output, Y_batch)
 
             # penalize loss
             penalty = 0
