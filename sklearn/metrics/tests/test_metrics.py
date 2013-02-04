@@ -797,6 +797,24 @@ def test_multilabel_representation_invariance():
                      msg="%s failed shuffling invariance "
                          " with dense binary indicator format." % metric)
 
+        # Check invariance with mix input representation
+        assert_equal(measure,
+                     metric(y1,
+                            y2_binary_indicator),
+                     msg="%s failed mix input representation invariance: "
+                         "y_true in list of list of labels format and "
+                         "y_pred in dense binary indicator format"
+                         % metric)
+
+        assert_equal(measure,
+                     metric(y1_binary_indicator,
+                            y2),
+                     msg="%s failed mix input representation invariance: "
+                         "y_true in dense binary indicator format and "
+                         "y_pred in list of list of labels format."
+                         % metric)
+
+
 
 def test_multilabel_zero_one_loss():
     # Dense label indicator matrix format

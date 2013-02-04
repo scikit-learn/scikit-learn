@@ -692,6 +692,14 @@ def zero_one_loss(y_true, y_pred, normalize=True):
     """
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
 
+    # Handle mix representation
+    if is_multilabel(y_true) and type(y_true) != type(y_pred):
+        labels = unique_labels(y_true, y_pred)
+        lb = LabelBinarizer()
+        lb.fit([labels.tolist()])
+        y_true = lb.transform(y_true)
+        y_pred = lb.transform(y_pred)
+
     loss = None
     if is_label_indicator_matrix(y_true):
         loss = (y_pred != y_true).sum(axis=1) > 0
@@ -793,6 +801,14 @@ def accuracy_score(y_true, y_pred):
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
+
+    # Handle mix representation
+    if is_multilabel(y_true) and type(y_true) != type(y_pred):
+        labels = unique_labels(y_true, y_pred)
+        lb = LabelBinarizer()
+        lb.fit([labels.tolist()])
+        y_true = lb.transform(y_true)
+        y_pred = lb.transform(y_pred)
 
     # Compute accuracy for each possible representation
     if is_label_indicator_matrix(y_true):
@@ -1536,6 +1552,13 @@ def hamming_loss(y_true, y_pred, labels=None):
         labels = np.asarray(labels, dtype=np.int)
 
     if is_multilabel(y_true):
+        lb = LabelBinarizer()
+        lb.fit([labels.tolist()])
+
+        if type(y_true) != type(y_pred):
+            y_true = lb.transform(y_true)
+            y_pred = lb.transform(y_pred)
+
         if is_label_indicator_matrix(y_true):
             return np.mean(y_true != y_pred)
         else:
