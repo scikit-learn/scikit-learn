@@ -9,7 +9,8 @@ from sklearn import svm
 
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.datasets import make_multilabel_classification
-from sklearn.utils import check_random_state
+from sklearn.utils import (check_random_state,
+                           shuffle)
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.testing import (assert_true,
                                    assert_raises,
@@ -612,10 +613,8 @@ def test_symmetry():
 def test_sample_order_invariance():
     y_true, y_pred, _ = make_prediction(binary=True)
 
-    rng = check_random_state(0)
-    idx = rng.permutation(np.size(y_true))
-    y_true_shuffle = y_true[idx]
-    y_pred_shuffle = y_pred[idx]
+    y_true_shuffle, y_pred_shuffle = shuffle(y_true, y_pred,
+                                             random_state=0)
 
     for metric in [accuracy_score,
                    hamming_loss,
