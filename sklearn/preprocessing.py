@@ -1002,9 +1002,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Y += self.neg_label
 
-        yis_multilabel = is_multilabel(y)
+        y_is_multilabel = is_multilabel(y)
 
-        if yis_multilabel and not self.multilabel:
+        if y_is_multilabel and not self.multilabel:
             raise ValueError("The object was not fitted with multilabel"
                              " input!")
 
