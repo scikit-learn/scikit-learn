@@ -439,6 +439,10 @@ def test_vectorizer_mixin():
     vm.strip_accents = 'ascii'
     assert_equal(vm.build_preprocessor(), strip_accents_ascii)
     
+    # error with bad analyzer
+    vm.analyzer = 'invalid_analyzer'
+    assert_raises(ValueError, vm.build_analyzer)    
+    
 
 def test_hashing_vectorizer():
     v = HashingVectorizer()
