@@ -531,14 +531,14 @@ def test_NIPALS():
     # Compare SVD with and without sparsity constraint to numpy.linalg.svd
 
     Xtr = np.random.rand(6,6)
-    Xte = np.random.rand(2,6)
+    #Xte = np.random.rand(2,6)
     num_comp = 3
+    tol = 5e-12
 
     Xtr, m = pls.center(Xtr, return_means = True)
     Xtr, s = pls.scale(Xtr, return_stds = True)
-    Xte = (Xte - m) / s
+    #Xte = (Xte - m) / s
 
-    tol = 5e-12
     for st in [0.1, 0.01, 0.001, 0.0001, 0]:
         # NIPALS.SVD
         svd = pls.SVD(num_comp = num_comp,
@@ -554,7 +554,7 @@ def test_NIPALS():
         S = S[:,0:num_comp]
         V = V[:,0:num_comp]
 #        V, U = pls.direct(V, U)
-        SVDte = dot(Xte, V)
+        #SVDte = dot(Xte, V)
 
         if st < tol:
             num_decimals = 5
@@ -640,6 +640,20 @@ def test_NIPALS():
             "numpy.linalg.svd implementations lead to different scores")
     print "Comparing test set of NIPALS PCA and numpy.linalg.svd... OK! "\
           "(max diff = %.4f)" % np.max(np.abs(Tte - SVDte))
+
+
+    # Test CCA
+    
+    num_comp = 3
+    tol = 5e-9
+    
+    d = load_linnerud()
+    X = np.asarray(d.data)
+    Y = d.target
+
+    #print X
+    #print Y
+
 
 
 def test_scale():

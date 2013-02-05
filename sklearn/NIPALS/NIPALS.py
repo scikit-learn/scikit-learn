@@ -633,7 +633,11 @@ class BasePLS(BaseEstimator, TransformerMixin):
             self.not_normed = ()
 
         # Number of rows
-        M = X[0].shape[0]
+        try:
+            M = X[0].shape[0]
+        except:
+            print "Here!"
+            print X
         minN = float('Inf')
 
         for i in xrange(self.n):
@@ -648,8 +652,12 @@ class BasePLS(BaseEstimator, TransformerMixin):
 
             minN = min(minN, X[i].shape[1])
 
-        if self.num_comp < 1 or self.num_comp > minN:
+        if self.num_comp < 1:
             raise ValueError('Invalid number of components')
+        if self.num_comp > minN:
+            warnings.warn('Too many components! No more than %d can be '
+                          'computed' % (minN,))
+            self.num_comp = minN
 
         if self.C == None and self.n == 1:
             self.C = np.ones((1,1))
@@ -782,7 +790,6 @@ class BasePLS(BaseEstimator, TransformerMixin):
 class PCA(BasePLS):
 
     def __init__(self, **kwargs):
-
         BasePLS.__init__(self, C = np.ones((1,1)), **kwargs)
 
     def _get_transform(self, index = 0):
@@ -804,57 +811,60 @@ class PCA(BasePLS):
         return self.fit(X[0], **fit_params).transform(X[0])
 
 
-class SVD(BasePLS):
+#class PCAfast(BasePLS):
+#
+#    def __init__(self, **kwargs):
+#        BasePLS.__init__(self, **kwargs)
+#
+#    def _get_transform(self, index = 0):
+#        return self.P
+#
+#    def _algorithm(self, *args, **kwargs):
+#        return _(*args, **kwargs)
+#
+#    def fit(self, *X, **kwargs):
+#        BasePLS.fit(self, X[0])
+#        self.T = self.T[0]
+#        self.P = self.W[0]
+#        del self.W
+#
+#        return self
+#
+#    def transform(self, *X, **kwargs):
+#        T = BasePLS.transform(self, X[0], **kwargs)
+#        return T[0]
+#
+#    def fit_transform(self, *X, **fit_params):
+#        return self.fit(X[0], **fit_params).transform(X[0])
 
-    def __init__(self, num_comp = 2, center = False, scale = False,
-             copy = True, max_iter = _MAXITER, tolerance = _TOLERANCE,
-             soft_threshold = 0):
 
-        BasePLS.__init__(self, C = np.ones((1,1)), num_comp = num_comp,
-                         center = center, scale = scale,
-                         mode = [_NEWA], scheme = [_HORST], copy = copy,
-                         max_iter = max_iter, tolerance = tolerance,
-                         soft_threshold = soft_threshold)
+class SVD(PCA):
+
+    def __init__(self, **kwargs):
+        PCA.__init__(self, **kwargs)
 
     def _get_transform(self, index = 0):
         return self.V
 
     def fit(self, *X, **kwargs):
-#        y = kwargs.get('y', None)
-        BasePLS.fit(self, X[0])
-        self.U = self.T[0]
+        PCA.fit(self, X[0])
+        self.U = self.T
         # Move norms of U to the diagonal matrix S
         norms = np.sum(self.U**2,axis=0)**(0.5)
         self.U /= norms
         self.S = np.diag(norms)
-        self.V = self.W[0]
-        del self.W
+        self.V = self.P
         del self.T
         del self.P
 
         return self
 
-    def transform(self, *X, **kwargs):
-        U = BasePLS.transform(self, X[0], **kwargs)
-        return U[0]
-
-    def fit_transform(self, *X, **fit_params):
-        return self.fit(X[0], **fit_params).transform(X[0])
-
 
 class PLSR(BasePLS, RegressorMixin):
 
-    def __init__(self, num_comp = 2, center = True, scale = True,
-             copy = True, max_iter = _MAXITER, tolerance = _TOLERANCE,
-             soft_threshold = 0):
-
-        C = np.ones((2,2)) - np.eye(2)
-        BasePLS.__init__(self, C = C, num_comp = num_comp,
-                         center = center, scale = scale,
-                         mode = _NEWA, scheme = _HORST, copy = copy,
-                         max_iter = max_iter, tolerance = tolerance,
-                         soft_threshold = soft_threshold, not_normed = [1])
-
+    def __init__(self, **kwargs):
+        BasePLS.__init__(self, mode = _NEWA, scheme = _HORST, not_normed = [1],
+                         **kwargs)
 
     def _get_transform(self, index = 0):
         if index < 0 or index > 1:
@@ -864,17 +874,17 @@ class PLSR(BasePLS, RegressorMixin):
         else:
             return self.C
 
-
     def _deflate(self, X, w, t, p, index = None):
         if index == 0:
             return X - dot(t, p.T) # Deflate X using its loadings
         else:
-#            return X - dot(t, w.T)
             return X # Do not deflate Y
 
-
-    def fit(self, *X, **kwargs):
-        BasePLS.fit(self, *X)
+    def fit(self, X, Y = None, **kwargs):
+        Y = kwargs.get('y', Y)
+        if Y == None:
+            raise ValueError('Y is not supplied')
+        BasePLS.fit(self, X, Y)
         self.C  = self.W[1]
         self.U  = self.T[1]
         self.Q  = self.P[1]
@@ -887,7 +897,6 @@ class PLSR(BasePLS, RegressorMixin):
 
         return self
 
-
     def predict(self, X, copy = True):
         X = np.asarray(X)
         if copy:
@@ -896,12 +905,15 @@ class PLSR(BasePLS, RegressorMixin):
             X -= self.means[0]
             X /= self.stds[0]
 
-        Ypred = dot(X, self.B)
+        if hasattr(self, 'B'):
+            Ypred = dot(X, self.B)
+        else:
+            Ypred = dot(X, self.Bx)
 
         return (Ypred*self.stds[1]) + self.means[1]
 
-
     def transform(self, X, Y = None, **kwargs):
+        Y = kwargs.get('y', Y)
         if Y != None:
             T = BasePLS.transform(self, X, Y, **kwargs)
         else:
@@ -909,16 +921,15 @@ class PLSR(BasePLS, RegressorMixin):
             T = T[0]
         return T
 
+    def fit_transform(self, X, Y = None, **kwargs):
+        Y = kwargs.get('y', Y)
+        return self.fit(X, Y, **kwargs).transform(X, Y)
 
-    def fit_transform(self, X, Y = None, **fit_params):
-        return self.fit(X, Y, **fit_params).transform(X, Y)
 
-
-class PLSC(BasePLS, RegressorMixin):
+class PLSC(PLSR):
 
     def __init__(self, **kwargs):
-        BasePLS.__init__(self, **kwargs)
-
+        BasePLS.__init__(self, mode = _NEWA, scheme = _HORST, **kwargs)
 
     def _get_transform(self, index = 0):
         if index < 0 or index > 1:
@@ -928,87 +939,80 @@ class PLSC(BasePLS, RegressorMixin):
         else: # index == 1
             return self.Cs
 
+    def _deflate(self, X, w, t, p, index = None):
+        return X - dot(t, p.T) # Deflate X using its loadings
 
-    def fit(self, *X, **kwargs):
-        BasePLS.fit(self, *X)
-        self.C  = self.W[1]
-        self.U  = self.T[1]
-        self.Q  = self.P[1]
-        self.Cs = self.Ws[1]
-        self.W  = self.W[0]
-        self.T  = self.T[0]
-        self.P  = self.P[0]
-        self.Ws = self.Ws[0]
+    def fit(self, X, Y = None, **kwargs):
+        Y = kwargs.get('y', Y)
+        PLSR.fit(self, X, Y)
+        self.Cs = dot(self.C, np.linalg.inv(dot(self.Q.T,self.C)))
 
-        self.Bx = dot(self.Ws, self.C.T)
+        self.Bx = self.B
         self.By = dot(self.Cs, self.W.T)
+        del self.B
 
         return self
 
+    def predict(self, X, Y = None, copy = True):
 
-    def predict(self, X, copy = True):
-        X = np.asarray(X)
-        if copy:
-            X = (X - self.means[0]) / self.stds[0]
-        else:
-            X -= self.means[0]
-            X /= self.stds[0]
+        Ypred = PLSR.predict(self, X, copy = copy)
 
-        Ypred = dot(X, self.Bx)
-
-        return (Ypred*self.stds[1]) + self.means[1]
-
-
-    def transform(self, X, Y = None, **kwargs):
         if Y != None:
-            T = BasePLS.transform(self, X, Y, **kwargs)
-        else:
-            T = BasePLS.transform(self, X, **kwargs)
-            T = T[0]
-        return T
+            Y = np.asarray(Y)
+            if copy:
+                Y = (Y - self.means[1]) / self.stds[1]
+            else:
+                Y -= self.means[1]
+                Y /= self.stds[1]
+    
+            Xpred = (dot(Y, self.By)*self.stds[0]) + self.means[0]
+
+            return Ypred, Xpred
+
+        return Ypred
 
 
-class CCA(BasePLS):
-
-    def __init__(self, **kwargs):
-        BasePLS.__init__(self, mode=(_B, _B), scheme=(_FACTORIAL,_FACTORIAL),
-                         tau = (0, 0), **kwargs)
-
-
-    def _get_transform(self, index = 0):
-        if index == 0:
-            return self.Ws
-        elif index == 1:
-            return self.Cs
-        else:
-            raise ValueError("Index must be 0 or 1")
-
-
-    def _algorithm(self, **kwargs):
-        return _RGCCA(**kwargs)
-
-
-    def fit(self, *X, **kwargs):
-        BasePLS.fit(self, *X)
-        self.C  = self.W[1]
-        self.U  = self.T[1]
-        self.Q  = self.P[1]
-        self.Cs = self.Ws[1]
-        self.W  = self.W[0]
-        self.T  = self.T[0]
-        self.P  = self.P[0]
-        self.Ws = self.Ws[0]
-
-        return self
-
-
-    def transform(self, X, Y = None, **kwargs):
-        if Y != None:
-            T = BasePLS.transform(self, X, Y, **kwargs)
-        else:
-            T = BasePLS.transform(self, X, **kwargs)
-            T = T[0]
-        return T
+#class CCA(BasePLS):
+#
+    #def __init__(self, **kwargs):
+        #BasePLS.__init__(self, mode=(_B, _B), scheme=(_FACTORIAL,_FACTORIAL),
+                         #tau = (0, 0), **kwargs)
+#
+#
+    #def _get_transform(self, index = 0):
+        #if index == 0:
+            #return self.Ws
+        #elif index == 1:
+            #return self.Cs
+        #else:
+            #raise ValueError("Index must be 0 or 1")
+#
+#
+    #def _algorithm(self, **kwargs):
+        #return _RGCCA(**kwargs)
+#
+#
+    #def fit(self, *X, **kwargs):
+        #BasePLS.fit(self, *X)
+        #self.C  = self.W[1]
+        #self.U  = self.T[1]
+        #self.Q  = self.P[1]
+        #self.Cs = self.Ws[1]
+        #self.W  = self.W[0]
+        #self.T  = self.T[0]
+        #self.P  = self.P[0]
+        #self.Ws = self.Ws[0]
+#
+        #return self
+#
+#
+    #def transform(self, X, Y = None, **kwargs):
+        #if Y != None:
+            #T = BasePLS.transform(self, X, Y, **kwargs)
+        #else:
+            #T = BasePLS.transform(self, X, **kwargs)
+            #T = T[0]
+        #return T
 
 
 #class Enum(object):

@@ -40,7 +40,6 @@ from sklearn.svm.base import BaseLibSVM
 # import "special" estimators
 from sklearn.decomposition import SparseCoder
 from sklearn.pls import _PLS, PLSCanonical, PLSRegression, CCA, PLSSVD
-from sklearn.NIPALS import PCA
 from sklearn.ensemble import RandomTreesEmbedding
 from sklearn.feature_selection import SelectKBest
 from sklearn.dummy import DummyClassifier, DummyRegressor
@@ -199,7 +198,9 @@ def test_transformers():
 
         # fit
 
-        if Trans in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
+        # Why speacial case here?
+        if Trans in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD,
+                     sklearn.NIPALS.PLSR, sklearn.NIPALS.PLSC):
             random_state = np.random.RandomState(seed=12345)
             y_ = np.vstack([y, 2 * y + random_state.randint(2, size=len(y))])
             y_ = y_.T
@@ -209,7 +210,7 @@ def test_transformers():
         try:
             trans.fit(X, y_)
             X_pred = trans.fit_transform(X, y=y_)
-            if isinstance(X_pred, tuple):
+            if isinstance(X_pred, (tuple, list)):
                 for x_pred in X_pred:
                     assert_equal(x_pred.shape[0], n_samples)
             else:
@@ -222,7 +223,8 @@ def test_transformers():
             continue
 
         if hasattr(trans, 'transform'):
-            if Trans in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
+            if Trans in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD,
+                         sklearn.NIPALS.PLSR, sklearn.NIPALS.PLSC):
                 X_pred2 = trans.transform(X, y_)
             else:
                 X_pred2 = trans.transform(X)
@@ -307,9 +309,9 @@ def test_estimators_nan_inf():
         for name, Est in estimators:
             if Est in dont_test:
                 continue
-            if Est in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
-                continue
-            if Est in (sklearn.NIPALS.PCA,):
+            if Est in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD,
+                       sklearn.NIPALS.PCA, sklearn.NIPALS.SVD,
+                       sklearn.NIPALS.PLSR, sklearn.NIPALS.PLSC):
                 continue
 
             # catch deprecation warnings
@@ -583,7 +585,8 @@ def test_regressors_int():
         set_random_state(reg1)
         set_random_state(reg2)
 
-        if Reg in (_PLS, PLSCanonical, PLSRegression):
+        if Reg in (_PLS, PLSCanonical, PLSRegression,
+                   sklearn.NIPALS.PLSR, sklearn.NIPALS.PLSC):
             y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
             y_ = y_.T
         else:
@@ -621,7 +624,8 @@ def test_regressors_train():
         assert_raises(ValueError, reg.fit, X, y[:-1])
         # fit
         try:
-            if Reg in (_PLS, PLSCanonical, PLSRegression, CCA):
+            if Reg in (_PLS, PLSCanonical, PLSRegression, CCA,
+                       sklearn.NIPALS.PLSR, sklearn.NIPALS.PLSC):
                 y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
                 y_ = y_.T
             else:
@@ -629,7 +633,8 @@ def test_regressors_train():
             reg.fit(X, y_)
             reg.predict(X)
 
-            if Reg not in (PLSCanonical, CCA):  # TODO: find out why
+            if Reg not in (PLSCanonical, CCA,
+                           sklearn.NIPALS.PLSC):  # TODO: find out why
                 assert_greater(reg.score(X, y_), 0.5)
         except Exception as e:
             print(reg)
