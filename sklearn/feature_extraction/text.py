@@ -168,7 +168,7 @@ class VectorizerMixin(object):
 
         # unfortunately python functools package does not have an efficient
         # `compose` function that would have allowed us to chain a dynamic
-        # number of functions. However the however of a lambda call is a few
+        # number of functions. However the cost of a lambda call is a few
         # hundreds of nanoseconds which is negligible when compared to the
         # cost of tokenizing a string of 1000 chars for instance.
         noop = lambda x: x
