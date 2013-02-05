@@ -8,6 +8,7 @@ from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import VectorizerMixin
 
 from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
@@ -426,6 +427,18 @@ def test_vectorizer():
     v3 = CountVectorizer(vocabulary=None)
     assert_raises(ValueError, v3.transform, train_data)
 
+
+def test_vectorizer_mixin():
+    # test a few cases in VectorizerMixin
+    vm = VectorizerMixin()
+    vm.preprocessor = None
+    vm.strip_accents = 'gabbldegook'
+    assert_raises(ValueError, vm.build_preprocessor)
+    
+    vm.lowercase = False
+    vm.strip_accents = 'ascii'
+    assert_equal(vm.build_preprocessor(), strip_accents_ascii)
+    
 
 def test_hashing_vectorizer():
     v = HashingVectorizer()
