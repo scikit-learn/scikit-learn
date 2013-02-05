@@ -165,7 +165,7 @@ def test_importances():
                                         random_state=1)
 
     for alg in ['SAMME', 'SAMME.R']:
-        clf = AdaBoostClassifier(algorithm=alg, compute_importances=True)
+        clf = AdaBoostClassifier(algorithm=alg)
 
         clf.fit(X, y)
         importances = clf.feature_importances_
@@ -173,10 +173,6 @@ def test_importances():
         assert_equal(importances.shape[0], 10)
         assert_equal((importances[:3, np.newaxis] >= importances[3:]).all(),
                      True)
-
-    clf = AdaBoostClassifier()
-    clf.fit(X, y)
-    assert_true(clf.feature_importances_ is None)
 
 
 def test_error():

@@ -12,8 +12,10 @@ randomized trees. Single and multi-output problems are both handled.
 # License: BSD3
 
 from __future__ import division
+
 import numpy as np
 from abc import ABCMeta, abstractmethod
+from warnings import warn
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..externals import six
@@ -170,6 +172,13 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         self.min_samples_leaf = min_samples_leaf
         self.min_density = min_density
         self.max_features = max_features
+
+        if compute_importances:
+            warn("Setting compute_importances=True is no longer "
+                 "required. Variable importances are now computed on the fly "
+                 "when accessing the feature_importances_ attribute. This "
+                 "parameter will be removed in 0.15.", DeprecationWarning)
+
         self.compute_importances = compute_importances
         self.random_state = random_state
 
@@ -180,7 +189,6 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         self.find_split_ = _tree.TREE_SPLIT_BEST
 
         self.tree_ = None
-        self.feature_importances_ = None
 
     def fit(self, X, y,
             sample_mask=None, X_argsorted=None,
@@ -363,11 +371,6 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
 
-        # Compute importances
-        if self.compute_importances:
-            self.feature_importances_ = \
-                self.tree_.compute_feature_importances()
-
         return self
 
     def predict(self, X):
@@ -427,6 +430,21 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             else:
                 return proba[:, :, 0]
 
+    @property
+    def feature_importances_(self):
+        """Return the feature importances (the higher, the more important the
+           feature).
+
+        Returns
+        -------
+        feature_importances_ : array, shape = [n_features]
+        """
+        if self.tree_ is None:
+            raise ValueError("Estimator not fitted, "
+                             "call `fit` before `feature_importances_`.")
+
+        return self.tree_.compute_feature_importances()
+
 
 class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     """A decision tree classifier.
@@ -466,10 +484,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         the partitions are always represented as copies of the original
         data. Otherwise, partitions are represented as bit masks (aka
         sample masks).
-
-    compute_importances : boolean, optional (default=False)
-        Whether feature importances are computed and stored into the
-        ``feature_importances_`` attribute when calling fit.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -665,10 +679,6 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         the partitions are always represented as copies of the original
         data. Otherwise, partitions are represented as bit masks (aka
         sample masks).
-
-    compute_importances : boolean, optional (default=True)
-        Whether feature importances are computed and stored into the
-        ``feature_importances_`` attribute when calling fit.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;

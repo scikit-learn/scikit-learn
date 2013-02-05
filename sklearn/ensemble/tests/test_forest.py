@@ -183,7 +183,7 @@ def test_importances():
                                         shuffle=False,
                                         random_state=0)
 
-    clf = RandomForestClassifier(n_estimators=10, compute_importances=True)
+    clf = RandomForestClassifier(n_estimators=10)
     clf.fit(X, y)
     importances = clf.feature_importances_
     n_important = sum(importances > 0.1)
@@ -193,10 +193,6 @@ def test_importances():
 
     X_new = clf.transform(X, threshold="mean")
     assert_less(0 < X_new.shape[1], X.shape[1])
-
-    clf = RandomForestClassifier(n_estimators=10)
-    clf.fit(X, y)
-    assert_true(clf.feature_importances_ is None)
 
 
 def test_oob_score_classification():
