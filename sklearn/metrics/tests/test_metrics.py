@@ -741,11 +741,12 @@ def test_multilabel_representation_invariance():
     y1 += ([], )
     y2 += ([], )
 
-    # NOTE: The "sorted" trick is necessary to shuffle labels in place.
+    # NOTE: The "sorted" trick is necessary to shuffle labels, because it
+    # allows to return the shuffled tuple.
     py_random_state = random.Random(0)
-    shuffle = lambda x: sorted(x, key=lambda *args: py_random_state.random())
-    y1_shuffle = [shuffle(x) for x in y1]
-    y2_shuffle = [shuffle(x) for x in y2]
+    shuffled = lambda x: sorted(x, key=lambda *args: py_random_state.random())
+    y1_shuffle = [shuffled(x) for x in y1]
+    y2_shuffle = [shuffled(x) for x in y2]
 
     # Let's have redundant label
     y1_redundant = [x * py_random_state.randint(1, 3) for x in y1]
