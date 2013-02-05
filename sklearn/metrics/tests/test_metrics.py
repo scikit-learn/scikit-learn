@@ -879,7 +879,7 @@ def test_multilabel_hamming_loss():
     assert_equal(0.75, hamming_loss(y2, [(), ()]))
     assert_equal(0.625, hamming_loss(y1, [tuple(), (10, )]))
     assert_almost_equal(0.1818, hamming_loss(y2, [tuple(), (10, )],
-                                             labels=np.arange(11)), 2)
+                                             classes=np.arange(11)), 2)
 
 
 def test_multilabel_accuracy_score():

@@ -1492,7 +1492,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
 ###############################################################################
 # Multilabel loss function
 ###############################################################################
-def hamming_loss(y_true, y_pred, labels=None):
+def hamming_loss(y_true, y_pred, classes=None):
     """ Compute the average Hamming loss
 
     The Hamming loss is the fraction of labels that are incorrectly predicted.
@@ -1562,14 +1562,14 @@ def hamming_loss(y_true, y_pred, labels=None):
     """
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
 
-    if labels is None:
-        labels = unique_labels(y_true, y_pred)
+    if classes is None:
+        classes = unique_labels(y_true, y_pred)
     else:
-        labels = np.asarray(labels, dtype=np.int)
+        classes = np.asarray(classes, dtype=np.int)
 
     if is_multilabel(y_true):
         lb = LabelBinarizer()
-        lb.fit([labels.tolist()])
+        lb.fit([classes.tolist()])
 
         if type(y_true) != type(y_pred):
             y_true = lb.transform(y_true)
@@ -1582,7 +1582,7 @@ def hamming_loss(y_true, y_pred, labels=None):
                                                  np.asarray(true)))
                              for pred, true in izip(y_pred, y_true)])
 
-            return np.mean(loss) / np.size(labels)
+            return np.mean(loss) / np.size(classes)
 
     else:
         return sp_hamming(y_true, y_pred)
