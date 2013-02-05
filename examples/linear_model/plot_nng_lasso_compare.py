@@ -8,8 +8,11 @@ Nonnegative Garrote and Lars-path comparison
 We replicate the comparison done by Ming Yuan and Yi Lin
 in their paper
 `On the Nonnegative Garrote Estimator <www2.isye.gatech.edu/statistics/papers/05-25.pdf>`_
-on page 11.
+(page 11).
 
+For different values of alpha over the generated data sets, we
+count how many times the path of each contains at least one estimate
+that covers the true model.
 """
 print(__doc__)
 
