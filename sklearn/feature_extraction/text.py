@@ -319,8 +319,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
 
     stop_words: string {'english'}, list, or None (default)
         If a string, it is passed to _check_stop_list and the appropriate stop
-        list is returned is currently the only
-        supported string value.
+        list is returned. 'english' is currently the only supported string
+        value.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
@@ -500,8 +500,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     stop_words : string {'english'}, list, or None (default)
         If a string, it is passed to _check_stop_list and the appropriate stop
-        list is returned is currently the only
-        supported string value.
+        list is returned. 'english' is currently the only supported string
+        value.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
@@ -1005,8 +1005,8 @@ class TfidfVectorizer(CountVectorizer):
 
     stop_words : string {'english'}, list, or None (default)
         If a string, it is passed to _check_stop_list and the appropriate stop
-        list is returned is currently the only
-        supported string value.
+        list is returned. 'english' is currently the only supported string
+        value.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
