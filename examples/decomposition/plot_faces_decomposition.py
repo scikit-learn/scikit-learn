@@ -9,7 +9,7 @@ matrix decomposition (dimension reduction) methods from the module
 :ref:`decompositions`) .
 
 """
-print __doc__
+print(__doc__)
 
 # Authors: Vlad Niculae, Alexandre Gramfort
 # License: BSD
@@ -45,7 +45,7 @@ faces_centered = faces - faces.mean(axis=0)
 # local centering
 faces_centered -= faces_centered.mean(axis=1).reshape(n_samples, -1)
 
-print "Dataset consists of %d faces" % n_samples
+print("Dataset consists of %d faces" % n_samples)
 
 
 ###############################################################################
@@ -82,23 +82,24 @@ estimators = [
 
     ('Sparse comp. - MiniBatchSparsePCA',
      decomposition.MiniBatchSparsePCA(n_components=n_components, alpha=0.8,
-                                      n_iter=100, chunk_size=3,
+                                      n_iter=100, batch_size=3,
                                       random_state=rng),
      True),
 
     ('MiniBatchDictionaryLearning',
-    decomposition.MiniBatchDictionaryLearning(n_components=15, alpha=0.1,
-                                              n_iter=50, chunk_size=3,
-                                              random_state=rng),
+        decomposition.MiniBatchDictionaryLearning(n_components=15, alpha=0.1,
+                                                  n_iter=50, batch_size=3,
+                                                  random_state=rng),
      True),
 
     ('Cluster centers - MiniBatchKMeans',
-     MiniBatchKMeans(n_clusters=n_components, tol=1e-3, batch_size=20,
-         max_iter=50, random_state=rng),
+        MiniBatchKMeans(n_clusters=n_components, tol=1e-3, batch_size=20,
+                        max_iter=50, random_state=rng),
      True),
 
     ('Factor Analysis components - FA',
-     decomposition.FactorAnalysis(n_components=n_components, max_iter=2), True),
+     decomposition.FactorAnalysis(n_components=n_components, max_iter=2),
+     True),
 ]
 
 
@@ -111,22 +112,22 @@ plot_gallery("First centered Olivetti faces", faces_centered[:n_components])
 # Do the estimation and plot it
 
 for name, estimator, center in estimators:
-    print "Extracting the top %d %s..." % (n_components, name)
+    print("Extracting the top %d %s..." % (n_components, name))
     t0 = time()
     data = faces
     if center:
         data = faces_centered
     estimator.fit(data)
     train_time = (time() - t0)
-    print "done in %0.3fs" % train_time
+    print("done in %0.3fs" % train_time)
     if hasattr(estimator, 'cluster_centers_'):
         components_ = estimator.cluster_centers_
     else:
         components_ = estimator.components_
     if hasattr(estimator, 'noise_variance_'):
         plot_gallery("Pixelwise variance",
-                estimator.noise_variance_.reshape(1,-1),
-                n_col=1, n_row=1)
+                     estimator.noise_variance_.reshape(1, -1), n_col=1,
+                     n_row=1)
     plot_gallery('%s - Train time %.1fs' % (name, train_time),
                  components_[:n_components])
 

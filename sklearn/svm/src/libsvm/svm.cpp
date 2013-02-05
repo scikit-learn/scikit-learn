@@ -707,7 +707,7 @@ void Solver::Solve(int l, const QMatrix& Q, const double *p_, const schar *y_,
 	while(1)
 	{
                 // set max_iter to -1 to disable the mechanism
-                if ((max_iter != -1) and (iter >= max_iter)) {
+                if ((max_iter != -1) && (iter >= max_iter)) {
                     info("WARN: libsvm Solver reached max_iter");
                     si->solve_timed_out = true;
                     break;

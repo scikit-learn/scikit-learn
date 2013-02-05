@@ -1,7 +1,6 @@
 """ Test the graph_lasso module.
 """
 import sys
-from StringIO import StringIO
 
 import numpy as np
 from scipy import linalg
@@ -9,9 +8,10 @@ from scipy import linalg
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_array_less
 
-from sklearn.covariance import graph_lasso, GraphLasso, GraphLassoCV, \
-            empirical_covariance
+from sklearn.covariance import (graph_lasso, GraphLasso, GraphLassoCV,
+                                empirical_covariance)
 from sklearn.datasets.samples_generator import make_sparse_spd_matrix
+from sklearn.externals.six.moves import StringIO
 from sklearn.utils import check_random_state
 
 

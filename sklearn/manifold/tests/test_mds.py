@@ -57,5 +57,5 @@ def test_MDS():
                     [5, 0, 2, 2],
                     [3, 2, 0, 1],
                     [4, 2, 1, 0]])
-    mds_clf = mds.MDS(metric=False, n_jobs=3)
+    mds_clf = mds.MDS(metric=False, n_jobs=3, dissimilarity="precomputed")
     mds_clf.fit(sim)

@@ -10,7 +10,8 @@ The data contains 20,640 observations on 9 variables.
 References
 ----------
 
-Pace, R. Kelley and Ronald Barry, Sparse Spatial Autoregressions, Statistics and Probability Letters, 33 (1997) 291-297.
+Pace, R. Kelley and Ronald Barry, Sparse Spatial Autoregressions,
+Statistics and Probability Letters, 33 (1997) 291-297.
 
 """
 # Authors: Peter Prettenhofer

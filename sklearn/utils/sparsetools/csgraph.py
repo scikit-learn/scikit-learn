@@ -13,7 +13,7 @@ if version_info >= (2, 6, 0):
         fp = None
         try:
             fp, pathname, description = imp.find_module('_csgraph',
-                    [dirname(__file__)])
+                                                        [dirname(__file__)])
         except ImportError:
             import _csgraph
             return _csgraph
@@ -69,7 +69,7 @@ def _swig_repr(self):
     except:
         strthis = ""
     return "<%s.%s; %s >" % (self.__class__.__module__,
-            self.__class__.__name__, strthis,)
+                             self.__class__.__name__, strthis,)
 
 try:
     _object = object

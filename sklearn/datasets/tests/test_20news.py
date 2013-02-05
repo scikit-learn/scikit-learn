@@ -11,16 +11,14 @@ from sklearn import datasets
 
 def test_20news():
     try:
-        data = datasets.fetch_20newsgroups(subset='all',
-                        download_if_missing=False,
-                        shuffle=False)
+        data = datasets.fetch_20newsgroups(
+            subset='all', download_if_missing=False, shuffle=False)
     except IOError:
         raise SkipTest("Download 20 newsgroups to run this test")
 
     # Extract a reduced dataset
-    data2cats = datasets.fetch_20newsgroups(subset='all',
-                            categories=data.target_names[-1:-3:-1],
-                            shuffle=False)
+    data2cats = datasets.fetch_20newsgroups(
+        subset='all', categories=data.target_names[-1:-3:-1], shuffle=False)
     # Check that the ordering of the target_names is the same
     # as the ordering in the full dataset
     assert_equal(data2cats.target_names,

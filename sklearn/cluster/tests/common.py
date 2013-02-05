@@ -19,7 +19,7 @@ def generate_clustered_data(seed=0, n_clusters=3, n_features=2,
                       [-1, -1, 0, 1],
                       [1, -1, 1, 1],
                       [-1, 1, 1, 0],
-                    ]) + 10
+                      ]) + 10
 
     X = np.empty((0, n_features))
     for i in range(n_clusters):

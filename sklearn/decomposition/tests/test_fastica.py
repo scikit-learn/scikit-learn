@@ -49,11 +49,12 @@ def test_gs():
     assert_less((tmp[:5] ** 2).sum(), 1.e-10)
 
 
-def test_fastica(add_noise=False):
+def test_fastica_simple(add_noise=False):
     """ Test the FastICA algorithm on very simple data.
     """
-    # scipy.stats uses the global RNG:
     rng = np.random.RandomState(0)
+    # scipy.stats uses the global RNG:
+    np.random.seed(0)
     n_samples = 1000
     # Generate two sources:
     s1 = (2 * np.sin(np.linspace(0, 100, n_samples)) > 0) - 1
@@ -87,8 +88,7 @@ def test_fastica(add_noise=False):
                           algorithm=algo)
         else:
             X = PCA(n_components=2, whiten=True).fit_transform(m.T)
-            k_, mixing_, s_ = fastica(X, fun=nl, algorithm=algo,
-                                     whiten=False)
+            k_, mixing_, s_ = fastica(X, fun=nl, algorithm=algo, whiten=False)
             assert_raises(ValueError, fastica, X, fun=np.tanh,
                           algorithm=algo)
         s_ = s_.T
@@ -106,7 +106,7 @@ def test_fastica(add_noise=False):
         s2_ *= np.sign(np.dot(s2_, s2))
 
         # Check that we have estimated the original sources
-        if add_noise == False:
+        if not add_noise:
             assert_almost_equal(np.dot(s1_, s1) / n_samples, 1, decimal=2)
             assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=2)
         else:
@@ -177,7 +177,7 @@ def test_non_square_fastica(add_noise=False):
     s2_ *= np.sign(np.dot(s2_, s2))
 
     # Check that we have estimated the original sources
-    if add_noise == False:
+    if not add_noise:
         assert_almost_equal(np.dot(s1_, s1) / n_samples, 1, decimal=3)
         assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=3)
 

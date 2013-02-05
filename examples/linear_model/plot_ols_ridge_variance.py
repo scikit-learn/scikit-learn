@@ -20,7 +20,7 @@ of the prediction is much more stable and the variance
 in the line itself is greatly reduced, in comparison to that
 of the standard linear regression
 """
-print __doc__
+print(__doc__)
 
 
 # Code source: Gael Varoqueux
@@ -39,10 +39,8 @@ X_test = np.c_[0, 2].T
 
 np.random.seed(0)
 
-classifiers = dict(
-    ols=linear_model.LinearRegression(),
-    ridge=linear_model.Ridge(alpha=.1)
-    )
+classifiers = dict(ols=linear_model.LinearRegression(),
+                   ridge=linear_model.Ridge(alpha=.1))
 
 fignum = 1
 for name, clf in classifiers.iteritems():

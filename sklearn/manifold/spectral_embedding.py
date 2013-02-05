@@ -12,6 +12,7 @@ from scipy.sparse.linalg import lobpcg
 from scipy.sparse.linalg.eigen.lobpcg.lobpcg import symeig
 
 from ..base import BaseEstimator, TransformerMixin
+from ..externals import six
 from ..utils import check_random_state
 from ..utils.validation import atleast2d_or_csr
 from ..utils.graph import graph_laplacian
@@ -120,7 +121,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                        random_state=None, eigen_tol=0.0,
                        norm_laplacian=True, drop_first=True,
                        mode=None):
-    """Project the sample on the first eigen vectors of the graph Laplacian
+    """Project the sample on the first eigen vectors of the graph Laplacian.
 
     The adjacency matrix is used to compute a normalized graph Laplacian
     whose spectrum (especially the eigen vectors associated to the
@@ -147,18 +148,18 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     eigen_solver : {None, 'arpack', 'lobpcg', or 'amg'}
         The eigenvalue decomposition strategy to use. AMG requires pyamg
         to be installed. It can be faster on very large, sparse problems,
-        but may also lead to instabilities
+        but may also lead to instabilities.
 
     random_state : int seed, RandomState instance, or None (default)
         A pseudo random number generator used for the initialization of the
         lobpcg eigen vectors decomposition when eigen_solver == 'amg'.
         By default, arpack is used.
 
-    eigen_tol : float, optional, default: 0.0
+    eigen_tol : float, optional, default=0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack eigen_solver.
 
-    drop_first : bool, optional, default: True
+    drop_first : bool, optional, default=True
         Whether to drop the first eigenvector. For spectral embedding, this
         should be True as the first eigenvector should be constant vector for
         connected graph, but for spectral clustering, this should be kept as
@@ -166,28 +167,29 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     Returns
     -------
-    embedding : array, shape: (n_samples, n_components)
-        The reduced samples
+    embedding : array, shape=(n_samples, n_components)
+        The reduced samples.
 
     Notes
     -----
     Spectral embedding is most useful when the graph has one connected
-    component. If there graph has many components, the first few
-    eigenvectors will simply uncover the connected components of the graph.
+    component. If there graph has many components, the first few eigenvectors
+    will simply uncover the connected components of the graph.
 
     References
     ----------
-    [1] http://en.wikipedia.org/wiki/LOBPCG
-    [2] Toward the Optimal Preconditioned Eigensolver: Locally Optimal
-        Block Preconditioned Conjugate Gradient Method
-        Andrew V. Knyazev
-        http://dx.doi.org/10.1137%2FS1064827500366124
+    * http://en.wikipedia.org/wiki/LOBPCG
+
+    * Toward the Optimal Preconditioned Eigensolver: Locally Optimal
+      Block Preconditioned Conjugate Gradient Method
+      Andrew V. Knyazev
+      http://dx.doi.org/10.1137%2FS1064827500366124
     """
 
     try:
         from pyamg import smoothed_aggregation_solver
     except ImportError:
-        if eigen_solver == "amg":
+        if eigen_solver == "amg" or mode == "amg":
             raise ValueError("The eigen_solver was set to 'amg', but pyamg is "
                              "not available.")
 
@@ -196,6 +198,13 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
                       "and will be removed in 0.15.",
                       DeprecationWarning)
         eigen_solver = mode
+
+    if eigen_solver is None:
+        eigen_solver = 'arpack'
+    elif not eigen_solver in ('arpack', 'lobpcg', 'amg'):
+        raise ValueError("Unknown value for eigen_solver: '%s'."
+                         "Should be 'amg', 'arpack', or 'lobpcg'"
+                         % eigen_solver)
 
     random_state = check_random_state(random_state)
 
@@ -215,14 +224,8 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
 
     if not _graph_is_connected(adjacency):
         warnings.warn("Graph is not fully connected, spectral embedding"
-                      "may not works as expected.")
+                      " may not works as expected.")
 
-    if eigen_solver is None:
-        eigen_solver = 'arpack'
-    elif not eigen_solver in ('arpack', 'lobpcg', 'amg'):
-        raise ValueError("Unknown value for eigen_solver: '%s'."
-                         "Should be 'amg', 'arpack', or 'lobpcg'"
-                         % eigen_solver)
     laplacian, dd = graph_laplacian(adjacency,
                                     normed=norm_laplacian, return_diag=True)
     if (eigen_solver == 'arpack'
@@ -235,7 +238,7 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
         # /lobpcg/lobpcg.py#L237
         # or matlab:
         # http://www.mathworks.com/matlabcentral/fileexchange/48-lobpcg-m
-        laplacian = _set_diag(laplacian, 0)
+        laplacian = _set_diag(laplacian, 1)
 
         # Here we'll use shift-invert mode for fast eigenvalues
         # (see http://docs.scipy.org/doc/scipy/reference/tutorial/arpack.html
@@ -447,7 +450,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
             Returns the instance itself.
         """
         self.random_state = check_random_state(self.random_state)
-        if isinstance(self.affinity, basestring):
+        if isinstance(self.affinity, six.string_types):
             if self.affinity not in set(("nearest_neighbors", "rbf",
                                          "precomputed")):
                 raise ValueError(("%s is not a valid affinity. Expected "

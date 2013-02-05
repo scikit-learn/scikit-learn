@@ -1,32 +1,42 @@
+from __future__ import division
+
 import random
 import warnings
 import numpy as np
 
-from nose.tools import raises, assert_not_equal
-from nose.tools import assert_true, assert_raises
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_equal, assert_almost_equal
-
 from sklearn import datasets
 from sklearn import svm
-from sklearn.metrics import auc
-from sklearn.metrics import classification_report
-from sklearn.metrics import confusion_matrix
-from sklearn.metrics import explained_variance_score
-from sklearn.metrics import r2_score
-from sklearn.metrics import f1_score
-from sklearn.metrics import matthews_corrcoef
-from sklearn.metrics import mean_squared_error
-from sklearn.metrics import precision_recall_curve
-from sklearn.metrics import precision_recall_fscore_support
-from sklearn.metrics import precision_score
-from sklearn.metrics import recall_score
-from sklearn.metrics import roc_curve
-from sklearn.metrics import auc_score
-from sklearn.metrics import average_precision_score
-from sklearn.metrics import zero_one
-from sklearn.metrics import hinge_loss
+
+from sklearn.utils.testing import (assert_true,
+                                   assert_raises,
+                                   assert_equal,
+                                   assert_almost_equal,
+                                   assert_not_equal,
+                                   assert_array_equal,
+                                   assert_array_almost_equal)
+
+
+from sklearn.metrics import (accuracy_score,
+                             average_precision_score,
+                             auc,
+                             auc_score,
+                             classification_report,
+                             confusion_matrix,
+                             explained_variance_score,
+                             f1_score,
+                             hinge_loss,
+                             matthews_corrcoef,
+                             mean_squared_error,
+                             mean_absolute_error,
+                             precision_recall_curve,
+                             precision_recall_fscore_support,
+                             precision_score,
+                             recall_score,
+                             r2_score,
+                             roc_curve,
+                             zero_one,
+                             zero_one_score,
+                             zero_one_loss)
 
 
 def make_prediction(dataset=None, binary=False):
@@ -100,12 +110,11 @@ def test_roc_returns_consistency():
     assert_array_almost_equal(tpr, tpr_correct, decimal=2)
 
 
-@raises(ValueError)
 def test_roc_curve_multi():
     """roc_curve not applicable for multi-class problems"""
     y_true, _, probas_pred = make_prediction(binary=False)
 
-    fpr, tpr, thresholds = roc_curve(y_true, probas_pred)
+    assert_raises(ValueError, roc_curve, y_true, probas_pred)
 
 
 def test_roc_curve_confidence():
@@ -219,7 +228,7 @@ def test_average_precision_score_tied_values():
     # could be swapped around, creating an imperfect sorting. This
     # imperfection should come through in the end score, making it less
     # than one.
-    y_true = [0,  1,  1]
+    y_true = [0, 1, 1]
     y_score = [.5, .5, .6]
     assert_not_equal(average_precision_score(y_true, y_score), 1.)
 
@@ -357,15 +366,15 @@ def test_confusion_matrix_multiclass():
 
     # compute confusion matrix with default labels introspection
     cm = confusion_matrix(y_true, y_pred)
-    assert_array_equal(cm, [[23, 2,  0],
-                            [5,  5, 20],
-                            [0,  2, 18]])
+    assert_array_equal(cm, [[23, 2, 0],
+                            [5, 5, 20],
+                            [0, 2, 18]])
 
     # compute confusion matrix with explicit label ordering
     cm = confusion_matrix(y_true, y_pred, labels=[0, 2, 1])
-    assert_array_equal(cm, [[23, 0,  2],
-                            [0, 18,  2],
-                            [5, 20,  5]])
+    assert_array_equal(cm, [[23, 0, 2],
+                            [0, 18, 2],
+                            [5, 20, 5]])
 
 
 def test_confusion_matrix_multiclass_subset_labels():
@@ -375,13 +384,13 @@ def test_confusion_matrix_multiclass_subset_labels():
     # compute confusion matrix with only first two labels considered
     cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
     assert_array_equal(cm, [[23, 2],
-                            [5,  5]])
+                            [5, 5]])
 
     # compute confusion matrix with explicit label ordering for only subset
     # of labels
     cm = confusion_matrix(y_true, y_pred, labels=[2, 1])
-    assert_array_equal(cm, [[18,  2],
-                            [20,  5]])
+    assert_array_equal(cm, [[18, 2],
+                            [20, 5]])
 
 
 def test_classification_report():
@@ -460,11 +469,13 @@ def test_score_scale_invariance():
     # Test that average_precision_score and auc_score are invariant by
     # the scaling or shifting of probabilities
     y_true, _, probas_pred = make_prediction(binary=True)
+
     roc_auc = auc_score(y_true, probas_pred)
     roc_auc_scaled = auc_score(y_true, 100 * probas_pred)
     roc_auc_shifted = auc_score(y_true, probas_pred - 10)
     assert_equal(roc_auc, roc_auc_scaled)
     assert_equal(roc_auc, roc_auc_shifted)
+
     pr_auc = average_precision_score(y_true, probas_pred)
     pr_auc_scaled = average_precision_score(y_true, 100 * probas_pred)
     pr_auc_shifted = average_precision_score(y_true, probas_pred - 10)
@@ -475,11 +486,42 @@ def test_score_scale_invariance():
 def test_losses():
     """Test loss functions"""
     y_true, y_pred, _ = make_prediction(binary=True)
-    n = y_true.shape[0]
+    n_samples = y_true.shape[0]
 
-    assert_equal(zero_one(y_true, y_pred), 13)
-    assert_almost_equal(mean_squared_error(y_true, y_pred), 12.999 / n, 2)
-    assert_almost_equal(mean_squared_error(y_true, y_true), 0.00, 2)
+    # Classification
+    # --------------
+    with warnings.catch_warnings(True):
+    # Throw deprecated warning
+        assert_equal(zero_one(y_true, y_pred), 13)
+        assert_almost_equal(zero_one(y_true, y_pred, normalize=True),
+                            13 / float(n_samples), 2)
+
+    assert_almost_equal(zero_one_loss(y_true, y_pred),
+                        13 / float(n_samples), 2)
+    assert_equal(zero_one_loss(y_true, y_pred, normalize=False), 13)
+    assert_almost_equal(zero_one_loss(y_true, y_true), 0.0, 2)
+    assert_almost_equal(zero_one_loss(y_true, y_true, normalize=False), 0, 2)
+
+    assert_equal(accuracy_score(y_true, y_pred),
+                 1 - zero_one_loss(y_true, y_pred))
+
+    with warnings.catch_warnings(True):
+    # Throw deprecated warning
+        assert_equal(zero_one_score(y_true, y_pred),
+                     1 - zero_one_loss(y_true, y_pred))
+
+    # Regression
+    # ----------
+    assert_almost_equal(mean_squared_error(y_true, y_pred),
+                        12.999 / n_samples, 2)
+    assert_almost_equal(mean_squared_error(y_true, y_true),
+                        0.00, 2)
+
+    # mean_absolute_error and mean_squared_error are equal because
+    # it is a binary problem.
+    assert_almost_equal(mean_absolute_error(y_true, y_pred),
+                        12.999 / n_samples, 2)
+    assert_almost_equal(mean_absolute_error(y_true, y_true), 0.00, 2)
 
     assert_almost_equal(explained_variance_score(y_true, y_pred), -0.04, 2)
     assert_almost_equal(explained_variance_score(y_true, y_true), 1.00, 2)
@@ -494,6 +536,7 @@ def test_losses():
 def test_losses_at_limits():
     # test limit cases
     assert_almost_equal(mean_squared_error([0.], [0.]), 0.00, 2)
+    assert_almost_equal(mean_absolute_error([0.], [0.]), 0.00, 2)
     assert_almost_equal(explained_variance_score([0.], [0.]), 1.00, 2)
     assert_almost_equal(r2_score([0., 1], [0., 1]), 1.00, 2)
 
@@ -508,10 +551,34 @@ def test_symmetry():
     y_true, y_pred, _ = make_prediction(binary=True)
 
     # symmetric
-    assert_equal(zero_one(y_true, y_pred),
-                 zero_one(y_pred, y_true))
+    assert_equal(accuracy_score(y_true, y_pred),
+                 accuracy_score(y_pred, y_true))
+
+    with warnings.catch_warnings(True):
+        # Throw deprecated warning
+        assert_equal(zero_one(y_true, y_pred),
+                     zero_one(y_pred, y_true))
+
+        assert_almost_equal(zero_one(y_true, y_pred, normalize=False),
+                            zero_one(y_pred, y_true, normalize=False), 2)
+
+    assert_equal(zero_one_loss(y_true, y_pred),
+                 zero_one_loss(y_pred, y_true))
+
+    assert_equal(zero_one_loss(y_true, y_pred, normalize=False),
+                 zero_one_loss(y_pred, y_true, normalize=False))
+
+    with warnings.catch_warnings(True):
+    # Throw deprecated warning
+        assert_equal(zero_one_score(y_true, y_pred),
+                     zero_one_score(y_pred, y_true))
+
     assert_almost_equal(mean_squared_error(y_true, y_pred),
                         mean_squared_error(y_pred, y_true))
+
+    assert_almost_equal(mean_absolute_error(y_true, y_pred),
+                        mean_absolute_error(y_pred, y_true))
+
     # not symmetric
     assert_true(explained_variance_score(y_true, y_pred) !=
                 explained_variance_score(y_pred, y_true))
@@ -529,3 +596,78 @@ def test_hinge_loss_binary():
     pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
     assert_equal(1.2 / 4,
                  hinge_loss(y_true, pred_decision, pos_label=2, neg_label=0))
+
+
+def test_roc_curve_one_label():
+    y_true = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    y_pred = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
+    # assert there are warnings
+    with warnings.catch_warnings(True) as w:
+        fpr, tpr, thresholds = roc_curve(y_true, y_pred)
+        assert_equal(len(w), 1)
+    # all true labels, all fpr should be nan
+    assert_array_equal(fpr,
+                       np.nan * np.ones(len(thresholds) + 1))
+    # assert there are warnings
+    with warnings.catch_warnings(True) as w:
+        fpr, tpr, thresholds = roc_curve([1 - x for x in y_true],
+                                         y_pred)
+        assert_equal(len(w), 1)
+    # all negative labels, all tpr should be nan
+    assert_array_equal(tpr,
+                       np.nan * np.ones(len(thresholds) + 1))
+
+
+def test_multioutput_regression():
+    y_true = np.array([[1, 0, 0, 1],
+                       [0, 1, 1, 1],
+                       [1, 1, 0, 1],
+                       ])
+
+    y_pred = np.array([[0, 0, 0, 1],
+                       [1, 0, 1, 1],
+                       [0, 0, 0, 1],
+                       ])
+
+    error = mean_squared_error(y_true, y_pred)
+    assert_almost_equal(error, (1. / 3 + 2. / 3 + 2. / 3) / 4.)
+
+    # mean_absolute_error and mean_squared_error are equal because
+    # it is a binary problem.
+    error = mean_absolute_error(y_true, y_pred)
+    assert_almost_equal(error, (1. / 3 + 2. / 3 + 2. / 3) / 4.)
+
+    error = r2_score(y_true, y_pred)
+    assert_almost_equal(error, 1 - 5. / 2)
+
+
+def test_multioutput_number_of_output_differ():
+    y_true = np.array([[1, 0, 0, 1],
+                       [0, 1, 1, 1],
+                       [1, 1, 0, 1],
+                       ])
+
+    y_pred = np.array([[0, 0],
+                       [1, 0],
+                       [0, 0],
+                       ])
+
+    assert_raises(ValueError, mean_squared_error, y_true, y_pred)
+    assert_raises(ValueError, mean_absolute_error, y_true, y_pred)
+    assert_raises(ValueError, r2_score, y_true, y_pred)
+
+
+def test_multioutput_regression_invariance_to_dimension_shuffling():
+    # test invariance to dimension shuffling
+    y_true, y_pred, _ = make_prediction()
+    n_dims = 3
+    y_true = np.reshape(y_true, (-1, n_dims))
+    y_pred = np.reshape(y_pred, (-1, n_dims))
+
+    for metric in [r2_score, mean_squared_error, mean_absolute_error]:
+        error = metric(y_true, y_pred)
+
+        for _ in xrange(3):
+            perm = np.random.permutation(n_dims)
+            assert_almost_equal(error,
+                                metric(y_true[:, perm], y_pred[:, perm]))

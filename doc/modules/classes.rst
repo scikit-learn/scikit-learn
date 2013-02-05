@@ -279,6 +279,8 @@ Samples generator
    ensemble.RandomForestRegressor
    ensemble.ExtraTreesClassifier
    ensemble.ExtraTreesRegressor
+   ensemble.AdaBoostClassifier
+   ensemble.AdaBoostRegressor
    ensemble.GradientBoostingClassifier
    ensemble.GradientBoostingRegressor
 
@@ -362,6 +364,7 @@ From text
    :template: class.rst
 
    feature_extraction.text.CountVectorizer
+   feature_extraction.text.HashingVectorizer
    feature_extraction.text.TfidfTransformer
    feature_extraction.text.TfidfVectorizer
 
@@ -518,8 +521,9 @@ From text
    :toctree: generated/
    :template: class.rst
 
-   kernel_approximation.RBFSampler
    kernel_approximation.AdditiveChi2Sampler
+   kernel_approximation.Nystroem
+   kernel_approximation.RBFSampler
    kernel_approximation.SkewedChi2Sampler
 
 :mod:`sklearn.semi_supervised` Semi-Supervised Learning
@@ -651,11 +655,22 @@ From text
 :mod:`sklearn.metrics`: Metrics
 ===============================
 
+See the :ref:`model_evaluation` section and the :ref:`metrics` section of the
+user guide for further details.
+
 .. automodule:: sklearn.metrics
    :no-members:
    :no-inherited-members:
 
 .. currentmodule:: sklearn
+
+Model Selection Interface
+-------------------------
+.. autosummary::
+   :toctree: generated/
+   :template: class_with_call.rst
+
+   metrics.Scorer
 
 Classification metrics
 ----------------------
@@ -664,36 +679,44 @@ Classification metrics
    :toctree: generated/
    :template: function.rst
 
-   metrics.confusion_matrix
-   metrics.roc_curve
+   metrics.accuracy_score
    metrics.auc
-   metrics.precision_score
-   metrics.recall_score
-   metrics.fbeta_score
-   metrics.f1_score
    metrics.auc_score
    metrics.average_precision_score
-   metrics.precision_recall_fscore_support
    metrics.classification_report
-   metrics.precision_recall_curve
-   metrics.zero_one_score
-   metrics.zero_one
+   metrics.confusion_matrix
+   metrics.f1_score
+   metrics.fbeta_score
    metrics.hinge_loss
+   metrics.matthews_corrcoef
+   metrics.precision_recall_curve
+   metrics.precision_recall_fscore_support
+   metrics.precision_score
+   metrics.recall_score
+   metrics.roc_curve
+   metrics.zero_one_loss
 
 Regression metrics
 ------------------
+
+See the :ref:`regression_metrics` section of the user guide for further
+details.
 
 .. autosummary::
    :toctree: generated/
    :template: function.rst
 
-   metrics.r2_score
+   metrics.explained_variance_score
+   metrics.mean_absolute_error
    metrics.mean_squared_error
+   metrics.r2_score
+
 
 Clustering metrics
 ------------------
 
-See the :ref:`clustering` section of the user guide for further details.
+See the :ref:`clustering_evaluation` section of the user guide for further
+details.
 
 .. automodule:: sklearn.metrics.cluster
    :no-members:
@@ -713,6 +736,7 @@ See the :ref:`clustering` section of the user guide for further details.
    metrics.mutual_info_score
    metrics.normalized_mutual_info_score
    metrics.silhouette_score
+   metrics.silhouette_samples
    metrics.v_measure_score
 
 Pairwise metrics
@@ -945,6 +969,33 @@ Pairwise metrics
    :template: class.rst
 
    qda.QDA
+
+.. _random_projection_ref:
+
+:mod:`sklearn.random_projection`: Random projection
+===================================================
+
+.. automodule:: sklearn.random_projection
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`random_projection` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   random_projection.GaussianRandomProjection
+   random_projection.SparseRandomProjection
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   random_projection.johnson_lindenstrauss_min_dim
+
 
 .. _svm_ref:
 

@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import linalg
 from sklearn.decomposition import nmf
 
 from sklearn.utils.testing import assert_true
@@ -33,8 +34,8 @@ def test_initialize_close():
     """
     A = np.abs(random_state.randn(10, 10))
     W, H = nmf._initialize_nmf(A, 10)
-    error = np.linalg.norm(np.dot(W, H) - A)
-    sdev = np.linalg.norm(A - A.mean())
+    error = linalg.norm(np.dot(W, H) - A)
+    sdev = linalg.norm(A - A.mean())
     assert_true(error <= sdev)
 
 
@@ -75,7 +76,7 @@ def test_projgrad_nmf_fit_nn_output():
 def test_projgrad_nmf_fit_close():
     """Test that the fit is not too far away"""
     assert_true(nmf.ProjectedGradientNMF(5, init='nndsvda').fit(np.abs(
-      random_state.randn(6, 5))).reconstruction_err_ < 0.05)
+        random_state.randn(6, 5))).reconstruction_err_ < 0.05)
 
 
 @raises(ValueError)
@@ -123,13 +124,12 @@ def test_projgrad_nmf_sparseness():
     Test that sparsity contraints actually increase sparseness in the
     part where they are applied.
     """
-
     A = np.abs(random_state.randn(10, 10))
     m = nmf.ProjectedGradientNMF(n_components=5).fit(A)
-    data_sp = nmf.ProjectedGradientNMF(n_components=5,
-                  sparseness='data').fit(A).data_sparseness_
-    comp_sp = nmf.ProjectedGradientNMF(n_components=5,
-                  sparseness='components').fit(A).comp_sparseness_
+    data_sp = nmf.ProjectedGradientNMF(
+        n_components=5, sparseness='data').fit(A).data_sparseness_
+    comp_sp = nmf.ProjectedGradientNMF(
+        n_components=5, sparseness='components').fit(A).comp_sparseness_
     assert_greater(data_sp, m.data_sparseness_)
     assert_greater(comp_sp, m.comp_sparseness_)
 
@@ -144,16 +144,22 @@ def test_sparse_input():
                                   random_state=999).fit_transform(A)
 
     A_sparse = csr_matrix(A)
-    T2 = nmf.ProjectedGradientNMF(n_components=5, init='random',
-                                  random_state=999).fit_transform(A_sparse)
+    pg_nmf = nmf.ProjectedGradientNMF(n_components=5, init='random',
+                                      random_state=999)
+    T2 = pg_nmf.fit_transform(A_sparse)
+    assert_array_almost_equal(pg_nmf.reconstruction_err_,
+                              linalg.norm(A - np.dot(T2, pg_nmf.components_),
+                                          'fro'))
     assert_array_almost_equal(T1, T2)
 
     # same with sparseness
 
-    T2 = nmf.ProjectedGradientNMF(n_components=5, init='random',
-            sparseness='data', random_state=999).fit_transform(A_sparse)
-    T1 = nmf.ProjectedGradientNMF(n_components=5, init='random',
-            sparseness='data', random_state=999).fit_transform(A)
+    T2 = nmf.ProjectedGradientNMF(
+        n_components=5, init='random', sparseness='data',
+        random_state=999).fit_transform(A_sparse)
+    T1 = nmf.ProjectedGradientNMF(
+        n_components=5, init='random', sparseness='data',
+        random_state=999).fit_transform(A)
 
 
 if __name__ == '__main__':

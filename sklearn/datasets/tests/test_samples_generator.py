@@ -78,7 +78,8 @@ def test_make_regression_multitarget():
     assert_equal(X.shape, (100, 10), "X shape mismatch")
     assert_equal(y.shape, (100, 3), "y shape mismatch")
     assert_equal(c.shape, (10, 3), "coef shape mismatch")
-    assert_array_equal(sum(c != 0.0), 3, "Unexpected number of informative features")
+    assert_array_equal(sum(c != 0.0), 3,
+                       "Unexpected number of informative features")
 
     # Test that y ~= np.dot(X, c) + bias + N(0, 1.0)
     assert_almost_equal(np.std(y - np.dot(X, c)), 1.0, decimal=1)
@@ -101,9 +102,10 @@ def test_make_friedman1():
     assert_equal(X.shape, (5, 10), "X shape mismatch")
     assert_equal(y.shape, (5,), "y shape mismatch")
 
-    assert_array_almost_equal(y, 10 * np.sin(np.pi * X[:, 0] * X[:, 1])
-                                 + 20 * (X[:, 2] - 0.5) ** 2 \
-                                 + 10 * X[:, 3] + 5 * X[:, 4])
+    assert_array_almost_equal(y,
+                              10 * np.sin(np.pi * X[:, 0] * X[:, 1])
+                              + 20 * (X[:, 2] - 0.5) ** 2
+                              + 10 * X[:, 3] + 5 * X[:, 4])
 
 
 def test_make_friedman2():
@@ -112,9 +114,10 @@ def test_make_friedman2():
     assert_equal(X.shape, (5, 4), "X shape mismatch")
     assert_equal(y.shape, (5,), "y shape mismatch")
 
-    assert_array_almost_equal(y, (X[:, 0] ** 2
-                                 + (X[:, 1] * X[:, 2]
-                                    - 1 / (X[:, 1] * X[:, 3])) ** 2) ** 0.5)
+    assert_array_almost_equal(y,
+                              (X[:, 0] ** 2
+                               + (X[:, 1] * X[:, 2] - 1
+                                  / (X[:, 1] * X[:, 3])) ** 2) ** 0.5)
 
 
 def test_make_friedman3():
@@ -141,8 +144,8 @@ def test_make_low_rank_matrix():
 
 def test_make_sparse_coded_signal():
     Y, D, X = make_sparse_coded_signal(n_samples=5, n_components=8,
-                                           n_features=10, n_nonzero_coefs=3,
-                                           random_state=0)
+                                       n_features=10, n_nonzero_coefs=3,
+                                       random_state=0)
     assert_equal(Y.shape, (10, 5), "Y shape mismatch")
     assert_equal(D.shape, (10, 8), "D shape mismatch")
     assert_equal(X.shape, (8, 5), "X shape mismatch")

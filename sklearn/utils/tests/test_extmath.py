@@ -16,9 +16,9 @@ from sklearn.utils.testing import assert_greater
 from sklearn.utils.extmath import density
 from sklearn.utils.extmath import logsumexp
 from sklearn.utils.extmath import randomized_svd
-from sklearn.datasets.samples_generator import make_low_rank_matrix
 from sklearn.utils.extmath import weighted_mode
 from sklearn.utils.extmath import cartesian
+from sklearn.datasets.samples_generator import make_low_rank_matrix
 
 
 def test_density():
@@ -89,7 +89,8 @@ def test_randomized_svd_low_rank():
     # generate a matrix X of approximate effective rank `rank` and no noise
     # component (very structured signal):
     X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
-        effective_rank=rank, tail_strength=0.0, random_state=0)
+                             effective_rank=rank, tail_strength=0.0,
+                             random_state=0)
     assert_equal(X.shape, (n_samples, n_features))
 
     # compute the singular values of X using the slow exact method
@@ -126,7 +127,8 @@ def test_randomized_svd_low_rank_with_noise():
     # generate a matrix X wity structure approximate rank `rank` and an
     # important noisy component
     X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
-        effective_rank=rank, tail_strength=0.5, random_state=0)
+                             effective_rank=rank, tail_strength=0.5,
+                             random_state=0)
     assert_equal(X.shape, (n_samples, n_features))
 
     # compute the singular values of X using the slow exact method
@@ -157,7 +159,8 @@ def test_randomized_svd_infinite_rank():
     # let us try again without 'low_rank component': just regularly but slowly
     # decreasing singular values: the rank of the data matrix is infinite
     X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
-        effective_rank=rank, tail_strength=1.0, random_state=0)
+                             effective_rank=rank, tail_strength=1.0,
+                             random_state=0)
     assert_equal(X.shape, (n_samples, n_features))
 
     # compute the singular values of X using the slow exact method
@@ -187,7 +190,8 @@ def test_randomized_svd_transpose_consistency():
     k = 10
 
     X = make_low_rank_matrix(n_samples=n_samples, n_features=n_features,
-        effective_rank=rank, tail_strength=0.5, random_state=0)
+                             effective_rank=rank, tail_strength=0.5,
+                             random_state=0)
     assert_equal(X.shape, (n_samples, n_features))
 
     U1, s1, V1 = randomized_svd(X, k, n_iter=3, transpose=False,
@@ -209,6 +213,18 @@ def test_randomized_svd_transpose_consistency():
 
     # in this case 'auto' is equivalent to transpose
     assert_almost_equal(s2, s3)
+
+
+def test_randomized_svd_sign_flip():
+    a = np.array([[2.0, 0.0], [0.0, 1.0]])
+    u1, s1, v1 = randomized_svd(a, 2, flip_sign=True, random_state=41)
+    for seed in xrange(10):
+        u2, s2, v2 = randomized_svd(a, 2, flip_sign=True, random_state=seed)
+        assert_almost_equal(u1, u2)
+        assert_almost_equal(v1, v2)
+        assert_almost_equal(np.dot(u2 * s2, v2), a)
+        assert_almost_equal(np.dot(u2.T, u2), np.eye(2))
+        assert_almost_equal(np.dot(v2.T, v2), np.eye(2))
 
 
 def test_cartesian():

@@ -16,18 +16,15 @@ from sklearn.cluster.spectral import discretize
 from sklearn.metrics import pairwise_distances, adjusted_rand_score
 from sklearn.datasets.samples_generator import make_blobs
 
-from sklearn.preprocessing import LabelBinarizer
-
 
 def test_spectral_clustering():
-    S = np.array([[1, 5, 2, 1, 0, 0, 0],
-                  [5, 1, 3, 1, 0, 0, 0],
-                  [2, 3, 1, 1, 0, 0, 0],
-                  [1, 1, 1, 1, 2, 1, 1],
-                  [0, 0, 0, 2, 2, 3, 2],
-                  [0, 0, 0, 1, 3, 1, 4],
-                  [0, 0, 0, 1, 2, 4, 1],
-                  ])
+    S = np.array([[1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
+                  [1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
+                  [1.0, 1.0, 1.0, 0.2, 0.0, 0.0, 0.0],
+                  [0.2, 0.2, 0.2, 1.0, 1.0, 1.0, 1.0],
+                  [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0],
+                  [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0],
+                  [0.0, 0.0, 0.0, 1.0, 1.0, 1.0, 1.0]])
 
     for eigen_solver in ('arpack', 'lobpcg'):
         for assign_labels in ('kmeans', 'discretize'):
@@ -46,8 +43,6 @@ def test_spectral_clustering():
                 model_copy = loads(dumps(model))
                 assert_equal(model_copy.n_clusters, model.n_clusters)
                 assert_equal(model_copy.eigen_solver, model.eigen_solver)
-                assert_array_equal(model_copy.random_state.get_state()[1],
-                                   model.random_state.get_state()[1])
                 assert_array_equal(model_copy.labels_, model.labels_)
 
 
@@ -60,7 +55,7 @@ def test_spectral_lobpcg_mode():
         [10., 10.],
     ])
     X, true_labels = make_blobs(n_samples=100, centers=centers,
-                                cluster_std=1., random_state=42)
+                                cluster_std=.1, random_state=42)
     D = pairwise_distances(X)  # Distance matrix
     S = np.max(D) - D  # Similarity matrix
     labels = spectral_clustering(S, n_clusters=len(centers),
@@ -116,7 +111,7 @@ def test_spectral_unknown_mode():
 
 
 def test_spectral_unknown_assign_labels():
-    # Test that SpectralClustering fails with an unknown mode set.
+    # Test that SpectralClustering fails with an unknown assign_labels set.
     centers = np.array([
         [0., 0., 0.],
         [10., 10., 10.],
@@ -157,7 +152,10 @@ def test_spectral_clustering_sparse():
 
 
 def test_affinities():
-    X, y = make_blobs(n_samples=40, random_state=1, centers=[[1, 1], [-1, -1]],
+    # Note: in the following, random_state has been selected to have
+    # a dataset that yields a stable eigen decomposition both when built
+    # on OSX and Linux
+    X, y = make_blobs(n_samples=40, random_state=2, centers=[[1, 1], [-1, -1]],
                       cluster_std=0.4)
     # nearest neighbors affinity
     sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
@@ -174,17 +172,22 @@ def test_affinities():
     assert_raises(ValueError, sp.fit, X)
 
 
-def test_discretize(seed=36):
+def test_discretize(seed=8):
     # Test the discretize using a noise assignment matrix
-    LB = LabelBinarizer()
-    for n_sample in [50, 100, 150, 500]:
+    random_state = np.random.RandomState(seed)
+    for n_samples in [50, 100, 150, 500]:
         for n_class in range(2, 10):
             # random class labels
-            random_state = np.random.RandomState(seed)
-            y_true = random_state.random_integers(0, n_class, n_sample)
+            y_true = random_state.random_integers(0, n_class, n_samples)
             y_true = np.array(y_true, np.float)
             # noise class assignment matrix
-            y_true_noisy = (LB.fit_transform(y_true)
-                            + 0.1 * random_state.randn(n_sample, n_class + 1))
+            y_indicator = sparse.coo_matrix((np.ones(n_samples),
+                                            (np.arange(n_samples),
+                                             y_true)),
+                                            shape=(n_samples,
+                                                   n_class + 1))
+            y_true_noisy = (y_indicator.todense()
+                            + 0.1 * random_state.randn(n_samples,
+                                                       n_class + 1))
             y_pred = discretize(y_true_noisy, random_state)
-            assert_greater(adjusted_rand_score(y_true, y_pred), 0.9)
+            assert_greater(adjusted_rand_score(y_true, y_pred), 0.8)

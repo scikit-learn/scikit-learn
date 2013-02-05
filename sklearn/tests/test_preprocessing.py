@@ -1,3 +1,4 @@
+import warnings
 import numpy as np
 import numpy.linalg as la
 import scipy.sparse as sp
@@ -22,6 +23,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import scale
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import add_dummy_feature
+from sklearn.preprocessing import balance_weights
 
 from sklearn import datasets
 from sklearn.linear_model.stochastic_gradient import SGDClassifier
@@ -111,7 +113,7 @@ def test_scaler_2d_arrays():
     assert_true(X_scaled is not X)
 
 
-def test_min_max_scaler():
+def test_min_max_scaler_iris():
     X = iris.data
     scaler = MinMaxScaler()
     # default params
@@ -119,16 +121,55 @@ def test_min_max_scaler():
     assert_array_equal(X_trans.min(axis=0), 0)
     assert_array_equal(X_trans.min(axis=0), 0)
     assert_array_equal(X_trans.max(axis=0), 1)
+    X_trans_inv = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
 
     # not default params
     scaler = MinMaxScaler(feature_range=(1, 2))
     X_trans = scaler.fit_transform(X)
     assert_array_equal(X_trans.min(axis=0), 1)
     assert_array_equal(X_trans.max(axis=0), 2)
+    X_trans_inv = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
 
     # raises on invalid range
     scaler = MinMaxScaler(feature_range=(2, 1))
     assert_raises(ValueError, scaler.fit, X)
+
+
+def test_min_max_scaler_zero_variance_features():
+    """Check min max scaler on toy data with zero variance features"""
+    X = [[0.,  1.,  0.5],
+         [0.,  1., -0.1],
+         [0.,  1.,  1.1]]
+
+    X_new = [[+0.,  2.,  0.5],
+             [-1.,  1.,  0.0],
+             [+0.,  1.,  1.5]]
+
+    # default params
+    scaler = MinMaxScaler()
+    X_trans = scaler.fit_transform(X)
+    X_expected_0_1 = [[0.,  0.,  0.5],
+                      [0.,  0.,  0.0],
+                      [0.,  0.,  1.0]]
+    assert_array_almost_equal(X_trans, X_expected_0_1)
+    X_trans_inv = scaler.inverse_transform(X_trans)
+    assert_array_almost_equal(X, X_trans_inv)
+
+    X_trans_new = scaler.transform(X_new)
+    X_expected_0_1_new = [[+0.,  1.,  0.500],
+                          [-1.,  0.,  0.083],
+                          [+0.,  0.,  1.333]]
+    assert_array_almost_equal(X_trans_new, X_expected_0_1_new, decimal=2)
+
+    # not default params
+    scaler = MinMaxScaler(feature_range=(1, 2))
+    X_trans = scaler.fit_transform(X)
+    X_expected_1_2 = [[1.,  1.,  1.5],
+                      [1.,  1.,  1.0],
+                      [1.,  1.,  2.0]]
+    assert_array_almost_equal(X_trans, X_expected_1_2)
 
 
 def test_scaler_without_centering():
@@ -247,6 +288,20 @@ def test_scale_function_without_centering():
     assert_array_almost_equal(X_csr_scaled_std, X_scaled.std(axis=0))
 
 
+def test_warning_scaling_integers():
+    """Check warning when scaling integer data"""
+    X = np.array([[1, 2, 0],
+                  [0, 0, 0]], dtype=np.uint8)
+
+    with warnings.catch_warnings(record=True) as w:
+        StandardScaler().fit(X)
+        assert_equal(len(w), 1)
+
+    with warnings.catch_warnings(record=True) as w:
+        MinMaxScaler().fit(X)
+        assert_equal(len(w), 1)
+
+
 def test_normalizer_l1():
     rng = np.random.RandomState(0)
     X_dense = rng.randn(4, 5)
@@ -353,7 +408,7 @@ def test_normalize_errors():
 def test_binarizer():
     X_ = np.array([[1, 0, 5], [2, 3, 0]])
 
-    for init in (np.array, sp.csr_matrix):
+    for init in (np.array, sp.csr_matrix, sp.csc_matrix):
 
         X = init(X_.copy())
 
@@ -361,6 +416,8 @@ def test_binarizer():
         X_bin = toarray(binarizer.transform(X))
         assert_equal(np.sum(X_bin == 0), 4)
         assert_equal(np.sum(X_bin == 1), 2)
+        X_bin = binarizer.transform(X)
+        assert_equal(type(X), type(X_bin))
 
         binarizer = Binarizer(copy=True).fit(X)
         X_bin = toarray(binarizer.transform(X))
@@ -652,3 +709,14 @@ def test_add_dummy_feature_csr():
     X = add_dummy_feature(X)
     assert_true(sp.isspmatrix_csr(X), X)
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
+
+
+def test_balance_weights():
+    weights = balance_weights([0, 0, 1, 1])
+    assert_array_equal(weights, [1., 1., 1., 1.])
+
+    weights = balance_weights([0, 1, 1, 1, 1])
+    assert_array_equal(weights, [1., 0.25, 0.25, 0.25, 0.25])
+
+    weights = balance_weights([0, 0])
+    assert_array_equal(weights, [1., 1.])

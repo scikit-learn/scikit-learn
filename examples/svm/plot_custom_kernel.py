@@ -7,7 +7,7 @@ Simple usage of Support Vector Machines to classify a sample. It will
 plot the decision surface and the support vectors.
 
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl
@@ -52,6 +52,6 @@ pl.pcolormesh(xx, yy, Z, cmap=pl.cm.Paired)
 # Plot also the training points
 pl.scatter(X[:, 0], X[:, 1], c=Y, cmap=pl.cm.Paired)
 pl.title('3-Class classification using Support Vector Machine with custom'
-        ' kernel')
+         ' kernel')
 pl.axis('tight')
 pl.show()

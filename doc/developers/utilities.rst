@@ -125,6 +125,14 @@ Efficient Linear Algebra & Array Operations
   Used in ``sklearn.cluster.k_means``.
 
 
+Efficient Random Sampling
+=========================
+
+- :func:`random.sample_without_replacement`: implements efficient algorithms
+  for sampling `n_samples` integers from a population of size `n_population`
+  without replacement.
+
+
 Efficient Routines for Sparse Matrices
 ======================================
 
@@ -242,8 +250,14 @@ Testing Functions
 - :func:`testing.assert_in`, :func:`testing.assert_not_in`: Assertions for
   container membership. Designed for forward compatibility with Nose 1.0.
 
+- :func:`testing.assert_raise_message`: Assertions for checking the
+  error raise message.
+
 - :class:`mock_urllib2`: Object which mocks the urllib2 module to fake
   requests of mldata.  Used in tests of :mod:`sklearn.datasets`.
+
+- :func:`testing.all_estimators` : returns a list of all estimators in
+  sklearn to test for consistent behavior and interfaces.
 
 
 Helper Functions

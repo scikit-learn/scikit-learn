@@ -145,7 +145,8 @@ rules before submitting a pull request:
 
 You can also check for common programming errors with the following tools:
 
-    * Code with a good unittest coverage (at least 80%), check with::
+    * Code with a good unittest coverage (at least 90%, better 100%), check
+      with::
 
         $ pip install nose coverage
         $ nosetests --with-coverage path/to/tests_for_package
@@ -180,6 +181,15 @@ and Cython optimizations.
   all of those guidelines, but we expect that enforcing those constraints
   on all new contributions will get the overall code base quality in the
   right direction.
+
+.. note::
+
+   For two very well documented and more detailed guides on development
+   workflow, please pay a visit to the `Scipy Development Workflow
+   <http://docs.scipy.org/doc/numpy/dev/gitwash/development_workflow.html>`_ -
+   and the `Astropy Workflow for Developers
+   <http://astropy.readthedocs.org/en/latest/development/workflow/development_workflow.html>`_
+   sections.
 
 Easy Issues
 -----------

@@ -19,7 +19,7 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin):
     Parameters
     ----------
     penalty : string, 'l1' or 'l2'
-        Used to specify the norm used in the penalization
+        Used to specify the norm used in the penalization.
 
     dual : boolean
         Dual or primal formulation. Dual formulation is only
@@ -32,7 +32,7 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin):
 
     fit_intercept : bool, default: True
         Specifies if a constant (a.k.a. bias or intercept) should be
-        added the decision function
+        added the decision function.
 
     intercept_scaling : float, default: 1
         when self.fit_intercept is True, instance vector x becomes
@@ -53,7 +53,7 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin):
         class frequencies.
 
     tol: float, optional
-        tolerance for stopping criteria
+        Tolerance for stopping criteria.
 
     Attributes
     ----------
@@ -64,8 +64,8 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin):
         follows the internal memory layout of liblinear.
 
     `intercept_` : array, shape = [n_classes-1]
-        intercept (a.k.a. bias) added to the decision function.
-        It is available only when parameter intercept is set to True
+        Intercept (a.k.a. bias) added to the decision function.
+        It is available only when parameter intercept is set to True.
 
     See also
     --------
@@ -90,13 +90,13 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin):
     """
 
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
-            fit_intercept=True, intercept_scaling=1, class_weight=None,
-            random_state=None):
+                 fit_intercept=True, intercept_scaling=1, class_weight=None,
+                 random_state=None):
 
-        super(LogisticRegression, self).__init__(penalty=penalty, dual=dual,
-                loss='lr', tol=tol, C=C, fit_intercept=fit_intercept,
-                intercept_scaling=intercept_scaling, class_weight=class_weight,
-                random_state=None)
+        super(LogisticRegression, self).__init__(
+            penalty=penalty, dual=dual, loss='lr', tol=tol, C=C,
+            fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
+            class_weight=class_weight, random_state=None)
 
     def predict_proba(self, X):
         """Probability estimates.
@@ -112,7 +112,7 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin):
         -------
         T : array-like, shape = [n_samples, n_classes]
             Returns the probability of the sample for each class in the model,
-            where classes are ordered as they are in self.classes_.
+            where classes are ordered as they are in ``self.classes_``.
         """
         # 1. / (1. + np.exp(-scores)), computed in-place
         prob = self.decision_function(X)
@@ -141,6 +141,6 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin):
         -------
         T : array-like, shape = [n_samples, n_classes]
             Returns the log-probability of the sample for each class in the
-            model, where classes are ordered as they are in self.classes_.
+            model, where classes are ordered as they are in ``self.classes_``.
         """
         return np.log(self.predict_proba(X))

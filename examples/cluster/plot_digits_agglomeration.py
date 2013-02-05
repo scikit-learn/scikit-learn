@@ -9,7 +9,7 @@ Feature agglomeration
 These images how similiar features are merged together using
 feature agglomeration.
 """
-print __doc__
+print(__doc__)
 
 # Code source: Gael Varoqueux
 # Modified for Documentation merge by Jaques Grobler
@@ -39,15 +39,14 @@ pl.clf()
 pl.subplots_adjust(left=.01, right=.99, bottom=.01, top=.91)
 for i in range(4):
     pl.subplot(3, 4, i + 1)
-    pl.imshow(images[i], cmap=pl.cm.gray,
-                vmax=16, interpolation='nearest')
+    pl.imshow(images[i], cmap=pl.cm.gray, vmax=16, interpolation='nearest')
     pl.xticks(())
     pl.yticks(())
     if i == 1:
         pl.title('Original data')
     pl.subplot(3, 4, 4 + i + 1)
-    pl.imshow(images_restored[i],
-                cmap=pl.cm.gray, vmax=16, interpolation='nearest')
+    pl.imshow(images_restored[i], cmap=pl.cm.gray, vmax=16,
+              interpolation='nearest')
     if i == 1:
         pl.title('Agglomerated data')
     pl.xticks(())

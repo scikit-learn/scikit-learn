@@ -19,7 +19,7 @@ analogous to the random splits in Random Forests
 .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
     Learning Ed. 2", Springer, 2009.
 """
-print __doc__
+print(__doc__)
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #
@@ -65,7 +65,7 @@ for label, color, setting in [('No shrinkage', 'orange',
         test_deviance[i] = clf.loss_(y_test, y_pred)
 
     pl.plot((np.arange(test_deviance.shape[0]) + 1)[::5], test_deviance[::5],
-             '-', color=color, label=label)
+            '-', color=color, label=label)
 
 pl.legend(loc='upper left')
 pl.xlabel('Boosting Iterations')

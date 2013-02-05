@@ -7,7 +7,7 @@ Fit linear SVMs with and without class weighting.
 Allows to handle problems with unbalanced classes.
 
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

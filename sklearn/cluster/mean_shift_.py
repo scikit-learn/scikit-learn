@@ -18,23 +18,23 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
 
     Parameters
     ----------
-    X: array [n_samples, n_features]
-        Input points
+    X : array [n_samples, n_features]
+        Input points.
 
-    quantile: float, default 0.3
+    quantile : float, default 0.3
         should be between [0, 1]
-        0.5 means that the median is all pairwise distances is used
+        0.5 means that the median is all pairwise distances is used.
 
-    n_samples: int
+    n_samples : int
         The number of samples to use. If None, all samples are used.
 
-    random_state: int or RandomState
+    random_state : int or RandomState
         Pseudo number generator state used for random sampling.
 
     Returns
     -------
-    bandwidth: float
-        The bandwidth parameter
+    bandwidth : float
+        The bandwidth parameter.
     """
     random_state = check_random_state(random_state)
     if n_samples is not None:
@@ -120,8 +120,8 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
             my_old_mean = my_mean  # save the old mean
             my_mean = np.mean(points_within, axis=0)
             # If converged or at max_iterations, addS the cluster
-            if extmath.norm(my_mean - my_old_mean) < stop_thresh or \
-                   completed_iterations == max_iterations:
+            if (extmath.norm(my_mean - my_old_mean) < stop_thresh or
+                    completed_iterations == max_iterations):
                 center_intensity_dict[tuple(my_mean)] = len(points_within)
                 break
             completed_iterations += 1
@@ -193,7 +193,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
         bin_sizes[tuple(binned_point)] += 1
 
     # Select only those bins as seeds which have enough members
-    bin_seeds = np.array([point for point, freq in bin_sizes.iteritems() if \
+    bin_seeds = np.array([point for point, freq in bin_sizes.iteritems() if
                           freq >= min_bin_freq], dtype=np.float32)
     bin_seeds = bin_seeds * bin_size
     return bin_seeds
@@ -271,9 +271,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
             Input points.
         """
         self.cluster_centers_, self.labels_ = \
-                               mean_shift(X,
-                                          bandwidth=self.bandwidth,
-                                          seeds=self.seeds,
-                                          bin_seeding=self.bin_seeding,
-                                          cluster_all=self.cluster_all)
+            mean_shift(X, bandwidth=self.bandwidth, seeds=self.seeds,
+                       bin_seeding=self.bin_seeding,
+                       cluster_all=self.cluster_all)
         return self

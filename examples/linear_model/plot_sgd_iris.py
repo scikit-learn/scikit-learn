@@ -8,7 +8,7 @@ The hyperplanes corresponding to the three one-versus-all (OVA) classifiers
 are represented by the dashed lines.
 
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl
@@ -56,7 +56,7 @@ pl.axis('tight')
 for i, color in zip(clf.classes_, colors):
     idx = np.where(y == i)
     pl.scatter(X[idx, 0], X[idx, 1], c=color, label=iris.target_names[i],
-            cmap=pl.cm.Paired)
+               cmap=pl.cm.Paired)
 pl.title("Decision surface of multi-class SGD")
 pl.axis('tight')
 

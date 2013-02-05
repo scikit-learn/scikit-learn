@@ -1,7 +1,7 @@
 .. _metrics:
 
-Metrics, Affinities and Kernels
-===============================
+Pairwise metrics, Affinities and Kernels
+========================================
 
 The :mod:`sklearn.metrics.pairwise` submodule implements utilities to evaluate
 pairwise distances or affinity of sets of samples.
@@ -35,6 +35,34 @@ kernel:
 
 .. currentmodule:: sklearn.metrics.pairwise
 
+Cosine similarity
+-----------------
+:func:`cosine_similarity` computes the L2-normalized dot product of vectors.
+That is, if :math:`x` and :math:`y` are row vectors,
+their cosine similarity :math:`k` is defined as:
+
+.. math::
+
+    k(x, y) = \frac{x \dot y^\top}{\|x\| \|y\|}
+
+This is called cosine similarity, because Euclidean (L2) normalization
+projects the vectors onto the unit sphere,
+and their dot product is then the cosine of the angle between the points
+denoted by the vectors.
+
+This kernel is a popular choice for computing the similarity of documents
+represented as tf-idf vectors.
+:func:`cosine_similarity` accepts ``scipy.sparse`` matrices.
+(Note that the tf-idf functionality in ``sklearn.feature_extraction.text``
+can produce normalized vectors, in which case :func:`cosine_similarity`
+is equivalent to :func:`linear_kernel`, only slower.)
+
+.. topic:: References:
+
+    * C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
+      Information Retrieval. Cambridge University Press.
+      http://nlp.stanford.edu/IR-book/html/htmledition/the-vector-space-model-for-scoring-1.html
+
 Chi Squared Kernel
 ------------------
 The chi squared kernel is a very popular choice for training non-linear SVMs in
@@ -55,13 +83,13 @@ It can be computed using :func:`chi2_kernel` and then passed to an
 
     >>> svm = SVC(kernel='precomputed').fit(K, y)
     >>> svm.predict(K)
-    array([ 0.,  1.,  0.,  1.])
+    array([0, 1, 0, 1])
 
 It can also be directly used as the ``kernel`` argument::
 
     >>> svm = SVC(kernel=chi2_kernel).fit(X, y)
     >>> svm.predict(X)
-    array([ 0.,  1.,  0.,  1.])
+    array([0, 1, 0, 1])
 
 
 The chi squared kernel is given by

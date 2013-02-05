@@ -40,11 +40,11 @@ from scipy.spatial import distance
 from scipy.sparse import csr_matrix
 from scipy.sparse import issparse
 
-from ..utils import safe_asarray
 from ..utils import atleast2d_or_csr
 from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
 from ..utils.validation import array2d
+from ..preprocessing import normalize
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.joblib.parallel import cpu_count
@@ -83,17 +83,10 @@ def check_pairwise_arrays(X, Y):
 
     """
     if Y is X or Y is None:
-        X = safe_asarray(X)
         X = Y = atleast2d_or_csr(X, dtype=np.float)
     else:
-        X = safe_asarray(X)
-        Y = safe_asarray(Y)
         X = atleast2d_or_csr(X, dtype=np.float)
         Y = atleast2d_or_csr(Y, dtype=np.float)
-    if len(X.shape) < 2:
-        raise ValueError("X is required to be at least two dimensional.")
-    if len(Y.shape) < 2:
-        raise ValueError("Y is required to be at least two dimensional.")
     if X.shape[1] != Y.shape[1]:
         raise ValueError("Incompatible dimension for X and Y matrices: "
                          "X.shape[1] == %d while Y.shape[1] == %d" % (
@@ -171,7 +164,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
         YY = atleast2d_or_csr(Y_norm_squared)
         if YY.shape != (1, Y.shape[0]):
             raise ValueError(
-                        "Incompatible dimensions for Y and Y_norm_squared")
+                "Incompatible dimensions for Y and Y_norm_squared")
 
     # TODO: a faster Cython implementation would do the clipping of negative
     # values in a single pass over the output matrix.
@@ -236,16 +229,15 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
     array([[ 1.,  1.],
            [ 1.,  1.]]...)
     """
+    if issparse(X) or issparse(Y):
+        raise ValueError("manhattan_distance does not support sparse"
+                         " matrices.")
     X, Y = check_pairwise_arrays(X, Y)
-    n_samples_X, n_features_X = X.shape
-    n_samples_Y, n_features_Y = Y.shape
-    if n_features_X != n_features_Y:
-        raise Exception("X and Y should have the same number of features!")
     D = np.abs(X[:, np.newaxis, :] - Y[np.newaxis, :, :])
     if sum_over_features:
         D = np.sum(D, axis=2)
     else:
-        D = D.reshape((n_samples_X * n_samples_Y, n_features_X))
+        D = D.reshape((-1, X.shape[1]))
     return D
 
 
@@ -268,7 +260,7 @@ def linear_kernel(X, Y=None):
     return safe_sparse_dot(X, Y.T, dense_output=True)
 
 
-def polynomial_kernel(X, Y=None, degree=3, gamma=0, coef0=1):
+def polynomial_kernel(X, Y=None, degree=3, gamma=None, coef0=1):
     """
     Compute the polynomial kernel between X and Y::
 
@@ -287,7 +279,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=0, coef0=1):
     Gram matrix : array of shape (n_samples_1, n_samples_2)
     """
     X, Y = check_pairwise_arrays(X, Y)
-    if gamma == 0:
+    if gamma is None:
         gamma = 1.0 / X.shape[1]
 
     K = linear_kernel(X, Y)
@@ -297,7 +289,7 @@ def polynomial_kernel(X, Y=None, degree=3, gamma=0, coef0=1):
     return K
 
 
-def sigmoid_kernel(X, Y=None, gamma=0, coef0=1):
+def sigmoid_kernel(X, Y=None, gamma=None, coef0=1):
     """
     Compute the sigmoid kernel between X and Y::
 
@@ -316,7 +308,7 @@ def sigmoid_kernel(X, Y=None, gamma=0, coef0=1):
     Gram matrix: array of shape (n_samples_1, n_samples_2)
     """
     X, Y = check_pairwise_arrays(X, Y)
-    if gamma == 0:
+    if gamma is None:
         gamma = 1.0 / X.shape[1]
 
     K = linear_kernel(X, Y)
@@ -353,6 +345,44 @@ def rbf_kernel(X, Y=None, gamma=None):
     K = euclidean_distances(X, Y, squared=True)
     K *= -gamma
     np.exp(K, K)    # exponentiate K in-place
+    return K
+
+
+def cosine_similarity(X, Y=None):
+    """Compute cosine similarity between samples in X and Y.
+
+    Cosine similarity, or the cosine kernel, computes similarity as the
+    normalized dot product of X and Y:
+
+        K(X, Y) = <X, Y> / (||X||*||Y||)
+
+    On L2-normalized data, this function is equivalent to linear_kernel.
+
+    Parameters
+    ----------
+    X : array_like, sparse matrix
+        with shape (n_samples_X, n_features).
+
+    Y : array_like, sparse matrix (optional)
+        with shape (n_samples_Y, n_features).
+
+    Returns
+    -------
+    kernel matrix : array_like
+        An array with shape (n_samples_X, n_samples_Y).
+    """
+    # to avoid recursive import
+
+    X, Y = check_pairwise_arrays(X, Y)
+
+    X_normalized = normalize(X, copy=True)
+    if X is Y:
+        Y_normalized = X_normalized
+    else:
+        Y_normalized = normalize(Y, copy=True)
+
+    K = linear_kernel(X_normalized, Y_normalized)
+
     return K
 
 
@@ -402,7 +432,9 @@ def additive_chi2_kernel(X, Y=None):
     sklearn.kernel_approximation.AdditiveChi2Sampler : A Fourier approximation
         to this kernel.
     """
-    ### once we support sparse matrices, we can use check_pairwise
+    if issparse(X) or issparse(Y):
+        raise ValueError("additive_chi2 does not support sparse matrices.")
+    ### we don't use check_pairwise to preserve float32.
 
     if Y is None:
         # optimize this case!
@@ -455,6 +487,9 @@ def chi2_kernel(X, Y=None, gamma=1.):
 
     Y : array of shape (n_samples_Y, n_features)
 
+    gamma : float, default=1.
+        Scaling parameter of the chi2 kernel.
+
     Returns
     -------
     kernel_matrix : array of shape (n_samples_X, n_samples_Y)
@@ -487,28 +522,27 @@ pairwise_distance_functions = {
     'l2': euclidean_distances,
     'l1': manhattan_distances,
     'manhattan': manhattan_distances,
-    'cityblock': manhattan_distances,
-    }
+    'cityblock': manhattan_distances, }
 
 
 def distance_metrics():
-    """ Valid metrics for pairwise_distances
+    """Valid metrics for pairwise_distances.
 
     This function simply returns the valid pairwise distance metrics.
-    It exists, however, to allow for a verbose description of the mapping for
+    It exists to allow for a description of the mapping for
     each of the valid strings.
 
     The valid distance metrics, and the function they map to, are:
 
-    ===========     ====================================
-    metric          Function
-    ===========     ====================================
-    'cityblock'     sklearn.pairwise.manhattan_distances
-    'euclidean'     sklearn.pairwise.euclidean_distances
-    'l1'            sklearn.pairwise.manhattan_distances
-    'l2'            sklearn.pairwise.euclidean_distances
-    'manhattan'     sklearn.pairwise.manhattan_distances
-    ===========     ====================================
+    ============     ====================================
+    metric           Function
+    ============     ====================================
+    'cityblock'      metrics.pairwise.manhattan_distances
+    'euclidean'      metrics.pairwise.euclidean_distances
+    'l1'             metrics.pairwise.manhattan_distances
+    'l2'             metrics.pairwise.euclidean_distances
+    'manhattan'      metrics.pairwise.manhattan_distances
+    ============     ====================================
 
     """
     return pairwise_distance_functions
@@ -524,8 +558,8 @@ def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
         Y = X
 
     ret = Parallel(n_jobs=n_jobs, verbose=0)(
-            delayed(func)(X, Y[s], **kwds)
-            for s in gen_even_slices(Y.shape[0], n_jobs))
+        delayed(func)(X, Y[s], **kwds)
+        for s in gen_even_slices(Y.shape[0], n_jobs))
 
     return np.hstack(ret)
 
@@ -591,7 +625,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
         used at all, which is useful for debuging. For n_jobs below -1,
-        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
     `**kwds` : optional keyword parameters
@@ -659,7 +693,7 @@ pairwise_kernel_functions = {
     'poly': polynomial_kernel,
     'rbf': rbf_kernel,
     'sigmoid': sigmoid_kernel,
-    }
+    'cosine': cosine_similarity, }
 
 
 def kernel_metrics():
@@ -670,17 +704,18 @@ def kernel_metrics():
     each of the valid strings.
 
     The valid distance metrics, and the function they map to, are:
-      ==============   ========================================
-      metric           Function
-      ==============   ========================================
-      'additive_chi2'  sklearn.pairwise.additive_chi2_kernel
-      'chi2'           sklearn.pairwise.chi2_kernel
-      'linear'         sklearn.pairwise.linear_kernel
-      'poly'           sklearn.pairwise.polynomial_kernel
-      'polynomial'     sklearn.pairwise.polynomial_kernel
-      'rbf'            sklearn.pairwise.rbf_kernel
-      'sigmoid'        sklearn.pairwise.sigmoid_kernel
-      ==============   ========================================
+      ===============   ========================================
+      metric            Function
+      ===============   ========================================
+      'additive_chi2'   sklearn.pairwise.additive_chi2_kernel
+      'chi2'            sklearn.pairwise.chi2_kernel
+      'linear'          sklearn.pairwise.linear_kernel
+      'poly'            sklearn.pairwise.polynomial_kernel
+      'polynomial'      sklearn.pairwise.polynomial_kernel
+      'rbf'             sklearn.pairwise.rbf_kernel
+      'sigmoid'         sklearn.pairwise.sigmoid_kernel
+      'cosine'          sklearn.pairwise.cosine_similarity
+      ===============   ========================================
     """
     return pairwise_kernel_functions
 
@@ -693,7 +728,7 @@ kernel_params = {
     "sigmoid": set(("gamma", "coef0")),
     "polynomial": set(("gamma", "degree", "coef0")),
     "poly": set(("gamma", "degree", "coef0")),
-}
+    "cosine": set(), }
 
 
 def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
@@ -712,7 +747,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     kernel between the arrays from both X and Y.
 
     Valid values for metric are::
-        ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear']
+        ['rbf', 'sigmoid', 'polynomial', 'poly', 'linear', 'cosine']
 
     Parameters
     ----------
@@ -740,7 +775,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
         used at all, which is useful for debuging. For n_jobs below -1,
-        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
     filter_params: boolean
@@ -766,8 +801,8 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         return X
     elif metric in pairwise_kernel_functions:
         if filter_params:
-            kwds = dict((k, kwds[k]) for k in kwds \
-                                        if k in kernel_params[metric])
+            kwds = dict((k, kwds[k]) for k in kwds
+                        if k in kernel_params[metric])
         func = pairwise_kernel_functions[metric]
         if n_jobs == 1:
             return func(X, Y, **kwds)

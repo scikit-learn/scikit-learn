@@ -377,11 +377,11 @@ class _BaseHMM(BaseEstimator):
             currstate = (transmat_cdf[currstate] > rand).argmax()
             hidden_states.append(currstate)
             obs.append(self._generate_sample_from_state(
-                                currstate, random_state=random_state))
+                currstate, random_state=random_state))
 
         return np.array(obs), np.array(hidden_states, dtype=int)
 
-    def fit(self, obs, **kwargs):
+    def fit(self, obs):
         """Estimate model parameters.
 
         An initialization step is performed before entering the EM
@@ -407,17 +407,6 @@ class _BaseHMM(BaseEstimator):
         deprecated and will be removed in the next release.
         Set it on initialization instead.**
         """
-
-        if kwargs:
-            warnings.warn("Setting parameters in the 'fit' method is"
-                          "deprecated and will be removed in 0.14. Set it on "
-                          "initialization instead.", DeprecationWarning,
-                          stacklevel=2)
-            # initialisations for in case the user still adds parameters to fit
-            # so things don't break
-            for name in ('n_iter', 'thresh', 'params', 'init_params'):
-                if name in kwargs:
-                    setattr(self, name, kwargs[name])
 
         if self.algorithm not in decoder_algorithms:
             self._algorithm = "viterbi"
@@ -492,7 +481,7 @@ class _BaseHMM(BaseEstimator):
     def _set_transmat(self, transmat):
         if transmat is None:
             transmat = np.tile(1.0 / self.n_components,
-                    (self.n_components, self.n_components))
+                               (self.n_components, self.n_components))
 
         # check if there exists a component whose value is exactly zero
         # if so, add a small number and re-normalize
@@ -501,8 +490,8 @@ class _BaseHMM(BaseEstimator):
 
         if (np.asarray(transmat).shape
                 != (self.n_components, self.n_components)):
-            raise ValueError('transmat must have shape ' +
-                    '(n_components, n_components)')
+            raise ValueError('transmat must have shape '
+                             '(n_components, n_components)')
         if not np.all(np.allclose(np.sum(transmat, axis=1), 1.0)):
             raise ValueError('Rows of transmat must sum to 1.0')
 
@@ -515,8 +504,8 @@ class _BaseHMM(BaseEstimator):
     def _do_viterbi_pass(self, framelogprob):
         n_observations, n_components = framelogprob.shape
         state_sequence, logprob = _hmmc._viterbi(
-                n_observations, n_components, self._log_startprob,
-                self._log_transmat, framelogprob)
+            n_observations, n_components, self._log_startprob,
+            self._log_transmat, framelogprob)
         return logprob, state_sequence
 
     def _do_forward_pass(self, framelogprob):
@@ -524,16 +513,15 @@ class _BaseHMM(BaseEstimator):
         n_observations, n_components = framelogprob.shape
         fwdlattice = np.zeros((n_observations, n_components))
         _hmmc._forward(n_observations, n_components, self._log_startprob,
-                self._log_transmat, framelogprob, fwdlattice)
+                       self._log_transmat, framelogprob, fwdlattice)
         fwdlattice[fwdlattice <= ZEROLOGPROB] = NEGINF
         return logsumexp(fwdlattice[-1]), fwdlattice
 
     def _do_backward_pass(self, framelogprob):
         n_observations, n_components = framelogprob.shape
         bwdlattice = np.zeros((n_observations, n_components))
-        _hmmc._backward(n_observations, n_components,
-                self._log_startprob, self._log_transmat,
-                framelogprob, bwdlattice)
+        _hmmc._backward(n_observations, n_components, self._log_startprob,
+                        self._log_transmat, framelogprob, bwdlattice)
 
         bwdlattice[bwdlattice <= ZEROLOGPROB] = NEGINF
 
@@ -567,12 +555,11 @@ class _BaseHMM(BaseEstimator):
             stats['start'] += posteriors[0]
         if 't' in params:
             n_observations, n_components = framelogprob.shape
-            lneta = np.zeros((n_observations - 1,
-                        n_components, n_components))
+            lneta = np.zeros((n_observations - 1, n_components, n_components))
             lnP = logsumexp(fwdlattice[-1])
-            _hmmc._compute_lneta(n_observations, n_components,
-                    fwdlattice, self._log_transmat, bwdlattice,
-                    framelogprob, lnP, lneta)
+            _hmmc._compute_lneta(n_observations, n_components, fwdlattice,
+                                 self._log_transmat, bwdlattice, framelogprob,
+                                 lnP, lneta)
             stats["trans"] += np.exp(logsumexp(lneta, 0))
 
     def _do_mstep(self, stats, params):
@@ -683,14 +670,11 @@ class GaussianHMM(_BaseHMM):
                  params=string.ascii_letters,
                  init_params=string.ascii_letters):
         _BaseHMM.__init__(self, n_components, startprob, transmat,
-                                        startprob_prior=startprob_prior,
-                                        transmat_prior=transmat_prior,
-                                        algorithm=algorithm,
-                                        random_state=random_state,
-                                        n_iter=n_iter,
-                                        thresh=thresh,
-                                        params=params,
-                                        init_params=init_params)
+                          startprob_prior=startprob_prior,
+                          transmat_prior=transmat_prior, algorithm=algorithm,
+                          random_state=random_state, n_iter=n_iter,
+                          thresh=thresh, params=params,
+                          init_params=init_params)
 
         self._covariance_type = covariance_type
         if not covariance_type in ['spherical', 'tied', 'diag', 'full']:
@@ -716,10 +700,10 @@ class GaussianHMM(_BaseHMM):
 
     def _set_means(self, means):
         means = np.asarray(means)
-        if hasattr(self, 'n_features') and \
-               means.shape != (self.n_components, self.n_features):
-            raise ValueError('means must have shape' +
-                    '(n_components, n_features)')
+        if (hasattr(self, 'n_features')
+                and means.shape != (self.n_components, self.n_features)):
+            raise ValueError('means must have shape '
+                             '(n_components, n_features)')
         self._means_ = means.copy()
         self.n_features = self._means_.shape[1]
 
@@ -841,8 +825,9 @@ class GaussianHMM(_BaseHMM):
                 cv_den = max(covars_weight - 1, 0) + denom
                 self._covars_ = (covars_prior + cv_num) / cv_den
                 if self._covariance_type == 'spherical':
-                    self._covars_ = np.tile(self._covars_.mean(1)
-                            [:, np.newaxis], (1, self._covars_.shape[1]))
+                    self._covars_ = np.tile(
+                        self._covars_.mean(1)[:, np.newaxis],
+                        (1, self._covars_.shape[1]))
             elif self._covariance_type in ('tied', 'full'):
                 cvnum = np.empty((self.n_components, self.n_features,
                                   self.n_features))
@@ -857,11 +842,11 @@ class GaussianHMM(_BaseHMM):
                                 * stats['post'][c])
                 cvweight = max(covars_weight - self.n_features, 0)
                 if self._covariance_type == 'tied':
-                    self._covars_ = ((covars_prior + cvnum.sum(axis=0))
-                                    / (cvweight + stats['post'].sum()))
+                    self._covars_ = ((covars_prior + cvnum.sum(axis=0)) /
+                                     (cvweight + stats['post'].sum()))
                 elif self._covariance_type == 'full':
-                    self._covars_ = ((covars_prior + cvnum)
-                                   / (cvweight + stats['post'][:, None, None]))
+                    self._covars_ = ((covars_prior + cvnum) /
+                                     (cvweight + stats['post'][:, None, None]))
 
 
 class MultinomialHMM(_BaseHMM):
@@ -983,7 +968,7 @@ class MultinomialHMM(_BaseHMM):
                     symbols = symbols.union(set(o))
                 self.n_symbols = len(symbols)
             emissionprob = normalize(self.random_state.rand(self.n_components,
-                self.n_symbols), 1)
+                                                            self.n_symbols), 1)
             self.emissionprob_ = emissionprob
 
     def _initialize_sufficient_statistics(self):
@@ -1005,7 +990,7 @@ class MultinomialHMM(_BaseHMM):
         super(MultinomialHMM, self)._do_mstep(stats, params)
         if 'e' in params:
             self.emissionprob_ = (stats['obs']
-                                 / stats['obs'].sum(1)[:, np.newaxis])
+                                  / stats['obs'].sum(1)[:, np.newaxis])
 
     def _check_input_symbols(self, obs):
         """check if input can be used for Multinomial.fit input must be both
@@ -1212,17 +1197,17 @@ class GMMHMM(_BaseHMM):
                 if g.covariance_type == 'tied':
                     g.covars_ = ((stats['covars'][state]
                                  + self.covars_prior * np.eye(n_features))
-                                / norm.sum())
+                                 / norm.sum())
                 else:
                     cvnorm = np.copy(norm)
                     shape = np.ones(g.covars_.ndim)
                     shape[0] = np.shape(g.covars_)[0]
                     cvnorm.shape = shape
                     if (g.covariance_type in ['spherical', 'diag']):
-                        g.covars_ = (stats['covars'][state]
-                                    + self.covars_prior) / cvnorm
+                        g.covars_ = (stats['covars'][state] +
+                                     self.covars_prior) / cvnorm
                     elif g.covariance_type == 'full':
                         eye = np.eye(n_features)
                         g.covars_ = ((stats['covars'][state]
                                      + self.covars_prior * eye[np.newaxis])
-                                    / cvnorm)
+                                     / cvnorm)

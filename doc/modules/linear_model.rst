@@ -268,7 +268,17 @@ They also tend to break when the problem is badly conditioned
 Elastic Net
 ===========
 :class:`ElasticNet` is a linear model trained with L1 and L2 prior as
-regularizer.
+regularizer. This combination allows for learning a sparse model where
+few of the weights are non-zero like :class:`Lasso`, while still maintaining the
+the regularization properties of :class:`Ridge`. We control this tradeoff
+using the `l1_ratio` parameter.
+
+Elastic-net is useful when there are multiple features which are
+correlated with one another. Lasso is likely to pick one of these
+at random, while elastic-net is likely to pick both.
+
+A practical advantage of trading-off between Lasso and Ridge is it allows
+Elastic-Net to inherit some of Ridge's stability under rotation.
 
 The objective function to minimize is in this case
 
@@ -632,7 +642,7 @@ Automatic Relevance Determination - ARD
 ---------------------------------------
 
 :class:`ARDRegression` is very similar to `Bayesian Ridge Regression`_,
-but can lead to sparser weights :math:`w` [1]_.
+but can lead to sparser weights :math:`w` [1]_ [2]_.
 :class:`ARDRegression` poses a different prior over :math:`w`, by dropping the
 assumption of the Gaussian being spherical.
 
@@ -648,7 +658,7 @@ with :math:`diag \; (A) = \lambda = \{\lambda_{1},...,\lambda_{p}\}`.
 
 In constrast to `Bayesian Ridge Regression`_, each coordinate of :math:`w_{i}`
 has its own standard deviation :math:`\lambda_i`. The prior over all
-:math:`\lambda_i` is choosen to be the same gamma distribution given by
+:math:`\lambda_i` is chosen to be the same gamma distribution given by
 hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
 
 .. figure:: ../auto_examples/linear_model/images/plot_ard_1.png
@@ -663,7 +673,9 @@ hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
 
 .. topic:: References:
 
-    .. [1] David Wipf and Srikantan Nagarajan: `A new view of automatic relevance determination. <http://books.nips.cc/papers/files/nips20/NIPS2007_0976.pdf>`_
+    .. [1] Christopher M. Bishop: Pattern Recognition and Machine Learning, Chapter 7.2.1
+
+    .. [2] David Wipf and Srikantan Nagarajan: `A new view of automatic relevance determination. <http://books.nips.cc/papers/files/nips20/NIPS2007_0976.pdf>`_
 
 .. _Logistic_regression:
 
@@ -728,11 +740,13 @@ The last characteristic implies that the Perceptron is slightly faster to
 train than SGD with the hinge loss and that the resulting models are
 sparser.
 
+.. _passive_aggressive:
+
 Passive Aggressive Algorithms
 =============================
 
 The passive-aggressive algorithms are a family of algorithms for large-scale
-learning. They are similar to the Pereptron in that they do not require a
+learning. They are similar to the Perceptron in that they do not require a
 learning rate. However, contrary to the Perceptron, they include a
 regularization parameter ``C``.
 

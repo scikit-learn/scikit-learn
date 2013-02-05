@@ -5,7 +5,7 @@ Linear and Quadratic Discriminant Analysis with confidence ellipsoid
 
 Plot the confidence ellipsoids of each class and decision boundary
 """
-print __doc__
+print(__doc__)
 
 from scipy import linalg
 import numpy as np
@@ -18,7 +18,8 @@ from sklearn.qda import QDA
 
 ###############################################################################
 # colormap
-cmap = colors.LinearSegmentedColormap('red_blue_classes',
+cmap = colors.LinearSegmentedColormap(
+    'red_blue_classes',
     {'red': [(0, 1, 1), (1, 0.7, 0.7)],
      'green': [(0, 0.7, 0.7), (1, 0.7, 0.7)],
      'blue': [(0, 0.7, 0.7), (1, 1, 1)]})
@@ -64,8 +65,8 @@ def plot_data(lda, X, y, y_pred, fig_index):
     tp = (y == y_pred)  # True Positive
     tp0, tp1 = tp[y == 0], tp[y == 1]
     X0, X1 = X[y == 0], X[y == 1]
-    X0_tp, X0_fp = X0[tp0], X0[tp0 != True]
-    X1_tp, X1_fp = X1[tp1], X1[tp1 != True]
+    X0_tp, X0_fp = X0[tp0], X0[~tp0]
+    X1_tp, X1_fp = X1[tp1], X1[~tp1]
     xmin, xmax = X[:, 0].min(), X[:, 0].max()
     ymin, ymax = X[:, 1].min(), X[:, 1].max()
 
@@ -86,7 +87,7 @@ def plot_data(lda, X, y, y_pred, fig_index):
     Z = lda.predict_proba(np.c_[xx.ravel(), yy.ravel()])
     Z = Z[:, 1].reshape(xx.shape)
     pl.pcolormesh(xx, yy, Z, cmap='red_blue_classes',
-                        norm=colors.Normalize(0., 1.))
+                  norm=colors.Normalize(0., 1.))
     pl.contour(xx, yy, Z, [0.5], linewidths=2., colors='k')
 
     # means
@@ -105,7 +106,7 @@ def plot_ellipse(splot, mean, cov, color):
     angle = 180 * angle / np.pi  # convert to degrees
     # filled gaussian at 2 standard deviation
     ell = mpl.patches.Ellipse(mean, 2 * v[0] ** 0.5, 2 * v[1] ** 0.5,
-                                            180 + angle, color=color)
+                              180 + angle, color=color)
     ell.set_clip_box(splot.bbox)
     ell.set_alpha(0.5)
     splot.add_artist(ell)

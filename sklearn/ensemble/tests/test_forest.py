@@ -154,7 +154,7 @@ def test_probability():
 
     # Random forest
     clf = RandomForestClassifier(n_estimators=10, random_state=1,
-            max_features=1, max_depth=1)
+                                 max_features=1, max_depth=1)
     clf.fit(iris.data, iris.target)
     assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1),
                               np.ones(iris.data.shape[0]))
@@ -163,7 +163,7 @@ def test_probability():
 
     # Extra-trees
     clf = ExtraTreesClassifier(n_estimators=10, random_state=1, max_features=1,
-            max_depth=1)
+                               max_depth=1)
     clf.fit(iris.data, iris.target)
     assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1),
                               np.ones(iris.data.shape[0]))
@@ -200,20 +200,21 @@ def test_importances():
 
 
 def test_oob_score_classification():
-    """Check that oob prediction is as acurate as
-    usual prediction on the training set.
-    Not really a good test that prediction is independent."""
+    """Check that oob prediction is a good estimation of the generalization
+    error."""
     clf = RandomForestClassifier(oob_score=True, random_state=rng)
-    clf.fit(X, y)
-    training_score = clf.score(X, y)
-    assert_almost_equal(training_score, clf.oob_score_)
+    n_samples = iris.data.shape[0]
+    clf.fit(iris.data[:n_samples / 2, :], iris.target[:n_samples / 2])
+    test_score = clf.score(iris.data[n_samples / 2:, :],
+                           iris.target[n_samples / 2:])
+    assert_less(abs(test_score - clf.oob_score_), 0.05)
 
 
 def test_oob_score_regression():
     """Check that oob prediction is pessimistic estimate.
     Not really a good test that prediction is independent."""
     clf = RandomForestRegressor(n_estimators=50, oob_score=True,
-            random_state=rng)
+                                random_state=rng)
     n_samples = boston.data.shape[0]
     clf.fit(boston.data[:n_samples / 2, :], boston.target[:n_samples / 2])
     test_score = clf.score(boston.data[n_samples / 2:, :],
@@ -373,6 +374,26 @@ def test_multioutput():
     assert_equal(y_hat.shape, (4, 2))
 
     np.seterr(**olderr)
+
+
+def test_classes_shape():
+    """Test that n_classes_ and classes_ have proper shape."""
+    # Classification, single output
+    clf = RandomForestClassifier()
+    clf.fit(X, y)
+
+    assert_equal(clf.n_classes_, 2)
+    assert_equal(clf.classes_, [-1, 1])
+
+    # Classification, multi-output
+    _y = np.vstack((y, np.array(y) * 2)).T
+    clf = RandomForestClassifier()
+    clf.fit(X, _y)
+
+    assert_equal(len(clf.n_classes_), 2)
+    assert_equal(len(clf.classes_), 2)
+    assert_equal(clf.n_classes_, [2, 2])
+    assert_equal(clf.classes_, [[-1, 1], [-2, 2]])
 
 
 def test_random_hasher():

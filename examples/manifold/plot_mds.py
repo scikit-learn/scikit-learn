@@ -12,7 +12,7 @@ shifted to avoid overlapping.
 # Author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
 # Licence: BSD
 
-print __doc__
+print(__doc__)
 import numpy as np
 
 from matplotlib import pyplot as plt
@@ -37,15 +37,18 @@ noise = noise + noise.T
 noise[np.arange(noise.shape[0]), np.arange(noise.shape[0])] = 0
 similarities += noise
 
-mds = manifold.MDS(n_components=2, max_iter=3000,
-                   eps=1e-9, random_state=seed,
-                   n_jobs=1)
+mds = manifold.MDS(n_components=2, max_iter=3000, eps=1e-9, random_state=seed,
+                   dissimilarity="precomputed", n_jobs=1)
 pos = mds.fit(similarities).embedding_
 
-nmds = manifold.MDS(n_components=2, metric=False,
-                    max_iter=3000,
-                    eps=1e-9, random_state=seed, n_jobs=1)
-npos = mds.fit_transform(similarities)
+nmds = manifold.MDS(n_components=2, metric=False, max_iter=3000, eps=1e-12,
+                    dissimilarity="precomputed", random_state=seed, n_jobs=1,
+                    n_init=1)
+npos = nmds.fit_transform(similarities, init=pos)
+
+# Rescale the data
+pos *= np.sqrt((X_true ** 2).sum()) / np.sqrt((pos ** 2).sum())
+npos *= np.sqrt((X_true ** 2).sum()) / np.sqrt((npos ** 2).sum())
 
 # Rotate the data
 clf = PCA(n_components=2)
@@ -53,14 +56,14 @@ X_true = clf.fit_transform(X_true)
 
 pos = clf.fit_transform(pos)
 
-npos = clf.fit_transform(pos)
+npos = clf.fit_transform(npos)
 
 fig = plt.figure(1)
 ax = plt.axes([0., 0., 1., 1.])
 
 plt.scatter(X_true[:, 0], X_true[:, 1], c='r', s=20)
-plt.scatter(pos[:, 0] + 0.2, pos[:, 1] + 0.2, s=20, c='g')
-plt.scatter(npos[:, 0] - 0.2, npos[:, 1] - 0.2, s=20, c='b')
+plt.scatter(pos[:, 0], pos[:, 1], s=20, c='g')
+plt.scatter(npos[:, 0], npos[:, 1], s=20, c='b')
 plt.legend(('True position', 'MDS', 'NMDS'), loc='best')
 
 similarities = similarities.max() / similarities * 100
@@ -70,7 +73,7 @@ similarities[np.isinf(similarities)] = 0
 start_idx, end_idx = np.where(pos)
 #a sequence of (*line0*, *line1*, *line2*), where::
 #            linen = (x0, y0), (x1, y1), ... (xm, ym)
-segments = [[pos[i, :], pos[j, :]]
+segments = [[X_true[i, :], X_true[j, :]]
             for i in range(len(pos)) for j in range(len(pos))]
 values = np.abs(similarities)
 lc = LineCollection(segments,

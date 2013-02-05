@@ -15,7 +15,7 @@ A small value of `C` includes more/all the observations, allowing
 the margins to be calculated using all the data in the area.
 
 """
-print __doc__
+print(__doc__)
 
 
 # Code source: Gael Varoqueux
@@ -59,8 +59,8 @@ for name, penality in (('unreg', 1), ('reg', 0.05)):
     pl.plot(xx, yy_down, 'k--')
     pl.plot(xx, yy_up, 'k--')
 
-    pl.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1],
-            s=80, facecolors='none', zorder=10)
+    pl.scatter(clf.support_vectors_[:, 0], clf.support_vectors_[:, 1], s=80,
+               facecolors='none', zorder=10)
     pl.scatter(X[:, 0], X[:, 1], c=Y, zorder=10, cmap=pl.cm.Paired)
 
     pl.axis('tight')

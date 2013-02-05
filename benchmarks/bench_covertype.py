@@ -192,7 +192,7 @@ def benchmark(clf):
     t0 = time()
     pred = clf.predict(X_test)
     test_time = time() - t0
-    err = metrics.zero_one(y_test, pred) / float(pred.shape[0])
+    err = metrics.zero_one_loss(y_test, pred, normalize=True)
     return err, train_time, test_time
 
 ######################################################################

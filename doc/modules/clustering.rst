@@ -132,6 +132,11 @@ and the new centroids is the inertia and the algorithm repeats these last two
 steps until this value is less than a threshold. In other words, it repeats
 until the centroids do not move significantly.
 
+.. image:: ../auto_examples/cluster/images/plot_kmeans_digits_1.png
+   :target: ../auto_examples/cluster/plot_kmeans_digits.html
+   :align: right
+   :scale: 35
+
 The algorithm can be identified through the concept of `Voronoi diagrams
 <https://en.wikipedia.org/wiki/Voronoi_diagram>`_. First the Voronoi diagram
 of the points is calculated using the current centroids. Each segment in the
@@ -198,6 +203,8 @@ the :class:`KMeans` algorithm.
  * :ref:`example_document_clustering.py`: Document clustering using sparse
    MiniBatchKMeans
 
+ * :ref:`example_cluster_plot_dict_face_patches.py`
+
 
 .. topic:: References:
 
@@ -208,17 +215,36 @@ the :class:`KMeans` algorithm.
 
 .. _affinity_propagation:
 
-Affinity propagation
+Affinity Propagation
 ====================
 
-:class:`AffinityPropagation` clusters data by diffusion in the similarity
-matrix. This algorithm automatically sets its numbers of cluster. It
-will have difficulties scaling to thousands of samples.
+:class:`AffinityPropagation` creates clusters by sending messages between
+pairs of samples until convergence. A dataset is then described using a small
+number of exemplars, which are identified as those most representative of other
+samples. The messages sent between pairs represent the suitability for one
+sample to be the exemplar of the other, which is updated in response to the
+values from other pairs. This updating happens iteratively until convergence,
+at which point the final exemplars are chosen, and hence the final clustering
+is given.
 
 .. figure:: ../auto_examples/cluster/images/plot_affinity_propagation_1.png
    :target: ../auto_examples/cluster/plot_affinity_propagation.html
    :align: center
    :scale: 50
+
+
+Affinity Propagation can be interesting as it chooses the number of
+clusters based on the data provided. For this purpose, the two important
+parameters are the `preference`, which controls how many examplars are
+used, and the `damping` factor.
+
+The main drawback of Affinity Propagation is its complexity. The
+algorithm has a time complexity of the order :math:`O(N^2 T)`, where `N`
+is the number of samples and `T` is the number of iterations until
+convergence. Further, the memory complexity is of the order
+:math:`O(N^2)` if a dense similarity matrix is used, but reducible if a
+sparse similarity matrix is used. This makes Affinity Propagation most
+appropriate for small to medium sized datasets.
 
 .. topic:: Examples:
 
@@ -228,6 +254,32 @@ will have difficulties scaling to thousands of samples.
  * :ref:`example_applications_plot_stock_market.py` Affinity Propagation on
    Financial time series to find groups of companies
 
+**Algorithm description:**
+The messages sent between points belong to one of two categories. The first is
+the responsibility `r(i, k)`, which is the accumulated evidence that sample `k`
+should be the exemplar for sample `i`. The second is the availability `a(i, k)`
+which is the accumulated evidence that sample `i` should choose sample `k` to
+be its exemplar, and considers the values for all other samples that `k` should
+be an exemplar. In this way, exemplars are chosen by samples if they are (1)
+similar enough to many samples and (2) chosen by many samples to be
+representative of themselves.
+
+More formally, the responsibility of a sample `k` to be the exemplar of sample
+`i` is given by:
+
+.. math::
+
+    r(i, k) \leftarrow s(i, k) - max [ a(i, \acute{k}) + s(i, \acute{k}) \forall \acute{k} \neq k ]
+
+Where :math:`s(i, k)` is the similarity between samples `i` and `k`. The
+availability of sample `k` to be the exemplar of sample `i` is given by:
+
+.. math::
+
+    a(i, k) \leftarrow min [0, r(k, k) + \sum_{\acute{i}~s.t.~\acute{i} \notin \{i, k\}}{r(\acute{i}, k)}]
+
+To begin with, all values for `r` and `a` are set to zero, and the calculation
+of each iterates until convergence.
 
 .. _mean_shift:
 
@@ -428,17 +480,51 @@ enable only merging of neighboring pixels on an image, as in the
 DBSCAN
 ======
 
-The :class:`DBSCAN` algorithm clusters data by finding core points which have
-many neighbours within a given radius. After a core point is found, the cluster
-is expanded by adding its neighbours to the current cluster and recursively
-checking if any are core points. Formally, a point is considered a core point
-if it has more than min_points points which are of a similarity greater than
-the given threshold eps. This is shown in the figure below, where the color
-indicates cluster membership and large circles indicate core points found by
-the algorithm. Moreover, the algorithm can detect outliers, indicated by black
-points below. The outliers are defined as points which do not belong to
-any current cluster and do not have enough close neighbours to start a
-new cluster.
+The :class:`DBSCAN` algorithm views clusters as areas of high density
+separated by areas of low density. Due to this rather generic view, clusters
+found by DBSCAN can be any shape, as opposed to k-means which assumes that
+clusters are convex shaped. The central component to the DBSCAN is the concept
+of *core samples*, which are samples that are in areas of high density. A
+cluster is therefore a set of core samples, each highly similar to each other
+and a set of non-core samples that are similar to a core sample (but are not
+themselves core samples). There are two parameters to the algorithm,
+`min_points` and `eps`, which define formally what we mean when we say *dense*.
+A higher `min_points` or lower `eps` indicate higher density necessary to form
+a cluster.
+
+More formally, we define a core sample as being a sample in the dataset such
+that there exists `min_samples` other samples with a similarity higher than
+`eps` to it, which are defined as *neighbors* of the core sample. This tells
+us that the core sample is in a dense area of the vector space. A cluster
+is a set of core samples, that can be built by recursively by taking a core
+sample, finding all of its neighbors that are core samples, finding all of
+*their* neighbors that are core samples, and so on. A cluster also has a
+set of non-core samples, which are samples that are neighbors of a core sample
+in the cluster but are not themselves core samples. Intuitively, these samples
+are on the fringes of a cluster.
+
+Any core sample is part of a cluster, by definition. Further, any cluster has
+at least `min_samples` points in it, following the definition of a core
+sample. For any sample that is not a core sample, and does not have a
+similarity higher than `eps` to a core sample, it is considered an outlier by
+the algorithm.
+
+The algorithm is non-deterministic, however the core samples themselves will
+always belong to the same clusters (although the labels themselves may be
+different). The non-determinism comes from deciding on which cluster a
+non-core sample belongs to. A non-core sample can be have a similarity higher
+than `eps` to two core samples in different classes. Following from the
+triangular inequality, those two core samples would be less similar than
+`eps` from each other -- else they would be in the same class. The non-core
+sample is simply assigned to which ever cluster is generated first, where
+the order is determined randomly within the code. Other than the ordering of,
+the dataset, the algorithm is deterministic, making the results relatively
+stable between iterations on the same data.
+
+In the figure below, the color indicates cluster membership, with large circles
+indicating core samples found by the algorithm. Smaller circles are non-core 
+samples that are still part of a cluster. Moreover, the outliers are indicated
+by black points below.
 
 .. |dbscan_results| image:: ../auto_examples/cluster/images/plot_dbscan_1.png
         :target: ../auto_examples/cluster/plot_dbscan.html

@@ -96,7 +96,7 @@ def test_inconsistent_input():
 
     # Wrong dimensions for test data
     assert_raises(ValueError, clf.fit(X_, y_).predict,
-            rng.random_sample((3, 12)))
+                  rng.random_sample((3, 12)))
 
 
 def test_write_parameters():

@@ -17,7 +17,7 @@ There are two options to assign labels:
 * whereas 'discrete' will iteratively search for the closest partition
   space to the embedding space.
 """
-print __doc__
+print(__doc__)
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>, Brian Cheung
 # License: BSD
@@ -66,7 +66,7 @@ for assign_labels in ('kmeans', 'discretize'):
     pl.imshow(lena,   cmap=pl.cm.gray)
     for l in range(N_REGIONS):
         pl.contour(labels == l, contours=1,
-                colors=[pl.cm.spectral(l / float(N_REGIONS)), ])
+                   colors=[pl.cm.spectral(l / float(N_REGIONS)), ])
     pl.xticks(())
     pl.yticks(())
     pl.title('Spectral clustering: %s, %.2fs' % (assign_labels, (t1 - t0)))

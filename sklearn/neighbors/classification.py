@@ -7,6 +7,8 @@
 #
 # License: BSD, (C) INRIA, University of Amsterdam
 
+import warnings
+
 import numpy as np
 from scipy import stats
 from ..utils.extmath import weighted_mode
@@ -60,14 +62,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    warn_on_equidistant : boolean, optional.  Defaults to True.
-        Generate a warning if equidistant neighbors are discarded.
-        For classification or regression based on k-neighbors, if
-        neighbor k and neighbor k+1 have identical distances but
-        different labels, then the result will be dependent on the
-        ordering of the training data.
-        If the fit method is ``'kd_tree'``, no warnings will be generated.
-
     p: integer, optional (default = 2)
         Parameter for the Minkowski metric from
         sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
@@ -99,18 +93,28 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     See :ref:`Nearest Neighbors <neighbors>` in the online documentation
     for a discussion of the choice of ``algorithm`` and ``leaf_size``.
 
+    .. warning::
+
+       Regarding the Nearest Neighbors algorithms, if it is found that two
+       neighbors, neighbor `k+1` and `k`, have identical distances but
+       but different labels, the results will depend on the odering of the
+       training data.
+
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
     def __init__(self, n_neighbors=5,
                  weights='uniform',
-                 algorithm='auto', leaf_size=30,
-                 warn_on_equidistant=True, p=2):
+                 algorithm='auto', leaf_size=30, p=2, **kwargs):
+        if kwargs:
+            if 'warn_on_equidistant' in kwargs:
+                warnings.warn("The warn_on_equidistant parameter is "
+                              "deprecated and will be removed in the future.",
+                              DeprecationWarning,
+                              stacklevel=2)
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
-                          leaf_size=leaf_size,
-                          warn_on_equidistant=warn_on_equidistant,
-                          p=p)
+                          leaf_size=leaf_size, p=p)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
@@ -280,42 +284,37 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             List of class labels (one for each data sample).
         """
         X = atleast2d_or_csr(X)
+        n_samples = X.shape[0]
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
-        pred_labels = [self._y[ind] for ind in neigh_ind]
+        inliers = [i for i, nind in enumerate(neigh_ind) if len(nind) != 0]
+        outliers = [i for i, nind in enumerate(neigh_ind) if len(nind) == 0]
 
-        if self.outlier_label:
-            outlier_label = np.array((self.outlier_label, ))
-            small_value = np.array((1e-6, ))
-            for i, pl in enumerate(pred_labels):
-                # Check that all have at least 1 neighbor
-                if len(pl) < 1:
-                    pred_labels[i] = outlier_label
-                    neigh_dist[i] = small_value
-        else:
-            for pl in pred_labels:
-                # Check that all have at least 1 neighbor
-                if len(pl) < 1:
-                    raise ValueError('no neighbors found for a test sample, '
-                                     'you can try using larger radius, '
-                                     'give a label for outliers, '
-                                     'or consider removing them in your '
-                                     'dataset')
+        if self.outlier_label is not None:
+            neigh_dist[outliers] = 1e-6
+        elif outliers:
+            raise ValueError('No neighbors found for test samples %r, '
+                             'you can try using larger radius, '
+                             'give a label for outliers, '
+                             'or consider removing them from your dataset.'
+                             % outliers)
 
         weights = _get_weights(neigh_dist, self.weights)
 
+        pred_labels = np.array([self._y[ind] for ind in neigh_ind],
+                               dtype=object)
         if weights is None:
-            mode = np.array([stats.mode(pl)[0] for pl in pred_labels],
+            mode = np.array([stats.mode(pl)[0] for pl in pred_labels[inliers]],
                             dtype=np.int)
         else:
             mode = np.array([weighted_mode(pl, w)[0]
-                             for (pl, w) in zip(pred_labels, weights)],
+                             for (pl, w) in zip(pred_labels[inliers], weights)],
                             dtype=np.int)
 
-        mode = mode.flatten().astype(np.int)
-        # map indices to classes
-        prediction = self.classes_.take(mode)
-        if self.outlier_label:
-            # reset outlier label
-            prediction[mode == outlier_label] = self.outlier_label
+        mode = mode.ravel().astype(np.int)
+        prediction = np.empty(n_samples, dtype=self.classes_.dtype)
+        prediction[inliers] = self.classes_.take(mode)
+        if outliers:
+            prediction[outliers] = self.outlier_label
+
         return prediction

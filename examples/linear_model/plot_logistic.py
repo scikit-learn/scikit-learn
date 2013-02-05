@@ -11,10 +11,10 @@ synthetic dataset, classify values as either 0 or 1,
 i.e. class one or two, using the logit-curve.
 
 """
-print __doc__
+print(__doc__)
 
 
-# Code source: Gael Varoqueux
+# Code source: Gael Varoquaux
 # License: BSD
 
 import numpy as np
