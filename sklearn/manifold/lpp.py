@@ -85,7 +85,7 @@ def affinity_matrix(adj_mat, kernel_func="heat", kernel_param="auto"):
         # Estimate kernel_param by the heuristics that it must correspond to
         # the variance of Gaussian distribution.
         if kernel_param == "auto":
-            kernel_param = np.mean(W.data)
+            kernel_param = np.median(W.data)
             
         np.exp(-W.data / kernel_param, W.data)
     else:
