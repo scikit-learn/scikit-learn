@@ -389,6 +389,10 @@ def test_vectorizer():
     t2 = TfidfTransformer(norm='l1', use_idf=False)
     tf = t2.fit(counts_train).transform(counts_train).toarray()
     assert_equal(t2.idf_, None)
+    
+    # test idf transform with unlearned idf vector
+    t3 = TfidfTransformer(use_idf=True)
+    assert_raises(ValueError, t3.transform, counts_train)
 
     # L1-normalized term frequencies sum to one
     assert_array_almost_equal(np.sum(tf, axis=1), [1.0] * n_train)

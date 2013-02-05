@@ -915,6 +915,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             X.data += 1
 
         if self.use_idf:
+            if not hasattr(self, "_idf_diag"):
+                raise ValueError("idf vector not fitted")  
             expected_n_features = self._idf_diag.shape[0]
             if n_features != expected_n_features:
                 raise ValueError("Input has n_features=%d while the model"
