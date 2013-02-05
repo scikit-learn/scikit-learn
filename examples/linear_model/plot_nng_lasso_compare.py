@@ -1,6 +1,22 @@
-# http://www2.isye.gatech.edu/statistics/papers/05-25.pdf , page 11
-#
-#imports
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
+"""
+=========================================================
+Nonnegative Garrote and Lars-path comparison
+=========================================================
+We replicate the comparison done by Ming Yuan and Yi Lin
+in their paper
+`On the Nonnegative Garrote Estimator <www2.isye.gatech.edu/statistics/papers/05-25.pdf>`_
+on page 11.
+
+"""
+print(__doc__)
+
+
+# Code source: Jaques Grobler
+# License: BSD
+
 import numpy as np
 import pylab as pl
 
@@ -10,7 +26,6 @@ from sklearn.linear_model import non_negative_garotte_path
 from sklearn.utils import check_random_state
 from sklearn.linear_model import lars_path
 
-print 'running nngarrote.py - __main__'
 rng = check_random_state(None)
 
 ng_path_correct = 0
