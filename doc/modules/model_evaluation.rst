@@ -53,7 +53,7 @@ Others also work in the multiclass case:
   precision_score
   recall_score
 
-Or in the multilabel case:
+And some also work in the multilabel case:
 
 .. autosummary::
    :template: function.rst
@@ -72,7 +72,7 @@ Accuracy score
 ---------------
 The :func:`accuracy_score` function computes the
 `accuracy <http://en.wikipedia.org/wiki/Accuracy_and_precision>`_, the fraction
-of correct predictions. In multi-label classification, the accuracy is also
+of correct predictions. In multilabel classification, the accuracy is also
 called subset accuracy (which is different of label-based accuracy).
 
 If :math:`\hat{y}_i` is the predicted value of
@@ -93,8 +93,14 @@ where :math:`1(x)` is the `indicator function
   >>> y_true = [0, 1, 2, 3]
   >>> accuracy_score(y_true, y_pred)
   0.5
+
+  In the multilabel case with binary indicator format:
+
   >>> accuracy_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
   0.0
+
+  and with a list of labels format:
+
   >>> accuracy_score([(1, 2), (3,)], [(1, 2), tuple()])
   0.5
 
@@ -244,23 +250,30 @@ where :math:`1(x)` is the `indicator function
   >>> y_true = [2, 2, 3, 4]
   >>> hamming_loss(y_true, y_pred)
   0.25
+
+  In the multilabel case with binary indicator format:
+
   >>> hamming_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
   0.75
+
+  and with a list of labels format:
+
   >>> hamming_loss([(1, 2), (3,)], [(1, 2), tuple()])  # doctest: +ELLIPSIS
   0.166...
 
 .. note::
 
-    In multiclass classification, the hamming loss correspond to the hamming
+    In multiclass classification, the Hamming loss correspond to the Hamming
     distance between ``y_true`` and ``y_pred`` which is equivalent to the
-    ``zero_one_loss``.
+    :ref:`zero_one_loss` function.
 
-    In multilabels classification, the Hamming loss loss is different from the
-    zero-one loss. The zero-one loss penalizes any classifiers that don't
-    predict correctly the subset of labels. The hamming loss penalizes only
+    In multilabel classification, the Hamming loss is different from the
+    zero-one loss. The zero-one loss penalizes any predications that don't
+    predict correctly the subset of labels. The Hamming loss penalizes only
     the fraction of labels incorrectly predicted.
 
-    The hamming loss is upperbounded by the zero one loss.
+    The Hamming loss is upperbounded by the zero one loss. With the
+    normalization over the samples, the Hamming loss is always between 0 and 1.
 
 
 .. _precision_recall_f_measure_metrics:
@@ -386,9 +399,9 @@ Here some small examples in binary classification::
   array([ 0.35,  0.4 ,  0.8 ])
 
 
-Multiclass and multilabels classification
+Multiclass and multilabel classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-In multiclass and multilabels classification task, the notions of precision,
+In multiclass and multilabel classification task, the notions of precision,
 recall and F-measures can be applied to each label independently.
 
 Moreover, these notions can be further extended. The functions
@@ -654,7 +667,7 @@ classification loss (:math:`L_{0-1}`) over :math:`n_{\text{samples}}`. By
 defaults, the function normalizes over the sample. To get the sum of the
 :math:`L_{0-1}`, set ``normalize``  to ``False``.
 
-In multi-labels classification, the :func:`zero_one_loss` function corresponds
+In multilabel classification, the :func:`zero_one_loss` function corresponds
 to the subset zero one loss: the subset of labels must be correctly predict.
 
 If :math:`\hat{y}_i` is the predicted value of
@@ -675,8 +688,14 @@ where :math:`1(x)` is the `indicator function
   0.25
   >>> zero_one_loss(y_true, y_pred, normalize=False)
   1
+
+  In the multilabel case with binary indicator format:
+
   >>> zero_one_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
   1.0
+
+  and with a list of labels format:
+
   >>> zero_one_loss([(1, 2), (3,)], [(1, 2), tuple()])
   0.5
 

@@ -666,7 +666,7 @@ def zero_one_loss(y_true, y_pred, normalize=True):
 
     Notes
     -----
-    In multi-labels classification, the zero_one_loss function corresponds to
+    In multilabel classification, the zero_one_loss function corresponds to
     the subset zero one loss: the subset of labels must be correctly
     predicted.
 
@@ -684,8 +684,12 @@ def zero_one_loss(y_true, y_pred, normalize=True):
     0.25
     >>> zero_one_loss(y_true, y_pred, normalize=False)
     1
+
+    In the multilabel case with binary indicator format
     >>> zero_one_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
     1.0
+
+    and with a list of labels format
     >>> zero_one_loss([(1, 2), (3,)], [(1, 2), tuple()])
     0.5
 
@@ -782,7 +786,7 @@ def accuracy_score(y_true, y_pred):
 
     Notes
     -----
-    In multi-labels classification, the accuracy_score function corresponds to
+    In multilabel classification, the accuracy_score function corresponds to
     the subset accuracy: the subset of labels must be correctly
     predicted.
 
@@ -794,8 +798,13 @@ def accuracy_score(y_true, y_pred):
     >>> y_true = [0, 1, 2, 3]
     >>> accuracy_score(y_true, y_pred)
     0.5
+
+    In the multilabel case with binary indicator format:
+
     >>> accuracy_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
     0.0
+
+    and with a list of labels format:
     >>> accuracy_score([(1, 2), (3,)], [(1, 2), tuple()])
     0.5
 
@@ -1486,7 +1495,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
 def hamming_loss(y_true, y_pred, labels=None):
     """ Compute the average Hamming loss
 
-    The hamming loss is the fraction of labels that are incorrectly predicted.
+    The Hamming loss is the fraction of labels that are incorrectly predicted.
 
     Parameters
     ----------
@@ -1497,12 +1506,12 @@ def hamming_loss(y_true, y_pred, labels=None):
         Predicted labels, as returned by a classifier.
 
     labels : array, shape = [n_labels], optional
-        Integer array of labels
+        Integer array of labels.
 
     Returns
     -------
     loss : float or int,
-        Return the average Hamming between element of ``y_true`` and
+        Return the average Hamming loss between element of ``y_true`` and
         ``y_pred``.
 
     See Also
@@ -1511,16 +1520,17 @@ def hamming_loss(y_true, y_pred, labels=None):
 
     Notes
     -----
-    In multiclass classification, the hamming loss correspond to the hamming
+    In multiclass classification, the Hamming loss correspond to the Hamming
     distance between ``y_true`` and ``y_pred`` which is equivalent to the
-    ``zero_one_loss``.
+    ``zero_one_loss`` function.
 
-    In multilabels classification, the  Hamming loss loss is different from the
-    hamming loss. The zero-one loss penalizes any classifiers that don't
-    predict correctly the subset of labels. The hamming loss penalizes only
+    In multilabel classification, the Hamming loss is different from the
+    zero-one loss. The zero-one loss penalizes any predications that don't
+    predict correctly the subset of labels. The Hamming loss penalizes only
     the fraction of labels incorrectly predicted.
 
-    The hamming loss is upperbounded by the zero one loss.
+    The Hamming loss is upperbounded by the zero one loss. With the
+    normalization over the samples, the Hamming loss is always between 0 and 1.
 
     References
     ----------
@@ -1538,8 +1548,14 @@ def hamming_loss(y_true, y_pred, labels=None):
     >>> y_true = [2, 2, 3, 4]
     >>> hamming_loss(y_true, y_pred)
     0.25
+
+    In the multilabel case with binary indicator format:
+
     >>> hamming_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
     0.75
+
+    and with a list of labels format:
+
     >>> hamming_loss([(1, 2), (3,)], [(1, 2), tuple()])  # doctest: +ELLIPSIS
     0.166...
 
