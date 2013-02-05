@@ -45,6 +45,7 @@ def test_is_multilabel():
 
     assert_false(is_multilabel(range(10)))
     assert_false(is_multilabel(np.arange(10)))
+    assert_false(is_multilabel(np.reshape(np.arange(10), (1, -1))))
     assert_false(is_multilabel(np.reshape(np.arange(10), (-1, 1))))
     assert_false(is_multilabel(np.random.randint(2, size=(10, ))))
     assert_false(is_multilabel(np.random.randint(2, size=(10, 1))))
@@ -61,5 +62,6 @@ def test_is_label_indicator_matrix():
     assert_false(is_label_indicator_matrix(np.arange(10)))
     assert_false(is_label_indicator_matrix(np.reshape(np.arange(9), (3, 3))))
     assert_false(is_label_indicator_matrix(np.reshape(np.arange(10), (-1, 1))))
+    assert_false(is_label_indicator_matrix(np.reshape(np.arange(10), (1, -1))))
     assert_false(is_label_indicator_matrix(np.random.randint(2, size=(10, ))))
     assert_false(is_label_indicator_matrix(np.random.randint(2, size=(10, 1))))

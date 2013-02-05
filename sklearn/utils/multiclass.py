@@ -17,8 +17,10 @@ def unique_labels(*lists_of_labels):
     Parameters
     ----------
     lists_of_labels : list of labels,
-        Each list of labels have to be in a format supported by
-        ``sklearn.preprocessing.LabelBinarizer``: .
+        The supported "list of labels" are:
+            - a list / tuple / numpy array of int
+            - a list of lists / tuples of int;
+            - a binary indicator matrix (2D numpy array)
 
     Returns
     -------
@@ -86,12 +88,12 @@ def is_label_indicator_matrix(y):
     True
     >>> is_label_indicator_matrix(np.array([[1], [0], [0]]))
     False
-    >>> is_label_indicator_matrix(np.array([[1], [0], [0]]))
+    >>> is_label_indicator_matrix(np.array([[1, 0, 0]]))
     False
 
     """
     return (hasattr(y, "shape") and len(y.shape) == 2 and y.shape[1] > 1 and
-            y.size > y.shape[0] and np.size(np.unique(y)) <= 2)
+            y.shape[0] > 1 and np.size(np.unique(y)) <= 2)
 
 
 def is_multilabel(y):
@@ -120,7 +122,7 @@ def is_multilabel(y):
     True
     >>> is_multilabel(np.array([[1], [0], [0]]))
     False
-    >>> is_multilabel(np.array([[1], [0], [0]]))
+    >>> is_multilabel(np.array([[1, 0, 0]]))
     False
 
     """
