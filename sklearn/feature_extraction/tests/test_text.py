@@ -2,11 +2,14 @@ import warnings
 from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
 from sklearn.feature_extraction.text import strip_accents_ascii
+from sklearn.feature_extraction.text import _check_stop_list
 
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
+
+from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
 
 from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
@@ -174,6 +177,14 @@ def test_unicode_decode_error():
     assert_raises(UnicodeDecodeError, ca, text_bytes)
 
 
+def test_check_stop_list():
+    assert_equal(_check_stop_list('english'), ENGLISH_STOP_WORDS)
+    assert_raises(ValueError, _check_stop_list, 'bad_str_stop')
+    assert_raises(ValueError, _check_stop_list, u'bad_unicode_stop')
+    stoplist = ['some', 'other', 'words']
+    assert_equal(_check_stop_list(stoplist), stoplist)
+    
+    
 def test_char_ngram_analyzer():
     cnga = CountVectorizer(analyzer='char', strip_accents='unicode',
                            ngram_range=(3, 6)).build_analyzer()
