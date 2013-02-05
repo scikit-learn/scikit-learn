@@ -17,8 +17,41 @@ from ..linear_model import LinearRegression, Lasso, lars_path, lasso_path
 
 def non_negative_garotte(X, y, alpha, tol=0.001, fit_intercept=False,
                          normalize=True, max_iter=1000, precompute='auto'):
-    """
-    Function that implements the Non-negative garrote method
+    """Function that implements the Non-negative garrote method
+
+    Parameters
+    -----------
+    X : array, shape: (n_samples, n_features)
+        Input data.
+
+    y : array, shape: (n_samples)
+        Input targets.
+
+    max_iter : integer, optional
+        Maximum number of iterations to perform, set to infinity for no limit.
+
+
+    Returns
+    --------
+    coefs: array, shape (n_features, max_features + 1)
+        Coefficients along the path
+
+    shrink_coef: array, shape (n_features, max_features + 1)
+        Shrinkage coefficients obtained using Lasso
+
+    See also
+    --------
+    lasso_path
+    LassoLars
+    Lars
+    LassoLarsCV
+    LarsCV
+    sklearn.decomposition.sparse_encode
+
+    Notes
+    ------
+    * http://libra.msra.cn/Publication/2083384/better-subset-regression-using-the-nonnegative-garrote
+
     """
     # Obtain the ordinary least squares coefficients from our data
     coef_ols = LinearRegression(fit_intercept=fit_intercept).fit(X, y).coef_
@@ -37,34 +70,66 @@ def non_negative_garotte(X, y, alpha, tol=0.001, fit_intercept=False,
 
     return coef, shrink_coef
 
-#WIP - still needs some inspecting
 def non_negative_garotte_path(X, y, eps=1e-10, n_alphas=100, alphas=None,
                               precompute='auto', fit_intercept=False,
                               **params):
 
     """
-    TODO - non_negative_garotte_path docstring
     Compute the Non-negative Garotte path
 
+    Parameters
+    ----------
+    X : ndarray, shape = (n_samples, n_features)
+        Training data. Pass directly as fortran contiguous data to avoid
+        unnecessary memory duplication
+
+    y : ndarray, shape = (n_samples,)
+        Target values
+
+    n_alphas : int, optional
+        Number of alphas along the regularization path
+
+    alphas : ndarray, optional
+        List of alphas where to compute the models.
+        If None alphas are set automatically
+
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to 'auto' let us decide. The Gram
+        matrix can also be passed as argument.
+
+    fit_intercept : bool
+        Fit or not an intercept
+
+    params : kwargs
+        keyword arguments passed to the Lasso objects
+
+    Returns
+    -------
+    coef_path: array, shape (n_features, max_features + 1)
+        Coefficients along the path
+
+    shrink_coef_path: array, shape (n_features, max_features + 1)
+        Shrinkage coefficients along the path using lars_path
+
+    See also
+    --------
+    lars_path
+    Lasso
+    LassoLars
+    LassoCV
+    LassoLarsCV
+    sklearn.decomposition.sparse_encode
     """
 
     # Obtain the ordinary least squares coefficients from our data
-    # TODO do it with RIDGE and alpha_ridge=0.0
     coef_ols = LinearRegression(fit_intercept=fit_intercept).fit(X, y).coef_
 
     X = X * coef_ols[np.newaxis, :]
     _, _, shrink_coef_path = lars_path(X, y, method='lasso')
-    #shrink_coef_path = lasso_path(X, y, positive=True)[0].coef_
-    #models = lasso_path(X, y, eps, n_alphas, alphas=alphas,
-    #                    precompute=precompute, fit_intercept=fit_intercept, positive=True)
-    #shrink_coef_path = np.array([m.coef_ for m in models]).T
-
-    #shrink_coef = lasso_path(X, y, positive=True, alpha=alpha)[0].coef_
 
     # Shrunken betas
     coef_path = shrink_coef_path * coef_ols[:, np.newaxis]
-
-    #coef_path = coef_ols * shrink_coef_path
 
     return coef_path, shrink_coef_path
 
@@ -128,10 +193,12 @@ class NonNegativeGarrote(LinearModel):
 
     See also
     --------
-    Lasso LINK
-
-    NOTES:
-    alpha will be cross-validated
+    lars_path
+    Lasso
+    LassoLars
+    LassoCV
+    LassoLarsCV
+    sklearn.decomposition.sparse_encode
     """
     def __init__(self, alpha=0.35, fit_intercept=True, max_iter=1000,
                  tol=1e-4, normalize=False,
