@@ -484,8 +484,11 @@ def test_hashing_vectorizer():
 
 def test_feature_names():
     cv = CountVectorizer(max_df=0.5, min_df=1)
-    X = cv.fit_transform(ALL_FOOD_DOCS)
-
+    
+    # test for Value error on unfitted/empty vocabulary
+    assert_raises(ValueError, cv.get_feature_names)
+    
+    X = cv.fit_transform(ALL_FOOD_DOCS) 
     n_samples, n_features = X.shape
     assert_equal(len(cv.vocabulary_), n_features)
 
