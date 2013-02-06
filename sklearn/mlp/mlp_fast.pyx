@@ -1,6 +1,6 @@
 # encoding: utf-8
 # filename: mlp_fast.pyx
-# cython: profile=True
+# cython: profile=False
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
@@ -14,9 +14,11 @@ from ..utils import shuffle
 
 DTYPE = np.float64
 ctypedef np.float64_t DTYPE_t
+ctypedef np.uint64_t uint64_t
 
 cdef extern from "math.h":
-    DTYPE_t log "log"(DTYPE_t)
+    DTYPE_t log "log"(DTYPE_t) nogil
+    DTYPE_t exp "exp"(DTYPE_t) nogil
 
 cdef extern from "cblas.h":
     enum CBLAS_ORDER:
@@ -46,6 +48,55 @@ cdef extern from "cblas.h":
     double dnrm2 "cblas_dnrm2"(int N, double *X, int incX)
     void dcopy "cblas_dcopy"(int N, double *X, int incX, double *Y, int incY)
     void dscal "cblas_dscal"(int N, double alpha, double *X, int incX)
+
+
+
+cdef inline double _logsumexp(double[:] x) nogil:
+    """Fast implementation of 1-d logsumexp for double precision floats.
+
+    Computes log(sum(exp(x))) and stores the result in out.
+    """
+    # XXX this might be interesting for sklearn.utils.extmath,
+    # and maybe even scipy.misc
+
+    cdef double total, vmax
+
+    vmax = x[0]
+    for i in range(1, x.shape[0]):
+        vmax = max(x[i], vmax)
+    total = 0.
+    for i in range(0, x.shape[0]):
+        total += exp(x[i] - vmax)
+    return log(total) + vmax
+
+
+cdef void log_softmax(double[:, :] X, double[:, :] log_y_output) nogil:
+    """Logistic K-way softmax (exp(X).T / exp(X).sum(axis=1)).T, in log domain.
+
+    In-place implementation.
+    """
+    cdef double logsum
+
+    for i in range(X.shape[0]):
+        logsum = _logsumexp(X[i, :])
+        for j in range(X.shape[1]):
+            log_y_output[i, j] = X[i, j] - logsum
+
+
+cdef double log_loss_multiclass(double[:, :] output, uint64_t[:, :] T) nogil:
+    """Multiclass cross-entropy loss function."""
+    #loss = -np.mean(np.sum(log_y_output * T, axis=1))
+    cdef double total
+
+    log_softmax(output, output)
+
+    total = 0.
+    for i in range(output.shape[0]):
+        for j in range(output.shape[1]):
+            total += output[i, j] * T[i, j]
+
+    return -(total / output.shape[0])
+
 
 cdef class LossFunction:
     """Base class for loss functions"""
@@ -259,9 +310,10 @@ cdef class SoftMax(OutputFunction):
 
     def output(self, np.ndarray[DTYPE_t, ndim=2] x, np.ndarray[DTYPE_t, ndim=2] out):
         # TODO: get rid of this allocation
-        r = np.logaddexp.reduce(x, axis=1)[:, np.newaxis]
-        np.subtract(x, r, out)
-        np.exp(out, out)
+        log_loss_multiclass(x, out)
+        #r = np.logaddexp.reduce(x, axis=1)[:, np.newaxis]
+        #np.subtract(x, r, out)
+        #np.exp(out, out)
 
 
 cdef class LogSig(OutputFunction):
