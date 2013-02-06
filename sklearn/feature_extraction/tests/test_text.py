@@ -405,6 +405,14 @@ def test_vectorizer():
     # test idf transform with unlearned idf vector
     t3 = TfidfTransformer(use_idf=True)
     assert_raises(ValueError, t3.transform, counts_train)
+    
+    # test idf transform with incompatible n_features
+    X = [[1, 1, 5],
+         [1, 1, 0]]
+    t3.fit(X)
+    X_incompt = [[1, 3],
+                 [1, 3]]
+    assert_raises(ValueError, t3.transform, X_incompt)
 
     # L1-normalized term frequencies sum to one
     assert_array_almost_equal(np.sum(tf, axis=1), [1.0] * n_train)
