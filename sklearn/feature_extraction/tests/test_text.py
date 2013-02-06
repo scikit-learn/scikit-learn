@@ -434,6 +434,19 @@ def test_vectorizer():
     # test transform on unfitted vectorizer with empty vocabulary
     v3 = CountVectorizer(vocabulary=None)
     assert_raises(ValueError, v3.transform, train_data)
+    
+    
+def test_tfidf_vectorizer_setters():
+    tv = TfidfVectorizer(norm='l2', use_idf=False,
+                             smooth_idf=False, sublinear_tf=False)
+    tv.norm = 'l1'
+    assert_equal(tv._tfidf.norm, 'l1')
+    tv.use_idf = True
+    assert_true(tv._tfidf.use_idf)
+    tv.smooth_idf = True
+    assert_true(tv._tfidf.smooth_idf)
+    tv.sublinear_tf = True
+    assert_true(tv._tfidf.sublinear_tf)
 
 
 def test_vectorizer_mixin():
