@@ -16,12 +16,19 @@ Changelog
      scoring function such as area under the ROC curve and f-beta scores.
      See :ref:`score_func_objects` for details. By `Andreas Müller`_.
      Passing a function from :mod:`sklearn.metrics` as ``score_func`` is
-     deprecated. 
+     deprecated.
 
-   - Added :class:`ensemble.AdaBoostClassifier` and 
-     :class:`ensemble.AdaBoostRegressor`, by `Noel Dawe`_  and `Gilles Louppe`_.
-     See the :ref:`AdaBoost <adaboost>` section of the user guide for
-     details and examples.
+   - Added :class:`ensemble.AdaBoostClassifier` and
+     :class:`ensemble.AdaBoostRegressor`, by `Noel Dawe`_  and
+     `Gilles Louppe`_. See the :ref:`AdaBoost <adaboost>` section of the user
+     guide for details and examples.
+
+   - Feature importances in :class:`tree.DecisionTreeClassifier`,
+     :class:`tree.DecisionTreeRegressor` and all derived ensemble estimators
+     are now computed on the fly when accessing  the ``feature_importances_``
+     attribute. Setting ``compute_importances=True`` is no longer required.
+     By `Gilles Louppe`_.
+
 
 .. _changes_0_13:
 
