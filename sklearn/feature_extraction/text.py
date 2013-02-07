@@ -168,7 +168,7 @@ class VectorizerMixin(object):
 
         # unfortunately python functools package does not have an efficient
         # `compose` function that would have allowed us to chain a dynamic
-        # number of functions. However the however of a lambda call is a few
+        # number of functions. However the cost of a lambda call is a few
         # hundreds of nanoseconds which is negligible when compared to the
         # cost of tokenizing a string of 1000 chars for instance.
         noop = lambda x: x
@@ -319,8 +319,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
 
     stop_words: string {'english'}, list, or None (default)
         If a string, it is passed to _check_stop_list and the appropriate stop
-        list is returned is currently the only
-        supported string value.
+        list is returned. 'english' is currently the only supported string
+        value.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
@@ -500,8 +500,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     stop_words : string {'english'}, list, or None (default)
         If a string, it is passed to _check_stop_list and the appropriate stop
-        list is returned is currently the only
-        supported string value.
+        list is returned. 'english' is currently the only supported string
+        value.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
@@ -994,8 +994,8 @@ class TfidfVectorizer(CountVectorizer):
 
     stop_words : string {'english'}, list, or None (default)
         If a string, it is passed to _check_stop_list and the appropriate stop
-        list is returned is currently the only
-        supported string value.
+        list is returned. 'english' is currently the only supported string
+        value.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
