@@ -432,8 +432,11 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
     @property
     def feature_importances_(self):
-        """Return the feature importances (the higher, the more important the
-           feature).
+        """Return the feature importances.
+
+        The importance of a feature is computed as the
+        (normalized) total reduction of the criterion brought by that
+        feature.  It is also known as the Gini importance [4]_.
 
         Returns
         -------
@@ -506,10 +509,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         output (for multi-output problems).
 
     `feature_importances_` : array of shape = [n_features]
-        The feature importances
-        (the higher, the more important the feature).
+        The feature importances. The higher, the more important the feature.
         The importance of a feature is computed as the
-        (normalized) total reduction of error brought by that
+        (normalized) total reduction of the criterion brought by that
         feature.  It is also known as the Gini importance [4]_.
 
     See also
@@ -692,10 +694,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The underlying Tree object.
 
     `feature_importances_` : array of shape = [n_features]
-        The feature importances
-        (the higher, the more important the feature).
+        The feature importances. The higher, the more important the feature.
         The importance of a feature is computed as the
-        (normalized) total reduction of error brought by that
+        (normalized) total reduction of the criterion brought by that
         feature.  It is also known as the Gini importance [4]_.
 
     See also
