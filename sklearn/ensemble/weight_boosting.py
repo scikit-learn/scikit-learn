@@ -50,8 +50,7 @@ class BaseWeightBoosting(BaseEnsemble):
                  base_estimator,
                  n_estimators=50,
                  estimator_params=tuple(),
-                 learning_rate=1.,
-                 compute_importances=False):
+                 learning_rate=1.):
 
         super(BaseWeightBoosting, self).__init__(
             base_estimator=base_estimator,
@@ -61,8 +60,6 @@ class BaseWeightBoosting(BaseEnsemble):
         self.estimator_weights_ = None
         self.estimator_errors_ = None
         self.learning_rate = learning_rate
-        self.compute_importances = compute_importances
-        self.feature_importances_ = None
 
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier/regressor from the training set (X, y).
@@ -88,9 +85,6 @@ class BaseWeightBoosting(BaseEnsemble):
         # Check parameters
         if self.learning_rate <= 0:
             raise ValueError("learning_rate must be greater than zero")
-
-        if self.compute_importances:
-            self.base_estimator.set_params(compute_importances=True)
 
         # Check data
         X, y = check_arrays(X, y, sparse_format="dense")
@@ -141,21 +135,6 @@ class BaseWeightBoosting(BaseEnsemble):
             if iboost < self.n_estimators - 1:
                 # Normalize
                 sample_weight /= sample_weight_sum
-
-        # Sum the importances
-        try:
-            if self.compute_importances:
-                norm = self.estimator_weights_.sum()
-                self.feature_importances_ = (
-                    sum(weight * clf.feature_importances_ for weight, clf
-                        in zip(self.estimator_weights_, self.estimators_))
-                    / norm)
-
-        except AttributeError:
-            raise AttributeError(
-                "Unable to compute feature importances "
-                "since base_estimator does not have a "
-                "feature_importances_ attribute")
 
         return self
 
@@ -213,7 +192,6 @@ class BaseWeightBoosting(BaseEnsemble):
         Returns
         -------
         z : float
-
         """
         for y_pred in self.staged_predict(X):
             if isinstance(self, ClassifierMixin):
@@ -221,10 +199,34 @@ class BaseWeightBoosting(BaseEnsemble):
             else:
                 yield r2_score(y, y_pred)
 
+    @property
+    def feature_importances_(self):
+        """Return the feature importances (the higher, the more important the
+           feature).
+
+        Returns
+        -------
+        feature_importances_ : array, shape = [n_features]
+        """
+        if self.estimators_ is None or len(self.estimators_) == 0:
+            raise ValueError("Estimator not fitted, "
+                             "call `fit` before `feature_importances_`.")
+
+        try:
+            norm = self.estimator_weights_.sum()
+            return (sum(weight * clf.feature_importances_ for weight, clf
+                    in zip(self.estimator_weights_, self.estimators_))
+                    / norm)
+
+        except AttributeError:
+            raise AttributeError(
+                "Unable to compute feature importances "
+                "since base_estimator does not have a "
+                "feature_importances_ attribute")
+
 
 def _samme_proba(estimator, n_classes, X):
-    """
-    Calculate algorithm 4, step 2, equation c) of Zhu et al [1]
+    """Calculate algorithm 4, step 2, equation c) of Zhu et al [1].
 
     References
     ----------
@@ -277,10 +279,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         The SAMME.R algorithm typically converges faster than SAMME,
         achieving a lower test error with fewer boosting iterations.
 
-    compute_importances : boolean, optional (default=False)
-        Whether feature importances are computed and stored in the
-        ``feature_importances_`` attribute when calling fit.
-
     Attributes
     ----------
     `estimators_` : list of classifiers
@@ -301,7 +299,6 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
     `feature_importances_` : array of shape = [n_features]
         The feature importances if supported by the ``base_estimator``.
-        Only computed if ``compute_importances=True``.
 
     See also
     --------
@@ -319,14 +316,12 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                  base_estimator=DecisionTreeClassifier(max_depth=1),
                  n_estimators=50,
                  learning_rate=1.,
-                 algorithm='SAMME.R',
-                 compute_importances=False):
+                 algorithm='SAMME.R'):
 
         super(AdaBoostClassifier, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
-            learning_rate=learning_rate,
-            compute_importances=compute_importances)
+            learning_rate=learning_rate)
 
         self.algorithm = algorithm
 
@@ -801,10 +796,6 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         The loss function to use when updating the weights after each
         boosting iteration.
 
-    compute_importances : boolean, optional (default=False)
-        Whether feature importances are computed and stored in the
-        ``feature_importances_`` attribute when calling fit.
-
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -824,7 +815,6 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
     `feature_importances_` : array of shape = [n_features]
         The feature importances if supported by the ``base_estimator``.
-        Only computed if ``compute_importances=True``.
 
     See also
     --------
@@ -843,14 +833,12 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
                  n_estimators=50,
                  learning_rate=1.,
                  loss='linear',
-                 compute_importances=False,
                  random_state=None):
 
         super(AdaBoostRegressor, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
-            learning_rate=learning_rate,
-            compute_importances=compute_importances)
+            learning_rate=learning_rate)
 
         self.loss = loss
         self.random_state = random_state
