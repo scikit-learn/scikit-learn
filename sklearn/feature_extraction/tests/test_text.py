@@ -435,6 +435,18 @@ def test_vectorizer():
     v3 = CountVectorizer(vocabulary=None)
     assert_raises(ValueError, v3.transform, train_data)
     
+    # ascii preprocessor?
+    v3.set_params(strip_accents='ascii', lowercase=False)
+    assert_equal(v3.build_preprocessor(), strip_accents_ascii)
+    
+    # error on bad strip_accents param
+    v3.set_params(strip_accents='_gabbledegook_', preprocessor=None)
+    assert_raises(ValueError, v3.build_preprocessor)
+    
+    # error with bad analyzer type
+    v3.set_params = '_invalid_analyzer_type_'
+    assert_raises(ValueError, v3.build_analyzer) 
+    
     
 def test_tfidf_vectorizer_setters():
     tv = TfidfVectorizer(norm='l2', use_idf=False,
@@ -447,22 +459,6 @@ def test_tfidf_vectorizer_setters():
     assert_true(tv._tfidf.smooth_idf)
     tv.sublinear_tf = True
     assert_true(tv._tfidf.sublinear_tf)
-
-
-def test_vectorizer_mixin():
-    # test a few cases in VectorizerMixin
-    vm = VectorizerMixin()
-    vm.preprocessor = None
-    vm.strip_accents = 'gabbldegook'
-    assert_raises(ValueError, vm.build_preprocessor)
-    
-    vm.lowercase = False
-    vm.strip_accents = 'ascii'
-    assert_equal(vm.build_preprocessor(), strip_accents_ascii)
-    
-    # error with bad analyzer
-    vm.analyzer = 'invalid_analyzer'
-    assert_raises(ValueError, vm.build_analyzer)    
     
 
 def test_hashing_vectorizer():
