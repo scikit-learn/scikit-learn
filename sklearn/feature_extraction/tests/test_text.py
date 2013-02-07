@@ -2,7 +2,6 @@ import warnings
 from sklearn.feature_extraction.text import strip_tags
 from sklearn.feature_extraction.text import strip_accents_unicode
 from sklearn.feature_extraction.text import strip_accents_ascii
-from sklearn.feature_extraction.text import _check_stop_list
 
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
@@ -175,14 +174,6 @@ def test_unicode_decode_error():
     ca = CountVectorizer(analyzer='char', ngram_range=(3, 6),
                          charset='ascii').build_analyzer()
     assert_raises(UnicodeDecodeError, ca, text_bytes)
-
-
-def test_check_stop_list():
-    assert_equal(_check_stop_list('english'), ENGLISH_STOP_WORDS)
-    assert_raises(ValueError, _check_stop_list, 'bad_str_stop')
-    assert_raises(ValueError, _check_stop_list, u'bad_unicode_stop')
-    stoplist = ['some', 'other', 'words']
-    assert_equal(_check_stop_list(stoplist), stoplist)
     
     
 def test_char_ngram_analyzer():
@@ -253,6 +244,19 @@ def test_countvectorizer_custom_vocabulary_pipeline():
     assert_equal(set(pipe.named_steps['count'].vocabulary_),
                  set(what_we_like))
     assert_equal(X.shape[1], len(what_we_like))
+    
+
+def test_countvectorizer_stop_words():
+    cv = CountVectorizer()
+    cv.set_params(stop_words='english')
+    assert_equal(cv.get_stop_words(), ENGLISH_STOP_WORDS)
+    cv.set_params(stop_words='_bad_str_stop_')
+    assert_raises(ValueError, cv.get_stop_words)
+    cv.set_params(stop_words=u'_bad_unicode_stop_')
+    assert_raises(ValueError, cv.get_stop_words)
+    stoplist = ['some', 'other', 'words']
+    cv.set_params(stop_words=stoplist)
+    assert_equal(cv.get_stop_words(), stoplist)
 
 
 def test_countvectorizer_empty_vocabulary():
