@@ -23,7 +23,6 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from numpy.core.umath_tests import inner1d
-from warnings import warn
 
 from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin
@@ -51,8 +50,7 @@ class BaseWeightBoosting(BaseEnsemble):
                  base_estimator,
                  n_estimators=50,
                  estimator_params=tuple(),
-                 learning_rate=1.,
-                 compute_importances=False):
+                 learning_rate=1.):
 
         super(BaseWeightBoosting, self).__init__(
             base_estimator=base_estimator,
@@ -62,14 +60,6 @@ class BaseWeightBoosting(BaseEnsemble):
         self.estimator_weights_ = None
         self.estimator_errors_ = None
         self.learning_rate = learning_rate
-
-        if compute_importances:
-            warn("Setting compute_importances=True is no longer "
-                 "required. Variable importances are now computed on the fly "
-                 "when accessing the feature_importances_ attribute. This "
-                 "parameter will be removed in 0.15.", DeprecationWarning)
-
-        self.compute_importances = compute_importances
 
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier/regressor from the training set (X, y).
@@ -326,14 +316,12 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                  base_estimator=DecisionTreeClassifier(max_depth=1),
                  n_estimators=50,
                  learning_rate=1.,
-                 algorithm='SAMME.R',
-                 compute_importances=False):
+                 algorithm='SAMME.R'):
 
         super(AdaBoostClassifier, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
-            learning_rate=learning_rate,
-            compute_importances=compute_importances)
+            learning_rate=learning_rate)
 
         self.algorithm = algorithm
 
@@ -845,14 +833,12 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
                  n_estimators=50,
                  learning_rate=1.,
                  loss='linear',
-                 compute_importances=False,
                  random_state=None):
 
         super(AdaBoostRegressor, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
-            learning_rate=learning_rate,
-            compute_importances=compute_importances)
+            learning_rate=learning_rate)
 
         self.loss = loss
         self.random_state = random_state
