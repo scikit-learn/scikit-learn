@@ -463,7 +463,6 @@ class BaseGradientBoosting(BaseEnsemble):
                 min_samples_leaf=self.min_samples_leaf,
                 min_density=self.min_density,
                 max_features=self.max_features,
-                compute_importances=False,
                 random_state=random_state)
 
             tree.fit(X, residual, sample_mask, X_argsorted, check_input=False)
@@ -681,14 +680,21 @@ class BaseGradientBoosting(BaseEnsemble):
 
     @property
     def feature_importances_(self):
+        """Return the feature importances (the higher, the more important the
+           feature).
+
+        Returns
+        -------
+        feature_importances_ : array, shape = [n_features]
+        """
         if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, "
                              "call `fit` before `feature_importances_`.")
+
         total_sum = np.zeros((self.n_features, ), dtype=np.float64)
         for stage in self.estimators_:
-            stage_sum = sum(
-                tree.tree_.compute_feature_importances(method='gini')
-                for tree in stage) / len(stage)
+            stage_sum = sum(tree.feature_importances_
+                            for tree in stage) / len(stage)
             total_sum += stage_sum
 
         importances = total_sum / len(self.estimators_)

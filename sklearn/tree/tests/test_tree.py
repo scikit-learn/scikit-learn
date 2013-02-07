@@ -288,7 +288,7 @@ def test_importances():
                                         shuffle=False,
                                         random_state=0)
 
-    clf = tree.DecisionTreeClassifier(compute_importances=True)
+    clf = tree.DecisionTreeClassifier()
     clf.fit(X, y)
     importances = clf.feature_importances_
     n_important = sum(importances > 0.1)
@@ -298,10 +298,6 @@ def test_importances():
 
     X_new = clf.transform(X, threshold="mean")
     assert 0 < X_new.shape[1] < X.shape[1]
-
-    clf = tree.DecisionTreeClassifier()
-    clf.fit(X, y)
-    assert_true(clf.feature_importances_ is None)
 
 
 def test_error():
