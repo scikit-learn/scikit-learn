@@ -24,4 +24,4 @@ __all__ = ["BaseEnsemble", "RandomForestClassifier", "RandomForestRegressor",
            "ExtraTreesRegressor", "GradientBoostingClassifier",
            "GradientBoostingRegressor", "AdaBoostClassifier",
            "AdaBoostRegressor", "forest", "gradient_boosting",
-           "partial_dependence", ]
+           "partial_dependence", "weight_boosting"]
