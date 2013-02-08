@@ -35,7 +35,6 @@ print("Fitting ExtraTreesClassifier on faces data with %d cores..." % n_jobs)
 t0 = time()
 forest = ExtraTreesClassifier(n_estimators=1000,
                               max_features=128,
-                              compute_importances=True,
                               n_jobs=n_jobs,
                               random_state=0)
 
