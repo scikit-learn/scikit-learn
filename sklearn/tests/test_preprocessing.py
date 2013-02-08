@@ -676,6 +676,9 @@ def test_label_binarizer_classes():
                         indicator_matrix=True)
     assert_array_equal(lb.inverse_transform(Y), Y)
 
+    lb = LabelBinarizer(classes=np.arange(1, 3), multilabel=False)
+    assert_raise_message(ValueError, "multilabel was set explicitly",
+                         lb.fit, y)
     lb = LabelBinarizer(classes=np.arange(1, 3))
     assert_raise_message(ValueError, "not fitted with multilabel",
                          lb.transform, y)
