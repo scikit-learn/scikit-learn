@@ -948,6 +948,7 @@ Pairwise metrics
    :template: function.rst
 
    preprocessing.add_dummy_feature
+   preprocessing.balance_weights
    preprocessing.binarize
    preprocessing.normalize
    preprocessing.scale
