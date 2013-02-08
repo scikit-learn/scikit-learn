@@ -614,7 +614,7 @@ def _is_multilabel(y):
     # versions of Numpy might want to register ndarray as a Sequence
     return (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) and
             not isinstance(y[0], string_types) or
-           _is_label_indicator_matrix(y))
+            _is_label_indicator_matrix(y))
 
 
 class OneHotEncoder(BaseEstimator, TransformerMixin):

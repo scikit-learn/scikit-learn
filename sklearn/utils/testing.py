@@ -12,7 +12,6 @@ import pkgutil
 
 import urllib2
 import scipy as sp
-from StringIO import StringIO
 from functools import wraps
 
 import sklearn

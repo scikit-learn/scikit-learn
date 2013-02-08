@@ -13,7 +13,6 @@ make it more stable, this module will be removed in version 0.11.
 """
 
 import string
-import warnings
 
 import numpy as np
 
