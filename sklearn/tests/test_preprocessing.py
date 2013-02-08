@@ -657,15 +657,24 @@ def test_label_binarizer_classes():
     transformed = lb.transform(['see', 'see'])
     assert_equal(transformed.shape, (2, 3))
     assert_array_equal(np.argmax(transformed, axis=1), [2, 2])
+    # test inverse transform
+    assert_array_equal(['see', 'see'], lb.inverse_transform(transformed))
 
     # also works with multilabel data if we say so:
     lb = LabelBinarizer(classes=np.arange(1, 3), multilabel=True)
-    y = [[1, 2], [1], []]
+    y = [(1, 2), (1,), ()]
     Y = np.array([[1, 1],
                   [1, 0],
                   [0, 0]])
     assert_array_equal(lb.transform(y), Y)
     assert_array_equal(lb.fit_transform(y), Y)
+    # inverse transform of label indicator matrix to label
+    assert_array_equal(lb.inverse_transform(Y), y)
+
+    # inverse transform  with indicator_matrix=True
+    lb = LabelBinarizer(classes=np.arange(1, 3), multilabel=True,
+                        indicator_matrix=True)
+    assert_array_equal(lb.inverse_transform(Y), Y)
 
     lb = LabelBinarizer(classes=np.arange(1, 3))
     assert_raise_message(ValueError, "not fitted with multilabel",

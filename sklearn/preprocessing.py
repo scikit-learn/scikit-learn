@@ -932,6 +932,11 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         Whether or not data will be multilabel.
         If None, it will be inferred during fitting.
 
+    indicator_matrix : bool or None (default)
+        Whether ``inverse_transform`` will produce an indicator
+        matrix encoding (if False it will return list of lists).
+        If None, it will be inferred during fitting.
+
     Attributes
     ----------
     `classes_` : array of shape [n_class]
@@ -939,6 +944,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
     `multilabel_` : bool
         Whether the estimator was fitted for multi-label data.
+
+    `indicator_matrix_` : bool
+        Whether the estimator was fitted with a label indicator matrix.
+        This will determine the result of ``inverse_transform``.
 
     Examples
     --------
@@ -960,7 +969,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, neg_label=0, pos_label=1, classes=None,
-                 multilabel=None):
+                 multilabel=None, indicator_matrix=None):
         if neg_label >= pos_label:
             raise ValueError("neg_label must be strictly less than pos_label.")
 
@@ -968,6 +977,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         self.pos_label = pos_label
         self.classes = classes
         self.multilabel = multilabel
+        self.indicator_matrix = indicator_matrix
 
     def _check_fitted(self):
         if not hasattr(self, "classes_"):
@@ -975,6 +985,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
                 self.classes_ = np.unique(self.classes)
                 # default to not doing multi-label things
                 self.multilabel_ = bool(self.multilabel)
+                self.indicator_matrix_ = bool(self.indicator_matrix)
             else:
                 raise ValueError("LabelBinarizer was not fitted yet.")
 
