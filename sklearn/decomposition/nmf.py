@@ -561,10 +561,10 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             Transformed data
         """
         X = atleast2d_or_csr(X)
-        H = np.zeros((X.shape[0], self.n_components))
+        W = np.zeros((X.shape[0], self.n_components))
         for j in xrange(0, X.shape[0]):
-            H[j, :], _ = nnls(self.components_.T, X[j, :])
-        return H
+            W[j, :], _ = nnls(self.components_.T, X[j, :])
+        return W
 
 
 class NMF(ProjectedGradientNMF):
