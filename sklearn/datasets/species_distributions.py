@@ -35,19 +35,11 @@ Notes:
 #
 # License: Simplified BSD
 
-import sys
-if sys.version_info[0] == 3:
-    # in python3, StringIO does not accept binary data
-    # see http://packages.python.org/six/
-    import io
-    StringIO = io.BytesIO
-else:
-    import cStringIO
-    StringIO = cStringIO.StringIO
-
+from io import BytesIO
 from os import makedirs
 from os.path import join
 from os.path import exists
+import sys
 
 try:
     # Python 2
@@ -233,10 +225,10 @@ def fetch_species_distributions(data_home=None,
     if not exists(join(data_home, DATA_ARCHIVE_NAME)):
         print('Downloading species data from %s to %s' % (SAMPLES_URL,
                                                           data_home))
-        X = np.load(StringIO(urlopen(SAMPLES_URL).read()))
+        X = np.load(BytesIO(urlopen(SAMPLES_URL).read()))
 
         for f in X.files:
-            fhandle = StringIO(X[f])
+            fhandle = BytesIO(X[f])
             if 'train' in f:
                 train = _load_csv(fhandle)
             if 'test' in f:
@@ -245,11 +237,11 @@ def fetch_species_distributions(data_home=None,
         print('Downloading coverage data from %s to %s' % (COVERAGES_URL,
                                                            data_home))
 
-        X = np.load(StringIO(urlopen(COVERAGES_URL).read()))
+        X = np.load(BytesIO(urlopen(COVERAGES_URL).read()))
 
         coverages = []
         for f in X.files:
-            fhandle = StringIO(X[f])
+            fhandle = BytesIO(X[f])
             print(' - converting', f)
             coverages.append(_load_coverage(fhandle))
         coverages = np.asarray(coverages,

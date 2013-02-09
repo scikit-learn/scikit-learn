@@ -17,9 +17,9 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 # Authors: Peter Prettenhofer
 # License: Simplified BSD
 
+from io import BytesIO
 from os.path import join, exists
 from os import makedirs
-from cStringIO import StringIO
 from zipfile import ZipFile
 import urllib2
 
@@ -63,11 +63,11 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
         print 'downloading Cal. housing from %s to %s' % (DATA_URL,
                                                           data_home)
         fhandle = urllib2.urlopen(DATA_URL)
-        buf = StringIO(fhandle.read())
+        buf = BytesIO(fhandle.read())
         zip_file = ZipFile(buf)
         try:
             cadata_fd = zip_file.open('cadata.txt', 'r')
-            cadata = StringIO(cadata_fd.read())
+            cadata = BytesIO(cadata_fd.read())
             # skip the first 27 lines (documentation)
             cal_housing = np.loadtxt(cadata, skiprows=27)
             joblib.dump(cal_housing, join(data_home, TARGET_FILENAME),
