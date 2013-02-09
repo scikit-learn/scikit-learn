@@ -394,8 +394,9 @@ class::
 
   >>> from sklearn.feature_extraction.text import TfidfTransformer
   >>> transformer = TfidfTransformer()
-  >>> transformer
-  TfidfTransformer(norm=u'l2', smooth_idf=True, sublinear_tf=False, use_idf=True)
+  >>> transformer   # doctest: +NORMALIZE_WHITESPACE
+  TfidfTransformer(norm=u'l2', smooth_idf=True, sublinear_tf=False,
+                   use_idf=True)
 
 Again please see the :ref:`reference documentation
 <text_feature_extraction_ref>` for the details on all the parameters.
