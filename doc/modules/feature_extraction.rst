@@ -281,8 +281,8 @@ reasonable (please see  the :ref:`reference documentation
 
   >>> vectorizer = CountVectorizer(min_df=1)
   >>> vectorizer                            # doctest: +NORMALIZE_WHITESPACE
-  CountVectorizer(analyzer='word', binary=False, charset='utf-8',
-          charset_error='strict', dtype=<type 'long'>, input='content',
+  CountVectorizer(analyzer=u'word', binary=False, charset=u'utf-8',
+          charset_error=u'strict', dtype=<type 'long'>, input=u'content',
           lowercase=True, max_df=1.0, max_features=None, min_df=1,
           ngram_range=(1, 1), preprocessor=None, stop_words=None,
           strip_accents=None, token_pattern=u'(?u)\\b\\w\\w+\\b',
@@ -395,7 +395,7 @@ class::
   >>> from sklearn.feature_extraction.text import TfidfTransformer
   >>> transformer = TfidfTransformer()
   >>> transformer
-  TfidfTransformer(norm='l2', smooth_idf=True, sublinear_tf=False, use_idf=True)
+  TfidfTransformer(norm=u'l2', smooth_idf=True, sublinear_tf=False, use_idf=True)
 
 Again please see the :ref:`reference documentation
 <text_feature_extraction_ref>` for the details on all the parameters.
