@@ -167,6 +167,14 @@ class BaseWeightBoosting(BaseEnsemble):
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.
 
+        X_argsorted : array-like, shape = [n_samples, n_features] (optional)
+            Each column of ``X_argsorted`` holds the row indices of ``X``
+            sorted according to the value of the corresponding feature
+            in ascending order.
+            The argument is supported to enable multiple decision trees
+            to share the data structure and to avoid re-computation in
+            tree ensembles. For maximum efficiency use dtype np.int32.
+
         Returns
         -------
         sample_weight : array-like of shape = [n_samples] or None
@@ -396,6 +404,14 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.
+
+        X_argsorted : array-like, shape = [n_samples, n_features] (optional)
+            Each column of ``X_argsorted`` holds the row indices of ``X``
+            sorted according to the value of the corresponding feature
+            in ascending order.
+            The argument is supported to enable multiple decision trees
+            to share the data structure and to avoid re-computation in
+            tree ensembles. For maximum efficiency use dtype np.int32.
 
         Returns
         -------
@@ -913,6 +929,14 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.
 
+        X_argsorted : array-like, shape = [n_samples, n_features] (optional)
+            Each column of ``X_argsorted`` holds the row indices of ``X``
+            sorted according to the value of the corresponding feature
+            in ascending order.
+            The argument is supported to enable multiple decision trees
+            to share the data structure and to avoid re-computation in
+            tree ensembles. For maximum efficiency use dtype np.int32.
+
         Returns
         -------
         sample_weight : array-like of shape = [n_samples] or None
@@ -942,6 +966,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         # Fit on the bootstrapped sample and obtain a prediction
         # for all samples in the training set
+        # X_argsorted is not used since bootstrap copies are used.
         estimator.fit(X[bootstrap_idx], y[bootstrap_idx])
         y_predict = estimator.predict(X)
 
