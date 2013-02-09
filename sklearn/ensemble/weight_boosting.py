@@ -428,17 +428,20 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             If None then boosting has terminated early.
         """
         if self.algorithm == 'SAMME.R':
-            return self._boost_real(iboost, X, y, sample_weight, X_argsorted=X_argsorted)
+            return self._boost_real(iboost, X, y, sample_weight,
+                                    X_argsorted=X_argsorted)
 
         else:  # elif self.algorithm == "SAMME":
-            return self._boost_discrete(iboost, X, y, sample_weight, X_argsorted=X_argsorted)
+            return self._boost_discrete(iboost, X, y, sample_weight,
+                                        X_argsorted=X_argsorted)
 
     def _boost_real(self, iboost, X, y, sample_weight, X_argsorted=None):
         """Implement a single boost using the SAMME.R real algorithm."""
         estimator = self._make_estimator()
 
         if X_argsorted is not None:
-            estimator.fit(X, y, sample_weight=sample_weight, X_argsorted=X_argsorted)
+            estimator.fit(X, y, sample_weight=sample_weight,
+                          X_argsorted=X_argsorted)
         else:
             estimator.fit(X, y, sample_weight=sample_weight)
 
@@ -498,7 +501,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         estimator = self._make_estimator()
 
         if X_argsorted is not None:
-            estimator.fit(X, y, sample_weight=sample_weight, X_argsorted=X_argsorted)
+            estimator.fit(X, y, sample_weight=sample_weight,
+                          X_argsorted=X_argsorted)
         else:
             estimator.fit(X, y, sample_weight=sample_weight)
 
