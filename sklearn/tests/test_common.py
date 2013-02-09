@@ -10,9 +10,11 @@ import warnings
 import sys
 import traceback
 import inspect
+import pickle
 
 import numpy as np
 from scipy import sparse
+from StringIO import StringIO
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
@@ -634,6 +636,52 @@ def test_regressors_train():
             print
             succeeded = False
 
+    assert_true(succeeded)
+
+
+def test_regressor_pickle():
+    # Test that estimators can be pickled, and once pickled
+    # give the same answer as before.
+    regressors = all_estimators(type_filter='regressor')
+    boston = load_boston()
+    X, y = boston.data, boston.target
+    X, y = shuffle(X, y, random_state=0)
+    # TODO: test with intercept
+    # TODO: test with multiple responses
+    X = StandardScaler().fit_transform(X)
+    y = StandardScaler().fit_transform(y)
+    succeeded = True
+    for name, Reg in regressors:
+        if Reg in dont_test:
+            continue
+        # catch deprecation warnings
+        with warnings.catch_warnings(record=True):
+            reg = Reg()
+        if not hasattr(reg, 'alphas') and hasattr(reg, 'alpha'):
+            # linear regressors need to set alpha, but not generalized CV ones
+            reg.alpha = 0.01
+
+        if Reg in (_PLS, PLSCanonical, PLSRegression, CCA):
+           y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
+           y_ = y_.T
+        else:
+           y_ = y
+        reg.fit(X, y_)
+        pred = reg.predict(X)
+        # store old predictions
+        pickled_reg = StringIO.StringIO()
+        pickle.dump(reg, pickled_reg)
+        pickled_reg.pos = 0
+        unpickled_reg = pickle.load(pickled_reg)
+        new_pred = unpickled_reg.predict(X)
+
+        try:
+            assert_array_almost_equal(new_pred, pred)
+        except Exception, exc:
+            succeeded = False
+            print ("Esimator %s doesn't predict the same value "
+                    "after pickling" % name)
+            raise exc
     assert_true(succeeded)
 
 
