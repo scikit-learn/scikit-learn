@@ -573,6 +573,53 @@ def test_classifiers_classes():
                   (clf, classes, clf.classes_))
 
 
+def test_classifiers_pickle():
+    # test if classifiers do something sensible on training set
+    # also test all shapes / shape errors
+    classifiers = all_estimators(type_filter='classifier')
+    X_m, y_m = make_blobs(random_state=0)
+    X_m, y_m = shuffle(X_m, y_m, random_state=7)
+    X_m = StandardScaler().fit_transform(X_m)
+    # generate binary problem from multi-class one
+    y_b = y_m[y_m != 2]
+    X_b = X_m[y_m != 2]
+    succeeded = True
+    for (X, y) in [(X_m, y_m), (X_b, y_b)]:
+        # do it once with binary, once with multiclass
+        classes = np.unique(y)
+        n_classes = len(classes)
+        n_samples, n_features = X.shape
+        for name, Clf in classifiers:
+            if Clf in dont_test:
+                continue
+            if Clf in [MultinomialNB, BernoulliNB]:
+                # TODO also test these!
+                continue
+            # catch deprecation warnings
+            with warnings.catch_warnings(record=True):
+                clf = Clf()
+            # raises error on malformed input for fit
+            assert_raises(ValueError, clf.fit, X, y[:-1])
+
+            # fit
+            clf.fit(X, y)
+            y_pred = clf.predict(X)
+            pickled_clf = StringIO.StringIO()
+            pickle.dump(clf, pickled_clf)
+            pickled_clf.pos = 0
+            unpickled_clf = pickle.load(pickled_clf)
+            pickled_y_pred = unpickled_clf.predict(X)
+
+            try:
+                assert_array_almost_equal(pickled_y_pred, y_pred)
+            except Exception, exc:
+                succeeded = False
+                print ("Esimator %s doesn't predict the same value "
+                        "after pickling" % name)
+                raise exc
+    assert_true(succeeded)
+
+
 def test_regressors_int():
     # test if regressors can cope with integer labels (by converting them to
     # float)
@@ -678,16 +725,16 @@ def test_regressor_pickle():
         else:
            y_ = y
         reg.fit(X, y_)
-        pred = reg.predict(X)
+        y_pred = reg.predict(X)
         # store old predictions
         pickled_reg = StringIO.StringIO()
         pickle.dump(reg, pickled_reg)
         pickled_reg.pos = 0
         unpickled_reg = pickle.load(pickled_reg)
-        new_pred = unpickled_reg.predict(X)
+        pickled_y_pred = unpickled_reg.predict(X)
 
         try:
-            assert_array_almost_equal(new_pred, pred)
+            assert_array_almost_equal(pickled_y_pred, y_pred)
         except Exception, exc:
             succeeded = False
             print ("Esimator %s doesn't predict the same value "
