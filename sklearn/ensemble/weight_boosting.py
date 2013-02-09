@@ -21,6 +21,7 @@ The module structure is the following:
 
 from abc import ABCMeta, abstractmethod
 
+import inspect
 import numpy as np
 from numpy.core.umath_tests import inner1d
 
@@ -108,12 +109,20 @@ class BaseWeightBoosting(BaseEnsemble):
         self.estimator_weights_ = np.zeros(self.n_estimators, dtype=np.float)
         self.estimator_errors_ = np.ones(self.n_estimators, dtype=np.float)
 
+        # Create argsorted X for fast tree induction
+        X_argsorted = None
+
+        if "X_argsorted" in inspect.getargspec(self.base_estimator.fit).args:
+            X_argsorted = np.asfortranarray(
+                np.argsort(X.T, axis=1).astype(np.int32).T)
+
         for iboost in xrange(self.n_estimators):
             # Boosting step
             sample_weight, estimator_weight, estimator_error = self._boost(
                 iboost,
                 X, y,
-                sample_weight)
+                sample_weight,
+                X_argsorted=X_argsorted)
 
             # Early termination
             if sample_weight is None:
@@ -139,7 +148,7 @@ class BaseWeightBoosting(BaseEnsemble):
         return self
 
     @abstractmethod
-    def _boost(self, iboost, X, y, sample_weight):
+    def _boost(self, iboost, X, y, sample_weight, X_argsorted=None):
         """Implement a single boost.
 
         Warning: This method needs to be overriden by subclasses.
@@ -367,7 +376,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         return super(AdaBoostClassifier, self).fit(X, y, sample_weight)
 
-    def _boost(self, iboost, X, y, sample_weight):
+    def _boost(self, iboost, X, y, sample_weight, X_argsorted=None):
         """Implement a single boost.
 
         Perform a single boost according to the real multi-class SAMME.R
@@ -403,17 +412,21 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             If None then boosting has terminated early.
         """
         if self.algorithm == 'SAMME.R':
-            return self._boost_real(iboost, X, y, sample_weight)
+            return self._boost_real(iboost, X, y, sample_weight, X_argsorted=X_argsorted)
 
         else:  # elif self.algorithm == "SAMME":
-            return self._boost_discrete(iboost, X, y, sample_weight)
+            return self._boost_discrete(iboost, X, y, sample_weight, X_argsorted=X_argsorted)
 
-    def _boost_real(self, iboost, X, y, sample_weight):
+    def _boost_real(self, iboost, X, y, sample_weight, X_argsorted=None):
         """Implement a single boost using the SAMME.R real algorithm."""
         estimator = self._make_estimator()
 
-        y_predict_proba = estimator.fit(
-            X, y, sample_weight=sample_weight).predict_proba(X)
+        if X_argsorted is not None:
+            estimator.fit(X, y, sample_weight=sample_weight, X_argsorted=X_argsorted)
+        else:
+            estimator.fit(X, y, sample_weight=sample_weight)
+
+        y_predict_proba = estimator.predict_proba(X)
 
         if iboost == 0:
             self.classes_ = getattr(estimator, 'classes_', None)
@@ -464,12 +477,16 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         return sample_weight, 1., estimator_error
 
-    def _boost_discrete(self, iboost, X, y, sample_weight):
+    def _boost_discrete(self, iboost, X, y, sample_weight, X_argsorted=None):
         """Implement a single boost using the SAMME discrete algorithm."""
         estimator = self._make_estimator()
 
-        y_predict = estimator.fit(
-            X, y, sample_weight=sample_weight).predict(X)
+        if X_argsorted is not None:
+            estimator.fit(X, y, sample_weight=sample_weight, X_argsorted=X_argsorted)
+        else:
+            estimator.fit(X, y, sample_weight=sample_weight)
+
+        y_predict = estimator.predict(X)
 
         if iboost == 0:
             self.classes_ = getattr(estimator, 'classes_', None)
@@ -875,7 +892,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         # Fit
         return super(AdaBoostRegressor, self).fit(X, y, sample_weight)
 
-    def _boost(self, iboost, X, y, sample_weight):
+    def _boost(self, iboost, X, y, sample_weight, X_argsorted=None):
         """Implement a single boost for regression
 
         Perform a single boost according to the AdaBoost.R2 algorithm and
@@ -925,8 +942,8 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         # Fit on the bootstrapped sample and obtain a prediction
         # for all samples in the training set
-        y_predict = estimator.fit(
-            X[bootstrap_idx], y[bootstrap_idx]).predict(X)
+        estimator.fit(X[bootstrap_idx], y[bootstrap_idx])
+        y_predict = estimator.predict(X)
 
         error_vect = np.abs(y_predict - y)
         error_max = error_vect.max()
@@ -965,7 +982,6 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         return sample_weight, estimator_weight, estimator_error
 
     def _get_median_predict(self, X, limit=-1):
-
         if not self.estimators_:
             raise RuntimeError(
                 ("{0} is not initialized. "
