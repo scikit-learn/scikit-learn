@@ -793,6 +793,8 @@ def test_estimators_overwrite_params():
                 # So we impose a smaller number (avoid "auto" mode)
                 est = Est(n_components=1)
 
+            set_random_state(est)
+
             params = est.get_params()
             est.fit(X, y)
             new_params = est.get_params()
