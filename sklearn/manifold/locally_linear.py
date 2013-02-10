@@ -609,7 +609,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         self.nbrs_ = NearestNeighbors(self.n_neighbors,
                                       algorithm=self.neighbors_algorithm)
 
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         X, = check_arrays(X, sparse_format='dense')
         self.nbrs_.fit(X)
         self.embedding_, self.reconstruction_error_ = \
@@ -618,7 +618,7 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
                 eigen_solver=self.eigen_solver, tol=self.tol,
                 max_iter=self.max_iter, method=self.method,
                 hessian_tol=self.hessian_tol, modified_tol=self.modified_tol,
-                random_state=self.random_state)
+                random_state=random_state)
 
     def fit(self, X, y=None):
         """Compute the embedding vectors for data X
