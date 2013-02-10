@@ -67,16 +67,14 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         """
 
         X = atleast2d_or_csr(X)
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
 
-        self.random_weights_ = (np.sqrt(self.gamma)
-                                * self.random_state.normal(size=(n_features,
-                                                           self.n_components)))
+        self.random_weights_ = (np.sqrt(self.gamma) * random_state.normal(
+            size=(n_features, self.n_components)))
 
-        self.random_offset_ = self.random_state.uniform(0,
-                                                        2 * np.pi,
-                                                        size=self.n_components)
+        self.random_offset_ = random_state.uniform(0, 2 * np.pi,
+                                                   size=self.n_components)
         return self
 
     def transform(self, X, y=None):
@@ -153,16 +151,14 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         """
 
         X = array2d(X)
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
-        uniform = self.random_state.uniform(size=(n_features,
-                                                  self.n_components))
+        uniform = random_state.uniform(size=(n_features, self.n_components))
         # transform by inverse CDF of sech
         self.random_weights_ = (1. / np.pi
                                 * np.log(np.tan(np.pi / 2. * uniform)))
-        self.random_offset_ = self.random_state.uniform(0,
-                                                        2 * np.pi,
-                                                        size=self.n_components)
+        self.random_offset_ = random_state.uniform(0, 2 * np.pi,
+                                                   size=self.n_components)
         return self
 
     def transform(self, X, y=None):
@@ -246,14 +242,16 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         if self.sample_interval is None:
             # See reference, figure 2 c)
             if self.sample_steps == 1:
-                self.sample_interval = 0.8
+                self.sample_interval_ = 0.8
             elif self.sample_steps == 2:
-                self.sample_interval = 0.5
+                self.sample_interval_ = 0.5
             elif self.sample_steps == 3:
-                self.sample_interval = 0.4
+                self.sample_interval_ = 0.4
             else:
                 raise ValueError("If sample_steps is not in [1, 2, 3],"
                                  " you need to provide sample_interval")
+        else:
+            self.sample_interval_ = self.interval
         return self
 
     def transform(self, X, y=None):
@@ -289,16 +287,16 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         X_nz = X[non_zero]
 
         X_step = np.zeros_like(X)
-        X_step[non_zero] = np.sqrt(X_nz * self.sample_interval)
+        X_step[non_zero] = np.sqrt(X_nz * self.sample_interval_)
 
         X_new = [X_step]
 
-        log_step_nz = self.sample_interval * np.log(X_nz)
-        step_nz = 2 * X_nz * self.sample_interval
+        log_step_nz = self.sample_interval_ * np.log(X_nz)
+        step_nz = 2 * X_nz * self.sample_interval_
 
         for j in xrange(1, self.sample_steps):
             factor_nz = np.sqrt(step_nz /
-                                np.cosh(np.pi * j * self.sample_interval))
+                                np.cosh(np.pi * j * self.sample_interval_))
 
             X_step = np.zeros_like(X)
             X_step[non_zero] = factor_nz * np.cos(j * log_step_nz)
@@ -314,17 +312,17 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         indices = X.indices.copy()
         indptr = X.indptr.copy()
 
-        data_step = np.sqrt(X.data * self.sample_interval)
+        data_step = np.sqrt(X.data * self.sample_interval_)
         X_step = sp.csr_matrix((data_step, indices, indptr),
                                shape=X.shape, dtype=X.dtype, copy=False)
         X_new = [X_step]
 
-        log_step_nz = self.sample_interval * np.log(X.data)
-        step_nz = 2 * X.data * self.sample_interval
+        log_step_nz = self.sample_interval_ * np.log(X.data)
+        step_nz = 2 * X.data * self.sample_interval_
 
         for j in xrange(1, self.sample_steps):
             factor_nz = np.sqrt(step_nz /
-                                np.cosh(np.pi * j * self.sample_interval))
+                                np.cosh(np.pi * j * self.sample_interval_))
 
             data_step = factor_nz * np.cos(j * log_step_nz)
             X_step = sp.csr_matrix((data_step, indices, indptr),
