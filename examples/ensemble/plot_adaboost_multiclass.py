@@ -89,7 +89,7 @@ pl.plot(n_trees, bdt_discrete.estimator_errors_, "b", label='SAMME', alpha=.5)
 pl.plot(n_trees, bdt_real.estimator_errors_, "r", label='SAMME.R', alpha=.5)
 pl.legend()
 pl.ylabel('Error')
-pl.xlabel('Tree')
+pl.xlabel('Number of Trees')
 pl.ylim((.2,
         max(bdt_real.estimator_errors_.max(),
             bdt_discrete.estimator_errors_.max()) * 1.2))
@@ -99,7 +99,7 @@ pl.subplot(133)
 pl.plot(n_trees, bdt_discrete.estimator_weights_, "b", label='SAMME')
 pl.legend()
 pl.ylabel('Weight')
-pl.xlabel('Tree')
+pl.xlabel('Number of Trees')
 pl.ylim((0, bdt_discrete.estimator_weights_.max() * 1.2))
 pl.xlim((-20, len(bdt_discrete) + 20))
 
