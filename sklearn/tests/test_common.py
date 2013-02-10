@@ -739,21 +739,42 @@ def test_class_weight_auto_classifies():
 def test_estimators_overwrite_params():
     # test whether any classifier overwrites his init parameters during fit
     for est_type in ["classifier", "regressor", "transformer"]:
-        estimators = all_estimators(type_filter="classifier")
-        X, y = make_blobs(random_state=0, n_samples=6)
+        estimators = all_estimators(type_filter=est_type)
+        X, y = make_blobs(random_state=0, n_samples=9)
         # some want non-negative input
         X -= X.min()
         for name, Est in estimators:
+            if (name in dont_test
+                    or name in ['CCA', 'PLSCanonical', 'PLSRegression',
+                                'PLSSVD', 'GaussianProcess']):
+                # FIXME!
+                # in particular GaussianProcess!
+                continue
             with warnings.catch_warnings(record=True):
                 # catch deprecation warnings
                 est = Est()
+
+            if hasattr(est, 'batch_size'):
+                # FIXME
+                # for MiniBatchDictLearning
+                est.batch_size = 1
+
+            if Est in [GaussianRandomProjection,
+                       SparseRandomProjection]:
+                # Due to the jl lemma and very few samples, the number
+                # of components of the random matrix projection will be
+                # greater
+                # than the number of features.
+                # So we impose a smaller number (avoid "auto" mode)
+                est = Est(n_components=1)
+
             params = est.get_params()
             est.fit(X, y)
             new_params = est.get_params()
             for k, v in params.items():
                 assert_false(np.any(new_params[k] != v),
                              "Estimator %s changes its parameter %s"
-                             "from %s to %s during fit."
+                             " from %s to %s during fit."
                              % (name, k, v, new_params[k]))
 
 
@@ -773,5 +794,5 @@ def test_cluster_overwrite_params():
         for k, v in params.items():
             assert_false(np.any(new_params[k] != v),
                          "Estimator %s changes its parameter %s"
-                         "from %s to %s during fit."
+                         " from %s to %s during fit."
                          % (name, k, v, new_params[k]))

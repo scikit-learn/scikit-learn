@@ -930,7 +930,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         self: object
             Returns the object itself
         """
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         X = array2d(X)
         if self.n_components is None:
             n_components = X.shape[1]
@@ -944,7 +944,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
                                 code_init=self.code_init,
                                 dict_init=self.dict_init,
                                 verbose=self.verbose,
-                                random_state=self.random_state)
+                                random_state=random_state)
         self.components_ = U
         self.error_ = E
         return self
@@ -1082,7 +1082,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         self : object
             Returns the instance itself.
         """
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         X = array2d(X)
         if self.n_components is None:
             n_components = X.shape[1]
@@ -1096,7 +1096,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
                                  dict_init=self.dict_init,
                                  batch_size=self.batch_size,
                                  shuffle=self.shuffle, verbose=self.verbose,
-                                 random_state=self.random_state)
+                                 random_state=random_state)
         self.components_ = U
         return self
 
@@ -1114,7 +1114,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         self : object
             Returns the instance itself.
         """
-        self.random_state = check_random_state(self.random_state)
+        if not hasattr(self.random_state_):
+            self.random_state_ = check_random_state(self.random_state)
         X = array2d(X)
         if hasattr(self, 'components_'):
             dict_init = self.components_
@@ -1127,6 +1128,6 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
                                  batch_size=len(X), shuffle=False,
                                  verbose=self.verbose, return_code=False,
                                  iter_offset=iter_offset,
-                                 random_state=self.random_state)
+                                 random_state=self.random_state_)
         self.components_ = U
         return self
