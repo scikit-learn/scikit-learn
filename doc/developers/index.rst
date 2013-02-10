@@ -511,6 +511,24 @@ In following example, k is deprecated and renamed to n_clusters::
 
 .. currentmodule:: sklearn
 
+Python 3.x support
+------------------
+
+All scikit-learn code should work unchanged in both Python 2.[67]
+and 3.2 or newer. Since Python 3.x is not backwards compatible,
+that may require changes to code and it certainly requires testing
+on both 2.6 or 2.7, and 3.2 or newer.
+
+For most numerical algorithms, Python 3.x support is easy:
+just remember that ``print`` is a function and
+integer division is written ``//``.
+String handling has been overhauled, though, as have parts of
+the Python standard library.
+The `six <http://pythonhosted.org/six/>`_ package helps with
+cross-compability and is included in scikit-learn as
+``sklearn.externals.six``.
+
+
 APIs of scikit-learn objects
 ============================
 
