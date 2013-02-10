@@ -21,13 +21,13 @@ The module structure is the following:
 
 from abc import ABCMeta, abstractmethod
 
-import inspect
 import numpy as np
 from numpy.core.umath_tests import inner1d
 
 from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
+from ..tree.tree import BaseDecisionTree
 from ..utils import check_arrays, check_random_state
 from ..metrics import accuracy_score, r2_score
 
@@ -112,7 +112,7 @@ class BaseWeightBoosting(BaseEnsemble):
         # Create argsorted X for fast tree induction
         X_argsorted = None
 
-        if "X_argsorted" in inspect.getargspec(self.base_estimator.fit).args:
+        if isinstance(self.base_estimator, BaseDecisionTree):
             X_argsorted = np.asfortranarray(
                 np.argsort(X.T, axis=1).astype(np.int32).T)
 
