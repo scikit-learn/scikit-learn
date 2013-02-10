@@ -41,7 +41,7 @@ y_2 = clf_2.predict(X)
 import pylab as pl
 
 pl.figure()
-pl.scatter(X, y, c="k", label="data")
+pl.scatter(X, y, c="k", label="training samples")
 pl.plot(X, y_1, c="g", label="n_estimators=1", linewidth=2)
 pl.plot(X, y_2, c="r", label="n_estimators=300", linewidth=2)
 pl.xlabel("data")
