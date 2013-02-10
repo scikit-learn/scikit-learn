@@ -27,6 +27,7 @@ from numpy.core.umath_tests import inner1d
 from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
+from ..tree.tree import BaseDecisionTree
 from ..utils import check_arrays, check_random_state
 from ..metrics import accuracy_score, r2_score
 
@@ -108,12 +109,20 @@ class BaseWeightBoosting(BaseEnsemble):
         self.estimator_weights_ = np.zeros(self.n_estimators, dtype=np.float)
         self.estimator_errors_ = np.ones(self.n_estimators, dtype=np.float)
 
+        # Create argsorted X for fast tree induction
+        X_argsorted = None
+
+        if isinstance(self.base_estimator, BaseDecisionTree):
+            X_argsorted = np.asfortranarray(
+                np.argsort(X.T, axis=1).astype(np.int32).T)
+
         for iboost in xrange(self.n_estimators):
             # Boosting step
             sample_weight, estimator_weight, estimator_error = self._boost(
                 iboost,
                 X, y,
-                sample_weight)
+                sample_weight,
+                X_argsorted=X_argsorted)
 
             # Early termination
             if sample_weight is None:
@@ -139,7 +148,7 @@ class BaseWeightBoosting(BaseEnsemble):
         return self
 
     @abstractmethod
-    def _boost(self, iboost, X, y, sample_weight):
+    def _boost(self, iboost, X, y, sample_weight, X_argsorted=None):
         """Implement a single boost.
 
         Warning: This method needs to be overriden by subclasses.
@@ -157,6 +166,14 @@ class BaseWeightBoosting(BaseEnsemble):
 
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.
+
+        X_argsorted : array-like, shape = [n_samples, n_features] (optional)
+            Each column of ``X_argsorted`` holds the row indices of ``X``
+            sorted according to the value of the corresponding feature
+            in ascending order.
+            The argument is supported to enable multiple decision trees
+            to share the data structure and to avoid re-computation in
+            tree ensembles. For maximum efficiency use dtype np.int32.
 
         Returns
         -------
@@ -367,7 +384,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         return super(AdaBoostClassifier, self).fit(X, y, sample_weight)
 
-    def _boost(self, iboost, X, y, sample_weight):
+    def _boost(self, iboost, X, y, sample_weight, X_argsorted=None):
         """Implement a single boost.
 
         Perform a single boost according to the real multi-class SAMME.R
@@ -388,6 +405,14 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.
 
+        X_argsorted : array-like, shape = [n_samples, n_features] (optional)
+            Each column of ``X_argsorted`` holds the row indices of ``X``
+            sorted according to the value of the corresponding feature
+            in ascending order.
+            The argument is supported to enable multiple decision trees
+            to share the data structure and to avoid re-computation in
+            tree ensembles. For maximum efficiency use dtype np.int32.
+
         Returns
         -------
         sample_weight : array-like of shape = [n_samples] or None
@@ -403,17 +428,24 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             If None then boosting has terminated early.
         """
         if self.algorithm == 'SAMME.R':
-            return self._boost_real(iboost, X, y, sample_weight)
+            return self._boost_real(iboost, X, y, sample_weight,
+                                    X_argsorted=X_argsorted)
 
         else:  # elif self.algorithm == "SAMME":
-            return self._boost_discrete(iboost, X, y, sample_weight)
+            return self._boost_discrete(iboost, X, y, sample_weight,
+                                        X_argsorted=X_argsorted)
 
-    def _boost_real(self, iboost, X, y, sample_weight):
+    def _boost_real(self, iboost, X, y, sample_weight, X_argsorted=None):
         """Implement a single boost using the SAMME.R real algorithm."""
         estimator = self._make_estimator()
 
-        y_predict_proba = estimator.fit(
-            X, y, sample_weight=sample_weight).predict_proba(X)
+        if X_argsorted is not None:
+            estimator.fit(X, y, sample_weight=sample_weight,
+                          X_argsorted=X_argsorted)
+        else:
+            estimator.fit(X, y, sample_weight=sample_weight)
+
+        y_predict_proba = estimator.predict_proba(X)
 
         if iboost == 0:
             self.classes_ = getattr(estimator, 'classes_', None)
@@ -464,12 +496,17 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         return sample_weight, 1., estimator_error
 
-    def _boost_discrete(self, iboost, X, y, sample_weight):
+    def _boost_discrete(self, iboost, X, y, sample_weight, X_argsorted=None):
         """Implement a single boost using the SAMME discrete algorithm."""
         estimator = self._make_estimator()
 
-        y_predict = estimator.fit(
-            X, y, sample_weight=sample_weight).predict(X)
+        if X_argsorted is not None:
+            estimator.fit(X, y, sample_weight=sample_weight,
+                          X_argsorted=X_argsorted)
+        else:
+            estimator.fit(X, y, sample_weight=sample_weight)
+
+        y_predict = estimator.predict(X)
 
         if iboost == 0:
             self.classes_ = getattr(estimator, 'classes_', None)
@@ -875,7 +912,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         # Fit
         return super(AdaBoostRegressor, self).fit(X, y, sample_weight)
 
-    def _boost(self, iboost, X, y, sample_weight):
+    def _boost(self, iboost, X, y, sample_weight, X_argsorted=None):
         """Implement a single boost for regression
 
         Perform a single boost according to the AdaBoost.R2 algorithm and
@@ -895,6 +932,14 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         sample_weight : array-like of shape = [n_samples]
             The current sample weights.
+
+        X_argsorted : array-like, shape = [n_samples, n_features] (optional)
+            Each column of ``X_argsorted`` holds the row indices of ``X``
+            sorted according to the value of the corresponding feature
+            in ascending order.
+            The argument is supported to enable multiple decision trees
+            to share the data structure and to avoid re-computation in
+            tree ensembles. For maximum efficiency use dtype np.int32.
 
         Returns
         -------
@@ -925,8 +970,9 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         # Fit on the bootstrapped sample and obtain a prediction
         # for all samples in the training set
-        y_predict = estimator.fit(
-            X[bootstrap_idx], y[bootstrap_idx]).predict(X)
+        # X_argsorted is not used since bootstrap copies are used.
+        estimator.fit(X[bootstrap_idx], y[bootstrap_idx])
+        y_predict = estimator.predict(X)
 
         error_vect = np.abs(y_predict - y)
         error_max = error_vect.max()
@@ -965,7 +1011,6 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         return sample_weight, estimator_weight, estimator_error
 
     def _get_median_predict(self, X, limit=-1):
-
         if not self.estimators_:
             raise RuntimeError(
                 ("{0} is not initialized. "
