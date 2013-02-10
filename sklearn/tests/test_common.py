@@ -374,6 +374,73 @@ def test_estimators_nan_inf():
                         raise AssertionError(error_string_transform, Est)
 
 
+def test_transformers_pickle():
+    # test if transformers do something sensible on training set
+    # also test all shapes / shape errors
+    transformers = all_estimators(type_filter='transformer')
+    X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
+                      random_state=0, n_features=2, cluster_std=0.1)
+    n_samples, n_features = X.shape
+    X = StandardScaler().fit_transform(X)
+    X -= X.min()
+
+    succeeded = True
+
+    for name, Trans in transformers:
+        trans = None
+
+        if Trans in dont_test:
+            continue
+        # these don't actually fit the data:
+        if Trans in [AdditiveChi2Sampler, Binarizer, Normalizer]:
+            continue
+        # catch deprecation warnings
+        with warnings.catch_warnings(record=True):
+            trans = Trans()
+        set_random_state(trans)
+        if hasattr(trans, 'compute_importances'):
+            trans.compute_importances = True
+
+        if Trans is SelectKBest:
+            # SelectKBest has a default of k=10
+            # which is more feature than we have.
+            trans.k = 1
+        elif Trans in [GaussianRandomProjection,
+                       SparseRandomProjection]:
+            # Due to the jl lemma and very few samples, the number
+            # of components of the random matrix projection will be greater
+            # than the number of features.
+            # So we impose a smaller number (avoid "auto" mode)
+            trans.n_components = 1
+
+        # fit
+
+        if Trans in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
+            random_state = np.random.RandomState(seed=12345)
+            y_ = np.vstack([y, 2 * y + random_state.randint(2, size=len(y))])
+            y_ = y_.T
+        else:
+            y_ = y
+
+        trans.fit(X, y_)
+        X_pred = trans.fit_transform(X, y=y_)
+        pickled_trans = StringIO.StringIO()
+        pickle.dump(trans, pickled_trans)
+        pickled_trans.pos = 0
+        unpickled_trans = pickle.load(pickled_trans)
+        pickled_X_pred = unpickled_trans.fit_transform(X, y=y_)
+
+        try:
+            assert_array_almost_equal(pickled_X_pred, X_pred)
+        except Exception, exc:
+            succeeded = False
+            print ("Transformer %s doesn't predict the same value "
+                    "after pickling" % name)
+            raise exc
+
+    assert_true(succeeded)
+
+
 def test_classifiers_one_label():
     # test classifiers trained on a single label always return this label
     # or raise an sensible error message
