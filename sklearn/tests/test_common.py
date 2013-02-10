@@ -38,30 +38,23 @@ from sklearn.lda import LDA
 from sklearn.svm.base import BaseLibSVM
 
 # import "special" estimators
-from sklearn.decomposition import SparseCoder
 from sklearn.pls import _PLS, PLSCanonical, PLSRegression, CCA, PLSSVD
-from sklearn.ensemble import RandomTreesEmbedding
 from sklearn.feature_selection import SelectKBest
-from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.naive_bayes import MultinomialNB, BernoulliNB
-from sklearn.covariance import EllipticEnvelope, EllipticEnvelop
-from sklearn.feature_extraction import DictVectorizer, FeatureHasher
-from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.kernel_approximation import AdditiveChi2Sampler
-from sklearn.preprocessing import (LabelBinarizer, LabelEncoder, Binarizer,
-                                   Normalizer, OneHotEncoder)
+from sklearn.preprocessing import Binarizer, Normalizer
 from sklearn.cluster import (WardAgglomeration, AffinityPropagation,
                              SpectralClustering)
-from sklearn.isotonic import IsotonicRegression
 from sklearn.random_projection import (GaussianRandomProjection,
                                        SparseRandomProjection)
 
 from sklearn.cross_validation import train_test_split
 
-dont_test = [SparseCoder, EllipticEnvelope, EllipticEnvelop, DictVectorizer,
-             LabelBinarizer, LabelEncoder, TfidfTransformer,
-             IsotonicRegression, OneHotEncoder, RandomTreesEmbedding,
-             FeatureHasher, DummyClassifier, DummyRegressor]
+dont_test = ['SparseCoder', 'EllipticEnvelope', 'EllipticEnvelop',
+             'DictVectorizer', 'LabelBinarizer', 'LabelEncoder',
+             'TfidfTransformer', 'IsotonicRegression', 'OneHotEncoder',
+             'RandomTreesEmbedding', 'FeatureHasher', 'DummyClassifier',
+             'DummyRegressor']
 
 
 def test_all_estimators():
@@ -72,7 +65,7 @@ def test_all_estimators():
 
     for name, E in estimators:
         # some can just not be sensibly default constructed
-        if E in dont_test:
+        if name in dont_test:
             continue
         # test default-constructibility
         # get rid of deprecation warnings
@@ -136,7 +129,7 @@ def test_estimators_sparse_data():
     estimators = [(name, E) for name, E in estimators
                   if issubclass(E, (ClassifierMixin, RegressorMixin))]
     for name, Clf in estimators:
-        if Clf in dont_test:
+        if name in dont_test:
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -172,7 +165,7 @@ def test_transformers():
     for name, Trans in transformers:
         trans = None
 
-        if Trans in dont_test:
+        if name in dont_test:
             continue
         # these don't actually fit the data:
         if Trans in [AdditiveChi2Sampler, Binarizer, Normalizer]:
@@ -250,7 +243,7 @@ def test_transformers_sparse_data():
     y = (4 * rng.rand(40)).astype(np.int)
     estimators = all_estimators(type_filter='transformer')
     for name, Trans in estimators:
-        if Trans in dont_test:
+        if name in dont_test:
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -304,7 +297,7 @@ def test_estimators_nan_inf():
                               " transform.")
     for X_train in [X_train_nan, X_train_inf]:
         for name, Est in estimators:
-            if Est in dont_test:
+            if name in dont_test:
                 continue
             if Est in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
                 continue
@@ -390,7 +383,7 @@ def test_classifiers_one_label():
     error_string_predict = ("Classifier can't predict when only one class is "
                             "present.")
     for name, Clf in classifiers:
-        if Clf in dont_test:
+        if name in dont_test:
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -471,7 +464,7 @@ def test_classifiers_train():
         n_classes = len(classes)
         n_samples, n_features = X.shape
         for name, Clf in classifiers:
-            if Clf in dont_test:
+            if name in dont_test:
                 continue
             if Clf in [MultinomialNB, BernoulliNB]:
                 # TODO also test these!
@@ -539,7 +532,7 @@ def test_classifiers_classes():
     # TODO: make work with next line :)
     #y = y.astype(np.str)
     for name, Clf in classifiers:
-        if Clf in dont_test:
+        if name in dont_test:
             continue
         if Clf in [MultinomialNB, BernoulliNB]:
             # TODO also test these!
@@ -570,7 +563,7 @@ def test_regressors_int():
     X = StandardScaler().fit_transform(X)
     y = np.random.randint(2, size=X.shape[0])
     for name, Reg in regressors:
-        if Reg in dont_test or Reg in (CCA,):
+        if name in dont_test or Reg in (CCA,):
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -605,7 +598,7 @@ def test_regressors_train():
     y = StandardScaler().fit_transform(y)
     succeeded = True
     for name, Reg in regressors:
-        if Reg in dont_test:
+        if name in dont_test:
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
