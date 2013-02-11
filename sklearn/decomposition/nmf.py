@@ -375,7 +375,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         n_samples, n_features = X.shape
         init = self.init
         if init is None:
-            if self.n_components < n_features:
+            if self.n_components_ < n_features:
                 init = 'nndsvd'
             else:
                 init = 'random'
@@ -391,19 +391,19 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             random_state = self.random_state
 
         if init == 'nndsvd':
-            W, H = _initialize_nmf(X, self.n_components)
+            W, H = _initialize_nmf(X, self.n_components_)
         elif init == 'nndsvda':
-            W, H = _initialize_nmf(X, self.n_components, variant='a')
+            W, H = _initialize_nmf(X, self.n_components_, variant='a')
         elif init == 'nndsvdar':
-            W, H = _initialize_nmf(X, self.n_components, variant='ar')
+            W, H = _initialize_nmf(X, self.n_components_, variant='ar')
         elif init == "random":
             rng = check_random_state(random_state)
-            W = rng.randn(n_samples, self.n_components)
+            W = rng.randn(n_samples, self.n_components_)
             # we do not write np.abs(W, out=W) to stay compatible with
             # numpy 1.5 and earlier where the 'out' keyword is not
             # supported as a kwarg on ufuncs
             np.abs(W, W)
-            H = rng.randn(self.n_components, n_features)
+            H = rng.randn(self.n_components_, n_features)
             np.abs(H, H)
         else:
             raise ValueError(
@@ -421,14 +421,14 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             W, gradW, iterW = _nls_subproblem(
                 safe_vstack([X.T, np.zeros((1, n_samples))]),
                 safe_vstack([H.T, np.sqrt(self.beta) * np.ones((1,
-                             self.n_components))]),
+                             self.n_components_))]),
                 W.T, tolW, self.nls_max_iter)
         elif self.sparseness == 'components':
             W, gradW, iterW = _nls_subproblem(
                 safe_vstack([X.T,
-                             np.zeros((self.n_components, n_samples))]),
+                             np.zeros((self.n_components_, n_samples))]),
                 safe_vstack([H.T,
-                             np.sqrt(self.eta) * np.eye(self.n_components)]),
+                             np.sqrt(self.eta) * np.eye(self.n_components_)]),
                 W.T, tolW, self.nls_max_iter)
 
         return W, gradW, iterW
@@ -441,16 +441,16 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
                                               self.nls_max_iter)
         elif self.sparseness == 'data':
             H, gradH, iterH = _nls_subproblem(
-                safe_vstack([X, np.zeros((self.n_components, n_features))]),
+                safe_vstack([X, np.zeros((self.n_components_, n_features))]),
                 safe_vstack([W,
-                             np.sqrt(self.eta) * np.eye(self.n_components)]),
+                             np.sqrt(self.eta) * np.eye(self.n_components_)]),
                 H, tolH, self.nls_max_iter)
         elif self.sparseness == 'components':
             H, gradH, iterH = _nls_subproblem(
                 safe_vstack([X, np.zeros((1, n_features))]),
                 safe_vstack([W,
                              np.sqrt(self.beta)
-                             * np.ones((1, self.n_components))]),
+                             * np.ones((1, self.n_components_))]),
                 H, tolH, self.nls_max_iter)
 
         return H, gradH, iterH
@@ -477,7 +477,9 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         n_samples, n_features = X.shape
 
         if not self.n_components:
-            self.n_components = n_features
+            self.n_components_ = n_features
+        else:
+            self.n_components_ = self.n_components
 
         W, H = self._init(X)
 
@@ -561,7 +563,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
             Transformed data
         """
         X = atleast2d_or_csr(X)
-        W = np.zeros((X.shape[0], self.n_components))
+        W = np.zeros((X.shape[0], self.n_components_))
         for j in range(0, X.shape[0]):
             W[j, :], _ = nnls(self.components_.T, X[j, :])
         return W
