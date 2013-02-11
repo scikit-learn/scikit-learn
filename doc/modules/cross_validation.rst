@@ -162,7 +162,7 @@ Example of 2-fold::
   sklearn.cross_validation.KFold(n=4, n_folds=2)
 
   >>> for train, test in kf:
-  ...     print(train, test)
+  ...      print("%s %s" % (train, test))
   [False False  True  True] [ True  True False False]
   [ True  True False False] [False False  True  True]
 
@@ -181,7 +181,7 @@ when creating the cross-validation procedure::
 
   >>> kf = KFold(len(Y), n_folds=2, indices=True)
   >>> for train, test in kf:
-  ...    print(train, test)
+  ...     print("%s %s" % (train, test))
   [2 3] [0 1]
   [0 1] [2 3]
 
@@ -210,7 +210,7 @@ Example of stratified 2-fold::
   sklearn.cross_validation.StratifiedKFold(labels=[0 0 0 1 1 1 0], n_folds=2)
 
   >>> for train, test in skf:
-  ...     print(train, test)
+  ...     print("%s %s" % (train, test))
   [1 4 6] [0 2 3 5]
   [0 2 3 5] [1 4 6]
 
@@ -233,7 +233,7 @@ not waste much data as only one sample is removed from the learning set::
   sklearn.cross_validation.LeaveOneOut(n=4)
 
   >>> for train, test in loo:
-  ...    print(train, test)
+  ...     print("%s %s" % (train, test))
   [1 2 3] [0]
   [0 2 3] [1]
   [0 1 3] [2]
@@ -257,7 +257,7 @@ Example of Leave-2-Out::
   sklearn.cross_validation.LeavePOut(n=4, p=2)
 
   >>> for train, test in lpo:
-  ...     print(train, test)
+  ...     print("%s %s" % (train, test))
   [2 3] [0 1]
   [1 3] [0 2]
   [1 2] [0 3]
@@ -291,7 +291,7 @@ a training set using the samples of all the experiments except one::
   sklearn.cross_validation.LeaveOneLabelOut(labels=[1, 1, 2, 2])
 
   >>> for train, test in lolo:
-  ...     print(train, test)
+  ...     print("%s %s" % (train, test))
   [2 3] [0 1]
   [0 1] [2 3]
 
@@ -318,7 +318,7 @@ Example of Leave-2-Label Out::
   sklearn.cross_validation.LeavePLabelOut(labels=[1, 1, 2, 2, 3, 3], p=2)
 
   >>> for train, test in lplo:
-  ...     print(train, test)
+  ...     print("%s %s" % (train, test))
   [4 5] [0 1 2 3]
   [2 3] [0 1 4 5]
   [0 1] [2 3 4 5]
@@ -348,7 +348,7 @@ Here is a usage example::
   ShuffleSplit(5, n_iter=3, test_size=0.25, indices=True, ...)
 
   >>> for train_index, test_index in ss:
-  ...    print(train_index, test_index)
+  ...     print("%s %s" % (train_index, test_index))
   ...
   [1 3 4] [2 0]
   [1 4 3] [0 2]
@@ -394,7 +394,7 @@ smaller than the total dataset if it is very large.
   Bootstrap(9, n_iter=3, train_size=5, test_size=4, random_state=0)
 
   >>> for train_index, test_index in bs:
-  ...    print(train_index, test_index)
+  ...     print("%s %s" % (train_index, test_index))
   ...
   [1 8 7 7 8] [0 3 0 5]
   [5 4 2 4 2] [6 7 1 0]

@@ -2,6 +2,8 @@
 Benchmarks of Non-Negative Matrix Factorization
 """
 
+from __future__ import print_function
+
 import gc
 from time import time
 import numpy as np
