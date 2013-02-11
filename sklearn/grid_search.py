@@ -231,10 +231,11 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
     __metaclass__ = ABCMeta
 
     @abstractmethod
-    def __init__(self, estimator, loss_func=None, score_func=None,
-                 fit_params=None, n_jobs=1, iid=True, refit=True, cv=None,
-                 verbose=0, pre_dispatch='2*n_jobs'):
+    def __init__(self, estimator, scoring=None, loss_func=None,
+                 score_func=None, fit_params=None, n_jobs=1, iid=True,
+                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs'):
 
+        self.scoring = scoring
         self.estimator = estimator
         self.loss_func = loss_func
         self.score_func = score_func
@@ -513,8 +514,8 @@ class GridSearchCV(BaseSearchCV):
                  score_func=None, fit_params=None, n_jobs=1, iid=True,
                  refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs'):
         super(GridSearchCV, self).__init__(
-            estimator, loss_func, score_func, fit_params, n_jobs, iid, refit,
-            cv, verbose, pre_dispatch)
+            estimator, scoring, loss_func, score_func, fit_params, n_jobs, iid,
+            refit, cv, verbose, pre_dispatch)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
 
@@ -679,7 +680,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
     """
 
-    def __init__(self, estimator, param_distributions, n_iter=10,
+    def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
                  loss_func=None, score_func=None, fit_params=None, n_jobs=1,
                  iid=True, refit=True, cv=None, verbose=0,
                  pre_dispatch='2*n_jobs'):
@@ -687,8 +688,8 @@ class RandomizedSearchCV(BaseSearchCV):
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         super(RandomizedSearchCV, self).__init__(
-            estimator, loss_func, score_func, fit_params, n_jobs, iid, refit,
-            cv, verbose, pre_dispatch)
+            estimator, scoring, loss_func, score_func, fit_params, n_jobs, iid,
+            refit, cv, verbose, pre_dispatch)
 
     def fit(self, X, y=None, **params):
         """Run fit on the estimator with randomly drawn parameters.
