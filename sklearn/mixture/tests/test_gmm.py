@@ -1,4 +1,3 @@
-import itertools
 import unittest
 
 from nose.tools import assert_true

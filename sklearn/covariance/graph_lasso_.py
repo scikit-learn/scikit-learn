@@ -511,7 +511,7 @@ class GraphLassoCV(GraphLasso):
                                  n_alphas + 2)
             alphas = alphas[1:-1]
             if self.verbose and n_refinements > 1:
-                print('[GraphLassoCV] Done refinement % 2i out of %i: % 3is'\
+                print('[GraphLassoCV] Done refinement % 2i out of %i: % 3is'
                       % (i + 1, n_refinements, time.time() - t0))
 
         path = list(zip(*path))

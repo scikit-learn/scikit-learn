@@ -145,8 +145,8 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
     moments_2 = np.zeros((n_nodes, n_features))
     moments_2[:n_samples] = X
     inertia = np.empty(len(coord_row), dtype=np.float)
-    _hierarchical.compute_ward_dist(moments_1, moments_2,
-                             coord_row, coord_col, inertia)
+    _hierarchical.compute_ward_dist(moments_1, moments_2, coord_row, coord_col,
+                                    inertia)
     inertia = list(six.moves.zip(inertia, coord_row, coord_col))
     heapify(inertia)
 

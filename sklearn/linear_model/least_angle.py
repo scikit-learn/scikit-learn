@@ -243,7 +243,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
             if verbose > 1:
                 print("%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, active[-1], '',
-                                                            n_active, C))
+                                                      n_active, C))
 
         if method == 'lasso' and n_iter > 0 and prev_alpha[0] < alpha[0]:
             # alpha is increasing. This is because the updates of Cov are

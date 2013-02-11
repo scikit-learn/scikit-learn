@@ -39,7 +39,6 @@ from io import BytesIO
 from os import makedirs
 from os.path import join
 from os.path import exists
-import sys
 
 try:
     # Python 2

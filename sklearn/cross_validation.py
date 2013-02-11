@@ -23,7 +23,6 @@ from .utils import check_arrays, check_random_state, safe_mask
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
 from .metrics import SCORERS, Scorer
-import numbers
 
 __all__ = ['Bootstrap',
            'KFold',
