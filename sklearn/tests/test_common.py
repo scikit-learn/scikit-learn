@@ -10,6 +10,7 @@ import warnings
 import sys
 import traceback
 import inspect
+import pickle
 
 import numpy as np
 from scipy import sparse
@@ -378,6 +379,71 @@ def test_estimators_nan_inf():
                         raise AssertionError(error_string_transform, Est)
 
 
+def test_transformers_pickle():
+    # test if transformers do something sensible on training set
+    # also test all shapes / shape errors
+    transformers = all_estimators(type_filter='transformer')
+    X, y = make_blobs(n_samples=30, centers=[[0, 0, 0], [1, 1, 1]],
+                      random_state=0, n_features=2, cluster_std=0.1)
+    n_samples, n_features = X.shape
+    X = StandardScaler().fit_transform(X)
+    X -= X.min()
+
+    succeeded = True
+
+    for name, Trans in transformers:
+        trans = None
+
+        if Trans in dont_test:
+            continue
+        # these don't actually fit the data:
+        if Trans in [AdditiveChi2Sampler, Binarizer, Normalizer]:
+            continue
+        # catch deprecation warnings
+        with warnings.catch_warnings(record=True):
+            trans = Trans()
+        set_random_state(trans)
+        if hasattr(trans, 'compute_importances'):
+            trans.compute_importances = True
+
+        if Trans is SelectKBest:
+            # SelectKBest has a default of k=10
+            # which is more feature than we have.
+            trans.k = 1
+        elif Trans in [GaussianRandomProjection,
+                       SparseRandomProjection]:
+            # Due to the jl lemma and very few samples, the number
+            # of components of the random matrix projection will be greater
+            # than the number of features.
+            # So we impose a smaller number (avoid "auto" mode)
+            trans.n_components = 1
+
+        # fit
+
+        if Trans in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
+            random_state = np.random.RandomState(seed=12345)
+            y_ = np.vstack([y, 2 * y + random_state.randint(2, size=len(y))])
+            y_ = y_.T
+        else:
+            y_ = y
+
+        trans.fit(X, y_)
+        X_pred = trans.fit_transform(X, y=y_)
+        pickled_trans = pickle.dumps(trans)
+        unpickled_trans = pickle.loads(pickled_trans)
+        pickled_X_pred = unpickled_trans.fit_transform(X, y=y_)
+
+        try:
+            assert_array_almost_equal(pickled_X_pred, X_pred)
+        except Exception, exc:
+            succeeded = False
+            print ("Transformer %s doesn't predict the same value "
+                    "after pickling" % name)
+            raise exc
+
+    assert_true(succeeded)
+
+
 def test_classifiers_one_label():
     # test classifiers trained on a single label always return this label
     # or raise an sensible error message
@@ -560,6 +626,51 @@ def test_classifiers_classes():
             "Unexpected classes_ attribute for %r" % clf)
 
 
+def test_classifiers_pickle():
+    # test if classifiers do something sensible on training set
+    # also test all shapes / shape errors
+    classifiers = all_estimators(type_filter='classifier')
+    X_m, y_m = make_blobs(random_state=0)
+    X_m, y_m = shuffle(X_m, y_m, random_state=7)
+    X_m = StandardScaler().fit_transform(X_m)
+    # generate binary problem from multi-class one
+    y_b = y_m[y_m != 2]
+    X_b = X_m[y_m != 2]
+    succeeded = True
+    for (X, y) in [(X_m, y_m), (X_b, y_b)]:
+        # do it once with binary, once with multiclass
+        classes = np.unique(y)
+        n_classes = len(classes)
+        n_samples, n_features = X.shape
+        for name, Clf in classifiers:
+            if Clf in dont_test:
+                continue
+            if Clf in [MultinomialNB, BernoulliNB]:
+                # TODO also test these!
+                continue
+            # catch deprecation warnings
+            with warnings.catch_warnings(record=True):
+                clf = Clf()
+            # raises error on malformed input for fit
+            assert_raises(ValueError, clf.fit, X, y[:-1])
+
+            # fit
+            clf.fit(X, y)
+            y_pred = clf.predict(X)
+            pickled_clf = pickle.dumps(clf)
+            unpickled_clf = pickle.loads(pickled_clf)
+            pickled_y_pred = unpickled_clf.predict(X)
+
+            try:
+                assert_array_almost_equal(pickled_y_pred, y_pred)
+            except Exception, exc:
+                succeeded = False
+                print ("Esimator %s doesn't predict the same value "
+                        "after pickling" % name)
+                raise exc
+    assert_true(succeeded)
+
+
 def test_regressors_int():
     # test if regressors can cope with integer labels (by converting them to
     # float)
@@ -634,6 +745,50 @@ def test_regressors_train():
             print
             succeeded = False
 
+    assert_true(succeeded)
+
+
+def test_regressor_pickle():
+    # Test that estimators can be pickled, and once pickled
+    # give the same answer as before.
+    regressors = all_estimators(type_filter='regressor')
+    boston = load_boston()
+    X, y = boston.data, boston.target
+    X, y = shuffle(X, y, random_state=0)
+    # TODO: test with intercept
+    # TODO: test with multiple responses
+    X = StandardScaler().fit_transform(X)
+    y = StandardScaler().fit_transform(y)
+    succeeded = True
+    for name, Reg in regressors:
+        if Reg in dont_test:
+            continue
+        # catch deprecation warnings
+        with warnings.catch_warnings(record=True):
+            reg = Reg()
+        if not hasattr(reg, 'alphas') and hasattr(reg, 'alpha'):
+            # linear regressors need to set alpha, but not generalized CV ones
+            reg.alpha = 0.01
+
+        if Reg in (_PLS, PLSCanonical, PLSRegression, CCA):
+           y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
+           y_ = y_.T
+        else:
+           y_ = y
+        reg.fit(X, y_)
+        y_pred = reg.predict(X)
+        # store old predictions
+        pickled_reg = pickle.dumps(reg)
+        unpickled_reg = pickle.loads(pickled_reg)
+        pickled_y_pred = unpickled_reg.predict(X)
+
+        try:
+            assert_array_almost_equal(pickled_y_pred, y_pred)
+        except Exception, exc:
+            succeeded = False
+            print ("Esimator %s doesn't predict the same value "
+                    "after pickling" % name)
+            raise exc
     assert_true(succeeded)
 
 
