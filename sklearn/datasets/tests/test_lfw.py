@@ -13,6 +13,7 @@ import os
 import shutil
 import tempfile
 import numpy as np
+from sklearn.externals import six
 try:
     try:
         from scipy.misc import imsave
@@ -81,17 +82,17 @@ def setup_module():
     # generate some pairing metadata files using the same format as LFW
     with open(os.path.join(LFW_HOME, 'pairsDevTrain.txt'), 'wb') as f:
         f.write("10\n")
-        more_than_two = [name for name, count in counts.iteritems()
+        more_than_two = [name for name, count in six.iteritems(counts)
                          if count >= 2]
         for i in range(5):
             name = random_state.choice(more_than_two)
-            first, second = random_state.sample(range(counts[name]), 2)
+            first, second = random_state.sample(np.arange(counts[name]), 2)
             f.write('%s\t%d\t%d\n' % (name, first, second))
 
         for i in range(5):
             first_name, second_name = random_state.sample(FAKE_NAMES, 2)
-            first_index = random_state.choice(range(counts[first_name]))
-            second_index = random_state.choice(range(counts[second_name]))
+            first_index = random_state.choice(np.arange(counts[first_name]))
+            second_index = random_state.choice(np.arange(counts[second_name]))
             f.write('%s\t%d\t%s\t%d\n' % (first_name, first_index,
                                           second_name, second_index))
 

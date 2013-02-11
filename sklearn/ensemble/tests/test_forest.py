@@ -183,7 +183,7 @@ def test_importances():
                                         shuffle=False,
                                         random_state=0)
 
-    clf = RandomForestClassifier(n_estimators=10, compute_importances=True)
+    clf = RandomForestClassifier(n_estimators=10)
     clf.fit(X, y)
     importances = clf.feature_importances_
     n_important = sum(importances > 0.1)
@@ -194,19 +194,16 @@ def test_importances():
     X_new = clf.transform(X, threshold="mean")
     assert_less(0 < X_new.shape[1], X.shape[1])
 
-    clf = RandomForestClassifier(n_estimators=10)
-    clf.fit(X, y)
-    assert_true(clf.feature_importances_ is None)
-
 
 def test_oob_score_classification():
-    """Check that oob prediction is as acurate as
-    usual prediction on the training set.
-    Not really a good test that prediction is independent."""
+    """Check that oob prediction is a good estimation of the generalization
+    error."""
     clf = RandomForestClassifier(oob_score=True, random_state=rng)
-    clf.fit(X, y)
-    training_score = clf.score(X, y)
-    assert_almost_equal(training_score, clf.oob_score_)
+    n_samples = iris.data.shape[0]
+    clf.fit(iris.data[:n_samples / 2, :], iris.target[:n_samples / 2])
+    test_score = clf.score(iris.data[n_samples / 2:, :],
+                           iris.target[n_samples / 2:])
+    assert_less(abs(test_score - clf.oob_score_), 0.05)
 
 
 def test_oob_score_regression():

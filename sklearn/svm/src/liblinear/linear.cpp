@@ -7,6 +7,8 @@
 
    - Changes roles of +1 and -1 to match scikit API, Andreas Mueller
         See issue 546: https://github.com/scikit-learn/scikit-learn/pull/546
+   - Also changed roles for pairwise class weights, Andreas Mueller
+        See issue 1491: https://github.com/scikit-learn/scikit-learn/pull/1491
    
  */
 
@@ -2410,7 +2412,7 @@ model* train(const problem *prob, const parameter *param)
 				for(; k<sub_prob.l; k++)
 					sub_prob.y[k] = +1;
 
-				train_one(&sub_prob, param, &model_->w[0], weighted_C[0], weighted_C[1]);
+				train_one(&sub_prob, param, &model_->w[0], weighted_C[1], weighted_C[0]);
 			}
 			else
 			{

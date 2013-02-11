@@ -144,7 +144,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
     # Check early stopping
     if remaining_iterations == 0:
         if verbose:
-            print 'Maximum number of iterations reached'
+            print('Maximum number of iterations reached')
         det = fast_logdet(covariance)
         results = location, covariance, det, support, dist
 
@@ -365,7 +365,8 @@ def fast_mcd(X, support_fraction=None,
         n_subsets = n_samples // 300
         n_samples_subsets = n_samples // n_subsets
         samples_shuffle = random_state.permutation(n_samples)
-        h_subset = np.ceil(n_samples_subsets * (n_support / float(n_samples)))
+        h_subset = int(np.ceil(n_samples_subsets *
+                       (n_support / float(n_samples))))
         # b. perform a total of 500 trials
         n_trials_tot = 500
         # c. select 10 best (location, covariance) for each subset
@@ -398,7 +399,8 @@ def fast_mcd(X, support_fraction=None,
         ## 2. Pool the candidate supports into a merged set
         ##    (possibly the full dataset)
         n_samples_merged = min(1500, n_samples)
-        h_merged = np.ceil(n_samples_merged * (n_support / float(n_samples)))
+        h_merged = int(np.ceil(n_samples_merged *
+                       (n_support / float(n_samples))))
         if n_samples > 1500:
             n_best_merged = 10
         else:
@@ -557,7 +559,7 @@ class MinCovDet(EmpiricalCovariance):
           Returns self.
 
         """
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
         # check that the empirical covariance is full rank
         if (linalg.svdvals(np.dot(X.T, X)) > 1e-8).sum() != n_features:
@@ -567,7 +569,7 @@ class MinCovDet(EmpiricalCovariance):
         raw_location, raw_covariance, raw_support, raw_dist = fast_mcd(
             X, support_fraction=self.support_fraction,
             cov_computation_method=self._nonrobust_covariance,
-            random_state=self.random_state)
+            random_state=random_state)
         if self.assume_centered:
             raw_location = np.zeros(n_features)
             raw_covariance = self._nonrobust_covariance(X[raw_support],

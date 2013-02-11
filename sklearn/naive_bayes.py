@@ -19,6 +19,7 @@ from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy.sparse import issparse
+import warnings
 
 from .base import BaseEstimator, ClassifierMixin
 from .preprocessing import binarize, LabelBinarizer
@@ -175,7 +176,7 @@ class GaussianNB(BaseNB):
     def _joint_log_likelihood(self, X):
         X = array2d(X)
         joint_log_likelihood = []
-        for i in xrange(np.size(self.classes_)):
+        for i in range(np.size(self.classes_)):
             jointi = np.log(self.class_prior_[i])
             n_ij = - 0.5 * np.sum(np.log(np.pi * self.sigma_[i, :]))
             n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) /
@@ -210,10 +211,6 @@ class BaseDiscreteNB(BaseNB):
         sample_weight : array-like, shape = [n_samples], optional
             Weights applied to individual samples (1. for unweighted).
 
-        class_prior : array, shape [n_classes]
-            Custom prior probability per class.
-            Overrides the fit_prior parameter.
-
         Returns
         -------
         self : object
@@ -237,6 +234,13 @@ class BaseDiscreteNB(BaseNB):
 
         if sample_weight is not None:
             Y *= array2d(sample_weight).T
+
+        if class_prior is not None:
+            warnings.warn('class_prior has been made an ``__init__`` parameter'
+                          ' and will be removed from fit in version 0.15.',
+                          DeprecationWarning)
+        else:
+            class_prior = self.class_prior
 
         if class_prior:
             if len(class_prior) != n_classes:
@@ -283,12 +287,17 @@ class MultinomialNB(BaseDiscreteNB):
 
     Parameters
     ----------
-    alpha: float, optional (default=1.0)
+    alpha : float, optional (default=1.0)
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
-    fit_prior: boolean
+
+    fit_prior : boolean
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
+
+    class_prior : array-like, size=[n_classes,]
+        Prior probabilities of the classes. If specified the priors are not
+        adjusted according to the data.
 
     Attributes
     ----------
@@ -311,7 +320,7 @@ class MultinomialNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
     >>> clf.fit(X, Y)
-    MultinomialNB(alpha=1.0, fit_prior=True)
+    MultinomialNB(alpha=1.0, class_prior=None, fit_prior=True)
     >>> print(clf.predict(X[2]))
     [3]
 
@@ -322,9 +331,10 @@ class MultinomialNB(BaseDiscreteNB):
     Tackling the poor assumptions of naive Bayes text classifiers, ICML.
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True):
+    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.fit_prior = fit_prior
+        self.class_prior = class_prior
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
@@ -351,15 +361,21 @@ class BernoulliNB(BaseDiscreteNB):
 
     Parameters
     ----------
-    alpha: float, optional (default=1.0)
+    alpha : float, optional (default=1.0)
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
-    binarize: float or None, optional
+
+    binarize : float or None, optional
         Threshold for binarizing (mapping to booleans) of sample features.
         If None, input is presumed to already consist of binary vectors.
-    fit_prior: boolean
+
+    fit_prior : boolean
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
+
+    class_prior : array-like, size=[n_classes,]
+        Prior probabilities of the classes. If specified the priors are not
+        adjusted according to the data.
 
     Attributes
     ----------
@@ -377,7 +393,7 @@ class BernoulliNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import BernoulliNB
     >>> clf = BernoulliNB()
     >>> clf.fit(X, Y)
-    BernoulliNB(alpha=1.0, binarize=0.0, fit_prior=True)
+    BernoulliNB(alpha=1.0, binarize=0.0, class_prior=None, fit_prior=True)
     >>> print(clf.predict(X[2]))
     [3]
 
@@ -395,10 +411,12 @@ class BernoulliNB(BaseDiscreteNB):
     naive Bayes -- Which naive Bayes? 3rd Conf. on Email and Anti-Spam (CEAS).
     """
 
-    def __init__(self, alpha=1.0, binarize=.0, fit_prior=True):
+    def __init__(self, alpha=1.0, binarize=.0, fit_prior=True,
+                 class_prior=None):
         self.alpha = alpha
         self.binarize = binarize
         self.fit_prior = fit_prior
+        self.class_prior = class_prior
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""

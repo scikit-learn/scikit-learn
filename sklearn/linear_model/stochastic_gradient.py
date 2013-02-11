@@ -15,11 +15,12 @@ from ..externals.joblib import Parallel, delayed
 from .base import LinearClassifierMixin
 from ..base import BaseEstimator, RegressorMixin
 from ..feature_selection.selector_mixin import SelectorMixin
-from ..utils import array2d, atleast2d_or_csr, check_arrays
+from ..utils import array2d, atleast2d_or_csr, check_arrays, deprecated
 from ..utils.extmath import safe_sparse_dot
 
 from .sgd_fast import plain_sgd as plain_sgd
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
+from ..utils import compute_class_weight
 from .sgd_fast import Hinge
 from .sgd_fast import SquaredHinge
 from .sgd_fast import Log
@@ -83,6 +84,7 @@ class BaseSGD(BaseEstimator):
     def set_params(self, *args, **kwargs):
         super(BaseSGD, self).set_params(*args, **kwargs)
         self._validate_params()
+        return self
 
     @abstractmethod
     def fit(self, X, y):
@@ -296,11 +298,17 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
                                         DEFAULT_EPSILON),
     }
 
-    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001,
-                 l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, epsilon=DEFAULT_EPSILON, n_jobs=1,
-                 random_state=None, learning_rate="optimal", eta0=0.0,
-                 power_t=0.5, class_weight=None, warm_start=False, rho=None):
+    def __init__(self, loss="hinge", penalty='l2', alpha=0.0001, l1_ratio=0.15,
+                 fit_intercept=True, n_iter=5, shuffle=False, verbose=0,
+                 epsilon=DEFAULT_EPSILON, n_jobs=1, random_state=None,
+                 learning_rate="optimal", eta0=0.0, power_t=0.5,
+                 class_weight=None, warm_start=False, rho=None, seed=None):
+
+        if seed is not None:
+            warnings.warn("Parameter 'seed' was renamed to 'random_state' for"
+                          " consistency and will be removed in 0.15",
+                          DeprecationWarning)
+            random_state = seed
 
         super(BaseSGDClassifier, self).__init__(loss=loss, penalty=penalty,
                                                 alpha=alpha, l1_ratio=l1_ratio,
@@ -317,30 +325,11 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
         self.classes_ = None
         self.n_jobs = int(n_jobs)
 
-    def _set_class_weight(self, class_weight, classes, y):
-        """Estimate class weights for unbalanced datasets."""
-        if class_weight is None or len(class_weight) == 0:
-            # uniform class weights
-            weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
-        elif class_weight == 'auto':
-            # proportional to the number of samples in the class
-            weight = np.array([1.0 / np.sum(y == i) for i in classes],
-                              dtype=np.float64, order='C')
-            weight *= classes.shape[0] / np.sum(weight)
-        else:
-            # user-defined dictionary
-            weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
-            if not isinstance(class_weight, dict):
-                raise ValueError("class_weight must be dict, 'auto', or None,"
-                                 " got: %r" % class_weight)
-            for c in class_weight:
-                i = np.searchsorted(classes, c)
-                if classes[i] != c:
-                    raise ValueError("Class label %d not present." % c)
-                else:
-                    weight[i] = class_weight[c]
-
-        self._expanded_class_weight = weight
+    @property
+    @deprecated("Parameter 'seed' war renamed to 'random_state' for"
+                " consistency and will be removed in 0.15")
+    def seed(self):
+        return self.random_state
 
     def _partial_fit(self, X, y, alpha, C,
                      loss, learning_rate, n_iter,
@@ -367,7 +356,8 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
         n_classes = self.classes_.shape[0]
 
         # Allocate datastructures from input arguments
-        self._set_class_weight(self.class_weight, self.classes_, y)
+        self._expanded_class_weight = compute_class_weight(self.class_weight,
+                                                           self.classes_, y)
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
         if self.coef_ is None:
@@ -459,7 +449,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
             delayed(fit_binary)(self, i, X, y, alpha, C, learning_rate,
                                 n_iter, self._expanded_class_weight[i], 1.,
                                 sample_weight)
-            for i in xrange(len(self.classes_)))
+            for i in range(len(self.classes_)))
 
         for i, (coef, intercept) in enumerate(result):
             self.coef_[i] = coef
@@ -610,7 +600,7 @@ class SGDClassifier(BaseSGDClassifier, SelectorMixin):
         The initial learning rate [default 0.01].
 
     power_t : double
-        The exponent for inverse scaling learning rate [default 0.25].
+        The exponent for inverse scaling learning rate [default 0.5].
 
     class_weight : dict, {class_label : weight} or "auto" or None, optional
         Preset for the class_weight fit parameter.
@@ -646,8 +636,8 @@ class SGDClassifier(BaseSGDClassifier, SelectorMixin):
     SGDClassifier(alpha=0.0001, class_weight=None, epsilon=0.1, eta0=0.0,
             fit_intercept=True, l1_ratio=0.15, learning_rate='optimal',
             loss='hinge', n_iter=5, n_jobs=1, penalty='l2', power_t=0.5,
-            random_state=None, rho=None, shuffle=False, verbose=0,
-            warm_start=False)
+            random_state=None, rho=None, shuffle=False,
+            verbose=0, warm_start=False)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -729,16 +719,9 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
 
     def __init__(self, loss="squared_loss", penalty="l2", alpha=0.0001,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
-                 verbose=0, epsilon=DEFAULT_EPSILON, p=None, random_state=None,
+                 verbose=0, epsilon=DEFAULT_EPSILON, random_state=None,
                  learning_rate="invscaling", eta0=0.01, power_t=0.25,
                  warm_start=False, rho=None):
-        if p is not None:
-            warnings.warn("Using 'p' is deprecated and will be removed in "
-                          "scikit-learn 0.14, use epsilon instead.",
-                          DeprecationWarning, stacklevel=2)
-            self.p = float(p)
-            epsilon = p
-
         super(BaseSGDRegressor, self).__init__(loss=loss, penalty=penalty,
                                                alpha=alpha, l1_ratio=l1_ratio,
                                                fit_intercept=fit_intercept,
@@ -1011,8 +994,8 @@ class SGDRegressor(BaseSGDRegressor, SelectorMixin):
     >>> clf.fit(X, y)
     SGDRegressor(alpha=0.0001, epsilon=0.1, eta0=0.01, fit_intercept=True,
            l1_ratio=0.15, learning_rate='invscaling', loss='squared_loss',
-           n_iter=5, p=None, penalty='l2', power_t=0.25, random_state=None,
-           rho=None, shuffle=False, verbose=0, warm_start=False)
+           n_iter=5, penalty='l2', power_t=0.25, random_state=None, rho=None,
+           shuffle=False, verbose=0, warm_start=False)
 
     See also
     --------

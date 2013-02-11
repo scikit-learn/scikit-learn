@@ -22,6 +22,7 @@ from .base import is_classifier, clone
 from .utils import check_arrays, check_random_state, safe_mask
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
+from .metrics import SCORERS, Scorer
 
 __all__ = ['Bootstrap',
            'KFold',
@@ -71,10 +72,10 @@ class LeaveOneOut(object):
     >>> print(loo)
     sklearn.cross_validation.LeaveOneOut(n=2)
     >>> for train_index, test_index in loo:
-    ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
-    ...    print("%s %s %s %s" % (X_train, X_test, y_train, y_test))
+    ...    print(X_train, X_test, y_train, y_test)
     TRAIN: [1] TEST: [0]
     [[3 4]] [[1 2]] [2] [1]
     TRAIN: [0] TEST: [1]
@@ -92,7 +93,7 @@ class LeaveOneOut(object):
 
     def __iter__(self):
         n = self.n
-        for i in xrange(n):
+        for i in range(n):
             test_index = np.zeros(n, dtype=np.bool)
             test_index[i] = True
             train_index = np.logical_not(test_index)
@@ -148,7 +149,7 @@ class LeavePOut(object):
     >>> print(lpo)
     sklearn.cross_validation.LeavePOut(n=4, p=2)
     >>> for train_index, test_index in lpo:
-    ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
     TRAIN: [2 3] TEST: [0 1]
@@ -238,7 +239,7 @@ class KFold(object):
     >>> print(kf)
     sklearn.cross_validation.KFold(n=4, n_folds=2)
     >>> for train_index, test_index in kf:
-    ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
     TRAIN: [2 3] TEST: [0 1]
@@ -281,7 +282,7 @@ class KFold(object):
         n_folds = self.n_folds
         fold_size = n // n_folds
 
-        for i in xrange(n_folds):
+        for i in range(n_folds):
             test_index = np.zeros(n, dtype=np.bool)
             if i < n_folds - 1:
                 test_index[self.idxs[i * fold_size:(i + 1) * fold_size]] = True
@@ -338,7 +339,7 @@ class StratifiedKFold(object):
     >>> print(skf)
     sklearn.cross_validation.StratifiedKFold(labels=[0 0 1 1], n_folds=2)
     >>> for train_index, test_index in skf:
-    ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
     TRAIN: [1 3] TEST: [0 2]
@@ -376,7 +377,7 @@ class StratifiedKFold(object):
         n = y.size
         idx = np.argsort(y)
 
-        for i in xrange(n_folds):
+        for i in range(n_folds):
             test_index = np.zeros(n, dtype=np.bool)
             test_index[idx[i::n_folds]] = True
             train_index = np.logical_not(test_index)
@@ -431,10 +432,10 @@ class LeaveOneLabelOut(object):
     >>> print(lol)
     sklearn.cross_validation.LeaveOneLabelOut(labels=[1 1 2 2])
     >>> for train_index, test_index in lol:
-    ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
-    ...    print("%s %s %s %s" % (X_train, X_test, y_train, y_test))
+    ...    print(X_train, X_test, y_train, y_test)
     TRAIN: [2 3] TEST: [0 1]
     [[5 6]
      [7 8]] [[1 2]
@@ -516,10 +517,10 @@ class LeavePLabelOut(object):
     >>> print(lpl)
     sklearn.cross_validation.LeavePLabelOut(labels=[1 2 3], p=2)
     >>> for train_index, test_index in lpl:
-    ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
-    ...    print("%s %s %s %s" % (X_train, X_test, y_train, y_test))
+    ...    print(X_train, X_test, y_train, y_test)
     TRAIN: [2] TEST: [0 1]
     [[5 6]] [[1 2]
      [3 4]] [1] [1 2]
@@ -625,7 +626,7 @@ class Bootstrap(object):
     >>> print(bs)
     Bootstrap(9, n_iter=3, train_size=5, test_size=4, random_state=0)
     >>> for train_index, test_index in bs:
-    ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...
     TRAIN: [1 8 7 7 8] TEST: [0 3 0 5]
     TRAIN: [5 4 2 4 2] TEST: [6 7 1 0]
@@ -649,7 +650,7 @@ class Bootstrap(object):
         self.n_iter = n_iter
         if (isinstance(train_size, numbers.Real) and train_size >= 0.0
                 and train_size <= 1.0):
-            self.train_size = ceil(train_size * n)
+            self.train_size = int(ceil(train_size * n))
         elif isinstance(train_size, numbers.Integral):
             self.train_size = train_size
         else:
@@ -660,7 +661,7 @@ class Bootstrap(object):
                              (self.train_size, n))
 
         if isinstance(test_size, numbers.Real) and 0.0 <= test_size <= 1.0:
-            self.test_size = ceil(test_size * n)
+            self.test_size = int(ceil(test_size * n))
         elif isinstance(test_size, numbers.Integral):
             self.test_size = test_size
         elif test_size is None:
@@ -721,16 +722,17 @@ class ShuffleSplit(object):
     n_iter : int (default 10)
         Number of re-shuffling & splitting iterations.
 
-    test_size : float (default 0.1) or int
+    test_size : float (default 0.1), int, or None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the test split. If
-        int, represents the absolute number of test samples.
+        int, represents the absolute number of test samples. If None,
+        the value is automatically set to the complement of the train size.
 
     train_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
-        the value is automatically set to the complement of the test fraction.
+        the value is automatically set to the complement of the test size.
 
     indices : boolean, optional (default True)
         Return train/test split as arrays of indices, rather than a boolean
@@ -751,7 +753,7 @@ class ShuffleSplit(object):
     ... # doctest: +ELLIPSIS
     ShuffleSplit(4, n_iter=3, test_size=0.25, indices=True, ...)
     >>> for train_index, test_index in rs:
-    ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...
     TRAIN: [3 1 0] TEST: [2]
     TRAIN: [2 1 3] TEST: [0]
@@ -760,7 +762,7 @@ class ShuffleSplit(object):
     >>> rs = cross_validation.ShuffleSplit(4, n_iter=3,
     ...     train_size=0.5, test_size=.25, random_state=0)
     >>> for train_index, test_index in rs:
-    ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...
     TRAIN: [3 1] TEST: [2]
     TRAIN: [2 1] TEST: [0]
@@ -821,18 +823,23 @@ class ShuffleSplit(object):
 
 
 def _validate_shuffle_split(n, test_size, train_size):
-    if np.asarray(test_size).dtype.kind == 'f':
-        if test_size >= 1.:
-            raise ValueError(
-                'test_size=%f should be smaller '
-                'than 1.0 or be an integer' % test_size)
-    elif np.asarray(test_size).dtype.kind == 'i':
-        if test_size >= n:
-            raise ValueError(
-                'test_size=%d should be smaller '
-                'than the number of samples %d' % (test_size, n))
-    else:
-        raise ValueError("Invalid value for test_size: %r" % test_size)
+    if test_size is None and train_size is None:
+        raise ValueError(
+            'test_size and train_size can not both be None')
+
+    if test_size is not None:
+        if np.asarray(test_size).dtype.kind == 'f':
+            if test_size >= 1.:
+                raise ValueError(
+                    'test_size=%f should be smaller '
+                    'than 1.0 or be an integer' % test_size)
+        elif np.asarray(test_size).dtype.kind == 'i':
+            if test_size >= n:
+                raise ValueError(
+                    'test_size=%d should be smaller '
+                    'than the number of samples %d' % (test_size, n))
+        else:
+            raise ValueError("Invalid value for test_size: %r" % test_size)
 
     if train_size is not None:
         if np.asarray(train_size).dtype.kind == 'f':
@@ -855,7 +862,7 @@ def _validate_shuffle_split(n, test_size, train_size):
 
     if np.asarray(test_size).dtype.kind == 'f':
         n_test = ceil(test_size * n)
-    else:
+    elif np.asarray(test_size).dtype.kind == 'i':
         n_test = float(test_size)
 
     if train_size is None:
@@ -866,13 +873,16 @@ def _validate_shuffle_split(n, test_size, train_size):
         else:
             n_train = float(train_size)
 
+    if test_size is None:
+        n_test = n - n_train
+
     if n_train + n_test > n:
         raise ValueError('The sum of train_size and test_size = %d, '
                          'should be smaller than the number of '
                          'samples %d. Reduce test_size and/or '
                          'train_size.' % (n_train + n_test, n))
 
-    return n_train, n_test
+    return int(n_train), int(n_test)
 
 
 def _validate_stratified_shuffle_split(y, test_size, train_size):
@@ -920,16 +930,17 @@ class StratifiedShuffleSplit(object):
     n_iter : int (default 10)
         Number of re-shuffling & splitting iterations.
 
-    test_size : float (default 0.1) or int
+    test_size : float (default 0.1), int, or None
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the test split. If
-        int, represents the absolute number of test samples.
+        int, represents the absolute number of test samples. If None,
+        the value is automatically set to the complement of the train size.
 
     train_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
-        the value is automatically set to the complement of the test fraction.
+        the value is automatically set to the complement of the test size.
 
     indices : boolean, optional (default True)
         Return train/test split as arrays of indices, rather than a boolean
@@ -947,7 +958,7 @@ class StratifiedShuffleSplit(object):
     >>> print(sss)       # doctest: +ELLIPSIS
     StratifiedShuffleSplit(labels=[0 0 1 1], n_iter=3, ...)
     >>> for train_index, test_index in sss:
-    ...    print("TRAIN: %s TEST: %s" % (train_index, test_index))
+    ...    print("TRAIN:", train_index, "TEST:", test_index)
     ...    X_train, X_test = X[train_index], X[test_index]
     ...    y_train, y_test = y[train_index], y[test_index]
     TRAIN: [1 2] TEST: [3 0]
@@ -1021,13 +1032,12 @@ class StratifiedShuffleSplit(object):
 
 ##############################################################################
 
-def _cross_val_score(estimator, X, y, score_func, train, test, verbose,
+def _cross_val_score(estimator, X, y, scorer, train, test, verbose,
                      fit_params):
     """Inner loop for cross validation"""
     n_samples = X.shape[0] if sp.issparse(X) else len(X)
     fit_params = dict([(k, np.asarray(v)[train]
-                        if hasattr(v, '__len__')
-                        and len(v) == n_samples else v)
+                       if hasattr(v, '__len__') and len(v) == n_samples else v)
                        for k, v in fit_params.items()])
     if not hasattr(X, "shape"):
         if getattr(estimator, "_pairwise", False):
@@ -1047,24 +1057,26 @@ def _cross_val_score(estimator, X, y, score_func, train, test, verbose,
             X_test = X[safe_mask(X, test)]
 
     if y is None:
-        estimator.fit(X_train, **fit_params)
-        if score_func is None:
-            score = estimator.score(X_test)
-        else:
-            score = score_func(X_test)
+        y_train = None
+        y_test = None
     else:
-        estimator.fit(X_train, y[train], **fit_params)
-        if score_func is None:
-            score = estimator.score(X_test, y[test])
-        else:
-            score = score_func(y[test], estimator.predict(X_test))
+        y_train = y[train]
+        y_test = y[test]
+    estimator.fit(X_train, y_train, **fit_params)
+    if scorer is None:
+        score = estimator.score(X_test, y_test)
+    else:
+        score = scorer(estimator, X_test, y_test)
+        if not isinstance(score, numbers.Number):
+            raise ValueError("scoring must return a number, got %s (%s)"
+                             " instead." % (str(score), type(score)))
     if verbose > 1:
         print("score: %f" % score)
     return score
 
 
-def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
-                    verbose=0, fit_params=None):
+def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
+                    verbose=0, fit_params=None, score_func=None):
     """Evaluate a score by cross-validation
 
     Parameters
@@ -1079,12 +1091,11 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
         The target variable to try to predict in the case of
         supervised learning.
 
-    score_func : callable, optional
-        Score function to use for evaluation.
-        Has priority over the score function in the estimator.
-        In a non-supervised setting, where y is None, it takes the test
-        data (X_test) as its only argument. In a supervised setting it takes
-        the test target (y_true) and the test prediction (y_pred) as arguments.
+    scoring : string or callable, optional
+        Either one of either a string ("zero_one", "f1", "roc_auc", ... for
+        classification, "mse", "r2", ... for regression) or a callable.
+        See 'Scoring objects' in the model evaluation section of the user guide
+        for details.
 
     cv : cross-validation generator, optional
         A cross-validation generator. If None, a 3-fold cross
@@ -1100,13 +1111,26 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
 
     fit_params : dict, optional
         Parameters to pass to the fit method of the estimator.
+
+    Returns
+    -------
+    scores : array of float, shape=(len(list(cv)),)
+        Array of scores of the estimator for each run of the cross validation.
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
-    if score_func is None:
-        if not hasattr(estimator, 'score'):
+    if score_func is not None:
+        warnings.warn("Passing function as ``score_func`` is "
+                      "deprecated and will be removed in 0.15. "
+                      "Either use strings or score objects.", stacklevel=2)
+        scorer = Scorer(score_func)
+    elif isinstance(scoring, basestring):
+        scorer = SCORERS[scoring]
+    else:
+        scorer = scoring
+    if scorer is None and not hasattr(estimator, 'score'):
             raise TypeError(
-                "If no score_func is specified, the estimator passed "
+                "If no scoring is specified, the estimator passed "
                 "should have a 'score' method. The estimator %s "
                 "does not." % estimator)
     # We clone the estimator to make sure that all the folds are
@@ -1114,19 +1138,17 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
     fit_params = fit_params if fit_params is not None else {}
     scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
         delayed(_cross_val_score)(
-            clone(estimator), X, y, score_func,
-            train, test, verbose, fit_params)
+            clone(estimator), X, y, scorer, train, test, verbose, fit_params)
         for train, test in cv)
     return np.array(scores)
 
 
-def _permutation_test_score(estimator, X, y, cv, score_func):
+def _permutation_test_score(estimator, X, y, cv, scorer):
     """Auxilary function for permutation_test_score"""
     avg_score = []
     for train, test in cv:
-        avg_score.append(score_func(y[test],
-                                    estimator.fit(X[train],
-                                                  y[train]).predict(X[test])))
+        estimator.fit(X[train], y[train])
+        avg_score.append(scorer(estimator, X[test], y[test]))
     return np.mean(avg_score)
 
 
@@ -1182,9 +1204,9 @@ def check_cv(cv, X=None, y=None, classifier=False):
     return cv
 
 
-def permutation_test_score(estimator, X, y, score_func, cv=None,
+def permutation_test_score(estimator, X, y, scoring=None, cv=None,
                            n_permutations=100, n_jobs=1, labels=None,
-                           random_state=0, verbose=0):
+                           random_state=0, verbose=0, score_func=None):
     """Evaluate the significance of a cross-validated score with permutations
 
     Parameters
@@ -1199,12 +1221,11 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
         The target variable to try to predict in the case of
         supervised learning.
 
-    score_func : callable
-        Callable taking as arguments the test targets (y_test) and
-        the predicted targets (y_pred) and returns a float. The score
-        functions are expected to return a bigger value for a better result
-        otherwise the returned value does not correspond to a p-value (see
-        Returns below for further details).
+    scoring : string or object, optional
+        Either one of either a string ("zero_one", "f1", "roc_auc", ... for
+        classification, "mse", "r2", ... for regression) or a callable.
+        See 'Scoring objects' in the model evaluation section of the user guide
+        for details.
 
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
@@ -1236,8 +1257,8 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
 
     pvalue : float
         The returned value equals p-value if `score_func` returns bigger
-        numbers for better scores (e.g., zero_one). If `score_func` is rather a
-        loss function (i.e. when lower is better such as with
+        numbers for better scores (e.g., accuracy_score). If `score_func` is
+        rather a loss function (i.e. when lower is better such as with
         `mean_squared_error`) then this is actually the complement of the
         p-value:  1 - p-value.
 
@@ -1253,15 +1274,28 @@ def permutation_test_score(estimator, X, y, score_func, cv=None,
     X, y = check_arrays(X, y, sparse_format='csr')
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
+    if score_func is not None:
+        warnings.warn("Passing function as ``score_func`` is "
+                      "deprecated and will be removed in 0.15. "
+                      "Either use strings or score objects.")
+        scorer = Scorer(score_func)
+    elif isinstance(scoring, basestring):
+        scorer = SCORERS[scoring]
+    else:
+        scorer = scoring
+
+    if scorer is None:
+        raise ValueError("No valid scoring provided.")
+
     random_state = check_random_state(random_state)
 
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
-    score = _permutation_test_score(clone(estimator), X, y, cv, score_func)
+    score = _permutation_test_score(clone(estimator), X, y, cv, scorer)
     permutation_scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
-        delayed(_permutation_test_score)(clone(estimator), X,
-                                         _shuffle(y, labels, random_state),
-                                         cv, score_func)
+        delayed(_permutation_test_score)(
+            clone(estimator), X, _shuffle(y, labels, random_state), cv,
+            scorer)
         for _ in range(n_permutations))
     permutation_scores = np.array(permutation_scores)
     pvalue = (np.sum(permutation_scores >= score) + 1.0) / (n_permutations + 1)
@@ -1285,22 +1319,29 @@ def train_test_split(*arrays, **options):
         Python lists or tuples occurring in arrays are converted to 1D numpy
         arrays.
 
-    test_size : float (default 0.25) or int
+    test_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the test split. If
-        int, represents the absolute number of test samples.
+        int, represents the absolute number of test samples. If None,
+        the value is automatically set to the complement of the train size.
+        If train size is also None, test size is set to 0.25.
 
     train_size : float, int, or None (default is None)
         If float, should be between 0.0 and 1.0 and represent the
         proportion of the dataset to include in the train split. If
         int, represents the absolute number of train samples. If None,
-        the value is automatically set to the complement of the test fraction.
+        the value is automatically set to the complement of the test size.
 
     random_state : int or RandomState
         Pseudo-random number generator state used for random sampling.
 
     dtype : a numpy dtype instance, None by default
         Enforce a specific dtype.
+
+    Returns
+    -------
+    splitting : list of arrays, length=2 * len(arrays)
+        List containing train-test split of input array.
 
     Examples
     --------
@@ -1336,10 +1377,13 @@ def train_test_split(*arrays, **options):
     if n_arrays == 0:
         raise ValueError("At least one array required as input")
 
-    test_size = options.pop('test_size', 0.1)
+    test_size = options.pop('test_size', None)
     train_size = options.pop('train_size', None)
     random_state = options.pop('random_state', None)
     options['sparse_format'] = 'csr'
+
+    if test_size is None and train_size is None:
+        test_size = 0.25
 
     arrays = check_arrays(*arrays, **options)
     n_samples = arrays[0].shape[0]
@@ -1353,3 +1397,5 @@ def train_test_split(*arrays, **options):
         splitted.append(a[train])
         splitted.append(a[test])
     return splitted
+
+train_test_split.__test__ = False  # to avoid a pb with nosetests

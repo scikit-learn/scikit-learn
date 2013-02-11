@@ -8,7 +8,7 @@ Demonstrate Gradient Boosting on the boston housing dataset.
 This example fits a Gradient Boosting model with least squares loss and
 500 regression trees of depth 4.
 """
-print __doc__
+print(__doc__)
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #

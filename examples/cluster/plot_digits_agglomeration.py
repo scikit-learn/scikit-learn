@@ -9,7 +9,7 @@ Feature agglomeration
 These images how similiar features are merged together using
 feature agglomeration.
 """
-print __doc__
+print(__doc__)
 
 # Code source: Gael Varoqueux
 # Modified for Documentation merge by Jaques Grobler

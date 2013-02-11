@@ -10,6 +10,8 @@ import numpy as np
 
 from sklearn.utils.murmurhash cimport murmurhash3_bytes_s32
 
+np.import_array()
+
 
 @cython.boundscheck(False)
 @cython.cdivision(True)

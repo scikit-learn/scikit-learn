@@ -83,14 +83,15 @@ by::
 
 By default, the score computed at each CV iteration is the ``score``
 method of the estimator. It is possible to change this by passing a custom
-scoring function, e.g. from the metrics module::
+scoring function::
 
   >>> from sklearn import metrics
   >>> cross_validation.cross_val_score(clf, iris.data, iris.target, cv=5,
-  ...     score_func=metrics.f1_score)
+  ...     scoring='f1')
   ...                                                     # doctest: +ELLIPSIS
   array([ 1.  ...,  0.96...,  0.89...,  0.96...,  1.        ])
 
+See :ref:`score_func_objects` for details.
 In the case of the Iris dataset, the samples are balanced across target
 classes hence the accuracy and the F1-score are almost equal.
 

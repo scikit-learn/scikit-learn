@@ -2,6 +2,7 @@
 Least Angle Regression algorithm. See the documentation on the
 Generalized Linear Model for a complete discussion.
 """
+from __future__ import print_function
 
 # Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -142,7 +143,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     if verbose:
         if verbose > 1:
-            print "Step\t\tAdded\t\tDropped\t\tActive set size\t\tC"
+            print("Step\t\tAdded\t\tDropped\t\tActive set size\t\tC")
         else:
             sys.stdout.write('.')
             sys.stdout.flush()
@@ -230,7 +231,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                               'i.e. alpha=%.3e, '
                               'with an active set of %i regressors, and '
                               'the smallest cholesky pivot element being %.3e'
-                              % (n_iter, alphas[n_iter], n_active, diag))
+                              % (n_iter, alpha, n_active, diag))
                 # XXX: need to figure a 'drop for good' way
                 Cov = Cov_not_shortened
                 Cov[0] = 0
@@ -241,8 +242,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             n_active += 1
 
             if verbose > 1:
-                print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, active[-1], '',
-                                                      n_active, C)
+                print("%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, active[-1], '',
+                                                      n_active, C))
 
         if method == 'lasso' and n_iter > 0 and prev_alpha[0] < alpha[0]:
             # alpha is increasing. This is because the updates of Cov are
@@ -382,8 +383,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             sign_active = np.delete(sign_active, idx)
             sign_active = np.append(sign_active, 0.)  # just to maintain size
             if verbose > 1:
-                print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, '', drop_idx,
-                                                      n_active, abs(temp))
+                print("%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, '', drop_idx,
+                                                      n_active, abs(temp)))
 
     if return_path:
         # resize coefs in case of early stop
@@ -414,8 +415,8 @@ class Lars(LinearModel, RegressorMixin):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
@@ -592,6 +593,13 @@ class LassoLars(Lars):
 
     Parameters
     ----------
+    alpha : float
+        Constant that multiplies the penalty term. Defaults to 1.0.
+        alpha = 0 is equivalent to an ordinary least square, solved
+        by the LinearRegression object in the scikit. For numerical
+        reasons, using alpha = 0 with the LassoLars object is not advised
+        and you should prefer the LinearRegression object.
+
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
@@ -600,8 +608,8 @@ class LassoLars(Lars):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -713,8 +721,8 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
     max_iter: integer, optional
         Maximum number of iterations to perform.
     eps: float, optional
@@ -784,8 +792,8 @@ class LarsCV(Lars):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -939,14 +947,6 @@ class LarsCV(Lars):
         # impedance matching for the above Lars.fit (should not be documented)
         return self.alpha_
 
-    @property
-    def cv_alphas(self):
-        warnings.warn("Use cv_alphas_. Using cv_alphas is deprecated"
-                      "since version 0.12, and backward compatibility "
-                      "won't be maintained from version 0.14 onward. ",
-                      DeprecationWarning, stacklevel=2)
-        return self.cv_alphas_
-
 
 class LassoLarsCV(LarsCV):
     """Cross-validated Lasso, using the LARS algorithm
@@ -965,8 +965,8 @@ class LassoLarsCV(LarsCV):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
@@ -1066,8 +1066,8 @@ class LassoLarsIC(LassoLars):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.

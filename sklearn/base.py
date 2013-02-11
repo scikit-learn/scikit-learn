@@ -4,10 +4,11 @@
 
 import copy
 import inspect
+import warnings
+
 import numpy as np
 from scipy import sparse
-
-from .metrics import r2_score
+from .externals import six
 
 
 ###############################################################################
@@ -42,7 +43,7 @@ def clone(estimator, safe=True):
                             % (repr(estimator), type(estimator)))
     klass = estimator.__class__
     new_object_params = estimator.get_params(deep=False)
-    for name, param in new_object_params.iteritems():
+    for name, param in six.iteritems(new_object_params):
         new_object_params[name] = clone(param, safe=False)
     new_object = klass(**new_object_params)
     params_set = new_object.get_params(deep=False)
@@ -120,7 +121,7 @@ def _pprint(params, offset=0, printer=repr):
     params_list = list()
     this_line_length = offset
     line_sep = ',\n' + (1 + offset // 2) * ' '
-    for i, (k, v) in enumerate(sorted(params.iteritems())):
+    for i, (k, v) in enumerate(sorted(six.iteritems(params))):
         if type(v) is float:
             # use str for representing floating point numbers
             # this way we get consistent representation across
@@ -195,7 +196,13 @@ class BaseEstimator(object):
         """
         out = dict()
         for key in self._get_param_names():
-            value = getattr(self, key, None)
+            # catch deprecation warnings
+            with warnings.catch_warnings(record=True) as w:
+                value = getattr(self, key, None)
+            if len(w) and w[0].category == DeprecationWarning:
+                # if the parameter is deprecated, don't show it
+                continue
+
             # XXX: should we rather test if instance of estimator?
             if deep and hasattr(value, 'get_params'):
                 deep_items = value.get_params().items()
@@ -217,9 +224,9 @@ class BaseEstimator(object):
         """
         if not params:
             # Simple optimisation to gain speed (inspect is slow)
-            return
+            return self
         valid_params = self.get_params(deep=True)
-        for key, value in params.iteritems():
+        for key, value in six.iteritems(params):
             split = key.split('__', 1)
             if len(split) > 1:
                 # nested objects case
@@ -269,7 +276,8 @@ class ClassifierMixin(object):
         z : float
 
         """
-        return np.mean(self.predict(X) == y)
+        from .metrics import accuracy_score
+        return accuracy_score(y, self.predict(X))
 
 
 ###############################################################################
@@ -279,9 +287,9 @@ class RegressorMixin(object):
     def score(self, X, y):
         """Returns the coefficient of determination R^2 of the prediction.
 
-        The coefficient R^2 is defined as (1 - u/v), where u is the
-        regression sum of squares ((y - y_pred) ** 2).sum() and v is the
-        residual sum of squares ((y_true - y_true.mean()) ** 2).sum().
+        The coefficient R^2 is defined as (1 - u/v), where u is the regression
+        sum of squares ((y_true - y_pred) ** 2).sum() and v is the residual
+        sum of squares ((y_true - y_true.mean()) ** 2).sum().
         Best possible score is 1.0, lower values are worse.
 
 
@@ -296,6 +304,8 @@ class RegressorMixin(object):
         -------
         z : float
         """
+
+        from .metrics import r2_score
         return r2_score(y, self.predict(X))
 
 

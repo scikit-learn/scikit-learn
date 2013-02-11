@@ -14,7 +14,7 @@ estimated weights is Gaussian.
 The estimation of the model is done by iteratively maximizing the
 marginal log-likelihood of the observations.
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

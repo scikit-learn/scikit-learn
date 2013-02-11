@@ -1,3 +1,4 @@
+from __future__ import print_function
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
@@ -11,7 +12,6 @@ from scipy import linalg, optimize, rand
 from ..base import BaseEstimator, RegressorMixin
 from ..metrics.pairwise import manhattan_distances
 from ..utils import array2d, check_random_state
-from ..utils import deprecated
 from . import regression_models as regression
 from . import correlation_models as correlation
 
@@ -647,24 +647,6 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         return reduced_likelihood_function_value, par
 
-    @deprecated("to be removed in 0.14, access ``self.theta_`` etc. directly "
-                " after fit.")
-    def arg_max_reduced_likelihood_function(self):
-        return self._arg_max_reduced_likelihood_function()
-
-    @property
-    @deprecated('``theta`` is deprecated and will be removed in 0.14, '
-                'please use ``theta_`` instead.')
-    def theta(self):
-        return self.theta_
-
-    @property
-    @deprecated("``reduced_likelihood_function_value`` is deprecated and will"
-                "be removed in 0.14, please use "
-                "``reduced_likelihood_function_value_`` instead.")
-    def reduced_likelihood_function_value(self):
-        return self.reduced_likelihood_function_value_
-
     def _arg_max_reduced_likelihood_function(self):
         """
         This function estimates the autocorrelation parameters theta as the
@@ -695,9 +677,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         best_optimal_par = []
 
         if self.verbose:
-            print "The chosen optimizer is: " + str(self.optimizer)
+            print("The chosen optimizer is: " + str(self.optimizer))
             if self.random_start > 1:
-                print str(self.random_start) + " random starts are required."
+                print(str(self.random_start) + " random starts are required.")
 
         percent_completed = 0.
 
@@ -759,7 +741,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 if self.verbose and self.random_start > 1:
                     if (20 * k) / self.random_start > percent_completed:
                         percent_completed = (20 * k) / self.random_start
-                        print "%s completed" % (5 * percent_completed)
+                        print("%s completed" % (5 * percent_completed))
 
             optimal_rlf_value = best_optimal_rlf_value
             optimal_par = best_optimal_par
@@ -791,7 +773,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 print("Now improving allowing for anisotropy...")
             for i in self.random_state.permutation(theta0.size):
                 if verbose:
-                    print "Proceeding along dimension %d..." % (i + 1)
+                    print("Proceeding along dimension %d..." % (i + 1))
                 self.theta0 = array2d(theta_iso)
                 self.thetaL = array2d(thetaL[0, i])
                 self.thetaU = array2d(thetaU[0, i])

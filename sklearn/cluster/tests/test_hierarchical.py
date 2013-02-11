@@ -172,7 +172,7 @@ def test_connectivity_popagation():
                   (.018, .153), (.018, .153), (.018, .153),
                   (.018, .152), (.018, .149), (.018, .144),
                   ])
-    nn = NearestNeighbors(n_neighbors=10, warn_on_equidistant=False).fit(X)
+    nn = NearestNeighbors(n_neighbors=10).fit(X)
     connectivity = nn.kneighbors_graph(X)
     ward = Ward(n_clusters=4, connectivity=connectivity)
     # If changes are not propagated correctly, fit crashes with an

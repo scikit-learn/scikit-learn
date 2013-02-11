@@ -13,6 +13,7 @@ from nose.tools import assert_raises, assert_true, assert_equal, assert_false
 
 from sklearn import svm, linear_model, datasets, metrics, base
 from sklearn.datasets.samples_generator import make_classification
+from sklearn.metrics import f1_score
 from sklearn.utils import check_random_state
 from sklearn.utils import ConvergenceWarning
 from sklearn.utils.testing import assert_greater, assert_less
@@ -53,7 +54,12 @@ def test_libsvm_iris():
         clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
         assert_greater(np.mean(clf.predict(iris.data) == iris.target), 0.9)
 
-    assert_array_equal(clf.label_, np.sort(clf.label_))
+    # check deprecated ``label_`` attribute:
+    with warnings.catch_warnings(record=True):
+        # catch deprecation warning
+        assert_array_equal(clf.label_, np.sort(clf.label_))
+
+    assert_array_equal(clf.classes_, np.sort(clf.classes_))
 
     # check also the low-level API
     model = svm.libsvm.fit(iris.data, iris.target.astype(np.float64))
@@ -290,7 +296,7 @@ def test_decision_function():
     assert_array_almost_equal(dec, clf.decision_function(X))
     assert_array_almost_equal(
         prediction,
-        clf.label_[(clf.decision_function(X) > 0).astype(np.int).ravel()])
+        clf.classes_[(clf.decision_function(X) > 0).astype(np.int).ravel()])
     expected = np.array([[-1.], [-0.66], [-1.], [0.66], [1.], [1.]])
     assert_array_almost_equal(clf.decision_function(X), expected, 2)
 
@@ -305,15 +311,15 @@ def test_weight():
     # so all predicted values belong to class 2
     assert_array_almost_equal(clf.predict(X), [2] * 6)
 
-    X_, y_ = make_classification(n_samples=200, n_features=100,
-                                 weights=[0.833, 0.167], random_state=0)
+    X_, y_ = make_classification(n_samples=200, n_features=10,
+                                 weights=[0.833, 0.167], random_state=2)
 
     for clf in (linear_model.LogisticRegression(),
                 svm.LinearSVC(random_state=0), svm.SVC()):
-        clf.set_params(class_weight={0: 5})
-        clf.fit(X_[: 180], y_[: 180])
-        y_pred = clf.predict(X_[180:])
-        assert_true(np.sum(y_pred == y_[180:]) >= 11)
+        clf.set_params(class_weight={0: .1, 1: 10})
+        clf.fit(X_[:100], y_[:100])
+        y_pred = clf.predict(X_[100:])
+        assert_true(f1_score(y_[100:], y_pred) > .3)
 
 
 def test_sample_weights():
@@ -336,11 +342,13 @@ def test_auto_weight():
     # we take as dataset a the two-dimensional projection of iris so
     # that it is not separable and remove half of predictors from
     # class 1
-    from sklearn.svm.base import _get_class_weight
+    from sklearn.utils import compute_class_weight
     X, y = iris.data[:, :2], iris.target
     unbalanced = np.delete(np.arange(y.size), np.where(y > 1)[0][::2])
 
-    assert_true(np.argmax(_get_class_weight('auto', y[unbalanced])[0]) == 2)
+    classes = np.unique(y[unbalanced])
+    class_weights = compute_class_weight('auto', classes, y[unbalanced])
+    assert_true(np.argmax(class_weights) == 2)
 
     for clf in (svm.SVC(kernel='linear'), svm.LinearSVC(random_state=0),
                 LogisticRegression()):
@@ -529,7 +537,7 @@ def test_liblinear_set_coef():
     clf.coef_ = clf.coef_.copy()
     clf.intercept_ = clf.intercept_.copy()
     values2 = clf.decision_function(iris.data)
-    assert_array_equal(values, values2)
+    assert_array_almost_equal(values, values2)
 
     # binary-class case
     X = [[2, 1],

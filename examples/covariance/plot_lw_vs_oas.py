@@ -20,7 +20,7 @@ distributed data.
 Chen et al., IEEE Trans. on Sign. Proc., Volume 58, Issue 10, October 2010.
 
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

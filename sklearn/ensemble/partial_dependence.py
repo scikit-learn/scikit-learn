@@ -13,6 +13,7 @@ from scipy.stats.mstats import mquantiles
 
 from ..utils.extmath import cartesian
 from ..externals.joblib import Parallel, delayed
+from ..externals import six
 from ..utils import array2d
 from ..tree._tree import DTYPE
 
@@ -188,7 +189,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         the name of the feature with index i.
     label : object
         The class label for which the PDPs should be computed.
-        Only if gbrt is a multi-class model. Must be in gbrt.classes_ .
+        Only if gbrt is a multi-class model. Must be in ``gbrt.classes_``.
     n_cols : int
         The number of columns in the grid plot (default: 3).
     percentiles : (low, high), default=(0.05, 0.95)
@@ -247,7 +248,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
             raise ValueError('label is not given for multi-class PDP')
         label_idx = np.searchsorted(gbrt.classes_, label)
         if gbrt.classes_[label_idx] != label:
-            raise ValueError('label %s not in gbrt.classes_' % str(label))
+            raise ValueError('label %s not in ``gbrt.classes_``' % str(label))
     else:
         # regression and binary classification
         label_idx = 0
@@ -269,7 +270,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         feature_names = feature_names.tolist()
 
     def convert_feature(fx):
-        if isinstance(fx, basestring):
+        if isinstance(fx, six.string_types):
             try:
                 fx = feature_names.index(fx)
             except ValueError:
@@ -279,7 +280,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     # convert features into a seq of int tuples
     tmp_features = []
     for fxs in features:
-        if isinstance(fxs, (numbers.Integral, basestring)):
+        if isinstance(fxs, (numbers.Integral,) + six.string_types):
             fxs = (fxs,)
         try:
             fxs = np.array([convert_feature(fx) for fx in fxs], dtype=np.int32)

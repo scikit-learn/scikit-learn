@@ -13,7 +13,6 @@ make it more stable, this module will be removed in version 0.11.
 """
 
 import string
-import warnings
 
 import numpy as np
 
@@ -372,7 +371,7 @@ class _BaseHMM(BaseEstimator):
         obs = [self._generate_sample_from_state(
             currstate, random_state=random_state)]
 
-        for _ in xrange(n - 1):
+        for _ in range(n - 1):
             rand = random_state.rand()
             currstate = (transmat_cdf[currstate] > rand).argmax()
             hidden_states.append(currstate)
@@ -381,7 +380,7 @@ class _BaseHMM(BaseEstimator):
 
         return np.array(obs), np.array(hidden_states, dtype=int)
 
-    def fit(self, obs, **kwargs):
+    def fit(self, obs):
         """Estimate model parameters.
 
         An initialization step is performed before entering the EM
@@ -408,24 +407,13 @@ class _BaseHMM(BaseEstimator):
         Set it on initialization instead.**
         """
 
-        if kwargs:
-            warnings.warn("Setting parameters in the 'fit' method is"
-                          "deprecated and will be removed in 0.14. Set it on "
-                          "initialization instead.", DeprecationWarning,
-                          stacklevel=2)
-            # initialisations for in case the user still adds parameters to fit
-            # so things don't break
-            for name in ('n_iter', 'thresh', 'params', 'init_params'):
-                if name in kwargs:
-                    setattr(self, name, kwargs[name])
-
         if self.algorithm not in decoder_algorithms:
             self._algorithm = "viterbi"
 
         self._init(obs, self.init_params)
 
         logprob = []
-        for i in xrange(self.n_iter):
+        for i in range(self.n_iter):
             # Expectation step
             stats = self._initialize_sufficient_statistics()
             curr_logprob = 0
@@ -797,7 +785,7 @@ class GaussianHMM(_BaseHMM):
             elif self._covariance_type in ('tied', 'full'):
                 for t, o in enumerate(obs):
                     obsobsT = np.outer(o, o)
-                    for c in xrange(self.n_components):
+                    for c in range(self.n_components):
                         stats['obs*obs.T'][c] += posteriors[t, c] * obsobsT
 
     def _do_mstep(self, stats, params):
@@ -842,7 +830,7 @@ class GaussianHMM(_BaseHMM):
             elif self._covariance_type in ('tied', 'full'):
                 cvnum = np.empty((self.n_components, self.n_features,
                                   self.n_features))
-                for c in xrange(self.n_components):
+                for c in range(self.n_components):
                     obsmean = np.outer(stats['obs'][c], self._means_[c])
 
                     cvnum[c] = (means_weight * np.outer(meandiff[c],
@@ -1119,7 +1107,7 @@ class GMMHMM(_BaseHMM):
         self.gmms = gmms
         if gmms is None:
             gmms = []
-            for x in xrange(self.n_components):
+            for x in range(self.n_components):
                 if covariance_type is None:
                     g = GMM(n_mix)
                 else:

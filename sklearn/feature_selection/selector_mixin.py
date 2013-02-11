@@ -4,6 +4,7 @@
 import numpy as np
 
 from ..base import TransformerMixin
+from ..externals import six
 from ..utils import safe_mask, atleast2d_or_csr
 
 
@@ -68,7 +69,7 @@ class SelectorMixin(TransformerMixin):
             else:
                 threshold = getattr(self, "threshold", "mean")
 
-        if isinstance(threshold, basestring):
+        if isinstance(threshold, six.string_types):
             if "*" in threshold:
                 scale, reference = threshold.split("*")
                 scale = float(scale.strip())

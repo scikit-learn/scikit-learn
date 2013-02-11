@@ -13,7 +13,7 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import array2d, as_float_array, check_random_state, deprecated
+from ..utils import array2d, as_float_array, check_random_state
 
 __all__ = ['fastica', 'FastICA']
 
@@ -435,8 +435,3 @@ class FastICA(BaseEstimator, TransformerMixin):
         """Compute the mixing matrix
         """
         return linalg.pinv(self.components_)
-
-    @property
-    @deprecated("Renamed to ``components_``. This will be removed in 0.14.")
-    def unmixing_matrix_(self):
-        return self.components_

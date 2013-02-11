@@ -1,4 +1,5 @@
 import numpy as np
+from scipy import linalg
 from sklearn.decomposition import nmf
 
 from sklearn.utils.testing import assert_true
@@ -33,8 +34,8 @@ def test_initialize_close():
     """
     A = np.abs(random_state.randn(10, 10))
     W, H = nmf._initialize_nmf(A, 10)
-    error = np.linalg.norm(np.dot(W, H) - A)
-    sdev = np.linalg.norm(A - A.mean())
+    error = linalg.norm(np.dot(W, H) - A)
+    sdev = linalg.norm(A - A.mean())
     assert_true(error <= sdev)
 
 
@@ -63,8 +64,8 @@ def test_projgrad_nmf_fit_nn_input():
 
 def test_projgrad_nmf_fit_nn_output():
     """Test that the decomposition does not contain negative values"""
-    A = np.c_[5 * np.ones(5) - xrange(1, 6),
-              5 * np.ones(5) + xrange(1, 6)]
+    A = np.c_[5 * np.ones(5) - np.arange(1, 6),
+              5 * np.ones(5) + np.arange(1, 6)]
     for init in (None, 'nndsvd', 'nndsvda', 'nndsvdar'):
         model = nmf.ProjectedGradientNMF(n_components=2, init=init)
         transf = model.fit_transform(A)
@@ -87,14 +88,14 @@ def test_nls_nn_input():
 
 def test_nls_nn_output():
     """Test that NLS solver doesn't return negative values"""
-    A = np.atleast_2d(range(1, 5))
+    A = np.arange(1, 5).reshape(1, -1)
     Ap, _, _ = nmf._nls_subproblem(np.dot(A.T, -A), A.T, A, 0.001, 100)
     assert_false((Ap < 0).any())
 
 
 def test_nls_close():
     """Test that the NLS results should be close"""
-    A = np.atleast_2d(range(1, 5))
+    A = np.arange(1, 5).reshape(1, -1)
     Ap, _, _ = nmf._nls_subproblem(np.dot(A.T, A), A.T, np.zeros_like(A),
                                    0.001, 100)
     assert_true((np.abs(Ap - A) < 0.01).all())
@@ -123,7 +124,6 @@ def test_projgrad_nmf_sparseness():
     Test that sparsity contraints actually increase sparseness in the
     part where they are applied.
     """
-
     A = np.abs(random_state.randn(10, 10))
     m = nmf.ProjectedGradientNMF(n_components=5).fit(A)
     data_sp = nmf.ProjectedGradientNMF(
@@ -144,8 +144,12 @@ def test_sparse_input():
                                   random_state=999).fit_transform(A)
 
     A_sparse = csr_matrix(A)
-    T2 = nmf.ProjectedGradientNMF(n_components=5, init='random',
-                                  random_state=999).fit_transform(A_sparse)
+    pg_nmf = nmf.ProjectedGradientNMF(n_components=5, init='random',
+                                      random_state=999)
+    T2 = pg_nmf.fit_transform(A_sparse)
+    assert_array_almost_equal(pg_nmf.reconstruction_err_,
+                              linalg.norm(A - np.dot(T2, pg_nmf.components_),
+                                          'fro'))
     assert_array_almost_equal(T1, T2)
 
     # same with sparseness

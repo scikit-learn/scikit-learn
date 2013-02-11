@@ -25,7 +25,7 @@ def configuration(parent_package='', top_path=None):
 
     config.add_extension('arrayfuncs',
                          sources=['arrayfuncs.c'],
-                         depends=[join('src', 'cholesky_delete.c')],
+                         depends=[join('src', 'cholesky_delete.h')],
                          libraries=cblas_libs,
                          include_dirs=[join('..', 'src', 'cblas'),
                                        numpy.get_include(),
@@ -39,6 +39,11 @@ def configuration(parent_package='', top_path=None):
         'murmurhash',
         sources=['murmurhash.c', join('src', 'MurmurHash3.cpp')],
         include_dirs=['src'])
+
+    config.add_extension('lgamma',
+                         sources=['lgamma.c', join('src', 'gamma.c')],
+                         include_dirs=['src'],
+                         libraries=libraries)
 
     config.add_extension('graph_shortest_path',
                          sources=['graph_shortest_path.c'],

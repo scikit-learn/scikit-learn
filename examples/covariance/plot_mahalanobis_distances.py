@@ -48,7 +48,7 @@ are represented in the boxplot, as Wilson and Hilferty suggest [2]
     of America, 17, 684-688.
 
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

@@ -8,7 +8,7 @@ coordinate descent.
 
 The coefficients can be forced to be positive.
 """
-print __doc__
+print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 # License: BSD Style.
@@ -23,30 +23,30 @@ diabetes = datasets.load_diabetes()
 X = diabetes.data
 y = diabetes.target
 
-X /= X.std(0)  # Standardize data (easier to set the rho parameter)
+X /= X.std(0)  # Standardize data (easier to set the l1_ratio parameter)
 
 ###############################################################################
 # Compute paths
 
 eps = 5e-3  # the smaller it is the longer is the path
 
-print "Computing regularization path using the lasso..."
+print("Computing regularization path using the lasso...")
 models = lasso_path(X, y, eps=eps)
 alphas_lasso = np.array([model.alpha for model in models])
 coefs_lasso = np.array([model.coef_ for model in models])
 
-print "Computing regularization path using the positive lasso..."
+print("Computing regularization path using the positive lasso...")
 models = lasso_path(X, y, eps=eps, positive=True)
 alphas_positive_lasso = np.array([model.alpha for model in models])
 coefs_positive_lasso = np.array([model.coef_ for model in models])
 
-print "Computing regularization path using the elastic net..."
-models = enet_path(X, y, eps=eps, rho=0.8)
+print("Computing regularization path using the elastic net...")
+models = enet_path(X, y, eps=eps, l1_ratio=0.8)
 alphas_enet = np.array([model.alpha for model in models])
 coefs_enet = np.array([model.coef_ for model in models])
 
-print "Computing regularization path using the positve elastic net..."
-models = enet_path(X, y, eps=eps, rho=0.8, positive=True)
+print("Computing regularization path using the positve elastic net...")
+models = enet_path(X, y, eps=eps, l1_ratio=0.8, positive=True)
 alphas_positive_enet = np.array([model.alpha for model in models])
 coefs_positive_enet = np.array([model.coef_ for model in models])
 

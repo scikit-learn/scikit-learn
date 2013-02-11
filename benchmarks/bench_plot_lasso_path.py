@@ -88,11 +88,11 @@ if __name__ == '__main__':
     features_range = np.linspace(10, 2000, 5).astype(np.int)
     results = compute_bench(samples_range, features_range)
 
-    max_time = max(max(t) for t in results.itervalues())
+    max_time = max(max(t) for t in results.values())
 
     fig = plt.figure()
     i = 1
-    for c, (label, timings) in zip('bcry', sorted(results.iteritems())):
+    for c, (label, timings) in zip('bcry', sorted(results.items())):
         ax = fig.add_subplot(2, 2, i, projection='3d')
         X, Y = np.meshgrid(samples_range, features_range)
         Z = np.asarray(timings).reshape(samples_range.shape[0],

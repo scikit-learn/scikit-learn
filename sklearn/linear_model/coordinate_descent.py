@@ -17,7 +17,7 @@ from scipy import sparse
 from .base import LinearModel
 from ..base import RegressorMixin
 from .base import sparse_center_data, center_data
-from ..utils import array2d, atleast2d_or_csc
+from ..utils import array2d, atleast2d_or_csc, deprecated
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
 from ..utils.extmath import safe_sparse_dot
@@ -60,7 +60,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         parameter
         alpha = 0 is equivalent to an ordinary least square, solved
         by the LinearRegression object in the scikit. For numerical
-        reasons, using alpha = 0 is with the Lasso object is not advised
+        reasons, using alpha = 0 with the Lasso object is not advised
         and you should prefer the LinearRegression object.
 
     l1_ratio : float
@@ -73,8 +73,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered.
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
@@ -172,7 +172,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         initial data in memory directly using that format.
         """
         if self.alpha == 0:
-            warnings.warn("With alpha=0, this aglorithm does not converge"
+            warnings.warn("With alpha=0, this algorithm does not converge "
                           "well. You are advised to use the LinearRegression "
                           "estimator", stacklevel=2)
         X = atleast2d_or_csc(X, dtype=np.float64, order='F',
@@ -363,8 +363,8 @@ class Lasso(ElasticNet):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -496,8 +496,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     fit_intercept : bool
         Fit or not an intercept
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -583,8 +583,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     fit_intercept : bool
         Fit or not an intercept
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -665,9 +665,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             model._set_intercept(X_mean, y_mean, X_std)
         if verbose:
             if verbose > 2:
-                print model
+                print(model)
             elif verbose > 1:
-                print 'Path: %03i out of %03i' % (i, n_alphas)
+                print('Path: %03i out of %03i' % (i, n_alphas))
             else:
                 sys.stderr.write('.')
         coef_ = model.coef_.copy()
@@ -796,17 +796,9 @@ class LinearModelCV(LinearModel):
 
     @property
     def rho_(self):
-        warnings.warn("rho was renamed to l1_ratio and will be removed "
+        warnings.warn("rho was renamed to ``l1_ratio_`` and will be removed "
                       "in 0.15", DeprecationWarning)
         return self.l1_ratio_
-
-    @property
-    def alpha(self):
-        warnings.warn("Use alpha_. Using alpha is deprecated "
-                      "since version 0.12, and backward compatibility "
-                      "won't be maintained from version 0.14 onward. ",
-                      DeprecationWarning, stacklevel=1)
-        return self.alpha_
 
 
 class LassoCV(LinearModelCV, RegressorMixin):
@@ -1030,6 +1022,12 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         self.verbose = verbose
         self.n_jobs = n_jobs
 
+    @property
+    @deprecated("rho was renamed to ``l1_ratio_`` and will be removed "
+                "in 0.15")
+    def rho(self):
+        return self.l1_ratio_
+
 
 ###############################################################################
 # Multi Task ElasticNet and Lasso models (with joint feature selection)
@@ -1065,8 +1063,8 @@ class MultiTaskElasticNet(Lasso):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -1102,10 +1100,10 @@ class MultiTaskElasticNet(Lasso):
     MultiTaskElasticNet(alpha=0.1, copy_X=True, fit_intercept=True,
             l1_ratio=0.5, max_iter=1000, normalize=False, rho=None, tol=0.0001,
             warm_start=False)
-    >>> print clf.coef_
+    >>> print(clf.coef_)
     [[ 0.45663524  0.45612256]
      [ 0.45663524  0.45612256]]
-    >>> print clf.intercept_
+    >>> print(clf.intercept_)
     [ 0.0872422  0.0872422]
 
     See also
@@ -1228,8 +1226,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -1262,10 +1260,10 @@ class MultiTaskLasso(MultiTaskElasticNet):
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
     MultiTaskLasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
             normalize=False, tol=0.0001, warm_start=False)
-    >>> print clf.coef_
+    >>> print(clf.coef_)
     [[ 0.89393398  0.        ]
      [ 0.89393398  0.        ]]
-    >>> print clf.intercept_
+    >>> print(clf.intercept_)
     [ 0.10606602  0.10606602]
 
     See also

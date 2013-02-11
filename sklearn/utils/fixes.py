@@ -12,6 +12,7 @@ at which the fixe is no longer needed.
 import collections
 from operator import itemgetter
 import inspect
+from sklearn.externals import six
 
 import numpy as np
 
@@ -25,12 +26,12 @@ except AttributeError:
             self.update(iterable)
 
         def most_common(self):
-            return sorted(self.iteritems(), key=itemgetter(1), reverse=True)
+            return sorted(six.iteritems(self), key=itemgetter(1), reverse=True)
 
         def update(self, other):
             """Adds counts for elements in other"""
             if isinstance(other, self.__class__):
-                for x, n in other.iteritems():
+                for x, n in six.iteritems(other):
                     self[x] += n
             else:
                 for x in other:

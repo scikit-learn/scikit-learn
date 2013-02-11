@@ -17,7 +17,7 @@ There are two options to assign labels:
 * whereas 'discrete' will iteratively search for the closest partition
   space to the embedding space.
 """
-print __doc__
+print(__doc__)
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>, Brian Cheung
 # License: BSD

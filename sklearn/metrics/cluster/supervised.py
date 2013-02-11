@@ -6,6 +6,7 @@ better.
 
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Wei LI <kuantkid@gmail.com>
+#          Diego Molla <dmolla-aliod@gmail.com>
 # License: BSD Style.
 
 from math import log
@@ -19,7 +20,7 @@ from .expected_mutual_info_fast import expected_mutual_information
 
 
 def comb2(n):
-    # the exact version if faster for k == 2: use it by default globally in
+    # the exact version is faster for k == 2: use it by default globally in
     # this module instead of the float approximate variant
     return comb(n, 2, exact=1)
 
@@ -57,14 +58,15 @@ def contingency_matrix(labels_true, labels_pred, eps=None):
     eps: None or float
         If a float, that value is added to all values in the contingency
         matrix. This helps to stop NaN propogation.
-        If None, nothing is adjusted.
+        If ``None``, nothing is adjusted.
 
     Returns
     -------
     contingency: array, shape=[n_classes_true, n_classes_pred]
-        Matrix C such that C[i][j] is the number of samples in true class i and
-        in predicted class j. If eps is None, the dtype of this array will be
-        integer. If eps is given, the dtype will be float.
+        Matrix :math:`C` such that :math:`C_{i, j}` is the number of samples in
+        true class :math:`i` and in predicted class :math:`j`. If
+        ``eps is None``, the dtype of this array will be integer. If ``eps`` is
+        given, the dtype will be float.
     """
     classes, class_idx = unique(labels_true, return_inverse=True)
     clusters, cluster_idx = unique(labels_pred, return_inverse=True)
@@ -168,10 +170,12 @@ def adjusted_rand_score(labels_true, labels_pred):
     n_samples = labels_true.shape[0]
     classes = np.unique(labels_true)
     clusters = np.unique(labels_pred)
-    # Special limit cases: no clustering since the data is not split.
-    # This is a perfect match hence return 1.0.
+    # Special limit cases: no clustering since the data is not split;
+    # or trivial clustering where each document is assigned a unique cluster.
+    # These are perfect matches hence return 1.0.
     if (classes.shape[0] == clusters.shape[0] == 1
-            or classes.shape[0] == clusters.shape[0] == 0):
+            or classes.shape[0] == clusters.shape[0] == 0
+            or classes.shape[0] == clusters.shape[0] == len(labels_true)):
         return 1.0
 
     contingency = contingency_matrix(labels_true, labels_pred)
@@ -187,7 +191,7 @@ def adjusted_rand_score(labels_true, labels_pred):
 
 
 def homogeneity_completeness_v_measure(labels_true, labels_pred):
-    """Compute the homogeneity and completeness and V-measure scores at once
+    """Compute the homogeneity and completeness and V-Measure scores at once
 
     Those metrics are based on normalized conditional entropy measures of
     the clustering labeling to evaluate given the knowledge of a Ground
@@ -206,8 +210,8 @@ def homogeneity_completeness_v_measure(labels_true, labels_pred):
     a permutation of the class or cluster label values won't change the
     score values in any way.
 
-    V-Measure is furthermore symmetric: swapping `labels_true` and
-    `label_pred` will give the same score. This does not hold for
+    V-Measure is furthermore symmetric: swapping ``labels_true`` and
+    ``label_pred`` will give the same score. This does not hold for
     homogeneity and completeness.
 
     Parameters
@@ -267,8 +271,9 @@ def homogeneity_score(labels_true, labels_pred):
     a permutation of the class or cluster label values won't change the
     score value in any way.
 
-    This metric is not symmetric: switching `label_true` with `label_pred`
-    will return the completeness_score which will be different in general.
+    This metric is not symmetric: switching ``label_true`` with ``label_pred``
+    will return the :func:`completeness_score` which will be different in
+    general.
 
     Parameters
     ----------
@@ -286,9 +291,9 @@ def homogeneity_score(labels_true, labels_pred):
     References
     ----------
 
-    * Andrew Rosenberg and Julia Hirschberg `V-Measure: A conditional
-      entropy-based external cluster evaluation measure`, 2007
-      http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf
+    .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
+       conditional entropy-based external cluster evaluation measure
+       <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
 
     See also
     --------
@@ -338,8 +343,9 @@ def completeness_score(labels_true, labels_pred):
     a permutation of the class or cluster label values won't change the
     score value in any way.
 
-    This metric is not symmetric: switching `label_true` with `label_pred`
-    will return the homogeneity_score which will be different in general.
+    This metric is not symmetric: switching ``label_true`` with ``label_pred``
+    will return the :func:`homogeneity_score` which will be different in
+    general.
 
     Parameters
     ----------
@@ -357,9 +363,9 @@ def completeness_score(labels_true, labels_pred):
     References
     ----------
 
-    * Andrew Rosenberg and Julia Hirschberg `V-Measure: A conditional
-      entropy-based external cluster evaluation measure`, 2007
-      http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf
+    .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
+       conditional entropy-based external cluster evaluation measure
+       <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
 
     See also
     --------
@@ -398,7 +404,7 @@ def completeness_score(labels_true, labels_pred):
 def v_measure_score(labels_true, labels_pred):
     """V-Measure cluster labeling given a ground truth.
 
-    This score is identical to normalized_mutual_info_score.
+    This score is identical to :func:`normalized_mutual_info_score`.
 
     The V-Measure is the hormonic mean between homogeneity and completeness::
 
@@ -408,8 +414,8 @@ def v_measure_score(labels_true, labels_pred):
     a permutation of the class or cluster label values won't change the
     score value in any way.
 
-    This metric is furthermore symmetric: switching `label_true` with
-    `label_pred` will return the same score value. This can be useful to
+    This metric is furthermore symmetric: switching ``label_true`` with
+    ``label_pred`` will return the same score value. This can be useful to
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
 
@@ -429,9 +435,9 @@ def v_measure_score(labels_true, labels_pred):
     References
     ----------
 
-    .. [Rosenberg2007] `V-Measure: A conditional entropy-based external cluster
-        evaluation measure Andrew Rosenberg and Julia Hirschberg, 2007`
-        http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf
+    .. [1] `Andrew Rosenberg and Julia Hirschberg, 2007. V-Measure: A
+       conditional entropy-based external cluster evaluation measure
+       <http://acl.ldc.upenn.edu/D/D07/D07-1043.pdf>`_
 
     See also
     --------
@@ -461,7 +467,7 @@ def v_measure_score(labels_true, labels_pred):
 
     Labelings that have pure clusters with members coming from the same
     classes are homogeneous but un-necessary splits harms completeness
-    and thus penalize V-measure as well::
+    and thus penalize V-Measure as well::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 1, 2]))
       ...                                                  # doctest: +ELLIPSIS
@@ -471,7 +477,7 @@ def v_measure_score(labels_true, labels_pred):
       0.66...
 
     If classes members are completly splitted across different clusters,
-    the assignment is totally in-complete, hence the v-measure is null::
+    the assignment is totally incomplete, hence the V-Measure is null::
 
       >>> print("%.6f" % v_measure_score([0, 0, 0, 0], [0, 1, 2, 3]))
       ...                                                  # doctest: +ELLIPSIS
@@ -491,11 +497,11 @@ def v_measure_score(labels_true, labels_pred):
 def mutual_info_score(labels_true, labels_pred, contingency=None):
     """Mutual Information between two clusterings
 
-    The Mutual Information is a measure of the similarity between two labels
-    of the same data. Where P(i) is the probability of a random sample occuring
-    in cluster U_i and P'(j) is the probability of a random sample occuring in
-    cluster V_j, the Mutual information  between clusterings U and V is given
-    as:
+    The Mutual Information is a measure of the similarity between two labels of
+    the same data. Where :math:`P(i)` is the probability of a random sample
+    occuring in cluster :math:`U_i` and :math:`P'(j)` is the probability of a
+    random sample occuring in cluster :math:`V_j`, the Mutual Information
+    between clusterings :math:`U` and :math:`V` is given as:
 
     .. math::
 
@@ -508,8 +514,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
     a permutation of the class or cluster label values won't change the
     score value in any way.
 
-    This metric is furthermore symmetric: switching `label_true` with
-    `label_pred` will return the same score value. This can be useful to
+    This metric is furthermore symmetric: switching ``label_true`` with
+    ``label_pred`` will return the same score value. This can be useful to
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
 
@@ -522,9 +528,9 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
         A clustering of the data into disjoint subsets.
 
     contingency: None or array, shape = [n_classes_true, n_classes_pred]
-        A contingency matrix given by the contingency_matrix function.
-        If value is None, it will be computed, otherwise the given value is
-        used, with labels_true and labels_pred ignored.
+        A contingency matrix given by the :func:`contingency_matrix` function.
+        If value is ``None``, it will be computed, otherwise the given value is
+        used, with ``labels_true`` and ``labels_pred`` ignored.
 
     Returns
     -------
@@ -564,7 +570,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     Information (MI) score to account for chance. It accounts for the fact that
     the MI is generally higher for two clusterings with a larger number of
     clusters, regardless of whether there is actually more information shared.
-    For two clusterings U and V, the AMI is given as::
+    For two clusterings :math:`U` and :math:`V`, the AMI is given as::
 
         AMI(U, V) = [MI(U, V) - E(MI(U, V))] / [max(H(U), H(V)) - E(MI(U, V))]
 
@@ -572,8 +578,8 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
     a permutation of the class or cluster label values won't change the
     score value in any way.
 
-    This metric is furthermore symmetric: switching `label_true` with
-    `label_pred` will return the same score value. This can be useful to
+    This metric is furthermore symmetric: switching ``label_true`` with
+    ``label_pred`` will return the same score value. This can be useful to
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
 
@@ -618,10 +624,10 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
 
     References
     ----------
-    .. [1] Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
+    .. [1] `Vinh, Epps, and Bailey, (2010). Information Theoretic Measures for
        Clusterings Comparison: Variants, Properties, Normalization and
-       Correction for Chance}, JMLR
-       http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf
+       Correction for Chance, JMLR
+       <http://jmlr.csail.mit.edu/papers/volume11/vinh10a/vinh10a.pdf>`_
 
     .. [2] `Wikipedia entry for the Adjusted Mutual Information
        <http://en.wikipedia.org/wiki/Adjusted_Mutual_Information>`_
@@ -655,17 +661,17 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     Normalized Mutual Information (NMI) is an normalization of the Mutual
     Information (MI) score to scale the results between 0 (no mutual
     information) and 1 (perfect correlation). In this function, mutual
-    information is normalized by sqrt(H(labels_true) * H(labels_pred))
+    information is normalized by ``sqrt(H(labels_true) * H(labels_pred))``
 
     This measure is not adjusted for chance. Therefore
-    ``adjusted_mustual_info_score`` might be preferred.
+    :func:`adjusted_mustual_info_score` might be preferred.
 
     This metric is independent of the absolute values of the labels:
     a permutation of the class or cluster label values won't change the
     score value in any way.
 
-    This metric is furthermore symmetric: switching `label_true` with
-    `label_pred` will return the same score value. This can be useful to
+    This metric is furthermore symmetric: switching ``label_true`` with
+    ``label_pred`` will return the same score value. This can be useful to
     measure the agreement of two independent label assignments strategies
     on the same dataset when the real ground truth is not known.
 

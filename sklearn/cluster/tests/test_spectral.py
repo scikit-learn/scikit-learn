@@ -1,6 +1,7 @@
 """Testing for Spectral Clustering methods"""
 
-from cPickle import dumps, loads
+from sklearn.externals.six.moves import cPickle
+dumps, loads = cPickle.dumps, cPickle.loads
 
 import numpy as np
 from scipy import sparse
@@ -43,8 +44,6 @@ def test_spectral_clustering():
                 model_copy = loads(dumps(model))
                 assert_equal(model_copy.n_clusters, model.n_clusters)
                 assert_equal(model_copy.eigen_solver, model.eigen_solver)
-                assert_array_equal(model_copy.random_state.get_state()[1],
-                                   model.random_state.get_state()[1])
                 assert_array_equal(model_copy.labels_, model.labels_)
 
 
@@ -57,7 +56,7 @@ def test_spectral_lobpcg_mode():
         [10., 10.],
     ])
     X, true_labels = make_blobs(n_samples=100, centers=centers,
-                                cluster_std=1., random_state=42)
+                                cluster_std=.1, random_state=42)
     D = pairwise_distances(X)  # Distance matrix
     S = np.max(D) - D  # Similarity matrix
     labels = spectral_clustering(S, n_clusters=len(centers),
@@ -113,7 +112,7 @@ def test_spectral_unknown_mode():
 
 
 def test_spectral_unknown_assign_labels():
-    # Test that SpectralClustering fails with an unknown mode set.
+    # Test that SpectralClustering fails with an unknown assign_labels set.
     centers = np.array([
         [0., 0., 0.],
         [10., 10., 10.],

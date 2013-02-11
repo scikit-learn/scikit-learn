@@ -35,6 +35,8 @@ from .base import MetaEstimatorMixin
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
+from .externals.joblib import Parallel
+from .externals.joblib import delayed
 
 
 def _fit_binary(estimator, X, y, classes=None):
@@ -73,15 +75,16 @@ def _check_estimator(estimator):
                          "decision_function or predict_proba!")
 
 
-def fit_ovr(estimator, X, y):
+def fit_ovr(estimator, X, y, n_jobs=1):
     """Fit a one-vs-the-rest strategy."""
     _check_estimator(estimator)
 
     lb = LabelBinarizer()
     Y = lb.fit_transform(y)
-    estimators = [_fit_binary(estimator, X, Y[:, i],
-                              classes=["not %s" % str(i), i])
-                  for i in range(Y.shape[1])]
+
+    estimators = Parallel(n_jobs=n_jobs)(
+        delayed(_fit_binary)(estimator, X, Y[:, i], classes=["not %s" % i, i])
+        for i in range(Y.shape[1]))
     return estimators, lb
 
 
@@ -148,6 +151,13 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         An estimator object implementing `fit` and one of `decision_function`
         or `predict_proba`.
 
+    n_jobs : int, optional, default: 1
+
+        The number of jobs to use for the computation. If -1 all CPUs are used.
+        If 1 is given, no parallel computing code is used at all, which is
+        useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
+        used. Thus for n_jobs = -2, all CPUs but one are used.
+
     Attributes
     ----------
     `estimators_` : list of `n_classes` estimators
@@ -162,8 +172,9 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         Whether a OneVsRestClassifier is a multilabel classifier.
     """
 
-    def __init__(self, estimator):
+    def __init__(self, estimator, n_jobs=1):
         self.estimator = estimator
+        self.n_jobs = n_jobs
 
     def fit(self, X, y):
         """Fit underlying estimators.
@@ -182,7 +193,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         -------
         self
         """
-        self.estimators_, self.label_binarizer_ = fit_ovr(self.estimator, X, y)
+        self.estimators_, self.label_binarizer_ = fit_ovr(self.estimator, X, y,
+                                                          n_jobs=self.n_jobs)
         return self
 
     def _check_is_fitted(self):
@@ -275,12 +287,14 @@ def _fit_ovo_binary(estimator, X, y, i, j):
     return _fit_binary(estimator, X[ind[cond]], y, classes=[i, j])
 
 
-def fit_ovo(estimator, X, y):
+def fit_ovo(estimator, X, y, n_jobs=1):
     """Fit a one-vs-one strategy."""
     classes = np.unique(y)
     n_classes = classes.shape[0]
-    estimators = [_fit_ovo_binary(estimator, X, y, classes[i], classes[j])
-                  for i in range(n_classes) for j in range(i + 1, n_classes)]
+    estimators = Parallel(n_jobs=n_jobs)(
+        delayed(_fit_ovo_binary)(
+            estimator, X, y, classes[i], classes[j])
+        for i in range(n_classes) for j in range(i + 1, n_classes))
 
     return estimators, classes
 
@@ -320,6 +334,13 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     estimator : estimator object
         An estimator object implementing `fit` and `predict`.
 
+    n_jobs : int, optional, default: 1
+
+        The number of jobs to use for the computation. If -1 all CPUs are used.
+        If 1 is given, no parallel computing code is used at all, which is
+        useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
+        used. Thus for n_jobs = -2, all CPUs but one are used.
+
     Attributes
     ----------
     `estimators_` : list of `n_classes * (n_classes - 1) / 2` estimators
@@ -329,8 +350,9 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         Array containing labels.
     """
 
-    def __init__(self, estimator):
+    def __init__(self, estimator, n_jobs=1):
         self.estimator = estimator
+        self.n_jobs = n_jobs
 
     def fit(self, X, y):
         """Fit underlying estimators.
@@ -347,7 +369,8 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         -------
         self
         """
-        self.estimators_, self.classes_ = fit_ovo(self.estimator, X, y)
+        self.estimators_, self.classes_ = fit_ovo(self.estimator, X, y,
+                                                  self.n_jobs)
         return self
 
     def predict(self, X):
@@ -369,7 +392,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         return predict_ovo(self.estimators_, self.classes_, X)
 
 
-def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None):
+def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None, n_jobs=1):
     """
     Fit an error-correcting output-code strategy.
 
@@ -417,11 +440,12 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None):
 
     cls_idx = dict((c, i) for i, c in enumerate(classes))
 
-    Y = np.array([code_book[cls_idx[y[i]]] for i in xrange(X.shape[0])],
+    Y = np.array([code_book[cls_idx[y[i]]] for i in range(X.shape[0])],
                  dtype=np.int)
 
-    estimators = [_fit_binary(estimator, X, Y[:, i])
-                  for i in range(Y.shape[1])]
+    estimators = Parallel(n_jobs=n_jobs)(
+        delayed(_fit_binary)(estimator, X, Y[:, i])
+        for i in range(Y.shape[1]))
 
     return estimators, classes, code_book
 
@@ -461,6 +485,13 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         The generator used to initialize the codebook. Defaults to
         numpy.random.
 
+    n_jobs : int, optional, default: 1
+
+        The number of jobs to use for the computation. If -1 all CPUs are used.
+        If 1 is given, no parallel computing code is used at all, which is
+        useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
+        used. Thus for n_jobs = -2, all CPUs but one are used.
+
     Attributes
     ----------
     `estimators_` : list of `int(n_classes * code_size)` estimators
@@ -491,13 +522,14 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
        2008.
     """
 
-    def __init__(self, estimator, code_size=1.5, random_state=None):
+    def __init__(self, estimator, code_size=1.5, random_state=None, n_jobs=1):
         if (code_size <= 0):
             raise ValueError("code_size should be greater than 0!")
 
         self.estimator = estimator
         self.code_size = code_size
         self.random_state = random_state
+        self.n_jobs = n_jobs
 
     def fit(self, X, y):
         """Fit underlying estimators.
@@ -515,7 +547,8 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         self
         """
         self.estimators_, self.classes_, self.code_book_ = \
-            fit_ecoc(self.estimator, X, y, self.code_size, self.random_state)
+            fit_ecoc(self.estimator, X, y, self.code_size, self.random_state,
+                     self.n_jobs)
         return self
 
     def predict(self, X):

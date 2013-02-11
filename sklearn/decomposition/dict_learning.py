@@ -1,12 +1,12 @@
 """ Dictionary learning
 """
+from __future__ import print_function
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
 # License: BSD
 
 import time
 import sys
 import itertools
-import warnings
 
 from math import sqrt, floor, ceil
 
@@ -16,6 +16,7 @@ from numpy.lib.stride_tricks import as_strided
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
+from ..externals.six.moves import zip
 from ..utils import array2d, check_random_state, gen_even_slices
 from ..utils.extmath import randomized_svd
 from ..linear_model import Lasso, orthogonal_mp_gram, LassoLars, Lars
@@ -293,7 +294,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
     R += Y
     R = np.asfortranarray(R)
     ger, = linalg.get_blas_funcs(('ger',), (dictionary, code))
-    for k in xrange(n_components):
+    for k in range(n_components):
         # R <- 1.0 * U_k * V_k^T + R
         R = ger(1.0, dictionary[:, k], code[k, :], a=R, overwrite_a=True)
         dictionary[:, k] = np.dot(R, code[k, :].T)
@@ -304,7 +305,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
                 sys.stdout.write("+")
                 sys.stdout.flush()
             elif verbose:
-                print "Adding new random atom"
+                print("Adding new random atom")
             dictionary[:, k] = random_state.randn(n_samples)
             # Setting corresponding coefs to 0
             code[k, :] = 0.0
@@ -328,8 +329,7 @@ def _update_dict(dictionary, Y, code, verbose=False, return_r2=False,
 
 def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
                   method='lars', n_jobs=1, dict_init=None, code_init=None,
-                  callback=None, verbose=False, random_state=None,
-                  n_atoms=None):
+                  callback=None, verbose=False, random_state=None):
     """Solves a dictionary learning matrix factorization problem.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -403,14 +403,9 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     MiniBatchSparsePCA
     """
 
-    if not n_atoms is None:
-        n_components = n_atoms
-        warnings.warn("Parameter n_atoms has been renamed to"
-                      "'n_components' and will be removed in release 0.14.",
-                      DeprecationWarning, stacklevel=2)
-
     if method not in ('lars', 'cd'):
-        raise ValueError('Coding method not supported as a fit algorithm.')
+        raise ValueError('Coding method %r not supported as a fit algorithm.'
+                         % method)
     method = 'lasso_' + method
 
     t0 = time.time()
@@ -447,9 +442,9 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
     current_cost = np.nan
 
     if verbose == 1:
-        print '[dict_learning]',
+        print('[dict_learning]', end=' ')
 
-    for ii in xrange(max_iter):
+    for ii in range(max_iter):
         dt = (time.time() - t0)
         if verbose == 1:
             sys.stdout.write(".")
@@ -478,9 +473,9 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
             if dE < tol * errors[-1]:
                 if verbose == 1:
                     # A line return
-                    print ""
+                    print("")
                 elif verbose:
-                    print "--- Convergence reached after %d iterations" % ii
+                    print("--- Convergence reached after %d iterations" % ii)
                 break
         if ii % 5 == 0 and callback is not None:
             callback(locals())
@@ -491,8 +486,7 @@ def dict_learning(X, n_components, alpha, max_iter=100, tol=1e-8,
 def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
                          return_code=True, dict_init=None, callback=None,
                          batch_size=3, verbose=False, shuffle=True, n_jobs=1,
-                         method='lars', iter_offset=0, random_state=None,
-                         n_atoms=None, chunk_size=None):
+                         method='lars', iter_offset=0, random_state=None):
     """Solves a dictionary learning matrix factorization problem online.
 
     Finds the best dictionary and the corresponding sparse code for
@@ -573,18 +567,6 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
     """
 
-    if n_atoms is not None:
-        n_components = n_atoms
-        warnings.warn("Parameter n_atoms has been renamed to "
-                      "'n_components' and will be removed in release 0.14.",
-                      DeprecationWarning, stacklevel=2)
-
-    if chunk_size is not None:
-        chunk_size = batch_size
-        warnings.warn("Parameter chunk_size has been renamed to "
-                      "'batch_size' and will be removed in release 0.14.",
-                      DeprecationWarning, stacklevel=2)
-
     if method not in ('lars', 'cd'):
         raise ValueError('Coding method not supported as a fit algorithm.')
     method = 'lasso_' + method
@@ -613,7 +595,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     dictionary = np.ascontiguousarray(dictionary.T)
 
     if verbose == 1:
-        print '[dict_learning]',
+        print('[dict_learning]', end=' ')
 
     n_batches = floor(float(len(X)) / batch_size)
     if shuffle:
@@ -629,8 +611,7 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
     # The data approximation
     B = np.zeros((n_features, n_components))
 
-    for ii, this_X in itertools.izip(xrange(iter_offset, iter_offset + n_iter),
-                                     batches):
+    for ii, this_X in zip(range(iter_offset, iter_offset + n_iter), batches):
         dt = (time.time() - t0)
         if verbose == 1:
             sys.stdout.write(".")
@@ -667,14 +648,14 @@ def dict_learning_online(X, n_components=2, alpha=1, n_iter=100,
 
     if return_code:
         if verbose > 1:
-            print 'Learning code...',
+            print('Learning code...', end=' ')
         elif verbose == 1:
-            print '|',
+            print('|', end=' ')
         code = sparse_encode(X, dictionary.T, algorithm=method, alpha=alpha,
                              n_jobs=n_jobs)
         if verbose > 1:
             dt = (time.time() - t0)
-            print 'done (total time: % 3is, % 4.1fmn)' % (dt, dt / 60)
+            print('done (total time: % 3is, % 4.1fmn)' % (dt, dt / 60))
         return code, dictionary.T
 
     return dictionary.T
@@ -921,13 +902,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
                  fit_algorithm='lars', transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
                  n_jobs=1, code_init=None, dict_init=None, verbose=False,
-                 split_sign=False, random_state=None, n_atoms=None):
-
-        if n_atoms is not None:
-            n_components = n_atoms
-            warnings.warn("Parameter n_atoms has been renamed to "
-                          "'n_components' and will be removed in release"
-                          " 0.14.", DeprecationWarning, stacklevel=2)
+                 split_sign=False, random_state=None):
 
         self._set_sparse_coding_params(n_components, transform_algorithm,
                                        transform_n_nonzero_coefs,
@@ -955,7 +930,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
         self: object
             Returns the object itself
         """
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         X = array2d(X)
         if self.n_components is None:
             n_components = X.shape[1]
@@ -969,7 +944,7 @@ class DictionaryLearning(BaseEstimator, SparseCodingMixin):
                                 code_init=self.code_init,
                                 dict_init=self.dict_init,
                                 verbose=self.verbose,
-                                random_state=self.random_state)
+                                random_state=random_state)
         self.components_ = U
         self.error_ = E
         return self
@@ -1078,20 +1053,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
                  fit_algorithm='lars', n_jobs=1, batch_size=3,
                  shuffle=True, dict_init=None, transform_algorithm='omp',
                  transform_n_nonzero_coefs=None, transform_alpha=None,
-                 verbose=False, split_sign=False, random_state=None,
-                 n_atoms=None, chunk_size=None):
-
-        if n_atoms is not None:
-            n_components = n_atoms
-            warnings.warn("Parameter n_atoms has been renamed to"
-                          "'n_components' and will be removed in release"
-                          " 0.14.", DeprecationWarning, stacklevel=2)
-
-        if chunk_size is not None:
-            chunk_size = batch_size
-            warnings.warn("Parameter chunk_size has been renamed to"
-                          "'batch_size' and will be removed in release"
-                          " 0.14.", DeprecationWarning, stacklevel=2)
+                 verbose=False, split_sign=False, random_state=None):
 
         self._set_sparse_coding_params(n_components, transform_algorithm,
                                        transform_n_nonzero_coefs,
@@ -1120,7 +1082,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         self : object
             Returns the instance itself.
         """
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         X = array2d(X)
         if self.n_components is None:
             n_components = X.shape[1]
@@ -1134,7 +1096,7 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
                                  dict_init=self.dict_init,
                                  batch_size=self.batch_size,
                                  shuffle=self.shuffle, verbose=self.verbose,
-                                 random_state=self.random_state)
+                                 random_state=random_state)
         self.components_ = U
         return self
 
@@ -1152,7 +1114,8 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
         self : object
             Returns the instance itself.
         """
-        self.random_state = check_random_state(self.random_state)
+        if not hasattr(self.random_state_):
+            self.random_state_ = check_random_state(self.random_state)
         X = array2d(X)
         if hasattr(self, 'components_'):
             dict_init = self.components_
@@ -1165,6 +1128,6 @@ class MiniBatchDictionaryLearning(BaseEstimator, SparseCodingMixin):
                                  batch_size=len(X), shuffle=False,
                                  verbose=self.verbose, return_code=False,
                                  iter_offset=iter_offset,
-                                 random_state=self.random_state)
+                                 random_state=self.random_state_)
         self.components_ = U
         return self

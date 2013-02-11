@@ -1,10 +1,9 @@
+from libc.math cimport exp, log
 import numpy as np
 cimport numpy as np
 cimport cython
 
-cdef extern from "math.h":
-    double exp(double)
-    double log(double)
+np.import_array()
 
 ctypedef np.float64_t dtype_t
 

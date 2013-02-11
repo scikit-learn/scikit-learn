@@ -3,6 +3,7 @@ Testing for grid search module (sklearn.grid_search)
 
 """
 
+import warnings
 from cStringIO import StringIO
 import sys
 
@@ -13,6 +14,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_almost_equal
 
 from scipy.stats import distributions
 
@@ -21,9 +23,9 @@ from sklearn.datasets.samples_generator import make_classification, make_blobs
 from sklearn.grid_search import GridSearchCV, RandomizedSearchCV, ParamSampler
 from sklearn.svm import LinearSVC, SVC
 from sklearn.cluster import KMeans, MeanShift
-from sklearn.metrics import f1_score, precision_score
-from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.cross_validation import KFold
+from sklearn.metrics import f1_score
+from sklearn.metrics import Scorer
+from sklearn.cross_validation import KFold, StratifiedKFold
 
 
 class MockClassifier(BaseEstimator):
@@ -159,18 +161,18 @@ def test_grid_search_sparse():
     assert_equal(C, C2)
 
 
-def test_grid_search_sparse_score_func():
+def test_grid_search_sparse_scoring():
     X_, y_ = make_classification(n_samples=200, n_features=100, random_state=0)
 
     clf = LinearSVC()
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, scoring="f1")
     cv.fit(X_[:180], y_[:180])
     y_pred = cv.predict(X_[180:])
     C = cv.best_estimator_.C
 
     X_ = sp.csr_matrix(X_)
     clf = LinearSVC()
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, scoring="f1")
     cv.fit(X_[:180], y_[:180])
     y_pred2 = cv.predict(X_[180:])
     C2 = cv.best_estimator_.C
@@ -181,16 +183,54 @@ def test_grid_search_sparse_score_func():
     #np.testing.assert_allclose(f1_score(cv.predict(X_[:180]), y[:180]),
     #                        cv.score(X_[:180], y[:180]))
 
-    # test loss_func
+    # test loss where greater is worse
     def f1_loss(y_true_, y_pred_):
         return -f1_score(y_true_, y_pred_)
-    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, loss_func=f1_loss)
+    F1Loss = Scorer(f1_loss, greater_is_better=False)
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, scoring=F1Loss)
     cv.fit(X_[:180], y_[:180])
     y_pred3 = cv.predict(X_[180:])
     C3 = cv.best_estimator_.C
 
-    assert_array_equal(y_pred, y_pred3)
     assert_equal(C, C3)
+    assert_array_equal(y_pred, y_pred3)
+
+
+def test_deprecated_score_func():
+    # test that old deprecated way of passing a score / loss function is still
+    # supported
+    X, y = make_classification(n_samples=200, n_features=100, random_state=0)
+    clf = LinearSVC(random_state=0)
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, scoring="f1")
+    cv.fit(X[:180], y[:180])
+    y_pred = cv.predict(X[180:])
+    C = cv.best_estimator_.C
+
+    clf = LinearSVC(random_state=0)
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, score_func=f1_score)
+    with warnings.catch_warnings(record=True):
+        # catch deprecation warning
+        cv.fit(X[:180], y[:180])
+    y_pred_func = cv.predict(X[180:])
+    C_func = cv.best_estimator_.C
+
+    assert_array_equal(y_pred, y_pred_func)
+    assert_equal(C, C_func)
+
+    # test loss where greater is worse
+    def f1_loss(y_true_, y_pred_):
+        return -f1_score(y_true_, y_pred_)
+
+    clf = LinearSVC(random_state=0)
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, loss_func=f1_loss)
+    with warnings.catch_warnings(record=True):
+        # catch deprecation warning
+        cv.fit(X[:180], y[:180])
+    y_pred_loss = cv.predict(X[180:])
+    C_loss = cv.best_estimator_.C
+
+    assert_array_equal(y_pred, y_pred_loss)
+    assert_equal(C, C_loss)
 
 
 def test_grid_search_precomputed_kernel():
@@ -264,7 +304,7 @@ def test_refit():
     y = np.array([0] * 5 + [1] * 5)
 
     clf = GridSearchCV(BrokenClassifier(), [{'parameter': [0, 1]}],
-                       score_func=precision_score, refit=True)
+                       scoring="precision", refit=True)
     clf.fit(X, y)
 
 
@@ -285,9 +325,14 @@ def test_unsupervised_grid_search():
     X, y = make_blobs(random_state=0)
     km = KMeans(random_state=0)
     grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]),
-                               score_func=adjusted_rand_score)
+                               scoring='ari')
+    grid_search.fit(X, y)
+    # ARI can find the right number :)
+    assert_equal(grid_search.best_params_["n_clusters"], 3)
+
+    # Now without a score, and without y
+    grid_search = GridSearchCV(km, param_grid=dict(n_clusters=[2, 3, 4]))
     grid_search.fit(X)
-    # most number of clusters should be best
     assert_equal(grid_search.best_params_["n_clusters"], 4)
 
 
@@ -296,7 +341,7 @@ def test_bad_estimator():
     ms = MeanShift()
     assert_raises(TypeError, GridSearchCV, ms,
                   param_grid=dict(gamma=[.1, 1, 10]),
-                  score_func=adjusted_rand_score)
+                  scoring='ari')
 
 
 def test_param_sampler():
@@ -319,3 +364,28 @@ def test_randomized_search():
     params = dict(C=distributions.expon())
     search = RandomizedSearchCV(LinearSVC(), param_distributions=params)
     search.fit(X, y)
+
+
+def test_grid_search_score_consistency():
+    # test that correct scores are used
+    from sklearn.metrics import auc_score
+    clf = LinearSVC(random_state=0)
+    X, y = make_blobs(random_state=0, centers=2)
+    Cs = [.1, 1, 10]
+    for score in ['f1', 'roc_auc']:
+        grid_search = GridSearchCV(clf, {'C': Cs}, scoring=score)
+        grid_search.fit(X, y)
+        cv = StratifiedKFold(n_folds=3, y=y)
+        for C, scores in zip(Cs, grid_search.grid_scores_):
+            clf.set_params(C=C)
+            scores = scores[2]  # get the separate runs from grid scores
+            i = 0
+            for train, test in cv:
+                clf.fit(X[train], y[train])
+                if score == "f1":
+                    correct_score = f1_score(y[test], clf.predict(X[test]))
+                elif score == "roc_auc":
+                    correct_score = auc_score(y[test],
+                                              clf.decision_function(X[test]))
+                assert_almost_equal(correct_score, scores[i])
+                i += 1

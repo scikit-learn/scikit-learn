@@ -1,6 +1,7 @@
 """
 Various bayesian regression
 """
+from __future__ import print_function
 
 # Authors: V. Michel, F. Pedregosa, A. Gramfort
 # License: BSD 3 clause
@@ -67,7 +68,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         Default is True.
 
     normalize : boolean, optional, default False
-        If True, the regressors X are normalized
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -206,7 +207,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
             ### Check for convergence
             if iter_ != 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
                 if verbose:
-                    print "Convergence after ", str(iter_), " iterations"
+                    print("Convergence after ", str(iter_), " iterations")
                 break
             coef_old_ = np.copy(coef_)
 
@@ -275,8 +276,8 @@ class ARDRegression(LinearModel, RegressorMixin):
         (e.g. data is expected to be already centered).
         Default is True.
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True.
         If True, X will be copied; else, it may be overwritten.
@@ -419,7 +420,7 @@ class ARDRegression(LinearModel, RegressorMixin):
             ### Check for convergence
             if iter_ > 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
                 if verbose:
-                    print "Converged after %s iterations" % iter_
+                    print("Converged after %s iterations" % iter_)
                 break
             coef_old_ = np.copy(coef_)
 

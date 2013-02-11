@@ -1,6 +1,7 @@
 """
 The :mod:`sklearn.lda` module implements Linear Discriminant Analysis (LDA).
 """
+from __future__ import print_function
 # Authors: Matthieu Perrot
 #          Mathieu Blondel
 
@@ -34,7 +35,6 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     Parameters
     ----------
-
     n_components: int
         Number of components (< n_classes - 1) for dimensionality reduction
 
@@ -43,14 +43,27 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     Attributes
     ----------
-    `means_` : array-like, shape = [n_classes, n_features]
-        Class means
-    `xbar_` : float, shape = [n_features]
-        Over all mean
-    `priors_` : array-like, shape = [n_classes]
-        Class priors (sum to 1)
+    `coef_` : array-like, shape = [rank, n_classes - 1]
+        Coefficients of the features in the linear decision
+        function. rank is min(rank_features, n_classes) where
+        rank_features is the dimensionality of the spaces spanned
+        by the features (i.e. n_features excluding redundant features).
+
     `covariance_` : array-like, shape = [n_features, n_features]
-        Covariance matrix (shared by all classes)
+        Covariance matrix (shared by all classes).
+
+    `means_` : array-like, shape = [n_classes, n_features]
+        Class means.
+
+    `priors_` : array-like, shape = [n_classes]
+        Class priors (sum to 1).
+
+    `scalings_` : array-like, shape = [rank, n_classes - 1]
+        Scaling of the features in the space spanned by the class
+        centroids.
+
+    `xbar_` : float, shape = [n_features]
+        Overall mean.
 
     Examples
     --------
@@ -78,7 +91,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             if (self.priors < 0).any():
                 raise ValueError('priors must be non-negative')
             if self.priors.sum() != 1:
-                print 'warning: the priors do not sum to 1. Renormalizing'
+                print('warning: the priors do not sum to 1. Renormalizing')
                 self.priors = self.priors / self.priors.sum()
 
     def fit(self, X, y, store_covariance=False, tol=1.0e-4):
@@ -90,8 +103,10 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         X : array-like, shape = [n_samples, n_features]
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
+
         y : array, shape = [n_samples]
             Target values (integers)
+
         store_covariance : boolean
             If True the covariance matrix (shared by all classes) is computed
             and stored in `self.covariance_` attribute.
@@ -145,7 +160,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         if rank < n_features:
             warnings.warn("Variables are collinear")
         # Scaling of within covariance is: V' 1/S
-        scaling = (V[:rank] / std).T / S[:rank]
+        scalings = (V[:rank] / std).T / S[:rank]
 
         ## ----------------------------
         ## 3) Between variance scaling
@@ -153,7 +168,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         xbar = np.dot(self.priors_, self.means_)
         # Scale weighted centers
         X = np.dot(((np.sqrt((n_samples * self.priors_) * fac)) *
-                    (means - xbar).T).T, scaling)
+                    (means - xbar).T).T, scalings)
         # Centers are living in a space with n_classes-1 dim (maximum)
         # Use svd to find projection in the space spanned by the
         # (n_classes) centers
@@ -161,25 +176,25 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
         rank = np.sum(S > tol * S[0])
         # compose the scalings
-        self.scaling = np.dot(scaling, V.T[:, :rank])
+        self.scalings_ = np.dot(scalings, V.T[:, :rank])
         self.xbar_ = xbar
         # weight vectors / centroids
-        self.coef_ = np.dot(self.means_ - self.xbar_, self.scaling)
+        self.coef_ = np.dot(self.means_ - self.xbar_, self.scalings_)
         self.intercept_ = (-0.5 * np.sum(self.coef_ ** 2, axis=1) +
                            np.log(self.priors_))
         return self
 
     @property
-    def classes(self):
-        warnings.warn("LDA.classes is deprecated and will be removed in 0.14. "
-                      "Use LDA.classes_ instead.", DeprecationWarning,
+    def scaling(self):  # pragma: no cover
+        warnings.warn("LDA.scaling is deprecated and will be removed in 0.15."
+                      " Use LDA.scalings_ instead.", DeprecationWarning,
                       stacklevel=2)
-        return self.classes_
+        return self.scalings_
 
     def _decision_function(self, X):
         X = array2d(X)
         # center and scale data
-        X = np.dot(X - self.xbar_, self.scaling)
+        X = np.dot(X - self.xbar_, self.scalings_)
         return np.dot(X, self.coef_.T) + self.intercept_
 
     def decision_function(self, X):
@@ -218,7 +233,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         """
         X = array2d(X)
         # center and scale data
-        X = np.dot(X - self.xbar_, self.scaling)
+        X = np.dot(X - self.xbar_, self.scalings_)
         n_comp = X.shape[1] if self.n_components is None else self.n_components
         return np.dot(X, self.coef_[:n_comp].T)
 

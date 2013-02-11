@@ -7,7 +7,6 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 #
 # License: BSD
 
-import warnings
 import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
@@ -165,7 +164,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         self.metric = metric
         self.random_state = random_state
 
-    def fit(self, X, **params):
+    def fit(self, X):
         """Perform DBSCAN clustering from vector array or distance matrix.
 
         Parameters
@@ -177,12 +176,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         params: dict
             Overwrite keywords from __init__.
         """
-        if params:
-            warnings.warn('Passing parameters to fit methods is '
-                          'deprecated and will be removed in 0.14',
-                          DeprecationWarning, stacklevel=2)
-            self.set_params(**params)
-        self.core_sample_indices_, self.labels_ = dbscan(X,
-                                                         **self.get_params())
+        clust = dbscan(X, **self.get_params())
+        self.core_sample_indices_, self.labels_ = clust
         self.components_ = X[self.core_sample_indices_].copy()
         return self

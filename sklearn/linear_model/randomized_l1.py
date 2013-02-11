@@ -8,6 +8,7 @@ sparse Logistic Regression
 # License: BSD Style.
 import itertools
 from abc import ABCMeta, abstractmethod
+import sys
 
 import numpy as np
 from scipy.sparse import issparse
@@ -16,12 +17,17 @@ from scipy.interpolate import interp1d
 
 from .base import center_data
 from ..base import BaseEstimator, TransformerMixin
+from ..externals import six
+from ..externals.joblib import Memory, Parallel, delayed
 from ..utils import (as_float_array, check_random_state, safe_asarray,
                      check_arrays, safe_mask)
-from ..externals.joblib import Parallel, delayed
 from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
-from ..externals.joblib import Memory
+
+PY3 = sys.version_info[0] == 3
+
+if PY3:
+    basestring = str
 
 
 ###############################################################################
@@ -96,7 +102,7 @@ class BaseRandomizedLinearModel(BaseEstimator, TransformerMixin):
 
         estimator_func, params = self._make_estimator_and_params(X, y)
         memory = self.memory
-        if isinstance(memory, basestring):
+        if isinstance(memory, six.string_types):
             memory = Memory(cachedir=memory)
 
         scores_ = memory.cache(
@@ -209,8 +215,8 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     precompute : True | False | 'auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -383,8 +389,8 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     tol : float, optional
          tolerance for stopping criteria of LogisticRegression
@@ -581,7 +587,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
             weights=1. - scaling * rng.random_integers(0, 1,
                                                        size=(n_features,)),
             eps=eps)
-        for k in xrange(n_resampling))
+        for k in range(n_resampling))
 
     all_alphas = sorted(list(set(itertools.chain(*[p[0] for p in paths]))))
     # Take approximately n_grid values

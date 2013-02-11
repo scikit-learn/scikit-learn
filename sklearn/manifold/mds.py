@@ -14,7 +14,7 @@ from ..metrics import euclidean_distances
 from ..utils import check_random_state, check_arrays
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
-from ..isotonic import isotonic_regression
+from ..isotonic import IsotonicRegression
 
 
 def _smacof_single(similarities, metric=True, n_components=2, init=None,
@@ -87,6 +87,7 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
         X = init
 
     old_stress = None
+    ir = IsotonicRegression()
     for it in range(max_iter):
         # Compute distance and monotonic regression
         dis = euclidean_distances(X)
@@ -99,15 +100,12 @@ def _smacof_single(similarities, metric=True, n_components=2, init=None,
             dis_flat_w = dis_flat[sim_flat != 0]
 
             # Compute the disparities using a monotonic regression
-            indxs = np.lexsort((dis_flat_w, sim_flat_w))
-            rindxs = np.argsort(indxs)
-            disparities_flat = isotonic_regression(dis_flat_w[indxs])
-            disparities_flat = disparities_flat[rindxs]
+            disparities_flat = ir.fit_transform(sim_flat_w, dis_flat_w)
             disparities = dis_flat.copy()
             disparities[sim_flat != 0] = disparities_flat
             disparities = disparities.reshape((n_samples, n_samples))
-            disparities *= np.sqrt((n_samples * (n_samples - 1) / 2)
-                                   / (disparities ** 2).sum())
+            disparities *= np.sqrt((n_samples * (n_samples - 1) / 2) /
+                                   (disparities ** 2).sum())
 
         # Compute stress
         stress = ((dis.ravel() - disparities.ravel()) ** 2).sum() / 2
@@ -184,7 +182,7 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
         used at all, which is useful for debuging. For n_jobs below -1,
-        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
     max_iter : int, optional, default: 300
@@ -261,8 +259,7 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
 
 
 class MDS(BaseEstimator):
-    """
-    Multidimensional scaling
+    """Multidimensional scaling
 
     Parameters
     ----------
@@ -295,13 +292,17 @@ class MDS(BaseEstimator):
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
         used at all, which is useful for debuging. For n_jobs below -1,
-        (n_cpus + 1 - n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
     random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
+
+    dissimilarity : string
+        Which dissimilarity measure to use.
+        Supported are 'euclidean' and 'precomputed'.
 
 
     Attributes
@@ -314,8 +315,8 @@ class MDS(BaseEstimator):
         disparities and the distances for all constrained points)
 
 
-    Notes
-    -----
+    References
+    ----------
     "Modern Multidimensional Scaling - Theory and Applications" Borg, I.;
     Groenen P. Springer Series in Statistics (1997)
 
@@ -328,15 +329,20 @@ class MDS(BaseEstimator):
     """
     def __init__(self, n_components=2, metric=True, n_init=4,
                  max_iter=300, verbose=0, eps=1e-3, n_jobs=1,
-                 random_state=None):
+                 random_state=None, dissimilarity="euclidean"):
         self.n_components = n_components
+        self.dissimilarity = dissimilarity
         self.metric = metric
         self.n_init = n_init
         self.max_iter = max_iter
         self.eps = eps
         self.verbose = verbose
         self.n_jobs = n_jobs
-        self.random_state = None
+        self.random_state = random_state
+
+    @property
+    def _pairwise(self):
+        return self.kernel == "precomputed"
 
     def fit(self, X, init=None, y=None):
         """
@@ -344,12 +350,12 @@ class MDS(BaseEstimator):
 
         Parameters
         ----------
-        X: array, shape=[n_samples, n_samples], symetric
-            Proximity matrice
+        X : array, shape=[n_samples, n_features]
+            Input data.
 
-        init: {None or ndarray, shape (n_samples,)}, optional
-            if None, randomly chooses the initial configuration
-            if ndarray, initialize the SMACOF algorithm with this array
+        init : {None or ndarray, shape (n_samples,)}, optional
+            If None, randomly chooses the initial configuration
+            if ndarray, initialize the SMACOF algorithm with this array.
         """
         self.fit_transform(X, init=init)
         return self
@@ -360,17 +366,32 @@ class MDS(BaseEstimator):
 
         Parameters
         ----------
-        X: array, shape=[n_samples, n_samples], symetric
-            Proximity matrice
+        X : array, shape=[n_samples, n_features]
+            Input data.
 
-        init: {None or ndarray, shape (n_samples,)}, optional
-            if None, randomly chooses the initial configuration
-            if ndarray, initialize the SMACOF algorithm with this array
+        init : {None or ndarray, shape (n_samples,)}, optional
+            If None, randomly chooses the initial configuration
+            if ndarray, initialize the SMACOF algorithm with this array.
 
         """
+        if X.shape[0] == X.shape[1] and self.dissimilarity != "precomputed":
+            warnings.warn("The MDS API has changed. ``fit`` now constructs an"
+                          "dissimilarity matrix from data. To use a custom "
+                          "dissimilarity matrix, set "
+                          "``dissimilarity=precomputed``.")
+
+        if self.dissimilarity is "precomputed":
+            self.dissimilarity_matrix_ = X
+        elif self.dissimilarity is "euclidean":
+            self.dissimilarity_matrix_ = euclidean_distances(X)
+        else:
+            raise ValueError("Proximity must be 'precomputed' or 'euclidean'."
+                             " Got %s instead" % str(self.dissimilarity))
+
         self.embedding_, self.stress_ = smacof(
-            X, metric=self.metric, n_components=self.n_components, init=init,
-            n_init=self.n_init, n_jobs=self.n_jobs, max_iter=self.max_iter,
-            verbose=self.verbose, eps=self.eps, random_state=self.random_state)
+            self.dissimilarity_matrix_, metric=self.metric,
+            n_components=self.n_components, init=init, n_init=self.n_init,
+            n_jobs=self.n_jobs, max_iter=self.max_iter, verbose=self.verbose,
+            eps=self.eps, random_state=self.random_state)
 
         return self.embedding_

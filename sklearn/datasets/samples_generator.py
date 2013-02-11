@@ -13,6 +13,9 @@ from scipy import linalg
 
 from ..utils import array2d, check_random_state
 from ..utils import shuffle as util_shuffle
+from ..externals import six
+map = six.moves.map
+zip = six.moves.zip
 
 
 def make_classification(n_samples=100, n_features=20, n_informative=2,
@@ -103,7 +106,6 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
     References
     ----------
-
     .. [1] I. Guyon, "Design of experiments for the NIPS 2003 variable
            selection benchmark", 2003.
     """
@@ -133,11 +135,11 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
     n_samples_per_cluster = []
 
-    for k in xrange(n_clusters):
+    for k in range(n_clusters):
         n_samples_per_cluster.append(int(n_samples * weights[k % n_classes]
                                      / n_clusters_per_class))
 
-    for i in xrange(n_samples - sum(n_samples_per_cluster)):
+    for i in range(n_samples - sum(n_samples_per_cluster)):
         n_samples_per_cluster[i % n_clusters] += 1
 
     # Intialize X and y
@@ -148,10 +150,10 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     C = np.array(list(product([-class_sep, class_sep], repeat=n_informative)))
 
     if not hypercube:
-        for k in xrange(n_clusters):
+        for k in range(n_clusters):
             C[k, :] *= generator.rand()
 
-        for f in xrange(n_informative):
+        for f in range(n_informative):
             C[:, f] *= generator.rand()
 
     generator.shuffle(C)
@@ -160,7 +162,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     pos = 0
     pos_end = 0
 
-    for k in xrange(n_clusters):
+    for k in range(n_clusters):
         # Number of samples in cluster k
         n_samples_k = n_samples_per_cluster[k]
 
@@ -200,7 +202,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
     # Randomly flip labels
     if flip_y >= 0.0:
-        for i in xrange(n_samples):
+        for i in range(n_samples):
             if generator.rand() < flip_y:
                 y[i] = generator.randint(n_classes)
 
@@ -208,7 +210,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     constant_shift = shift is not None
     constant_scale = scale is not None
 
-    for f in xrange(n_features):
+    for f in range(n_features):
         if not constant_shift:
             shift = (2 * generator.rand() - 1) * class_sep
 
@@ -222,7 +224,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
 
-        indices = range(n_features)
+        indices = np.arange(n_features)
         generator.shuffle(indices)
         X[:, :] = X[:, indices]
 
@@ -332,12 +334,13 @@ def make_hastie_10_2(n_samples=12000, random_state=None):
     The ten features are standard independent Gaussian and
     the target ``y`` is defined by::
 
-      y[i] = 1 if np.sum(X[i] > 9.34 else -1
+      y[i] = 1 if np.sum(X[i] ** 2) > 9.34 else -1
 
     Parameters
     ----------
     n_samples : int, optional (default=12000)
         The number of samples.
+
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -352,16 +355,18 @@ def make_hastie_10_2(n_samples=12000, random_state=None):
     y : array of shape [n_samples]
         The output values.
 
-    **References**:
-
+    References
+    ----------
     .. [1] T. Hastie, R. Tibshirani and J. Friedman, "Elements of Statistical
-    Learning Ed. 2", Springer, 2009.
+           Learning Ed. 2", Springer, 2009.
     """
     rs = check_random_state(random_state)
+
     shape = (n_samples, 10)
     X = rs.normal(size=shape).reshape(shape)
     y = ((X ** 2.0).sum(axis=1) > 9.34).astype(np.float64)
     y[y == 0.0] = -1.0
+
     return X, y
 
 
@@ -471,7 +476,7 @@ def make_regression(n_samples=100, n_features=100, n_informative=10,
     if shuffle:
         X, y = util_shuffle(X, y, random_state=generator)
 
-        indices = range(n_features)
+        indices = np.arange(n_features)
         generator.shuffle(indices)
         X[:, :] = X[:, indices]
         ground_truth = ground_truth[indices]
@@ -653,7 +658,7 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
     n_centers = centers.shape[0]
     n_samples_per_center = [int(n_samples // n_centers)] * n_centers
 
-    for i in xrange(n_samples % n_centers):
+    for i in range(n_samples % n_centers):
         n_samples_per_center[i] += 1
 
     for i, n in enumerate(n_samples_per_center):
@@ -716,7 +721,6 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
 
     References
     ----------
-
     .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
            of Statistics 19 (1), pages 1-67, 1991.
 
@@ -777,7 +781,6 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
 
     References
     ----------
-
     .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
            of Statistics 19 (1), pages 1-67, 1991.
 
@@ -842,7 +845,6 @@ def make_friedman3(n_samples=100, noise=0.0, random_state=None):
 
     References
     ----------
-
     .. [1] J. Friedman, "Multivariate adaptive regression splines", The Annals
            of Statistics 19 (1), pages 1-67, 1991.
 
@@ -979,7 +981,7 @@ def make_sparse_coded_signal(n_samples, n_components, n_features,
 
     # generate code
     X = np.zeros((n_components, n_samples))
-    for i in xrange(n_samples):
+    for i in range(n_samples):
         idx = np.arange(n_components)
         generator.shuffle(idx)
         idx = idx[:n_nonzero_coefs]
@@ -1026,7 +1028,6 @@ def make_sparse_uncorrelated(n_samples=100, n_features=10, random_state=None):
 
     References
     ----------
-
     .. [1] G. Celeux, M. El Anbari, J.-M. Marin, C. P. Robert,
            "Regularization in regression: comparing Bayesian and frequentist
            methods in a poorly informative situation", 2009.
@@ -1157,7 +1158,6 @@ def make_swiss_roll(n_samples=100, noise=0.0, random_state=None):
 
     References
     ----------
-
     .. [1] S. Marsland, "Machine Learning: An Algorithmic Perpsective",
            Chapter 10, 2009.
            http://www-ist.massey.ac.nz/smarsland/Code/10/lle.py
@@ -1216,3 +1216,88 @@ def make_s_curve(n_samples=100, noise=0.0, random_state=None):
     t = np.squeeze(t)
 
     return X, t
+
+
+def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
+                            n_features=2, n_classes=3,
+                            shuffle=True, random_state=None):
+    """Generate isotropic Gaussian and label samples by quantile
+
+    This classification dataset is constructed by taking a multi-dimensional
+    standard normal distribution and defining classes separated by nested
+    concentric multi-dimensional spheres such that roughly equal numbers of
+    samples are in each class (quantiles of the :math:`\chi^2` distribution).
+
+    Parameters
+    ----------
+    mean : array of shape [n_features], optional (default=None)
+        The mean of the multi-dimensional normal distribution.
+        If None then use the origin (0, 0, ...).
+
+    cov : float, optional (default=1.)
+        The covariance matrix will be this value times the unit matrix. This
+        dataset only produces symmetric normal distributions.
+
+    n_samples : int, optional (default=100)
+        The total number of points equally divided among classes.
+
+    n_features : int, optional (default=2)
+        The number of features for each sample.
+
+    n_classes : int, optional (default=3)
+        The number of classes
+
+    shuffle : boolean, optional (default=True)
+        Shuffle the samples.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    Returns
+    -------
+    X : array of shape [n_samples, n_features]
+        The generated samples.
+
+    y : array of shape [n_samples]
+        The integer labels for quantile membership of each sample.
+
+    Notes
+    -----
+    The dataset is from Zhu et al [1].
+
+    References
+    ----------
+    .. [1] J. Zhu, H. Zou, S. Rosset, T. Hastie, "Multi-class AdaBoost", 2009.
+
+    """
+    if n_samples < n_classes:
+        raise ValueError("n_samples must be at least n_classes")
+
+    generator = check_random_state(random_state)
+
+    if mean is None:
+        mean = np.zeros(n_features)
+    else:
+        mean = np.array(mean)
+
+    # Build multivariate normal distribution
+    X = generator.multivariate_normal(mean, cov * np.identity(n_features),
+                                      (n_samples,))
+
+    # Sort by distance from origin
+    idx = np.argsort(np.sum((X - mean[np.newaxis, :]) ** 2, axis=1))
+    X = X[idx, :]
+
+    # Label by quantile
+    step = n_samples // n_classes
+
+    y = np.hstack([np.repeat(np.arange(n_classes), step),
+                   np.repeat(n_classes - 1, n_samples - step * n_classes)])
+
+    if shuffle:
+        X, y = util_shuffle(X, y, random_state=generator)
+
+    return X, y

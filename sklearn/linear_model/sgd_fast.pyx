@@ -12,19 +12,15 @@ import numpy as np
 import sys
 from time import time
 
+from libc.math cimport exp, log, sqrt, pow, fabs
 cimport numpy as np
 cimport cython
 
 from sklearn.utils.weight_vector cimport WeightVector
 from sklearn.utils.seq_dataset cimport SequentialDataset
 
+np.import_array()
 
-cdef extern from "math.h":
-    cdef extern double exp(double x)
-    cdef extern double log(double x)
-    cdef extern double sqrt(double x)
-    cdef extern double pow(double x, double y)
-    cdef extern double fabs(double x)
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INTEGER
@@ -174,8 +170,8 @@ cdef class SquaredHinge(LossFunction):
     ----------
 
     threshold : float > 0.0
-        Margin threshold. When threshold=1.0, one gets the loss used by SVM.
-        When threshold=0.0, one gets the loss used by the Perceptron.
+        Margin threshold. When threshold=1.0, one gets the loss used by
+        (quadratically penalized) SVM.
     """
 
     cdef double threshold
@@ -184,13 +180,13 @@ cdef class SquaredHinge(LossFunction):
         self.threshold = threshold
 
     cpdef double loss(self, double p, double y):
-        cdef double z = 1 - p * y
+        cdef double z = self.threshold - p * y
         if z > 0:
             return z * z
         return 0.0
 
     cpdef double dloss(self, double p, double y):
-        cdef double z = 1 - p * y
+        cdef double z = self.threshold - p * y
         if z > 0:
             return -2 * y * z
         return 0.0

@@ -6,7 +6,7 @@ Confusion matrix
 Example of confusion matrix usage to evaluate the quality
 of the output of a classifier.
 """
-print __doc__
+print(__doc__)
 
 import random
 import pylab as pl

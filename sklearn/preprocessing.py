@@ -11,15 +11,20 @@ import numbers
 import numpy as np
 import scipy.sparse as sp
 
+from .base import BaseEstimator, TransformerMixin
+from .externals.six import string_types
 from .utils import check_arrays, array2d, atleast2d_or_csr, safe_asarray
 from .utils import warn_if_not_float
 from .utils.fixes import unique
-from .base import BaseEstimator, TransformerMixin
 
 from .utils.sparsefuncs import inplace_csr_row_normalize_l1
 from .utils.sparsefuncs import inplace_csr_row_normalize_l2
 from .utils.sparsefuncs import inplace_csr_column_scale
 from .utils.sparsefuncs import mean_variance_axis0
+from .externals import six
+
+zip = six.moves.zip
+map = six.moves.map
 
 __all__ = ['Binarizer',
            'KernelCenterer',
@@ -147,6 +152,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
     The standardization is given by::
         X_std = (X - X.min(axis=0)) / (X.max(axis=0) - X.min(axis=0))
         X_scaled = X_std / (max - min) + min
+
     where min, max = feature_range.
 
     This standardization is often used as an alternative to zero mean,
@@ -163,10 +169,10 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    min_ : ndarray, shape (n_features,)
+    `min_` : ndarray, shape (n_features,)
         Per feature adjustment for minimum.
 
-    scale_ : ndarray, shape (n_features,)
+    `scale_` : ndarray, shape (n_features,)
         Per feature relative scaling of the data.
     """
 
@@ -184,6 +190,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
             used for later scaling along the features axis.
         """
         X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
+        warn_if_not_float(X, estimator=self)
         feature_range = self.feature_range
         if feature_range[0] >= feature_range[1]:
             raise ValueError("Minimum of desired feature range must be smaller"
@@ -207,6 +214,19 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
         X *= self.scale_
         X += self.min_
+        return X
+
+    def inverse_transform(self, X):
+        """Undo the scaling of X according to feature_range.
+
+        Parameters
+        ----------
+        X : array-like with shape [n_samples, n_features]
+            Input data that will be transformed.
+        """
+        X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
+        X -= self.min_
+        X /= self.scale_
         return X
 
 
@@ -493,7 +513,7 @@ def binarize(X, threshold=0.0, copy=True):
     ----------
     X : array or scipy.sparse matrix with shape [n_samples, n_features]
         The data to binarize, element by element.
-        scipy.sparse matrices should be in CSR format to avoid an
+        scipy.sparse matrices should be in CSR or CSC format to avoid an
         un-necessary copy.
 
     threshold : float, optional (0.0 by default)
@@ -501,7 +521,7 @@ def binarize(X, threshold=0.0, copy=True):
 
     copy : boolean, optional, default is True
         set to False to perform inplace binarization and avoid a copy
-        (if the input is already a numpy array or a scipy.sparse CSR
+        (if the input is already a numpy array or a scipy.sparse CSR / CSC
         matrix and if axis is 1).
 
     See also
@@ -510,14 +530,18 @@ def binarize(X, threshold=0.0, copy=True):
     using the ``Transformer`` API (e.g. as part of a preprocessing
     :class:`sklearn.pipeline.Pipeline`)
     """
-    X = check_arrays(X, sparse_format='csr', copy=copy)[0]
+    sparse_format = "csr"  # We force sparse format to be either csr or csc.
+    if hasattr(X, "format"):
+        if X.format in ["csr", "csc"]:
+            sparse_format = X.format
+
+    X = check_arrays(X, sparse_format=sparse_format, copy=copy)[0]
     if sp.issparse(X):
         cond = X.data > threshold
         not_cond = np.logical_not(cond)
         X.data[cond] = 1
-        # FIXME: if enough values became 0, it may be worth changing
-        #        the sparsity structure
         X.data[not_cond] = 0
+        X.eliminate_zeros()
     else:
         cond = X > threshold
         not_cond = np.logical_not(cond)
@@ -593,7 +617,8 @@ def _is_multilabel(y):
     # the explicit check for ndarray is for forward compatibility; future
     # versions of Numpy might want to register ndarray as a Sequence
     return (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) and
-            not isinstance(y[0], basestring) or _is_label_indicator_matrix(y))
+            not isinstance(y[0], string_types) or
+            _is_label_indicator_matrix(y))
 
 
 class OneHotEncoder(BaseEstimator, TransformerMixin):
@@ -622,12 +647,15 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     `active_features_` : array
-        Indices for active features, meaning values that actually occur in the
-        training set. Only available when n_values is ``'auto'``.
+        Indices for active features, meaning values that actually occur
+        in the training set. Only available when n_values is ``'auto'``.
+
     `feature_indices_` : array of shape (n_features,)
-        Indices to feature ranges. Feature ``i`` in the original data is mapped
-        to features ``feature_indices_[i]`` to ``feature_indices_[i+1]``
-        (and potentially masked by `active_features_` afterwards)
+        Indices to feature ranges.
+        Feature ``i`` in the original data is mapped to features
+        from ``feature_indices_[i]`` to ``feature_indices_[i+1]``
+        (and then potentially masked by `active_features_` afterwards)
+
     `n_values_` : array of shape (n_features,)
         Maximum number of values per feature.
 
@@ -1154,7 +1182,7 @@ def add_dummy_feature(X, value=1.0):
     X : array or scipy.sparse matrix with shape [n_samples, n_features + 1]
         Same data with dummy feature added as first column.
 
-    Example
+    Examples
     --------
 
     >>> from sklearn.preprocessing import add_dummy_feature
@@ -1192,3 +1220,27 @@ def add_dummy_feature(X, value=1.0):
             return klass(X)
     else:
         return np.hstack((np.ones((n_samples, 1)) * value, X))
+
+
+def balance_weights(y):
+    """Compute sample weights such that the class distribution of y becomes
+       balanced.
+
+    Parameters
+    ----------
+    y : array-like
+        Labels for the samples.
+
+    Returns
+    -------
+    weights : array-like
+        The sample weights.
+    """
+    y = safe_asarray(y)
+    y = np.searchsorted(np.unique(y), y)
+    bins = np.bincount(y)
+
+    weights = 1. / bins.take(y)
+    weights *= bins.min()
+
+    return weights

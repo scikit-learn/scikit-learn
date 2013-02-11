@@ -159,10 +159,27 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         if n_features > n_samples or has_sw:
             # kernel ridge
             # w = X.T * inv(X X^t + alpha*Id) y
-            A = safe_sparse_dot(X, X.T, dense_output=True)
-            A.flat[::n_samples + 1] += alpha * sample_weight
-            Axy = linalg.solve(A, y, sym_pos=True, overwrite_a=True)
-            coef = safe_sparse_dot(X.T, Axy, dense_output=True)
+            K = safe_sparse_dot(X, X.T, dense_output=True)
+            if has_sw:
+                # We are doing a little danse with the sample weights to
+                # avoid copying the original X, which could be big
+                sw = np.sqrt(sample_weight)
+                if y.ndim == 1:
+                    y = y * sw
+                else:
+                    # Deal with multiple-output problems
+                    y = y * sw[:, np.newaxis]
+                K *= np.outer(sw, sw)
+            K.flat[::n_samples + 1] += alpha
+            dual_coef = linalg.solve(K, y,
+                                     sym_pos=True, overwrite_a=True)
+            if has_sw:
+                if dual_coef.ndim == 1:
+                    dual_coef *= sw
+                else:
+                    # Deal with multiple-output problems
+                    dual_coef *= sw[:, np.newaxis]
+            coef = safe_sparse_dot(X.T, dual_coef, dense_output=True)
         else:
             # ridge
             # w = inv(X^t X + alpha*Id) * X.T y
@@ -188,17 +205,17 @@ class _BaseRidge(LinearModel):
         self.tol = tol
         self.solver = solver
 
-    def fit(self, X, y, sample_weight=1.0, solver=None):
+    def fit(self, X, y, sample_weight=1.0):
         X = safe_asarray(X, dtype=np.float)
         y = np.asarray(y, dtype=np.float)
 
         X, y, X_mean, y_mean, X_std = self._center_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X)
+            X, y, self.fit_intercept, self.normalize, self.copy_X,
+            sample_weight=sample_weight)
 
         self.coef_ = ridge_regression(X, y,
                                       alpha=self.alpha,
                                       sample_weight=sample_weight,
-                                      solver=solver,
                                       max_iter=self.max_iter,
                                       tol=self.tol)
         self._set_intercept(X_mean, y_mean, X_std)
@@ -234,8 +251,8 @@ class Ridge(_BaseRidge, RegressorMixin):
         Maximum number of iterations for conjugate gradient solver.
         The default value is determined by scipy.sparse.linalg.
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     solver : {'auto', 'dense_cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational routines:
@@ -287,7 +304,7 @@ class Ridge(_BaseRidge, RegressorMixin):
                                     normalize=normalize, copy_X=copy_X,
                                     max_iter=max_iter, tol=tol, solver=solver)
 
-    def fit(self, X, y, sample_weight=1.0, solver=None):
+    def fit(self, X, y, sample_weight=1.0):
         """Fit Ridge regression model
 
         Parameters
@@ -305,16 +322,7 @@ class Ridge(_BaseRidge, RegressorMixin):
         -------
         self : returns an instance of self.
         """
-        if solver is None:
-            solver = self.solver
-        else:
-            # The fit method should be removed from Ridge when this warning is
-            # removed
-            warnings.warn("""solver option in fit is deprecated and will be
-                          removed in v0.14.""")
-
-        return _BaseRidge.fit(self, X, y, solver=solver,
-                              sample_weight=sample_weight)
+        return super(Ridge, self).fit(X, y, sample_weight=sample_weight)
 
 
 class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
@@ -345,8 +353,8 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         Maximum number of iterations for conjugate gradient solver.
         The default value is determined by scipy.sparse.linalg.
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     solver : {'auto', 'dense_cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational
@@ -383,7 +391,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver)
         self.class_weight = class_weight
 
-    def fit(self, X, y, solver=None):
+    def fit(self, X, y):
         """Fit Ridge regression model.
 
         Parameters
@@ -403,17 +411,11 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         else:
             class_weight = self.class_weight
 
-        if solver is None:
-            solver = self.solver
-        else:
-            warnings.warn("""solver option in fit is deprecated and will be
-                          removed in v0.14.""")
-
         sample_weight_classes = np.array([class_weight.get(k, 1.0) for k in y])
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
-        _BaseRidge.fit(self, X, Y, solver=solver,
-                       sample_weight=sample_weight_classes)
+        super(RidgeClassifier, self).fit(X, Y,
+                                         sample_weight=sample_weight_classes)
         return self
 
     @property
@@ -560,7 +562,8 @@ class _RidgeGCV(LinearModel):
         n_samples, n_features = X.shape
 
         X, y, X_mean, y_mean, X_std = LinearModel._center_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X)
+            X, y, self.fit_intercept, self.normalize, self.copy_X,
+            sample_weight=sample_weight)
 
         gcv_mode = self.gcv_mode
         with_sw = len(np.shape(sample_weight))
@@ -626,17 +629,8 @@ class _RidgeGCV(LinearModel):
 
         return self
 
-    @property
-    def best_alpha(self):
-        warnings.warn("Use alpha_. Using best_alpha is deprecated"
-                      "since version 0.12, and backward compatibility "
-                      "won't be maintained from version 0.14 onward. ",
-                      DeprecationWarning, stacklevel=2)
-        return self.alpha_
-
 
 class _BaseRidgeCV(LinearModel):
-
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]),
                  fit_intercept=True, normalize=False, score_func=None,
                  loss_func=None, cv=None, gcv_mode=None,
@@ -721,8 +715,8 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     score_func: callable, optional
         function that takes 2 arguments and compares them in
@@ -800,8 +794,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     score_func: callable, optional
         function that takes 2 arguments and compares them in

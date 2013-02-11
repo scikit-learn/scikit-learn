@@ -49,6 +49,20 @@ combinations is retained.
   This can be done by using the :func:`cross_validation.train_test_split`
   utility function.
 
+.. currentmodule:: sklearn.grid_search
+
+.. _gridsearch_scoring:
+
+Scoring functions for GridSearchCV
+----------------------------------
+By default, :class:`GridSearchCV` uses the ``score`` function of the estimator
+to evaluate a parameter setting. These are the :func:`sklearn.metrics.accuracy_score` for classification
+and :func:`sklearn.metrics.r2_score` for regression.
+For some applications, other scoring function are better suited (for example in
+unbalanced classification, the accuracy score is often non-informative). An
+alternative scoring function can be specified via the ``scoring`` parameter to
+:class:`GridSearchCV`. 
+See :ref:`score_func_objects` for more details.
 
 .. topic:: Examples:
 

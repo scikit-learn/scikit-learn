@@ -14,7 +14,7 @@ class will be very good.
 
 At the end, the top 10 most uncertain predictions will be shown.
 """
-print __doc__
+print(__doc__)
 
 # Authors: Clay Woolam <clay@woolam.org>
 # Licence: BSD
@@ -62,10 +62,10 @@ cm = confusion_matrix(true_labels, predicted_labels, labels=lp_model.classes_)
 print("Label Spreading model: %d labeled & %d unlabeled points (%d total)" %
       (n_labeled_points, n_total_samples - n_labeled_points, n_total_samples))
 
-print metrics.classification_report(true_labels, predicted_labels)
+print(metrics.classification_report(true_labels, predicted_labels))
 
-print "Confusion matrix"
-print cm
+print("Confusion matrix")
+print(cm)
 
 # calculate uncertainty values for each transduced distribution
 pred_entropies = stats.distributions.entropy(lp_model.label_distributions_.T)

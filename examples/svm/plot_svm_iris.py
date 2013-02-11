@@ -12,7 +12,7 @@ dataset has been used for this example
 The decision boundaries, are shown with all the points in the training-set.
 
 """
-print __doc__
+print(__doc__)
 
 
 # Code source: Gael Varoqueux

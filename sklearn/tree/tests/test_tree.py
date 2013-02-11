@@ -8,10 +8,11 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
-from nose.tools import assert_true
 
 from sklearn import tree
 from sklearn import datasets
+from sklearn.externals.six import StringIO
+from sklearn.preprocessing import balance_weights
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -37,29 +38,54 @@ boston.target = boston.target[perm]
 
 def test_classification_toy():
     """Check classification on a toy dataset."""
+    # Decision trees
     clf = tree.DecisionTreeClassifier()
     clf.fit(X, y)
-
     assert_array_equal(clf.predict(T), true_result)
 
-    # With subsampling
     clf = tree.DecisionTreeClassifier(max_features=1, random_state=1)
     clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
 
+    # Extra-trees
+    clf = tree.ExtraTreeClassifier()
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+
+    clf = tree.ExtraTreeClassifier(max_features=1, random_state=1)
+    clf.fit(X, y)
+    assert_array_equal(clf.predict(T), true_result)
+
+
+def test_weighted_classification_toy():
+    """Check classification on a weighted toy dataset."""
+    clf = tree.DecisionTreeClassifier()
+
+    clf.fit(X, y, sample_weight=np.ones(len(X)))
+    assert_array_equal(clf.predict(T), true_result)
+
+    clf.fit(X, y, sample_weight=np.ones(len(X)) * 0.5)
     assert_array_equal(clf.predict(T), true_result)
 
 
 def test_regression_toy():
     """Check regression on a toy dataset."""
+    # Decision trees
     clf = tree.DecisionTreeRegressor()
     clf.fit(X, y)
-
     assert_almost_equal(clf.predict(T), true_result)
 
-    # With subsampling
     clf = tree.DecisionTreeRegressor(max_features=1, random_state=1)
     clf.fit(X, y)
+    assert_almost_equal(clf.predict(T), true_result)
 
+    # Extra-trees
+    clf = tree.ExtraTreeRegressor()
+    clf.fit(X, y)
+    assert_almost_equal(clf.predict(T), true_result)
+
+    clf = tree.ExtraTreeRegressor(max_features=1, random_state=1)
+    clf.fit(X, y)
     assert_almost_equal(clf.predict(T), true_result)
 
 
@@ -95,7 +121,6 @@ def test_graphviz_toy():
     """Check correctness of graphviz output on a toy dataset."""
     clf = tree.DecisionTreeClassifier(max_depth=3, min_samples_split=1)
     clf.fit(X, y)
-    from StringIO import StringIO
 
     # test export code
     out = StringIO()
@@ -182,7 +207,7 @@ def test_boston():
                                          random_state=1).fit(boston.data,
                                                              boston.target)
 
-        #using fewer features reduces the learning ability of this tree,
+        # using fewer features reduces the learning ability of this tree,
         # but reduces training time.
         score = np.mean(np.power(clf.predict(boston.data) - boston.target, 2))
         assert score < 2, "Failed with criterion " + c + \
@@ -262,7 +287,7 @@ def test_importances():
                                         shuffle=False,
                                         random_state=0)
 
-    clf = tree.DecisionTreeClassifier(compute_importances=True)
+    clf = tree.DecisionTreeClassifier()
     clf.fit(X, y)
     importances = clf.feature_importances_
     n_important = sum(importances > 0.1)
@@ -273,16 +298,16 @@ def test_importances():
     X_new = clf.transform(X, threshold="mean")
     assert 0 < X_new.shape[1] < X.shape[1]
 
-    clf = tree.DecisionTreeClassifier()
-    clf.fit(X, y)
-    assert_true(clf.feature_importances_ is None)
-
 
 def test_error():
     """Test that it gives proper exception on deficient input."""
     # Invalid values for parameters
     assert_raises(ValueError,
                   tree.DecisionTreeClassifier(min_samples_leaf=-1).fit,
+                  X, y)
+
+    assert_raises(ValueError,
+                  tree.DecisionTreeClassifier(min_samples_split=-1).fit,
                   X, y)
 
     assert_raises(ValueError,
@@ -311,6 +336,7 @@ def test_error():
     # predict before fitting
     clf = tree.DecisionTreeClassifier()
     assert_raises(Exception, clf.predict, T)
+
     # predict on vector with different dims
     clf.fit(X, y)
     t = np.asarray(T)
@@ -501,6 +527,93 @@ def test_classes_shape():
     assert_equal(len(clf.classes_), 2)
     assert_equal(clf.n_classes_, [2, 2])
     assert_equal(clf.classes_, [[-1, 1], [-2, 2]])
+
+
+def test_unbalanced_iris():
+    """Check class rebalancing."""
+    unbalanced_X = iris.data[:125]
+    unbalanced_y = iris.target[:125]
+    sample_weight = balance_weights(unbalanced_y)
+
+    clf = tree.DecisionTreeClassifier()
+    clf.fit(unbalanced_X, unbalanced_y, sample_weight=sample_weight)
+    assert_almost_equal(clf.predict(unbalanced_X), unbalanced_y)
+
+
+def test_sample_weight():
+    """Check sample weighting."""
+    # Test that zero-weighted samples are not taken into account
+    X = np.arange(100)[:, np.newaxis]
+    y = np.ones(100)
+    y[:50] = 0.0
+
+    sample_weight = np.ones(100)
+    sample_weight[y == 0] = 0.0
+
+    clf = tree.DecisionTreeClassifier()
+    clf.fit(X, y, sample_weight=sample_weight)
+    assert_array_equal(clf.predict(X), np.ones(100))
+
+    # Test that low weighted samples are not taken into account at low depth
+    X = np.arange(200)[:, np.newaxis]
+    y = np.zeros(200)
+    y[50:100] = 1
+    y[100:200] = 2
+    X[100:200, 0] = 200
+
+    sample_weight = np.ones(200)
+
+    sample_weight[y == 2] = .51  # Samples of class '2' are still weightier
+    clf = tree.DecisionTreeClassifier(max_depth=1)
+    clf.fit(X, y, sample_weight=sample_weight)
+    assert_equal(clf.tree_.threshold[0], 149.5)
+
+    sample_weight[y == 2] = .50  # Samples of class '2' are no longer weightier
+    clf = tree.DecisionTreeClassifier(max_depth=1)
+    clf.fit(X, y, sample_weight=sample_weight)
+    assert_equal(clf.tree_.threshold[0], 49.5)  # Threshold should have moved
+
+    # Test that sample weighting is the same as having duplicates
+    X = iris.data
+    y = iris.target
+
+    duplicates = rng.randint(0, X.shape[0], 1000)
+
+    clf = tree.DecisionTreeClassifier(random_state=1)
+    clf.fit(X[duplicates], y[duplicates])
+
+    from sklearn.utils.fixes import bincount
+    sample_weight = bincount(duplicates, minlength=X.shape[0])
+    clf2 = tree.DecisionTreeClassifier(random_state=1)
+    clf2.fit(X, y, sample_weight=sample_weight)
+
+    internal = clf.tree_.children_left != tree._tree.TREE_LEAF
+    assert_array_equal(clf.tree_.threshold[internal],
+                       clf2.tree_.threshold[internal])
+
+    # Test negative weights
+    X = iris.data
+    y = iris.target
+
+    sample_weight = -np.ones(X.shape[0])
+    clf = tree.DecisionTreeClassifier(random_state=1)
+    assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
+
+    sample_weight = np.ones(X.shape[0])
+    sample_weight[0] = -1
+    clf = tree.DecisionTreeClassifier(random_state=1)
+    clf.fit(X, y, sample_weight=sample_weight)
+
+    # Check that predict_proba returns valid probabilities in the presence of
+    # samples with negative weight
+    X = iris.data
+    y = iris.target
+
+    sample_weight = rng.normal(.5, 1.0, X.shape[0])
+    clf = tree.DecisionTreeClassifier(random_state=1)
+    clf.fit(X, y, sample_weight=sample_weight)
+    proba = clf.predict_proba(X)
+    assert (proba >= 0).all() and (proba <= 1).all()
 
 
 if __name__ == "__main__":
