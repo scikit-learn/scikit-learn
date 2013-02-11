@@ -16,7 +16,6 @@ import pickle
 
 import numpy as np
 from scipy import sparse
-from StringIO import StringIO
 
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
@@ -424,10 +423,8 @@ def test_transformers_pickle():
 
         trans.fit(X, y_)
         X_pred = trans.fit_transform(X, y=y_)
-        pickled_trans = StringIO.StringIO()
-        pickle.dump(trans, pickled_trans)
-        pickled_trans.pos = 0
-        unpickled_trans = pickle.load(pickled_trans)
+        pickled_trans = pickle.dumps(trans)
+        unpickled_trans = pickle.loads(pickled_trans)
         pickled_X_pred = unpickled_trans.fit_transform(X, y=y_)
 
         try:
@@ -671,10 +668,8 @@ def test_classifiers_pickle():
             # fit
             clf.fit(X, y)
             y_pred = clf.predict(X)
-            pickled_clf = StringIO.StringIO()
-            pickle.dump(clf, pickled_clf)
-            pickled_clf.pos = 0
-            unpickled_clf = pickle.load(pickled_clf)
+            pickled_clf = pickle.dumps(clf)
+            unpickled_clf = pickle.loads(pickled_clf)
             pickled_y_pred = unpickled_clf.predict(X)
 
             try:
@@ -794,10 +789,8 @@ def test_regressor_pickle():
         reg.fit(X, y_)
         y_pred = reg.predict(X)
         # store old predictions
-        pickled_reg = StringIO.StringIO()
-        pickle.dump(reg, pickled_reg)
-        pickled_reg.pos = 0
-        unpickled_reg = pickle.load(pickled_reg)
+        pickled_reg = pickle.dumps(reg)
+        unpickled_reg = pickle.loads(pickled_reg)
         pickled_y_pred = unpickled_reg.predict(X)
 
         try:
