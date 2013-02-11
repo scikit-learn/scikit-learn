@@ -106,13 +106,35 @@ class MLPClassifier(BaseEstimator, ClassifierMixin):
         self.intercept_output_ = rng.uniform(-1, 1, n_targets)
 
     def fit(self, X, y):
-        X = atleast2d_or_csr(X)
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         _, n_features = X.shape
 
         self._lbin = LabelBinarizer()
         Y = self._lbin.fit_transform(y)
 
         self._init_fit(n_features, Y.shape[1])
+        backprop_sgd(self, X, Y)
+
+        return self
+
+    def partial_fit(self, X, y, classes):
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        _, n_features = X.shape
+
+        if self.classes_ is None and classes is None:
+            raise ValueError("classes must be passed on the first call "
+                             "to partial_fit.")
+        elif classes is not None and self.classes_ is not None:
+            if not np.all(self.classes_ == np.unique(classes)):
+                raise ValueError("`classes` is not the same as on last call "
+                                 "to partial_fit.")
+        elif classes is not None:
+            self._lbin = LabelBinarizer(classes=classes)
+            Y = self._lbin.fit_transform(y)
+            self._init_fit(n_features, Y.shape[1])
+        else:
+            Y = self._lbin.transform(y)
+
         backprop_sgd(self, X, Y)
 
         return self
