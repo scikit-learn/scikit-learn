@@ -266,10 +266,11 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
                             " 'fit' and 'predict' or 'score' methods,"
                             " %s (type %s) was passed" %
                             (self.estimator, type(self.estimator)))
-        if self.loss_func is None and self.score_func is None:
+        if (self.scoring is None and self.loss_func is None and self.score_func
+                is None):
             if not hasattr(self.estimator, 'score'):
                 raise TypeError(
-                    "If no loss_func is specified, the estimator passed "
+                    "If no scoring is specified, the estimator passed "
                     "should have a 'score' method. The estimator %s "
                     "does not." % self.estimator)
 
@@ -365,6 +366,9 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
                     or (score < best_score and not greater_is_better)):
                 best_score = score
                 best_params = params
+
+        self.best_params_ = best_params
+        self.best_score_ = best_score
 
         if self.refit:
             # fit the best estimator using the entire dataset
