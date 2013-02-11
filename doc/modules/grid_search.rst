@@ -105,7 +105,7 @@ discrete choices (which will be sampled uniformly) can be specified::
     'kernel': ['rbf'], 'class_weight':['auto', None]}]
 
 This example uses the ``scipy.stats.distribution`` module, which contains
-may useful distributions for sampling hyperparameters, such as ``expon``,
+many useful distributions for sampling hyperparameters, such as ``expon``,
 ``gamma``, ``uniform`` or ``randint``.
 In principle, any function can be passed that provides a ``rvs`` method to
 sample a value.
