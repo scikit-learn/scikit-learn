@@ -5,6 +5,8 @@ General tests for all estimators in sklearn.
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Gael Varoquaux gael.varoquaux@normalesup.org
 # License: BSD Style.
+from __future__ import print_function
+
 import os
 import warnings
 import sys
@@ -139,13 +141,13 @@ def test_estimators_sparse_data():
             clf.fit(X, y)
         except TypeError, e:
             if not 'sparse' in repr(e):
-                print ("Estimator %s doesn't seem to fail gracefully on "
-                       "sparse data" % name)
+                print("Estimator %s doesn't seem to fail gracefully on "
+                      "sparse data" % name)
                 traceback.print_exc(file=sys.stdout)
                 raise e
         except Exception, exc:
-            print ("Estimator %s doesn't seem to fail gracefully on "
-                   "sparse data" % name)
+            print("Estimator %s doesn't seem to fail gracefully on "
+                  "sparse data" % name)
             traceback.print_exc(file=sys.stdout)
             raise exc
 
@@ -207,9 +209,9 @@ def test_transformers():
             else:
                 assert_equal(X_pred.shape[0], n_samples)
         except Exception as e:
-            print trans
-            print e
-            print
+            print(trans)
+            print(e)
+            print()
             succeeded = False
             continue
 
@@ -263,13 +265,13 @@ def test_transformers_sparse_data():
             trans.fit(X, y)
         except TypeError, e:
             if not 'sparse' in repr(e):
-                print ("Estimator %s doesn't seem to fail gracefully on "
-                       "sparse data" % name)
+                print("Estimator %s doesn't seem to fail gracefully on "
+                      "sparse data" % name)
                 traceback.print_exc(file=sys.stdout)
                 raise e
         except Exception, exc:
-            print ("Estimator %s doesn't seem to fail gracefully on "
-                   "sparse data" % name)
+            print("Estimator %s doesn't seem to fail gracefully on "
+                  "sparse data" % name)
             traceback.print_exc(file=sys.stdout)
             raise exc
 
@@ -623,8 +625,8 @@ def test_regressors_train():
                 assert_greater(reg.score(X, y_), 0.5)
         except Exception as e:
             print(reg)
-            print e
-            print
+            print(e)
+            print()
             succeeded = False
 
     assert_true(succeeded)

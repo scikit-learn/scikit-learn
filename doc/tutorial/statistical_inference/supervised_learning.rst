@@ -175,7 +175,7 @@ Linear models: :math:`y = X\beta + \epsilon`
     >>> regr = linear_model.LinearRegression()
     >>> regr.fit(diabetes_X_train, diabetes_y_train)
     LinearRegression(copy_X=True, fit_intercept=True, normalize=False)
-    >>> print regr.coef_
+    >>> print(regr.coef_)
     [   0.30349955 -237.63931533  510.53060544  327.73698041 -814.13170937
       492.81458798  102.84845219  184.60648906  743.51961675   76.09517222]
 
@@ -328,7 +328,7 @@ application of Occam's razor: `prefer simpler models`.
     Lasso(alpha=0.025118864315095794, copy_X=True, fit_intercept=True,
        max_iter=1000, normalize=False, positive=False, precompute='auto',
        tol=0.0001, warm_start=False)
-    >>> print regr.coef_
+    >>> print(regr.coef_)
     [   0.         -212.43764548  517.19478111  313.77959962 -160.8303982    -0.
      -187.19554705   69.38229038  508.66011217   71.84239008]
 

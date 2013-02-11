@@ -168,7 +168,7 @@ def test_no_path_all_precomputed():
 
     alphas_, active_, coef_path_ = linear_model.lars_path(
         X, y, method="lasso", Gram=G, Xy=Xy, alpha_min=0.9)
-    print "---"
+    print("---")
     alpha_, active, coef = linear_model.lars_path(
         X, y, method="lasso", Gram=G, Xy=Xy, alpha_min=0.9, return_path=False)
 

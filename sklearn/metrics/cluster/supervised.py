@@ -312,20 +312,20 @@ def homogeneity_score(labels_true, labels_pred):
     Non-pefect labelings that futher split classes into more clusters can be
     perfectly homogeneous::
 
-      >>> print ("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 0, 1, 2]))
+      >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 0, 1, 2]))
       ...                                                  # doctest: +ELLIPSIS
       1.0...
-      >>> print ("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 1, 2, 3]))
+      >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 1, 2, 3]))
       ...                                                  # doctest: +ELLIPSIS
       1.0...
 
     Clusters that include samples from different classes do not make for an
     homogeneous labeling::
 
-      >>> print ("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 1, 0, 1]))
+      >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 1, 0, 1]))
       ...                                                  # doctest: +ELLIPSIS
       0.0...
-      >>> print ("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 0, 0, 0]))
+      >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 0, 0, 0]))
       ...                                                  # doctest: +ELLIPSIS
       0.0...
 
@@ -384,17 +384,17 @@ def completeness_score(labels_true, labels_pred):
     Non-pefect labelings that assign all classes members to the same clusters
     are still complete::
 
-      >>> print completeness_score([0, 0, 1, 1], [0, 0, 0, 0])
+      >>> print(completeness_score([0, 0, 1, 1], [0, 0, 0, 0]))
       1.0
-      >>> print completeness_score([0, 1, 2, 3], [0, 0, 1, 1])
+      >>> print(completeness_score([0, 1, 2, 3], [0, 0, 1, 1]))
       1.0
 
     If classes members are splitted across different clusters, the
     assignment cannot be complete::
 
-      >>> print completeness_score([0, 0, 1, 1], [0, 1, 0, 1])
+      >>> print(completeness_score([0, 0, 1, 1], [0, 1, 0, 1]))
       0.0
-      >>> print completeness_score([0, 0, 0, 0], [0, 1, 2, 3])
+      >>> print(completeness_score([0, 0, 0, 0], [0, 1, 2, 3]))
       0.0
 
     """

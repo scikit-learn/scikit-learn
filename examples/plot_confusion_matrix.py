@@ -31,7 +31,7 @@ y_ = classifier.fit(X[:half], y[:half]).predict(X[half:])
 # Compute confusion matrix
 cm = confusion_matrix(y[half:], y_)
 
-print cm
+print(cm)
 
 # Show confusion matrix
 pl.matshow(cm)

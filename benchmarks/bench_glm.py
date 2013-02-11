@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
     for i in range(n_iter):
 
-        print 'Iteration %s of %s' % (i, n_iter)
+        print('Iteration %s of %s' % (i, n_iter))
 
         n_samples, n_features = 10 * i + 3, 10 * i + 3
 

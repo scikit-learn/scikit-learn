@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import numpy as np
 import scipy.sparse as sp
 import warnings
@@ -180,7 +182,7 @@ class BaseLibSVM(BaseEstimator):
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
         if self.verbose:  # pragma: no cover
-            print '[LibSVM]',
+            print('[LibSVM]', end='')
         fit(X, y, sample_weight, solver_type, kernel)
 
         self.shape_fit_ = X.shape
@@ -681,7 +683,7 @@ class BaseLibLinear(BaseEstimator):
 
         rnd = check_random_state(self.random_state)
         if self.verbose:
-            print '[LibLinear]',
+            print('[LibLinear]', end='')
         self.raw_coef_ = train(X, y, self._get_solver_type(), self.tol,
                                self._get_bias(), self.C,
                                self.class_weight_,

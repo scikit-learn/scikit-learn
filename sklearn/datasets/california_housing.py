@@ -60,8 +60,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
     if not exists(data_home):
         makedirs(data_home)
     if not exists(join(data_home, TARGET_FILENAME)):
-        print 'downloading Cal. housing from %s to %s' % (DATA_URL,
-                                                          data_home)
+        print('downloading Cal. housing from %s to %s' % (DATA_URL, data_home))
         fhandle = urllib2.urlopen(DATA_URL)
         buf = BytesIO(fhandle.read())
         zip_file = ZipFile(buf)

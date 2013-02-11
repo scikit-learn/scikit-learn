@@ -38,7 +38,7 @@ data in *folds* that we use for training and testing::
     ...     y_test  = y_train.pop(k)
     ...     y_train = np.concatenate(y_train)
     ...     scores.append(svc.fit(X_train, y_train).score(X_test, y_test))
-    >>> print scores
+    >>> print(scores)
     [0.93489148580968284, 0.95659432387312182, 0.93989983305509184]
 
 .. currentmodule:: sklearn.cross_validation
@@ -59,7 +59,7 @@ of indices for this purpose::
     >>> from sklearn import cross_validation
     >>> k_fold = cross_validation.KFold(n=6, n_folds=3, indices=True)
     >>> for train_indices, test_indices in k_fold:
-    ...      print 'Train: %s | test: %s' % (train_indices, test_indices)
+    ...      print('Train: %s | test: %s' % (train_indices, test_indices))
     Train: [2 3 4 5] | test: [0 1]
     Train: [0 1 4 5] | test: [2 3]
     Train: [0 1 2 3] | test: [4 5]

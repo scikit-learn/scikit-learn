@@ -40,9 +40,9 @@ algorithms. The simplest clustering algorithm is
     >>> k_means = cluster.KMeans(n_clusters=3)
     >>> k_means.fit(X_iris) # doctest: +ELLIPSIS
     KMeans(copy_x=True, init='k-means++', ...
-    >>> print k_means.labels_[::10]
+    >>> print(k_means.labels_[::10])
     [1 1 1 1 1 0 0 0 0 0 2 2 2 2 2]
-    >>> print y_iris[::10]
+    >>> print(y_iris[::10])
     [0 0 0 0 0 1 1 1 1 1 2 2 2 2 2]
 
 .. |k_means_iris_bad_init| image:: ../../auto_examples/cluster/images/plot_cluster_iris_3.png
@@ -276,7 +276,7 @@ data by projecting on a principal subspace.
     >>> pca = decomposition.PCA()
     >>> pca.fit(X)
     PCA(copy=True, n_components=None, whiten=False)
-    >>> print pca.explained_variance_  # doctest: +SKIP
+    >>> print(pca.explained_variance_)  # doctest: +SKIP
     [  2.18565811e+00   1.19346747e+00   8.43026679e-32]
 
     >>> # As we can see, only the 2 first components are useful

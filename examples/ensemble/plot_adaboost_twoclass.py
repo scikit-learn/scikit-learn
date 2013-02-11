@@ -16,7 +16,7 @@ containing a desired purity of class B, for example, by only selecting samples
 with a decision score above some value.
 
 """
-print __doc__
+print(__doc__)
 
 import pylab as pl
 import numpy as np

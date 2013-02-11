@@ -78,7 +78,7 @@ the data and fitting a model and computing the score 5 consecutive times
 The mean score and the standard deviation of the score estimate are hence given
 by::
 
-  >>> print "Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() / 2)
+  >>> print("Accuracy: %0.2f (+/- %0.2f)" % (scores.mean(), scores.std() / 2))
   Accuracy: 0.97 (+/- 0.02)
 
 By default, the score computed at each CV iteration is the ``score``
@@ -158,11 +158,11 @@ Example of 2-fold::
   >>> Y = np.array([0, 1, 0, 1])
 
   >>> kf = KFold(len(Y), n_folds=2, indices=False)
-  >>> print kf
+  >>> print(kf)
   sklearn.cross_validation.KFold(n=4, n_folds=2)
 
   >>> for train, test in kf:
-  ...     print train, test
+  ...     print(train, test)
   [False False  True  True] [ True  True False False]
   [ True  True False False] [False False  True  True]
 
@@ -181,7 +181,7 @@ when creating the cross-validation procedure::
 
   >>> kf = KFold(len(Y), n_folds=2, indices=True)
   >>> for train, test in kf:
-  ...    print train, test
+  ...    print(train, test)
   [2 3] [0 1]
   [0 1] [2 3]
 
@@ -206,11 +206,11 @@ Example of stratified 2-fold::
   >>> Y = [0, 0, 0, 1, 1, 1, 0]
 
   >>> skf = StratifiedKFold(Y, 2)
-  >>> print skf
+  >>> print(skf)
   sklearn.cross_validation.StratifiedKFold(labels=[0 0 0 1 1 1 0], n_folds=2)
 
   >>> for train, test in skf:
-  ...     print train, test
+  ...     print(train, test)
   [1 4 6] [0 2 3 5]
   [0 2 3 5] [1 4 6]
 
@@ -229,11 +229,11 @@ not waste much data as only one sample is removed from the learning set::
   >>> Y = np.array([0, 1, 0, 1])
 
   >>> loo = LeaveOneOut(len(Y))
-  >>> print loo
+  >>> print(loo)
   sklearn.cross_validation.LeaveOneOut(n=4)
 
   >>> for train, test in loo:
-  ...    print train, test
+  ...    print(train, test)
   [1 2 3] [0]
   [0 2 3] [1]
   [0 1 3] [2]
@@ -253,11 +253,11 @@ Example of Leave-2-Out::
   >>> Y = [0, 1, 0, 1]
 
   >>> lpo = LeavePOut(len(Y), 2)
-  >>> print lpo
+  >>> print(lpo)
   sklearn.cross_validation.LeavePOut(n=4, p=2)
 
   >>> for train, test in lpo:
-  ...     print train, test
+  ...     print(train, test)
   [2 3] [0 1]
   [1 3] [0 2]
   [1 2] [0 3]
@@ -287,11 +287,11 @@ a training set using the samples of all the experiments except one::
   >>> labels = [1, 1, 2, 2]
 
   >>> lolo = LeaveOneLabelOut(labels)
-  >>> print lolo
+  >>> print(lolo)
   sklearn.cross_validation.LeaveOneLabelOut(labels=[1, 1, 2, 2])
 
   >>> for train, test in lolo:
-  ...     print train, test
+  ...     print(train, test)
   [2 3] [0 1]
   [0 1] [2 3]
 
@@ -314,11 +314,11 @@ Example of Leave-2-Label Out::
   >>> labels = [1, 1, 2, 2, 3, 3]
 
   >>> lplo = LeavePLabelOut(labels, 2)
-  >>> print lplo
+  >>> print(lplo)
   sklearn.cross_validation.LeavePLabelOut(labels=[1, 1, 2, 2, 3, 3], p=2)
 
   >>> for train, test in lplo:
-  ...     print train, test
+  ...     print(train, test)
   [4 5] [0 1 2 3]
   [2 3] [0 1 4 5]
   [0 1] [2 3 4 5]
@@ -344,11 +344,11 @@ Here is a usage example::
   ...     random_state=0)
   >>> len(ss)
   3
-  >>> print ss                                            # doctest: +ELLIPSIS
+  >>> print(ss)                                           # doctest: +ELLIPSIS
   ShuffleSplit(5, n_iter=3, test_size=0.25, indices=True, ...)
 
   >>> for train_index, test_index in ss:
-  ...    print train_index, test_index
+  ...    print(train_index, test_index)
   ...
   [1 3 4] [2 0]
   [1 4 3] [0 2]
@@ -390,11 +390,11 @@ smaller than the total dataset if it is very large.
   >>> bs = cross_validation.Bootstrap(9, random_state=0)
   >>> len(bs)
   3
-  >>> print bs
+  >>> print(bs)
   Bootstrap(9, n_iter=3, train_size=5, test_size=4, random_state=0)
 
   >>> for train_index, test_index in bs:
-  ...    print train_index, test_index
+  ...    print(train_index, test_index)
   ...
   [1 8 7 7 8] [0 3 0 5]
   [5 4 2 4 2] [6 7 1 0]

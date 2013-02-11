@@ -38,9 +38,9 @@ def bench(factory, X, Y, X_test, Y_test, ref_coef):
     delta = (time() - tstart)
     # stop time
 
-    print "duration: %0.3fs" % delta
-    print "rmse: %f" % rmse(Y_test, clf.predict(X_test))
-    print "mean coef abs diff: %f" % abs(ref_coef - clf.coef_.ravel()).mean()
+    print("duration: %0.3fs" % delta)
+    print("rmse: %f" % rmse(Y_test, clf.predict(X_test)))
+    print("mean coef abs diff: %f" % abs(ref_coef - clf.coef_.ravel()).mean())
     return delta
 
 
@@ -58,9 +58,9 @@ if __name__ == '__main__':
     n_informative = n_features / 10
     n_test_samples = 1000
     for i in range(1, n + 1):
-        print '=================='
-        print 'Iteration %s of %s' % (i, n)
-        print '=================='
+        print('==================')
+        print('Iteration %s of %s' % (i, n))
+        print('==================')
 
         X, Y, coef_ = make_regression(
             n_samples=(i * step) + n_test_samples, n_features=n_features,
@@ -71,9 +71,9 @@ if __name__ == '__main__':
         X = X[:(i * step)]
         Y = Y[:(i * step)]
 
-        print "benching scikit: "
+        print("benching scikit-learn: ")
         scikit_results.append(bench(ScikitLasso, X, Y, X_test, Y_test, coef_))
-        print "benching glmnet: "
+        print("benching glmnet: ")
         glmnet_results.append(bench(GlmnetLasso, X, Y, X_test, Y_test, coef_))
 
     pl.clf()
@@ -96,9 +96,9 @@ if __name__ == '__main__':
     n_samples = 500
 
     for i in range(1, n + 1):
-        print '=================='
-        print 'Iteration %02d of %02d' % (i, n)
-        print '=================='
+        print('==================')
+        print('Iteration %02d of %02d' % (i, n))
+        print('==================')
         n_features = i * step
         n_informative = n_features / 10
 
@@ -111,9 +111,9 @@ if __name__ == '__main__':
         X = X[:n_samples]
         Y = Y[:n_samples]
 
-        print "benching scikit: "
+        print("benching scikit-learn: ")
         scikit_results.append(bench(ScikitLasso, X, Y, X_test, Y_test, coef_))
-        print "benching glmnet: "
+        print("benching glmnet: ")
         glmnet_results.append(bench(GlmnetLasso, X, Y, X_test, Y_test, coef_))
 
     xx = np.arange(100, 100 + n * step, step)

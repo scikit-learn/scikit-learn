@@ -93,7 +93,7 @@ are estimated using maximum likelihood.
     >>> from sklearn.naive_bayes import GaussianNB
     >>> gnb = GaussianNB()
     >>> y_pred = gnb.fit(iris.data, iris.target).predict(iris.data)
-    >>> print "Number of mislabeled points : %d" % (iris.target != y_pred).sum()
+    >>> print("Number of mislabeled points : %d" % (iris.target != y_pred).sum())
     Number of mislabeled points : 6
 
 .. _multinomial_naive_bayes:

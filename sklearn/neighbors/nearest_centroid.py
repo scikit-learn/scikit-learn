@@ -46,7 +46,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
     >>> clf = NearestCentroid()
     >>> clf.fit(X, y)
     NearestCentroid(metric='euclidean', shrink_threshold=None)
-    >>> print clf.predict([[-0.8, -1]])
+    >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
     See also
