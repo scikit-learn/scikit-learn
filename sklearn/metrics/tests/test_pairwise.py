@@ -21,7 +21,7 @@ from sklearn.metrics.pairwise import sigmoid_kernel
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.pairwise import pairwise_kernels
-from sklearn.metrics.pairwise import pairwise_kernel_functions
+from sklearn.metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
 from sklearn.metrics.pairwise import check_pairwise_arrays
 from sklearn.metrics.pairwise import _parallel_pairwise
 from sklearn.preprocessing import normalize
@@ -118,11 +118,11 @@ def test_pairwise_kernels():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     Y = rng.random_sample((2, 4))
-    # Test with all metrics that should be in pairwise_kernel_functions.
+    # Test with all metrics that should be in PAIRWISE_KERNEL_FUNCTIONS.
     test_metrics = ["rbf", "sigmoid", "polynomial", "linear", "chi2",
                     "additive_chi2"]
     for metric in test_metrics:
-        function = pairwise_kernel_functions[metric]
+        function = PAIRWISE_KERNEL_FUNCTIONS[metric]
         # Test with Y=None
         K1 = pairwise_kernels(X, metric=metric)
         K2 = function(X)

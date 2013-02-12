@@ -515,7 +515,6 @@ def chi2_kernel(X, Y=None, gamma=1.):
 
 
 # Helper functions - distance
-#pairwise_distance_functions
 PAIRWISE_DISTANCE_FUNCTIONS = {
     # If updating this dictionary, update the doc in both distance_metrics()
     # and also in pairwise_distances()!
@@ -684,7 +683,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 
 
 # Helper functions - distance
-pairwise_kernel_functions = {
+PAIRWISE_KERNEL_FUNCTIONS = {
     # If updating this dictionary, update the doc in both distance_metrics()
     # and also in pairwise_distances()!
     'additive_chi2': additive_chi2_kernel,
@@ -718,10 +717,10 @@ def kernel_metrics():
       'cosine'          sklearn.pairwise.cosine_similarity
       ===============   ========================================
     """
-    return pairwise_kernel_functions
+    return PAIRWISE_KERNEL_FUNCTIONS
 
 
-kernel_params = {
+KERNEL_PARAMS = {
     "chi2": (),
     "exp_chi2": set(("gamma", )),
     "linear": (),
@@ -762,7 +761,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     metric : string, or callable
         The metric to use when calculating kernel between instances in a
         feature array. If metric is a string, it must be one of the metrics
-        in pairwise.pairwise_kernel_functions.
+        in pairwise.PAIRWISE_KERNEL_FUNCTIONS.
         If metric is "precomputed", X is assumed to be a kernel matrix.
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
@@ -800,11 +799,11 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     """
     if metric == "precomputed":
         return X
-    elif metric in pairwise_kernel_functions:
+    elif metric in PAIRWISE_KERNEL_FUNCTIONS:
         if filter_params:
             kwds = dict((k, kwds[k]) for k in kwds
-                        if k in kernel_params[metric])
-        func = pairwise_kernel_functions[metric]
+                        if k in KERNEL_PARAMS[metric])
+        func = PAIRWISE_KERNEL_FUNCTIONS[metric]
         if n_jobs == 1:
             return func(X, Y, **kwds)
         else:
