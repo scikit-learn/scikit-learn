@@ -515,7 +515,8 @@ def chi2_kernel(X, Y=None, gamma=1.):
 
 
 # Helper functions - distance
-pairwise_distance_functions = {
+#pairwise_distance_functions
+PAIRWISE_DISTANCE_FUNCTIONS = {
     # If updating this dictionary, update the doc in both distance_metrics()
     # and also in pairwise_distances()!
     'euclidean': euclidean_distances,
@@ -545,7 +546,7 @@ def distance_metrics():
     ============     ====================================
 
     """
-    return pairwise_distance_functions
+    return PAIRWISE_DISTANCE_FUNCTIONS
 
 
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
@@ -579,7 +580,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     distance between the arrays from both X and Y.
 
     Please note that support for sparse matrices is currently limited to those
-    metrics listed in pairwise.pairwise_distance_functions.
+    metrics listed in pairwise.PAIRWISE_DISTANCE_FUNCTIONS.
 
     Valid values for metric are:
 
@@ -611,7 +612,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter, or
-        a metric listed in pairwise.pairwise_distance_functions.
+        a metric listed in pairwise.PAIRWISE_DISTANCE_FUNCTIONS.
         If metric is "precomputed", X is assumed to be a distance matrix.
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
@@ -644,8 +645,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     """
     if metric == "precomputed":
         return X
-    elif metric in pairwise_distance_functions:
-        func = pairwise_distance_functions[metric]
+    elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
+        func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
         if n_jobs == 1:
             return func(X, Y, **kwds)
         else:
