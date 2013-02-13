@@ -1505,7 +1505,7 @@ def hamming_loss(y_true, y_pred, classes=None):
     y_pred : array-like or list of labels or label indicator matrix
         Predicted labels, as returned by a classifier.
 
-    labels : array, shape = [n_labels], optional
+    classes : array, shape = [n_labels], optional
         Integer array of labels.
 
     Returns
