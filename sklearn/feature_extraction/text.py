@@ -220,8 +220,8 @@ class CountVectorizer(BaseEstimator):
 
     def __init__(self, input='content', charset='utf-8',
                  charset_error='strict', strip_accents=None,
-                 lowercase=True, 
-		 preprocessor=None, tokenizer=None, token_processor=None,
+                 lowercase=True,
+                 preprocessor=None, tokenizer=None, token_processor=None,
                  stop_words=None, token_pattern=ur"(?u)\b\w\w+\b",
                  ngram_range=(1, 1),
                  min_n=None, max_n=None, analyzer='word',
@@ -373,6 +373,7 @@ class CountVectorizer(BaseEstimator):
 
     def build_token_processor(self):
         """Return a function that processes the tokens.
+
         This can be useful, e.g., for introducing stemming, etc.
         """
         if self.token_processor is not None:
@@ -402,8 +403,10 @@ class CountVectorizer(BaseEstimator):
             tokenize = self.build_tokenizer()
             process_token = self.build_token_processor()
 
-            return lambda doc: self._word_ngrams(
-                [process_token(tok) for tok in tokenize(preprocess(self.decode(doc)))], stop_words)
+            def word_analyzer(doc):
+                toks = (process_token(tok) for tok in tokenize(preprocess(self.decode(doc))))
+                return self._word_ngrams([tok for tok in toks if tok], stop_words)
+            return word_analyzer
 
         else:
             raise ValueError('%s is not a valid tokenization scheme/analyzer' %
@@ -881,17 +884,19 @@ class TfidfVectorizer(CountVectorizer):
 
     def __init__(self, input='content', charset='utf-8',
                  charset_error='strict', strip_accents=None, lowercase=True,
-                 preprocessor=None, tokenizer=None, token_processor=None, analyzer='word',
-                 stop_words=None, token_pattern=ur"(?u)\b\w\w+\b", min_n=None,
-                 max_n=None, ngram_range=(1, 1), max_df=1.0, min_df=2,
+                 preprocessor=None, tokenizer=None, token_processor=None,
+                 analyzer='word', stop_words=None,
+                 token_pattern=ur"(?u)\b\w\w+\b",
+                 min_n=None, max_n=None, ngram_range=(1, 1),
+                 max_df=1.0, min_df=2,
                  max_features=None, vocabulary=None, binary=False, dtype=long,
                  norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=False):
 
         super(TfidfVectorizer, self).__init__(
             input=input, charset=charset, charset_error=charset_error,
             strip_accents=strip_accents, lowercase=lowercase,
-            preprocessor=preprocessor, tokenizer=tokenizer, token_processor=token_processor,
-            analyzer=analyzer,
+            preprocessor=preprocessor, tokenizer=tokenizer,
+            token_processor=token_processor, analyzer=analyzer,
             stop_words=stop_words, token_pattern=token_pattern, min_n=min_n,
             max_n=max_n, ngram_range=ngram_range, max_df=max_df, min_df=min_df,
             max_features=max_features, vocabulary=vocabulary, binary=False,

@@ -581,7 +581,8 @@ In particular we name:
 
   * ``token_processor`` a callable that takes a token as 
     input and outputs a processed version of it (useful, e.g., for 
-    integrating stemming).
+    integrating stemming). If the return value evaluates to False (None, 
+    empty string, etc.), the token is dropped.
 
   * ``analyzer`` a callable that wraps calls to the preprocessor, tokenizer, and
     token_processor and performs some further filtering or n-gram extraction
