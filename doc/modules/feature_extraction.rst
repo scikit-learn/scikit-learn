@@ -140,11 +140,11 @@ or ``chi2`` feature selectors that expect non-negative inputs.
 depending on the constructor parameter ``input_type``.
 Mapping are treated as lists of ``(feature, value)`` pairs,
 while single strings have an implicit value of 1,
-so ``[feat1, feat2, feat3]`` is interpreted as
-``[(feat1, 1), (feat2, 1), (feat3, 1)]``.
+so ``['feat1', 'feat2', 'feat3']`` is interpreted as
+``[('feat1', 1), ('feat2', 1), ('feat3', 1)]``.
 If a single feature occurs multiple times in a sample,
 the associated values will be summed
-(so ``(feat, 2)`` and ``(feat, 3.5)`` become ``(feat, 5.5)``).
+(so ``('feat', 2)`` and ``('feat', 3.5)`` become ``('feat', 5.5)``).
 The output from :class:`FeatureHasher` is always a ``scipy.sparse`` matrix
 in the CSR format.
 
@@ -200,8 +200,8 @@ The present implementation works under the assumption
 that the sign bit of MurmurHash3 is independent of its other bits.
 
 Since a simple modulo is used to transform the hash function to a column index,
-it is advisable to use a power of two as the ``n_features`` parameter,
-since otherwise the features will not be mapped evenly to the columns.
+it is advisable to use a power of two as the ``n_features`` parameter;
+otherwise the features will not be mapped evenly to the columns.
 
 
 .. topic:: References:
