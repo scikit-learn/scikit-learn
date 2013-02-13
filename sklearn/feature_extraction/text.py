@@ -213,7 +213,6 @@ class VectorizerMixin(object):
             return self.token_processor
         return lambda tok: tok
 
-
     def build_analyzer(self):
         """Return a callable that handles preprocessing and tokenization"""
         if hasattr(self.analyzer, '__call__'):
@@ -234,8 +233,10 @@ class VectorizerMixin(object):
             process_token = self.build_token_processor()
 
             def word_analyzer(doc):
-                toks = (process_token(tok) for tok in tokenize(preprocess(self.decode(doc))))
-                return self._word_ngrams([tok for tok in toks if tok], stop_words)
+                toks = (process_token(tok) for tok in
+                        tokenize(preprocess(self.decode(doc))))
+                return self._word_ngrams([tok for tok in toks if tok],
+                                         stop_words)
             return word_analyzer
 
             return lambda doc: self._word_ngrams(
