@@ -78,7 +78,7 @@ def test_ovr_always_present():
     # Test that ovr works with classes that are always present or absent
     X = np.ones((10, 2))
     X[:5, :] = 0
-    y = [[int(i >= 5), 2, 3] for i in xrange(10)]
+    y = [[int(i >= 5), 2, 3] for i in range(10)]
     with warnings.catch_warnings(record=True):
         ovr = OneVsRestClassifier(DecisionTreeClassifier())
         ovr.fit(X, y)

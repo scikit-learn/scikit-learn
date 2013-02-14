@@ -44,6 +44,7 @@ from abc import ABCMeta, abstractmethod
 
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
+from ..externals.six.moves import xrange
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..metrics import r2_score
 from ..preprocessing import OneHotEncoder

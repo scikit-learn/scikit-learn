@@ -22,6 +22,7 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
+from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from ..utils.fixes import Counter
 from .hashing import FeatureHasher

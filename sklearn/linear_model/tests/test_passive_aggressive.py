@@ -82,7 +82,7 @@ def test_classifier_partial_fit():
             clf = PassiveAggressiveClassifier(C=1.0,
                                               fit_intercept=True,
                                               random_state=0)
-            for t in xrange(30):
+            for t in range(30):
                 clf.partial_fit(data, y, classes)
             score = clf.score(data, y)
             assert_greater(score, 0.79)
@@ -138,7 +138,7 @@ def test_regressor_partial_fit():
             reg = PassiveAggressiveRegressor(C=1.0,
                                              fit_intercept=True,
                                              random_state=0)
-            for t in xrange(50):
+            for t in range(50):
                 reg.partial_fit(data, y_bin)
             pred = reg.predict(data)
             assert_less(np.mean((pred - y_bin) ** 2), 1.7)

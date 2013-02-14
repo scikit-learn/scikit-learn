@@ -389,7 +389,7 @@ def test_multitarget():
         assert_array_almost_equal(Y_pred, Y_dec)
         alphas, active, coef, path = (estimator.alphas_, estimator.active_,
                                       estimator.coef_, estimator.coef_path_)
-        for k in xrange(n_targets):
+        for k in range(n_targets):
             estimator.fit(X, Y[:, k])
             y_pred = estimator.predict(X)
             assert_array_almost_equal(alphas[k], estimator.alphas_)

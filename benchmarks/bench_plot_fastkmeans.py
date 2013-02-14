@@ -62,7 +62,7 @@ def compute_bench_2(chunks):
     means = np.array([[1, 1], [-1, -1], [1, -1], [-1, 1],
                       [0.5, 0.5], [0.75, -0.5], [-1, 0.75], [1, 0]])
     X = np.empty((0, 2))
-    for i in xrange(8):
+    for i in range(8):
         X = np.r_[X, means[i] + 0.8 * np.random.randn(n_features, 2)]
     max_it = len(chunks)
     it = 0

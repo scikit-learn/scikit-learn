@@ -11,6 +11,7 @@ from collections import defaultdict
 
 from sklearn.decomposition.nmf import NMF, _initialize_nmf
 from sklearn.datasets.samples_generator import make_low_rank_matrix
+from sklearn.externals.six.moves import xrange
 
 
 def alt_nnmf(V, r, max_iter=1000, tol=1e-3, R=None):

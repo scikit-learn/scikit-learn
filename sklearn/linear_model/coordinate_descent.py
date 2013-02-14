@@ -20,6 +20,7 @@ from .base import sparse_center_data, center_data
 from ..utils import array2d, atleast2d_or_csc, deprecated
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
+from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
 
 from . import cd_fast

@@ -17,6 +17,7 @@ from scipy import linalg
 
 
 from ..base import BaseEstimator, TransformerMixin
+from ..externals.six.moves import xrange
 from ..utils import array2d, check_arrays
 from ..utils.extmath import fast_logdet
 

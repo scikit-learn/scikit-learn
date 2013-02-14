@@ -520,7 +520,7 @@ class MultinomialHMMTestCase(TestCase):
         learner = hmm.MultinomialHMM(self.n_components)
 
         # Create training data by sampling from the HMM.
-        train_obs = [h.sample(n=10)[0] for x in xrange(10)]
+        train_obs = [h.sample(n=10)[0] for x in range(10)]
 
         # use init_function to initialize paramerters
         learner._init(train_obs, params)

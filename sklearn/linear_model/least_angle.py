@@ -23,6 +23,7 @@ from ..base import RegressorMixin
 from ..utils import array2d, arrayfuncs, as_float_array
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
+from ..externals.six.moves import xrange
 
 
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500,

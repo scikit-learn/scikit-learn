@@ -33,10 +33,11 @@ from itertools import izip
 
 import pylab as pl
 
-from sklearn.ensemble import AdaBoostClassifier
-from sklearn.tree import DecisionTreeClassifier
 from sklearn.datasets import make_gaussian_quantiles
+from sklearn.ensemble import AdaBoostClassifier
+from sklearn.externals.six.moves import xrange
 from sklearn.metrics import accuracy_score
+from sklearn.tree import DecisionTreeClassifier
 
 
 X, y = make_gaussian_quantiles(n_samples=13000, n_features=10,

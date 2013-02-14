@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import random
 
+from sklearn.externals.six.moves import xrange
 from sklearn.utils.random import sample_without_replacement
 
 

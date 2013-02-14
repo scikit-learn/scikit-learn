@@ -19,6 +19,7 @@ from warnings import warn
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..externals import six
+from ..externals.six.moves import xrange
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..utils import array2d, check_random_state
 from ..utils.validation import check_arrays

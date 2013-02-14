@@ -62,7 +62,7 @@ cs = pl.contourf(xx, yy, Z, cmap=pl.cm.Paired)
 pl.axis("tight")
 
 # Plot the training points
-for i, n, c in zip(xrange(2), class_names, plot_colors):
+for i, n, c in zip(range(2), class_names, plot_colors):
     idx = np.where(y == i)
     pl.scatter(X[idx, 0], X[idx, 1],
                c=c, cmap=pl.cm.Paired,
@@ -76,7 +76,7 @@ pl.xlabel("Decision Boundary")
 twoclass_output = bdt.decision_function(X)
 plot_range = (twoclass_output.min(), twoclass_output.max())
 pl.subplot(122)
-for i, n, c in zip(xrange(2), class_names, plot_colors):
+for i, n, c in zip(range(2), class_names, plot_colors):
     pl.hist(twoclass_output[y == i],
             bins=10,
             range=plot_range,
