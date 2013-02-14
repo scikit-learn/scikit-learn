@@ -14,7 +14,8 @@ from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
 from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.linear_model import LinearRegression, Lasso, ElasticNet, Ridge
+from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
+                                  Perceptron)
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
@@ -258,6 +259,36 @@ def test_ovo_gridsearch():
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator_.estimators_[0].C
     assert_true(best_C in Cs)
+
+
+def test_ovo_ties():
+    # test that ties are broken using the decision function, not defaulting to
+    # the smallest label
+    X = np.array([[1, 2], [2, 1], [-2, 1], [-2, -1]])
+    y = np.array([2, 0, 1, 2])
+    multi_clf = OneVsOneClassifier(Perceptron())
+    ovo_prediction = multi_clf.fit(X, y).predict(X)
+
+    # recalculate votes to make sure we have a tie
+    predictions = np.vstack([clf.predict(X) for clf in multi_clf.estimators_])
+    scores = np.vstack([clf.decision_function(X)
+                        for clf in multi_clf.estimators_])
+    # classifiers are in order 0-1, 0-2, 1-2
+    # aggregate votes:
+    votes = np.zeros((4, 3))
+    votes[np.arange(4), predictions[0]] += 1
+    votes[np.arange(4), 2 * predictions[1]] += 1
+    votes[np.arange(4), 1 + predictions[2]] += 1
+    # for the first point, there is one vote per class
+    assert_array_equal(votes[0, :], 1)
+    # for the rest, there is no tie and the prediction is the argmax
+    assert_array_equal(np.argmax(votes[1:], axis=1), ovo_prediction[1:])
+    # for the tie, the prediction is the class with the highest score
+    assert_equal(ovo_prediction[0], 1)
+    # score for one is greater than score for zero
+    assert_greater(scores[2, 0] - scores[0, 0], scores[0, 0] + scores[1, 0])
+    # score for one is greater than score for two
+    assert_greater(scores[2, 0] - scores[0, 0], -scores[1, 0] - scores[2, 0])
 
 
 def test_ecoc_exceptions():
