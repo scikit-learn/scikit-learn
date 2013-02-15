@@ -851,27 +851,29 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
         # Reassign clusters that have very low counts
         to_reassign = np.logical_or(
             (counts <= 1), counts <= reassignment_ratio * counts.max())
-        # Pick new clusters amongst observations with a probability
-        # proportional to their closeness to their center
-        distance_to_centers = np.asarray(centers[nearest_center] - X)
-        distance_to_centers **= 2
-        distance_to_centers = distance_to_centers.sum(axis=1)
-        # Flip the ordering of the distances
-        distance_to_centers -= distance_to_centers.max()
-        distance_to_centers *= -1
-        rand_vals = random_state.rand(to_reassign.sum())
-        rand_vals *= distance_to_centers.sum()
-        new_centers = np.searchsorted(distance_to_centers.cumsum(),
-                                      rand_vals)
-        new_centers = X[new_centers]
-        if verbose:
-            n_reassigns = to_reassign.sum()
-            if n_reassigns:
-                print("[_mini_batch_step] Reassigning %i cluster centers."
-                      % n_reassigns)
-        if sp.issparse(new_centers) and not sp.issparse(centers):
-            new_centers = new_centers.toarray()
-        centers[to_reassign] = new_centers
+        number_of_reassignments = to_reassign.sum()
+        if number_of_reassignments:
+            # Pick new clusters amongst observations with a probability
+            # proportional to their closeness to their center
+            distance_to_centers = np.asarray(centers[nearest_center] - X)
+            distance_to_centers **= 2
+            distance_to_centers = distance_to_centers.sum(axis=1)
+            # Flip the ordering of the distances
+            distance_to_centers -= distance_to_centers.max()
+            distance_to_centers *= -1
+            rand_vals = random_state.rand(number_of_reassignments)
+            rand_vals *= distance_to_centers.sum()
+            new_centers = np.searchsorted(distance_to_centers.cumsum(),
+                                          rand_vals)
+            new_centers = X[new_centers]
+            if verbose:
+                n_reassigns = to_reassign.sum()
+                if n_reassigns:
+                    print("[_mini_batch_step] Reassigning %i cluster centers."
+                          % n_reassigns)
+            if sp.issparse(new_centers) and not sp.issparse(centers):
+                new_centers = new_centers.toarray()
+            centers[to_reassign] = new_centers
 
     # implementation for the sparse CSR reprensation completely written in
     # cython
