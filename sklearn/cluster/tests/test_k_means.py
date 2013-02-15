@@ -343,6 +343,22 @@ def test_minibatch_reassign():
         assert_greater(((centers_before - centers_after)**2).sum(axis=1).min(),
                     .2)
 
+    # Give a perfect initialization, with a small reassignment_ratio,
+    # no center should be reassigned
+    for this_X in (X, X_csr):
+        mb_k_means = MiniBatchKMeans(n_clusters=n_clusters, batch_size=1,
+                                     init=centers.copy(),
+                                     random_state=42)
+        mb_k_means.fit(this_X)
+        centers_before = mb_k_means.cluster_centers_.copy()
+        # Turn on verbosity to smoke test the display code
+        _mini_batch_step(this_X, (X ** 2).sum(axis=1),
+                         mb_k_means.cluster_centers_,
+                         mb_k_means.counts_,
+                         np.zeros(X.shape[1], np.double),
+                         False, random_reassign=True, random_state=42,
+                         reassignment_ratio=1e-15)
+
 
 def test_sparse_mb_k_means_callable_init():
 
