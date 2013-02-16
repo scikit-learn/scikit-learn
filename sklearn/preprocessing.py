@@ -1141,7 +1141,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             half = (self.pos_label - self.neg_label) / 2.0
             threshold = self.neg_label + half
 
-        if self.label_type_ != "multiclass":
+        if self.multilabel_:
             Y = np.array(Y > threshold, dtype=int)
             # Return the predictions in the same format as in fit
             if self.label_type_ == "multilabel-indicator":
@@ -1161,14 +1161,13 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         return self.classes_[y]
 
     @property
-    @deprecated("Use ``label_type_`` instead. Will be removed in 0.15.")
     def multilabel_(self):
-        return self.label_type in ["multilabel-list", "multilabel-indicator"]
+        return self.label_type_ in ["multilabel-list", "multilabel-indicator"]
 
     @property
-    @deprecated("Use ``label_type_`` instead. Will be removed in 0.15.")
+    @deprecated("it will be removed in 0.15. Use ``label_type_`` instead.")
     def label_indicator_(self):
-        return self.label_type == "multilabel-indicator"
+        return self.label_type_ == "multilabel-indicator"
 
 
 class KernelCenterer(BaseEstimator, TransformerMixin):
