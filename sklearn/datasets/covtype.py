@@ -41,12 +41,19 @@ def fetch_covtype(data_home=None, download_if_missing=True,
         Specify another download and cache folder for the datasets. By default
         all scikit learn data is stored in '~/scikit_learn_data' subfolders.
 
-    download_if_missing: boolean, optional
+    download_if_missing : boolean, default=True
         If False, raise a IOError if the data is not locally available
         instead of trying to download the data from the source site.
 
-    dtype: dtype specifier, optional
-        dtype of feature array.
+    random_state : int, RandomState instance or None, optional (default=None)
+        Random state for shuffling the dataset.
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    shuffle : bool, default=False
+        Whether to shuffle dataset.
     """
 
     data_home = get_data_home(data_home=data_home)
@@ -59,7 +66,7 @@ def fetch_covtype(data_home=None, download_if_missing=True,
         _mkdirp(covtype_dir)
         logger.warn("Downloading %s" % URL)
         f = BytesIO(urlopen(URL).read())
-        Xy = np.genfromtxt(GzipFile(fileobj=f), delimiter=',', dtype=dtype)
+        Xy = np.genfromtxt(GzipFile(fileobj=f), delimiter=',')
 
         X = Xy[:, :-1]
         y = Xy[:, -1].astype(np.int32)
@@ -68,7 +75,7 @@ def fetch_covtype(data_home=None, download_if_missing=True,
         joblib.dump(y, targets_path, compress=9)
 
     try:
-       X, y
+        X, y
     except NameError:
         X = joblib.load(samples_path)
         y = joblib.load(targets_path)
