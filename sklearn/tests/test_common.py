@@ -396,6 +396,8 @@ def test_transformers_pickle():
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
             trans = Trans()
+        if not hasattr(trans, 'transform'):
+            continue
         set_random_state(trans)
         if hasattr(trans, 'compute_importances'):
             trans.compute_importances = True
@@ -413,7 +415,6 @@ def test_transformers_pickle():
             trans.n_components = 1
 
         # fit
-
         if Trans in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
             random_state = np.random.RandomState(seed=12345)
             y_ = np.vstack([y, 2 * y + random_state.randint(2, size=len(y))])
@@ -422,10 +423,10 @@ def test_transformers_pickle():
             y_ = y
 
         trans.fit(X, y_)
-        X_pred = trans.fit_transform(X, y=y_)
+        X_pred = trans.fit(X, y_).transform(X)
         pickled_trans = pickle.dumps(trans)
         unpickled_trans = pickle.loads(pickled_trans)
-        pickled_X_pred = unpickled_trans.fit_transform(X, y=y_)
+        pickled_X_pred = unpickled_trans.transform(X)
 
         try:
             assert_array_almost_equal(pickled_X_pred, X_pred)
