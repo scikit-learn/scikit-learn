@@ -16,6 +16,7 @@ from .externals.six import string_types
 from .utils import check_arrays, array2d, atleast2d_or_csr, safe_asarray
 from .utils import warn_if_not_float
 from .utils.fixes import unique
+from .utils import deprecated
 
 from .utils.sparsefuncs import inplace_csr_row_normalize_l1
 from .utils.sparsefuncs import inplace_csr_row_normalize_l2
@@ -941,7 +942,8 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         Array of possible classes.
 
     label_type : string, default="auto"
-        Possible values and expected forms of y are:
+        Expected type of y.
+        Possible values are:
             - "multiclass", y is array of ints
             - "multilabel-indicator", y is indicator matrix of classes
             - "multiclass-list", y is list of lists of labels
@@ -953,12 +955,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     `classes_` : array of shape [n_class]
         Holds the label for each class.
 
-    `multilabel_` : bool
-        Whether the estimator was fitted for multi-label data.
+    `label_type_` : bool
+        The type of label used. Inferred from training data if
+        ``label_type="auto"``.
 
-    `indicator_matrix_` : bool
-        Whether the estimator was fitted with a label indicator matrix.
-        This will determine the result of ``inverse_transform``.
 
     Examples
     --------
@@ -1159,6 +1159,16 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             y = Y.argmax(axis=1)
 
         return self.classes_[y]
+
+    @property
+    @deprecated("Use ``label_type_`` instead. Will be removed in 0.15.")
+    def multilabel_(self):
+        return self.label_type in ["multilabel-list", "multilabel-indicator"]
+
+    @property
+    @deprecated("Use ``label_type_`` instead. Will be removed in 0.15.")
+    def label_indicator_(self):
+        return self.label_type == "multilabel-indicator"
 
 
 class KernelCenterer(BaseEstimator, TransformerMixin):
