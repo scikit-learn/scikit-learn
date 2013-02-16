@@ -622,6 +622,18 @@ def _is_multilabel(y):
             _is_label_indicator_matrix(y))
 
 
+def _get_label_type(y):
+    multilabel = _is_multilabel(y)
+    if multilabel:
+        if _is_label_indicator_matrix(y):
+            label_type = "multilabel-indicator"
+        else:
+            label_type = "multilabel-list"
+    else:
+        label_type = "multiclass"
+    return label_type
+
+
 class OneHotEncoder(BaseEstimator, TransformerMixin):
     """Encode categorical integer features using a one-hot aka one-of-K scheme.
 
@@ -983,10 +995,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             if self.classes is not None:
                 self.classes_ = np.unique(self.classes)
                 # default to not doing multi-label things
-                self.multilabel_ = self.label_type in ["multilabel-indicator",
-                                                       "multilabel-list"]
-                self.indicator_matrix_ = (self.label_type ==
-                                          "multilabel-indicator")
+                self.label_type_ = (self.label_type
+                                    if self.label_type != "auto"
+                                    else "multiclass")
             else:
                 raise ValueError("LabelBinarizer was not fitted yet.")
 
@@ -1006,16 +1017,18 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         self : returns an instance of self.
 
         """
-        self.multilabel_ = _is_multilabel(y)
-        if self.multilabel_ and self.label_type == "multiclass":
-            raise ValueError("Multilabel y was passed but"
-                             " label_type='multiclass'.")
-        if self.multilabel_:
-            self.indicator_matrix_ = _is_label_indicator_matrix(y)
-            if self.indicator_matrix_:
-                classes = np.arange(y.shape[1])
-            else:
-                classes = np.array(sorted(set.union(*map(set, y))))
+        label_type = _get_label_type(y)
+
+        if self.label_type not in ["auto", label_type]:
+            raise ValueError("label_type was set to %s, but got y of type %s."
+                             % (self.label_type, label_type))
+
+        self.label_type_ = label_type
+
+        if label_type == "multilabel-indicator":
+            classes = np.arange(y.shape[1])
+        elif label_type == "multilabel-list":
+            classes = np.array(sorted(set.union(*map(set, y))))
         else:
             classes = np.unique(y)
 
@@ -1049,29 +1062,21 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         """
         self._check_fitted()
-
-        if self.multilabel_ or len(self.classes_) > 2:
-            if _is_label_indicator_matrix(y):
-                # nothing to do as y is already a label indicator matrix
-                return y
-
+        label_type = _get_label_type(y)
+        if label_type != self.label_type_:
+            raise ValueError("label_type was set to %s, but got y of type %s."
+                             % (self.label_type_, label_type))
+        if label_type == "multilabel-indicator":
+            # nothing to do as y is already a label indicator matrix
+            return y
+        elif label_type == "multilabel-list" or len(self.classes_) > 2:
             Y = np.zeros((len(y), len(self.classes_)), dtype=np.int)
         else:
             Y = np.zeros((len(y), 1), dtype=np.int)
 
         Y += self.neg_label
 
-        y_is_multilabel = _is_multilabel(y)
-
-        if y_is_multilabel and not self.multilabel_:
-            raise ValueError("The object was not fitted with multilabel"
-                             " input!")
-
-        elif self.multilabel_:
-            if not y_is_multilabel:
-                raise ValueError("y should be a list of label lists/tuples,"
-                                 "got %r" % (y,))
-
+        if label_type == "multilabel-list":
             # inverse map: label => column index
             imap = dict((v, k) for k, v in enumerate(self.classes_))
 
@@ -1136,10 +1141,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             half = (self.pos_label - self.neg_label) / 2.0
             threshold = self.neg_label + half
 
-        if self.multilabel_:
+        if self.label_type_ != "multiclass":
             Y = np.array(Y > threshold, dtype=int)
             # Return the predictions in the same format as in fit
-            if self.indicator_matrix_:
+            if self.label_type_ == "multilabel-indicator":
                 # Label indicator matrix format
                 return Y
             else:

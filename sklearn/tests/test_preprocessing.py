@@ -661,7 +661,8 @@ def test_label_binarizer_classes():
     assert_array_equal(['see', 'see'], lb.inverse_transform(transformed))
 
     # also works with multilabel data if we say so:
-    lb = LabelBinarizer(classes=np.arange(1, 3), multilabel=True)
+    lb = LabelBinarizer(classes=np.arange(1, 3),
+                        label_type="multilabel-list")
     y = [(1, 2), (1,), ()]
     Y = np.array([[1, 1],
                   [1, 0],
@@ -672,15 +673,17 @@ def test_label_binarizer_classes():
     assert_array_equal(lb.inverse_transform(Y), y)
 
     # inverse transform  with indicator_matrix=True
-    lb = LabelBinarizer(classes=np.arange(1, 3), multilabel=True,
-                        indicator_matrix=True)
+    lb = LabelBinarizer(classes=np.arange(1, 3),
+                        label_type="multilabel-indicator")
     assert_array_equal(lb.inverse_transform(Y), Y)
 
-    lb = LabelBinarizer(classes=np.arange(1, 3), multilabel=False)
-    assert_raise_message(ValueError, "multilabel was set explicitly",
+    lb = LabelBinarizer(classes=np.arange(1, 3), label_type="multiclass")
+    assert_raise_message(ValueError, "label_type was set to multiclass, "
+                         "but got y of type multilabel-list.",
                          lb.fit, y)
     lb = LabelBinarizer(classes=np.arange(1, 3))
-    assert_raise_message(ValueError, "not fitted with multilabel",
+    assert_raise_message(ValueError, "label_type was set to multiclass,"
+                         " but got y of type multilabel-list.",
                          lb.transform, y)
 
     # check that labels present at fit time that are not in 'classes'
