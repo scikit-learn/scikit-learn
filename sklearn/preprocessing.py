@@ -928,14 +928,13 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     classes : ndarray if int or None (default)
         Array of possible classes.
 
-    multilabel : bool or None (default)
-        Whether or not data will be multilabel.
-        If None, it will be inferred during fitting.
-
-    indicator_matrix : bool or None (default)
-        Whether ``inverse_transform`` will produce an indicator
-        matrix encoding (if False it will return list of lists).
-        If None, it will be inferred during fitting.
+    label_type : string, default="auto"
+        Possible values and expected forms of y are:
+            - "multiclass", y is array of ints
+            - "multilabel-indicator", y is indicator matrix of classes
+            - "multiclass-list", y is list of lists of labels
+            - "auto", form of y is determined during 'fit'. If 'fit' is not
+              called, multiclass is assumed.
 
     Attributes
     ----------
@@ -970,23 +969,24 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, neg_label=0, pos_label=1, classes=None,
-                 multilabel=None, indicator_matrix=None):
+                 label_type='auto'):
         if neg_label >= pos_label:
             raise ValueError("neg_label must be strictly less than pos_label.")
 
         self.neg_label = neg_label
         self.pos_label = pos_label
         self.classes = classes
-        self.multilabel = multilabel
-        self.indicator_matrix = indicator_matrix
+        self.label_type = label_type
 
     def _check_fitted(self):
         if not hasattr(self, "classes_"):
             if self.classes is not None:
                 self.classes_ = np.unique(self.classes)
                 # default to not doing multi-label things
-                self.multilabel_ = bool(self.multilabel)
-                self.indicator_matrix_ = bool(self.indicator_matrix)
+                self.multilabel_ = self.label_type in ["multilabel-indicator",
+                                                       "multilabel-list"]
+                self.indicator_matrix_ = (self.label_type ==
+                                          "multilabel-indicator")
             else:
                 raise ValueError("LabelBinarizer was not fitted yet.")
 
@@ -1007,9 +1007,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         """
         self.multilabel_ = _is_multilabel(y)
-        if self.multilabel is not None and self.multilabel != self.multilabel_:
-            raise ValueError("Parameter multilabel was set explicitly but "
-                             "does not match the data.")
+        if self.multilabel_ and self.label_type == "multiclass":
+            raise ValueError("Multilabel y was passed but"
+                             " label_type='multiclass'.")
         if self.multilabel_:
             self.indicator_matrix_ = _is_label_indicator_matrix(y)
             if self.indicator_matrix_:
@@ -1068,7 +1068,7 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
                              " input!")
 
         elif self.multilabel_:
-            if not _is_multilabel(y):
+            if not y_is_multilabel:
                 raise ValueError("y should be a list of label lists/tuples,"
                                  "got %r" % (y,))
 
