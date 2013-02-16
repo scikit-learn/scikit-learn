@@ -388,7 +388,7 @@ def test_transformers_pickle():
     for name, Trans in transformers:
         trans = None
 
-        if Trans in dont_test:
+        if name in dont_test:
             continue
         # these don't actually fit the data:
         if Trans in [AdditiveChi2Sampler, Binarizer, Normalizer]:
@@ -432,7 +432,7 @@ def test_transformers_pickle():
         except Exception, exc:
             succeeded = False
             print ("Transformer %s doesn't predict the same value "
-                    "after pickling" % name)
+                   "after pickling" % name)
             raise exc
 
     assert_true(succeeded)
@@ -650,11 +650,9 @@ def test_classifiers_pickle():
     succeeded = True
     for (X, y) in [(X_m, y_m), (X_b, y_b)]:
         # do it once with binary, once with multiclass
-        classes = np.unique(y)
-        n_classes = len(classes)
         n_samples, n_features = X.shape
         for name, Clf in classifiers:
-            if Clf in dont_test:
+            if name in dont_test:
                 continue
             if Clf in [MultinomialNB, BernoulliNB]:
                 # TODO also test these!
@@ -677,7 +675,7 @@ def test_classifiers_pickle():
             except Exception, exc:
                 succeeded = False
                 print ("Esimator %s doesn't predict the same value "
-                        "after pickling" % name)
+                       "after pickling" % name)
                 raise exc
     assert_true(succeeded)
 
@@ -772,7 +770,7 @@ def test_regressor_pickle():
     y = StandardScaler().fit_transform(y)
     succeeded = True
     for name, Reg in regressors:
-        if Reg in dont_test:
+        if name in dont_test:
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -782,10 +780,10 @@ def test_regressor_pickle():
             reg.alpha = 0.01
 
         if Reg in (_PLS, PLSCanonical, PLSRegression, CCA):
-           y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
-           y_ = y_.T
+            y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
+            y_ = y_.T
         else:
-           y_ = y
+            y_ = y
         reg.fit(X, y_)
         y_pred = reg.predict(X)
         # store old predictions
@@ -798,7 +796,7 @@ def test_regressor_pickle():
         except Exception, exc:
             succeeded = False
             print ("Esimator %s doesn't predict the same value "
-                    "after pickling" % name)
+                   "after pickling" % name)
             raise exc
     assert_true(succeeded)
 
