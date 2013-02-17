@@ -426,14 +426,15 @@ class BaseGradientBoosting(BaseEnsemble):
 
     @abstractmethod
     def __init__(self, loss, learning_rate, n_estimators, min_samples_split,
-                 min_samples_leaf, max_depth, init, subsample, max_features,
-                 random_state, alpha=0.9, verbose=0):
+                 min_samples_leaf, min_density, max_depth, init, subsample,
+                 max_features, random_state, alpha=0.9, verbose=0):
 
         self.n_estimators = n_estimators
         self.learning_rate = learning_rate
         self.loss = loss
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
+        self.min_density = min_density
         self.subsample = subsample
         self.max_features = max_features
         self.max_depth = max_depth
@@ -559,9 +560,6 @@ class BaseGradientBoosting(BaseEnsemble):
             raise ValueError("alpha must be in (0.0, 1.0)")
 
         random_state = check_random_state(self.random_state)
-
-        # use default min_density (0.1) only for deep trees
-        self.min_density = 0.0 if self.max_depth < 6 else 0.1
 
         # create argsorted X for fast tree induction
         X_argsorted = np.asfortranarray(
@@ -739,6 +737,17 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     min_samples_leaf : integer, optional (default=1)
         The minimum number of samples required to be at a leaf node.
 
+    min_density : float, optional (default=0.1)
+        This parameter controls a trade-off in an optimization heuristic. It
+        controls the minimum density of the `sample_mask` (i.e. the
+        fraction of samples in the mask). If the density falls below this
+        threshold the mask is recomputed and the input data is packed
+        which results in data copying.  If `min_density` equals to one,
+        the partitions are always represented as copies of the original
+        data. Otherwise, partitions are represented as bit masks (aka
+        sample masks).
+        Note: this parameter is tree-specific.
+
     subsample : float, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
         learners. If smaller than 1.0 this results in Stochastic Gradient
@@ -813,13 +822,13 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
 
     def __init__(self, loss='deviance', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,
-                 max_depth=3, init=None, random_state=None,
+                 min_density=0.1, max_depth=3, init=None, random_state=None,
                  max_features=None, verbose=0):
 
         super(GradientBoostingClassifier, self).__init__(
             loss, learning_rate, n_estimators, min_samples_split,
-            min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state, verbose=verbose)
+            min_samples_leaf, min_density, max_depth, init, subsample,
+            max_features, random_state, verbose=verbose)
 
     def fit(self, X, y):
         """Fit the gradient boosting model.
@@ -969,6 +978,17 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     min_samples_leaf : integer, optional (default=1)
         The minimum number of samples required to be at a leaf node.
 
+    min_density : float, optional (default=0.1)
+        This parameter controls a trade-off in an optimization heuristic. It
+        controls the minimum density of the `sample_mask` (i.e. the
+        fraction of samples in the mask). If the density falls below this
+        threshold the mask is recomputed and the input data is packed
+        which results in data copying.  If `min_density` equals to one,
+        the partitions are always represented as copies of the original
+        data. Otherwise, partitions are represented as bit masks (aka
+        sample masks).
+        Note: this parameter is tree-specific.
+
     subsample : float, optional (default=1.0)
         The fraction of samples to be used for fitting the individual base
         learners. If smaller than 1.0 this results in Stochastic Gradient
@@ -1048,13 +1068,13 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     def __init__(self, loss='ls', learning_rate=0.1, n_estimators=100,
                  subsample=1.0, min_samples_split=2, min_samples_leaf=1,
-                 max_depth=3, init=None, random_state=None,
+                 min_density=0.1, max_depth=3, init=None, random_state=None,
                  max_features=None, alpha=0.9, verbose=0):
 
         super(GradientBoostingRegressor, self).__init__(
             loss, learning_rate, n_estimators, min_samples_split,
-            min_samples_leaf, max_depth, init, subsample, max_features,
-            random_state, alpha, verbose)
+            min_samples_leaf, min_density, max_depth, init, subsample,
+            max_features, random_state, alpha, verbose)
 
     def fit(self, X, y):
         """Fit the gradient boosting model.

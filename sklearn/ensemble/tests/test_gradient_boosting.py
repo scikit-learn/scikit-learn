@@ -477,11 +477,19 @@ def test_mem_layout():
 
 
 def test_min_density():
-    """Check if min_density is properly set when growing deep trees."""
-    clf = GradientBoostingClassifier(max_depth=6)
+    """Check if setting min_density works and default is 0.1."""
+    clf = GradientBoostingClassifier()
     clf.fit(X, y)
     assert clf.min_density == 0.1
 
-    clf = GradientBoostingClassifier(max_depth=5)
+    clf = GradientBoostingClassifier(min_density=0.5)
     clf.fit(X, y)
-    assert clf.min_density == 0.0
+    assert clf.min_density == 0.5
+
+    clf = GradientBoostingRegressor()
+    clf.fit(X, y)
+    assert clf.min_density == 0.1
+
+    clf = GradientBoostingRegressor(min_density=0.5)
+    clf.fit(X, y)
+    assert clf.min_density == 0.5
