@@ -1,5 +1,35 @@
 .. currentmodule:: sklearn
 
+.. _changes_0_14:
+
+0.14
+====
+
+Changelog
+---------
+
+   - Hyperlinks to documentation in example code on the website by
+     `Martin Luessi`_.
+
+   - :class:`grid_search.GridSearchCV` and
+     :func:`cross_validation.cross_val_score` now support the use of advanced
+     scoring function such as area under the ROC curve and f-beta scores.
+     See :ref:`score_func_objects` for details. By `Andreas Müller`_.
+     Passing a function from :mod:`sklearn.metrics` as ``score_func`` is
+     deprecated.
+
+   - Added :class:`ensemble.AdaBoostClassifier` and
+     :class:`ensemble.AdaBoostRegressor`, by `Noel Dawe`_  and
+     `Gilles Louppe`_. See the :ref:`AdaBoost <adaboost>` section of the user
+     guide for details and examples.
+
+   - Feature importances in :class:`tree.DecisionTreeClassifier`,
+     :class:`tree.DecisionTreeRegressor` and all derived ensemble estimators
+     are now computed on the fly when accessing  the ``feature_importances_``
+     attribute. Setting ``compute_importances=True`` is no longer required.
+     By `Gilles Louppe`_.
+
+
 .. _changes_0_13:
 
 0.13
@@ -1763,3 +1793,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Arnaud Joly: http://www.ajoly.org
 
 .. _Rob Zinkov: http://zinkov.com
+
+.. _Martin Luessi: https://github.com/mluessi

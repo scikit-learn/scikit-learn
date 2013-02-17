@@ -6,7 +6,7 @@ Orthogonal Matching Pursuit
 Using orthogonal matching pursuit for recovering a sparse signal from a noisy
 measurement encoded with a dictionary
 """
-print __doc__
+print(__doc__)
 
 import pylab as pl
 import numpy as np

@@ -290,7 +290,7 @@ def test_enet_multitarget():
     coef, intercept, dual_gap, eps = (estimator.coef_, estimator.intercept_,
                                       estimator.dual_gap_, estimator.eps_)
 
-    for k in xrange(n_targets):
+    for k in range(n_targets):
         estimator.fit(X, y[:, k])
         assert_array_almost_equal(coef[k, :], estimator.coef_)
         assert_array_almost_equal(intercept[k], estimator.intercept_)

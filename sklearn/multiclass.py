@@ -304,16 +304,28 @@ def predict_ovo(estimators, classes, X):
     n_samples = X.shape[0]
     n_classes = classes.shape[0]
     votes = np.zeros((n_samples, n_classes))
+    scores = np.zeros((n_samples, n_classes))
 
     k = 0
     for i in range(n_classes):
         for j in range(i + 1, n_classes):
             pred = estimators[k].predict(X)
+            score = _predict_binary(estimators[k], X)
+            scores[:, 0] += score
+            scores[:, 1] -= score
             votes[pred == 0, i] += 1
             votes[pred == 1, j] += 1
             k += 1
+    # find all places with maximum votes per sample
+    maxima = votes == np.max(votes, axis=1)[:, np.newaxis]
 
-    return classes[votes.argmax(axis=1)]
+    # if there are ties, use scores to break them
+    if np.any(maxima.sum(axis=1) > 1):
+        scores[~maxima] = -np.inf
+        prediction = scores.argmax(axis=1)
+    else:
+        prediction = votes.argmax(axis=1)
+    return classes[prediction]
 
 
 class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
@@ -440,7 +452,7 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None, n_jobs=1):
 
     cls_idx = dict((c, i) for i, c in enumerate(classes))
 
-    Y = np.array([code_book[cls_idx[y[i]]] for i in xrange(X.shape[0])],
+    Y = np.array([code_book[cls_idx[y[i]]] for i in range(X.shape[0])],
                  dtype=np.int)
 
     estimators = Parallel(n_jobs=n_jobs)(

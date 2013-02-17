@@ -21,7 +21,7 @@ from sklearn.metrics.pairwise import sigmoid_kernel
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.metrics.pairwise import pairwise_distances
 from sklearn.metrics.pairwise import pairwise_kernels
-from sklearn.metrics.pairwise import pairwise_kernel_functions
+from sklearn.metrics.pairwise import PAIRWISE_KERNEL_FUNCTIONS
 from sklearn.metrics.pairwise import check_pairwise_arrays
 from sklearn.metrics.pairwise import _parallel_pairwise
 from sklearn.preprocessing import normalize
@@ -118,11 +118,11 @@ def test_pairwise_kernels():
     rng = np.random.RandomState(0)
     X = rng.random_sample((5, 4))
     Y = rng.random_sample((2, 4))
-    # Test with all metrics that should be in pairwise_kernel_functions.
+    # Test with all metrics that should be in PAIRWISE_KERNEL_FUNCTIONS.
     test_metrics = ["rbf", "sigmoid", "polynomial", "linear", "chi2",
                     "additive_chi2"]
     for metric in test_metrics:
-        function = pairwise_kernel_functions[metric]
+        function = PAIRWISE_KERNEL_FUNCTIONS[metric]
         # Test with Y=None
         K1 = pairwise_kernels(X, metric=metric)
         K2 = function(X)
@@ -136,12 +136,15 @@ def test_pairwise_kernels():
         Y_tuples = tuple([tuple([v for v in row]) for row in Y])
         K2 = pairwise_kernels(X_tuples, Y_tuples, metric=metric)
         assert_array_almost_equal(K1, K2)
-        if metric in ["chi2", "additive_chi2"]:
-            # these don't support sparse matrices yet
-            continue
+
         # Test with sparse X and Y
         X_sparse = csr_matrix(X)
         Y_sparse = csr_matrix(Y)
+        if metric in ["chi2", "additive_chi2"]:
+            # these don't support sparse matrices yet
+            assert_raises(ValueError, pairwise_kernels,
+                          X_sparse, Y=Y_sparse, metric=metric)
+            continue
         K1 = pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
         assert_array_almost_equal(K1, K2)
     # Test with a callable function, with given keywords.
@@ -234,6 +237,8 @@ def test_chi_square_kernel():
 
     # sparse matrices
     assert_raises(ValueError, chi2_kernel, csr_matrix(X), csr_matrix(Y))
+    assert_raises(ValueError, additive_chi2_kernel,
+                  csr_matrix(X), csr_matrix(Y))
 
 
 def test_kernel_symmetry():

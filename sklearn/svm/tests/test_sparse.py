@@ -55,6 +55,7 @@ def test_svc():
 
     assert_true(sparse.issparse(sp_clf.coef_))
     assert_array_almost_equal(clf.coef_, sp_clf.coef_.todense())
+    assert_array_almost_equal(clf.support_, sp_clf.support_)
     assert_array_almost_equal(clf.predict(T), sp_clf.predict(T))
 
     # refit with a different dataset
@@ -64,6 +65,7 @@ def test_svc():
                               sp_clf.support_vectors_.todense())
     assert_array_almost_equal(clf.dual_coef_, sp_clf.dual_coef_.todense())
     assert_array_almost_equal(clf.coef_, sp_clf.coef_.todense())
+    assert_array_almost_equal(clf.support_, sp_clf.support_)
     assert_array_almost_equal(clf.predict(T2), sp_clf.predict(T2))
     assert_array_almost_equal(clf.predict_proba(T2),
                               sp_clf.predict_proba(T2), 4)

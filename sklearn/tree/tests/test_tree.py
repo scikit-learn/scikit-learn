@@ -8,10 +8,10 @@ from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_almost_equal
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
-from nose.tools import assert_true
 
 from sklearn import tree
 from sklearn import datasets
+from sklearn.externals.six import StringIO
 from sklearn.preprocessing import balance_weights
 
 # toy sample
@@ -121,7 +121,6 @@ def test_graphviz_toy():
     """Check correctness of graphviz output on a toy dataset."""
     clf = tree.DecisionTreeClassifier(max_depth=3, min_samples_split=1)
     clf.fit(X, y)
-    from StringIO import StringIO
 
     # test export code
     out = StringIO()
@@ -288,7 +287,7 @@ def test_importances():
                                         shuffle=False,
                                         random_state=0)
 
-    clf = tree.DecisionTreeClassifier(compute_importances=True)
+    clf = tree.DecisionTreeClassifier()
     clf.fit(X, y)
     importances = clf.feature_importances_
     n_important = sum(importances > 0.1)
@@ -298,10 +297,6 @@ def test_importances():
 
     X_new = clf.transform(X, threshold="mean")
     assert 0 < X_new.shape[1] < X.shape[1]
-
-    clf = tree.DecisionTreeClassifier()
-    clf.fit(X, y)
-    assert_true(clf.feature_importances_ is None)
 
 
 def test_error():

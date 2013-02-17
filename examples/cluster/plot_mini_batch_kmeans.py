@@ -12,7 +12,7 @@ MiniBatchKMeans, and plot the results.
 We will also plot the points that are labelled differently between the two
 algorithms.
 """
-print __doc__
+print(__doc__)
 
 import time
 

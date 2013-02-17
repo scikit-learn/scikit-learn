@@ -20,6 +20,7 @@ from .base import sparse_center_data, center_data
 from ..utils import array2d, atleast2d_or_csc, deprecated
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
+from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
 
 from . import cd_fast
@@ -73,8 +74,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         Whether the intercept should be estimated or not. If False, the
         data is assumed to be already centered.
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
@@ -363,8 +364,8 @@ class Lasso(ElasticNet):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -496,8 +497,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     fit_intercept : bool
         Fit or not an intercept
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -519,6 +520,35 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a fortran contiguous numpy array.
+
+    Note that in certain cases, the Lars solver may be significantly
+    faster to implement this functionality. In particular, linear
+    interpolation can be used to retrieve model coefficents between the
+    values output by lars_path
+
+    Examples
+    ---------
+
+    Comparing lasso_path and lars_path with interpolation:
+
+    >>> X = np.array([[1, 2, 3.1], [2.3, 5.4, 4.3]]).T
+    >>> y = np.array([1, 2, 3.1])
+    >>> # Use lasso_path to compute a coefficient path
+    >>> coef_path = [e.coef_ for e in lasso_path(X, y, alphas=[5., 1., .5], fit_intercept=False)]
+    >>> print np.array(coef_path).T
+    [[ 0.          0.          0.46874778]
+     [ 0.2159048   0.4425765   0.23689075]]
+
+    >>> # Now use lars_path and 1D linear interpolation to compute the
+    >>> # same path
+    >>> from sklearn.linear_model import lars_path
+    >>> alphas, active, coef_path_lars = lars_path(X, y, method='lasso')
+    >>> from scipy import interpolate
+    >>> coef_path_continuous = interpolate.interp1d(alphas[::-1], coef_path_lars[:, ::-1])
+    >>> print coef_path_continuous([5., 1., .5])
+    [[ 0.          0.          0.46915237]
+     [ 0.2159048   0.4425765   0.23668876]]
+
 
     See also
     --------
@@ -583,8 +613,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     fit_intercept : bool
         Fit or not an intercept
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -665,9 +695,9 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             model._set_intercept(X_mean, y_mean, X_std)
         if verbose:
             if verbose > 2:
-                print model
+                print(model)
             elif verbose > 1:
-                print 'Path: %03i out of %03i' % (i, n_alphas)
+                print('Path: %03i out of %03i' % (i, n_alphas))
             else:
                 sys.stderr.write('.')
         coef_ = model.coef_.copy()
@@ -1063,8 +1093,8 @@ class MultiTaskElasticNet(Lasso):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -1100,10 +1130,10 @@ class MultiTaskElasticNet(Lasso):
     MultiTaskElasticNet(alpha=0.1, copy_X=True, fit_intercept=True,
             l1_ratio=0.5, max_iter=1000, normalize=False, rho=None, tol=0.0001,
             warm_start=False)
-    >>> print clf.coef_
+    >>> print(clf.coef_)
     [[ 0.45663524  0.45612256]
      [ 0.45663524  0.45612256]]
-    >>> print clf.intercept_
+    >>> print(clf.intercept_)
     [ 0.0872422  0.0872422]
 
     See also
@@ -1226,8 +1256,8 @@ class MultiTaskLasso(MultiTaskElasticNet):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -1260,10 +1290,10 @@ class MultiTaskLasso(MultiTaskElasticNet):
     >>> clf.fit([[0,0], [1, 1], [2, 2]], [[0, 0], [1, 1], [2, 2]])
     MultiTaskLasso(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
             normalize=False, tol=0.0001, warm_start=False)
-    >>> print clf.coef_
+    >>> print(clf.coef_)
     [[ 0.89393398  0.        ]
      [ 0.89393398  0.        ]]
-    >>> print clf.intercept_
+    >>> print(clf.intercept_)
     [ 0.10606602  0.10606602]
 
     See also

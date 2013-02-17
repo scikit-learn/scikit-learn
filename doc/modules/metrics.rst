@@ -1,7 +1,7 @@
 .. _metrics:
 
-Metrics, Affinities and Kernels
-===============================
+Pairwise metrics, Affinities and Kernels
+========================================
 
 The :mod:`sklearn.metrics.pairwise` submodule implements utilities to evaluate
 pairwise distances or affinity of sets of samples.

@@ -137,7 +137,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
                 U, S, Vh = np.linalg.svd(t_svd)
                 svd_restarts += 1
             except LinAlgError:
-                print "SVD did not converge, randomizing and trying again"
+                print("SVD did not converge, randomizing and trying again")
                 break
 
             ncut_value = 2.0 * (n_samples - S.sum())
@@ -211,7 +211,9 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
         space.  There are two ways to assign labels after the laplacian
         embedding.  k-means can be applied and is a popular choice. But it can
         also be sensitive to initialization. Discretization is another
-        approach which is less sensitive to random initialization.
+        approach which is less sensitive to random initialization. See
+        the 'Multiclass spectral clustering' paper referenced below for
+        more details on the discretization approach.
 
     Returns
     -------

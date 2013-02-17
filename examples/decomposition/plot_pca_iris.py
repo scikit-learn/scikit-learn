@@ -7,7 +7,7 @@ PCA example with Iris Data-set
 =========================================================
 
 """
-print __doc__
+print(__doc__)
 
 
 # Code source: Gael Varoqueux

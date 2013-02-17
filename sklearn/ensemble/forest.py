@@ -44,6 +44,7 @@ from abc import ABCMeta, abstractmethod
 
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
+from ..externals.six.moves import xrange
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..metrics import r2_score
 from ..preprocessing import OneHotEncoder
@@ -69,13 +70,12 @@ def _parallel_build_trees(n_trees, forest, X, y, sample_weight,
     random_state = check_random_state(seed)
     trees = []
 
-    for i in xrange(n_trees):
+    for i in range(n_trees):
         if verbose > 1:
             print("building tree %d of %d" % (i + 1, n_trees))
         seed = random_state.randint(MAX_INT)
 
         tree = forest._make_estimator(append=False)
-        tree.set_params(compute_importances=forest.compute_importances)
         tree.set_params(random_state=check_random_state(seed))
 
         if forest.bootstrap:
@@ -166,12 +166,12 @@ def _partition_trees(forest):
     # Partition trees between jobs
     n_trees = [forest.n_estimators // n_jobs] * n_jobs
 
-    for i in xrange(forest.n_estimators % n_jobs):
+    for i in range(forest.n_estimators % n_jobs):
         n_trees[i] += 1
 
     starts = [0] * (n_jobs + 1)
 
-    for i in xrange(1, n_jobs + 1):
+    for i in range(1, n_jobs + 1):
         starts[i] = starts[i - 1] + n_trees[i - 1]
 
     return n_jobs, n_trees, starts
@@ -230,6 +230,13 @@ class BaseForest(BaseEnsemble, SelectorMixin):
             estimator_params=estimator_params)
 
         self.bootstrap = bootstrap
+
+        if compute_importances:
+            warn("Setting compute_importances=True is no longer "
+                 "required. Variable importances are now computed on the fly "
+                 "when accessing the feature_importances_ attribute. This "
+                 "parameter will be removed in 0.15.", DeprecationWarning)
+
         self.compute_importances = compute_importances
         self.oob_score = oob_score
         self.n_jobs = n_jobs
@@ -239,7 +246,6 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         self.n_outputs_ = None
         self.classes_ = None
         self.n_classes_ = None
-        self.feature_importances_ = None
 
         self.verbose = verbose
 
@@ -362,7 +368,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                 X_argsorted,
                 random_state.randint(MAX_INT),
                 verbose=self.verbose)
-            for i in xrange(n_jobs))
+            for i in range(n_jobs))
 
         # Reduce
         self.estimators_ = [tree for tree in itertools.chain(*all_trees)]
@@ -453,13 +459,23 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
                 self.oob_score_ /= self.n_outputs_
 
-        # Sum the importances
-        if self.compute_importances:
-            self.feature_importances_ = \
-                sum(tree.feature_importances_ for tree in self.estimators_) \
-                / self.n_estimators
-
         return self
+
+    @property
+    def feature_importances_(self):
+        """Return the feature importances (the higher, the more important the
+           feature).
+
+        Returns
+        -------
+        feature_importances_ : array, shape = [n_features]
+        """
+        if self.estimators_ is None or len(self.estimators_) == 0:
+            raise ValueError("Estimator not fitted, "
+                             "call `fit` before `feature_importances_`.")
+
+        return sum(tree.feature_importances_
+                   for tree in self.estimators_) / self.n_estimators
 
 
 class ForestClassifier(BaseForest, ClassifierMixin):
@@ -557,7 +573,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
                 X,
                 self.n_classes_,
                 self.n_outputs_)
-            for i in xrange(n_jobs))
+            for i in range(n_jobs))
 
         # Reduce
         proba = all_proba[0]
@@ -665,7 +681,7 @@ class ForestRegressor(BaseForest, RegressorMixin):
         all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_predict_regression)(
                 self.estimators_[starts[i]:starts[i + 1]], X)
-            for i in xrange(n_jobs))
+            for i in range(n_jobs))
 
         # Reduce
         y_hat = sum(all_y_hat) / self.n_estimators
@@ -730,10 +746,6 @@ class RandomForestClassifier(ForestClassifier):
 
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
-
-    compute_importances : boolean, optional (default=True)
-        Whether feature importances are computed and stored into the
-        ``feature_importances_`` attribute when calling fit.
 
     oob_score : bool
         Whether to use out-of-bag samples to estimate
@@ -877,10 +889,6 @@ class RandomForestRegressor(ForestRegressor):
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
 
-    compute_importances : boolean, optional (default=True)
-        Whether feature importances are computed and stored into the
-        ``feature_importances_`` attribute when calling fit.
-
     oob_score : bool
         whether to use out-of-bag samples to estimate
         the generalization error.
@@ -1014,10 +1022,6 @@ class ExtraTreesClassifier(ForestClassifier):
 
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
-
-    compute_importances : boolean, optional (default=True)
-        Whether feature importances are computed and stored into the
-        ``feature_importances_`` attribute when calling fit.
 
     oob_score : bool
         Whether to use out-of-bag samples to estimate
@@ -1165,10 +1169,6 @@ class ExtraTreesRegressor(ForestRegressor):
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
         Note: this parameter is tree-specific.
-
-    compute_importances : boolean, optional (default=True)
-        Whether feature importances are computed and stored into the
-        ``feature_importances_`` attribute when calling fit.
 
     oob_score : bool
         Whether to use out-of-bag samples to estimate

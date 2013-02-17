@@ -11,7 +11,7 @@ data-points are not linearly seperable.
 
 
 """
-print __doc__
+print(__doc__)
 
 
 # Code source: Gael Varoqueux

@@ -20,7 +20,7 @@ to evaluate the average stability of clustering algorithms for a given
 value of k on various overlapping sub-samples of the dataset.
 
 """
-print __doc__
+print(__doc__)
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 # License: Simplified BSD
@@ -73,12 +73,12 @@ pl.figure(1)
 plots = []
 names = []
 for score_func in score_funcs:
-    print "Computing %s for %d values of n_clusters and n_samples=%d" % (
-        score_func.__name__, len(n_clusters_range), n_samples)
+    print("Computing %s for %d values of n_clusters and n_samples=%d"
+          % (score_func.__name__, len(n_clusters_range), n_samples))
 
     t0 = time()
     scores = uniform_labelings_scores(score_func, n_samples, n_clusters_range)
-    print "done in %0.3fs" % (time() - t0)
+    print("done in %0.3fs" % (time() - t0))
     plots.append(pl.errorbar(
         n_clusters_range, np.median(scores, axis=1), scores.std(axis=1))[0])
     names.append(score_func.__name__)
@@ -103,13 +103,13 @@ pl.figure(2)
 plots = []
 names = []
 for score_func in score_funcs:
-    print "Computing %s for %d values of n_clusters and n_samples=%d" % (
-        score_func.__name__, len(n_clusters_range), n_samples)
+    print("Computing %s for %d values of n_clusters and n_samples=%d"
+          % (score_func.__name__, len(n_clusters_range), n_samples))
 
     t0 = time()
     scores = uniform_labelings_scores(score_func, n_samples, n_clusters_range,
                                       fixed_n_classes=n_classes)
-    print "done in %0.3fs" % (time() - t0)
+    print("done in %0.3fs" % (time() - t0))
     plots.append(pl.errorbar(
         n_clusters_range, scores.mean(axis=1), scores.std(axis=1))[0])
     names.append(score_func.__name__)

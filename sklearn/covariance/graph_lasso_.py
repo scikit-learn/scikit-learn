@@ -22,6 +22,7 @@ from ..linear_model import lars_path
 from ..linear_model import cd_fast
 from ..cross_validation import check_cv, cross_val_score
 from ..externals.joblib import Parallel, delayed
+import collections
 
 
 ###############################################################################
@@ -154,8 +155,8 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
     else:
         errors = dict(invalid='raise')
     try:
-        for i in xrange(max_iter):
-            for idx in xrange(n_features):
+        for i in range(max_iter):
+            for idx in range(n_features):
                 sub_covariance = covariance_[indices != idx].T[indices != idx]
                 row = emp_cov[idx, indices != idx]
                 with np.errstate(**errors):
@@ -187,7 +188,7 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
             d_gap = _dual_gap(emp_cov, precision_, alpha)
             cost = _objective(emp_cov, precision_, alpha)
             if verbose:
-                print (
+                print(
                     '[graph_lasso] Iteration % 3i, cost % 3.2e, dual gap %.3e'
                     % (i, cost, d_gap))
             if return_costs:
@@ -431,7 +432,7 @@ class GraphLassoCV(GraphLasso):
         n_alphas = self.alphas
         inner_verbose = max(0, self.verbose - 1)
 
-        if operator.isSequenceType(n_alphas):
+        if isinstance(n_alphas, collections.Sequence):
             alphas = self.alphas
             n_refinements = 1
         else:
@@ -510,10 +511,10 @@ class GraphLassoCV(GraphLasso):
                                  n_alphas + 2)
             alphas = alphas[1:-1]
             if self.verbose and n_refinements > 1:
-                print '[GraphLassoCV] Done refinement % 2i out of %i: % 3is'\
-                      % (i + 1, n_refinements, time.time() - t0)
+                print('[GraphLassoCV] Done refinement % 2i out of %i: % 3is'
+                      % (i + 1, n_refinements, time.time() - t0))
 
-        path = zip(*path)
+        path = list(zip(*path))
         cv_scores = list(path[1])
         alphas = list(path[0])
         # Finally, compute the score with alpha = 0

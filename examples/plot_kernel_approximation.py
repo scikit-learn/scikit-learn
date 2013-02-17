@@ -38,7 +38,7 @@ The usage of :class:`RBFSampler` and :class:`Nystroem` is described in detail
 in :ref:`kernel_approximation`.
 
 """
-print __doc__
+print(__doc__)
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 #         Andreas Mueller <amueller@ais.uni-bonn.de>

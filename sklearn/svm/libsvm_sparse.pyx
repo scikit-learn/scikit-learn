@@ -33,6 +33,7 @@ cdef extern from "libsvm_sparse_helper.c":
                                   double , double , double , double,
                                   double, int, int, int, char *, char *, int)
     void copy_sv_coef   (char *, svm_csr_model *)
+    void copy_support   (char *, svm_csr_model *)
     void copy_intercept (char *, svm_csr_model *, np.npy_intp *)
     int copy_predict (char *, svm_csr_model *, np.npy_intp *, char *)
     int csr_copy_predict (np.npy_intp *data_size, char *data, np.npy_intp *index_size,
@@ -151,6 +152,10 @@ def libsvm_sparse_train ( int n_features,
     sv_coef_data = np.empty((n_class-1)*SV_len, dtype=np.float64)
     copy_sv_coef (sv_coef_data.data, model)
 
+    cdef np.ndarray[np.int32_t, ndim=1, mode='c'] support
+    support = np.empty(SV_len, dtype=np.int32)
+    copy_support(support.data, model)
+
     # copy model.rho into the intercept
     # the intercept is just model.rho but with sign changed
     cdef np.ndarray intercept
@@ -202,7 +207,7 @@ def libsvm_sparse_train ( int n_features,
     free_problem(problem)
     free_param(param)
 
-    return (support_vectors_, sv_coef_data, intercept, label, n_class_SV,
+    return (support, support_vectors_, sv_coef_data, intercept, label, n_class_SV,
             probA, probB, fit_status)
 
 

@@ -567,6 +567,13 @@ cdef class Tree:
                         n_node_samples_right += 1
                         weighted_n_node_samples_right += w
 
+            # Make current node a leaf if no valid split was found
+            if (weighted_n_node_samples_left <= 0 or
+                weighted_n_node_samples_right <= 0):
+
+                self.add_leaf(parent, is_left_child, buffer_value, init_error, n_node_samples)
+                return
+
             node_id = self.add_split_node(parent, is_left_child, feature,
                                           threshold, buffer_value, best_error,
                                           init_error, n_node_samples)
@@ -1000,40 +1007,16 @@ cdef class Tree:
 
         return out
 
-    cpdef compute_feature_importances(self, method="gini"):
-        """Computes the importance of each feature (aka variable).
-
-        The following `method`s are supported:
-
-          * "gini" : The difference of the initial error and the error of the
-                     split times the number of samples that passed the node.
-          * "squared" : The empirical improvement in squared error.
-
-        Parameters
-        ----------
-        method : str, optional (default="gini")
-            The method to estimate the importance of a feature. Either "gini"
-            or "squared".
-        """
-        if method != "gini" and method != "squared":
-            raise ValueError(
-                'Invalid value for method. Allowed string '
-                'values are "gini", or "squared".')
-
+    cpdef compute_feature_importances(self):
+        """Computes the importance of each feature (aka variable)."""
         cdef int node
         cdef np.ndarray[np.float64_t, ndim=1] importances
         importances = np_zeros((self.n_features,), dtype=np.float64)
 
-        if method == "gini":
-            for node from 0 <= node < self.node_count:
-                if self.children_left[node] != _TREE_LEAF: # and self.children_right[node] != _TREE_LEAF:
-                    importances[self.feature[node]] += \
-                        self._compute_feature_importances_gini(node)
-        else:
-            for node from 0 <= node < self.node_count:
-                if self.children_left[node] != _TREE_LEAF: # and self.children_right[node] != _TREE_LEAF:
-                    importances[self.feature[node]] += \
-                        self._compute_feature_importances_squared(node)
+        for node from 0 <= node < self.node_count:
+            if self.children_left[node] != _TREE_LEAF: # and self.children_right[node] != _TREE_LEAF:
+                importances[self.feature[node]] += \
+                    self.n_samples[node] * (self.init_error[node] - self.best_error[node])
 
         cdef double normalizer = np.sum(importances)
 
@@ -1042,13 +1025,6 @@ cdef class Tree:
             importances /= normalizer
 
         return importances
-
-    cdef inline double _compute_feature_importances_gini(self, int node):
-        return self.n_samples[node] * (self.init_error[node] - self.best_error[node])
-
-    cdef inline double _compute_feature_importances_squared(self, int node):
-        cdef double error = self.init_error[node] - self.best_error[node]
-        return error * error
 
 
 # =============================================================================

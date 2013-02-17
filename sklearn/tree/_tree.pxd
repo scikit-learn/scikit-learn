@@ -152,8 +152,4 @@ cdef class Tree:
 
     cpdef apply(self, np.ndarray[DTYPE_t, ndim=2] X)
 
-    cpdef compute_feature_importances(self, method=*)
-
-    cdef inline double _compute_feature_importances_gini(self, int node)
-
-    cdef inline double _compute_feature_importances_squared(self, int node)
+    cpdef compute_feature_importances(self)

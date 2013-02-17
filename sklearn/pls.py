@@ -263,7 +263,7 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
         self.y_loadings_ = np.zeros((q, self.n_components))
 
         # NIPALS algo: outer loop, over components
-        for k in xrange(self.n_components):
+        for k in range(self.n_components):
             #1) weights estimation (inner loop)
             # -----------------------------------
             if self.algorithm == "nipals":

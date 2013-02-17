@@ -6,7 +6,7 @@ SVM: Weighted samples
 Plot decision function of a weighted dataset, where the size of points
 is proportional to its weight.
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

@@ -12,10 +12,14 @@ randomized trees. Single and multi-output problems are both handled.
 # License: BSD3
 
 from __future__ import division
+
 import numpy as np
 from abc import ABCMeta, abstractmethod
+from warnings import warn
 
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..externals import six
+from ..externals.six.moves import xrange
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..utils import array2d, check_random_state
 from ..utils.validation import check_arrays
@@ -70,6 +74,7 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
 
     Examples
     --------
+    >>> import os
     >>> from sklearn.datasets import load_iris
     >>> from sklearn import tree
 
@@ -78,8 +83,10 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
 
     >>> clf = clf.fit(iris.data, iris.target)
     >>> import tempfile
-    >>> out_file = tree.export_graphviz(clf, out_file=tempfile.TemporaryFile())
-    >>> out_file.close()
+    >>> export_file = tree.export_graphviz(clf,
+    ...     out_file='test_export_graphvix.dot')
+    >>> export_file.close()
+    >>> os.unlink(export_file.name)
     """
     def node_to_str(tree, node_id):
         value = tree.value[node_id]
@@ -124,9 +131,13 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
             recurse(tree, right_child, node_id)
 
     if out_file is None:
-        out_file = open("tree.dot", "w")
-    elif isinstance(out_file, basestring):
-        out_file = open(out_file, "w")
+        out_file = "tree.dot"
+
+    if isinstance(out_file, six.string_types):
+        if six.PY3:
+            out_file = open(out_file, "w", encoding="utf-8")
+        else:
+            out_file = open(out_file, "wb")
 
     out_file.write("digraph Tree {\n")
     if isinstance(decision_tree, _tree.Tree):
@@ -162,6 +173,13 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         self.min_samples_leaf = min_samples_leaf
         self.min_density = min_density
         self.max_features = max_features
+
+        if compute_importances:
+            warn("Setting compute_importances=True is no longer "
+                 "required. Variable importances are now computed on the fly "
+                 "when accessing the feature_importances_ attribute. This "
+                 "parameter will be removed in 0.15.", DeprecationWarning)
+
         self.compute_importances = compute_importances
         self.random_state = random_state
 
@@ -172,7 +190,6 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         self.find_split_ = _tree.TREE_SPLIT_BEST
 
         self.tree_ = None
-        self.feature_importances_ = None
 
     def fit(self, X, y,
             sample_mask=None, X_argsorted=None,
@@ -273,7 +290,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         # Check parameters
         max_depth = np.inf if self.max_depth is None else self.max_depth
 
-        if isinstance(self.max_features, basestring):
+        if isinstance(self.max_features, six.string_types):
             if self.max_features == "auto":
                 if is_classification:
                     max_features = max(1, int(np.sqrt(self.n_features_)))
@@ -355,11 +372,6 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
 
-        # Compute importances
-        if self.compute_importances:
-            self.feature_importances_ = \
-                self.tree_.compute_feature_importances()
-
         return self
 
     def predict(self, X):
@@ -398,9 +410,8 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
         # Classification
         if isinstance(self, ClassifierMixin):
             if self.n_outputs_ == 1:
-                return np.array(self.classes_.take(
-                    np.argmax(proba[:, 0], axis=1),
-                    axis=0))
+                return self.classes_.take(np.argmax(proba[:, 0], axis=1),
+                                          axis=0)
 
             else:
                 predictions = np.zeros((n_samples, self.n_outputs_))
@@ -419,6 +430,24 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
 
             else:
                 return proba[:, :, 0]
+
+    @property
+    def feature_importances_(self):
+        """Return the feature importances.
+
+        The importance of a feature is computed as the
+        (normalized) total reduction of the criterion brought by that
+        feature.  It is also known as the Gini importance [4]_.
+
+        Returns
+        -------
+        feature_importances_ : array, shape = [n_features]
+        """
+        if self.tree_ is None:
+            raise ValueError("Estimator not fitted, "
+                             "call `fit` before `feature_importances_`.")
+
+        return self.tree_.compute_feature_importances()
 
 
 class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
@@ -460,10 +489,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         data. Otherwise, partitions are represented as bit masks (aka
         sample masks).
 
-    compute_importances : boolean, optional (default=False)
-        Whether feature importances are computed and stored into the
-        ``feature_importances_`` attribute when calling fit.
-
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -485,10 +510,9 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         output (for multi-output problems).
 
     `feature_importances_` : array of shape = [n_features]
-        The feature importances
-        (the higher, the more important the feature).
+        The feature importances. The higher, the more important the feature.
         The importance of a feature is computed as the
-        (normalized) total reduction of error brought by that
+        (normalized) total reduction of the criterion brought by that
         feature.  It is also known as the Gini importance [4]_.
 
     See also
@@ -659,10 +683,6 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         data. Otherwise, partitions are represented as bit masks (aka
         sample masks).
 
-    compute_importances : boolean, optional (default=True)
-        Whether feature importances are computed and stored into the
-        ``feature_importances_`` attribute when calling fit.
-
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -675,10 +695,9 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The underlying Tree object.
 
     `feature_importances_` : array of shape = [n_features]
-        The feature importances
-        (the higher, the more important the feature).
+        The feature importances. The higher, the more important the feature.
         The importance of a feature is computed as the
-        (normalized) total reduction of error brought by that
+        (normalized) total reduction of the criterion brought by that
         feature.  It is also known as the Gini importance [4]_.
 
     See also

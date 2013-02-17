@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import numpy as np
 import scipy.sparse as sp
 import warnings
@@ -31,10 +33,10 @@ def _one_vs_one_coef(dual_coef, n_support, support_vectors):
     # would have to take care in the sparse case
     coef = []
     sv_locs = np.cumsum(np.hstack([[0], n_support]))
-    for class1 in xrange(n_class):
+    for class1 in range(n_class):
         # SVs for class1:
         sv1 = support_vectors[sv_locs[class1]:sv_locs[class1 + 1], :]
-        for class2 in xrange(class1 + 1, n_class):
+        for class2 in range(class1 + 1, n_class):
             # SVs for class1:
             sv2 = support_vectors[sv_locs[class2]:sv_locs[class2 + 1], :]
 
@@ -180,7 +182,7 @@ class BaseLibSVM(BaseEstimator):
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
         if self.verbose:  # pragma: no cover
-            print '[LibSVM]',
+            print('[LibSVM]', end='')
         fit(X, y, sample_weight, solver_type, kernel)
 
         self.shape_fit_ = X.shape
@@ -237,8 +239,9 @@ class BaseLibSVM(BaseEstimator):
 
         libsvm_sparse.set_verbosity_wrap(self.verbose)
 
-        self.support_vectors_, dual_coef_data, self.intercept_, self._label, \
-            self.n_support_, self.probA_, self.probB_, self.fit_status_ = \
+        self.support_, self.support_vectors_, dual_coef_data, \
+            self.intercept_, self._label, self.n_support_, \
+            self.probA_, self.probB_, self.fit_status_ = \
             libsvm_sparse.libsvm_sparse_train(
                 X.shape[1], X.data, X.indices, X.indptr, y, solver_type,
                 kernel_type, self.degree, self._gamma, self.coef0, self.tol,
@@ -623,7 +626,7 @@ class BaseLibLinear(BaseEstimator):
                                 "and loss='l1' is not supported.")
             elif self.penalty.upper() == 'L2' and self.loss.upper() == 'L1':
                 # this has to be in primal
-                error_string = ("loss='l2' and penalty='l1' is "
+                error_string = ("penalty='l2' and ploss='l1' is "
                                 "only supported when dual='true'.")
             else:
                 # only PL1 in dual remains
@@ -680,7 +683,7 @@ class BaseLibLinear(BaseEstimator):
 
         rnd = check_random_state(self.random_state)
         if self.verbose:
-            print '[LibLinear]',
+            print('[LibLinear]', end='')
         self.raw_coef_ = train(X, y, self._get_solver_type(), self.tol,
                                self._get_bias(), self.C,
                                self.class_weight_,

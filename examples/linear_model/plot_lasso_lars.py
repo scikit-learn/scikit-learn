@@ -10,7 +10,7 @@ feature of the coefficient vector, and this is displayed as a function
 of the regularization parameter.
 
 """
-print __doc__
+print(__doc__)
 
 # Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -26,7 +26,7 @@ diabetes = datasets.load_diabetes()
 X = diabetes.data
 y = diabetes.target
 
-print "Computing regularization path using the LARS ..."
+print("Computing regularization path using the LARS ...")
 alphas, _, coefs = linear_model.lars_path(X, y, method='lasso', verbose=True)
 
 xx = np.sum(np.abs(coefs.T), axis=1)

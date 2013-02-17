@@ -26,6 +26,7 @@ import scipy.sparse as sp
 
 from ._svmlight_format import _load_svmlight_file
 from .. import __version__
+from ..externals import six
 from ..utils import atleast2d_or_csr
 
 
@@ -116,7 +117,7 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
 def _gen_open(f):
     if isinstance(f, int):  # file descriptor
         return io.open(f, "rb", closefd=False)
-    elif not isinstance(f, basestring):
+    elif not isinstance(f, six.string_types):
         raise TypeError("expected {str, int, file-like}, got %s" % type(f))
 
     _, ext = os.path.splitext(f)
@@ -250,9 +251,9 @@ def _dump_svmlight(X, y, f, one_based, comment, query_id):
         f.write("#\n")
         f.writelines("# %s\n" % line for line in comment.splitlines())
 
-    for i in xrange(X.shape[0]):
-        s = u" ".join([value_pattern % (j + one_based, X[i, j])
-                       for j in X[i].nonzero()[is_sp]])
+    for i in range(X.shape[0]):
+        s = " ".join([value_pattern % (j + one_based, X[i, j])
+                      for j in X[i].nonzero()[is_sp]])
         if query_id is not None:
             feat = (y[i], query_id[i], s)
         else:

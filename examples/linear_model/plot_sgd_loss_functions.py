@@ -6,7 +6,7 @@ SGD: Convex Loss Functions
 Plot the convex loss functions supported by
 `sklearn.linear_model.stochastic_gradient`.
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

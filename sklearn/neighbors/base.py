@@ -117,6 +117,10 @@ class NeighborsBase(BaseEstimator):
         if X.ndim != 2:
             raise ValueError("data type not understood")
 
+        n_samples = X.shape[0]
+        if n_samples == 0:
+            raise ValueError("n_samples must be greater than 0")
+
         if issparse(X):
             if self.algorithm not in ('auto', 'brute'):
                 warnings.warn("cannot use tree with sparse input: "
