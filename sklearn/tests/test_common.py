@@ -214,20 +214,28 @@ def test_transformers():
             print()
             succeeded = False
             continue
-
+        
         if hasattr(trans, 'transform'):
             if Trans in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
                 X_pred2 = trans.transform(X, y_)
+                X_pred3 = trans.fit_transform(X, y=y_)
             else:
                 X_pred2 = trans.transform(X)
+                X_pred3 = trans.fit_transform(X,y=y_)
             if isinstance(X_pred, tuple) and isinstance(X_pred2, tuple):
-                for x_pred, x_pred2 in zip(X_pred, X_pred2):
+                for x_pred, x_pred2, x_pred3 in zip(X_pred, X_pred2, X_pred3):
                     assert_array_almost_equal(
                         x_pred, x_pred2, 2,
+                        "fit_transform not correct in %s" % Trans)
+                    assert_array_almost_equal(
+                        x_pred3, x_pred2, 2,
                         "fit_transform not correct in %s" % Trans)
             else:
                 assert_array_almost_equal(
                     X_pred, X_pred2, 2,
+                    "fit_transform not correct in %s" % Trans)
+                assert_array_almost_equal(
+                    X_pred3, X_pred2, 2,
                     "fit_transform not correct in %s" % Trans)
 
             # raises error on malformed input for transform
