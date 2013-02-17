@@ -671,7 +671,7 @@ def test_classifiers_pickle():
                 assert_array_almost_equal(pickled_y_pred, y_pred)
             except Exception, exc:
                 succeeded = False
-                print ("Esimator %s doesn't predict the same value "
+                print ("Estimator %s doesn't predict the same value "
                        "after pickling" % name)
                 raise exc
     assert_true(succeeded)
@@ -685,7 +685,8 @@ def test_regressors_int():
     X, y = boston.data, boston.target
     X, y = shuffle(X, y, random_state=0)
     X = StandardScaler().fit_transform(X)
-    y = np.random.randint(2, size=X.shape[0])
+    rnd = np.random.RandomState(0)
+    y = rnd.randint(2, size=X.shape[0])
     for name, Regressor in regressors:
         if name in dont_test or name in ('CCA',):
             continue
@@ -698,7 +699,7 @@ def test_regressors_int():
         set_random_state(regressor_2)
 
         if name in ('_PLS', 'PLSCanonical', 'PLSRegression'):
-            y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
+            y_ = np.vstack([y, 2 * y + rnd.randint(2, size=len(y))])
             y_ = y_.T
         else:
             y_ = y
@@ -720,6 +721,7 @@ def test_regressors_train():
     # TODO: test with multiple responses
     X = StandardScaler().fit_transform(X)
     y = StandardScaler().fit_transform(y)
+    rnd = np.random.RandomState(0)
     succeeded = True
     for name, Regressor in regressors:
         if name in dont_test:
@@ -736,7 +738,7 @@ def test_regressors_train():
         # fit
         try:
             if name in ('_PLS', 'PLSCanonical', 'PLSRegression', 'CCA'):
-                y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
+                y_ = np.vstack([y, 2 * y + rnd.randint(2, size=len(y))])
                 y_ = y_.T
             else:
                 y_ = y
@@ -765,6 +767,7 @@ def test_regressor_pickle():
     # TODO: test with multiple responses
     X = StandardScaler().fit_transform(X)
     y = StandardScaler().fit_transform(y)
+    rnd = np.random.RandomState(0)
     succeeded = True
     for name, Regressor in regressors:
         if name in dont_test:
@@ -777,7 +780,7 @@ def test_regressor_pickle():
             regressor.alpha = 0.01
 
         if name in ('_PLS', 'PLSCanonical', 'PLSRegression', 'CCA'):
-            y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
+            y_ = np.vstack([y, 2 * y + rnd.randint(2, size=len(y))])
             y_ = y_.T
         else:
             y_ = y
@@ -792,7 +795,7 @@ def test_regressor_pickle():
             assert_array_almost_equal(pickled_y_pred, y_pred)
         except Exception, exc:
             succeeded = False
-            print ("Esimator %s doesn't predict the same value "
+            print ("Estimator %s doesn't predict the same value "
                    "after pickling" % name)
             raise exc
     assert_true(succeeded)
