@@ -521,6 +521,35 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     To avoid unnecessary memory duplication the X argument of the fit method
     should be directly passed as a fortran contiguous numpy array.
 
+    Note that in certain cases, the Lars solver may be significantly
+    faster to implement this functionality. In particular, linear
+    interpolation can be used to retrieve model coefficents between the
+    values output by lars_path
+
+    Examples
+    ---------
+
+    Comparing lasso_path and lars_path with interpolation:
+
+    >>> X = np.array([[1, 2, 3.1], [2.3, 5.4, 4.3]]).T
+    >>> y = np.array([1, 2, 3.1])
+    >>> # Use lasso_path to compute a coefficient path
+    >>> coef_path = [e.coef_ for e in lasso_path(X, y, alphas=[5., 1., .5], fit_intercept=False)]
+    >>> print np.array(coef_path).T
+    [[ 0.          0.          0.46874778]
+     [ 0.2159048   0.4425765   0.23689075]]
+
+    >>> # Now use lars_path and 1D linear interpolation to compute the
+    >>> # same path
+    >>> from sklearn.linear_model import lars_path
+    >>> alphas, active, coef_path_lars = lars_path(X, y, method='lasso')
+    >>> from scipy import interpolate
+    >>> coef_path_continuous = interpolate.interp1d(alphas[::-1], coef_path_lars[:, ::-1])
+    >>> print coef_path_continuous([5., 1., .5])
+    [[ 0.          0.          0.46915237]
+     [ 0.2159048   0.4425765   0.23668876]]
+
+
     See also
     --------
     lars_path
