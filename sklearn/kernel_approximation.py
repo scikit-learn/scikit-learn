@@ -28,10 +28,10 @@ class RBFSampler(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     gamma: float
-        parameter of RBF kernel: exp(-gamma * x**2)
+        Parameter of RBF kernel: exp(-γ × x²)
 
     n_components: int
-        number of Monte Carlo samples per original feature.
+        Number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
     random_state : {int, RandomState}, optional
@@ -44,7 +44,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
     Benjamin Recht.
     """
 
-    def __init__(self, gamma=1., n_components=100., random_state=None):
+    def __init__(self, gamma=1., n_components=100, random_state=None):
         self.gamma = gamma
         self.n_components = n_components
         self.random_state = random_state
@@ -90,10 +90,11 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         -------
         X_new: array-like, shape (n_samples, n_components)
         """
-        X = atleast2d_or_csr(X)
         projection = safe_sparse_dot(X, self.random_weights_)
-        return (np.sqrt(2.) / np.sqrt(self.n_components)
-                * np.cos(projection + self.random_offset_))
+        projection += self.random_offset_
+        np.cos(projection, projection)
+        projection *= np.sqrt(2.) / np.sqrt(self.n_components)
+        return projection
 
 
 class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
@@ -172,15 +173,17 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         -------
         X_new: array-like, shape (n_samples, n_components)
         """
-        X = array2d(X)
+        X = array2d(X, copy=True)
         if (X < 0).any():
             raise ValueError("X may not contain entries smaller than zero.")
 
-        projection = safe_sparse_dot(np.log(X + self.skewedness),
-                                     self.random_weights_)
-
-        return (np.sqrt(2.) / np.sqrt(self.n_components)
-                * np.cos(projection + self.random_offset_))
+        X += self.skewedness
+        np.log(X, X)
+        projection = safe_sparse_dot(X, self.random_weights_)
+        projection += self.random_offset_
+        np.cos(projection, projection)
+        projection *= np.sqrt(2.) / np.sqrt(self.n_components)
+        return projection
 
 
 class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
