@@ -525,7 +525,7 @@ From text
    kernel_approximation.SkewedChi2Sampler
 
 :mod:`sklearn.semi_supervised` Semi-Supervised Learning
-========================================================
+=======================================================
 
 .. automodule:: sklearn.semi_supervised
    :no-members:
@@ -639,6 +639,7 @@ From text
     manifold.Isomap
     manifold.MDS
     manifold.SpectralEmbedding
+    manifold.LocalityPreservingProjection
 
 .. autosummary::
     :toctree: generated
@@ -646,6 +647,7 @@ From text
 
     manifold.locally_linear_embedding
     manifold.spectral_embedding
+    manifold.locality_preserving_projection
 
 
 .. _metrics_ref:

@@ -324,7 +324,7 @@ class LocalityPreservingProjection(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_neighbors=None, n_components=2, mode="distance",
                  kernel_func="heat", kernel_param="auto", eigen_solver='auto',
-                 tol=1E-6, max_iter=100, random_state=None,
+                 tol=1E-6, max_iter=100, random_state=None, copy=True,
                  pca_preprocess=0.9):
         self.n_neighbors = n_neighbors
         self.n_components = n_components
@@ -335,6 +335,7 @@ class LocalityPreservingProjection(BaseEstimator, TransformerMixin):
         self.tol = tol
         self.max_iter = max_iter
         self.random_state = random_state
+        self.copy = copy
         self.pca_preprocess = pca_preprocess
 
     def fit(self, X, y=None):

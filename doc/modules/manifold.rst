@@ -300,7 +300,7 @@ The overall complexity of standard HLLE is
 .. _spectral_embedding:
 
 Spectral Embedding
-====================
+==================
 
 Spectral Embedding (also known as Laplacian Eigenmaps) is one method
 to calculate nonlinear embedding. It finds a low dimensional representation
@@ -343,6 +343,55 @@ The overall complexity of spectral embedding is
      <http://www.cse.ohio-state.edu/~mbelkin/papers/LEM_NC_03.pdf>`_
      M. Belkin, P. Niyogi, Neural Computation, June 2003; 15 (6):1373-1396
 
+
+Locality Preserving Projection
+==============================
+
+Locality Preserving Projection (LPP) is a linear approximation to
+Laplacian Eigenmaps. Unlike other manifold lerning algorithm, LPP can be project
+data which were not used during training process. Therefore LPP can be seen as a
+non-linear alternative to PCA. LPP can be performed with the
+function :func:`locality_preserving_projection` or its object-oriented
+counterpart :class:`LocalityPreservingProjection`.
+
+.. figure:: ../auto_examples/manifold/images/plot_lle_digits_13.png
+   :target: ../auto_examples/manifold/plot_lle_digits.html
+   :align: center
+   :scale: 50
+
+Complexity
+----------
+
+Since LPP is an approximation of Laplacian Eigenmaps,
+they have many common parts. However, the resulted eigen problem is on the 
+symmetric matrix of dimension (d x d). If d (original data dimension) is
+significantly smaller than N (data sample size), it could be much faster than
+Laplacian Eigenmaps.
+
+1. **Weighted Graph Construction**. Transform the raw input data into
+   graph representation using k-nearest neighbor and heat kernel.
+   :math:`W_{ij} = \exp{(-\frac{|\mathbf{X_i} - \mathbf{X_j}|^2}{t})}`.
+
+2. **Graph Laplacian Construction**. Graph Laplacian is constructed as 
+   :math:`L = D - W` where :math:`D` is a diagonal matrix with 
+   :math:`D_{ii} = \sum_j W_{ij}`.  
+
+3. **Partial Eigenvalue Decomposition**. Solve Generalized Eigenvalue Problem
+   :math: `XLX^T\mathbf{a} = \lambda XDX^T\mathbf{a}`
+
+The overall complexity of LPP is
+:math:`O[d \log(k) N \log(N)] + O[N^2] + O[4N d^2] + O[d p^2]`.
+
+* :math:`N` : number of training data points
+* :math:`d` : input dimension
+* :math:`k` : number of nearest neighbors
+* :math:`p` : output dimension
+
+.. topic:: References:
+
+   * `"Locality preserving projections."
+     <http://books.nips.cc/papers/files/nips16/NIPS2003_AA20.pdf>`_
+     X. He and P. Niyogi., Information Processing Systems 16 (NIPS 2003), 2003. Vancouver, Canada.
 
 Local Tangent Space Alignment
 =============================
