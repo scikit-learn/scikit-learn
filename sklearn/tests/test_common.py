@@ -218,16 +218,24 @@ def test_transformers():
         if hasattr(trans, 'transform'):
             if Trans in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
                 X_pred2 = trans.transform(X, y_)
+                X_pred3 = trans.fit_transform(X, y=y_)
             else:
                 X_pred2 = trans.transform(X)
+                X_pred3 = trans.fit_transform(X, y=y_)
             if isinstance(X_pred, tuple) and isinstance(X_pred2, tuple):
-                for x_pred, x_pred2 in zip(X_pred, X_pred2):
+                for x_pred, x_pred2, x_pred3 in zip(X_pred, X_pred2, X_pred3):
                     assert_array_almost_equal(
                         x_pred, x_pred2, 2,
+                        "fit_transform not correct in %s" % Trans)
+                    assert_array_almost_equal(
+                        x_pred3, x_pred2, 2,
                         "fit_transform not correct in %s" % Trans)
             else:
                 assert_array_almost_equal(
                     X_pred, X_pred2, 2,
+                    "fit_transform not correct in %s" % Trans)
+                assert_array_almost_equal(
+                    X_pred3, X_pred2, 2,
                     "fit_transform not correct in %s" % Trans)
 
             # raises error on malformed input for transform
@@ -532,7 +540,7 @@ def test_classifiers_classes():
     y = 2 * y + 1
     classes = np.unique(y)
     # TODO: make work with next line :)
-    #y = y.astype(np.str)
+    # y = y.astype(np.str)
     for name, Clf in classifiers:
         if name in dont_test:
             continue
@@ -647,7 +655,7 @@ def test_configure():
         with warnings.catch_warnings():
             # The configuration spits out warnings when not finding
             # Blas/Atlas development headers
-            warnings.simplefilter('ignore',  UserWarning)
+            warnings.simplefilter('ignore', UserWarning)
             execfile('setup.py', dict(__name__='__main__'))
     finally:
         sys.argv = old_argv
