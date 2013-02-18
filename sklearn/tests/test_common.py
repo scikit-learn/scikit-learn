@@ -31,24 +31,13 @@ import sklearn
 from sklearn.base import (clone, ClassifierMixin, RegressorMixin,
                           TransformerMixin, ClusterMixin)
 from sklearn.utils import shuffle
-from sklearn.preprocessing import StandardScaler, Scaler
+from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import (load_iris, load_boston, make_blobs,
                               make_classification)
 from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
 from sklearn.lda import LDA
 from sklearn.svm.base import BaseLibSVM
-
-# import "special" estimators
-from sklearn.pls import _PLS, PLSCanonical, PLSRegression, CCA, PLSSVD
-from sklearn.feature_selection import SelectKBest
-from sklearn.naive_bayes import MultinomialNB, BernoulliNB
-from sklearn.kernel_approximation import AdditiveChi2Sampler
-from sklearn.preprocessing import Binarizer, Normalizer
-from sklearn.cluster import (WardAgglomeration, AffinityPropagation,
-                             SpectralClustering)
-from sklearn.random_projection import (GaussianRandomProjection,
-                                       SparseRandomProjection)
 
 from sklearn.cross_validation import train_test_split
 
@@ -170,7 +159,7 @@ def test_transformers():
         if name in dont_test:
             continue
         # these don't actually fit the data:
-        if Trans in [AdditiveChi2Sampler, Binarizer, Normalizer]:
+        if name in ['AdditiveChi2Sampler', 'Binarizer', 'Normalizer']:
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -179,12 +168,12 @@ def test_transformers():
         if hasattr(trans, 'compute_importances'):
             trans.compute_importances = True
 
-        if Trans is SelectKBest:
+        if name == 'SelectKBest':
             # SelectKBest has a default of k=10
             # which is more feature than we have.
             trans.k = 1
-        elif Trans in [GaussianRandomProjection,
-                       SparseRandomProjection]:
+        elif name in ['GaussianRandomProjection',
+                      'SparseRandomProjection']:
             # Due to the jl lemma and very few samples, the number
             # of components of the random matrix projection will be greater
             # than the number of features.
@@ -193,7 +182,7 @@ def test_transformers():
 
         # fit
 
-        if Trans in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
+        if name in ('_PLS', 'PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD'):
             random_state = np.random.RandomState(seed=12345)
             y_ = np.vstack([y, 2 * y + random_state.randint(2, size=len(y))])
             y_ = y_.T
@@ -216,7 +205,8 @@ def test_transformers():
             continue
 
         if hasattr(trans, 'transform'):
-            if Trans in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
+            if name in ('_PLS', 'PLSCanonical', 'PLSRegression', 'CCA',
+                        'PLSSVD'):
                 X_pred2 = trans.transform(X, y_)
                 X_pred3 = trans.fit_transform(X, y=y_)
             else:
@@ -257,10 +247,10 @@ def test_transformers_sparse_data():
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
-            if Trans in [Scaler, StandardScaler]:
+            if name in ['Scaler', 'StandardScaler']:
                 trans = Trans(with_mean=False)
-            elif Trans in [GaussianRandomProjection,
-                           SparseRandomProjection]:
+            elif name in ['GaussianRandomProjection',
+                          'SparseRandomProjection']:
                 # Due to the jl lemma and very few samples, the number
                 # of components of the random matrix projection will be greater
                 # than the number of features.
@@ -309,14 +299,15 @@ def test_estimators_nan_inf():
         for name, Est in estimators:
             if name in dont_test:
                 continue
-            if Est in (_PLS, PLSCanonical, PLSRegression, CCA, PLSSVD):
+            if name in ('_PLS', 'PLSCanonical', 'PLSRegression', 'CCA',
+                        'PLSSVD'):
                 continue
 
             # catch deprecation warnings
             with warnings.catch_warnings(record=True):
                 est = Est()
-                if Est in [GaussianRandomProjection,
-                           SparseRandomProjection]:
+                if name in ['GaussianRandomProjection',
+                            'SparseRandomProjection']:
                     # Due to the jl lemma and very few samples, the number
                     # of components of the random matrix projection will be
                     # greater
@@ -430,7 +421,7 @@ def test_clustering():
     n_samples, n_features = X.shape
     X = StandardScaler().fit_transform(X)
     for name, Alg in clustering:
-        if Alg is WardAgglomeration:
+        if name == 'WardAgglomeration':
             # this is clustering on the features
             # let's not test that here.
             continue
@@ -440,7 +431,7 @@ def test_clustering():
             if hasattr(alg, "n_clusters"):
                 alg.set_params(n_clusters=3)
             set_random_state(alg)
-            if Alg is AffinityPropagation:
+            if name == 'AffinityPropagation':
                 alg.set_params(preference=-100)
             # fit
             alg.fit(X)
@@ -449,7 +440,7 @@ def test_clustering():
         pred = alg.labels_
         assert_greater(adjusted_rand_score(pred, y), 0.4)
         # fit another time with ``fit_predict`` and compare results
-        if Alg is SpectralClustering:
+        if name is 'SpectralClustering':
             # there is no way to make Spectral clustering deterministic :(
             continue
         set_random_state(alg)
@@ -476,7 +467,7 @@ def test_classifiers_train():
         for name, Clf in classifiers:
             if name in dont_test:
                 continue
-            if Clf in [MultinomialNB, BernoulliNB]:
+            if name in ['MultinomialNB', 'BernoulliNB']:
                 # TODO also test these!
                 continue
             # catch deprecation warnings
@@ -544,7 +535,7 @@ def test_classifiers_classes():
     for name, Clf in classifiers:
         if name in dont_test:
             continue
-        if Clf in [MultinomialNB, BernoulliNB]:
+        if name in ['MultinomialNB', 'BernoulliNB']:
             # TODO also test these!
             continue
 
@@ -573,7 +564,7 @@ def test_regressors_int():
     X = StandardScaler().fit_transform(X)
     y = np.random.randint(2, size=X.shape[0])
     for name, Reg in regressors:
-        if name in dont_test or Reg in (CCA,):
+        if name in dont_test or name in ('CCA',):
             continue
         # catch deprecation warnings
         with warnings.catch_warnings(record=True):
@@ -583,7 +574,7 @@ def test_regressors_int():
         set_random_state(reg1)
         set_random_state(reg2)
 
-        if Reg in (_PLS, PLSCanonical, PLSRegression):
+        if name in ('_PLS', 'PLSCanonical', 'PLSRegression'):
             y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
             y_ = y_.T
         else:
@@ -621,7 +612,7 @@ def test_regressors_train():
         assert_raises(ValueError, reg.fit, X, y[:-1])
         # fit
         try:
-            if Reg in (_PLS, PLSCanonical, PLSRegression, CCA):
+            if name in ('_PLS', 'PLSCanonical', 'PLSRegression', 'CCA'):
                 y_ = np.vstack([y, 2 * y + np.random.randint(2, size=len(y))])
                 y_ = y_.T
             else:
@@ -629,7 +620,7 @@ def test_regressors_train():
             reg.fit(X, y_)
             reg.predict(X)
 
-            if Reg not in (PLSCanonical, CCA):  # TODO: find out why
+            if name not in ('PLSCanonical', 'CCA'):  # TODO: find out why
                 assert_greater(reg.score(X, y_), 0.5)
         except Exception as e:
             print(reg)
@@ -769,8 +760,8 @@ def test_estimators_overwrite_params():
                 # for MiniBatchDictLearning
                 est.batch_size = 1
 
-            if Est in [GaussianRandomProjection,
-                       SparseRandomProjection]:
+            if name in ['GaussianRandomProjection',
+                        'SparseRandomProjection']:
                 # Due to the jl lemma and very few samples, the number
                 # of components of the random matrix projection will be
                 # greater
