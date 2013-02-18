@@ -1,0 +1,84 @@
+From: Gael Varoquaux <gael.varoquaux@normalesup.org>
+Subject: BUG: highly-degenerate roc curves
+  Fixes 1658
+
+Make sure that roc_curves start at [0, 0] and end at [1, 1]
+
+--- a/sklearn/metrics/metrics.py
++++ b/sklearn/metrics/metrics.py
+@@ -482,11 +482,11 @@ def roc_curve(y_true, y_score, pos_label
+ 
+     if n_pos == 0:
+         warnings.warn("No positive samples in y_true, "
+-                      "true positve value should be meaningless")
++                      "true positive value should be meaningless")
+         n_pos = np.nan
+     if n_neg == 0:
+         warnings.warn("No negative samples in y_true, "
+-                      "false positve value should be meaningless")
++                      "false positive value should be meaningless")
+         n_neg = np.nan
+ 
+     thresholds = np.unique(y_score)
+@@ -520,11 +520,18 @@ def roc_curve(y_true, y_score, pos_label
+         tpr[-1] = (sum_pos + current_pos_count) / n_pos
+         fpr[-1] = (sum_neg + current_neg_count) / n_neg
+ 
+-    # hard decisions, add (0,0)
+-    if fpr.shape[0] == 2:
++    thresholds = thresholds[::-1]
++
++    if not (n_pos is np.nan or n_neg is np.nan):
++        # add (0,0) and (1, 1)
++        fpr = np.r_[0., fpr, 1.]
++        tpr = np.r_[0., tpr, 1.]
++        thresholds = np.r_[thresholds[0] + 1, thresholds, thresholds[-1] - 1]
++    elif fpr.shape[0] == 2:
++        # trivial decisions, add (0,0)
+         fpr = np.array([0.0, fpr[0], fpr[1]])
+         tpr = np.array([0.0, tpr[0], tpr[1]])
+-    # trivial decisions, add (0,0) and (1,1)
++        # trivial decisions, add (0,0) and (1,1)
+     elif fpr.shape[0] == 1:
+         fpr = np.array([0.0, fpr[0], 1.0])
+         tpr = np.array([0.0, tpr[0], 1.0])
+@@ -535,7 +542,7 @@ def roc_curve(y_true, y_score, pos_label
+     if n_neg is np.nan:
+         fpr[0] = np.nan
+ 
+-    return fpr, tpr, thresholds[::-1]
++    return fpr, tpr, thresholds
+ 
+ 
+ ###############################################################################
+--- a/sklearn/metrics/tests/test_metrics.py
++++ b/sklearn/metrics/tests/test_metrics.py
+@@ -93,6 +93,17 @@ def test_roc_curve():
+     assert_almost_equal(roc_auc, auc_score(y_true, probas_pred))
+ 
+ 
++def test_roc_curve_end_points():
++    # Make sure that roc_curve returns a curve start at 0 and ending and
++    # 1 even in corner cases
++    rng = np.random.RandomState(0)
++    y_true = np.array([0] * 50 + [1] * 50)
++    y_pred = rng.randint(3, size=100)
++    fpr, tpr, thr = roc_curve(y_true, y_pred)
++    assert_equal(fpr[0], 0)
++    assert_equal(fpr[-1], 1)
++
++
+ def test_roc_returns_consistency():
+     """Test whether the returned threshold matches up with tpr"""
+     # make small toy dataset
+@@ -101,8 +112,8 @@ def test_roc_returns_consistency():
+ 
+     # use the given thresholds to determine the tpr
+     tpr_correct = []
+-    for t in range(len(thresholds)):
+-        tp = np.sum((probas_pred >= thresholds[t]) & y_true)
++    for t in thresholds:
++        tp = np.sum((probas_pred >= t) & y_true)
+         p = np.sum(y_true)
+         tpr_correct.append(1.0 * tp / p)
+ 
