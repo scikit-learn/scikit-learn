@@ -11,11 +11,11 @@ Created on 2012/11/27
 '''
 
 import numpy as np
-from scipy.sparse import csr_matrix
+from scipy.sparse import csr_matrix, isspmatrix
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import kneighbors_graph
 from ..utils.extmath import safe_sparse_dot
-from ..utils import check_random_state
+from ..utils import check_random_state, array2d, check_arrays
 from scipy.linalg import eigh
 from ..utils.arpack import eigsh
 from ..decomposition import PCA
@@ -326,35 +326,51 @@ class LocalityPreservingProjection(BaseEstimator, TransformerMixin):
                  kernel_func="heat", kernel_param="auto", eigen_solver='auto',
                  tol=1E-6, max_iter=100, random_state=None,
                  pca_preprocess=0.9):
-        self._n_neighbors = n_neighbors
-        self._n_components = n_components
-        self._mode = mode
-        self._kernel_func = kernel_func
-        self._kernel_param = kernel_param
-        self._eigen_solver = eigen_solver
-        self._tol = tol
-        self._max_iter = max_iter
-        self._random_state = random_state
-        self._pca_preprocess = pca_preprocess
+        self.n_neighbors = n_neighbors
+        self.n_components = n_components
+        self.mode = mode
+        self.kernel_func = kernel_func
+        self.kernel_param = kernel_param
+        self.eigen_solver = eigen_solver
+        self.tol = tol
+        self.max_iter = max_iter
+        self.random_state = random_state
+        self.pca_preprocess = pca_preprocess
 
     def fit(self, X, y=None):
-        if self._pca_preprocess:
+#        print X
+#        X = array2d(X)
+#        print X
+        X = array2d(check_arrays(X, copy=self.copy, sparse_format='dense',
+                    dtype=np.float)[0])
+        n_samples, n_features = X.shape
+        
+        did_pca_preprocess = False
+        if self.pca_preprocess:
             # PCA preprocess for removing singularity
-            _pca = PCA(n_components=self._pca_preprocess)
-            X = _pca.fit_transform(X)
+            # check preprocess param
+            if isinstance(self.pca_preprocess, float)\
+                    and (0.0 < self.pca_preprocess < 1):
+                pca_dim = self.pca_preprocess
+            else:
+                pca_dim = 0.9
+            if int(pca_dim * n_features) > self.n_components:   
+                _pca = PCA(n_components=pca_dim)
+                X = _pca.fit_transform(X)
+                did_pca_preprocess = True
 
-        if self._kernel_func == "heat" and self._kernel_param is None:
-            self._kernel_param = "auto"
-        if self._n_neighbors is None:
-            self._n_neighbors = max(int(X.shape[0] / 10), 1)
+        if self.kernel_func == "heat" and self.kernel_param is None:
+            self.kernel_param = "auto"
+        if self.n_neighbors is None:
+            self.n_neighbors = max(int(X.shape[0] / 10), 1)
         self.components_, _ = locality_preserving_projection(X, 
-                                  self._n_neighbors, self._mode,
-                                  self._kernel_func, self._kernel_param,
-                                  self._n_components, self._eigen_solver,
-                                  self._tol, self._max_iter, 
-                                  self._random_state)
+                                  self.n_neighbors, self.mode,
+                                  self.kernel_func, self.kernel_param,
+                                  self.n_components, self.eigen_solver,
+                                  self.tol, self.max_iter, 
+                                  self.random_state)
 
-        if self._pca_preprocess:
+        if did_pca_preprocess:
             self.components_ = safe_sparse_dot(_pca.components_.T,
                                                self.components_)
             
