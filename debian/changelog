@@ -1,3 +1,10 @@
+scikit-learn (0.13-2) experimental; urgency=low
+
+  * CP from upstream commits to fix a problem with ROC curves lacking
+    (0,0), (1,1) trailing points in some cases (gh-1658)
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 18 Feb 2013 12:31:57 -0500
+
 scikit-learn (0.13-1) experimental; urgency=low
 
   * Fresh upstream release
