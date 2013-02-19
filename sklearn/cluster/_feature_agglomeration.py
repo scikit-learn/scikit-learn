@@ -35,12 +35,12 @@ class AgglomerationTransform(TransformerMixin):
         """
         X = array2d(X)
         nX = []
-        if len(self.labels_) != X.shape[1]:
+        if len(self.classes_) != X.shape[1]:
             raise ValueError("X has a different number of features than "
                              "during fitting.")
 
-        for l in np.unique(self.labels_):
-            nX.append(pooling_func(X[:, self.labels_ == l], axis=1))
+        for l in np.unique(self.classes_):
+            nX.append(pooling_func(X[:, self.classes_ == l], axis=1))
         return np.array(nX).T
 
     def inverse_transform(self, Xred):
@@ -61,13 +61,13 @@ class AgglomerationTransform(TransformerMixin):
             each of the cluster of samples.
         """
         if np.size((Xred.shape)) == 1:
-            X = np.zeros([self.labels_.shape[0]])
+            X = np.zeros([self.classes_.shape[0]])
         else:
-            X = np.zeros([Xred.shape[0], self.labels_.shape[0]])
-        unil = np.unique(self.labels_)
+            X = np.zeros([Xred.shape[0], self.classes_.shape[0]])
+        unil = np.unique(self.classes_)
         for i in range(len(unil)):
             if np.size((Xred.shape)) == 1:
-                X[self.labels_ == unil[i]] = Xred[i]
+                X[self.classes_ == unil[i]] = Xred[i]
             else:
-                X[:, self.labels_ == unil[i]] = array2d(Xred[:, i]).T
+                X[:, self.classes_ == unil[i]] = array2d(Xred[:, i]).T
         return X

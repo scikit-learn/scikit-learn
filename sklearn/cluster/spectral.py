@@ -43,8 +43,8 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
 
     Returns
     -------
-    labels : array of integers, shape: n_samples
-        The labels of the clusters.
+    classes : array of integers, shape: n_samples
+        The classes of the clusters.
 
     References
     ----------
@@ -126,9 +126,9 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
 
             t_discrete = np.dot(vectors, rotation)
 
-            labels = t_discrete.argmax(axis=1)
+            classes = t_discrete.argmax(axis=1)
             vectors_discrete = csc_matrix(
-                (np.ones(len(labels)), (np.arange(0, n_samples), labels)),
+                (np.ones(len(classes)), (np.arange(0, n_samples), classes)),
                 shape=(n_samples, n_components))
 
             t_svd = vectors_discrete.T * vectors
@@ -151,7 +151,7 @@ def discretize(vectors, copy=True, max_svd_restarts=30, n_iter_max=20,
 
     if not has_converged:
         raise LinAlgError('SVD did not converge')
-    return labels
+    return classes
 
 
 def spectral_clustering(affinity, n_clusters=8, n_components=None,
@@ -217,8 +217,8 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
 
     Returns
     -------
-    labels: array of integers, shape: n_samples
-        The labels of the clusters.
+    classes: array of integers, shape: n_samples
+        The classes of the clusters.
 
     References
     ----------
@@ -267,12 +267,12 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
                               eigen_tol=eigen_tol, drop_first=False)
 
     if assign_labels == 'kmeans':
-        _, labels, _ = k_means(maps, n_clusters, random_state=random_state,
+        _, classes, _ = k_means(maps, n_clusters, random_state=random_state,
                                n_init=n_init)
     else:
-        labels = discretize(maps, random_state=random_state)
+        classes = discretize(maps, random_state=random_state)
 
-    return labels
+    return classes
 
 
 class SpectralClustering(BaseEstimator, ClusterMixin):
@@ -344,8 +344,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         Affinity matrix used for clustering. Available only if after calling
         ``fit``.
 
-    `labels_` :
-        Labels of each point
+    `classes_` :
+        classes of each point
 
     Notes
     -----
@@ -403,6 +403,12 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         self.eigen_tol = eigen_tol
         self.assign_labels = assign_labels
 
+    @property
+    @deprecated("Attribute labels_ is deprecated and "
+        "will be removed in 0.15. Use 'classes_' instead")
+    def labels_(self):
+        return self.classes_
+    
     def fit(self, X):
         """Creates an affinity matrix for X using the selected affinity,
         then applies spectral clustering to this affinity matrix.
@@ -433,7 +439,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
                              % self.affinity)
 
         random_state = check_random_state(self.random_state)
-        self.labels_ = spectral_clustering(self.affinity_matrix_,
+        self.classes_ = spectral_clustering(self.affinity_matrix_,
                                            n_clusters=self.n_clusters,
                                            eigen_solver=self.eigen_solver,
                                            random_state=random_state,

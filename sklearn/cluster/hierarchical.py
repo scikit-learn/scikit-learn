@@ -19,6 +19,7 @@ from ..externals.joblib import Memory
 from ..externals import six
 from ..metrics import euclidean_distances
 from ..utils import array2d
+from ..utils import deprecated
 from ..utils._csgraph import cs_graph_components
 
 from . import _hierarchical
@@ -96,7 +97,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
 
     # Compute the number of nodes
     if n_components is None:
-        n_components, labels = cs_graph_components(connectivity)
+        n_components, classes = cs_graph_components(connectivity)
 
     # Convert connectivity matrix to LIL with a copy if needed
     if sparse.isspmatrix_lil(connectivity) and copy:
@@ -110,7 +111,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
         warnings.warn("the number of connected components of the "
                       "connectivity matrix is %d > 1. Completing it to avoid "
                       "stopping the tree early." % n_components)
-        connectivity = _fix_connectivity(X, connectivity, n_components, labels)
+        connectivity = _fix_connectivity(X, connectivity, n_components, classes)
         n_components = 1
 
     if n_clusters is None:
@@ -204,15 +205,15 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
 ###############################################################################
 # For non fully-connected graphs
 
-def _fix_connectivity(X, connectivity, n_components, labels):
+def _fix_connectivity(X, connectivity, n_components, classes, labels=None):
     """
     Warning: modifies connectivity in place
     """
     for i in range(n_components):
-        idx_i = np.where(labels == i)[0]
+        idx_i = np.where(classes == i)[0]
         Xi = X[idx_i]
         for j in range(i):
-            idx_j = np.where(labels == j)[0]
+            idx_j = np.where(classes == j)[0]
             Xj = X[idx_j]
             D = euclidean_distances(Xi, Xj)
             ii, jj = np.where(D == np.min(D))
@@ -243,8 +244,8 @@ def _hc_cut(n_clusters, children, n_leaves):
 
     Returns
     -------
-    labels : array [n_samples]
-        cluster labels for each point
+    classes : array [n_samples]
+        cluster classes for each point
 
     """
     if n_clusters > n_leaves:
@@ -312,8 +313,8 @@ class Ward(BaseEstimator, ClusterMixin):
     `children_` : array-like, shape = [n_nodes, 2]
         List of the children of each nodes.  Leaves of the tree do not appear.
 
-    `labels_` : array [n_samples]
-        cluster labels for each point
+    `classes_` : array [n_samples]
+        cluster classes for each point
 
     `n_leaves_` : int
         Number of leaves in the hiearchical tree.
@@ -333,6 +334,12 @@ class Ward(BaseEstimator, ClusterMixin):
         self.connectivity = connectivity
         self.compute_full_tree = compute_full_tree
 
+    @property
+    @deprecated("Attribute labels_ is deprecated and "
+        "will be removed in 0.15. Use 'classes_' instead")
+    def labels_(self):
+        return self.classes_
+    
     def fit(self, X):
         """Fit the hierarchical clustering on the data
 
@@ -380,14 +387,14 @@ class Ward(BaseEstimator, ClusterMixin):
                                     copy=self.copy, n_clusters=n_clusters)
         # Cut the tree
         if compute_full_tree:
-            self.labels_ = _hc_cut(self.n_clusters, self.children_,
+            self.classes_ = _hc_cut(self.n_clusters, self.children_,
                                    self.n_leaves_)
         else:
-            labels = _hierarchical.hc_get_heads(parents, copy=False)
+            classes = _hierarchical.hc_get_heads(parents, copy=False)
             # copy to avoid holding a reference on the original array
-            labels = np.copy(labels[:n_samples])
+            classes = np.copy(classes[:n_samples])
             # Reasign cluster numbers
-            self.labels_ = np.searchsorted(np.unique(labels), labels)
+            self.classes_ = np.searchsorted(np.unique(classes), classes)
         return self
 
 
@@ -435,8 +442,8 @@ class WardAgglomeration(AgglomerationTransform, Ward):
         List of the children of each nodes.
         Leaves of the tree do not appear.
 
-    `labels_` : array [n_samples]
-        cluster labels for each point
+    `classes_` : array [n_samples]
+        cluster classes for each point
 
     `n_leaves_` : int
         Number of leaves in the hiearchical tree.
