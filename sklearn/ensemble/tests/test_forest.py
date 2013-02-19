@@ -440,7 +440,7 @@ def test_parallel_train():
         probas.append(proba)
 
     for proba1, proba2 in zip(probas, probas[1:]):
-        assert np.allclose(proba1, proba2)
+        assert_true(np.allclose(proba1, proba2))
 
 
 if __name__ == "__main__":
