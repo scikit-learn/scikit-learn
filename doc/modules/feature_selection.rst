@@ -201,7 +201,7 @@ features::
   >>> clf = ExtraTreesClassifier(random_state=0)
   >>> X_new = clf.fit(X, y).transform(X)
   >>> clf.feature_importances_
-  array([ 0.08062796,  0.03471289,  0.42329694,  0.46136221])
+  array([ 0.12604616,  0.07234783,  0.38787583,  0.41373018])
   >>> X_new.shape
   (150, 2)
 
