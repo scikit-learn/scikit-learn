@@ -396,12 +396,13 @@ def test_random_hasher():
     # test random forest hashing on circles dataset
     # make sure that it is linearly separable.
     # even after projected to two pca dimensions
-    hasher = RandomTreesEmbedding(n_estimators=30, random_state=0)
+    # Note: Not all random_states produce perfect results.
+    hasher = RandomTreesEmbedding(n_estimators=30, random_state=1)
     X, y = datasets.make_circles(factor=0.5)
     X_transformed = hasher.fit_transform(X)
 
     # test fit and transform:
-    hasher = RandomTreesEmbedding(n_estimators=30, random_state=0)
+    hasher = RandomTreesEmbedding(n_estimators=30, random_state=1)
     assert_array_equal(hasher.fit(X).transform(X).toarray(),
                        X_transformed.toarray())
 
@@ -413,6 +414,33 @@ def test_random_hasher():
     linear_clf = LinearSVC()
     linear_clf.fit(X_reduced, y)
     assert_equal(linear_clf.score(X_reduced, y), 1.)
+
+
+def test_parallel_train():
+    rng = np.random.RandomState(12321)
+    
+    X = rng.randn(100, 1000)
+    y = rng.randint(0, 2, 100)
+
+    clfs = [
+        RandomForestClassifier(n_estimators=20,
+                               n_jobs=n_jobs,
+                               random_state=12345)
+        for n_jobs in range(1, 9)
+    ]
+
+    for clf in clfs:
+        clf.fit(X, y)
+
+    X2 = rng.randn(100, 1000)
+
+    probas = []
+    for clf in clfs:
+        proba = clf.predict_proba(X2)
+        probas.append(proba)
+
+    for proba1, proba2 in zip(probas, probas[1:]):
+        assert np.allclose(proba1, proba2)
 
 
 if __name__ == "__main__":
