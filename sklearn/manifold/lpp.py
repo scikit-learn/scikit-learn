@@ -81,12 +81,12 @@ def affinity_matrix(adj_mat, kernel_func="heat", kernel_param="auto"):
     W = csr_matrix(adj_mat)
     if kernel_func == "heat":
         W.data **= 2
-        
+
         # Estimate kernel_param by the heuristics that it must correspond to
         # the variance of Gaussian distribution.
         if kernel_param == "auto":
             kernel_param = np.median(W.data)
-            
+
         np.exp(-W.data / kernel_param, W.data)
     else:
         W.data = kernel_func(W.data)
@@ -255,6 +255,13 @@ def locality_preserving_projection(X, n_neighbors, mode="distance",
     eigen vectors : ndarray, shape(n_features, k)
     eigen values : ndarray, shape(k)
     """
+
+    # fix input parameters    
+    if kernel_func == "heat" and kernel_param is None:
+        kernel_param = "auto"
+    if n_neighbors is None:
+        n_neighbors = max(int(X.shape[0] / 10), 1)
+    
     # making adjacency matrix
     W = adjacency_matrix(X, n_neighbors, mode)
     # making affinity matrix
@@ -341,7 +348,7 @@ class LocalityPreservingProjection(BaseEstimator, TransformerMixin):
         assert_all_finite(X)
         X = check_arrays(X, sparse_format='dense')[0]
         n_samples, n_features = X.shape
-        
+
         did_pca_preprocess = False
         if self.pca_preprocess:
             # PCA preprocess for removing singularity
@@ -351,26 +358,22 @@ class LocalityPreservingProjection(BaseEstimator, TransformerMixin):
                 pca_dim = self.pca_preprocess
             else:
                 pca_dim = 0.9
-            if int(pca_dim * n_features) > self.n_components:   
+            if int(pca_dim * n_features) > self.n_components:
                 _pca = PCA(n_components=pca_dim)
                 X = _pca.fit_transform(X)
                 did_pca_preprocess = True
 
-        if self.kernel_func == "heat" and self.kernel_param is None:
-            self.kernel_param = "auto"
-        if self.n_neighbors is None:
-            self.n_neighbors = max(int(X.shape[0] / 10), 1)
-        self.components_, _ = locality_preserving_projection(X, 
+        self.components_, _ = locality_preserving_projection(X,
                                   self.n_neighbors, self.mode,
                                   self.kernel_func, self.kernel_param,
                                   self.n_components, self.eigen_solver,
-                                  self.tol, self.max_iter, 
+                                  self.tol, self.max_iter,
                                   self.random_state)
 
         if did_pca_preprocess:
             self.components_ = safe_sparse_dot(_pca.components_.T,
                                                self.components_)
-            
+
         self.components_ = self.components_.T
 
 
