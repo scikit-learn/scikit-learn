@@ -56,8 +56,8 @@ def configuration(parent_package='', top_path=None):
     )
 
     config.add_extension(
-        'manifold/lpp_util',
-        sources=['manifold/lpp_util.c'],
+        'manifold/_lpp',
+        sources=['manifold/_lpp.c'],
         include_dirs=[numpy.get_include()],
         libraries=libraries,
     )

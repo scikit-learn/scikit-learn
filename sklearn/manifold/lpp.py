@@ -11,11 +11,11 @@ Created on 2012/11/27
 '''
 
 import numpy as np
-from scipy.sparse import csr_matrix, isspmatrix
+from scipy.sparse import csr_matrix
 from ..base import BaseEstimator, TransformerMixin
 from ..neighbors import kneighbors_graph
 from ..utils.extmath import safe_sparse_dot
-from ..utils import check_random_state, array2d, check_arrays
+from ..utils import check_random_state, check_arrays, assert_all_finite
 from scipy.linalg import eigh
 from ..utils.arpack import eigsh
 from ..decomposition import PCA
@@ -49,7 +49,7 @@ def adjacency_matrix(X, n_neighbors, mode='distance'):
     G = G.tolil()
     nzx, nzy = G.nonzero()
     try:
-        from .lpp_util import to_symmetrix_matrix
+        from _lpp import to_symmetrix_matrix
         G = to_symmetrix_matrix(G, nzx, nzy)
     except ImportError:
         for xx, yy in zip(nzx, nzy):
@@ -324,7 +324,7 @@ class LocalityPreservingProjection(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_neighbors=None, n_components=2, mode="distance",
                  kernel_func="heat", kernel_param="auto", eigen_solver='auto',
-                 tol=1E-6, max_iter=100, random_state=None, copy=True,
+                 tol=1E-6, max_iter=100, random_state=None,
                  pca_preprocess=0.9):
         self.n_neighbors = n_neighbors
         self.n_components = n_components
@@ -335,15 +335,11 @@ class LocalityPreservingProjection(BaseEstimator, TransformerMixin):
         self.tol = tol
         self.max_iter = max_iter
         self.random_state = random_state
-        self.copy = copy
         self.pca_preprocess = pca_preprocess
 
     def fit(self, X, y=None):
-#        print X
-#        X = array2d(X)
-#        print X
-        X = array2d(check_arrays(X, copy=self.copy, sparse_format='dense',
-                    dtype=np.float)[0])
+        assert_all_finite(X)
+        X = check_arrays(X, sparse_format='dense')[0]
         n_samples, n_features = X.shape
         
         did_pca_preprocess = False
@@ -381,4 +377,5 @@ class LocalityPreservingProjection(BaseEstimator, TransformerMixin):
         return self
 
     def transform(self, X):
+        assert_all_finite(X)
         return safe_sparse_dot(X, self.components_.T)
