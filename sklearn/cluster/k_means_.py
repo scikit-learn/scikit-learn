@@ -98,7 +98,7 @@ def _k_init(X, n_clusters, n_local_trials=None, random_state=None,
     current_pot = closest_dist_sq.sum()
 
     # Pick the remaining n_clusters-1 points
-    for c in xrange(1, n_clusters):
+    for c in range(1, n_clusters):
         # Choose center candidates by sampling with probability proportional
         # to the squared distance to the closest existing center
         rand_vals = random_state.random_sample(n_local_trials) * current_pot
@@ -112,7 +112,7 @@ def _k_init(X, n_clusters, n_local_trials=None, random_state=None,
         best_candidate = None
         best_pot = None
         best_dist_sq = None
-        for trial in xrange(n_local_trials):
+        for trial in range(n_local_trials):
             # Compute potential when including center candidate
             new_dist_sq = np.minimum(closest_dist_sq,
                                      distance_to_candidates[trial])
@@ -150,7 +150,7 @@ def _tolerance(X, tol):
 
 def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
             n_init=10, max_iter=300, verbose=False,
-            tol=1e-4, random_state=None, copy_x=True, n_jobs=1, k=None):
+            tol=1e-4, random_state=None, copy_x=True, n_jobs=1):
     """K-means clustering algorithm.
 
     Parameters
@@ -229,12 +229,6 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
 
     """
     random_state = check_random_state(random_state)
-
-    if not k is None:
-        n_clusters = k
-        warnings.warn("Parameter k has been renamed to 'n_clusters'"
-                      " and will be removed in release 0.14.",
-                      DeprecationWarning, stacklevel=2)
 
     best_inertia = np.infty
     X = as_float_array(X, copy=copy_x)
@@ -369,7 +363,7 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
     centers = _init_centroids(X, n_clusters, init, random_state=random_state,
                               x_squared_norms=x_squared_norms)
     if verbose:
-        print 'Initialization complete'
+        print('Initialization complete')
 
     # Allocate memory to store the distances for each sample to its
     # closer center for reallocation in case of ties
@@ -392,7 +386,7 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
             centers = _k_means._centers_dense(X, labels, n_clusters, distances)
 
         if verbose:
-            print 'Iteration %i, inertia %s' % (i, inertia)
+            print('Iteration %i, inertia %s' % (i, inertia))
 
         if best_inertia is None or inertia < best_inertia:
             best_labels = labels.copy()
@@ -401,7 +395,7 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
 
         if np.sum((centers_old - centers) ** 2) < tol:
             if verbose:
-                print 'Converged to similar centers at iteration', i
+                print('Converged to similar centers at iteration', i)
             break
     return best_labels, best_inertia, best_centers
 
@@ -705,21 +699,11 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         ----------
         X : array-like or sparse matrix, shape=(n_samples, n_features)
         """
-
-        if not self.k is None:
-            n_clusters = self.k
-            warnings.warn("Parameter k has been renamed by 'n_clusters'"
-                          " and will be removed in release 0.14.",
-                          DeprecationWarning, stacklevel=2)
-            self.n_clusters = n_clusters
-        else:
-            n_clusters = self.n_clusters
-
         random_state = check_random_state(self.random_state)
         X = self._check_fit_data(X)
 
         self.cluster_centers_, self.labels_, self.inertia_ = k_means(
-            X, n_clusters=n_clusters, init=self.init, n_init=self.n_init,
+            X, n_clusters=self.n_clusters, init=self.init, n_init=self.n_init,
             max_iter=self.max_iter, verbose=self.verbose,
             precompute_distances=self.precompute_distances,
             tol=self.tol, random_state=random_state, copy_x=self.copy_x,
@@ -862,7 +846,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
     # Perform label assignement to nearest centers
     nearest_center, inertia = _labels_inertia(X, x_squared_norms, centers,
                                               distances=distances)
-    if random_reassign:
+    if random_reassign and reassignment_ratio > 0:
         random_state = check_random_state(random_state)
         # Reassign clusters that have very low counts
         to_reassign = np.logical_or(
@@ -885,6 +869,8 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
             if n_reassigns:
                 print("[_mini_batch_step] Reassigning %i cluster centers."
                       % n_reassigns)
+        if sp.issparse(new_centers) and not sp.issparse(centers):
+            new_centers = new_centers.toarray()
         centers[to_reassign] = new_centers
 
     # implementation for the sparse CSR reprensation completely written in
@@ -957,14 +943,14 @@ def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
             'mean batch inertia: %f, ewa inertia: %f ' % (
                 iteration_idx + 1, n_iter, batch_inertia,
                 ewa_inertia))
-        print progress_msg
+        print(progress_msg)
 
     # Early stopping based on absolute tolerance on squared change of
     # centers postion (using EWA smoothing)
     if tol > 0.0 and ewa_diff < tol:
         if verbose:
-            print 'Converged (small centers change) at iteration %d/%d' % (
-                iteration_idx + 1, n_iter)
+            print('Converged (small centers change) at iteration %d/%d'
+                  % (iteration_idx + 1, n_iter))
         return True
 
     # Early stopping heuristic due to lack of improvement on smoothed inertia
@@ -979,9 +965,9 @@ def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
     if (model.max_no_improvement is not None
             and no_improvement >= model.max_no_improvement):
         if verbose:
-            print ('Converged (lack of improvement in inertia)'
-                   ' at iteration %d/%d' % (
-                       iteration_idx + 1, n_iter))
+            print('Converged (lack of improvement in inertia)'
+                  ' at iteration %d/%d'
+                  % (iteration_idx + 1, n_iter))
         return True
 
     # update the convergence context to maintain state across sucessive calls:
@@ -1110,11 +1096,6 @@ class MiniBatchKMeans(KMeans):
             Coordinates of the data points to cluster
         """
         random_state = check_random_state(self.random_state)
-        if self.k is not None:
-            warnings.warn("Parameter k has been replaced by 'n_clusters'"
-                          " and will be removed in release 0.14.",
-                          DeprecationWarning, stacklevel=2)
-            self.n_clusters = self.k
         X = check_arrays(X, sparse_format="csr", copy=False,
                          check_ccontiguous=True, dtype=np.float64)[0]
         n_samples, n_features = X.shape
@@ -1160,8 +1141,8 @@ class MiniBatchKMeans(KMeans):
         best_inertia = None
         for init_idx in range(self.n_init):
             if self.verbose:
-                print "Init %d/%d with method: %s" % (
-                    init_idx + 1, self.n_init, self.init)
+                print("Init %d/%d with method: %s"
+                      % (init_idx + 1, self.n_init, self.init))
             counts = np.zeros(self.n_clusters, dtype=np.int32)
 
             # TODO: once the `k_means` function works with sparse input we
@@ -1186,8 +1167,8 @@ class MiniBatchKMeans(KMeans):
             _, inertia = _labels_inertia(X_valid, x_squared_norms_valid,
                                          cluster_centers)
             if self.verbose:
-                print "Inertia for init %d/%d: %f" % (
-                    init_idx + 1, self.n_init, inertia)
+                print("Inertia for init %d/%d: %f"
+                      % (init_idx + 1, self.n_init, inertia))
             if best_inertia is None or inertia < best_inertia:
                 self.cluster_centers_ = cluster_centers
                 self.counts_ = counts
@@ -1198,8 +1179,7 @@ class MiniBatchKMeans(KMeans):
 
         # Perform the iterative optimization until the final convergence
         # criterion
-        for iteration_idx in xrange(n_iter):
-
+        for iteration_idx in range(n_iter):
             # Sample a minibatch from the full dataset
             minibatch_indices = random_state.random_integers(
                 0, n_samples - 1, self.batch_size)
@@ -1229,7 +1209,7 @@ class MiniBatchKMeans(KMeans):
 
         if self.compute_labels:
             if self.verbose:
-                print 'Computing label assignements and total inertia'
+                print('Computing label assignements and total inertia')
             self.labels_, self.inertia_ = _labels_inertia(
                 X, x_squared_norms, self.cluster_centers_)
 
