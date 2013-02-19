@@ -357,7 +357,7 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         n_jobs, n_trees, _ = _partition_trees(self)
 
         # Precalculate the random states
-        seeds = [random_state.randint(MAX_INT, size=n_trees[i]) for i in xrange(len(n_trees))]
+        seeds = [random_state.randint(MAX_INT, size=i) for i in n_trees]
 
         # Parallel loop
         all_trees = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
