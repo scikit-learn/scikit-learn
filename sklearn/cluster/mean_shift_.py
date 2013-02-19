@@ -263,13 +263,13 @@ class MeanShift(BaseEstimator, ClusterMixin):
         self.cluster_all = cluster_all
         self.cluster_centers_ = None
         self.classes_ = None
-    
+
     @property
     @deprecated("Attribute labels_ is deprecated and "
-        "will be removed in 0.15. Use 'classes_' instead")
+                "will be removed in 0.15. Use 'classes_' instead")
     def labels_(self):
         return self.classes_
-    
+
     def fit(self, X):
         """ Compute MeanShift
 

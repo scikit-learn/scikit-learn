@@ -268,7 +268,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
 
     if assign_labels == 'kmeans':
         _, classes, _ = k_means(maps, n_clusters, random_state=random_state,
-                               n_init=n_init)
+                                n_init=n_init)
     else:
         classes = discretize(maps, random_state=random_state)
 
@@ -405,10 +405,10 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     @property
     @deprecated("Attribute labels_ is deprecated and "
-        "will be removed in 0.15. Use 'classes_' instead")
+                "will be removed in 0.15. Use 'classes_' instead")
     def labels_(self):
         return self.classes_
-    
+
     def fit(self, X):
         """Creates an affinity matrix for X using the selected affinity,
         then applies spectral clustering to this affinity matrix.
@@ -440,12 +440,12 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
         random_state = check_random_state(self.random_state)
         self.classes_ = spectral_clustering(self.affinity_matrix_,
-                                           n_clusters=self.n_clusters,
-                                           eigen_solver=self.eigen_solver,
-                                           random_state=random_state,
-                                           n_init=self.n_init,
-                                           eigen_tol=self.eigen_tol,
-                                           assign_labels=self.assign_labels)
+                                            n_clusters=self.n_clusters,
+                                            eigen_solver=self.eigen_solver,
+                                            random_state=random_state,
+                                            n_init=self.n_init,
+                                            eigen_tol=self.eigen_tol,
+                                            assign_labels=self.assign_labels)
         return self
 
     @property

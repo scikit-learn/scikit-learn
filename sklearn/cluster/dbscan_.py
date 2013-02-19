@@ -14,6 +14,7 @@ from ..metrics import pairwise_distances
 from ..utils import check_random_state
 from ..utils import deprecated
 
+
 def dbscan(X, eps=0.5, min_samples=5, metric='euclidean',
            random_state=None):
     """Perform DBSCAN clustering from vector array or distance matrix.
@@ -46,7 +47,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='euclidean',
         Indices of core samples.
 
     classes : array [n_samples]
-        Cluster classes for each point.  Noisy samples are given the label -1.
+        Cluster classes for each point.  Noisy samples are given the class -1.
 
     Notes
     -----
@@ -74,8 +75,8 @@ def dbscan(X, eps=0.5, min_samples=5, metric='euclidean',
     classes = -np.ones(n)
     # A list of all core samples found.
     core_samples = []
-    # label_num is the label given to the new cluster
-    label_num = 0
+    # class_num is the class given to the new cluster
+    class_num = 0
     # Look at all samples and determine if they are core.
     # If they are then build a new cluster from them.
     for index in index_order:
@@ -83,7 +84,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='euclidean',
             # This point is already classified, or not enough for a core point.
             continue
         core_samples.append(index)
-        classes[index] = label_num
+        classes[index] = class_num
         # candidates for new core samples in the cluster.
         candidates = [index]
         while len(candidates) > 0:
@@ -93,7 +94,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='euclidean',
             for c in candidates:
                 noise = np.where(classes[neighborhoods[c]] == -1)[0]
                 noise = neighborhoods[c][noise]
-                classes[noise] = label_num
+                classes[noise] = class_num
                 for neighbor in noise:
                     # check if its a core point as well
                     if len(neighborhoods[neighbor]) >= min_samples:
@@ -104,7 +105,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='euclidean',
             candidates = new_candidates
         # Current cluster finished.
         # Next core point found will start a new cluster.
-        label_num += 1
+        class_num += 1
     return core_samples, classes
 
 
@@ -143,7 +144,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
     `classes_` : array, shape = [n_samples]
         Cluster classes for each point in the dataset given to fit().
-        Noisy samples are given the label -1.
+        Noisy samples are given the class -1.
 
     Notes
     -----
@@ -163,13 +164,13 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         self.min_samples = min_samples
         self.metric = metric
         self.random_state = random_state
-    
+
     @property
     @deprecated("Attribute labels_ is deprecated and "
-        "will be removed in 0.15. Use 'classes_' instead")
+                "will be removed in 0.15. Use 'classes_' instead")
     def labels_(self):
         return self.classes_
-    
+
     def fit(self, X):
         """Perform DBSCAN clustering from vector array or distance matrix.
 

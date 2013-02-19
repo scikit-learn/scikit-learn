@@ -111,7 +111,8 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
         warnings.warn("the number of connected components of the "
                       "connectivity matrix is %d > 1. Completing it to avoid "
                       "stopping the tree early." % n_components)
-        connectivity = _fix_connectivity(X, connectivity, n_components, classes)
+        connectivity = _fix_connectivity(X, connectivity,
+                                         n_components, classes)
         n_components = 1
 
     if n_clusters is None:
@@ -264,10 +265,10 @@ def _hc_cut(n_clusters, children, n_leaves):
         # Insert the 2 children and remove the largest node
         heappush(nodes, -these_children[0])
         heappushpop(nodes, -these_children[1])
-    label = np.zeros(n_leaves, dtype=np.int)
+    class_ = np.zeros(n_leaves, dtype=np.int)
     for i, node in enumerate(nodes):
-        label[_hierarchical._hc_get_descendent(-node, children, n_leaves)] = i
-    return label
+        class_[_hierarchical._hc_get_descendent(-node, children, n_leaves)] = i
+    return class_
 
 
 ###############################################################################
@@ -336,10 +337,10 @@ class Ward(BaseEstimator, ClusterMixin):
 
     @property
     @deprecated("Attribute labels_ is deprecated and "
-        "will be removed in 0.15. Use 'classes_' instead")
+                "will be removed in 0.15. Use 'classes_' instead")
     def labels_(self):
         return self.classes_
-    
+
     def fit(self, X):
         """Fit the hierarchical clustering on the data
 
@@ -388,7 +389,7 @@ class Ward(BaseEstimator, ClusterMixin):
         # Cut the tree
         if compute_full_tree:
             self.classes_ = _hc_cut(self.n_clusters, self.children_,
-                                   self.n_leaves_)
+                                    self.n_leaves_)
         else:
             classes = _hierarchical.hc_get_heads(parents, copy=False)
             # copy to avoid holding a reference on the original array

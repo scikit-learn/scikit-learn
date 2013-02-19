@@ -244,13 +244,13 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
         self.verbose = verbose
         self.preference = preference
         self.affinity = affinity
-    
+
     @property
     @deprecated("Attribute labels_ is deprecated and "
-        "will be removed in 0.15. Use 'classes_' instead")
+                "will be removed in 0.15. Use 'classes_' instead")
     def labels_(self):
         return self.classes_
-    
+
     @property
     def _pairwise(self):
         return self.affinity is "precomputed"
