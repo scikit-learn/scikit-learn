@@ -112,48 +112,6 @@ def _parallel_build_trees(n_trees, forest, X, y, sample_weight,
     return trees
 
 
-def _parallel_predict_proba(trees, X, n_classes, n_outputs):
-    """Private function used to compute a batch of predictions within a job."""
-    n_samples = X.shape[0]
-
-    if n_outputs == 1:
-        proba = np.zeros((n_samples, n_classes))
-
-        for tree in trees:
-            proba_tree = tree.predict_proba(X)
-
-            if n_classes == tree.n_classes_:
-                proba += proba_tree
-
-            else:
-                for j, c in enumerate(tree.classes_):
-                    proba[:, c] += proba_tree[:, j]
-
-    else:
-        proba = []
-
-        for k in xrange(n_outputs):
-            proba.append(np.zeros((n_samples, n_classes[k])))
-
-        for tree in trees:
-            proba_tree = tree.predict_proba(X)
-
-            for k in xrange(n_outputs):
-                if n_classes[k] == tree.n_classes_[k]:
-                    proba[k] += proba_tree[k]
-
-                else:
-                    for j, c in enumerate(tree.classes_[k]):
-                        proba[k][:, c] += proba_tree[k][:, j]
-
-    return proba
-
-
-def _parallel_predict_regression(trees, X):
-    """Private function used to compute a batch of predictions within a job."""
-    return sum(tree.predict(X) for tree in trees)
-
-
 def _partition_trees(forest):
     """Private function used to partition trees between jobs."""
     # Compute the number of jobs
@@ -566,17 +524,40 @@ class ForestClassifier(BaseForest, ClassifierMixin):
         if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
             X = array2d(X, dtype=DTYPE)
 
-        # Running with n_jobs > 1 is slower
-        proba = _parallel_predict_proba(
-                self.estimators_,
-                X,
-                self.n_classes_,
-                self.n_outputs_)
+        n_samples = X.shape[0]
 
         if self.n_outputs_ == 1:
+            proba = np.zeros((n_samples, self.n_classes_))
+
+            for tree in self.estimators_:
+                proba_tree = tree.predict_proba(X)
+
+                if self.n_classes_ == tree.n_classes_:
+                    proba += proba_tree
+
+                else:
+                    for j, c in enumerate(tree.classes_):
+                        proba[:, c] += proba_tree[:, j]
+
             proba /= self.n_estimators
 
         else:
+            proba = []
+
+            for k in xrange(self.n_outputs_):
+                proba.append(np.zeros((n_samples, self.n_classes_[k])))
+
+            for tree in self.estimators_:
+                proba_tree = tree.predict_proba(X)
+
+                for k in xrange(self.n_outputs_):
+                    if self.n_classes_[k] == tree.n_classes_[k]:
+                        proba[k] += proba_tree[k]
+
+                    else:
+                        for j, c in enumerate(tree.classes_[k]):
+                            proba[k][:, c] += proba_tree[k][:, j]
+
             for k in xrange(self.n_outputs_):
                 proba[k] /= self.n_estimators
 
@@ -662,9 +643,8 @@ class ForestRegressor(BaseForest, RegressorMixin):
         if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
             X = array2d(X, dtype=DTYPE)
 
-        y_hat = _parallel_predict_regression(self.estimators_, X)
+        y_hat = sum(tree.predict(X) for tree in self.estimators_)
         y_hat /= self.n_estimators
-
         return y_hat
 
 
