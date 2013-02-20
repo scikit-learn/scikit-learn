@@ -83,16 +83,25 @@ def test_ward_clustering():
     clustering = Ward(n_clusters=10, connectivity=connectivity,
                       memory=mkdtemp())
     clustering.fit(X)
-    labels = clustering.labels_
-    assert_true(np.size(np.unique(labels)) == 10)
+    #Check labels deprecation
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        _ = clustering.labels_
+        # Verify some things
+        assert len(w) == 1
+        assert issubclass(w[-1].category, DeprecationWarning)
+        assert "deprecated" in str(w[-1].message)
+
+    classes = clustering.classes_
+    assert_true(np.size(np.unique(classes)) == 10)
     # Check that we obtain the same solution with early-stopping of the
     # tree building
     clustering.compute_full_tree = False
     clustering.fit(X)
-    np.testing.assert_array_equal(clustering.labels_, labels)
+    np.testing.assert_array_equal(clustering.classes_, classes)
     clustering.connectivity = None
     clustering.fit(X)
-    assert_true(np.size(np.unique(clustering.labels_)) == 10)
+    assert_true(np.size(np.unique(clustering.classes_)) == 10)
     # Check that we raise a TypeError on dense matrices
     clustering = Ward(n_clusters=10,
                       connectivity=connectivity.todense())
@@ -113,7 +122,15 @@ def test_ward_agglomeration():
     connectivity = grid_to_graph(*mask.shape)
     ward = WardAgglomeration(n_clusters=5, connectivity=connectivity)
     ward.fit(X)
-    assert_true(np.size(np.unique(ward.labels_)) == 5)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        _ = ward.labels_
+        # Verify some things
+        assert len(w) == 1
+        assert issubclass(w[-1].category, DeprecationWarning)
+        assert "deprecated" in str(w[-1].message)
+
+    assert_true(np.size(np.unique(ward.classes_)) == 5)
 
     Xred = ward.transform(X)
     assert_true(Xred.shape[1] == 5)
