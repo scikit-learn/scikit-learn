@@ -23,6 +23,7 @@ from ..utils import check_arrays
 from ..utils import check_random_state
 from ..utils import atleast2d_or_csr
 from ..utils import as_float_array
+from ..utils import deprecated
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 
@@ -219,8 +220,8 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
     centroid : float ndarray with shape (k, n_features)
         Centroids found at the last iteration of k-means.
 
-    label : integer ndarray with shape (n_samples,)
-        label[i] is the code or index of the centroid the
+    class_ : integer ndarray with shape (n_samples,)
+        class_[i] is the code or index of the centroid the
         i'th observation is closest to.
 
     inertia : float
@@ -347,8 +348,8 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
     centroid: float ndarray with shape (k, n_features)
         Centroids found at the last iteration of k-means.
 
-    label: integer ndarray with shape (n_samples,)
-        label[i] is the code or index of the centroid the
+    class_: integer ndarray with shape (n_samples,)
+        class_[i] is the code or index of the centroid the
         i'th observation is closest to.
 
     inertia: float
@@ -450,7 +451,7 @@ def _labels_inertia(X, x_squared_norms, centers,
 
     Returns
     -------
-    labels: int array of shape(n)
+    classes: int array of shape(n)
         The resulting assignment
 
     inertia: float
@@ -459,19 +460,19 @@ def _labels_inertia(X, x_squared_norms, centers,
     n_samples = X.shape[0]
     # set the default value of centers to -1 to be able to detect any anomaly
     # easily
-    labels = - np.ones(n_samples, np.int32)
+    classes = - np.ones(n_samples, np.int32)
     if distances is None:
         distances = np.zeros(shape=(0,), dtype=np.float64)
     if sp.issparse(X):
         inertia = _k_means._assign_labels_csr(
-            X, x_squared_norms, centers, labels, distances=distances)
+            X, x_squared_norms, centers, classes, distances=distances)
     else:
         if precompute_distances:
             return _labels_inertia_precompute_dense(X, x_squared_norms,
                                                     centers)
         inertia = _k_means._assign_labels_array(
-            X, x_squared_norms, centers, labels, distances=distances)
-    return labels, inertia
+            X, x_squared_norms, centers, classes, distances=distances)
+    return classes, inertia
 
 
 def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
@@ -611,8 +612,8 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     `cluster_centers_`: array, [n_clusters, n_features]
         Coordinates of cluster centers
 
-    `labels_`:
-        Labels of each point
+    `classes_`:
+        classes of each point
 
     `inertia_`: float
         The value of the inertia criterion associated with the chosen
@@ -664,6 +665,12 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         self.copy_x = copy_x
         self.n_jobs = n_jobs
 
+    @property
+    @deprecated("Attribute labels_ is deprecated and "
+                "will be removed in 0.15. Use 'classes_' instead")
+    def labels_(self):
+        return self.classes_
+
     def _check_fit_data(self, X):
         """Verify that the number of samples given is larger than k"""
         X = atleast2d_or_csr(X, dtype=np.float64)
@@ -702,7 +709,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         random_state = check_random_state(self.random_state)
         X = self._check_fit_data(X)
 
-        self.cluster_centers_, self.labels_, self.inertia_ = k_means(
+        self.cluster_centers_, self.classes_, self.inertia_ = k_means(
             X, n_clusters=self.n_clusters, init=self.init, n_init=self.n_init,
             max_iter=self.max_iter, verbose=self.verbose,
             precompute_distances=self.precompute_distances,
@@ -716,7 +723,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         Convenience method; equivalent to calling fit(X) followed by
         predict(X).
         """
-        return self.fit(X).labels_
+        return self.fit(X).classes_
 
     def fit_transform(self, X, y=None):
         """Compute clustering and transform X to cluster-distance space.
@@ -1056,8 +1063,8 @@ class MiniBatchKMeans(KMeans):
     `cluster_centers_`: array, [n_clusters, n_features]
         Coordinates of cluster centers
 
-    `labels_`:
-        Labels of each point (if compute_labels is set to True).
+    `classes_`:
+        classes of each point (if compute_labels is set to True).
 
     `inertia_`: float
         The value of the inertia criterion associated with the chosen
@@ -1086,6 +1093,12 @@ class MiniBatchKMeans(KMeans):
         self.compute_labels = compute_labels
         self.init_size = init_size
         self.reassignment_ratio = reassignment_ratio
+
+    @property
+    @deprecated("Attribute labels_ is deprecated and "
+                "will be removed in 0.15. Use 'classes_' instead")
+    def labels_(self):
+        return self.classes_
 
     def fit(self, X, y=None):
         """Compute the centroids on X by chunking it into mini-batches.
@@ -1210,7 +1223,7 @@ class MiniBatchKMeans(KMeans):
         if self.compute_labels:
             if self.verbose:
                 print('Computing label assignements and total inertia')
-            self.labels_, self.inertia_ = _labels_inertia(
+            self.classes_, self.inertia_ = _labels_inertia(
                 X, x_squared_norms, self.cluster_centers_)
 
         return self
@@ -1260,7 +1273,7 @@ class MiniBatchKMeans(KMeans):
                          verbose=self.verbose)
 
         if self.compute_labels:
-            self.labels_, self.inertia_ = _labels_inertia(
+            self.classes_, self.inertia_ = _labels_inertia(
                 X, x_squared_norms, self.cluster_centers_)
 
         return self

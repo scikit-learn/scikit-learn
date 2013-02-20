@@ -3,6 +3,7 @@ Tests for DBSCAN clustering algorithm
 """
 
 import pickle
+import warnings
 
 import numpy as np
 from scipy.spatial import distance
@@ -25,17 +26,27 @@ def test_dbscan_similarity():
     D = distance.squareform(distance.pdist(X))
     D /= np.max(D)
     # Compute DBSCAN
-    core_samples, labels = dbscan(D, metric="precomputed", eps=eps,
-                                  min_samples=min_samples)
+    core_samples, classes = dbscan(D, metric="precomputed", eps=eps,
+                                   min_samples=min_samples)
     # number of clusters, ignoring noise if present
-    n_clusters_1 = len(set(labels)) - (1 if -1 in labels else 0)
+    n_clusters_1 = len(set(classes)) - (1 if -1 in classes else 0)
 
     assert_equal(n_clusters_1, n_clusters)
 
     db = DBSCAN(metric="precomputed", eps=eps, min_samples=min_samples)
-    labels = db.fit(D).labels_
+    classes = db.fit(D).classes_
 
-    n_clusters_2 = len(set(labels)) - int(-1 in labels)
+    #Test for deprecations of labels_
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        _ = db.fit(D).labels_
+        # Verify some things
+        print w
+        assert len(w) == 1
+        assert issubclass(w[-1].category, DeprecationWarning)
+        assert "deprecated" in str(w[-1].message)
+
+    n_clusters_2 = len(set(classes)) - int(-1 in classes)
     assert_equal(n_clusters_2, n_clusters)
 
 
@@ -48,17 +59,17 @@ def test_dbscan_feature():
     metric = 'euclidean'
     # Compute DBSCAN
     # parameters chosen for task
-    core_samples, labels = dbscan(X, metric=metric, eps=eps,
-                                  min_samples=min_samples)
+    core_samples, classes = dbscan(X, metric=metric, eps=eps,
+                                   min_samples=min_samples)
 
     # number of clusters, ignoring noise if present
-    n_clusters_1 = len(set(labels)) - int(-1 in labels)
+    n_clusters_1 = len(set(classes)) - int(-1 in classes)
     assert_equal(n_clusters_1, n_clusters)
 
     db = DBSCAN(metric=metric, eps=eps, min_samples=min_samples)
-    labels = db.fit(X).labels_
+    classes = db.fit(X).classes_
 
-    n_clusters_2 = len(set(labels)) - int(-1 in labels)
+    n_clusters_2 = len(set(classes)) - int(-1 in classes)
     assert_equal(n_clusters_2, n_clusters)
 
 
@@ -72,17 +83,17 @@ def test_dbscan_callable():
     metric = distance.euclidean
     # Compute DBSCAN
     # parameters chosen for task
-    core_samples, labels = dbscan(X, metric=metric, eps=eps,
-                                  min_samples=min_samples)
+    core_samples, classes = dbscan(X, metric=metric, eps=eps,
+                                   min_samples=min_samples)
 
     # number of clusters, ignoring noise if present
-    n_clusters_1 = len(set(labels)) - int(-1 in labels)
+    n_clusters_1 = len(set(classes)) - int(-1 in classes)
     assert_equal(n_clusters_1, n_clusters)
 
     db = DBSCAN(metric=metric, eps=eps, min_samples=min_samples)
-    labels = db.fit(X).labels_
+    classes = db.fit(X).classes_
 
-    n_clusters_2 = len(set(labels)) - int(-1 in labels)
+    n_clusters_2 = len(set(classes)) - int(-1 in classes)
     assert_equal(n_clusters_2, n_clusters)
 
 
