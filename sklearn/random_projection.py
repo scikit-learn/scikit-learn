@@ -130,7 +130,7 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
 
 def _check_density(density, n_features):
     """Factorize density check according to Li et al."""
-    if density is 'auto':
+    if density == 'auto':
         density = 1 / np.sqrt(n_features)
 
     elif density <= 0 or density > 1:
