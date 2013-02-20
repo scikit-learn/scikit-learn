@@ -364,6 +364,7 @@ def test_randomized_search():
     params = dict(C=distributions.expon())
     search = RandomizedSearchCV(LinearSVC(), param_distributions=params)
     search.fit(X, y)
+    assert_equal(len(search.cv_scores_), 10)
 
 
 def test_grid_search_score_consistency():

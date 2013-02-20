@@ -36,29 +36,32 @@ clf = RandomForestClassifier(n_estimators=20)
 
 # specify parameters and distributions to sample from
 param_dist = {"max_depth": randint(1, 5), "max_features": randint(1, 4),
-    "min_samples_split": randint(1, 5), "min_samples_leaf": randint(1, 5),
-    "bootstrap": [True, False], "criterion": ["gini",  "entropy"]}
+              "min_samples_split": randint(1, 5), "min_samples_leaf":
+              randint(1, 5), "bootstrap": [True, False],
+              "criterion": ["gini", "entropy"]}
 
 # run randomized search
 random_search = RandomizedSearchCV(clf, param_distributions=param_dist,
-        n_iter=20)
+                                   n_iter=20)
 
 start = time()
 random_search.fit(X, y)
 print("RandomizedSearchCV took %.2f seconds for 20 iterations."
-        % (time() - start))
+      % (time() - start))
 print("Best score: %f" % random_search.best_score_)
 print("Best parameters: %s" % repr(random_search.best_params_))
 
 # use a full grid over all parameters
 param_grid = {"max_depth": range(1, 5), "max_features": range(1, 4),
-    "min_samples_split": range(1, 5), "min_samples_leaf": range(1, 5),
-    "bootstrap": [True, False], "criterion": ["gini",  "entropy"]}
+              "min_samples_split": range(1, 5),
+              "min_samples_leaf": range(1, 5), "bootstrap": [True, False],
+              "criterion": ["gini",  "entropy"]}
 
 # run grid search
 grid_search = GridSearchCV(clf, param_grid=param_grid)
 grid_search.fit(X, y)
 
-print("GridSearchCV took %.2f seconds." % (time() - start))
+print("GridSearchCV took %.2f seconds for %d parameter settings."
+      % (time() - start, len(grid_search.cv_scores_)))
 print("Best score: %f" % grid_search.best_score_)
 print("Best parameters: %s" % repr(grid_search.best_params_))
