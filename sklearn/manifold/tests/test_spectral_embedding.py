@@ -154,7 +154,7 @@ def test_pipline_spectral_clustering(seed=36):
         km.fit(se.fit_transform(S))
         assert_array_almost_equal(
             normalized_mutual_info_score(
-                km.labels_,
+                km.classes_,
                 true_labels), 1.0, 2)
 
 
