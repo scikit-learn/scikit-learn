@@ -418,7 +418,6 @@ def test_random_hasher():
 
 def test_parallel_train():
     rng = np.random.RandomState(12321)
-    
     X = rng.randn(100, 1000)
     y = rng.randint(0, 2, 100)
 
