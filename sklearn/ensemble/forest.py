@@ -788,7 +788,9 @@ class RandomForestClassifier(ForestClassifier):
 
     `oob_decision_function_` : array of shape = [n_samples, n_classes]
         Decision function computed with out-of-bag estimate on the training
-        set.
+        set. If n_estimators is small it might be possible that a data point
+        was never left out during the bootstrap. In this case,
+        `oob_decision_function_` might contain NaN.
 
     References
     ----------
@@ -1064,7 +1066,9 @@ class ExtraTreesClassifier(ForestClassifier):
 
     `oob_decision_function_` : array of shape = [n_samples, n_classes]
         Decision function computed with out-of-bag estimate on the training
-        set.
+        set. If n_estimators is small it might be possible that a data point
+        was never left out during the bootstrap. In this case,
+        `oob_decision_function_` might contain NaN.
 
     References
     ----------
