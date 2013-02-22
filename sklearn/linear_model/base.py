@@ -197,7 +197,8 @@ class LinearClassifierMixin(ClassifierMixin):
             raise ValueError("X has %d features per sample; expecting %d"
                              % (X.shape[1], n_features))
 
-        scores = safe_sparse_dot(X, self.coef_.T) + self.intercept_
+        scores = safe_sparse_dot(X, self.coef_.T,
+                                 dense_output=True) + self.intercept_
         return scores.ravel() if scores.shape[1] == 1 else scores
 
     def predict(self, X):
