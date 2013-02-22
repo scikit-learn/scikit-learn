@@ -755,8 +755,8 @@ class RandomForestClassifier(ForestClassifier):
         the generalization error.
 
     n_jobs : integer, optional (default=1)
-        The number of jobs to run in parallel. If -1, then the number of jobs
-        is set to the number of cores.
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        If -1, then the number of jobs is set to the number of cores.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -897,8 +897,8 @@ class RandomForestRegressor(ForestRegressor):
         the generalization error.
 
     n_jobs : integer, optional (default=1)
-        The number of jobs to run in parallel. If -1, then the number of jobs
-        is set to the number of cores.
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        If -1, then the number of jobs is set to the number of cores.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1031,8 +1031,8 @@ class ExtraTreesClassifier(ForestClassifier):
         the generalization error.
 
     n_jobs : integer, optional (default=1)
-        The number of jobs to run in parallel. If -1, then the number of jobs
-        is set to the number of cores.
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        If -1, then the number of jobs is set to the number of cores.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1178,8 +1178,8 @@ class ExtraTreesRegressor(ForestRegressor):
         the generalization error.
 
     n_jobs : integer, optional (default=1)
-        The number of jobs to run in parallel. If -1, then the number of jobs
-        is set to the number of cores.
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        If -1, then the number of jobs is set to the number of cores.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1290,8 +1290,8 @@ class RandomTreesEmbedding(BaseForest):
         sample masks).
 
     n_jobs : integer, optional (default=1)
-        The number of jobs to run in parallel. If -1, then the number of jobs
-        is set to the number of cores.
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        If -1, then the number of jobs is set to the number of cores.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
