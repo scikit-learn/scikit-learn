@@ -1198,7 +1198,7 @@ cdef class ClassificationCriterion(Criterion):
         cdef int k = 0
         cdef int c = 0
         cdef int j = 0
-        cdef DTYPE_t w = 1.0
+        cdef DOUBLE_t w = 1.0
 
         self.n_samples = n_samples
         self.weighted_n_samples = weighted_n_samples
