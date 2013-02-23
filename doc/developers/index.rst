@@ -350,6 +350,12 @@ In addition, we add the following guidelines:
 
     * Use relative imports for references inside scikit-learn.
 
+    * Unit tests are an exception to the previous rule;
+      they should use absolute imports, exactly as client code would.
+      A corollary is that, if ``sklearn.foo`` exports a class or function
+      that is implemented in ``sklearn.foo.bar.baz``,
+      the test should import it from ``sklearn.foo``.
+
     * **Please don't use `import *` in any case**. It is considered harmful
       by the `official Python recommendations
       <http://docs.python.org/howto/doanddont.html#from-module-import>`_.
@@ -621,5 +627,31 @@ advised to maintain notes on the `GitHub wiki
 Specific models
 ---------------
 
+Classifiers should accept ``y`` (target) arguments to ``fit``
+that are sequences (lists, arrays) of either strings or integers.
+They should not assume that the class labels
+are a contiguous range of integers;
+instead, they should store a list of classes
+in a ``classes_`` attribute or property.
+The order of class labels in this attribute
+should match the order in which ``predict_proba``, ``predict_log_proba``
+and ``decision_function`` return their values.
+The easiest way to achieve this is to put::
+
+    self.classes_ = np.unique(y)
+
+in ``fit``.
+
+A classifier's ``predict`` method should return
+arrays containing class labels from ``classes_``.
+In a classifier that implements ``decision_function``,
+this can be achieved with::
+
+    def predict(self, X):
+        D = self.decision_function(X)
+        return self.classes_[np.argmax(D, axis=1)]
+
 In linear models, coefficients are stored in an array called ``coef_``,
 and the independent term is stored in ``intercept_``.
+``sklearn.linear_model.base`` contains a few base classes and mixins
+that implement common linear model patterns.
