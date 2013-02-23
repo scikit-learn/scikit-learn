@@ -541,7 +541,7 @@ def roc_curve(y_true, y_score, pos_label=None):
 ###############################################################################
 # Multiclass general function
 ###############################################################################
-def confusion_matrix(y_true, y_pred, labels=None):
+def confusion_matrix(y_true, y_pred, classes=None, labels=None):
     """Compute confusion matrix to evaluate the accuracy of a classification
 
     By definition a confusion matrix :math:`C` is such that :math:`C_{i, j}`
@@ -556,8 +556,8 @@ def confusion_matrix(y_true, y_pred, labels=None):
     y_pred : array, shape = [n_samples]
         Estimated targets as returned by a classifier.
 
-    labels : array, shape = [n_classes]
-        List of all labels occuring in the dataset.
+    classes : array, shape = [n_classes]
+        List of all classes occuring in the dataset.
         If none is given, those that appear at least once
         in ``y_true`` or ``y_pred`` are used.
 
@@ -582,9 +582,17 @@ def confusion_matrix(y_true, y_pred, labels=None):
 
     """
     if labels is None:
-        labels = unique_labels(y_true, y_pred)
+        if classes is not None:
+            labels = np.asarray(classes, dtype=np.int)
+        else:
+            labels = unique_labels(y_true, y_pred)
     else:
-        labels = np.asarray(labels, dtype=np.int)
+        warnings.warn("Parameter 'labels' is deprecated"
+                      " and will be removed in 0.15. "
+                      "Please use 'classes' instead",
+                      DeprecationWarning)
+        classes = labels
+        labels = np.asarray(classes, dtype=np.int)
 
     n_labels = labels.size
     label_to_ind = dict((y, x) for x, y in enumerate(labels))
@@ -726,7 +734,8 @@ def accuracy_score(y_true, y_pred):
     return np.mean(y_pred == y_true)
 
 
-def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
+def f1_score(y_true, y_pred, classes=None, labels=None,
+             pos_label=1, average='weighted'):
     """Compute the F1 score, also known as balanced F-score or F-measure
 
     The F1 score can be interpreted as a weighted average of the precision and
@@ -747,8 +756,8 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     y_pred : array, shape = [n_samples]
         Estimated targets as returned by a classifier.
 
-    labels : array
-        Integer array of labels.
+    classes : array
+        Integer array of classes.
 
     pos_label : int
         In the binary classification case, give the label of the positive class
@@ -806,11 +815,17 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     array([ 0.8,  0. ,  0. ])
 
     """
-    return fbeta_score(y_true, y_pred, 1, labels=labels,
+    if labels is not None:
+        warnings.warn("Parameter 'labels' is deprecated"
+                      " and will be removed in 0.15."
+                      "Please use 'classes' instead", DeprecationWarning)
+        classes = labels
+
+    return fbeta_score(y_true, y_pred, 1, classes=classes,
                        pos_label=pos_label, average=average)
 
 
-def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
+def fbeta_score(y_true, y_pred, beta, classes=None, labels=None, pos_label=1,
                 average='weighted'):
     """Compute the F-beta score
 
@@ -833,8 +848,8 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     beta: float
         Weight of precision in harmonic mean.
 
-    labels : array
-        Integer array of labels.
+    classes : array
+        Integer array of classes.
 
     pos_label : int
         In the binary classification case, give the label of the positive class
@@ -905,16 +920,23 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     array([ 0.71...,  0.        ,  0.        ])
 
     """
+
+    if labels is not None:
+        warnings.warn("Parameter 'labels' is deprecated"
+                      " and will be removed in 0.15."
+                      "Please use 'classes' instead", DeprecationWarning)
+        classes = labels
+
     _, _, f, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  beta=beta,
-                                                 labels=labels,
+                                                 classes=classes,
                                                  pos_label=pos_label,
                                                  average=average)
     return f
 
 
-def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
-                                    pos_label=1, average=None):
+def precision_recall_fscore_support(y_true, y_pred, beta=1.0, classes=None,
+                                    labels=None,  pos_label=1, average=None):
     """Compute precision, recall, F-measure and support for each class
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
@@ -950,8 +972,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     beta : float, 1.0 by default
         The strength of recall versus precision in the F-score.
 
-    labels : array
-        Integer array of labels.
+    classes : array
+        Integer array of classes.
 
     pos_label : int
         In the binary classification case, give the label of the positive class
@@ -1030,9 +1052,16 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     y_true, y_pred = check_arrays(y_true, y_pred)
     if labels is None:
-        labels = unique_labels(y_true, y_pred)
+        if classes is None:
+            labels = unique_labels(y_true, y_pred)
+        else:
+            labels = np.asarray(classes, dtype=np.int)
     else:
-        labels = np.asarray(labels, dtype=np.int)
+        warnings.warn("'labels' was renamed to classes and will "
+                      "be removed in 0.15.",
+                      DeprecationWarning)
+        classes = labels
+        labels = np.asarray(classes, dtype=np.int)
 
     n_labels = labels.size
     true_pos = np.zeros(n_labels, dtype=np.double)
@@ -1101,7 +1130,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         return avg_precision, avg_recall, avg_fscore, None
 
 
-def precision_score(y_true, y_pred, labels=None, pos_label=1,
+def precision_score(y_true, y_pred, classes=None, labels=None, pos_label=1,
                     average='weighted'):
     """Compute the precision
 
@@ -1120,8 +1149,8 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     y_pred : array, shape = [n_samples]
         Estimated targets as returned by a classifier.
 
-    labels : array
-        Integer array of labels.
+    classes : array
+        Integer array of classes.
 
     pos_label : int
         In the binary classification case, give the label of the positive class
@@ -1177,14 +1206,20 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     array([ 0.66...,  0.        ,  0.        ])
 
     """
+    if labels is not None:
+        warnings.warn("'labels' was renamed to classes and will "
+                      "be removed in 0.15.",
+                      DeprecationWarning)
+        classes = labels
     p, _, _, _ = precision_recall_fscore_support(y_true, y_pred,
-                                                 labels=labels,
+                                                 classes=classes,
                                                  pos_label=pos_label,
                                                  average=average)
     return p
 
 
-def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
+def recall_score(y_true, y_pred, classes=None, labels=None,
+                 pos_label=1, average='weighted'):
     """Compute the recall
 
     The recall is the ratio ``tp / (tp + fn)`` where ``tp`` is the number of
@@ -1201,11 +1236,11 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     y_pred : array, shape = [n_samples]
         Estimated targets as returned by a classifier.
 
-    labels : array
-        Integer array of labels.
+    classes : array
+        Integer array of classes.
 
     pos_label : int
-        In the binary classification case, give the label of the positive class
+        In the binary classification case, give the class of the positive class
         (default is 1). Everything else but ``pos_label`` is considered to
         belong to the negative class.  Set to ``None`` in the case of
         multiclass classification.
@@ -1257,6 +1292,12 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     array([ 1.,  0.,  0.])
 
     """
+    if labels is not None:
+        warnings.warn("'labels' was renamed to classes and will "
+                      "be removed in 0.15.",
+                      DeprecationWarning)
+        classes = labels
+
     _, r, _, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  labels=labels,
                                                  pos_label=pos_label,
@@ -1272,10 +1313,10 @@ def zero_one_score(y_true, y_pred):
     Parameters
     ----------
     y_true : array-like, shape = n_samples
-        Ground truth (correct) labels.
+        Ground truth (correct) classes.
 
     y_pred : array-like, shape = n_samples
-        Predicted labels, as returned by a classifier.
+        Predicted classes, as returned by a classifier.
 
     Returns
     -------
@@ -1290,7 +1331,8 @@ def zero_one_score(y_true, y_pred):
 ###############################################################################
 # Multiclass utility function
 ###############################################################################
-def classification_report(y_true, y_pred, labels=None, target_names=None):
+def classification_report(y_true, y_pred, classes=None,
+                          labels=None, target_names=None):
     """Build a text report showing the main classification metrics
 
     Parameters
@@ -1301,11 +1343,11 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
     y_pred : array, shape = [n_samples]
         Estimated targets as returned by a classifier.
 
-    labels : array, shape = [n_labels]
-        Optional list of label indices to include in the report.
+    classes : array, shape = [n_classes]
+        Optional list of classes indices to include in the report.
 
     target_names : list of strings
-        Optional display names matching the labels (same order).
+        Optional display names matching the classes (same order).
 
     Returns
     -------
@@ -1331,9 +1373,17 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
     """
 
     if labels is None:
-        labels = unique_labels(y_true, y_pred)
+        if classes is not None:
+            labels = np.asarray(classes, dtype=np.int)
+        else:
+            labels = unique_labels(y_true, y_pred)
     else:
-        labels = np.asarray(labels, dtype=np.int)
+        warnings.warn("'labels' was renamed to classes and will "
+                      "be removed in 0.15.",
+                      DeprecationWarning)
+        classes = labels
+
+        labels = np.asarray(classes, dtype=np.int)
 
     last_line_heading = 'avg / total'
 
@@ -1355,7 +1405,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
     report += '\n'
 
     p, r, f1, s = precision_recall_fscore_support(y_true, y_pred,
-                                                  labels=labels,
+                                                  classes=labels,
                                                   average=None)
 
     for i, label in enumerate(labels):

@@ -733,8 +733,13 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     return nmi
 
 
-def entropy(classes):
+def entropy(classes, labels=None):
     """Calculates the entropy for a labeling."""
+    if labels is not None:
+        warnings.warn("Parameter 'labels' is deprecated and will be "
+                      "removed in 0.15. Please use 'classes' instead",
+                      DeprecationWarning)
+        classes = labels
     if len(classes) == 0:
         return 1.0
     class_idx = unique(classes, return_inverse=True)[1]

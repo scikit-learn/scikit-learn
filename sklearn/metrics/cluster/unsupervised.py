@@ -76,7 +76,8 @@ def silhouette_score(X, classes, labels=None, metric='euclidean',
     """
     if labels is not None:
         warnings.warn("Parameter 'labels' is deprecated and will be "
-                      "removed in 0.15. Please use 'classes' instead")
+                      "removed in 0.15. Please use 'classes' instead",
+                      DeprecationWarning)
         classes = labels
 
     if sample_size is not None:
@@ -148,7 +149,8 @@ def silhouette_samples(X, classes, labels=None, metric='euclidean', **kwds):
 
     if labels is not None:
         warnings.warn("Parameter 'labels' is deprecated and will"
-                      " be removed in 0.15. Please use 'classes' instead")
+                      " be removed in 0.15. Please use 'classes' instead",
+                      DeprecationWarning)
         classes = labels
 
     distances = pairwise_distances(X, metric=metric, **kwds)
@@ -186,7 +188,8 @@ def _intra_cluster_distance(distances_row, classes, i, labels=None):
     if labels is not None:
         warnings.warn("Parameter 'labels' is deprecated"
                       " and will be removed in 0.15. "
-                      "Please use 'classes' instead")
+                      "Please use 'classes' instead",
+                      DeprecationWarning)
         classes = labels
 
     mask = classes == classes[i]
