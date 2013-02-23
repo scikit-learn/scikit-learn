@@ -4,9 +4,10 @@ import scipy.sparse as sp
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import raises
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import raises
 
 from sklearn.linear_model import logistic
 from sklearn import datasets
@@ -64,7 +65,7 @@ def test_predict_3_classes():
 
 
 def test_predict_iris():
-    """Test logisic regression with the iris dataset"""
+    """Test logistic regression with the iris dataset"""
     n_samples, n_features = iris.data.shape
 
     target = iris.target_names[iris.target]
@@ -79,6 +80,29 @@ def test_predict_iris():
 
     pred = iris.target_names[probabilities.argmax(axis=1)]
     assert_greater(np.mean(pred == target), .95)
+
+
+def test_sparsify():
+    """Test sparsify and densify members."""
+    n_samples, n_features = iris.data.shape
+    target = iris.target_names[iris.target]
+    clf = logistic.LogisticRegression().fit(iris.data, target)
+
+    pred_d_d = clf.decision_function(iris.data)
+
+    clf.sparsify()
+    assert_true(sp.issparse(clf.coef_))
+    pred_s_d = clf.decision_function(iris.data)
+
+    sp_data = sp.coo_matrix(iris.data)
+    pred_s_s = clf.decision_function(sp_data)
+
+    clf.densify()
+    pred_d_s = clf.decision_function(sp_data)
+
+    assert_array_equal(pred_d_d, pred_s_d)
+    assert_array_equal(pred_d_d, pred_s_s)
+    assert_array_equal(pred_d_d, pred_d_s)
 
 
 def test_inconsistent_input():

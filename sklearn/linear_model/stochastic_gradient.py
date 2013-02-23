@@ -12,7 +12,7 @@ import warnings
 
 from ..externals.joblib import Parallel, delayed
 
-from .base import LinearClassifierMixin
+from .base import LinearClassifierMixin, SparseCoefMixin
 from ..base import BaseEstimator, RegressorMixin
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..utils import array2d, atleast2d_or_csr, check_arrays, deprecated
@@ -44,7 +44,7 @@ DEFAULT_EPSILON = 0.1
 """Default value of ``epsilon`` parameter. """
 
 
-class BaseSGD(BaseEstimator):
+class BaseSGD(BaseEstimator, SparseCoefMixin):
     """Base class for SGD classification and regression."""
 
     __metaclass__ = ABCMeta

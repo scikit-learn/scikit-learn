@@ -8,9 +8,6 @@
 Changelog
 ---------
 
-   - Hyperlinks to documentation in example code on the website by
-     `Martin Luessi`_.
-
    - :class:`grid_search.GridSearchCV` and
      :func:`cross_validation.cross_val_score` now support the use of advanced
      scoring function such as area under the ROC curve and f-beta scores.
@@ -28,6 +25,14 @@ Changelog
      are now computed on the fly when accessing  the ``feature_importances_``
      attribute. Setting ``compute_importances=True`` is no longer required.
      By `Gilles Louppe`_.
+
+   - :class:`LinearSVC`, :class:`SGDClassifier` and :class:`SGDRegressor`
+     now have a ``sparsify`` method that converts their ``coef_`` into a
+     sparse matrix, meaning stored models trained using these estimators
+     can be made much more compact.
+
+   - Hyperlinks to documentation in example code on the website by
+     `Martin Luessi`_.
 
 
 .. _changes_0_13:

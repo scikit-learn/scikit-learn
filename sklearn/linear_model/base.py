@@ -137,7 +137,8 @@ class LinearModel(BaseEstimator):
             Returns predicted values.
         """
         X = safe_asarray(X)
-        return safe_sparse_dot(X, self.coef_.T) + self.intercept_
+        return safe_sparse_dot(X, self.coef_.T,
+                               dense_output=True) + self.intercept_
 
     def predict(self, X):
         """Predict using the linear model
@@ -197,7 +198,8 @@ class LinearClassifierMixin(ClassifierMixin):
             raise ValueError("X has %d features per sample; expecting %d"
                              % (X.shape[1], n_features))
 
-        scores = safe_sparse_dot(X, self.coef_.T) + self.intercept_
+        scores = safe_sparse_dot(X, self.coef_.T,
+                                 dense_output=True) + self.intercept_
         return scores.ravel() if scores.shape[1] == 1 else scores
 
     def predict(self, X):
@@ -219,6 +221,60 @@ class LinearClassifierMixin(ClassifierMixin):
         else:
             indices = scores.argmax(axis=1)
         return self.classes_[indices]
+
+
+class SparseCoefMixin(object):
+    """Mixin for converting coef_ to and from CSR format.
+
+    L1-regularizing estimators should inherit this.
+    """
+
+    def densify(self):
+        """Convert coefficient matrix to dense array format.
+
+        Converts the ``coef_`` member (back) to a numpy.ndarray. This is the
+        default format of coef_ and is required for fitting, so calling this
+        method is only required on models that have previously been sparsified;
+        otherwise, it is a no-op.
+
+        Returns
+        -------
+        self: estimator
+        """
+        if not hasattr(self, "coef_"):
+            raise ValueError("Estimator must be fitted before densifying.")
+        if sp.issparse(self.coef_):
+            self.coef_ = self.coef_.toarray()
+        return self
+
+    def sparsify(self):
+        """Convert coefficient matrix to sparse format.
+
+        Converts the coef_ member to a scipy.sparse matrix, which for
+        L1-regularized models can be much more memory- and storage-efficient
+        than the usual numpy.ndarray representation.
+
+        The intercept_ member is not converted.
+
+        Notes
+        -----
+        For non-sparse models, i.e. when there are not many zeros in coef_,
+        this may actually *increase* memory usage, so use this method with
+        care. A rule of thumb is that the number of zero elements, which can
+        be computed with (coef_ == 0).sum(), must be more than 50% for this
+        to provide significant benefits.
+
+        After calling this method, further fitting with the partial_fit
+        method (if any) will not work until you call densify.
+
+        Returns
+        -------
+        self: estimator
+        """
+        if not hasattr(self, "coef_"):
+            raise ValueError("Estimator must be fitted before sparsifying.")
+        self.coef_ = sp.csr_matrix(self.coef_)
+        return self
 
 
 class LinearRegression(LinearModel, RegressorMixin):
