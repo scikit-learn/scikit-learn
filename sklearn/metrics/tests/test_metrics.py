@@ -316,9 +316,22 @@ def test_precision_recall_f1_score_multiclass():
     fs = f1_score(y_true, y_pred, average='weighted')
     assert_array_almost_equal(fs, 0.55, 2)
 
-    # same prediction but with and explicit label ordering
-    p, r, f, s = precision_recall_fscore_support(
+    # test deprecation for labels parameter for
+    # precision_recall_fscore_support
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        _, _, _, _ = precision_recall_fscore_support(
         y_true, y_pred, labels=[0, 2, 1], average=None)
+        # Verify some things
+        print w
+        assert len(w) == 1
+        assert issubclass(w[-1].category, DeprecationWarning)
+
+    # same prediction but with and explicit label ordering
+    # Test deprecation of "labels" for confusion matrix
+
+    p, r, f, s = precision_recall_fscore_support(
+        y_true, y_pred, classes=[0, 2, 1], average=None)
     assert_array_almost_equal(p, [0.82, 0.47, 0.55], 2)
     assert_array_almost_equal(r, [0.92, 0.90, 0.17], 2)
     assert_array_almost_equal(f, [0.87, 0.62, 0.26], 2)
@@ -370,25 +383,36 @@ def test_confusion_matrix_multiclass():
                             [5, 5, 20],
                             [0, 2, 18]])
 
+    # Test deprecation of "labels" for confusion matrix
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        _ = confusion_matrix(y_true, y_pred, labels=[0, 2, 1])
+        # Verify some things
+        print w
+        assert len(w) == 1
+        assert issubclass(w[-1].category, DeprecationWarning)
+        assert "deprecated" in str(w[-1].message)
+
     # compute confusion matrix with explicit label ordering
-    cm = confusion_matrix(y_true, y_pred, labels=[0, 2, 1])
+
+    cm = confusion_matrix(y_true, y_pred, classes=[0, 2, 1])
     assert_array_equal(cm, [[23, 0, 2],
                             [0, 18, 2],
                             [5, 20, 5]])
 
 
 def test_confusion_matrix_multiclass_subset_labels():
-    """Test confusion matrix - multi-class case with subset of labels"""
+    """Test confusion matrix - multi-class case with subset of classes"""
     y_true, y_pred, _ = make_prediction(binary=False)
 
-    # compute confusion matrix with only first two labels considered
-    cm = confusion_matrix(y_true, y_pred, labels=[0, 1])
+    # compute confusion matrix with only first two classes considered
+    cm = confusion_matrix(y_true, y_pred, classes=[0, 1])
     assert_array_equal(cm, [[23, 2],
                             [5, 5]])
 
-    # compute confusion matrix with explicit label ordering for only subset
+    # compute confusion matrix with explicit class ordering for only subset
     # of labels
-    cm = confusion_matrix(y_true, y_pred, labels=[2, 1])
+    cm = confusion_matrix(y_true, y_pred, classes=[2, 1])
     assert_array_equal(cm, [[18, 2],
                             [20, 5]])
 
@@ -408,8 +432,20 @@ def test_classification_report():
 
 avg / total       0.62      0.61      0.56        75
 """
-    report = classification_report(
+
+    # test deprecation for labels for classification_report
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        _ = classification_report(
         y_true, y_pred, labels=np.arange(len(iris.target_names)),
+        target_names=iris.target_names)
+        # Verify some things
+        print w
+        assert len(w) == 1
+        assert issubclass(w[-1].category, DeprecationWarning)
+
+    report = classification_report(
+        y_true, y_pred, classes=np.arange(len(iris.target_names)),
         target_names=iris.target_names)
     assert_equal(report, expected_report)
 
