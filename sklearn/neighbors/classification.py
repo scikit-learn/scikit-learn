@@ -283,10 +283,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         n_samples = X.shape[0]
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
-        inliers = [i for i, nind in enumerate(neigh_ind)
-                     if len(nind) != 0]
-        outliers = [i for i, nind in enumerate(neigh_ind)
-                      if len(nind) == 0]
+        inliers = [i for i, nind in enumerate(neigh_ind) if len(nind) != 0]
+        outliers = [i for i, nind in enumerate(neigh_ind) if len(nind) == 0]
 
         if self.outlier_label is not None:
             neigh_dist[outliers] = 1e-6

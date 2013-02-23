@@ -452,8 +452,8 @@ def test_vectorizer():
 
 
 def test_tfidf_vectorizer_setters():
-    tv = TfidfVectorizer(norm='l2', use_idf=False,
-                             smooth_idf=False, sublinear_tf=False)
+    tv = TfidfVectorizer(norm='l2', use_idf=False, smooth_idf=False,
+                         sublinear_tf=False)
     tv.norm = 'l1'
     assert_equal(tv._tfidf.norm, 'l1')
     tv.use_idf = True
