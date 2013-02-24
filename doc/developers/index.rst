@@ -428,6 +428,68 @@ Here's a simple example of code using some of the above guidelines::
         i = random_state.randint(X.shape[0])
         return X[i]
 
+Deprecation
+-----------
+
+If any publically accessible method, function or attribute is renamed, 
+we still support the old one for two releases and throw
+a Deprecation warning if it is called. An appropriate test must also 
+be created to make sure the deprecation warning is thrown.
+e.g. if function zero_one is renamed to zero_one_loss, we add a decorator
+@deprecated to the zero_one and call zero_one_loss::
+
+    from ..utils import deprecated
+     
+    def zero_one_loss(y_true, y_pred, normalize=False):
+        y_true, y_pred = check_arrays(y_true, y_pred)
+        if not normalize:
+            return np.sum(y_pred != y_true)
+        else:
+            return np.mean(y_pred != y_true)
+
+
+    @deprecated("Function 'zero_one' has been renamed to "
+                "'zero_one_loss' and will be removed in release 0.15.")
+    def zero_one(y_true, y_pred, normalize=False):
+        return zero_one_loss(y_true, y_pred, normalize)
+
+If an attribute has to be deprecated, use decorators @deprecated and @property.
+e.g. if attribute labels_ is deprecated and renamed as classes_, deprecation
+should be done as follows::
+
+    from ..utils import deprecated
+    class SomeClass(args):
+      
+      @property
+      @deprecated("Attribute labels_ is deprecated and "
+                  "will be removed in 0.15. Use 'classes_' instead")
+      def labels_(self):
+          return self.classes_
+
+If a parameter has to be deprecated, use DeprecationWarning appropriately.
+In following example, k is deprecated and renamed to n_clusters::
+
+    import warnings
+
+    def eg_function(n_clusters=8, k=None):
+      if not k is None:
+        warnings.warn("'k' was renamed to n_clusters and will "
+                      "be removed in 0.15.",
+                      DeprecationWarning)
+        n_clusters = k
+
+Here is how to create a test to make sure deprecation warning is thrown.
+if attribute labels_ of object clustering has been deprecated, calling
+clustering.labels_ should throw a warning. Following test checks for that::
+    import warnings
+
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        _ = clustering.labels_
+        # Verify some things
+        assert len(w) == 1
+        assert issubclass(w[-1].category, DeprecationWarning)
+        assert "deprecated" in str(w[-1].message)
 
 APIs of scikit-learn objects
 ============================
