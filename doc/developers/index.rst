@@ -464,6 +464,50 @@ when an estimator is ``fit`` twice to the same data,
 it should produce an identical model both times,
 hence the validation in ``fit``, not ``__init__``.
 
+Deprecation
+-----------
+
+If any publically accessible method, function, attribute or parameter
+is renamed, we still support the old one for two releases and issue
+a deprecation warning when it is called/passed/accessed.
+E.g., if the function ``zero_one`` is renamed to ``zero_one_loss``,
+we add the decorator ``deprecated`` (from ``sklearn.utils``)
+to ``zero_one`` and call ``zero_one_loss`` from that function::
+
+    from ..utils import check_arrays, deprecated
+
+    def zero_one_loss(y_true, y_pred, normalize=True):
+        # actual implementation
+
+    @deprecated("Function 'zero_one' has been renamed to "
+                "'zero_one_loss' and will be removed in release 0.15."
+                "Default behavior is changed from 'normalize=False' to "
+                "'normalize=True'")
+    def zero_one(y_true, y_pred, normalize=False):
+        return zero_one_loss(y_true, y_pred, normalize)
+
+If an attribute is to be deprecated,
+use the decorator ``deprecated`` on a property.
+E.g., renaming an attribute ``labels_`` to ``classes_`` can be done as::
+
+    @property
+    @deprecated("Attribute labels_ is deprecated and "
+                "will be removed in 0.15. Use 'classes_' instead")
+    def labels_(self):
+        return self.classes_
+
+If a parameter has to be deprecated, use ``DeprecationWarning`` appropriately.
+In following example, k is deprecated and renamed to n_clusters::
+
+    import warnings
+
+    def example_function(n_clusters=8, k=None):
+        if k is not None:
+            warnings.warn("'k' was renamed to n_clusters and will "
+                          "be removed in 0.15.",
+                          DeprecationWarning)
+            n_clusters = k
+
 
 APIs of scikit-learn objects
 ============================
