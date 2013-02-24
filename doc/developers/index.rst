@@ -444,7 +444,6 @@ e.g. if function zero_one is renamed to zero_one_loss, we add a decorator
 
     @deprecated("Function 'zero_one' has been renamed to "
                 "'zero_one_loss' and will be removed in release 0.15.")
-                
     def zero_one(y_true, y_pred, normalize=False):
         return zero_one_loss(y_true, y_pred, normalize)
 
@@ -474,7 +473,7 @@ In following example, k is deprecated and renamed to n_clusters::
         n_clusters = k
 
 Here is how to create a test to make sure deprecation warning is thrown.
-if object clusting's attribute labels_ has been deprecated, calling
+if attribute labels_ of object clustering has been deprecated, calling
 clustering.labels_ should throw a warning. Following test checks for that::
     import warnings
 
