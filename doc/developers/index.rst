@@ -429,8 +429,7 @@ If any publically accessible method, function or attribute is renamed,
 we still support the old one for two releases and throw
 a Deprecation warning if it is called.
 e.g. if function zero_one is renamed to zero_one_loss, we add a decorator
-@deprecated to the zero_one and call zero_one_loss
-
+@deprecated to the zero_one and call zero_one_loss::
 
     from ..utils import check_arrays, deprecated
      
@@ -451,8 +450,8 @@ e.g. if function zero_one is renamed to zero_one_loss, we add a decorator
 
 If an attribute has to be deprecated, use decorators @deprecated and @property.
 e.g. if attribute labels_ is deprecated and renamed as classes_, deprecation
-should be done as follows
-    
+should be done as follows::
+
     from ..utils import deprecated
 
     @property
@@ -462,7 +461,8 @@ should be done as follows
         return self.classes_
 
 If a parameter has to be deprecated, use DeprecationWarning appropriately.
-In following example, k is deprecated and renamed to n_clusters
+In following example, k is deprecated and renamed to n_clusters::
+
     import warnings
 
     def eg_function(n_clusters=8, k=None):
