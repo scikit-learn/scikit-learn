@@ -431,51 +431,47 @@ a Deprecation warning if it is called.
 e.g. if function zero_one is renamed to zero_one_loss, we add a decorator
 @deprecated to the zero_one and call zero_one_loss
 
-```python
-from ..utils import check_arrays, deprecated
- 
-def zero_one_loss(y_true, y_pred, normalize=True):
-    y_true, y_pred = check_arrays(y_true, y_pred)
-    if not normalize:
-        return np.sum(y_pred != y_true)
-    else:
-        return np.mean(y_pred != y_true)
+
+    from ..utils import check_arrays, deprecated
+     
+    def zero_one_loss(y_true, y_pred, normalize=True):
+        y_true, y_pred = check_arrays(y_true, y_pred)
+        if not normalize:
+            return np.sum(y_pred != y_true)
+        else:
+            return np.mean(y_pred != y_true)
 
 
-@deprecated("Function 'zero_one' has been renamed to "
-            "'zero_one_loss' and will be removed in release 0.15."
-            "Default behavior is changed from 'normalize=False' to "
-            "'normalize=True'")
-def zero_one(y_true, y_pred, normalize=False):
-    return zero_one_loss(y_true, y_pred, normalize)
-```
+    @deprecated("Function 'zero_one' has been renamed to "
+                "'zero_one_loss' and will be removed in release 0.15."
+                "Default behavior is changed from 'normalize=False' to "
+                "'normalize=True'")
+    def zero_one(y_true, y_pred, normalize=False):
+        return zero_one_loss(y_true, y_pred, normalize)
 
 If an attribute has to be deprecated, use decorators @deprecated and @property.
 e.g. if attribute labels_ is deprecated and renamed as classes_, deprecation
 should be done as follows
-```python
-from ..utils import deprecated
+    
+    from ..utils import deprecated
 
     @property
     @deprecated("Attribute labels_ is deprecated and "
                 "will be removed in 0.15. Use 'classes_' instead")
     def labels_(self):
         return self.classes_
-```
 
 If a parameter has to be deprecated, use DeprecationWarning appropriately.
 In following example, k is deprecated and renamed to n_clusters
-```python
-import warnings
+    import warnings
 
-def eg_function(n_clusters=8, k=None):
-  if not k is None:
-          warnings.warn("'k' was renamed to n_clusters and will "
-                        "be removed in 0.15.",
-                        DeprecationWarning)
-          n_clusters = k
+    def eg_function(n_clusters=8, k=None):
+      if not k is None:
+        warnings.warn("'k' was renamed to n_clusters and will "
+                      "be removed in 0.15.",
+                      DeprecationWarning)
+        n_clusters = k
 
-```
 APIs of scikit-learn objects
 ============================
 
