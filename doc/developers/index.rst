@@ -432,9 +432,9 @@ be created to make sure the deprecation warning is thrown.
 e.g. if function zero_one is renamed to zero_one_loss, we add a decorator
 @deprecated to the zero_one and call zero_one_loss::
 
-    from ..utils import check_arrays, deprecated
+    from ..utils import deprecated
      
-    def zero_one_loss(y_true, y_pred, normalize=True):
+    def zero_one_loss(y_true, y_pred, normalize=False):
         y_true, y_pred = check_arrays(y_true, y_pred)
         if not normalize:
             return np.sum(y_pred != y_true)
@@ -443,9 +443,8 @@ e.g. if function zero_one is renamed to zero_one_loss, we add a decorator
 
 
     @deprecated("Function 'zero_one' has been renamed to "
-                "'zero_one_loss' and will be removed in release 0.15."
-                "Default behavior is changed from 'normalize=False' to "
-                "'normalize=True'")
+                "'zero_one_loss' and will be removed in release 0.15.")
+                
     def zero_one(y_true, y_pred, normalize=False):
         return zero_one_loss(y_true, y_pred, normalize)
 
