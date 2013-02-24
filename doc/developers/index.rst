@@ -428,6 +428,42 @@ Here's a simple example of code using some of the above guidelines::
         i = random_state.randint(X.shape[0])
         return X[i]
 
+If you use randomness in an estimator instead of a freestanding function,
+some additional guidelines apply.
+
+First off, the estimator should take a ``random_state`` argument to its
+``__init__`` with a default value of ``None``.
+It should store that argument's value, **unmodified**,
+in an attribute ``random_state``.
+``fit`` can call ``check_random_state`` on that attribute
+to get an actual random number generator.
+If, for some reason, randomness is needed after ``fit``,
+the RNG should be stored in an attibute ``random_state_``.
+The following example should make this clear::
+
+    class GaussianNoise(BaseEstimator, TransformerMixin):
+        """This estimator ignores its input and returns random Gaussian noise.
+
+        It also does not adhere to all scikit-learn conventions,
+        but showcases how to handle randomness.
+        """
+
+        def __init__(self, n_components=100, random_state=None):
+            self.random_state = random_state
+
+        # the arguments are ignored anyway, so we make them optional
+        def fit(self, X=None, y=None):
+            self.random_state_ = check_random_state(self.random_state)
+
+        def transform(self, X):
+            n_samples = X.shape[0]
+            return self.random_state_.randn(n_samples, n_components)
+
+The reason for this setup is reproducibility:
+when an estimator is ``fit`` twice to the same data,
+it should produce an identical model both times,
+hence the validation in ``fit``, not ``__init__``.
+
 
 APIs of scikit-learn objects
 ============================
@@ -638,9 +674,12 @@ should match the order in which ``predict_proba``, ``predict_log_proba``
 and ``decision_function`` return their values.
 The easiest way to achieve this is to put::
 
-    self.classes_ = np.unique(y)
+    self.classes_, y = unique(y, return_inverse=True)
 
 in ``fit``.
+This return a new ``y`` that contains class indexes, rather than labels,
+in the range [0, ``n_classes``).
+``unique`` is available in ``sklearn.utils.fixes``.
 
 A classifier's ``predict`` method should return
 arrays containing class labels from ``classes_``.
