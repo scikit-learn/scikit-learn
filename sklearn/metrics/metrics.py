@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Utilities to evaluate the predictive performance of models
 
 Functions named as ``*_score`` return a scalar value to maximize: the higher
@@ -1512,7 +1513,7 @@ def explained_variance_score(y_true, y_pred):
 
 
 def r2_score(y_true, y_pred):
-    """R^2 (coefficient of determination) regression score function
+    """R² (coefficient of determination) regression score function.
 
     Best possible score is 1.0, lower values are worse.
 
@@ -1527,15 +1528,19 @@ def r2_score(y_true, y_pred):
     Returns
     -------
     z : float
-        The R^2 score
+        The R² score.
 
     Notes
     -----
     This is not a symmetric function.
 
+    Unlike most other scores, R² score may be negative (it need not actually
+    be the square of a quantity R).
+
     References
     ----------
-    http://en.wikipedia.org/wiki/Coefficient_of_determination
+    https://en.wikipedia.org/wiki/Coefficient_of_determination
+    http://stats.stackexchange.com/a/12991/8517
 
     Examples
     --------
