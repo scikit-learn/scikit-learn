@@ -427,7 +427,8 @@ Deprecation
 
 If any publically accessible method, function or attribute is renamed, 
 we still support the old one for two releases and throw
-a Deprecation warning if it is called.
+a Deprecation warning if it is called. An appropriate test must also 
+be created to make sure the deprecation warning is thrown.
 e.g. if function zero_one is renamed to zero_one_loss, we add a decorator
 @deprecated to the zero_one and call zero_one_loss::
 
@@ -454,12 +455,12 @@ should be done as follows::
 
     from ..utils import deprecated
     class SomeClass(args):
-    
-    @property
-    @deprecated("Attribute labels_ is deprecated and "
-                "will be removed in 0.15. Use 'classes_' instead")
-    def labels_(self):
-        return self.classes_
+      
+      @property
+      @deprecated("Attribute labels_ is deprecated and "
+                  "will be removed in 0.15. Use 'classes_' instead")
+      def labels_(self):
+          return self.classes_
 
 If a parameter has to be deprecated, use DeprecationWarning appropriately.
 In following example, k is deprecated and renamed to n_clusters::
@@ -472,6 +473,19 @@ In following example, k is deprecated and renamed to n_clusters::
                       "be removed in 0.15.",
                       DeprecationWarning)
         n_clusters = k
+
+Here is how to create a test to make sure deprecation warning is thrown.
+if object clusting's attribute labels_ has been deprecated, calling
+clustering.labels_ should throw a warning. Following test checks for that::
+    import warnings
+
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        _ = clustering.labels_
+        # Verify some things
+        assert len(w) == 1
+        assert issubclass(w[-1].category, DeprecationWarning)
+        assert "deprecated" in str(w[-1].message)
 
 APIs of scikit-learn objects
 ============================
