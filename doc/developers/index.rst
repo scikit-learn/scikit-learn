@@ -453,7 +453,8 @@ e.g. if attribute labels_ is deprecated and renamed as classes_, deprecation
 should be done as follows::
 
     from ..utils import deprecated
-
+    class SomeClass(args):
+    
     @property
     @deprecated("Attribute labels_ is deprecated and "
                 "will be removed in 0.15. Use 'classes_' instead")
