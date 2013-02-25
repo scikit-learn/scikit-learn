@@ -338,6 +338,9 @@ def test_max_features():
     clf = tree.DecisionTreeClassifier(max_features=0.0)
     assert_raises(ValueError, clf.fit, X, y)
 
+    clf = tree.DecisionTreeClassifier(max_features=1.5)
+    assert_raises(ValueError, clf.fit, X, y)
+
     clf = tree.DecisionTreeClassifier(max_features="foobar")
     assert_raises(ValueError, clf.fit, X, y)
 
