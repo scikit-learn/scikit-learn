@@ -538,25 +538,8 @@ class BaseGradientBoosting(BaseEnsemble):
         else:
             self.loss_ = loss_class(self.n_classes_)
 
-        if self.min_samples_split <= 0:
-            raise ValueError("min_samples_split must be larger than 0")
-
-        if self.min_samples_leaf <= 0:
-            raise ValueError("min_samples_leaf must be larger than 0")
-
         if self.subsample <= 0.0 or self.subsample > 1:
             raise ValueError("subsample must be in (0,1]")
-
-        if self.max_features is None:
-            max_features = n_features
-        else:
-            max_features = self.max_features
-
-        if not (0 < max_features <= n_features):
-            raise ValueError("max_features must be in (0, n_features]")
-
-        if self.max_depth <= 0:
-            raise ValueError("max_depth must be larger than 0")
 
         if self.init is not None:
             if (not hasattr(self.init, 'fit')
