@@ -709,11 +709,12 @@ class RandomForestClassifier(ForestClassifier):
         "gini" for the Gini impurity and "entropy" for the information gain.
         Note: this parameter is tree-specific.
 
-    max_features : int, string or None, optional (default="auto")
+    max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
-          - If "auto", then `max_features=sqrt(n_features)` on
-            classification tasks and `max_features=n_features` on regression
-            problems.
+          - If int, then consider `max_features` features at each split.
+          - If float, then consider `int(max_features * n_features) features
+            at each split.
+          - If "auto", then `max_features=sqrt(n_features)`.
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
@@ -853,11 +854,12 @@ class RandomForestRegressor(ForestRegressor):
         criterion is "mse" for the mean squared error.
         Note: this parameter is tree-specific.
 
-    max_features : int, string or None, optional (default="auto")
+    max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
-          - If "auto", then `max_features=sqrt(n_features)` on
-            classification tasks and `max_features=n_features`
-            on regression problems.
+          - If int, then consider `max_features` features at each split.
+          - If float, then consider `int(max_features * n_features) features
+            at each split.
+          - If "auto", then `max_features=n_features`.
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
@@ -987,11 +989,12 @@ class ExtraTreesClassifier(ForestClassifier):
         "gini" for the Gini impurity and "entropy" for the information gain.
         Note: this parameter is tree-specific.
 
-    max_features : int, string or None, optional (default="auto")
-        The number of features to consider when looking for the best split.
-          - If "auto", then `max_features=sqrt(n_features)` on
-            classification tasks and `max_features=n_features`
-            on regression problems.
+    max_features : int, float, string or None, optional (default="auto")
+        The number of features to consider when looking for the best split:
+          - If int, then consider `max_features` features at each split.
+          - If float, then consider `int(max_features * n_features) features
+            at each split.
+          - If "auto", then `max_features=sqrt(n_features)`.
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
@@ -1135,11 +1138,12 @@ class ExtraTreesRegressor(ForestRegressor):
         criterion is "mse" for the mean squared error.
         Note: this parameter is tree-specific.
 
-    max_features : int, string or None, optional (default="auto")
+    max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
-          - If "auto", then `max_features=sqrt(n_features)` on
-            classification tasks and `max_features=n_features`
-            on regression problems.
+          - If int, then consider `max_features` features at each split.
+          - If float, then consider `int(max_features * n_features) features
+            at each split.
+          - If "auto", then `max_features=n_features`.
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
