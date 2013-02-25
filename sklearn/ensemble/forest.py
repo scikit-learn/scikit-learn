@@ -712,8 +712,9 @@ class RandomForestClassifier(ForestClassifier):
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
           - If int, then consider `max_features` features at each split.
-          - If float, then consider `int(max_features * n_features) features
-            at each split.
+          - If float, then `max_features` is a percentage and
+            `int(max_features * n_features)` features are considered at each
+            split.
           - If "auto", then `max_features=sqrt(n_features)`.
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
@@ -857,8 +858,9 @@ class RandomForestRegressor(ForestRegressor):
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
           - If int, then consider `max_features` features at each split.
-          - If float, then consider `int(max_features * n_features) features
-            at each split.
+          - If float, then `max_features` is a percentage and
+            `int(max_features * n_features)` features are considered at each
+            split.
           - If "auto", then `max_features=n_features`.
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
@@ -992,8 +994,9 @@ class ExtraTreesClassifier(ForestClassifier):
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
           - If int, then consider `max_features` features at each split.
-          - If float, then consider `int(max_features * n_features) features
-            at each split.
+          - If float, then `max_features` is a percentage and
+            `int(max_features * n_features)` features are considered at each
+            split.
           - If "auto", then `max_features=sqrt(n_features)`.
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
@@ -1141,8 +1144,9 @@ class ExtraTreesRegressor(ForestRegressor):
     max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
           - If int, then consider `max_features` features at each split.
-          - If float, then consider `int(max_features * n_features) features
-            at each split.
+          - If float, then `max_features` is a percentage and
+            `int(max_features * n_features)` features are considered at each
+            split.
           - If "auto", then `max_features=n_features`.
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
