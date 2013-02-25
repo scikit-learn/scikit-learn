@@ -25,6 +25,7 @@ print(__doc__)
 # Code source: Gael Varoqueux
 #              Andreas Mueller
 # Modified for Documentation merge by Jaques Grobler
+# Modified to add ELMClassifier by David Lambert
 # License: BSD
 
 import numpy as np

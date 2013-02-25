@@ -121,10 +121,10 @@ def make_classifiers():
 
     nh = 10
     srhl_rbf = RBFRandomHiddenLayer(n_hidden=nh*2, gamma=0.1, random_state=0)
-    srhl_tanh = SimpleRandomHiddenLayer(n_hidden=nh, transfer_func=np.tanh, random_state=0)
-    srhl_sinsq = SimpleRandomHiddenLayer(n_hidden=nh, transfer_func=sinsq, random_state=0)
-    srhl_tribas = SimpleRandomHiddenLayer(n_hidden=nh, transfer_func=tribas, random_state=0)
-    srhl_hardlim = SimpleRandomHiddenLayer(n_hidden=nh, transfer_func=hardlim, random_state=0)
+    srhl_tanh = SimpleRandomHiddenLayer(n_hidden=nh, user_func=np.tanh, random_state=0)
+    srhl_sinsq = SimpleRandomHiddenLayer(n_hidden=nh, user_func=sinsq, random_state=0)
+    srhl_tribas = SimpleRandomHiddenLayer(n_hidden=nh, user_func=tribas, random_state=0)
+    srhl_hardlim = SimpleRandomHiddenLayer(n_hidden=nh, user_func=hardlim, random_state=0)
 
     log_reg = LogisticRegression()
 

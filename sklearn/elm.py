@@ -60,9 +60,12 @@ __________
 `n_hidden` : int, optional (default=20)
     number of units to generate in the SimpleRandomHiddenLayer
 
-`transfer_func` : callable, optional (default=None)
+`user_func` : callable, optional (default=None)
     if supplied and callable, used to transform the input activations,
     otherwise numpy.tanh is used
+
+`user_args` : dictionary, optional (default=None)
+    keyword args for user_func
 
 `random_state`  : int, RandomState instance or None (default=None)
     Control the pseudo random number generator used to generate the
@@ -89,7 +92,6 @@ class BaseELM(BaseEstimator):
     """
     __metaclass__ = ABCMeta
 
-    @abstractmethod
     def __init__(self, hidden_layer, regressor):
         self.regressor = regressor
         self.hidden_layer = hidden_layer
@@ -112,7 +114,6 @@ class BaseELM(BaseEstimator):
         self : object
             Returns an instance of self.
         """
-        return self
 
     @abstractmethod
     def predict(self, X):
@@ -127,8 +128,6 @@ class BaseELM(BaseEstimator):
         C : numpy array of shape = [n_samples, n_outputs]
             Returns predicted values.
         """
-
-        return None
 
 
 ###################################
@@ -303,9 +302,10 @@ __________
 class SimpleELMRegressor(BaseEstimator, RegressorMixin):
     __doc__ = _SimpleELMRegressor_doc
 
-    def __init__(self, n_hidden=20, transfer_func=None, random_state=None):
+    def __init__(self, n_hidden=20, user_func=None, user_args={}, random_state=None):
         self.n_hidden = n_hidden
-        self.transfer_func = transfer_func
+        self.user_func = user_func
+        self.user_args = user_args
         self.random_state = random_state
 
         self.elm_regressor_ = None
@@ -313,7 +313,8 @@ class SimpleELMRegressor(BaseEstimator, RegressorMixin):
     @_take_docstring_from(BaseELM)
     def fit(self, X, y):
         rhl = SimpleRandomHiddenLayer(n_hidden=self.n_hidden,
-                                      transfer_func=self.transfer_func,
+                                      user_func=self.user_func,
+                                      user_args=self.user_args,
                                       random_state=self.random_state)
 
         self.elm_regressor_ = ELMRegressor(hidden_layer=rhl)
@@ -354,9 +355,10 @@ __________
 class SimpleELMClassifier(BaseEstimator, ClassifierMixin):
     __doc__ = _SimpleELMClassifier_doc
 
-    def __init__(self, n_hidden=20, transfer_func=None, random_state=None):
+    def __init__(self, n_hidden=20, user_func=None, user_args={}, random_state=None):
         self.n_hidden = n_hidden
-        self.transfer_func = transfer_func
+        self.user_func = user_func
+        self.user_args = user_args
         self.random_state = random_state
 
         self.classes_ = None
@@ -369,7 +371,8 @@ class SimpleELMClassifier(BaseEstimator, ClassifierMixin):
     @_take_docstring_from(BaseELM)
     def fit(self, X, y):
         rhl = SimpleRandomHiddenLayer(n_hidden=self.n_hidden,
-                                      transfer_func=self.transfer_func,
+                                      user_func=self.user_func,
+                                      user_args=self.user_args,
                                       random_state=self.random_state)
 
         self.elm_classifier_ = ELMClassifier(hidden_layer=rhl)
