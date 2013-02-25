@@ -466,10 +466,14 @@ the ridge coefficients will not change inversely proportional to the changes
 in the variable scales)
 
 The Non-negative Garrote, however, is scale invariant whilst having an accuracy
-that can compete with that of ridge regression. It aims to minimize a function
+that can compete with that of ridge regression. It will eliminate some variables, while
+shrinking others and is relatively stable.
+Unless a large part of the `true` coefficients are nonnegligible, it gives
+an accuracy better than or comparable to ridge methods[1].
+It aims to minimize a function
 similiar to that of the :class:`Lasso`:
 
-.. math::  \underset{w}{min\,} { \frac{1}{2n_{samples}} ||X c \beta - y||_2 ^ 2 + \alpha ||w||_1}
+.. math::  \underset{c}{min\,} { \frac{1}{2n_{samples}} ||X c \beta - y||_2 ^ 2 + \alpha ||w||_1}
 
 where :math:`c` must follow the constraint:
 
@@ -482,10 +486,10 @@ The new predictor coefficients are thusly obtained by the product of :math:`c` a
 
 ::
 
-   >>> clf = linear_model.NonNegativeGarrote(alpha=0.2)
+   >>> clf = linear_model.NonNegativeGarrote(alpha=0.1)
    >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1])  # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
    NonNegativeGarrote(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
-        normalize=False, precompute='auto', tol=0.0001)
+              normalize=False, precompute='auto', tol=0.0001)
    >>> clf.coef_    # doctest: +ELLIPSIS
    array([ 0.00263158,  0.        ])
    >>> clf.intercept_    # doctest: +ELLIPSIS
