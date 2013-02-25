@@ -30,6 +30,7 @@ matplotlib.use('Agg')
 
 import token
 import tokenize
+import numpy as np
 
 ###############################################################################
 # A tee object to redict streams to multiple outputs
@@ -458,6 +459,37 @@ Examples
             generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery)
     fhindex.flush()
 
+def extract_line_count(filename, target_dir):
+    # Extract the line count of a file
+    example_file = os.path.join(target_dir, filename)
+    lines = file(example_file).readlines()
+    start_row = 0
+    if lines[0].startswith('#!'):
+        lines.pop(0)
+        start_row = 1
+    tokens = tokenize.generate_tokens(lines.__iter__().next)
+    check_docstring = True
+    for tok_type, _, _, (erow, _), _ in tokens:
+        tok_type = token.tok_name[tok_type]
+        if tok_type in ('NEWLINE', 'COMMENT', 'NL', 'INDENT', 'DEDENT'):
+            continue
+        elif ((tok_type == 'STRING') and (check_docstring == True)):
+            erow_docstring = erow
+            check_docstring = False
+    return erow_docstring+1+start_row, erow+1+start_row
+
+def line_count_sort(file_list, target_dir):
+    # Sort the list of examples by line-count
+    new_list = filter(lambda x: x.endswith('.py'), file_list)
+    unsorted = np.zeros(shape=(len(new_list), 2))
+    unsorted = unsorted.astype(np.object)
+    for count, exmpl in enumerate(new_list):
+        docstr_lines, total_lines = extract_line_count(exmpl, target_dir)
+        unsorted[count][1] = total_lines - docstr_lines
+        unsorted[count][0] = exmpl
+    index = np.lexsort((unsorted[:,0].astype(np.str),
+                        unsorted[:,1].astype(np.float)))
+    return np.array(unsorted[index][:,0]).tolist()
 
 def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
     """ Generate the rst file for an example directory.
@@ -485,12 +517,9 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
 
-    def sort_key(a):
-        # put last elements without a plot
-        if not a.startswith('plot') and a.endswith('.py'):
-            return 'zz' + a
-        return a
-    for fname in sorted(os.listdir(src_dir), key=sort_key):
+    sorted_listdir = line_count_sort(os.listdir(src_dir),
+                                     target_dir)
+    for fname in sorted_listdir:
         if fname.endswith('py'):
             generate_file_rst(fname, target_dir, src_dir, plot_gallery)
             thumb = os.path.join(dir, 'images', 'thumb', fname[:-3] + '.png')
