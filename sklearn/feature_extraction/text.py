@@ -759,6 +759,14 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             del col_ind
             del feature_values
 
+        if not vocab:
+            msg = "Empty vocabulary; "
+            if fixed_vocab:
+                msg += "%r passed to constructor." % vocab
+            else:
+                msg += "perhaps your documents contain stop words only?"
+            raise ValueError(msg)
+
         # the term_counts and document_counts might be useful statistics, are
         # we really sure want we want to drop them? They take some memory but
         # can be useful for corpus introspection

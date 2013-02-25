@@ -265,7 +265,7 @@ def test_countvectorizer_empty_vocabulary():
         CountVectorizer(vocabulary=[])
         assert False, "we shouldn't get here"
     except ValueError as e:
-        assert_in("empty vocabulary", str(e))
+        assert_in("empty vocabulary", str(e).lower())
 
     try:
         v = CountVectorizer(min_df=1, max_df=1.0, stop_words="english")
@@ -273,7 +273,7 @@ def test_countvectorizer_empty_vocabulary():
         v.fit(["to be or not to be", "and me too", "and so do you"])
         assert False, "we shouldn't get here"
     except ValueError as e:
-        assert_in("empty vocabulary", str(e))
+        assert_in("empty vocabulary", str(e).lower())
 
 
 def test_fit_countvectorizer_twice():
