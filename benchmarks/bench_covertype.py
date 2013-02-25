@@ -4,24 +4,25 @@ Covertype dataset benchmark
 ===========================
 
 Benchmark stochastic gradient descent (SGD), Liblinear, and Naive Bayes, CART
-(decision tree), RandomForest and Extra-Trees on the forest covertype dataset
-of Blackard, Jock, and Dean [1]. The dataset comprises 581,012 samples. It is
-low dimensional with 54 features and a sparsity of approx. 23%. Here, we
-consider the task of predicting class 1 (spruce/fir). The classification
-performance of SGD is competitive with Liblinear while being two orders of
-magnitude faster to train::
+(decision tree), ELM (Extreme Learning Machine), RandomForest and Extra-Trees
+on the forest covertype dataset of Blackard, Jock, and Dean [1]. The dataset
+comprises 581,012 samples. It is low dimensional with 54 features and a sparsity
+of approx. 23%. Here, we consider the task of predicting class 1 (spruce/fir).
+The classification performance of SGD is competitive with Liblinear while being
+two orders of magnitude faster to train::
 
     [..]
     Classification performance:
     ===========================
     Classifier   train-time test-time error-rate
     --------------------------------------------
-    liblinear     15.9744s    0.0705s     0.2305
-    GaussianNB    3.0666s     0.3884s     0.4841
-    SGD           1.0558s     0.1152s     0.2300
-    CART          79.4296s    0.0523s     0.0469
-    RandomForest  1190.1620s  0.5881s     0.0243
-    ExtraTrees    640.3194s   0.6495s     0.0198
+    liblinear      5.5299s    0.0547s     0.2305  
+    GaussianNB     2.3553s    0.1823s     0.4841  
+    SGD            0.5724s    0.0522s     0.2300  
+    ELMClassifier  4.7900s    0.2834s     0.2363  
+    CART           25.9310s   0.0637s     0.0426  
+    RandomForest  313.1874s   0.5917s     0.0233  
+    ExtraTrees    263.5628s   0.6620s     0.0202  
 
 The same task has been used in a number of papers including:
 
@@ -63,6 +64,9 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn import metrics
 from sklearn.externals.joblib import Memory
+from sklearn.random_hidden_layer import RBFRandomHiddenLayer
+from sklearn.elm import ELMClassifier
+from sklearn.linear_model import LinearRegression
 
 logging.basicConfig(level=logging.INFO,
                     format='%(asctime)s %(levelname)s %(message)s')
@@ -73,7 +77,7 @@ op.add_option("--classifiers",
               dest="classifiers", default='liblinear,GaussianNB,SGD,CART',
               help="comma-separated list of classifiers to benchmark. "
                    "default: %default. available: "
-                   "liblinear,GaussianNB,SGD,CART,ExtraTrees,RandomForest")
+                   "liblinear,GaussianNB,SGD,CART,ExtraTrees,RandomForest,ELMClassifier")
 
 op.add_option("--n-jobs",
               dest="n_jobs", default=1, type=int,
@@ -227,6 +231,10 @@ classifiers['ExtraTrees'] = ExtraTreesClassifier(n_estimators=20,
                                                  n_jobs=opts.n_jobs,
                                                  random_state=opts.random_seed)
 
+######################################################################
+## Train ELMClassifier model
+rhl = RBFRandomHiddenLayer(n_hidden=35, gamma=0.02, random_state=opts.random_seed)
+classifiers['ELMClassifier'] = ELMClassifier(hidden_layer=rhl, regressor=LinearRegression())
 
 selected_classifiers = opts.classifiers.split(',')
 for name in selected_classifiers:
@@ -252,7 +260,7 @@ print()
 
 
 def print_row(clf_type, train_time, test_time, err):
-    print("%s %s %s %s" % (clf_type.ljust(12),
+    print("%s %s %s %s" % (clf_type.ljust(13),
                            ("%.4fs" % train_time).center(10),
                            ("%.4fs" % test_time).center(10),
                            ("%.4f" % err).center(10)))

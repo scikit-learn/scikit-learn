@@ -40,11 +40,12 @@ from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.lda import LDA
 from sklearn.qda import QDA
+from sklearn.elm import ELMClassifier
 
 h = .02  # step size in the mesh
 
 names = ["Nearest Neighbors", "Linear SVM", "RBF SVM", "Decision Tree",
-         "Random Forest", "AdaBoost", "Naive Bayes", "LDA", "QDA"]
+         "Random Forest", "AdaBoost", "Naive Bayes", "LDA", "QDA", "ELM"]
 classifiers = [
     KNeighborsClassifier(3),
     SVC(kernel="linear", C=0.025),
@@ -54,7 +55,8 @@ classifiers = [
     AdaBoostClassifier(),
     GaussianNB(),
     LDA(),
-    QDA()]
+    QDA(),
+    ELMClassifier()]
 
 X, y = make_classification(n_features=2, n_redundant=0, n_informative=2,
                            random_state=1, n_clusters_per_class=1)
@@ -67,7 +69,7 @@ datasets = [make_moons(noise=0.3, random_state=0),
             linearly_separable
             ]
 
-figure = pl.figure(figsize=(27, 9))
+figure = pl.figure(figsize=(21, 7))
 i = 1
 # iterate over datasets
 for ds in datasets:
