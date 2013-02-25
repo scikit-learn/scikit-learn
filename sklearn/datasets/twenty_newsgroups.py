@@ -133,10 +133,10 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         try:
             cache = pickle.loads(open(cache_path, 'rb').read().decode('zip'))
         except Exception as e:
-            print 80 * '_'
-            print 'Cache loading failed'
-            print 80 * '_'
-            print e
+            print(80 * '_')
+            print('Cache loading failed')
+            print(80 * '_')
+            print(e)
 
     if cache is None:
         if download_if_missing:

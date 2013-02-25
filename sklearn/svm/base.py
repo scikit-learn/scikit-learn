@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import numpy as np
 import scipy.sparse as sp
 import warnings
@@ -31,10 +33,10 @@ def _one_vs_one_coef(dual_coef, n_support, support_vectors):
     # would have to take care in the sparse case
     coef = []
     sv_locs = np.cumsum(np.hstack([[0], n_support]))
-    for class1 in xrange(n_class):
+    for class1 in range(n_class):
         # SVs for class1:
         sv1 = support_vectors[sv_locs[class1]:sv_locs[class1 + 1], :]
-        for class2 in xrange(class1 + 1, n_class):
+        for class2 in range(class1 + 1, n_class):
             # SVs for class1:
             sv2 = support_vectors[sv_locs[class2]:sv_locs[class2 + 1], :]
 
@@ -180,7 +182,7 @@ class BaseLibSVM(BaseEstimator):
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
         if self.verbose:  # pragma: no cover
-            print '[LibSVM]',
+            print('[LibSVM]', end='')
         fit(X, y, sample_weight, solver_type, kernel)
 
         self.shape_fit_ = X.shape
@@ -681,7 +683,7 @@ class BaseLibLinear(BaseEstimator):
 
         rnd = check_random_state(self.random_state)
         if self.verbose:
-            print '[LibLinear]',
+            print('[LibLinear]', end='')
         self.raw_coef_ = train(X, y, self._get_solver_type(), self.tol,
                                self._get_bias(), self.C,
                                self.class_weight_,

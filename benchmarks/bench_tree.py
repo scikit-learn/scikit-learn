@@ -63,9 +63,9 @@ def bench_scikit_tree_regressor(X, Y):
 
 if __name__ == '__main__':
 
-    print '============================================'
-    print 'Warning: this is going to take a looong time'
-    print '============================================'
+    print('============================================')
+    print('Warning: this is going to take a looong time')
+    print('============================================')
 
     n = 10
     step = 10000
@@ -73,9 +73,9 @@ if __name__ == '__main__':
     dim = 10
     n_classes = 10
     for i in range(n):
-        print '============================================'
-        print 'Entering iteration %s of %s' % (i, n)
-        print '============================================'
+        print('============================================')
+        print('Entering iteration %s of %s' % (i, n))
+        print('============================================')
         n_samples += step
         X = np.random.randn(n_samples, dim)
         Y = np.random.randint(0, n_classes, (n_samples,))
@@ -102,9 +102,9 @@ if __name__ == '__main__':
 
     dim = start_dim
     for i in range(0, n):
-        print '============================================'
-        print 'Entering iteration %s of %s' % (i, n)
-        print '============================================'
+        print('============================================')
+        print('Entering iteration %s of %s' % (i, n))
+        print('============================================')
         dim += step
         X = np.random.randn(100, dim)
         Y = np.random.randint(0, n_classes, (100,))

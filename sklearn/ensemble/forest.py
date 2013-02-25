@@ -44,6 +44,7 @@ from abc import ABCMeta, abstractmethod
 
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
+from ..externals.six.moves import xrange
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..metrics import r2_score
 from ..preprocessing import OneHotEncoder
@@ -64,18 +65,17 @@ MAX_INT = np.iinfo(np.int32).max
 
 
 def _parallel_build_trees(n_trees, forest, X, y, sample_weight,
-                          sample_mask, X_argsorted, seed, verbose):
+                          sample_mask, X_argsorted, seeds, verbose):
     """Private function used to build a batch of trees within a job."""
-    random_state = check_random_state(seed)
     trees = []
 
-    for i in xrange(n_trees):
+    for i in range(n_trees):
+        random_state = check_random_state(seeds[i])
         if verbose > 1:
             print("building tree %d of %d" % (i + 1, n_trees))
         seed = random_state.randint(MAX_INT)
 
         tree = forest._make_estimator(append=False)
-        tree.set_params(compute_importances=forest.compute_importances)
         tree.set_params(random_state=check_random_state(seed))
 
         if forest.bootstrap:
@@ -166,12 +166,12 @@ def _partition_trees(forest):
     # Partition trees between jobs
     n_trees = [forest.n_estimators // n_jobs] * n_jobs
 
-    for i in xrange(forest.n_estimators % n_jobs):
+    for i in range(forest.n_estimators % n_jobs):
         n_trees[i] += 1
 
     starts = [0] * (n_jobs + 1)
 
-    for i in xrange(1, n_jobs + 1):
+    for i in range(1, n_jobs + 1):
         starts[i] = starts[i - 1] + n_trees[i - 1]
 
     return n_jobs, n_trees, starts
@@ -230,6 +230,13 @@ class BaseForest(BaseEnsemble, SelectorMixin):
             estimator_params=estimator_params)
 
         self.bootstrap = bootstrap
+
+        if compute_importances:
+            warn("Setting compute_importances=True is no longer "
+                 "required. Variable importances are now computed on the fly "
+                 "when accessing the feature_importances_ attribute. This "
+                 "parameter will be removed in 0.15.", DeprecationWarning)
+
         self.compute_importances = compute_importances
         self.oob_score = oob_score
         self.n_jobs = n_jobs
@@ -239,7 +246,6 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         self.n_outputs_ = None
         self.classes_ = None
         self.n_classes_ = None
-        self.feature_importances_ = None
 
         self.verbose = verbose
 
@@ -350,6 +356,9 @@ class BaseForest(BaseEnsemble, SelectorMixin):
         # Assign chunk of trees to jobs
         n_jobs, n_trees, _ = _partition_trees(self)
 
+        # Precalculate the random states
+        seeds = [random_state.randint(MAX_INT, size=i) for i in n_trees]
+
         # Parallel loop
         all_trees = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_build_trees)(
@@ -360,9 +369,9 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                 sample_weight,
                 sample_mask,
                 X_argsorted,
-                random_state.randint(MAX_INT),
+                seeds[i],
                 verbose=self.verbose)
-            for i in xrange(n_jobs))
+            for i in range(n_jobs))
 
         # Reduce
         self.estimators_ = [tree for tree in itertools.chain(*all_trees)]
@@ -453,13 +462,23 @@ class BaseForest(BaseEnsemble, SelectorMixin):
 
                 self.oob_score_ /= self.n_outputs_
 
-        # Sum the importances
-        if self.compute_importances:
-            self.feature_importances_ = \
-                sum(tree.feature_importances_ for tree in self.estimators_) \
-                / self.n_estimators
-
         return self
+
+    @property
+    def feature_importances_(self):
+        """Return the feature importances (the higher, the more important the
+           feature).
+
+        Returns
+        -------
+        feature_importances_ : array, shape = [n_features]
+        """
+        if self.estimators_ is None or len(self.estimators_) == 0:
+            raise ValueError("Estimator not fitted, "
+                             "call `fit` before `feature_importances_`.")
+
+        return sum(tree.feature_importances_
+                   for tree in self.estimators_) / self.n_estimators
 
 
 class ForestClassifier(BaseForest, ClassifierMixin):
@@ -557,7 +576,7 @@ class ForestClassifier(BaseForest, ClassifierMixin):
                 X,
                 self.n_classes_,
                 self.n_outputs_)
-            for i in xrange(n_jobs))
+            for i in range(n_jobs))
 
         # Reduce
         proba = all_proba[0]
@@ -665,7 +684,7 @@ class ForestRegressor(BaseForest, RegressorMixin):
         all_y_hat = Parallel(n_jobs=n_jobs, verbose=self.verbose)(
             delayed(_parallel_predict_regression)(
                 self.estimators_[starts[i]:starts[i + 1]], X)
-            for i in xrange(n_jobs))
+            for i in range(n_jobs))
 
         # Reduce
         y_hat = sum(all_y_hat) / self.n_estimators
@@ -731,17 +750,13 @@ class RandomForestClassifier(ForestClassifier):
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
 
-    compute_importances : boolean, optional (default=True)
-        Whether feature importances are computed and stored into the
-        ``feature_importances_`` attribute when calling fit.
-
     oob_score : bool
         Whether to use out-of-bag samples to estimate
         the generalization error.
 
     n_jobs : integer, optional (default=1)
-        The number of jobs to run in parallel. If -1, then the number of jobs
-        is set to the number of cores.
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        If -1, then the number of jobs is set to the number of cores.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -773,7 +788,9 @@ class RandomForestClassifier(ForestClassifier):
 
     `oob_decision_function_` : array of shape = [n_samples, n_classes]
         Decision function computed with out-of-bag estimate on the training
-        set.
+        set. If n_estimators is small it might be possible that a data point
+        was never left out during the bootstrap. In this case,
+        `oob_decision_function_` might contain NaN.
 
     References
     ----------
@@ -877,17 +894,13 @@ class RandomForestRegressor(ForestRegressor):
     bootstrap : boolean, optional (default=True)
         Whether bootstrap samples are used when building trees.
 
-    compute_importances : boolean, optional (default=True)
-        Whether feature importances are computed and stored into the
-        ``feature_importances_`` attribute when calling fit.
-
     oob_score : bool
         whether to use out-of-bag samples to estimate
         the generalization error.
 
     n_jobs : integer, optional (default=1)
-        The number of jobs to run in parallel. If -1, then the number of jobs
-        is set to the number of cores.
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        If -1, then the number of jobs is set to the number of cores.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1015,17 +1028,13 @@ class ExtraTreesClassifier(ForestClassifier):
     bootstrap : boolean, optional (default=False)
         Whether bootstrap samples are used when building trees.
 
-    compute_importances : boolean, optional (default=True)
-        Whether feature importances are computed and stored into the
-        ``feature_importances_`` attribute when calling fit.
-
     oob_score : bool
         Whether to use out-of-bag samples to estimate
         the generalization error.
 
     n_jobs : integer, optional (default=1)
-        The number of jobs to run in parallel. If -1, then the number of jobs
-        is set to the number of cores.
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        If -1, then the number of jobs is set to the number of cores.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1057,7 +1066,9 @@ class ExtraTreesClassifier(ForestClassifier):
 
     `oob_decision_function_` : array of shape = [n_samples, n_classes]
         Decision function computed with out-of-bag estimate on the training
-        set.
+        set. If n_estimators is small it might be possible that a data point
+        was never left out during the bootstrap. In this case,
+        `oob_decision_function_` might contain NaN.
 
     References
     ----------
@@ -1166,17 +1177,13 @@ class ExtraTreesRegressor(ForestRegressor):
         Whether bootstrap samples are used when building trees.
         Note: this parameter is tree-specific.
 
-    compute_importances : boolean, optional (default=True)
-        Whether feature importances are computed and stored into the
-        ``feature_importances_`` attribute when calling fit.
-
     oob_score : bool
         Whether to use out-of-bag samples to estimate
         the generalization error.
 
     n_jobs : integer, optional (default=1)
-        The number of jobs to run in parallel. If -1, then the number of jobs
-        is set to the number of cores.
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        If -1, then the number of jobs is set to the number of cores.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -1287,8 +1294,8 @@ class RandomTreesEmbedding(BaseForest):
         sample masks).
 
     n_jobs : integer, optional (default=1)
-        The number of jobs to run in parallel. If -1, then the number of jobs
-        is set to the number of cores.
+        The number of jobs to run in parallel for both `fit` and `predict`.
+        If -1, then the number of jobs is set to the number of cores.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;

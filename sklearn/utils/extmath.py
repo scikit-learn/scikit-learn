@@ -10,6 +10,7 @@ from scipy import linalg
 
 from . import check_random_state
 from .fixes import qr_economic
+from ..externals.six.moves import xrange
 
 
 def norm(v):

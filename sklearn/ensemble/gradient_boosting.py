@@ -76,7 +76,10 @@ class LogOddsEstimator(BaseEstimator):
     """An estimator predicting the log odds ratio."""
     def fit(self, X, y):
         n_pos = np.sum(y)
-        self.prior = np.log(n_pos / (y.shape[0] - n_pos))
+        n_neg = y.shape[0] - n_pos
+        if n_neg == 0 or n_pos == 0:
+            raise ValueError('y contains non binary labels.')
+        self.prior = np.log(n_pos / n_neg)
 
     def predict(self, X):
         y = np.empty((X.shape[0], 1), dtype=np.float64)
@@ -336,17 +339,25 @@ class BinomialDeviance(LossFunction):
         return LogOddsEstimator()
 
     def __call__(self, y, pred):
-        """Compute the deviance (= negative log-likelihood). """
+        """Compute the deviance (= 2 * negative log-likelihood). """
         # logaddexp(0, v) == log(1.0 + exp(v))
         pred = pred.ravel()
-        return np.sum(np.logaddexp(0.0, -2 * y * pred)) / y.shape[0]
+        return -2.0 * np.mean((y * pred) - np.logaddexp(0.0, pred))
 
     def negative_gradient(self, y, pred, **kargs):
+        """Compute the residual (= negative gradient). """
         return y - 1.0 / (1.0 + np.exp(-pred.ravel()))
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, pred):
-        """Make a single Newton-Raphson step. """
+        """Make a single Newton-Raphson step.
+
+        our node estimate is given by:
+
+            sum(y - prob) / sum(prob * (1 - prob))
+
+        we take advantage that: y - prob = residual
+        """
         terminal_region = np.where(terminal_regions == leaf)[0]
         residual = residual.take(terminal_region, axis=0)
         y = y.take(terminal_region, axis=0)
@@ -463,7 +474,6 @@ class BaseGradientBoosting(BaseEnsemble):
                 min_samples_leaf=self.min_samples_leaf,
                 min_density=self.min_density,
                 max_features=self.max_features,
-                compute_importances=False,
                 random_state=random_state)
 
             tree.fit(X, residual, sample_mask, X_argsorted, check_input=False)
@@ -681,14 +691,21 @@ class BaseGradientBoosting(BaseEnsemble):
 
     @property
     def feature_importances_(self):
+        """Return the feature importances (the higher, the more important the
+           feature).
+
+        Returns
+        -------
+        feature_importances_ : array, shape = [n_features]
+        """
         if self.estimators_ is None or len(self.estimators_) == 0:
             raise ValueError("Estimator not fitted, "
                              "call `fit` before `feature_importances_`.")
+
         total_sum = np.zeros((self.n_features, ), dtype=np.float64)
         for stage in self.estimators_:
-            stage_sum = sum(
-                tree.tree_.compute_feature_importances(method='gini')
-                for tree in stage) / len(stage)
+            stage_sum = sum(tree.feature_importances_
+                            for tree in stage) / len(stage)
             total_sum += stage_sum
 
         importances = total_sum / len(self.estimators_)

@@ -282,7 +282,7 @@ results.append(benchmark(L1LinearSVC()))
 
 indices = np.arange(len(results))
 
-results = [[x[i] for x in results] for i in xrange(4)]
+results = [[x[i] for x in results] for i in range(4)]
 
 clf_names, score, training_time, test_time = results
 training_time = np.array(training_time) / np.max(training_time)

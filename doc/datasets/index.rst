@@ -180,3 +180,4 @@ features::
 
 .. include:: labeled_faces.rst
 
+.. include:: covtype.rst

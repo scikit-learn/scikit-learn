@@ -15,10 +15,11 @@ from scipy import sparse
 from scipy.cluster import hierarchy
 
 from ..base import BaseEstimator, ClusterMixin
-from ..utils._csgraph import cs_graph_components
 from ..externals.joblib import Memory
+from ..externals import six
 from ..metrics import euclidean_distances
 from ..utils import array2d
+from ..utils._csgraph import cs_graph_components
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
@@ -146,7 +147,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
     inertia = np.empty(len(coord_row), dtype=np.float)
     _hierarchical.compute_ward_dist(moments_1, moments_2, coord_row, coord_col,
                                     inertia)
-    inertia = zip(inertia, coord_row, coord_col)
+    inertia = list(six.moves.zip(inertia, coord_row, coord_col))
     heapify(inertia)
 
     # prepare the main fields
@@ -158,7 +159,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
     not_visited = np.empty(n_nodes, dtype=np.int8)
 
     # recursive merge loop
-    for k in xrange(n_samples, n_nodes):
+    for k in range(n_samples, n_nodes):
         # identify the merge
         while True:
             inert, i, j = heappop(inertia)
@@ -191,7 +192,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
                                         coord_row, coord_col, ini)
         # List comprehension is faster than a for loop
         [heappush(inertia, (ini[idx], k, coord_col[idx]))
-            for idx in xrange(n_additions)]
+            for idx in range(n_additions)]
 
     # Separate leaves in children (empty lists up to now)
     n_leaves = n_samples
@@ -346,7 +347,7 @@ class Ward(BaseEstimator, ClusterMixin):
         """
         memory = self.memory
         X = array2d(X)
-        if isinstance(memory, basestring):
+        if isinstance(memory, six.string_types):
             memory = Memory(cachedir=memory, verbose=0)
 
         if not self.connectivity is None:

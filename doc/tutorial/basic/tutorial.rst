@@ -93,7 +93,7 @@ section <datasets>`.
 For instance, in the case of the digits dataset, ``digits.data`` gives
 access to the features that can be used to classify the digits samples::
 
-  >>> print digits.data  # doctest: +NORMALIZE_WHITESPACE
+  >>> print(digits.data)  # doctest: +NORMALIZE_WHITESPACE
   [[  0.   0.   5. ...,   0.   0.   0.]
    [  0.   0.   0. ...,  10.   0.   0.]
    [  0.   0.   0. ...,  16.   9.   0.]

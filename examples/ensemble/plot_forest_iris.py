@@ -23,6 +23,7 @@ from sklearn import clone
 from sklearn.datasets import load_iris
 from sklearn.ensemble import (RandomForestClassifier, ExtraTreesClassifier,
                               AdaBoostClassifier)
+from sklearn.externals.six.moves import xrange
 from sklearn.tree import DecisionTreeClassifier
 
 # Parameters

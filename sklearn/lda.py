@@ -1,6 +1,7 @@
 """
 The :mod:`sklearn.lda` module implements Linear Discriminant Analysis (LDA).
 """
+from __future__ import print_function
 # Authors: Matthieu Perrot
 #          Mathieu Blondel
 
@@ -90,7 +91,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             if (self.priors < 0).any():
                 raise ValueError('priors must be non-negative')
             if self.priors.sum() != 1:
-                print 'warning: the priors do not sum to 1. Renormalizing'
+                print('warning: the priors do not sum to 1. Renormalizing')
                 self.priors = self.priors / self.priors.sum()
 
     def fit(self, X, y, store_covariance=False, tol=1.0e-4):
@@ -127,7 +128,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         cov = None
         if store_covariance:
             cov = np.zeros((n_features, n_features))
-        for ind in xrange(n_classes):
+        for ind in range(n_classes):
             Xg = X[y == ind, :]
             meang = Xg.mean(0)
             means.append(meang)

@@ -98,7 +98,7 @@ def _k_init(X, n_clusters, n_local_trials=None, random_state=None,
     current_pot = closest_dist_sq.sum()
 
     # Pick the remaining n_clusters-1 points
-    for c in xrange(1, n_clusters):
+    for c in range(1, n_clusters):
         # Choose center candidates by sampling with probability proportional
         # to the squared distance to the closest existing center
         rand_vals = random_state.random_sample(n_local_trials) * current_pot
@@ -112,7 +112,7 @@ def _k_init(X, n_clusters, n_local_trials=None, random_state=None,
         best_candidate = None
         best_pot = None
         best_dist_sq = None
-        for trial in xrange(n_local_trials):
+        for trial in range(n_local_trials):
             # Compute potential when including center candidate
             new_dist_sq = np.minimum(closest_dist_sq,
                                      distance_to_candidates[trial])
@@ -363,7 +363,7 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
     centers = _init_centroids(X, n_clusters, init, random_state=random_state,
                               x_squared_norms=x_squared_norms)
     if verbose:
-        print 'Initialization complete'
+        print('Initialization complete')
 
     # Allocate memory to store the distances for each sample to its
     # closer center for reallocation in case of ties
@@ -386,7 +386,7 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
             centers = _k_means._centers_dense(X, labels, n_clusters, distances)
 
         if verbose:
-            print 'Iteration %i, inertia %s' % (i, inertia)
+            print('Iteration %i, inertia %s' % (i, inertia))
 
         if best_inertia is None or inertia < best_inertia:
             best_labels = labels.copy()
@@ -395,7 +395,7 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
 
         if np.sum((centers_old - centers) ** 2) < tol:
             if verbose:
-                print 'Converged to similar centers at iteration', i
+                print('Converged to similar centers at iteration', i)
             break
     return best_labels, best_inertia, best_centers
 
@@ -851,27 +851,29 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
         # Reassign clusters that have very low counts
         to_reassign = np.logical_or(
             (counts <= 1), counts <= reassignment_ratio * counts.max())
-        # Pick new clusters amongst observations with a probability
-        # proportional to their closeness to their center
-        distance_to_centers = np.asarray(centers[nearest_center] - X)
-        distance_to_centers **= 2
-        distance_to_centers = distance_to_centers.sum(axis=1)
-        # Flip the ordering of the distances
-        distance_to_centers -= distance_to_centers.max()
-        distance_to_centers *= -1
-        rand_vals = random_state.rand(to_reassign.sum())
-        rand_vals *= distance_to_centers.sum()
-        new_centers = np.searchsorted(distance_to_centers.cumsum(),
-                                      rand_vals)
-        new_centers = X[new_centers]
-        if verbose:
-            n_reassigns = to_reassign.sum()
-            if n_reassigns:
-                print("[_mini_batch_step] Reassigning %i cluster centers."
-                      % n_reassigns)
-        if sp.issparse(new_centers) and not sp.issparse(centers):
-            new_centers = new_centers.toarray()
-        centers[to_reassign] = new_centers
+        number_of_reassignments = to_reassign.sum()
+        if number_of_reassignments:
+            # Pick new clusters amongst observations with a probability
+            # proportional to their closeness to their center
+            distance_to_centers = np.asarray(centers[nearest_center] - X)
+            distance_to_centers **= 2
+            distance_to_centers = distance_to_centers.sum(axis=1)
+            # Flip the ordering of the distances
+            distance_to_centers -= distance_to_centers.max()
+            distance_to_centers *= -1
+            rand_vals = random_state.rand(number_of_reassignments)
+            rand_vals *= distance_to_centers.sum()
+            new_centers = np.searchsorted(distance_to_centers.cumsum(),
+                                          rand_vals)
+            new_centers = X[new_centers]
+            if verbose:
+                n_reassigns = to_reassign.sum()
+                if n_reassigns:
+                    print("[_mini_batch_step] Reassigning %i cluster centers."
+                          % n_reassigns)
+            if sp.issparse(new_centers) and not sp.issparse(centers):
+                new_centers = new_centers.toarray()
+            centers[to_reassign] = new_centers
 
     # implementation for the sparse CSR reprensation completely written in
     # cython
@@ -943,14 +945,14 @@ def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
             'mean batch inertia: %f, ewa inertia: %f ' % (
                 iteration_idx + 1, n_iter, batch_inertia,
                 ewa_inertia))
-        print progress_msg
+        print(progress_msg)
 
     # Early stopping based on absolute tolerance on squared change of
     # centers postion (using EWA smoothing)
     if tol > 0.0 and ewa_diff < tol:
         if verbose:
-            print 'Converged (small centers change) at iteration %d/%d' % (
-                iteration_idx + 1, n_iter)
+            print('Converged (small centers change) at iteration %d/%d'
+                  % (iteration_idx + 1, n_iter))
         return True
 
     # Early stopping heuristic due to lack of improvement on smoothed inertia
@@ -965,9 +967,9 @@ def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
     if (model.max_no_improvement is not None
             and no_improvement >= model.max_no_improvement):
         if verbose:
-            print ('Converged (lack of improvement in inertia)'
-                   ' at iteration %d/%d' % (
-                       iteration_idx + 1, n_iter))
+            print('Converged (lack of improvement in inertia)'
+                  ' at iteration %d/%d'
+                  % (iteration_idx + 1, n_iter))
         return True
 
     # update the convergence context to maintain state across sucessive calls:
@@ -1141,8 +1143,8 @@ class MiniBatchKMeans(KMeans):
         best_inertia = None
         for init_idx in range(self.n_init):
             if self.verbose:
-                print "Init %d/%d with method: %s" % (
-                    init_idx + 1, self.n_init, self.init)
+                print("Init %d/%d with method: %s"
+                      % (init_idx + 1, self.n_init, self.init))
             counts = np.zeros(self.n_clusters, dtype=np.int32)
 
             # TODO: once the `k_means` function works with sparse input we
@@ -1167,8 +1169,8 @@ class MiniBatchKMeans(KMeans):
             _, inertia = _labels_inertia(X_valid, x_squared_norms_valid,
                                          cluster_centers)
             if self.verbose:
-                print "Inertia for init %d/%d: %f" % (
-                    init_idx + 1, self.n_init, inertia)
+                print("Inertia for init %d/%d: %f"
+                      % (init_idx + 1, self.n_init, inertia))
             if best_inertia is None or inertia < best_inertia:
                 self.cluster_centers_ = cluster_centers
                 self.counts_ = counts
@@ -1179,8 +1181,7 @@ class MiniBatchKMeans(KMeans):
 
         # Perform the iterative optimization until the final convergence
         # criterion
-        for iteration_idx in xrange(n_iter):
-
+        for iteration_idx in range(n_iter):
             # Sample a minibatch from the full dataset
             minibatch_indices = random_state.random_integers(
                 0, n_samples - 1, self.batch_size)
@@ -1210,7 +1211,7 @@ class MiniBatchKMeans(KMeans):
 
         if self.compute_labels:
             if self.verbose:
-                print 'Computing label assignements and total inertia'
+                print('Computing label assignements and total inertia')
             self.labels_, self.inertia_ = _labels_inertia(
                 X, x_squared_norms, self.cluster_centers_)
 

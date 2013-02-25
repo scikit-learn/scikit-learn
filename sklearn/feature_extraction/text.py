@@ -9,6 +9,7 @@
 The :mod:`sklearn.feature_extraction.text` submodule gathers utilities to
 build feature vectors from text documents.
 """
+from __future__ import unicode_literals
 
 from collections import Mapping
 from operator import itemgetter
@@ -21,10 +22,12 @@ import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
+from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from ..utils.fixes import Counter
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
+from sklearn.externals import six
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
@@ -48,8 +51,8 @@ def strip_accents_unicode(s):
         Remove accentuated char for any unicode symbol that has a direct
         ASCII equivalent.
     """
-    return u''.join([c for c in unicodedata.normalize('NFKD', s)
-                     if not unicodedata.combining(c)])
+    return ''.join([c for c in unicodedata.normalize('NFKD', s)
+                    if not unicodedata.combining(c)])
 
 
 def strip_accents_ascii(s):
@@ -73,13 +76,13 @@ def strip_tags(s):
     For serious HTML/XML preprocessing you should rather use an external
     library such as lxml or BeautifulSoup.
     """
-    return re.compile(ur"<([^>]+)>", flags=re.UNICODE).sub(u" ", s)
+    return re.compile(r"<([^>]+)>", flags=re.UNICODE).sub(" ", s)
 
 
 def _check_stop_list(stop):
     if stop == "english":
         return ENGLISH_STOP_WORDS
-    elif isinstance(stop, str) or isinstance(stop, unicode):
+    elif isinstance(stop, six.string_types):
         raise ValueError("not a built-in stop list: %s" % stop)
     else:               # assume it's a collection
         return stop
@@ -168,7 +171,7 @@ class VectorizerMixin(object):
 
         # unfortunately python functools package does not have an efficient
         # `compose` function that would have allowed us to chain a dynamic
-        # number of functions. However the however of a lambda call is a few
+        # number of functions. However the cost of a lambda call is a few
         # hundreds of nanoseconds which is negligible when compared to the
         # cost of tokenizing a string of 1000 chars for instance.
         noop = lambda x: x
@@ -319,8 +322,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
 
     stop_words: string {'english'}, list, or None (default)
         If a string, it is passed to _check_stop_list and the appropriate stop
-        list is returned is currently the only
-        supported string value.
+        list is returned. 'english' is currently the only supported string
+        value.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
@@ -500,8 +503,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     stop_words : string {'english'}, list, or None (default)
         If a string, it is passed to _check_stop_list and the appropriate stop
-        list is returned is currently the only
-        supported string value.
+        list is returned. 'english' is currently the only supported string
+        value.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
@@ -572,7 +575,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     def __init__(self, input='content', charset='utf-8',
                  charset_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
-                 stop_words=None, token_pattern=ur"(?u)\b\w\w+\b",
+                 stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word',
                  max_df=1.0, min_df=2, max_features=None,
                  vocabulary=None, binary=False, dtype=long):
@@ -609,7 +612,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         vocabulary = self.vocabulary_
 
         for i, term_count_dict in enumerate(term_count_dicts):
-            for term, count in term_count_dict.iteritems():
+            for term, count in six.iteritems(term_count_dict):
                 j = vocabulary.get(term)
                 if j is not None:
                     i_indices.append(i)
@@ -618,7 +621,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             # free memory as we go
             term_count_dict.clear()
 
-        shape = (i + 1, max(vocabulary.itervalues()) + 1)
+        shape = (i + 1, max(six.itervalues(vocabulary)) + 1)
         spmatrix = sp.coo_matrix((values, (i_indices, j_indices)),
                                  shape=shape, dtype=self.dtype)
         if self.binary:
@@ -681,7 +684,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             term_count_current = Counter(analyze(doc))
             term_counts.update(term_count_current)
 
-            document_counts.update(term_count_current.iterkeys())
+            document_counts.update(six.iterkeys(term_count_current))
 
             term_counts_per_doc.append(term_count_current)
 
@@ -699,7 +702,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         # filter out stop words: terms that occur in almost all documents
         if max_doc_count < n_doc or min_doc_count > 1:
-            stop_words = set(t for t, dc in document_counts.iteritems()
+            stop_words = set(t for t, dc in six.iteritems(document_counts)
                              if dc > max_doc_count or dc < min_doc_count)
         else:
             stop_words = set()
@@ -782,19 +785,19 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             X = np.asmatrix(X)
         n_samples = X.shape[0]
 
-        terms = np.array(self.vocabulary_.keys())
-        indices = np.array(self.vocabulary_.values())
+        terms = np.array(list(self.vocabulary_.keys()))
+        indices = np.array(list(self.vocabulary_.values()))
         inverse_vocabulary = terms[np.argsort(indices)]
 
         return [inverse_vocabulary[X[i, :].nonzero()[1]].ravel()
-                for i in xrange(n_samples)]
+                for i in range(n_samples)]
 
     def get_feature_names(self):
         """Array mapping from feature integer indices to feature name"""
         if not hasattr(self, 'vocabulary_') or len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary wasn't fitted or is empty!")
 
-        return [t for t, i in sorted(self.vocabulary_.iteritems(),
+        return [t for t, i in sorted(six.iteritems(self.vocabulary_),
                                      key=itemgetter(1))]
 
     @property
@@ -916,7 +919,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
         if self.use_idf:
             if not hasattr(self, "_idf_diag"):
-                raise ValueError("idf vector not fitted")  
+                raise ValueError("idf vector not fitted")
             expected_n_features = self._idf_diag.shape[0]
             if n_features != expected_n_features:
                 raise ValueError("Input has n_features=%d while the model"
@@ -994,8 +997,8 @@ class TfidfVectorizer(CountVectorizer):
 
     stop_words : string {'english'}, list, or None (default)
         If a string, it is passed to _check_stop_list and the appropriate stop
-        list is returned is currently the only
-        supported string value.
+        list is returned. 'english' is currently the only supported string
+        value.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
@@ -1076,7 +1079,7 @@ class TfidfVectorizer(CountVectorizer):
     def __init__(self, input='content', charset='utf-8',
                  charset_error='strict', strip_accents=None, lowercase=True,
                  preprocessor=None, tokenizer=None, analyzer='word',
-                 stop_words=None, token_pattern=ur"(?u)\b\w\w+\b",
+                 stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), max_df=1.0, min_df=2,
                  max_features=None, vocabulary=None, binary=False, dtype=long,
                  norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=False):

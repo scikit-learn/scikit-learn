@@ -251,9 +251,9 @@ def _dump_svmlight(X, y, f, one_based, comment, query_id):
         f.write("#\n")
         f.writelines("# %s\n" % line for line in comment.splitlines())
 
-    for i in xrange(X.shape[0]):
-        s = u" ".join([value_pattern % (j + one_based, X[i, j])
-                       for j in X[i].nonzero()[is_sp]])
+    for i in range(X.shape[0]):
+        s = " ".join([value_pattern % (j + one_based, X[i, j])
+                      for j in X[i].nonzero()[is_sp]])
         if query_id is not None:
             feat = (y[i], query_id[i], s)
         else:

@@ -2,6 +2,7 @@
 Least Angle Regression algorithm. See the documentation on the
 Generalized Linear Model for a complete discussion.
 """
+from __future__ import print_function
 
 # Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
@@ -22,6 +23,7 @@ from ..base import RegressorMixin
 from ..utils import array2d, arrayfuncs, as_float_array
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
+from ..externals.six.moves import xrange
 
 
 def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
@@ -142,7 +144,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
 
     if verbose:
         if verbose > 1:
-            print "Step\t\tAdded\t\tDropped\t\tActive set size\t\tC"
+            print("Step\t\tAdded\t\tDropped\t\tActive set size\t\tC")
         else:
             sys.stdout.write('.')
             sys.stdout.flush()
@@ -241,8 +243,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             n_active += 1
 
             if verbose > 1:
-                print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, active[-1], '',
-                                                      n_active, C)
+                print("%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, active[-1], '',
+                                                      n_active, C))
 
         if method == 'lasso' and n_iter > 0 and prev_alpha[0] < alpha[0]:
             # alpha is increasing. This is because the updates of Cov are
@@ -382,8 +384,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             sign_active = np.delete(sign_active, idx)
             sign_active = np.append(sign_active, 0.)  # just to maintain size
             if verbose > 1:
-                print "%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, '', drop_idx,
-                                                      n_active, abs(temp))
+                print("%s\t\t%s\t\t%s\t\t%s\t\t%s" % (n_iter, '', drop_idx,
+                                                      n_active, abs(temp)))
 
     if return_path:
         # resize coefs in case of early stop

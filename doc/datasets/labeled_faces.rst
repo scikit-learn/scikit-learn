@@ -43,7 +43,7 @@ classification task (hence supervised learning)::
   >>> lfw_people = fetch_lfw_people(min_faces_per_person=70, resize=0.4)
 
   >>> for name in lfw_people.target_names:
-  ...     print name
+  ...     print(name)
   ...
   Ariel Sharon
   Colin Powell

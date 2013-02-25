@@ -82,7 +82,7 @@ def test_outlier_detection():
     rnd = np.random.RandomState(0)
     X = rnd.randn(100, 10)
     clf = EllipticEnvelope(contamination=0.1)
-    print clf.threshold
+    print(clf.threshold)
     assert_raises(Exception, clf.predict, X)
     assert_raises(Exception, clf.decision_function, X)
     clf.fit(X)

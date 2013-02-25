@@ -18,6 +18,7 @@ from ..preprocessing import LabelBinarizer
 from ..utils import (array2d, as_float_array, atleast2d_or_csr, check_arrays,
                      safe_asarray, safe_sqr, safe_mask)
 from ..utils.extmath import safe_sparse_dot
+from functools import reduce
 
 
 def _clean_nans(scores):

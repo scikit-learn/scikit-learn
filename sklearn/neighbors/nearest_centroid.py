@@ -12,8 +12,9 @@ import numpy as np
 from scipy import sparse as sp
 
 from ..base import BaseEstimator, ClassifierMixin
-from ..utils.validation import check_arrays, atleast2d_or_csr
+from ..externals.six.moves import xrange
 from ..metrics.pairwise import pairwise_distances
+from ..utils.validation import check_arrays, atleast2d_or_csr
 
 
 class NearestCentroid(BaseEstimator, ClassifierMixin):
@@ -46,7 +47,7 @@ class NearestCentroid(BaseEstimator, ClassifierMixin):
     >>> clf = NearestCentroid()
     >>> clf.fit(X, y)
     NearestCentroid(metric='euclidean', shrink_threshold=None)
-    >>> print clf.predict([[-0.8, -1]])
+    >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
     See also

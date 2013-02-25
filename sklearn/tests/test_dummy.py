@@ -2,6 +2,7 @@ import warnings
 import numpy as np
 
 from sklearn.base import clone
+from sklearn.externals.six.moves import xrange
 from sklearn.utils.testing import (assert_array_equal,
                                    assert_equal,
                                    assert_almost_equal,

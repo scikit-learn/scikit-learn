@@ -199,13 +199,11 @@ a :class:`ExtraTreesClassifier` model.
    :align: center
    :scale: 75
 
-In practice those estimates can be computed by explicitly passing
-``compute_importances=True`` to the constructor of the decision trees,
-random forest and extremely randomized trees models. The result is stored
-as an attribute named ``feature_importances_`` on the fitted model. This
-is an array with shape ``(n_features,)`` whose values are positive and sum
-to 1.0. The higher the value, the more important is the contribution of
-the matching feature to the prediction function.
+In practice those estimates are stored as an attribute named 
+``feature_importances_`` on the fitted model. This is an array with shape 
+``(n_features,)`` whose values are positive and sum to 1.0. The higher 
+the value, the more important is the contribution of the matching feature 
+to the prediction function.
 
 .. topic:: Examples:
 

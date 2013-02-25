@@ -16,12 +16,64 @@ Changelog
      scoring function such as area under the ROC curve and f-beta scores.
      See :ref:`score_func_objects` for details. By `Andreas Müller`_.
      Passing a function from :mod:`sklearn.metrics` as ``score_func`` is
-     deprecated. 
+     deprecated.
 
-   - Added :class:`ensemble.AdaBoostClassifier` and 
-     :class:`ensemble.AdaBoostRegressor`, by `Noel Dawe`_  and `Gilles Louppe`_.
-     See the :ref:`AdaBoost <adaboost>` section of the user guide for
-     details and examples.
+   - Added :class:`ensemble.AdaBoostClassifier` and
+     :class:`ensemble.AdaBoostRegressor`, by `Noel Dawe`_  and
+     `Gilles Louppe`_. See the :ref:`AdaBoost <adaboost>` section of the user
+     guide for details and examples.
+
+   - Feature importances in :class:`tree.DecisionTreeClassifier`,
+     :class:`tree.DecisionTreeRegressor` and all derived ensemble estimators
+     are now computed on the fly when accessing  the ``feature_importances_``
+     attribute. Setting ``compute_importances=True`` is no longer required.
+     By `Gilles Louppe`_.
+
+.. _changes_0_13_1:
+
+0.13.1
+======
+
+The 0.13.1 release only fixes some bugs and does not add any new functionality.
+
+Changelog
+---------
+
+    - Fixed a testing error caused by the function :func:`cross_validation.train_test_split` being
+      interpreted as a test by `Yaroslav Halchenko`_.
+
+    - Fixed a bug in the reassignment of small clusters in the :class:`cluster.MiniBatchKMeans`
+      by `Gael Varoquaux`_.
+
+    - Fixed default value of ``gamma`` in :class:`decomposition.KernelPCA` by `Lars Buitinck`_.
+
+    - Updated joblib to ``0.7.0d`` by `Gael Varoquaux`_.
+
+    - Fixed scaling of the deviance in :class:`ensemble.GradientBoostingClassifier` by `Peter Prettenhofer`_.
+
+    - Better tie-breaking in :class:`multiclass.OneVsOneClassifier` by `Andreas Müller`_.
+
+    - Other small improvements to tests and documentation.
+
+People
+------
+List of contributors for release 0.13.1 by number of commits.
+ * 16  `Lars Buitinck`_
+ * 12  `Andreas Müller`_
+ *  8  `Gael Varoquaux`_
+ *  5  Robert Marchman
+ *  3  `Peter Prettenhofer`_
+ *  2  Hrishikesh Huilgolkar
+ *  1  Bastiaan van den Berg
+ *  1  Diego Molla
+ *  1  `Gilles Louppe`_
+ *  1  `Mathieu Blondel`_
+ *  1  Nelle Varoquaux
+ *  1  Rafael Cunha de Almeida
+ *  1  Rolando Espinoza La fuente
+ *  1  `Vlad Niculae`_
+ *  1  `Yaroslav Halchenko`_
+
 
 .. _changes_0_13:
 

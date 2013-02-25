@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 The :mod:`sklearn.metrics.pairwise` submodule implements utilities to evaluate
 pairwise distances or affinity of sets of samples.
@@ -322,7 +323,7 @@ def rbf_kernel(X, Y=None, gamma=None):
     """
     Compute the rbf (gaussian) kernel between X and Y::
 
-        K(x, y) = exp(-gamma ||x-y||^2)
+        K(x, y) = exp(-γ ||x-y||²)
 
     for each pair of rows x in X and y in Y.
 
@@ -395,7 +396,7 @@ def additive_chi2_kernel(X, Y=None):
 
     The chi-squared kernel is given by::
 
-        k(x, y) = -\sum_i (x[i] - y[i]) ** 2 / (x[i] + y[i])
+        k(x, y) = -∑ᵢ [(xᵢ - yᵢ)² / (xᵢ + yᵢ)]
 
     It can be interpreted as a weighted difference per entry.
 
@@ -477,7 +478,7 @@ def chi2_kernel(X, Y=None, gamma=1.):
 
     The chi-squared kernel is given by::
 
-        k(x, y) = exp(-gamma * \sum_i (x[i] - y[i]) ** 2 / (x[i] + y[i]))
+        k(x, y) = exp(-γ ∑ᵢ [(xᵢ - yᵢ)² / (xᵢ + yᵢ)])
 
     It can be interpreted as a weighted difference per entry.
 
@@ -515,7 +516,7 @@ def chi2_kernel(X, Y=None, gamma=1.):
 
 
 # Helper functions - distance
-pairwise_distance_functions = {
+PAIRWISE_DISTANCE_FUNCTIONS = {
     # If updating this dictionary, update the doc in both distance_metrics()
     # and also in pairwise_distances()!
     'euclidean': euclidean_distances,
@@ -545,7 +546,7 @@ def distance_metrics():
     ============     ====================================
 
     """
-    return pairwise_distance_functions
+    return PAIRWISE_DISTANCE_FUNCTIONS
 
 
 def _parallel_pairwise(X, Y, func, n_jobs, **kwds):
@@ -579,7 +580,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     distance between the arrays from both X and Y.
 
     Please note that support for sparse matrices is currently limited to those
-    metrics listed in pairwise.pairwise_distance_functions.
+    metrics listed in pairwise.PAIRWISE_DISTANCE_FUNCTIONS.
 
     Valid values for metric are:
 
@@ -611,7 +612,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
         allowed by scipy.spatial.distance.pdist for its metric parameter, or
-        a metric listed in pairwise.pairwise_distance_functions.
+        a metric listed in pairwise.PAIRWISE_DISTANCE_FUNCTIONS.
         If metric is "precomputed", X is assumed to be a distance matrix.
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
@@ -644,8 +645,8 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     """
     if metric == "precomputed":
         return X
-    elif metric in pairwise_distance_functions:
-        func = pairwise_distance_functions[metric]
+    elif metric in PAIRWISE_DISTANCE_FUNCTIONS:
+        func = PAIRWISE_DISTANCE_FUNCTIONS[metric]
         if n_jobs == 1:
             return func(X, Y, **kwds)
         else:
@@ -683,7 +684,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
 
 
 # Helper functions - distance
-pairwise_kernel_functions = {
+PAIRWISE_KERNEL_FUNCTIONS = {
     # If updating this dictionary, update the doc in both distance_metrics()
     # and also in pairwise_distances()!
     'additive_chi2': additive_chi2_kernel,
@@ -717,10 +718,10 @@ def kernel_metrics():
       'cosine'          sklearn.pairwise.cosine_similarity
       ===============   ========================================
     """
-    return pairwise_kernel_functions
+    return PAIRWISE_KERNEL_FUNCTIONS
 
 
-kernel_params = {
+KERNEL_PARAMS = {
     "chi2": (),
     "exp_chi2": set(("gamma", )),
     "linear": (),
@@ -761,7 +762,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     metric : string, or callable
         The metric to use when calculating kernel between instances in a
         feature array. If metric is a string, it must be one of the metrics
-        in pairwise.pairwise_kernel_functions.
+        in pairwise.PAIRWISE_KERNEL_FUNCTIONS.
         If metric is "precomputed", X is assumed to be a kernel matrix.
         Alternatively, if metric is a callable function, it is called on each
         pair of instances (rows) and the resulting value recorded. The callable
@@ -799,11 +800,11 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     """
     if metric == "precomputed":
         return X
-    elif metric in pairwise_kernel_functions:
+    elif metric in PAIRWISE_KERNEL_FUNCTIONS:
         if filter_params:
             kwds = dict((k, kwds[k]) for k in kwds
-                        if k in kernel_params[metric])
-        func = pairwise_kernel_functions[metric]
+                        if k in KERNEL_PARAMS[metric])
+        func = PAIRWISE_KERNEL_FUNCTIONS[metric]
         if n_jobs == 1:
             return func(X, Y, **kwds)
         else:

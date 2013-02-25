@@ -14,6 +14,7 @@ from scipy.stats.mstats import mquantiles
 from ..utils.extmath import cartesian
 from ..externals.joblib import Parallel, delayed
 from ..externals import six
+from ..externals.six.moves import xrange
 from ..utils import array2d
 from ..tree._tree import DTYPE
 
