@@ -608,6 +608,21 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.dtype = dtype
 
     def _term_counts_to_matrix(self, n_doc, i_indices, j_indices, values):
+        """Construct COO matrix from indices and values.
+
+        i_indices and j_indices should be constructed with _make_int_array.
+        """
+        # array("i") corresponds to np.intc, which is also what scipy.sparse
+        # wants for indices, so they won't be copied by the coo_matrix ctor.
+        # The length check works around a bug in old NumPy versions:
+        # http://projects.scipy.org/numpy/ticket/1943
+        if len(i_indices) > 0:
+            i_indices = np.frombuffer(i_indices, dtype=np.intc)
+        if len(j_indices) > 0:
+            j_indices = np.frombuffer(j_indices, dtype=np.intc)
+        if self.dtype == np.intc and len(values) > 0:
+            values = np.frombuffer(values, dtype=np.intc)
+
         shape = (n_doc, max(six.itervalues(self.vocabulary_)) + 1)
         spmatrix = sp.coo_matrix((values, (i_indices, j_indices)),
                                  shape=shape, dtype=self.dtype)
