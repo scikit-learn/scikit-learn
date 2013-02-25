@@ -23,6 +23,11 @@ Changelog
      `Gilles Louppe`_. See the :ref:`AdaBoost <adaboost>` section of the user
      guide for details and examples.
 
+   - Much reduced memory usage in
+     :class:`feature_extraction.text.CountVectorizer` and
+     :class:`feature_extraction.text.TfidfVectorizer`,
+     by Jochen Wersdörfer.
+
    - Feature importances in :class:`tree.DecisionTreeClassifier`,
      :class:`tree.DecisionTreeRegressor` and all derived ensemble estimators
      are now computed on the fly when accessing  the ``feature_importances_``
