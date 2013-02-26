@@ -13,6 +13,7 @@ randomized trees. Single and multi-output problems are both handled.
 
 from __future__ import division
 
+import numbers
 import numpy as np
 from abc import ABCMeta, abstractmethod
 from warnings import warn
@@ -306,10 +307,10 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                     'values are "auto", "sqrt" or "log2".')
         elif self.max_features is None:
             max_features = self.n_features_
-        elif isinstance(self.max_features, float):
-            max_features = int(self.max_features * self.n_features_)
-        else:
+        elif isinstance(self.max_features, numbers.Integral):
             max_features = self.max_features
+        else: # float
+            max_features = int(self.max_features * self.n_features_)
 
         if len(y) != n_samples:
             raise ValueError("Number of labels=%d does not match "
