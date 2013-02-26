@@ -1,3 +1,4 @@
+import pickle
 import unittest
 
 import numpy as np
@@ -226,7 +227,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         self.factory(shuffle="false")
 
     @raises(TypeError)
-    def test_arument_coef(self):
+    def test_argument_coef(self):
         """Checks coef_init not allowed as model argument (only fit)"""
         # Provided coef_ does not match dataset.
         self.factory(coef_init=np.zeros((3,))).fit(X, Y)
@@ -340,6 +341,18 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
                            n_iter=2000)
         clf.fit(X, Y)
         assert_array_equal(clf.coef_[0, 1:-1], np.zeros((4,)))
+        pred = clf.predict(X)
+        assert_array_equal(pred, Y)
+
+        # test sparsify with dense inputs
+        clf.sparsify()
+        assert_true(sp.issparse(clf.coef_))
+        pred = clf.predict(X)
+        assert_array_equal(pred, Y)
+
+        # pickle and unpickle with sparse coef_
+        clf = pickle.loads(pickle.dumps(clf))
+        assert_true(sp.issparse(clf.coef_))
         pred = clf.predict(X)
         assert_array_equal(pred, Y)
 
