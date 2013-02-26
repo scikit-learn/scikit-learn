@@ -107,23 +107,6 @@ def graph_laplacian(csgraph, normed=False, return_diag=False):
 
     For non-symmetric directed graphs, the laplacian is computed using the
     out-degree of each node.
-
-    Examples
-    --------
-    >>> from scipy.sparse import csgraph
-    >>> G = np.arange(5) * np.arange(5)[:, np.newaxis]
-    >>> G
-    array([[ 0,  0,  0,  0,  0],
-           [ 0,  1,  2,  3,  4],
-           [ 0,  2,  4,  6,  8],
-           [ 0,  3,  6,  9, 12],
-           [ 0,  4,  8, 12, 16]])
-    >>> csgraph.laplacian(G, normed=False)
-    array([[  0,   0,   0,   0,   0],
-           [  0,   9,  -2,  -3,  -4],
-           [  0,  -2,  16,  -6,  -8],
-           [  0,  -3,  -6,  21, -12],
-           [  0,  -4,  -8, -12,  24]])
     """
     if csgraph.ndim != 2 or csgraph.shape[0] != csgraph.shape[1]:
         raise ValueError('csgraph must be a square matrix or array')
