@@ -8,6 +8,10 @@ ELM Classifiers Comparison
 A comparison of a several ELMClassifiers with different types of hidden
 layer activations.
 
+ELMClassifier is a classifier based on the Extreme Learning Machine,
+a single layer feedforward network with random hidden layer components
+and least squares fitting of the hidden->output weights by default [1][2]
+
 The point of this example is to illustrate the nature of decision boundaries
 with different hidden layer activation types and regressors.
 
@@ -22,6 +26,14 @@ The plots show training points in solid colors and testing points
 semi-transparent. The lower right shows the classification accuracy on the test
 set.
 
+References
+__________
+.. [1] http://www.extreme-learning-machines.org
+.. [2] G.-B. Huang, Q.-Y. Zhu and C.-K. Siew, "Extreme Learning Machine:
+          Theory and Applications", Neurocomputing, vol. 70, pp. 489-501,
+          2006.
+
+===============================================================================
 Basis Functions:
   rbf = exp(-gamma * (||x-c||/r)^2)
   tanh = np.tanh
@@ -29,6 +41,7 @@ Basis Functions:
   tribas = (lambda x: np.clip(1.0 - np.fabs(x), 0.0, 1.0))
   hardlim = (lambda x: np.array(x > 0.0, dtype=float))
 
+Label Legend:
   ELM(10,tanh)      :10 tanh units
   ELM(10,tanh,LR)   :10 tanh units, LogisticRegression
   ELM(10,sinsq)     :10 sin*sin units
@@ -43,7 +56,7 @@ print __doc__
 # Code source: Gael Varoqueux
 #              Andreas Mueller
 # Modified for Documentation merge by Jaques Grobler
-# Modified for ELM Classifiers by David Lambert
+# Modified for Extreme Learning Machine Classifiers by David Lambert
 # License: BSD
 
 import numpy as np
