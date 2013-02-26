@@ -307,7 +307,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                     'values are "auto", "sqrt" or "log2".')
         elif self.max_features is None:
             max_features = self.n_features_
-        elif isinstance(self.max_features, numbers.Integral):
+        elif isinstance(self.max_features, (numbers.Integral, np.integer)):
             max_features = self.max_features
         else: # float
             max_features = int(self.max_features * self.n_features_)
