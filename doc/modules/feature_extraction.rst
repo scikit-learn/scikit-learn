@@ -291,12 +291,12 @@ reasonable (please see  the :ref:`reference documentation
 
   >>> vectorizer = CountVectorizer(min_df=1)
   >>> vectorizer                            # doctest: +NORMALIZE_WHITESPACE
-  CountVectorizer(analyzer=u'word', binary=False, charset=u'utf-8',
-          charset_error=u'strict', dtype=<type 'long'>, input=u'content',
-          lowercase=True, max_df=1.0, max_features=None, min_df=1,
-          ngram_range=(1, 1), preprocessor=None, stop_words=None,
-          strip_accents=None, token_pattern=u'(?u)\\b\\w\\w+\\b',
-          tokenizer=None, vocabulary=None)
+  CountVectorizer(analyzer='word', binary=False, charset='utf-8',
+          charset_error='strict', dtype=<type 'long'>, input='content',
+          lowercase=True, max_df=1.0, max_features=None, min_df=1, 
+          ngram_range=(1, 1), preprocessor=None, stop_words=None, 
+          strip_accents=None, token_pattern=u'(?u)\\b\\w\\w+\\b', 
+          token_processor=None, tokenizer=None, vocabulary=None)
 
 Let's use it to tokenize and count the word occurrences of a minimalistic
 corpus of text documents::
@@ -376,6 +376,7 @@ last document::
   >>> feature_index = bigram_vectorizer.vocabulary_.get(u'is this')
   >>> X_2[:, feature_index]     # doctest: +ELLIPSIS
   array([0, 0, 0, 1]...)
+
 
 
 .. _tfidf:
@@ -669,24 +670,45 @@ to the vectorizer constructor::
 
 In particular we name:
 
-  * ``preprocessor`` a callable that takes a string as input and return
-    another string (removing HTML tags or converting to lower case for
-    instance)
+  * ``preprocessor`` a callable that takes the original document as a string as
+    input and returns another string (removing HTML tags or converting to lower
+    case for instance)
 
-  * ``tokenizer`` a callable that takes a string as input and output a
-    sequence of feature occurrences (a.k.a. the tokens).
+  * ``tokenizer`` a callable that takes the output from ``preprocessor`` as a
+    string and outputs a sequence of feature occurrences (a.k.a. the tokens).
 
-  * ``analyzer`` a callable that wraps calls to the preprocessor and
-    tokenizer and further perform some filtering or n-grams extractions
+  * ``token_processor`` a callable that takes a token as 
+    input and outputs a processed version of it (useful, e.g., for 
+    integrating stemming).
+
+  * ``analyzer`` a callable that wraps calls to the preprocessor, tokenizer, and
+    token_processor and performs some further filtering or n-gram extraction
     on the tokens.
 
 To make the preprocessor, tokenizer and analyzers aware of the model
 parameters it is possible to derive from the class and override the
-``build_preprocessor``, ``build_tokenizer``` and ``build_analyzer``
-factory method instead.
+``build_preprocessor``, ``build_tokenizer``, ``build_token_processor`` 
+and ``build_analyzer`` factory method instead.
 
-Customizing the vectorizer can be very useful to handle Asian languages
-that do not use an explicit word separator such as whitespace.
+Customizing the vectorizer can be very useful, for example, to handle Asian
+languages that do not use an explicit word separator such as whitespace (you
+would use a ``tokenizer`` to achieve that). Or if you would like to count
+variants of the same word stem are counted together (e.g. "look", "looks",
+"looking"), you could set ``token_processor`` to a simple function that takes a
+string and applies the stemming on it (e.g. by using NLTK's `SnowBallStemmer
+<http://nltk.org/api/nltk.stem.html>`_).
+
+For the sake of simplicity, the following example will remove all vowels before counting:
+
+  >>> def vowel_remover(word):
+  ...     for vowel in "aeiou": 
+  ...         word = word.replace(vowel, "")
+  ...     return word
+  ... 
+  >>> vectorizer = CountVectorizer(token_processor=vowel_remover)
+  >>> print vectorizer.build_analyzer()(u"color colour")
+  [u'clr', u'clr']
+
 
 
 Image feature extraction
