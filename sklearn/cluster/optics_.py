@@ -135,7 +135,7 @@ EXTRACTION_FUNCTIONS = {
 }
 
 def optics(X, eps=float('inf'), min_samples=5, metric='euclidean',
-           extraction='hierarchical'):
+           extraction='hierarchical', ext_kwargs=dict()):
     """
     Perform OPTICS clustering from vector array or distance matrix.
 
@@ -145,12 +145,15 @@ def optics(X, eps=float('inf'), min_samples=5, metric='euclidean',
         Array of distances between samples, or a feature array.
         The array is treated as a feature array unless the metric is given as
         'precomputed'.
+
     eps : float, optional
         The generating distance between two samples for them to be considered
         as in the same neighborhood.
+
     min_samples : int, optional
         The number of samples in a neighborhood for a point to be considered
         as a core point.
+
     metric : string or callable, optional
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
@@ -158,9 +161,13 @@ def optics(X, eps=float('inf'), min_samples=5, metric='euclidean',
         metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square.
+
     extraction : string, optional
         The extraction method used to generate clusters from the ordering of
         points returned by the OPTICS algorithm.
+
+    ext_kwargs : dict
+        Keyword arguments to be supplied to the extraction function.
 
     Returns
     -------
@@ -227,7 +234,8 @@ def optics(X, eps=float('inf'), min_samples=5, metric='euclidean',
         estr = extraction.lower()
         if estr in EXTRACTION_FUNCTIONS:
             func = EXTRACTION_FUNCTIONS[estr]
-            labels = func(ordering, reachability_distances, min_samples)
+            labels = func(ordering, reachability_distances, min_samples,
+                    **ext_kwargs)
         else:
             raise ValueError('Unknown Extraction Method: %s' % estr)
     else:
@@ -245,12 +253,15 @@ class OPTICS(BaseEstimator, ClusterMixin):
         Array of distances between samples, or a feature array.
         The array is treated as a feature array unless the metric is given as
         'precomputed'.
+
     eps : float, optional
         The generating distance between two samples for them to be considered
         as in the same neighborhood.
+
     min_samples : int, optional
         The number of samples in a neighborhood for a point to be considered
         as a core point.
+
     metric : string or callable, optional
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string or callable, it must be one of
@@ -258,9 +269,13 @@ class OPTICS(BaseEstimator, ClusterMixin):
         metric parameter.
         If metric is "precomputed", X is assumed to be a distance matrix and
         must be square.
+
     extraction : string, optional
         The extraction method used to generate clusters from the ordering of
         points returned by the OPTICS algorithm.
+
+    ext_kwargs : dict
+        Keyword arguments to be supplied to the extraction function.
 
     Attributes
     ----------
@@ -288,11 +303,12 @@ class OPTICS(BaseEstimator, ClusterMixin):
 
     """
     def __init__(self, eps=float('inf'), min_samples=5, metric='euclidean',
-                 extraction='hierarchical'):
+                 extraction='hierarchical', ext_kwargs=dict()):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric
         self.extraction = extraction
+        self.ext_kwargs = ext_kwargs
 
     def fit(self, X):
         """
