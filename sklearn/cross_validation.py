@@ -372,10 +372,9 @@ class StratifiedKFold(object):
         self.indices = indices
 
     def __iter__(self):
-        y = self.y.copy()
         n_folds = self.n_folds
-        n = y.size
-        idx = np.argsort(y)
+        n = self.y.size
+        idx = np.argsort(self.y)
 
         for i in range(n_folds):
             test_index = np.zeros(n, dtype=np.bool)
