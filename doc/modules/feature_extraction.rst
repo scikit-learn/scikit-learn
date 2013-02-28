@@ -702,15 +702,15 @@ Some tips and tricks:
     tokenizer or the analyzer.
     Here's a ``CountVectorizer`` with a tokenizer and lemmatizer using NLTK::
 
-        >>> from nltk import word_tokenize      # doctest: +SKIP
-        >>> from nltk.stem import WordNetLemmatizer
+        >>> from nltk import word_tokenize          # doctest: +SKIP
+        >>> from nltk.stem import WordNetLemmatizer # doctest: +SKIP
         >>> class LemmaTokenizer(object):
         ...     def __init__(self):
         ...         self.wnl = WordNetLemmatizer()
         ...     def __call__(self, doc):
         ...         return [self.wnl.lemmatize(t) for t in word_tokenize(doc)]
         ...
-        >>> vect = CountVectorizer(tokenizer=LemmaTokenizer())
+        >>> vect = CountVectorizer(tokenizer=LemmaTokenizer())  # doctest: +SKIP
 
     (Note that this will not filter out punctuation.)
 
