@@ -182,12 +182,27 @@ Mini Batch K-Means
 ------------------
 
 The :class:`MiniBatchKMeans` is a variant of the :class:`KMeans` algorithm
-using mini-batches, random subset of the dataset, to compute the centroids.
+which uses mini-batches to reduce the computation time, while still attempting
+to optimise the same objective function. Mini-batches are subsets of the input
+data, randomly sampled in each training iteration. These mini-batches
+drastically reduce the amount of computation required to converge to a local
+solution. In contrast to other algorithms that reduce the convergence time of
+k-means, mini-batch k-means produces results that are generally only slightly
+worse than the standard algorithm.
 
-Although the :class:`MiniBatchKMeans` converge faster than the KMeans
-version, the quality of the results, measured by the inertia, the sum of
-the distance of each points to the nearest centroid, is not as good as
-the :class:`KMeans` algorithm.
+The algorithm iterates between two major steps, similar to vanilla k-means.
+In the first step, `b` samples are drawn randomly from the dataset, to form
+a mini-batch. These are then assigned to the nearest centroid. In the second
+step, the centroids are updated. In contrast to k-means, this is done on a
+per-sample basis. For each sample in the mini-batch, the assigned centroid
+is updated by taking the streaming average of the sample and all previous
+samples assigned to that centroid. This has the effect of decreasing the
+rate of change for a centroid over time. These steps are performed until
+convergence or a predetermined number of iterations is reached.
+
+:class:`MiniBatchKMeans` converges faster than :class:`KMeans`, but the quality
+of the results is reduced. In practice this difference in quality can be quite
+small, as shown in the example and cited reference.
 
 .. figure:: ../auto_examples/cluster/images/plot_mini_batch_kmeans_1.png
    :target: ../auto_examples/cluster/plot_mini_batch_kmeans.html
