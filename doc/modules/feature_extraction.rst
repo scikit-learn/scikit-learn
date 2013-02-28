@@ -669,23 +669,52 @@ to the vectorizer constructor::
 
 In particular we name:
 
-  * ``preprocessor`` a callable that takes a string as input and return
-    another string (removing HTML tags or converting to lower case for
-    instance)
+  * ``preprocessor``: a callable that takes an entire document as input (as a
+    single string), and returns a possibly transformed version of the document,
+    still as an entire string. This can be used to remove HTML tags, lowercase
+    the entire document, etc.
 
-  * ``tokenizer`` a callable that takes a string as input and output a
-    sequence of feature occurrences (a.k.a. the tokens).
+  * ``tokenizer``: a callable that takes the output from the preprocessor
+    and splits it into tokens, then returns a list of these.
 
-  * ``analyzer`` a callable that wraps calls to the preprocessor and
-    tokenizer and further perform some filtering or n-grams extractions
-    on the tokens.
+  * ``analyzer``: a callable that replaces the preprocessor and tokenizer.
+    The default analyzers all call the preprocessor and tokenizer, but custom
+    analyzers will skip this. N-gram extraction and stop word filtering take
+    place at the analyzer level, so a custom analyzer may have to reproduce
+    these steps.
+
+(Lucene users might recognize these names, but be aware that scikit-learn
+concepts may not map one-to-one onto Lucene concepts.)
 
 To make the preprocessor, tokenizer and analyzers aware of the model
 parameters it is possible to derive from the class and override the
 ``build_preprocessor``, ``build_tokenizer``` and ``build_analyzer``
-factory method instead.
+factory methods instead of passing custom functions.
 
-Customizing the vectorizer can be very useful to handle Asian languages
+Some tips and tricks:
+
+  * If documents are pre-tokenized by an external package, then store them in
+    files (or strings) with the tokens separated by whitespace and pass
+    ``analyzer=str.split``
+  * Fancy token-level analysis such as stemming, lemmatizing, compound
+    splitting, filtering based on part-of-speech, etc. are not included in the
+    scikit-learn codebase, but can be added by customizing either the
+    tokenizer or the analyzer.
+    Here's a ``CountVectorizer`` with a tokenizer and lemmatizer using NLTK::
+
+        >>> from nltk import word_tokenize      # doctest: +SKIP
+        >>> from nltk.stem import WordNetLemmatizer
+        >>> class LemmaTokenizer(object):
+        ...     def __init__(self):
+        ...         self.wnl = WordNetLemmatizer()
+        ...     def __call__(self, doc):
+        ...         return [self.wnl.lemmatize(t) for t in word_tokenize(doc)]
+        ...
+        >>> vect = CountVectorizer(tokenizer=LemmaTokenizer())
+
+    (Note that this will not filter out punctuation.)
+
+Customizing the vectorizer can also be useful when handling Asian languages
 that do not use an explicit word separator such as whitespace.
 
 
