@@ -102,9 +102,9 @@ def test_sparsify():
     clf.densify()
     pred_d_s = clf.decision_function(sp_data)
 
-    assert_array_equal(pred_d_d, pred_s_d)
-    assert_array_equal(pred_d_d, pred_s_s)
-    assert_array_equal(pred_d_d, pred_d_s)
+    assert_array_almost_equal(pred_d_d, pred_s_d)
+    assert_array_almost_equal(pred_d_d, pred_s_s)
+    assert_array_almost_equal(pred_d_d, pred_d_s)
 
 
 def test_inconsistent_input():
