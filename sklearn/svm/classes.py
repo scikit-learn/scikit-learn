@@ -76,6 +76,11 @@ class LinearSVC(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
 
+    random_state: int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data.
+
+
     Attributes
     ----------
     `coef_` : array, shape = [n_features] if n_classes == 2 \

@@ -68,6 +68,10 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
         Intercept (a.k.a. bias) added to the decision function.
         It is available only when parameter intercept is set to True.
 
+    random_state: int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data.
+
     See also
     --------
     LinearSVC
