@@ -42,16 +42,18 @@ def test_predict_2_classes():
 
     Make sure it predicts the correct result on simple datasets.
     """
-    check_predictions(logistic.LogisticRegression(), X, Y1)
-    check_predictions(logistic.LogisticRegression(), X_sp, Y1)
+    check_predictions(logistic.LogisticRegression(random_state=0), X, Y1)
+    check_predictions(logistic.LogisticRegression(random_state=0), X_sp, Y1)
 
-    check_predictions(logistic.LogisticRegression(C=100), X, Y1)
-    check_predictions(logistic.LogisticRegression(C=100), X_sp, Y1)
-
-    check_predictions(logistic.LogisticRegression(fit_intercept=False),
+    check_predictions(logistic.LogisticRegression(C=100, random_state=0),
                       X, Y1)
-    check_predictions(logistic.LogisticRegression(fit_intercept=False),
+    check_predictions(logistic.LogisticRegression(C=100, random_state=0),
                       X_sp, Y1)
+
+    check_predictions(logistic.LogisticRegression(fit_intercept=False,
+                                                  random_state=0), X, Y1)
+    check_predictions(logistic.LogisticRegression(fit_intercept=False,
+                                                  random_state=0), X_sp, Y1)
 
 
 def test_error():
@@ -86,7 +88,7 @@ def test_sparsify():
     """Test sparsify and densify members."""
     n_samples, n_features = iris.data.shape
     target = iris.target_names[iris.target]
-    clf = logistic.LogisticRegression().fit(iris.data, target)
+    clf = logistic.LogisticRegression(random_state=0).fit(iris.data, target)
 
     pred_d_d = clf.decision_function(iris.data)
 
@@ -112,7 +114,7 @@ def test_inconsistent_input():
     y_ = np.ones(X_.shape[0])
     y_[0] = 0
 
-    clf = logistic.LogisticRegression()
+    clf = logistic.LogisticRegression(random_state=0)
 
     # Wrong dimensions for training data
     y_wrong = y_[:-1]
@@ -128,7 +130,7 @@ def test_write_parameters():
     #rng = np.random.RandomState(0)
     #X = rng.random_sample((5, 10))
     #y = np.ones(X.shape[0])
-    clf = logistic.LogisticRegression()
+    clf = logistic.LogisticRegression(random_state=0)
     clf.fit(X, Y1)
     clf.coef_[:] = 0
     clf.intercept_[:] = 0
@@ -143,7 +145,7 @@ def test_nan():
     """
     Xnan = np.array(X, dtype=np.float64)
     Xnan[0, 1] = np.nan
-    logistic.LogisticRegression().fit(Xnan, Y1)
+    logistic.LogisticRegression(random_state=0).fit(Xnan, Y1)
 
 
 def test_liblinear_random_state():
