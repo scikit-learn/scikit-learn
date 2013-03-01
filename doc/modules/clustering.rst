@@ -182,28 +182,27 @@ Mini Batch K-Means
 ------------------
 
 The :class:`MiniBatchKMeans` is a variant of the :class:`KMeans` algorithm
-which uses mini-batches to reduce the computation time. Mini-batches are
-randomly chosen subsets of data, which are recomputed in each training
-iteration. These mini-batches drastically reduce the amount of computation
-required to converge to a local solution. In contrast to other algorithms
-that reduce the convergence time of k-means, mini-batch k-means produces
-results that are generally only slightly worse than the standard algorithm.
+which uses mini-batches to reduce the computation time, while still attempting
+to optimise the same objective function. Mini-batches are randomly chosen
+subsets of data, which are recomputed in each training iteration. These
+mini-batches drastically reduce the amount of computation required to converge
+to a local solution. In contrast to other algorithms that reduce the convergence
+time of k-means, mini-batch k-means produces results that are generally only
+slightly worse than the standard algorithm.
 
 The algorithm iterates between two major steps, similar to vanilla k-means.
 In the first step, `b` samples are drawn randomly from the dataset, to form
 a mini-batch. These are then assigned to the nearest centroid. In the second
 step, the centroids are updated. In contrast to k-means, this is done on a
 per-sample basis. For each sample in the mini-batch, the assigned centroid
-is updated by taking a gradient step based on the sample and the previous
-centroid. The learning rate for this updating reduces over time. These steps
-are performed until convergence or a predetermined number of iterations is
-reached.
+is updated by taking the streaming average of the sample and all previous
+samples assigned to that centroid. This has the effect of decreasing the
+rate of change for a centroid over time. These steps are performed until
+convergence or a predetermined number of iterations is reached.
 
-This algorithm attempts to reduce the same objective function as the k-means
-algorithm. Although :class:`MiniBatchKMeans` converges faster than
-:class:`KMeans` versions, the results are generally of a slightly poorer
-quality, as measured by the objective function (also called the inertia). In
-practice this difference can be quite small, as shown in the example.
+:class:`MiniBatchKMeans` converges faster than :class:`KMeans`, but the quality
+of the results is reduced. In practice this difference in quality can be quite
+small, as shown in the example.
 
 .. figure:: ../auto_examples/cluster/images/plot_mini_batch_kmeans_1.png
    :target: ../auto_examples/cluster/plot_mini_batch_kmeans.html
