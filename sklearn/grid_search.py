@@ -10,9 +10,10 @@ from __future__ import print_function
 
 import time
 import warnings
-from itertools import product
-from abc import ABCMeta, abstractmethod
 import numbers
+from itertools import product
+from collections import namedtuple
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
@@ -333,18 +334,18 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         cv_scores = list()
         for start in range(0, n_fits, n_folds):
             n_test_samples = 0
-            score = 0
+            mean_validation_score = 0
             these_points = list()
             for this_score, clf_params, this_n_test_samples in \
                     out[start:start + n_folds]:
                 these_points.append(this_score)
                 if self.iid:
                     this_score *= this_n_test_samples
-                score += this_score
+                mean_validation_score += this_score
                 n_test_samples += this_n_test_samples
             if self.iid:
-                score /= float(n_test_samples)
-            scores.append((score, clf_params))
+                mean_validation_score /= float(n_test_samples)
+            scores.append((mean_validation_score, clf_params))
             cv_scores.append(these_points)
 
         cv_scores = np.asarray(cv_scores)
@@ -382,8 +383,11 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
             self._set_methods()
 
         # Store the computed scores
+        CVScoreTuple = namedtuple('CVScoreTuple', ('parameters',
+                                                   'mean_validation_score',
+                                                   'cv_validation_scores'))
         self.cv_scores_ = [
-            (clf_params, score, all_scores)
+            CVScoreTuple(clf_params, score, all_scores)
             for clf_params, (score, _), all_scores
             in zip(parameter_iterator, scores, cv_scores)]
         return self
@@ -475,8 +479,15 @@ class GridSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    `cv_scores_` : dict of any to float
+    `cv_scores_` : list of named tuples
         Contains scores for all parameter combinations in param_grid.
+        Each entry corresponds to one parameter setting.
+        Each named tuple has the attributes:
+
+            * ``parameters``, a dict of parameter settings
+            * ``mean_validation_score``, the mean score over the
+             cross-validation folds
+            * ``cv_validation_scores``, the list of scores for each fold
 
     `best_estimator_` : estimator
         Estimator that was choosen by grid search, i.e. estimator
@@ -526,7 +537,7 @@ class GridSearchCV(BaseSearchCV):
     @property
     def grid_scores_(self):
         warnings.warn("grid_scores_ is deprecated and will be removed in 0.15."
-                      " Use estomator_scores_ instead.", DeprecationWarning)
+                      " Use estimator_scores_ instead.", DeprecationWarning)
         return self.cv_scores_
 
     def fit(self, X, y=None, **params):
@@ -574,7 +585,7 @@ class RandomizedSearchCV(BaseSearchCV):
     used to predict is optimized by cross-validation.
 
     In constrast to GridSearchCV, not all parameter values are tried out, but
-    rather a fixed number of parmeter settings is sampled from the specified
+    rather a fixed number of parameter settings is sampled from the specified
     distributions. The number of parameter settings that are tried is
     given by n_iter.
 
@@ -643,9 +654,15 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    `cv_scores_` : dict of any to float
-        Contains scores for all parameter setting that were sampled
-        during ``fit``.
+    `cv_scores_` : list of named tuples
+        Contains scores for all parameter combinations in param_grid.
+        Each entry corresponds to one parameter setting.
+        Each named tuple has the attributes:
+
+            * ``parameters``, a dict of parameter settings
+            * ``mean_validation_score``, the mean score over the
+             cross-validation folds
+            * ``cv_validation_scores``, the list of scores for each fold
 
     `best_estimator_` : estimator
         Estimator that was choosen by search, i.e. estimator

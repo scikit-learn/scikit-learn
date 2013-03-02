@@ -18,7 +18,7 @@ The main class for implementing hyperparameters grid search in
 scikit-learn is :class:`GridSearchCV`. This class is passed
 a base model instance (for example ``sklearn.svm.SVC()``) along with a
 grid of potential hyper-parameter values specified with the `param_grid`
-attribute. For instace the following `param_grid`::
+attribute. For instance the following `param_grid`::
 
   param_grid = [
     {'C': [1, 10, 100, 1000], 'kernel': ['linear']},
@@ -83,14 +83,14 @@ See :ref:`score_func_objects` for more details.
 
 Randomized Hyper-Parameter Optimization
 =======================================
-While using a grid of parameter settings is currenlty the most widely used
+While using a grid of parameter settings is currently the most widely used
 method for hyper-parameter optimization, other search methods have more
 favourable properties.
 :class:`RandomizedSearchCV` implements a randomized search over hyperparameters,
 where each setting is sampled from a distribution over possible parameter values.
 This has two main benefits over searching over a grid:
 
-* A budget can be choosen independent of the number of parameters and possible values.
+* A budget can be chosen independent of the number of parameters and possible values.
 
 * Adding parameters that do not influence the performance does not decrease efficiency.
 
@@ -101,14 +101,23 @@ of iterations (parameter samples) to be used.
 For each parameter, either a distribution over possible values or list of
 discrete choices (which will be sampled uniformly) can be specified::
 
-  [{'C': distributions.expon(scale=10), 'gamma': distributions.expon(scale=10),
+  [{'C': scipy.stats.expon(scale=100), 'gamma': scipy.stats.expon(scale=.1),
     'kernel': ['rbf'], 'class_weight':['auto', None]}]
 
-This example uses the ``scipy.stats.distribution`` module, which contains
-many useful distributions for sampling hyperparameters, such as ``expon``,
-``gamma``, ``uniform`` or ``randint``.
-In principle, any function can be passed that provides a ``rvs`` method to
-sample a value.
+This example uses the ``scipy.stats`` module, which contains many useful
+distributions for sampling hyperparameters, such as ``expon``, ``gamma``,
+``uniform`` or ``randint``.
+In principle, any function can be passed that provides a ``rvs`` (random
+variate sample) method to sample a value. A call to the ``rvs`` function should
+provide independent random samples from possible parameter values on
+consecutive calls.
+
+    .. warning::
+        
+        The distributions in ``scipy.stats`` do not allow specifying a random
+        state. Instead, they use the global numpy random state, that can be seeded
+        via ``np.random.seed`` or set using ``np.random.set_state``.
+
 For continuous parameters, such as ``C`` above, it is important to specify
 a continuous distribution to take full advantage of the randomization. This way,
 increasing ``n_iter`` will always lead to a finer search.
