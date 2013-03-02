@@ -117,7 +117,7 @@ class ParameterSampler(object):
     ----------
     param_distributions : dict
         Dictionary where the keys are parameters and values
-        are distributions from which a paramter is to be sampled.
+        are distributions from which a parameter is to be sampled.
         Distributions either have to provide a ``rvs`` function
         to sample from them, or can be given as a list of values,
         where a uniform distribution is assumed.
