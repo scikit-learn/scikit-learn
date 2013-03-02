@@ -16,6 +16,7 @@ from .externals.six import string_types
 from .utils import check_arrays, array2d, atleast2d_or_csr, safe_asarray
 from .utils import warn_if_not_float
 from .utils.fixes import unique
+from .utils import deprecated
 
 from .utils.sparsefuncs import inplace_csr_row_normalize_l1
 from .utils.sparsefuncs import inplace_csr_row_normalize_l2
@@ -624,6 +625,18 @@ def _is_multilabel(y):
             _is_label_indicator_matrix(y))
 
 
+def _get_label_type(y):
+    multilabel = _is_multilabel(y)
+    if multilabel:
+        if _is_label_indicator_matrix(y):
+            label_type = "multilabel-indicator"
+        else:
+            label_type = "multilabel-list"
+    else:
+        label_type = "multiclass"
+    return label_type
+
+
 class OneHotEncoder(BaseEstimator, TransformerMixin):
     """Encode categorical integer features using a one-hot aka one-of-K scheme.
 
@@ -921,24 +934,41 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-
-    neg_label: int (default: 0)
+    neg_label : int (default: 0)
         Value with which negative labels must be encoded.
 
-    pos_label: int (default: 1)
+    pos_label : int (default: 1)
         Value with which positive labels must be encoded.
+
+    classes : ndarray of int or None (default)
+        Array of possible classes.
+
+    label_type : string, default="auto"
+        Expected type of y.
+        Possible values are:
+            - "multiclass", y is an array-like of ints
+            - "multilabel-indicator", y is an indicator matrix of classes
+            - "multiclass-list", y is a list of lists of labels
+            - "auto", the form of y is determined during 'fit'. If 'fit' is not
+              called, multiclass is assumed.
 
     Attributes
     ----------
-    `classes_`: array of shape [n_class]
+    `classes_` : array of shape [n_class]
         Holds the label for each class.
+
+    `label_type_` : string
+        The type of label used. Inferred from training data if
+        ``label_type="auto"``, otherwise identical to the ``label_type``
+        parameter.
+
 
     Examples
     --------
     >>> from sklearn import preprocessing
     >>> lb = preprocessing.LabelBinarizer()
     >>> lb.fit([1, 2, 6, 4, 2])
-    LabelBinarizer(neg_label=0, pos_label=1)
+    LabelBinarizer(classes=None, label_type='auto', neg_label=0, pos_label=1)
     >>> lb.classes_
     array([1, 2, 4, 6])
     >>> lb.transform([1, 6])
@@ -952,19 +982,29 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     array([1, 2, 3])
     """
 
-    def __init__(self, neg_label=0, pos_label=1):
-        if neg_label >= pos_label:
-            raise ValueError("neg_label must be strictly less than pos_label.")
+    def __init__(self, neg_label=0, pos_label=1, classes=None,
+                 label_type='auto'):
 
         self.neg_label = neg_label
         self.pos_label = pos_label
+        self.classes = classes
+        self.label_type = label_type
 
     def _check_fitted(self):
         if not hasattr(self, "classes_"):
-            raise ValueError("LabelBinarizer was not fitted yet.")
+            if self.classes is not None:
+                self.classes_ = np.unique(self.classes)
+                # default to not doing multi-label things
+                self.label_type_ = (self.label_type
+                                    if self.label_type != "auto"
+                                    else "multiclass")
+            else:
+                raise ValueError("LabelBinarizer was not fitted yet.")
 
     def fit(self, y):
-        """Fit label binarizer
+        """Fit label binarizer.
+
+        No-op if parameter ``classes`` was specified.
 
         Parameters
         ----------
@@ -975,16 +1015,36 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         Returns
         -------
         self : returns an instance of self.
+
         """
-        self.multilabel = _is_multilabel(y)
-        if self.multilabel:
-            self.indicator_matrix_ = _is_label_indicator_matrix(y)
-            if self.indicator_matrix_:
-                self.classes_ = np.arange(y.shape[1])
-            else:
-                self.classes_ = np.array(sorted(set.union(*map(set, y))))
+        if self.neg_label >= self.pos_label:
+            raise ValueError("neg_label must be strictly less than pos_label.")
+
+        label_type = _get_label_type(y)
+
+        if self.label_type not in ["auto", label_type]:
+            raise ValueError("label_type was set to %s, but got y of type %s."
+                             % (self.label_type, label_type))
+
+        self.label_type_ = label_type
+
+        if label_type == "multilabel-indicator":
+            classes = np.arange(y.shape[1])
+        elif label_type == "multilabel-list":
+            classes = np.array(sorted(set.union(*map(set, y))))
         else:
-            self.classes_ = np.unique(y)
+            classes = np.unique(y)
+
+        if self.classes is not None:
+            classes_set = set(classes)
+            if not set.issubset(classes_set, self.classes):
+                difference = set.difference(classes_set, self.classes)
+                warnings.warn("Found class(es) %s, which was not contained "
+                              "in parameter ``classes`` and will be ignored."
+                              % str(list(difference)))
+            self.classes_ = np.unique(self.classes)
+        else:
+            self.classes_ = classes
         return self
 
     def transform(self, y):
@@ -1002,31 +1062,24 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         Returns
         -------
         Y : numpy array of shape [n_samples, n_classes]
+
         """
         self._check_fitted()
-
-        if self.multilabel or len(self.classes_) > 2:
-            if _is_label_indicator_matrix(y):
-                # nothing to do as y is already a label indicator matrix
-                return y
-
+        label_type = _get_label_type(y)
+        if label_type != self.label_type_:
+            raise ValueError("label_type was set to %s, but got y of type %s."
+                             % (self.label_type_, label_type))
+        if label_type == "multilabel-indicator":
+            # nothing to do as y is already a label indicator matrix
+            return y
+        elif label_type == "multilabel-list" or len(self.classes_) > 2:
             Y = np.zeros((len(y), len(self.classes_)), dtype=np.int)
         else:
             Y = np.zeros((len(y), 1), dtype=np.int)
 
         Y += self.neg_label
 
-        y_is_multilabel = _is_multilabel(y)
-
-        if y_is_multilabel and not self.multilabel:
-            raise ValueError("The object was not fitted with multilabel"
-                             " input!")
-
-        elif self.multilabel:
-            if not _is_multilabel(y):
-                raise ValueError("y should be a list of label lists/tuples,"
-                                 "got %r" % (y,))
-
+        if label_type == "multilabel-list":
             # inverse map: label => column index
             imap = dict((v, k) for k, v in enumerate(self.classes_))
 
@@ -1091,10 +1144,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             half = (self.pos_label - self.neg_label) / 2.0
             threshold = self.neg_label + half
 
-        if self.multilabel:
+        if self.multilabel_:
             Y = np.array(Y > threshold, dtype=int)
             # Return the predictions in the same format as in fit
-            if self.indicator_matrix_:
+            if self.label_type_ == "multilabel-indicator":
                 # Label indicator matrix format
                 return Y
             else:
@@ -1109,6 +1162,15 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
             y = Y.argmax(axis=1)
 
         return self.classes_[y]
+
+    @property
+    def multilabel_(self):
+        return self.label_type_ in ["multilabel-list", "multilabel-indicator"]
+
+    @property
+    @deprecated("it will be removed in 0.15. Use ``label_type_`` instead.")
+    def label_indicator_(self):
+        return self.label_type_ == "multilabel-indicator"
 
 
 class KernelCenterer(BaseEstimator, TransformerMixin):
