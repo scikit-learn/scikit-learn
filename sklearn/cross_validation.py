@@ -247,8 +247,8 @@ class KFold(object):
 
     Notes
     -----
-    All the folds have size trunc(n_samples / n_folds), the last one has the
-    complementary.
+    The first n % n_folds folds have size n // n_folds + 1, other folds have
+    size n // n_folds.
 
     See also
     --------
@@ -280,18 +280,18 @@ class KFold(object):
     def __iter__(self):
         n = self.n
         n_folds = self.n_folds
-        fold_size = n // n_folds
-
-        for i in range(n_folds):
+        fold_sizes = (n // n_folds) * np.ones(n_folds, dtype=np.int)
+        fold_sizes[:n % n_folds] += 1
+        current = 0
+        for i, fold_size in enumerate(fold_sizes):
             test_index = np.zeros(n, dtype=np.bool)
-            if i < n_folds - 1:
-                test_index[self.idxs[i * fold_size:(i + 1) * fold_size]] = True
-            else:
-                test_index[self.idxs[i * fold_size:]] = True
+            start, stop = current, current + fold_size
+            test_index[self.idxs[start:stop]] = True
             train_index = np.logical_not(test_index)
             if self.indices:
                 train_index = self.idxs[train_index]
                 test_index = self.idxs[test_index]
+            current = stop
             yield train_index, test_index
 
     def __repr__(self):
