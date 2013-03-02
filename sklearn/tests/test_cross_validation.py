@@ -138,6 +138,7 @@ def test_kfold_balance():
             sizes.append(len(test))
 
         assert_equal(np.min(sizes) + 1, np.max(sizes))
+        assert_equal(np.sum(sizes), kf.n)
 
 
 def test_shuffle_kfold():
