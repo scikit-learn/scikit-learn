@@ -20,6 +20,10 @@ Changelog
      `Gilles Louppe`_. See the :ref:`AdaBoost <adaboost>` section of the user
      guide for details and examples.
 
+   - :func:`metrics.accuracy_score`, :func:`metrics.zero_one_loss` support
+     multi-label classification and a new metric :func:`metrics.hamming_loss`
+     is added with multi-label support by `Arnaud Joly`_.
+
    - Much reduced memory usage in
      :class:`feature_extraction.text.CountVectorizer` and
      :class:`feature_extraction.text.TfidfVectorizer`,
@@ -88,17 +92,6 @@ List of contributors for release 0.13.1 by number of commits.
  *  1  `Vlad Niculae`_
  *  1  `Yaroslav Halchenko`_
 
-=======
-   - :func:`metrics.accuracy_score` and :func:`metrics.zero_one_loss` support
-     multi-label classification.  A new metric :func:`metrics.hamming_loss` is
-     added with mullti-label support.
->>>>>>> Update what's new
-=======
-   - :func:`metrics.accuracy_score`, :func:`metrics.zero_one_loss` support
-     multi-label classification and a new metric :func:`metrics.hamming_loss`
-     is added with multi-label support by `Arnaud Joly`_.
-
->>>>>>> What's new : add credit
 
 .. _changes_0_13:
 
