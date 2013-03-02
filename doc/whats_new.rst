@@ -29,6 +29,18 @@ Changelog
      attribute. Setting ``compute_importances=True`` is no longer required.
      By `Gilles Louppe`_.
 
+   - Added :class:`grid_search.RandomizedSearchCV` and
+     :class:`grid_search.ParameterSampler` for randomized hyperparameter
+     optimization. By `Andreas Müller`_.
+
+
+API changes summary
+-------------------
+
+    - :class:`grid_search.IterGrid` was renamed to
+      :class:`grid_search.ParameterGrid`.
+
+
 
 .. _changes_0_13:
 
