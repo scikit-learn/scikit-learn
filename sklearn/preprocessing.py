@@ -938,16 +938,16 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     pos_label : int (default: 1)
         Value with which positive labels must be encoded.
 
-    classes : ndarray if int or None (default)
+    classes : ndarray of int or None (default)
         Array of possible classes.
 
     label_type : string, default="auto"
         Expected type of y.
         Possible values are:
-            - "multiclass", y is array of ints
-            - "multilabel-indicator", y is indicator matrix of classes
-            - "multiclass-list", y is list of lists of labels
-            - "auto", form of y is determined during 'fit'. If 'fit' is not
+            - "multiclass", y is an array-like of ints
+            - "multilabel-indicator", y is an indicator matrix of classes
+            - "multiclass-list", y is a list of lists of labels
+            - "auto", the form of y is determined during 'fit'. If 'fit' is not
               called, multiclass is assumed.
 
     Attributes
@@ -955,9 +955,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
     `classes_` : array of shape [n_class]
         Holds the label for each class.
 
-    `label_type_` : bool
+    `label_type_` : string
         The type of label used. Inferred from training data if
-        ``label_type="auto"``.
+        ``label_type="auto"``, otherwise identical to the ``label_type``
+        parameter.
 
 
     Examples
@@ -981,8 +982,6 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
     def __init__(self, neg_label=0, pos_label=1, classes=None,
                  label_type='auto'):
-        if neg_label >= pos_label:
-            raise ValueError("neg_label must be strictly less than pos_label.")
 
         self.neg_label = neg_label
         self.pos_label = pos_label
@@ -1016,6 +1015,9 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         self : returns an instance of self.
 
         """
+        if self.neg_label >= self.pos_label:
+            raise ValueError("neg_label must be strictly less than pos_label.")
+
         label_type = _get_label_type(y)
 
         if self.label_type not in ["auto", label_type]:
