@@ -280,7 +280,7 @@ class KFold(object):
     def __iter__(self):
         n = self.n
         n_folds = self.n_folds
-        fold_size = n // n_folds
+        fold_size = int(round(n / float(n_folds)))
 
         for i in range(n_folds):
             test_index = np.zeros(n, dtype=np.bool)
