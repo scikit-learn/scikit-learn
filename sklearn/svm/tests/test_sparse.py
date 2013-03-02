@@ -70,12 +70,15 @@ def test_svc():
     assert_array_almost_equal(clf.predict_proba(T2),
                               sp_clf.predict_proba(T2), 4)
 
+
 def test_kernels():
-    kernels =  ["poly", "rbf", "sigmoid", "precomputed"]
+    kernels = ["poly", "rbf", "sigmoid", "precomputed"]
     for k in kernels:
         sp_clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
         clf = svm.SVC(kernel=k).fit(iris.data.todense(), iris.target)
-        assert_array_almost_equal(clf.decision_function(iris.data), sp_clf.decision_function(iris.data))
+        assert_array_almost_equal(clf.decision_function(iris.data.todense()),
+                                  sp_clf.decision_function(iris.data))
+
 
 def test_unsorted_indices():
     # test that the result with sorted and unsorted indices in csr is the same
