@@ -25,7 +25,8 @@ from .utils import safe_mask, check_random_state
 from .utils.validation import _num_samples, check_arrays
 from .metrics import SCORERS, Scorer
 
-__all__ = ['GridSearchCV', 'IterGrid', 'fit_grid_point']
+__all__ = ['GridSearchCV', 'IterGrid', 'fit_grid_point', 'ParameterSampler',
+           'RandomizedSearchCV']
 
 
 class IterGrid(object):
@@ -74,7 +75,7 @@ class IterGrid(object):
                 yield params
 
 
-class ParamSampler(object):
+class ParameterSampler(object):
     """Generator on parameters sampled from given distributions.
 
     Parameters
@@ -100,10 +101,10 @@ class ParamSampler(object):
 
     Examples
     --------
-    >>> from sklearn.grid_search import ParamSampler
+    >>> from sklearn.grid_search import ParameterSampler
     >>> from scipy.stats.distributions import expon
     >>> param_grid = {'a':[1, 2], 'b': expon()}
-    >>> list(ParamSampler(param_grid, n_iter=4))
+    >>> list(ParameterSampler(param_grid, n_iter=4))
     ...  #doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
     [{'a': ..., 'b': ...}, {'a': ..., 'b': ...},
      {'a': ..., 'b': ...}, {'a': ..., 'b': ...}]
@@ -130,9 +131,50 @@ class ParamSampler(object):
 
 def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
                    verbose, loss_func=None, **fit_params):
-    """Run fit on one set of parameters
+    """Run fit on one set of parameters.
 
-    Returns the score and the instance of the classifier
+    Parameters
+    ----------
+    X : array-like, sparse matrix or list
+        Input data.
+
+    y : array-like or None
+        Targets for input data.
+
+    base_clf : estimator object
+        This estimator will be cloned and then fitted.
+
+    clf_params : dict
+        Parameters to be set on base_estimator clone for this grid point.
+
+    train : ndarray, dtype int or bool
+        Boolean mask or indices for training set.
+
+    test : ndarray, dtype int or bool
+        Boolean mask or indices for test set.
+
+    scorer : callable or None.
+        If provided must be a scoring object / function with signature
+        ``scorer(estimator, X, y)``.
+
+    verbose : int
+        Verbosity level.
+
+    **fit_params : kwargs
+        Additional parameter passed to the fit function of the estimator.
+
+
+    Returns
+    -------
+    score : float
+        Score of this parameter setting on given training / test split.
+
+    estimator : estimator object
+        Estimator object of type base_clf that was fitted using clf_params
+        and provided train / test split.
+
+    n_samples_test : int
+        Number of test samples in this split.
     """
     if verbose > 1:
         start_time = time.time()
@@ -250,6 +292,21 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         self._check_estimator()
 
     def score(self, X, y=None):
+        """Returns the mean accuracy on the given test data and labels.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training set.
+
+        y : array-like, shape = [n_samples], optional
+            Labels for X.
+
+        Returns
+        -------
+        score : float
+
+        """
         if hasattr(self.best_estimator_, 'score'):
             return self.best_estimator_.score(X, y)
         if self.scorer_ is None:
@@ -260,6 +317,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         return self.scorer(y, y_predicted)
 
     def _check_estimator(self):
+        """Check that estimator can be fitted and score can be computed."""
         if (not hasattr(self.estimator, 'fit') or
                 not (hasattr(self.estimator, 'predict')
                      or hasattr(self.estimator, 'score'))):
@@ -276,12 +334,14 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
                     "does not." % self.estimator)
 
     def _set_methods(self):
+        """Create predict and  predict_proba if present in best estimator."""
         if hasattr(self.best_estimator_, 'predict'):
             self.predict = self.best_estimator_.predict
         if hasattr(self.best_estimator_, 'predict_proba'):
             self.predict_proba = self.best_estimator_.predict_proba
 
     def _fit(self, X, y, parameter_iterator, **params):
+        """Actual fitting,  performing the search over parameters."""
         estimator = self.estimator
         cv = self.cv
 
@@ -695,7 +755,7 @@ class RandomizedSearchCV(BaseSearchCV):
     :class:`GridSearchCV`:
         Does exhaustive search over a grid of parameters.
 
-    :class:`ParamSampler`:
+    :class:`ParameterSampler`:
         A generator over parameter settins, constructed from
         param_distributions.
 
@@ -727,5 +787,6 @@ class RandomizedSearchCV(BaseSearchCV):
             None for unsupervised learning.
 
         """
-        sampled_params = ParamSampler(self.param_distributions, self.n_iter)
+        sampled_params = ParameterSampler(self.param_distributions,
+                                          self.n_iter)
         return self._fit(X, y, sampled_params, **params)

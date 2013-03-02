@@ -20,7 +20,8 @@ from scipy.stats import distributions
 
 from sklearn.base import BaseEstimator
 from sklearn.datasets.samples_generator import make_classification, make_blobs
-from sklearn.grid_search import GridSearchCV, RandomizedSearchCV, ParamSampler
+from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
+                                 ParameterSampler)
 from sklearn.svm import LinearSVC, SVC
 from sklearn.cluster import KMeans, MeanShift
 from sklearn.metrics import f1_score
@@ -348,8 +349,8 @@ def test_param_sampler():
     # test basic properties of param sampler
     param_distributions = {"kernel": ["rbf", "linear"],
                            "C": distributions.uniform(0, 1)}
-    sampler = ParamSampler(param_distributions=param_distributions,
-                           n_iter=10, random_state=0)
+    sampler = ParameterSampler(param_distributions=param_distributions,
+                               n_iter=10, random_state=0)
     samples = [x for x in sampler]
     assert_equal(len(samples), 10)
     for sample in samples:
