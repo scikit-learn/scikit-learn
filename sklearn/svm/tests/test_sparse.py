@@ -178,6 +178,13 @@ def test_linearsvc_iris():
     pred = np.argmax(sp_clf.decision_function(iris.data), 1)
     assert_array_almost_equal(pred, clf.predict(iris.data.todense()))
 
+    # sparsify the coefficients on both models and check that they still
+    # produce the same results
+    clf.sparsify()
+    assert_array_equal(pred, clf.predict(iris.data))
+    sp_clf.sparsify()
+    assert_array_equal(pred, sp_clf.predict(iris.data))
+
 
 def test_weight():
     """

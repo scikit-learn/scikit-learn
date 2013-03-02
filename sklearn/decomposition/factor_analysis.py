@@ -17,6 +17,7 @@ from scipy import linalg
 
 
 from ..base import BaseEstimator, TransformerMixin
+from ..externals.six.moves import xrange
 from ..utils import array2d, check_arrays
 from ..utils.extmath import fast_logdet
 
@@ -162,7 +163,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
             psi = np.maximum(var - np.sum(W ** 2, axis=0), SMALL)
         else:
             if self.verbose:
-                print "Did not converge"
+                print("Did not converge")
 
         self.components_ = W
         self.noise_variance_ = psi

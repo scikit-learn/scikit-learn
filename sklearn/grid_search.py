@@ -221,7 +221,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
     clf = clone(base_clf)
     clf.set_params(**clf_params)
 
-    if hasattr(base_clf, 'kernel') and hasattr(base_clf.kernel, '__call__'):
+    if hasattr(base_clf, 'kernel') and callable(base_clf.kernel):
         # cannot compute the kernel values with custom function
         raise ValueError("Cannot use a custom kernel function. "
                          "Precompute the kernel matrix instead.")

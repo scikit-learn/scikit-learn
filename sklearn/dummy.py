@@ -6,6 +6,7 @@
 import numpy as np
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
+from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.fixes import unique
 from .utils.validation import safe_asarray

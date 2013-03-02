@@ -12,7 +12,7 @@ detail.
 .. [1] H. Drucker, "Improving Regressors using Boosting Techniques", 1997.
 
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 

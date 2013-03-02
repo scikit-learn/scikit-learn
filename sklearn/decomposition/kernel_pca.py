@@ -81,7 +81,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         MIT Press, Cambridge, MA, USA 327-352.
     """
 
-    def __init__(self, n_components=None, kernel="linear", gamma=0, degree=3,
+    def __init__(self, n_components=None, kernel="linear", gamma=None, degree=3,
                  coef0=1, alpha=1.0, fit_inverse_transform=False,
                  eigen_solver='auto', tol=0, max_iter=None):
         if fit_inverse_transform and kernel == 'precomputed':

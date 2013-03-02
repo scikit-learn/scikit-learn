@@ -14,7 +14,7 @@ Unlike Bayesian procedures, such inferences are prior-free.
 In that case, the model with 2 components and full covariance
 (which corresponds to the true generative model) is selected.
 """
-print __doc__
+print(__doc__)
 
 import itertools
 

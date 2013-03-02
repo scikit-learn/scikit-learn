@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import numpy as np
 import scipy.sparse as sp
 import warnings
@@ -90,7 +92,7 @@ class BaseLibSVM(BaseEstimator):
     @property
     def _pairwise(self):
         kernel = self.kernel
-        return kernel == "precomputed" or hasattr(kernel, "__call__")
+        return kernel == "precomputed" or callable(kernel)
 
     def fit(self, X, y, sample_weight=None):
         """Fit the SVM model according to the given training data.
@@ -175,12 +177,12 @@ class BaseLibSVM(BaseEstimator):
             self._gamma = self.gamma
 
         kernel = self.kernel
-        if hasattr(kernel, '__call__'):
+        if callable(kernel):
             kernel = 'precomputed'
 
         fit = self._sparse_fit if self._sparse else self._dense_fit
         if self.verbose:  # pragma: no cover
-            print '[LibSVM]',
+            print('[LibSVM]', end='')
         fit(X, y, sample_weight, solver_type, kernel)
 
         self.shape_fit_ = X.shape
@@ -201,15 +203,14 @@ class BaseLibSVM(BaseEstimator):
                           % self.max_iter, ConvergenceWarning)
 
     def _dense_fit(self, X, y, sample_weight, solver_type, kernel):
-
-        if hasattr(self.kernel, '__call__'):
+        if callable(self.kernel):
             # you must store a reference to X to compute the kernel in predict
             # TODO: add keyword copy to copy on demand
             self.__Xfit = X
             X = self._compute_kernel(X)
 
-        if hasattr(self.kernel, '__call__') and X.shape[0] != X.shape[1]:
-            raise ValueError("X.shape[0] should be equal to X.shape[1]")
+            if X.shape[0] != X.shape[1]:
+                raise ValueError("X.shape[0] should be equal to X.shape[1]")
 
         libsvm.set_verbosity_wrap(self.verbose)
 
@@ -283,7 +284,7 @@ class BaseLibSVM(BaseEstimator):
             X = array2d(X, order='C')
 
         kernel = self.kernel
-        if hasattr(self.kernel, "__call__"):
+        if callable(self.kernel):
             kernel = 'precomputed'
             if X.shape[1] != self.shape_fit_[0]:
                 raise ValueError("X.shape[1] = %d should be equal to %d, "
@@ -308,7 +309,7 @@ class BaseLibSVM(BaseEstimator):
         X = sp.csr_matrix(X, dtype=np.float64)
 
         kernel = self.kernel
-        if hasattr(kernel, '__call__'):
+        if callable(kernel):
             kernel = 'precomputed'
 
         kernel_type = self._sparse_kernels.index(kernel)
@@ -330,7 +331,7 @@ class BaseLibSVM(BaseEstimator):
 
     def _compute_kernel(self, X):
         """Return the data transformed by a callable kernel"""
-        if hasattr(self.kernel, '__call__'):
+        if callable(self.kernel):
             # in the case of precomputed kernel given as a function, we
             # have to compute explicitly the kernel matrix
             kernel = self.kernel(X, self.__Xfit)
@@ -361,7 +362,7 @@ class BaseLibSVM(BaseEstimator):
         C = 0.0  # C is not useful here
 
         kernel = self.kernel
-        if hasattr(kernel, '__call__'):
+        if callable(kernel):
             kernel = 'precomputed'
 
         dec_func = libsvm.decision_function(
@@ -388,8 +389,7 @@ class BaseLibSVM(BaseEstimator):
         if self._sparse:
             X.sort_indices()
 
-        if (sp.issparse(X) and not self._sparse and
-                not hasattr(self.kernel, '__call__')):
+        if sp.issparse(X) and not self._sparse and not callable(self.kernel):
             raise ValueError(
                 "cannot use sparse input in %r trained on dense data"
                 % type(self).__name__)
@@ -524,7 +524,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         C = 0.0  # C is not useful here
 
         kernel = self.kernel
-        if hasattr(kernel, '__call__'):
+        if callable(kernel):
             kernel = 'precomputed'
 
         svm_type = LIBSVM_IMPL.index(self.impl)
@@ -543,7 +543,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         X.data = np.asarray(X.data, dtype=np.float64, order='C')
 
         kernel = self.kernel
-        if hasattr(kernel, '__call__'):
+        if callable(kernel):
             kernel = 'precomputed'
 
         kernel_type = self._sparse_kernels.index(kernel)
@@ -681,7 +681,7 @@ class BaseLibLinear(BaseEstimator):
 
         rnd = check_random_state(self.random_state)
         if self.verbose:
-            print '[LibLinear]',
+            print('[LibLinear]', end='')
         self.raw_coef_ = train(X, y, self._get_solver_type(), self.tol,
                                self._get_bias(), self.C,
                                self.class_weight_,

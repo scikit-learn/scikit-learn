@@ -11,6 +11,7 @@ import warnings
 import numpy as np
 
 from .base import BaseEstimator, ClassifierMixin
+from .externals.six.moves import xrange
 from .utils.fixes import unique
 from .utils import check_arrays, array2d
 

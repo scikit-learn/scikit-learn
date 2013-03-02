@@ -19,20 +19,18 @@ from sklearn.datasets.samples_generator import make_regression
 
 
 def compute_bench(alpha, n_samples, n_features, precompute):
-
     lasso_results = []
     lars_lasso_results = []
 
-    n_test_samples = 0
     it = 0
 
     for ns in n_samples:
         for nf in n_features:
             it += 1
-            print '=================='
-            print 'Iteration %s of %s' % (it, max(len(n_samples),
-                                          len(n_features)))
-            print '=================='
+            print('==================')
+            print('Iteration %s of %s' % (it, max(len(n_samples),
+                                          len(n_features))))
+            print('==================')
             n_informative = nf // 10
             X, Y, coef_ = make_regression(n_samples=ns, n_features=nf,
                                           n_informative=n_informative,
@@ -41,7 +39,7 @@ def compute_bench(alpha, n_samples, n_features, precompute):
             X /= np.sqrt(np.sum(X ** 2, axis=0))  # Normalize data
 
             gc.collect()
-            print "- benching Lasso"
+            print("- benching Lasso")
             clf = Lasso(alpha=alpha, fit_intercept=False,
                         precompute=precompute)
             tstart = time()
@@ -49,7 +47,7 @@ def compute_bench(alpha, n_samples, n_features, precompute):
             lasso_results.append(time() - tstart)
 
             gc.collect()
-            print "- benching LassoLars"
+            print("- benching LassoLars")
             clf = LassoLars(alpha=alpha, fit_intercept=False,
                             normalize=False, precompute=precompute)
             tstart = time()

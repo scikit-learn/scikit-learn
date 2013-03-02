@@ -3,6 +3,7 @@
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 #          Robert Layton <robertlayton@gmail.com>
+#          Jochen Wersdörfer <jochen@wersdoerfer.de>
 #
 # License: BSD Style.
 """
@@ -11,17 +12,19 @@ build feature vectors from text documents.
 """
 from __future__ import unicode_literals
 
+import array
 from collections import Mapping
+import numbers
 from operator import itemgetter
 import re
 import unicodedata
 import warnings
-import numbers
 
 import numpy as np
 import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
+from ..externals.six.moves import xrange
 from ..preprocessing import normalize
 from ..utils.fixes import Counter
 from .hashing import FeatureHasher
@@ -178,7 +181,7 @@ class VectorizerMixin(object):
         # accent stripping
         if not self.strip_accents:
             strip_accents = noop
-        elif hasattr(self.strip_accents, '__call__'):
+        elif callable(self.strip_accents):
             strip_accents = self.strip_accents
         elif self.strip_accents == 'ascii':
             strip_accents = strip_accents_ascii
@@ -206,7 +209,7 @@ class VectorizerMixin(object):
 
     def build_analyzer(self):
         """Return a callable that handles preprocessing and tokenization"""
-        if hasattr(self.analyzer, '__call__'):
+        if callable(self.analyzer):
             return self.analyzer
 
         preprocess = self.build_preprocessor()
@@ -604,23 +607,23 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.binary = binary
         self.dtype = dtype
 
-    def _term_count_dicts_to_matrix(self, term_count_dicts):
-        i_indices = []
-        j_indices = []
-        values = []
-        vocabulary = self.vocabulary_
+    def _term_counts_to_matrix(self, n_doc, i_indices, j_indices, values):
+        """Construct COO matrix from indices and values.
 
-        for i, term_count_dict in enumerate(term_count_dicts):
-            for term, count in six.iteritems(term_count_dict):
-                j = vocabulary.get(term)
-                if j is not None:
-                    i_indices.append(i)
-                    j_indices.append(j)
-                    values.append(count)
-            # free memory as we go
-            term_count_dict.clear()
+        i_indices and j_indices should be constructed with _make_int_array.
+        """
+        # array("i") corresponds to np.intc, which is also what scipy.sparse
+        # wants for indices, so they won't be copied by the coo_matrix ctor.
+        # The length check works around a bug in old NumPy versions:
+        # http://projects.scipy.org/numpy/ticket/1943
+        if len(i_indices) > 0:
+            i_indices = np.frombuffer(i_indices, dtype=np.intc)
+        if len(j_indices) > 0:
+            j_indices = np.frombuffer(j_indices, dtype=np.intc)
+        if self.dtype == np.intc and len(values) > 0:
+            values = np.frombuffer(values, dtype=np.intc)
 
-        shape = (i + 1, max(six.itervalues(vocabulary)) + 1)
+        shape = (n_doc, max(six.itervalues(self.vocabulary_)) + 1)
         spmatrix = sp.coo_matrix((values, (i_indices, j_indices)),
                                  shape=shape, dtype=self.dtype)
         if self.binary:
@@ -656,19 +659,22 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         -------
         vectors : array, [n_samples, n_features]
         """
-        if self.fixed_vocabulary:
-            # No need to fit anything, directly perform the transformation.
-            # We intentionally don't call the transform method to make it
-            # fit_transform overridable without unwanted side effects in
-            # TfidfVectorizer
-            analyze = self.build_analyzer()
-            term_counts_per_doc = (Counter(analyze(doc))
-                                   for doc in raw_documents)
-            return self._term_count_dicts_to_matrix(term_counts_per_doc)
+        # We intentionally don't call the transform method to make
+        # fit_transform overridable without unwanted side effects in
+        # TfidfVectorizer.
+        fixed_vocab = self.fixed_vocabulary
 
-        self.vocabulary_ = {}
-        # result of document conversion to term count dicts
-        term_counts_per_doc = []
+        if fixed_vocab:
+            vocab = self.vocabulary_
+            vocab_max_ind = max(six.itervalues(self.vocabulary_)) + 1
+        else:
+            vocab = {}
+            vocab_max_ind = 0
+
+        # Result of document conversion to term count arrays.
+        row_ind = _make_int_array()
+        col_ind = _make_int_array()
+        feature_values = _make_int_array()
         term_counts = Counter()
 
         # term counts across entire corpus (count each term maximum once per
@@ -677,67 +683,109 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         analyze = self.build_analyzer()
 
-        # TODO: parallelize the following loop with joblib?
-        # (see XXX up ahead)
-        for doc in raw_documents:
+        for n_doc, doc in enumerate(raw_documents):
             term_count_current = Counter(analyze(doc))
             term_counts.update(term_count_current)
 
+            if not fixed_vocab:
+                for term in six.iterkeys(term_count_current):
+                    if term not in vocab:
+                        vocab[term] = vocab_max_ind
+                        vocab_max_ind += 1
+
             document_counts.update(six.iterkeys(term_count_current))
 
-            term_counts_per_doc.append(term_count_current)
+            for term, count in six.iteritems(term_count_current):
+                if term in vocab:
+                    row_ind.append(n_doc)
+                    col_ind.append(vocab[term])
+                    feature_values.append(count)
+        n_doc += 1
 
-        n_doc = len(term_counts_per_doc)
-        max_features = self.max_features
-        max_df = self.max_df
-        min_df = self.min_df
-
-        max_doc_count = (max_df
-                         if isinstance(max_df, numbers.Integral)
-                         else max_df * n_doc)
-        min_doc_count = (min_df
-                         if isinstance(min_df, numbers.Integral)
-                         else min_df * n_doc)
-
-        # filter out stop words: terms that occur in almost all documents
-        if max_doc_count < n_doc or min_doc_count > 1:
-            stop_words = set(t for t, dc in six.iteritems(document_counts)
-                             if dc > max_doc_count or dc < min_doc_count)
+        if fixed_vocab:
+            # XXX max_df, min_df and max_features have no effect
+            # with a fixed vocabulary.
+            i_indices = row_ind
+            j_indices = col_ind
+            values = feature_values
         else:
-            stop_words = set()
+            max_features = self.max_features
+            max_df = self.max_df
+            min_df = self.min_df
 
-        # list the terms that should be part of the vocabulary
-        if max_features is None:
-            terms = set(term_counts) - stop_words
-        else:
-            # extract the most frequent terms for the vocabulary
-            terms = set()
-            for t, tc in term_counts.most_common():
-                if t not in stop_words:
-                    terms.add(t)
-                if len(terms) >= max_features:
-                    break
+            max_doc_count = (max_df if isinstance(max_df, numbers.Integral)
+                                    else max_df * n_doc)
+            min_doc_count = (min_df if isinstance(min_df, numbers.Integral)
+                                    else min_df * n_doc)
 
-        # store the learned stop words to make it easier to debug the value of
-        # max_df
-        self.stop_words_ = stop_words
+            # filter out stop words: terms that occur in almost all documents
+            if max_doc_count < n_doc or min_doc_count > 1:
+                stop_words = set(t for t, dc in six.iteritems(document_counts)
+                                   if not min_doc_count <= dc <= max_doc_count)
+            else:
+                stop_words = set()
 
-        # store map from term name to feature integer index: we sort the term
-        # to have reproducible outcome for the vocabulary structure: otherwise
-        # the mapping from feature name to indices might depend on the memory
-        # layout of the machine. Furthermore sorted terms might make it
-        # possible to perform binary search in the feature names array.
-        vocab = dict(((t, i) for i, t in enumerate(sorted(terms))))
+            # list the terms that should be part of the vocabulary
+            if max_features is None:
+                terms = set(term_counts) - stop_words
+            else:
+                # extract the most frequent terms for the vocabulary
+                terms = set()
+                for t, tc in term_counts.most_common():
+                    if t not in stop_words:
+                        terms.add(t)
+                    if len(terms) >= max_features:
+                        break
+
+            # store the learned stop words to make it easier to debug the value
+            # of max_df
+            self.stop_words_ = stop_words
+
+            # free memory
+            term_counts.clear()
+            document_counts.clear()
+
+            # store map from term name to feature integer index: we sort the
+            # terms to have reproducible outcome for the vocabulary structure:
+            # otherwise the mapping from feature name to indices might depend
+            # on the memory layout of the machine. Furthermore sorted terms
+            # might make it possible to perform binary search in the feature
+            # names array.
+            terms = sorted(terms)
+
+            # reorder term indices
+            reorder_indices = dict((vocab[term], i)
+                                   for i, term in enumerate(terms))
+            self.vocabulary_ = dict(((t, i) for i, t in enumerate(terms)))
+
+            # create term count arrays with new vocabulary structure
+            i_indices = _make_int_array()
+            j_indices = _make_int_array()
+            values = _make_int_array()
+            for i, col in enumerate(col_ind):
+                if col in reorder_indices:
+                    i_indices.append(row_ind[i])
+                    j_indices.append(reorder_indices[col_ind[i]])
+                    values.append(feature_values[i])
+
+            # free memory
+            del reorder_indices
+            del row_ind
+            del col_ind
+            del feature_values
+
         if not vocab:
-            raise ValueError("empty vocabulary; training set may have"
-                             " contained only stop words or min_df (resp. "
-                             "max_df) may be too high (resp. too low).")
-        self.vocabulary_ = vocab
+            msg = "Empty vocabulary; "
+            if fixed_vocab:
+                msg += "%r passed to constructor." % vocab
+            else:
+                msg += "perhaps your documents contain stop words only?"
+            raise ValueError(msg)
 
         # the term_counts and document_counts might be useful statistics, are
         # we really sure want we want to drop them? They take some memory but
         # can be useful for corpus introspection
-        return self._term_count_dicts_to_matrix(term_counts_per_doc)
+        return self._term_counts_to_matrix(n_doc, i_indices, j_indices, values)
 
     def transform(self, raw_documents):
         """Extract token counts out of raw text documents using the vocabulary
@@ -758,11 +806,22 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         # raw_documents can be an iterable so we don't know its size in
         # advance
 
-        # XXX @larsmans tried to parallelize the following loop with joblib.
-        # The result was some 20% slower than the serial version.
+        # result of document conversion to term count arrays
+        i_indices = _make_int_array()
+        j_indices = _make_int_array()
+        values = _make_int_array()
+
         analyze = self.build_analyzer()
-        term_counts_per_doc = (Counter(analyze(doc)) for doc in raw_documents)
-        return self._term_count_dicts_to_matrix(term_counts_per_doc)
+        for n_doc, doc in enumerate(raw_documents):
+            term_counts = Counter(analyze(doc))
+
+            for term, count in term_counts.iteritems():
+                if term in self.vocabulary_:
+                    i_indices.append(n_doc)
+                    j_indices.append(self.vocabulary_[term])
+                    values.append(count)
+        n_doc += 1
+        return self._term_counts_to_matrix(n_doc, i_indices, j_indices, values)
 
     def inverse_transform(self, X):
         """Return terms per document with nonzero entries in X.
@@ -805,6 +864,13 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             "The 'stop_words_ attribute was renamed to 'max_df_stop_words'. "
             "The old attribute will be removed in 0.15.", DeprecationWarning)
         return self.stop_words_
+
+
+def _make_int_array():
+    """Construct an array.array of a type suitable for scipy.sparse indices."""
+    # This is nasty: Python 2.x wants str (bytes) for the typecodes, but 3.x
+    # wants str (unicode). Neither will accept the other string type.
+    return array.array("i" if six.PY3 else b"i")
 
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):

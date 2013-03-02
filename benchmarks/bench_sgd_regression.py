@@ -5,7 +5,7 @@ Compares SGD regression against coordinate descent and Ridge
 on synthetik data.
 """
 
-print __doc__
+print(__doc__)
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 # License: BSD Style.
@@ -41,10 +41,10 @@ if __name__ == "__main__":
             X_test = X[n_train:]
             y_test = y[n_train:]
 
-            print "======================="
-            print "Round %d %d" % (i, j)
-            print "n_features:", n_features
-            print "n_samples:", n_train
+            print("=======================")
+            print("Round %d %d" % (i, j))
+            print("n_features:", n_features)
+            print("n_samples:", n_train)
 
             # Shuffle data
             idx = np.arange(n_train)
@@ -64,7 +64,7 @@ if __name__ == "__main__":
             y_test = (y_test - mean) / std
 
             gc.collect()
-            print "- benching ElasticNet"
+            print("- benching ElasticNet")
             clf = ElasticNet(alpha=alpha, rho=0.5, fit_intercept=False)
             tstart = time()
             clf.fit(X_train, y_train)
@@ -73,7 +73,7 @@ if __name__ == "__main__":
             elnet_results[i, j, 1] = time() - tstart
 
             gc.collect()
-            print "- benching SGD"
+            print("- benching SGD")
             n_iter = np.ceil(10 ** 4.0 / n_train)
             clf = SGDRegressor(alpha=alpha, fit_intercept=False,
                                n_iter=n_iter, learning_rate="invscaling",
@@ -86,7 +86,7 @@ if __name__ == "__main__":
             sgd_results[i, j, 1] = time() - tstart
 
             gc.collect()
-            print "- benching RidgeRegression"
+            print("- benching RidgeRegression")
             clf = Ridge(alpha=alpha, fit_intercept=False)
             tstart = time()
             clf.fit(X_train, y_train)

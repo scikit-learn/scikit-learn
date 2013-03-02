@@ -35,11 +35,12 @@ import numpy as np
 from numpy.testing import assert_equal
 import scipy.sparse as sp
 
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.utils import check_random_state
-from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.utils.random import sample_without_replacement
-from sklearn.utils.validation import check_arrays
+from .base import BaseEstimator, TransformerMixin
+from .externals.six.moves import xrange
+from .utils import check_random_state
+from .utils.extmath import safe_sparse_dot
+from .utils.random import sample_without_replacement
+from .utils.validation import check_arrays
 
 
 __all__ = ["SparseRandomProjection",
@@ -129,7 +130,7 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
 
 def _check_density(density, n_features):
     """Factorize density check according to Li et al."""
-    if density is 'auto':
+    if density == 'auto':
         density = 1 / np.sqrt(n_features)
 
     elif density <= 0 or density > 1:

@@ -372,10 +372,9 @@ class StratifiedKFold(object):
         self.indices = indices
 
     def __iter__(self):
-        y = self.y.copy()
         n_folds = self.n_folds
-        n = y.size
-        idx = np.argsort(y)
+        n = self.y.size
+        idx = np.argsort(self.y)
 
         for i in range(n_folds):
             test_index = np.zeros(n, dtype=np.bool)
@@ -1129,10 +1128,10 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     else:
         scorer = scoring
     if scorer is None and not hasattr(estimator, 'score'):
-            raise TypeError(
-                "If no scoring is specified, the estimator passed "
-                "should have a 'score' method. The estimator %s "
-                "does not." % estimator)
+        raise TypeError(
+            "If no scoring is specified, the estimator passed "
+            "should have a 'score' method. The estimator %s "
+            "does not." % estimator)
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     fit_params = fit_params if fit_params is not None else {}

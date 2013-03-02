@@ -2,12 +2,14 @@
 
 The input data is mostly low rank but is a fat infinite tail.
 """
+from __future__ import print_function
+
+from collections import defaultdict
 import gc
-from time import time
 import sys
+from time import time
 
 import numpy as np
-from collections import defaultdict
 
 from sklearn.linear_model import lars_path
 from sklearn.linear_model import lasso_path
@@ -24,9 +26,9 @@ def compute_bench(samples_range, features_range):
     for n_samples in samples_range:
         for n_features in features_range:
             it += 1
-            print '===================='
-            print 'Iteration %03d of %03d' % (it, max_it)
-            print '===================='
+            print('====================')
+            print('Iteration %03d of %03d' % (it, max_it))
+            print('====================')
             dataset_kwargs = {
                 'n_samples': n_samples,
                 'n_features': n_features,
@@ -35,46 +37,46 @@ def compute_bench(samples_range, features_range):
                 #'effective_rank': None,
                 'bias': 0.0,
             }
-            print "n_samples: %d" % n_samples
-            print "n_features: %d" % n_features
+            print("n_samples: %d" % n_samples)
+            print("n_features: %d" % n_features)
             X, y = make_regression(**dataset_kwargs)
 
             gc.collect()
-            print "benching lars_path (with Gram):",
+            print("benching lars_path (with Gram):", end='')
             sys.stdout.flush()
             tstart = time()
             G = np.dot(X.T, X)  # precomputed Gram matrix
             Xy = np.dot(X.T, y)
             lars_path(X, y, Xy=Xy, Gram=G, method='lasso')
             delta = time() - tstart
-            print "%0.3fs" % delta
+            print("%0.3fs" % delta)
             results['lars_path (with Gram)'].append(delta)
 
             gc.collect()
-            print "benching lars_path (without Gram):",
+            print("benching lars_path (without Gram):", end='')
             sys.stdout.flush()
             tstart = time()
             lars_path(X, y, method='lasso')
             delta = time() - tstart
-            print "%0.3fs" % delta
+            print("%0.3fs" % delta)
             results['lars_path (without Gram)'].append(delta)
 
             gc.collect()
-            print "benching lasso_path (with Gram):",
+            print("benching lasso_path (with Gram):", end='')
             sys.stdout.flush()
             tstart = time()
             lasso_path(X, y, precompute=True)
             delta = time() - tstart
-            print "%0.3fs" % delta
+            print("%0.3fs" % delta)
             results['lasso_path (with Gram)'].append(delta)
 
             gc.collect()
-            print "benching lasso_path (without Gram):",
+            print("benching lasso_path (without Gram):", end='')
             sys.stdout.flush()
             tstart = time()
             lasso_path(X, y, precompute=False)
             delta = time() - tstart
-            print "%0.3fs" % delta
+            print("%0.3fs" % delta)
             results['lasso_path (without Gram)'].append(delta)
 
     return results

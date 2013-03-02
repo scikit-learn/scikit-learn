@@ -52,7 +52,7 @@ def test_feature_hasher_pairs():
 
 def test_hash_empty_input():
     n_features = 16
-    raw_X = [[], (), xrange(0)]
+    raw_X = [[], (), iter(range(0))]
 
     h = FeatureHasher(n_features=n_features, input_type="string")
     X = h.transform(raw_X)

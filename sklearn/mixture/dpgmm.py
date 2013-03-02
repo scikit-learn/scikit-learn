@@ -15,6 +15,7 @@ from scipy.special import digamma as _digamma, gammaln as _gammaln
 from scipy import linalg
 from scipy.spatial.distance import cdist
 
+from ..externals.six.moves import xrange
 from ..utils import check_random_state
 from ..utils.extmath import norm, logsumexp, pinvh
 from .. import cluster

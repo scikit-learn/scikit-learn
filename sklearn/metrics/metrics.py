@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Utilities to evaluate the predictive performance of models
 
 Functions named as ``*_score`` return a scalar value to maximize: the higher
@@ -482,11 +483,11 @@ def roc_curve(y_true, y_score, pos_label=None):
 
     if n_pos == 0:
         warnings.warn("No positive samples in y_true, "
-                      "true positve value should be meaningless")
+                      "true positive value should be meaningless")
         n_pos = np.nan
     if n_neg == 0:
         warnings.warn("No negative samples in y_true, "
-                      "false positve value should be meaningless")
+                      "false positive value should be meaningless")
         n_neg = np.nan
 
     thresholds = np.unique(y_score)
@@ -520,11 +521,28 @@ def roc_curve(y_true, y_score, pos_label=None):
         tpr[-1] = (sum_pos + current_pos_count) / n_pos
         fpr[-1] = (sum_neg + current_neg_count) / n_neg
 
-    # hard decisions, add (0,0)
-    if fpr.shape[0] == 2:
+    thresholds = thresholds[::-1]
+
+    if not (n_pos is np.nan or n_neg is np.nan):
+        # add (0,0) and (1, 1)
+        if not (fpr[0] == 0 and fpr[-1] == 1):
+            fpr = np.r_[0., fpr, 1.]
+            tpr = np.r_[0., tpr, 1.]
+            thresholds = np.r_[thresholds[0] + 1, thresholds,
+                               thresholds[-1] - 1]
+        elif not fpr[0] == 0:
+            fpr = np.r_[0., fpr]
+            tpr = np.r_[0., tpr]
+            thresholds = np.r_[thresholds[0] + 1, thresholds]
+        elif not fpr[-1] == 1:
+            fpr = np.r_[fpr, 1.]
+            tpr = np.r_[tpr, 1.]
+            thresholds = np.r_[thresholds, thresholds[-1] - 1]
+    elif fpr.shape[0] == 2:
+        # trivial decisions, add (0,0)
         fpr = np.array([0.0, fpr[0], fpr[1]])
         tpr = np.array([0.0, tpr[0], tpr[1]])
-    # trivial decisions, add (0,0) and (1,1)
+        # trivial decisions, add (0,0) and (1,1)
     elif fpr.shape[0] == 1:
         fpr = np.array([0.0, fpr[0], 1.0])
         tpr = np.array([0.0, tpr[0], 1.0])
@@ -535,7 +553,7 @@ def roc_curve(y_true, y_score, pos_label=None):
     if n_neg is np.nan:
         fpr[0] = np.nan
 
-    return fpr, tpr, thresholds[::-1]
+    return fpr, tpr, thresholds
 
 
 ###############################################################################
@@ -1495,7 +1513,7 @@ def explained_variance_score(y_true, y_pred):
 
 
 def r2_score(y_true, y_pred):
-    """R^2 (coefficient of determination) regression score function
+    """R² (coefficient of determination) regression score function.
 
     Best possible score is 1.0, lower values are worse.
 
@@ -1510,15 +1528,19 @@ def r2_score(y_true, y_pred):
     Returns
     -------
     z : float
-        The R^2 score
+        The R² score.
 
     Notes
     -----
     This is not a symmetric function.
 
+    Unlike most other scores, R² score may be negative (it need not actually
+    be the square of a quantity R).
+
     References
     ----------
-    http://en.wikipedia.org/wiki/Coefficient_of_determination
+    https://en.wikipedia.org/wiki/Coefficient_of_determination
+    http://stats.stackexchange.com/a/12991/8517
 
     Examples
     --------

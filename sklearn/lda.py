@@ -128,7 +128,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         cov = None
         if store_covariance:
             cov = np.zeros((n_features, n_features))
-        for ind in xrange(n_classes):
+        for ind in range(n_classes):
             Xg = X[y == ind, :]
             meang = Xg.mean(0)
             means.append(meang)

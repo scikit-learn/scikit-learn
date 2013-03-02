@@ -1,10 +1,11 @@
 from .base import BaseLibLinear, BaseSVC, BaseLibSVM
 from ..base import RegressorMixin
-from ..linear_model.base import LinearClassifierMixin
+from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin
 from ..feature_selection.selector_mixin import SelectorMixin
 
 
-class LinearSVC(BaseLibLinear, LinearClassifierMixin, SelectorMixin):
+class LinearSVC(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
+                SparseCoefMixin):
     """Linear Support Vector Classification.
 
     Similar to SVC with parameter kernel='linear', but implemented in terms of
@@ -74,6 +75,11 @@ class LinearSVC(BaseLibLinear, LinearClassifierMixin, SelectorMixin):
         Enable verbose output. Note that this setting takes advantage of a
         per-process runtime setting in liblinear that, if enabled, may not work
         properly in a multithreaded context.
+
+    random_state: int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data.
+
 
     Attributes
     ----------

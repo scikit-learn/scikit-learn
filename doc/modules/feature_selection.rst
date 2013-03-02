@@ -198,8 +198,10 @@ features::
   >>> X, y = iris.data, iris.target
   >>> X.shape
   (150, 4)
-  >>> clf = ExtraTreesClassifier(compute_importances=True, random_state=0)
+  >>> clf = ExtraTreesClassifier(random_state=0)
   >>> X_new = clf.fit(X, y).transform(X)
+  >>> clf.feature_importances_
+  array([ 0.12604616,  0.07234783,  0.38787583,  0.41373018])
   >>> X_new.shape
   (150, 2)
 
@@ -211,5 +213,3 @@ features::
 
     * :ref:`example_ensemble_plot_forest_importances_faces.py`: example
       on face recognition data.
-
-

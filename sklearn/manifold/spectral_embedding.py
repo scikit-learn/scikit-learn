@@ -455,7 +455,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
                 raise ValueError(("%s is not a valid affinity. Expected "
                                   "'precomputed', 'rbf', 'nearest_neighbors' "
                                   "or a callable.") % self.affinity)
-        elif not hasattr(self.affinity, "__call__"):
+        elif not callable(self.affinity):
             raise ValueError(("'affinity' is expected to be an an affinity "
                               "name or a callable. Got: %s") % self.affinity)
 
