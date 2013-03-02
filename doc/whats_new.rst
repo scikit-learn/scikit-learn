@@ -34,6 +34,9 @@ Changelog
    - Hyperlinks to documentation in example code on the website by
      `Martin Luessi`_.
 
+   - Fixed bug in :class:`MinMaxScaler` causing incorrect scaling of the
+     features for non-default ``feature_range`` settings. By `Andreas Müller`_.
+
 
 .. _changes_0_13_1:
 
