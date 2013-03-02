@@ -455,8 +455,8 @@ From text
    :template: class.rst
 
    grid_search.GridSearchCV
-   grid_search.IterGrid
-   grid_search.ParamSampler
+   grid_search.ParameterGrid
+   grid_search.ParameterSampler
    grid_search.RandomizedSearchCV
 
 

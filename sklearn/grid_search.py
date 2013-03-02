@@ -25,11 +25,57 @@ from .utils import safe_mask, check_random_state
 from .utils.validation import _num_samples, check_arrays
 from .metrics import SCORERS, Scorer
 
-__all__ = ['GridSearchCV', 'IterGrid', 'fit_grid_point', 'ParameterSampler',
-           'RandomizedSearchCV']
+__all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
+           'ParameterSampler', 'RandomizedSearchCV']
 
 
-class IterGrid(object):
+class ParameterGrid(object):
+    """Generators on the combination of the various parameter lists given.
+
+    Parameters
+    ----------
+    param_grid: dict of string to sequence
+        The parameter grid to explore, as a dictionary mapping estimator
+        parameters to sequences of allowed values.
+
+    Returns
+    -------
+    params: dict of string to any
+        **Yields** dictionaries mapping each estimator parameter to one of its
+        allowed values.
+
+    Examples
+    --------
+    >>> from sklearn.grid_search import ParameterGrid
+    >>> param_grid = {'a':[1, 2], 'b':[True, False]}
+    >>> list(ParameterGrid(param_grid)) #doctest: +NORMALIZE_WHITESPACE
+    [{'a': 1, 'b': True}, {'a': 1, 'b': False},
+     {'a': 2, 'b': True}, {'a': 2, 'b': False}]
+
+    See also
+    --------
+    :class:`GridSearchCV`:
+        uses ``ParameterGrid`` to perform a full parallelized grid search.
+    """
+
+    def __init__(self, param_grid):
+        self.param_grid = param_grid
+
+    def __iter__(self):
+        param_grid = self.param_grid
+        if hasattr(param_grid, 'items'):
+            # wrap dictionary in a singleton list
+            param_grid = [param_grid]
+        for p in param_grid:
+            # Always sort the keys of a dictionary, for reproducibility
+            items = sorted(p.items())
+            keys, values = zip(*items)
+            for v in product(*values):
+                params = dict(zip(keys, v))
+                yield params
+
+
+class IterGrid(ParameterGrid):
     """Generators on the combination of the various parameter lists given.
 
     Parameters
@@ -59,20 +105,9 @@ class IterGrid(object):
     """
 
     def __init__(self, param_grid):
-        self.param_grid = param_grid
-
-    def __iter__(self):
-        param_grid = self.param_grid
-        if hasattr(param_grid, 'items'):
-            # wrap dictionary in a singleton list
-            param_grid = [param_grid]
-        for p in param_grid:
-            # Always sort the keys of a dictionary, for reproducibility
-            items = sorted(p.items())
-            keys, values = zip(*items)
-            for v in product(*values):
-                params = dict(zip(keys, v))
-                yield params
+        warnings.warn("IterGrid was renamed to ParameterGrid and will be"
+                      " removed in 0.15.", DeprecationWarning)
+        super(IterGrid, self).__init__(param_grid)
 
 
 class ParameterSampler(object):
@@ -575,7 +610,7 @@ class GridSearchCV(BaseSearchCV):
 
     See Also
     ---------
-    :class:`IterGrid`:
+    :class:`ParameterGrid`:
         generates all the combinations of a an hyperparameter grid.
 
     :func:`sklearn.cross_validation.train_test_split`:
@@ -619,7 +654,7 @@ class GridSearchCV(BaseSearchCV):
         cv = self.cv
         cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
-        grid = IterGrid(self.param_grid)
+        grid = ParameterGrid(self.param_grid)
         base_clf = clone(self.estimator)
 
         # Return early if there is only one grid point.
