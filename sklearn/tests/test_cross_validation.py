@@ -130,9 +130,9 @@ def test_kfold_indices():
     assert_array_equal(all_folds, np.arange(300))
 
 
-def test_kfold_round():
-    # Check KFold rounding of fold size
-    for kf in [cval.KFold(12, 5), cval.KFold(14, 5)]:
+def test_kfold_balance():
+    # Check that KFold returns folds with balanced sizes
+    for kf in [cval.KFold(i, 5) for i in range(11, 15)]:
         sizes = []
         for _, test in kf:
             sizes.append(len(test))
