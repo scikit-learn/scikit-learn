@@ -209,7 +209,7 @@ class VectorizerMixin(object):
 
     def build_analyzer(self):
         """Return a callable that handles preprocessing and tokenization"""
-        if hasattr(self.analyzer, '__call__'):
+        if callable(self.analyzer):
             return self.analyzer
 
         preprocess = self.build_preprocessor()
