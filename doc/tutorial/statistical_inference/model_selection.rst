@@ -198,7 +198,7 @@ automatically by cross-validation::
         tol=0.0001, verbose=False)
     >>> # The estimator chose automatically its lambda:
     >>> lasso.alpha_ # doctest: +ELLIPSIS
-    0.01318...
+    0.01229...
 
 These estimators are called similarly to their counterparts, with 'CV'
 appended to their name.
