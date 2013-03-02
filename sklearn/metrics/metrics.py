@@ -14,12 +14,20 @@ the lower the better
 #          Arnaud Joly <a.joly@ulg.ac.be>
 # License: BSD Style.
 
+from __future__ import division
+
 from itertools import izip
 import warnings
 import numpy as np
-from scipy.sparse import coo_matrix
 
+from scipy.sparse import coo_matrix
+from scipy.spatial.distance import hamming as sp_hamming
+
+from ..preprocessing import LabelBinarizer
 from ..utils import check_arrays, deprecated
+from ..utils.multiclass import is_label_indicator_matrix
+from ..utils.multiclass import is_multilabel
+from ..utils.multiclass import unique_labels
 
 
 ###############################################################################
@@ -59,7 +67,7 @@ def auc(x, y, reorder=False):
 
     See also
     --------
-    auc_score Computes the area under the ROC curve
+    auc_score : Computes the area under the ROC curve
 
     """
     # XXX: Consider using  ``scipy.integrate`` instead, or moving to
@@ -83,13 +91,6 @@ def auc(x, y, reorder=False):
 
     area = np.sum(h * (y[1:] + y[:-1])) / 2.0
     return area
-
-
-def unique_labels(*lists_of_labels):
-    """Extract an ordered array of unique labels"""
-    labels = set().union(*(l.ravel() if hasattr(l, "ravel") else l
-                           for l in lists_of_labels))
-    return np.asarray(sorted(labels))
 
 
 ###############################################################################
@@ -118,7 +119,8 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/Hinge_loss
+    .. [1] `Wikipedia entry on the Hinge loss
+            <http://en.wikipedia.org/wiki/Hinge_loss>`_
 
     Examples
     --------
@@ -179,11 +181,15 @@ def average_precision_score(y_true, y_score):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/Information_retrieval#Average_precision
+    .. [1] `Wikipedia entry for the Average precision
+            <http://en.wikipedia.org/wiki/Information_retrieval#Average_precision>`_
 
     See also
     --------
-    auc_score: Area under the ROC curve
+    auc_score : Area under the ROC curve
+
+    precision_recall_curve :
+        Compute precision-recall pairs for different probability thresholds
 
     Examples
     --------
@@ -220,11 +226,14 @@ def auc_score(y_true, y_score):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/Receiver_operating_characteristic
+    .. [1] `Wikipedia entry for the Receiver operating characteristic
+            <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
 
     See also
     --------
-    average_precision_score: Area under the precision-recall curve
+    average_precision_score : Area under the precision-recall curve
+
+    roc_curve : Compute Receiver operating characteristic (ROC)
 
     Examples
     --------
@@ -273,7 +282,6 @@ def matthews_corrcoef(y_true, y_pred):
 
     References
     ----------
-
     .. [1] `Baldi, Brunak, Chauvin, Andersen and Nielsen, (2000). Assessing the
        accuracy of prediction algorithms for classification: an overview
        <http://dx.doi.org/10.1093/bioinformatics/16.5.412>`_
@@ -439,6 +447,10 @@ def roc_curve(y_true, y_score, pos_label=None):
     thresholds : array, shape = [>2]
         Thresholds on ``y_score`` used to compute ``fpr`` and ``fpr``.
 
+    See also
+    --------
+    auc_score : Compute Area Under the Curve (AUC) from prediction scores
+
     Notes
     -----
     Since the thresholds are sorted from low to high values, they
@@ -447,7 +459,9 @@ def roc_curve(y_true, y_score, pos_label=None):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/Receiver_operating_characteristic
+    .. [1] `Wikipedia entry for the Receiver operating characteristic
+            <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
+
 
     Examples
     --------
@@ -586,7 +600,8 @@ def confusion_matrix(y_true, y_pred, labels=None):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/Confusion_matrix
+    .. [2] `Wikipedia entry for the Confusion matrix
+           <http://en.wikipedia.org/wiki/Confusion_matrix>`_
 
     Examples
     --------
@@ -633,9 +648,11 @@ def zero_one_loss(y_true, y_pred, normalize=True):
 
     Parameters
     ----------
-    y_true : array-like
+    y_true : array-like or list of labels or label indicator matrix
+        Ground truth (correct) labels.
 
-    y_pred : array-like
+    y_pred : array-like or list of labels or label indicator matrix
+        Predicted labels, as returned by a classifier.
 
     normalize : bool, optional
         If ``False`` (default), return the number of misclassifications.
@@ -647,6 +664,17 @@ def zero_one_loss(y_true, y_pred, normalize=True):
         If ``normalize == True``, return the fraction of misclassifications
         (float), else it returns the number of misclassifications (int).
 
+    Notes
+    -----
+    In multilabel classification, the zero_one_loss function corresponds to
+    the subset zero one loss: the subset of labels must be correctly
+    predicted.
+
+    See also
+    --------
+    accuracy_score : Compute the accuracy score
+    hamming_loss : Compute the average Hamming loss
+
     Examples
     --------
     >>> from sklearn.metrics import zero_one_loss
@@ -657,12 +685,37 @@ def zero_one_loss(y_true, y_pred, normalize=True):
     >>> zero_one_loss(y_true, y_pred, normalize=False)
     1
 
+    In the multilabel case with binary indicator format
+    >>> zero_one_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+    1.0
+
+    and with a list of labels format
+    >>> zero_one_loss([(1, 2), (3,)], [(1, 2), tuple()])
+    0.5
+
     """
-    y_true, y_pred = check_arrays(y_true, y_pred)
-    if not normalize:
-        return np.sum(y_pred != y_true)
+    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
+
+    # Handle mix representation
+    if is_multilabel(y_true) and type(y_true) != type(y_pred):
+        labels = unique_labels(y_true, y_pred)
+        lb = LabelBinarizer()
+        lb.fit([labels.tolist()])
+        y_true = lb.transform(y_true)
+        y_pred = lb.transform(y_pred)
+
+    loss = None
+    if is_label_indicator_matrix(y_true):
+        loss = (y_pred != y_true).sum(axis=1) > 0
     else:
-        return np.mean(y_pred != y_true)
+        loss = np.array([np.size(np.setxor1d(np.array(pred),
+                                             np.array(true))) > 0
+                         for pred, true in izip(y_pred, y_true)])
+
+    if normalize:
+        return np.mean(loss)
+    else:
+        return np.sum(loss)
 
 
 @deprecated("Function 'zero_one' has been renamed to "
@@ -715,10 +768,10 @@ def accuracy_score(y_true, y_pred):
 
     Parameters
     ----------
-    y_true : array-like, shape = n_samples
+    y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like, shape = n_samples
+    y_pred : array-like or list of labels or label indicator matrix
         Predicted labels, as returned by a classifier.
 
     Returns
@@ -729,19 +782,52 @@ def accuracy_score(y_true, y_pred):
 
     See also
     --------
-    zero_one_loss Zero-One classification loss
+    zero_one_loss : zero-one classification loss
+
+    Notes
+    -----
+    In multilabel classification, the accuracy_score function corresponds to
+    the subset accuracy: the subset of labels must be correctly
+    predicted.
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.metrics import accuracy_score
     >>> y_pred = [0, 2, 1, 3]
     >>> y_true = [0, 1, 2, 3]
     >>> accuracy_score(y_true, y_pred)
     0.5
 
+    In the multilabel case with binary indicator format:
+
+    >>> accuracy_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+    0.0
+
+    and with a list of labels format:
+    >>> accuracy_score([(1, 2), (3,)], [(1, 2), tuple()])
+    0.5
+
     """
-    y_true, y_pred = check_arrays(y_true, y_pred)
-    return np.mean(y_pred == y_true)
+    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
+
+    # Handle mix representation
+    if is_multilabel(y_true) and type(y_true) != type(y_pred):
+        labels = unique_labels(y_true, y_pred)
+        lb = LabelBinarizer()
+        lb.fit([labels.tolist()])
+        y_true = lb.transform(y_true)
+        y_pred = lb.transform(y_pred)
+
+    # Compute accuracy for each possible representation
+    if is_label_indicator_matrix(y_true):
+        score = (y_pred != y_true).sum(axis=1) == 0
+    else:
+        score = np.array([np.size(np.setxor1d(np.array(pred),
+                                              np.array(true))) == 0
+                         for pred, true in izip(y_pred, y_true)])
+
+    return np.mean(score)
 
 
 def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
@@ -797,7 +883,8 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/F1_score
+    .. [1] `Wikipedia entry for the F1-score
+           <http://en.wikipedia.org/wiki/F1_score>`_
 
     Examples
     --------
@@ -885,10 +972,11 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     References
     ----------
-    R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern Information Retrieval.
-    Addison Wesley, pp. 327-328.
+    .. [1] R. Baeza-Yates and B. Ribeiro-Neto (2011).
+           Modern Information Retrieval. Addison Wesley, pp. 327-328.
 
-    http://en.wikipedia.org/wiki/F1_score
+    .. [2] `Wikipedia entry for the F1-score
+           <http://en.wikipedia.org/wiki/F1_score>`_
 
     Examples
     --------
@@ -1008,7 +1096,12 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     References
     ----------
-    http://en.wikipedia.org/wiki/Precision_and_recall
+    .. [1] `Wikipedia entry for the Precision and recall
+           <http://en.wikipedia.org/wiki/Precision_and_recall>`_
+
+    .. [2] `Wikipedia entry for the F1-score
+           <http://en.wikipedia.org/wiki/F1_score>`_
+
 
     Examples
     --------
@@ -1397,6 +1490,105 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
 
 
 ###############################################################################
+# Multilabel loss function
+###############################################################################
+def hamming_loss(y_true, y_pred, classes=None):
+    """ Compute the average Hamming loss
+
+    The Hamming loss is the fraction of labels that are incorrectly predicted.
+
+    Parameters
+    ----------
+    y_true : array-like or list of labels or label indicator matrix
+        Ground truth (correct) labels.
+
+    y_pred : array-like or list of labels or label indicator matrix
+        Predicted labels, as returned by a classifier.
+
+    classes : array, shape = [n_labels], optional
+        Integer array of labels.
+
+    Returns
+    -------
+    loss : float or int,
+        Return the average Hamming loss between element of ``y_true`` and
+        ``y_pred``.
+
+    See Also
+    --------
+    zero_one_loss : Zero-one classification loss
+
+    Notes
+    -----
+    In multiclass classification, the Hamming loss correspond to the Hamming
+    distance between ``y_true`` and ``y_pred`` which is equivalent to the
+    ``zero_one_loss`` function.
+
+    In multilabel classification, the Hamming loss is different from the
+    zero-one loss. The zero-one loss penalizes any predications that don't
+    predict correctly the subset of labels. The Hamming loss penalizes only
+    the fraction of labels incorrectly predicted.
+
+    The Hamming loss is upperbounded by the zero one loss. With the
+    normalization over the samples, the Hamming loss is always between 0 and 1.
+
+    References
+    ----------
+    .. [1] Grigorios Tsoumakas, Ioannis Katakis. Multi-Label Classification:
+           An Overview. International Journal of Data Warehousing & Mining,
+           3(3), 1-13, July-September 2007.
+
+    .. [2] `Wikipedia entry on the Hamming distance
+           <http://en.wikipedia.org/wiki/Hamming_distance>`_
+
+    Examples
+    --------
+    >>> from sklearn.metrics import hamming_loss
+    >>> y_pred = [1, 2, 3, 4]
+    >>> y_true = [2, 2, 3, 4]
+    >>> hamming_loss(y_true, y_pred)
+    0.25
+
+    In the multilabel case with binary indicator format:
+
+    >>> hamming_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+    0.75
+
+    and with a list of labels format:
+
+    >>> hamming_loss([(1, 2), (3,)], [(1, 2), tuple()])  # doctest: +ELLIPSIS
+    0.166...
+
+    """
+    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
+
+    if classes is None:
+        classes = unique_labels(y_true, y_pred)
+    else:
+        classes = np.asarray(classes, dtype=np.int)
+
+    if is_multilabel(y_true):
+        lb = LabelBinarizer()
+        lb.fit([classes.tolist()])
+
+        if type(y_true) != type(y_pred):
+            y_true = lb.transform(y_true)
+            y_pred = lb.transform(y_pred)
+
+        if is_label_indicator_matrix(y_true):
+            return np.mean(y_true != y_pred)
+        else:
+            loss = np.array([np.size(np.setxor1d(np.asarray(pred),
+                                                 np.asarray(true)))
+                             for pred, true in izip(y_pred, y_true)])
+
+            return np.mean(loss) / np.size(classes)
+
+    else:
+        return sp_hamming(y_true, y_pred)
+
+
+###############################################################################
 # Regression loss functions
 ###############################################################################
 def mean_absolute_error(y_true, y_pred):
@@ -1539,8 +1731,11 @@ def r2_score(y_true, y_pred):
 
     References
     ----------
-    https://en.wikipedia.org/wiki/Coefficient_of_determination
-    http://stats.stackexchange.com/a/12991/8517
+    .. [1] `Wikipedia entry on the Coefficient of determination
+            <http://en.wikipedia.org/wiki/Coefficient_of_determination>`_
+
+    .. [2] `When is R squared negative?
+            <http://stats.stackexchange.com/a/12991/8517>`_
 
     Examples
     --------

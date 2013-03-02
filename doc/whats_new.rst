@@ -8,6 +8,9 @@
 Changelog
 ---------
 
+   - Hyperlinks to documentation in example code on the website by
+     `Martin Luessi`_.
+
    - :class:`grid_search.GridSearchCV` and
      :func:`cross_validation.cross_val_score` now support the use of advanced
      scoring function such as area under the ROC curve and f-beta scores.
@@ -36,8 +39,9 @@ Changelog
      sparse matrix, meaning stored models trained using these estimators
      can be made much more compact.
 
-   - Hyperlinks to documentation in example code on the website by
-     `Martin Luessi`_.
+   - :func:`metrics.accuracy_score`, :func:`metrics.zero_one_loss` support
+     multi-label classification and a new metric :func:`metrics.hamming_loss`
+     is added with multi-label support by `Arnaud Joly`_.
 
    - Fixed bug in :class:`MinMaxScaler` causing incorrect scaling of the
      features for non-default ``feature_range`` settings. By `Andreas Müller`_.

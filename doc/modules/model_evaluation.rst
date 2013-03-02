@@ -45,7 +45,6 @@ Others also work in the multiclass case:
 .. autosummary::
    :template: function.rst
 
-  accuracy_score
   classification_report
   confusion_matrix
   f1_score
@@ -53,7 +52,16 @@ Others also work in the multiclass case:
   precision_recall_fscore_support
   precision_score
   recall_score
+
+And some also work in the multilabel case:
+
+.. autosummary::
+   :template: function.rst
+
+  accuracy_score
+  hamming_loss
   zero_one_loss
+
 
 Some metrics might require probability estimates of the positive class,
 confidence values or binary decisions value.
@@ -64,7 +72,8 @@ Accuracy score
 ---------------
 The :func:`accuracy_score` function computes the
 `accuracy <http://en.wikipedia.org/wiki/Accuracy_and_precision>`_, the fraction
-of correct predictions.
+of correct predictions. In multilabel classification, the accuracy is also
+called subset accuracy (which is different of label-based accuracy).
 
 If :math:`\hat{y}_i` is the predicted value of
 the :math:`i`-th sample and :math:`y_i` is the corresponding true value,
@@ -73,15 +82,26 @@ defined as
 
 .. math::
 
-   \texttt{accuracy}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y} = y)
+   \texttt{accuracy}(y, \hat{y}) = \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples}-1} 1(\hat{y}_i = y_i)
 
 where :math:`1(x)` is the `indicator function
 <http://en.wikipedia.org/wiki/Indicator_function>`_.
 
+  >>> import numpy as np
   >>> from sklearn.metrics import accuracy_score
   >>> y_pred = [0, 2, 1, 3]
   >>> y_true = [0, 1, 2, 3]
   >>> accuracy_score(y_true, y_pred)
+  0.5
+
+  In the multilabel case with binary indicator format:
+
+  >>> accuracy_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+  0.0
+
+  and with a list of labels format:
+
+  >>> accuracy_score([(1, 2), (3,)], [(1, 2), tuple()])
   0.5
 
 .. topic:: Example:
@@ -207,6 +227,54 @@ and infered labels:
     for an example of classification report usage in parameter estimation using
     grid search with a nested cross-validation.
 
+Hamming loss
+------------
+The :func:`hamming_loss` computes the average Hamming loss or `Hamming
+distance <http://en.wikipedia.org/wiki/Hamming_distance>`_ between two sets
+of samples.
+
+If :math:`\hat{y}_j` is the predicted value for the :math:`j`-th labels of
+a given sample, :math:`y_j` is the corresponding true value and
+:math:`n_\text{labels}` is the number of class or labels, then the
+Hamming loss :math:`L_{Hamming}` between two samples is defined as:
+
+.. math::
+
+   L_{Hamming}(y, \hat{y}) = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} 1(\hat{y}_j \not= y_j)
+
+where :math:`1(x)` is the `indicator function
+<http://en.wikipedia.org/wiki/Indicator_function>`_.
+
+  >>> from sklearn.metrics import hamming_loss
+  >>> y_pred = [1, 2, 3, 4]
+  >>> y_true = [2, 2, 3, 4]
+  >>> hamming_loss(y_true, y_pred)
+  0.25
+
+  In the multilabel case with binary indicator format:
+
+  >>> hamming_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+  0.75
+
+  and with a list of labels format:
+
+  >>> hamming_loss([(1, 2), (3,)], [(1, 2), tuple()])  # doctest: +ELLIPSIS
+  0.166...
+
+.. note::
+
+    In multiclass classification, the Hamming loss correspond to the Hamming
+    distance between ``y_true`` and ``y_pred`` which is equivalent to the
+    :ref:`zero_one_loss` function.
+
+    In multilabel classification, the Hamming loss is different from the
+    zero-one loss. The zero-one loss penalizes any predications that don't
+    predict correctly the subset of labels. The Hamming loss penalizes only
+    the fraction of labels incorrectly predicted.
+
+    The Hamming loss is upperbounded by the zero one loss. With the
+    normalization over the samples, the Hamming loss is always between 0 and 1.
+
 
 .. _precision_recall_f_measure_metrics:
 
@@ -331,9 +399,9 @@ Here some small examples in binary classification::
   array([ 0.35,  0.4 ,  0.8 ])
 
 
-Multiclass and multilabels classification
+Multiclass and multilabel classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-In multiclass and multilabels classification task, the notions of precision,
+In multiclass and multilabel classification task, the notions of precision,
 recall and F-measures can be applied to each label independently.
 
 Moreover, these notions can be further extended. The functions
@@ -599,13 +667,16 @@ classification loss (:math:`L_{0-1}`) over :math:`n_{\text{samples}}`. By
 defaults, the function normalizes over the sample. To get the sum of the
 :math:`L_{0-1}`, set ``normalize``  to ``False``.
 
+In multilabel classification, the :func:`zero_one_loss` function corresponds
+to the subset zero one loss: the subset of labels must be correctly predict.
+
 If :math:`\hat{y}_i` is the predicted value of
 the :math:`i`-th sample and :math:`y_i` is the corresponding true value,
 then the 0-1 loss :math:`L_{0-1}` is defined as:
 
 .. math::
 
-   L_{0-1}(y_i, \hat{y}_i) = 1(\hat{y} \not= y)
+   L_{0-1}(y_i, \hat{y}_i) = 1(\hat{y}_i \not= y_i)
 
 where :math:`1(x)` is the `indicator function
 <http://en.wikipedia.org/wiki/Indicator_function>`_.
@@ -617,6 +688,16 @@ where :math:`1(x)` is the `indicator function
   0.25
   >>> zero_one_loss(y_true, y_pred, normalize=False)
   1
+
+  In the multilabel case with binary indicator format:
+
+  >>> zero_one_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+  1.0
+
+  and with a list of labels format:
+
+  >>> zero_one_loss([(1, 2), (3,)], [(1, 2), tuple()])
+  0.5
 
 .. topic:: Example:
 

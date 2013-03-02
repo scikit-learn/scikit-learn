@@ -40,10 +40,8 @@ improves.
       :class:`sklearn.linear_model.SGDClassifier`,
       :class:`sklearn.linear_model.RidgeClassifier`.
 
-.. note::
-
-    At the moment there are no evaluation metrics implemented for multilabel
-    learnings.
+The :mod:`sklearn.utils.multiclass` module contains usefull functions
+when working with multiclass and multilabel problem.
 
 
 One-Vs-The-Rest
@@ -176,11 +174,11 @@ Example::
 .. topic:: References:
 
     .. [1] "Solving multiclass learning problems via error-correcting ouput codes",
-        Dietterich T., Bakiri G., 
-        Journal of Artificial Intelligence Research 2, 
+        Dietterich T., Bakiri G.,
+        Journal of Artificial Intelligence Research 2,
         1995.
 
-    .. [2] "The error coding method and PICTs", 
+    .. [2] "The error coding method and PICTs",
         James G., Hastie T.,
         Journal of Computational and Graphical statistics 7,
         1998.
