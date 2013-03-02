@@ -193,7 +193,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
                               logger.short_format_time(time.time() -
                                                        start_time))
         print("[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
-    return this_score, clf_params, _num_samples(X)
+    return this_score, clf_params, _num_samples(X_test)
 
 
 def _check_param_grid(param_grid):
