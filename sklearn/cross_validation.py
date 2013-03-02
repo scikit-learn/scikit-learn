@@ -280,18 +280,21 @@ class KFold(object):
     def __iter__(self):
         n = self.n
         n_folds = self.n_folds
-        fold_size = int(round(n / float(n_folds)))
-
-        for i in range(n_folds):
+        fold_sizes = (n // n_folds) * np.ones(n_folds, dtype=np.int)
+        fold_sizes[:n % n_folds] += 1
+        current = 0
+        for i, fold_size in enumerate(fold_sizes):
             test_index = np.zeros(n, dtype=np.bool)
+            start, stop = current, current + fold_size
             if i < n_folds - 1:
-                test_index[self.idxs[i * fold_size:(i + 1) * fold_size]] = True
+                test_index[self.idxs[start:stop]] = True
             else:
-                test_index[self.idxs[i * fold_size:]] = True
+                test_index[self.idxs[start:]] = True
             train_index = np.logical_not(test_index)
             if self.indices:
                 train_index = self.idxs[train_index]
                 test_index = self.idxs[test_index]
+            current = stop
             yield train_index, test_index
 
     def __repr__(self):
