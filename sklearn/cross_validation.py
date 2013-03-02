@@ -247,8 +247,8 @@ class KFold(object):
 
     Notes
     -----
-    All the folds have size trunc(n_samples / n_folds), the last one has the
-    complementary.
+    The first n % n_folds folds have size n // n_folds + 1, other folds have
+    size n // n_folds.
 
     See also
     --------
