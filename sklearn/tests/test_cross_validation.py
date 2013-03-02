@@ -132,12 +132,12 @@ def test_kfold_indices():
 
 def test_kfold_round():
     # Check KFold rounding of fold size
-    kf = cval.KFold(14, 5)
-    sizes = []
-    for _, test in kf:
-        sizes.append(len(test))
+    for kf in [cval.KFold(12, 5), cval.KFold(14, 5)]:
+        sizes = []
+        for _, test in kf:
+            sizes.append(len(test))
 
-    assert_equal(np.min(sizes) + 1, np.max(sizes))
+        assert_equal(np.min(sizes) + 1, np.max(sizes))
 
 
 def test_shuffle_kfold():
