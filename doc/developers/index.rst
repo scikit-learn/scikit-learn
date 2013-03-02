@@ -429,6 +429,8 @@ Here's a simple example of code using some of the above guidelines::
         return X[i]
 
 
+.. currentmodule:: sklearn
+
 APIs of scikit-learn objects
 ============================
 
@@ -447,7 +449,7 @@ multiple interfaces):
 
     The base object, implements::
 
-      estimator = obj.fit(data)
+      estimator = obj.fit(data, targets)
 
 :Predictor:
 
@@ -458,7 +460,7 @@ multiple interfaces):
     Classification algorithm usually also offer a way to quantify certainty
     of a prediction, either using ``decision_function`` or ``predict_proba``::
         
-        probability = obj.predict_proba(data)
+      probability = obj.predict_proba(data)
 
 :Transformer:
 
@@ -491,8 +493,7 @@ classifier or a regressor. All estimators implement the fit method::
 
 All built-in estimators also have a ``set_params`` method, which sets
 data-independent parameters (overriding previous parameter values passed
-to ``__init__``). This method is not required for an object to be an
-estimator.
+to ``__init__``).
 
 All estimators should inherit from ``sklearn.base.BaseEstimator``.
 
@@ -616,12 +617,13 @@ an integer called ``n_iter``.
 Writing Your Own Estimator
 ==========================
 If you want to implement a new estimator that is scikit-learn compatible -
-wether it is just for you or for contributing it to sklearn, there several
+whether it is just for you or for contributing it to sklearn, there are several
 internals of scikit-learn that you should be aware of in addition to the
 sklearn API outlined above.
 
-The main motivation to make a class compatible to the scikit-learn estimator interface
-might be that you want to use it together for :class:`grid_search.GridSearchCV`.
+The main motivation to make a class compatible to the scikit-learn estimator
+interface might be that you want to use it together with model assessment and
+selection tools such as :class:`grid_search.GridSearchCV`.
 
 For this to work, you need to implement the following interface:
 
@@ -638,9 +640,10 @@ While the ``get_params`` mechanism is not essential (see :ref:`cloning` below),
 the ``set_params`` function is necessary as it is used to set parameters during
 grid searches.
 
-The easiest way to implement these functions, and to get a sensible ``__repr__`` method,
-is to inherit from ``base.BaseEstimator``. If you do not want to make your code dependend on
-scikit-learn, the easiest way to implement the interface is::
+The easiest way to implement these functions, and to get a sensible
+``__repr__`` method, is to inherit from ``sklearn.base.BaseEstimator``. If you
+do not want to make your code dependent on scikit-learn, the easiest way to
+implement the interface is::
     
     def set_params(self, **parameters):
         for parameter, value in parameters.items():
@@ -654,7 +657,7 @@ to estimators, it is essential that calling ``set_params`` has the same effect
 as setting parameters using the ``__init__`` method.
 The easiest and recommended way to accomplish this is to **not do any parameter
 parsing in ``__init__``**. All logic behind estimator parameters, like translating
-a string argument into a function, should therefor be done in ``fit``.
+a string argument into a function, should therefore be done in ``fit``.
 
 .. _cloning:
 
@@ -674,8 +677,9 @@ For an estimator to be usable together with ``pipeline.Pipeline`` in any but the
 last step, it needs to provide a ``fit`` or ``fit_transform`` function.
 To be able to evaluate the pipeline on any data but the training set, it also needs
 to provide a ``transform`` function.
-There are no special requirements for the last step in a pipeline, except that it
-has a ``fit`` function.
+There are no special requirements for the last step in a pipeline, except that
+it has a ``fit`` function.  All ``fit`` and ``fit_transform`` functions must
+take arguments ``X, y``, even if y is not used.
 
 
 Working notes
