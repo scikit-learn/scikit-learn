@@ -286,10 +286,7 @@ class KFold(object):
         for i, fold_size in enumerate(fold_sizes):
             test_index = np.zeros(n, dtype=np.bool)
             start, stop = current, current + fold_size
-            if i < n_folds - 1:
-                test_index[self.idxs[start:stop]] = True
-            else:
-                test_index[self.idxs[start:]] = True
+            test_index[self.idxs[start:stop]] = True
             train_index = np.logical_not(test_index)
             if self.indices:
                 train_index = self.idxs[train_index]
