@@ -132,12 +132,12 @@ def test_kfold_indices():
 
 def test_kfold_balance():
     # Check that KFold returns folds with balanced sizes
-    for kf in [cval.KFold(i, 5) for i in range(11, 15)]:
+    for kf in [cval.KFold(i, 5) for i in range(11, 17)]:
         sizes = []
         for _, test in kf:
             sizes.append(len(test))
 
-        assert_equal(np.min(sizes) + 1, np.max(sizes))
+        assert_true((np.max(sizes) - np.min(sizes)) <= 1)
         assert_equal(np.sum(sizes), kf.n)
 
 
