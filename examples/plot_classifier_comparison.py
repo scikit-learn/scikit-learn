@@ -41,7 +41,7 @@ from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.lda import LDA
 from sklearn.qda import QDA
-from sklearn.elm import ELMClassifier
+from sklearn.neural_networks.elm import ELMClassifier
 
 h = .02  # step size in the mesh
 

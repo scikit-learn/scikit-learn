@@ -64,8 +64,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn import metrics
 from sklearn.externals.joblib import Memory
-from sklearn.random_hidden_layer import RBFRandomHiddenLayer
-from sklearn.elm import ELMClassifier
+from sklearn.neural_networks.elm import ELMClassifier
+from sklearn.neural_networks.random_hidden_layer import RBFRandomHiddenLayer
 from sklearn.linear_model import LinearRegression
 
 logging.basicConfig(level=logging.INFO,

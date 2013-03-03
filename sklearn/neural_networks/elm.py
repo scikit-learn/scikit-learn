@@ -1,26 +1,6 @@
 # -*- coding: utf8
-""" Extreme Learning Machine Classifier/Regressor implementation"""
-
 # Author: David C. Lambert <dcl@panix.com>
 # License: Simple BSD
-
-from abc import ABCMeta, abstractmethod
-
-import numpy as np
-from scipy.linalg import pinv2
-
-from .utils import as_float_array
-from .utils.extmath import safe_sparse_dot
-from .base import BaseEstimator, ClassifierMixin, RegressorMixin
-from .preprocessing import LabelBinarizer
-
-from .random_hidden_layer import SimpleRandomHiddenLayer
-
-__all__ = ["ELMRegressor",
-           "ELMClassifier",
-           "SimpleELMRegressor",
-           "SimpleELMClassifier"]
-
 
 ###################
 # docstring chunks
@@ -30,42 +10,75 @@ network with a random hidden layer components and least-squares fitting
 of the hidden->output weights by default. [1][2]
 """
 
-_ELM_params = """Parameters
-__________
-`hidden_layer` : random_hidden_layer object, optional
-    (default=SimpleRandomHiddenLayer(random_state=0))
-
-`regressor`    : linear_model object, optional (default=None)
-    If provided, this object is used to perform the regression from hidden
-    unit activations to the outputs and subsequent predictions.  If not
-    present, a simple least squares fit is performed internally
-"""
-
-_ELM_seealso_refs = """See Also
-________
-RBFRandomHiddenLayer, SimpleRandomHiddenLayer, ELMRegressor, ELMClassifier
-SimpleELMRegressor, SimpleELMClassifier
-
-References
-__________
+_ELM_refs = """References
+----------
 .. [1] http://www.extreme-learning-machines.org
 .. [2] G.-B. Huang, Q.-Y. Zhu and C.-K. Siew, "Extreme Learning Machine:
           Theory and Applications", Neurocomputing, vol. 70, pp. 489-501,
           2006.
 """
 
-_SimpleELM_params = """
-Parameters
-__________
+############################
+# module docstring assembly
+############################
+__doc__ = """The :mod:`sklearn.neural_networks.elm` module implements the
+Extreme Learning Machine Classifiers and Regressors (ELMClassifier,
+ELMRegressor, SimpleELMRegressor, SimpleELMClassifier).
+
+{}
+{}""".format(_ELM_blurb, _ELM_refs)
+
+from abc import ABCMeta, abstractmethod
+
+import numpy as np
+from scipy.linalg import pinv2
+
+from ..utils import as_float_array
+from ..utils.extmath import safe_sparse_dot
+from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
+from ..preprocessing import LabelBinarizer
+
+from .random_hidden_layer import SimpleRandomHiddenLayer
+
+__all__ = ["ELMRegressor",
+           "ELMClassifier",
+           "SimpleELMRegressor",
+           "SimpleELMClassifier"]
+
+
+########################
+# more docstring chunks
+########################
+_ELM_params = """Parameters
+----------
+`hidden_layer` : random_hidden_layer instance, optional
+    (default=SimpleRandomHiddenLayer(random_state=0))
+
+`regressor`    : linear_model instance, optional (default=None)
+    If provided, this object is used to perform the regression from hidden
+    unit activations to the outputs and subsequent predictions.  If not
+    present, a simple least squares fit is performed internally.
+"""
+
+_ELM_seealso = """See Also
+--------
+RBFRandomHiddenLayer, SimpleRandomHiddenLayer, ELMRegressor, ELMClassifier
+SimpleELMRegressor, SimpleELMClassifier
+"""
+
+_SimpleELM_params = """Parameters
+----------
 `n_hidden` : int, optional (default=20)
-    number of units to generate in the SimpleRandomHiddenLayer
+    Number of units to generate in the SimpleRandomHiddenLayer
 
-`user_func` : callable, optional (default=None)
-    if supplied and callable, used to transform the input activations,
-    otherwise numpy.tanh is used
+`xfer_func` : {callable, string} optional (default='tanh')
+    Function used to transform input activation
+    It must be one of 'tanh', 'sine', 'tribas', 'sigmoid', 'hardlim' or
+    a callable.  If none is given, 'tanh' will be used. If a callable
+    is given, it will be used to compute the hidden unit activations.
 
-`user_args` : dictionary, optional (default=None)
-    keyword args for user_func
+`xfer_args` : dictionary, optional (default=None)
+    Supplies keyword arguments for a callable xfer_func
 
 `random_state`  : int, RandomState instance or None (default=None)
     Control the pseudo random number generator used to generate the
@@ -103,15 +116,18 @@ class BaseELM(BaseEstimator):
 
         Parameters
         ----------
-        X : array-like of shape [n_samples, n_features]
-            Training data.
+        X : {array-like, sparse matrix} of shape [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples
+            and n_features is the number of features.
 
         y : array-like of shape [n_samples, n_outputs]
-            Training target.
+            Target values (class labels in classification, real numbers in
+            regression)
 
         Returns
         -------
         self : object
+
             Returns an instance of self.
         """
 
@@ -121,12 +137,12 @@ class BaseELM(BaseEstimator):
 
         Parameters
         ----------
-        X : numpy array of shape [n_samples, n_features]
+        X : {array-like, sparse matrix} of shape [n_samples, n_features]
 
         Returns
         -------
-        C : numpy array of shape = [n_samples, n_outputs]
-            Returns predicted values.
+        C : numpy array of shape [n_samples, n_outputs]
+            Predicted values.
         """
 
 
@@ -134,23 +150,24 @@ class BaseELM(BaseEstimator):
 # ELMRegressor doc string assembly
 ###################################
 _ELMRegressor_doc = """
-ELMRegressor is a regressor based on the Extreme Learning Machine
+ELMRegressor is a regressor based on the Extreme Learning Machine.
 
 {}
 {}
 Attributes
-__________
+----------
 `coefs_` : numpy array
-    fitted regression coefficients if no regressor supplied
+    Fitted regression coefficients if no regressor supplied.
 
 `fitted_` : bool
-    flag set when fit has been called already
+    Flag set when fit has been called already.
 
 `hidden_activations_` : numpy array of shape [n_samples, n_hidden]
-    hidden layer activations for last input
+    Hidden layer activations for last input.
 
 {}
-""".format(_ELM_blurb, _ELM_params, _ELM_seealso_refs)
+{}
+""".format(_ELM_blurb, _ELM_params, _ELM_seealso, _ELM_refs)
 
 
 # workhorse class
@@ -213,22 +230,24 @@ class ELMRegressor(BaseELM, RegressorMixin):
 # ELMClassifier doc string assembly
 ####################################
 _ELMClassifier_doc = """
-ELMClassifier is a classifier based on the Extreme Learning Machine
+ELMClassifier is a classifier based on the Extreme Learning Machine.
 
 {}
 {}
 Attributes
-__________
-`classes_` : array or list of array of shape = [n_classes]
+----------
+`classes_` : numpy array of shape [n_classes]
+    Array of class labels
 
-`binarizer_` : preprocessing.LabelBinarizer object
-    used to transform class labels
+`binarizer_` : LabelBinarizer instance
+    Used to transform class labels
 
-`elm_regressor_` : ELMRegressor object
-    performs actual fit of binarized values
+`elm_regressor_` : ELMRegressor instance
+    Performs actual fit of binarized values
 
 {}
-""".format(_ELM_blurb, _ELM_params, _ELM_seealso_refs)
+{}
+""".format(_ELM_blurb, _ELM_params, _ELM_seealso, _ELM_refs)
 
 
 class ELMClassifier(BaseELM, ClassifierMixin):
@@ -251,11 +270,11 @@ class ELMClassifier(BaseELM, ClassifierMixin):
 
         Parameters
         ----------
-        X : array-like, shape = [n_samples, n_features]
+        X : array-like of shape [n_samples, n_features]
 
         Returns
         -------
-        C : array, shape = [n_samples, n_classes] or [n_samples,]
+        C : array of shape [n_samples, n_classes] or [n_samples,]
             Decision function values related to each class, per sample.
             In the two-class case, the shape is [n_samples,]
         """
@@ -282,30 +301,34 @@ class ELMClassifier(BaseELM, ClassifierMixin):
 # SimpleELMRegressor doc string assembly
 #########################################
 _SimpleELMRegressor_doc = """
-SimpleELMRegressor is a regressor based on the Extreme Learning Machine
+SimpleELMRegressor is a regressor based on the Extreme Learning Machine.
 
 {}
 SimpleELMRegressor is a wrapper for an ELMRegressor that uses a
 SimpleRandomHiddenLayer and passes the __init__ parameters through
 to the hidden layer generated by the fit() method.
-{}
-Attributes
-__________
-`elm_regressor_` : ELMRegressor object
-    wrapped object that actually performs the fit
 
 {}
-""".format(_ELM_blurb, _SimpleELM_params, _ELM_seealso_refs)
+Attributes
+----------
+`elm_regressor_` : ELMRegressor object
+    Wrapped object that actually performs the fit.
+
+{}
+{}
+""".format(_ELM_blurb, _SimpleELM_params, _ELM_seealso, _ELM_refs)
 
 
 # ELMRegressor with default SimpleRandomHiddenLayer
 class SimpleELMRegressor(BaseEstimator, RegressorMixin):
     __doc__ = _SimpleELMRegressor_doc
 
-    def __init__(self, n_hidden=20, user_func=None, user_args={}, random_state=None):
+    def __init__(self, n_hidden=20, xfer_func='tanh', xfer_args=None,
+                 random_state=None):
+
         self.n_hidden = n_hidden
-        self.user_func = user_func
-        self.user_args = user_args
+        self.xfer_func = xfer_func
+        self.xfer_args = xfer_args
         self.random_state = random_state
 
         self.elm_regressor_ = None
@@ -313,8 +336,8 @@ class SimpleELMRegressor(BaseEstimator, RegressorMixin):
     @_take_docstring_from(BaseELM)
     def fit(self, X, y):
         rhl = SimpleRandomHiddenLayer(n_hidden=self.n_hidden,
-                                      user_func=self.user_func,
-                                      user_args=self.user_args,
+                                      xfer_func=self.xfer_func,
+                                      xfer_args=self.xfer_args,
                                       random_state=self.random_state)
 
         self.elm_regressor_ = ELMRegressor(hidden_layer=rhl)
@@ -333,36 +356,44 @@ class SimpleELMRegressor(BaseEstimator, RegressorMixin):
 # SimpleELMClassifier doc string assembly
 ##########################################
 _SimpleELMClassifier_doc = """
-SimpleELMClassifier is a classifier based on the Extreme Learning Machine
+SimpleELMClassifier is a classifier based on the Extreme Learning Machine.
 
 {}
 SimpleELMClassifier is a wrapper for an ELMClassifier that uses a
 SimpleRandomHiddenLayer and passes the __init__ parameters through
 to the hidden layer generated by the fit() method.
+
 {}
 Attributes
-__________
-`classes_` : array or list of array of shape = [n_classes]
+----------
+`classes_` : numpy array of shape [n_classes]
+    Array of class labels
 
 `elm_classifier_` : ELMClassifier object
-    wrapped object that actually performs the fit
+    Wrapped object that actually performs the fit
 
 {}
-""".format(_ELM_blurb, _SimpleELM_params, _ELM_seealso_refs)
+{}
+""".format(_ELM_blurb, _SimpleELM_params, _ELM_seealso, _ELM_refs)
 
 
 # ELMClassifier with default SimpleRandomHiddenLayer
 class SimpleELMClassifier(BaseEstimator, ClassifierMixin):
     __doc__ = _SimpleELMClassifier_doc
 
-    def __init__(self, n_hidden=20, user_func=None, user_args={}, random_state=None):
+    def __init__(self, n_hidden=20, xfer_func='tanh', xfer_args=None,
+                 random_state=None):
+
         self.n_hidden = n_hidden
-        self.user_func = user_func
-        self.user_args = user_args
+        self.xfer_func = xfer_func
+        self.xfer_args = xfer_args
         self.random_state = random_state
 
-        self.classes_ = None
         self.elm_classifier_ = None
+
+    @property
+    def classes_(self):
+        return self.elm_classifier_.classes_
 
     @_take_docstring_from(ELMClassifier)
     def decision_function(self, X):
@@ -371,13 +402,12 @@ class SimpleELMClassifier(BaseEstimator, ClassifierMixin):
     @_take_docstring_from(BaseELM)
     def fit(self, X, y):
         rhl = SimpleRandomHiddenLayer(n_hidden=self.n_hidden,
-                                      user_func=self.user_func,
-                                      user_args=self.user_args,
+                                      xfer_func=self.xfer_func,
+                                      xfer_args=self.xfer_args,
                                       random_state=self.random_state)
 
         self.elm_classifier_ = ELMClassifier(hidden_layer=rhl)
         self.elm_classifier_.fit(X, y)
-        self.classes_ = self.elm_classifier_.classes_
 
         return self
 

@@ -35,11 +35,15 @@ __________
 
 ===============================================================================
 Basis Functions:
-  rbf = exp(-gamma * (||x-c||/r)^2)
-  tanh = np.tanh
-  sinsq = (lambda x: np.power(np.sin(x), 2.0))
-  tribas = (lambda x: np.clip(1.0 - np.fabs(x), 0.0, 1.0))
-  hardlim = (lambda x: np.array(x > 0.0, dtype=float))
+  gaussian rbf  : exp(-gamma * (||x-c||/r)^2)
+  tanh          : np.tanh(a)
+  sinsq         : np.power(np.sin(a), 2.0)
+  tribas        : np.clip(1.0 - np.fabs(a), 0.0, 1.0)
+  hardlim       : np.array(a > 0.0, dtype=float)
+
+     where x   : input pattern
+           a   : dot_product(x, c) + b
+           c,r : randomly generated components
 
 Label Legend:
   ELM(10,tanh)      :10 tanh units
@@ -68,9 +72,9 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.cross_validation import train_test_split
 from sklearn.linear_model import LogisticRegression
 
-from sklearn.elm import ELMClassifier
-from sklearn.random_hidden_layer import (SimpleRandomHiddenLayer,
-                                         RBFRandomHiddenLayer)
+from sklearn.neural_networks.elm import ELMClassifier
+from sklearn.neural_networks.random_hidden_layer import (SimpleRandomHiddenLayer,
+                                                         RBFRandomHiddenLayer)
 
 
 def get_data_bounds(X):
@@ -125,19 +129,23 @@ def make_datasets():
 
 
 def make_classifiers():
-    sinsq = (lambda x: np.power(np.sin(x), 2.0))
-    tribas = (lambda x: np.clip(1.0 - np.fabs(x), 0.0, 1.0))
-    hardlim = (lambda x: np.array(x > 0.0, dtype=float))
 
     names = ["ELM(10,tanh)", "ELM(10,tanh,LR)", "ELM(10,sinsq)",
              "ELM(10,tribas)", "ELM(hardlim)", "ELM(20,rbf(0.1))"]
 
     nh = 10
+
+    # pass user defined transfer func
+    sinsq = (lambda x: np.power(np.sin(x), 2.0))
+    srhl_sinsq = SimpleRandomHiddenLayer(n_hidden=nh, xfer_func=sinsq, random_state=0)
+
+    # use internal transfer funcs
+    srhl_tanh = SimpleRandomHiddenLayer(n_hidden=nh, xfer_func='tanh', random_state=0)
+    srhl_tribas = SimpleRandomHiddenLayer(n_hidden=nh, xfer_func='tribas', random_state=0)
+    srhl_hardlim = SimpleRandomHiddenLayer(n_hidden=nh, xfer_func='hardlim', random_state=0)
+
+    # use gaussian RBF
     srhl_rbf = RBFRandomHiddenLayer(n_hidden=nh*2, gamma=0.1, random_state=0)
-    srhl_tanh = SimpleRandomHiddenLayer(n_hidden=nh, user_func=np.tanh, random_state=0)
-    srhl_sinsq = SimpleRandomHiddenLayer(n_hidden=nh, user_func=sinsq, random_state=0)
-    srhl_tribas = SimpleRandomHiddenLayer(n_hidden=nh, user_func=tribas, random_state=0)
-    srhl_hardlim = SimpleRandomHiddenLayer(n_hidden=nh, user_func=hardlim, random_state=0)
 
     log_reg = LogisticRegression()
 
