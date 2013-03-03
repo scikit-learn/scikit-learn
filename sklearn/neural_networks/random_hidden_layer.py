@@ -1,4 +1,7 @@
 # -*- coding: utf8
+# Author: David C. Lambert
+# License: Simple BSD
+
 """The :mod:`sklearn.neural_networks.random_hidden_layer` module
 implements Random Hidden Layer transformers.
 
@@ -10,9 +13,6 @@ functions).
 They are used in the implementation of Extreme Learning Machines (ELMs),
 but can be used as a general input mapping.
 """
-
-# Author: David C. Lambert <dcl@panix.com>
-# License: Simple BSD
 
 from abc import ABCMeta, abstractmethod
 
@@ -31,30 +31,21 @@ __all__ = ['SimpleRandomHiddenLayer',
            'RBFRandomHiddenLayer']
 
 
-# little function to propagate docstrings
-# tinily tweaked from Paul McGuire
-def _take_docstring_from(cls):
-    def docstring_decorator(fn):
-        fn.__doc__ = getattr(cls, fn.__name__).__doc__
-        return fn
-    return docstring_decorator
-
-
 # Abstract Base Class for random hidden layers
 class BaseRandomHiddenLayer(BaseEstimator, TransformerMixin):
     __metaclass__ = ABCMeta
 
-    _internal_xfer_funcs = dict()
+    _internal_activation_funcs = dict()
 
     # take n_hidden and random_state, init components_ and
     # input_activations_
-    def __init__(self, n_hidden=20, random_state=0, xfer_func=None,
-                 xfer_args=None):
+    def __init__(self, n_hidden=20, random_state=0, activation_func=None,
+                 activation_args=None):
 
         self.n_hidden = n_hidden
         self.random_state = random_state
-        self.xfer_func = xfer_func
-        self.xfer_args = xfer_args
+        self.activation_func = activation_func
+        self.activation_args = activation_args
 
         self.components_ = dict()
         self.input_activations_ = None
@@ -80,12 +71,12 @@ class BaseRandomHiddenLayer(BaseEstimator, TransformerMixin):
 
         acts = self.input_activations_
 
-        if (callable(self.xfer_func)):
-            args_dict = self.xfer_args if (self.xfer_args) else dict()
-            X_new = self.xfer_func(acts, **args_dict)
+        if (callable(self.activation_func)):
+            args_dict = self.activation_args if (self.activation_args) else {}
+            X_new = self.activation_func(acts, **args_dict)
         else:
-            func_name = self.xfer_func
-            func = self._internal_xfer_funcs[func_name]
+            func_name = self.activation_func
+            func = self._internal_activation_funcs[func_name]
 
             X_new = func(acts, **self._extra_args)
 
@@ -156,14 +147,14 @@ class SimpleRandomHiddenLayer(BaseRandomHiddenLayer):
     `n_hidden` : int, optional (default=20)
         Number of units to generate
 
-    `xfer_func` : {callable, string} optional (default='tanh')
+    `activation_func` : {callable, string} optional (default='tanh')
         Function used to transform input activation
         It must be one of 'tanh', 'sine', 'tribas', 'sigmoid', 'hardlim' or
         a callable.  If none is given, 'tanh' will be used. If a callable
         is given, it will be used to compute the hidden unit activations.
 
-    `xfer_args` : dictionary, optional (default=None)
-        Supplies keyword arguments for a callable xfer_func
+    `activation_args` : dictionary, optional (default=None)
+        Supplies keyword arguments for a callable activation_func
 
     `random_state`  : int, RandomState instance or None (default=None)
         Control the pseudo random number generator used to generate the
@@ -198,27 +189,31 @@ class SimpleRandomHiddenLayer(BaseRandomHiddenLayer):
     _hardlim = (lambda x: np.array(x > 0.0, dtype=float))
 
     # internal transfer function table
-    _internal_xfer_funcs = {'sine': np.sin,
-                            'tanh': np.tanh,
-                            'tribas': _tribas,
-                            'sigmoid': _sigmoid,
-                            'hardlim': _hardlim
-                            }
+    _internal_activation_funcs = {'sine': np.sin,
+                                  'tanh': np.tanh,
+                                  'tribas': _tribas,
+                                  'sigmoid': _sigmoid,
+                                  'hardlim': _hardlim
+                                  }
 
-    # default setup, plus initialization of xfer_func
+    # default setup, plus initialization of activation_func
     def __init__(self, n_hidden=20, random_state=None,
-                 xfer_func='tanh', xfer_args=None):
+                 activation_func='tanh', activation_args=None):
 
-        super(SimpleRandomHiddenLayer, self).__init__(n_hidden, random_state,
-                                                      xfer_func, xfer_args)
+        super(SimpleRandomHiddenLayer, self).__init__(n_hidden,
+                                                      random_state,
+                                                      activation_func,
+                                                      activation_args)
 
-        if (isinstance(self.xfer_func, str)):
-            if (self.xfer_func not in self._internal_xfer_funcs.keys()):
-                msg = "unknown transfer function '{}'".format(self.xfer_func)
+        if (isinstance(self.activation_func, str)):
+            func_names = self._internal_activation_funcs.keys()
+            if (self.activation_func not in func_names):
+                msg = "unknown transfer function '%s'" % self.activation_func
                 raise ValueError(msg)
 
-    @_take_docstring_from(BaseRandomHiddenLayer)
     def _generate_components(self, X):
+        """Generate components of hidden layer given X"""
+
         rand_state = check_random_state(self.random_state)
         n_features = X.shape[1]
 
@@ -228,8 +223,9 @@ class SimpleRandomHiddenLayer(BaseRandomHiddenLayer):
         self.components_['biases'] = rand_state.normal(size=b_size)
         self.components_['weights'] = rand_state.normal(size=hw_size)
 
-    @_take_docstring_from(BaseRandomHiddenLayer)
     def _compute_input_activations(self, X):
+        """Compute input activations given X"""
+
         b = self.components_['biases']
         w = self.components_['weights']
 
@@ -258,20 +254,20 @@ class RBFRandomHiddenLayer(BaseRandomHiddenLayer):
     `n_hidden` : int, optional (default=20)
         Number of units to generate, ignored if centers are provided
 
-    `xfer_func` : {callable, string} optional (default='gaussian')
+    `activation_func` : {callable, string} optional (default='gaussian')
         Function used to transform input activation.
         It must be one of 'gaussian', 'poly_spline', 'multiquadric' or
         a callable.  If none is given, 'gaussian' will be used. If a
         callable is given, it will be used to compute the hidden unit
         activations.
 
-    `xfer_args` : dictionary, optional (default=None)
-        Supplies keyword arguments for a callable xfer_func
+    `activation_args` : dictionary, optional (default=None)
+        Supplies keyword arguments for a callable activation_func
 
     `gamma` : {int, float} optional (default=1.0)
         Width multiplier for RBF distance argument, ignored if callable
-        xfer_func is provided.  Must be an int > 0 when xfer_func is
-        'poly_spline'.
+        activation_func is provided.  Must be an int > 0 when activation_func
+        is 'poly_spline'.
 
     `centers` : array of shape (n_hidden, n_features), optional (default=None)
         If provided, overrides internal computation of the centers
@@ -311,7 +307,7 @@ class RBFRandomHiddenLayer(BaseRandomHiddenLayer):
 
     # multiquadric spline RBF
     _multiquadric = (lambda x, gamma:
-                         np.sqrt(1.0 + pow(gamma * x, 2.0)))
+                     np.sqrt(1.0 + pow(gamma * x, 2.0)))
 
     # polyharmonic spline RBF
     def _poly_spline(acts, gamma):
@@ -330,21 +326,25 @@ class RBFRandomHiddenLayer(BaseRandomHiddenLayer):
         return X_new
 
     # internal RBF table
-    _internal_xfer_funcs = {'gaussian': _gaussian,
-                            'poly_spline': _poly_spline,
-                            'multiquadric': _multiquadric
-                            }
+    _internal_activation_funcs = {'gaussian': _gaussian,
+                                  'poly_spline': _poly_spline,
+                                  'multiquadric': _multiquadric
+                                  }
 
-    def __init__(self, n_hidden=20, random_state=None, xfer_func='gaussian',
-                 xfer_args=None, gamma=1.0, centers=None, radii=None,
+    def __init__(self, n_hidden=20, random_state=None,
+                 activation_func='gaussian', activation_args=None,
+                 gamma=1.0, centers=None, radii=None,
                  use_exemplars=False):
 
-        super(RBFRandomHiddenLayer, self).__init__(n_hidden, random_state,
-                                                   xfer_func, xfer_args)
+        super(RBFRandomHiddenLayer, self).__init__(n_hidden,
+                                                   random_state,
+                                                   activation_func,
+                                                   activation_args)
 
-        if (isinstance(self.xfer_func, str)):
-            if (self.xfer_func not in self._internal_xfer_funcs.keys()):
-                msg = "unknown transfer function '{}'".format(self.xfer_func)
+        if (isinstance(self.activation_func, str)):
+            func_names = self._internal_activation_funcs.keys()
+            if (self.activation_func not in func_names):
+                msg = "unknown transfer function '%s'" % self.activation_func
                 raise ValueError(msg)
 
         self.radii = radii
@@ -362,14 +362,16 @@ class RBFRandomHiddenLayer(BaseRandomHiddenLayer):
     def gamma(self, value):
         self._extra_args['gamma'] = value
 
-    @_take_docstring_from(BaseRandomHiddenLayer)
     def _generate_components(self, X):
+        """Generate components of hidden layer given X"""
+
         sparse = sp.issparse(X)
         self._compute_centers(X, sparse)
         self._compute_radii(X, sparse)
 
-    @_take_docstring_from(BaseRandomHiddenLayer)
     def _compute_input_activations(self, X):
+        """Compute input activations given X"""
+
         radii = self.components_['radii']
         centers = self.components_['centers']
 

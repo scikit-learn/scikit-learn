@@ -73,8 +73,8 @@ from sklearn.cross_validation import train_test_split
 from sklearn.linear_model import LogisticRegression
 
 from sklearn.neural_networks.elm import ELMClassifier
-from sklearn.neural_networks.random_hidden_layer import (SimpleRandomHiddenLayer,
-                                                         RBFRandomHiddenLayer)
+from sklearn.neural_networks.random_hidden_layer import RBFRandomHiddenLayer
+from sklearn.neural_networks.random_hidden_layer import SimpleRandomHiddenLayer
 
 
 def get_data_bounds(X):
@@ -137,12 +137,22 @@ def make_classifiers():
 
     # pass user defined transfer func
     sinsq = (lambda x: np.power(np.sin(x), 2.0))
-    srhl_sinsq = SimpleRandomHiddenLayer(n_hidden=nh, xfer_func=sinsq, random_state=0)
+    srhl_sinsq = SimpleRandomHiddenLayer(n_hidden=nh,
+                                         activation_func=sinsq,
+                                         random_state=0)
 
     # use internal transfer funcs
-    srhl_tanh = SimpleRandomHiddenLayer(n_hidden=nh, xfer_func='tanh', random_state=0)
-    srhl_tribas = SimpleRandomHiddenLayer(n_hidden=nh, xfer_func='tribas', random_state=0)
-    srhl_hardlim = SimpleRandomHiddenLayer(n_hidden=nh, xfer_func='hardlim', random_state=0)
+    srhl_tanh = SimpleRandomHiddenLayer(n_hidden=nh,
+                                        activation_func='tanh',
+                                        random_state=0)
+
+    srhl_tribas = SimpleRandomHiddenLayer(n_hidden=nh,
+                                          activation_func='tribas',
+                                          random_state=0)
+
+    srhl_hardlim = SimpleRandomHiddenLayer(n_hidden=nh,
+                                           activation_func='hardlim',
+                                           random_state=0)
 
     # use gaussian RBF
     srhl_rbf = RBFRandomHiddenLayer(n_hidden=nh*2, gamma=0.1, random_state=0)
@@ -180,7 +190,8 @@ for ds in datasets:
     # preprocess dataset, split into training and test part
     X, y = ds
     X = StandardScaler().fit_transform(X)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.4, random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=.4,
+                                                        random_state=0)
 
     x_min, x_max, y_min, y_max, xx, yy = get_data_bounds(X)
 
