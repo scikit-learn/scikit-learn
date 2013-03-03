@@ -153,11 +153,11 @@ def test_lasso_path():
     X, y, X_test, y_test = build_dataset()
     max_iter = 150
     clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter).fit(X, y)
-    assert_almost_equal(clf.alpha_, 0.026, 2)
+    assert_almost_equal(clf.alpha_, 0.056, 2)
 
     clf = LassoCV(n_alphas=10, eps=1e-3, max_iter=max_iter, precompute=True)
     clf.fit(X, y)
-    assert_almost_equal(clf.alpha_, 0.026, 2)
+    assert_almost_equal(clf.alpha_, 0.056, 2)
 
     # Check that the lars and the coordinate descent implementation
     # select a similar alpha
