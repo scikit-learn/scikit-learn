@@ -39,16 +39,17 @@ Changelog
      :class:`grid_search.ParameterSampler` for randomized hyperparameter
      optimization. By `Andreas Müller`_.
 
-   - :class:`LinearSVC`, :class:`SGDClassifier` and :class:`SGDRegressor`
-     now have a ``sparsify`` method that converts their ``coef_`` into a
-     sparse matrix, meaning stored models trained using these estimators
-     can be made much more compact.
+   - :class:`svm.LinearSVC`, :class:`linear_model.SGDClassifier` and
+     :class:`linear_model.SGDRegressor` now have a ``sparsify`` method that
+     converts their ``coef_`` into a sparse matrix, meaning stored models
+     trained using these estimators can be made much more compact.
 
    - Hyperlinks to documentation in example code on the website by
      `Martin Luessi`_.
 
-   - Fixed bug in :class:`MinMaxScaler` causing incorrect scaling of the
-     features for non-default ``feature_range`` settings. By `Andreas Müller`_.
+   - Fixed bug in :class:`preprocessing.MinMaxScaler` causing incorrect scaling
+     of the features for non-default ``feature_range`` settings. By `Andreas
+     Müller`_.
 
 
 API changes summary
