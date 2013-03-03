@@ -667,11 +667,11 @@ For using :class:`grid_search.GridSearch` or any functionality of the
 :mod:`cross_validation` module, an estimator must support the ``base.clone``
 function to replicate an estimator. This can be done either by not providing a ``get_params``
 method. Then the provided estimator will be deepcopied.
-If ``get_params`` is present, then ``clone(estimagor)`` will be an instance of
+If ``get_params`` is present, then ``clone(estimator)`` will be an instance of
 ``estimator.__class__`` on which ``set_params`` has been called with clones of
 the result of ``estimator.get_params()``.
 
-Pipeline Compatiblity
+Pipeline Compatibility
 ----------------------
 For an estimator to be usable together with ``pipeline.Pipeline`` in any but the
 last step, it needs to provide a ``fit`` or ``fit_transform`` function.
