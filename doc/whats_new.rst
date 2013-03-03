@@ -46,6 +46,9 @@ Changelog
    - Fixed bug in :class:`MinMaxScaler` causing incorrect scaling of the
      features for non-default ``feature_range`` settings. By `Andreas Müller`_.
 
+   - Fixed bug in :class:`KFold` causing imperfect class balance in some
+     cases. By `Alexandre Gramfort`_ and Tadej Janež.
+
 
 .. _changes_0_13_1:
 

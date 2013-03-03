@@ -130,6 +130,17 @@ def test_kfold_indices():
     assert_array_equal(all_folds, np.arange(300))
 
 
+def test_kfold_balance():
+    # Check that KFold returns folds with balanced sizes
+    for kf in [cval.KFold(i, 5) for i in range(11, 17)]:
+        sizes = []
+        for _, test in kf:
+            sizes.append(len(test))
+
+        assert_true((np.max(sizes) - np.min(sizes)) <= 1)
+        assert_equal(np.sum(sizes), kf.n)
+
+
 def test_shuffle_kfold():
     # Check the indices are shuffled properly, and that all indices are
     # returned in the different test folds
