@@ -21,6 +21,8 @@ simultaneously using grid search, but pick only the ones deemed most important.
 print __doc__
 
 from time import time
+from operator import itemgetter
+from scipy.stats import sem
 from scipy.stats import randint as sp_randint
 
 from sklearn.grid_search import GridSearchCV, RandomizedSearchCV
@@ -44,12 +46,23 @@ param_dist = {"max_depth": sp_randint(1, 5), "max_features": sp_randint(1, 4),
 random_search = RandomizedSearchCV(clf, param_distributions=param_dist,
                                    n_iter=20)
 
+# Utility function to report best scores
+def report(cv_scores, n_top=3):
+    top_scores = sorted(random_search.cv_scores_, key=itemgetter(1),
+                 reverse=True)[:n_top]
+    for i, score in enumerate(top_scores):
+        print("Model with rank: {0}".format(i + 1))
+        print("Mean validation score: {0:.3f} (+/-{1:.3f})".format(
+              score.mean_validation_score,
+              sem(score.cv_validation_scores)))
+        print("Parameters: {0}".format(score.parameters))
+        print("")
+
 start = time()
 random_search.fit(X, y)
 print("RandomizedSearchCV took %.2f seconds for 20 iterations."
       % (time() - start))
-print("Best score: %f" % random_search.best_score_)
-print("Best parameters: %s" % repr(random_search.best_params_))
+report(random_search.cv_scores_)
 
 # use a full grid over all parameters
 param_grid = {"max_depth": range(1, 5), "max_features": range(1, 4),
@@ -63,5 +76,4 @@ grid_search.fit(X, y)
 
 print("GridSearchCV took %.2f seconds for %d parameter settings."
       % (time() - start, len(grid_search.cv_scores_)))
-print("Best score: %f" % grid_search.best_score_)
-print("Best parameters: %s" % repr(grid_search.best_params_))
+report(grid_search.cv_scores_)
