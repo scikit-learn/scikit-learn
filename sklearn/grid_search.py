@@ -138,11 +138,13 @@ class ParameterSampler(object):
     --------
     >>> from sklearn.grid_search import ParameterSampler
     >>> from scipy.stats.distributions import expon
+    >>> import numpy as np
+    >>> np.random.seed(0)
     >>> param_grid = {'a':[1, 2], 'b': expon()}
     >>> list(ParameterSampler(param_grid, n_iter=4))
     ...  #doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    [{'a': ..., 'b': ...}, {'a': ..., 'b': ...},
-     {'a': ..., 'b': ...}, {'a': ..., 'b': ...}]
+    [{'a': 1, 'b': 0.89...}, {'a': 1, 'b': 0.92...},
+     {'a': 2, 'b': 1.87...}, {'a': 2, 'b': 1.03...}]
 
     """
     def __init__(self, param_distributions, n_iter, random_state=None):
