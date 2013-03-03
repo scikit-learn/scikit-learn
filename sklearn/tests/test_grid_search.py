@@ -16,9 +16,12 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
 
+from scipy.stats import distributions
+
 from sklearn.base import BaseEstimator
-from sklearn.grid_search import GridSearchCV
 from sklearn.datasets.samples_generator import make_classification, make_blobs
+from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
+                                 ParameterSampler)
 from sklearn.svm import LinearSVC, SVC
 from sklearn.cluster import KMeans, MeanShift
 from sklearn.metrics import f1_score
@@ -86,7 +89,8 @@ def test_grid_search():
     assert_equal(grid_search.best_estimator_.foo_param, 2)
 
     for i, foo_i in enumerate([1, 2, 3]):
-        assert_true(grid_search.grid_scores_[i][0] == {'foo_param': foo_i})
+        assert_true(grid_search.cv_scores_[i][0]
+                    == {'foo_param': foo_i})
     # Smoke test the score:
     grid_search.score(X, y)
 
@@ -341,6 +345,29 @@ def test_bad_estimator():
                   scoring='ari')
 
 
+def test_param_sampler():
+    # test basic properties of param sampler
+    param_distributions = {"kernel": ["rbf", "linear"],
+                           "C": distributions.uniform(0, 1)}
+    sampler = ParameterSampler(param_distributions=param_distributions,
+                               n_iter=10, random_state=0)
+    samples = [x for x in sampler]
+    assert_equal(len(samples), 10)
+    for sample in samples:
+        assert_true(sample["kernel"] in ["rbf", "linear"])
+        assert_true(0 <= sample["C"] <= 1)
+
+
+def test_randomized_search():
+    # very basic smoke test
+    X, y = make_classification(n_samples=200, n_features=100, random_state=0)
+
+    params = dict(C=distributions.expon())
+    search = RandomizedSearchCV(LinearSVC(), param_distributions=params)
+    search.fit(X, y)
+    assert_equal(len(search.cv_scores_), 10)
+
+
 def test_grid_search_score_consistency():
     # test that correct scores are used
     from sklearn.metrics import auc_score
@@ -351,7 +378,7 @@ def test_grid_search_score_consistency():
         grid_search = GridSearchCV(clf, {'C': Cs}, scoring=score)
         grid_search.fit(X, y)
         cv = StratifiedKFold(n_folds=3, y=y)
-        for C, scores in zip(Cs, grid_search.grid_scores_):
+        for C, scores in zip(Cs, grid_search.cv_scores_):
             clf.set_params(C=C)
             scores = scores[2]  # get the separate runs from grid scores
             i = 0

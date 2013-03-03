@@ -35,6 +35,10 @@ Changelog
      attribute. Setting ``compute_importances=True`` is no longer required.
      By `Gilles Louppe`_.
 
+   - Added :class:`grid_search.RandomizedSearchCV` and
+     :class:`grid_search.ParameterSampler` for randomized hyperparameter
+     optimization. By `Andreas Müller`_.
+
    - :class:`LinearSVC`, :class:`SGDClassifier` and :class:`SGDRegressor`
      now have a ``sparsify`` method that converts their ``coef_`` into a
      sparse matrix, meaning stored models trained using these estimators
@@ -45,6 +49,13 @@ Changelog
 
    - Fixed bug in :class:`MinMaxScaler` causing incorrect scaling of the
      features for non-default ``feature_range`` settings. By `Andreas Müller`_.
+
+
+API changes summary
+-------------------
+
+    - :class:`grid_search.IterGrid` was renamed to
+      :class:`grid_search.ParameterGrid`.
 
    - Fixed bug in :class:`KFold` causing imperfect class balance in some
      cases. By `Alexandre Gramfort`_ and Tadej Janež.

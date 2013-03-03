@@ -146,7 +146,7 @@ estimator during the construction and exposes an estimator API::
     >>> clf.fit(X_digits[:1000], y_digits[:1000]) # doctest: +ELLIPSIS
     GridSearchCV(cv=None,...
     >>> clf.best_score_
-    0.988991985997974
+    0.98899999999999999
     >>> clf.best_estimator_.gamma
     9.9999999999999995e-07
 
