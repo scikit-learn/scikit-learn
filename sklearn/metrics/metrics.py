@@ -245,7 +245,8 @@ def auc_score(y_true, y_score):
     0.75
 
     """
-
+    if len(np.unique(y_true)) != 2:
+        raise ValueError("AUC is defined for binary classification only")
     fpr, tpr, tresholds = roc_curve(y_true, y_score)
     return auc(fpr, tpr, reorder=True)
 
