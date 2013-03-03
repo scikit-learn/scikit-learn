@@ -78,6 +78,9 @@ class ParameterGrid(object):
 class IterGrid(ParameterGrid):
     """Generators on the combination of the various parameter lists given.
 
+    This class is DEPRECATED. It was renamed to ``ParameterGrid``. The name
+    ``IterGrid`` will be removed in 0.15.
+
     Parameters
     ----------
     param_grid: dict of string to sequence
