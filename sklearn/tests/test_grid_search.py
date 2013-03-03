@@ -15,6 +15,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_array_almost_equal
 
 from scipy.stats import distributions
 
@@ -111,6 +112,41 @@ def test_grid_search_error():
     clf = LinearSVC()
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]})
     assert_raises(ValueError, cv.fit, X_[:180], y_)
+
+
+def test_grid_search_iid():
+    # test the iid parameter
+    # noise-free simple 2d-data
+    X, y = make_blobs(centers=[[0, 0], [1, 0], [0, 1], [1, 1]], random_state=0,
+                      cluster_std=0.1, shuffle=False, n_samples=80)
+    # split dataset into two folds that are not iid
+    # first on contains data of all 4 blobs, second only from two.
+    mask = np.ones(X.shape[0], dtype=np.bool)
+    mask[np.where(y == 1)[0][::2]] = 0
+    mask[np.where(y == 2)[0][::2]] = 0
+    # this leads to perfect classification on one fold and a score of 1/3 on
+    # the other
+    svm = SVC(kernel='linear')
+    # create "cv" for splits
+    cv = [[mask, ~mask], [~mask, mask]]
+    # once with iid=True (default)
+    grid_search = GridSearchCV(svm, param_grid={'C': [1, 10]}, cv=cv)
+    grid_search.fit(X, y)
+    _, average_score, scores = grid_search.grid_scores_[0]
+    assert_array_almost_equal(scores, [1, 1. / 3.])
+    # for first split, 1/4 of dataset is in test, for second 3/4.
+    # take weighted average
+    assert_almost_equal(average_score, 1 * 1. / 4. + 1. / 3. * 3. / 4.)
+
+    # once with iid=False (default)
+    grid_search = GridSearchCV(svm, param_grid={'C': [1, 10]}, cv=cv,
+                               iid=False)
+    grid_search.fit(X, y)
+    _, average_score, scores = grid_search.grid_scores_[0]
+    # scores are the same as above
+    assert_array_almost_equal(scores, [1, 1. / 3.])
+    # averaged score is just mean of scores
+    assert_almost_equal(average_score, np.mean(scores))
 
 
 def test_grid_search_one_grid_point():
