@@ -57,6 +57,7 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
         results = []
 
         for algorithm in ALGORITHMS:
+            print algorithm
             neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
                                                algorithm=algorithm,
                                                p=p)
@@ -67,6 +68,7 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
             results.append(neigh.kneighbors(test, return_distance=True))
 
         for i in range(len(results) - 1):
+            print i
             assert_array_almost_equal(results_nodist[i], results[i][1])
             assert_array_almost_equal(results[i][0], results[i + 1][0])
             assert_array_almost_equal(results[i][1], results[i + 1][1])
