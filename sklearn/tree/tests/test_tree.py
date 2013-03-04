@@ -301,31 +301,40 @@ def test_importances():
 
 def test_max_features():
     """Check max_features."""
-    clf = tree.DecisionTreeClassifier(max_features="auto").fit(iris.data, iris.target)
+    clf = tree.DecisionTreeClassifier(max_features="auto")
+    clf.fit(iris.data, iris.target)
     assert_equal(clf.tree_.max_features, 2)
 
-    clf = tree.DecisionTreeRegressor(max_features="auto").fit(boston.data, boston.target)
+    clf = tree.DecisionTreeRegressor(max_features="auto")
+    clf.fit(boston.data, boston.target)
     assert_equal(clf.tree_.max_features, boston.data.shape[1])
 
-    clf = tree.DecisionTreeRegressor(max_features="sqrt").fit(boston.data, boston.target)
+    clf = tree.DecisionTreeRegressor(max_features="sqrt")
+    clf.fit(boston.data, boston.target)
     assert_equal(clf.tree_.max_features, int(np.sqrt(boston.data.shape[1])))
 
-    clf = tree.DecisionTreeRegressor(max_features="log2").fit(boston.data, boston.target)
+    clf = tree.DecisionTreeRegressor(max_features="log2")
+    clf.fit(boston.data, boston.target)
     assert_equal(clf.tree_.max_features, int(np.log2(boston.data.shape[1])))
 
-    clf = tree.DecisionTreeRegressor(max_features=1).fit(boston.data, boston.target)
+    clf = tree.DecisionTreeRegressor(max_features=1)
+    clf.fit(boston.data, boston.target)
     assert_equal(clf.tree_.max_features, 1)
 
-    clf = tree.DecisionTreeRegressor(max_features=7).fit(boston.data, boston.target)
+    clf = tree.DecisionTreeRegressor(max_features=7)
+    clf.fit(boston.data, boston.target)
     assert_equal(clf.tree_.max_features, 7)
 
-    clf = tree.DecisionTreeRegressor(max_features=0.5).fit(boston.data, boston.target)
+    clf = tree.DecisionTreeRegressor(max_features=0.5)
+    clf.fit(boston.data, boston.target)
     assert_equal(clf.tree_.max_features, int(0.5 * boston.data.shape[1]))
 
-    clf = tree.DecisionTreeRegressor(max_features=1.0).fit(boston.data, boston.target)
+    clf = tree.DecisionTreeRegressor(max_features=1.0)
+    clf.fit(boston.data, boston.target)
     assert_equal(clf.tree_.max_features, boston.data.shape[1])
 
-    clf = tree.DecisionTreeRegressor(max_features=None).fit(boston.data, boston.target)
+    clf = tree.DecisionTreeRegressor(max_features=None)
+    clf.fit(boston.data, boston.target)
     assert_equal(clf.tree_.max_features, boston.data.shape[1])
 
     # use values of max_features that are invalid
