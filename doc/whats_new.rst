@@ -59,8 +59,8 @@ Changelog
 API changes summary
 -------------------
 
-    - :class:`grid_search.IterGrid` was renamed to
-      :class:`grid_search.ParameterGrid`.
+   - :class:`grid_search.IterGrid` was renamed to
+     :class:`grid_search.ParameterGrid`.
 
    - Fixed bug in :class:`KFold` causing imperfect class balance in some
      cases. By `Alexandre Gramfort`_ and Tadej Janež.
