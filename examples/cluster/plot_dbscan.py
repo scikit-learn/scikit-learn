@@ -19,7 +19,7 @@ from sklearn.datasets.samples_generator import make_blobs
 ##############################################################################
 # Generate sample data
 centers = [[1, 1], [-1, -1], [1, -1]]
-X, labels_true = make_blobs(n_samples=750, centers=centers, cluster_std=0.4)
+X, classes_true = make_blobs(n_samples=750, centers=centers, cluster_std=0.4)
 
 ##############################################################################
 # Compute similarities
@@ -30,21 +30,21 @@ S = 1 - (D / np.max(D))
 # Compute DBSCAN
 db = DBSCAN(eps=0.95, min_samples=10).fit(S)
 core_samples = db.core_sample_indices_
-labels = db.labels_
+classes = db.classes_
 
-# Number of clusters in labels, ignoring noise if present.
-n_clusters_ = len(set(labels)) - (1 if -1 in labels else 0)
+# Number of clusters in classes, ignoring noise if present.
+n_clusters_ = len(set(classes)) - (1 if -1 in classes else 0)
 
 print('Estimated number of clusters: %d' % n_clusters_)
-print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels_true, labels))
-print("Completeness: %0.3f" % metrics.completeness_score(labels_true, labels))
-print("V-measure: %0.3f" % metrics.v_measure_score(labels_true, labels))
+print("Homogeneity: %0.3f" % metrics.homogeneity_score(classes_true, classes))
+print("Completeness: %0.3f" % metrics.completeness_score(classes_true, classes))
+print("V-measure: %0.3f" % metrics.v_measure_score(classes_true, classes))
 print("Adjusted Rand Index: %0.3f"
-      % metrics.adjusted_rand_score(labels_true, labels))
+      % metrics.adjusted_rand_score(classes_true, classes))
 print("Adjusted Mutual Information: %0.3f"
-      % metrics.adjusted_mutual_info_score(labels_true, labels))
+      % metrics.adjusted_mutual_info_score(classes_true, classes))
 print("Silhouette Coefficient: %0.3f"
-      % metrics.silhouette_score(D, labels, metric='precomputed'))
+      % metrics.silhouette_score(D, classes, metric='precomputed'))
 
 ##############################################################################
 # Plot result
@@ -57,14 +57,14 @@ pl.clf()
 
 # Black removed and is used for noise instead.
 colors = cycle('bgrcmybgrcmybgrcmybgrcmy')
-for k, col in zip(set(labels), colors):
+for k, col in zip(set(classes), colors):
     if k == -1:
         # Black used for noise.
         col = 'k'
         markersize = 6
-    class_members = [index[0] for index in np.argwhere(labels == k)]
+    class_members = [index[0] for index in np.argwhere(classes == k)]
     cluster_core_samples = [index for index in core_samples
-                            if labels[index] == k]
+                            if classes[index] == k]
     for index in class_members:
         x = X[index]
         if index in core_samples and k != -1:

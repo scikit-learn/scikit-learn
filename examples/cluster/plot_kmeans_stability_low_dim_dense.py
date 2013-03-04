@@ -107,7 +107,7 @@ km = MiniBatchKMeans(n_clusters=n_clusters, init='random', n_init=1,
 
 fig = pl.figure()
 for k in range(n_clusters):
-    my_members = km.labels_ == k
+    my_members = km.classes_ == k
     color = cm.spectral(float(k) / n_clusters, 1)
     pl.plot(X[my_members, 0], X[my_members, 1], 'o', marker='.', c=color)
     cluster_center = km.cluster_centers_[k]

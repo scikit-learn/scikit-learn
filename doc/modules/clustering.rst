@@ -11,7 +11,7 @@ Each clustering algorithm comes in two variants: a class, that implements
 the `fit` method to learn the clusters on train data, and a function,
 that, given train data, returns an array of integer labels corresponding
 to the different clusters. For the class, the labels over the training
-data can be found in the `labels_` attribute.
+data can be found in the `classes_` attribute.
 
 .. currentmodule:: sklearn.cluster
 
@@ -1077,7 +1077,7 @@ cluster analysis.
   >>> import numpy as np
   >>> from sklearn.cluster import KMeans
   >>> kmeans_model = KMeans(n_clusters=3, random_state=1).fit(X)
-  >>> labels = kmeans_model.labels_
+  >>> labels = kmeans_model.classes_
   >>> metrics.silhouette_score(X, labels, metric='euclidean')  
   ...                                                      # doctest: +ELLIPSIS
   0.55...

@@ -44,18 +44,18 @@ X[:, 1] *= .5
 print("Compute unstructured hierarchical clustering...")
 st = time.time()
 ward = Ward(n_clusters=6).fit(X)
-label = ward.labels_
+class_ = ward.classes_
 print("Elapsed time: ", time.time() - st)
-print("Number of points: ", label.size)
+print("Number of points: ", class_.size)
 
 ###############################################################################
 # Plot result
 fig = pl.figure()
 ax = p3.Axes3D(fig)
 ax.view_init(7, -80)
-for l in np.unique(label):
-    ax.plot3D(X[label == l, 0], X[label == l, 1], X[label == l, 2],
-              'o', color=pl.cm.jet(np.float(l) / np.max(label + 1)))
+for l in np.unique(class_):
+    ax.plot3D(X[class_ == l, 0], X[class_ == l, 1], X[class_ == l, 2],
+              'o', color=pl.cm.jet(np.float(l) / np.max(class_ + 1)))
 pl.title('Without connectivity constraints')
 
 
@@ -69,18 +69,18 @@ connectivity = kneighbors_graph(X, n_neighbors=10)
 print("Compute structured hierarchical clustering...")
 st = time.time()
 ward = Ward(n_clusters=6, connectivity=connectivity).fit(X)
-label = ward.labels_
+class_ = ward.classes_
 print("Elapsed time: ", time.time() - st)
-print("Number of points: ", label.size)
+print("Number of points: ", class_.size)
 
 ###############################################################################
 # Plot result
 fig = pl.figure()
 ax = p3.Axes3D(fig)
 ax.view_init(7, -80)
-for l in np.unique(label):
-    ax.plot3D(X[label == l, 0], X[label == l, 1], X[label == l, 2],
-              'o', color=pl.cm.jet(float(l) / np.max(label + 1)))
+for l in np.unique(class_):
+    ax.plot3D(X[class_ == l, 0], X[class_ == l, 1], X[class_ == l, 2],
+              'o', color=pl.cm.jet(float(l) / np.max(class_ + 1)))
 pl.title('With connectivity constraints')
 
 pl.show()

@@ -52,9 +52,9 @@ for name, est in estimators.iteritems():
 
     pl.cla()
     est.fit(X)
-    labels = est.labels_
+    classes = est.classes_
 
-    ax.scatter(X[:, 3], X[:, 0], X[:, 2], c=labels.astype(np.float))
+    ax.scatter(X[:, 3], X[:, 0], X[:, 2], c=classes.astype(np.float))
 
     ax.w_xaxis.set_ticklabels([])
     ax.w_yaxis.set_ticklabels([])
@@ -79,7 +79,7 @@ for name, label in [('Setosa', 0),
               X[y == label, 2].mean(), name,
               horizontalalignment='center',
               bbox=dict(alpha=.5, edgecolor='w', facecolor='w'))
-# Reorder the labels to have colors matching the cluster results
+# Reorder the classes to have colors matching the cluster results
 y = np.choose(y, [1, 2, 0]).astype(np.float)
 ax.scatter(X[:, 3], X[:, 0], X[:, 2], c=y)
 

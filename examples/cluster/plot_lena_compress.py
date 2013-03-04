@@ -36,10 +36,10 @@ X = lena.reshape((-1, 1))  # We need an (n_sample, n_feature) array
 k_means = cluster.KMeans(n_clusters=n_clusters, n_init=4)
 k_means.fit(X)
 values = k_means.cluster_centers_.squeeze()
-labels = k_means.labels_
+classes = k_means.classes_
 
-# create an array from labels and values
-lena_compressed = np.choose(labels, values)
+# create an array from classes and values
+lena_compressed = np.choose(classes, values)
 lena_compressed.shape = lena.shape
 
 vmin = lena.min()
@@ -55,9 +55,9 @@ pl.imshow(lena_compressed, cmap=pl.cm.gray, vmin=vmin, vmax=vmax)
 
 # equal bins lena
 regular_values = np.linspace(0, 256, n_clusters + 1)
-regular_labels = np.searchsorted(regular_values, lena) - 1
+regular_classes = np.searchsorted(regular_values, lena) - 1
 regular_values = .5 * (regular_values[1:] + regular_values[:-1])  # mean
-regular_lena = np.choose(regular_labels.ravel(), regular_values)
+regular_lena = np.choose(regular_classes.ravel(), regular_values)
 regular_lena.shape = lena.shape
 pl.figure(3, figsize=(3, 2.2))
 pl.imshow(regular_lena, cmap=pl.cm.gray, vmin=vmin, vmax=vmax)

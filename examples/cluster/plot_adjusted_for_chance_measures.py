@@ -41,19 +41,19 @@ def uniform_labelings_scores(score_func, n_samples, n_clusters_range,
     When fixed_n_classes is not None the first labeling is considered a ground
     truth class assignement with fixed number of classes.
     """
-    random_labels = np.random.RandomState(seed).random_integers
+    random_classes = np.random.RandomState(seed).random_integers
     scores = np.zeros((len(n_clusters_range), n_runs))
 
     if fixed_n_classes is not None:
-        labels_a = random_labels(low=0, high=fixed_n_classes - 1,
+        classes_a = random_classes(low=0, high=fixed_n_classes - 1,
                                  size=n_samples)
 
     for i, k in enumerate(n_clusters_range):
         for j in range(n_runs):
             if fixed_n_classes is None:
-                labels_a = random_labels(low=0, high=k - 1, size=n_samples)
-            labels_b = random_labels(low=0, high=k - 1, size=n_samples)
-            scores[i, j] = score_func(labels_a, labels_b)
+                classes_a = random_classes(low=0, high=k - 1, size=n_samples)
+            classes_b = random_classes(low=0, high=k - 1, size=n_samples)
+            scores[i, j] = score_func(classes_a, classes_b)
     return scores
 
 score_funcs = [

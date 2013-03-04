@@ -118,8 +118,8 @@ print("%d documents" % len(dataset.data))
 print("%d categories" % len(dataset.target_names))
 print()
 
-labels = dataset.target
-true_k = np.unique(labels).shape[0]
+classes = dataset.target
+true_k = np.unique(classes).shape[0]
 
 print("Extracting features from the training dataset using a sparse vectorizer")
 t0 = time()
@@ -165,12 +165,12 @@ km.fit(X)
 print("done in %0.3fs" % (time() - t0))
 print()
 
-print("Homogeneity: %0.3f" % metrics.homogeneity_score(labels, km.labels_))
-print("Completeness: %0.3f" % metrics.completeness_score(labels, km.labels_))
-print("V-measure: %0.3f" % metrics.v_measure_score(labels, km.labels_))
+print("Homogeneity: %0.3f" % metrics.homogeneity_score(classes, km.classes_))
+print("Completeness: %0.3f" % metrics.completeness_score(classes, km.classes_))
+print("V-measure: %0.3f" % metrics.v_measure_score(classes, km.classes_))
 print("Adjusted Rand-Index: %.3f"
-      % metrics.adjusted_rand_score(labels, km.labels_))
+      % metrics.adjusted_rand_score(classes, km.classes_))
 print("Silhouette Coefficient: %0.3f"
-      % metrics.silhouette_score(X, labels, sample_size=1000))
+      % metrics.silhouette_score(X, classes, sample_size=1000))
 
 print()

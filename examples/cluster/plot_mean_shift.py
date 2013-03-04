@@ -29,11 +29,11 @@ bandwidth = estimate_bandwidth(X, quantile=0.2, n_samples=500)
 
 ms = MeanShift(bandwidth=bandwidth, bin_seeding=True)
 ms.fit(X)
-labels = ms.labels_
+classes = ms.classes_
 cluster_centers = ms.cluster_centers_
 
-labels_unique = np.unique(labels)
-n_clusters_ = len(labels_unique)
+classes_unique = np.unique(classes)
+n_clusters_ = len(classes_unique)
 
 print("number of estimated clusters : %d" % n_clusters_)
 
@@ -47,7 +47,7 @@ pl.clf()
 
 colors = cycle('bgrcmykbgrcmykbgrcmykbgrcmyk')
 for k, col in zip(range(n_clusters_), colors):
-    my_members = labels == k
+    my_members = classes == k
     cluster_center = cluster_centers[k]
     pl.plot(X[my_members, 0], X[my_members, 1], col + '.')
     pl.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,

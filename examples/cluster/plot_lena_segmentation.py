@@ -10,7 +10,7 @@ partly-homogenous regions.
 This procedure (spectral clustering on an image) is an efficient
 approximate solution for finding normalized graph cuts.
 
-There are two options to assign labels:
+There are two options to assign classes:
 
 * with 'kmeans' spectral clustering will cluster samples in the embedding space
   using a kmeans algorithm
@@ -56,16 +56,16 @@ N_REGIONS = 11
 
 for assign_labels in ('kmeans', 'discretize'):
     t0 = time.time()
-    labels = spectral_clustering(graph, n_clusters=N_REGIONS,
+    classes = spectral_clustering(graph, n_clusters=N_REGIONS,
                                  assign_labels=assign_labels,
                                  random_state=1)
     t1 = time.time()
-    labels = labels.reshape(lena.shape)
+    classes = classes.reshape(lena.shape)
 
     pl.figure(figsize=(5, 5))
     pl.imshow(lena,   cmap=pl.cm.gray)
     for l in range(N_REGIONS):
-        pl.contour(labels == l, contours=1,
+        pl.contour(classes == l, contours=1,
                    colors=[pl.cm.spectral(l / float(N_REGIONS)), ])
     pl.xticks(())
     pl.yticks(())
