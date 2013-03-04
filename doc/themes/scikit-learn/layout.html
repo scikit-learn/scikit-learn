@@ -7,6 +7,7 @@
 
     Update: Collapsable sidebar added - 13/03/2012 - Jaques Grobler
     Update: Next-page button added - 16/03/2012 - Jaques Grobler
+    Update: Citing note below toc - 04/03/2012 - Andreas Mueller
 
 
     :copyright: Fabian Pedregosa
@@ -72,7 +73,7 @@
           {%- block navbar -%}
           <div class="navbar">
           <ul>
-            <li><a href="{{pathto('install')}}">Download</a></li>
+            <li><a href="{{pathto('install')}}">Installation</a></li>
             <li><a href="{{pathto('support')}}">Support</a></li>
             <li><a href="{{pathto('user_guide')}}">User Guide</a></li>
             <li><a href="{{pathto('auto_examples/index')}}">Examples</a></li>
@@ -198,13 +199,14 @@
     <p><a href="{{pathto('about')}}">Read more ...</a></p>
 
     {% endif %}
+    {%- if (pagename != 'index') %}
+    <h3>{{ _('This page') }}</h3>
+    {{ toc }}
+
     <h3><a href="{{pathto('about')}}#citing-scikit-learn">Citing</a></h3>
     <p>If you use the software, please consider
     <a href="{{pathto('about')}}#citing-scikit-learn">citing scikit-learn</a>.</p>
 
-    {%- if (pagename != 'index') %}
-    <h3>{{ _('This page') }}</h3>
-	{{ toc }}
     {% endif %}
     </div>
 	  </div>
