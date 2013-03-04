@@ -538,25 +538,8 @@ class BaseGradientBoosting(BaseEnsemble):
         else:
             self.loss_ = loss_class(self.n_classes_)
 
-        if self.min_samples_split <= 0:
-            raise ValueError("min_samples_split must be larger than 0")
-
-        if self.min_samples_leaf <= 0:
-            raise ValueError("min_samples_leaf must be larger than 0")
-
         if self.subsample <= 0.0 or self.subsample > 1:
             raise ValueError("subsample must be in (0,1]")
-
-        if self.max_features is None:
-            max_features = n_features
-        else:
-            max_features = self.max_features
-
-        if not (0 < max_features <= n_features):
-            raise ValueError("max_features must be in (0, n_features]")
-
-        if self.max_depth <= 0:
-            raise ValueError("max_depth must be larger than 0")
 
         if self.init is not None:
             if (not hasattr(self.init, 'fit')
@@ -757,11 +740,18 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         Choosing `subsample < 1.0` leads to a reduction of variance
         and an increase in bias.
 
-    max_features : int, None, optional (default=None)
-        The number of features to consider when looking for the best split.
-        Features are choosen randomly at each split point.
-        If None, then `max_features=n_features`. Choosing
-        `max_features < n_features` leads to a reduction of variance
+    max_features : int, float, string or None, optional (default="auto")
+        The number of features to consider when looking for the best split:
+          - If int, then consider `max_features` features at each split.
+          - If float, then `max_features` is a percentage and
+            `int(max_features * n_features)` features are considered at each
+            split.
+          - If "auto", then `max_features=sqrt(n_features)`.
+          - If "sqrt", then `max_features=sqrt(n_features)`.
+          - If "log2", then `max_features=log2(n_features)`.
+          - If None, then `max_features=n_features`.
+
+        Choosing `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
 
     init : BaseEstimator, None, optional (default=None)
@@ -987,11 +977,18 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         Choosing `subsample < 1.0` leads to a reduction of variance
         and an increase in bias.
 
-    max_features : int, None, optional (default=None)
-        The number of features to consider when looking for the best split.
-        Features are choosen randomly at each split point.
-        If None, then `max_features=n_features`. Choosing
-        `max_features < n_features` leads to a reduction of variance
+    max_features : int, float, string or None, optional (default=None)
+        The number of features to consider when looking for the best split:
+          - If int, then consider `max_features` features at each split.
+          - If float, then `max_features` is a percentage and
+            `int(max_features * n_features)` features are considered at each
+            split.
+          - If "auto", then `max_features=n_features`.
+          - If "sqrt", then `max_features=sqrt(n_features)`.
+          - If "log2", then `max_features=log2(n_features)`.
+          - If None, then `max_features=n_features`.
+
+        Choosing `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
 
     alpha : float (default=0.9)

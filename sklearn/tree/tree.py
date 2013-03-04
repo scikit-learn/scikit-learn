@@ -13,6 +13,7 @@ randomized trees. Single and multi-output problems are both handled.
 
 from __future__ import division
 
+import numbers
 import numpy as np
 from abc import ABCMeta, abstractmethod
 from warnings import warn
@@ -306,8 +307,10 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
                     'values are "auto", "sqrt" or "log2".')
         elif self.max_features is None:
             max_features = self.n_features_
-        else:
+        elif isinstance(self.max_features, (numbers.Integral, np.integer)):
             max_features = self.max_features
+        else: # float
+            max_features = int(self.max_features * self.n_features_)
 
         if len(y) != n_samples:
             raise ValueError("Number of labels=%d does not match "
@@ -459,11 +462,13 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         The function to measure the quality of a split. Supported criteria are
         "gini" for the Gini impurity and "entropy" for the information gain.
 
-    max_features : int, string or None, optional (default=None)
+    max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
-          - If "auto", then `max_features=sqrt(n_features)` on
-            classification tasks and `max_features=n_features`
-            on regression problems.
+          - If int, then consider `max_features` features at each split.
+          - If float, then `max_features` is a percentage and
+            `int(max_features * n_features)` features are considered at each
+            split.
+          - If "auto", then `max_features=sqrt(n_features)`.
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
@@ -653,11 +658,13 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The function to measure the quality of a split. The only supported
         criterion is "mse" for the mean squared error.
 
-    max_features : int, string or None, optional (default=None)
+    max_features : int, float, string or None, optional (default=None)
         The number of features to consider when looking for the best split:
-          - If "auto", then `max_features=sqrt(n_features)` on
-            classification tasks and `max_features=n_features`
-            on regression problems.
+          - If int, then consider `max_features` features at each split.
+          - If float, then `max_features` is a percentage and
+            `int(max_features * n_features)` features are considered at each
+            split.
+          - If "auto", then `max_features=n_features`.
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
