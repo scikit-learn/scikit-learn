@@ -309,7 +309,7 @@ class BaseDecisionTree(BaseEstimator, SelectorMixin):
             max_features = self.n_features_
         elif isinstance(self.max_features, (numbers.Integral, np.integer)):
             max_features = self.max_features
-        else: # float
+        else:  # float
             max_features = int(self.max_features * self.n_features_)
 
         if len(y) != n_samples:
