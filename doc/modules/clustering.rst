@@ -202,7 +202,7 @@ convergence or a predetermined number of iterations is reached.
 
 :class:`MiniBatchKMeans` converges faster than :class:`KMeans`, but the quality
 of the results is reduced. In practice this difference in quality can be quite
-small, as shown in the example.
+small, as shown in the example and cited reference.
 
 .. figure:: ../auto_examples/cluster/images/plot_mini_batch_kmeans_1.png
    :target: ../auto_examples/cluster/plot_mini_batch_kmeans.html
