@@ -32,6 +32,9 @@ from functools import partial
 import pickle
 from io import StringIO
 
+JUNK = (
+    "aa aa aa aa aaa aaa aaaa",
+)
 
 JUNK = (
     "aa aa aa aa aaa aaa aaaa",
