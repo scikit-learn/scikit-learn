@@ -152,6 +152,8 @@ compute the **regularization path** of the estimator.
 
 Here is the list of such models:
 
+.. currentmodule:: sklearn
+
 .. autosummary::
    :toctree: generated/
    :template: class.rst
