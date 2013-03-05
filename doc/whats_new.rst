@@ -29,6 +29,13 @@ Changelog
      :class:`feature_extraction.text.TfidfVectorizer`,
      by Jochen Wersdörfer.
 
+   - The ``min_df`` parameter in
+     :class:`feature_extraction.text.CountVectorizer` and
+     :class:`feature_extraction.text.TfidfVectorizer`, which used to be 2,
+     has been reset to 1 to avoid unpleasant surprises (empty vocabularies)
+     for novice users who try it out on tiny document collections.
+     A value of at least 2 is still recommended for practical use.
+
    - Feature importances in :class:`tree.DecisionTreeClassifier`,
      :class:`tree.DecisionTreeRegressor` and all derived ensemble estimators
      are now computed on the fly when accessing  the ``feature_importances_``

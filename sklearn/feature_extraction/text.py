@@ -531,7 +531,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         absolute counts.
         This parameter is ignored if vocabulary is not None.
 
-    min_df : float in range [0.0, 1.0] or int, optional, 2 by default
+    min_df : float in range [0.0, 1.0] or int, optional, 1 by default
         When building the vocabulary ignore terms that have a term frequency
         strictly lower than the given threshold. This value is also called
         cut-off in the literature.
@@ -579,7 +579,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                  lowercase=True, preprocessor=None, tokenizer=None,
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word',
-                 max_df=1.0, min_df=2, max_features=None,
+                 max_df=1.0, min_df=1, max_features=None,
                  vocabulary=None, binary=False, dtype=long):
         self.input = input
         self.charset = charset
@@ -1088,7 +1088,7 @@ class TfidfVectorizer(CountVectorizer):
         absolute counts.
         This parameter is ignored if vocabulary is not None.
 
-    min_df : float in range [0.0, 1.0] or int, optional, 2 by default
+    min_df : float in range [0.0, 1.0] or int, optional, 1 by default
         When building the vocabulary ignore terms that have a term frequency
         strictly lower than the given threshold.
         This value is also called cut-off in the literature.
@@ -1145,7 +1145,7 @@ class TfidfVectorizer(CountVectorizer):
                  charset_error='strict', strip_accents=None, lowercase=True,
                  preprocessor=None, tokenizer=None, analyzer='word',
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
-                 ngram_range=(1, 1), max_df=1.0, min_df=2,
+                 ngram_range=(1, 1), max_df=1.0, min_df=1,
                  max_features=None, vocabulary=None, binary=False, dtype=long,
                  norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=False):
 
