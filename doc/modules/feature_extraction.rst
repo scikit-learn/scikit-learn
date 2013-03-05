@@ -678,7 +678,7 @@ In particular we name:
   * ``tokenizer``: a callable that takes the output from the preprocessor
     and splits it into tokens, then returns a list of these.
 
-  * ``token_processor`` a callable that takes a token as 
+  * ``token_processor`` a callable that takes an iterable of tokens as 
     input and outputs a processed version of it (useful, e.g., for 
     integrating stemming).
 
@@ -722,14 +722,18 @@ Some tips and tricks:
 
     For the sake of simplicity, the following example will remove all vowels before counting:
     
-      >>> def vowel_remover(word):
-      ...     for vowel in "aeiou": 
-      ...         word = word.replace(vowel, "")
-      ...     return word
+      >>> import re
+      >>> def to_british(tokens):
+      ...     for t in tokens:
+      ...         t = re.sub(r"(...)our$", r"\1or", t)
+      ...         t = re.sub(r"([bt])re$", r"\1er", t)
+      ...         t = re.sub(r"([iy])s(e$|ing|ation)", r"\1z\2", t)
+      ...         t = re.sub(r"ogue$", "og", t)
+      ...         yield t
       ... 
-      >>> vectorizer = CountVectorizer(token_processor=vowel_remover)
+      >>> vectorizer = CountVectorizer(token_processor=to_british)
       >>> print vectorizer.build_analyzer()(u"color colour")
-      [u'clr', u'clr']
+      [u'color', u'color']
 
 
 

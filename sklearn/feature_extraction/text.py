@@ -236,8 +236,7 @@ class VectorizerMixin(object):
             process_token = self.build_token_processor()
 
             def word_analyzer(doc):
-                toks = (process_token(tok) for tok in
-                        tokenize(preprocess(self.decode(doc))))
+                toks = process_token(tokenize(preprocess(self.decode(doc))))
                 return self._word_ngrams([tok for tok in toks if tok],
                                          stop_words)
             return word_analyzer

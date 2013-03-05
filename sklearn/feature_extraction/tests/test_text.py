@@ -30,6 +30,7 @@ from sklearn.utils.testing import assert_in, assert_less, assert_greater
 from collections import defaultdict, Mapping
 from functools import partial
 import pickle
+import re
 from io import StringIO
 
 JUNK = (
@@ -811,9 +812,11 @@ def test_pickling_transformer():
         orig.fit_transform(X).toarray())
 
 
-def test_token_processor():
+def test_token_processor_1():
     # with token_processor
-    poor_mans_stemmer = lambda tok: tok[:3]
+    def poor_mans_stemmer(tokens):
+        for tok in tokens:
+            yield tok[:3]
 
     word_vect = CountVectorizer(min_df=0.0, max_df=1.0, analyzer="word",
                                 token_processor=poor_mans_stemmer)
@@ -839,12 +842,34 @@ def test_token_processor():
     assert_equal(counts[word_vect.vocabulary_['aaaa']], 1)
 
 
+def test_token_processor_2():
+    def to_british(tokens):
+        """Heuristic British->American spelling converter."""
+        for t in tokens:
+            t = re.sub(r"(...)our$", r"\1or", t)
+            t = re.sub(r"([bt])re$", r"\1er", t)
+            t = re.sub(r"([iy])s(e$|ing|ation)", r"\1z\2", t)
+            t = re.sub(r"ogue$", "og", t)
+            yield t
+
+    word_vect = CountVectorizer(min_df=0.0, max_df=1.0, analyzer="word",
+                                token_processor=to_british)
+    vectorized = word_vect.fit_transform(["colour color"])
+    assert_equal(['color', 'color'], word_vect.build_analyzer()(u"color colour"))
+    
+    feature_names = word_vect.get_feature_names()
+    assert_equal(set(feature_names), set(['color']))
+
+    counts = vectorized.toarray()[0]
+    assert_equal(counts[word_vect.vocabulary_['color']], 2)
+
+
 def test_token_processor_filter_unwanted_tokens():
     # with token_processor
-    def filter_short(tok):
-        if len(tok) < 3:
-            return None
-        return tok
+    def filter_short(tokens):
+        for tok in tokens:
+            if len(tok) >= 3:
+                yield tok
 
     word_vect = CountVectorizer(
         min_df=0.0, max_df=1.0, analyzer="word", token_processor=filter_short)
