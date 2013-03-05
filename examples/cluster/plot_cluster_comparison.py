@@ -86,8 +86,8 @@ for i_dataset, dataset in enumerate([noisy_circles, noisy_moons, blobs,
         t0 = time.time()
         algorithm.fit(X)
         t1 = time.time()
-        if hasattr(algorithm, 'labels_'):
-            y_pred = algorithm.labels_.astype(np.int)
+        if hasattr(algorithm, 'classes_'):
+            y_pred = algorithm.classes_.astype(np.int)
         else:
             y_pred = algorithm.predict(X)
 

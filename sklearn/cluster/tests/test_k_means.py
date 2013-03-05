@@ -52,7 +52,7 @@ def test_kmeans_dtype():
     X = (X * 10).astype(np.uint8)
     km = KMeans(n_init=1).fit(X)
     with warnings.catch_warnings(record=True) as w:
-        assert_array_equal(km.labels_, km.predict(X))
+        assert_array_equal(km.classes_, km.predict(X))
         assert_equal(len(w), 1)
 
 
@@ -158,7 +158,17 @@ def _check_fitted_model(km):
     centers = km.cluster_centers_
     assert_equal(centers.shape, (n_clusters, n_features))
 
-    labels = km.labels_
+    labels = km.classes_
+
+    #Also test labels_ deprecation
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        _ = km.labels_
+        # Verify some things
+        assert len(w) == 1
+        assert issubclass(w[-1].category, DeprecationWarning)
+        assert "deprecated" in str(w[-1].message)
+
     assert_equal(np.unique(labels).shape[0], n_clusters)
 
     # check that the labels assignements are perfect (up to a permutation)
@@ -197,7 +207,7 @@ def test_k_means_new_centers():
                 random_state=1)
     for this_X in (X, sp.coo_matrix(X)):
         km.fit(this_X)
-        this_labels = km.labels_
+        this_labels = km.classes_
         # Reorder the labels so that the first instance is in cluster 0,
         # the second in cluster 1, ...
         this_labels = unique(this_labels, return_index=True)[1][this_labels]
@@ -445,7 +455,7 @@ def test_k_means_non_collapsed():
     km.fit(my_X)
 
     # centers must not been collapsed
-    assert_equal(len(np.unique(km.labels_)), 3)
+    assert_equal(len(np.unique(km.classes_)), 3)
 
     centers = km.cluster_centers_
     assert_true(np.linalg.norm(centers[0] - centers[1]) >= 0.1)
@@ -464,11 +474,11 @@ def test_predict():
 
     # sanity check: re-predict labeling for training set samples
     pred = km.predict(X)
-    assert_array_equal(pred, km.labels_)
+    assert_array_equal(pred, km.classes_)
 
     # re-predict labels for training set using fit_predict
     pred = km.fit_predict(X)
-    assert_array_equal(pred, km.labels_)
+    assert_array_equal(pred, km.classes_)
 
 
 def test_score():
@@ -488,7 +498,15 @@ def test_predict_minibatch_dense_input():
 
     # sanity check: re-predict labeling for training set samples
     pred = mb_k_means.predict(X)
-    assert_array_equal(mb_k_means.predict(X), mb_k_means.labels_)
+    assert_array_equal(mb_k_means.predict(X), mb_k_means.classes_)
+    #Check labels- deprecation for mb_k_means
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        _ = mb_k_means.labels_
+        # Verify some things
+        assert len(w) == 1
+        assert issubclass(w[-1].category, DeprecationWarning)
+        assert "deprecated" in str(w[-1].message)
 
 
 def test_predict_minibatch_kmeanspp_init_sparse_input():
@@ -496,7 +514,7 @@ def test_predict_minibatch_kmeanspp_init_sparse_input():
                                  n_init=10).fit(X_csr)
 
     # sanity check: re-predict labeling for training set samples
-    assert_array_equal(mb_k_means.predict(X_csr), mb_k_means.labels_)
+    assert_array_equal(mb_k_means.predict(X_csr), mb_k_means.classes_)
 
     # sanity check: predict centroid labels
     pred = mb_k_means.predict(mb_k_means.cluster_centers_)
@@ -504,7 +522,7 @@ def test_predict_minibatch_kmeanspp_init_sparse_input():
 
     # check that models trained on sparse input also works for dense input at
     # predict time
-    assert_array_equal(mb_k_means.predict(X), mb_k_means.labels_)
+    assert_array_equal(mb_k_means.predict(X), mb_k_means.classes_)
 
 
 def test_predict_minibatch_random_init_sparse_input():
@@ -512,7 +530,7 @@ def test_predict_minibatch_random_init_sparse_input():
                                  n_init=10).fit(X_csr)
 
     # sanity check: re-predict labeling for training set samples
-    assert_array_equal(mb_k_means.predict(X_csr), mb_k_means.labels_)
+    assert_array_equal(mb_k_means.predict(X_csr), mb_k_means.classes_)
 
     # sanity check: predict centroid labels
     pred = mb_k_means.predict(mb_k_means.cluster_centers_)
@@ -520,7 +538,7 @@ def test_predict_minibatch_random_init_sparse_input():
 
     # check that models trained on sparse input also works for dense input at
     # predict time
-    assert_array_equal(mb_k_means.predict(X), mb_k_means.labels_)
+    assert_array_equal(mb_k_means.predict(X), mb_k_means.classes_)
 
 
 def test_input_dtypes():
@@ -545,7 +563,7 @@ def test_input_dtypes():
                         init=init_int).fit(X_int_csr),
     ]
     expected_labels = [0, 1, 1, 0, 0, 1]
-    scores = np.array([v_measure_score(expected_labels, km.labels_)
+    scores = np.array([v_measure_score(expected_labels, km.classes_)
                        for km in fitted_models])
     assert_array_equal(scores, np.ones(scores.shape[0]))
 

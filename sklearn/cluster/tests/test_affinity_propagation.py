@@ -4,6 +4,7 @@ Testing for Clustering methods
 """
 
 import numpy as np
+import warnings
 
 from sklearn.utils.testing import (assert_equal, assert_array_equal,
                                    assert_raises)
@@ -25,7 +26,7 @@ def test_affinity_propagation():
     S = -euclidean_distances(X, squared=True)
     preference = np.median(S) * 10
     # Compute Affinity Propagation
-    cluster_centers_indices, labels = affinity_propagation(
+    cluster_centers_indices, classes = affinity_propagation(
         S, preference=preference)
 
     n_clusters_ = len(cluster_centers_indices)
@@ -33,23 +34,32 @@ def test_affinity_propagation():
     assert_equal(n_clusters, n_clusters_)
 
     af = AffinityPropagation(preference=preference, affinity="precomputed")
-    labels_precomputed = af.fit(S).labels_
+    classes_precomputed = af.fit(S).classes_
 
     af = AffinityPropagation(preference=preference, verbose=True)
-    labels = af.fit(X).labels_
+    classes = af.fit(X).classes_
 
-    assert_array_equal(labels, labels_precomputed)
+    assert_array_equal(classes, classes_precomputed)
+
+    #Test for deprecations of labels_
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        _ = af.fit(X).labels_
+        # Verify some things
+        assert len(w) == 1
+        assert issubclass(w[-1].category, DeprecationWarning)
+        assert "deprecated" in str(w[-1].message)
 
     cluster_centers_indices = af.cluster_centers_indices_
 
     n_clusters_ = len(cluster_centers_indices)
-    assert_equal(np.unique(labels).size, n_clusters_)
+    assert_equal(np.unique(classes).size, n_clusters_)
     assert_equal(n_clusters, n_clusters_)
 
     # Test also with no copy
-    _, labels_no_copy = affinity_propagation(S, preference=preference,
-                                             copy=False)
-    assert_array_equal(labels, labels_no_copy)
+    _, classes_no_copy = affinity_propagation(S, preference=preference,
+                                              copy=False)
+    assert_array_equal(classes, classes_no_copy)
 
     # Test input validation
     assert_raises(ValueError, affinity_propagation, S[:, :-1])

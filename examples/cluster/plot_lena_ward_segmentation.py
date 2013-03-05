@@ -38,17 +38,17 @@ print("Compute structured hierarchical clustering...")
 st = time.time()
 n_clusters = 15  # number of regions
 ward = Ward(n_clusters=n_clusters, connectivity=connectivity).fit(X)
-label = np.reshape(ward.labels_, lena.shape)
+class_ = np.reshape(ward.classes_, lena.shape)
 print("Elapsed time: ", time.time() - st)
-print("Number of pixels: ", label.size)
-print("Number of clusters: ", np.unique(label).size)
+print("Number of pixels: ", class_.size)
+print("Number of clusters: ", np.unique(class_).size)
 
 ###############################################################################
 # Plot the results on an image
 pl.figure(figsize=(5, 5))
 pl.imshow(lena, cmap=pl.cm.gray)
 for l in range(n_clusters):
-    pl.contour(label == l, contours=1,
+    pl.contour(class_ == l, contours=1,
                colors=[pl.cm.spectral(l / float(n_clusters)), ])
 pl.xticks(())
 pl.yticks(())

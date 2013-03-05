@@ -53,9 +53,9 @@ for i in range(4):
     pl.yticks(())
 
 pl.subplot(3, 4, 10)
-pl.imshow(np.reshape(agglo.labels_, images[0].shape),
+pl.imshow(np.reshape(agglo.classes_, images[0].shape),
           interpolation='nearest', cmap=pl.cm.spectral)
 pl.xticks(())
 pl.yticks(())
-pl.title('Labels')
+pl.title('Classes')
 pl.show()

@@ -496,8 +496,8 @@ def test_clustering():
             # fit
             alg.fit(X)
 
-        assert_equal(alg.labels_.shape, (n_samples,))
-        pred = alg.labels_
+        assert_equal(alg.classes_.shape, (n_samples,))
+        pred = alg.classes_
         assert_greater(adjusted_rand_score(pred, y), 0.4)
         # fit another time with ``fit_predict`` and compare results
         if name is 'SpectralClustering':

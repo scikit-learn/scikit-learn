@@ -10,8 +10,8 @@ from ...utils import check_random_state
 from ..pairwise import pairwise_distances
 
 
-def silhouette_score(X, labels, metric='euclidean', sample_size=None,
-                     random_state=None, **kwds):
+def silhouette_score(X, classes, labels=None, metric='euclidean',
+                     sample_size=None, random_state=None, **kwds):
     """Compute the mean Silhouette Coefficient of all samples.
 
     The Silhouette Coefficient is calculated using the mean intra-cluster
@@ -33,8 +33,8 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
              [n_samples_a, n_features] otherwise
         Array of pairwise distances between samples, or a feature array.
 
-    labels : array, shape = [n_samples]
-             label values for each sample
+    classes : array, shape = [n_samples]
+             class values for each sample
 
     metric : string, or callable
         The metric to use when calculating distance between instances in a
@@ -74,17 +74,23 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
            <http://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
+    if labels is not None:
+        warnings.warn("Parameter 'labels' is deprecated and will be "
+                      "removed in 0.15. Please use 'classes' instead",
+                      DeprecationWarning)
+        classes = labels
+
     if sample_size is not None:
         random_state = check_random_state(random_state)
         indices = random_state.permutation(X.shape[0])[:sample_size]
         if metric == "precomputed":
-            X, labels = X[indices].T[indices].T, labels[indices]
+            X, classes = X[indices].T[indices].T, classes[indices]
         else:
-            X, labels = X[indices], labels[indices]
-    return np.mean(silhouette_samples(X, labels, metric=metric, **kwds))
+            X, classes = X[indices], classes[indices]
+    return np.mean(silhouette_samples(X, classes, metric=metric, **kwds))
 
 
-def silhouette_samples(X, labels, metric='euclidean', **kwds):
+def silhouette_samples(X, classes, labels=None, metric='euclidean', **kwds):
     """Compute the Silhouette Coefficient for each sample.
 
     The Silhoeutte Coefficient is a measure of how well samples are clustered
@@ -109,8 +115,8 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
              [n_samples_a, n_features] otherwise
         Array of pairwise distances between samples, or a feature array.
 
-    labels : array, shape = [n_samples]
-             label values for each sample
+    classes : array, shape = [n_samples]
+             class values for each sample
 
     metric : string, or callable
         The metric to use when calculating distance between instances in a
@@ -140,18 +146,25 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
        <http://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
+
+    if labels is not None:
+        warnings.warn("Parameter 'labels' is deprecated and will"
+                      " be removed in 0.15. Please use 'classes' instead",
+                      DeprecationWarning)
+        classes = labels
+
     distances = pairwise_distances(X, metric=metric, **kwds)
-    n = labels.shape[0]
-    A = np.array([_intra_cluster_distance(distances[i], labels, i)
+    n = classes.shape[0]
+    A = np.array([_intra_cluster_distance(distances[i], classes, i)
                   for i in range(n)])
-    B = np.array([_nearest_cluster_distance(distances[i], labels, i)
+    B = np.array([_nearest_cluster_distance(distances[i], classes, i)
                   for i in range(n)])
     sil_samples = (B - A) / np.maximum(A, B)
     # nan values are for clusters of size 1, and should be 0
     return np.nan_to_num(sil_samples)
 
 
-def _intra_cluster_distance(distances_row, labels, i):
+def _intra_cluster_distance(distances_row, classes, i, labels=None):
     """Calculate the mean intra-cluster distance for sample i.
 
     Parameters
@@ -159,25 +172,33 @@ def _intra_cluster_distance(distances_row, labels, i):
     distances_row : array, shape = [n_samples]
         Pairwise distance matrix between sample i and each sample.
 
-    labels : array, shape = [n_samples]
-        label values for each sample
+    classes : array, shape = [n_samples]
+        class values for each sample
 
     i : int
         Sample index being calculated. It is excluded from calculation and
-        used to determine the current label
+        used to determine the current class
 
     Returns
     -------
     a : float
         Mean intra-cluster distance for sample i
     """
-    mask = labels == labels[i]
+
+    if labels is not None:
+        warnings.warn("Parameter 'labels' is deprecated"
+                      " and will be removed in 0.15. "
+                      "Please use 'classes' instead",
+                      DeprecationWarning)
+        classes = labels
+
+    mask = classes == classes[i]
     mask[i] = False
     a = np.mean(distances_row[mask])
     return a
 
 
-def _nearest_cluster_distance(distances_row, labels, i):
+def _nearest_cluster_distance(distances_row, classes, i, labels=None):
     """Calculate the mean nearest-cluster distance for sample i.
 
     Parameters
@@ -185,19 +206,19 @@ def _nearest_cluster_distance(distances_row, labels, i):
     distances_row : array, shape = [n_samples]
         Pairwise distance matrix between sample i and each sample.
 
-    labels : array, shape = [n_samples]
-        label values for each sample
+    classes : array, shape = [n_samples]
+        class values for each sample
 
     i : int
         Sample index being calculated. It is used to determine the current
-        label.
+        class.
 
     Returns
     -------
     b : float
         Mean nearest-cluster distance for sample i
     """
-    label = labels[i]
-    b = np.min([np.mean(distances_row[labels == cur_label])
-               for cur_label in set(labels) if not cur_label == label])
+    class_ = classes[i]
+    b = np.min([np.mean(distances_row[classes == cur_class])
+               for cur_class in set(classes) if not cur_class == class_])
     return b

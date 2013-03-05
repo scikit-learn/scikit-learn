@@ -3,6 +3,8 @@
 from sklearn.externals.six.moves import cPickle
 dumps, loads = cPickle.dumps, cPickle.loads
 
+import warnings
+
 import numpy as np
 from scipy import sparse
 
@@ -35,7 +37,15 @@ def test_spectral_clustering():
                                            eigen_solver=eigen_solver,
                                            assign_labels=assign_labels
                                            ).fit(mat)
-                labels = model.labels_
+                labels = model.classes_
+                with warnings.catch_warnings(record=True) as w:
+                    warnings.simplefilter("always")
+                    _ = model.labels_
+                    # Verify some things
+                    assert len(w) == 1
+                    assert issubclass(w[-1].category, DeprecationWarning)
+                    assert "deprecated" in str(w[-1].message)
+
                 if labels[0] == 0:
                     labels = 1 - labels
 
@@ -44,7 +54,7 @@ def test_spectral_clustering():
                 model_copy = loads(dumps(model))
                 assert_equal(model_copy.n_clusters, model.n_clusters)
                 assert_equal(model_copy.eigen_solver, model.eigen_solver)
-                assert_array_equal(model_copy.labels_, model.labels_)
+                assert_array_equal(model_copy.classes_, model.classes_)
 
 
 def test_spectral_lobpcg_mode():
@@ -145,7 +155,7 @@ def test_spectral_clustering_sparse():
     S = sparse.coo_matrix(S)
 
     labels = SpectralClustering(random_state=0, n_clusters=2,
-                                affinity='precomputed').fit(S).labels_
+                                affinity='precomputed').fit(S).classes_
     if labels[0] == 0:
         labels = 1 - labels
 
@@ -161,11 +171,11 @@ def test_affinities():
     # nearest neighbors affinity
     sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
                             random_state=0)
-    labels = sp.fit(X).labels_
+    labels = sp.fit(X).classes_
     assert_equal(adjusted_rand_score(y, labels), 1)
 
     sp = SpectralClustering(n_clusters=2, gamma=2, random_state=0)
-    labels = sp.fit(X).labels_
+    labels = sp.fit(X).classes_
     assert_equal(adjusted_rand_score(y, labels), 1)
 
     # raise error on unknown affinity

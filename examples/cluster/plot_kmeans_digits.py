@@ -7,7 +7,7 @@ In this example with compare the various initialization strategies for
 K-means in terms of runtime and quality of the results.
 
 As the ground truth is known here, we also apply different cluster
-quality metrics to judge the goodness of fit of the cluster labels to the
+quality metrics to judge the goodness of fit of the cluster classes to the
 ground truth.
 
 Cluster quality metrics evaluated (see :ref:`clustering_evaluation` for
@@ -44,7 +44,7 @@ data = scale(digits.data)
 
 n_samples, n_features = data.shape
 n_digits = len(np.unique(digits.target))
-labels = digits.target
+classes = digits.target
 
 sample_size = 300
 
@@ -62,12 +62,12 @@ def bench_k_means(estimator, name, data):
     estimator.fit(data)
     print('% 9s   %.2fs    %i   %.3f   %.3f   %.3f   %.3f   %.3f    %.3f'
           % (name, (time() - t0), estimator.inertia_,
-             metrics.homogeneity_score(labels, estimator.labels_),
-             metrics.completeness_score(labels, estimator.labels_),
-             metrics.v_measure_score(labels, estimator.labels_),
-             metrics.adjusted_rand_score(labels, estimator.labels_),
-             metrics.adjusted_mutual_info_score(labels,  estimator.labels_),
-             metrics.silhouette_score(data, estimator.labels_,
+             metrics.homogeneity_score(classes, estimator.classes_),
+             metrics.completeness_score(classes, estimator.classes_),
+             metrics.v_measure_score(classes, estimator.classes_),
+             metrics.adjusted_rand_score(classes, estimator.classes_),
+             metrics.adjusted_mutual_info_score(classes,  estimator.classes_),
+             metrics.silhouette_score(data, estimator.classes_,
                                       metric='euclidean',
                                       sample_size=sample_size)))
 
@@ -100,7 +100,7 @@ x_min, x_max = reduced_data[:, 0].min() + 1, reduced_data[:, 0].max() - 1
 y_min, y_max = reduced_data[:, 1].min() + 1, reduced_data[:, 1].max() - 1
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 
-# Obtain labels for each point in mesh. Use last trained model.
+# Obtain classes for each point in mesh. Use last trained model.
 Z = kmeans.predict(np.c_[xx.ravel(), yy.ravel()])
 
 # Put the result into a color plot

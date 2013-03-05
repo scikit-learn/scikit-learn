@@ -733,12 +733,17 @@ def normalized_mutual_info_score(labels_true, labels_pred):
     return nmi
 
 
-def entropy(labels):
+def entropy(classes, labels=None):
     """Calculates the entropy for a labeling."""
-    if len(labels) == 0:
+    if labels is not None:
+        warnings.warn("Parameter 'labels' is deprecated and will be "
+                      "removed in 0.15. Please use 'classes' instead",
+                      DeprecationWarning)
+        classes = labels
+    if len(classes) == 0:
         return 1.0
-    label_idx = unique(labels, return_inverse=True)[1]
-    pi = np.bincount(label_idx).astype(np.float)
+    class_idx = unique(classes, return_inverse=True)[1]
+    pi = np.bincount(class_idx).astype(np.float)
     pi = pi[pi > 0]
     pi_sum = np.sum(pi)
     # log(a / b) should be calculated as log(a) - log(b) for

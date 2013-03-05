@@ -54,10 +54,10 @@ image_array_sample = shuffle(image_array, random_state=0)[:1000]
 kmeans = KMeans(n_clusters=n_colors, random_state=0).fit(image_array_sample)
 print("done in %0.3fs." % (time() - t0))
 
-# Get labels for all points
+# Get classes for all points
 print("Predicting color indices on the full image (k-means)")
 t0 = time()
-labels = kmeans.predict(image_array)
+classes = kmeans.predict(image_array)
 print("done in %0.3fs." % (time() - t0))
 
 
@@ -65,19 +65,19 @@ codebook_random = shuffle(image_array, random_state=0)[:n_colors + 1]
 print("Predicting color indices on the full image (random)")
 t0 = time()
 dist = euclidean_distances(codebook_random, image_array, squared=True)
-labels_random = dist.argmin(axis=0)
+classes_random = dist.argmin(axis=0)
 print("done in %0.3fs." % (time() - t0))
 
 
-def recreate_image(codebook, labels, w, h):
-    """Recreate the (compressed) image from the code book & labels"""
+def recreate_image(codebook, classes, w, h):
+    """Recreate the (compressed) image from the code book & classes"""
     d = codebook.shape[1]
     image = np.zeros((w, h, d))
-    label_idx = 0
+    class_idx = 0
     for i in range(w):
         for j in range(h):
-            image[i][j] = codebook[labels[label_idx]]
-            label_idx += 1
+            image[i][j] = codebook[classes[class_idx]]
+            class_idx += 1
     return image
 
 # Display all results, alongside original image
@@ -93,12 +93,12 @@ pl.clf()
 ax = pl.axes([0, 0, 1, 1])
 pl.axis('off')
 pl.title('Quantized image (64 colors, K-Means)')
-pl.imshow(recreate_image(kmeans.cluster_centers_, labels, w, h))
+pl.imshow(recreate_image(kmeans.cluster_centers_, classes, w, h))
 
 pl.figure(3)
 pl.clf()
 ax = pl.axes([0, 0, 1, 1])
 pl.axis('off')
 pl.title('Quantized image (64 colors, Random)')
-pl.imshow(recreate_image(codebook_random, labels_random, w, h))
+pl.imshow(recreate_image(codebook_random, classes_random, w, h))
 pl.show()

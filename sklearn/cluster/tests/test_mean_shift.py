@@ -2,7 +2,7 @@
 Testing for mean shift clustering methods
 
 """
-
+import warnings
 import numpy as np
 
 from sklearn.utils.testing import assert_equal
@@ -29,7 +29,16 @@ def test_mean_shift():
     assert_true(0.9 <= bandwidth_ <= 1.5)
 
     ms = MeanShift(bandwidth=bandwidth)
-    labels = ms.fit(X).labels_
+    #test labels_ deprecation
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter("always")
+        _ = ms.fit(X).labels_
+        # Verify some things
+        assert len(w) == 1
+        assert issubclass(w[-1].category, DeprecationWarning)
+        assert "deprecated" in str(w[-1].message)
+
+    labels = ms.fit(X).classes_
     cluster_centers = ms.cluster_centers_
     labels_unique = np.unique(labels)
     n_clusters_ = len(labels_unique)

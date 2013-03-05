@@ -40,7 +40,7 @@ algorithms. The simplest clustering algorithm is
     >>> k_means = cluster.KMeans(n_clusters=3)
     >>> k_means.fit(X_iris) # doctest: +ELLIPSIS
     KMeans(copy_x=True, init='k-means++', ...
-    >>> print(k_means.labels_[::10])
+    >>> print(k_means.classes_[::10])
     [1 1 1 1 1 0 0 0 0 0 2 2 2 2 2]
     >>> print(y_iris[::10])
     [0 0 0 0 0 1 1 1 1 1 2 2 2 2 2]
@@ -121,8 +121,8 @@ algorithms. The simplest clustering algorithm is
     	>>> k_means.fit(X) # doctest: +ELLIPSIS
     	KMeans(copy_x=True, init='k-means++', ...
     	>>> values = k_means.cluster_centers_.squeeze()
-    	>>> labels = k_means.labels_
-    	>>> lena_compressed = np.choose(labels, values)
+    	>>> classes = k_means.classes_
+    	>>> lena_compressed = np.choose(classes, values)
     	>>> lena_compressed.shape = lena.shape
 
     .. list-table::

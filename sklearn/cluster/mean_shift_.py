@@ -10,6 +10,7 @@ import numpy as np
 
 from ..externals import six
 from ..utils import extmath, check_random_state
+from ..utils import deprecated
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
 
@@ -88,8 +89,8 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
     cluster_centers : array [n_clusters, n_features]
         Coordinates of cluster centers.
 
-    labels : array [n_samples]
-        Cluster labels for each point.
+    classes : array [n_samples]
+        Cluster classes for each point.
 
     Notes
     -----
@@ -144,17 +145,17 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
             unique[i] = 1  # leave the current point as unique
     cluster_centers = sorted_centers[unique]
 
-    # ASSIGN LABELS: a point belongs to the cluster that it is closest to
+    # ASSIGN CLASSES: a point belongs to the cluster that it is closest to
     nbrs = NearestNeighbors(n_neighbors=1).fit(cluster_centers)
-    labels = np.zeros(n_samples, dtype=np.int)
+    classes = np.zeros(n_samples, dtype=np.int)
     distances, idxs = nbrs.kneighbors(X)
     if cluster_all:
-        labels = idxs.flatten()
+        classes = idxs.flatten()
     else:
-        labels.fill(-1)
+        classes.fill(-1)
         bool_selector = distances.flatten() <= bandwidth
-        labels[bool_selector] = idxs.flatten()[bool_selector]
-    return cluster_centers, labels
+        classes[bool_selector] = idxs.flatten()[bool_selector]
+    return cluster_centers, classes
 
 
 def get_bin_seeds(X, bin_size, min_bin_freq=1):
@@ -226,8 +227,8 @@ class MeanShift(BaseEstimator, ClusterMixin):
     `cluster_centers_` : array, [n_clusters, n_features]
         Coordinates of cluster centers.
 
-    `labels_` :
-        Labels of each point.
+    `classes_` :
+        classes of each point.
 
     Notes
     -----
@@ -261,7 +262,13 @@ class MeanShift(BaseEstimator, ClusterMixin):
         self.bin_seeding = bin_seeding
         self.cluster_all = cluster_all
         self.cluster_centers_ = None
-        self.labels_ = None
+        self.classes_ = None
+
+    @property
+    @deprecated("Attribute labels_ is deprecated and "
+                "will be removed in 0.15. Use 'classes_' instead")
+    def labels_(self):
+        return self.classes_
 
     def fit(self, X):
         """ Compute MeanShift
@@ -271,7 +278,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
         X : array-like, shape=[n_samples, n_features]
             Input points.
         """
-        self.cluster_centers_, self.labels_ = \
+        self.cluster_centers_, self.classes_ = \
             mean_shift(X, bandwidth=self.bandwidth, seeds=self.seeds,
                        bin_seeding=self.bin_seeding,
                        cluster_all=self.cluster_all)

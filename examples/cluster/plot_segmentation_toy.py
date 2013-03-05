@@ -70,12 +70,12 @@ graph.data = np.exp(-graph.data / graph.data.std())
 
 # Force the solver to be arpack, since amg is numerically
 # unstable on this example
-labels = spectral_clustering(graph, n_clusters=4, eigen_solver='arpack')
-label_im = -np.ones(mask.shape)
-label_im[mask] = labels
+classes = spectral_clustering(graph, n_clusters=4, eigen_solver='arpack')
+class_im = -np.ones(mask.shape)
+class_im[mask] = classes
 
 pl.matshow(img)
-pl.matshow(label_im)
+pl.matshow(class_im)
 
 ###############################################################################
 # 2 circles
@@ -88,11 +88,11 @@ img += 1 + 0.2 * np.random.randn(*img.shape)
 graph = image.img_to_graph(img, mask=mask)
 graph.data = np.exp(-graph.data / graph.data.std())
 
-labels = spectral_clustering(graph, n_clusters=2, eigen_solver='arpack')
-label_im = -np.ones(mask.shape)
-label_im[mask] = labels
+classes = spectral_clustering(graph, n_clusters=2, eigen_solver='arpack')
+class_im = -np.ones(mask.shape)
+class_im[mask] = classes
 
 pl.matshow(img)
-pl.matshow(label_im)
+pl.matshow(class_im)
 
 pl.show()
