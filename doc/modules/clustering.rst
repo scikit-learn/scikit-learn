@@ -183,12 +183,12 @@ Mini Batch K-Means
 
 The :class:`MiniBatchKMeans` is a variant of the :class:`KMeans` algorithm
 which uses mini-batches to reduce the computation time, while still attempting
-to optimise the same objective function. Mini-batches are randomly chosen
-subsets of data, which are recomputed in each training iteration. These
-mini-batches drastically reduce the amount of computation required to converge
-to a local solution. In contrast to other algorithms that reduce the convergence
-time of k-means, mini-batch k-means produces results that are generally only
-slightly worse than the standard algorithm.
+to optimise the same objective function. Mini-batches are subsets of the input
+data, randomly sampled in each training iteration. These mini-batches
+drastically reduce the amount of computation required to converge to a local
+solution. In contrast to other algorithms that reduce the convergence time of
+k-means, mini-batch k-means produces results that are generally only slightly
+worse than the standard algorithm.
 
 The algorithm iterates between two major steps, similar to vanilla k-means.
 In the first step, `b` samples are drawn randomly from the dataset, to form
