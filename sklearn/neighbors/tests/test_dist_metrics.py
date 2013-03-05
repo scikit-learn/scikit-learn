@@ -3,8 +3,22 @@ import itertools
 import numpy as np
 from numpy.testing import assert_allclose
 
+import scipy
 from scipy.spatial.distance import cdist, pdist, squareform
 from sklearn.neighbors.dist_metrics import DistanceMetric
+from nose import SkipTest
+
+
+def cmp_version(version1, version2):
+    version1 = tuple(map(int, version1.split('.')[:2]))
+    version2 = tuple(map(int, version2.split('.')[:2]))
+
+    if version1 < version2:
+        return -1
+    elif version1 > version2:
+        return 1
+    else:
+        return 0
 
 
 class TestMetrics:
@@ -50,6 +64,8 @@ class TestMetrics:
             yield self.check_cdist_bool, metric, D_true
             
     def check_cdist(self, metric, kwargs, D_true):
+        if metric == 'canberra' and cmp_version(scipy.__version__, '0.9') <= 0:
+            raise SkipTest("Canberra distance incorrect in scipy < 0.9")
         dm = DistanceMetric.get_metric(metric, **kwargs)
         D12 = dm.pairwise(self.X1, self.X2)
         assert_allclose(D12, D_true)
@@ -64,14 +80,24 @@ class TestMetrics:
             keys = argdict.keys()
             for vals in itertools.product(*argdict.values()):
                 kwargs = dict(zip(keys, vals))
-                D_true = pdist(self.X1, metric, **kwargs)
-                Dsq_true = squareform(D_true)
-                yield self.check_pdist, metric, kwargs, Dsq_true
+                D_true = cdist(self.X1, self.X1, metric, **kwargs)
+                yield self.check_pdist, metric, kwargs, D_true
+
+        for metric in self.bool_metrics:
+            D_true = cdist(self.X1_bool, self.X1_bool, metric)
+            yield self.check_pdist_bool, metric, D_true
 
     def check_pdist(self, metric, kwargs, D_true):
+        if metric == 'canberra' and cmp_version(scipy.__version__, '0.9') <= 0:
+            raise SkipTest("Canberra distance incorrect in scipy < 0.9")
         dm = DistanceMetric.get_metric(metric, **kwargs)
         D12 = dm.pairwise(self.X1)
-        assert_allclose(D12, D_true)        
+        assert_allclose(D12, D_true)
+
+    def check_pdist_bool(self, metric, D_true):
+        dm = DistanceMetric.get_metric(metric)
+        D12 = dm.pairwise(self.X1_bool)
+        assert_allclose(D12, D_true)
 
         
 if __name__ == '__main__':
