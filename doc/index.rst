@@ -247,33 +247,9 @@ printable format, see :ref:`documentation_resources`.
 
 .. include:: includes/big_toc_css.rst
 
-User Guide
-==========
-
 .. toctree::
    :numbered:
 
-   user_guide.rst
-
-Example Gallery
-===============
-
-.. toctree::
-   :maxdepth: 2
-
-   auto_examples/index
-
-
-Development
-===========
-.. toctree::
-   :numbered:
-
-   developers/index
-   developers/performance
-   developers/utilities
-   developers/debugging
-   developers/maintainer
    about
 
 .. toctree::
