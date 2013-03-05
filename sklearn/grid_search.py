@@ -391,12 +391,14 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         if self.loss_func is not None:
             warnings.warn("Passing a loss function is "
                           "deprecated and will be removed in 0.15. "
-                          "Either use strings or score objects.")
+                          "Either use strings or score objects."
+                          "The relevant new parameter is called ''scoring''. ")
             scorer = Scorer(self.loss_func, greater_is_better=False)
         elif self.score_func is not None:
             warnings.warn("Passing function as ``score_func`` is "
                           "deprecated and will be removed in 0.15. "
-                          "Either use strings or score objects.")
+                          "Either use strings or score objects."
+                          "The relevant new parameter is called ''scoring''.")
             scorer = Scorer(self.score_func)
         elif isinstance(self.scoring, basestring):
             scorer = SCORERS[self.scoring]
