@@ -14,6 +14,7 @@ from sklearn.utils import (check_random_state,
 from sklearn.utils.multiclass import unique_labels
 from sklearn.utils.testing import (assert_true,
                                    assert_raises,
+                                   assert_raise_message,
                                    assert_equal,
                                    assert_almost_equal,
                                    assert_not_equal,
@@ -202,6 +203,21 @@ def test_auc_errors():
     # Too few x values
     assert_raises(ValueError, auc, [0.0], [0.1])
 
+def test_auc_score_non_binary_class():
+    """Test that auc_score function returns an error when trying to compute AUC
+    for non-binary class values.
+    """
+    # y_true contains only one class value
+    y_true = np.ones(10, dtype="int")
+    y_pred = np.random.rand(10)
+    assert_raise_message(ValueError, "AUC is defined for binary " \
+                         "classification only", auc_score, y_true, y_pred)
+    
+    # y_true contains three different class values
+    y_true = np.random.randint(0, 3, size=10)
+    y_pred = np.random.rand(10)
+    assert_raise_message(ValueError, "AUC is defined for binary " \
+                         "classification only", auc_score, y_true, y_pred)
 
 def test_precision_recall_f1_score_binary():
     """Test Precision Recall and F1 Score for binary classification task"""
