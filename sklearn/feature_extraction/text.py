@@ -207,6 +207,15 @@ class VectorizerMixin(object):
         """Build or fetch the effective stop words list"""
         return _check_stop_list(self.stop_words)
 
+    def build_token_processor(self):
+        """Return a function that processes the tokens.
+
+        This can be useful, e.g., for introducing stemming, etc.
+        """
+        if self.token_processor is not None:
+            return self.token_processor
+        return lambda tok: tok
+
     def build_analyzer(self):
         """Return a callable that handles preprocessing and tokenization"""
         if callable(self.analyzer):
@@ -224,6 +233,14 @@ class VectorizerMixin(object):
         elif self.analyzer == 'word':
             stop_words = self.get_stop_words()
             tokenize = self.build_tokenizer()
+            process_token = self.build_token_processor()
+
+            def word_analyzer(doc):
+                toks = (process_token(tok) for tok in
+                        tokenize(preprocess(self.decode(doc))))
+                return self._word_ngrams([tok for tok in toks if tok],
+                                         stop_words)
+            return word_analyzer
 
             return lambda doc: self._word_ngrams(
                 tokenize(preprocess(self.decode(doc))), stop_words)
@@ -317,6 +334,10 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         Override the string tokenization step while preserving the
         preprocessing and n-grams generation steps.
 
+    token_processor: callable or None (default)
+        Override the token processing step while preserving the
+        preprocessing, tokenizing and n-grams generation steps.
+
     ngram_range: tuple (min_n, max_n)
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
@@ -369,8 +390,9 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     """
     def __init__(self, input='content', charset='utf-8',
                  charset_error='strict', strip_accents=None,
-                 lowercase=True, preprocessor=None, tokenizer=None,
-                 stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
+                 lowercase=True, preprocessor=None, token_processor=None,
+                 tokenizer=None,
+                 stop_words=None, token_pattern=ur"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word', n_features=(2 ** 20),
                  binary=False, norm='l2', non_negative=False,
                  dtype=np.float64):
@@ -380,6 +402,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         self.strip_accents = strip_accents
         self.preprocessor = preprocessor
         self.tokenizer = tokenizer
+        self.token_processor = token_processor
         self.analyzer = analyzer
         self.lowercase = lowercase
         self.token_pattern = token_pattern
@@ -497,6 +520,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         Override the string tokenization step while preserving the
         preprocessing and n-grams generation steps.
 
+    token_processor: callable or None (default)
+        Override the token processing step while preserving the
+        preprocessing, tokenizing and n-grams generation steps.
+
     ngram_range : tuple (min_n, max_n)
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
@@ -575,7 +602,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     def __init__(self, input='content', charset='utf-8',
                  charset_error='strict', strip_accents=None,
-                 lowercase=True, preprocessor=None, tokenizer=None,
+                 lowercase=True,
+                 preprocessor=None, tokenizer=None, token_processor=None,
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word',
                  max_df=1.0, min_df=1, max_features=None,
@@ -586,6 +614,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.strip_accents = strip_accents
         self.preprocessor = preprocessor
         self.tokenizer = tokenizer
+        self.token_processor = token_processor
         self.analyzer = analyzer
         self.lowercase = lowercase
         self.token_pattern = token_pattern
@@ -1059,6 +1088,10 @@ class TfidfVectorizer(CountVectorizer):
         Override the string tokenization step while preserving the
         preprocessing and n-grams generation steps.
 
+    token_processor: callable or None (default)
+        Override the token processing step while preserving the
+        preprocessing, tokenizing and n-grams generation steps.
+
     ngram_range : tuple (min_n, max_n)
         The lower and upper boundary of the range of n-values for different
         n-grams to be extracted. All values of n such that min_n <= n <= max_n
@@ -1147,17 +1180,18 @@ class TfidfVectorizer(CountVectorizer):
 
     def __init__(self, input='content', charset='utf-8',
                  charset_error='strict', strip_accents=None, lowercase=True,
-                 preprocessor=None, tokenizer=None, analyzer='word',
-                 stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
+                 preprocessor=None, tokenizer=None, token_processor=None,
+                 analyzer='word', stop_words=None,
+                 token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), max_df=1.0, min_df=1,
-                 max_features=None, vocabulary=None, binary=False,
-                 dtype=np.int64, norm='l2', use_idf=True, smooth_idf=True,
-                 sublinear_tf=False):
+                 max_features=None, vocabulary=None, binary=False, dtype=np.int64,
+                 norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=False):
 
         super(TfidfVectorizer, self).__init__(
             input=input, charset=charset, charset_error=charset_error,
             strip_accents=strip_accents, lowercase=lowercase,
-            preprocessor=preprocessor, tokenizer=tokenizer, analyzer=analyzer,
+            preprocessor=preprocessor, tokenizer=tokenizer,
+            token_processor=token_processor, analyzer=analyzer,
             stop_words=stop_words, token_pattern=token_pattern,
             ngram_range=ngram_range, max_df=max_df, min_df=min_df,
             max_features=max_features, vocabulary=vocabulary, binary=False,
