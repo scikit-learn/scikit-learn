@@ -697,21 +697,28 @@ def zero_one_loss(y_true, y_pred, normalize=True):
     """
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
 
-    # Handle mix representation
-    if is_multilabel(y_true) and type(y_true) != type(y_pred):
-        labels = unique_labels(y_true, y_pred)
-        lb = LabelBinarizer()
-        lb.fit([labels.tolist()])
-        y_true = lb.transform(y_true)
-        y_pred = lb.transform(y_pred)
+    if is_multilabel(y_true):    
+        # Handle mix representation
+        if type(y_true) != type(y_pred):
+            labels = unique_labels(y_true, y_pred)
+            lb = LabelBinarizer()
+            lb.fit([labels.tolist()])
+            y_true = lb.transform(y_true)
+            y_pred = lb.transform(y_pred)
 
-    loss = None
-    if is_label_indicator_matrix(y_true):
-        loss = (y_pred != y_true).sum(axis=1) > 0
+        if is_label_indicator_matrix(y_true):
+            loss = (y_pred != y_true).sum(axis=1) > 0
+        else:
+            # numpy 1.3 : it is required to perform a unique before setxor1d
+            #             to get unique label in numpy 1.3.
+            #             This is needed in order to handle redundant labels.
+            # FIXME : check if this can be simplified when 1.3 is removed        
+            loss = np.array([np.size(np.setxor1d(np.unique(pred),
+                                                 np.unique(true))) > 0
+                             for pred, true in izip(y_pred, y_true)])
     else:
-        loss = np.array([np.size(np.setxor1d(np.array(pred),
-                                             np.array(true))) > 0
-                         for pred, true in izip(y_pred, y_true)])
+        y_true, y_pred = check_arrays(y_true, y_pred)
+        loss = y_true != y_pred
 
     if normalize:
         return np.mean(loss)
@@ -812,21 +819,29 @@ def accuracy_score(y_true, y_pred):
     """
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
 
-    # Handle mix representation
-    if is_multilabel(y_true) and type(y_true) != type(y_pred):
-        labels = unique_labels(y_true, y_pred)
-        lb = LabelBinarizer()
-        lb.fit([labels.tolist()])
-        y_true = lb.transform(y_true)
-        y_pred = lb.transform(y_pred)
-
     # Compute accuracy for each possible representation
-    if is_label_indicator_matrix(y_true):
-        score = (y_pred != y_true).sum(axis=1) == 0
+    if is_multilabel(y_true):
+        # Handle mix representation
+        if type(y_true) != type(y_pred):
+            labels = unique_labels(y_true, y_pred)
+            lb = LabelBinarizer()
+            lb.fit([labels.tolist()])
+            y_true = lb.transform(y_true)
+            y_pred = lb.transform(y_pred)
+
+        if is_label_indicator_matrix(y_true):
+            score = (y_pred != y_true).sum(axis=1) == 0
+        else:
+            # numpy 1.3 : it is required to perform a unique before setxor1d
+            #             to get unique label in numpy 1.3.
+            #             This is needed in order to handle redundant labels.
+            # FIXME : check if this can be simplified when 1.3 is removed
+            score = np.array([np.size(np.setxor1d(np.unique(pred),
+                                                  np.unique(true))) == 0
+                             for pred, true in izip(y_pred, y_true)])
     else:
-        score = np.array([np.size(np.setxor1d(np.array(pred),
-                                              np.array(true))) == 0
-                         for pred, true in izip(y_pred, y_true)])
+        y_true, y_pred = check_arrays(y_true, y_pred)
+        score = y_true == y_pred
 
     return np.mean(score)
 
@@ -1579,8 +1594,12 @@ def hamming_loss(y_true, y_pred, classes=None):
         if is_label_indicator_matrix(y_true):
             return np.mean(y_true != y_pred)
         else:
-            loss = np.array([np.size(np.setxor1d(np.asarray(pred),
-                                                 np.asarray(true)))
+            # numpy 1.3 : it is required to perform a unique before setxor1d
+            #             to get unique label in numpy 1.3.
+            #             This is needed in order to handle redundant labels.
+            # FIXME : check if this can be simplified when 1.3 is removed
+            loss = np.array([np.size(np.setxor1d(np.unique(pred),
+                                                 np.unique(true)))
                              for pred, true in izip(y_pred, y_true)])
 
             return np.mean(loss) / np.size(classes)
