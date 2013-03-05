@@ -167,6 +167,26 @@ def test_roc_curve_hard():
     assert_array_almost_equal(roc_auc, 0.74, decimal=2)
 
 
+def test_roc_curve_one_label():
+    y_true = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    y_pred = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
+    # assert there are warnings
+    with warnings.catch_warnings(True) as w:
+        fpr, tpr, thresholds = roc_curve(y_true, y_pred)
+        assert_equal(len(w), 1)
+    # all true labels, all fpr should be nan
+    assert_array_equal(fpr,
+                       np.nan * np.ones(len(thresholds) + 1))
+    # assert there are warnings
+    with warnings.catch_warnings(True) as w:
+        fpr, tpr, thresholds = roc_curve([1 - x for x in y_true],
+                                         y_pred)
+        assert_equal(len(w), 1)
+    # all negative labels, all tpr should be nan
+    assert_array_equal(tpr,
+                       np.nan * np.ones(len(thresholds) + 1))
+
+
 def test_auc():
     """Test Area Under Curve (AUC) computation"""
     x = [0, 1]
@@ -668,26 +688,6 @@ def test_hinge_loss_binary():
     pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
     assert_equal(1.2 / 4,
                  hinge_loss(y_true, pred_decision, pos_label=2, neg_label=0))
-
-
-def test_roc_curve_one_label():
-    y_true = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
-    y_pred = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
-    # assert there are warnings
-    with warnings.catch_warnings(True) as w:
-        fpr, tpr, thresholds = roc_curve(y_true, y_pred)
-        assert_equal(len(w), 1)
-    # all true labels, all fpr should be nan
-    assert_array_equal(fpr,
-                       np.nan * np.ones(len(thresholds) + 1))
-    # assert there are warnings
-    with warnings.catch_warnings(True) as w:
-        fpr, tpr, thresholds = roc_curve([1 - x for x in y_true],
-                                         y_pred)
-        assert_equal(len(w), 1)
-    # all negative labels, all tpr should be nan
-    assert_array_equal(tpr,
-                       np.nan * np.ones(len(thresholds) + 1))
 
 
 def test_multioutput_regression():
