@@ -217,7 +217,7 @@ class ElasticNet(LinearModel, RegressorMixin):
         # precompute if n_samples > n_features
         if hasattr(precompute, '__array__'):
             Gram = precompute
-        elif precompute or (precompute == 'auto' and n_samples > n_features):
+        elif precompute == True or (precompute == 'auto' and n_samples > n_features):
             Gram = np.dot(X.T, X)
         else:
             Gram = None
