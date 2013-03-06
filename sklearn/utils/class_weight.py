@@ -21,8 +21,7 @@ def compute_class_weight(class_weight, classes, y):
         ``np.unique(y_org)`` with ``y_org`` the original class labels.
 
     y : array-like, shape=(n_samples,), dtype=int
-        Array of class indices per sample;
-        0 <= y[i] < n_classes for i in range(n_samples).
+        Array of classes.
 
     Returns
     -------

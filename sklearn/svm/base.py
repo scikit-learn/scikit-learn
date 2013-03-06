@@ -138,9 +138,10 @@ class BaseLibSVM(BaseEstimator):
 
         if self.impl in ['c_svc', 'nu_svc']:
             # classification
+            y_org = y
             self.classes_, y = unique(y, return_inverse=True)
             self.class_weight_ = compute_class_weight(self.class_weight,
-                                                      self.classes_, y)
+                                                      self.classes_, y_org)
         else:
             self.class_weight_ = np.empty(0)
         if self.impl != "one_class" and len(np.unique(y)) < 2:
@@ -656,6 +657,7 @@ class BaseLibLinear(BaseEstimator):
             Returns self.
         """
         self._enc = LabelEncoder()
+        y_org = y
         y = self._enc.fit_transform(y)
         if len(self.classes_) < 2:
             raise ValueError("The number of classes has to be greater than"
@@ -665,7 +667,7 @@ class BaseLibLinear(BaseEstimator):
         y = np.asarray(y, dtype=np.float64).ravel()
 
         self.class_weight_ = compute_class_weight(self.class_weight,
-                                                  self.classes_, y)
+                                                  self.classes_, y_org)
 
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n"

@@ -624,6 +624,16 @@ def test_timeout():
         assert_equal(foo[0].category, ConvergenceWarning, msg=foo[0].category)
 
 
+def test_shifted_class_labels():
+    m1 = svm.SVC(kernel='linear')
+    m1.fit(iris.data, iris.target)
+    pred1 = m1.predict(iris.data)
+    m2 = svm.SVC(kernel='linear', class_weight='auto')
+    m2.fit(iris.data, iris.target + 1)
+    pred2 = m2.predict(iris.data)
+    assert_array_equal(pred1, pred2 - 1)
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()
