@@ -13,6 +13,7 @@ from nose.tools import assert_raises, assert_true, assert_equal, assert_false
 
 from sklearn import svm, linear_model, datasets, metrics, base
 from sklearn.datasets.samples_generator import make_classification
+from sklearn.fixes import unique
 from sklearn.metrics import f1_score
 from sklearn.utils import check_random_state
 from sklearn.utils import ConvergenceWarning
@@ -348,7 +349,7 @@ def test_auto_weight():
     X, y = iris.data[:, :2], iris.target + 1
     unbalanced = np.delete(np.arange(y.size), np.where(y > 2)[0][::2])
 
-    classes, y_ind = np.unique(y[unbalanced], return_inverse=True)
+    classes, y_ind = unique(y[unbalanced], return_inverse=True)
     class_weights = compute_class_weight('auto', classes, y_ind)
     assert_true(np.argmax(class_weights) == 2)
 
