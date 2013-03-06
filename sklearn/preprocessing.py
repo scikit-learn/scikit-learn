@@ -320,10 +320,12 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             return self
         else:
             if self.with_std == "auto":
-                self.with_std = True
+                self.with_std_ = True
+            else:
+                self.with_std_ = self.with_std
             warn_if_not_float(X, estimator=self)
             self.mean_, self.std_ = _mean_and_std(
-                X, axis=0, with_mean=self.with_mean, with_std=self.with_std)
+                X, axis=0, with_mean=self.with_mean, with_std=self.with_std_)
             return self
 
     def transform(self, X, y=None, copy=None):
