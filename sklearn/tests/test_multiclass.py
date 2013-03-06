@@ -318,3 +318,12 @@ def test_ecoc_gridsearch():
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator_.estimators_[0].C
     assert_true(best_C in Cs)
+
+def test_shifted_class_labels():
+    m1 = svm.SVC(kernel='linear')
+    m1.fit(iris.data, iris.target)
+    pred1 = m1.predict(iris.data)
+    m2 = svm.SVC(kernel='linear', class_weight='auto')
+    m2.fit(iris.data, iris.target + 1)
+    pred2 = m2.predict(iris.data)
+    assert_array_equal(pred1, pred2 - 1)
