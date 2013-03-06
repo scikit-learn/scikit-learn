@@ -288,7 +288,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     to further remove the linear correlation across features.
     """
 
-    def __init__(self, copy=True, with_mean=True, with_std=True):
+    def __init__(self, copy=True, with_mean=True, with_std='auto'):
         self.with_mean = with_mean
         self.with_std = with_std
         self.copy = copy
@@ -304,6 +304,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         """
         X = check_arrays(X, copy=self.copy, sparse_format="csr")[0]
         if sp.issparse(X):
+            if with_std == "auto":
+                with_std = False
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
