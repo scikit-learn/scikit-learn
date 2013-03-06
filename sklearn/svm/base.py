@@ -662,7 +662,6 @@ class BaseLibLinear(BaseEstimator):
                              " one.")
 
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
-        y = np.asarray(y, dtype=np.float64).ravel()
 
         self.class_weight_ = compute_class_weight(self.class_weight,
                                                   self.classes_, y)
@@ -682,6 +681,9 @@ class BaseLibLinear(BaseEstimator):
         rnd = check_random_state(self.random_state)
         if self.verbose:
             print('[LibLinear]', end='')
+
+        # LibLinear wants targets as doubles, even for classification
+        y = np.asarray(y, dtype=np.float64).ravel()
         self.raw_coef_ = train(X, y, self._get_solver_type(), self.tol,
                                self._get_bias(), self.C,
                                self.class_weight_,
