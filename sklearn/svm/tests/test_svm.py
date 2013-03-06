@@ -339,15 +339,17 @@ def test_sample_weights():
 def test_auto_weight():
     """Test class weights for imbalanced data"""
     from sklearn.linear_model import LogisticRegression
-    # we take as dataset a the two-dimensional projection of iris so
+    # We take as dataset a the two-dimensional projection of iris so
     # that it is not separable and remove half of predictors from
-    # class 1
+    # class 1.
+    # We add one to the targets as a non-regression test: class_weight="auto"
+    # used to work only when the labels where a range [0..K).
     from sklearn.utils import compute_class_weight
-    X, y = iris.data[:, :2], iris.target
-    unbalanced = np.delete(np.arange(y.size), np.where(y > 1)[0][::2])
+    X, y = iris.data[:, :2], iris.target + 1
+    unbalanced = np.delete(np.arange(y.size), np.where(y > 2)[0][::2])
 
-    classes = np.unique(y[unbalanced])
-    class_weights = compute_class_weight('auto', classes, y[unbalanced])
+    classes, y_ind = np.unique(y[unbalanced], return_inverse=True)
+    class_weights = compute_class_weight('auto', classes, y_ind)
     assert_true(np.argmax(class_weights) == 2)
 
     for clf in (svm.SVC(kernel='linear'), svm.LinearSVC(random_state=0),
