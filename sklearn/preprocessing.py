@@ -304,8 +304,10 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         """
         X = check_arrays(X, copy=self.copy, sparse_format="csr")[0]
         if sp.issparse(X):
-            if with_std == "auto":
-                with_std = False
+            if self.with_std == True:
+                raise TypeError(
+                    "Cannot scale sparse matrices: pass `with_std=False` ")
+
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
@@ -317,6 +319,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             self.std_[var == 0.0] = 1.0
             return self
         else:
+            if self.with_std == "auto":
+                self.with_std = True
             warn_if_not_float(X, estimator=self)
             self.mean_, self.std_ = _mean_and_std(
                 X, axis=0, with_mean=self.with_mean, with_std=self.with_std)
