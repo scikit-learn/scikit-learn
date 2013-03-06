@@ -49,12 +49,6 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     CSR results of the first call and benefit from the near instantaneous
     loading of memmapped structures for the subsequent calls.
 
-    This implementation is naive: it does allocate too much memory and
-    is slow since written in python. On large datasets it is recommended
-    to use an optimized loader such as:
-
-      https://github.com/mblondel/svmlight-loader
-
     In case the file contains a pairwise preference constraint (known
     as "qid" in the svmlight format) these are ignored unless the
     query_id parameter is set to True. These pairwise preference
@@ -62,6 +56,11 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
     when using pairwise loss functions (as is the case in some
     learning to rank problems) so that only pairs with the same
     query_id value are considered.
+    
+    This implementation is written in Cython and is reasonably fast.
+    However, a faster API-compatible loader is also available at:
+
+      https://github.com/mblondel/svmlight-loader
 
     Parameters
     ----------
