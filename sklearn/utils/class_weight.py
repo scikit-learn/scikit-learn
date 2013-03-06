@@ -35,7 +35,7 @@ def compute_class_weight(class_weight, classes, y):
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
     elif class_weight == 'auto':
         # anti-proportional to the number of samples in the class
-        weight = np.array([1.0 / np.sum(y == i) for i in classes],
+        weight = np.array([1.0 / np.sum(y == i) for i in range(len(classes))],
                           dtype=np.float64, order='C')
         weight *= classes.shape[0] / np.sum(weight)
     else:
