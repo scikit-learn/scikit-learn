@@ -3,7 +3,7 @@
 
 import numpy as np
 
-from ..externals.six.moves import xrange
+from .fixes import bincount
 
 
 def compute_class_weight(class_weight, classes, y_ind):
@@ -37,7 +37,9 @@ def compute_class_weight(class_weight, classes, y_ind):
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
     elif class_weight == 'auto':
         # anti-proportional to the number of samples in the class
-        weight = 1. / np.bincount(y_ind)
+        counts = bincount(y_ind, minlength=len(classes))
+        counts = np.maximum(counts, 1)
+        weight = 1. / counts
         weight *= classes.shape[0] / np.sum(weight)
     else:
         # user-defined dictionary
