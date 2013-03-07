@@ -66,13 +66,13 @@ class BaseLibSVM(BaseEstimator):
     @abstractmethod
     def __init__(self, impl, kernel, degree, gamma, coef0,
                  tol, C, nu, epsilon, shrinking, probability, cache_size,
-                 sparse, class_weight, verbose, max_iter):
+                 class_weight, verbose, max_iter):
 
         if not impl in LIBSVM_IMPL:  # pragma: no cover
             raise ValueError("impl should be one of %s, %s was given" % (
                 LIBSVM_IMPL, impl))
 
-        self.impl = impl
+        self._impl = impl
         self.kernel = kernel
         self.degree = degree
         self.gamma = gamma
@@ -84,7 +84,6 @@ class BaseLibSVM(BaseEstimator):
         self.shrinking = shrinking
         self.probability = probability
         self.cache_size = cache_size
-        self.sparse = sparse
         self.class_weight = class_weight
         self.verbose = verbose
         self.max_iter = max_iter
@@ -124,10 +123,7 @@ class BaseLibSVM(BaseEstimator):
         matrices as input.
         """
 
-        if self.sparse == "auto":
-            self._sparse = sp.isspmatrix(X) and not self._pairwise
-        else:
-            self._sparse = self.sparse
+        self._sparse = sp.isspmatrix(X) and not self._pairwise
 
         if self._sparse and self._pairwise:
             raise ValueError("Sparse precomputed kernels are not supported. "
@@ -136,14 +132,14 @@ class BaseLibSVM(BaseEstimator):
 
         X = atleast2d_or_csr(X, dtype=np.float64, order='C')
 
-        if self.impl in ['c_svc', 'nu_svc']:
+        if self._impl in ['c_svc', 'nu_svc']:
             # classification
             self.classes_, y = unique(y, return_inverse=True)
             self.class_weight_ = compute_class_weight(self.class_weight,
                                                       self.classes_, y)
         else:
             self.class_weight_ = np.empty(0)
-        if self.impl != "one_class" and len(np.unique(y)) < 2:
+        if self._impl != "one_class" and len(np.unique(y)) < 2:
             raise ValueError("The number of classes has to be greater than"
                              " one.")
 
@@ -152,7 +148,7 @@ class BaseLibSVM(BaseEstimator):
         sample_weight = np.asarray([]
                                    if sample_weight is None
                                    else sample_weight, dtype=np.float64)
-        solver_type = LIBSVM_IMPL.index(self.impl)
+        solver_type = LIBSVM_IMPL.index(self._impl)
 
         # input validation
         if solver_type != 2 and X.shape[0] != y.shape[0]:
@@ -190,7 +186,7 @@ class BaseLibSVM(BaseEstimator):
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function. Use self._intercept_ internally.
         self._intercept_ = self.intercept_.copy()
-        if self.impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
+        if self._impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
             self.intercept_ *= -1
         return self
 
@@ -293,7 +289,7 @@ class BaseLibSVM(BaseEstimator):
 
         C = 0.0  # C is not useful here
 
-        svm_type = LIBSVM_IMPL.index(self.impl)
+        svm_type = LIBSVM_IMPL.index(self._impl)
 
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self.n_support_,
@@ -322,7 +318,7 @@ class BaseLibSVM(BaseEstimator):
             self.support_vectors_.indices,
             self.support_vectors_.indptr,
             self.dual_coef_.data, self._intercept_,
-            LIBSVM_IMPL.index(self.impl), kernel_type,
+            LIBSVM_IMPL.index(self._impl), kernel_type,
             self.degree, self._gamma, self.coef0, self.tol,
             C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
@@ -369,7 +365,7 @@ class BaseLibSVM(BaseEstimator):
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self._intercept_, self._label,
             self.probA_, self.probB_,
-            svm_type=LIBSVM_IMPL.index(self.impl),
+            svm_type=LIBSVM_IMPL.index(self._impl),
             kernel=kernel, C=C, nu=self.nu,
             probability=self.probability, degree=self.degree,
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
@@ -377,7 +373,7 @@ class BaseLibSVM(BaseEstimator):
 
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function.
-        if self.impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
+        if self._impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
             return -dec_func
 
         return dec_func
@@ -483,7 +479,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             raise NotImplementedError(
                 "probability estimates must be enabled to use this method")
 
-        if self.impl not in ('c_svc', 'nu_svc'):
+        if self._impl not in ('c_svc', 'nu_svc'):
             raise NotImplementedError("predict_proba only implemented for SVC "
                                       "and NuSVC")
 
@@ -527,7 +523,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         if callable(kernel):
             kernel = 'precomputed'
 
-        svm_type = LIBSVM_IMPL.index(self.impl)
+        svm_type = LIBSVM_IMPL.index(self._impl)
         pprob = libsvm.predict_proba(
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self._intercept_, self._label,
@@ -554,7 +550,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             self.support_vectors_.indices,
             self.support_vectors_.indptr,
             self.dual_coef_.data, self._intercept_,
-            LIBSVM_IMPL.index(self.impl), kernel_type,
+            LIBSVM_IMPL.index(self._impl), kernel_type,
             self.degree, self._gamma, self.coef0, self.tol,
             self.C, self.class_weight_,
             self.nu, self.epsilon, self.shrinking,
