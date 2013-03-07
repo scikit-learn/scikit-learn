@@ -13,10 +13,10 @@ from nose.tools import assert_raises, assert_true, assert_equal, assert_false
 
 from sklearn import svm, linear_model, datasets, metrics, base
 from sklearn.datasets.samples_generator import make_classification
-from sklearn.fixes import unique
 from sklearn.metrics import f1_score
 from sklearn.utils import check_random_state
 from sklearn.utils import ConvergenceWarning
+from sklearn.utils.fixes import unique
 from sklearn.utils.testing import assert_greater, assert_less
 
 # toy sample
