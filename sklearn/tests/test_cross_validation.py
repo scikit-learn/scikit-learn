@@ -475,6 +475,34 @@ def test_cross_val_generator_with_indices():
             y_train, y_test = y[train], y[test]
 
 
+def test_cross_val_generator_mask_indices_same():
+    # Test that the cross validation generators return the same results when
+    # indices=True and when indices=False
+    y = np.array([0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2])
+    labels = np.array([1, 1, 2, 3, 3, 3, 4])
+    
+    loo_mask = cval.LeaveOneOut(5, indices=False)
+    loo_ind = cval.LeaveOneOut(5, indices=True)
+    lpo_mask = cval.LeavePOut(10, 2, indices=False)
+    lpo_ind = cval.LeavePOut(10, 2, indices=True)
+    kf_mask = cval.KFold(10, 5, indices=False, shuffle=True, random_state=1)
+    kf_ind = cval.KFold(10, 5, indices=True, shuffle=True, random_state=1)
+    skf_mask = cval.StratifiedKFold(y, 3, indices=False)
+    skf_ind = cval.StratifiedKFold(y, 3, indices=True)
+    lolo_mask = cval.LeaveOneLabelOut(labels, indices=False)
+    lolo_ind = cval.LeaveOneLabelOut(labels, indices=True)
+    lopo_mask = cval.LeavePLabelOut(labels, 2, indices=False)
+    lopo_ind = cval.LeavePLabelOut(labels, 2, indices=True)
+    
+    for cv_mask, cv_ind in [(loo_mask, loo_ind), (lpo_mask, lpo_ind),
+            (kf_mask, kf_ind), (skf_mask, skf_ind), (lolo_mask, lolo_ind),
+            (lopo_mask, lopo_ind)]:
+        for (train_mask, test_mask), (train_ind, test_ind) in \
+                zip(cv_mask, cv_ind):
+            assert_array_equal(np.where(train_mask == True)[0], train_ind)
+            assert_array_equal(np.where(test_mask == True)[0], test_ind)
+
+
 def test_bootstrap_errors():
     assert_raises(ValueError, cval.Bootstrap, 10, train_size=100)
     assert_raises(ValueError, cval.Bootstrap, 10, test_size=100)
