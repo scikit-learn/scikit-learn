@@ -65,6 +65,10 @@ Changelog
    - Performance improvements in :class:`isotonic.IsotonicRegression` by
      Nelle Varoquaux.
 
+   - :func:`metrics.accuracy_score` has an option normalize to return
+     the fraction or the number of correctly classified sample
+     by `Arnaud Joly`_.
+
 
 API changes summary
 -------------------

@@ -24,7 +24,8 @@ from scipy.spatial.distance import hamming as sp_hamming
 
 from ..externals.six.moves import zip
 from ..preprocessing import LabelBinarizer
-from ..utils import check_arrays, deprecated
+from ..utils import check_arrays
+from ..utils import deprecated
 from ..utils.multiclass import is_label_indicator_matrix
 from ..utils.multiclass import is_multilabel
 from ..utils.multiclass import unique_labels
@@ -33,6 +34,121 @@ from ..utils.multiclass import unique_labels
 ###############################################################################
 # General utilities
 ###############################################################################
+def _is_1d(x):
+    """Return True if x can be considered as a 1d vector.
+
+    This function allows to distinguish between a 1d vector, e.g. :
+        - ``np.array([1, 2])``
+        - ``np.array([[1, 2]])``
+        - ``np.array([[1], [2]])``
+
+    and 2d matrix, e.g.:
+        - ``np.array([[1, 2], [3, 4]])``
+
+
+    Parameters
+    ----------
+    x : numpy array.
+
+    Return
+    ------
+    is_1d : boolean,
+        Return True if x can be considered as a 1d vector.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics.metrics import _is_1d
+    >>> _is_1d([1, 2, 3])
+    True
+    >>> _is_1d(np.array([1, 2, 3]))
+    True
+    >>> _is_1d([[1, 2, 3]])
+    True
+    >>> _is_1d(np.array([[1, 2, 3]]))
+    True
+    >>> _is_1d([[1], [2], [3]])
+    True
+    >>> _is_1d(np.array([[1], [2], [3]]))
+    True
+    >>> _is_1d([[1, 2], [3, 4]])
+    False
+    >>> _is_1d(np.array([[1, 2], [3, 4]]))
+    False
+
+    See also
+    --------
+    _check_1d_array
+
+    """
+    return np.size(x) == np.max(np.shape(x))
+
+
+def _check_1d_array(y1, y2, ravel=False):
+    """Check that y1 and y2 are vectors of the same shape.
+
+    It convert 1d arrays (y1 and y2) of various shape to a common shape
+    representation. Note that ``y1`` and ``y2`` should have the same number of
+    element.
+
+    Parameters
+    ----------
+    y1 : array-like,
+        y1 must be a "vector".
+
+    y2 : array-like
+        y2 must be a "vector".
+
+    ravel : boolean, optional (default=False),
+        If ``ravel``` is set to ``True``, then ``y1`` and ``y2`` are raveled.
+
+    Returns
+    -------
+    y1 : numpy array,
+        If ``ravel`` is set to ``True``, return np.ravel(y1), else
+        return y1.
+
+    y2 : numpy array,
+        Return y2  reshaped to have the shape of y1.
+
+    Examples
+    --------
+    >>> from numpy import array
+    >>> from sklearn.metrics.metrics import _check_1d_array
+    >>> _check_1d_array([1, 2], [[3, 4]])
+    (array([1, 2]), array([3, 4]))
+    >>> _check_1d_array([[1, 2]], [[3], [4]])
+    (array([[1, 2]]), array([[3, 4]]))
+    >>> _check_1d_array([[1], [2]], [[3, 4]])
+    (array([[1],
+           [2]]), array([[3],
+           [4]]))
+    >>> _check_1d_array([[1], [2]], [[3, 4]], ravel=True)
+    (array([1, 2]), array([3, 4]))
+
+    See also
+    --------
+    _is_1d
+
+    """
+    y1 = np.asarray(y1)
+    y2 = np.asarray(y2)
+
+    if not _is_1d(y1):
+        raise ValueError("y1 can't be considered as a vector")
+
+    if not _is_1d(y2):
+        raise ValueError("y2 can't be considered as a vector")
+
+    if ravel:
+        return np.ravel(y1), np.ravel(y2)
+    else:
+        if np.shape(y1) != np.shape(y2):
+            y2 = np.reshape(y2, np.shape(y1))
+
+        return y1, y2
+
+
 def auc(x, y, reorder=False):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
@@ -47,7 +163,7 @@ def auc(x, y, reorder=False):
     y : array, shape = [n]
         y coordinates.
 
-    reorder : boolean, optional
+    reorder : boolean, optional (default=False)
         If True, assume that the curve is ascending in the case of ties, as for
         an ROC curve. If the curve is non-ascending, the result will be wrong.
 
@@ -299,6 +415,9 @@ def matthews_corrcoef(y_true, y_pred):
     -0.33...
 
     """
+    y_true, y_pred = check_arrays(y_true, y_pred)
+    y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=True)
+
     mcc = np.corrcoef(y_true, y_pred)[0, 1]
     if np.isnan(mcc):
         return 0.
@@ -655,8 +774,8 @@ def zero_one_loss(y_true, y_pred, normalize=True):
     y_pred : array-like or list of labels or label indicator matrix
         Predicted labels, as returned by a classifier.
 
-    normalize : bool, optional
-        If ``False`` (default), return the number of misclassifications.
+    normalize : bool, optional (default=True)
+        If ``False``, return the number of misclassifications.
         Otherwise, return the fraction of misclassifications.
 
     Returns
@@ -696,34 +815,19 @@ def zero_one_loss(y_true, y_pred, normalize=True):
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
-
-    if is_multilabel(y_true):    
-        # Handle mix representation
-        if type(y_true) != type(y_pred):
-            labels = unique_labels(y_true, y_pred)
-            lb = LabelBinarizer()
-            lb.fit([labels.tolist()])
-            y_true = lb.transform(y_true)
-            y_pred = lb.transform(y_pred)
-
-        if is_label_indicator_matrix(y_true):
-            loss = (y_pred != y_true).sum(axis=1) > 0
-        else:
-            # numpy 1.3 : it is required to perform a unique before setxor1d
-            #             to get unique label in numpy 1.3.
-            #             This is needed in order to handle redundant labels.
-            # FIXME : check if this can be simplified when 1.3 is removed        
-            loss = np.array([np.size(np.setxor1d(np.unique(pred),
-                                                 np.unique(true))) > 0
-                             for pred, true in zip(y_pred, y_true)])
-    else:
-        y_true, y_pred = check_arrays(y_true, y_pred)
-        loss = y_true != y_pred
+    score = accuracy_score(y_true, y_pred, normalize=normalize)
 
     if normalize:
-        return np.mean(loss)
+        return 1 - score
     else:
-        return np.sum(loss)
+        if hasattr(y_true, "shape"):
+            n_samples = (np.max(y_true.shape) if _is_1d(y_true)
+                         else y_true.shape[0])
+
+        else:
+            n_samples = len(y_true)
+
+        return n_samples - score
 
 
 @deprecated("Function 'zero_one' has been renamed to "
@@ -743,7 +847,7 @@ def zero_one(y_true, y_pred, normalize=False):
 
     y_pred : array-like
 
-    normalize : bool, optional
+    normalize : bool, optional (default=False)
         If ``False`` (default), return the number of misclassifications.
         Otherwise, return the fraction of misclassifications.
 
@@ -771,7 +875,7 @@ def zero_one(y_true, y_pred, normalize=False):
 ###############################################################################
 # Multiclass score functions
 ###############################################################################
-def accuracy_score(y_true, y_pred):
+def accuracy_score(y_true, y_pred, normalize=True):
     """Accuracy classification score.
 
     Parameters
@@ -781,6 +885,10 @@ def accuracy_score(y_true, y_pred):
 
     y_pred : array-like or list of labels or label indicator matrix
         Predicted labels, as returned by a classifier.
+
+    normalize : bool, optional (default=True)
+        If ``False``, return the number of correctly classified samples.
+        Otherwise, return the fraction of correctly classified samples.
 
     Returns
     -------
@@ -806,6 +914,8 @@ def accuracy_score(y_true, y_pred):
     >>> y_true = [0, 1, 2, 3]
     >>> accuracy_score(y_true, y_pred)
     0.5
+    >>> accuracy_score(y_true, y_pred, normalize=False)
+    2
 
     In the multilabel case with binary indicator format:
 
@@ -841,9 +951,15 @@ def accuracy_score(y_true, y_pred):
                              for pred, true in zip(y_pred, y_true)])
     else:
         y_true, y_pred = check_arrays(y_true, y_pred)
+
+        # Handle mix shape
+        y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=True)
         score = y_true == y_pred
 
-    return np.mean(score)
+    if normalize:
+        return np.mean(score)
+    else:
+        return np.sum(score)
 
 
 def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
@@ -1146,6 +1262,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         raise ValueError("beta should be >0 in the F-beta score")
 
     y_true, y_pred = check_arrays(y_true, y_pred)
+    y_true, y_pred = _check_1d_array(y_true, y_pred)
+
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
@@ -1589,6 +1707,9 @@ def hamming_loss(y_true, y_pred, classes=None):
             return np.mean(loss) / np.size(classes)
 
     else:
+        y_true, y_pred = check_arrays(y_true, y_pred)
+        y_true, y_pred = _check_1d_array(y_true, y_pred)
+
         return sp_hamming(y_true, y_pred)
 
 
@@ -1625,6 +1746,11 @@ def mean_absolute_error(y_true, y_pred):
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
+
+    # Handle mix 1d representation
+    if _is_1d(y_true):
+        y_true, y_pred = _check_1d_array(y_true, y_pred)
+
     return np.mean(np.abs(y_pred - y_true))
 
 
@@ -1658,6 +1784,11 @@ def mean_squared_error(y_true, y_pred):
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
+
+    # Handle mix 1d representation
+    if _is_1d(y_true):
+        y_true, y_pred = _check_1d_array(y_true, y_pred)
+
     return np.mean((y_pred - y_true) ** 2)
 
 
@@ -1696,6 +1827,11 @@ def explained_variance_score(y_true, y_pred):
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
+
+    # Handle mix 1d representation
+    if _is_1d(y_true):
+        y_true, y_pred = _check_1d_array(y_true, y_pred)
+
     numerator = np.var(y_true - y_pred)
     denominator = np.var(y_true)
     if denominator == 0.0:
@@ -1752,6 +1888,11 @@ def r2_score(y_true, y_pred):
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
+
+    # Handle mix 1d representation
+    if _is_1d(y_true):
+        y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=True)
+
     if len(y_true) == 1:
         raise ValueError("r2_score can only be computed given more than one"
                          " sample.")
