@@ -474,6 +474,7 @@ def test_cross_val_generator_with_indices():
             X_train, X_test = X[train], X[test]
             y_train, y_test = y[train], y[test]
 
+
 def test_cross_val_generator_mask_indices_same():
     # Test that the cross validation generators return the same results when
     # indices=True and when indices=False
@@ -500,6 +501,7 @@ def test_cross_val_generator_mask_indices_same():
                 zip(cv_mask, cv_ind):
             assert_array_equal(np.where(train_mask == True)[0], train_ind)
             assert_array_equal(np.where(test_mask == True)[0], test_ind)
+
 
 def test_bootstrap_errors():
     assert_raises(ValueError, cval.Bootstrap, 10, train_size=100)
