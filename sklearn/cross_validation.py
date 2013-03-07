@@ -289,8 +289,9 @@ class KFold(object):
             test_index[self.idxs[start:stop]] = True
             train_index = np.logical_not(test_index)
             if self.indices:
-                train_index = self.idxs[train_index]
-                test_index = self.idxs[test_index]
+                ind = np.arange(n)
+                train_index = ind[train_index]
+                test_index = ind[test_index]
             current = stop
             yield train_index, test_index
 
