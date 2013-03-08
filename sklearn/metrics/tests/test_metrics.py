@@ -208,15 +208,19 @@ def test_auc_score_non_binary_class():
     """Test that auc_score function returns an error when trying to compute AUC
     for non-binary class values.
     """
-    # y_true contains only one class value
-    y_true = np.ones(10, dtype="int")
     y_pred = np.random.rand(10)
+    # y_true contains only one class value
+    y_true = np.zeros(10, dtype="int")
     assert_raise_message(ValueError, "AUC is defined for binary "
                          "classification only", auc_score, y_true, y_pred)
-    
+    y_true = np.ones(10, dtype="int")
+    assert_raise_message(ValueError, "AUC is defined for binary "
+                         "classification only", auc_score, y_true, y_pred)
+    y_true = -np.ones(10, dtype="int")
+    assert_raise_message(ValueError, "AUC is defined for binary "
+                         "classification only", auc_score, y_true, y_pred)
     # y_true contains three different class values
     y_true = np.random.randint(0, 3, size=10)
-    y_pred = np.random.rand(10)
     assert_raise_message(ValueError, "AUC is defined for binary "
                          "classification only", auc_score, y_true, y_pred)
 
