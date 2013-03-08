@@ -7,6 +7,7 @@ import numpy as np
 from scipy import interpolate
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import as_float_array, check_arrays
+from ._isotonic import _isotonic_regression
 
 
 def isotonic_regression(y, weight=None, y_min=None, y_max=None):
@@ -46,8 +47,11 @@ def isotonic_regression(y, weight=None, y_min=None, y_max=None):
     "Active set algorithms for isotonic regression; A unifying framework"
     by Michael J. Best and Nilotpal Chakravarti, section 3.
     """
+    y = np.asarray(y, dtype=np.float)
     if weight is None:
         weight = np.ones(len(y), dtype=y.dtype)
+    else:
+        weight = np.asarray(weight, dtype=np.float)
     if y_min is not None or y_max is not None:
         y = np.copy(y)
         weight = np.copy(weight)
@@ -59,42 +63,8 @@ def isotonic_regression(y, weight=None, y_min=None, y_max=None):
             y[-1] = y_max
             weight[-1] = C
 
-    active_set = [(weight[i] * y[i], weight[i], [i, ])
-                  for i in range(len(y))]
-    current = 0
-
-    while current < len(active_set) - 1:
-        value0, value1, value2 = 0, 0, np.inf
-        weight0, weight1, weight2 = 1, 1, 1
-        while value0 * weight1 <= value1 * weight0 and \
-                current < len(active_set) - 1:
-            value0, weight0, idx0 = active_set[current]
-            value1, weight1, idx1 = active_set[current + 1]
-            if value0 * weight1 <= value1 * weight0:
-                current += 1
-
-        if current == len(active_set) - 1:
-            break
-
-        # merge two groups
-        value0, weight0, idx0 = active_set.pop(current)
-        value1, weight1, idx1 = active_set.pop(current)
-        active_set.insert(current,
-                          (value0 + value1,
-                           weight0 + weight1, idx0 + idx1))
-        while value2 * weight0 > value0 * weight2 and current > 0:
-            value0, weight0, idx0 = active_set[current]
-            value2, weight2, idx2 = active_set[current - 1]
-            if weight0 * value2 >= weight2 * value0:
-                active_set.pop(current)
-                active_set[current - 1] = (value0 + value2, weight0 + weight2,
-                                           idx0 + idx2)
-                current -= 1
-
     solution = np.empty(len(y))
-    for value, weight, idx in active_set:
-        solution[idx] = value / weight
-    return solution
+    return _isotonic_regression(y, weight, solution)
 
 
 class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
