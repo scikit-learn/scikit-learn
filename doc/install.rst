@@ -66,10 +66,9 @@ you can install all these requirements by issuing::
 
     Using OpenBLAS can give speedups in some scikit-learn modules,
     but it doesn't play nicely with joblib/multiprocessing,
-    so using it is not recommended
-    unless you know what you're doing.
+    so using it is not recommended unless you know what you're doing.
 
-    If you do don't to use OpenBLAS, then replacing ATLAS
+    If you do want to use OpenBLAS, then replacing ATLAS
     only requires two commands.
     ATLAS has to be removed, otherwise NumPy may not work::
 
