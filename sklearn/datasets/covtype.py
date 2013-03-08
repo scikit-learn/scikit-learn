@@ -14,7 +14,10 @@ from io import BytesIO
 import logging
 import os
 from os.path import exists, join
-from urllib2 import urlopen
+try:
+    from urllib2 import urlopen
+except ImportError:
+    from urllib.request import urlopen
 
 import numpy as np
 

@@ -10,6 +10,8 @@ from collections import Sequence
 
 import numpy as np
 
+from ..externals.six import string_types
+
 
 def unique_labels(*lists_of_labels):
     """Extract an ordered array of unique labels
@@ -129,4 +131,4 @@ def is_multilabel(y):
     # the explicit check for ndarray is for forward compatibility; future
     # versions of Numpy might want to register ndarray as a Sequence
     return (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) and
-            not isinstance(y[0], basestring) or is_label_indicator_matrix(y))
+            not isinstance(y[0], string_types) or is_label_indicator_matrix(y))

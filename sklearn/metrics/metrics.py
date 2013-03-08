@@ -16,13 +16,13 @@ the lower the better
 
 from __future__ import division
 
-from itertools import izip
 import warnings
 import numpy as np
 
 from scipy.sparse import coo_matrix
 from scipy.spatial.distance import hamming as sp_hamming
 
+from ..externals.six.moves import zip
 from ..preprocessing import LabelBinarizer
 from ..utils import check_arrays, deprecated
 from ..utils.multiclass import is_label_indicator_matrix
@@ -396,7 +396,7 @@ def precision_recall_curve(y_true, probas_pred):
     # select all labels associated with the predictions. By incrementally
     # keeping track of the number of positive and negative labels seen so far,
     # we can calculate precision and recall.
-    for l_idx, r_idx in izip(threshold_idxs[:-1], threshold_idxs[1:]):
+    for l_idx, r_idx in zip(threshold_idxs[:-1], threshold_idxs[1:]):
         threshold_labels = y_true[l_idx:r_idx]
         n_at_threshold = r_idx - l_idx
         n_pos_at_threshold = threshold_labels.sum()
@@ -714,7 +714,7 @@ def zero_one_loss(y_true, y_pred, normalize=True):
             # FIXME : check if this can be simplified when 1.3 is removed        
             loss = np.array([np.size(np.setxor1d(np.unique(pred),
                                                  np.unique(true))) > 0
-                             for pred, true in izip(y_pred, y_true)])
+                             for pred, true in zip(y_pred, y_true)])
     else:
         y_true, y_pred = check_arrays(y_true, y_pred)
         loss = y_true != y_pred
@@ -837,7 +837,7 @@ def accuracy_score(y_true, y_pred):
             # FIXME : check if this can be simplified when 1.3 is removed
             score = np.array([np.size(np.setxor1d(np.unique(pred),
                                                   np.unique(true))) == 0
-                             for pred, true in izip(y_pred, y_true)])
+                             for pred, true in zip(y_pred, y_true)])
     else:
         y_true, y_pred = check_arrays(y_true, y_pred)
         score = y_true == y_pred
@@ -1599,7 +1599,7 @@ def hamming_loss(y_true, y_pred, classes=None):
             # FIXME : check if this can be simplified when 1.3 is removed
             loss = np.array([np.size(np.setxor1d(np.unique(pred),
                                                  np.unique(true)))
-                             for pred, true in izip(y_pred, y_true)])
+                             for pred, true in zip(y_pred, y_true)])
 
             return np.mean(loss) / np.size(classes)
 
