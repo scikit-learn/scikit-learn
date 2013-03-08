@@ -63,14 +63,16 @@ you can install all these requirements by issuing::
     (the Basic Linear Algebra Subprograms library).
     Ubuntu 11.10 and later, and recent (testing) versions of Debian,
     offer an alternative implementation called OpenBLAS.
-    While this implementation has some issues
-    (please don't file bug reports about this),
-    it may offer a significant speedup to some modules of scikit-learn,
-    especially on multicore hardware.
-    Replacing ATLAS with OpenBLAS only requires two commands::
 
-        # NumPy may not run when both ATLAS and OpenBLAS are installed,
-        # so remove the former.
+    Using OpenBLAS can give speedups in some scikit-learn modules,
+    but it doesn't play nicely with joblib/multiprocessing,
+    so using it is not recommended
+    unless you know what you're doing.
+
+    If you do don't to use OpenBLAS, then replacing ATLAS
+    only requires two commands.
+    ATLAS has to be removed, otherwise NumPy may not work::
+
         sudo apt-get remove libatlas3gf-base libatlas-dev
         sudo apt-get install libopenblas-dev
 
