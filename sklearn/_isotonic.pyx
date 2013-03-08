@@ -23,9 +23,9 @@ def _isotonic_regression(np.ndarray[DOUBLE, ndim=1] y,
     current = 0
 
     while current < len_active_set - 1:
-        while (active_set[current][0] * active_set[current + 1][1] <= 
-               active_set[current][1] * active_set[current + 1][0]) and \
-                current < len_active_set - 1:
+        while current < len_active_set -1 and \
+              (active_set[current][0] * active_set[current + 1][1] <= 
+               active_set[current][1] * active_set[current + 1][0]):
             current += 1
 
         if current == len_active_set - 1:
