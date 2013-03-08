@@ -203,6 +203,7 @@ def test_auc_errors():
     # Too few x values
     assert_raises(ValueError, auc, [0.0], [0.1])
 
+
 def test_auc_score_non_binary_class():
     """Test that auc_score function returns an error when trying to compute AUC
     for non-binary class values.
@@ -218,6 +219,7 @@ def test_auc_score_non_binary_class():
     y_pred = np.random.rand(10)
     assert_raise_message(ValueError, "AUC is defined for binary " \
                          "classification only", auc_score, y_true, y_pred)
+
 
 def test_precision_recall_f1_score_binary():
     """Test Precision Recall and F1 Score for binary classification task"""
