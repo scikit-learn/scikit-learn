@@ -23,8 +23,8 @@ def compute_class_weight(class_weight, classes, y_ind):
         ``np.unique(y_org)`` with ``y_org`` the original class labels.
 
     y_ind : array-like, shape=(n_samples,), dtype=int
-            Array of class indices per sample;
-            0 <= y_ind[i] < n_classes for i in range(n_samples).
+        Array of class indices per sample;
+        0 <= y_ind[i] < n_classes for i in range(n_samples).
 
     Returns
     -------
@@ -36,7 +36,7 @@ def compute_class_weight(class_weight, classes, y_ind):
         # uniform class weights
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
     elif class_weight == 'auto':
-        # anti-proportional to the number of samples in the class
+        # inversely proportional to the number of samples in the class
         counts = bincount(y_ind, minlength=len(classes))
         counts = np.maximum(counts, 1)
         weight = 1. / counts
