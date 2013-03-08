@@ -567,7 +567,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         Maximum number of iterations of the k-means algorithm for a
         single run.
 
-    n_init: int, optional, default: 10
+    n_init : int, optional, default: 10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
@@ -588,10 +588,10 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     precompute_distances : boolean
         Precompute distances (faster but takes more memory).
 
-    tol: float, optional default: 1e-4
+    tol : float, optional default: 1e-4
         Relative tolerance w.r.t. inertia to declare convergence
 
-    n_jobs: int
+    n_jobs : int
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
@@ -601,20 +601,20 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
-    random_state: integer or numpy.RandomState, optional
+    random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
     Attributes
     ----------
-    `cluster_centers_`: array, [n_clusters, n_features]
+    `cluster_centers_` : array, [n_clusters, n_features]
         Coordinates of cluster centers
 
-    `labels_`:
+    `labels_` :
         Labels of each point
 
-    `inertia_`: float
+    `inertia_` : float
         The value of the inertia criterion associated with the chosen
         partition.
 
@@ -739,7 +739,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             New data to transform.
 
         Returns
@@ -764,7 +764,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             New data to predict.
 
         Returns
@@ -782,12 +782,12 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             New data.
 
         Returns
         -------
-        score: float
+        score : float
             Opposite of the value of X on the K-means objective.
         """
         self._check_fitted()
@@ -1012,10 +1012,10 @@ class MiniBatchKMeans(KMeans):
         To disable convergence detection based on normalized center
         change, set tol to 0.0 (default).
 
-    batch_size: int, optional, default: 100
+    batch_size : int, optional, default: 100
         Size of the mini batches.
 
-    init_size: int, optional, default: 3 * batch_size
+    init_size : int, optional, default: 3 * batch_size
         Number of samples to randomly sample for speeding up the
         initialization (sometimes at the expense of accurracy): the
         only algorithm is initialized by running a batch KMeans on a
@@ -1035,16 +1035,16 @@ class MiniBatchKMeans(KMeans):
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
-    compute_labels: boolean
+    compute_labels : boolean
         Compute label assignements and inertia for the complete dataset
         once the minibatch optimization has converged in fit.
 
-    random_state: integer or numpy.RandomState, optional
+    random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
-    reassignment_ratio: float, optional
+    reassignment_ratio : float, optional
         Control the fraction of the maximum number of counts for a
         center to be reassigned. A higher value means that low count
         centers are more easily reassigned, which means that the
@@ -1055,13 +1055,13 @@ class MiniBatchKMeans(KMeans):
     Attributes
     ----------
 
-    `cluster_centers_`: array, [n_clusters, n_features]
+    `cluster_centers_` : array, [n_clusters, n_features]
         Coordinates of cluster centers
 
-    `labels_`:
+    `labels_` :
         Labels of each point (if compute_labels is set to True).
 
-    `inertia_`: float
+    `inertia_` : float
         The value of the inertia criterion associated with the chosen
         partition (if compute_labels is set to True). The inertia is
         defined as the sum of square distances of samples to their nearest
@@ -1094,7 +1094,7 @@ class MiniBatchKMeans(KMeans):
 
         Parameters
         ----------
-        X: array-like, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             Coordinates of the data points to cluster
         """
         random_state = check_random_state(self.random_state)
@@ -1222,7 +1222,7 @@ class MiniBatchKMeans(KMeans):
 
         Parameters
         ----------
-        X: array-like, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             Coordinates of the data points to cluster.
         """
 
