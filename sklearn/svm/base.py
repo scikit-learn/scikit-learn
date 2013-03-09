@@ -353,11 +353,23 @@ class BaseLibSVM(BaseEstimator):
             Returns the decision function of the sample for each class
             in the model.
         """
-        if self._sparse:
-            raise NotImplementedError("Decision_function not supported for"
-                                      " sparse SVM.")
 
         X = self._validate_for_predict(X)
+
+        if self._sparse:
+            dec_func = self._sparse_decision_function(X)
+        else:
+            dec_func = self._dense_decision_function(X)
+
+        # In binary case, we need to flip the sign of coef, intercept and
+        # decision function.
+        if self.impl != 'one_class' and len(self.classes_) == 2: 
+            return -dec_func
+
+        return dec_func
+
+    def _dense_decision_function(self, X):
+        X = array2d(X, dtype=np.float64, order="C")
 
         C = 0.0  # C is not useful here
 
@@ -365,7 +377,7 @@ class BaseLibSVM(BaseEstimator):
         if callable(kernel):
             kernel = 'precomputed'
 
-        dec_func = libsvm.decision_function(
+        return libsvm.decision_function(
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self._intercept_, self._label,
             self.probA_, self.probB_,
@@ -375,12 +387,27 @@ class BaseLibSVM(BaseEstimator):
             shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
             coef0=self.coef0, gamma=self._gamma, epsilon=self.epsilon)
 
-        # In binary case, we need to flip the sign of coef, intercept and
-        # decision function.
-        if self.impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
-            return -dec_func
+    def _sparse_decision_function(self, X):
+        X.data = np.asarray(X.data, dtype=np.float64, order='C')
 
-        return dec_func
+        kernel = self.kernel
+        if hasattr(kernel, '__call__'):
+            kernel = 'precomputed'
+
+        kernel_type = self._sparse_kernels.index(kernel)
+
+        return libsvm_sparse.libsvm_sparse_decision_function(
+            X.data, X.indices, X.indptr,
+            self.support_vectors_.data,
+            self.support_vectors_.indices,
+            self.support_vectors_.indptr,
+            self.dual_coef_.data, self._intercept_,
+            LIBSVM_IMPL.index(self.impl), kernel_type,
+            self.degree, self.gamma, self.coef0, self.tol,
+            self.C, self.class_weight_,
+            self.nu, self.epsilon, self.shrinking,
+            self.probability, self.n_support_, self._label,
+            self.probA_, self.probB_)
 
     def _validate_for_predict(self, X):
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
