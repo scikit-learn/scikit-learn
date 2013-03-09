@@ -3,6 +3,10 @@
 #cython: wraparound=False
 #cython: cdivision=True
 
+# By Jake Vanderplas (2013) <jakevdp@cs.washington.edu>
+# written for the scikit-learn project
+# License: BSD
+
 __all__ = ['KDTree']
 
 DOC_DICT = {'BinaryTree':'KDTree', 'binary_tree':'kd_tree'}
@@ -19,22 +23,25 @@ cdef void allocate_data(BinaryTree bt, ITYPE_t n_nodes, ITYPE_t n_features):
 cdef void init_node(BinaryTree bt, ITYPE_t i_node,
                     ITYPE_t idx_start, ITYPE_t idx_end):
     cdef ITYPE_t n_features = bt.data.shape[1]
-    cdef ITYPE_t i, j, idx_i
+    cdef ITYPE_t i, j
+
+    cdef DTYPE_t* lower_bounds = &bt.node_bounds[0, i_node, 0]
+    cdef DTYPE_t* upper_bounds = &bt.node_bounds[1, i_node, 0]
+    cdef DTYPE_t* data = &bt.data[0, 0]
+    cdef ITYPE_t* idx_array = &bt.idx_array[0]
+
+    cdef DTYPE_t* data_row
 
     # determine Node bounds
     for j in range(n_features):
-        bt.node_bounds[0, i_node, j] = INF
-        bt.node_bounds[1, i_node, j] = -INF
+        lower_bounds[j] = INF
+        upper_bounds[j] = -INF
 
     for i in range(idx_start, idx_end):
-        idx_i = bt.idx_array[i]
+        data_row = data + idx_array[i] * n_features
         for j in range(n_features):
-            bt.node_bounds[0, i_node, j] =\
-                fmin(bt.node_bounds[0, i_node, j],
-                     bt.data[idx_i, j])
-            bt.node_bounds[1, i_node, j] =\
-                fmax(bt.node_bounds[1, i_node, j],
-                     bt.data[idx_i, j])
+            lower_bounds[j] = fmin(lower_bounds[j], data_row[j])
+            upper_bounds[j] = fmax(upper_bounds[j], data_row[j])
 
     bt.node_data[i_node].idx_start = idx_start
     bt.node_data[i_node].idx_end = idx_end
