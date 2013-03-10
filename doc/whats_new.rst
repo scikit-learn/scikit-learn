@@ -72,6 +72,12 @@ API changes summary
    - Fixed bug in :class:`KFold` causing imperfect class balance in some
      cases. By `Alexandre Gramfort`_ and Tadej Janež.
 
+   - :class:`sklearn.decomposition.KernelPCA` now always returns output with
+     ``n_components`` components, unless the new parameter ``remove_zero_eig``
+     is set to ``True``. This new behavior is consistent with the way
+     kernel PCA was always documented; previously, the removal of components
+     with zero eigenvalues was tacitly performed on all data.
+
 
 .. _changes_0_13_1:
 
