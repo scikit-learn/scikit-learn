@@ -47,7 +47,7 @@ def isotonic_regression(y, weight=None, y_min=None, y_max=None):
     "Active set algorithms for isotonic regression; A unifying framework"
     by Michael J. Best and Nilotpal Chakravarti, section 3.
     """
-    y = as_float_array(y)
+    y = np.asarray(y, dtype=np.float)
     if weight is None:
         weight = np.ones(len(y), dtype=y.dtype)
     else:
