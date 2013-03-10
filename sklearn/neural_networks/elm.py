@@ -111,9 +111,6 @@ class ELMRegressor(BaseELM, RegressorMixin):
 
     Attributes
     ----------
-    `coefs_` : numpy array
-        Fitted regression coefficients if no regressor supplied.
-
     `fitted_` : bool
         Flag set when fit has been called already.
 
@@ -185,7 +182,7 @@ class ELMRegressor(BaseELM, RegressorMixin):
 
         return self
 
-    def _get_predictions(self, X):
+    def _get_predictions(self):
         """get predictions using internal least squares/supplied regressor"""
         if (self.regressor is None):
             preds = self._lin_reg.predict(self.hidden_activations_)
@@ -214,7 +211,7 @@ class ELMRegressor(BaseELM, RegressorMixin):
         self.hidden_activations_ = self.hidden_layer.transform(X)
 
         # compute output predictions for new hidden activations
-        predictions = self._get_predictions(X)
+        predictions = self._get_predictions()
 
         return predictions
 

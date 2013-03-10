@@ -367,7 +367,7 @@ class RBFRandomHiddenLayer(BaseRandomHiddenLayer):
 
         sparse = sp.issparse(X)
         self._compute_centers(X, sparse)
-        self._compute_radii(X, sparse)
+        self._compute_radii(X)
 
     def _compute_input_activations(self, X):
         """Compute input activations given X"""
@@ -412,7 +412,7 @@ class RBFRandomHiddenLayer(BaseRandomHiddenLayer):
         self.components_['centers'] = centers
 
     # compute radii
-    def _compute_radii(self, X, sparse):
+    def _compute_radii(self, X):
         # use supplied radii
         if (self.radii is not None):
             radii = self.radii
