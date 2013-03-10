@@ -252,7 +252,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_componentsi : int or None
+    n_components : int or None
         Number of components, if n_components is not set all components
         are kept
 
