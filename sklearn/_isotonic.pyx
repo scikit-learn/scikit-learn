@@ -3,7 +3,6 @@ cimport numpy as np
 cimport cython
 
 ctypedef np.float64_t DOUBLE
-ctypedef np.int32_t INT
 
 
 @cython.boundscheck(False)
@@ -14,10 +13,11 @@ def _isotonic_regression(np.ndarray[DOUBLE, ndim=1] y,
                          np.ndarray[DOUBLE, ndim=1] solution):
 
     cdef:
-        unsigned int current, i, len_active_set
+        Py_ssize_t current, i
+        unsigned int len_active_set
         DOUBLE v, w
 
-    len_active_set = len(y)
+    len_active_set = y.shape[0]
     active_set = [[weight[i] * y[i], weight[i], [i, ]]
                   for i in range(len_active_set)]
     current = 0

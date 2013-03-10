@@ -51,7 +51,7 @@ def isotonic_regression(y, weight=None, y_min=None, y_max=None):
     if weight is None:
         weight = np.ones(len(y), dtype=y.dtype)
     else:
-        weight = as_float_array(weight)
+        weight = np.asarray(weight, dtype=np.float)
     if y_min is not None or y_max is not None:
         y = np.copy(y)
         weight = np.copy(weight)
