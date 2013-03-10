@@ -2,6 +2,8 @@
 The :mod:`sklearn.utils` module includes various utilites.
 """
 
+from collections import Sequence
+
 import numpy as np
 from scipy.sparse import issparse
 import warnings
@@ -344,6 +346,16 @@ def gen_even_slices(n, n_packs):
             end = start + this_n
             yield slice(start, end, None)
             start = end
+
+
+def tosequence(x):
+    """Cast iterable x to a Sequence, avoiding a copy if possible."""
+    if isinstance(x, np.ndarray):
+        return np.asarray(x)
+    elif isinstance(x, Sequence):
+        return x
+    else:
+        return list(x)
 
 
 class ConvergenceWarning(Warning):

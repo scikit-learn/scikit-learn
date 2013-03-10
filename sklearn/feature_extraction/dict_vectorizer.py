@@ -10,17 +10,15 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
-from ..utils import atleast2d_or_csr
+from ..utils import atleast2d_or_csr, tosequence
 
 
 def _tosequence(X):
     """Turn X into a sequence or ndarray, avoiding a copy if possible."""
-    if isinstance(X, Mapping):
+    if isinstance(X, Mapping):  # single sample
         return [X]
-    elif isinstance(X, (Sequence, np.ndarray)):
-        return X
     else:
-        return list(X)
+        return tosequence(X)
 
 
 class DictVectorizer(BaseEstimator, TransformerMixin):
