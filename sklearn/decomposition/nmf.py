@@ -299,9 +299,9 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         Non-negative components of the data.
 
     `reconstruction_err_` : number
-        Frobenius norm of the matrix difference between the
-        training data and the reconstructed data from the
-        fit produced by the model. ``|| X - WH ||_2``
+        Frobenius norm of the matrix difference between
+        the training data and the reconstructed data from
+        the fit produced by the model. ``|| X - WH ||_2``
 
     Examples
     --------
