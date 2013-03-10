@@ -524,10 +524,10 @@ class GridSearchCV(BaseSearchCV):
     fit_params : dict, optional
         Parameters to pass to the fit method.
 
-    n_jobs: int, optional
+    n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
 
-    pre_dispatch: int, or string, optional
+    pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
@@ -544,7 +544,7 @@ class GridSearchCV(BaseSearchCV):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    iid: boolean, optional
+    iid : boolean, optional
         If True, the data is assumed to be identically distributed across
         the folds, and the loss minimized is the total loss per sample,
         and not the mean loss across the folds.
@@ -554,12 +554,12 @@ class GridSearchCV(BaseSearchCV):
         Specific crossvalidation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects
 
-    refit: boolean
+    refit : boolean
         Refit the best estimator with the entire dataset.
         If "False", it is impossible to make predictions using
         this GridSearchCV instance after fitting.
 
-    verbose: integer
+    verbose : integer
         Controls the verbosity: the higher, the more messages.
 
     Examples
@@ -693,16 +693,16 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Parameters
     ----------
-    estimator: object type that implements the "fit" and "predict" methods
+    estimator : object type that implements the "fit" and "predict" methods
         A object of that type is instantiated for each parameter setting.
 
-    param_distribution: dict
+    param_distribution : dict
         Dictionary with parameters names (string) as keys and distributions
         or lists of parameters to try. Distributions must provide a ``rvs``
         method for sampling (such as those from scipy.stats.distributions).
         If a list is given, it is sampled uniformly.
 
-    n_iter: int, default=10
+    n_iter : int, default=10
         Number of parameter settings that are sampled. n_iter trades
         off runtime vs qualitiy of the solution.
 
@@ -715,10 +715,10 @@ class RandomizedSearchCV(BaseSearchCV):
     fit_params : dict, optional
         Parameters to pass to the fit method.
 
-    n_jobs: int, optional
+    n_jobs : int, optional
         Number of jobs to run in parallel (default 1).
 
-    pre_dispatch: int, or string, optional
+    pre_dispatch : int, or string, optional
         Controls the number of jobs that get dispatched during parallel
         execution. Reducing this number can be useful to avoid an
         explosion of memory consumption when more jobs get dispatched
@@ -735,7 +735,7 @@ class RandomizedSearchCV(BaseSearchCV):
             - A string, giving an expression as a function of n_jobs,
               as in '2*n_jobs'
 
-    iid: boolean, optional
+    iid : boolean, optional
         If True, the data is assumed to be identically distributed across
         the folds, and the loss minimized is the total loss per sample,
         and not the mean loss across the folds.
@@ -745,12 +745,12 @@ class RandomizedSearchCV(BaseSearchCV):
         Specific crossvalidation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects
 
-    refit: boolean
+    refit : boolean
         Refit the best estimator with the entire dataset.
         If "False", it is impossible to make predictions using
         this RandomizedSearchCV instance after fitting.
 
-    verbose: integer
+    verbose : integer
         Controls the verbosity: the higher, the more messages.
 
 

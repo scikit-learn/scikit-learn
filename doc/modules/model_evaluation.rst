@@ -665,6 +665,8 @@ The following figure shows an example of such ROC curve.
     for an example of receiver operating characteristic (ROC) metric to
     model species distribution.
 
+.. _zero_one_loss:
+
 Zero one loss
 --------------
 The :func:`zero_one_loss` function computes the sum or the average of the 0-1
