@@ -1104,7 +1104,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     recall: float (if average is not None) or array of float, , shape =\
         [n_unique_labels]
 
-    f1_score: float (if average is not None) or array of float, shape =\
+    fbeta_score: float (if average is not None) or array of float, shape =\
         [n_unique_labels]
 
     support: int (if average is not None) or array of int, shape =\
