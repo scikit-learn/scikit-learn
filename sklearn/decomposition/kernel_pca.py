@@ -60,6 +60,13 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         maximum number of iterations for arpack
         Default: None (optimal value will be chosen by arpack)
 
+    remove_zero_eig : boolean, default=True
+        If True, then all components with zero eigenvalues are removed, so
+        that the number of components in the output may be < n_components
+        (and sometimes even zero due to numerical instability).
+        When n_components is None, this parameter is ignored and components
+        with zero eigenvalues are removed regardless.
+
     Attributes
     ----------
 
@@ -83,7 +90,8 @@ class KernelPCA(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_components=None, kernel="linear", gamma=None, degree=3,
                  coef0=1, alpha=1.0, fit_inverse_transform=False,
-                 eigen_solver='auto', tol=0, max_iter=None):
+                 eigen_solver='auto', tol=0, max_iter=None,
+                 remove_zero_eig=False):
         if fit_inverse_transform and kernel == 'precomputed':
             raise ValueError(
                 "Cannot fit_inverse_transform with a precomputed kernel.")
@@ -95,6 +103,7 @@ class KernelPCA(BaseEstimator, TransformerMixin):
         self.alpha = alpha
         self.fit_inverse_transform = fit_inverse_transform
         self.eigen_solver = eigen_solver
+        self.remove_zero_eig = remove_zero_eig
         self.tol = tol
         self.max_iter = max_iter
         self._centerer = KernelCenterer()
@@ -143,14 +152,15 @@ class KernelPCA(BaseEstimator, TransformerMixin):
                                                 tol=self.tol,
                                                 maxiter=self.max_iter)
 
-        # sort eignenvectors in descending order
+        # sort eigenvectors in descending order
         indices = self.lambdas_.argsort()[::-1]
         self.lambdas_ = self.lambdas_[indices]
         self.alphas_ = self.alphas_[:, indices]
 
         # remove eigenvectors with a zero eigenvalue
-        self.alphas_ = self.alphas_[:, self.lambdas_ > 0]
-        self.lambdas_ = self.lambdas_[self.lambdas_ > 0]
+        if self.remove_zero_eig or self.n_components is None:
+            self.alphas_ = self.alphas_[:, self.lambdas_ > 0]
+            self.lambdas_ = self.lambdas_[self.lambdas_ > 0]
 
         return K
 

@@ -99,6 +99,24 @@ def test_kernel_pca_n_components():
             assert_equal(shape, (2, c))
 
 
+def test_remove_zero_eig():
+    X = np.array([[1 - 1e-30, 1], [1, 1], [1, 1 - 1e-20]])
+
+    # n_components=None (default) => remove_zero_eig is True
+    kpca = KernelPCA()
+    Xt = kpca.fit_transform(X)
+    assert_equal(Xt.shape, (3, 0))
+
+    kpca = KernelPCA(n_components=2)
+    Xt = kpca.fit_transform(X)
+    assert_equal(Xt.shape, (3, 2))
+
+    kpca = KernelPCA(n_components=2, remove_zero_eig=True)
+    Xt = kpca.fit_transform(X)
+    assert_equal(Xt.shape, (3, 0))
+
+
+
 def test_kernel_pca_precomputed():
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((5, 4))
