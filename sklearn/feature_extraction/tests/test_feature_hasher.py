@@ -1,3 +1,5 @@
+from __future__ import unicode_literals
+
 import numpy as np
 
 from sklearn.feature_extraction import FeatureHasher
@@ -12,14 +14,15 @@ def test_feature_hasher_dicts():
 
     raw_X = [{"dada": 42, "tzara": 37}, {"gaga": 17}]
     X1 = FeatureHasher(n_features=16).transform(raw_X)
-    gen = (d.iteritems() for d in raw_X)
+    gen = (iter(d.items()) for d in raw_X)
     X2 = FeatureHasher(n_features=16, input_type="pair").transform(gen)
     assert_array_equal(X1.toarray(), X2.toarray())
 
 
 def test_feature_hasher_strings():
-    raw_X = [[u"foo", "bar", "baz", "foo"],    # note: duplicate
-             [u"bar", "baz", "quux"]]
+    # mix byte and Unicode strings; note that "foo" is a duplicate in row 0
+    raw_X = [["foo", "bar", "baz", "foo".encode("ascii")],
+             ["bar".encode("ascii"), "baz", "quux"]]
 
     for lg_n_features in (7, 9, 11, 16, 22):
         n_features = 2 ** lg_n_features
@@ -36,12 +39,12 @@ def test_feature_hasher_strings():
         assert_equal(X[0].sum(), 4)
         assert_equal(X[1].sum(), 3)
 
-        assert_equal(X.nnz, sum(len(set(x)) for x in raw_X))
+        assert_equal(X.nnz, 6)
 
 
 def test_feature_hasher_pairs():
-    raw_X = (d.iteritems() for d in [{"foo": 1, "bar": 2},
-                                     {"baz": 3, "quux": 4, "foo": -1}])
+    raw_X = (iter(d.items()) for d in [{"foo": 1, "bar": 2},
+                                       {"baz": 3, "quux": 4, "foo": -1}])
     h = FeatureHasher(n_features=16, input_type="pair")
     x1, x2 = h.transform(raw_X).toarray()
     x1_nz = sorted(np.abs(x1[x1 != 0]))
