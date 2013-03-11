@@ -12,6 +12,7 @@ import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -281,6 +282,21 @@ def test_grid_search_precomputed_kernel_error_kernel_function():
     assert_raises(ValueError, cv.fit, X_, y_)
 
 
+def test_grid_search_training_score():
+    # test that the training score contains sensible numbers
+    X, y = make_classification(n_samples=200, n_features=100, random_state=0)
+    clf = LinearSVC(random_state=0)
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, compute_training_score=True)
+    cv.fit(X, y)
+    for grid_point in cv.cv_scores_:
+        assert_greater(grid_point.mean_training_score,
+                       grid_point.mean_validation_score)
+        # hacky greater-equal
+        assert_greater(1 + 1e-10, grid_point.mean_training_score)
+        assert_greater(grid_point.training_time, 0)
+        assert_greater(grid_point.prediction_time, 0)
+
+
 class BrokenClassifier(BaseEstimator):
     """Broken classifier that cannot be fit twice"""
 
@@ -378,9 +394,9 @@ def test_grid_search_score_consistency():
         grid_search = GridSearchCV(clf, {'C': Cs}, scoring=score)
         grid_search.fit(X, y)
         cv = StratifiedKFold(n_folds=3, y=y)
-        for C, scores in zip(Cs, grid_search.cv_scores_):
+        for C, result in zip(Cs, grid_search.cv_scores_):
             clf.set_params(C=C)
-            scores = scores[2]  # get the separate runs from grid scores
+            scores = result[2]  # get the separate runs from grid scores
             i = 0
             for train, test in cv:
                 clf.fit(X[train], y[train])
