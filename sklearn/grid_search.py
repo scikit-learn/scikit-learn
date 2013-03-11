@@ -589,7 +589,7 @@ class GridSearchCV(BaseSearchCV):
 
             * ``parameters``, a dict of parameter settings
             * ``mean_validation_score``, the mean score over the
-             cross-validation folds
+              cross-validation folds
             * ``cv_validation_scores``, the list of scores for each fold
 
     `best_estimator_` : estimator
@@ -613,8 +613,8 @@ class GridSearchCV(BaseSearchCV):
     reasons if individual jobs take very little time, but may raise errors if
     the dataset is large and not enough memory is available.  A workaround in
     this case is to set `pre_dispatch`. Then, the memory is copied only
-    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is 2 *
-    `n_jobs`.
+    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *
+    n_jobs`.
 
     See Also
     ---------
@@ -764,7 +764,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
             * ``parameters``, a dict of parameter settings
             * ``mean_validation_score``, the mean score over the
-             cross-validation folds
+              cross-validation folds
             * ``cv_validation_scores``, the list of scores for each fold
 
     `best_estimator_` : estimator
@@ -790,8 +790,8 @@ class RandomizedSearchCV(BaseSearchCV):
     reasons if individual jobs take very little time, but may raise errors if
     the dataset is large and not enough memory is available.  A workaround in
     this case is to set `pre_dispatch`. Then, the memory is copied only
-    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is 2 *
-    `n_jobs`.
+    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *
+    n_jobs`.
 
     See Also
     --------
