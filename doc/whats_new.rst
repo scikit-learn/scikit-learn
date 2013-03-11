@@ -62,6 +62,9 @@ Changelog
      :class:`tree.DecisionTreeRegressor` and all derived ensemble estimators
      now supports percentage values. By `Gilles Louppe`_.
 
+   - Performance improvements in :class:`isotonic.IsotonicRegression` by
+     Nelle Varoquaux.
+
 
 API changes summary
 -------------------
@@ -181,6 +184,9 @@ New Estimator Classes
      :func:`manifold.spectral_embedding`, implementing the "laplacian
      eigenmaps" transformation for nonlinear dimensionality reduction by Wei
      Li. See :ref:`spectral_embedding` in the user guide.
+
+   - :class:`isotonic.IsotonicRegression` by `Fabian Pedregosa`_, `Alexandre Gramfort`_
+     and Nelle Varoquaux.
 
 
 Changelog
