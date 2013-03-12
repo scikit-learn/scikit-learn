@@ -25,7 +25,7 @@ from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
                                  ParameterSampler)
 from sklearn.svm import LinearSVC, SVC
 from sklearn.cluster import KMeans, MeanShift
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, precision_score, recall_score
 from sklearn.metrics import Scorer
 from sklearn.cross_validation import KFold, StratifiedKFold
 
@@ -431,3 +431,24 @@ def test_grid_search_score_consistency():
                                               clf.decision_function(X[test]))
                 assert_almost_equal(correct_score, scores[i])
                 i += 1
+
+def test_composite_scores():
+    """Test that precision and recall are output when using f1"""
+    clf = LinearSVC(random_state=0)
+    X, y = make_blobs(random_state=0, centers=2)
+    Cs = [.1, 1, 10]
+    grid_search = GridSearchCV(clf, {'C': Cs}, scoring='f1', compute_training_score=True)
+    grid_search.fit(X, y)
+    cv = StratifiedKFold(n_folds=3, y=y)
+    for C, scores in zip(Cs, grid_search.fold_results_):
+        clf.set_params(C=C)
+        for fold, (train, test) in enumerate(cv):
+            clf.fit(X[train], y[train])
+            for prefix, mask in [('test_', test), ('train_', train)]:
+                fold_scores = scores[fold]
+                correct_score = f1_score(y[mask], clf.predict(X[mask]))
+                correct_precision = precision_score(y[mask], clf.predict(X[mask]))
+                correct_recall = recall_score(y[mask], clf.predict(X[mask]))
+                assert_almost_equal(correct_score, fold_scores[prefix + 'score'])
+                assert_almost_equal(correct_precision, fold_scores[prefix + 'precision'])
+                assert_almost_equal(correct_recall, fold_scores[prefix + 'recall'])
