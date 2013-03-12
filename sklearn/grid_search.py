@@ -12,7 +12,6 @@ import warnings
 import numbers
 from time import time
 from itertools import product
-from collections import namedtuple
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
@@ -24,7 +23,7 @@ from .externals.joblib import Parallel, delayed, logger
 from .externals.six import string_types
 from .utils import safe_mask, check_random_state
 from .utils.validation import _num_samples, check_arrays
-from .metrics import SCORERS, Scorer
+from .metrics import SCORERS, Scorer, EstimatorScorer, WrapScorer
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
            'ParameterSampler', 'RandomizedSearchCV']
@@ -262,36 +261,37 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer, verbose,
             X_train = X[safe_mask(X, train)]
             X_test = X[safe_mask(X, test)]
 
-    score_func = (clf.score if scorer is None
-                  else lambda X_, y_: scorer(clf, X_, y_))
+    results = {'test_n_samples': _num_samples(X_test)}
+    if scorer is None:
+        scorer = EstimatorScorer(clf.score)
+    elif not hasattr(scorer, 'store'):
+        scorer = WrapScorer(scorer)
 
     if y is not None:
         y_test = y[safe_mask(y, test)]
         y_train = y[safe_mask(y, train)]
-        start = time()
-        # do actual fitting
-        clf.fit(X_train, y_train, **fit_params)
-        training_time = time() - start
-        start = time()
-        test_score = score_func(X_test, y_test)
-        predict_time = time() - start
+        fit_args = (X_train, y_train)
+        score_args = (X_test, y_test)
     else:
-        start = time()
-        # do actual fitting
-        clf.fit(X_train, **fit_params)
-        training_time = time() - start
-        start = time()
-        test_score = score_func(X_test)
-        predict_time = time() - start
+        fit_args = (X_train,)
+        score_args = (X_test,)
+
+    start = time()
+    # do actual fitting
+    clf.fit(*fit_args, **fit_params)
+    results['train_time'] = time() - start
+    start = time()
+    scorer.store(results, clf, *score_args, prefix='test_')
+    results['test_time'] = time() - start
 
     if compute_training_score:
-        if y is not None:
-            training_score = score_func(X_train, y_train)
-        else:
-            training_score = score_func(X_train)
-    else:
-        training_score = None
+        scorer.store(results, clf, *fit_args, prefix='train_')
 
+    try:
+        test_score = results['test_score']
+    except KeyError:
+        raise ValueError("Scorer.store must set the key '%s' in results."
+                         " Got %s instead." % (Scorer.SCORE_KEY, results))
     if not isinstance(test_score, numbers.Number):
         raise ValueError("scoring must return a number, got %s (%s)"
                          " instead." % (str(test_score), type(test_score)))
@@ -303,8 +303,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer, verbose,
                               logger.short_format_time(time() -
                                                        start_time))
         print("[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
-    return (test_score, training_score, training_time, predict_time,
-            clf_params, _num_samples(X_test))
+    return clf_params, results
 
 
 def _check_param_grid(param_grid):
@@ -411,6 +410,27 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         if hasattr(self.best_estimator_, 'predict_proba'):
             self.predict_proba = self.best_estimator_.predict_proba
 
+    def _aggregate_scores(self, scores, n_samples):
+        """Take 2d arrays of scores and samples and calculate weighted means/sums of each row"""
+        if self.iid:
+            scores = scores * n_samples
+            scores = scores.sum(axis=1) / n_samples.sum(axis=1)
+        else:
+            scores = scores.sum(axis=1)
+        return scores
+
+    def _merge_result_dicts(self, result_dicts):
+        """
+        From a result dict for each fold, produce a single dict with an array
+        for each key.
+        For example [[{'score': 1}, {'score': 2}], [{'score': 3}, {'score': 4}]]
+                 -> {'score': np.array([[1, 2], [3, 4]])}"""
+        # assume keys are same throughout
+        result_keys = list(result_dicts[0][0].iterkeys()) 
+        return {key: np.asarray([[fold_results[key] for fold_results in point]
+                                 for point in result_dicts])
+                for key in result_keys}
+
     def _fit(self, X, y, parameter_iterator, **params):
         """Actual fitting,  performing the search over parameters."""
         estimator = self.estimator
@@ -459,56 +479,23 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
                     compute_training_score=self.compute_training_score,
                     **self.fit_params) for clf_params in
                 parameter_iterator for train, test in cv)
-        # type and list for storing results
-        CVScoreTuple = namedtuple('CVScoreTuple',
-                                  ('parameters', 'mean_validation_score',
-                                   'cv_validation_scores',
-                                   'mean_training_score', 'training_time',
-                                   'prediction_time'))
-        cv_scores = []
-        # Out is a list of triplet: score, estimator, n_test_samples
+
         n_param_points = len(list(parameter_iterator))
         n_fits = len(out)
         n_folds = n_fits // n_param_points
 
-        for start in range(0, n_fits, n_folds):
-            n_test_samples = 0
-            mean_validation_score, mean_training_score = 0, 0
-            # lists for accumulating statistics over fold
-            test_points, training_times, prediction_times = [], [], []
-            for (test_score, training_score, training_time, prediction_time,
-                    clf_params, this_n_test_samples) in out[start:start +
-                                                            n_folds]:
-                test_points.append(test_score)
-                training_times.append(training_time)
-                prediction_times.append(prediction_time)
-                if self.iid:
-                    test_score *= this_n_test_samples
-                    # assumes n_train + n_test = len(X)
-                mean_validation_score += test_score
+        cv_results = self._merge_result_dicts([
+            [fold_results for clf_params, fold_results in out[start:start + n_folds]]
+            for start in range(0, n_fits, n_folds)
+        ])
 
-                if self.compute_training_score:
-                    if self.iid:
-                        training_score *= n_samples - this_n_test_samples
-                    mean_training_score += training_score
-
-                n_test_samples += this_n_test_samples
-
-            if self.iid:
-                mean_validation_score /= float(n_test_samples)
-
-            if self.compute_training_score:
-                if self.iid:
-                    # again, we assume n_train + n_test = len(X)
-                    mean_training_score /= (n_folds * n_samples
-                                            - float(n_test_samples))
-            else:
-                mean_training_score = None
-
-            cv_scores.append(CVScoreTuple(
-                clf_params, mean_validation_score,
-                test_points, mean_training_score,
-                np.mean(training_times), np.mean(prediction_times)))
+        grid_results = {'parameters': list(parameter_iterator)}
+        grid_results['test_score'] = self._aggregate_scores(
+                cv_results['test_score'], cv_results['test_n_samples'])
+        if self.compute_training_score:
+            grid_results['train_score'] = self._aggregate_scores(
+                    cv_results['train_score'],
+                    n_samples - cv_results['test_n_samples'])
 
         # Note: we do not use max(out) to make ties deterministic even if
         # comparison on estimator instances is not deterministic
@@ -522,22 +509,23 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         else:
             best_score = np.inf
 
-        for point in cv_scores:
-            score = point.mean_validation_score
+        for i, score in enumerate(grid_results['test_score']):
             if ((score > best_score and greater_is_better)
                     or (score < best_score
                         and not greater_is_better)):
                 best_score = score
-                best_params = point.parameters
+                best_index = i
 
-        self.best_params_ = best_params
+        self.best_index_ = best_index
+        self.best_params_ = grid_results['parameters'][best_index]
         self.best_score_ = best_score
-        self.cv_scores_ = cv_scores
+        self.fold_results_ = cv_results
+        self.grid_results_ = grid_results
 
         if self.refit:
             # fit the best estimator using the entire dataset
             # clone first to work around broken estimators
-            best_estimator = clone(base_clf).set_params(**best_params)
+            best_estimator = clone(base_clf).set_params(**self.best_params_)
             if y is not None:
                 best_estimator.fit(X, y, **self.fit_params)
             else:
@@ -634,29 +622,40 @@ class GridSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    `cv_scores_` : list of named tuples
-        Contains scores for all parameter combinations in param_grid.
-        Each entry corresponds to one parameter setting.
-        Each named tuple has the attributes:
+    `grid_results_` : dict of string -> array or list
+        Each value is an array or list with elements for each parameter
+        combination in ``param_grid``. Elements for the following keys are:
 
-            * ``parameters``, a dict of parameter settings
-            * ``mean_validation_score``, the mean score over the
-             cross-validation folds
-            * ``cv_validation_scores``, the list of scores for each fold
-            * ``mean_training_score``, the mean of the training score
-             over cross-validation folds. Only available if
-             ``compute_training_score=True``.
-            * ``training_time``, the mean training time in seconds.
-            * ``prediction_time``, the mean prediction time over the test set
-              in seconds.
+            * ``parameters``, dict of parameter settings
+            * ``test_score``, the mean score over the
+              cross-validation folds
+            * ``train_score``, the mean training score over the
+              cross-validation folds, if ``compute_training_score``
+
+    `fold_results_` : dict of string -> array
+        Each value is an array whose first two dimensions correspond to
+        parameter combinations and cross-validation folds, respectively.
+        Elements for the following keys are:
+
+            * ``test_time``, the elapsed prediction and scoring time
+            * ``train_time``, the elapsed training time
+            * ``test_score``, the score for this fold
+            * ``train_score``, the training score for this fold
+            * ``test_n_samples``, the number of samples in testing
+            * ``test_*``, other score information stored by the Scorer
+            * ``train_*``, other training score information stored by the Scorer
 
     `best_estimator_` : estimator
-        Estimator that was choosen by grid search, i.e. estimator
+        Estimator that was chosen by grid search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data.
+        on the left out data. Available only if refit=True.
 
     `best_score_` : float
         score of best_estimator on the left out data.
+
+    `best_index_` : int
+        The index of the best parameter setting into ``grid_results_`` and
+        ``fold_results_`` data.
 
     `best_params_` : dict
         Parameter setting that gave the best results on the hold out data.
@@ -671,8 +670,8 @@ class GridSearchCV(BaseSearchCV):
     reasons if individual jobs take very little time, but may raise errors if
     the dataset is large and not enough memory is available.  A workaround in
     this case is to set `pre_dispatch`. Then, the memory is copied only
-    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is 2 *
-    `n_jobs`.
+    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *
+    n_jobs`.
 
     See Also
     ---------
@@ -699,8 +698,8 @@ class GridSearchCV(BaseSearchCV):
     @property
     def grid_scores_(self):
         warnings.warn("grid_scores_ is deprecated and will be removed in 0.15."
-                      " Use estimator_scores_ instead.", DeprecationWarning)
-        return self.cv_scores_
+                      " Use grid_results_ and fold_results_ instead.", DeprecationWarning)
+        return self.grid_results_['test_score']
 
     def fit(self, X, y=None, **params):
         """Run fit with all sets of parameters.
@@ -816,29 +815,40 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    `cv_scores_` : list of named tuples
-        Contains scores for all parameter combinations in param_grid.
-        Each entry corresponds to one parameter setting.
-        Each named tuple has the attributes:
+    `grid_results_` : dict of string -> array or list
+        Each value is an array or list with elements for each parameter
+        combination in ``param_grid``. Elements for the following keys are:
 
-            * ``parameters``, a dict of parameter settings
-            * ``mean_validation_score``, the mean score over the
-             cross-validation folds
-            * ``cv_validation_scores``, the list of scores for each fold
-            * ``mean_training_score``, the mean of the training score
-             over cross-validation folds. Only available if
-             ``compute_training_score=True``.
-            * ``training_time``, the mean training time in seconds.
-            * ``prediction_time``, the mean prediction time over the test set
-              in seconds.
+            * ``parameters``, dict of parameter settings
+            * ``test_score``, the mean score over the
+              cross-validation folds
+            * ``train_score``, the mean training score over the
+              cross-validation folds, if ``compute_training_score``
+
+    `fold_results_` : dict of string -> array
+        Each value is an array whose first two dimensions correspond to
+        parameter combinations and cross-validation folds, respectively.
+        Elements for the following keys are:
+
+            * ``test_time``, the elapsed prediction and scoring time
+            * ``train_time``, the elapsed training time
+            * ``test_score``, the score for this fold
+            * ``train_score``, the training score for this fold
+            * ``test_n_samples``, the number of samples in testing
+            * ``test_*``, other score information stored by the Scorer
+            * ``train_*``, other training score information stored by the Scorer
 
     `best_estimator_` : estimator
-        Estimator that was choosen by search, i.e. estimator
+        Estimator that was chosen by grid search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data.
+        on the left out data. Available only if refit=True.
 
     `best_score_` : float
-        Score of best_estimator on the left out data.
+        score of best_estimator on the left out data.
+
+    `best_index_` : int
+        The index of the best parameter setting into ``grid_results_`` and
+        ``fold_results_`` data.
 
     `best_params_` : dict
         Parameter setting that gave the best results on the hold out data.
@@ -855,8 +865,8 @@ class RandomizedSearchCV(BaseSearchCV):
     reasons if individual jobs take very little time, but may raise errors if
     the dataset is large and not enough memory is available.  A workaround in
     this case is to set `pre_dispatch`. Then, the memory is copied only
-    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is 2 *
-    `n_jobs`.
+    `pre_dispatch` many times. A reasonable value for `pre_dispatch` is `2 *
+    n_jobs`.
 
     See Also
     --------

@@ -20,12 +20,48 @@ import numpy as np
 
 from . import (r2_score, mean_squared_error, accuracy_score, f1_score,
                auc_score, average_precision_score, precision_score,
-               recall_score)
+               recall_score, precision_recall_fscore_support)
 
 from .cluster import adjusted_rand_score
 
+class BaseScorer(object):
+    SCORE_KEY = 'score'
 
-class Scorer(object):
+    def __init__(self, greater_is_better=True):
+        self.greater_is_better = greater_is_better
+
+    def store(self, result, estimator, X, y=None, prefix=''):
+        """Score X and y using the provided estimator and store it under the
+        key ``prefix`` + 'score' in result.
+
+        Parameters
+        ----------
+        result: dict-like
+            Where the result should be stored under key ``prefix`` + ``Scorer.SCORE_KEY``.
+            A custom ``Scorer`` may store other information under this prefix.
+
+        estimator : object
+            Trained estimator to use for scoring.
+            If ``needs_threshold`` is True, estimator needs
+            to provide ``decision_function`` or ``predict_proba``.
+            Otherwise, estimator needs to provide ``predict``.
+
+        X : array-like or sparse matrix
+            Test data that will be scored by the estimator.
+
+        y : array-like
+            True prediction for X.
+
+        prefix : string
+            The prefix of any keys to be stored in ``result``.
+        """
+        result[prefix + self.SCORE_KEY] = self(estimator, X, y)
+
+    def __call__(self, estimator, X, y=None):
+        raise NotImplementedError()
+
+
+class Scorer(BaseScorer):
     """Flexible scores for any estimator.
 
     This class wraps estimator scoring functions for the use in GridSearchCV
@@ -63,8 +99,8 @@ class Scorer(object):
     """
     def __init__(self, score_func, greater_is_better=True,
                  needs_threshold=False, **kwargs):
+        super(Scorer, self).__init__(greater_is_better)
         self.score_func = score_func
-        self.greater_is_better = greater_is_better
         self.needs_threshold = needs_threshold
         self.kwargs = kwargs
 
@@ -75,7 +111,7 @@ class Scorer(object):
                 "%s%s)" % (self.score_func.__name__, self.greater_is_better,
                            self.needs_threshold, kwargs_string))
 
-    def __call__(self, estimator, X, y):
+    def __call__(self, estimator, X, y=None):
         """Score X and y using the provided estimator.
 
         Parameters
@@ -105,10 +141,61 @@ class Scorer(object):
                 y_pred = estimator.decision_function(X).ravel()
             except (NotImplementedError, AttributeError):
                 y_pred = estimator.predict_proba(X)[:, 1]
-            return self.score_func(y, y_pred, **self.kwargs)
         else:
             y_pred = estimator.predict(X)
+        if y is not None:
             return self.score_func(y, y_pred, **self.kwargs)
+        else:
+            return self.score_func(y_pred, **self.kwargs)
+
+
+class PRFScorer(Scorer):
+    """Scorer to optimise F score while also storing precision and recall.
+    """
+
+    def __init__(self, **kwargs):
+        if 'average' not in kwargs:
+            kwargs['average'] = 'weighted'
+        super(PRFScorer, self).__init__(precision_recall_fscore_support, **kwargs)
+
+    PRECISION_KEY = 'precision'
+    RECALL_KEY = 'recall'
+
+    def __repr__(self):
+        kwargs_string = "".join([", %s=%s" % (str(k), str(v))
+                                 for k, v in self.kwargs.items()])
+        return 'PRFScorer(%s)' % kwargs_string
+
+    def store(self, result, estimator, X, y, prefix=''):
+        p, r, f, support = super(PRFScorer, self).__call__(estimator, X, y)
+        result[prefix + self.SCORE_KEY] = f
+        result[prefix + self.PRECISION_KEY] = p
+        result[prefix + self.RECALL_KEY] = r
+
+    def __call__(self, estimator, X, y):
+        p, r, f, support = super(PRFScorer, self).__call__(estimator, X, y)
+        return f
+
+
+class WrapScorer(BaseScorer):
+    """Scores by passing the estimator and data to a given function"""
+
+    def __init__(self, score_fn, greater_is_better=True):
+        super(EstimatorScorer, self).__init__(greater_is_better)
+
+    def __call__(self, estimator, X, y=None):
+        if y is None:
+            return self.score_fn(estimator, X)
+        return self.score_fn(estimator, X, y)
+
+
+class EstimatorScorer(BaseScorer):
+    """Scores by calling the estimator's score method."""
+
+    def __call__(self, estimator, X, y=None):
+        if y is None:
+            return estimator.score(X)
+        return estimator.score(X, y)
 
 
 # Standard regression scores
@@ -130,7 +217,7 @@ recall_scorer = Scorer(recall_score)
 ari_scorer = Scorer(adjusted_rand_score)
 
 SCORERS = dict(r2=r2_scorer, mse=mse_scorer, accuracy=accuracy_scorer,
-               f1=f1_scorer, roc_auc=auc_scorer,
+               f1=f1_scorer, prf1=PRFScorer(), roc_auc=auc_scorer,
                average_precision=average_precision_scorer,
                precision=precision_scorer, recall=recall_scorer,
                ari=ari_scorer)

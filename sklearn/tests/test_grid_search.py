@@ -90,7 +90,7 @@ def test_grid_search():
     assert_equal(grid_search.best_estimator_.foo_param, 2)
 
     for i, foo_i in enumerate([1, 2, 3]):
-        assert_true(grid_search.cv_scores_[i][0]
+        assert_true(grid_search.grid_results_['parameters'][i]
                     == {'foo_param': foo_i})
     # Smoke test the score:
     grid_search.score(X, y)
@@ -288,13 +288,14 @@ def test_grid_search_training_score():
     clf = LinearSVC(random_state=0)
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, compute_training_score=True)
     cv.fit(X, y)
-    for grid_point in cv.cv_scores_:
-        assert_greater(grid_point.mean_training_score,
-                       grid_point.mean_validation_score)
+    scores = zip(cv.grid_results_['train_score'],
+                 cv.grid_results_['test_score'])
+    for i, (train_score, test_score) in enumerate(scores):
+        assert_greater(train_score, test_score)
         # hacky greater-equal
-        assert_greater(1 + 1e-10, grid_point.mean_training_score)
-        assert_greater(grid_point.training_time, 0)
-        assert_greater(grid_point.prediction_time, 0)
+        assert_greater(1 + 1e-10, train_score)
+        assert_greater(cv.fold_results_['train_time'][i, :].mean(), 0)
+        assert_greater(cv.fold_results_['test_time'][i, :].mean(), 0)
 
 
 class BrokenClassifier(BaseEstimator):
@@ -381,7 +382,7 @@ def test_randomized_search():
     params = dict(C=distributions.expon())
     search = RandomizedSearchCV(LinearSVC(), param_distributions=params)
     search.fit(X, y)
-    assert_equal(len(search.cv_scores_), 10)
+    assert_equal(len(search.grid_results_['test_score']), 10)
 
 
 def test_grid_search_score_consistency():
@@ -394,9 +395,8 @@ def test_grid_search_score_consistency():
         grid_search = GridSearchCV(clf, {'C': Cs}, scoring=score)
         grid_search.fit(X, y)
         cv = StratifiedKFold(n_folds=3, y=y)
-        for C, result in zip(Cs, grid_search.cv_scores_):
+        for C, scores in zip(Cs, grid_search.fold_results_['test_score']):
             clf.set_params(C=C)
-            scores = result[2]  # get the separate runs from grid scores
             i = 0
             for train, test in cv:
                 clf.fit(X[train], y[train])
