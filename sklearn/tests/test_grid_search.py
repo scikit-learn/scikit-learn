@@ -96,6 +96,30 @@ def test_grid_search():
     grid_search.score(X, y)
 
 
+def test_grid_scores():
+    """Test that GridSearchCV.grid_scores_ is filled in the correct format"""
+    clf = MockClassifier()
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, verbose=3)
+    # make sure it selects the smallest parameter in case of ties
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    grid_search.fit(X, y)
+    sys.stdout = old_stdout
+    assert_equal(grid_search.best_estimator_.foo_param, 2)
+
+    n_folds = 3
+    with warnings.catch_warnings(record=True):
+        for i, foo_i in enumerate([1, 2, 3]):
+            assert_true(grid_search.grid_scores_[i][0]
+                        == {'foo_param': foo_i})
+            # mean score
+            assert_almost_equal(grid_search.grid_scores_[i][1],
+                        (1. if foo_i > 1 else 0.))
+            # all fold scores
+            assert_array_equal(grid_search.grid_scores_[i][2],
+                        [1. if foo_i > 1 else 0.] * n_folds)
+
+
 def test_no_refit():
     """Test that grid search can be used for model selection only"""
     clf = MockClassifier()

@@ -386,6 +386,14 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         y_predicted = self.predict(X)
         return self.scorer(y, y_predicted)
 
+    @property
+    def grid_scores_(self):
+        warnings.warn("grid_scores_ is deprecated and will be removed in 0.15."
+                      " Use grid_results_ and fold_results_ instead.", DeprecationWarning)
+        return zip(self.grid_results_['parameters'],
+                   self.grid_results_['test_score'],
+                   self.fold_results_['test_score'])
+
     def _check_estimator(self):
         """Check that estimator can be fitted and score can be computed."""
         if (not hasattr(self.estimator, 'fit') or
@@ -658,15 +666,19 @@ class GridSearchCV(BaseSearchCV):
         which gave highest score (or smallest loss if specified)
         on the left out data. Available only if refit=True.
 
-    `best_score_` : float
-        score of best_estimator on the left out data.
-
     `best_index_` : int
         The index of the best parameter setting into ``grid_results_`` and
         ``fold_results_`` data.
 
+    `best_score_` : float
+        score of best_estimator on the left out data.
+
     `best_params_` : dict
         Parameter setting that gave the best results on the hold out data.
+
+    `grid_scores_` : list of tuples (deprecated)
+        Contains scores for all parameter combinations in ``param_grid``:
+        each tuple is (parameters, mean score, fold scores).
 
     Notes
     ------
@@ -702,12 +714,6 @@ class GridSearchCV(BaseSearchCV):
             refit, cv, verbose, pre_dispatch, compute_training_score)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
-
-    @property
-    def grid_scores_(self):
-        warnings.warn("grid_scores_ is deprecated and will be removed in 0.15."
-                      " Use grid_results_ and fold_results_ instead.", DeprecationWarning)
-        return self.grid_results_['test_score']
 
     def fit(self, X, y=None, **params):
         """Run fit with all sets of parameters.
@@ -820,7 +826,6 @@ class RandomizedSearchCV(BaseSearchCV):
     verbose : integer
         Controls the verbosity: the higher, the more messages.
 
-
     Attributes
     ----------
     `grid_results_` : structured array of shape [# param combinations]
@@ -848,15 +853,19 @@ class RandomizedSearchCV(BaseSearchCV):
         which gave highest score (or smallest loss if specified)
         on the left out data. Available only if refit=True.
 
-    `best_score_` : float
-        score of best_estimator on the left out data.
-
     `best_index_` : int
         The index of the best parameter setting into ``grid_results_`` and
         ``fold_results_`` data.
 
+    `best_score_` : float
+        score of best_estimator on the left out data.
+
     `best_params_` : dict
         Parameter setting that gave the best results on the hold out data.
+
+    `grid_scores_` : list of tuples (deprecated)
+        Contains scores for all parameter combinations in ``param_grid``:
+        each tuple is (parameters, mean score, fold scores).
 
     Notes
     -----
