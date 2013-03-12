@@ -411,7 +411,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
             self.predict_proba = self.best_estimator_.predict_proba
 
     def _aggregate_scores(self, scores, n_samples):
-        """Take 2d arrays of scores and samples and calculate weighted means/sums of each row"""
+        """Take 2d arrays of scores and samples and calculate weighted
+        means/sums of each row"""
         if self.iid:
             scores = scores * n_samples
             scores = scores.sum(axis=1) / n_samples.sum(axis=1)
@@ -430,7 +431,9 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         res = {key: np.asarray([[fold_results[key] for fold_results in point]
                                  for point in result_dicts])
                 for key in result_keys}
-        np_res = np.zeros((len(result_dicts), len(result_dicts[0])), dtype=[(key, res[key].dtype) for key in result_keys])
+        # TODO: it would be nice if we need not duplicate this structure
+        np_res = np.zeros((len(result_dicts), len(result_dicts[0])),
+                dtype=[(key, res[key].dtype) for key in result_keys])
         for key, val in res.iteritems():
             np_res[key] = val
         return np_res
