@@ -9,6 +9,7 @@
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Robert Layton <robertlayton@gmail.com>
+#          Lars Buitinck <L.J.Buitinck@uva.nl>
 # License: BSD
 
 import warnings
@@ -650,7 +651,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         if hasattr(init, '__array__'):
             n_clusters = init.shape[0]
-            init = np.asanyarray(init, dtype=np.float64)
+            init = np.asarray(init, dtype=np.float64)
 
         self.n_clusters = n_clusters
         self.k = k
@@ -855,15 +856,14 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
         if number_of_reassignments:
             # Pick new clusters amongst observations with a probability
             # proportional to their closeness to their center
-            distance_to_centers = np.asarray(centers[nearest_center] - X)
-            distance_to_centers **= 2
-            distance_to_centers = distance_to_centers.sum(axis=1)
+            dist_to_centers = _k_means.sq_dist_to_centers(centers,
+                                                          nearest_center, X)
             # Flip the ordering of the distances
-            distance_to_centers -= distance_to_centers.max()
-            distance_to_centers *= -1
+            dist_to_centers -= dist_to_centers.max()
+            dist_to_centers *= -1
             rand_vals = random_state.rand(number_of_reassignments)
-            rand_vals *= distance_to_centers.sum()
-            new_centers = np.searchsorted(distance_to_centers.cumsum(),
+            rand_vals *= dist_to_centers.sum()
+            new_centers = np.searchsorted(dist_to_centers.cumsum(),
                                           rand_vals)
             new_centers = X[new_centers]
             if verbose:

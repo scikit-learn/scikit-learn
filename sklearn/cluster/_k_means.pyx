@@ -4,6 +4,7 @@
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Olivier Grisel <olivier.grisel@ensta.org>
+#         Lars Buitinck <L.J.Buitinck@uva.nl>
 #
 # License: BSD Style.
 
@@ -379,3 +380,87 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
     centers /= n_samples_in_cluster[:, np.newaxis]
 
     return centers
+
+
+def sq_dist_to_centers(np.ndarray[DOUBLE, ndim=2] centers,
+                       np.ndarray[INT, ndim=1] labels,
+                       X):
+    """Compute squared L2 distances from samples X to their current centers.
+
+    Parameters
+    ----------
+    centers : array, shape = (n_clusters, n_features)
+    labels : array, shape = n_samples
+    X : {array, scipy.sparse.csr_matrix}, shape = (n_samples, n_features)
+
+    Returns
+    -------
+    sqdist : array, shape = n_samples
+    """
+    out = np.empty(X.shape[0], dtype=np.float64)
+    if sp.issparse(X):
+        sq_dist_to_centers_csr(centers, labels, X, out)
+    else:
+        sq_dist_to_centers_dense(centers, labels, X, out)
+    return out
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef void sq_dist_to_centers_csr(np.ndarray[DOUBLE, ndim=2] centers,
+                                 np.ndarray[INT, ndim=1] labels,
+                                 X,
+                                 np.ndarray[DOUBLE, ndim=1] out):
+    cdef DOUBLE d_sq, diff
+    cdef int i, j, ind, sparse_j
+    cdef int n_samples = X.shape[0], n_features = X.shape[1]
+
+    cdef np.ndarray[DOUBLE, ndim=1] center, data
+    cdef np.ndarray[int, ndim=1] indices, indptr
+
+    data = X.data
+    indices = X.indices
+    indptr = X.indptr
+    out = np.empty(n_samples, dtype=np.float64)
+
+    for i in range(n_samples):
+        center = centers[labels[i], :]  # XXX cython doesn't optimize this
+        d_sq = 0.
+        j = 0
+        for ind in range(indptr[i], indptr[i + 1]):
+            sparse_j = indices[ind]
+            while j < sparse_j:
+                diff = center[j]
+                d_sq += diff * diff
+                j += 1
+            diff = center[j] - data[ind]
+            d_sq += diff * diff
+            j += 1
+
+        while j < n_features:
+            diff = center[j]
+            d_sq += diff * diff
+            j += 1
+
+        out[i] = d_sq
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+cdef void sq_dist_to_centers_dense(np.ndarray[DOUBLE, ndim=2] centers,
+                                   np.ndarray[INT, ndim=1] labels,
+                                   np.ndarray[DOUBLE, ndim=2] X,
+                                   np.ndarray[DOUBLE, ndim=1] out):
+    cdef DOUBLE d_sq, diff
+
+    cdef np.npy_intp n_samples = X.shape[0], n_features = X.shape[1]
+    cdef np.ndarray[DOUBLE, ndim=1] center
+
+    for i in range(n_samples):
+        center = centers[labels[i], :]  # XXX cython doesn't optimize this
+        d_sq = 0.
+        for j in range(n_features):
+            diff = center[j] - X[i, j]
+            d_sq += diff * diff
+
+        out[i] = d_sq
