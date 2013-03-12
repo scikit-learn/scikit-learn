@@ -288,14 +288,12 @@ def test_grid_search_training_score():
     clf = LinearSVC(random_state=0)
     cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, compute_training_score=True)
     cv.fit(X, y)
-    scores = zip(cv.grid_results_['train_score'],
-                 cv.grid_results_['test_score'])
-    for i, (train_score, test_score) in enumerate(scores):
-        assert_greater(train_score, test_score)
+    for i, (grid_data, fold_data) in enumerate(zip(cv.grid_results_, cv.fold_results_)):
+        assert_greater(grid_data['train_score'], grid_data['test_score'])
         # hacky greater-equal
-        assert_greater(1 + 1e-10, train_score)
-        assert_greater(cv.fold_results_['train_time'][i, :].mean(), 0)
-        assert_greater(cv.fold_results_['test_time'][i, :].mean(), 0)
+        assert_greater(1 + 1e-10, grid_data['train_score'])
+        assert_greater(fold_data['train_time'].mean(), 0)
+        assert_greater(fold_data['test_time'].mean(), 0)
 
 
 class BrokenClassifier(BaseEstimator):

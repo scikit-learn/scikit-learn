@@ -427,9 +427,13 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
                  -> {'score': np.array([[1, 2], [3, 4]])}"""
         # assume keys are same throughout
         result_keys = list(result_dicts[0][0].iterkeys()) 
-        return {key: np.asarray([[fold_results[key] for fold_results in point]
+        res = {key: np.asarray([[fold_results[key] for fold_results in point]
                                  for point in result_dicts])
                 for key in result_keys}
+        np_res = np.zeros((len(result_dicts), len(result_dicts[0])), dtype=[(key, res[key].dtype) for key in result_keys])
+        for key, val in res.iteritems():
+            np_res[key] = val
+        return np_res
 
     def _fit(self, X, y, parameter_iterator, **params):
         """Actual fitting,  performing the search over parameters."""
@@ -489,7 +493,11 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
             for start in range(0, n_fits, n_folds)
         ])
 
-        grid_results = {'parameters': list(parameter_iterator)}
+        field_defs = [('parameters', 'object'), ('test_score', cv_results['test_score'].dtype)]
+        if self.compute_training_score:
+            field_defs.append(('train_score', cv_results['train_score'].dtype))
+        grid_results = np.zeros(n_param_points, dtype=field_defs)
+        grid_results['parameters'] = list(parameter_iterator)
         grid_results['test_score'] = self._aggregate_scores(
                 cv_results['test_score'], cv_results['test_n_samples'])
         if self.compute_training_score:
@@ -622,9 +630,8 @@ class GridSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    `grid_results_` : dict of string -> array or list
-        Each value is an array or list with elements for each parameter
-        combination in ``param_grid``. Elements for the following keys are:
+    `grid_results_` : structured array of shape [# param combinations]
+        For each parameter combination in ``param_grid`` includes these fields:
 
             * ``parameters``, dict of parameter settings
             * ``test_score``, the mean score over the
@@ -632,10 +639,8 @@ class GridSearchCV(BaseSearchCV):
             * ``train_score``, the mean training score over the
               cross-validation folds, if ``compute_training_score``
 
-    `fold_results_` : dict of string -> array
-        Each value is an array whose first two dimensions correspond to
-        parameter combinations and cross-validation folds, respectively.
-        Elements for the following keys are:
+    `fold_results_` : structured array of shape [# param combinations, # folds]
+        For each cross-validation fold includes these fields:
 
             * ``test_time``, the elapsed prediction and scoring time
             * ``train_time``, the elapsed training time
@@ -815,9 +820,8 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    `grid_results_` : dict of string -> array or list
-        Each value is an array or list with elements for each parameter
-        combination in ``param_grid``. Elements for the following keys are:
+    `grid_results_` : structured array of shape [# param combinations]
+        For each parameter combination in ``param_grid`` includes these fields:
 
             * ``parameters``, dict of parameter settings
             * ``test_score``, the mean score over the
@@ -825,10 +829,8 @@ class RandomizedSearchCV(BaseSearchCV):
             * ``train_score``, the mean training score over the
               cross-validation folds, if ``compute_training_score``
 
-    `fold_results_` : dict of string -> array
-        Each value is an array whose first two dimensions correspond to
-        parameter combinations and cross-validation folds, respectively.
-        Elements for the following keys are:
+    `fold_results_` : structured array of shape [# param combinations, # folds]
+        For each cross-validation fold includes these fields:
 
             * ``test_time``, the elapsed prediction and scoring time
             * ``train_time``, the elapsed training time
