@@ -249,22 +249,32 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
             X_train = X[safe_mask(X, train)]
             X_test = X[safe_mask(X, test)]
 
+    results = {'n_test_samples': _num_samples(X_test)}
+    if scorer is not None:
+        if hasattr(scorer, 'store'):
+            def store_score(*args):
+                scorer.store(results, clf, *args)
+        else:
+            def store_score(*args):
+                results[Scorer.SCORE_KEY] = scorer(*args)
+    else:
+        def store_score(*args):
+            results[Scorer.SCORE_KEY] = clf.score(*args)
+
     if y is not None:
         y_test = y[safe_mask(y, test)]
         y_train = y[safe_mask(y, train)]
         clf.fit(X_train, y_train, **fit_params)
 
-        if scorer is not None:
-            this_score = scorer(clf, X_test, y_test)
-        else:
-            this_score = clf.score(X_test, y_test)
+        store_score(X_test, y_test)
     else:
         clf.fit(X_train, **fit_params)
-        if scorer is not None:
-            this_score = scorer(clf, X_test)
-        else:
-            this_score = clf.score(X_test)
+        store_score(X_test)
 
+    if Scorer.SCORE_KEY not in results:
+        raise ValueError("Scorer.store must set the key '%s' in results."
+                         " Got %s instead." % (Scorer.SCORE_KEY, results))
+    this_score = results[Scorer.SCORE_KEY]
     if not isinstance(this_score, numbers.Number):
         raise ValueError("scoring must return a number, got %s (%s)"
                          " instead." % (str(this_score), type(this_score)))
@@ -276,7 +286,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
                               logger.short_format_time(time.time() -
                                                        start_time))
         print("[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
-    return this_score, clf_params, _num_samples(X_test)
+    return clf_params, results
 
 
 def _check_param_grid(param_grid):
@@ -433,25 +443,20 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         n_fits = len(out)
         n_folds = n_fits // n_param_points
 
-        scores = list()
-        cv_scores = list()
-        for start in range(0, n_fits, n_folds):
-            n_test_samples = 0
-            mean_validation_score = 0
-            these_points = list()
-            for this_score, clf_params, this_n_test_samples in \
-                    out[start:start + n_folds]:
-                these_points.append(this_score)
-                if self.iid:
-                    this_score *= this_n_test_samples
-                mean_validation_score += this_score
-                n_test_samples += this_n_test_samples
-            if self.iid:
-                mean_validation_score /= float(n_test_samples)
-            scores.append((mean_validation_score, clf_params))
-            cv_scores.append(these_points)
+        results = [
+            [fold_results for clf_params, fold_results in out[start:start + n_folds]]
+            for start in range(0, n_fits, n_folds)
+        ]
+        result_keys = list(results[0][0].iterkeys()) # assume keys are same throughout
+        merged_results = {key: np.array([[fold_results[key] for fold_results in point] for point in results])
+                for key in result_keys}
 
-        cv_scores = np.asarray(cv_scores)
+        scores = merged_results[Scorer.SCORE_KEY]
+        if self.iid:
+            scores = scores * merged_results['n_test_samples']
+            scores = scores.sum(axis=1) / merged_results['n_test_samples'].sum(axis=1)
+        else:
+            scores = scores.sum(axis=1)
 
         # Note: we do not use max(out) to make ties deterministic even if
         # comparison on estimator instances is not deterministic
@@ -465,7 +470,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         else:
             best_score = np.inf
 
-        for score, params in scores:
+        for score, params in zip(scores, parameter_iterator):
             if ((score > best_score and greater_is_better)
                     or (score < best_score and not greater_is_better)):
                 best_score = score
@@ -486,13 +491,9 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
             self._set_methods()
 
         # Store the computed scores
-        CVScoreTuple = namedtuple('CVScoreTuple', ('parameters',
-                                                   'mean_validation_score',
-                                                   'cv_validation_scores'))
-        self.cv_scores_ = [
-            CVScoreTuple(clf_params, score, all_scores)
-            for clf_params, (score, _), all_scores
-            in zip(parameter_iterator, scores, cv_scores)]
+        self.cv_params_ = list(parameter_iterator)
+        self.cv_scores_ = scores
+        self.cv_folds_ = merged_results
         return self
 
 
