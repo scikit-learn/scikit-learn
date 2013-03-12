@@ -1207,8 +1207,7 @@ def add_dummy_feature(X, value=1.0):
             return sp.csc_matrix((data, indices, indptr), shape)
         else:
             klass = X.__class__
-            X = klass(add_dummy_feature(X.tocoo(), value))
-            return klass(X)
+            return klass(add_dummy_feature(X.tocoo(), value))
     else:
         return np.hstack((np.ones((n_samples, 1)) * value, X))
 
