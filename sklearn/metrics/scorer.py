@@ -204,7 +204,7 @@ mse_scorer = Scorer(mean_squared_error, greater_is_better=False)
 
 # Standard Classification Scores
 accuracy_scorer = Scorer(accuracy_score)
-f1_scorer = Scorer(f1_score)
+f1_scorer = PRFScorer()
 
 # Score functions that need decision values
 auc_scorer = Scorer(auc_score, greater_is_better=True, needs_threshold=True)
@@ -217,7 +217,7 @@ recall_scorer = Scorer(recall_score)
 ari_scorer = Scorer(adjusted_rand_score)
 
 SCORERS = dict(r2=r2_scorer, mse=mse_scorer, accuracy=accuracy_scorer,
-               f1=f1_scorer, prf1=PRFScorer(), roc_auc=auc_scorer,
+               f1=f1_scorer, roc_auc=auc_scorer,
                average_precision=average_precision_scorer,
                precision=precision_scorer, recall=recall_scorer,
                ari=ari_scorer)
