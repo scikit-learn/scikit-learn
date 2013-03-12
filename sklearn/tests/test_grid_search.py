@@ -88,6 +88,8 @@ def test_grid_search():
     grid_search.fit(X, y)
     sys.stdout = old_stdout
     assert_equal(grid_search.best_estimator_.foo_param, 2)
+    assert_equal(grid_search.best_params_, {'foo_param': 2})
+    assert_equal(grid_search.best_score_, 1.)
 
     for i, foo_i in enumerate([1, 2, 3]):
         assert_true(grid_search.grid_results_['parameters'][i]

@@ -394,6 +394,18 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
                    self.grid_results_['test_score'],
                    self.fold_results_['test_score'])
 
+    @property
+    def best_score_(self):
+        if not hasattr(self, 'best_index_'):
+            raise AttributeError('Call fit() to calculate best_score_')
+        return self.grid_results_['test_score'][self.best_index_]
+
+    @property
+    def best_params_(self):
+        if not hasattr(self, 'best_index_'):
+            raise AttributeError('Call fit() to calculate best_params_')
+        return self.grid_results_['parameters'][self.best_index_]
+
     def _check_estimator(self):
         """Check that estimator can be fitted and score can be computed."""
         if (not hasattr(self.estimator, 'fit') or
@@ -536,8 +548,6 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
                 best_index = i
 
         self.best_index_ = best_index
-        self.best_params_ = grid_results['parameters'][best_index]
-        self.best_score_ = best_score
         self.fold_results_ = cv_results
         self.grid_results_ = grid_results
 
