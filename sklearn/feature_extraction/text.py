@@ -449,8 +449,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     If you do not provide an a-priori dictionary and you do not use an analyzer
     that does some kind of feature selection then the number of features will
-    be equal to the vocabulary size found by analysing the data. The default
-    analyzer does simple stop word filtering for English.
+    be equal to the vocabulary size found by analysing the data.
 
     Parameters
     ----------
