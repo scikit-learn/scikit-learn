@@ -18,7 +18,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
-from ..utils.sparsefuncs import mean_variance_axis0
+from ..utils.sparsefuncs import assign_rows_csr, mean_variance_axis0
 from ..utils import check_arrays
 from ..utils import check_random_state
 from ..utils import atleast2d_or_csr
@@ -863,15 +863,17 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
             rand_vals *= distances.sum()
             new_centers = np.searchsorted(distances.cumsum(),
                                           rand_vals)
-            new_centers = X[new_centers]
             if verbose:
                 n_reassigns = to_reassign.sum()
                 if n_reassigns:
-                    print("[_mini_batch_step] Reassigning %i cluster centers."
+                    print("[MiniBatchKMeans] Reassigning %i cluster centers."
                           % n_reassigns)
-            if sp.issparse(new_centers) and not sp.issparse(centers):
-                new_centers = new_centers.toarray()
-            centers[to_reassign] = new_centers
+
+            if sp.issparse(X) and not sp.issparse(centers):
+                assign_rows_csr(X, new_centers, np.where(to_reassign)[0],
+                                centers)
+            else:
+                centers[to_reassign] = X[new_centers]
 
     # implementation for the sparse CSR reprensation completely written in
     # cython
