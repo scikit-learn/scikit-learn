@@ -401,8 +401,9 @@ class SelectKBest(_ScoreFilter):
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
 
-    k : int, optional, default=10
+    k : int or SelectKBest.SELECT_ALL, optional, default=10
         Number of top features to select.
+        The SELECT_ALL option bypasses selection, for use in a parameter search.
 
     Attributes
     ----------
@@ -418,6 +419,7 @@ class SelectKBest(_ScoreFilter):
     way.
 
     """
+    SELECT_ALL = None
 
     def __init__(self, score_func=f_classif, k=10):
         self.k = k
@@ -425,6 +427,8 @@ class SelectKBest(_ScoreFilter):
 
     def _get_support_mask(self):
         k = self.k
+        if k is self.SELECT_ALL:
+            return np.ones(self.scores_.shape, dtype=bool)
         if k > len(self.scores_):
             raise ValueError("cannot select %d features among %d"
                              % (k, len(self.scores_)))
