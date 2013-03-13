@@ -113,7 +113,7 @@ def test_minibatch_update_consistency():
     # step 1: compute the dense minibatch update
     old_inertia, incremental_diff = _mini_batch_step(
         X_mb, x_mb_squared_norms, new_centers, counts,
-        buffer, 1)
+        buffer, 1, None, random_reassign=False)
     assert_greater(old_inertia, 0.0)
 
     # compute the new inertia on the same batch to check that it decreased
@@ -130,7 +130,7 @@ def test_minibatch_update_consistency():
     # step 2: compute the sparse minibatch update
     old_inertia_csr, incremental_diff_csr = _mini_batch_step(
         X_mb_csr, x_mb_squared_norms_csr, new_centers_csr, counts_csr,
-        buffer_csr, 1)
+        buffer_csr, 1, None, random_reassign=False)
     assert_greater(old_inertia_csr, 0.0)
 
     # compute the new inertia on the same batch to check that it decreased
@@ -335,7 +335,8 @@ def test_minibatch_reassign():
                              mb_k_means.cluster_centers_,
                              mb_k_means.counts_,
                              np.zeros(X.shape[1], np.double),
-                             False, random_reassign=True, random_state=42,
+                             False, distances=np.zeros(n_clusters),
+                             random_reassign=True, random_state=42,
                              reassignment_ratio=1, verbose=True)
         finally:
             sys.stdout = old_stdout
@@ -357,7 +358,8 @@ def test_minibatch_reassign():
                          mb_k_means.cluster_centers_,
                          mb_k_means.counts_,
                          np.zeros(X.shape[1], np.double),
-                         False, random_reassign=True, random_state=42,
+                         False, distances=np.zeros(n_clusters),
+                         random_reassign=True, random_state=42,
                          reassignment_ratio=1e-15)
 
 
