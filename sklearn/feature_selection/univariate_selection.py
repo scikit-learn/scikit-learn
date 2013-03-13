@@ -429,7 +429,8 @@ class SelectKBest(_ScoreFilter):
         if k == 'all':
             return np.ones(self.scores_.shape, dtype=bool)
         if k > len(self.scores_):
-            raise ValueError("cannot select %d features among %d"
+            raise ValueError("Cannot select %d features among %d. "
+                             "Use k='all' to return all features."
                              % (k, len(self.scores_)))
 
         scores = _clean_nans(self.scores_)
