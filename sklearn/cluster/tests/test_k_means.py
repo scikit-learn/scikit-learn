@@ -22,7 +22,7 @@ from sklearn.cluster import KMeans, k_means
 from sklearn.cluster import MiniBatchKMeans
 from sklearn.cluster.k_means_ import _labels_inertia
 from sklearn.cluster.k_means_ import _mini_batch_step
-from sklearn.cluster._k_means import csr_row_norm_l2
+from sklearn.cluster._k_means import csr_row_norm_l2, sq_dist_to_centers
 from sklearn.datasets.samples_generator import make_blobs
 
 
@@ -359,6 +359,15 @@ def test_minibatch_reassign():
                          np.zeros(X.shape[1], np.double),
                          False, random_reassign=True, random_state=42,
                          reassignment_ratio=1e-15)
+
+    # Verify that the underlying Cython code does the same as the old code
+    for this_X in (X, X_csr):
+        n_samples, n_features = this_X.shape
+        rnd = np.random.RandomState(0)
+        labels = np.arange(X.shape[0], dtype=np.int32) % n_clusters
+        sq_dists = (np.asarray(centers[labels] - X) ** 2).sum(axis=1)
+        assert_array_almost_equal(sq_dist_to_centers(centers, labels, X),
+                                  sq_dists)
 
 
 def test_sparse_mb_k_means_callable_init():
