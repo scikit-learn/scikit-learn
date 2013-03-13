@@ -262,9 +262,11 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     with_mean : boolean, True by default
         If True, center the data before scaling.
 
-    with_std : boolean, True by default
+    with_std : boolean, 'auto' by default
         If True, scale the data to unit variance (or equivalently,
         unit standard deviation).
+        Set to false by default if input is a CSR matrix.
+        Otherwise set to True by default.
 
     copy : boolean, optional, default is True
         Set to False to perform inplace row normalization and avoid a
@@ -307,6 +309,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             if self.with_std == True:
                 raise TypeError(
                     "Cannot scale sparse matrices: pass `with_std=False` ")
+            else:
+                self.with_std_ = False
 
             if self.with_mean:
                 raise ValueError(

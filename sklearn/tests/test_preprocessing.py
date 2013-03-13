@@ -63,6 +63,16 @@ def test_scaler_1d():
     assert_array_almost_equal(X_scaled.mean(axis=0), 0.0)
     assert_array_almost_equal(X_scaled.std(axis=0), 1.0)
 
+    #Test value of self.with_std_
+    scaler = StandardScaler()
+    X_scaled = scaler.fit(X)
+    assert_true(scaler.with_std_)
+
+    scaler = StandardScaler(with_mean=False)
+    X_csr=sp.csr_matrix(X)
+    X_scaled = scaler.fit(X_csr)
+    assert_false(scaler.with_std_)
+
 
 def test_scaler_2d_arrays():
     """Test scaling of 2d array along first axis"""
