@@ -20,7 +20,7 @@ from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
 from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
-from .externals.six import string_types
+from .externals.six import string_types, iteritems
 from .utils import safe_mask, check_random_state
 from .utils.validation import _num_samples, check_arrays
 from .metrics import SCORERS, Scorer, EstimatorScorer, WrapScorer
@@ -454,7 +454,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         # TODO: it would be nice if we need not duplicate this structure
         np_res = np.zeros((len(result_dicts), len(result_dicts[0])),
                 dtype=[(key, res[key].dtype) for key in result_keys])
-        for key, val in res.iteritems():
+        for key, val in iteritems(res):
             np_res[key] = val
         return np_res
 
