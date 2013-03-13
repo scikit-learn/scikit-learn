@@ -306,7 +306,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         """
         X = check_arrays(X, copy=self.copy, sparse_format="csr")[0]
         if sp.issparse(X):
-            if self.with_std == True:
+            if self.with_std is True:
                 raise TypeError(
                     "Cannot scale sparse matrices: pass `with_std=False` ")
             else:

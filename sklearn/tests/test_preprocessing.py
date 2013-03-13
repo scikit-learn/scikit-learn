@@ -69,7 +69,7 @@ def test_scaler_1d():
     assert_true(scaler.with_std_)
 
     scaler = StandardScaler(with_mean=False)
-    X_csr=sp.csr_matrix(X)
+    X_csr = sp.csr_matrix(X)
     X_scaled = scaler.fit(X_csr)
     assert_false(scaler.with_std_)
 
