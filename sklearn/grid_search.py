@@ -20,7 +20,7 @@ from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
 from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
-from .externals.six import string_types, iteritems
+from .externals.six import string_types, iterkeys
 from .utils import safe_mask, check_random_state
 from .utils.validation import _num_samples, check_arrays
 from .metrics import SCORERS, Scorer, EstimatorScorer, WrapScorer
@@ -447,16 +447,11 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         For example [[{'score': 1}, {'score': 2}], [{'score': 3}, {'score': 4}]]
                  -> {'score': np.array([[1, 2], [3, 4]])}"""
         # assume keys are same throughout
-        result_keys = list(result_dicts[0][0].iterkeys()) 
-        res = {key: np.asarray([[fold_results[key] for fold_results in point]
-                                 for point in result_dicts])
-                for key in result_keys}
-        # TODO: it would be nice if we need not duplicate this structure
-        np_res = np.zeros((len(result_dicts), len(result_dicts[0])),
-                dtype=[(key, res[key].dtype) for key in result_keys])
-        for key, val in iteritems(res):
-            np_res[key] = val
-        return np_res
+        result_keys = list(iterkeys(result_dicts[0][0])) 
+        arrays = ([[fold_results[key] for fold_results in point]
+                              for point in result_dicts]
+                 for key in result_keys)
+        return np.rec.fromarrays(arrays, names=result_keys)
 
     def _fit(self, X, y, parameter_iterator, **params):
         """Actual fitting,  performing the search over parameters."""
