@@ -1,11 +1,13 @@
 import pickle
 
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
 
 from sklearn.metrics import f1_score, r2_score, auc_score, fbeta_score
 from sklearn.metrics.cluster import adjusted_rand_score
-from sklearn.metrics import SCORERS, Scorer
+from sklearn.metrics import SCORERS, Scorer, PRFScorer, WrapScorer, EstimatorScorer
 from sklearn.svm import LinearSVC
 from sklearn.cluster import KMeans
 from sklearn.linear_model import Ridge, LogisticRegression
@@ -13,6 +15,8 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.datasets import make_blobs, load_diabetes
 from sklearn.cross_validation import train_test_split, cross_val_score
 from sklearn.grid_search import GridSearchCV
+
+# TODO: test scorers without ground truth
 
 
 def test_classification_scores():
@@ -97,3 +101,61 @@ def test_raises_on_score_list():
     grid_search = GridSearchCV(clf, scoring=f1_scorer_no_average,
                                param_grid={'max_depth': [1, 2]})
     assert_raises(ValueError, grid_search.fit, X, y)
+
+
+def test_calc_scores():
+    """Test that the score returned by __call__ is named 'score' by calc_scores"""
+    scorer = SCORERS['roc_auc']
+    X, y = make_blobs(random_state=0, centers=2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = LinearSVC(random_state=0)
+    clf.fit(X_train, y_train)
+    score = scorer(clf, X_test, y_test)
+    scores = dict(scorer.calc_scores(clf, X_test, y_test))
+    assert_true('score' in scores)
+    assert_equal(score, scores['score'])
+
+
+def test_prf_scorer():
+    X, y = make_blobs(random_state=0, centers=2)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = LinearSVC(random_state=0)
+    clf.fit(X_train, y_train)
+
+    f1_scorer = PRFScorer()
+    f1_score = f1_scorer(clf, X_test, y_test)
+    f1_scores = dict(f1_scorer.calc_scores(clf, X_test, y_test))
+
+    f2_scorer = PRFScorer(beta=2.)
+    f2_score = f2_scorer(clf, X_test, y_test)
+    f2_scores = dict(f2_scorer.calc_scores(clf, X_test, y_test))
+
+    def F(p, r, beta):
+        return (1 + beta * beta) * p * r / (beta * beta * p + r)
+
+    assert_equal(f1_score, f1_scores['score'])
+    assert_equal(f2_score, f2_scores['score'])
+    assert_almost_equal(f1_score, F(f1_scores['precision'], f1_scores['recall'], 1.))
+    assert_almost_equal(f2_score, F(f2_scores['precision'], f2_scores['recall'], 2.))
+
+
+def test_estimator_scorer():
+    scorer = EstimatorScorer()
+    X, y = make_blobs(random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = LinearSVC(random_state=0)
+    clf.fit(X_train, y_train)
+    score = scorer(clf, X_test, y_test)
+    assert_equal(clf.score(X_test, y_test), score)
+    assert_equal(score, dict(scorer.calc_scores(clf, X_test, y_test))['score'])
+
+
+def test_wrap_scorer():
+    scorer = WrapScorer(lambda clf, X, y: clf.score(X, y) * 100)
+    X, y = make_blobs(random_state=0)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = LinearSVC(random_state=0)
+    clf.fit(X_train, y_train)
+    score = scorer(clf, X_test, y_test)
+    assert_equal(clf.score(X_test, y_test) * 100, score)
+    assert_equal(score, dict(scorer.calc_scores(clf, X_test, y_test))['score'])

@@ -16,30 +16,29 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
 # Liscence: Simplified BSD
 
+from abc import ABCMeta, abstractmethod
+
 import numpy as np
 
-from . import (r2_score, mean_squared_error, accuracy_score, f1_score,
+from . import (r2_score, mean_squared_error, accuracy_score,
                auc_score, average_precision_score, precision_score,
                recall_score, precision_recall_fscore_support)
 
 from .cluster import adjusted_rand_score
 
 class BaseScorer(object):
-    SCORE_KEY = 'score'
+    __metaclass__ = ABCMeta
 
     def __init__(self, greater_is_better=True):
         self.greater_is_better = greater_is_better
 
-    def store(self, result, estimator, X, y=None, prefix=''):
-        """Score X and y using the provided estimator and store it under the
-        key ``prefix`` + 'score' in result.
+    def calc_scores(self, estimator, X, y=None):
+        """Calculate one or more scores for X against y using the provided
+        estimator. While __call__ calculates a single score, this may return
+        multiple.
 
         Parameters
         ----------
-        result: dict-like
-            Where the result should be stored under key ``prefix`` + ``Scorer.SCORE_KEY``.
-            A custom ``Scorer`` may store other information under this prefix.
-
         estimator : object
             Trained estimator to use for scoring.
             If ``needs_threshold`` is True, estimator needs
@@ -52,13 +51,39 @@ class BaseScorer(object):
         y : array-like
             True prediction for X.
 
-        prefix : string
-            The prefix of any keys to be stored in ``result``.
+        Returns
+        -------
+        scores : iterable of (name, score) pairs
+            Scores of the estimator's predictions of X with respect to y.
+            Names must be distinct, and exactly one name must be 'score', whose
+            score corresponds to the result of `__call__`.
         """
-        result[prefix + self.SCORE_KEY] = self(estimator, X, y)
+        yield ('score', self(estimator, X, y))
 
+    @abstractmethod
     def __call__(self, estimator, X, y=None):
-        raise NotImplementedError()
+        """Score X and y using the provided estimator.
+
+        Parameters
+        ----------
+        estimator : object
+            Trained estimator to use for scoring.
+            If ``needs_threshold`` is True, estimator needs
+            to provide ``decision_function`` or ``predict_proba``.
+            Otherwise, estimator needs to provide ``predict``.
+
+        X : array-like or sparse matrix
+            Test data that will be scored by the estimator.
+
+        y : array-like
+            True prediction for X.
+
+        Returns
+        -------
+        score : float
+            The score of estimator's prediction of X.
+        """
+        pass
 
 
 class Scorer(BaseScorer):
@@ -150,7 +175,13 @@ class Scorer(BaseScorer):
 
 
 class PRFScorer(Scorer):
-    """Scorer to optimise F score while also storing precision and recall.
+    """Scorer to optimise F score while also providing precision and recall.
+
+    Parameters
+    ----------
+    **kwargs : additional arguments
+        Additional parameters to be passed to
+        `metrics.precision_recall_fscore_support`.
     """
 
     def __init__(self, **kwargs):
@@ -158,19 +189,40 @@ class PRFScorer(Scorer):
             kwargs['average'] = 'weighted'
         super(PRFScorer, self).__init__(precision_recall_fscore_support, **kwargs)
 
-    PRECISION_KEY = 'precision'
-    RECALL_KEY = 'recall'
-
     def __repr__(self):
         kwargs_string = "".join([", %s=%s" % (str(k), str(v))
                                  for k, v in self.kwargs.items()])
         return 'PRFScorer(%s)' % kwargs_string
 
-    def store(self, result, estimator, X, y, prefix=''):
+    def calc_scores(self, estimator, X, y):
+        """
+        Calculates F score, precision and recall
+
+        Parameters
+        ----------
+        estimator : object
+            Trained estimator to use for scoring.
+            If ``needs_threshold`` is True, estimator needs
+            to provide ``decision_function`` or ``predict_proba``.
+            Otherwise, estimator needs to provide ``predict``.
+
+        X : array-like or sparse matrix
+            Test data that will be scored by the estimator.
+
+        y : array-like
+            True prediction for X.
+
+        Returns
+        -------
+        scores : list of (name, score) pairs
+            providing names 'score', 'precision' and 'recall'
+        """
         p, r, f, support = super(PRFScorer, self).__call__(estimator, X, y)
-        result[prefix + self.SCORE_KEY] = f
-        result[prefix + self.PRECISION_KEY] = p
-        result[prefix + self.RECALL_KEY] = r
+        return [
+                ('score', f),
+                ('precision', p),
+                ('recall', r),
+        ]
 
     def __call__(self, estimator, X, y):
         p, r, f, support = super(PRFScorer, self).__call__(estimator, X, y)
@@ -178,10 +230,22 @@ class PRFScorer(Scorer):
 
 
 class WrapScorer(BaseScorer):
-    """Scores by passing the estimator and data to a given function"""
+    """Scores by passing the estimator and data to a given function
+    
+    Parameters
+    ----------
+    score_fn : function with signature of `Scorer.__call__`
+        A function which returns a score given an estimator, instances and
+        ground truth if available.
+
+    greater_is_better : boolean, default=True
+        Whether score_func is a score function (default), meaning high is good,
+        or a loss function, meaning low is good.
+    """
 
     def __init__(self, score_fn, greater_is_better=True):
-        super(EstimatorScorer, self).__init__(greater_is_better)
+        super(WrapScorer, self).__init__(greater_is_better)
+        self.score_fn = score_fn
 
     def __call__(self, estimator, X, y=None):
         if y is None:
@@ -217,7 +281,7 @@ recall_scorer = Scorer(recall_score)
 ari_scorer = Scorer(adjusted_rand_score)
 
 SCORERS = dict(r2=r2_scorer, mse=mse_scorer, accuracy=accuracy_scorer,
-               f1=f1_scorer, roc_auc=auc_scorer,
+               f1=PRFScorer(), roc_auc=auc_scorer,
                average_precision=average_precision_scorer,
                precision=precision_scorer, recall=recall_scorer,
                ari=ari_scorer)

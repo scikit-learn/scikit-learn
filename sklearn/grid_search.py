@@ -264,7 +264,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer, verbose,
     results = {'test_n_samples': _num_samples(X_test)}
     if scorer is None:
         scorer = EstimatorScorer(clf.score)
-    elif not hasattr(scorer, 'store'):
+    elif not hasattr(scorer, 'calc_scores'):
         scorer = WrapScorer(scorer)
 
     if y is not None:
@@ -281,17 +281,19 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer, verbose,
     clf.fit(*fit_args, **fit_params)
     results['train_time'] = time() - start
     start = time()
-    scorer.store(results, clf, *score_args, prefix='test_')
+    results.update(('test_' + name, score)
+            for name, score in scorer.calc_scores(clf, *score_args))
     results['test_time'] = time() - start
 
     if compute_training_score:
-        scorer.store(results, clf, *fit_args, prefix='train_')
+        results.update(('train_' + name, score)
+                for name, score in scorer.calc_scores(clf, *fit_args))
 
     try:
         test_score = results['test_score']
     except KeyError:
-        raise ValueError("Scorer.store must set the key '%s' in results."
-                         " Got %s instead." % (Scorer.SCORE_KEY, results))
+        raise ValueError("Scorer.calc_scores must return a score named 'score'."
+                         " Got %s instead." % (results))
     if not isinstance(test_score, numbers.Number):
         raise ValueError("scoring must return a number, got %s (%s)"
                          " instead." % (str(test_score), type(test_score)))
@@ -663,8 +665,8 @@ class GridSearchCV(BaseSearchCV):
             * ``test_score``, the score for this fold
             * ``train_score``, the training score for this fold
             * ``test_n_samples``, the number of samples in testing
-            * ``test_*``, other score information stored by the Scorer
-            * ``train_*``, other training score information stored by the Scorer
+            * ``test_*``, other scores from `scorer.calc_scores()`
+            * ``train_*``, other training scores from `scorer.calc_scores()`
 
     `best_estimator_` : estimator
         Estimator that was chosen by grid search, i.e. estimator
@@ -850,8 +852,8 @@ class RandomizedSearchCV(BaseSearchCV):
             * ``test_score``, the score for this fold
             * ``train_score``, the training score for this fold
             * ``test_n_samples``, the number of samples in testing
-            * ``test_*``, other score information stored by the Scorer
-            * ``train_*``, other training score information stored by the Scorer
+            * ``test_*``, other scores from `scorer.calc_scores()`
+            * ``train_*``, other training scores from `scorer.calc_scores()`
 
     `best_estimator_` : estimator
         Estimator that was chosen by grid search, i.e. estimator
