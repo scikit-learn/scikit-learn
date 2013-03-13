@@ -170,28 +170,31 @@ These can make installation and upgrading much easier for users since
 the integration includes the ability to automatically install
 dependencies (numpy, scipy) that scikit-learn requires.
 
-The following is an imcomplete list of Python and OS distributions
-that provide their own version of scikit-learn:
+The following is an incomplete list of Python and OS distributions
+that provide their own version of scikit-learn.
 
 
 Debian and derivatives (Ubuntu)
 -------------------------------
 
-The Debian package is named python-sklearn (formerly
-python-scikits-learn) and can be installed using the following
-commands with root privileges::
+The Debian package is named ``python-sklearn``
+(formerly ``python-scikits-learn``)
+and can be installed using the following command::
 
-      apt-get install python-sklearn
+      sudo apt-get install python-sklearn
 
 Additionally, backport builds of the most recent release of
 scikit-learn for existing releases of Debian and Ubuntu are available
-from `NeuroDebian repository
+from the `NeuroDebian repository
 <http://neuro.debian.net/pkgs/python-sklearn.html>`__ .
 
-Python(x, y)
-------------
+A quick-'n'-dirty way of rolling your own ``.deb`` package
+is to `use stdeb <https://github.com/scikit-learn/scikit-learn/wiki/Quick-packaging-for-Debian-Ubuntu>`_.
 
-The `Python(x, y) <http://pythonxy.com>`_ distributes scikit-learn as an additional plugin, which can
+Python(x,y)
+-----------
+
+The `Python(x,y) <http://pythonxy.com>`_ distributes scikit-learn as an additional plugin, which can
 be found in the `Additional plugins <http://code.google.com/p/pythonxy/wiki/AdditionalPlugins>`_
 page.
 
@@ -204,20 +207,19 @@ The `Enthought Python Distribution
 version.
 
 
-Macports
+MacPorts
 --------
 
-The macport's package is named `py26-sklearn` or `py27-sklearn` depending
-on the version of Python. It can be installed by typing the following
+The MacPorts package is named ``py<XY>-scikits-learn``,
+where ``XY`` denotes the Python version.
+It can be installed by typing the following
 command::
 
-    sudo port install py26-sklearn
+    sudo port install py26-scikits-learn
 
 or::
 
-    sudo port install py27-sklearn
-
-depending on the version of Python you want to use.
+    sudo port install py27-scikits-learn
 
 
 Archlinux
