@@ -4,6 +4,7 @@
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 #          Robert Layton <robertlayton@gmail.com>
 #          Jochen Wersdörfer <jochen@wersdoerfer.de>
+#          Roman Sinayev <roman.sinayev@gmail.com>
 #
 # License: BSD Style.
 """
