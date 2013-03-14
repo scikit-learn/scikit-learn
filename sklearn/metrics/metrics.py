@@ -870,24 +870,21 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     labels : array
         Integer array of labels.
 
-    pos_label : int
-        In the binary classification case, give the label of the positive class
-        (default is 1). Everything else but ``pos_label`` is considered to
-        belong to the negative class.  Set to ``None`` in the case of
-        multiclass classification.
+    pos_label : int, 1 by default
+        If ``average`` is not ``None`` and the classification target is binary,
+        only this class's scores will be returned.
 
     average : string, [None, 'micro', 'macro', 'weighted' (default)]
-        In the multiclass classification case, this determines the type of
-        averaging performed on the data.
+        If ``None``, the scores for each class are returned. Otherwise,
+        unless ``pos_label`` is given in binary classification, this
+        determines the type of averaging performed on the data:
 
-        None:
-            Do not perform any averaging, return the score for each class.
-        'macro':
+        ``'macro'``:
             Average over classes (does not take imbalance into account).
-        'micro':
+        ``'micro'``:
             Average over instances (takes imbalance into account).  This
             implies that ``precision == recall == F1``.
-        'weighted':
+        ``'weighted'``:
             Average weighted by support (takes imbalance into account).  Can
             result in F-score that is not between precision and recall.
 
@@ -957,18 +954,15 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     labels : array
         Integer array of labels.
 
-    pos_label : int
-        In the binary classification case, give the label of the positive class
-        (default is 1). Everything else but ``pos_label`` is considered to
-        belong to the negative class.  Set to ``None`` in the case of
-        multiclass classification.
+    pos_label : int, 1 by default
+        If ``average`` is not ``None`` and the classification target is binary,
+        only this class's scores will be returned.
 
     average : string, [None, 'micro', 'macro', 'weighted' (default)]
-        In the multiclass classification case, this determines the type of
-        averaging performed on the data.
+        If ``None``, the scores for each class are returned. Otherwise,
+        unless ``pos_label`` is given in binary classification, this
+        determines the type of averaging performed on the data:
 
-        ``None``:
-            Do not perform any averaging, return the scores for each class.
         ``'macro'``:
             Average over classes (does not take imbalance into account).
         ``'micro'``:
@@ -977,7 +971,6 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
         ``'weighted'``:
             Average weighted by support (takes imbalance into account).  Can
             result in F-score that is not between precision and recall.
-            Do not perform any averaging, return the score for each class.
 
     Returns
     -------
@@ -1075,18 +1068,15 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     labels : array
         Integer array of labels.
 
-    pos_label : int
-        In the binary classification case, give the label of the positive class
-        (default is 1). Everything else but ``pos_label`` is considered to
-        belong to the negative class.  Set to ``None`` in the case of
-        multiclass classification.
+    pos_label : int, 1 by default
+        If ``average`` is not ``None`` and the classification target is binary,
+        only this class's scores will be returned.
 
     average : string, [None (default), 'micro', 'macro', 'weighted']
-        In the multiclass classification case, this determines the type of
-        averaging performed on the data.
+        If ``None``, the scores for each class are returned. Otherwise,
+        unless ``pos_label`` is given in binary classification, this
+        determines the type of averaging performed on the data:
 
-        ``None``:
-            Do not perform any averaging, return the scores for each class.
         ``'macro'``:
             Average over classes (does not take imbalance into account).
         ``'micro'``:
@@ -1250,18 +1240,15 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     labels : array
         Integer array of labels.
 
-    pos_label : int
-        In the binary classification case, give the label of the positive class
-        (default is 1). Everything else but ``pos_label`` is considered to
-        belong to the negative class.  Set to ``None`` in the case of
-        multiclass classification.
+    pos_label : int, 1 by default
+        If ``average`` is not ``None`` and the classification target is binary,
+        only this class's scores will be returned.
 
     average : string, [None, 'micro', 'macro', 'weighted' (default)]
-        In the multiclass classification case, this determines the type of
-        averaging performed on the data.
+        If ``None``, the scores for each class are returned. Otherwise,
+        unless ``pos_label`` is given in binary classification, this
+        determines the type of averaging performed on the data:
 
-        ``None``:
-            Do not perform any averaging, return the scores for each class.
         ``'macro'``:
             Average over classes (does not take imbalance into account).
         ``'micro'``:
@@ -1331,18 +1318,15 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     labels : array
         Integer array of labels.
 
-    pos_label : int
-        In the binary classification case, give the label of the positive class
-        (default is 1). Everything else but ``pos_label`` is considered to
-        belong to the negative class.  Set to ``None`` in the case of
-        multiclass classification.
+    pos_label : int, 1 by default
+        If ``average`` is not ``None`` and the classification target is binary,
+        only this class's scores will be returned.
 
     average : string, [None, 'micro', 'macro', 'weighted' (default)]
-        In the multiclass classification case, this determines the type of
-        averaging performed on the data.
+        If ``None``, the scores for each class are returned. Otherwise,
+        unless ``pos_label`` is given in binary classification, this
+        determines the type of averaging performed on the data:
 
-        ``None``:
-            Do not perform any averaging, return the scores for each class.
         ``'macro'``:
             Average over classes (does not take imbalance into account).
         ``'micro'``:
