@@ -340,7 +340,7 @@ def test_sample_weights():
 def test_auto_weight():
     """Test class weights for imbalanced data"""
     from sklearn.linear_model import LogisticRegression
-    # We take as dataset a the two-dimensional projection of iris so
+    # We take as dataset the two-dimensional projection of iris so
     # that it is not separable and remove half of predictors from
     # class 1.
     # We add one to the targets as a non-regression test: class_weight="auto"
