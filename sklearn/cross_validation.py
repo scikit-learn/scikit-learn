@@ -93,12 +93,13 @@ class LeaveOneOut(object):
 
     def __iter__(self):
         n = self.n
+        if self.indices:
+            ind = np.arange(n)
         for i in range(n):
             test_index = np.zeros(n, dtype=np.bool)
             test_index[i] = True
             train_index = np.logical_not(test_index)
             if self.indices:
-                ind = np.arange(n)
                 train_index = ind[train_index]
                 test_index = ind[test_index]
             yield train_index, test_index
@@ -169,12 +170,13 @@ class LeavePOut(object):
         n = self.n
         p = self.p
         comb = combinations(range(n), p)
+        if self.indices:
+            ind = np.arange(n)
         for idx in comb:
             test_index = np.zeros(n, dtype=np.bool)
             test_index[np.array(idx)] = True
             train_index = np.logical_not(test_index)
             if self.indices:
-                ind = np.arange(n)
                 train_index = ind[train_index]
                 test_index = ind[test_index]
             yield train_index, test_index
@@ -377,13 +379,13 @@ class StratifiedKFold(object):
         n_folds = self.n_folds
         n = self.y.size
         idx = np.argsort(self.y)
-
+        if self.indices:
+            ind = np.arange(n)
         for i in range(n_folds):
             test_index = np.zeros(n, dtype=np.bool)
             test_index[idx[i::n_folds]] = True
             train_index = np.logical_not(test_index)
             if self.indices:
-                ind = np.arange(n)
                 train_index = ind[train_index]
                 test_index = ind[test_index]
             yield train_index, test_index
@@ -457,12 +459,13 @@ class LeaveOneLabelOut(object):
     def __iter__(self):
         # We make a copy here to avoid side-effects during iteration
         labels = np.array(self.labels, copy=True)
+        if self.indices:
+            ind = np.arange(len(labels))
         for i in self.unique_labels:
             test_index = np.zeros(len(labels), dtype=np.bool)
             test_index[labels == i] = True
             train_index = np.logical_not(test_index)
             if self.indices:
-                ind = np.arange(len(labels))
                 train_index = ind[train_index]
                 test_index = ind[test_index]
             yield train_index, test_index
@@ -545,7 +548,8 @@ class LeavePLabelOut(object):
         # We make a copy here to avoid side-effects during iteration
         labels = np.array(self.labels, copy=True)
         comb = combinations(range(self.n_unique_labels), self.p)
-
+        if self.indices:
+            ind = np.arange(labels.size)
         for idx in comb:
             test_index = np.zeros(labels.size, dtype=np.bool)
             idx = np.array(idx)
@@ -553,7 +557,6 @@ class LeavePLabelOut(object):
                 test_index[labels == l] = True
             train_index = np.logical_not(test_index)
             if self.indices:
-                ind = np.arange(labels.size)
                 train_index = ind[train_index]
                 test_index = ind[test_index]
             yield train_index, test_index
