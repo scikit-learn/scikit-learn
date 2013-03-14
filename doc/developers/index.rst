@@ -509,6 +509,8 @@ In following example, k is deprecated and renamed to n_clusters::
             n_clusters = k
 
 
+.. currentmodule:: sklearn
+
 APIs of scikit-learn objects
 ============================
 
@@ -527,13 +529,18 @@ multiple interfaces):
 
     The base object, implements::
 
-      estimator = obj.fit(data)
+      estimator = obj.fit(data, targets)
 
 :Predictor:
 
     For supervised learning, or some unsupervised problems, implements::
 
       prediction = obj.predict(data)
+
+    Classification algorithm usually also offer a way to quantify certainty
+    of a prediction, either using ``decision_function`` or ``predict_proba``::
+        
+      probability = obj.predict_proba(data)
 
 :Transformer:
 
@@ -550,8 +557,7 @@ multiple interfaces):
 :Model:
 
     A model that can give a `goodness of fit <https://en.wikipedia.org/wiki/Goodness_of_fit>`_
-    measure or a likelihood of unseen
-    data, implements (higher is better)::
+    measure or a likelihood of unseen data, implements (higher is better)::
 
       score = obj.score(data)
 
@@ -567,8 +573,7 @@ classifier or a regressor. All estimators implement the fit method::
 
 All built-in estimators also have a ``set_params`` method, which sets
 data-independent parameters (overriding previous parameter values passed
-to ``__init__``). This method is not required for an object to be an
-estimator.
+to ``__init__``).
 
 All estimators should inherit from ``sklearn.base.BaseEstimator``.
 
@@ -688,14 +693,74 @@ Optional Arguments
 In iterative algorithms, the number of iterations should be specified by
 an integer called ``n_iter``.
 
-Unresolved API issues
+
+Writing Your Own Estimator
+==========================
+If you want to implement a new estimator that is scikit-learn compatible -
+whether it is just for you or for contributing it to sklearn, there are several
+internals of scikit-learn that you should be aware of in addition to the
+sklearn API outlined above.
+
+The main motivation to make a class compatible to the scikit-learn estimator
+interface might be that you want to use it together with model assessment and
+selection tools such as :class:`grid_search.GridSearchCV`.
+
+For this to work, you need to implement the following interface:
+
+get_param and set_param
+-----------------------
+All sklearn estimator have ``get_params`` and ``set_params`` functions.
+The ``get_params`` function takes no arguments and returns a dict of the
+``__init__`` parameters of the estimator, together with their values.
+
+The ``set_params`` on the other hand takes as input a dict of the form
+``'parameter': value`` and sets the parameter of the estimator using this dict.
+
+While the ``get_params`` mechanism is not essential (see :ref:`cloning` below),
+the ``set_params`` function is necessary as it is used to set parameters during
+grid searches.
+
+The easiest way to implement these functions, and to get a sensible
+``__repr__`` method, is to inherit from ``sklearn.base.BaseEstimator``. If you
+do not want to make your code dependent on scikit-learn, the easiest way to
+implement the interface is::
+    
+    def set_params(self, **parameters):
+        for parameter, value in parameters.items():
+            self.setattr(parameter, value)
+
+
+Parameters and init
+-------------------
+As :class:`grid_search.GridSearchCV` uses ``set_params`` to apply parameter setting
+to estimators, it is essential that calling ``set_params`` has the same effect
+as setting parameters using the ``__init__`` method.
+The easiest and recommended way to accomplish this is to **not do any parameter
+parsing in ``__init__``**. All logic behind estimator parameters, like translating
+a string argument into a function, should therefore be done in ``fit``.
+
+.. _cloning:
+
+Cloning
+-------
+For using :class:`grid_search.GridSearch` or any functionality of the
+:mod:`cross_validation` module, an estimator must support the ``base.clone``
+function to replicate an estimator. This can be done either by not providing a ``get_params``
+method. Then the provided estimator will be deepcopied.
+If ``get_params`` is present, then ``clone(estimator)`` will be an instance of
+``estimator.__class__`` on which ``set_params`` has been called with clones of
+the result of ``estimator.get_params()``.
+
+Pipeline Compatibility
 ----------------------
+For an estimator to be usable together with ``pipeline.Pipeline`` in any but the
+last step, it needs to provide a ``fit`` or ``fit_transform`` function.
+To be able to evaluate the pipeline on any data but the training set, it also needs
+to provide a ``transform`` function.
+There are no special requirements for the last step in a pipeline, except that
+it has a ``fit`` function.  All ``fit`` and ``fit_transform`` functions must
+take arguments ``X, y``, even if y is not used.
 
-Some things are must still be decided:
-
-    * what should happen when predict is called before ``fit()`` ?
-    * which exception should be raised when the shape of arrays do not match
-      in ``fit()`` ?
 
 Working notes
 -------------
