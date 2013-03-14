@@ -809,7 +809,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                         csc_m, feature_to_position, stop_words_, max_features)
             self.stop_words_ = stop_words_
             self.vocabulary_ = feature_to_position
-        return csc_m.tocoo()
+        return csc_m
 
     def transform(self, raw_documents):
         """Extract token counts out of raw text documents using the vocabulary
