@@ -27,7 +27,6 @@ import scipy.sparse as sp
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.six.moves import xrange
 from ..preprocessing import normalize
-from ..utils.fixes import Counter
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from sklearn.externals import six
@@ -835,16 +834,18 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         binary = self.binary
         analyze = self.build_analyzer()
         for n_doc, doc in enumerate(raw_documents):
-            term_counts = Counter(analyze(doc))
-            for term, count in term_counts.iteritems():
-                if term in self.vocabulary_:
+            for feature in analyze(doc):
+                try:
+                    j_indices.append(self.vocabulary_[feature])
                     i_indices.append(n_doc)
-                    j_indices.append(self.vocabulary_[term])
-                    values.append(count)
+                    values.append(1)
+                except KeyError:
+                    pass
         n_doc += 1
         n_features = len(self.vocabulary_)
         m = self._term_counts_to_matrix(n_doc, \
                                     i_indices, j_indices, values, n_features)
+        del i_indices, j_indices, values  # free memory
         if binary:
             m.data.fill(1)
         return m
