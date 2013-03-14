@@ -13,7 +13,7 @@ build feature vectors from text documents.
 from __future__ import unicode_literals
 
 import array
-from collections import Mapping
+from collections import Mapping, defaultdict
 import numbers
 from operator import itemgetter
 import re
@@ -93,7 +93,7 @@ def _check_stop_list(stop):
 class VectorizerMixin(object):
     """Provides common code for text vectorizers (tokenization logic)."""
 
-    _white_spaces = re.compile(r"\s\s+")
+    _white_spaces = re.compile(ur"\s\s+")
 
     def decode(self, doc):
         """Decode the input into a string of unicode symbols
@@ -126,14 +126,14 @@ class VectorizerMixin(object):
             for n in xrange(min_n,
                             min(max_n + 1, n_original_tokens + 1)):
                 for i in xrange(n_original_tokens - n + 1):
-                    tokens.append(" ".join(original_tokens[i: i + n]))
+                    tokens.append(u" ".join(original_tokens[i: i + n]))
 
         return tokens
 
     def _char_ngrams(self, text_document):
         """Tokenize text_document into a sequence of character n-grams"""
         # normalize white spaces
-        text_document = self._white_spaces.sub(" ", text_document)
+        text_document = self._white_spaces.sub(u" ", text_document)
 
         text_len = len(text_document)
         ngrams = []
@@ -149,12 +149,12 @@ class VectorizerMixin(object):
         Tokenize text_document into a sequence of character n-grams
         excluding any whitespace (operating only inside word boundaries)"""
         # normalize white spaces
-        text_document = self._white_spaces.sub(" ", text_document)
+        text_document = self._white_spaces.sub(u" ", text_document)
 
         min_n, max_n = self.ngram_range
         ngrams = []
         for w in text_document.split():
-            w = " " + w + " "
+            w = u' ' + w + u' '
             w_len = len(w)
             for n in xrange(min_n, max_n + 1):
                 offset = 0
@@ -370,7 +370,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     def __init__(self, input='content', charset='utf-8',
                  charset_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
-                 stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
+                 stop_words=None, token_pattern=ur"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word', n_features=(2 ** 20),
                  binary=False, norm='l2', non_negative=False,
                  dtype=np.float64):
@@ -449,7 +449,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     If you do not provide an a-priori dictionary and you do not use an analyzer
     that does some kind of feature selection then the number of features will
-    be equal to the vocabulary size found by analysing the data.
+    be equal to the vocabulary size found by analysing the data. The default
+    analyzer does simple stop word filtering for English.
 
     Parameters
     ----------
@@ -557,6 +558,12 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
+    sort_features : boolean, True by default.
+        If True, the output matrix has the feature columns in order
+        corresponding to sorted vocabulary.  If False, order of the
+        columns is determined by features first encountered.
+        Computation is about 2% faster without sorting.
+
     Attributes
     ----------
     `vocabulary_` : dict
@@ -579,7 +586,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word',
                  max_df=1.0, min_df=1, max_features=None,
-                 vocabulary=None, binary=False, dtype=np.int64):
+                 vocabulary=None, binary=False, dtype=long, sort_features=True):
         self.input = input
         self.charset = charset
         self.charset_error = charset_error
@@ -592,23 +599,31 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.stop_words = stop_words
         self.max_df = max_df
         self.min_df = min_df
+        if max_df < 0 or min_df < 0:
+            raise ValueError("negative value for max_df of min_df")
         self.max_features = max_features
+        if not any((
+                isinstance(max_features, numbers.Integral), 
+                max_features is None, 
+                max_features > 0)):
+            raise ValueError("max_features is neither a positive integer nor None")
         self.ngram_range = ngram_range
         if vocabulary is not None:
             if not isinstance(vocabulary, Mapping):
                 vocabulary = dict((t, i) for i, t in enumerate(vocabulary))
+                print "initial vocabulary", vocabulary
             if not vocabulary:
                 raise ValueError("empty vocabulary passed to fit")
             self.fixed_vocabulary = True
-            self.vocabulary_ = vocabulary
+            self.vocabulary_ = dict(vocabulary)
         else:
             self.fixed_vocabulary = False
         self.binary = binary
         self.dtype = dtype
+        self.sort_features = sort_features
 
-    def _term_counts_to_matrix(self, n_doc, i_indices, j_indices, values):
+    def _term_counts_to_matrix(self, n_doc, i_indices, j_indices, values, n_features):
         """Construct COO matrix from indices and values.
-
         i_indices and j_indices should be constructed with _make_int_array.
         """
         # array("i") corresponds to np.intc, which is also what scipy.sparse
@@ -619,20 +634,62 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             i_indices = np.frombuffer(i_indices, dtype=np.intc)
         if len(j_indices) > 0:
             j_indices = np.frombuffer(j_indices, dtype=np.intc)
-
         if self.dtype == np.intc and len(values) > 0:
             values = np.frombuffer(values, dtype=np.intc)
         else:
             # In Python 3.2, SciPy 0.10.1, the coo_matrix ctor won't accept an
             # array.array.
             values = np.asarray(values, dtype=self.dtype)
-
-        shape = (n_doc, max(six.itervalues(self.vocabulary_)) + 1)
+        shape = (n_doc, n_features)
         spmatrix = sp.coo_matrix((values, (i_indices, j_indices)),
                                  shape=shape, dtype=self.dtype)
-        if self.binary:
-            spmatrix.data.fill(1)
+        # weird bug -- this doesn't work on some computers
+        # if self.binary:
+        #     spmatrix = spmatrix.data.fill(1)
+        #     print spmatrix.todense()
         return spmatrix
+
+    def _sort_features_and_matrix(self, cscmatrix, feature_to_position):
+        '''sort dict by keys and assign values to the sorted key index'''
+        sorted_by_name_dict = {}
+        sorted_features = sorted(feature_to_position)
+        new_positions = []
+        for i, k in enumerate(sorted_features):
+            sorted_by_name_dict[k] = i
+            new_positions.append(feature_to_position[k])
+        return cscmatrix[:, new_positions], sorted_by_name_dict
+
+    def _remove_highandlow(self, cscmatrix, feature_to_position, high, low):
+        '''removes features that are in more documents than high and less documents than low
+           does not remove documents with zero features
+        '''
+        kept_indices = []
+        removed_indices = set()
+        for colptr in xrange(len(cscmatrix.indptr)-1):
+            len_data_slice = len(cscmatrix.data[cscmatrix.indptr[colptr]:cscmatrix.indptr[colptr+1]])
+            if len_data_slice <= high and len_data_slice >= low:
+                kept_indices.append(colptr)
+            else:
+                removed_indices.add(colptr)
+        s_kept_indices = set(kept_indices)
+        new_mapping = dict((v,i) for i,v in enumerate(kept_indices))
+        feature_to_position = dict((k,new_mapping[v]) for k,v in six.iteritems(feature_to_position) if v in s_kept_indices)
+        return cscmatrix[:,kept_indices], feature_to_position, removed_indices
+
+    def _get_max_features(self, csc_m, feature_to_position, stop_words_, max_features):
+        '''cuts only the top max_features from the matrix and feature_to_position
+        cut features are added to stop_words_
+        '''
+        a = np.argsort(np.squeeze(np.asarray(csc_m.sum(axis=0))))[::-1][:max_features]
+        s_a = set(a)
+        new_feature_to_position = {}
+        for (k,v) in six.iteritems(feature_to_position):
+            if v in s_a:
+                new_feature_to_position[k] = v
+            else:
+                stop_words_.add(k)
+        return csc_m[:,np.sort(a)], new_feature_to_position, stop_words_
+
 
     def fit(self, raw_documents, y=None):
         """Learn a vocabulary dictionary of all tokens in the raw documents.
@@ -667,129 +724,70 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         # fit_transform overridable without unwanted side effects in
         # TfidfVectorizer.
         fixed_vocab = self.fixed_vocabulary
-
-        if fixed_vocab:
-            vocab = self.vocabulary_
-            vocab_max_ind = max(six.itervalues(self.vocabulary_)) + 1
-        else:
-            vocab = {}
-            vocab_max_ind = 0
-
-        # Result of document conversion to term count arrays.
-        row_ind = _make_int_array()
-        col_ind = _make_int_array()
-        feature_values = _make_int_array()
-        term_counts = Counter()
-
-        # term counts across entire corpus (count each term maximum once per
-        # document)
-        document_counts = Counter()
-
         analyze = self.build_analyzer()
-
-        for n_doc, doc in enumerate(raw_documents):
-            term_count_current = Counter(analyze(doc))
-            term_counts.update(term_count_current)
-
-            if not fixed_vocab:
-                for term in six.iterkeys(term_count_current):
-                    if term not in vocab:
-                        vocab[term] = vocab_max_ind
-                        vocab_max_ind += 1
-
-            document_counts.update(six.iterkeys(term_count_current))
-
-            for term, count in six.iteritems(term_count_current):
-                if term in vocab:
-                    row_ind.append(n_doc)
-                    col_ind.append(vocab[term])
-                    feature_values.append(count)
-        n_doc += 1
-
+        max_df = self.max_df
+        min_df = self.min_df
+        max_features = self.max_features
+        sort_features = self.sort_features
+        binary = self.binary
+        i_indices = _make_int_array()
+        j_indices = _make_int_array()
+        values = _make_int_array()
         if fixed_vocab:
-            # XXX max_df, min_df and max_features have no effect
-            # with a fixed vocabulary.
-            i_indices = row_ind
-            j_indices = col_ind
-            values = feature_values
+            feature_to_position = self.vocabulary_
+            for i, doc in enumerate(raw_documents):
+                for feature in analyze(doc):
+                    try:
+                        j_indices.append(feature_to_position[feature])
+                        i_indices.append(i)
+                        values.append(1)
+                    except KeyError:
+                        continue
+            n_doc = i + 1
         else:
-            max_features = self.max_features
-            max_df = self.max_df
-            min_df = self.min_df
-
+            j = 0
+            feature_to_count = defaultdict(int)
+            feature_to_position = defaultdict(int)
+            for i, doc in enumerate(raw_documents):
+                for feature in analyze(doc):
+                    feature_to_count[feature] += 1
+                    if feature_to_count[feature] == 1: # new feature
+                        feature_to_position[feature] = j
+                        j+=1
+                    i_indices.append(i)
+                    j_indices.append(feature_to_position[feature])
+                    values.append(1)
+            # assert j == len(feature_to_count)
+            del feature_to_count
+            n_doc = i + 1
             max_doc_count = (max_df if isinstance(max_df, numbers.Integral)
-                                    else max_df * n_doc)
+                                         else int(round(max_df * n_doc)))
             min_doc_count = (min_df if isinstance(min_df, numbers.Integral)
-                                    else min_df * n_doc)
+                                         else int(round(min_df * n_doc)))
+            if max_doc_count < min_doc_count:
+                raise ValueError("max_df corresponds to < documents than min_df")
+        n_features = len(feature_to_position)
+        if n_features == 0:
+            raise ValueError("Empty vocabulary; Perhaps the document only contains stop words")
+        csc_m = self._term_counts_to_matrix(
+                                n_doc, i_indices, j_indices, values, n_features).tocsc()
+        if binary:
+            csc_m.data.fill(1)
 
-            # filter out stop words: terms that occur in almost all documents
+        if not fixed_vocab:
+            if sort_features:
+                csc_m, feature_to_position = self._sort_features_and_matrix(
+                                                            csc_m, feature_to_position)
+            stop_words_ = set()
             if max_doc_count < n_doc or min_doc_count > 1:
-                stop_words = set(t for t, dc in six.iteritems(document_counts)
-                                   if not min_doc_count <= dc <= max_doc_count)
-            else:
-                stop_words = set()
-
-            # list the terms that should be part of the vocabulary
-            if max_features is None:
-                terms = set(term_counts) - stop_words
-            else:
-                # extract the most frequent terms for the vocabulary
-                terms = set()
-                for t, tc in term_counts.most_common():
-                    if t not in stop_words:
-                        terms.add(t)
-                    if len(terms) >= max_features:
-                        break
-
-            # store the learned stop words to make it easier to debug the value
-            # of max_df
-            self.stop_words_ = stop_words
-
-            # free memory
-            term_counts.clear()
-            document_counts.clear()
-
-            # store map from term name to feature integer index: we sort the
-            # terms to have reproducible outcome for the vocabulary structure:
-            # otherwise the mapping from feature name to indices might depend
-            # on the memory layout of the machine. Furthermore sorted terms
-            # might make it possible to perform binary search in the feature
-            # names array.
-            terms = sorted(terms)
-
-            # reorder term indices
-            reorder_indices = dict((vocab[term], i)
-                                   for i, term in enumerate(terms))
-            self.vocabulary_ = dict(((t, i) for i, t in enumerate(terms)))
-
-            # create term count arrays with new vocabulary structure
-            i_indices = _make_int_array()
-            j_indices = _make_int_array()
-            values = _make_int_array()
-            for i, col in enumerate(col_ind):
-                if col in reorder_indices:
-                    i_indices.append(row_ind[i])
-                    j_indices.append(reorder_indices[col_ind[i]])
-                    values.append(feature_values[i])
-
-            # free memory
-            del reorder_indices
-            del row_ind
-            del col_ind
-            del feature_values
-
-        if not vocab:
-            msg = "Empty vocabulary; "
-            if fixed_vocab:
-                msg += "%r passed to constructor." % vocab
-            else:
-                msg += "perhaps your documents contain stop words only?"
-            raise ValueError(msg)
-
-        # the term_counts and document_counts might be useful statistics, are
-        # we really sure want we want to drop them? They take some memory but
-        # can be useful for corpus introspection
-        return self._term_counts_to_matrix(n_doc, i_indices, j_indices, values)
+                csc_m, feature_to_position, stop_words_ = self._remove_highandlow(
+                                    csc_m, feature_to_position, max_doc_count, min_doc_count)
+            if max_features and max_features < csc_m.shape[1]:
+                csc_m, feature_to_position, stop_words_ = \
+                        self._get_max_features(csc_m, feature_to_position, stop_words_, max_features)
+            self.stop_words_ = stop_words_
+            self.vocabulary_ = feature_to_position
+        return csc_m.tocoo()
 
     def transform(self, raw_documents):
         """Extract token counts out of raw text documents using the vocabulary
@@ -809,23 +807,24 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         # raw_documents can be an iterable so we don't know its size in
         # advance
-
-        # result of document conversion to term count arrays
         i_indices = _make_int_array()
         j_indices = _make_int_array()
         values = _make_int_array()
-
+        binary = self.binary
         analyze = self.build_analyzer()
         for n_doc, doc in enumerate(raw_documents):
             term_counts = Counter(analyze(doc))
-
-            for term, count in six.iteritems(term_counts):
+            for term, count in term_counts.iteritems():
                 if term in self.vocabulary_:
                     i_indices.append(n_doc)
                     j_indices.append(self.vocabulary_[term])
                     values.append(count)
         n_doc += 1
-        return self._term_counts_to_matrix(n_doc, i_indices, j_indices, values)
+        n_features = len(self.vocabulary_)
+        m = self._term_counts_to_matrix(n_doc, i_indices, j_indices, values, n_features)
+        if binary:
+            m.data.fill(1)
+        return m
 
     def inverse_transform(self, X):
         """Return terms per document with nonzero entries in X.
@@ -1150,9 +1149,8 @@ class TfidfVectorizer(CountVectorizer):
                  preprocessor=None, tokenizer=None, analyzer='word',
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), max_df=1.0, min_df=1,
-                 max_features=None, vocabulary=None, binary=False,
-                 dtype=np.int64, norm='l2', use_idf=True, smooth_idf=True,
-                 sublinear_tf=False):
+                 max_features=None, vocabulary=None, binary=False, dtype=long,
+                 norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=False):
 
         super(TfidfVectorizer, self).__init__(
             input=input, charset=charset, charset_error=charset_error,
