@@ -24,10 +24,10 @@ Changelog
      multi-label classification and a new metric :func:`metrics.hamming_loss`
      is added with multi-label support by `Arnaud Joly`_.
 
-   - Much reduced memory usage in
+   - Speed and memory usage improvements in
      :class:`feature_extraction.text.CountVectorizer` and
      :class:`feature_extraction.text.TfidfVectorizer`,
-     by Jochen Wersdörfer.
+     by Jochen Wersdörfer and Roman Sinayev.
 
    - The ``min_df`` parameter in
      :class:`feature_extraction.text.CountVectorizer` and

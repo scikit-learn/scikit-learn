@@ -294,9 +294,9 @@ reasonable (please see  the :ref:`reference documentation
   CountVectorizer(analyzer=u'word', binary=False, charset=u'utf-8',
           charset_error=u'strict', dtype=<type 'numpy.int64'>,
           input=u'content', lowercase=True, max_df=1.0, max_features=None,
-          min_df=1, ngram_range=(1, 1), preprocessor=None, stop_words=None,
-          strip_accents=None, token_pattern=u'(?u)\\b\\w\\w+\\b',
-          tokenizer=None, vocabulary=None)
+          min_df=1, ngram_range=(1, 1), preprocessor=None, 
+          stop_words=None, strip_accents=None,
+          token_pattern=u'(?u)\\b\\w\\w+\\b', tokenizer=None, vocabulary=None)
 
 Let's use it to tokenize and count the word occurrences of a minimalistic
 corpus of text documents::
@@ -310,7 +310,7 @@ corpus of text documents::
   >>> X = vectorizer.fit_transform(corpus)
   >>> X                                       # doctest: +NORMALIZE_WHITESPACE
   <4x9 sparse matrix of type '<type 'numpy.int64'>'
-      with 19 stored elements in COOrdinate format>
+      with 19 stored elements in Compressed Sparse Column format>
 
 The default configuration tokenizes the string by extracting words of
 at least 2 letters. The specific function that does this step can be
@@ -535,7 +535,7 @@ span across words::
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   ...                                         # doctest: +NORMALIZE_WHITESPACE
   <1x4 sparse matrix of type '<type 'numpy.int64'>'
-     with 4 stored elements in COOrdinate format>
+     with 4 stored elements in Compressed Sparse Column format>
   >>> ngram_vectorizer.get_feature_names()
   [u' fox ', u' jump', u'jumpy', u'umpy ']
 
@@ -543,7 +543,7 @@ span across words::
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   ...                                         # doctest: +NORMALIZE_WHITESPACE
   <1x5 sparse matrix of type '<type 'numpy.int64'>'
-      with 5 stored elements in COOrdinate format>
+      with 5 stored elements in Compressed Sparse Column format>
   >>> ngram_vectorizer.get_feature_names()
   [u'jumpy', u'mpy f', u'py fo', u'umpy ', u'y fox']
 
