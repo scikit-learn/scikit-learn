@@ -435,20 +435,22 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
 
         scores = list()
         cv_scores = list()
-        for start in range(0, n_fits, n_folds):
+        for grid_start in range(0, n_fits, n_folds):
             n_test_samples = 0
-            mean_validation_score = 0
+            score = 0
             these_points = list()
             for this_score, clf_params, this_n_test_samples in \
-                    out[start:start + n_folds]:
+                    out[grid_start:grid_start + n_folds]:
                 these_points.append(this_score)
                 if self.iid:
                     this_score *= this_n_test_samples
-                mean_validation_score += this_score
-                n_test_samples += this_n_test_samples
+                    n_test_samples += this_n_test_samples
+                score += this_score
             if self.iid:
-                mean_validation_score /= float(n_test_samples)
-            scores.append((mean_validation_score, clf_params))
+                score /= float(n_test_samples)
+            else:
+                score /= float(n_folds)
+            scores.append((score, clf_params))
             cv_scores.append(these_points)
 
         cv_scores = np.asarray(cv_scores)
