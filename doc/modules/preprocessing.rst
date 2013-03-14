@@ -73,7 +73,7 @@ This class is hence suitable for use in the early steps of a
 
   >>> scaler = preprocessing.StandardScaler().fit(X)
   >>> scaler
-  StandardScaler(copy=True, with_mean=True, with_std=True)
+  StandardScaler(copy=True, with_mean=True, with_std='auto')
 
   >>> scaler.mean_                                      # doctest: +ELLIPSIS
   array([ 1. ...,  0. ...,  0.33...])

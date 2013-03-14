@@ -266,9 +266,11 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         matrix which in common use cases is likely to be too large to fit in
         memory.
 
-    with_std : boolean, True by default
+    with_std : boolean, 'auto' by default
         If True, scale the data to unit variance (or equivalently,
         unit standard deviation).
+        Set to false by default if input is a CSR matrix.
+        Otherwise set to True by default.
 
     copy : boolean, optional, default is True
         If False, try to avoid a copy and do inplace scaling instead.
@@ -293,7 +295,7 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     to further remove the linear correlation across features.
     """
 
-    def __init__(self, copy=True, with_mean=True, with_std=True):
+    def __init__(self, copy=True, with_mean=True, with_std='auto'):
         self.with_mean = with_mean
         self.with_std = with_std
         self.copy = copy
@@ -309,6 +311,12 @@ class StandardScaler(BaseEstimator, TransformerMixin):
         """
         X = check_arrays(X, copy=self.copy, sparse_format="csr")[0]
         if sp.issparse(X):
+            if self.with_std is True:
+                raise TypeError(
+                    "Cannot scale sparse matrices: pass `with_std=False` ")
+            else:
+                self.with_std_ = False
+
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
@@ -324,9 +332,13 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 self.std_ = None
             return self
         else:
+            if self.with_std == "auto":
+                self.with_std_ = True
+            else:
+                self.with_std_ = self.with_std
             warn_if_not_float(X, estimator=self)
             self.mean_, self.std_ = _mean_and_std(
-                X, axis=0, with_mean=self.with_mean, with_std=self.with_std)
+                X, axis=0, with_mean=self.with_mean, with_std=self.with_std_)
             return self
 
     def transform(self, X, y=None, copy=None):
