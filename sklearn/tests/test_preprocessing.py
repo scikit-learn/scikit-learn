@@ -187,6 +187,14 @@ def test_scaler_without_centering():
     X_csr = sp.csr_matrix(X)
     X_csc = sp.csc_matrix(X)
 
+    assert_raises(ValueError, StandardScaler().fit, X_csr)
+
+    null_transform = StandardScaler(with_mean=False, with_std=False, copy=True)
+    X_null = null_transform.fit_transform(X_csr)
+    assert_array_equal(X_null.data, X_csr.data)
+    X_orig = null_transform.inverse_transform(X_null)
+    assert_array_equal(X_orig.data, X_csr.data)
+
     scaler = StandardScaler(with_mean=False).fit(X)
     X_scaled = scaler.transform(X, copy=True)
     assert_false(np.any(np.isnan(X_scaled)))

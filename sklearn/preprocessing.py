@@ -261,15 +261,20 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     ----------
     with_mean : boolean, True by default
         If True, center the data before scaling.
+        This does not work (and will raise an exception) when attempted on
+        sparse matrices, because centering them entails building a dense
+        matrix which in common use cases is likely to be too large to fit in
+        memory.
 
     with_std : boolean, True by default
         If True, scale the data to unit variance (or equivalently,
         unit standard deviation).
 
     copy : boolean, optional, default is True
-        Set to False to perform inplace row normalization and avoid a
-        copy (if the input is already a numpy array or a scipy.sparse
-        CSR matrix and if axis is 1).
+        If False, try to avoid a copy and do inplace scaling instead.
+        This is not guaranteed to always work inplace; e.g. if the data is
+        not a NumPy array or scipy.sparse CSR matrix, a copy may still be
+        returned.
 
     Attributes
     ----------
@@ -307,12 +312,16 @@ class StandardScaler(BaseEstimator, TransformerMixin):
             if self.with_mean:
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
-                    "instead See docstring for motivation and alternatives.")
+                    "instead. See docstring for motivation and alternatives.")
             warn_if_not_float(X, estimator=self)
             self.mean_ = None
-            var = mean_variance_axis0(X)[1]
-            self.std_ = np.sqrt(var)
-            self.std_[var == 0.0] = 1.0
+
+            if self.with_std:
+                var = mean_variance_axis0(X)[1]
+                self.std_ = np.sqrt(var)
+                self.std_[var == 0.0] = 1.0
+            else:
+                self.std_ = None
             return self
         else:
             warn_if_not_float(X, estimator=self)
@@ -335,8 +344,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 raise ValueError(
                     "Cannot center sparse matrices: pass `with_mean=False` "
                     "instead See docstring for motivation and alternatives.")
-            warn_if_not_float(X, estimator=self)
-            inplace_csr_column_scale(X, 1 / self.std_)
+            if self.std_ is not None:
+                warn_if_not_float(X, estimator=self)
+                inplace_csr_column_scale(X, 1 / self.std_)
         else:
             warn_if_not_float(X, estimator=self)
             if self.with_mean:
@@ -364,7 +374,8 @@ class StandardScaler(BaseEstimator, TransformerMixin):
                 copy = False
             if copy:
                 X = X.copy()
-            inplace_csr_column_scale(X, self.std_)
+            if self.std_ is not None:
+                inplace_csr_column_scale(X, self.std_)
         else:
             X = np.asarray(X)
             if copy:
