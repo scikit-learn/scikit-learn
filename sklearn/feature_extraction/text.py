@@ -772,7 +772,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                     j_indices.append(feature_to_position[feature])
                     values.append(1)
             # assert j == len(feature_to_count)
-            del feature_to_count
+            del feature_to_count  # free memory
             n_doc = i + 1
             max_doc_count = (max_df if isinstance(max_df, numbers.Integral)
                                          else int(round(max_df * n_doc)))
@@ -788,6 +788,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         csc_m = self._term_counts_to_matrix(
                                 n_doc, i_indices,
                                 j_indices, values, n_features).tocsc()
+        del i_indices, j_indices, values  # free memory
         if binary:
             csc_m.data.fill(1)
 
