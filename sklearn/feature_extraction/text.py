@@ -94,7 +94,7 @@ def _check_stop_list(stop):
 class VectorizerMixin(object):
     """Provides common code for text vectorizers (tokenization logic)."""
 
-    _white_spaces = re.compile(ur"\s\s+")
+    _white_spaces = re.compile(r"\s\s+")
 
     def decode(self, doc):
         """Decode the input into a string of unicode symbols
@@ -127,14 +127,14 @@ class VectorizerMixin(object):
             for n in xrange(min_n,
                             min(max_n + 1, n_original_tokens + 1)):
                 for i in xrange(n_original_tokens - n + 1):
-                    tokens.append(u" ".join(original_tokens[i: i + n]))
+                    tokens.append(" ".join(original_tokens[i: i + n]))
 
         return tokens
 
     def _char_ngrams(self, text_document):
         """Tokenize text_document into a sequence of character n-grams"""
         # normalize white spaces
-        text_document = self._white_spaces.sub(u" ", text_document)
+        text_document = self._white_spaces.sub(" ", text_document)
 
         text_len = len(text_document)
         ngrams = []
@@ -155,7 +155,7 @@ class VectorizerMixin(object):
         min_n, max_n = self.ngram_range
         ngrams = []
         for w in text_document.split():
-            w = u' ' + w + u' '
+            w = ' ' + w + ' '
             w_len = len(w)
             for n in xrange(min_n, max_n + 1):
                 offset = 0
@@ -371,7 +371,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     def __init__(self, input='content', charset='utf-8',
                  charset_error='strict', strip_accents=None,
                  lowercase=True, preprocessor=None, tokenizer=None,
-                 stop_words=None, token_pattern=ur"(?u)\b\w\w+\b",
+                 stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word', n_features=(2 ** 20),
                  binary=False, norm='l2', non_negative=False,
                  dtype=np.float64):
@@ -450,8 +450,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     If you do not provide an a-priori dictionary and you do not use an analyzer
     that does some kind of feature selection then the number of features will
-    be equal to the vocabulary size found by analysing the data. The default
-    analyzer does simple stop word filtering for English.
+    be equal to the vocabulary size found by analysing the data. 
 
     Parameters
     ----------
@@ -587,7 +586,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word',
                  max_df=1.0, min_df=1, max_features=None,
-                 vocabulary=None, binary=False, dtype=long, sort_features=True):
+                 vocabulary=None, binary=False, dtype=np.int64, sort_features=True):
         self.input = input
         self.charset = charset
         self.charset_error = charset_error
@@ -1150,8 +1149,9 @@ class TfidfVectorizer(CountVectorizer):
                  preprocessor=None, tokenizer=None, analyzer='word',
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), max_df=1.0, min_df=1,
-                 max_features=None, vocabulary=None, binary=False, dtype=long,
-                 norm='l2', use_idf=True, smooth_idf=True, sublinear_tf=False):
+                 max_features=None, vocabulary=None, binary=False, 
+                 dtype=np.int64, norm='l2', use_idf=True, smooth_idf=True, 
+                 sublinear_tf=False):
 
         super(TfidfVectorizer, self).__init__(
             input=input, charset=charset, charset_error=charset_error,
