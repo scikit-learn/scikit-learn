@@ -31,6 +31,24 @@ from ..utils.multiclass import unique_labels
 
 
 ###############################################################################
+# Annotations
+###############################################################################
+
+# TODO: is there a better name for this, or its opposite, "categorical"?
+def needs_threshold(metric):
+    metric.needs_threshold = True
+    return metric
+
+def greater_is_better(metric):
+    metric.greater_is_better = True
+    return metric
+
+def lesser_is_better(metric):
+    metric.greater_is_better = False
+    return metric
+
+
+###############################################################################
 # General utilities
 ###############################################################################
 def auc(x, y, reorder=False):
@@ -96,6 +114,7 @@ def auc(x, y, reorder=False):
 ###############################################################################
 # Binary classification loss
 ###############################################################################
+@lesser_is_better
 def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
     """Average hinge loss (non-regularized)
 
@@ -159,6 +178,8 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
 ###############################################################################
 # Binary classification scores
 ###############################################################################
+@needs_threshold
+@greater_is_better
 def average_precision_score(y_true, y_score):
     """Compute average precision (AP) from prediction scores
 
@@ -205,6 +226,8 @@ def average_precision_score(y_true, y_score):
     return auc(recall, precision)
 
 
+@needs_threshold
+@greater_is_better
 def auc_score(y_true, y_score):
     """Compute Area Under the Curve (AUC) from prediction scores
 
@@ -251,6 +274,7 @@ def auc_score(y_true, y_score):
     return auc(fpr, tpr, reorder=True)
 
 
+@greater_is_better
 def matthews_corrcoef(y_true, y_pred):
     """Compute the Matthews correlation coefficient (MCC) for binary classes
 
@@ -306,6 +330,7 @@ def matthews_corrcoef(y_true, y_pred):
         return mcc
 
 
+@needs_threshold
 def precision_recall_curve(y_true, probas_pred):
     """Compute precision-recall pairs for different probability thresholds
 
@@ -418,6 +443,7 @@ def precision_recall_curve(y_true, probas_pred):
     return precision, recall, thresholds
 
 
+@needs_threshold
 def roc_curve(y_true, y_score, pos_label=None):
     """Compute Receiver operating characteristic (ROC)
 
@@ -640,6 +666,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
 ###############################################################################
 # Multiclass loss function
 ###############################################################################
+@lesser_is_better
 def zero_one_loss(y_true, y_pred, normalize=True):
     """Zero-one classification loss.
 
@@ -730,6 +757,7 @@ def zero_one_loss(y_true, y_pred, normalize=True):
             "'zero_one_loss' and will be removed in release 0.15."
             "Default behavior is changed from 'normalize=False' to "
             "'normalize=True'")
+@lesser_is_better
 def zero_one(y_true, y_pred, normalize=False):
     """Zero-One classification loss
 
@@ -771,6 +799,7 @@ def zero_one(y_true, y_pred, normalize=False):
 ###############################################################################
 # Multiclass score functions
 ###############################################################################
+@greater_is_better
 def accuracy_score(y_true, y_pred):
     """Accuracy classification score.
 
@@ -846,6 +875,7 @@ def accuracy_score(y_true, y_pred):
     return np.mean(score)
 
 
+@greater_is_better
 def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     """Compute the F1 score, also known as balanced F-score or F-measure
 
@@ -928,6 +958,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
                        pos_label=pos_label, average=average)
 
 
+@greater_is_better
 def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
                 average='weighted'):
     """Compute the F-beta score
@@ -1218,6 +1249,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         return avg_precision, avg_recall, avg_fscore, None
 
 
+@greater_is_better
 def precision_score(y_true, y_pred, labels=None, pos_label=1,
                     average='weighted'):
     """Compute the precision
@@ -1298,6 +1330,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     return p
 
 
+@greater_is_better
 def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     """Compute the recall
 
@@ -1377,6 +1410,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
 
 @deprecated("Function zero_one_score has been renamed to "
             'accuracy_score'" and will be removed in release 0.15.")
+@greater_is_better
 def zero_one_score(y_true, y_pred):
     """Zero-one classification score (accuracy)
 
@@ -1492,6 +1526,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
 ###############################################################################
 # Multilabel loss function
 ###############################################################################
+@lesser_is_better
 def hamming_loss(y_true, y_pred, classes=None):
     """Compute the average Hamming loss.
 
@@ -1595,6 +1630,7 @@ def hamming_loss(y_true, y_pred, classes=None):
 ###############################################################################
 # Regression loss functions
 ###############################################################################
+@lesser_is_better
 def mean_absolute_error(y_true, y_pred):
     """Mean absolute error regression loss
 
@@ -1628,6 +1664,7 @@ def mean_absolute_error(y_true, y_pred):
     return np.mean(np.abs(y_pred - y_true))
 
 
+@lesser_is_better
 def mean_squared_error(y_true, y_pred):
     """Mean squared error regression loss
 
@@ -1664,6 +1701,7 @@ def mean_squared_error(y_true, y_pred):
 ###############################################################################
 # Regression score functions
 ###############################################################################
+@greater_is_better
 def explained_variance_score(y_true, y_pred):
     """Explained variance regression score function
 
@@ -1708,6 +1746,7 @@ def explained_variance_score(y_true, y_pred):
     return 1 - numerator / denominator
 
 
+@greater_is_better
 def r2_score(y_true, y_pred):
     """R² (coefficient of determination) regression score function.
 
