@@ -56,7 +56,7 @@ class ParameterGrid(object):
     See also
     --------
     :class:`GridSearchCV`:
-        uses ``ParameterGrid`` to perform a full parallelized grid search.
+        uses ``ParameterGrid`` to perform a full parallelized parameter search.
     """
 
     def __init__(self, param_grid):
@@ -105,7 +105,7 @@ class IterGrid(ParameterGrid):
     See also
     --------
     :class:`GridSearchCV`:
-        uses ``IterGrid`` to perform a full parallelized grid search.
+        uses ``IterGrid`` to perform a full parallelized parameter search.
     """
 
     def __init__(self, param_grid):
@@ -497,7 +497,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
 
 
 class GridSearchCV(BaseSearchCV):
-    """Grid search on the parameters of an estimator.
+    """Exhaustive search over specified parameter values for an estimator.
 
     Important members are fit, predict.
 
@@ -514,7 +514,8 @@ class GridSearchCV(BaseSearchCV):
         Dictionary with parameters names (string) as keys and lists of
         parameter settings to try as values, or a list of such
         dictionaries, in which case the grids spanned by each dictionary
-        in the list are explored.
+        in the list are explored. This enables searching over any sequence
+        of parameter settings.
 
     scoring : string or callable, optional
         Either one of either a string ("zero_one", "f1", "roc_auc", ... for
@@ -593,12 +594,12 @@ class GridSearchCV(BaseSearchCV):
             * ``cv_validation_scores``, the list of scores for each fold
 
     `best_estimator_` : estimator
-        Estimator that was choosen by grid search, i.e. estimator
+        Estimator that was choosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data.
 
     `best_score_` : float
-        score of best_estimator on the left out data.
+        Score of best_estimator on the left out data.
 
     `best_params_` : dict
         Parameter setting that gave the best results on the hold out data.
@@ -768,7 +769,7 @@ class RandomizedSearchCV(BaseSearchCV):
             * ``cv_validation_scores``, the list of scores for each fold
 
     `best_estimator_` : estimator
-        Estimator that was choosen by search, i.e. estimator
+        Estimator that was choosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data.
 
