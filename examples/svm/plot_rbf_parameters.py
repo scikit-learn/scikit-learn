@@ -14,10 +14,30 @@ against simplicity of the decision surface. A low C makes
 the decision surface smooth, while a high C aims at classifying
 all training examples correctly.
 
-Two plots are generated.  The first is a visualization of the
-decision function for a variety of parameter values, and the second
-is a heatmap of the classifier's cross-validation accuracy as
-a function of `C` and `gamma`.
+Two plots are generated. The first is a visualization of the decision function
+for a variety of parameter values, and the second is a heatmap of the
+classifier's cross-validation accuracy and training time as a function of `C`
+and `gamma`.
+
+An interesting observation on overfitting can be made when comparing validation
+and training error: higher C always result in lower training error, as it
+inceases complexity of the classifier.
+
+For the validation set on the other hand, there is a tradeoff of goodness of
+fit and generalization.
+
+We can observe that the lower right half of the parameters (below the diagonal
+with high C and gamma values) is characteristic of parameters that yields an
+overfitting model: the trainin score is very high but there is a wide gap. The
+top and left parts of the parameter plots show underfitting models: the C and
+gamma values can individually or in conjunction constrain the model too much
+leading to low training scores (hence low validation scores too as validation
+scores are on average upper bounded by training scores).
+
+
+We can also see that the training time is quite sensitive to the parameter
+setting, while the prediction time is not impacted very much. This is probably
+a consequence of the small size of the data set.
 '''
 print(__doc__)
 
@@ -65,7 +85,8 @@ C_range = 10.0 ** np.arange(-2, 9)
 gamma_range = 10.0 ** np.arange(-5, 4)
 param_grid = dict(gamma=gamma_range, C=C_range)
 cv = StratifiedKFold(y=Y, n_folds=3)
-grid = GridSearchCV(SVC(), param_grid=param_grid, cv=cv)
+grid = GridSearchCV(SVC(), param_grid=param_grid, cv=cv,
+                    compute_training_score=True)
 grid.fit(X, Y)
 
 print("The best classifier is: ", grid.best_estimator_)
@@ -108,18 +129,28 @@ for (k, (C, gamma, clf)) in enumerate(classifiers):
 # cv_scores_ contains parameter settings and scores
 score_dict = grid.cv_scores_
 
-# We extract just the scores
-scores = [x[1] for x in score_dict]
-scores = np.array(scores).reshape(len(C_range), len(gamma_range))
+# We extract validation and training scores, as well as training and prediction
+# times
+_, val_scores, _, train_scores, train_time, pred_time = zip(*score_dict)
 
-# draw heatmap of accuracy as a function of gamma and C
-pl.figure(figsize=(8, 6))
-pl.subplots_adjust(left=0.05, right=0.95, bottom=0.15, top=0.95)
-pl.imshow(scores, interpolation='nearest', cmap=pl.cm.spectral)
-pl.xlabel('gamma')
-pl.ylabel('C')
-pl.colorbar()
-pl.xticks(np.arange(len(gamma_range)), gamma_range, rotation=45)
-pl.yticks(np.arange(len(C_range)), C_range)
+arrays = [val_scores, train_scores, train_time, pred_time]
+titles = ["Validation Score", "Training Score", "Training Time",
+          "Prediction Time"]
+
+# for each value draw heatmap  as a function of gamma and C
+pl.figure(figsize=(12, 8))
+for i, (arr, title) in enumerate(zip(arrays, titles)):
+    pl.subplot(2, 2, i + 1)
+    arr = np.array(arr).reshape(len(C_range), len(gamma_range))
+    pl.title(title)
+    pl.imshow(arr, interpolation='nearest', cmap=pl.cm.spectral)
+    pl.xlabel('gamma')
+    pl.ylabel('C')
+    pl.colorbar()
+    pl.xticks(np.arange(len(gamma_range)), ["%.e" % g for g in gamma_range],
+              rotation=45)
+    pl.yticks(np.arange(len(C_range)), ["%.e" % C for C in C_range])
+
+pl.subplots_adjust(top=.95, hspace=.35, left=.0, right=.8, wspace=.05)
 
 pl.show()

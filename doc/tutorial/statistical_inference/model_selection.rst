@@ -144,7 +144,7 @@ estimator during the construction and exposes an estimator API::
     >>> clf = GridSearchCV(estimator=svc, param_grid=dict(gamma=gammas),
     ...                    n_jobs=-1)
     >>> clf.fit(X_digits[:1000], y_digits[:1000]) # doctest: +ELLIPSIS
-    GridSearchCV(cv=None,...
+    GridSearchCV(compute_training_score=False,...
     >>> clf.best_score_
     0.98899999999999999
     >>> clf.best_estimator_.gamma

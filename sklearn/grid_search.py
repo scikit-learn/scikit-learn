@@ -8,11 +8,10 @@ from __future__ import print_function
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD Style.
 
-import time
 import warnings
 import numbers
+from time import time
 from itertools import product
-from collections import namedtuple
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
@@ -21,10 +20,10 @@ from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
 from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
-from .externals.six import string_types
+from .externals.six import string_types, iterkeys
 from .utils import safe_mask, check_random_state
 from .utils.validation import _num_samples, check_arrays
-from .metrics import SCORERS, Scorer
+from .metrics import SCORERS, Scorer, EstimatorScorer, WrapScorer
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
            'ParameterSampler', 'RandomizedSearchCV']
@@ -170,8 +169,8 @@ class ParameterSampler(object):
             yield params
 
 
-def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
-                   verbose, loss_func=None, **fit_params):
+def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer, verbose,
+                   loss_func=None, compute_training_score=False, **fit_params):
     """Run fit on one set of parameters.
 
     Parameters
@@ -198,6 +197,9 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
         If provided must be a scoring object / function with signature
         ``scorer(estimator, X, y)``.
 
+    compute_training_score : bool, default=False
+        Whether to compute the training loss. If False, None is returned.
+
     verbose : int
         Verbosity level.
 
@@ -207,8 +209,18 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
 
     Returns
     -------
-    score : float
-        Score of this parameter setting on given training / test split.
+    test_score : float
+        Test score of this parameter setting on given training / test split.
+
+    training_score : float or None
+        Training score of this parameter setting or None if
+        ``compute_training_score=False`` (default).
+
+    training_time : float
+        Training time for this parameter setting in seconds.
+
+    prediction_time : float
+        Prediction time for the given test set in seconds.
 
     estimator : estimator object
         Estimator object of type base_clf that was fitted using clf_params
@@ -218,7 +230,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
         Number of test samples in this split.
     """
     if verbose > 1:
-        start_time = time.time()
+        start_time = time()
         msg = '%s' % (', '.join('%s=%s' % (k, v)
                       for k, v in clf_params.items()))
         print("[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.'))
@@ -249,34 +261,52 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
             X_train = X[safe_mask(X, train)]
             X_test = X[safe_mask(X, test)]
 
+    results = {'test_n_samples': _num_samples(X_test)}
+    if scorer is None:
+        scorer = EstimatorScorer(clf.score)
+    elif not hasattr(scorer, 'calc_scores'):
+        scorer = WrapScorer(scorer)
+
     if y is not None:
         y_test = y[safe_mask(y, test)]
         y_train = y[safe_mask(y, train)]
-        clf.fit(X_train, y_train, **fit_params)
-
-        if scorer is not None:
-            this_score = scorer(clf, X_test, y_test)
-        else:
-            this_score = clf.score(X_test, y_test)
+        fit_args = (X_train, y_train)
+        score_args = (X_test, y_test)
     else:
-        clf.fit(X_train, **fit_params)
-        if scorer is not None:
-            this_score = scorer(clf, X_test)
-        else:
-            this_score = clf.score(X_test)
+        fit_args = (X_train,)
+        score_args = (X_test,)
 
-    if not isinstance(this_score, numbers.Number):
+    start = time()
+    # do actual fitting
+    clf.fit(*fit_args, **fit_params)
+    results['train_time'] = time() - start
+    start = time()
+    results.update(('test_' + name, score)
+            for name, score in scorer.calc_scores(clf, *score_args))
+    print(dict(scorer.calc_scores(clf, *score_args)))
+    results['test_time'] = time() - start
+
+    if compute_training_score:
+        results.update(('train_' + name, score)
+                for name, score in scorer.calc_scores(clf, *fit_args))
+
+    try:
+        test_score = results['test_score']
+    except KeyError:
+        raise ValueError("Scorer.calc_scores must return a score named 'score'."
+                         " Got %s instead." % (results))
+    if not isinstance(test_score, numbers.Number):
         raise ValueError("scoring must return a number, got %s (%s)"
-                         " instead." % (str(this_score), type(this_score)))
+                         " instead." % (str(test_score), type(test_score)))
 
     if verbose > 2:
-        msg += ", score=%f" % this_score
+        msg += ", score=%f" % test_score
     if verbose > 1:
         end_msg = "%s -%s" % (msg,
-                              logger.short_format_time(time.time() -
+                              logger.short_format_time(time() -
                                                        start_time))
         print("[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
-    return this_score, clf_params, _num_samples(X_test)
+    return clf_params, results
 
 
 def _check_param_grid(param_grid):
@@ -317,8 +347,10 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
     @abstractmethod
     def __init__(self, estimator, scoring=None, loss_func=None,
                  score_func=None, fit_params=None, n_jobs=1, iid=True,
-                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs'):
+                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
+                 compute_training_score=False):
 
+        self.compute_training_score = compute_training_score
         self.scoring = scoring
         self.estimator = estimator
         self.loss_func = loss_func
@@ -357,6 +389,26 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         y_predicted = self.predict(X)
         return self.scorer(y, y_predicted)
 
+    @property
+    def grid_scores_(self):
+        warnings.warn("grid_scores_ is deprecated and will be removed in 0.15."
+                      " Use grid_results_ and fold_results_ instead.", DeprecationWarning)
+        return zip(self.grid_results_['parameters'],
+                   self.grid_results_['test_score'],
+                   self.fold_results_['test_score'])
+
+    @property
+    def best_score_(self):
+        if not hasattr(self, 'best_index_'):
+            raise AttributeError('Call fit() to calculate best_score_')
+        return self.grid_results_['test_score'][self.best_index_]
+
+    @property
+    def best_params_(self):
+        if not hasattr(self, 'best_index_'):
+            raise AttributeError('Call fit() to calculate best_params_')
+        return self.grid_results_['parameters'][self.best_index_]
+
     def _check_estimator(self):
         """Check that estimator can be fitted and score can be computed."""
         if (not hasattr(self.estimator, 'fit') or
@@ -380,6 +432,29 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
             self.predict = self.best_estimator_.predict
         if hasattr(self.best_estimator_, 'predict_proba'):
             self.predict_proba = self.best_estimator_.predict_proba
+
+    def _aggregate_scores(self, scores, n_samples):
+        """Take 2d arrays of scores and samples and calculate weighted
+        means/sums of each row"""
+        if self.iid:
+            scores = scores * n_samples
+            scores = scores.sum(axis=1) / n_samples.sum(axis=1)
+        else:
+            scores = scores.sum(axis=1)
+        return scores
+
+    def _merge_result_dicts(self, result_dicts):
+        """
+        From a result dict for each fold, produce a single dict with an array
+        for each key.
+        For example [[{'score': 1}, {'score': 2}], [{'score': 3}, {'score': 4}]]
+                 -> {'score': np.array([[1, 2], [3, 4]])}"""
+        # assume keys are same throughout
+        result_keys = list(iterkeys(result_dicts[0][0])) 
+        arrays = ([[fold_results[key] for fold_results in point]
+                              for point in result_dicts]
+                 for key in result_keys)
+        return np.rec.fromarrays(arrays, names=result_keys)
 
     def _fit(self, X, y, parameter_iterator, **params):
         """Actual fitting,  performing the search over parameters."""
@@ -425,33 +500,31 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
             pre_dispatch=pre_dispatch)(
                 delayed(fit_grid_point)(
                     X, y, base_clf, clf_params, train, test, scorer,
-                    self.verbose, **self.fit_params) for clf_params in
+                    self.verbose,
+                    compute_training_score=self.compute_training_score,
+                    **self.fit_params) for clf_params in
                 parameter_iterator for train, test in cv)
 
-        # Out is a list of triplet: score, estimator, n_test_samples
         n_param_points = len(list(parameter_iterator))
         n_fits = len(out)
         n_folds = n_fits // n_param_points
 
-        scores = list()
-        cv_scores = list()
-        for start in range(0, n_fits, n_folds):
-            n_test_samples = 0
-            mean_validation_score = 0
-            these_points = list()
-            for this_score, clf_params, this_n_test_samples in \
-                    out[start:start + n_folds]:
-                these_points.append(this_score)
-                if self.iid:
-                    this_score *= this_n_test_samples
-                mean_validation_score += this_score
-                n_test_samples += this_n_test_samples
-            if self.iid:
-                mean_validation_score /= float(n_test_samples)
-            scores.append((mean_validation_score, clf_params))
-            cv_scores.append(these_points)
+        cv_results = self._merge_result_dicts([
+            [fold_results for clf_params, fold_results in out[start:start + n_folds]]
+            for start in range(0, n_fits, n_folds)
+        ])
 
-        cv_scores = np.asarray(cv_scores)
+        field_defs = [('parameters', 'object'), ('test_score', cv_results['test_score'].dtype)]
+        if self.compute_training_score:
+            field_defs.append(('train_score', cv_results['train_score'].dtype))
+        grid_results = np.zeros(n_param_points, dtype=field_defs)
+        grid_results['parameters'] = list(parameter_iterator)
+        grid_results['test_score'] = self._aggregate_scores(
+                cv_results['test_score'], cv_results['test_n_samples'])
+        if self.compute_training_score:
+            grid_results['train_score'] = self._aggregate_scores(
+                    cv_results['train_score'],
+                    n_samples - cv_results['test_n_samples'])
 
         # Note: we do not use max(out) to make ties deterministic even if
         # comparison on estimator instances is not deterministic
@@ -465,19 +538,21 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         else:
             best_score = np.inf
 
-        for score, params in scores:
+        for i, score in enumerate(grid_results['test_score']):
             if ((score > best_score and greater_is_better)
-                    or (score < best_score and not greater_is_better)):
+                    or (score < best_score
+                        and not greater_is_better)):
                 best_score = score
-                best_params = params
+                best_index = i
 
-        self.best_params_ = best_params
-        self.best_score_ = best_score
+        self.best_index_ = best_index
+        self.fold_results_ = cv_results
+        self.grid_results_ = grid_results
 
         if self.refit:
             # fit the best estimator using the entire dataset
             # clone first to work around broken estimators
-            best_estimator = clone(base_clf).set_params(**best_params)
+            best_estimator = clone(base_clf).set_params(**self.best_params_)
             if y is not None:
                 best_estimator.fit(X, y, **self.fit_params)
             else:
@@ -485,14 +560,6 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
             self.best_estimator_ = best_estimator
             self._set_methods()
 
-        # Store the computed scores
-        CVScoreTuple = namedtuple('CVScoreTuple', ('parameters',
-                                                   'mean_validation_score',
-                                                   'cv_validation_scores'))
-        self.cv_scores_ = [
-            CVScoreTuple(clf_params, score, all_scores)
-            for clf_params, (score, _), all_scores
-            in zip(parameter_iterator, scores, cv_scores)]
         return self
 
 
@@ -572,7 +639,7 @@ class GridSearchCV(BaseSearchCV):
     >>> clf = grid_search.GridSearchCV(svr, parameters)
     >>> clf.fit(iris.data, iris.target)
     ...                             # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    GridSearchCV(cv=None,
+    GridSearchCV(compute_training_score=False, cv=None,
         estimator=SVC(C=1.0, cache_size=..., coef0=..., degree=...,
             gamma=..., kernel='rbf', max_iter=-1, probability=False,
             shrinking=True, tol=...),
@@ -582,26 +649,44 @@ class GridSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    `cv_scores_` : list of named tuples
-        Contains scores for all parameter combinations in param_grid.
-        Each entry corresponds to one parameter setting.
-        Each named tuple has the attributes:
+    `grid_results_` : structured array of shape [# param combinations]
+        For each parameter combination in ``param_grid`` includes these fields:
 
-            * ``parameters``, a dict of parameter settings
-            * ``mean_validation_score``, the mean score over the
+            * ``parameters``, dict of parameter settings
+            * ``test_score``, the mean score over the
               cross-validation folds
-            * ``cv_validation_scores``, the list of scores for each fold
+            * ``train_score``, the mean training score over the
+              cross-validation folds, if ``compute_training_score``
+
+    `fold_results_` : structured array of shape [# param combinations, # folds]
+        For each cross-validation fold includes these fields:
+
+            * ``test_time``, the elapsed prediction and scoring time
+            * ``train_time``, the elapsed training time
+            * ``test_score``, the score for this fold
+            * ``train_score``, the training score for this fold
+            * ``test_n_samples``, the number of samples in testing
+            * ``test_*``, other scores from `scorer.calc_scores()`
+            * ``train_*``, other training scores from `scorer.calc_scores()`
 
     `best_estimator_` : estimator
-        Estimator that was choosen by grid search, i.e. estimator
+        Estimator that was chosen by grid search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data.
+        on the left out data. Available only if refit=True.
+
+    `best_index_` : int
+        The index of the best parameter setting into ``grid_results_`` and
+        ``fold_results_`` data.
 
     `best_score_` : float
         score of best_estimator on the left out data.
 
     `best_params_` : dict
         Parameter setting that gave the best results on the hold out data.
+
+    `grid_scores_` : list of tuples (deprecated)
+        Contains scores for all parameter combinations in ``param_grid``:
+        each tuple is (parameters, mean score, fold scores).
 
     Notes
     ------
@@ -630,18 +715,13 @@ class GridSearchCV(BaseSearchCV):
 
     def __init__(self, estimator, param_grid, scoring=None, loss_func=None,
                  score_func=None, fit_params=None, n_jobs=1, iid=True,
-                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs'):
+                 refit=True, cv=None, verbose=0, pre_dispatch='2*n_jobs',
+                 compute_training_score=False):
         super(GridSearchCV, self).__init__(
             estimator, scoring, loss_func, score_func, fit_params, n_jobs, iid,
-            refit, cv, verbose, pre_dispatch)
+            refit, cv, verbose, pre_dispatch, compute_training_score)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
-
-    @property
-    def grid_scores_(self):
-        warnings.warn("grid_scores_ is deprecated and will be removed in 0.15."
-                      " Use estimator_scores_ instead.", DeprecationWarning)
-        return self.cv_scores_
 
     def fit(self, X, y=None, **params):
         """Run fit with all sets of parameters.
@@ -754,29 +834,46 @@ class RandomizedSearchCV(BaseSearchCV):
     verbose : integer
         Controls the verbosity: the higher, the more messages.
 
-
     Attributes
     ----------
-    `cv_scores_` : list of named tuples
-        Contains scores for all parameter combinations in param_grid.
-        Each entry corresponds to one parameter setting.
-        Each named tuple has the attributes:
+    `grid_results_` : structured array of shape [# param combinations]
+        For each parameter combination in ``param_grid`` includes these fields:
 
-            * ``parameters``, a dict of parameter settings
-            * ``mean_validation_score``, the mean score over the
+            * ``parameters``, dict of parameter settings
+            * ``test_score``, the mean score over the
               cross-validation folds
-            * ``cv_validation_scores``, the list of scores for each fold
+            * ``train_score``, the mean training score over the
+              cross-validation folds, if ``compute_training_score``
+
+    `fold_results_` : structured array of shape [# param combinations, # folds]
+        For each cross-validation fold includes these fields:
+
+            * ``test_time``, the elapsed prediction and scoring time
+            * ``train_time``, the elapsed training time
+            * ``test_score``, the score for this fold
+            * ``train_score``, the training score for this fold
+            * ``test_n_samples``, the number of samples in testing
+            * ``test_*``, other scores from `scorer.calc_scores()`
+            * ``train_*``, other training scores from `scorer.calc_scores()`
 
     `best_estimator_` : estimator
-        Estimator that was choosen by search, i.e. estimator
+        Estimator that was chosen by grid search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data.
+        on the left out data. Available only if refit=True.
+
+    `best_index_` : int
+        The index of the best parameter setting into ``grid_results_`` and
+        ``fold_results_`` data.
 
     `best_score_` : float
-        Score of best_estimator on the left out data.
+        score of best_estimator on the left out data.
 
     `best_params_` : dict
         Parameter setting that gave the best results on the hold out data.
+
+    `grid_scores_` : list of tuples (deprecated)
+        Contains scores for all parameter combinations in ``param_grid``:
+        each tuple is (parameters, mean score, fold scores).
 
     Notes
     -----
@@ -807,13 +904,13 @@ class RandomizedSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
                  loss_func=None, score_func=None, fit_params=None, n_jobs=1,
                  iid=True, refit=True, cv=None, verbose=0,
-                 pre_dispatch='2*n_jobs'):
+                 pre_dispatch='2*n_jobs', compute_training_score=False):
 
         self.param_distributions = param_distributions
         self.n_iter = n_iter
         super(RandomizedSearchCV, self).__init__(
             estimator, scoring, loss_func, score_func, fit_params, n_jobs, iid,
-            refit, cv, verbose, pre_dispatch)
+            refit, cv, verbose, pre_dispatch, compute_training_score)
 
     def fit(self, X, y=None, **params):
         """Run fit on the estimator with randomly drawn parameters.

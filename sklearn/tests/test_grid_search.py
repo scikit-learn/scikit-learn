@@ -12,6 +12,7 @@ import scipy.sparse as sp
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -24,7 +25,7 @@ from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
                                  ParameterSampler)
 from sklearn.svm import LinearSVC, SVC
 from sklearn.cluster import KMeans, MeanShift
-from sklearn.metrics import f1_score
+from sklearn.metrics import f1_score, precision_score, recall_score
 from sklearn.metrics import Scorer
 from sklearn.cross_validation import KFold, StratifiedKFold
 
@@ -87,12 +88,38 @@ def test_grid_search():
     grid_search.fit(X, y)
     sys.stdout = old_stdout
     assert_equal(grid_search.best_estimator_.foo_param, 2)
+    assert_equal(grid_search.best_params_, {'foo_param': 2})
+    assert_equal(grid_search.best_score_, 1.)
 
     for i, foo_i in enumerate([1, 2, 3]):
-        assert_true(grid_search.cv_scores_[i][0]
+        assert_true(grid_search.grid_results_['parameters'][i]
                     == {'foo_param': foo_i})
     # Smoke test the score:
     grid_search.score(X, y)
+
+
+def test_grid_scores():
+    """Test that GridSearchCV.grid_scores_ is filled in the correct format"""
+    clf = MockClassifier()
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, verbose=3)
+    # make sure it selects the smallest parameter in case of ties
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    grid_search.fit(X, y)
+    sys.stdout = old_stdout
+    assert_equal(grid_search.best_estimator_.foo_param, 2)
+
+    n_folds = 3
+    with warnings.catch_warnings(record=True):
+        for i, foo_i in enumerate([1, 2, 3]):
+            assert_true(grid_search.grid_scores_[i][0]
+                        == {'foo_param': foo_i})
+            # mean score
+            assert_almost_equal(grid_search.grid_scores_[i][1],
+                        (1. if foo_i > 1 else 0.))
+            # all fold scores
+            assert_array_equal(grid_search.grid_scores_[i][2],
+                        [1. if foo_i > 1 else 0.] * n_folds)
 
 
 def test_no_refit():
@@ -281,6 +308,20 @@ def test_grid_search_precomputed_kernel_error_kernel_function():
     assert_raises(ValueError, cv.fit, X_, y_)
 
 
+def test_grid_search_training_score():
+    # test that the training score contains sensible numbers
+    X, y = make_classification(n_samples=200, n_features=100, random_state=0)
+    clf = LinearSVC(random_state=0)
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, compute_training_score=True)
+    cv.fit(X, y)
+    for i, (grid_data, fold_data) in enumerate(zip(cv.grid_results_, cv.fold_results_)):
+        assert_greater(grid_data['train_score'], grid_data['test_score'])
+        # hacky greater-equal
+        assert_greater(1 + 1e-10, grid_data['train_score'])
+        assert_greater(fold_data['train_time'].mean(), 0)
+        assert_greater(fold_data['test_time'].mean(), 0)
+
+
 class BrokenClassifier(BaseEstimator):
     """Broken classifier that cannot be fit twice"""
 
@@ -365,7 +406,7 @@ def test_randomized_search():
     params = dict(C=distributions.expon())
     search = RandomizedSearchCV(LinearSVC(), param_distributions=params)
     search.fit(X, y)
-    assert_equal(len(search.cv_scores_), 10)
+    assert_equal(len(search.grid_results_['test_score']), 10)
 
 
 def test_grid_search_score_consistency():
@@ -378,9 +419,8 @@ def test_grid_search_score_consistency():
         grid_search = GridSearchCV(clf, {'C': Cs}, scoring=score)
         grid_search.fit(X, y)
         cv = StratifiedKFold(n_folds=3, y=y)
-        for C, scores in zip(Cs, grid_search.cv_scores_):
+        for C, scores in zip(Cs, grid_search.fold_results_['test_score']):
             clf.set_params(C=C)
-            scores = scores[2]  # get the separate runs from grid scores
             i = 0
             for train, test in cv:
                 clf.fit(X[train], y[train])
@@ -391,3 +431,24 @@ def test_grid_search_score_consistency():
                                               clf.decision_function(X[test]))
                 assert_almost_equal(correct_score, scores[i])
                 i += 1
+
+def test_composite_scores():
+    """Test that precision and recall are output when using f1"""
+    clf = LinearSVC(random_state=0)
+    X, y = make_blobs(random_state=0, centers=2)
+    Cs = [.1, 1, 10]
+    grid_search = GridSearchCV(clf, {'C': Cs}, scoring='f1', compute_training_score=True)
+    grid_search.fit(X, y)
+    cv = StratifiedKFold(n_folds=3, y=y)
+    for C, scores in zip(Cs, grid_search.fold_results_):
+        clf.set_params(C=C)
+        for fold, (train, test) in enumerate(cv):
+            clf.fit(X[train], y[train])
+            for prefix, mask in [('test_', test), ('train_', train)]:
+                fold_scores = scores[fold]
+                correct_score = f1_score(y[mask], clf.predict(X[mask]))
+                correct_precision = precision_score(y[mask], clf.predict(X[mask]))
+                correct_recall = recall_score(y[mask], clf.predict(X[mask]))
+                assert_almost_equal(correct_score, fold_scores[prefix + 'score'])
+                assert_almost_equal(correct_precision, fold_scores[prefix + 'precision'])
+                assert_almost_equal(correct_recall, fold_scores[prefix + 'recall'])
