@@ -1,9 +1,13 @@
+import functools
 import pickle
 
 from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 
 from sklearn.metrics import f1_score, r2_score, auc_score, fbeta_score
+from sklearn.metrics.metrics import (needs_threshold, greater_is_better,
+        lesser_is_better)
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.metrics import SCORERS, Scorer
 from sklearn.svm import LinearSVC
@@ -13,6 +17,50 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.datasets import make_blobs, load_diabetes
 from sklearn.cross_validation import train_test_split, cross_val_score
 from sklearn.grid_search import GridSearchCV
+
+
+def test_scorer_default_params():
+    """Test to ensure correct default Scorer parameters"""
+    metric = lambda test, pred: 1.
+    scorer = Scorer(metric)
+    assert_equal(scorer.greater_is_better, True)
+    assert_equal(scorer.needs_threshold, False)
+
+
+def test_scorer_annotated_params():
+    """Test to ensure metric annotations affect Scorer params"""
+    metric = needs_threshold(lambda test, pred: 1.)
+    scorer = Scorer(metric)
+    assert_equal(scorer.greater_is_better, True)
+    assert_equal(scorer.needs_threshold, True)
+
+    metric = greater_is_better(lambda test, pred: 1.)
+    scorer = Scorer(metric)
+    assert_equal(scorer.greater_is_better, True)
+    assert_equal(scorer.needs_threshold, False)
+
+    metric = lesser_is_better(lambda test, pred: 1.)
+    scorer = Scorer(metric)
+    assert_equal(scorer.greater_is_better, False)
+    assert_equal(scorer.needs_threshold, False)
+
+
+def test_scorer_wrapped_annotated_params():
+    """Test to ensure metric annotations are found within functools.partial"""
+    metric = functools.partial(
+            lesser_is_better(lambda test, pred, param=5: 1.), param=1)
+    scorer = Scorer(metric)
+    assert_equal(scorer.greater_is_better, False)
+    assert_equal(scorer.needs_threshold, False)
+    assert_equal(metric, scorer.score_func)  # ensure still wrapped
+
+
+def test_scorer_constructor_params():
+    """Test to ensure constructor params to Scorer override those annotated"""
+    metric = lesser_is_better(lambda test, pred: 1.)
+    scorer = Scorer(metric, greater_is_better=True, needs_threshold=True)
+    assert_equal(scorer.greater_is_better, True)
+    assert_equal(scorer.needs_threshold, True)
 
 
 def test_classification_scores():

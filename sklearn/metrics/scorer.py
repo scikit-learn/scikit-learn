@@ -39,11 +39,11 @@ class Scorer(object):
         Score function (or loss function) with signature
         ``score_func(y, y_pred, **kwargs)``.
 
-    greater_is_better : boolean, default=True
+    greater_is_better : boolean, default=score_func.greater_is_better or True
         Whether score_func is a score function (default), meaning high is good,
         or a loss function, meaning low is good.
 
-    needs_threshold : bool, default=False
+    needs_threshold : bool, default=score_func.needs_threshold or False
         Whether score_func takes a continuous decision certainty.
         For example ``average_precision`` or the area under the roc curve
         can not be computed using predictions alone, but need the output of
@@ -61,17 +61,35 @@ class Scorer(object):
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]},
     ...                     scoring=ftwo_scorer)
     """
-    def __init__(self, score_func, greater_is_better=True,
-                 needs_threshold=False, **kwargs):
+    def __init__(self, score_func, greater_is_better=None,
+                 needs_threshold=None, **kwargs):
         self.score_func = score_func
-        self.greater_is_better = greater_is_better
-        self.needs_threshold = needs_threshold
         self.kwargs = kwargs
+
+        if greater_is_better is None:
+            greater_is_better = self._get_annotation(score_func,
+                    'greater_is_better', True)
+        self.greater_is_better = greater_is_better
+
+        if needs_threshold is None:
+            needs_threshold = self._get_annotation(score_func,
+                    'needs_threshold', False)
+        self.needs_threshold = needs_threshold
+
+    @staticmethod
+    def _get_annotation(func, attr, default):
+        if hasattr(func, attr):
+            return getattr(func, attr)
+        while hasattr(func, 'func'):
+            func = getattr(func, 'func') # unwrap functools.partial
+            if hasattr(func, attr):
+                return getattr(func, attr)
+        return default
 
     def __repr__(self):
         kwargs_string = "".join([", %s=%s" % (str(k), str(v))
                                  for k, v in self.kwargs.items()])
-        return ("Scorer(score_func=%s, greater_is_better=%s, needs_thresholds="
+        return ("Scorer(score_func=%s, greater_is_better=%s, needs_threshold="
                 "%s%s)" % (self.score_func.__name__, self.greater_is_better,
                            self.needs_threshold, kwargs_string))
 
@@ -111,26 +129,19 @@ class Scorer(object):
             return self.score_func(y, y_pred, **self.kwargs)
 
 
-# Standard regression scores
-r2_scorer = Scorer(r2_score)
-mse_scorer = Scorer(mean_squared_error, greater_is_better=False)
-
-# Standard Classification Scores
-accuracy_scorer = Scorer(accuracy_score)
-f1_scorer = Scorer(f1_score)
-
-# Score functions that need decision values
-auc_scorer = Scorer(auc_score, greater_is_better=True, needs_threshold=True)
-average_precision_scorer = Scorer(average_precision_score,
-                                  needs_threshold=True)
-precision_scorer = Scorer(precision_score)
-recall_scorer = Scorer(recall_score)
-
-# Clustering scores
-ari_scorer = Scorer(adjusted_rand_score)
-
-SCORERS = dict(r2=r2_scorer, mse=mse_scorer, accuracy=accuracy_scorer,
-               f1=f1_scorer, roc_auc=auc_scorer,
-               average_precision=average_precision_scorer,
-               precision=precision_scorer, recall=recall_scorer,
-               ari=ari_scorer)
+SCORERS = {name: Scorer(metric)
+        for name, metric in [
+        # Regression
+        ('r2', r2_score),
+        ('mse', mean_squared_error),
+        # Classification
+        ('accuracy', accuracy_score),
+        ('f1', f1_score),
+        ('precision', precision_score),
+        ('recall', recall_score),
+        # Classification thresholded
+        ('roc_auc', auc_score),
+        ('average_precision', average_precision_score),
+        # Clustering
+        ('ari', adjusted_rand_score),
+]}
