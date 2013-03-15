@@ -49,9 +49,8 @@ in the dataset::
 We can now load the list of files matching those categories as follows::
 
   >>> from sklearn.datasets import fetch_20newsgroups
-  >>> twenty_train = fetch_20newsgroups(
-  ...     subset='train', categories=categories,
-  ...     shuffle=True, random_state=42)
+  >>> twenty_train = fetch_20newsgroups(subset='train',
+  ...     categories=categories, shuffle=True, random_state=42)
 
 The returned dataset is a ``scikit-learn`` "bunch": a simple holder
 object with fields that can be both accessed as python ``dict``
@@ -72,9 +71,9 @@ reference the filenames are also available::
 Let's print the first lines of the first loaded file::
 
   >>> print "\n".join(twenty_train.data[0].split("\n")[:3])
-  Organization: Penn State University
-  From: Andrew Newell <TAN102@psuvm.psu.edu>
-  Subject: Re: Christian Morality is
+  From: sd345@city.ac.uk (Michael Collier)
+  Subject: Converting images to HP LaserJet III?
+  Nntp-Posting-Host: hampton
 
   >>> print twenty_train.target_names[twenty_train.target[0]]
   alt.atheism
@@ -97,16 +96,16 @@ It is possible to get back the category names as follows::
   >>> for t in twenty_train.target[:10]:
   ...     print twenty_train.target_names[t]
   ...
-  alt.atheism
+  comp.graphics
   comp.graphics
   soc.religion.christian
-  comp.graphics
+  soc.religion.christian
+  soc.religion.christian
+  soc.religion.christian
+  soc.religion.christian
   sci.med
-  comp.graphics
-  comp.graphics
-  comp.graphics
-  soc.religion.christian
-  soc.religion.christian
+  sci.med
+  sci.med
 
 You can notice that the samples have been shuffled randomly (with
 a fixed RNG seed): this is useful if you select only the first
@@ -162,13 +161,13 @@ dictionary of features and transform documents to feature vectors::
   >>> count_vect = CountVectorizer()
   >>> X_train_counts = count_vect.fit_transform(twenty_train.data)
   >>> X_train_counts.shape
-  (2257, 33883)
+  (2257, 18494)
 
 ``CountVectorizer`` supports counts of N-grams of words or consequective characters.
 Once fitted, the vectorizer has built a dictionary of feature indices::
 
-  >>> count_vect.vocabulary.get(u'algorithm')
-  1512
+  >>> count_vect.vocabulary_.get(u'algorithm')
+  1815
 
 The index value of a word in the vocabulary is linked to its frequency
 in the whole training corpus.
@@ -212,12 +211,12 @@ Both tf and tf–idf can be computed as follows::
   >>> tf_transformer = TfidfTransformer(use_idf=False).fit(X_train_counts)
   >>> X_train_tf = tf_transformer.transform(X_train_counts)
   >>> X_train_tf.shape
-  (2257, 33883)
+  (2257, 35788)
 
   >>> tfidf_transformer = TfidfTransformer()
   >>> X_train_tfidf = tfidf_transformer.fit_transform(X_train_counts)
   >>> X_train_tfidf.shape
-  (2257, 33883)
+  (2257, 35788)
 
 
 Training a classifier
@@ -258,10 +257,9 @@ to work with, ``scikit-learn`` provides a ``Pipeline`` class that behaves
 like a compound classifier::
 
   >>> from sklearn.pipeline import Pipeline
-  >>> text_clf = Pipeline([
-  ...     ('vect', CountVectorizer()),
-  ...     ('tfidf', TfidfTransformer()),
-  ...     ('clf', MultinomialNB()),
+  >>> text_clf = Pipeline([('vect', CountVectorizer()),
+  ...                      ('tfidf', TfidfTransformer()),
+  ...                      ('clf', MultinomialNB()),
   ... ])
 
 The names ``vect``, ``tfidf`` and ``clf`` (classifier) are arbitrary.
@@ -277,53 +275,50 @@ Evaluation of the performance on the test set
 Evaluating the predictive accuracy of the model is equally easy::
 
   >>> import numpy as np
-  >>> twenty_test = fetch_20newsgroups(
-  ...     subset='test', categories=categories,
-  ...     shuffle=True, random_state=42)
+  >>> twenty_test = fetch_20newsgroups(subset='test',
+  ...     categories=categories, shuffle=True, random_state=42)
   >>> docs_test = twenty_test.data
   >>> predicted = text_clf.predict(docs_test)
   >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
-  0.894...
+  0.859...
 
-I.e., we achieved 89.4% accuracy. Let's see if we can do better with a
+I.e., we achieved 85.9% accuracy. Let's see if we can do better with a
 linear support vector machine (SVM), which is widely regarded as one of
 the best text classification algorithms (although it's also a bit slower
 than naïve Bayes). We can change the learner by just plugging a different
 classifier object into our pipeline::
 
   >>> from sklearn.linear_model import SGDClassifier
-  >>> text_clf = Pipeline([
-  ...     ('vect', CountVectorizer()),
-  ...     ('tfidf', TfidfTransformer()),
-  ...     ('clf', SGDClassifier(loss='hinge', penalty='l2',
-  ...                           alpha=1e-3, n_iter=5)),
+  >>> text_clf = Pipeline([('vect', CountVectorizer()),
+  ...                      ('tfidf', TfidfTransformer()),
+  ...                      ('clf', SGDClassifier(loss='hinge', penalty='l2',
+  ...                                            alpha=1e-3, n_iter=5)),
   ... ])
   >>> _ = text_clf.fit(twenty_train.data, twenty_train.target)
   >>> predicted = text_clf.predict(docs_test)
   >>> np.mean(predicted == twenty_test.target)            # doctest: +ELLIPSIS
-  0.906...
+  0.912...
 
 ``scikit-learn`` further provides utilities for more detailed performance
 analysis of the results::
 
   >>> from sklearn import metrics
-  >>> print metrics.classification_report(
-  ...     twenty_test.target, predicted,
+  >>> print metrics.classification_report(twenty_test.target, predicted,
   ...     target_names=twenty_test.target_names)
   ...                                         # doctest: +NORMALIZE_WHITESPACE
                           precision    recall  f1-score   support
-             alt.atheism       0.95      0.78      0.86       319
-           comp.graphics       0.88      0.99      0.93       389
+             alt.atheism       0.93      0.82      0.87       319
+           comp.graphics       0.88      0.98      0.93       389
                  sci.med       0.95      0.89      0.92       396
-  soc.religion.christian       0.88      0.94      0.91       398
+  soc.religion.christian       0.90      0.95      0.92       398
              avg / total       0.91      0.91      0.91      1502
 
 
   >>> metrics.confusion_matrix(twenty_test.target, predicted)
-  array([[250,  14,  15,  40],
-         [  2, 384,   1,   2],
-         [  1,  30, 354,  11],
-         [ 10,  10,   4, 374]])
+  array([[261,  10,  12,  36],
+         [  5, 380,   2,   2],
+         [  7,  33, 352,   4],
+         [  7,   9,   4, 378]])
 
 As expected the confusion matrix shows that posts from the newsgroups
 on atheism and christian are more often confused for one another than
@@ -364,10 +359,9 @@ on either words or bigrams, with or without idf, and with a penalty
 parameter of either 100 or 1000 for the linear SVM::
 
   >>> from sklearn.grid_search import GridSearchCV
-  >>> parameters = {
-  ...     'vect__analyzer__max_n': (1, 2),
-  ...     'tfidf__use_idf': (True, False),
-  ...     'clf__alpha': (1e-2, 1e-3),
+  >>> parameters = {'vect__ngram_range': [(1, 1), (1, 2)],
+  ...               'tfidf__use_idf': (True, False),
+  ...               'clf__alpha': (1e-2, 1e-3),
   ... }
 
 Obviously, such an exhaustive search can be expensive. If we have multiple
@@ -399,12 +393,12 @@ we can do::
   >>> for param_name in sorted(parameters.keys()):
   ...     print "%s: %r" % (param_name, best_parameters[param_name])
   ...
-  clf__alpha: 0.01
+  clf__alpha: 0.001
   tfidf__use_idf: True
-  vect__analyzer__max_n: 1
+  vect__ngram_range: (1, 1)
 
   >>> score                                              # doctest: +ELLIPSIS
-  0.922...
+  0.910...
 
 .. note:
 
