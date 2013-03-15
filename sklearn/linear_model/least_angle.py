@@ -30,11 +30,14 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
               alpha_min=0, method='lar', copy_X=True,
               eps=np.finfo(np.float).eps,
               copy_Gram=True, verbose=0, return_path=True):
-    """Compute Least Angle Regression and Lasso path
+    """Compute Least Angle Regression or Lasso path using LARS algorithm [1]
 
-    The optimization objective for Lasso is::
+    The optimization objective for the case method='lasso' is::
 
     (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
+    
+    in the case of method='lars', the objective function is only known in
+    the form of an implicit equation (see discussion in [1])
 
     Parameters
     -----------
@@ -99,6 +102,11 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     * http://en.wikipedia.org/wiki/Least-angle_regression
 
     * http://en.wikipedia.org/wiki/Lasso_(statistics)#LASSO_method
+    
+    References
+    ----------
+    [1] "Least Angle Regression", Effron et al.
+    http://www-stat.stanford.edu/~tibs/ftp/lars.pdf
     """
 
     n_features = X.shape[1]
