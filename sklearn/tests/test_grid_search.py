@@ -120,7 +120,7 @@ def test_grid_search_iid():
     X, y = make_blobs(centers=[[0, 0], [1, 0], [0, 1], [1, 1]], random_state=0,
                       cluster_std=0.1, shuffle=False, n_samples=80)
     # split dataset into two folds that are not iid
-    # first on contains data of all 4 blobs, second only from two.
+    # first one contains data of all 4 blobs, second only from two.
     mask = np.ones(X.shape[0], dtype=np.bool)
     mask[np.where(y == 1)[0][::2]] = 0
     mask[np.where(y == 2)[0][::2]] = 0
