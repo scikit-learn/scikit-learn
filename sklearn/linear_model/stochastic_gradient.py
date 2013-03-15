@@ -389,6 +389,9 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
     def _fit(self, X, y, alpha, C, loss, learning_rate,
              coef_init=None, intercept_init=None, class_weight=None,
              sample_weight=None):
+        if hasattr(self, "classes_"):
+            self.classes_ = None
+
         if class_weight is not None:
             warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
                           "method is deprecated and will be removed in 0.13. "
