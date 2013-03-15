@@ -93,12 +93,13 @@ class LeaveOneOut(object):
 
     def __iter__(self):
         n = self.n
+        if self.indices:
+            ind = np.arange(n)
         for i in range(n):
             test_index = np.zeros(n, dtype=np.bool)
             test_index[i] = True
             train_index = np.logical_not(test_index)
             if self.indices:
-                ind = np.arange(n)
                 train_index = ind[train_index]
                 test_index = ind[test_index]
             yield train_index, test_index
@@ -169,12 +170,13 @@ class LeavePOut(object):
         n = self.n
         p = self.p
         comb = combinations(range(n), p)
+        if self.indices:
+            ind = np.arange(n)
         for idx in comb:
             test_index = np.zeros(n, dtype=np.bool)
             test_index[np.array(idx)] = True
             train_index = np.logical_not(test_index)
             if self.indices:
-                ind = np.arange(n)
                 train_index = ind[train_index]
                 test_index = ind[test_index]
             yield train_index, test_index
@@ -375,15 +377,15 @@ class StratifiedKFold(object):
 
     def __iter__(self):
         n_folds = self.n_folds
-        n = self.y.size
+        n = len(self.y)
         idx = np.argsort(self.y)
-
+        if self.indices:
+            ind = np.arange(n)
         for i in range(n_folds):
             test_index = np.zeros(n, dtype=np.bool)
             test_index[idx[i::n_folds]] = True
             train_index = np.logical_not(test_index)
             if self.indices:
-                ind = np.arange(n)
                 train_index = ind[train_index]
                 test_index = ind[test_index]
             yield train_index, test_index
@@ -450,18 +452,20 @@ class LeaveOneLabelOut(object):
 
     def __init__(self, labels, indices=True):
         self.labels = labels
-        self.n_unique_labels = unique(labels).size
+        self.unique_labels = unique(self.labels)
+        self.n_unique_labels = len(self.unique_labels)
         self.indices = indices
 
     def __iter__(self):
         # We make a copy here to avoid side-effects during iteration
         labels = np.array(self.labels, copy=True)
-        for i in unique(labels):
+        if self.indices:
+            ind = np.arange(len(labels))
+        for i in self.unique_labels:
             test_index = np.zeros(len(labels), dtype=np.bool)
             test_index[labels == i] = True
             train_index = np.logical_not(test_index)
             if self.indices:
-                ind = np.arange(len(labels))
                 train_index = ind[train_index]
                 test_index = ind[test_index]
             yield train_index, test_index
@@ -536,24 +540,23 @@ class LeavePLabelOut(object):
     def __init__(self, labels, p, indices=True):
         self.labels = labels
         self.unique_labels = unique(self.labels)
-        self.n_unique_labels = self.unique_labels.size
+        self.n_unique_labels = len(self.unique_labels)
         self.p = p
         self.indices = indices
 
     def __iter__(self):
         # We make a copy here to avoid side-effects during iteration
         labels = np.array(self.labels, copy=True)
-        unique_labels = unique(labels)
         comb = combinations(range(self.n_unique_labels), self.p)
-
+        if self.indices:
+            ind = np.arange(len(labels))
         for idx in comb:
-            test_index = np.zeros(labels.size, dtype=np.bool)
+            test_index = np.zeros(len(labels), dtype=np.bool)
             idx = np.array(idx)
-            for l in unique_labels[idx]:
+            for l in self.unique_labels[idx]:
                 test_index[labels == l] = True
             train_index = np.logical_not(test_index)
             if self.indices:
-                ind = np.arange(labels.size)
                 train_index = ind[train_index]
                 test_index = ind[test_index]
             yield train_index, test_index
@@ -896,7 +899,7 @@ def _validate_stratified_shuffle_split(y, test_size, train_size):
                          " number of labels for any class cannot"
                          " be less than 2.")
 
-    n_train, n_test = _validate_shuffle_split(y.size, test_size, train_size)
+    n_train, n_test = _validate_shuffle_split(len(y), test_size, train_size)
 
     if n_train < n_cls:
         raise ValueError('The train_size = %d should be greater or '
@@ -971,7 +974,7 @@ class StratifiedShuffleSplit(object):
                  indices=True, random_state=None, n_iterations=None):
 
         self.y = np.array(y)
-        self.n = self.y.size
+        self.n = len(self.y)
         self.n_iter = n_iter
         if n_iterations is not None:  # pragma: no cover
             warnings.warn("n_iterations was renamed to n_iter for consistency"
@@ -1156,9 +1159,9 @@ def _permutation_test_score(estimator, X, y, cv, scorer):
 def _shuffle(y, labels, random_state):
     """Return a shuffled copy of y eventually shuffle among same labels."""
     if labels is None:
-        ind = random_state.permutation(y.size)
+        ind = random_state.permutation(len(y))
     else:
-        ind = np.arange(labels.size)
+        ind = np.arange(len(labels))
         for label in unique(labels):
             this_mask = (labels == label)
             ind[this_mask] = random_state.permutation(ind[this_mask])
