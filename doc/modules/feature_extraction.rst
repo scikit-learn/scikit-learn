@@ -296,7 +296,7 @@ reasonable (please see  the :ref:`reference documentation
           input=u'content', lowercase=True, max_df=1.0, max_features=None,
           min_df=1, ngram_range=(1, 1), preprocessor=None, stop_words=None,
           strip_accents=None, token_pattern=u'(?u)\\b\\w\\w+\\b',
-          tokenizer=None, vocabulary=None)
+          token_processor=None, tokenizer=None, vocabulary=None)
 
 Let's use it to tokenize and count the word occurrences of a minimalistic
 corpus of text documents::
@@ -376,6 +376,7 @@ last document::
   >>> feature_index = bigram_vectorizer.vocabulary_.get(u'is this')
   >>> X_2[:, feature_index]     # doctest: +ELLIPSIS
   array([0, 0, 0, 1]...)
+
 
 
 .. _tfidf:
@@ -677,6 +678,10 @@ In particular we name:
   * ``tokenizer``: a callable that takes the output from the preprocessor
     and splits it into tokens, then returns a list of these.
 
+  * ``token_processor`` a callable that takes an iterable of tokens as 
+    input and outputs a processed version of it (useful, e.g., for 
+    integrating stemming).
+
   * ``analyzer``: a callable that replaces the preprocessor and tokenizer.
     The default analyzers all call the preprocessor and tokenizer, but custom
     analyzers will skip this. N-gram extraction and stop word filtering take
@@ -688,8 +693,8 @@ concepts may not map one-to-one onto Lucene concepts.)
 
 To make the preprocessor, tokenizer and analyzers aware of the model
 parameters it is possible to derive from the class and override the
-``build_preprocessor``, ``build_tokenizer``` and ``build_analyzer``
-factory methods instead of passing custom functions.
+``build_preprocessor``, ``build_tokenizer```,  ``build_token_processor``, 
+and ``build_analyzer`` factory methods instead of passing custom functions.
 
 Some tips and tricks:
 
@@ -699,7 +704,7 @@ Some tips and tricks:
   * Fancy token-level analysis such as stemming, lemmatizing, compound
     splitting, filtering based on part-of-speech, etc. are not included in the
     scikit-learn codebase, but can be added by customizing either the
-    tokenizer or the analyzer.
+    tokenizer, token_processor, or the analyzer.
     Here's a ``CountVectorizer`` with a tokenizer and lemmatizer using NLTK::
 
         >>> from nltk import word_tokenize          # doctest: +SKIP
@@ -713,6 +718,24 @@ Some tips and tricks:
         >>> vect = CountVectorizer(tokenizer=LemmaTokenizer())  # doctest: +SKIP
 
     (Note that this will not filter out punctuation.)
+
+
+    For the sake of simplicity, the following example will remove all vowels before counting:
+    
+      >>> import re
+      >>> def to_british(tokens):
+      ...     for t in tokens:
+      ...         t = re.sub(r"(...)our$", r"\1or", t)
+      ...         t = re.sub(r"([bt])re$", r"\1er", t)
+      ...         t = re.sub(r"([iy])s(e$|ing|ation)", r"\1z\2", t)
+      ...         t = re.sub(r"ogue$", "og", t)
+      ...         yield t
+      ... 
+      >>> vectorizer = CountVectorizer(token_processor=to_british)
+      >>> print vectorizer.build_analyzer()(u"color colour")
+      [u'color', u'color']
+
+
 
 Customizing the vectorizer can also be useful when handling Asian languages
 that do not use an explicit word separator such as whitespace.
