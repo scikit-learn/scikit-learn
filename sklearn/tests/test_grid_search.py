@@ -156,7 +156,7 @@ def test_grid_search_iid():
     # once with iid=True (default)
     grid_search = GridSearchCV(svm, param_grid={'C': [1, 10]}, cv=cv)
     grid_search.fit(X, y)
-    _, average_score, scores = grid_search.grid_scores_[0]
+    _, average_score, scores = grid_search.cv_scores_[0]
     assert_array_almost_equal(scores, [1, 1. / 3.])
     # for first split, 1/4 of dataset is in test, for second 3/4.
     # take weighted average
@@ -166,7 +166,7 @@ def test_grid_search_iid():
     grid_search = GridSearchCV(svm, param_grid={'C': [1, 10]}, cv=cv,
                                iid=False)
     grid_search.fit(X, y)
-    _, average_score, scores = grid_search.grid_scores_[0]
+    _, average_score, scores = grid_search.cv_scores_[0]
     # scores are the same as above
     assert_array_almost_equal(scores, [1, 1. / 3.])
     # averaged score is just mean of scores

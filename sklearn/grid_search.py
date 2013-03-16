@@ -662,7 +662,7 @@ class GridSearchCV(BaseSearchCV):
     @property
     def grid_scores_(self):
         warnings.warn("grid_scores_ is deprecated and will be removed in 0.15."
-                      " Use estimator_scores_ instead.", DeprecationWarning)
+                      " Use cv_scores_ instead.", DeprecationWarning)
         return self.cv_scores_
 
     def fit(self, X, y=None, **params):
