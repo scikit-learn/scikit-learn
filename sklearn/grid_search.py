@@ -12,7 +12,7 @@ import time
 import warnings
 import numbers
 from itertools import product
-from collections import namedtuple
+from collections import Mapping, namedtuple
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
@@ -31,19 +31,16 @@ __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
 
 
 class ParameterGrid(object):
-    """Generators on the combination of the various parameter lists given.
+    """Grid of parameters with a discrete number of values for each.
+
+    Can be used to iterate over parameter value combinations with the
+    Python built-in function iter.
 
     Parameters
     ----------
-    param_grid: dict of string to sequence
+    param_grid : dict of string to sequence
         The parameter grid to explore, as a dictionary mapping estimator
         parameters to sequences of allowed values.
-
-    Returns
-    -------
-    params: dict of string to any
-        **Yields** dictionaries mapping each estimator parameter to one of its
-        allowed values.
 
     Examples
     --------
@@ -60,14 +57,23 @@ class ParameterGrid(object):
     """
 
     def __init__(self, param_grid):
+        if isinstance(param_grid, Mapping):
+            # wrap dictionary in a singleton list
+            # XXX Why? The behavior when passing a list is undocumented,
+            # but not doing this breaks one of the tests.
+            param_grid = [param_grid]
         self.param_grid = param_grid
 
     def __iter__(self):
-        param_grid = self.param_grid
-        if hasattr(param_grid, 'items'):
-            # wrap dictionary in a singleton list
-            param_grid = [param_grid]
-        for p in param_grid:
+        """Iterate over the points in the grid.
+
+        Returns
+        -------
+        params : iterator over dict of string to any
+            Yields dictionaries mapping each estimator parameter to one of its
+            allowed values.
+        """
+        for p in self.param_grid:
             # Always sort the keys of a dictionary, for reproducibility
             items = sorted(p.items())
             keys, values = zip(*items)

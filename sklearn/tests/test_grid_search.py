@@ -3,9 +3,11 @@ Testing for grid search module (sklearn.grid_search)
 
 """
 
-import warnings
+from collections import Iterable
 from cStringIO import StringIO
+from itertools import chain, product
 import sys
+import warnings
 
 import numpy as np
 import scipy.sparse as sp
@@ -22,7 +24,7 @@ from scipy.stats import distributions
 from sklearn.base import BaseEstimator
 from sklearn.datasets.samples_generator import make_classification, make_blobs
 from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
-                                 ParameterSampler)
+                                 ParameterGrid, ParameterSampler)
 from sklearn.svm import LinearSVC, SVC
 from sklearn.cluster import KMeans, MeanShift
 from sklearn.metrics import f1_score
@@ -76,6 +78,25 @@ class MockListClassifier(BaseEstimator):
 
 X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
 y = np.array([1, 1, 2, 2])
+
+
+def test_parameter_grid():
+    """Test basic properties of ParameterGrid."""
+    params1 = {"foo": [1, 2, 3]}
+    grid1 = ParameterGrid(params1)
+    assert_true(isinstance(grid1, Iterable))
+
+    params2 = {"foo": [4, 2],
+               "bar": ["ham", "spam", "eggs"]}
+    grid2 = ParameterGrid(params2)
+
+    # loop to assert we can iterate over the grid multiple times
+    for i in xrange(2):
+        # tuple + chain transforms {"a": 1, "b": 2} to ("a", 1, "b", 2)
+        points = set(tuple(chain(*p.items())) for p in grid2)
+        assert_equal(points,
+                     set(("foo", x, "bar", y)
+                         for x, y in product(params2["foo"], params2["bar"])))
 
 
 def test_grid_search():
