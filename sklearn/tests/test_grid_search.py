@@ -120,6 +120,21 @@ def test_grid_search():
     grid_search.score(X, y)
 
 
+def test_trivial_cv_scores():
+    """Test search over a "grid" with only one point.
+
+    Non-regression test: cv_scores_ wouldn't be set by GridSearchCV.
+    """
+    clf = MockClassifier()
+    grid_search = GridSearchCV(clf, {'foo_param': [1]})
+    grid_search.fit(X, y)
+    assert_true(hasattr(grid_search, "cv_scores_"))
+
+    random_search = RandomizedSearchCV(clf, {'foo_param': [0]})
+    random_search.fit(X, y)
+    assert_true(hasattr(random_search, "cv_scores_"))
+
+
 def test_no_refit():
     """Test that grid search can be used for model selection only"""
     clf = MockClassifier()

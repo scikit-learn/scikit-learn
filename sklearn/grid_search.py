@@ -316,18 +316,6 @@ def _check_param_grid(param_grid):
                                  "list.")
 
 
-def _has_one_grid_point(param_grid):
-    if hasattr(param_grid, 'items'):
-        param_grid = [param_grid]
-
-    for p in param_grid:
-        for v in p.values():
-            if len(v) > 1:
-                return False
-
-    return True
-
-
 class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
     """Base class for hyper parameter search with cross-validation.
     """
@@ -680,26 +668,7 @@ class GridSearchCV(BaseSearchCV):
             None for unsupervised learning.
 
         """
-        estimator = self.estimator
-        cv = self.cv
-        cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
-
-        grid = ParameterGrid(self.param_grid)
-        base_clf = clone(self.estimator)
-
-        # Return early if there is only one grid point.
-        if _has_one_grid_point(self.param_grid):
-            params = next(iter(grid))
-            base_clf.set_params(**params)
-            if y is not None:
-                base_clf.fit(X, y)
-            else:
-                base_clf.fit(X)
-            self.best_estimator_ = base_clf
-            self._set_methods()
-            return self
-
-        return self._fit(X, y, grid, **params)
+        return self._fit(X, y, ParameterGrid(self.param_grid), **params)
 
 
 class RandomizedSearchCV(BaseSearchCV):
