@@ -3,7 +3,7 @@ Testing for grid search module (sklearn.grid_search)
 
 """
 
-from collections import Iterable
+from collections import Iterable, Sized
 from cStringIO import StringIO
 from itertools import chain, product
 import sys
@@ -85,10 +85,13 @@ def test_parameter_grid():
     params1 = {"foo": [1, 2, 3]}
     grid1 = ParameterGrid(params1)
     assert_true(isinstance(grid1, Iterable))
+    assert_true(isinstance(grid1, Sized))
+    assert_equal(len(grid1), 3)
 
     params2 = {"foo": [4, 2],
                "bar": ["ham", "spam", "eggs"]}
     grid2 = ParameterGrid(params2)
+    assert_equal(len(grid2), 6)
 
     # loop to assert we can iterate over the grid multiple times
     for i in xrange(2):

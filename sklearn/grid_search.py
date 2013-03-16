@@ -8,12 +8,14 @@ from __future__ import print_function
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
 # License: BSD Style.
 
+from abc import ABCMeta, abstractmethod
+from collections import Mapping, namedtuple
+from functools import partial, reduce
+from itertools import product
+import numbers
+import operator
 import time
 import warnings
-import numbers
-from itertools import product
-from collections import Mapping, namedtuple
-from abc import ABCMeta, abstractmethod
 
 import numpy as np
 
@@ -80,6 +82,13 @@ class ParameterGrid(object):
             for v in product(*values):
                 params = dict(zip(keys, v))
                 yield params
+
+    def __len__(self):
+        """Number of points on the grid."""
+        # Product function that can handle iterables (np.product can't).
+        product = partial(reduce, operator.mul)
+        return sum(product(len(v) for v in p.values())
+                   for p in self.param_grid)
 
 
 class IterGrid(ParameterGrid):
@@ -174,6 +183,10 @@ class ParameterSampler(object):
                 else:
                     params[k] = v[rnd.randint(len(v))]
             yield params
+
+    def __len__(self):
+        """Number of points that will be sampled."""
+        return self.n_iter
 
 
 def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
