@@ -28,8 +28,9 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
         n_samples > n_features.
 
     C : float, optional (default=1.0)
-        Specifies the strength of the regularization. The smaller it is
-        the bigger is the regularization.
+        Inverse of regularization strength; must be a positive float.
+        Like in support vector machines, smaller values specify stronger
+        regularization.
 
     fit_intercept : bool, default: True
         Specifies if a constant (a.k.a. bias or intercept) should be
