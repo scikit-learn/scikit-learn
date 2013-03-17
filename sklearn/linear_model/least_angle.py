@@ -46,7 +46,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         Maximum number of iterations to perform, set to infinity for no limit.
 
     Gram : None, 'auto', array, shape: (n_features, n_features), optional
-        Precomputed Gram matrix (X' * X), if 'auto', the Gram
+        Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
         matrix is precomputed from the given X, if there are more samples
         than features.
 
@@ -55,8 +55,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         regularization parameter alpha parameter in the Lasso.
 
     method : {'lar', 'lasso'}
-        Specifies the returned model. Select 'lar' for Least Angle
-        Regression, 'lasso' for the Lasso.
+        Specifies the returned model. Select ``'lar'`` for Least Angle
+        Regression, ``'lasso'`` for the Lasso.
 
     eps : float, optional
         The machine-precision regularization in the computation of the
@@ -64,10 +64,10 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         systems.
 
     copy_X : bool
-        If False, X is overwritten.
+        If ``False``, ``X`` is overwritten.
 
     copy_Gram : bool
-        If False, Gram is overwritten.
+        If ``False``, ``Gram`` is overwritten.
 
     verbose : int (default=0)
         Controls output verbosity.
@@ -76,6 +76,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     --------
     alphas: array, shape: (max_features + 1,)
         Maximum of covariances (in absolute value) at each iteration.
+        ``max_features`` is either ``max_iter`` or ``n_features``, whichever is
+        smaller.
 
     active: array, shape (max_features,)
         Indices of active variables at the end of the path.
@@ -419,7 +421,7 @@ class Lars(LinearModel, RegressorMixin):
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to 'auto' let us decide. The Gram
+        calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
     copy_X : boolean, optional, default True
@@ -428,28 +430,35 @@ class Lars(LinearModel, RegressorMixin):
     eps: float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems. Unlike the 'tol' parameter in some iterative
+        systems. Unlike the ``tol`` parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
     fit_path : boolean
-        If True the full path is stored in the `coef_path_` attribute.
+        If True the full path is stored in the ``coef_path_`` attribute.
         If you compute the solution for a large problem or many targets,
         setting fit_path to False will lead to a speedup, especially
         with a small alpha.
 
     Attributes
     ----------
-    `coef_path_` : array, shape = [n_features, n_alpha] | list of \
+    alphas_ : array, shape: [max_features + 1] | list of n_targets such arrays
+        Maximum of covariances (in absolute value) at each iteration.
+        ``max_features`` is either ``n_nonzero_coefs`` or ``n_features``,
+        whichever is smaller.
+
+    active_ : list, length: [max_features] | list of n_targets such lists
+        Indices of active variables at the end of the path.
+
+    coef_path_ : array, shape = [n_features, max_features + 1] | list of \
             n_targets such arrays
         The varying values of the coefficients along the path. It is not \
-    present if the fit_path parameter is False.
+    present if the ``fit_path`` parameter is ``False``.
 
-
-    `coef_` : array, shape = [n_features] | [n_targets, n_features]
+    coef_ : array, shape = [n_features] | [n_targets, n_features]
         Parameter vector (w in the fomulation formula).
 
-    `intercept_` : float | array of shape [n_targets]
+    intercept_ : float | array of shape [n_targets]
         Independent term in decision function.
 
     Examples
@@ -610,7 +619,7 @@ class LassoLars(Lars):
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to 'auto' let us decide. The Gram
+        calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
     max_iter: integer, optional
@@ -619,27 +628,35 @@ class LassoLars(Lars):
     eps: float, optional
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
-        systems. Unlike the 'tol' parameter in some iterative
+        systems. Unlike the ``tol`` parameter in some iterative
         optimization-based algorithms, this parameter does not control
         the tolerance of the optimization.
 
     fit_path : boolean
-        If True the full path is stored in the `coef_path_` attribute.
+        If ``True`` the full path is stored in the ``coef_path_`` attribute.
         If you compute the solution for a large problem or many targets,
-        setting fit_path to False will lead to a speedup, especially
+        setting ``fit_path`` to ``False`` will lead to a speedup, especially
         with a small alpha.
 
     Attributes
     ----------
-    `coef_path_` : array, shape = [n_features, n_alpha] | list of \
+    alphas_ : array, shape: [max_features + 1] | list of n_targets such arrays
+        Maximum of covariances (in absolute value) at each iteration.
+        ``max_features`` is either ``max_iter`` or ``n_features``,
+        whichever is smaller.
+
+    active_ : list, length: [max_features] | list of n_targets such lists
+        Indices of active variables at the end of the path.
+
+    coef_path_ : array, shape = [n_features, n_alpha] | list of \
             n_targets such arrays
         The varying values of the coefficients along the path. It is not \
-    present if fit_path parameter is False.
+    present if ``fit_path`` parameter is ``False``.
 
-    `coef_` : array, shape = [n_features] | [n_targets, n_features]
+    coef_ : array, shape = [n_features] | [n_targets, n_features]
         Parameter vector (w in the fomulation formula).
 
-    `intercept_` : float | array of shape [n_targets]
+    intercept_ : float | array of shape [n_targets]
         Independent term in decision function.
 
     Examples
@@ -701,7 +718,7 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
     y_test: array, shape (n_samples)
         The target variable to compute the residues on
     Gram: None, 'auto', array, shape: (n_features, n_features), optional
-        Precomputed Gram matrix (X' * X), if 'auto', the Gram
+        Precomputed Gram matrix (X' * X), if ``'auto'``, the Gram
         matrix is precomputed from the given X, if there are more samples
         than features
     copy: boolean, optional
@@ -731,8 +748,9 @@ def _lars_path_residues(X_train, y_train, X_test, y_test, Gram=None,
     Returns
     --------
     alphas: array, shape: (max_features + 1,)
-        Maximum of covariances (in absolute value) at each
-        iteration.
+        Maximum of covariances (in absolute value) at each iteration.
+        ``max_features`` is either ``max_iter`` or ``n_features``, whichever
+        is smaller.
 
     active: array, shape (max_features,)
         Indices of active variables at the end of the path.
@@ -791,18 +809,18 @@ class LarsCV(Lars):
         If True, the regressors X are normalized
 
     copy_X : boolean, optional, default True
-        If True, X will be copied; else, it may be overwritten.
+        If ``True``, X will be copied; else, it may be overwritten.
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to 'auto' let us decide. The Gram
+        calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
     max_iter: integer, optional
         Maximum number of iterations to perform.
 
     cv : crossvalidation generator, optional
-        see sklearn.cross_validation module. If None is passed, default to
+        see :mod:`sklearn.cross_validation`. If ``None`` is passed, default to
         a 5-fold strategy
 
     max_n_alphas : integer, optional
@@ -810,7 +828,7 @@ class LarsCV(Lars):
         residuals in the cross-validation
 
     n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If '-1', use
+        Number of CPUs to use during the cross validation. If ``-1``, use
         all the CPUs
 
     eps: float, optional
@@ -821,27 +839,27 @@ class LarsCV(Lars):
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_features]
+    coef_ : array, shape = [n_features]
         parameter vector (w in the fomulation formula)
 
-    `intercept_` : float
+    intercept_ : float
         independent term in decision function
 
-    `coef_path_`: array, shape = [n_features, n_alpha]
+    coef_path_: array, shape = [n_features, n_alpha]
         the varying values of the coefficients along the path
 
-    `alpha_`: float
+    alpha_: float
         the estimated regularization parameter alpha
 
-    `alphas_`: array, shape = [n_alpha]
+    alphas_: array, shape = [n_alpha]
         the different values of alpha along the path
 
-    `cv_alphas_`: array, shape = [n_cv_alphas]
+    cv_alphas_: array, shape = [n_cv_alphas]
         all the values of alpha along the path for the different folds
 
-    `cv_mse_path_`: array, shape = [n_folds, n_cv_alphas]
+    cv_mse_path_: array, shape = [n_folds, n_cv_alphas]
         the mean square error on left-out for each fold along the path
-        (alpha values given by cv_alphas)
+        (alpha values given by ``cv_alphas``)
 
     See also
     --------
@@ -973,7 +991,7 @@ class LassoLarsCV(LarsCV):
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to 'auto' let us decide. The Gram
+        calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
     max_iter: integer, optional
@@ -988,7 +1006,7 @@ class LassoLarsCV(LarsCV):
         residuals in the cross-validation
 
     n_jobs : integer, optional
-        Number of CPUs to use during the cross validation. If '-1', use
+        Number of CPUs to use during the cross validation. If ``-1``, use
         all the CPUs
 
     eps: float, optional
@@ -1001,27 +1019,27 @@ class LassoLarsCV(LarsCV):
 
     Attributes
     ----------
-    `coef_` : array, shape = [n_features]
+    coef_ : array, shape = [n_features]
         parameter vector (w in the fomulation formula)
 
-    `intercept_` : float
+    intercept_ : float
         independent term in decision function.
 
-    `coef_path_`: array, shape = [n_features, n_alpha]
+    coef_path_`: array, shape = [n_features, n_alpha]
         the varying values of the coefficients along the path
 
-    `alpha_`: float
+    alpha_: float
         the estimated regularization parameter alpha
 
-    `alphas_`: array, shape = [n_alpha]
+    alphas_: array, shape = [n_alpha]
         the different values of alpha along the path
 
-    `cv_alphas_`: array, shape = [n_cv_alphas]
+    cv_alphas_: array, shape = [n_cv_alphas]
         all the values of alpha along the path for the different folds
 
-    `cv_mse_path_`: array, shape = [n_folds, n_cv_alphas]
+    cv_mse_path_: array, shape = [n_folds, n_cv_alphas]
         the mean square error on left-out for each fold along the path
-        (alpha values given by cv_alphas)
+        (alpha values given by ``cv_alphas``)
 
     Notes
     -----
@@ -1077,7 +1095,7 @@ class LassoLarsIC(LassoLars):
 
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to 'auto' let us decide. The Gram
+        calculations. If set to ``'auto'`` let us decide. The Gram
         matrix can also be passed as argument.
 
     max_iter: integer, optional
