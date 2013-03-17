@@ -32,7 +32,9 @@ from sklearn.metrics import Scorer
 from sklearn.cross_validation import KFold, StratifiedKFold
 
 
-class MockClassifier(BaseEstimator):
+# Neither of the following two estimators inherit from BaseEstimator,
+# to test hyperparameter search on user-defined classifiers.
+class MockClassifier(object):
     """Dummy classifier to test the cross-validation"""
     def __init__(self, foo_param=0):
         self.foo_param = foo_param
@@ -51,8 +53,15 @@ class MockClassifier(BaseEstimator):
             score = 0.
         return score
 
+    def get_params(self, deep=False):
+        return {'foo_param': self.foo_param}
 
-class MockListClassifier(BaseEstimator):
+    def set_params(self, **params):
+        self.foo_param = params['foo_param']
+        return self
+
+
+class MockListClassifier(object):
     """Dummy classifier to test the cross-validation.
 
     Checks that GridSearchCV didn't convert X to array.
@@ -74,6 +83,13 @@ class MockListClassifier(BaseEstimator):
         else:
             score = 0.
         return score
+
+    def get_params(self, deep=False):
+        return {'foo_param': self.foo_param}
+
+    def set_params(self, **params):
+        self.foo_param = params['foo_param']
+        return self
 
 
 X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
@@ -394,6 +410,7 @@ def test_X_as_list():
     cv = KFold(n=len(X), n_folds=3)
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X.tolist(), y).score(X, y)
+    assert_true(hasattr(grid_search, "cv_scores_"))
 
 
 def test_unsupervised_grid_search():
