@@ -625,7 +625,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     def _term_counts_to_matrix(self, n_doc, i_indices,
                                     j_indices, values, n_features):
         """Construct COO matrix from indices and values.
+
         i_indices and j_indices should be constructed with _make_int_array.
+
         """
         # array("i") corresponds to np.intc, which is also what scipy.sparse
         # wants for indices, so they won't be copied by the coo_matrix ctor.
@@ -663,10 +665,14 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     def _remove_highandlow(self, cscmatrix,
                                 feature_to_position, high, low):
-        '''removes features that are in more documents
-           than high and less documents than low
-           does not remove documents with zero features
-        '''
+        """Remove too rare or too common features.
+
+        Prune features that are non zero in more samples than high or less
+        documents than low.
+
+        This does not prune samples with zero features.
+
+        """
         kept_indices = []
         removed_indices = set()
         for colptr in xrange(len(cscmatrix.indptr) - 1):
@@ -690,9 +696,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     def _get_max_features(self, csc_m, feature_to_position,
                                                 stop_words_, max_features):
-        '''cuts only the top max_features from the matrix and
-        feature_to_position.
-        cut features are added to stop_words_
+        '''Remove maximum features using a sparse matrix.
+
+        Cut only the top max_features from the matrix and
+        feature_to_position. Cut features are added to stop_words_.
+
         '''
         to_keep = self._get_kept_features(csc_m, max_features)
         s_to_keep = set(to_keep)
@@ -746,6 +754,13 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         i_indices = _make_int_array()
         j_indices = _make_int_array()
         values = _make_int_array()
+        # we create 3 arrays with i_indices corresponding to samples
+        # ordered in the order first encountered,
+        # j_indices corresponding to features also ordered in order
+        # first encountered.  Values corresponds to the value in that
+        # position.  We take advantage of the fact that values in
+        # the same position get implicitly added together when the COO
+        # matrix is constructed.
         if fixed_vocab:
             feature_to_position = self.vocabulary_
             for i, doc in enumerate(raw_documents):
@@ -790,18 +805,20 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         del i_indices, j_indices, values  # free memory
         if binary:
             csc_m.data.fill(1)
-
         if not fixed_vocab:
             if sort_features:
                 csc_m, feature_to_position = self.\
                                             _sort_features_and_matrix(
                                                     csc_m, feature_to_position)
             stop_words_ = set()
+            # get rid of features between max_df and min_df
             if max_doc_count < n_doc or min_doc_count > 1:
                 csc_m, feature_to_position, stop_words_ = \
                                     self._remove_highandlow(
                                     csc_m, feature_to_position,
                                     max_doc_count, min_doc_count)
+            # get rid of features that are not in the top max_features
+            # overall occurance wise
             if max_features and max_features < csc_m.shape[1]:
                 csc_m, feature_to_position, stop_words_ = \
                     self._get_max_features(
@@ -833,13 +850,14 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         values = _make_int_array()
         binary = self.binary
         analyze = self.build_analyzer()
+        # use the same matrix-building strategy as fit_transform
         for n_doc, doc in enumerate(raw_documents):
             for feature in analyze(doc):
                 try:
                     j_indices.append(self.vocabulary_[feature])
                     i_indices.append(n_doc)
                     values.append(1)
-                except KeyError:
+                except KeyError:  # feature not in the vectorizer vocabulary
                     pass
         n_doc += 1
         n_features = len(self.vocabulary_)
@@ -848,7 +866,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         del i_indices, j_indices, values  # free memory
         if binary:
             m.data.fill(1)
-        return m
+        return m.tocsc()  # keep the same sparse format as fit_transform
 
     def inverse_transform(self, X):
         """Return terms per document with nonzero entries in X.
@@ -862,7 +880,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         X_inv : list of arrays, len = n_samples
             List of arrays of terms.
         """
-        if sp.isspmatrix_coo(X):  # COO matrix is not indexable
+        if sp.isspmatrix_coo(X) or sp.isspmatrix_csc(X):
+            # COO matrix is not indexable, CSC is slow for row manipulations
             X = X.tocsr()
         elif not sp.issparse(X):
             # We need to convert X to a matrix, so that the indexing
