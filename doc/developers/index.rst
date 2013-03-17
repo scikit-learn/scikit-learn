@@ -717,6 +717,11 @@ get_params and set_params
 All sklearn estimator have ``get_params`` and ``set_params`` functions.
 The ``get_params`` function takes no arguments and returns a dict of the
 ``__init__`` parameters of the estimator, together with their values.
+It must take one keyword argument, ``deep``,
+which receives a boolean value that determines
+whether the method should return the parameters of sub-estimators
+(for most estimators, this can be ignored).
+The default value for ``deep`` should be true.
 
 The ``set_params`` on the other hand takes as input a dict of the form
 ``'parameter': value`` and sets the parameter of the estimator using this dict.
@@ -729,7 +734,11 @@ The easiest way to implement these functions, and to get a sensible
 ``__repr__`` method, is to inherit from ``sklearn.base.BaseEstimator``. If you
 do not want to make your code dependent on scikit-learn, the easiest way to
 implement the interface is::
-    
+
+    def get_params(self, deep=True):
+        # suppose this estimator has parameters "alpha" and "recursive"
+        return {"alpha": self.alpha, "recursive": self.recursive}
+
     def set_params(self, **parameters):
         for parameter, value in parameters.items():
             self.setattr(parameter, value)
@@ -742,7 +751,7 @@ to apply parameter setting to estimators,
 it is essential that calling ``set_params`` has the same effect
 as setting parameters using the ``__init__`` method.
 The easiest and recommended way to accomplish this is to
-**not do any parameter parsing in ``__init__``**.
+**not do any parameter validation in ``__init__``**.
 All logic behind estimator parameters,
 like translating string arguments into functions, should be done in ``fit``.
 
@@ -753,13 +762,16 @@ Cloning
 For using :class:`grid_search.GridSearch` or any functionality of the
 :mod:`cross_validation` module, an estimator must support the ``base.clone``
 function to replicate an estimator.
-This can be done either by not providing a ``get_params`` method.
-Then the provided estimator will be deep-copied.
+This can be done by providing a ``get_params`` method.
 If ``get_params`` is present, then ``clone(estimator)`` will be an instance of
-``estimator.__class__`` on which ``set_params`` has been called with clones of
+``type(estimator)`` on which ``set_params`` has been called with clones of
 the result of ``estimator.get_params()``.
 
-Pipeline Compatibility
+Objects that do not provide this method will be deep-copied
+(using the Python standard function ``copy.deepcopy``)
+if ``safe=False`` is passed to ``clone``.
+
+Pipeline compatibility
 ----------------------
 For an estimator to be usable together with ``pipeline.Pipeline`` in any but the
 last step, it needs to provide a ``fit`` or ``fit_transform`` function.

@@ -193,6 +193,11 @@ class BaseEstimator(object):
         deep: boolean, optional
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
         """
         out = dict()
         for key in self._get_param_names():
