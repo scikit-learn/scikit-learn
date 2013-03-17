@@ -24,11 +24,6 @@ from ..utils import (as_float_array, check_random_state, safe_asarray,
 from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
 
-PY3 = sys.version_info[0] == 3
-
-if PY3:
-    basestring = str
-
 
 ###############################################################################
 # Randomized linear model: feature selection
@@ -346,7 +341,7 @@ def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
         weight_dia = sparse.dia_matrix((1 - weights, 0), (size, size))
         X = X * weight_dia
     else:
-        X = (1 - weights) * X
+        X *= (1 - weights)
 
     C = np.atleast_1d(np.asarray(C, dtype=np.float))
     scores = np.zeros((X.shape[1], len(C)), dtype=np.bool)
