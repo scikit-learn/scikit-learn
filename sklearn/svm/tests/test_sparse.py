@@ -72,7 +72,7 @@ def test_svc():
 
 
 def test_kernels():
-    kernels = ["poly", "rbf", "sigmoid", "precomputed"]
+    kernels = ["poly", "rbf", "sigmoid"]
     for k in kernels:
         sp_clf = svm.SVC(kernel=k).fit(iris.data, iris.target)
         clf = svm.SVC(kernel=k).fit(iris.data.todense(), iris.target)
