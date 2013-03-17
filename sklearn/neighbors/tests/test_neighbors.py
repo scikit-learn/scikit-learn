@@ -387,7 +387,6 @@ def test_kneighbors_regressor_sparse(n_samples=40,
     # Like the above, but with various types of sparse matrices
     rng = np.random.RandomState(random_state)
     X = 2 * rng.rand(n_samples, n_features) - 1
-    X *= X > .1
     y = ((X ** 2).sum(axis=1) < .25).astype(np.int)
 
     for sparsemat in SPARSE_TYPES:
