@@ -158,7 +158,7 @@ class mock_mldata_urlopen(object):
             matfile.seek(0)
             return matfile
         else:
-            raise HTTPError(urlname, 404, dataset_name+ " is not available",
+            raise HTTPError(urlname, 404, dataset_name + " is not available",
                             [], None)
 
 # Meta estimators need another estimator to be instantiated.
