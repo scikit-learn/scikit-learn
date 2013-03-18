@@ -45,6 +45,7 @@ from sklearn.metrics import (accuracy_score,
                              zero_one,
                              zero_one_score,
                              zero_one_loss)
+from sklearn.externals.six.moves import xrange
 
 
 def make_prediction(dataset=None, binary=False):
