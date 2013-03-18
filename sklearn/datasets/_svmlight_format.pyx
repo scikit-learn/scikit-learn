@@ -10,6 +10,8 @@ cimport numpy as np
 import numpy as np
 import scipy.sparse as sp
 
+from ..externals.six import b
+
 from ..utils.arraybuilder import ArrayBuilder
 
 np.import_array()
@@ -32,7 +34,9 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based, bint query_i
     cdef char *hash_ptr, *line_cstr
     cdef np.int32_t idx, prev_idx
     cdef Py_ssize_t i
-
+    cdef bytes qid_prefix = b('qid')
+    cdef Py_ssize_t n_features
+    
     data = ArrayBuilder(dtype=dtype)
     indptr = ArrayBuilder(dtype=_INDPTR_DTYPE)
     indices = ArrayBuilder(dtype=_INDICES_DTYPE)
@@ -64,8 +68,7 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based, bint query_i
 
         prev_idx = -1
         n_features = len(features)
-
-        if n_features and line_parts[1].startswith('qid'):
+        if n_features and line_parts[1].startswith(qid_prefix):
             _, value = line_parts[1].split(COLON, 1)
             if query_id:
                 query_values.append(int(value))
@@ -81,7 +84,7 @@ def _load_svmlight_file(f, dtype, bint multilabel, bint zero_based, bint query_i
                 raise ValueError(
                         "Invalid index %d in SVMlight/LibSVM data file." % idx)
             if idx <= prev_idx:
-                raise ValueError("Feature ndices in SVMlight/LibSVM data "
+                raise ValueError("Feature indices in SVMlight/LibSVM data "
                                  "file should be sorted and unique.")
             indices.append(idx)
             data.append(dtype(value))
