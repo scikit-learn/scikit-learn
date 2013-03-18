@@ -151,3 +151,4 @@ if __name__ == "__main__":
     test_input_validation()
     test_skewed_chi2_sampler()
     test_rbf_sampler()
+    test_nystrom_approximation()
