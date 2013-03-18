@@ -144,8 +144,8 @@ def test_load_zero_based():
 
 
 def test_load_zero_based_auto():
-    data1 = "-1 1:1 2:2 3:3\n"
-    data2 = "-1 0:0 1:1\n"
+    data1 = b("-1 1:1 2:2 3:3\n")
+    data2 = b("-1 0:0 1:1\n")
 
     f1 = BytesIO(data1)
     X, y = load_svmlight_file(f1, zero_based="auto")
@@ -160,10 +160,10 @@ def test_load_zero_based_auto():
 
 def test_load_with_qid():
     # load svmfile with qid attribute
-    data = """
+    data = b("""
     3 qid:1 1:0.53 2:0.12
     2 qid:1 1:0.13 2:0.1
-    7 qid:2 1:0.87 2:0.12"""
+    7 qid:2 1:0.87 2:0.12""")
     X, y = load_svmlight_file(BytesIO(data), query_id=False)
     assert_array_equal(y, [3, 2, 7])
     assert_array_equal(X.todense(), [[.53, .12], [.13, .1], [.87, .12]])
