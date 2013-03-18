@@ -7,6 +7,7 @@
 
     Update: Collapsable sidebar added - 13/03/2012 - Jaques Grobler
     Update: Next-page button added - 16/03/2012 - Jaques Grobler
+    Update: Citing note below toc - 04/03/2012 - Andreas Mueller
 
 
     :copyright: Fabian Pedregosa
@@ -72,29 +73,16 @@
           {%- block navbar -%}
           <div class="navbar">
           <ul>
-            <li><a href="{{pathto('install')}}">Download</a></li>
-            <li><a href="{{pathto('support')}}">Support</a></li>
+            <li><a href="{{pathto(master_doc)}}">Home</a></li>
+            <li><a href="{{pathto('install')}}">Installation</a></li>
+            <li><a href="{{pathto('tutorial/index')}}">Tutorials</a></li>
             <li><a href="{{pathto('user_guide')}}">User Guide</a></li>
             <li><a href="{{pathto('auto_examples/index')}}">Examples</a></li>
             <li><a href="{{pathto('modules/classes')}}">Reference</a></li>
+            <li><a href="{{pathto('developers/index')}}">Development</a></li>
+            <li><a href="{{pathto('support')}}">Support</a></li>
        </ul>
 
-<div class="search_form">
-
-<div id="cse" style="width: 100%;"></div>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript">
-  google.load('search', '1', {language : 'en'});
-  google.setOnLoadCallback(function() {
-    var customSearchControl = new google.search.CustomSearchControl('016639176250731907682:tjtqbvtvij0');
-    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-    var options = new google.search.DrawOptions();
-    options.setAutoComplete(true);
-    customSearchControl.draw('cse', options);
-  }, true);
-</script>
-
-</div>
           </div> <!-- end navbar -->
           {%- endblock -%}
 
@@ -185,6 +173,9 @@
     <a href="http://github.com/scikit-learn/scikit-learn/wiki/Upcoming-events">coding sprint</a>. <a href="{{pathto('developers/index')}}">Read More...</a>
     </p>
 
+    <h3><a href="{{pathto('about')}}">About us</a></h3>
+    <p>Find out <a href="{{pathto('about')}}">who we are</a></p>
+
     <h3><a href="{{pathto('about')}}">Funding</a></h3>
     <p>Generous funding provided
     by <a href="http://www.inria.fr">INRIA</a>,
@@ -198,13 +189,14 @@
     <p><a href="{{pathto('about')}}">Read more ...</a></p>
 
     {% endif %}
+    {%- if (pagename != 'index') %}
+    <h3>{{ _('This page') }}</h3>
+    {{ toc }}
+
     <h3><a href="{{pathto('about')}}#citing-scikit-learn">Citing</a></h3>
     <p>If you use the software, please consider
     <a href="{{pathto('about')}}#citing-scikit-learn">citing scikit-learn</a>.</p>
 
-    {%- if (pagename != 'index') %}
-    <h3>{{ _('This page') }}</h3>
-	{{ toc }}
     {% endif %}
     </div>
 	  </div>
