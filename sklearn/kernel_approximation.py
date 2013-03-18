@@ -346,14 +346,30 @@ class Nystroem(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     kernel : string or callable, default="rbf"
-        Kernel map to be approximated.
+        Kernel map to be approximated. A callable should accept two arguments
+        and the keyword arguments passed to this object as kernel_params, and
+        should return a floating point number.
 
     n_components : int
         Number of features to construct.
         How many data points will be used to construct the mapping.
 
-    gamma : float, default=1/n_features.
-        Parameter for the RBF kernel.
+    gamma : float, default=None
+        Gamma parameter for the RBF, polynomial, exponential chi² and
+        sigmoid kernels. Interpretation of the default value is left to
+        the kernel; see the documentation for sklearn.metrics.pairwise.
+        Ignored by other kernels.
+
+    degree : float, default=3
+        Degree of the polynomial kernel. Ignored by other kernels.
+
+    coef0 : float, default=1
+        Zero coefficient for polynomial and sigmoid kernels.
+        Ignored by other kernels.
+
+    kernel_params : mapping of string to any, optional
+        Additional parameters (keyword arguments) for kernel function passed
+        as callable object.
 
     random_state : {int, RandomState}, optional
         If int, random_state is the seed used by the random number generator;
@@ -393,11 +409,12 @@ class Nystroem(BaseEstimator, TransformerMixin):
     sklearn.metric.pairwise.kernel_metrics : List of built-in kernels.
     """
     def __init__(self, kernel="rbf", gamma=None, coef0=1, degree=3,
-                 n_components=100, random_state=None):
+                 kernel_params=None, n_components=100, random_state=None):
         self.kernel = kernel
         self.gamma = gamma
         self.coef0 = coef0
         self.degree = degree
+        self.kernel_params = kernel_params
         self.n_components = n_components
         self.random_state = random_state
 
@@ -431,14 +448,12 @@ class Nystroem(BaseEstimator, TransformerMixin):
         basis_inds = inds[:n_components]
         basis = X[basis_inds]
 
-        if callable(self.kernel):
+        if False:
             basis_kernel = self.kernel(basis, basis)
         else:
-            params = {"gamma": self.gamma,
-                      "degree": self.degree,
-                      "coef0": self.coef0}
             basis_kernel = pairwise_kernels(basis, metric=self.kernel,
-                                            filter_params=True, **params)
+                                            filter_params=True,
+                                            **self._get_kernel_params())
 
         # sqrt of kernel matrix on basis vectors
         U, S, V = svd(basis_kernel)
@@ -464,10 +479,22 @@ class Nystroem(BaseEstimator, TransformerMixin):
             Transformed data.
         """
 
-        if callable(self.kernel):
+        if False:
             embedded = self.kernel(X, self.components_)
         else:
             embedded = pairwise_kernels(X, self.components_,
                                         metric=self.kernel,
-                                        gamma=self.gamma)
+                                        filter_params=True,
+                                        **self._get_kernel_params())
         return np.dot(embedded, self.normalization_.T)
+
+    def _get_kernel_params(self):
+        params = self.kernel_params
+        if params is None:
+            params = {}
+        if not callable(self.kernel):
+            params['gamma'] = self.gamma
+            params['degree'] = self.degree
+            params['coef0'] = self.coef0
+
+        return params
