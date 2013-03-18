@@ -139,7 +139,6 @@ def test_nystrom_approximation():
 
     # test that available kernels fit and transform
     kernels_available = kernel_metrics().keys()
-    print(kernels_available)
     for kern in kernels_available:
         trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
         X_transformed = trans.fit(X).transform(X)
