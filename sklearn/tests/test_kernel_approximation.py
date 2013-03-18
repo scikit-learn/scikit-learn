@@ -4,6 +4,7 @@ from scipy.sparse import csr_matrix
 from sklearn.utils.testing import assert_array_equal, assert_equal
 from sklearn.utils.testing import assert_array_almost_equal, assert_raises
 
+from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.kernel_approximation import SkewedChi2Sampler
@@ -136,9 +137,17 @@ def test_nystrom_approximation():
     X_transformed = trans.fit(X).transform(X)
     assert_equal(X_transformed.shape, (X.shape[0], 2))
 
+    # test that available kernels fit and transform
+    kernels_available = kernel_metrics().keys()
+    for kern in kernels_available:
+        trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
+        X_transformed = trans.fit(X).transform(X)
+        assert_equal(X_transformed.shape, (X.shape[0], 2))
+
 
 if __name__ == "__main__":
     test_additive_chi2_sampler()
     test_input_validation()
     test_skewed_chi2_sampler()
     test_rbf_sampler()
+    test_nystrom_approximation()

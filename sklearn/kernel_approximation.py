@@ -434,9 +434,14 @@ class Nystroem(BaseEstimator, TransformerMixin):
         if callable(self.kernel):
             basis_kernel = self.kernel(basis, basis)
         else:
-            params = {"gamma": self.gamma,
-                      "degree": self.degree,
-                      "coef0": self.coef0}
+            # Not all kernel_metrics accepts gamma param
+            if self.gamma is None:
+                params = {"degree": self.degree,
+                          "coef0": self.coef0}
+            else:
+                params = {"gamma": self.gamma,
+                          "degree": self.degree,
+                          "coef0": self.coef0}
             basis_kernel = pairwise_kernels(basis, metric=self.kernel,
                                             filter_params=True, **params)
 
@@ -467,7 +472,11 @@ class Nystroem(BaseEstimator, TransformerMixin):
         if callable(self.kernel):
             embedded = self.kernel(X, self.components_)
         else:
-            embedded = pairwise_kernels(X, self.components_,
-                                        metric=self.kernel,
-                                        gamma=self.gamma)
+            if self.gamma is None:
+                embedded = pairwise_kernels(X, self.components_,
+                                            metric=self.kernel)
+            else:
+                embedded = pairwise_kernels(X, self.components_,
+                                            metric=self.kernel,
+                                            gamma=self.gamma)
         return np.dot(embedded, self.normalization_.T)
