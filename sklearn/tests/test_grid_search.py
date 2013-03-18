@@ -5,6 +5,7 @@ Testing for grid search module (sklearn.grid_search)
 
 from collections import Iterable, Sized
 from sklearn.externals.six.moves import cStringIO as StringIO
+from sklearn.externals.six.moves import xrange
 from itertools import chain, product
 import sys
 import warnings
