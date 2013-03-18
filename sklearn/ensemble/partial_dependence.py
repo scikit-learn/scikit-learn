@@ -3,7 +3,9 @@
 # Authors: Peter Prettenhofer
 # License: BSD Style.
 
-from itertools import count, izip
+from itertools import count
+
+from sklearn.externals.six.moves import zip
 
 import numbers
 
@@ -332,7 +334,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     n_cols = min(n_cols, len(features))
     n_rows = int(np.ceil(len(features) / float(n_cols)))
     axs = []
-    for i, fx, name, (pdp, axes) in izip(count(), features, names,
+    for i, fx, name, (pdp, axes) in zip(count(), features, names,
                                          pd_result):
         ax = fig.add_subplot(n_rows, n_cols, i + 1)
 
