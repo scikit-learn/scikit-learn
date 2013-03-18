@@ -65,10 +65,8 @@ def plot_data(lda, X, y, y_pred, fig_index):
     tp = (y == y_pred)  # True Positive
     tp0, tp1 = tp[y == 0], tp[y == 1]
     X0, X1 = X[y == 0], X[y == 1]
-    # pep8 moans about next 2 lines:
-    # E712 comparison to False should be 'if cond is False:' or 'if not cond:'
-    X0_tp, X0_fp = X0[tp0], X0[tp0 != True]
-    X1_tp, X1_fp = X1[tp1], X1[tp1 != True]
+    X0_tp, X0_fp = X0[tp0], X0[~tp0]
+    X1_tp, X1_fp = X1[tp1], X1[~tp1]
     xmin, xmax = X[:, 0].min(), X[:, 0].max()
     ymin, ymax = X[:, 1].min(), X[:, 1].max()
 
