@@ -18,11 +18,20 @@ def test_kernel_pca():
     X_fit = rng.random_sample((5, 4))
     X_pred = rng.random_sample((2, 4))
 
+    def histogram(x, y, **kwargs):
+        """Histogram kernel implemented as a callable."""
+        assert_equal(kwargs, {})    # no kernel_params that we didn't ask for
+        return np.minimum(x, y).sum()
+
     for eigen_solver in ("auto", "dense", "arpack"):
-        for kernel in ("linear", "rbf", "poly"):
+        for kernel in ("linear", "rbf", "poly", histogram):
+            # histogram kernel produces singular matrix inside linalg.solve
+            # XXX use a least-squares approximation?
+            inv = not callable(kernel)
+
             # transform fit data
             kpca = KernelPCA(4, kernel=kernel, eigen_solver=eigen_solver,
-                             fit_inverse_transform=True)
+                             fit_inverse_transform=inv)
             X_fit_transformed = kpca.fit_transform(X_fit)
             X_fit_transformed2 = kpca.fit(X_fit).transform(X_fit)
             assert_array_almost_equal(np.abs(X_fit_transformed),
@@ -38,8 +47,9 @@ def test_kernel_pca():
                          X_fit_transformed.shape[1])
 
             # inverse transform
-            X_pred2 = kpca.inverse_transform(X_pred_transformed)
-            assert_equal(X_pred2.shape, X_pred.shape)
+            if inv:
+                X_pred2 = kpca.inverse_transform(X_pred_transformed)
+                assert_equal(X_pred2.shape, X_pred.shape)
 
 
 def test_invalid_parameters():
