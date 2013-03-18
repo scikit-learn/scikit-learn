@@ -1,5 +1,4 @@
 """Testing for K-means"""
-from cStringIO import StringIO
 import sys
 import warnings
 
@@ -24,6 +23,7 @@ from sklearn.cluster.k_means_ import _labels_inertia
 from sklearn.cluster.k_means_ import _mini_batch_step
 from sklearn.cluster._k_means import csr_row_norm_l2
 from sklearn.datasets.samples_generator import make_blobs
+from sklearn.externals.six.moves import cStringIO as StringIO
 
 
 # non centered, sparse centers to check the
