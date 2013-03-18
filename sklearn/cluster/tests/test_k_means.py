@@ -203,16 +203,25 @@ def test_k_means_new_centers():
         np.testing.assert_array_equal(this_labels, labels)
 
 
-def _get_mac_os_version():
+def _is_mac_os_version_ge(version):
+    '''
+    return True if system mac version is greater or equal than version
+    '''
     import platform
     mac_version, _, _ = platform.mac_ver()
     if mac_version:
-        # turn something like '10.7.3' into '10.7'
-        return '.'.join(mac_version.split('.')[:2])
+        [my_major, my_minor] = [int(v) for v in version.split('.')]
+        # keep only major and minor system version
+        [sys_major, sys_minor] = [int(v) for v in mac_version.split('.')[:2]]
+        if sys_major > my_major:
+            return True
+        else:
+            return sys_minor >= my_minor
+    return False
 
 
 def test_k_means_plus_plus_init_2_jobs():
-    if _get_mac_os_version() >= '10.7':
+    if _is_mac_os_version_ge('10.7'):
         raise SkipTest('Multi-process bug in Mac OS X Lion (see issue #636)')
     km = KMeans(init="k-means++", n_clusters=n_clusters, n_jobs=2,
                      random_state=42).fit(X)
