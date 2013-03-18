@@ -10,7 +10,7 @@ import tempfile
 import shutil
 
 from sklearn import datasets
-from sklearn.utils.testing import mock_urllib2
+from sklearn.utils.testing import mock_mldata_urlopen
 
 
 def globs(globs):
@@ -34,13 +34,13 @@ def globs(globs):
     makedirs(join(custom_data_home, 'mldata'))
     globs['custom_data_home'] = custom_data_home
 
-    global _urllib2_ref
-    _urllib2_ref = datasets.mldata.urllib2
-    globs['_urllib2_ref'] = _urllib2_ref
-    datasets.mldata.urllib2 = mock_urllib2(mock_dataset)
+    global _urlopen_ref
+    _urlopen_ref = datasets.mldata.urlopen
+    globs['_urlopen_ref'] = _urlopen_ref
+    datasets.mldata.urlopen = mock_mldata_urlopen(mock_dataset)
     return globs
 
 
 def teardown_module(module):
-    datasets.mldata.urllib2 = _urllib2_ref
+    datasets.mldata.urlopen = _urlopen_ref
     shutil.rmtree(custom_data_home)

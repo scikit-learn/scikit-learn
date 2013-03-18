@@ -253,7 +253,7 @@ Testing Functions
 - :func:`testing.assert_raise_message`: Assertions for checking the
   error raise message.
 
-- :class:`UrlopenMock`: Object which mocks the urlopen function to fake
+- :func:`testing.mock_mldata_urlopen`: Mocks the urlopen function to fake
   requests to mldata.org. Used in tests of :mod:`sklearn.datasets`.
 
 - :func:`testing.all_estimators` : returns a list of all estimators in
