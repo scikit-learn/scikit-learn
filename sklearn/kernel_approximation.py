@@ -472,7 +472,11 @@ class Nystroem(BaseEstimator, TransformerMixin):
         if callable(self.kernel):
             embedded = self.kernel(X, self.components_)
         else:
-            embedded = pairwise_kernels(X, self.components_,
-                                        metric=self.kernel,
-                                        gamma=self.gamma)
+            if self.gamma is None:
+                embedded = pairwise_kernels(X, self.components_,
+                                            metric=self.kernel)
+            else:
+                embedded = pairwise_kernels(X, self.components_,
+                                            metric=self.kernel,
+                                            gamma=self.gamma)
         return np.dot(embedded, self.normalization_.T)
