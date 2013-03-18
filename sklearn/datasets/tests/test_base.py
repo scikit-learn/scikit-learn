@@ -17,7 +17,7 @@ from sklearn.datasets import load_linnerud
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_boston
 
-from sklearn.externals.six import b
+from sklearn.externals.six import b, u
 
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
@@ -93,7 +93,7 @@ def test_default_load_files():
     assert_equal(len(res.filenames), 1)
     assert_equal(len(res.target_names), 2)
     assert_equal(res.DESCR, None)
-    assert_equal(res.data, ["Hello World!\n"])
+    assert_equal(res.data, [b("Hello World!\n")])
 
 
 @nose.tools.with_setup(setup_load_files, teardown_load_files)
@@ -104,7 +104,7 @@ def test_load_files_w_categories_desc_and_charset():
     assert_equal(len(res.filenames), 1)
     assert_equal(len(res.target_names), 1)
     assert_equal(res.DESCR, "test")
-    assert_equal(res.data, ["Hello World!\n"])
+    assert_equal(res.data, [u("Hello World!\n")])
 
 
 @nose.tools.with_setup(setup_load_files, teardown_load_files)
