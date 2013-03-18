@@ -301,6 +301,18 @@ cdef inline void swap(DITYPE_t* arr, ITYPE_t i1, ITYPE_t i2):
     arr[i1] = arr[i2]
     arr[i2] = tmp
 
+
+cdef inline void dual_swap(DTYPE_t* darr, ITYPE_t* iarr,
+                           ITYPE_t i1, ITYPE_t i2):
+    cdef DTYPE_t dtmp = darr[i1]
+    darr[i1] = darr[i2]
+    darr[i2] = dtmp
+
+    cdef ITYPE_t itmp = iarr[i1]
+    iarr[i1] = iarr[i2]
+    iarr[i2] = itmp
+    
+
 #------------------------------------------------------------
 # NeighborsHeap
 #  max-heap structure to keep track of distances and indices of neighbors
@@ -382,49 +394,73 @@ cdef class NeighborsHeap:
 
 #------------------------------------------------------------
 # simultaneous_sort :
-#  this is a recursive quicksort implementation which sorts `distances`
-#  and simultaneously performs the same swaps on `indices`.
+#  this is a simple recursive quicksort implementation which sorts
+#  `distances` and simultaneously performs the same swaps on `indices`.
 cdef void _simultaneous_sort(DTYPE_t* dist, ITYPE_t* idx, ITYPE_t size):
-    cdef ITYPE_t pivot_idx, store_idx, i
+    cdef ITYPE_t pivot_idx, i, j
     cdef DTYPE_t pivot_val
 
+    # in the small-array case, do things efficiently
     if size <= 1:
-        return
+        pass
+    elif size == 2:
+        if dist[0] > dist[1]:
+            dual_swap(dist, idx, 0, 1)
+    elif size == 3:
+        if dist[0] > dist[1]:
+            dual_swap(dist, idx, 0, 1)
+        if dist[1] > dist[2]:
+            dual_swap(dist, idx, 1, 2)
+            if dist[0] > dist[1]:
+                dual_swap(dist, idx, 0, 1)
+    else:
+        # Determine the pivot using the median-of-three rule.
+        # The smallest of the three is moved to the beginning of the array,
+        # the middle (the pivot value) is moved to the end, and the largest
+        # is moved to the pivot index.
+        pivot_idx = size / 2
+        if dist[0] > dist[size - 1]:
+            dual_swap(dist, idx, 0, size - 1)
+        if dist[size - 1] > dist[pivot_idx]:
+            dual_swap(dist, idx, size - 1, pivot_idx)
+            if dist[0] > dist[size - 1]:
+                dual_swap(dist, idx, 0, size - 1)
+        pivot_val = dist[size - 1]
 
-    # determine new pivot
-    pivot_idx = size / 2
-    pivot_val = dist[pivot_idx]
-    store_idx = 0
+        # partition indices about pivot.  At the end of this operation,
+        # pivot_idx will contain the pivot value, everything to the left
+        # will be smaller, and everything to the right will be larger.
+        i = 0
+        j = size - 2
+        while i < j:
+            while dist[i] < pivot_val:
+                i += 1
+            while dist[j] > pivot_val:
+                j -= 1
+            if i >= j:
+                break
+            else:
+                dual_swap(dist, idx, i, j)
+        pivot_idx = i
+        dual_swap(dist, idx, pivot_idx, size - 1)
 
-    swap(dist, pivot_idx, size - 1)
-    swap(idx, pivot_idx, size - 1)
-
-    for i in range(size - 1):
-        if dist[i] < pivot_val:
-            swap(dist, i, store_idx)
-            swap(idx, i, store_idx)
-            store_idx += 1
-    swap(dist, store_idx, size - 1)
-    swap(idx, store_idx, size - 1)
-    pivot_idx = store_idx
-
-    # recursively sort each side of the pivot
-    if pivot_idx > 1:
-        _simultaneous_sort(dist, idx, pivot_idx)
-    if pivot_idx + 2 < size:
-        _simultaneous_sort(dist + pivot_idx + 1,
-                           idx + pivot_idx + 1,
-                           size - pivot_idx - 1)
+        # recursively sort each side of the pivot
+        if pivot_idx > 1:
+            _simultaneous_sort(dist, idx, pivot_idx)
+        if pivot_idx + 2 < size:
+            _simultaneous_sort(dist + pivot_idx + 1,
+                               idx + pivot_idx + 1,
+                               size - pivot_idx - 1)
 
 
 #------------------------------------------------------------
-# find_split_dim:
+# find_node_split_dim:
 #  this computes the equivalent of the 
 #  j_max = np.argmax(np.max(data, 0) - np.min(data, 0))
-cdef ITYPE_t find_split_dim(DTYPE_t* data,
-                            ITYPE_t* node_indices,
-                            ITYPE_t n_features,
-                            ITYPE_t n_points):
+cdef ITYPE_t find_node_split_dim(DTYPE_t* data,
+                                 ITYPE_t* node_indices,
+                                 ITYPE_t n_features,
+                                 ITYPE_t n_points):
     cdef DTYPE_t min_val, max_val, val, spread, max_spread
     cdef ITYPE_t i, j, j_max
 
@@ -446,7 +482,7 @@ cdef ITYPE_t find_split_dim(DTYPE_t* data,
 
 
 #------------------------------------------------------------
-# partition_indices will modify the array node_indices between
+# partition_node_indices will modify the array node_indices between
 # indices 0 and n_points.  Upon return (assuming numpy-style slicing)
 #   data[node_indices[0:split_index], split_dim]
 #     <= data[node_indices[split_index], split_dim]
@@ -454,12 +490,12 @@ cdef ITYPE_t find_split_dim(DTYPE_t* data,
 #   data[node_indices[split_index], split_dim]
 #     <= data[node_indices[split_index:n_points], split_dim]
 # will hold.  The algorithm amounts to a partial quicksort
-cdef void partition_indices(DTYPE_t* data,
-                            ITYPE_t* node_indices,
-                            ITYPE_t split_dim,
-                            ITYPE_t split_index,
-                            ITYPE_t n_features,
-                            ITYPE_t n_points):
+cdef void partition_node_indices(DTYPE_t* data,
+                                 ITYPE_t* node_indices,
+                                 ITYPE_t split_dim,
+                                 ITYPE_t split_index,
+                                 ITYPE_t n_features,
+                                 ITYPE_t n_points):
     cdef ITYPE_t left, right, midindex, i
     cdef DTYPE_t d1, d2
     left = 0
@@ -811,17 +847,18 @@ cdef class BinaryTree:
         else:
             # split node and recursively construct child nodes.
             self.node_data[i_node].is_leaf = False
-            i_max = find_split_dim(data, idx_array,
+            i_max = find_node_split_dim(data, idx_array,
+                                        n_features, n_points)
+            partition_node_indices(data, idx_array, i_max, n_mid,
                                    n_features, n_points)
-            partition_indices(data, idx_array, i_max, n_mid,
-                              n_features, n_points)
             self._recursive_build(2 * i_node + 1,
                                   idx_start, idx_start + n_mid)
             self._recursive_build(2 * i_node + 2,
                                   idx_start + n_mid, idx_end)
 
     def query(self, X, k=1, return_distance=True,
-              dualtree=False, breadth_first=False):
+              dualtree=False, breadth_first=False,
+              sort_results=True):
         """
         query(X, k=1, return_distance=True,
               dualtree=False, breadth_first=False)
@@ -845,6 +882,10 @@ cdef class BinaryTree:
         breadth_first : boolean (default = False)
             if True, then query the nodes in a breadth-first manner.
             Otherwise, query the nodes in a depth-first manner.
+        sort_results : boolean (default = True)
+            if True, then distances and indices of each point are sorted
+            on return, so that the first column contains the closest points.
+            Otherwise, neighbors are returned in an arbitrary order.
 
         Returns
         -------
@@ -854,12 +895,10 @@ cdef class BinaryTree:
         d : array of doubles - shape: x.shape[:-1] + (k,)
             each entry gives the list of distances to the
             neighbors of the corresponding point
-            (note that distances are not sorted)
 
         i : array of integers - shape: x.shape[:-1] + (k,)
             each entry gives the list of indices of
             neighbors of the corresponding point
-            (note that neighbors are not sorted)
 
         Examples
         --------
@@ -931,7 +970,7 @@ cdef class BinaryTree:
                                                   reduced_dist_LB)
                     pt += Xarr.shape[1]
 
-        distances, indices = heap.get_arrays(sort=True)
+        distances, indices = heap.get_arrays(sort=sort_results)
         distances = self.dm.rdist_to_dist_arr(distances)
 
         # deflatten results
@@ -987,7 +1026,7 @@ cdef class BinaryTree:
             each element is a numpy integer array listing the indices of
             neighbors of the corresponding point.  Note that unlike
             the results of a k-neighbors query, the returned neighbors
-            are not sorted by distance
+            are not sorted by distance by default.
 
         dist : array of objects, shape = X.shape[:-1]
             each element is a numpy double array
@@ -1866,8 +1905,7 @@ cdef class BinaryTree:
 
             N1 = self.node_data[i1].idx_end - self.node_data[i1].idx_start
             N2 = self.node_data[i2].idx_end - self.node_data[i2].idx_start
-            
-            # XXX: for efficiency, compute min & max bounds at the same time
+
             min_max_dist(self, i1, pt, &dist_LB, &dist_UB)
             child1_min_bound = N1 * compute_kernel(dist_UB, h, kernel)
             child1_max_bound = N1 * compute_kernel(dist_LB, h, kernel)
