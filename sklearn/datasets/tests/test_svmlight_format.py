@@ -13,6 +13,8 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import assert_in
 
+from sklearn.externals.six import b
+
 import sklearn
 from sklearn.datasets import (load_svmlight_file, load_svmlight_files,
                               dump_svmlight_file)
@@ -137,7 +139,7 @@ def test_load_invalid_order_file():
 
 @raises(ValueError)
 def test_load_zero_based():
-    f = BytesIO("-1 4:1.\n1 0:1\n")
+    f = BytesIO(b("-1 4:1.\n1 0:1\n"))
     load_svmlight_file(f, zero_based=False)
 
 
