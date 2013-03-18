@@ -17,6 +17,8 @@ from sklearn.datasets import load_linnerud
 from sklearn.datasets import load_iris
 from sklearn.datasets import load_boston
 
+from sklearn.externals.six import b
+
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
@@ -47,7 +49,7 @@ def setup_load_files():
     TEST_CATEGORY_DIR2 = tempfile.mkdtemp(dir=LOAD_FILES_ROOT)
     sample_file = tempfile.NamedTemporaryFile(dir=TEST_CATEGORY_DIR1,
                                               delete=False)
-    sample_file.write("Hello World!\n")
+    sample_file.write(b("Hello World!\n"))
     sample_file.close()
 
 
