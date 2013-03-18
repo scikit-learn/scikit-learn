@@ -103,11 +103,16 @@ def test_fetch_multiple_column():
 
         # by default
         dataname = 'threecol-default'
-        datasets.mldata.urlopen = mock_mldata_urlopen({dataname:
-                                                ({'label': y,
-                                                  'data': x,
-                                                  'z': z},
-                                                 ['z', 'data', 'label'])})
+        datasets.mldata.urlopen = mock_mldata_urlopen({
+            dataname: (
+                {
+                    'label': y,
+                    'data': x,
+                    'z': z,
+                },
+                ['z', 'data', 'label'],
+            ),
+        })
 
         dset = fetch_mldata(dataname, data_home=tmpdir)
         for n in ["COL_NAMES", "DESCR", "target", "data", "z"]:
@@ -121,11 +126,10 @@ def test_fetch_multiple_column():
 
         # by order
         dataname = 'threecol-order'
-        datasets.mldata.urlopen = mock_mldata_urlopen({dataname:
-                                                ({'y': y,
-                                                  'x': x,
-                                                  'z': z},
-                                                 ['y', 'x', 'z'])})
+        datasets.mldata.urlopen = mock_mldata_urlopen({
+            dataname: ({'y': y, 'x': x, 'z': z},
+                       ['y', 'x', 'z']),
+            })
 
         dset = fetch_mldata(dataname, data_home=tmpdir)
         for n in ["COL_NAMES", "DESCR", "target", "data", "z"]:
@@ -139,11 +143,10 @@ def test_fetch_multiple_column():
 
         # by number
         dataname = 'threecol-number'
-        datasets.mldata.urlopen = mock_mldata_urlopen({dataname:
-                                                ({'y': y,
-                                                  'x': x,
-                                                  'z': z},
-                                                 ['z', 'x', 'y'])})
+        datasets.mldata.urlopen = mock_mldata_urlopen({
+            dataname: ({'y': y, 'x': x, 'z': z},
+                       ['z', 'x', 'y']),
+        })
 
         dset = fetch_mldata(dataname, target_name=2, data_name=0,
                             data_home=tmpdir)
