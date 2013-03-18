@@ -131,8 +131,8 @@ and ``value`` is an estimator object::
     FeatureUnion(n_jobs=1, transformer_list=[('linear_pca', PCA(copy=True,
         n_components=None, whiten=False)), ('kernel_pca', KernelPCA(alpha=1.0,
         coef0=1, degree=3, eigen_solver='auto', fit_inverse_transform=False,
-        gamma=None, kernel='linear', max_iter=None, n_components=None,
-        remove_zero_eig=False, tol=0))],
+        gamma=None, kernel='linear', kernel_params=None, max_iter=None,
+        n_components=None, remove_zero_eig=False, tol=0))],
         transformer_weights=None)
 
 
