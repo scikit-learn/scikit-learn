@@ -212,8 +212,19 @@ def test_dump():
                 f.seek(0)
 
                 comment = f.readline()
+                try:
+                    comment = str(comment, "utf-8")
+                except TypeError:  # fails in Python 2.x
+                    pass
+
                 assert_in("scikit-learn %s" % sklearn.__version__, comment)
+
                 comment = f.readline()
+                try:
+                    comment = str(comment, "utf-8")
+                except TypeError:  # fails in Python 2.x
+                    pass
+
                 assert_in(["one", "zero"][zero_based] + "-based", comment)
 
                 X2, y2 = load_svmlight_file(f, dtype=dtype,
@@ -245,7 +256,7 @@ def test_dump_comment():
     assert_array_equal(y, y2)
 
     # XXX we have to update this to support Python 3.x
-    utf8_comment = "It is true that\n\xc2\xbd\xc2\xb2 = \xc2\xbc"
+    utf8_comment = b("It is true that\n\xc2\xbd\xc2\xb2 = \xc2\xbc")
     f = BytesIO()
     assert_raises(UnicodeDecodeError,
                   dump_svmlight_file, X, y, f, comment=utf8_comment)
