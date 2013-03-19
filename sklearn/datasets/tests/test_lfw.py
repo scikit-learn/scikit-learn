@@ -86,7 +86,7 @@ def setup_module():
                          if count >= 2]
         for i in range(5):
             name = random_state.choice(more_than_two)
-            first, second = random_state.sample(np.arange(counts[name]), 2)
+            first, second = random_state.sample(range(counts[name]), 2)
             f.write(six.b('%s\t%d\t%d\n' % (name, first, second)))
 
         for i in range(5):
