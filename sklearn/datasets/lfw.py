@@ -33,6 +33,7 @@ import urllib
 from .base import get_data_home, Bunch
 from ..externals.joblib import Memory
 
+from ..externals.six import b, u
 
 logger = logging.getLogger(__name__)
 
@@ -291,7 +292,7 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     # parse the index file to find the number of pairs to be able to allocate
     # the right amount of memory before starting to decode the jpeg files
     with open(index_file_path, 'rb') as index_file:
-        split_lines = [ln.strip().split('\t') for ln in index_file]
+        split_lines = [ln.strip().split(b('\t')) for ln in index_file]
     pair_specs = [sl for sl in split_lines if len(sl) > 2]
     n_pairs = len(pair_specs)
 
@@ -315,7 +316,10 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
         else:
             raise ValueError("invalid line %d: %r" % (i + 1, components))
         for j, (name, idx) in enumerate(pair):
-            person_folder = join(data_folder_path, name)
+            try:
+                person_folder = join(data_folder_path, name)
+            except TypeError:
+                person_folder = join(data_folder_path, str(name,'UTF-8'))
             filenames = list(sorted(listdir(person_folder)))
             file_path = join(person_folder, filenames[idx])
             file_paths.append(file_path)
