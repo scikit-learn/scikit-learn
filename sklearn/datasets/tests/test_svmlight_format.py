@@ -210,21 +210,21 @@ def test_dump():
                 dump_svmlight_file(X.astype(dtype), y, f, comment="test",
                                    zero_based=zero_based)
                 f.seek(0)
-                
+
                 comment = f.readline()
                 try:
                     comment = str(comment, "UTF-8")
                 except TypeError:  # fails in Python 2.x
                     pass
-                
+
                 assert_in("scikit-learn %s" % sklearn.__version__, comment)
-                
+
                 comment = f.readline()
                 try:
                     comment = str(comment, "UTF-8")
                 except TypeError:  # fails in Python 2.x
                     pass
-                
+
                 assert_in(["one", "zero"][zero_based] + "-based", comment)
 
                 X2, y2 = load_svmlight_file(f, dtype=dtype,
