@@ -42,11 +42,13 @@ def clone(estimator, safe=True):
                             " it does not implement a 'get_params' methods."
                             % (repr(estimator), type(estimator)))
     klass = estimator.__class__
-    new_object_params = estimator.get_params(deep=False)
+    new_object_params = estimator.get_params(
+        deep=False, skip_deprecated=False)
+
     for name, param in six.iteritems(new_object_params):
         new_object_params[name] = clone(param, safe=False)
     new_object = klass(**new_object_params)
-    params_set = new_object.get_params(deep=False)
+    params_set = new_object.get_params(deep=False, skip_deprecated=False)
 
     # quick sanity check of the parameters of the clone
     for name in new_object_params:
@@ -185,7 +187,7 @@ class BaseEstimator(object):
         args.sort()
         return args
 
-    def get_params(self, deep=True):
+    def get_params(self, deep=True, skip_deprecated=True):
         """Get parameters for the estimator
 
         Parameters
@@ -204,13 +206,15 @@ class BaseEstimator(object):
             # catch deprecation warnings
             with warnings.catch_warnings(record=True) as w:
                 value = getattr(self, key, None)
-            if len(w) and w[0].category == DeprecationWarning:
+            if (skip_deprecated and len(w)
+                and w[0].category is DeprecationWarning):
                 # if the parameter is deprecated, don't show it
                 continue
 
             # XXX: should we rather test if instance of estimator?
             if deep and hasattr(value, 'get_params'):
-                deep_items = value.get_params().items()
+                deep_items = value.get_params(
+                    skip_deprecated=skip_deprecated).items()
                 out.update((key + '__' + k, val) for k, val in deep_items)
             out[key] = value
         return out
