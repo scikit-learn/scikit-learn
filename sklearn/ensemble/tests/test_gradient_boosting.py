@@ -417,7 +417,7 @@ def test_symbol_labels():
     symbol_y = list(map(str, y))
 
     clf.fit(X, symbol_y)
-    assert_array_equal(clf.predict(T), map(str, true_result))
+    assert_array_equal(clf.predict(T), list(map(str, true_result)))
     assert_equal(100, len(clf.estimators_))
 
 
