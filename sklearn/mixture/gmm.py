@@ -16,14 +16,7 @@ from ..utils import check_random_state
 from ..utils.extmath import logsumexp, pinvh
 from .. import cluster
 
-try:
-    # Python 2
-    from itertools import izip
-    zip = izip
-except ImportError:
-    # Python 3
-    pass
-
+from sklearn.externals.six.moves import zip
 
 EPS = np.finfo(float).eps
 
