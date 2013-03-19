@@ -209,7 +209,7 @@ def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
 
 
 def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
-                     min_faces_per_person=None, color=False,
+                     min_faces_per_person=0, color=False,
                      slice_=(slice(70, 195), slice(78, 172)),
                      download_if_missing=True):
     """Loader for the Labeled Faces in the Wild (LFW) people dataset
