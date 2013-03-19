@@ -11,7 +11,7 @@ import numpy as np
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, as_float_array, deprecated
 from ..utils.extmath import norm
-from ..metrics.pairwise import rbf_kernel
+from ..metrics.pairwise import pairwise_kernels
 from ..neighbors import kneighbors_graph
 from ..manifold import spectral_embedding
 from .k_means_ import k_means
@@ -302,7 +302,9 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     n_clusters : integer, optional
         The dimension of the projection subspace.
 
-    affinity: string, 'nearest_neighbors', 'rbf' or 'precomputed'
+    affinity: string, 'nearest_neighbors', 'precomputed', or a kernel:
+        'linear' | 'poly' | 'rbf' | 'sigmoid' | 'cosine'
+        Default: 'rbf'
 
     gamma: float
         Scaling factor of Gaussian (rbf) affinity kernel. Ignored for
@@ -337,6 +339,10 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         embedding. k-means can be applied and is a popular choice. But it can
         also be sensitive to initialization. Discretization is another approach
         which is less sensitive to random initialization.
+
+    kernel_params : mapping of string to any, optional
+        Parameters (keyword arguments) and values for kernel passed as
+        callable object. Ignored by other kernels.
 
     Attributes
     ----------
@@ -381,7 +387,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     def __init__(self, n_clusters=8, eigen_solver=None, random_state=None,
                  n_init=10, gamma=1., affinity='rbf', n_neighbors=10, k=None,
-                 eigen_tol=0.0, assign_labels='kmeans', mode=None):
+                 eigen_tol=0.0, assign_labels='kmeans', mode=None, kernel='rbf',
+                 kernel_params=None):
         if k is not None:
             warnings.warn("'k' was renamed to n_clusters and "
                           "will be removed in 0.15.",
@@ -402,6 +409,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         self.n_neighbors = n_neighbors
         self.eigen_tol = eigen_tol
         self.assign_labels = assign_labels
+        self.kernel = kernel
+        self.kernel_params = kernel_params
 
     def fit(self, X):
         """Creates an affinity matrix for X using the selected affinity,
@@ -419,18 +428,15 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
                           " a custom affinity matrix, "
                           "set ``affinity=precomputed``.")
 
-        if self.affinity == 'rbf':
-            self.affinity_matrix_ = rbf_kernel(X, gamma=self.gamma)
-
-        elif self.affinity == 'nearest_neighbors':
+        if self.affinity == 'nearest_neighbors':
             connectivity = kneighbors_graph(X, n_neighbors=self.n_neighbors)
             self.affinity_matrix_ = 0.5 * (connectivity + connectivity.T)
         elif self.affinity == 'precomputed':
             self.affinity_matrix_ = X
         else:
-            raise ValueError("Invalid 'affinity'. Expected 'rbf', "
-                             "'nearest_neighbors' or 'precomputed', got '%s'."
-                             % self.affinity)
+            self.affinity_matrix_ = pairwise_kernels(X, metric=self.affinity,
+                                                     filter_params=True,
+                                                     **self._get_kernel_params())
 
         random_state = check_random_state(self.random_state)
         self.labels_ = spectral_clustering(self.affinity_matrix_,
@@ -457,3 +463,11 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
                 " 0.15.")
     def k(self):
         return self.n_clusters
+
+    def _get_kernel_params(self):
+        params = self.kernel_params
+        if params is None:
+            params = {}
+        if not callable(self.kernel):
+            params['gamma'] = self.gamma
+        return params

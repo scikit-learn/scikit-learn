@@ -1,6 +1,8 @@
 """Testing for Spectral Clustering methods"""
 
 from sklearn.externals.six.moves import cPickle
+from sklearn.metrics.pairwise import kernel_metrics
+
 dumps, loads = cPickle.dumps, cPickle.loads
 
 import numpy as np
@@ -157,7 +159,7 @@ def test_affinities():
     # a dataset that yields a stable eigen decomposition both when built
     # on OSX and Linux
     X, y = make_blobs(n_samples=40, random_state=2, centers=[[1, 1], [-1, -1]],
-                      cluster_std=0.4)
+                                                         cluster_std=0.4)
     # nearest neighbors affinity
     sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
                             random_state=0)
@@ -168,6 +170,11 @@ def test_affinities():
     labels = sp.fit(X).labels_
     assert_equal(adjusted_rand_score(y, labels), 1)
 
+    kernels_available = kernel_metrics()
+    for kern in kernels_available:
+        sp = SpectralClustering(n_clusters=2, kernel=kern, random_state=0)
+        labels = sp.fit(X).labels_
+        assert_equal(adjusted_rand_score(y, labels), 1)
     # raise error on unknown affinity
     sp = SpectralClustering(n_clusters=2, affinity='<unknown>')
     assert_raises(ValueError, sp.fit, X)
