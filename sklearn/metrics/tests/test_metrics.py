@@ -46,6 +46,22 @@ from sklearn.metrics import (accuracy_score,
                              zero_one_score,
                              zero_one_loss)
 
+ALL_METRICS = [accuracy_score,
+               lambda y1, y2: accuracy_score(y1, y2, normalize=False),
+               hamming_loss,
+               zero_one_loss,
+               lambda y1, y2: zero_one_loss(y1, y2, normalize=False),
+               precision_score,
+               recall_score,
+               f1_score,
+               lambda y1, y2: fbeta_score(y1, y2, beta=2),
+               lambda y1, y2: fbeta_score(y1, y2, beta=0.5),
+               matthews_corrcoef,
+               mean_absolute_error,
+               mean_squared_error,
+               explained_variance_score,
+               r2_score]
+
 
 def make_prediction(dataset=None, binary=False):
     """Make some classification predictions on a toy dataset using a SVC
@@ -569,6 +585,9 @@ def test_losses():
     assert_equal(accuracy_score(y_true, y_pred),
                  1 - zero_one_loss(y_true, y_pred))
 
+    assert_equal(accuracy_score(y_true, y_pred, normalize=False),
+                 n_samples - zero_one_loss(y_true, y_pred, normalize=False))
+
     with warnings.catch_warnings(True):
     # Throw deprecated warning
         assert_equal(zero_one_score(y_true, y_pred),
@@ -616,6 +635,7 @@ def test_symmetry():
 
     # Symmetric metric
     for metric in [accuracy_score,
+                   lambda y1, y2: accuracy_score(y1, y2, normalize=False),
                    zero_one_loss,
                    lambda y1, y2: zero_one_loss(y1, y2, normalize=False),
                    hamming_loss,
@@ -658,25 +678,94 @@ def test_sample_order_invariance():
     y_true_shuffle, y_pred_shuffle = shuffle(y_true, y_pred,
                                              random_state=0)
 
-    for metric in [accuracy_score,
-                   hamming_loss,
-                   zero_one_loss,
-                   lambda y1, y2: zero_one_loss(y1, y2, normalize=False),
-                   precision_score,
-                   recall_score,
-                   f1_score,
-                   lambda y1, y2: fbeta_score(y1, y2, beta=2),
-                   lambda y1, y2: fbeta_score(y1, y2, beta=0.5),
-                   matthews_corrcoef,
-                   mean_absolute_error,
-                   mean_squared_error,
-                   explained_variance_score,
-                   r2_score]:
+    for metric in ALL_METRICS:
 
         assert_almost_equal(metric(y_true, y_pred),
                             metric(y_true_shuffle, y_pred_shuffle),
                             err_msg="%s is not sample order invariant"
                                     % metric)
+
+
+def test_format_invariance_with_1d_vectors():
+    y1, y2, _ = make_prediction(binary=True)
+
+    y1_list = list(y1)
+    y2_list = list(y2)
+
+    y1_1d, y2_1d = np.array(y1), np.array(y2)
+    assert_equal(y1_1d.ndim, 1)
+    assert_equal(y2_1d.ndim, 1)
+    y1_column = np.reshape(y1_1d, (-1, 1))
+    y2_column = np.reshape(y2_1d, (-1, 1))
+    y1_row = np.reshape(y1_1d, (1, -1))
+    y2_row = np.reshape(y2_1d, (1, -1))
+
+    for metric in ALL_METRICS:
+
+        measure = metric(y1, y2)
+
+        assert_almost_equal(measure,
+                            metric(y1_list, y2_list),
+                            err_msg="%s is not representation invariant"
+                                    "with list" % metric)
+
+        assert_almost_equal(measure,
+                            metric(y1_1d, y2_1d),
+                            err_msg="%s is not representation invariant"
+                                    "with np-array-1d" % metric)
+
+        assert_almost_equal(measure,
+                            metric(y1_column, y2_column),
+                            err_msg="%s is not representation invariant "
+                                    "with np-array-column" % metric)
+
+        assert_almost_equal(measure,
+                            metric(y1_row, y2_row),
+                            err_msg="%s is not representation invariant "
+                                    "with np-array-row" % metric)
+
+        # Mix format support
+        assert_almost_equal(measure,
+                            metric(y1_1d, y2_list),
+                            err_msg="%s is not representation invariant "
+                                    "with mix np-array-1d and list" % metric)
+
+        assert_almost_equal(measure,
+                            metric(y1_list, y2_1d),
+                            err_msg="%s is not representation invariant "
+                                    "with mix np-array-1d and list" % metric)
+
+        assert_almost_equal(measure,
+                            metric(y1_1d, y2_column),
+                            err_msg="%s is not representation invariant "
+                                    "with mix np-array-1d and np-array-column"
+                                    % metric)
+
+        assert_almost_equal(measure,
+                            metric(y1_column, y2_1d),
+                            err_msg="%s is not representation invariant "
+                                    "with mix np-array-1d and np-array-column"
+                                    % metric)
+
+        assert_almost_equal(measure,
+                            metric(y1_list, y2_column),
+                            err_msg="%s is not representation invariant"
+                                    "with mix list and np-array-column"
+                                    % metric)
+
+        assert_almost_equal(measure,
+                            metric(y1_column, y2_list),
+                            err_msg="%s is not representation invariant"
+                                    "with mix list and np-array-column"
+                                    % metric)
+
+        # At the moment, these mix representations aren't allowed
+        assert_raises(ValueError, metric, y1_1d, y2_row)
+        assert_raises(ValueError, metric, y1_row, y2_1d)
+        assert_raises(ValueError, metric, y1_list, y2_row)
+        assert_raises(ValueError, metric, y1_row, y2_list)
+        assert_raises(ValueError, metric, y1_column, y2_row)
+        assert_raises(ValueError, metric, y1_row, y2_column)
 
 
 def test_hinge_loss_binary():
@@ -859,6 +948,14 @@ def test_multilabel_zero_one_loss():
     assert_equal(1.0, zero_one_loss(y1, np.zeros(y1.shape)))
     assert_equal(1.0, zero_one_loss(y2, np.zeros(y1.shape)))
 
+    assert_equal(1, zero_one_loss(y1, y2, normalize=False))
+    assert_equal(0, zero_one_loss(y1, y1, normalize=False))
+    assert_equal(0, zero_one_loss(y2, y2, normalize=False))
+    assert_equal(2, zero_one_loss(y2, np.logical_not(y2), normalize=False))
+    assert_equal(2, zero_one_loss(y1, np.logical_not(y1), normalize=False))
+    assert_equal(2, zero_one_loss(y1, np.zeros(y1.shape), normalize=False))
+    assert_equal(2, zero_one_loss(y2, np.zeros(y1.shape), normalize=False))
+
     # List of tuple of label
     y1 = [(1, 2,),
           (0, 2,)]
@@ -871,6 +968,12 @@ def test_multilabel_zero_one_loss():
     assert_equal(0.0, zero_one_loss(y2, y2))
     assert_equal(1.0, zero_one_loss(y2, [(), ()]))
     assert_equal(1.0, zero_one_loss(y2, [tuple(), (10, )]))
+
+    assert_equal(1, zero_one_loss(y1, y2, normalize=False))
+    assert_equal(0, zero_one_loss(y1, y1, normalize=False))
+    assert_equal(0, zero_one_loss(y2, y2, normalize=False))
+    assert_equal(2, zero_one_loss(y2, [(), ()], normalize=False))
+    assert_equal(2, zero_one_loss(y2, [tuple(), (10, )], normalize=False))
 
 
 def test_multilabel_hamming_loss():
@@ -919,6 +1022,14 @@ def test_multilabel_accuracy_score():
     assert_equal(0.0, accuracy_score(y1, np.zeros(y1.shape)))
     assert_equal(0.0, accuracy_score(y2, np.zeros(y1.shape)))
 
+    assert_equal(1, accuracy_score(y1, y2, normalize=False))
+    assert_equal(2, accuracy_score(y1, y1, normalize=False))
+    assert_equal(2, accuracy_score(y2, y2, normalize=False))
+    assert_equal(0, accuracy_score(y2, np.logical_not(y2), normalize=False))
+    assert_equal(0, accuracy_score(y1, np.logical_not(y1), normalize=False))
+    assert_equal(0, accuracy_score(y1, np.zeros(y1.shape), normalize=False))
+    assert_equal(0, accuracy_score(y2, np.zeros(y1.shape), normalize=False))
+
     # List of tuple of label
     y1 = [(1, 2,),
           (0, 2,)]
@@ -930,3 +1041,8 @@ def test_multilabel_accuracy_score():
     assert_equal(1.0, accuracy_score(y1, y1))
     assert_equal(1.0, accuracy_score(y2, y2))
     assert_equal(0.0, accuracy_score(y2, [(), ()]))
+
+    assert_equal(1, accuracy_score(y1, y2, normalize=False))
+    assert_equal(2, accuracy_score(y1, y1, normalize=False))
+    assert_equal(2, accuracy_score(y2, y2, normalize=False))
+    assert_equal(0, accuracy_score(y2, [(), ()], normalize=False))
