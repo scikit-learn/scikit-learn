@@ -13,11 +13,9 @@ import pkgutil
 import scipy as sp
 from functools import wraps
 try:
-    from urllib2 import URLError
-    from urllib2 import quote as urlquote
+    from urllib2 import HTTPError
 except ImportError:
-    from urllib.parse import quote as urlquote
-    from urllib.error import URLError
+    from urllib.error import HTTPError
 
 import sklearn
 from sklearn.base import BaseEstimator
@@ -127,10 +125,10 @@ def fake_mldata_cache(columns_dict, dataname, matfile, ordering=None):
     savemat(matfile, datasets, oned_as='column')
 
 
-class mock_urllib2(object):
+class mock_mldata_urlopen(object):
 
     def __init__(self, mock_datasets):
-        """Object that mocks the urllib2 module to fake requests to mldata.
+        """Object that mocks the urlopen function to fake requests to mldata.
 
         `mock_datasets` is a dictionary of {dataset_name: data_dict}, or
         {dataset_name: (data_dict, ordering).
@@ -140,14 +138,11 @@ class mock_urllib2(object):
 
         When requesting a dataset with a name that is in mock_datasets,
         this object creates a fake dataset in a StringIO object and
-        returns it. Otherwise, it raises an URLError.
+        returns it. Otherwise, it raises an HTTPError.
         """
         self.mock_datasets = mock_datasets
 
-    class HTTPError(URLError):
-        code = 404
-
-    def urlopen(self, urlname):
+    def __call__(self, urlname):
         dataset_name = urlname.split('/')[-1]
         if dataset_name in self.mock_datasets:
             resource_name = '_' + dataset_name
@@ -163,10 +158,8 @@ class mock_urllib2(object):
             matfile.seek(0)
             return matfile
         else:
-            raise mock_urllib2.HTTPError('%s not found.' % urlname)
-
-    def quote(self, string, safe='/'):
-        return urlquote(string, safe)
+            raise HTTPError(urlname, 404, dataset_name + " is not available",
+                            [], None)
 
 # Meta estimators need another estimator to be instantiated.
 meta_estimators = ["OneVsOneClassifier",

@@ -15,6 +15,7 @@ from .base import BaseEstimator, TransformerMixin
 from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils import tosequence
+from .externals.six import iteritems
 
 __all__ = ['Pipeline', 'FeatureUnion']
 
@@ -341,6 +342,6 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
         else:
             out = dict(self.transformer_list)
             for name, trans in self.transformer_list:
-                for key, value in trans.get_params(deep=True).iteritems():
+                for key, value in iteritems(trans.get_params(deep=True)):
                     out['%s__%s' % (name, key)] = value
             return out

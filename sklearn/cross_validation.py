@@ -22,6 +22,7 @@ from .base import is_classifier, clone
 from .utils import check_arrays, check_random_state, safe_mask
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
+from .externals.six import string_types
 from .metrics import SCORERS, Scorer
 
 __all__ = ['Bootstrap',
@@ -1129,7 +1130,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
                       "deprecated and will be removed in 0.15. "
                       "Either use strings or score objects.", stacklevel=2)
         scorer = Scorer(score_func)
-    elif isinstance(scoring, basestring):
+    elif isinstance(scoring, string_types):
         scorer = SCORERS[scoring]
     else:
         scorer = scoring
@@ -1284,7 +1285,7 @@ def permutation_test_score(estimator, X, y, scoring=None, cv=None,
                       "deprecated and will be removed in 0.15. "
                       "Either use strings or score objects.")
         scorer = Scorer(score_func)
-    elif isinstance(scoring, basestring):
+    elif isinstance(scoring, string_types):
         scorer = SCORERS[scoring]
     else:
         scorer = scoring
