@@ -90,7 +90,7 @@ def _check_1d_array(y1, y2, ravel=False):
 
     It convert 1d arrays (y1 and y2) of various shape to a common shape
     representation. Note that ``y1`` and ``y2`` should have the same number of
-    element.
+    elements.
 
     Parameters
     ----------
@@ -299,7 +299,7 @@ def average_precision_score(y_true, y_score):
     References
     ----------
     .. [1] `Wikipedia entry for the Average precision
-            <http://en.wikipedia.org/wiki/Information_retrieval#Average_precision>`_
+           <http://en.wikipedia.org/wiki/Information_retrieval#Average_precision>`_
 
     See also
     --------
@@ -721,7 +721,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
 
     References
     ----------
-    .. [2] `Wikipedia entry for the Confusion matrix
+    .. [1] `Wikipedia entry for the Confusion matrix
            <http://en.wikipedia.org/wiki/Confusion_matrix>`_
 
     Examples
@@ -797,8 +797,7 @@ def zero_one_loss(y_true, y_pred, normalize=True):
 
     See also
     --------
-    accuracy_score : Compute the accuracy score
-    hamming_loss : Compute the average Hamming loss
+    accuracy_score, hamming_loss, jaccard_similarity_score
 
     Examples
     --------
@@ -810,17 +809,21 @@ def zero_one_loss(y_true, y_pred, normalize=True):
     >>> zero_one_loss(y_true, y_pred, normalize=False)
     1
 
-    In the multilabel case with binary indicator format
-    >>> zero_one_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+    In the multilabel case with binary indicator format:
+
+    >>> zero_one_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
+    0.5
+
+    and with a list of labels format:
+
+    >>> zero_one_loss([(1,), (3,)], [(1, 2), tuple()])
     1.0
 
-    and with a list of labels format
-    >>> zero_one_loss([(1, 2), (3,)], [(1, 2), tuple()])
-    0.5
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
-    score = accuracy_score(y_true, y_pred, normalize=normalize)
+    score = accuracy_score(y_true, y_pred,
+                           normalize=normalize)
 
     if normalize:
         return 1 - score
@@ -880,8 +883,148 @@ def zero_one(y_true, y_pred, normalize=False):
 ###############################################################################
 # Multiclass score functions
 ###############################################################################
+
+def jaccard_similarity_score(y_true, y_pred, normalize=True, pos_label=1):
+    """Jaccard similarity coefficient score
+
+    The Jaccard index [1], or Jaccard similarity coefficient, defined as
+    the size of the intersection divided by the size of the union of two label
+    sets, is used to compare set of predicted labels for a sample to the
+    corresponding set of labels in ``y_true``.
+
+    Parameters
+    ----------
+    y_true : array-like or list of labels or label indicator matrix
+        Ground truth (correct) labels.
+
+    y_pred : array-like or list of labels or label indicator matrix
+        Predicted labels, as returned by a classifier.
+
+    normalize : bool, optional (default=True)
+        If ``False``, return the sum of the Jaccard similarity coefficient
+        over the sample set. Otherwise, return the average of Jaccard
+        similarity coefficient.
+
+    pos_label : int, 1 by default
+        It is used to infer what is a positive label in the label indicator
+        matrix format.
+
+    Returns
+    -------
+    score : float
+        If ``normalize == True``, return the average Jaccard similarity
+        coefficient, else it returns the sum of the Jaccard similarity
+        coefficient over the sample set.
+
+        The best performance is 1 with ``normalize == True`` and the number
+        of samples with ``normalize == False``.
+
+    See also
+    --------
+    accuracy_score, hamming_loss, zero_one_loss
+
+    Notes
+    -----
+    In binary and multiclass classification, this function is equivalent
+    to the ``accuracy_score``. It differs in the multilabel classification
+    problem.
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Jaccard index
+           <http://en.wikipedia.org/wiki/Jaccard_index>`_
+
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import jaccard_similarity_score
+    >>> y_pred = [0, 2, 1, 3]
+    >>> y_true = [0, 1, 2, 3]
+    >>> jaccard_similarity_score(y_true, y_pred)
+    0.5
+    >>> jaccard_similarity_score(y_true, y_pred, normalize=False)
+    2
+
+    In the multilabel case with binary indicator format:
+
+    >>> jaccard_similarity_score(np.array([[0.0, 1.0], [1.0, 1.0]]),\
+        np.ones((2, 2)))
+    0.75
+
+    and with a list of labels format:
+
+    >>> jaccard_similarity_score([(1,), (3,)], [(1, 2), tuple()])
+    0.25
+
+    """
+    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
+
+    # Compute accuracy for each possible representation
+    if is_multilabel(y_true):
+
+        # Handle mix representation
+        if type(y_true) != type(y_pred):
+            labels = unique_labels(y_true, y_pred)
+            lb = LabelBinarizer()
+            lb.fit([labels.tolist()])
+            y_true = lb.transform(y_true)
+            y_pred = lb.transform(y_pred)
+
+        if is_label_indicator_matrix(y_true):
+            try:
+                # oddly, we may get an "invalid" rather than a "divide"
+                # error here
+                old_err_settings = np.seterr(divide='ignore',
+                                             invalid='ignore')
+                y_pred_pos_label = y_pred == pos_label
+                y_true_pos_label = y_true == pos_label
+                score = (np.sum(np.logical_and(y_pred_pos_label,
+                                               y_true_pos_label),
+                                axis=1) /
+                         np.sum(np.logical_or(y_pred_pos_label,
+                                              y_true_pos_label),
+                                axis=1))
+
+                # If there is no label, it results in a Nan instead, we set
+                # the jaccard to 1: lim_{x->0} x/x = 1
+                score[np.isnan(score)] = 1.0
+            finally:
+                np.seterr(**old_err_settings)
+
+        else:
+            score = np.empty(len(y_true))
+            for i, (true, pred) in enumerate(zip(y_pred, y_true)):
+                true_set = set(true)
+                pred_set = set(pred)
+                size_true_union_pred = len(true_set | pred_set)
+                # If there is no label, it results in a Nan instead, we set
+                # the jaccard to 1: lim_{x->0} x/x = 1
+                if size_true_union_pred == 0:
+                    score[i] = 1.
+                else:
+                    score[i] = (len(true_set & pred_set) /
+                                size_true_union_pred)
+
+    else:
+        y_true, y_pred = check_arrays(y_true, y_pred)
+
+        # Handle mix shape
+        y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=True)
+        score = y_true == y_pred
+
+    if normalize:
+        return np.mean(score)
+    else:
+        return np.sum(score)
+
+
 def accuracy_score(y_true, y_pred, normalize=True):
     """Accuracy classification score.
+
+    In multilabel classification, this function computes subset accuracy:
+    the set of labels predicted for a sample must *exactly* match the
+    corresponding set of labels in y_true.
 
     Parameters
     ----------
@@ -898,18 +1041,21 @@ def accuracy_score(y_true, y_pred, normalize=True):
     Returns
     -------
     score : float
-        The fraction of correct predictions in ``y_pred``.
-        The best performance is 1.
+        If ``normalize == True``, return the correctly classified samples
+        (float), else it returns the number of correctly classified samples
+        (int).
+
+        The best performance is 1 with ``normalize == True`` and the number
+        of samples with ``normalize == False``.
 
     See also
     --------
-    zero_one_loss : zero-one classification loss
+    jaccard_similarity_score, hamming_loss, zero_one_loss
 
     Notes
     -----
-    In multilabel classification, this function computes subset accuracy:
-    the set of labels predicted for a sample must *exactly* match the
-    corresponding set of labels in y_true.
+    In binary and multiclass classification, this function is equal
+    to the ``jaccard_similarity_score`` function.
 
     Examples
     --------
@@ -924,18 +1070,20 @@ def accuracy_score(y_true, y_pred, normalize=True):
 
     In the multilabel case with binary indicator format:
 
-    >>> accuracy_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
-    0.0
+    >>> accuracy_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
+    0.5
 
     and with a list of labels format:
-    >>> accuracy_score([(1, 2), (3,)], [(1, 2), tuple()])
-    0.5
+
+    >>> accuracy_score([(1,), (3,)], [(1, 2), tuple()])
+    0.0
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
 
     # Compute accuracy for each possible representation
     if is_multilabel(y_true):
+
         # Handle mix representation
         if type(y_true) != type(y_pred):
             labels = unique_labels(y_true, y_pred)
@@ -1639,21 +1787,22 @@ def hamming_loss(y_true, y_pred, classes=None):
 
     See Also
     --------
-    zero_one_loss : Zero-one classification loss
+    accuracy_score, jaccard_similarity_score, zero_one_loss
 
     Notes
     -----
     In multiclass classification, the Hamming loss correspond to the Hamming
     distance between ``y_true`` and ``y_pred`` which is equivalent to the
-    ``zero_one_loss`` function.
+    subset ``zero_one_loss`` function.
 
     In multilabel classification, the Hamming loss is different from the
-    zero-one loss. The zero-one loss considers the entire set of labels for a
-    given sample incorrect if it does entirely match the true set of labels.
-    Hamming loss is more forgiving in that it penalizes the individual labels.
+    subset zero-one loss. The zero-one loss considers the entire set of labels
+    for a given sample incorrect if it does entirely match the true set of
+    labels. Hamming loss is more forgiving in that it penalizes the individual
+    labels.
 
-    The Hamming loss is upperbounded by the zero-one loss. When normalized
-    over samples, the Hamming loss is always between 0 and 1.
+    The Hamming loss is upperbounded by the subset zero-one loss. When
+    normalized over samples, the Hamming loss is always between 0 and 1.
 
     References
     ----------
