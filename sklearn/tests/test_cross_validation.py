@@ -291,7 +291,7 @@ def test_cross_val_score_score_func():
         _score_func_args.append((y_test, y_predict))
         return 1.0
 
-    with warnings.catch_warnings(True):
+    with warnings.catch_warnings(record=True):
         score = cval.cross_val_score(clf, X, y, score_func=score_func)
     assert_array_equal(score, [1.0, 1.0, 1.0])
     assert len(_score_func_args) == 3
@@ -381,7 +381,7 @@ def test_cross_val_score_with_score_func_regression():
     assert_array_almost_equal(mse_scores, expected_mse, 2)
 
     # Explained variance
-    with warnings.catch_warnings(True):
+    with warnings.catch_warnings(record=True):
         ev_scores = cval.cross_val_score(reg, X, y, cv=5,
                                          score_func=explained_variance_score)
     assert_array_almost_equal(ev_scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)

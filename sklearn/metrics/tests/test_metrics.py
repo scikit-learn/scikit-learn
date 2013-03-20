@@ -188,14 +188,14 @@ def test_roc_curve_one_label():
     y_true = [1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     y_pred = [0, 1, 0, 1, 0, 1, 0, 1, 0, 1]
     # assert there are warnings
-    with warnings.catch_warnings(True) as w:
+    with warnings.catch_warnings(record=True) as w:
         fpr, tpr, thresholds = roc_curve(y_true, y_pred)
         assert_equal(len(w), 1)
     # all true labels, all fpr should be nan
     assert_array_equal(fpr,
                        np.nan * np.ones(len(thresholds) + 1))
     # assert there are warnings
-    with warnings.catch_warnings(True) as w:
+    with warnings.catch_warnings(record=True) as w:
         fpr, tpr, thresholds = roc_curve([1 - x for x in y_true],
                                          y_pred)
         assert_equal(len(w), 1)
@@ -568,7 +568,7 @@ def test_losses():
 
     # Classification
     # --------------
-    with warnings.catch_warnings(True):
+    with warnings.catch_warnings(record=True):
     # Throw deprecated warning
         assert_equal(zero_one(y_true, y_pred), 13)
         assert_almost_equal(zero_one(y_true, y_pred, normalize=True),
@@ -589,7 +589,7 @@ def test_losses():
     assert_equal(accuracy_score(y_true, y_pred, normalize=False),
                  n_samples - zero_one_loss(y_true, y_pred, normalize=False))
 
-    with warnings.catch_warnings(True):
+    with warnings.catch_warnings(record=True):
     # Throw deprecated warning
         assert_equal(zero_one_score(y_true, y_pred),
                      1 - zero_one_loss(y_true, y_pred))
@@ -661,7 +661,7 @@ def test_symmetry():
                     msg="%s seems to be symetric" % metric)
 
     # Deprecated metrics
-    with warnings.catch_warnings(True):
+    with warnings.catch_warnings(record=True):
         # Throw deprecated warning
         assert_equal(zero_one(y_true, y_pred),
                      zero_one(y_pred, y_true))
