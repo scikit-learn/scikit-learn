@@ -302,9 +302,10 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     n_clusters : integer, optional
         The dimension of the projection subspace.
 
-    affinity: string, 'nearest_neighbors', 'precomputed', or a kernel:
-        'linear' | 'poly' | 'rbf' | 'sigmoid' | 'cosine'
-        Default: 'rbf'
+    affinity : string, array-like or callable
+        Default : 'rbf'
+        If it's a string, it can be one of 'nearest_neighbors', 'precomputed',
+        'rbf' or one of the kernels supported by `sklearn.metrics.pairwise_kernels`.
 
     gamma: float
         Scaling factor of Gaussian (rbf) affinity kernel. Ignored for
@@ -387,8 +388,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
 
     def __init__(self, n_clusters=8, eigen_solver=None, random_state=None,
                  n_init=10, gamma=1., affinity='rbf', n_neighbors=10, k=None,
-                 eigen_tol=0.0, assign_labels='kmeans', mode=None, kernel='rbf',
-                 kernel_params=None):
+                 eigen_tol=0.0, assign_labels='kmeans', mode=None,
+                 degree=3, coef0=1, kernel_params=None):
         if k is not None:
             warnings.warn("'k' was renamed to n_clusters and "
                           "will be removed in 0.15.",
@@ -409,7 +410,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         self.n_neighbors = n_neighbors
         self.eigen_tol = eigen_tol
         self.assign_labels = assign_labels
-        self.kernel = kernel
+        self.degree = degree
+        self.coef0 = coef0
         self.kernel_params = kernel_params
 
     def fit(self, X):
@@ -468,6 +470,8 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         params = self.kernel_params
         if params is None:
             params = {}
-        if not callable(self.kernel):
+        if not callable(self.affinity):
             params['gamma'] = self.gamma
+            params['degree'] = self.degree
+            params['coef0'] = self.coef0
         return params
