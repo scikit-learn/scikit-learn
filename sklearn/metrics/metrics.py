@@ -947,13 +947,8 @@ def accuracy_score(y_true, y_pred, normalize=True):
         if is_label_indicator_matrix(y_true):
             score = (y_pred != y_true).sum(axis=1) == 0
         else:
-            # numpy 1.3 : it is required to perform a unique before setxor1d
-            #             to get unique label in numpy 1.3.
-            #             This is needed in order to handle redundant labels.
-            # FIXME : check if this can be simplified when 1.3 is removed
-            score = np.array([np.size(np.setxor1d(np.unique(pred),
-                                                  np.unique(true))) == 0
-                             for pred, true in zip(y_pred, y_true)])
+            score = np.array([len(set(true) ^ set(pred)) == 0
+                              for pred, true in zip(y_pred, y_true)])
     else:
         y_true, y_pred = check_arrays(y_true, y_pred)
 
@@ -1706,12 +1701,7 @@ def hamming_loss(y_true, y_pred, classes=None):
         if is_label_indicator_matrix(y_true):
             return np.mean(y_true != y_pred)
         else:
-            # numpy 1.3 : it is required to perform a unique before setxor1d
-            #             to get unique label in numpy 1.3.
-            #             This is needed in order to handle redundant labels.
-            # FIXME : check if this can be simplified when 1.3 is removed
-            loss = np.array([np.size(np.setxor1d(np.unique(pred),
-                                                 np.unique(true)))
+            loss = np.array([len(set(pred) ^ set(true))
                              for pred, true in zip(y_pred, y_true)])
 
             return np.mean(loss) / np.size(classes)
