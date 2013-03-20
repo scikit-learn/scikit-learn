@@ -872,9 +872,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
 def _make_int_array():
     """Construct an array.array of a type suitable for scipy.sparse indices."""
-    # This is nasty: Python 2.x wants str (bytes) for the typecodes, but 3.x
-    # wants str (unicode). Neither will accept the other string type.
-    return array.array("i" if six.PY3 else b"i")
+    return array.array(str("i"))
 
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
