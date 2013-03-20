@@ -455,7 +455,9 @@ From text
    :template: class.rst
 
    grid_search.GridSearchCV
-   grid_search.IterGrid
+   grid_search.ParameterGrid
+   grid_search.ParameterSampler
+   grid_search.RandomizedSearchCV
 
 
 .. _hmm_ref:
@@ -687,6 +689,7 @@ Classification metrics
    metrics.confusion_matrix
    metrics.f1_score
    metrics.fbeta_score
+   metrics.hamming_loss
    metrics.hinge_loss
    metrics.matthews_corrcoef
    metrics.precision_recall_curve
@@ -818,7 +821,6 @@ Pairwise metrics
     multiclass.predict_ovo
     multiclass.fit_ecoc
     multiclass.predict_ecoc
-
 
 .. _naive_bayes_ref:
 

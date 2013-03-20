@@ -10,17 +10,16 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
-from ..utils import atleast2d_or_csr
+from ..externals.six.moves import xrange
+from ..utils import atleast2d_or_csr, tosequence
 
 
 def _tosequence(X):
     """Turn X into a sequence or ndarray, avoiding a copy if possible."""
-    if isinstance(X, Mapping):
+    if isinstance(X, Mapping):  # single sample
         return [X]
-    elif isinstance(X, (Sequence, np.ndarray)):
-        return X
     else:
-        return list(X)
+        return tosequence(X)
 
 
 class DictVectorizer(BaseEstimator, TransformerMixin):
@@ -148,22 +147,21 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             Feature mappings for the samples in X.
         """
         X = atleast2d_or_csr(X)     # COO matrix is not subscriptable
+        n_samples = X.shape[0]
 
-        sample_ids = np.arange(X.shape[0])
         names = self.feature_names_
-        Xd = [dict_type() for _ in sample_ids]
+        dicts = [dict_type() for _ in xrange(n_samples)]
 
         if sp.issparse(X):
             for i, j in zip(*X.nonzero()):
-                Xd[i][names[j]] = X[i, j]
+                dicts[i][names[j]] = X[i, j]
         else:
-            for i in sample_ids:
-                d = Xd[i]
+            for i, d in enumerate(dicts):
                 for j, v in enumerate(X[i, :]):
                     if v != 0:
                         d[names[j]] = X[i, j]
 
-        return Xd
+        return dicts
 
     def transform(self, X, y=None):
         """Transform feature->value dicts to array or sparse matrix.

@@ -144,7 +144,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
 
     # Intialize X and y
     X = np.zeros((n_samples, n_features))
-    y = np.zeros(n_samples)
+    y = np.zeros(n_samples, dtype=np.int)
 
     # Build the polytope
     C = np.array(list(product([-class_sep, class_sep], repeat=n_informative)))

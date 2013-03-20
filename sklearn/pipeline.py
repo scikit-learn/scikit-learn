@@ -14,6 +14,7 @@ from scipy import sparse
 from .base import BaseEstimator, TransformerMixin
 from .externals.joblib import Parallel, delayed
 from .externals import six
+from .utils import tosequence
 
 __all__ = ['Pipeline', 'FeatureUnion']
 
@@ -78,7 +79,8 @@ class Pipeline(BaseEstimator):
         if len(self.named_steps) != len(steps):
             raise ValueError("Names provided are not unique: %s" % names)
 
-        self.steps = zip(names, estimators)     # shallow copy of steps
+        # shallow copy of steps
+        self.steps = tosequence(zip(names, estimators))
         transforms = estimators[:-1]
         estimator = estimators[-1]
 

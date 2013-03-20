@@ -147,8 +147,8 @@ def test_linearsvc():
     """
     Similar to test_SVC
     """
-    clf = svm.LinearSVC().fit(X, Y)
-    sp_clf = svm.LinearSVC().fit(X_sp, Y)
+    clf = svm.LinearSVC(random_state=0).fit(X, Y)
+    sp_clf = svm.LinearSVC(random_state=0).fit(X_sp, Y)
 
     assert_true(sp_clf.fit_intercept)
 
@@ -165,8 +165,8 @@ def test_linearsvc():
 def test_linearsvc_iris():
     """Test the sparse LinearSVC with the iris dataset"""
 
-    sp_clf = svm.LinearSVC().fit(iris.data, iris.target)
-    clf = svm.LinearSVC().fit(iris.data.todense(), iris.target)
+    sp_clf = svm.LinearSVC(random_state=0).fit(iris.data, iris.target)
+    clf = svm.LinearSVC(random_state=0).fit(iris.data.todense(), iris.target)
 
     assert_equal(clf.fit_intercept, sp_clf.fit_intercept)
 
@@ -178,6 +178,13 @@ def test_linearsvc_iris():
     pred = np.argmax(sp_clf.decision_function(iris.data), 1)
     assert_array_almost_equal(pred, clf.predict(iris.data.todense()))
 
+    # sparsify the coefficients on both models and check that they still
+    # produce the same results
+    clf.sparsify()
+    assert_array_equal(pred, clf.predict(iris.data))
+    sp_clf.sparsify()
+    assert_array_equal(pred, sp_clf.predict(iris.data))
+
 
 def test_weight():
     """
@@ -188,7 +195,7 @@ def test_weight():
 
     X_ = sparse.csr_matrix(X_)
     for clf in (linear_model.LogisticRegression(),
-                svm.LinearSVC(),
+                svm.LinearSVC(random_state=0),
                 svm.SVC()):
         clf.set_params(class_weight={0: 5})
         clf.fit(X_[:180], y_[:180])

@@ -10,9 +10,14 @@
 import inspect
 import pkgutil
 
-import urllib2
 import scipy as sp
 from functools import wraps
+try:
+    from urllib2 import URLError
+    from urllib2 import quote as urlquote
+except ImportError:
+    from urllib.parse import quote as urlquote
+    from urllib.error import URLError
 
 import sklearn
 from sklearn.base import BaseEstimator
@@ -139,7 +144,7 @@ class mock_urllib2(object):
         """
         self.mock_datasets = mock_datasets
 
-    class HTTPError(urllib2.URLError):
+    class HTTPError(URLError):
         code = 404
 
     def urlopen(self, urlname):
@@ -161,14 +166,14 @@ class mock_urllib2(object):
             raise mock_urllib2.HTTPError('%s not found.' % urlname)
 
     def quote(self, string, safe='/'):
-        return urllib2.quote(string, safe)
+        return urlquote(string, safe)
 
 # Meta estimators need another estimator to be instantiated.
 meta_estimators = ["OneVsOneClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier", "RFE",
                    "RFECV", "BaseEnsemble"]
 # estimators that there is no way to default-construct sensibly
-other = ["Pipeline", "FeatureUnion", "GridSearchCV"]
+other = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV"]
 
 
 def all_estimators(include_meta_estimators=False, include_other=False,

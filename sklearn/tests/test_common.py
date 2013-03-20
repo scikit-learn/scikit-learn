@@ -179,6 +179,8 @@ def test_transformers():
             # than the number of features.
             # So we impose a smaller number (avoid "auto" mode)
             transformer.n_components = 1
+        elif name == "MiniBatchDictionaryLearning":
+            transformer.set_params(n_iter=5)    # default = 1000
 
         # fit
 
@@ -677,14 +679,27 @@ def test_classifiers_pickle():
     assert_true(succeeded)
 
 
+BOSTON = None
+
+
+def _boston_subset():
+    global BOSTON
+    if BOSTON is None:
+        boston = load_boston()
+        X, y = boston.data, boston.target
+        X, y = shuffle(X, y, random_state=0)
+        X, y = X[:200], y[:200]
+        X = StandardScaler().fit_transform(X)
+        BOSTON = X, y
+    return BOSTON
+
+
 def test_regressors_int():
     # test if regressors can cope with integer labels (by converting them to
     # float)
     regressors = all_estimators(type_filter='regressor')
-    boston = load_boston()
-    X, y = boston.data, boston.target
-    X, y = shuffle(X, y, random_state=0)
-    X = StandardScaler().fit_transform(X)
+    X, _ = _boston_subset()
+    X = X[:50]
     rnd = np.random.RandomState(0)
     y = rnd.randint(2, size=X.shape[0])
     for name, Regressor in regressors:
@@ -714,13 +729,10 @@ def test_regressors_int():
 
 def test_regressors_train():
     regressors = all_estimators(type_filter='regressor')
-    boston = load_boston()
-    X, y = boston.data, boston.target
-    X, y = shuffle(X, y, random_state=0)
     # TODO: test with intercept
     # TODO: test with multiple responses
-    X = StandardScaler().fit_transform(X)
-    y = StandardScaler().fit_transform(y)
+    X, y = _boston_subset()
+    y = StandardScaler().fit_transform(y)   # X is already scaled
     rnd = np.random.RandomState(0)
     succeeded = True
     for name, Regressor in regressors:
@@ -760,13 +772,10 @@ def test_regressor_pickle():
     # Test that estimators can be pickled, and once pickled
     # give the same answer as before.
     regressors = all_estimators(type_filter='regressor')
-    boston = load_boston()
-    X, y = boston.data, boston.target
-    X, y = shuffle(X, y, random_state=0)
+    X, y = _boston_subset()
     # TODO: test with intercept
     # TODO: test with multiple responses
-    X = StandardScaler().fit_transform(X)
-    y = StandardScaler().fit_transform(y)
+    y = StandardScaler().fit_transform(y)   # X is already scaled
     rnd = np.random.RandomState(0)
     succeeded = True
     for name, Regressor in regressors:

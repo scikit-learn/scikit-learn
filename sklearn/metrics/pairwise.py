@@ -722,19 +722,21 @@ def kernel_metrics():
 
 
 KERNEL_PARAMS = {
+    "additive_chi2": (),
     "chi2": (),
-    "exp_chi2": set(("gamma", )),
+    "cosine": (),
+    "exp_chi2": frozenset(["gamma"]),
     "linear": (),
-    "rbf": set(("gamma",)),
-    "sigmoid": set(("gamma", "coef0")),
-    "polynomial": set(("gamma", "degree", "coef0")),
-    "poly": set(("gamma", "degree", "coef0")),
-    "cosine": set(), }
+    "poly": frozenset(["gamma", "degree", "coef0"]),
+    "polynomial": frozenset(["gamma", "degree", "coef0"]),
+    "rbf": frozenset(["gamma"]),
+    "sigmoid": frozenset(["gamma", "coef0"]),
+}
 
 
 def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
                      n_jobs=1, **kwds):
-    """ Compute the kernel between arrays X and optional array Y.
+    """Compute the kernel between arrays X and optional array Y.
 
     This method takes either a vector array or a kernel matrix, and returns
     a kernel matrix. If the input is a vector array, the kernels are
@@ -826,4 +828,4 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
                     K[j][i] = K[i][j]
         return K
     else:
-        raise AttributeError("Unknown metric %s" % metric)
+        raise ValueError("Unknown kernel %r" % metric)

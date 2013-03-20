@@ -189,6 +189,18 @@ def test_select_kbest_classif():
     assert_array_equal(support, gtruth)
 
 
+def test_select_kbest_all():
+    """
+    Test whether k="all" correctly returns all features.
+    """
+    X, y = make_classification(n_samples=20, n_features=10,
+                               shuffle=False, random_state=0)
+
+    univariate_filter = SelectKBest(f_classif, k='all')
+    X_r = univariate_filter.fit(X, y).transform(X)
+    assert_array_equal(X, X_r)
+
+
 def test_select_fpr_classif():
     """
     Test whether the relative univariate feature selection

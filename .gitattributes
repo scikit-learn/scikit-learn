@@ -1,5 +1,6 @@
 /sklearn/__check_build/_check_build.c -diff
 /sklearn/_hmmc.c -diff
+/sklearn/_isotonic.c -diff
 /sklearn/cluster/_hierarchical.c -diff
 /sklearn/cluster/_k_means.c -diff
 /sklearn/datasets/_svmlight_format.c -diff
