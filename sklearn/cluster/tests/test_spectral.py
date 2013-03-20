@@ -158,8 +158,8 @@ def test_affinities():
     # Note: in the following, random_state has been selected to have
     # a dataset that yields a stable eigen decomposition both when built
     # on OSX and Linux
-    X, y = make_blobs(n_samples=40, random_state=2, centers=[[1, 1], [-1, -1]],
-                                                         cluster_std=0.4)
+    X, y = make_blobs(n_samples=40, random_state=2,
+                      centers=[[1, 1], [-1, -1]], cluster_std=0.4)
     # nearest neighbors affinity
     sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
                             random_state=0)
@@ -170,11 +170,28 @@ def test_affinities():
     labels = sp.fit(X).labels_
     assert_equal(adjusted_rand_score(y, labels), 1)
 
+    X, y = make_blobs(n_samples=40, random_state=2,
+                      centers=[[1, 1], [2, 2]], cluster_std=0.4)
     kernels_available = kernel_metrics()
     for kern in kernels_available:
-        sp = SpectralClustering(n_clusters=2, kernel=kern, random_state=0)
+        sp = SpectralClustering(n_clusters=2, affinity=kern, random_state=0)
         labels = sp.fit(X).labels_
-        assert_equal(adjusted_rand_score(y, labels), 1)
+        assert_equal(y.shape, labels.shape)
+
+    sp = SpectralClustering(n_clusters=2, affinity=lambda x, y: 1,
+                            random_state=0)
+    labels = sp.fit(X).labels_
+    assert_equal(y.shape, labels.shape)
+
+    def histogram(x, y, **kwargs):
+        """Histogram kernel implemented as a callable."""
+        assert_equal(kwargs, {})    # no kernel_params that we didn't ask for
+        return np.minimum(x, y).sum()
+
+    sp = SpectralClustering(n_clusters=2, affinity=histogram, random_state=0)
+    labels = sp.fit(X).labels_
+    assert_equal(y.shape, labels.shape)
+
     # raise error on unknown affinity
     sp = SpectralClustering(n_clusters=2, affinity='<unknown>')
     assert_raises(ValueError, sp.fit, X)
