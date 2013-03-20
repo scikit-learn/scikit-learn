@@ -26,8 +26,9 @@ from sklearn.metrics import explained_variance_score
 from sklearn.metrics import fbeta_score
 from sklearn.metrics import Scorer
 
-from sklearn.svm import SVC
+from sklearn.externals import six
 from sklearn.linear_model import Ridge
+from sklearn.svm import SVC
 
 
 class MockListClassifier(BaseEstimator):
@@ -170,7 +171,8 @@ def test_shuffle_split():
     ss1 = cval.ShuffleSplit(10, test_size=0.2, random_state=0)
     ss2 = cval.ShuffleSplit(10, test_size=2, random_state=0)
     ss3 = cval.ShuffleSplit(10, test_size=np.int32(2), random_state=0)
-    ss4 = cval.ShuffleSplit(10, test_size=long(2), random_state=0)
+    for typ in six.integer_types:
+        ss4 = cval.ShuffleSplit(10, test_size=typ(2), random_state=0)
     for t1, t2, t3, t4 in zip(ss1, ss2, ss3, ss4):
         assert_array_equal(t1[0], t2[0])
         assert_array_equal(t2[0], t3[0])
