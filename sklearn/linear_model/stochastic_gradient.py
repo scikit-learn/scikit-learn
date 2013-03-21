@@ -268,7 +268,6 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
     The i'th class is considered the "positive" class.
     """
     y_i, coef, intercept = _prepare_fit_binary(est, y, i)
-
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
     dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)
 
