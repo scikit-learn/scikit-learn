@@ -268,6 +268,7 @@ def fit_binary(est, i, X, y, alpha, C, learning_rate, n_iter,
     The i'th class is considered the "positive" class.
     """
     y_i, coef, intercept = _prepare_fit_binary(est, y, i)
+
     assert y_i.shape[0] == y.shape[0] == sample_weight.shape[0]
     dataset, intercept_decay = _make_dataset(X, y_i, sample_weight)
 
@@ -361,7 +362,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
                                                            self.classes_, y_ind)
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
-        if self.coef_ is None:
+        if self.coef_ is None or coef_init is not None:
             self._allocate_parameter_mem(n_classes, n_features,
                                          coef_init, intercept_init)
 
