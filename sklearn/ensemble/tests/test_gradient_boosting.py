@@ -10,7 +10,7 @@ from numpy.testing import assert_equal
 from nose.tools import assert_raises, assert_true
 
 from sklearn.metrics import mean_squared_error
-from sklearn.utils import check_random_state
+from sklearn.utils import check_random_state, tosequence
 
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
@@ -414,10 +414,10 @@ def test_symbol_labels():
     """Test with non-integer class labels. """
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
 
-    symbol_y = map(str, y)
+    symbol_y = tosequence(map(str, y))
 
     clf.fit(X, symbol_y)
-    assert_array_equal(clf.predict(T), map(str, true_result))
+    assert_array_equal(clf.predict(T), tosequence(map(str, true_result)))
     assert_equal(100, len(clf.estimators_))
 
 

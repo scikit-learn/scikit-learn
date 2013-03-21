@@ -45,6 +45,7 @@ from sklearn.metrics import (accuracy_score,
                              zero_one,
                              zero_one_score,
                              zero_one_loss)
+from sklearn.externals.six.moves import xrange
 
 ALL_METRICS = [accuracy_score,
                lambda y1, y2: accuracy_score(y1, y2, normalize=False),

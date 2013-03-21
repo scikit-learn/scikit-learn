@@ -90,7 +90,7 @@ def test_dict_learning_online_shapes():
 def test_dict_learning_online_verbosity():
     n_components = 5
     # test verbosity
-    from cStringIO import StringIO
+    from sklearn.externals.six.moves import cStringIO as StringIO
     import sys
     old_stdout = sys.stdout
     sys.stdout = StringIO()

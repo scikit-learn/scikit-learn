@@ -40,3 +40,6 @@ nips2010_pdf/
 
 examples/cluster/joblib
 benchmarks/bench_covertype_data/
+
+*.prefs
+.pydevproject

@@ -24,7 +24,7 @@ def test_simple():
     """
 
     # also test verbose output
-    from cStringIO import StringIO
+    from sklearn.externals.six.moves import cStringIO as StringIO
     import sys
     old_stdout = sys.stdout
     sys.stdout = StringIO()
