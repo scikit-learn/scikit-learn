@@ -55,7 +55,7 @@ def csr_mean_variance_axis0(X):
     cdef np.ndarray[DOUBLE, ndim=1] variances = np.zeros_like(means)
 
     # counts[j] contains the number of samples where feature j is non-zero
-    counts = np.zeros_like(means)
+    cdef np.ndarray[int, ndim=1] counts = np.zeros_like(means, dtype=int)
 
     for i in xrange(n_samples):
         for j in xrange(X_indptr[i], X_indptr[i + 1]):
@@ -207,7 +207,7 @@ def csc_mean_variance_axis0(X):
     cdef np.ndarray[DOUBLE, ndim=1] variances = np.zeros_like(means)
 
     # counts[j] contains the number of samples where feature j is non-zero
-    counts = np.zeros_like(means)
+    cdef np.ndarray[int, ndim=1] counts = np.zeros_like(means, dtype=int)
 
     for i in xrange(n_features):
         for j in xrange(X_indptr[i], X_indptr[i + 1]):
