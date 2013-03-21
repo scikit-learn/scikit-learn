@@ -18,7 +18,7 @@ from sklearn.utils.testing import assert_greater
 #from sklearn import datasets
 from sklearn.linear_model.nng import NonNegativeGarrote
 from sklearn.linear_model import LinearRegression
-from sklearn.linear_model import non_negative_garotte_path
+from sklearn.linear_model import non_negative_garrote_path
 from sklearn import datasets
 
 diabetes = datasets.load_diabetes()
@@ -155,7 +155,7 @@ def test_singular_matrix():
     """
     X1 = np.array([[1, 1.], [1., 1.]])
     y1 = np.array([1, 1])
-    coef_path, scp = non_negative_garotte_path(X1, y1)
+    coef_path, scp = non_negative_garrote_path(X1, y1)
     #assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0], [1, 0]])
 
 def test_lars_add_features():

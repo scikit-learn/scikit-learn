@@ -13,9 +13,9 @@ import numpy as np
 from ..utils import array2d
 
 from .base import LinearModel
-from ..linear_model import LinearRegression, Lasso, lars_path, lasso_path
+from ..linear_model import LinearRegression, Lasso, lars_path
 
-def non_negative_garotte(X, y, alpha, tol=0.001, fit_intercept=False,
+def non_negative_garrote(X, y, alpha, tol=0.001, fit_intercept=False,
                          normalize=True, max_iter=1000, precompute='auto'):
     """Function that implements the Non-negative garrote method
 
@@ -55,7 +55,6 @@ def non_negative_garotte(X, y, alpha, tol=0.001, fit_intercept=False,
     """
     # Obtain the ordinary least squares coefficients from our data
     coef_ols = LinearRegression(fit_intercept=fit_intercept).fit(X, y).coef_
-    # TODO: check out with Ridge - Ledoit-Wolf in stead of OLS
 
     X = X * coef_ols[np.newaxis, :]
     # find the shrinkage factor by minimising the sum of square residuals
@@ -67,15 +66,13 @@ def non_negative_garotte(X, y, alpha, tol=0.001, fit_intercept=False,
                         tol=tol).fit(X, y).coef_
     # Shrunken betas
     coef = coef_ols * shrink_coef
-
     return coef, shrink_coef
 
-def non_negative_garotte_path(X, y, eps=1e-10, n_alphas=100, alphas=None,
+def non_negative_garrote_path(X, y, eps=1e-10, n_alphas=100, alphas=None,
                               precompute='auto', fit_intercept=False,
                               **params):
-
     """
-    Compute the Non-negative Garotte path
+    Compute the Non-negative Garrote path
 
     Parameters
     ----------
@@ -130,7 +127,6 @@ def non_negative_garotte_path(X, y, eps=1e-10, n_alphas=100, alphas=None,
 
     # Shrunken betas
     coef_path = shrink_coef_path * coef_ols[:, np.newaxis]
-
     return coef_path, shrink_coef_path
 
 class NonNegativeGarrote(LinearModel):
@@ -154,17 +150,14 @@ class NonNegativeGarrote(LinearModel):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-
     tol: float, optional
         The tolerance for the optimization: if the updates are
         smaller than 'tol', the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than tol.
 
-
     normalize : boolean, optional
         If True, the regressors X are normalized
-
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -178,18 +171,25 @@ class NonNegativeGarrote(LinearModel):
     max_iter: int, optional
         The maximum number of iterations
 
-
     Attributes
     ----------
-    coef_ : array, shape = (n_features,)
+    ``coef_`` : array, shape = (n_features,)
         The parameter vector
 
-    shrink_coef_ : array, shape = (n_features,)
+    ``shrink_coef_`` : array, shape = (n_features,)
         The shrinkage coefficients that must always be positive.
 
     Examples
     --------
-    Non-negative Garrote and Lasso consistency - ADD LINK
+    >>> clf = linear_model.NonNegativeGarrote(alpha=0.1)
+    >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
+    ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    NonNegativeGarrote(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
+       normalize=False, precompute='auto', tol=0.0001)
+    >>> clf.coef_ # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    array([ 0.00263158,  0.        ])
+    >>> clf.intercept_ # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
+    0.36578947368421072
 
     See also
     --------
@@ -236,7 +236,7 @@ class NonNegativeGarrote(LinearModel):
                 self.fit_intercept, self.normalize, self.copy_X)
 
         self.coef_, self.shrink_coef_ = \
-                                    non_negative_garotte(X, y, self.alpha,
+                                    non_negative_garrote(X, y, self.alpha,
                                                          self.tol,
                                                          self.fit_intercept,
                                                          self.normalize,
@@ -245,7 +245,4 @@ class NonNegativeGarrote(LinearModel):
         self._set_intercept(X_mean, y_mean, X_std)
 
         return self
-
-
-
 
