@@ -47,6 +47,10 @@ class MockClassifier(object):
     def predict(self, T):
         return T.shape[0]
 
+    predict_proba = predict
+    decision_function = predict
+    transform = predict
+
     def score(self, X=None, Y=None):
         if self.foo_param > 1:
             score = 1.
@@ -133,8 +137,11 @@ def test_grid_search():
     for i, foo_i in enumerate([1, 2, 3]):
         assert_true(grid_search.cv_scores_[i][0]
                     == {'foo_param': foo_i})
-    # Smoke test the score:
+    # Smoke test the score etc:
     grid_search.score(X, y)
+    grid_search.predict_proba(X)
+    grid_search.decision_function(X)
+    grid_search.transform(X)
 
 
 def test_trivial_cv_scores():
