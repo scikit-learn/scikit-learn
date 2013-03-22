@@ -316,6 +316,11 @@ def _check_param_grid(param_grid):
                                  "list.")
 
 
+_CVScoreTuple = namedtuple('_CVScoreTuple', ('parameters',
+                                           'mean_validation_score',
+                                           'cv_validation_scores'))
+
+
 class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
     """Base class for hyper parameter search with cross-validation.
     """
@@ -505,11 +510,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
             self.best_estimator_ = best_estimator
 
         # Store the computed scores
-        CVScoreTuple = namedtuple('CVScoreTuple', ('parameters',
-                                                   'mean_validation_score',
-                                                   'cv_validation_scores'))
         self.cv_scores_ = [
-            CVScoreTuple(clf_params, score, all_scores)
+            _CVScoreTuple(clf_params, score, all_scores)
             for clf_params, (score, _), all_scores
             in zip(parameter_iterator, scores, cv_scores)]
         return self
