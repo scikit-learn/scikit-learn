@@ -397,7 +397,7 @@ cdef class NeighborsHeap:
 #  this is a simple recursive quicksort implementation which sorts
 #  `distances` and simultaneously performs the same swaps on `indices`.
 cdef void _simultaneous_sort(DTYPE_t* dist, ITYPE_t* idx, ITYPE_t size):
-    cdef ITYPE_t pivot_idx, i, j
+    cdef ITYPE_t pivot_idx, i, store_idx
     cdef DTYPE_t pivot_val
 
     # in the small-array case, do things efficiently
@@ -430,19 +430,13 @@ cdef void _simultaneous_sort(DTYPE_t* dist, ITYPE_t* idx, ITYPE_t size):
         # partition indices about pivot.  At the end of this operation,
         # pivot_idx will contain the pivot value, everything to the left
         # will be smaller, and everything to the right will be larger.
-        i = 0
-        j = size - 2
-        while i < j:
-            while dist[i] < pivot_val:
-                i += 1
-            while dist[j] > pivot_val:
-                j -= 1
-            if i >= j:
-                break
-            else:
-                dual_swap(dist, idx, i, j)
-        pivot_idx = i
-        dual_swap(dist, idx, pivot_idx, size - 1)
+        store_idx = 0
+        for i in range(size - 1):
+            if dist[i] < pivot_val:
+                dual_swap(dist, idx, i, store_idx)
+                store_idx += 1
+        dual_swap(dist, idx, store_idx, size - 1)
+        pivot_idx = store_idx
 
         # recursively sort each side of the pivot
         if pivot_idx > 1:
