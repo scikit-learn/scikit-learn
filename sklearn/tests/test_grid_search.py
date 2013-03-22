@@ -6,6 +6,7 @@ Testing for grid search module (sklearn.grid_search)
 from collections import Iterable, Sized
 from cStringIO import StringIO
 from itertools import chain, product
+import pickle
 import sys
 import warnings
 
@@ -490,3 +491,14 @@ def test_grid_search_score_consistency():
                                               clf.decision_function(X[test]))
                 assert_almost_equal(correct_score, scores[i])
                 i += 1
+
+def test_pickle():
+    """Test that a fit search can be pickled"""
+    clf = MockClassifier()
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, refit=True)
+    grid_search.fit(X, y)
+    pickle.dumps(grid_search) # smoke test
+
+    random_search = RandomizedSearchCV(clf, {'foo_param': [1, 2, 3]}, refit=True)
+    random_search.fit(X, y)
+    pickle.dumps(random_search) # smoke test
