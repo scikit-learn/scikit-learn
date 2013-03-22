@@ -138,16 +138,14 @@ def test_less_sample_than_dimentions():
     pass
 
 
-def test_nng_lstsq():
+def test_lasso_gives_lstsq_solution():
     """
-    Test that Nng gives least square solution at the end
+    Test that Non-Negative Garrote gives least square solution at the end
     of the path
     """
-    X1 = 3 * diabetes.data  # use un-normalized dataset
-    clf = NonNegativeGarrote(alpha=0.)
-    clf.fit(X1, y)
-    coef_lstsq = np.linalg.lstsq(X1, y)[0]
-    assert_array_almost_equal(clf.coef_, coef_lstsq, decimal=5)
+    coef_path_, _ = non_negative_garrote_path(X, y)
+    coef_lstsq = np.linalg.lstsq(X, y)[0]
+    assert_array_almost_equal(coef_lstsq, coef_path_[:, -1])
 
 def test_singular_matrix():
     """
@@ -156,7 +154,7 @@ def test_singular_matrix():
     X1 = np.array([[1, 1.], [1., 1.]])
     y1 = np.array([1, 1])
     coef_path, scp = non_negative_garrote_path(X1, y1)
-    #assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0], [1, 0]])
+    assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0]])
 
 def test_lars_add_features():
     """
