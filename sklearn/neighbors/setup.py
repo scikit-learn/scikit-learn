@@ -22,7 +22,9 @@ def configuration(parent_package='', top_path=None):
 
     config.add_extension('dist_metrics',
                          sources=['dist_metrics.c'],
-                         include_dirs=[numpy.get_include()],
+                         include_dirs=[numpy.get_include(),
+                                       os.path.join(numpy.get_include(),
+                                                    'numpy')],
                          libraries=libraries)
 
     config.add_extension('typedefs',

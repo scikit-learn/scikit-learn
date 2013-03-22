@@ -99,6 +99,21 @@ class TestMetrics:
         D12 = dm.pairwise(self.X1_bool)
         assert_allclose(D12, D_true)
 
+
+def test_pyfunc_metric():
+    def dist_func(x1, x2):
+        return np.sqrt(np.sum((x1 - x2) ** 2))
+
+    X = np.random.random((10, 3))
+
+    euclidean = DistanceMetric.get_metric("euclidean")
+    pyfunc = DistanceMetric.get_metric("pyfunc", func=dist_func)
+
+    D1 = euclidean.pairwise(X)
+    D2 = pyfunc.pairwise(X)
+
+    assert_allclose(D1, D2)
+
         
 if __name__ == '__main__':
     import nose
