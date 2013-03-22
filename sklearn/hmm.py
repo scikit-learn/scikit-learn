@@ -153,9 +153,6 @@ class _BaseHMM(BaseEstimator):
     def eval(self, obs):
         """Compute the log probability under the model and compute posteriors
 
-        Implements rank and beam pruning in the forward-backward
-        algorithm to speed up inference in large models.
-
         Parameters
         ----------
         obs : array_like, shape (n, n_features)
@@ -384,10 +381,8 @@ class _BaseHMM(BaseEstimator):
         """Estimate model parameters.
 
         An initialization step is performed before entering the EM
-        algorithm. If you want to avoid this step, set the keyword
-        argument init_params to the empty string ''. Likewise, if you
-        would like just to do an initialization, call this method with
-        n_iter=0.
+        algorithm. If you want to avoid this step, pass proper
+        ``init_params`` keyword argument to estimator's constructor.
 
         Parameters
         ----------
@@ -401,10 +396,6 @@ class _BaseHMM(BaseEstimator):
         a sign of overfitting (e.g. a covariance parameter getting too
         small).  You can fix this by getting more training data, or
         decreasing `covars_prior`.
-
-        **Please note that setting parameters in the `fit` method is
-        deprecated and will be removed in the next release.
-        Set it on initialization instead.**
         """
 
         if self.algorithm not in decoder_algorithms:
