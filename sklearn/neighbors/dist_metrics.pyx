@@ -9,12 +9,27 @@
 
 import numpy as np
 cimport numpy as np
+np.import_array() # required in order to use C-API
+
+# First, define a function to get an ndarray from a memory bufffer
+cdef extern from "arrayobject.h":
+    object PyArray_SimpleNewFromData(int nd, np.npy_intp* dims,
+                                     int typenum, void* data)
+
+cdef inline np.ndarray _buffer_to_ndarray(DTYPE_t* x, np.npy_intp n):
+    # Wrap a memory buffer with an ndarray. Warning: this is not robust.
+    # In particular, if x is deallocated before the returned array goes
+    # out of scope, this could cause memory errors.  Since there is not
+    # a possibility of this here, this should be safe.
+
+    # Note: this Segfaults unless np.import_array() is called above
+    return PyArray_SimpleNewFromData(1, &n, DTYPECODE, <void*>x)
 
 # some handy constants
 from libc.math cimport fmax, fmin, fabs, sqrt, exp, cos, pow
 cdef DTYPE_t INF = np.inf
 
-from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t
+from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
 from typedefs import DTYPE, ITYPE
 
 
@@ -97,6 +112,28 @@ cdef class DistanceMetric:
     "sokalmichener"   SokalMichenerDistance   2 * NNEQ / (N + NNEQ)
     "sokalsneath"     SokalSneathDistance     NNEQ / (NNEQ + 0.5 * NTT)
     ================  ======================  =================================
+
+    *User-defined distance:*
+    
+    ==========    ==============    =======
+    identifier    class name        args
+    ----------    --------------    -------
+    "pyfunc"      PyFuncDistance    func
+    ==========    ==============    =======
+
+    Here ``func`` is a function which takes two one-dimensional numpy
+    arrays, and returns a distance.  Note that in order to be used within
+    the BallTree, the distance must be a true metric:
+    i.e. it must satisfy the following properties
+
+    1) Non-negativity: d(x, y) >= 0
+    2) Identity: d(x, y) = 0 if and only if x == y
+    3) Symmetry: d(x, y) = d(y, x)
+    4) Triangle Inequality: d(x, y) + d(y, z) >= d(x, z)
+
+    Because of the Python object overhead involved in calling the python
+    function, this will be fairly slow, but it will have the same
+    scaling as other distances.
     """
     def __cinit__(self):
         self.p = 2
@@ -195,6 +232,8 @@ cdef class DistanceMetric:
             return SokalMichenerDistance(**kwargs)
         elif metric == 'sokalsneath':
             return SokalSneathDistance(**kwargs)
+        elif metric == 'pyfunc':
+            return PyFuncDistance(**kwargs)
         else:
             raise ValueError('metric = "%s" not recognized' % str(metric))
 
@@ -817,6 +856,38 @@ cdef class SokalSneathDistance(DistanceMetric):
 #            x1Tx2 += tmp1 * tmp2
 #
 #        return (1. - x1Tx2) / sqrt(x1nrm * x2nrm)
+
+
+#------------------------------------------------------------
+# User-defined distance
+#
+cdef class PyFuncDistance(DistanceMetric):
+    """PyFunc Distance
+
+    A user-defined distance
+
+    Parameters
+    ----------
+    func : function
+        func should take two numpy arrays as input, and return a distance.
+    """
+    def __init__(self, func):
+        self.func = func
+        x = np.random.random(10)
+        try:
+            d = self.func(x, x)
+        except TypeError:
+            raise ValueError("func must be a callable taking two arrays")
+
+        try:
+            d = float(d)
+        except TypeError:
+            raise ValueError("func must return a float")
+
+    cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size):
+        cdef np.ndarray x1arr = _buffer_to_ndarray(x1, size)
+        cdef np.ndarray x2arr = _buffer_to_ndarray(x2, size)
+        return self.func(x1arr, x2arr)
 
 
 ######################################################################

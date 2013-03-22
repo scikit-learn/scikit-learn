@@ -135,9 +135,9 @@ leaf_size : positive integer (default = 20)
 metric : string or DistanceMetric object
     the distance metric to use for the tree.  Default='minkowski'
     with p=2 (that is, a euclidean metric). See the documentation
-    of the DistanceMetric class for a list of available metrics,
-    and see thefor details.  {binary_tree}.valid_metrics gives a list
-    of the metrics which are valid for {BinaryTree}.
+    of the DistanceMetric class for a list of available metrics.
+    {binary_tree}.valid_metrics gives a list of the metrics which
+    are valid for {BinaryTree}.
 
 Additional keywords are passed to the distance metric class.
 
