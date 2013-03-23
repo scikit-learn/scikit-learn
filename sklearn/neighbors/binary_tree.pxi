@@ -263,8 +263,7 @@ cdef inline DTYPE_t cosine_kernel(DTYPE_t dist, DTYPE_t h):
         return 0.0
 
 
-cdef inline DTYPE_t compute_kernel(DTYPE_t dist, DTYPE_t h,
-                                   KernelType kernel):
+cdef inline DTYPE_t compute_kernel(DTYPE_t dist, DTYPE_t h, KernelType kernel):
     if kernel == GAUSSIAN_KERNEL:
         return gaussian_kernel(dist, h)
     elif kernel == TOPHAT_KERNEL:
@@ -333,10 +332,10 @@ cdef class NeighborsHeap:
             self._sort()
         return map(np.asarray, (self.distances, self.indices))
 
-    cdef inline DTYPE_t largest(self, ITYPE_t row):
+    cdef inline DTYPE_t largest(self, ITYPE_t row) except -1:
         return self.distances[row, 0]
 
-    cpdef push(self, ITYPE_t row, DTYPE_t val, ITYPE_t i_val):
+    cpdef int push(self, ITYPE_t row, DTYPE_t val, ITYPE_t i_val) except -1:
         cdef ITYPE_t i, ic1, ic2, i_swap
         cdef ITYPE_t size = self.distances.shape[1]
         cdef DTYPE_t* dist_arr = &self.distances[row, 0]
@@ -344,7 +343,7 @@ cdef class NeighborsHeap:
 
         # check if val should be in heap
         if val > dist_arr[0]:
-            return
+            return 0
 
         # insert val at position zero
         dist_arr[0] = val
@@ -382,7 +381,9 @@ cdef class NeighborsHeap:
         dist_arr[i] = val
         ind_arr[i] = i_val
 
-    cdef _sort(self):
+        return 0
+
+    cdef int _sort(self) except -1:
         cdef DTYPE_t[:, ::1] distances = self.distances
         cdef ITYPE_t[:, ::1] indices = self.indices
         cdef ITYPE_t row
@@ -390,13 +391,14 @@ cdef class NeighborsHeap:
             _simultaneous_sort(&distances[row, 0],
                                &indices[row, 0],
                                distances.shape[1])
-
+        return 0
 
 #------------------------------------------------------------
 # simultaneous_sort :
 #  this is a simple recursive quicksort implementation which sorts
 #  `distances` and simultaneously performs the same swaps on `indices`.
-cdef void _simultaneous_sort(DTYPE_t* dist, ITYPE_t* idx, ITYPE_t size):
+cdef int _simultaneous_sort(DTYPE_t* dist, ITYPE_t* idx,
+                            ITYPE_t size) except -1:
     cdef ITYPE_t pivot_idx, i, store_idx
     cdef DTYPE_t pivot_val
 
@@ -445,7 +447,7 @@ cdef void _simultaneous_sort(DTYPE_t* dist, ITYPE_t* idx, ITYPE_t size):
             _simultaneous_sort(dist + pivot_idx + 1,
                                idx + pivot_idx + 1,
                                size - pivot_idx - 1)
-
+    return 0
 
 #------------------------------------------------------------
 # find_node_split_dim:
@@ -454,7 +456,7 @@ cdef void _simultaneous_sort(DTYPE_t* dist, ITYPE_t* idx, ITYPE_t size):
 cdef ITYPE_t find_node_split_dim(DTYPE_t* data,
                                  ITYPE_t* node_indices,
                                  ITYPE_t n_features,
-                                 ITYPE_t n_points):
+                                 ITYPE_t n_points) except -1:
     cdef DTYPE_t min_val, max_val, val, spread, max_spread
     cdef ITYPE_t i, j, j_max
 
@@ -484,12 +486,12 @@ cdef ITYPE_t find_node_split_dim(DTYPE_t* data,
 #   data[node_indices[split_index], split_dim]
 #     <= data[node_indices[split_index:n_points], split_dim]
 # will hold.  The algorithm amounts to a partial quicksort
-cdef void partition_node_indices(DTYPE_t* data,
-                                 ITYPE_t* node_indices,
-                                 ITYPE_t split_dim,
-                                 ITYPE_t split_index,
-                                 ITYPE_t n_features,
-                                 ITYPE_t n_points):
+cdef int partition_node_indices(DTYPE_t* data,
+                                ITYPE_t* node_indices,
+                                ITYPE_t split_dim,
+                                ITYPE_t split_index,
+                                ITYPE_t n_features,
+                                ITYPE_t n_points) except -1:
     cdef ITYPE_t left, right, midindex, i
     cdef DTYPE_t d1, d2
     left = 0
@@ -510,6 +512,9 @@ cdef void partition_node_indices(DTYPE_t* data,
             left = midindex + 1
         else:
             right = midindex - 1
+
+    return 0
+
 
 ######################################################################
 # NodeHeap : min-heap used to keep track of nodes during
@@ -551,7 +556,7 @@ cdef class NodeHeap:
         self.n = size_guess
         self.clear()
 
-    cdef void resize(self, ITYPE_t new_size):
+    cdef int resize(self, ITYPE_t new_size) except -1:
         cdef NodeHeapData_t *data_arr, *new_data_arr
         cdef ITYPE_t i
         cdef ITYPE_t size = self.data.shape[0]
@@ -568,8 +573,9 @@ cdef class NodeHeap:
             self.n = new_size
 
         self.data = new_data
+        return 0
 
-    cdef void push(self, NodeHeapData_t data):
+    cdef int push(self, NodeHeapData_t data) except -1:
         cdef ITYPE_t i, i_parent
         cdef NodeHeapData_t* data_arr
         self.n += 1
@@ -589,6 +595,7 @@ cdef class NodeHeap:
             else:
                 swap_nodes(data_arr, i, i_parent)
                 i = i_parent
+        return 0
 
     cdef NodeHeapData_t peek(self):
         return self.data[0]
@@ -631,7 +638,7 @@ cdef class NodeHeap:
         
         return popped_element
 
-    cdef clear(self):
+    cdef void clear(self):
         """Clear the stack"""
         self.n = 0
 
@@ -793,7 +800,7 @@ cdef class BinaryTree:
                                 self.node_data, self.node_bounds))        
 
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
-                             ITYPE_t size):
+                             ITYPE_t size) except -1:
         self.n_calls += 1
         if self.euclidean:
             return euclidean_dist(x1, x2, size)
@@ -801,15 +808,15 @@ cdef class BinaryTree:
             return self.dm.dist(x1, x2, size)
 
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
-                              ITYPE_t size):
+                              ITYPE_t size) except -1:
         self.n_calls += 1
         if self.euclidean:
             return euclidean_rdist(x1, x2, size)
         else:
             return self.dm.rdist(x1, x2, size)
 
-    cdef void _recursive_build(self, ITYPE_t i_node,
-                               ITYPE_t idx_start, ITYPE_t idx_end):
+    cdef int _recursive_build(self, ITYPE_t i_node, ITYPE_t idx_start,
+                              ITYPE_t idx_end) except -1:
         cdef ITYPE_t imax
         cdef ITYPE_t n_features = self.data.shape[1]
         cdef ITYPE_t n_points = idx_end - idx_start
@@ -1336,10 +1343,10 @@ cdef class BinaryTree:
     
         return count
 
-    cdef void _query_single_depthfirst(BinaryTree self, ITYPE_t i_node,
-                                       DTYPE_t* pt, ITYPE_t i_pt,
-                                       NeighborsHeap heap,
-                                       DTYPE_t reduced_dist_LB):
+    cdef int _query_single_depthfirst(BinaryTree self, ITYPE_t i_node,
+                                      DTYPE_t* pt, ITYPE_t i_pt,
+                                      NeighborsHeap heap,
+                                      DTYPE_t reduced_dist_LB) except -1:
         cdef NodeData_t node_info = self.node_data[i_node]
 
         cdef DTYPE_t dist_pt, reduced_dist_LB_1, reduced_dist_LB_2
@@ -1385,11 +1392,12 @@ cdef class BinaryTree:
                                               reduced_dist_LB_2)
                 self._query_single_depthfirst(i1, pt, i_pt, heap,
                                               reduced_dist_LB_1)
+        return 0
 
-    cdef void _query_single_breadthfirst(BinaryTree self, DTYPE_t* pt,
-                                         ITYPE_t i_pt,
-                                         NeighborsHeap heap,
-                                         NodeHeap nodeheap):
+    cdef int _query_single_breadthfirst(BinaryTree self, DTYPE_t* pt,
+                                        ITYPE_t i_pt,
+                                        NeighborsHeap heap,
+                                        NodeHeap nodeheap) except -1:
         cdef ITYPE_t i, i_node
         cdef DTYPE_t dist_pt, reduced_dist_LB
         cdef NodeData_t* node_data = &self.node_data[0]
@@ -1433,12 +1441,13 @@ cdef class BinaryTree:
                     nodeheap_item.i1 = i
                     nodeheap_item.val = min_rdist(self, i, pt)
                     nodeheap.push(nodeheap_item)
+        return 0
 
-    cdef void _query_dual_depthfirst(BinaryTree self, ITYPE_t i_node1,
-                                     BinaryTree other, ITYPE_t i_node2,
-                                     DTYPE_t[::1] bounds,
-                                     NeighborsHeap heap,
-                                     DTYPE_t reduced_dist_LB):
+    cdef int _query_dual_depthfirst(BinaryTree self, ITYPE_t i_node1,
+                                    BinaryTree other, ITYPE_t i_node2,
+                                    DTYPE_t[::1] bounds,
+                                    NeighborsHeap heap,
+                                    DTYPE_t reduced_dist_LB) except -1:
         # note that the array `bounds` is maintained such that
         # bounds[i] is the largest distance among any of the
         # current neighbors in node i of the other tree.
@@ -1575,9 +1584,11 @@ cdef class BinaryTree:
                 self._query_dual_depthfirst(2 * i_node1 + 1,
                                             other, 2 * i_node2 + 2,
                                             bounds, heap, reduced_dist_LB1)
+        return 0
 
-    cdef void _query_dual_breadthfirst(BinaryTree self, BinaryTree other,
-                                       NeighborsHeap heap, NodeHeap nodeheap):
+    cdef int _query_dual_breadthfirst(BinaryTree self, BinaryTree other,
+                                      NeighborsHeap heap,
+                                      NodeHeap nodeheap) except -1:
         cdef ITYPE_t i, i1, i2, i_node1, i_node2, i_pt
         cdef DTYPE_t dist_pt, reduced_dist_LB
         cdef DTYPE_t[::1] bounds = np.inf + np.zeros(other.node_data.shape[0])
@@ -1664,6 +1675,7 @@ cdef class BinaryTree:
                         nodeheap_item.i2 = i2
                         nodeheap_item.val = min_rdist_dual(self, i1, other, i2)
                         nodeheap.push(nodeheap_item)
+        return 0
 
     cdef ITYPE_t _query_radius_single(BinaryTree self,
                                       ITYPE_t i_node,
@@ -1672,7 +1684,7 @@ cdef class BinaryTree:
                                       DTYPE_t* distances,
                                       ITYPE_t count,
                                       int count_only,
-                                      int return_distance):
+                                      int return_distance) except -1:
         cdef DTYPE_t* data = &self.data[0, 0]
         cdef ITYPE_t* idx_array = &self.idx_array[0]
         cdef ITYPE_t n_features = self.data.shape[1]
@@ -1746,7 +1758,7 @@ cdef class BinaryTree:
                                           DTYPE_t atol, DTYPE_t rtol,
                                           NodeHeap nodeheap,
                                           DTYPE_t* node_min_bounds,
-                                          DTYPE_t* node_max_bounds):
+                                          DTYPE_t* node_max_bounds) except -1:
         cdef ITYPE_t i, i1, i2, N1, N2, i_node
         cdef DTYPE_t global_min_bound, global_max_bound
 
@@ -1842,14 +1854,13 @@ cdef class BinaryTree:
         nodeheap.clear()
         return 0.5 * (global_max_bound + global_min_bound)
 
-
-    cdef void _kde_single_depthfirst(self, ITYPE_t i_node, DTYPE_t* pt,
-                                     KernelType kernel, DTYPE_t h,
-                                     DTYPE_t atol, DTYPE_t rtol,
-                                     DTYPE_t local_min_bound,
-                                     DTYPE_t local_max_bound,
-                                     DTYPE_t* global_min_bound,
-                                     DTYPE_t* global_max_bound):
+    cdef int _kde_single_depthfirst(self, ITYPE_t i_node, DTYPE_t* pt,
+                                    KernelType kernel, DTYPE_t h,
+                                    DTYPE_t atol, DTYPE_t rtol,
+                                    DTYPE_t local_min_bound,
+                                    DTYPE_t local_max_bound,
+                                    DTYPE_t* global_min_bound,
+                                    DTYPE_t* global_max_bound) except -1:
         cdef ITYPE_t i, i1, i2, N1, N2
 
         cdef DTYPE_t* data = &self.data[0, 0]
@@ -1921,12 +1932,13 @@ cdef class BinaryTree:
                                         atol, rtol,
                                         child2_min_bound, child2_max_bound,
                                         global_min_bound, global_max_bound)
+        return 0
 
-
-    cdef void _kde_dual_breadthfirst(BinaryTree self, BinaryTree other,
-                                     KernelType kernel,
-                                     DTYPE_t h, DTYPE_t atol,
-                                     DTYPE_t* density, NodeHeap nodeheap):
+    cdef int _kde_dual_breadthfirst(BinaryTree self, BinaryTree other,
+                                    KernelType kernel,
+                                    DTYPE_t h, DTYPE_t atol,
+                                    DTYPE_t* density,
+                                    NodeHeap nodeheap) except -1:
         # note that atol here is absolute tolerance *per point*
         cdef ITYPE_t i1, i2, i_node1, i_node2
 
@@ -2009,13 +2021,13 @@ cdef class BinaryTree:
                         nodeheap_item.i1 = i1
                         nodeheap_item.i2 = i2
                         nodeheap.push(nodeheap_item)
+        return 0
 
-
-    cdef void _kde_dual_depthfirst(BinaryTree self, ITYPE_t i_node1,
-                                   BinaryTree other, ITYPE_t i_node2,
-                                   KernelType kernel,
-                                   DTYPE_t h, DTYPE_t atol,
-                                   DTYPE_t* density):
+    cdef int _kde_dual_depthfirst(BinaryTree self, ITYPE_t i_node1,
+                                  BinaryTree other, ITYPE_t i_node2,
+                                  KernelType kernel,
+                                  DTYPE_t h, DTYPE_t atol,
+                                  DTYPE_t* density) except -1:
         # note that atol here is absolute tolerance *per point*
         cdef ITYPE_t i1, i2
 
@@ -2077,9 +2089,11 @@ cdef class BinaryTree:
                 for i2 in range(2 * i_node2 + 1, 2 * i_node2 + 3):
                     self._kde_dual_depthfirst(i1, other, i2, kernel,
                                               h, atol, density)
+        return 0
 
-    cdef void _two_point_single(self, ITYPE_t i_node, DTYPE_t* pt, DTYPE_t* r,
-                                ITYPE_t* count, ITYPE_t i_min, ITYPE_t i_max):
+    cdef int _two_point_single(self, ITYPE_t i_node, DTYPE_t* pt, DTYPE_t* r,
+                               ITYPE_t* count, ITYPE_t i_min,
+                               ITYPE_t i_max) except -1:
         cdef DTYPE_t* data = &self.data[0, 0]
         cdef ITYPE_t* idx_array = &self.idx_array[0]
         cdef ITYPE_t n_features = self.data.shape[1]
@@ -2123,11 +2137,12 @@ cdef class BinaryTree:
                                        count, i_min, i_max)
                 self._two_point_single(2 * i_node + 2, pt, r,
                                        count, i_min, i_max)
+        return 0
 
-    cdef void _two_point_dual(self, ITYPE_t i_node1,
-                              BinaryTree other, ITYPE_t i_node2,
-                              DTYPE_t* r, ITYPE_t* count,
-                              ITYPE_t i_min, ITYPE_t i_max):
+    cdef int _two_point_dual(self, ITYPE_t i_node1,
+                             BinaryTree other, ITYPE_t i_node2,
+                             DTYPE_t* r, ITYPE_t* count,
+                             ITYPE_t i_min, ITYPE_t i_max) except -1:
         cdef DTYPE_t* data1 = &self.data[0, 0]
         cdef DTYPE_t* data2 = &other.data[0, 0]
         cdef ITYPE_t* idx_array1 = &self.idx_array[0]
@@ -2193,6 +2208,8 @@ cdef class BinaryTree:
                     for i2 in range(2 * i_node2 + 1, 2 * i_node2 + 3):
                         self._two_point_dual(i1, other, i2,
                                              r, count, i_min, i_max)
+        return 0
+
 
 ######################################################################
 # Python functions for benchmarking and testing

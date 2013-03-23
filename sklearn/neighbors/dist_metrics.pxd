@@ -37,7 +37,8 @@ cdef inline DTYPE_t euclidean_dist_to_rdist(DTYPE_t dist) except -1:
 cdef inline DTYPE_t euclidean_rdist_to_dist(DTYPE_t dist) except -1:
     return sqrt(dist)
 
-cdef DTYPE_t[:, ::1] euclidean_cdist(DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y)
+cdef int euclidean_cdist(DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y,
+                         DTYPE_t[:, ::1] D) except -1
 
 ######################################################################
 # DistanceMetric base class
