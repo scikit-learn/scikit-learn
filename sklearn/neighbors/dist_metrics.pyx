@@ -26,7 +26,7 @@ cdef inline np.ndarray _buffer_to_ndarray(DTYPE_t* x, np.npy_intp n):
     return PyArray_SimpleNewFromData(1, &n, DTYPECODE, <void*>x)
 
 # some handy constants
-from libc.math cimport fmax, fmin, fabs, sqrt, exp, cos, pow
+from libc.math cimport fmax, fmin, fabs, sqrt, exp, pow, cos, sin, asin
 cdef DTYPE_t INF = np.inf
 
 from typedefs cimport DTYPE_t, ITYPE_t, DITYPE_t, DTYPECODE
@@ -75,6 +75,15 @@ cdef class DistanceMetric:
     "seuclidean"    SEuclideanDistance    V         sqrt(sum((x - y)^2 / V))
     "mahalanobis"   MahalanobisDistance   V or VI   sqrt((x - y)' V^-1 (x - y))
     ==============  ====================  ========  ===========================
+
+    *Metrics intended for two-dimensional vector spaces:*
+    ===========  =================  =======================================
+    identifier   class name         distance function
+    -----------  -----------------  ----------------------------------------
+    "haversine"  HaversineDistance  2 arcsin(sqrt(sin^2(0.5*dx)
+                                             + cos(x1)cos(x2)sin^2(0.5*dy)))
+    ===========  =================  ========================================
+    
 
     *Metrics intended for integer-valued vector spaces:*  Though intended
     for integer-valued vectors, these are also valid metrics in the case of
@@ -232,6 +241,8 @@ cdef class DistanceMetric:
             return SokalMichenerDistance(**kwargs)
         elif metric == 'sokalsneath':
             return SokalSneathDistance(**kwargs)
+        elif metric == 'haversine':
+            return HaversineDistance(**kwargs)
         elif metric == 'pyfunc':
             return PyFuncDistance(**kwargs)
         else:
@@ -241,39 +252,34 @@ cdef class DistanceMetric:
         if self.__class__ is DistanceMetric:
             raise NotImplementedError("DistanceMetric is an abstract class")
 
-    cdef DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size):
+    cdef DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size) except -1:
         return -999
 
-    cdef DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size):
+    cdef DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size) except -1:
         return self.dist(x1, x2, size)
 
-    cdef DTYPE_t[:, ::1] pdist(self, DTYPE_t[:, ::1] X):
+    cdef int pdist(self, DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] D) except -1:
         cdef ITYPE_t i1, i2
-        cdef DTYPE_t[:, ::1] D = np.zeros((X.shape[0], X.shape[0]),
-                                          dtype=DTYPE, order='C')
         for i1 in range(X.shape[0]):
             for i2 in range(i1, X.shape[0]):
                 D[i1, i2] = self.dist(&X[i1, 0], &X[i2, 0], X.shape[1])
                 D[i2, i1] = D[i1, i2]
-        return D
+        return 0
 
-    cdef DTYPE_t[:, ::1] cdist(self, DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y):
+    cdef int cdist(self, DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y,
+                   DTYPE_t[:, ::1] D) except -1:
         cdef ITYPE_t i1, i2
         if X.shape[1] != Y.shape[1]:
             raise ValueError('X and Y must have the same second dimension')
-
-        cdef DTYPE_t[:, ::1] D = np.zeros((X.shape[0], Y.shape[0]),
-                                          dtype=DTYPE, order='C')
-
         for i1 in range(X.shape[0]):
             for i2 in range(Y.shape[0]):
                 D[i1, i2] = self.dist(&X[i1, 0], &Y[i2, 0], X.shape[1])
-        return D
+        return 0
 
-    cdef DTYPE_t rdist_to_dist(self, DTYPE_t rdist):
+    cdef DTYPE_t rdist_to_dist(self, DTYPE_t rdist) except -1:
         return rdist
 
-    cdef DTYPE_t dist_to_rdist(self, DTYPE_t dist):
+    cdef DTYPE_t dist_to_rdist(self, DTYPE_t dist) except -1:
         return dist
 
     def rdist_to_dist_arr(self, rdist):
@@ -285,10 +291,14 @@ cdef class DistanceMetric:
     def pairwise(self, X, Y=None):
         X = np.asarray(X, dtype=DTYPE)
         if Y is None:
-            D = self.pdist(X)
+            D = np.zeros((X.shape[0], X.shape[0]),
+                         dtype=DTYPE, order='C')
+            self.pdist(X, D)
         else:
             Y = np.asarray(Y, dtype=DTYPE)
-            D = self.cdist(X, Y)
+            D = np.zeros((X.shape[0], Y.shape[0]),
+                         dtype=DTYPE, order='C')
+            self.cdist(X, Y, D)
         return np.asarray(D)
 
 
@@ -338,7 +348,8 @@ cdef class SEuclideanDistance(DistanceMetric):
         self.vec_ptr = &self.vec[0]
         self.p = 2
 
-    cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size):
+    cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
+                              ITYPE_t size) except -1:
         if size != self.size:
             raise ValueError('SEuclidean dist: size of V does not match')
         cdef DTYPE_t tmp, d=0
@@ -467,7 +478,8 @@ cdef class WMinkowskiDistance(DistanceMetric):
         self.size = self.vec.shape[0]
         self.vec_ptr = &self.vec[0]
 
-    cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size):
+    cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
+                              ITYPE_t size) except -1:
         if size != self.size:
             raise ValueError('SEuclidean dist: size of V does not match')
         cdef DTYPE_t d=0
@@ -522,7 +534,8 @@ cdef class MahalanobisDistance(DistanceMetric):
         self.vec = np.zeros(self.size, dtype=DTYPE)
         self.vec_ptr = &self.vec[0]
 
-    cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size):
+    cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
+                              ITYPE_t size) except -1:
         if size != self.size:
             raise ValueError('Mahalanobis dist: size of V does not match')
 
@@ -797,6 +810,54 @@ cdef class SokalSneathDistance(DistanceMetric):
             n_neq += (tf1 != tf2)
             ntt += (tf1 and tf2)
         return n_neq / (0.5 * ntt + n_neq)
+
+
+#------------------------------------------------------------
+# Haversine Distance (2 dimensional)
+#  D(x, y) = 2 arcsin{sqrt[sin^2 ((x1 - y1) / 2)
+#                          + cos(x1) cos(y1) sin^2 ((x2 - y2) / 2)]}
+cdef class HaversineDistance(DistanceMetric):
+    """Haversine (Spherical) Distance
+
+    The Haversine distance is the angular distance between two points on
+    the surface of a sphere.  The first distance of each point is assumed
+    to be the latitude, the second is the longitude.  The size of the
+    points must be 2:
+
+    .. math::
+       D(x, y) = 2\arcsin[\sqrt{\sin^2((x1 - y1) / 2)
+                                + cos(x1)cos(y1)sin^2((x2 - y2) / 2)}]
+    """
+    cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
+                              ITYPE_t size) except -1:
+        if size != 2:
+            raise ValueError("Haversine distance only valid in 2 dimensions")
+        cdef DTYPE_t sin_0 = sin(0.5 * (x1[0] - x2[0]))
+        cdef DTYPE_t sin_1 = sin(0.5 * (x1[1] - x2[1]))
+        return (sin_0 * sin_0 + cos(x1[0]) * cos(x2[0]) * sin_1 * sin_1)
+
+    cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
+                              ITYPE_t size) except -1:
+        if size != 2:
+            raise ValueError("Haversine distance only valid in 2 dimensions")
+        cdef DTYPE_t sin_0 = sin(0.5 * (x1[0] - x2[0]))
+        cdef DTYPE_t sin_1 = sin(0.5 * (x1[1] - x2[1]))
+        return 2 * asin(sqrt(sin_0 * sin_0
+                             + cos(x1[0]) * cos(x2[0]) * sin_1 * sin_1))
+
+    cdef inline DTYPE_t rdist_to_dist(self, DTYPE_t rdist):
+        return 2 * asin(sqrt(rdist))
+
+    cdef inline DTYPE_t dist_to_rdist(self, DTYPE_t dist):
+        cdef DTYPE_t tmp = sin(0.5 * dist)
+        return tmp * tmp
+
+    def rdist_to_dist_arr(self, rdist):
+        return 2 * np.arcsin(np.sqrt(rdist))
+
+    def dist_to_rdist_arr(self, dist):
+        tmp = np.sin(0.5 * dist)
+        return tmp * tmp
 
 
 #------------------------------------------------------------

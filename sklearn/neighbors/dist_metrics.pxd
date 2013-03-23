@@ -16,7 +16,7 @@ from typedefs import DTYPE, ITYPE
 #  We use these for the default (euclidean) case so that they can be
 #  inlined.  This leads to faster computation for the most common case
 cdef inline DTYPE_t euclidean_dist(DTYPE_t* x1, DTYPE_t* x2,
-                                   ITYPE_t size):
+                                   ITYPE_t size) except -1:
     cdef DTYPE_t tmp, d=0
     for j in range(size):
         tmp = x1[j] - x2[j]
@@ -24,17 +24,17 @@ cdef inline DTYPE_t euclidean_dist(DTYPE_t* x1, DTYPE_t* x2,
     return sqrt(d)
 
 cdef inline DTYPE_t euclidean_rdist(DTYPE_t* x1, DTYPE_t* x2,
-                                    ITYPE_t size):
+                                    ITYPE_t size) except -1:
     cdef DTYPE_t tmp, d=0
     for j in range(size):
         tmp = x1[j] - x2[j]
         d += tmp * tmp
     return d
 
-cdef inline DTYPE_t euclidean_dist_to_rdist(DTYPE_t dist):
+cdef inline DTYPE_t euclidean_dist_to_rdist(DTYPE_t dist) except -1:
     return dist * dist
 
-cdef inline DTYPE_t euclidean_rdist_to_dist(DTYPE_t dist):
+cdef inline DTYPE_t euclidean_rdist_to_dist(DTYPE_t dist) except -1:
     return sqrt(dist)
 
 cdef DTYPE_t[:, ::1] euclidean_cdist(DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y)
@@ -54,14 +54,15 @@ cdef class DistanceMetric:
     cdef ITYPE_t size
     cdef object func
 
-    cdef DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size)
+    cdef DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size) except -1
 
-    cdef DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size)
+    cdef DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size) except -1
 
-    cdef DTYPE_t[:, ::1] pdist(self, DTYPE_t[:, ::1] X)
+    cdef int pdist(self, DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] D) except -1
 
-    cdef DTYPE_t[:, ::1] cdist(self, DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y)
+    cdef int cdist(self, DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y,
+                   DTYPE_t[:, ::1] D) except -1
 
-    cdef DTYPE_t rdist_to_dist(self, DTYPE_t rdist)
+    cdef DTYPE_t rdist_to_dist(self, DTYPE_t rdist) except -1
 
-    cdef DTYPE_t dist_to_rdist(self, DTYPE_t dist)
+    cdef DTYPE_t dist_to_rdist(self, DTYPE_t dist) except -1

@@ -261,6 +261,17 @@ def test_simultaneous_sort(n_rows=10, n_pts=201):
     assert_allclose(ind, ind2)
 
 
+def test_query_haversine():
+    np.random.seed(0)
+    X = 2 * np.pi * np.random.random((40, 2))
+    bt = BallTree(X, leaf_size=1, metric='haversine')
+    dist1, ind1 = bt.query(X, k=5)
+    dist2, ind2 = brute_force_neighbors(X, X, k=5, metric='haversine')
+
+    assert_allclose(dist1, dist2)
+    assert_allclose(ind1, ind2)
+
+
 def _test_find_split_dim():
     # check for several different random seeds
     for i in range(5):

@@ -100,6 +100,27 @@ class TestMetrics:
         assert_allclose(D12, D_true)
 
 
+def test_haversine_metric():
+    def haversine_slow(x1, x2):
+        return 2 * np.arcsin(np.sqrt(np.sin(0.5 * (x1[0] - x2[0])) ** 2
+                                     + np.cos(x1[0]) * np.cos(x2[0]) *
+                                     np.sin(0.5 * (x1[1] - x2[1])) ** 2))
+
+    X = np.random.random((10, 2))
+
+    haversine = DistanceMetric.get_metric("haversine")
+
+    D1 = haversine.pairwise(X)
+    D2 = np.zeros_like(D1)
+    for i, x1 in enumerate(X):
+        for j, x2 in enumerate(X):
+            D2[i, j] = haversine_slow(x1, x2)
+
+    assert_allclose(D1, D2)
+    assert_allclose(haversine.dist_to_rdist_arr(D1),
+                    np.sin(0.5 * D2) ** 2)
+
+
 def test_pyfunc_metric():
     def dist_func(x1, x2):
         return np.sqrt(np.sum((x1 - x2) ** 2))
