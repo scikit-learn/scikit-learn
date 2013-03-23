@@ -67,7 +67,7 @@ cdef int init_node(BinaryTree bt, ITYPE_t i_node,
                                  data + n_features * idx_array[i],
                                  n_features))
 
-    bt.node_data[i_node].radius = bt.dm.rdist_to_dist(radius)
+    bt.node_data[i_node].radius = bt.dm._rdist_to_dist(radius)
     bt.node_data[i_node].idx_start = idx_start
     bt.node_data[i_node].idx_end = idx_end
     return 0
@@ -98,14 +98,14 @@ cdef inline DTYPE_t min_rdist(BinaryTree bt, ITYPE_t i_node,
     if bt.euclidean:
         return euclidean_dist_to_rdist(min_dist(bt, i_node, pt))
     else:
-        return bt.dm.dist_to_rdist(min_dist(bt, i_node, pt))
+        return bt.dm._dist_to_rdist(min_dist(bt, i_node, pt))
 
 cdef inline DTYPE_t max_rdist(BinaryTree bt, ITYPE_t i_node,
                               DTYPE_t* pt) except -1:
     if bt.euclidean:
         return euclidean_dist_to_rdist(max_dist(bt, i_node, pt))
     else:
-        return bt.dm.dist_to_rdist(max_dist(bt, i_node, pt))
+        return bt.dm._dist_to_rdist(max_dist(bt, i_node, pt))
 
 cdef inline DTYPE_t min_dist_dual(BinaryTree bt1, ITYPE_t i_node1,
                                   BinaryTree bt2, ITYPE_t i_node2) except -1:
@@ -129,8 +129,8 @@ cdef inline DTYPE_t min_rdist_dual(BinaryTree bt1, ITYPE_t i_node1,
         return euclidean_dist_to_rdist(min_dist_dual(bt1, i_node1,
                                                      bt2, i_node2))
     else:
-        return bt1.dm.dist_to_rdist(min_dist_dual(bt1, i_node1,
-                                                  bt2, i_node2))
+        return bt1.dm._dist_to_rdist(min_dist_dual(bt1, i_node1,
+                                                   bt2, i_node2))
 
 cdef inline DTYPE_t max_rdist_dual(BinaryTree bt1, ITYPE_t i_node1,
                                    BinaryTree bt2, ITYPE_t i_node2) except -1:
@@ -138,5 +138,5 @@ cdef inline DTYPE_t max_rdist_dual(BinaryTree bt1, ITYPE_t i_node1,
         return euclidean_dist_to_rdist(max_dist_dual(bt1, i_node1,
                                                      bt2, i_node2))
     else:
-        return bt1.dm.dist_to_rdist(max_dist_dual(bt1, i_node1,
-                                                  bt2, i_node2))
+        return bt1.dm._dist_to_rdist(max_dist_dual(bt1, i_node1,
+                                                   bt2, i_node2))

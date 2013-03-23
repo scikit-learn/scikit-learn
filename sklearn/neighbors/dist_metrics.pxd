@@ -64,6 +64,6 @@ cdef class DistanceMetric:
     cdef int cdist(self, DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y,
                    DTYPE_t[:, ::1] D) except -1
 
-    cdef DTYPE_t rdist_to_dist(self, DTYPE_t rdist) except -1
+    cdef DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1
 
-    cdef DTYPE_t dist_to_rdist(self, DTYPE_t dist) except -1
+    cdef DTYPE_t _dist_to_rdist(self, DTYPE_t dist) except -1

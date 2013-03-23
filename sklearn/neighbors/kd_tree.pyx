@@ -126,8 +126,8 @@ cdef inline DTYPE_t min_rdist_dual(BinaryTree bt, ITYPE_t i_node1,
 
 cdef inline DTYPE_t min_dist_dual(BinaryTree bt1, ITYPE_t i_node1,
                                   BinaryTree bt2, ITYPE_t i_node2) except -1:
-    return bt1.dm.rdist_to_dist(min_rdist_dual(bt1, i_node1,
-                                               bt2, i_node2))
+    return bt1.dm._rdist_to_dist(min_rdist_dual(bt1, i_node1,
+                                                bt2, i_node2))
 
 cdef inline DTYPE_t max_rdist_dual(BinaryTree bt1, ITYPE_t i_node1,
                                    BinaryTree bt2, ITYPE_t i_node2) except -1:
@@ -148,5 +148,5 @@ cdef inline DTYPE_t max_rdist_dual(BinaryTree bt1, ITYPE_t i_node1,
 
 cdef inline DTYPE_t max_dist_dual(BinaryTree bt1, ITYPE_t i_node1,
                                   BinaryTree bt2, ITYPE_t i_node2) except -1:
-    return bt1.dm.rdist_to_dist(max_rdist_dual(bt1, i_node1,
-                                               bt2, i_node2))
+    return bt1.dm._rdist_to_dist(max_rdist_dual(bt1, i_node1,
+                                                bt2, i_node2))

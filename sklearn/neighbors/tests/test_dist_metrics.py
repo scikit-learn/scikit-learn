@@ -117,7 +117,7 @@ def test_haversine_metric():
             D2[i, j] = haversine_slow(x1, x2)
 
     assert_allclose(D1, D2)
-    assert_allclose(haversine.dist_to_rdist_arr(D1),
+    assert_allclose(haversine.dist_to_rdist(D1),
                     np.sin(0.5 * D2) ** 2)
 
 

@@ -972,7 +972,7 @@ cdef class BinaryTree:
                     pt += Xarr.shape[1]
 
         distances, indices = heap.get_arrays(sort=sort_results)
-        distances = self.dm.rdist_to_dist_arr(distances)
+        distances = self.dm.rdist_to_dist(distances)
 
         # deflatten results
         if return_distance:
@@ -1724,7 +1724,7 @@ cdef class BinaryTree:
         # Case 3: this is a leaf node.  Go through all points to
         #         determine if they fall within radius
         elif node_info.is_leaf:
-            reduced_r = self.dm.dist_to_rdist(r)
+            reduced_r = self.dm._dist_to_rdist(r)
 
             for i in range(node_info.idx_start, node_info.idx_end):
                 dist_pt = self.rdist(pt, (data + n_features * idx_array[i]),
@@ -1738,7 +1738,7 @@ cdef class BinaryTree:
                     else:
                         indices[count] = idx_array[i]
                         if return_distance:
-                            distances[count] = self.dm.rdist_to_dist(dist_pt)
+                            distances[count] = self.dm._rdist_to_dist(dist_pt)
                     count += 1
 
         #------------------------------------------------------------

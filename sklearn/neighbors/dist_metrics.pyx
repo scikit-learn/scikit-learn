@@ -276,16 +276,16 @@ cdef class DistanceMetric:
                 D[i1, i2] = self.dist(&X[i1, 0], &Y[i2, 0], X.shape[1])
         return 0
 
-    cdef DTYPE_t rdist_to_dist(self, DTYPE_t rdist) except -1:
+    cdef DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
         return rdist
 
-    cdef DTYPE_t dist_to_rdist(self, DTYPE_t dist) except -1:
+    cdef DTYPE_t _dist_to_rdist(self, DTYPE_t dist) except -1:
         return dist
 
-    def rdist_to_dist_arr(self, rdist):
+    def rdist_to_dist(self, rdist):
         return rdist
 
-    def dist_to_rdist_arr(self, dist):
+    def dist_to_rdist(self, dist):
         return dist
 
     def pairwise(self, X, Y=None):
@@ -322,16 +322,16 @@ cdef class EuclideanDistance(DistanceMetric):
                               ITYPE_t size) except -1:
         return euclidean_rdist(x1, x2, size)
 
-    cdef inline DTYPE_t rdist_to_dist(self, DTYPE_t rdist) except -1:
+    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
         return sqrt(rdist)
 
-    cdef inline DTYPE_t dist_to_rdist(self, DTYPE_t dist) except -1:
+    cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist) except -1:
         return dist * dist
 
-    def rdist_to_dist_arr(self, rdist):
+    def rdist_to_dist(self, rdist):
         return np.sqrt(rdist)
 
-    def dist_to_rdist_arr(self, dist):
+    def dist_to_rdist(self, dist):
         return dist ** 2
 
 
@@ -364,16 +364,16 @@ cdef class SEuclideanDistance(DistanceMetric):
                              ITYPE_t size) except -1:
         return sqrt(self.rdist(x1, x2, size))
 
-    cdef inline DTYPE_t rdist_to_dist(self, DTYPE_t rdist) except -1:
+    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
         return sqrt(rdist)
 
-    cdef inline DTYPE_t dist_to_rdist(self, DTYPE_t dist) except -1:
+    cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist) except -1:
         return dist * dist
 
-    def rdist_to_dist_arr(self, rdist):
+    def rdist_to_dist(self, rdist):
         return np.sqrt(rdist)
 
-    def dist_to_rdist_arr(self, dist):
+    def dist_to_rdist(self, dist):
         return dist ** 2
 
 
@@ -450,16 +450,16 @@ cdef class MinkowskiDistance(DistanceMetric):
                              ITYPE_t size) except -1:
         return pow(self.rdist(x1, x2, size), 1. / self.p)
 
-    cdef inline DTYPE_t rdist_to_dist(self, DTYPE_t rdist) except -1:
+    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
         return pow(rdist, 1. / self.p)
 
-    cdef inline DTYPE_t dist_to_rdist(self, DTYPE_t dist) except -1:
+    cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist) except -1:
         return pow(dist, self.p)
 
-    def rdist_to_dist_arr(self, rdist):
+    def rdist_to_dist(self, rdist):
         return rdist ** (1. / self.p)
 
-    def dist_to_rdist_arr(self, dist):
+    def dist_to_rdist(self, dist):
         return dist ** self.p
 
 
@@ -498,16 +498,16 @@ cdef class WMinkowskiDistance(DistanceMetric):
                              ITYPE_t size) except -1:
         return pow(self.rdist(x1, x2, size), 1. / self.p)
 
-    cdef inline DTYPE_t rdist_to_dist(self, DTYPE_t rdist) except -1:
+    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
         return pow(rdist, 1. / self.p)
 
-    cdef inline DTYPE_t dist_to_rdist(self, DTYPE_t dist) except -1:
+    cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist) except -1:
         return pow(dist, self.p)
 
-    def rdist_to_dist_arr(self, rdist):
+    def rdist_to_dist(self, rdist):
         return rdist ** (1. / self.p)
 
-    def dist_to_rdist_arr(self, dist):
+    def dist_to_rdist(self, dist):
         return dist ** self.p
 
 
@@ -564,16 +564,16 @@ cdef class MahalanobisDistance(DistanceMetric):
                              ITYPE_t size) except -1:
         return sqrt(self.rdist(x1, x2, size))
 
-    cdef inline DTYPE_t rdist_to_dist(self, DTYPE_t rdist) except -1:
+    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
         return sqrt(rdist)
 
-    cdef inline DTYPE_t dist_to_rdist(self, DTYPE_t dist) except -1:
+    cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist) except -1:
         return dist * dist
 
-    def rdist_to_dist_arr(self, rdist):
+    def rdist_to_dist(self, rdist):
         return np.sqrt(rdist)
 
-    def dist_to_rdist_arr(self, dist):
+    def dist_to_rdist(self, dist):
         return dist ** 2
 
 
@@ -865,17 +865,17 @@ cdef class HaversineDistance(DistanceMetric):
         return 2 * asin(sqrt(sin_0 * sin_0
                              + cos(x1[0]) * cos(x2[0]) * sin_1 * sin_1))
 
-    cdef inline DTYPE_t rdist_to_dist(self, DTYPE_t rdist):
+    cdef inline DTYPE_t _rdist_to_dist(self, DTYPE_t rdist):
         return 2 * asin(sqrt(rdist))
 
-    cdef inline DTYPE_t dist_to_rdist(self, DTYPE_t dist):
+    cdef inline DTYPE_t _dist_to_rdist(self, DTYPE_t dist):
         cdef DTYPE_t tmp = sin(0.5 * dist)
         return tmp * tmp
 
-    def rdist_to_dist_arr(self, rdist):
+    def rdist_to_dist(self, rdist):
         return 2 * np.arcsin(np.sqrt(rdist))
 
-    def dist_to_rdist_arr(self, dist):
+    def dist_to_rdist(self, dist):
         tmp = np.sin(0.5 * dist)
         return tmp * tmp
 
