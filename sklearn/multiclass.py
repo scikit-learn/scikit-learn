@@ -152,7 +152,6 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         or `predict_proba`.
 
     n_jobs : int, optional, default: 1
-
         The number of jobs to use for the computation. If -1 all CPUs are used.
         If 1 is given, no parallel computing code is used at all, which is
         useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
@@ -316,6 +315,7 @@ def predict_ovo(estimators, classes, X):
             votes[pred == 0, i] += 1
             votes[pred == 1, j] += 1
             k += 1
+
     # find all places with maximum votes per sample
     maxima = votes == np.max(votes, axis=1)[:, np.newaxis]
 
@@ -347,7 +347,6 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         An estimator object implementing `fit` and `predict`.
 
     n_jobs : int, optional, default: 1
-
         The number of jobs to use for the computation. If -1 all CPUs are used.
         If 1 is given, no parallel computing code is used at all, which is
         useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
@@ -498,7 +497,6 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         numpy.random.
 
     n_jobs : int, optional, default: 1
-
         The number of jobs to use for the computation. If -1 all CPUs are used.
         If 1 is given, no parallel computing code is used at all, which is
         useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
