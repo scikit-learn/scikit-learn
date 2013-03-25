@@ -173,10 +173,3 @@ def test_nystroem_callable():
              n_components=(n_samples - 1),
              kernel_params={'log': kernel_log}).fit(X)
     assert_equal(len(kernel_log), n_samples * (n_samples - 1) / 2)
-
-
-if __name__ == "__main__":
-    test_additive_chi2_sampler()
-    test_input_validation()
-    test_skewed_chi2_sampler()
-    test_rbf_sampler()

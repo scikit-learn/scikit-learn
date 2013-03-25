@@ -26,8 +26,9 @@ from sklearn.metrics import explained_variance_score
 from sklearn.metrics import fbeta_score
 from sklearn.metrics import Scorer
 
-from sklearn.svm import SVC
+from sklearn.externals import six
 from sklearn.linear_model import Ridge
+from sklearn.svm import SVC
 
 
 class MockListClassifier(BaseEstimator):
@@ -170,7 +171,8 @@ def test_shuffle_split():
     ss1 = cval.ShuffleSplit(10, test_size=0.2, random_state=0)
     ss2 = cval.ShuffleSplit(10, test_size=2, random_state=0)
     ss3 = cval.ShuffleSplit(10, test_size=np.int32(2), random_state=0)
-    ss4 = cval.ShuffleSplit(10, test_size=long(2), random_state=0)
+    for typ in six.integer_types:
+        ss4 = cval.ShuffleSplit(10, test_size=typ(2), random_state=0)
     for t1, t2, t3, t4 in zip(ss1, ss2, ss3, ss4):
         assert_array_equal(t1[0], t2[0])
         assert_array_equal(t2[0], t3[0])
@@ -291,7 +293,7 @@ def test_cross_val_score_score_func():
         _score_func_args.append((y_test, y_predict))
         return 1.0
 
-    with warnings.catch_warnings(True):
+    with warnings.catch_warnings(record=True):
         score = cval.cross_val_score(clf, X, y, score_func=score_func)
     assert_array_equal(score, [1.0, 1.0, 1.0])
     assert len(_score_func_args) == 3
@@ -381,7 +383,7 @@ def test_cross_val_score_with_score_func_regression():
     assert_array_almost_equal(mse_scores, expected_mse, 2)
 
     # Explained variance
-    with warnings.catch_warnings(True):
+    with warnings.catch_warnings(record=True):
         ev_scores = cval.cross_val_score(reg, X, y, cv=5,
                                          score_func=explained_variance_score)
     assert_array_almost_equal(ev_scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
