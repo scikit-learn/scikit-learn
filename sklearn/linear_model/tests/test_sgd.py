@@ -104,7 +104,7 @@ true_result5 = [0, 1, 1]
 
 class CommonTest(object):
 
-    def _test_warm_start(self, lr):
+    def _test_warm_start(self, X, Y, lr):
         # Test that explicit warm restart...
         clf = self.factory(alpha=0.01, eta0=0.01, n_iter=5, shuffle=False,
                            learning_rate=lr)
@@ -131,13 +131,16 @@ class CommonTest(object):
         assert_array_almost_equal(clf3.coef_, clf2.coef_)
 
     def test_warm_start_constant(self):
-        self._test_warm_start("constant")
+        self._test_warm_start(X, Y, "constant")
 
     def test_warm_start_invscaling(self):
-        self._test_warm_start("invscaling")
+        self._test_warm_start(X, Y, "invscaling")
 
     def test_warm_start_optimal(self):
-        self._test_warm_start("optimal")
+        self._test_warm_start(X, Y, "optimal")
+
+    def test_warm_start_multiclass(self):
+        self._test_warm_start(X2, Y2, "optimal")
 
     def test_multiple_fit(self):
         """Test multiple calls of fit w/ different shaped inputs."""

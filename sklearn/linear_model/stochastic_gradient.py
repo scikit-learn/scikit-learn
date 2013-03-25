@@ -361,7 +361,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
                                                            self.classes_, y_ind)
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
-        if self.coef_ is None:
+        if self.coef_ is None or coef_init is not None:
             self._allocate_parameter_mem(n_classes, n_features,
                                          coef_init, intercept_init)
 
