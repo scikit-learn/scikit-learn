@@ -1,6 +1,6 @@
 """
 ====================================================================
-Comparison of the K-Means clustering and MiniBatchKMeans Algorithms
+Comparison of the K-Means and MiniBatchKMeans clustering algorithms
 ====================================================================
 
 We want to compare the performance of the MiniBatchKMeans and KMeans:
