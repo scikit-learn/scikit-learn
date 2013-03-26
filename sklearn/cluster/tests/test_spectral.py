@@ -173,11 +173,13 @@ def test_affinities():
     X, y = make_blobs(n_samples=40, random_state=2,
                       centers=[[1, 1], [2, 2]], cluster_std=0.4)
     kernels_available = kernel_metrics()
-    del kernels_available['additive_chi2']
     for kern in kernels_available:
-        sp = SpectralClustering(n_clusters=2, affinity=kern, random_state=0)
-        labels = sp.fit(X).labels_
-        assert_equal(y.shape, labels.shape)
+        # Additive chi^2 gives a negative similarity matrix which
+        # doesn't make sense for spectral clustering
+        if kern != 'additive_chi2':
+            sp = SpectralClustering(n_clusters=2, affinity=kern, random_state=0)
+            labels = sp.fit(X).labels_
+            assert_equal(y.shape, labels.shape)
 
     sp = SpectralClustering(n_clusters=2, affinity=lambda x, y: 1,
                             random_state=0)
