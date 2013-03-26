@@ -319,9 +319,11 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         clf = self.factory(loss="hinge", alpha=0.01, n_iter=10).fit(X, Y)
         assert_raises(NotImplementedError, clf.predict_proba, [3, 2])
 
-        # the log and modified_huber losses can output "probability" estimates
-        for loss in ("log", "modified_huber"):
-            clf = self.factory(loss=loss, alpha=0.01, n_iter=10).fit(X, Y)
+        # log and modified_huber losses can output probability estimates
+        # binary case
+        for loss in ["log", "modified_huber"]:
+            clf = self.factory(loss="modified_huber", alpha=0.01, n_iter=10)
+            clf.fit(X, Y)
             p = clf.predict_proba([3, 2])
             assert_true(p[0, 1] > 0.5)
             p = clf.predict_proba([-1, -1])
@@ -331,6 +333,49 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
             assert_true(p[0, 1] > p[0, 0])
             p = clf.predict_log_proba([-1, -1])
             assert_true(p[0, 1] < p[0, 0])
+
+        # log loss multiclass probability estimates
+        clf = self.factory(loss="log", alpha=0.01, n_iter=10).fit(X2, Y2)
+
+        d = clf.decision_function([[.1, -.1], [.3, .2]])
+        p = clf.predict_proba([[.1, -.1], [.3, .2]])
+        assert_array_equal(np.argmax(p, axis=1), np.argmax(d, axis=1))
+        assert_almost_equal(p[0].sum(), 1)
+        assert_true(np.all(p[0] >= 0))
+
+        p = clf.predict_proba([-1, -1])
+        d = clf.decision_function([-1, -1])
+        assert_array_equal(np.argsort(p[0]), np.argsort(d[0]))
+
+        l = clf.predict_log_proba([3, 2])
+        p = clf.predict_proba([3, 2])
+        assert_array_almost_equal(np.log(p), l)
+
+        l = clf.predict_log_proba([-1, -1])
+        p = clf.predict_proba([-1, -1])
+        assert_array_almost_equal(np.log(p), l)
+
+        # Modified Huber multiclass probability estimates; requires a separate
+        # test because the hard zero/one probabilities may destroy the
+        # ordering present in decision_function output.
+        clf = self.factory(loss="modified_huber", alpha=0.01, n_iter=10)
+        clf.fit(X2, Y2)
+        d = clf.decision_function([3, 2])
+        p = clf.predict_proba([3, 2])
+        if not isinstance(self, SparseSGDClassifierTestCase):
+            assert_equal(np.argmax(d, axis=1), np.argmax(p, axis=1))
+        else:   # XXX the sparse test gets a different X2 (?)
+            assert_equal(np.argmin(d, axis=1), np.argmin(p, axis=1))
+
+        # the following sample produces decision_function values < -1,
+        # which would cause naive normalization to fail (see comment
+        # in SGDClassifier.predict_proba)
+        x = X.mean(axis=0)
+        d = clf.decision_function(x)
+        if np.all(d < -1):  # XXX not true in sparse test case (why?)
+            p = clf.predict_proba(x)
+            assert_array_almost_equal(p[0], [1/3.] * 3)
+
 
     def test_sgd_l1(self):
         """Test L1 regularization"""

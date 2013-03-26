@@ -654,7 +654,12 @@ class SGDClassifier(BaseSGDClassifier, SelectorMixin):
     def predict_proba(self, X):
         """Probability estimates.
 
-        Probability estimates are only supported for binary classification.
+        Multiclass probability estimates are derived from binary (one-vs.-rest)
+        estimates by simple normalization, as recommended by Zadrozny and
+        Elkan.
+
+        Binary probability estimates for loss="modified_huber" are given by
+        (clip(decision_function(X), -1, 1) + 1) / 2.
 
         Parameters
         ----------
@@ -668,34 +673,59 @@ class SGDClassifier(BaseSGDClassifier, SelectorMixin):
 
         References
         ----------
+        Zadrozny and Elkan, "Transforming classifier scores into multiclass
+        probability estimates", SIGKDD'02,
+        http://www.research.ibm.com/people/z/zadrozny/kdd2002-Transf.pdf
 
         The justification for the formula in the loss="modified_huber"
         case is in the appendix B in:
         http://jmlr.csail.mit.edu/papers/volume2/zhang02c/zhang02c.pdf
         """
-        if len(self.classes_) != 2:
-            raise NotImplementedError("predict_(log_)proba only supported"
-                                      " for binary classification")
-
-        scores = self.decision_function(X)
-        proba = np.ones((scores.shape[0], 2), dtype=np.float64)
         if self.loss == "log":
-            proba[:, 1] = 1. / (1. + np.exp(-scores))
+            return self._predict_proba_lr(X)
 
         elif self.loss == "modified_huber":
-            proba[:, 1] = (np.clip(scores, -1, 1) + 1) / 2.
+            binary = (len(self.classes_) == 2)
+            scores = self.decision_function(X)
+
+            if binary:
+                prob2 = np.ones((scores.shape[0], 2))
+                prob = prob2[:, 1]
+            else:
+                prob = scores
+
+            np.clip(scores, -1, 1, prob)
+            prob += 1.
+            prob /= 2.
+
+            if binary:
+                prob2[:, 0] -= prob
+                prob = prob2
+            else:
+                # the above might assign zero to all classes, which doesn't
+                # normalize neatly; work around this to produce uniform
+                # probabilities
+                prob_sum = prob.sum(axis=1)
+                all_zero = (prob_sum == 0)
+                if np.any(all_zero):
+                    prob[all_zero, :] = 1
+                    prob_sum[all_zero] = len(self.classes_)
+
+                # normalize
+                prob /= prob_sum.reshape((prob.shape[0], -1))
+
+            return prob
 
         else:
             raise NotImplementedError("predict_(log_)proba only supported when"
                                       " loss='log' or loss='modified_huber' "
-                                      "(%s given)" % self.loss)
-        proba[:, 0] -= proba[:, 1]
-        return proba
+                                      "(%r given)" % self.loss)
 
     def predict_log_proba(self, X):
         """Log of probability estimates.
 
-        Log probability estimates are only supported for binary classification.
+        When loss="modified_huber", probability estimates may be hard zeros
+        and ones, so taking the logarithm is not possible.
 
         Parameters
         ----------
