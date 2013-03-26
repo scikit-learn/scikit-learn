@@ -306,6 +306,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
         Default : 'rbf'
         If it's a string, it can be one of 'nearest_neighbors', 'precomputed',
         'rbf' or one of the kernels supported by `sklearn.metrics.pairwise_kernels`.
+        Only kernels that have a non-negative similarity should be used.
 
     gamma: float
         Scaling factor of Gaussian (rbf) affinity kernel. Ignored for
