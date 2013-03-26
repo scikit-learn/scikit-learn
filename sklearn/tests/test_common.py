@@ -130,13 +130,13 @@ def test_estimators_sparse_data():
         # fit
         try:
             classifier.fit(X, y)
-        except TypeError, e:
+        except TypeError as e:
             if not 'sparse' in repr(e):
                 print("Estimator %s doesn't seem to fail gracefully on "
                       "sparse data" % name)
                 traceback.print_exc(file=sys.stdout)
                 raise e
-        except Exception, exc:
+        except Exception as exc:
             print("Estimator %s doesn't seem to fail gracefully on "
                   "sparse data" % name)
             traceback.print_exc(file=sys.stdout)
@@ -263,13 +263,13 @@ def test_transformers_sparse_data():
         # fit
         try:
             transformer.fit(X, y)
-        except TypeError, e:
+        except TypeError as e:
             if not 'sparse' in repr(e):
                 print("Estimator %s doesn't seem to fail gracefully on "
                       "sparse data" % name)
                 traceback.print_exc(file=sys.stdout)
                 raise e
-        except Exception, exc:
+        except Exception as exc:
             print("Estimator %s doesn't seem to fail gracefully on "
                   "sparse data" % name)
             traceback.print_exc(file=sys.stdout)
@@ -324,12 +324,12 @@ def test_estimators_nan_inf():
                         estimator.fit(X_train)
                     else:
                         estimator.fit(X_train, y)
-                except ValueError, e:
+                except ValueError as e:
                     if not 'inf' in repr(e) and not 'NaN' in repr(e):
                         print(error_string_fit, Estimator, e)
                         traceback.print_exc(file=sys.stdout)
                         raise e
-                except Exception, exc:
+                except Exception as exc:
                         print(error_string_fit, Estimator, exc)
                         traceback.print_exc(file=sys.stdout)
                         raise exc
@@ -347,12 +347,12 @@ def test_estimators_nan_inf():
                 if hasattr(estimator, "predict"):
                     try:
                         estimator.predict(X_train)
-                    except ValueError, e:
+                    except ValueError as e:
                         if not 'inf' in repr(e) and not 'NaN' in repr(e):
                             print(error_string_predict, Estimator, e)
                             traceback.print_exc(file=sys.stdout)
                             raise e
-                    except Exception, exc:
+                    except Exception as exc:
                         print(error_string_predict, Estimator, exc)
                         traceback.print_exc(file=sys.stdout)
                     else:
@@ -362,12 +362,12 @@ def test_estimators_nan_inf():
                 if hasattr(estimator, "transform"):
                     try:
                         estimator.transform(X_train)
-                    except ValueError, e:
+                    except ValueError as e:
                         if not 'inf' in repr(e) and not 'NaN' in repr(e):
                             print(error_string_transform, Estimator, e)
                             traceback.print_exc(file=sys.stdout)
                             raise e
-                    except Exception, exc:
+                    except Exception as exc:
                         print(error_string_transform, Estimator, exc)
                         traceback.print_exc(file=sys.stdout)
                     else:
@@ -425,7 +425,7 @@ def test_transformers_pickle():
 
         try:
             assert_array_almost_equal(pickled_X_pred, X_pred)
-        except Exception, exc:
+        except Exception as exc:
             succeeded = False
             print ("Transformer %s doesn't predict the same value "
                    "after pickling" % name)
@@ -454,21 +454,21 @@ def test_classifiers_one_label():
             # try to fit
             try:
                 classifier.fit(X_train, y)
-            except ValueError, e:
+            except ValueError as e:
                 if not 'class' in repr(e):
                     print(error_string_fit, Classifier, e)
                     traceback.print_exc(file=sys.stdout)
                     raise e
                 else:
                     continue
-            except Exception, exc:
+            except Exception as exc:
                     print(error_string_fit, Classifier, exc)
                     traceback.print_exc(file=sys.stdout)
                     raise exc
             # predict
             try:
                 assert_array_equal(classifier.predict(X_test), y)
-            except Exception, exc:
+            except Exception as exc:
                 print(error_string_predict, Classifier, exc)
                 traceback.print_exc(file=sys.stdout)
 
@@ -671,7 +671,7 @@ def test_classifiers_pickle():
 
             try:
                 assert_array_almost_equal(pickled_y_pred, y_pred)
-            except Exception, exc:
+            except Exception as exc:
                 succeeded = False
                 print ("Estimator %s doesn't predict the same value "
                        "after pickling" % name)
@@ -802,7 +802,7 @@ def test_regressor_pickle():
 
         try:
             assert_array_almost_equal(pickled_y_pred, y_pred)
-        except Exception, exc:
+        except Exception as exc:
             succeeded = False
             print ("Estimator %s doesn't predict the same value "
                    "after pickling" % name)

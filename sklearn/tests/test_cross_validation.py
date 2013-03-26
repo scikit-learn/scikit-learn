@@ -231,10 +231,10 @@ def test_stratified_shuffle_split_iter_no_indices():
     y = np.asarray([0, 1, 2] * 10)
 
     sss1 = cval.StratifiedShuffleSplit(y, indices=False, random_state=0)
-    train_mask, test_mask = iter(sss1).next()
+    train_mask, test_mask = next(iter(sss1))
 
     sss2 = cval.StratifiedShuffleSplit(y, indices=True, random_state=0)
-    train_indices, test_indices = iter(sss2).next()
+    train_indices, test_indices = next(iter(sss2))
 
     assert_array_equal(sorted(test_indices), np.where(test_mask)[0])
 
@@ -482,7 +482,7 @@ def test_cross_val_generator_mask_indices_same():
     # indices=True and when indices=False
     y = np.array([0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2])
     labels = np.array([1, 1, 2, 3, 3, 3, 4])
-    
+
     loo_mask = cval.LeaveOneOut(5, indices=False)
     loo_ind = cval.LeaveOneOut(5, indices=True)
     lpo_mask = cval.LeavePOut(10, 2, indices=False)
@@ -495,7 +495,7 @@ def test_cross_val_generator_mask_indices_same():
     lolo_ind = cval.LeaveOneLabelOut(labels, indices=True)
     lopo_mask = cval.LeavePLabelOut(labels, 2, indices=False)
     lopo_ind = cval.LeavePLabelOut(labels, 2, indices=True)
-    
+
     for cv_mask, cv_ind in [(loo_mask, loo_ind), (lpo_mask, lpo_ind),
             (kf_mask, kf_ind), (skf_mask, skf_ind), (lolo_mask, lolo_ind),
             (lopo_mask, lopo_ind)]:
