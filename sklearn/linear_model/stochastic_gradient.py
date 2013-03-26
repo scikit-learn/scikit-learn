@@ -654,7 +654,8 @@ class SGDClassifier(BaseSGDClassifier, SelectorMixin):
     def predict_proba(self, X):
         """Probability estimates.
 
-        Probability estimates are only supported for binary classification.
+        When loss="modified_huber", probability estimates are only available
+        for binary classification.
 
         Parameters
         ----------
@@ -668,34 +669,44 @@ class SGDClassifier(BaseSGDClassifier, SelectorMixin):
 
         References
         ----------
+        Multiclass probability estimates are derived from binary (one-vs.-rest)
+        estimates by simple normalization, as recommended by Zadrozny and
+        Elkan, "Transforming classifier scores into multiclass probability
+        estimates", SIGKDD'02,
+        http://www.research.ibm.com/people/z/zadrozny/kdd2002-Transf.pdf
 
+        Probability estimates for loss="modified_huber" are given by
         The justification for the formula in the loss="modified_huber"
         case is in the appendix B in:
         http://jmlr.csail.mit.edu/papers/volume2/zhang02c/zhang02c.pdf
         """
-        if len(self.classes_) != 2:
-            raise NotImplementedError("predict_(log_)proba only supported"
-                                      " for binary classification")
-
-        scores = self.decision_function(X)
-        proba = np.ones((scores.shape[0], 2), dtype=np.float64)
         if self.loss == "log":
-            proba[:, 1] = 1. / (1. + np.exp(-scores))
+            return self._predict_proba_lr(X)
 
         elif self.loss == "modified_huber":
-            proba[:, 1] = (np.clip(scores, -1, 1) + 1) / 2.
+            if len(self.classes_) != 2:
+                raise NotImplementedError("predict_(log_)proba only supported"
+                                          " for binary classification"
+                                          " when loss='modified_huber'")
+
+            scores = self.decision_function(X)
+            proba = np.ones((scores.shape[0], 2))
+            np.clip(scores, -1, 1, proba[:, 1])
+            proba[:, 1] += 1.
+            proba[:, 1] /= 2.
+            proba[:, 0] -= proba[:, 1]
+            return proba
 
         else:
             raise NotImplementedError("predict_(log_)proba only supported when"
                                       " loss='log' or loss='modified_huber' "
-                                      "(%s given)" % self.loss)
-        proba[:, 0] -= proba[:, 1]
-        return proba
+                                      "(%r given)" % self.loss)
 
     def predict_log_proba(self, X):
         """Log of probability estimates.
 
-        Log probability estimates are only supported for binary classification.
+        When loss="modified_huber", probability estimates are only available
+        for binary classification.
 
         Parameters
         ----------
