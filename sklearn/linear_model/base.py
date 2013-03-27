@@ -223,7 +223,12 @@ class LinearClassifierMixin(ClassifierMixin):
         return self.classes_[indices]
 
     def _predict_proba_lr(self, X):
-        # 1. / (1. + np.exp(-scores)), computed in-place
+        """Probability estimation for OvR logistic regression.
+
+        Positive class probabilities are computed as
+        1. / (1. + np.exp(-self.decision_function(X)));
+        multiclass is handled by normalizing that over all classes.
+        """
         prob = self.decision_function(X)
         prob *= -1
         np.exp(prob, prob)
