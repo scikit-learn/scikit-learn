@@ -688,18 +688,20 @@ class SGDClassifier(BaseSGDClassifier, SelectorMixin):
             binary = (len(self.classes_) == 2)
             scores = self.decision_function(X)
 
-            if len(self.classes_) == 2:
-                prob = np.ones((scores.shape[0], 2))
-                np.clip(scores, -1, 1, prob[:, 1])
-                prob[:, 1] += 1.
-                prob[:, 1] /= 2.
-                prob[:, 0] -= prob[:, 1]
+            if binary:
+                prob2 = np.ones((scores.shape[0], 2))
+                prob = prob2[:, 1]
             else:
                 prob = scores
-                np.clip(prob, -1, 1, prob)
-                prob[:] += 1.
-                prob[:] /= 2.
 
+            np.clip(scores, -1, 1, prob)
+            prob[:] += 1.
+            prob[:] /= 2.
+
+            if binary:
+                prob2[:, 0] -= prob
+                prob = prob2
+            else:
                 # the above might assign zero to all classes, which doesn't
                 # normalize neatly; work around this to produce uniform
                 # probabilities
@@ -722,8 +724,8 @@ class SGDClassifier(BaseSGDClassifier, SelectorMixin):
     def predict_log_proba(self, X):
         """Log of probability estimates.
 
-        When loss="modified_huber", probability estimates are only available
-        for binary classification.
+        When loss="modified_huber", probability estimates may be hard zeros
+        and ones, so taking the logarithm is not possible.
 
         Parameters
         ----------
