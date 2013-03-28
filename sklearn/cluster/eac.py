@@ -220,6 +220,6 @@ class EAC(BaseEstimator, ClusterMixin):
         params: dict
             Overwrite keywords from __init__.
         """
-        self.final_clusterer = eac(X, **self.get_params())
-        self.labels_ = self.final_clusterer.labels_
+        final_clusterer = eac(X, **self.get_params())
+        self.labels_ = final_clusterer.labels_
         return self
