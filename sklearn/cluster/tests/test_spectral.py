@@ -170,8 +170,8 @@ def test_affinities():
     labels = sp.fit(X).labels_
     assert_equal(adjusted_rand_score(y, labels), 1)
 
-    X, y = make_blobs(n_samples=40, random_state=2,
-                      centers=[[1, 1], [2, 2]], cluster_std=0.4)
+    X = np.random.rand(10, 5) * 10
+
     kernels_available = kernel_metrics()
     for kern in kernels_available:
         # Additive chi^2 gives a negative similarity matrix which
@@ -179,12 +179,13 @@ def test_affinities():
         if kern != 'additive_chi2':
             sp = SpectralClustering(n_clusters=2, affinity=kern, random_state=0)
             labels = sp.fit(X).labels_
-            assert_equal(y.shape, labels.shape)
+            print(labels)
+            assert_equal((X.shape[0],), labels.shape)
 
     sp = SpectralClustering(n_clusters=2, affinity=lambda x, y: 1,
                             random_state=0)
     labels = sp.fit(X).labels_
-    assert_equal(y.shape, labels.shape)
+    assert_equal((X.shape[0],), labels.shape)
 
     def histogram(x, y, **kwargs):
         """Histogram kernel implemented as a callable."""
@@ -193,7 +194,7 @@ def test_affinities():
 
     sp = SpectralClustering(n_clusters=2, affinity=histogram, random_state=0)
     labels = sp.fit(X).labels_
-    assert_equal(y.shape, labels.shape)
+    assert_equal((X.shape[0],), labels.shape)
 
     # raise error on unknown affinity
     sp = SpectralClustering(n_clusters=2, affinity='<unknown>')
