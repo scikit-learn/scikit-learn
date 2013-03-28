@@ -31,8 +31,8 @@ The disadvantages of support vector machines include:
       samples, the method is likely to give poor performances.
 
     - SVMs do not directly provide probability estimates, these are
-      calculated using five-fold cross-validation, and thus
-      performance can suffer.
+      calculated using an expensive five-fold cross-validation
+      (see :ref:`Scores and probabilities <_scores_probabilities>`, below).
 
 The support vector machines in scikit-learn support both dens
 (``numpy.ndarray`` and convertible to that by ``numpy.asarray``) and
@@ -41,7 +41,6 @@ an SVM to make predictions for sparse data, it must have been fit on such
 data. For optimal performance, use C-ordered ``numpy.ndarray`` (dense) or
 ``scipy.sparse.csr_matrix`` (sparse) with ``dtype=float64``.
 
-.. TODO: add reference to probability estimates
 
 .. _svm_classification:
 
@@ -194,6 +193,30 @@ this:
 +------------------------+------------------------+for SVs of class 2|
 |:math:`\alpha^{1}_{2,0}`|:math:`\alpha^{1}_{2,1}`|                  |
 +------------------------+------------------------+------------------+
+
+
+.. _scores_probabilities:
+
+Scores and probabilities
+------------------------
+
+The :class:`SVC` method ``decision_function`` gives per-class scores 
+for each sample (or a single score per sample in the binary case).
+When the constructor option ``probability`` is set to ``True``,
+class membership probability estimates
+(from the methods ``predict_proba`` and ``predict_log_proba``) are enabled.
+In the binary case, the probabilities are calibrated using Platt's method:
+logistic regression on the SVM's scores,
+fit by an additional cross-validation on the training data.
+Needless to say, this is an expensive operation for large datasets.
+In the multiclass case, this is extended as per Wu et al. (2004).
+
+.. topic:: References:
+
+ * Wu, Lin and Weng,
+   `"Probability estimates for multi-class classification by pairwise coupling"
+   <http://www.csie.ntu.edu.tw/~cjlin/papers/svmprob/svmprob.pdf>`_.
+   JMLR 5:975-1005, 2004.
 
 
 Unbalanced problems
