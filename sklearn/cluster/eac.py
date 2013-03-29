@@ -10,7 +10,6 @@ EAC: Evidence Accumulation Clustering
 import numpy as np
 
 from sklearn.cluster import KMeans
-from sklearn.cluster import DBSCAN  #TODO: Remove after create_default_final_clusterer
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state
@@ -85,11 +84,11 @@ def eac(X, initial_clusterers=None, final_clusterer=None, use_distance=True,
     if use_distance:
         if use_distance is True:
             # Turn into a distance matrix
-            C = 1. / (C + 1)
-        else:
+            C = 1. / (C + 0.5)
+        elif callable(use_distance):  # If a callable
             C = use_distance(C)
     final_clusterer.fit(C)
-    return model
+    return final_clusterer
 
 
 def update_coassociation_matrix(C, labels):
@@ -97,7 +96,7 @@ def update_coassociation_matrix(C, labels):
     """
     labels = np.asarray(labels)
     for i in range(len(labels)):
-        indices = np.where(labels[i:] == labels[i])
+        indices = np.where(labels[i:] == labels[i])[0] + i
         C[i, indices] += 1
     return C
 
@@ -144,17 +143,22 @@ def _kmeans_random_k(n_samples, random_state=None, **kmeans_args):
     return (KMeans(n_clusters=k, **kmeans_args) for k in k_values)
 
 
-def create_default_final_clusterer(random_state):
-    # TODO: MST clustering is the default in the paper, should use that.
-    return DBSCAN()
+def create_default_final_clusterer(random_state=None):
+    random_state = check_random_state(random_state)
+    # TODO: MST clustering is the default in the paper, should use that, but it hasn't been implemented yet.
+    return KMeans(n_clusters=3)
 
 
 class EAC(BaseEstimator, ClusterMixin):
     """Perform EAC clustering from vector array or distance matrix.
 
-    DBSCAN - Density-Based Spatial Clustering of Applications with Noise.
-    Finds core samples of high density and expands clusters from them.
-    Good for data which contains clusters of similar density.
+    Evidence Accumulation Clustering (EAC) is an ensemble cluster that uses
+    many iterations of k-means with randomly chosen k values (``n_clusters``)
+    each time. The number of times two instances are clustered together is
+    given in a co-association matrix, which is then clustered a final time to
+    produce the 'final clustering'. In practice, this gives a more easily
+    separable set of attributes that the original attributes.
+    
 
     Parameters
     ----------
@@ -217,9 +221,7 @@ class EAC(BaseEstimator, ClusterMixin):
             Array of distances between samples, or a feature array.
             The array is treated as a feature array unless the metric is
             given as 'precomputed'.
-        params: dict
-            Overwrite keywords from __init__.
         """
-        final_clusterer = eac(X, **self.get_params())
+        final_clusterer = eac(X, final_clusterer=self.final_clusterer)
         self.labels_ = final_clusterer.labels_
         return self

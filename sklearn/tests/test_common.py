@@ -500,7 +500,10 @@ def test_clustering():
 
         assert_equal(alg.labels_.shape, (n_samples,))
         pred = alg.labels_
-        assert_greater(adjusted_rand_score(pred, y), 0.4)
+        score = adjusted_rand_score(pred, y)
+        error_message = "{} failed with score {} (<0.4 benchmark)".format(name,
+                                                                          score)
+        assert_greater(score, 0.4, error_message)
         # fit another time with ``fit_predict`` and compare results
         if name is 'SpectralClustering':
             # there is no way to make Spectral clustering deterministic :(

@@ -1,5 +1,5 @@
 """
-Tests for DBSCAN clustering algorithm
+Tests for EAC clustering algorithm
 """
 
 import pickle
@@ -18,5 +18,5 @@ X = generate_clustered_data(n_clusters=n_clusters)
 
 def test_eac():
     """Tests the EAC algorithm runs with basic data."""
-    clusterer = EAC().fit(X)
+    clusterer = EAC(use_distance=True).fit(X)
     
