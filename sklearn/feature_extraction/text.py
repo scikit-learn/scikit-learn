@@ -656,7 +656,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         """Construct COO matrix from indices and values."""
         # j_indices is either an array.array or numpy array of np.int32 dtype
         if type(j_indices) is array.array:
-            j_indices = np.frombuffer(j_indices, dtype=np.intc)
+            try:
+                j_indices = np.frombuffer(j_indices, dtype=np.intc)
+            except ValueError:
+                j_indices = np.array([])
         shape = (n_doc, n_features)
         spmatrix = sp.coo_matrix((values, (i_indices, j_indices)),
                                  shape=shape, dtype=self.dtype)
