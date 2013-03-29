@@ -294,7 +294,7 @@ reasonable (please see  the :ref:`reference documentation
   CountVectorizer(analyzer=u'word', binary=False, charset=u'utf-8',
           charset_error=u'strict', dtype=<type 'numpy.int64'>,
           input=u'content', lowercase=True, max_df=1.0, max_features=None,
-          min_df=1, ngram_range=(1, 1), preprocessor=None, 
+          min_df=1, n_jobs=1, ngram_range=(1, 1), preprocessor=None, 
           sort_features=True, stop_words=None,
           strip_accents=None, token_pattern=u'(?u)\\b\\w\\w+\\b',
           tokenizer=None, vocabulary=None)
