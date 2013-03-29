@@ -358,30 +358,15 @@ def test_vectorizer():
     # test without vocabulary
     v1 = CountVectorizer(max_df=0.5)
     counts_train = v1.fit_transform(train_data)
-    train_data = iter(ALL_FOOD_DOCS[:-1])
-
-    # test parallel execution
-    multi_v = CountVectorizer(max_df=0.5, n_jobs=10)
-    counts_train_multi = multi_v.fit_transform(train_data)
-    np.testing.assert_equal(counts_train.todense(),
-                            counts_train_multi.todense())
     if hasattr(counts_train, 'tocsr'):
         counts_train = counts_train.tocsr()
     assert_equal(counts_train[0, v1.vocabulary_["pizza"]], 2)
 
-    # test parallel not sorted
-    multi_v = CountVectorizer(n_jobs=10,
-                              sort_features=False).fit_transform(ALL_FOOD_DOCS)
-    serial_v = CountVectorizer(sort_features=True).fit_transform(ALL_FOOD_DOCS)
-    np.testing.assert_equal(multi_v.todense(), serial_v.todense())
-
     # build a vectorizer v1 with the same vocabulary as the one fitted by v1
     v2 = CountVectorizer(vocabulary=v1.vocabulary_)
-    # test parallel execution
-    v3 = CountVectorizer(vocabulary=v1.vocabulary_, n_jobs=3)
 
     # compare that the two vectorizer give the same output on the test sample
-    for v in (v1, v2, v3):
+    for v in (v1, v2):
         counts_test = v.transform(test_data)
         if hasattr(counts_test, 'tocsr'):
             counts_test = counts_test.tocsr()

@@ -20,7 +20,7 @@ from operator import itemgetter
 import re
 import unicodedata
 import warnings
-import multiprocessing as mp
+from multiprocessing import Pool, cpu_count
 import copy_reg
 import types
 
@@ -93,8 +93,9 @@ def _check_stop_list(stop):
         return stop
 
 
-# below two functions are necessary to pickle a method for mp.Pool to work
-# within an object.  They need to be outside classes.
+# below two functions are necessary to pickle a method for
+# multiprocessing.Pool to work within an object.
+# They need to be outside classes.
 
 def _pickle_method(method):
     """Tell python how to pickle a method."""
@@ -626,10 +627,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.stop_words = stop_words
         self.max_df = max_df
         self.min_df = min_df
-        if n_jobs == -1:
-            self.n_jobs = mp.cpu_count()
-        else:
-            self.n_jobs = n_jobs
+        self.n_jobs = n_jobs
         if max_df < 0 or min_df < 0:
             raise ValueError("negative value for max_df of min_df")
         self.max_features = max_features
@@ -768,7 +766,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)
 
         chunk_size = int(np.ceil(float(len(raw_documents))/n_jobs))
-        pool = mp.Pool(processes=n_jobs)
+        pool = Pool(processes=n_jobs)
         i_arrays = []
         to_merge_list = []
         total_n_doc = 0
@@ -958,6 +956,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         sort_features = self.sort_features
         binary = self.binary
         n_jobs = self.n_jobs
+        if n_jobs == -1:
+            n_jobs = cpu_count()
         if n_jobs == 1:  # use serial execution
             if fixed_vocab:
                 feature_to_position = self.vocabulary_
@@ -1043,15 +1043,18 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         # advance
         j_indices = _make_int_array()
         binary = self.binary
+        n_jobs = self.n_jobs
+        if n_jobs == -1:
+            n_jobs = cpu_count()
         # use the same matrix-building strategy as fit_transform
-        if self.n_jobs == 1:
+        if n_jobs == 1:
             j_indices, n_doc, features_per_doc = \
                 self._count_fixed_vocab(raw_documents)
             i_indices = self._make_i_indices(features_per_doc)
         else:
             i_indices, j_indices, n_doc = \
                 self._parallel_count(raw_documents, fixed_vocab=True,
-                                     n_jobs=self.n_jobs
+                                     n_jobs=n_jobs
                                      )
         if i_indices is None:
             i_indices = np.empty(0, dtype=np.int32)
