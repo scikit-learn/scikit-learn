@@ -51,6 +51,9 @@ Changelog
      converts their ``coef_`` into a sparse matrix, meaning stored models
      trained using these estimators can be made much more compact.
 
+   - :class:`linear_model.SGDClassifier` now produces multiclass probability
+     estimates when trained under log loss or modified Huber loss.
+
    - Hyperlinks to documentation in example code on the website by
      `Martin Luessi`_.
 

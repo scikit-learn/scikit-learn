@@ -120,18 +120,7 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in ``self.classes_``.
         """
-        # 1. / (1. + np.exp(-scores)), computed in-place
-        prob = self.decision_function(X)
-        prob *= -1
-        np.exp(prob, prob)
-        prob += 1
-        np.reciprocal(prob, prob)
-        if len(prob.shape) == 1:
-            return np.vstack([1 - prob, prob]).T
-        else:
-            # OvR, not softmax, like Liblinear's predict_probability
-            prob /= prob.sum(axis=1).reshape((prob.shape[0], -1))
-            return prob
+        return self._predict_proba_lr(X)
 
     def predict_log_proba(self, X):
         """Log of probability estimates.
