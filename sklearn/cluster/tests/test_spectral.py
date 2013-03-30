@@ -1,11 +1,14 @@
 """Testing for Spectral Clustering methods"""
 
 from sklearn.externals.six.moves import cPickle
+from sklearn.metrics.pairwise import kernel_metrics
+
 dumps, loads = cPickle.dumps, cPickle.loads
 
 import numpy as np
 from scipy import sparse
 
+from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
@@ -156,8 +159,8 @@ def test_affinities():
     # Note: in the following, random_state has been selected to have
     # a dataset that yields a stable eigen decomposition both when built
     # on OSX and Linux
-    X, y = make_blobs(n_samples=40, random_state=2, centers=[[1, 1], [-1, -1]],
-                      cluster_std=0.4)
+    X, y = make_blobs(n_samples=40, random_state=2,
+                      centers=[[1, 1], [-1, -1]], cluster_std=0.4)
     # nearest neighbors affinity
     sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
                             random_state=0)
@@ -167,6 +170,32 @@ def test_affinities():
     sp = SpectralClustering(n_clusters=2, gamma=2, random_state=0)
     labels = sp.fit(X).labels_
     assert_equal(adjusted_rand_score(y, labels), 1)
+
+    X = check_random_state(10).rand(10, 5) * 10
+
+    kernels_available = kernel_metrics()
+    for kern in kernels_available:
+        # Additive chi^2 gives a negative similarity matrix which
+        # doesn't make sense for spectral clustering
+        if kern != 'additive_chi2':
+            sp = SpectralClustering(n_clusters=2, affinity=kern, random_state=0)
+            labels = sp.fit(X).labels_
+            print(labels)
+            assert_equal((X.shape[0],), labels.shape)
+
+    sp = SpectralClustering(n_clusters=2, affinity=lambda x, y: 1,
+                            random_state=0)
+    labels = sp.fit(X).labels_
+    assert_equal((X.shape[0],), labels.shape)
+
+    def histogram(x, y, **kwargs):
+        """Histogram kernel implemented as a callable."""
+        assert_equal(kwargs, {})    # no kernel_params that we didn't ask for
+        return np.minimum(x, y).sum()
+
+    sp = SpectralClustering(n_clusters=2, affinity=histogram, random_state=0)
+    labels = sp.fit(X).labels_
+    assert_equal((X.shape[0],), labels.shape)
 
     # raise error on unknown affinity
     sp = SpectralClustering(n_clusters=2, affinity='<unknown>')
