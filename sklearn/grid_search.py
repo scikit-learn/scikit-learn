@@ -560,9 +560,9 @@ class GridSearchCV(BaseSearchCV):
         the folds, and the loss minimized is the total loss per sample,
         and not the mean loss across the folds.
 
-    cv : integer or crossvalidation generator, optional
-        If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see
+    cv : integer or cross-validation generator, optional
+        If an integer is passed, it is the number of folds (default 3).
+        Specific cross-validation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects
 
     refit : boolean
@@ -732,9 +732,9 @@ class RandomizedSearchCV(BaseSearchCV):
         the folds, and the loss minimized is the total loss per sample,
         and not the mean loss across the folds.
 
-    cv : integer or crossvalidation generator, optional
-        If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see
+    cv : integer or cross-validation generator, optional
+        If an integer is passed, it is the number of folds (default 3).
+        Specific cross-validation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects
 
     refit : boolean
