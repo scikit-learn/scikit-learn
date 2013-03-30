@@ -8,6 +8,7 @@ dumps, loads = cPickle.dumps, cPickle.loads
 import numpy as np
 from scipy import sparse
 
+from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_raises
@@ -170,7 +171,7 @@ def test_affinities():
     labels = sp.fit(X).labels_
     assert_equal(adjusted_rand_score(y, labels), 1)
 
-    X = np.random.rand(10, 5) * 10
+    X = check_random_state(10).rand(10, 5) * 10
 
     kernels_available = kernel_metrics()
     for kern in kernels_available:
