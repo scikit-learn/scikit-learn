@@ -20,9 +20,7 @@ from operator import itemgetter
 import re
 import unicodedata
 import warnings
-from multiprocessing import Pool, cpu_count
-import copy_reg
-import types
+from multiprocessing import Queue, Process, cpu_count
 
 import numpy as np
 import scipy.sparse as sp
@@ -91,30 +89,6 @@ def _check_stop_list(stop):
         raise ValueError("not a built-in stop list: %s" % stop)
     else:               # assume it's a collection
         return stop
-
-
-# below two functions are necessary to pickle a method for
-# multiprocessing.Pool to work within an object.
-# They need to be outside classes.
-
-def _pickle_method(method):
-    """Tell python how to pickle a method."""
-    func_name = method.im_func.__name__
-    obj = method.im_self
-    cls = method.im_class
-    return _unpickle_method, (func_name, obj, cls)
-
-
-def _unpickle_method(func_name, obj, cls):
-    """Tell python how to unpickle a method."""
-    for cls in cls.mro():
-        try:
-            func = cls.__dict__[func_name]
-        except KeyError:
-            pass
-        else:
-            break
-    return func.__get__(obj, cls)
 
 
 class VectorizerMixin(object):
@@ -753,34 +727,48 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             j_ind_old.extend([position_remap[j] for j in j_ind])
         return j_ind_old, f2p_old
 
+    def _run_queue(self, fixed_vocab, in_q, out_q):
+        """Run the queue created in _parallel_count."""
+        idx, chunk = in_q.get()
+        if fixed_vocab:
+            out_q.put((idx, self._count_fixed_vocab(chunk)))
+        else:
+            out_q.put((idx, self._count_new_vocab(chunk)))
+
     def _parallel_count(self, raw_documents, fixed_vocab, n_jobs):
         """Use mp to parallelize _count_new_vocab and _count_fixed_vocab.
 
-        Chunk raw documents into a list and map _count_*_vocab on it. This
-        requires pickling a method using functions located outside of the
-        class. Then merge the outputs using _merge_outputs.
+        Chunk raw documents into n_jobs lists and apply _count_*_vocab on each
+        using pythone Queue module.
+        Then merge the outputs using _merge_outputs.
 
         """
         if not hasattr(raw_documents, "__getitem__"):
             raw_documents = [doc for doc in raw_documents]
         if len(raw_documents) == 0:
             raise ValueError("No documents provided")
-        # tell python how to pickle a method
-        copy_reg.pickle(types.MethodType, _pickle_method, _unpickle_method)
-
         chunk_size = int(np.ceil(float(len(raw_documents))/n_jobs))
-        pool = Pool(processes=n_jobs)
+        in_q = Queue(n_jobs)
+        out_q = Queue(n_jobs)
+        procs = []
+        for i, chunk in enumerate(self._chunk_docs(raw_documents, chunk_size)):
+            in_q.put((i, chunk))
+        n_chunks = i + 1
+        for i in xrange(n_chunks):
+            procs.append(Process(target=self._run_queue,
+                                 args=(fixed_vocab, in_q, out_q)))
+        for proc in procs:
+            proc.start()
+        process_output = [out_q.get() for i in xrange(len(procs))]
+        for proc in procs:
+            proc.join()
+        process_output.sort()
         i_arrays = []
         to_merge_list = []
         total_n_doc = 0
         if not fixed_vocab:
-            process_output = \
-                pool.map(self._count_new_vocab,
-                         self._chunk_docs(raw_documents, chunk_size))
-            pool.close()
-            pool.join()
-            for (j_indices, feature_to_position,
-                 n_doc, features_per_doc) in process_output:
+            for i, (j_indices, feature_to_position,
+                    n_doc, features_per_doc) in process_output:
                 i_array = self._make_i_indices(features_per_doc, total_n_doc)
                 total_n_doc += n_doc
                 # if i_array is None, no features were found
@@ -789,6 +777,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                     continue
                 i_arrays.append(i_array)
                 to_merge_list.append((j_indices, feature_to_position))
+
             if len(i_arrays) == 0:
                 error_str = ''.join(["empty vocabulary;",
                                      " Perhaps the document",
@@ -799,13 +788,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             j_indices = np.frombuffer(j_indices, dtype=np.intc)
             return i_indices, j_indices, feature_to_position, total_n_doc
         else:  # fixed vocabulary
-            process_output = pool.map(self._count_fixed_vocab,
-                                      self._chunk_docs(raw_documents,
-                                                       chunk_size)
-                                      )
-            pool.close()
-            pool.join()
-            for (j_indices, n_doc, features_per_doc) in process_output:
+            for i, (j_indices, n_doc, features_per_doc) in process_output:
                 i_array = self._make_i_indices(features_per_doc, total_n_doc)
                 total_n_doc += n_doc
                 if i_array is None:
@@ -913,12 +896,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 i_vals.fill(fill_val)
                 combined_arrays.append(i_vals)
         if number_of_docs_with_features == 1:
-            i_indices = combined_arrays[0]
+            return combined_arrays[0]
         elif number_of_docs_with_features == 0:  # no docs found with features
-            i_indices = None
+            return None
         else:  # more than one doc with features
-            i_indices = np.concatenate(combined_arrays)
-        return i_indices
+            return np.concatenate(combined_arrays)
 
     def fit(self, raw_documents, y=None):
         """Learn a vocabulary dictionary of all tokens in the raw documents.
