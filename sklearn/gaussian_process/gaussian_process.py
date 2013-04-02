@@ -274,7 +274,11 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         self.y_shape = np.array(y).shape
         y = array2d(y)
 
+        # If the y values are given to fit() as a list:
         if len(self.y_shape) == 1:
+            y = y.T
+        # If the y vales are given to fit() as an array, but transposed wrong
+        elif self.y_shape[0] == 1 and self.y_shape[1] == X.shape[0]:
             y = y.T
 
         # Check shapes of DOE & observations
@@ -461,6 +465,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
             if len(self.y_shape) == 1:
                 y = y.ravel()
+            elif self.y_shape[0] == 1 and self.y_shape[1] == X.shape[0]:
+                y = y.T
 
             # Mean Squared Error
             if eval_MSE:
@@ -496,6 +502,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
                 if len(self.y_shape) == 1:
                     MSE = MSE.ravel()
+                elif self.y_shape[0] == 1 and self.y_shape[1] == X.shape[0]:
+                    MSE = MSE.T
 
                 return y, MSE
 
