@@ -497,12 +497,12 @@ def test_cross_val_generator_mask_indices_same():
     lopo_ind = cval.LeavePLabelOut(labels, 2, indices=True)
 
     for cv_mask, cv_ind in [(loo_mask, loo_ind), (lpo_mask, lpo_ind),
-            (kf_mask, kf_ind), (skf_mask, skf_ind), (lolo_mask, lolo_ind),
-            (lopo_mask, lopo_ind)]:
+                            (kf_mask, kf_ind), (skf_mask, skf_ind),
+                            (lolo_mask, lolo_ind), (lopo_mask, lopo_ind)]:
         for (train_mask, test_mask), (train_ind, test_ind) in \
                 zip(cv_mask, cv_ind):
-            assert_array_equal(np.where(train_mask == True)[0], train_ind)
-            assert_array_equal(np.where(test_mask == True)[0], test_ind)
+            assert_array_equal(np.where(train_mask)[0], train_ind)
+            assert_array_equal(np.where(test_mask)[0], test_ind)
 
 
 def test_bootstrap_errors():

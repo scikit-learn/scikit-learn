@@ -2,7 +2,7 @@
 # License: BSD-style.
 
 from array import array
-from collections import Mapping, Sequence
+from collections import Mapping
 from operator import itemgetter
 
 import numpy as np

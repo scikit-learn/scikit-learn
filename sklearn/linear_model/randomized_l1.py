@@ -8,7 +8,6 @@ sparse Logistic Regression
 # License: BSD Style.
 import itertools
 from abc import ABCMeta, abstractmethod
-import sys
 
 import numpy as np
 from scipy.sparse import issparse

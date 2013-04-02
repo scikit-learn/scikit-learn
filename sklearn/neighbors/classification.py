@@ -308,7 +308,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                             dtype=np.int)
         else:
             mode = np.array([weighted_mode(pl, w)[0]
-                             for (pl, w) in zip(pred_labels[inliers], weights)],
+                             for (pl, w)
+                             in zip(pred_labels[inliers], weights)],
                             dtype=np.int)
 
         mode = mode.ravel().astype(np.int)

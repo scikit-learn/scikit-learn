@@ -288,7 +288,7 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
     If affinity is the adjacency matrix of a graph, this method can be
     used to find normalized graph cuts.
 
-    When calling ``fit``, an affinity matrix is constructed using either 
+    When calling ``fit``, an affinity matrix is constructed using either
     kernel function such the Gaussian (aka RBF) kernel of the euclidean
     distanced ``d(X, X)``::
 
@@ -486,5 +486,3 @@ class SpectralClustering(BaseEstimator, ClusterMixin):
                 " 0.15.")
     def k(self):
         return self.n_clusters
-
-

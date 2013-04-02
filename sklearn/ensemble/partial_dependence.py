@@ -335,7 +335,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     n_rows = int(np.ceil(len(features) / float(n_cols)))
     axs = []
     for i, fx, name, (pdp, axes) in zip(count(), features, names,
-                                         pd_result):
+                                        pd_result):
         ax = fig.add_subplot(n_rows, n_cols, i + 1)
 
         if len(axes) == 1:

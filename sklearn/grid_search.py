@@ -316,9 +316,9 @@ def _check_param_grid(param_grid):
                                  "list.")
 
 
-_CVScoreTuple = namedtuple('_CVScoreTuple', ('parameters',
-                                           'mean_validation_score',
-                                           'cv_validation_scores'))
+_CVScoreTuple = namedtuple('_CVScoreTuple',
+                           ('parameters', 'mean_validation_score',
+                            'cv_validation_scores'))
 
 
 class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):

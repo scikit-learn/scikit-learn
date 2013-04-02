@@ -319,7 +319,7 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
             try:
                 person_folder = join(data_folder_path, name)
             except TypeError:
-                person_folder = join(data_folder_path, str(name,'UTF-8'))
+                person_folder = join(data_folder_path, str(name, 'UTF-8'))
             filenames = list(sorted(listdir(person_folder)))
             file_path = join(person_folder, filenames[idx])
             file_paths.append(file_path)

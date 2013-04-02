@@ -376,7 +376,6 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
             p = clf.predict_proba(x)
             assert_array_almost_equal(p[0], [1/3.] * 3)
 
-
     def test_sgd_l1(self):
         """Test L1 regularization"""
         n = len(X4)
