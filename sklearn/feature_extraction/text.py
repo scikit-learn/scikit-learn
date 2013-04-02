@@ -21,6 +21,7 @@ import re
 import unicodedata
 import warnings
 from multiprocessing import Queue, Process, cpu_count
+import cPickle as pickle
 
 import numpy as np
 import scipy.sparse as sp
@@ -31,6 +32,7 @@ from ..preprocessing import normalize
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from sklearn.externals import six
+
 
 __all__ = ['CountVectorizer',
            'ENGLISH_STOP_WORDS',
@@ -564,6 +566,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         columns is determined by features first encountered.
         Always True if n_jobs > 1.
 
+    n_jobs: int, 1 by default.
+        If n_jobs > 1 uses parallel execution to count features.  Final feature
+        position may not be the same as the serial version unless sort_features
+        is set to True.
 
     Attributes
     ----------
@@ -729,11 +735,13 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     def _run_queue(self, fixed_vocab, in_q, out_q):
         """Run the queue created in _parallel_count."""
-        idx, chunk = in_q.get()
+        idx, chunk = pickle.loads(in_q.get())
         if fixed_vocab:
-            out_q.put((idx, self._count_fixed_vocab(chunk)))
+            out_q.put(pickle.dumps((idx, self._count_fixed_vocab(chunk)),
+                                   protocol=2))
         else:
-            out_q.put((idx, self._count_new_vocab(chunk)))
+            out_q.put(pickle.dumps((idx, self._count_new_vocab(chunk)),
+                                   protocol=2))
 
     def _parallel_count(self, raw_documents, fixed_vocab, n_jobs):
         """Use mp to parallelize _count_new_vocab and _count_fixed_vocab.
@@ -752,14 +760,15 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         out_q = Queue(n_jobs)
         procs = []
         for i, chunk in enumerate(self._chunk_docs(raw_documents, chunk_size)):
-            in_q.put((i, chunk))
+            in_q.put(pickle.dumps((i, chunk), protocol=2))
         n_chunks = i + 1
         for i in xrange(n_chunks):
             procs.append(Process(target=self._run_queue,
                                  args=(fixed_vocab, in_q, out_q)))
         for proc in procs:
             proc.start()
-        process_output = [out_q.get() for i in xrange(len(procs))]
+        process_output = [pickle.loads(out_q.get()) for i in
+                          xrange(len(procs))]
         for proc in procs:
             proc.join()
         process_output.sort()
@@ -862,18 +871,15 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         j_indices = _make_int_array()
         features_per_doc = []
         for i, doc in enumerate(raw_documents):
-            for k, feature in enumerate(analyze(doc)):
+            k = 0
+            for feature in analyze(doc):
+                k += 1
                 feature_to_count[feature] += 1
                 if feature_to_count[feature] == 1:  # new feature
                     feature_to_position[feature] = j
                     j += 1
                 j_indices.append(feature_to_position[feature])
-            try:
-                features_per_doc.append(k+1)
-            except UnboundLocalError:
-                # k is undefined so
-                # no features found in the doc
-                features_per_doc.append(0)
+            features_per_doc.append(k)
         # assert j == len(feature_to_count)
         n_doc = i + 1
         return j_indices, feature_to_position, n_doc, features_per_doc
@@ -980,15 +986,18 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                                  " Perhaps the document",
                                  " only contains stop words"])
             raise ValueError(error_str)
-        values = np.empty(len(i_indices), dtype=np.int32)
-        values.fill(1)
+        values = np.ones(len(i_indices), dtype=np.int32)
         csc_m = self._term_counts_to_matrix(n_doc, i_indices, j_indices,
                                             values, n_features).tocsc()
         del i_indices, j_indices, values  # free memory
         if binary:
             csc_m.data.fill(1)
         if not fixed_vocab:
-            if sort_features or n_jobs != 1:
+            # do we ALWAYS sort if run in parallel?
+            # currently the parallel feature locations are always 
+            # consistent for the same number of jobs, but
+            # sometimes different from serial unless sorted.
+            if sort_features:  # or n_jobs != 1:
                 csc_m, feature_to_position = \
                     self._sort_features_and_matrix(csc_m, feature_to_position)
             stop_words_ = set()
@@ -1043,8 +1052,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                                      )
         if i_indices is None:
             i_indices = np.empty(0, dtype=np.int32)
-        values = np.empty(len(i_indices), dtype=np.int32)
-        values.fill(1)
+        values = np.ones(len(i_indices), dtype=np.int32)
         n_features = len(self.vocabulary_)
         m = self._term_counts_to_matrix(n_doc, i_indices,
                                         j_indices, values, n_features)
@@ -1358,6 +1366,17 @@ class TfidfVectorizer(CountVectorizer):
     sublinear_tf : boolean, optional
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
+    sort_features : boolean, True by default.
+        If True, the output matrix has the feature columns in order
+        corresponding to sorted vocabulary.  If False, order of the
+        columns is determined by features first encountered.
+        Always True if n_jobs > 1.
+
+    n_jobs: int, 1 by default.
+        If n_jobs > 1 uses parallel execution to count features.  Final feature
+        position may not be the same as the serial version unless sort_features
+        is set to True.
+
     See also
     --------
     CountVectorizer
@@ -1377,7 +1396,7 @@ class TfidfVectorizer(CountVectorizer):
                  ngram_range=(1, 1), max_df=1.0, min_df=1,
                  max_features=None, vocabulary=None, binary=False,
                  dtype=np.int64, norm='l2', use_idf=True, smooth_idf=True,
-                 sublinear_tf=False):
+                 sublinear_tf=False, sort_features=True, n_jobs=1):
 
         super(TfidfVectorizer, self).__init__(
             input=input, charset=charset, charset_error=charset_error,
@@ -1386,7 +1405,7 @@ class TfidfVectorizer(CountVectorizer):
             stop_words=stop_words, token_pattern=token_pattern,
             ngram_range=ngram_range, max_df=max_df, min_df=min_df,
             max_features=max_features, vocabulary=vocabulary, binary=False,
-            dtype=dtype)
+            dtype=dtype, sort_features=sort_features, n_jobs=n_jobs)
 
         self._tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
                                        smooth_idf=smooth_idf,
