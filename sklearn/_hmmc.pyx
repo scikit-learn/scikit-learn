@@ -99,28 +99,23 @@ def _viterbi(int n_observations, int n_components,
         np.ndarray[dtype_t, ndim=2] log_transmat,
         np.ndarray[dtype_t, ndim=2] framelogprob):
 
-    cdef int i, j, t, max_pos
+    cdef int t, max_pos
     cdef np.ndarray[dtype_t, ndim = 2] viterbi_lattice
     cdef np.ndarray[np.int_t, ndim = 1] state_sequence
-    cdef double logprob
-    cdef np.ndarray[dtype_t, ndim = 1] work_buffer
+    cdef dtype_t logprob
+    cdef np.ndarray[dtype_t, ndim = 2] work_buffer
 
-    # Initialize state_sequenceation
-    state_sequence = np.zeros(n_observations, dtype=np.int)
-    work_buffer = np.zeros(n_components)
+    # Initialization
+    state_sequence = np.empty(n_observations, dtype=np.int)
     viterbi_lattice = np.zeros((n_observations, n_components))
-
-    # viterbi_lattice[0,:] = log_startprob[:] + framelogprob[0,:]
-    for i in range(n_components):
-        viterbi_lattice[0, i] = log_startprob[i] + framelogprob[0, i]
+    viterbi_lattice[0] = log_startprob + framelogprob[0]
 
     # Induction
     for t in range(1, n_observations):
-        for j in range(n_components):
-            work_buffer[:] = viterbi_lattice[t - 1, :] + log_transmat[:, j]
-            viterbi_lattice[t, j] = np.max(work_buffer) + framelogprob[t, j]
+        work_buffer = viterbi_lattice[t-1] + log_transmat.T
+        viterbi_lattice[t] = np.max(work_buffer, axis=1) + framelogprob[t]
 
-    # observation traceback
+    # Observation traceback
     max_pos = np.argmax(viterbi_lattice[n_observations - 1, :])
     state_sequence[n_observations - 1] = max_pos
     logprob = viterbi_lattice[n_observations - 1, max_pos]
@@ -131,4 +126,3 @@ def _viterbi(int n_observations, int n_components,
         state_sequence[t] = max_pos
 
     return state_sequence, logprob
-
