@@ -9,13 +9,13 @@ EAC: Evidence Accumulation Clustering
 
 import numpy as np
 
-from sklearn.cluster import KMeans
+from sklearn.cluster import KMeans, SpectralClustering
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state
 
 
-def eac(X, initial_clusterers=None, final_clusterer=None, use_distance=True,
+def eac(X, initial_clusterers=None, final_clusterer=None, use_distance=False,
         random_state=None):
     """Perform EAC clustering from vector array or distance matrix.
 
@@ -84,9 +84,10 @@ def eac(X, initial_clusterers=None, final_clusterer=None, use_distance=True,
     if use_distance:
         if use_distance is True:
             # Turn into a distance matrix
-            C = 1. / (C + 0.5)
+            C = 1. - C
         elif callable(use_distance):  # If a callable
             C = use_distance(C)
+    np.savetxt(open("/home/bob/test_eac_data.txt", 'w'), C, fmt='%.3f')
     final_clusterer.fit(C)
     return final_clusterer
 
@@ -97,7 +98,7 @@ def update_coassociation_matrix(C, labels):
     labels = np.asarray(labels)
     for i in range(len(labels)):
         indices = np.where(labels[i:] == labels[i])[0] + i
-        C[i, indices] += 1
+        C[i, indices] += 1.
     return C
 
 
@@ -146,7 +147,7 @@ def _kmeans_random_k(n_samples, random_state=None, **kmeans_args):
 def create_default_final_clusterer(random_state=None):
     random_state = check_random_state(random_state)
     # TODO: MST clustering is the default in the paper, should use that, but it hasn't been implemented yet.
-    return KMeans(n_clusters=3)
+    return SpectralClustering(n_clusters=3, affinity='precomputed')
 
 
 class EAC(BaseEstimator, ClusterMixin):
