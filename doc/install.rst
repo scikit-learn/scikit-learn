@@ -215,11 +215,11 @@ where ``XY`` denotes the Python version.
 It can be installed by typing the following
 command::
 
-    sudo port install py26-scikits-learn
+    sudo port install py26-scikit-learn
 
 or::
 
-    sudo port install py27-scikits-learn
+    sudo port install py27-scikit-learn
 
 
 Archlinux
