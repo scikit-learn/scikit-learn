@@ -316,6 +316,11 @@ def _check_param_grid(param_grid):
                                  "list.")
 
 
+_CVScoreTuple = namedtuple('_CVScoreTuple', ('parameters',
+                                           'mean_validation_score',
+                                           'cv_validation_scores'))
+
+
 class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
     """Base class for hyper parameter search with cross-validation.
     """
@@ -340,7 +345,9 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         self._check_estimator()
 
     def score(self, X, y=None):
-        """Returns the mean accuracy on the given test data and labels.
+        """Returns the score on the given test data and labels, if the search
+        estimator has been refit. The ``score`` function of the best estimator
+        is used, or the ``scoring`` parameter where unavailable.
 
         Parameters
         ----------
@@ -364,6 +371,22 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         y_predicted = self.predict(X)
         return self.scorer(y, y_predicted)
 
+    @property
+    def predict(self):
+        return self.best_estimator_.predict
+
+    @property
+    def predict_proba(self):
+        return self.best_estimator_.predict_proba
+
+    @property
+    def decision_function(self):
+        return self.best_estimator_.decision_function
+
+    @property
+    def transform(self):
+        return self.best_estimator_.transform
+
     def _check_estimator(self):
         """Check that estimator can be fitted and score can be computed."""
         if (not hasattr(self.estimator, 'fit') or
@@ -380,13 +403,6 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
                     "If no scoring is specified, the estimator passed "
                     "should have a 'score' method. The estimator %s "
                     "does not." % self.estimator)
-
-    def _set_methods(self):
-        """Create predict and  predict_proba if present in best estimator."""
-        if hasattr(self.best_estimator_, 'predict'):
-            self.predict = self.best_estimator_.predict
-        if hasattr(self.best_estimator_, 'predict_proba'):
-            self.predict_proba = self.best_estimator_.predict_proba
 
     def _fit(self, X, y, parameter_iterator, **params):
         """Actual fitting,  performing the search over parameters."""
@@ -492,14 +508,10 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
             else:
                 best_estimator.fit(X, **self.fit_params)
             self.best_estimator_ = best_estimator
-            self._set_methods()
 
         # Store the computed scores
-        CVScoreTuple = namedtuple('CVScoreTuple', ('parameters',
-                                                   'mean_validation_score',
-                                                   'cv_validation_scores'))
         self.cv_scores_ = [
-            CVScoreTuple(clf_params, score, all_scores)
+            _CVScoreTuple(clf_params, score, all_scores)
             for clf_params, (score, _), all_scores
             in zip(parameter_iterator, scores, cv_scores)]
         return self
