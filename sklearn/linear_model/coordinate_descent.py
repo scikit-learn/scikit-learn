@@ -466,7 +466,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
 
     Parameters
     ==========
-    X : ndarray, shape = (n_samples, n_features)
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training data. Pass directly as Fortran-contiguous data to avoid
         unnecessary memory duplication
 
@@ -529,7 +529,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Parameters
     ----------
-    X : ndarray, shape = (n_samples, n_features)
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training data. Pass directly as Fortran-contiguous data to avoid
         unnecessary memory duplication
 
@@ -641,7 +641,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     Parameters
     ----------
-    X : ndarray, shape = (n_samples, n_features)
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training data. Pass directly as Fortran-contiguous data to avoid
         unnecessary memory duplication
 
@@ -777,7 +777,7 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
 
         Parameters
         ==========
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data.
 
         y : narray, shape (n_samples,) or (n_samples, n_targets)
@@ -855,7 +855,7 @@ class LinearModelCV(LinearModel):
         Parameters
         ----------
 
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data. Pass directly as float64, Fortran-contiguous data
             to avoid unnecessary memory duplication
 
