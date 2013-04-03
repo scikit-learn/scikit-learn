@@ -19,6 +19,7 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
 
+from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..utils import as_float_array, atleast2d_or_csr, safe_asarray
@@ -116,9 +117,8 @@ def center_data(X, y, fit_intercept, normalize=False, copy=True,
     return X, y, X_mean, y_mean, X_std
 
 
-class LinearModel(BaseEstimator):
+class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for Linear Models"""
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def fit(self, X, y):

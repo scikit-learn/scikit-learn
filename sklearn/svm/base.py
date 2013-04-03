@@ -13,6 +13,7 @@ from ..utils import atleast2d_or_csr, array2d, check_random_state
 from ..utils import ConvergenceWarning, compute_class_weight, deprecated
 from ..utils.fixes import unique
 from ..utils.extmath import safe_sparse_dot
+from ..externals import six
 
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -51,7 +52,7 @@ def _one_vs_one_coef(dual_coef, n_support, support_vectors):
     return coef
 
 
-class BaseLibSVM(BaseEstimator):
+class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for estimators that use libsvm as backing library
 
     This implements support vector machine classification and regression.
@@ -60,7 +61,6 @@ class BaseLibSVM(BaseEstimator):
     """
     # see ./classes.py for SVC class.
 
-    __metaclass__ = ABCMeta
     _sparse_kernels = ["linear", "poly", "rbf", "sigmoid", "precomputed"]
 
     @abstractmethod

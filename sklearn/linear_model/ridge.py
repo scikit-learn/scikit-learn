@@ -22,6 +22,7 @@ from ..utils.extmath import safe_sparse_dot
 from ..utils import safe_asarray
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
+from ..externals import six
 
 
 def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
@@ -191,8 +192,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         return coef.T
 
 
-class _BaseRidge(LinearModel):
-    __metaclass__ = ABCMeta
+class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
 
     @abstractmethod
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,

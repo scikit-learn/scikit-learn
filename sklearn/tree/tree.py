@@ -150,13 +150,12 @@ def export_graphviz(decision_tree, out_file=None, feature_names=None):
     return out_file
 
 
-class BaseDecisionTree(BaseEstimator, SelectorMixin):
+class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator, SelectorMixin)):
     """Base class for decision trees.
 
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self,
