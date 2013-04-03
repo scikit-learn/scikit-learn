@@ -461,6 +461,30 @@ class Lasso(ElasticNet):
 ###############################################################################
 # Classes to store linear models along a regularization path
 
+def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
+                eps=1e-3, n_alphas=100, normalize=False, copy_X=True):
+    """ Compute the grid of alpha values for elastic net parameter search
+    """
+    if Xy is None:
+        X = atleast2d_or_csc(X, dtype=np.float64, order='F',
+                             copy=copy_X and fit_intercept
+                                and not sparse.isspmatrix(X))
+        if not sparse.isspmatrix(X):
+            # X can be touched inplace thanks to the above line
+            X, y, X_mean, y_mean, X_std = center_data(X, y, fit_intercept,
+                                                    normalize, copy=False)
+
+        Xy = safe_sparse_dot(X.T, y, dense_output=True)
+        n_samples = X.shape[0]
+    else:
+        n_samples = len(y)
+
+    alpha_max = np.abs(Xy).max() / (n_samples * l1_ratio)
+    alphas = np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
+                         num=n_alphas)[::-1]
+    return alphas
+
+
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, fit_intercept=True,
                normalize=False, copy_X=True, verbose=False,
@@ -661,6 +685,19 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     n_samples, n_features = X.shape
 
+    if Xy is None:
+        Xy = safe_sparse_dot(X.T, y, dense_output=True)
+
+    n_samples = X.shape[0]
+    if alphas is None:
+        # No need to normalize of fit_intercept: it has been done
+        # above
+        alphas = _alpha_grid(X, y, Xy=Xy, l1_ratio=l1_ratio,
+                             fit_intercept=False, eps=1e-3, n_alphas=100,
+                             normalize=False, copy_X=False)
+    else:
+        alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
+
     if (hasattr(precompute, '__array__')
             and not np.allclose(X_mean, np.zeros(n_features))
             and not np.allclose(X_std, np.ones(n_features))):
@@ -675,16 +712,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         else:
             precompute = np.dot(X.T, X)
 
-    if Xy is None:
-        Xy = safe_sparse_dot(X.T, y, dense_output=True)
-
-    n_samples = X.shape[0]
-    if alphas is None:
-        alpha_max = np.abs(Xy).max() / (n_samples * l1_ratio)
-        alphas = np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
-                             num=n_alphas)[::-1]
-    else:
-        alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
     coef_ = None  # init coef_
     models = []
 
@@ -781,13 +808,16 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         # We can modify X inplace
         path_params['copy_X'] = False
 
-        # Start to compute path on full data
-        # XXX: is this really useful: we are fitting models that we won't
-        # use later
-        models = self.path(X, y, **path_params)
-
-        # Update the alphas list
-        alphas = [model.alpha for model in models]
+        alphas = self.alphas
+        if alphas is None:
+            mean_l1_ratio = 1.
+            if hasattr(self, 'l1_ratio'):
+                mean_l1_ratio = np.mean(self.l1_ratio)
+            alphas = _alpha_grid(X, y, l1_ratio=mean_l1_ratio,
+                                 fit_intercept=self.fit_intercept,
+                                 eps=self.eps, n_alphas=self.n_alphas,
+                                 normalize=self.normalize,
+                                 copy_X=self.copy_X)
         n_alphas = len(alphas)
         path_params.update({'alphas': alphas, 'n_alphas': n_alphas})
 
@@ -821,22 +851,28 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             this_best_mse = mse[i_best_alpha]
             all_mse_paths.append(mse_alphas.T)
             if this_best_mse < best_mse:
-                model = models[i_best_alpha]
+                best_alpha = alphas[i_best_alpha]
                 best_l1_ratio = l1_ratio
                 best_mse = this_best_mse
 
-        if hasattr(model, 'l1_ratio'):
-            if model.l1_ratio != best_l1_ratio:
-                # Need to refit the model
-                model.l1_ratio = best_l1_ratio
-                model.fit(X, y)
-            self.l1_ratio_ = model.l1_ratio
+        self.l1_ratio_ = best_l1_ratio
+        self.alpha_ = best_alpha
+        self.alphas_ = np.asarray(alphas)
+        self.mse_path_ = np.squeeze(all_mse_paths)
+
+        # Refit the model with the parameters selected
+        model = ElasticNet()
+        common_params = dict((name, value)
+                             for name, value in self.get_params().items()
+                             if name in model.get_params())
+        model.set_params(**common_params)
+        model.alpha = best_alpha
+        model.l1_ratio = best_l1_ratio
+        model.fit(X, y)
         self.coef_ = model.coef_
         self.intercept_ = model.intercept_
-        self.alpha_ = model.alpha
-        self.alphas_ = np.asarray(alphas)
-        self.coef_path_ = np.asarray([model.coef_ for model in models])
-        self.mse_path_ = np.squeeze(all_mse_paths)
+        self.dual_gap_ = model.dual_gap_
+        self.eps_ = model.eps_
         return self
 
     @property
