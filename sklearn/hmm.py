@@ -23,7 +23,6 @@ from .mixture import (
     GMM, log_multivariate_normal_density, sample_gaussian,
     distribute_covar_matrix_to_match_covariance_type, _validate_covars)
 from . import cluster
-from . import _hmmc
 
 __all__ = ['GMMHMM',
            'GaussianHMM',
@@ -63,6 +62,72 @@ def normalize(A, axis=None):
         shape[axis] = 1
         Asum.shape = shape
     return A / Asum
+
+
+def _forward(n_observations, n_components, log_startprob, log_transmat,
+                     framelogprob):
+    fwdlattice = np.empty((n_observations, n_components))
+    fwdlattice[0] = log_startprob + framelogprob[0]
+
+    for t in range(1, n_observations):
+        summand = fwdlattice[t-1] + log_transmat.T
+        l_sum = logsumexp(summand, axis=1)
+
+        # FIXME: vectorize this loop?
+        for j in range(n_components):
+            fwdlattice[t, j] = l_sum[j] + framelogprob[t, j]
+
+    return fwdlattice
+
+
+def _backward(n_observations, n_components, log_transmat, framelogprob):
+
+    bwdlattice = np.empty((n_observations, n_components))
+    bwdlattice[n_observations - 1] = 0.0
+
+    for t in range(n_observations - 2, -1, -1):
+        summand = log_transmat + framelogprob[t+1] + bwdlattice[t+1]
+        bwdlattice[t] = logsumexp(summand, axis=1)
+
+    return bwdlattice
+
+
+def _viterbi(n_observations, n_components, log_startprob, log_transmat,
+             framelogprob):
+
+    # Initialization
+    state_sequence = np.empty(n_observations, dtype=np.int)
+    viterbi_lattice = np.zeros((n_observations, n_components))
+    viterbi_lattice[0] = log_startprob + framelogprob[0]
+
+    # Induction
+    for t in range(1, n_observations):
+        work_buffer = viterbi_lattice[t-1] + log_transmat.T
+        viterbi_lattice[t] = np.max(work_buffer, axis=1) + framelogprob[t]
+
+    # Observation traceback
+    max_pos = np.argmax(viterbi_lattice[n_observations - 1, :])
+    state_sequence[n_observations - 1] = max_pos
+    logprob = viterbi_lattice[n_observations - 1, max_pos]
+
+    for t in range(n_observations - 2, -1, -1):
+        max_pos = np.argmax(viterbi_lattice[t, :] \
+                + log_transmat[:, state_sequence[t + 1]])
+        state_sequence[t] = max_pos
+
+    return state_sequence, logprob
+
+
+def _compute_lneta(n_observations, n_components, fwdlattice, log_transmat,
+                   bwdlattice, framelogprob, logprob):
+
+    lneta = np.empty((n_observations - 1, n_components, n_components))
+
+    for t in range(n_observations - 1):
+        lneta[t] = fwdlattice[t].reshape((n_components, 1)) + log_transmat + \
+                   framelogprob[t+1] + bwdlattice[t+1] - logprob
+
+    return lneta
 
 
 class _BaseHMM(BaseEstimator):
@@ -493,7 +558,7 @@ class _BaseHMM(BaseEstimator):
 
     def _do_viterbi_pass(self, framelogprob):
         n_observations, n_components = framelogprob.shape
-        state_sequence, logprob = _hmmc._viterbi(
+        state_sequence, logprob = _viterbi(
             n_observations, n_components, self._log_startprob,
             self._log_transmat, framelogprob)
         return logprob, state_sequence
@@ -501,20 +566,16 @@ class _BaseHMM(BaseEstimator):
     def _do_forward_pass(self, framelogprob):
 
         n_observations, n_components = framelogprob.shape
-        fwdlattice = np.zeros((n_observations, n_components))
-        _hmmc._forward(n_observations, n_components, self._log_startprob,
-                       self._log_transmat, framelogprob, fwdlattice)
+        fwdlattice = _forward(n_observations, n_components, self._log_startprob,
+                              self._log_transmat, framelogprob)
         fwdlattice[fwdlattice <= ZEROLOGPROB] = NEGINF
         return logsumexp(fwdlattice[-1]), fwdlattice
 
     def _do_backward_pass(self, framelogprob):
         n_observations, n_components = framelogprob.shape
-        bwdlattice = np.zeros((n_observations, n_components))
-        _hmmc._backward(n_observations, n_components, self._log_startprob,
-                        self._log_transmat, framelogprob, bwdlattice)
-
+        bwdlattice = _backward(n_observations, n_components,
+                        self._log_transmat, framelogprob)
         bwdlattice[bwdlattice <= ZEROLOGPROB] = NEGINF
-
         return bwdlattice
 
     def _compute_log_likelihood(self, obs):
@@ -545,11 +606,10 @@ class _BaseHMM(BaseEstimator):
             stats['start'] += posteriors[0]
         if 't' in params:
             n_observations, n_components = framelogprob.shape
-            lneta = np.zeros((n_observations - 1, n_components, n_components))
             lnP = logsumexp(fwdlattice[-1])
-            _hmmc._compute_lneta(n_observations, n_components, fwdlattice,
-                                 self._log_transmat, bwdlattice, framelogprob,
-                                 lnP, lneta)
+            lneta = _compute_lneta(n_observations, n_components, fwdlattice,
+                                   self._log_transmat, bwdlattice, framelogprob,
+                                   lnP)
             stats["trans"] += np.exp(logsumexp(lneta, 0))
 
     def _do_mstep(self, stats, params):
