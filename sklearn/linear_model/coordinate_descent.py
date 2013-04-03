@@ -875,7 +875,11 @@ class LinearModelCV(LinearModel):
             # not useful for the cross-validation loop and will be done
             # by the model fitting itself
             X = atleast2d_or_csc(X, copy=False)
-            if not np.may_share_memory(reference_to_old_X, X):
+            if sparse.isspmatrix(X):
+                if not np.may_share_memory(reference_to_old_X.data, X.data):
+                    # X is a sparse matrix and has been copied
+                    copy_X = False
+            elif not np.may_share_memory(reference_to_old_X, X):
                 # X has been copied
                 copy_X = False
             del reference_to_old_X
