@@ -467,7 +467,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
 
     Parameters
     ==========
-    X : ndarray, shape = (n_samples, n_features)
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training data. Pass directly as Fortran-contiguous data to avoid
         unnecessary memory duplication
 
@@ -530,7 +530,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Parameters
     ----------
-    X : ndarray, shape = (n_samples, n_features)
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training data. Pass directly as Fortran-contiguous data to avoid
         unnecessary memory duplication
 
@@ -642,7 +642,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     Parameters
     ----------
-    X : ndarray, shape = (n_samples, n_features)
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training data. Pass directly as Fortran-contiguous data to avoid
         unnecessary memory duplication
 
@@ -778,7 +778,7 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
 
         Parameters
         ==========
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data.
 
         y : narray, shape (n_samples,) or (n_samples, n_targets)
@@ -855,7 +855,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         Parameters
         ----------
 
-        X : array-like, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data. Pass directly as float64, Fortran-contiguous data
             to avoid unnecessary memory duplication
 
@@ -875,7 +875,11 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             # not useful for the cross-validation loop and will be done
             # by the model fitting itself
             X = atleast2d_or_csc(X, copy=False)
-            if not np.may_share_memory(reference_to_old_X, X):
+            if sparse.isspmatrix(X):
+                if not np.may_share_memory(reference_to_old_X.data, X.data):
+                    # X is a sparse matrix and has been copied
+                    copy_X = False
+            elif not np.may_share_memory(reference_to_old_X, X):
                 # X has been copied
                 copy_X = False
             del reference_to_old_X
