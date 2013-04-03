@@ -464,6 +464,40 @@ class Lasso(ElasticNet):
 def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
                 eps=1e-3, n_alphas=100, normalize=False, copy_X=True):
     """ Compute the grid of alpha values for elastic net parameter search
+
+    Parameters
+    ==========
+    X : ndarray, shape = (n_samples, n_features)
+        Training data. Pass directly as Fortran-contiguous data to avoid
+        unnecessary memory duplication
+
+    y : ndarray, shape = (n_samples,)
+        Target values
+
+    Xy : array-like, optional
+        Xy = np.dot(X.T, y) that can be precomputed.
+
+    l1_ratio : float
+        The ElasticNet mixing parameter, with ``0 <= l1_ratio <= 1``.
+        For ``l1_ratio = 0`` the penalty is an L2 penalty. ``For
+        l1_ratio = 1`` it is an L1 penalty.  For ``0 < l1_ratio <
+        1``, the penalty is a combination of L1 and L2.
+
+    eps : float, optional
+        Length of the path. ``eps=1e-3`` means that
+        ``alpha_min / alpha_max = 1e-3``
+
+    n_alphas : int, optional
+        Number of alphas along the regularization path
+
+    fit_intercept : bool
+        Fit or not an intercept
+
+    normalize : boolean, optional, default False
+        If ``True``, the regressors X will be normalized before regression.
+
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
     """
     if Xy is None:
         X = atleast2d_or_csc(X, copy=copy_X and fit_intercept
@@ -740,6 +774,44 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
 def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
                     X_order=None, dtype=None):
+    """ Returns the MSE for the models computed by 'path'
+
+        Parameters
+        ==========
+        X : array-like, shape (n_samples, n_features)
+            Training data.
+
+        y : narray, shape (n_samples,) or (n_samples, n_targets)
+            Target values
+
+        train : list of indices
+            The indices of the train set
+
+        test : list of indices
+            The indices of the test set
+
+        path : callable
+            function returning a list of models on the path. See
+            enet_path for an example of signature
+
+        path_params : dictionary
+            Parameters passed to the path function
+
+        l1_ratio : float, optional
+            float between 0 and 1 passed to ElasticNet (scaling between
+            l1 and l2 penalties). For ``l1_ratio = 0`` the penalty is an
+            L2 penalty. For ``l1_ratio = 1`` it is an L1 penalty. For ``0
+            < l1_ratio < 1``, the penalty is a combination of L1 and L2
+
+
+        X_order : {'F', 'C', or None}, optional
+            The order of the arrays expected by the path function to
+            avoid memory copies
+
+        dtype: a numpy dtype or None
+            The dtype of the arrays expected by the path function to
+            avoid memory copies
+    """
     this_mses = list()
     if 'l1_ratio' in path_params:
         path_params['l1_ratio'] = l1_ratio
