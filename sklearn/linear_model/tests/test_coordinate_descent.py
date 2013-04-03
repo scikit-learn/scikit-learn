@@ -177,26 +177,40 @@ def test_lasso_path():
 
 
 def test_enet_path():
-    X, y, X_test, y_test = build_dataset()
+    # We use a large number of samples and of informative features so that
+    # the l1_ratio selected is more toward ridge than lasso
+    X, y, X_test, y_test = build_dataset(n_samples=200,
+                                n_features=100,
+                                n_informative_features=100)
     max_iter = 150
 
     with warnings.catch_warnings():
         # Here we have a small number of iterations, and thus the
         # ElasticNet might not converge. This is to speed up tests
         warnings.simplefilter("ignore", UserWarning)
-        clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.9, 0.95], cv=3,
+        clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7], cv=3,
                            max_iter=max_iter)
         clf.fit(X, y)
-        assert_almost_equal(clf.alpha_, 0.002, 2)
-        assert_equal(clf.l1_ratio_, 0.95)
+        # Well-conditionned settings, we should have selected our
+        # smallest penalty
+        assert_almost_equal(clf.alpha_, min(clf.alphas_))
+        # Non-sparse ground truth: we should have seleted an elastic-net
+        # that is closer to ridge than to lasso
+        assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
 
-        clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.9, 0.95], cv=3,
+        clf = ElasticNetCV(n_alphas=5, eps=2e-3, l1_ratio=[0.5, 0.7], cv=3,
                            max_iter=max_iter, precompute=True)
         clf.fit(X, y)
-    assert_almost_equal(clf.alpha_, 0.002, 2)
-    assert_equal(clf.l1_ratio_, 0.95)
 
-    # test set
+    # Well-conditionned settings, we should have selected our
+    # smallest penalty
+    assert_almost_equal(clf.alpha_, min(clf.alphas_))
+    # Non-sparse ground truth: we should have seleted an elastic-net
+    # that is closer to ridge than to lasso
+    assert_equal(clf.l1_ratio_, min(clf.l1_ratio))
+
+    # We are in well-conditionned settings with low noise: we should
+    # have a good test-set performance
     assert_greater(clf.score(X_test, y_test), 0.99)
 
 

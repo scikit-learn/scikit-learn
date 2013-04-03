@@ -758,6 +758,8 @@ class LinearModelCV(LinearModel):
             Target values
 
         """
+        # We avoid copying X so for to save memory. X will be copied
+        # after the cross-validation loop
         X = atleast2d_or_csc(X, dtype=np.float64, order='F',
                              copy=self.copy_X and self.fit_intercept)
         # From now on X can be touched inplace
@@ -776,6 +778,8 @@ class LinearModelCV(LinearModel):
             l1_ratios = [1, ]
         path_params.pop('cv', None)
         path_params.pop('n_jobs', None)
+        # We can modify X inplace
+        path_params['copy_X'] = False
 
         # Start to compute path on full data
         # XXX: is this really useful: we are fitting models that we won't
@@ -786,6 +790,11 @@ class LinearModelCV(LinearModel):
         alphas = [model.alpha for model in models]
         n_alphas = len(alphas)
         path_params.update({'alphas': alphas, 'n_alphas': n_alphas})
+
+        # If we are not computing in parallel, we don't want to modify X
+        # inplace in the folds
+        if self.n_jobs == 1 or self.n_jobs is None:
+            path_params['copy_X'] = True
 
         # init cross-validation generator
         cv = check_cv(self.cv, X)
@@ -814,6 +823,7 @@ class LinearModelCV(LinearModel):
             if this_best_mse < best_mse:
                 model = models[i_best_alpha]
                 best_l1_ratio = l1_ratio
+                best_mse = this_best_mse
 
         if hasattr(model, 'l1_ratio'):
             if model.l1_ratio != best_l1_ratio:
