@@ -466,8 +466,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
     """ Compute the grid of alpha values for elastic net parameter search
     """
     if Xy is None:
-        X = atleast2d_or_csc(X, dtype=np.float64, order='F',
-                             copy=copy_X and fit_intercept
+        X = atleast2d_or_csc(X, copy=copy_X and fit_intercept
                                 and not sparse.isspmatrix(X))
         if not sparse.isspmatrix(X):
             # X can be touched inplace thanks to the above line
@@ -722,6 +721,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             fit_intercept=fit_intercept if sparse.isspmatrix(X) else False,
             precompute=precompute)
         model.set_params(**params)
+        model.copy_X = False
         model.fit(X, y, coef_init=coef_, Xy=Xy)
         if fit_intercept and not sparse.isspmatrix(X):
             model.fit_intercept = True
@@ -738,11 +738,17 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     return models
 
 
-def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1):
+def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
+                    X_order=None, dtype=None):
     this_mses = list()
     if 'l1_ratio' in path_params:
         path_params['l1_ratio'] = l1_ratio
-    models_train = path(X[train], y[train], **path_params)
+    X_train = X[train]
+    # Do the ordering and type casting here, as if it is done in the path,
+    # X is copied and a reference is kept here
+    X_train = atleast2d_or_csc(X_train, dtype=dtype, order=X_order)
+    models_train = path(X_train, y[train], **path_params)
+    del X_train
     this_mses = np.empty(len(models_train))
     for i_model, model in enumerate(models_train):
         y_ = model.predict(X[test])
@@ -778,18 +784,34 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         ----------
 
         X : array-like, shape (n_samples, n_features)
-            Training data. Pass directly as Fortran-contiguous data to avoid
-            unnecessary memory duplication
+            Training data. Pass directly as float64, Fortran-contiguous data
+            to avoid unnecessary memory duplication
 
         y : narray, shape (n_samples,) or (n_samples, n_targets)
             Target values
 
         """
-        # We avoid copying X so for to save memory. X will be copied
-        # after the cross-validation loop
-        X = atleast2d_or_csc(X, dtype=np.float64, order='F',
-                             copy=self.copy_X and self.fit_intercept)
-        # From now on X can be touched inplace
+        # Dealing right with copy_X is important in the following:
+        # multiple functions touch X and subsamples of X and can induce a
+        # lot of duplication of memory
+        copy_X = self.copy_X and self.fit_intercept
+
+        if isinstance(X, np.ndarray) or sparse.isspmatrix(X):
+            # Keep a reference to X
+            reference_to_old_X = X
+            # Let us not impose fortran ordering or float64 so far: it is
+            # not useful for the cross-validation loop and will be done
+            # by the model fitting itself
+            X = atleast2d_or_csc(X, copy=False)
+            if not np.may_share_memory(reference_to_old_X, X):
+                # X has been copied
+                copy_X = False
+            del reference_to_old_X
+        else:
+            X = atleast2d_or_csc(X, dtype=np.float64, order='F',
+                                 copy=copy_X)
+            copy_X = False
+
         y = np.asarray(y, dtype=np.float64)
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have inconsistent dimensions (%d != %d)"
@@ -805,8 +827,6 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
             l1_ratios = [1, ]
         path_params.pop('cv', None)
         path_params.pop('n_jobs', None)
-        # We can modify X inplace
-        path_params['copy_X'] = False
 
         alphas = self.alphas
         if alphas is None:
@@ -821,10 +841,11 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         n_alphas = len(alphas)
         path_params.update({'alphas': alphas, 'n_alphas': n_alphas})
 
-        # If we are not computing in parallel, we don't want to modify X
+        path_params['copy_X'] = copy_X
+        # We are not computing in parallel, we can modify X
         # inplace in the folds
-        if self.n_jobs == 1 or self.n_jobs is None:
-            path_params['copy_X'] = True
+        if not (self.n_jobs == 1 or self.n_jobs is None):
+            path_params['copy_X'] = False
 
         # init cross-validation generator
         cv = check_cv(self.cv, X)
@@ -840,7 +861,8 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
                 Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                     delayed(_path_residuals)(
                         X, y, train, test, self.path, path_params,
-                        l1_ratio=l1_ratio)
+                        l1_ratio=l1_ratio, X_order='F',
+                        dtype=np.float64)
                     for l1_ratio in l1_ratios for train, test in folds
                 ), operator.itemgetter(1)):
 
@@ -868,6 +890,7 @@ class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
         model.set_params(**common_params)
         model.alpha = best_alpha
         model.l1_ratio = best_l1_ratio
+        model.copy_X = copy_X
         model.fit(X, y)
         self.coef_ = model.coef_
         self.intercept_ = model.intercept_
