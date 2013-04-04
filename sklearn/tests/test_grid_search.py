@@ -17,6 +17,7 @@ import scipy.sparse as sp
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_raise_message
+from sklearn.utils.testing import assert_greater
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_almost_equal
@@ -227,20 +228,22 @@ def test_grid_search_iid():
     # once with iid=True (default)
     grid_search = GridSearchCV(svm, param_grid={'C': [1, 10]}, cv=cv)
     grid_search.fit(X, y)
-    _, average_score, scores = grid_search.cv_scores_[0]
+    scores = grid_search.cv_scores_[0].cv_validation_scores
     assert_array_almost_equal(scores, [1, 1. / 3.])
     # for first split, 1/4 of dataset is in test, for second 3/4.
     # take weighted average
+    average_score = grid_search.cv_scores_[0].mean_validation_score
     assert_almost_equal(average_score, 1 * 1. / 4. + 1. / 3. * 3. / 4.)
 
     # once with iid=False (default)
     grid_search = GridSearchCV(svm, param_grid={'C': [1, 10]}, cv=cv,
                                iid=False)
     grid_search.fit(X, y)
-    _, average_score, scores = grid_search.cv_scores_[0]
+    scores = grid_search.cv_scores_[0].cv_validation_scores
     # scores are the same as above
     assert_array_almost_equal(scores, [1, 1. / 3.])
     # averaged score is just mean of scores
+    average_score = grid_search.cv_scores_[0].mean_validation_score
     assert_almost_equal(average_score, np.mean(scores))
 
 
@@ -412,6 +415,21 @@ def test_grid_search_precomputed_kernel_error_kernel_function():
     assert_raises(ValueError, cv.fit, X_, y_)
 
 
+def test_grid_search_training_score():
+    # test that the training score contains sensible numbers
+    X, y = make_classification(n_samples=200, n_features=100, random_state=0)
+    clf = LinearSVC(random_state=0)
+    cv = GridSearchCV(clf, {'C': [0.1, 1.0]}, compute_training_score=True)
+    cv.fit(X, y)
+    for grid_point in cv.cv_scores_:
+        assert_greater(grid_point.mean_training_score,
+                       grid_point.mean_validation_score)
+        # hacky greater-equal
+        assert_greater(1 + 1e-10, grid_point.mean_training_score)
+        assert_greater(grid_point.training_time, 0)
+        assert_greater(grid_point.prediction_time, 0)
+
+
 class BrokenClassifier(BaseEstimator):
     """Broken classifier that cannot be fit twice"""
 
@@ -510,9 +528,9 @@ def test_grid_search_score_consistency():
         grid_search = GridSearchCV(clf, {'C': Cs}, scoring=score)
         grid_search.fit(X, y)
         cv = StratifiedKFold(n_folds=3, y=y)
-        for C, scores in zip(Cs, grid_search.cv_scores_):
+        for C, result in zip(Cs, grid_search.cv_scores_):
             clf.set_params(C=C)
-            scores = scores[2]  # get the separate runs from grid scores
+            scores = result[2]  # get the separate runs from grid scores
             i = 0
             for train, test in cv:
                 clf.fit(X[train], y[train])
