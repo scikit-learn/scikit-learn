@@ -368,8 +368,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
-        y_predicted = self.predict(X)
-        return self.scorer(y, y_predicted)
+        return self.scorer_(self.best_estimator_, X, y)
 
     @property
     def predict(self):
