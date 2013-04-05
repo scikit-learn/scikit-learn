@@ -20,6 +20,7 @@ from .base import sparse_center_data, center_data
 from ..utils import array2d, atleast2d_or_csc, deprecated
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
+from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
 
@@ -722,9 +723,8 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1):
     return this_mses, l1_ratio
 
 
-class LinearModelCV(LinearModel):
+class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
     """Base class for iterative model fitting along a regularization path"""
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,

@@ -36,6 +36,7 @@ from numpy.testing import assert_equal
 import scipy.sparse as sp
 
 from .base import BaseEstimator, TransformerMixin
+from .externals import six
 from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.extmath import safe_sparse_dot
@@ -278,13 +279,12 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         return np.sqrt(1 / density) / np.sqrt(n_components) * components
 
 
-class BaseRandomProjection(BaseEstimator, TransformerMixin):
+class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
     """Base class for random projections.
 
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self, n_components='auto', eps=0.1, dense_output=False,

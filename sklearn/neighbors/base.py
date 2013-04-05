@@ -6,9 +6,9 @@
 #
 # License: BSD, (C) INRIA, University of Amsterdam
 import warnings
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
-from abc import ABCMeta, abstractmethod
 from scipy.sparse import csr_matrix, issparse
 from scipy.spatial.ckdtree import cKDTree
 
@@ -17,6 +17,7 @@ from ..base import BaseEstimator
 from ..metrics import pairwise_distances
 from ..utils import safe_asarray, atleast2d_or_csr, check_arrays
 from ..utils.fixes import unique
+from ..externals import six
 
 
 class NeighborsWarning(UserWarning):
@@ -65,9 +66,8 @@ def _get_weights(dist, weights):
                          "'distance', or a callable function")
 
 
-class NeighborsBase(BaseEstimator):
+class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for nearest neighbors estimators."""
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self):

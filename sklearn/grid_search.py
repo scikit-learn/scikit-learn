@@ -23,10 +23,11 @@ from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
 from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
-from .externals.six import string_types
+from .externals import six
 from .utils import safe_mask, check_random_state
 from .utils.validation import _num_samples, check_arrays
 from .metrics import SCORERS, Scorer
+
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
            'ParameterSampler', 'RandomizedSearchCV']
@@ -321,10 +322,9 @@ _CVScoreTuple = namedtuple('_CVScoreTuple',
                             'cv_validation_scores'))
 
 
-class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
+class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator, MetaEstimatorMixin)):
     """Base class for hyper parameter search with cross-validation.
     """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self, estimator, scoring=None, loss_func=None,
@@ -424,7 +424,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
                           "Either use strings or score objects."
                           "The relevant new parameter is called ''scoring''.")
             scorer = Scorer(self.score_func)
-        elif isinstance(self.scoring, string_types):
+        elif isinstance(self.scoring, six.string_types):
             scorer = SCORERS[self.scoring]
         else:
             scorer = self.scoring

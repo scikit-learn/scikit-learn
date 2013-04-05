@@ -26,6 +26,7 @@ from numpy.core.umath_tests import inner1d
 
 from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin
+from ..externals import six
 from ..externals.six.moves import xrange
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..tree.tree import BaseDecisionTree
@@ -39,13 +40,12 @@ __all__ = [
 ]
 
 
-class BaseWeightBoosting(BaseEnsemble):
+class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     """Base class for AdaBoost estimators.
 
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self,

@@ -36,6 +36,7 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..utils import check_random_state, array2d, check_arrays
 from ..utils.extmath import logsumexp
+from ..externals import six
 
 from ..tree.tree import DecisionTreeRegressor
 from ..tree._tree import _random_sample_mask
@@ -101,7 +102,7 @@ class PriorProbabilityEstimator(BaseEstimator):
         return y
 
 
-class LossFunction(object):
+class LossFunction(six.with_metaclass(ABCMeta, object)):
     """Abstract base class for various loss functions.
 
     Attributes
@@ -111,7 +112,6 @@ class LossFunction(object):
         1 for regression and binary classification;
         ``n_classes`` for multi-class classification.
     """
-    __metaclass__ = ABCMeta
 
     is_multi_class = False
 
@@ -180,9 +180,8 @@ class LossFunction(object):
         """Template method for updating terminal regions (=leaves). """
 
 
-class RegressionLossFunction(LossFunction):
+class RegressionLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
     """Base class for regression loss functions. """
-    __metaclass__ = ABCMeta
 
     def __init__(self, n_classes):
         if n_classes != 1:
@@ -431,9 +430,8 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
                   'deviance': None}  # for both, multinomial and binomial
 
 
-class BaseGradientBoosting(BaseEnsemble):
+class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     """Abstract base class for Gradient Boosting. """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self, loss, learning_rate, n_estimators, min_samples_split,

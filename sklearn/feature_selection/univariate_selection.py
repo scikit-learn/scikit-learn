@@ -8,6 +8,7 @@
 
 from abc import ABCMeta, abstractmethod
 from warnings import warn
+from functools import reduce
 
 import numpy as np
 from scipy import stats
@@ -18,7 +19,7 @@ from ..preprocessing import LabelBinarizer
 from ..utils import (array2d, as_float_array, atleast2d_or_csr, check_arrays,
                      safe_asarray, safe_sqr, safe_mask)
 from ..utils.extmath import safe_sparse_dot
-from functools import reduce
+from ..externals import six
 
 
 def _clean_nans(scores):
@@ -245,8 +246,7 @@ def f_regression(X, y, center=True):
 ######################################################################
 # Base classes
 
-class _BaseFilter(BaseEstimator, TransformerMixin):
-    __metaclass__ = ABCMeta
+class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
 
     def __init__(self, score_func):
         """ Initialize the univariate feature selection.
