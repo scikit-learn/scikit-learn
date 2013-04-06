@@ -123,6 +123,58 @@ def test_parameter_grid():
                      set(("foo", x, "bar", y)
                          for x, y in product(params2["foo"], params2["bar"])))
 
+def test_build_index():
+    params = {"foo": [4, 2],
+               "bar": ["ham", "spam", "eggs"]}
+    grid = ParameterGrid(params)
+
+    keys, index1a = grid.build_index(['foo', 'bar'])
+    assert_equal(keys, ['foo', 'bar'])
+    assert_equal(index1a.shape, (2, 3))
+
+    keys, index1b = grid.build_index(['foo'])
+    assert_equal(keys, ['foo', 'bar'])
+    assert_array_equal(index1a, index1b)
+
+    keys, index2a = grid.build_index(['bar', 'foo'])
+    assert_equal(keys, ['bar', 'foo'])
+    assert_equal(index2a.shape, (3, 2))
+
+    keys, index2b = grid.build_index(['bar'])
+    assert_equal(keys, ['bar', 'foo'])
+    assert_array_equal(index2a, index2b)
+
+    keys, index = grid.build_index()  # dimensions are implementation-specific? 
+    assert_true(keys == ['foo', 'bar'] or keys == ['bar', 'foo'])
+    assert_true(np.all(index == index1a) or np.all(index == index2a))
+
+    points = np.asarray(list(grid))
+    points[index1a]
+    assert_array_equal(points[index1a].ravel(),
+                 np.asarray([{"foo": x, "bar": y}
+                     for x, y in product(params["foo"], params["bar"])]))
+    assert_array_equal(points[index2a].ravel(),
+                 np.asarray([{"foo": y, "bar": x}
+                     for x, y in product(params["bar"], params["foo"])]))
+
+    assert_raises(ValueError, grid.build_index, ['foo', 'foo'])
+    assert_raises(ValueError, grid.build_index, ['argh'])
+
+    grid2 = ParameterGrid([params, {'foo': [3]}])
+
+    keys, index1c = grid2.build_index(['foo'])
+    assert_equal(keys, ['foo', 'bar'])
+    assert_array_equal(index1a, index1c)
+
+    keys, index1d = grid2.build_index(['foo'], grid=0)
+    assert_equal(keys, ['foo', 'bar'])
+    assert_array_equal(index1a, index1d)
+
+    keys, index3 = grid2.build_index(['foo'], grid=1)
+    assert_equal(keys, ['foo'])
+    assert_array_equal(index3, np.array([len(grid2) - 1]))
+
+
 
 def test_grid_search():
     """Test that the best estimator contains the right value for foo_param"""

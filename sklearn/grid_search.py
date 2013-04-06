@@ -47,10 +47,19 @@ class ParameterGrid(object):
     Examples
     --------
     >>> from sklearn.grid_search import ParameterGrid
-    >>> param_grid = {'a':[1, 2], 'b':[True, False]}
-    >>> list(ParameterGrid(param_grid)) #doctest: +NORMALIZE_WHITESPACE
+    >>> param_grid = ParameterGrid({'a':[1, 2], 'b':[True, False]})
+    >>> list(param_grid) #doctest: +NORMALIZE_WHITESPACE
     [{'a': 1, 'b': True}, {'a': 1, 'b': False},
      {'a': 2, 'b': True}, {'a': 2, 'b': False}]
+
+    Using `build_index` to access points by parameter value:
+    >>> import numpy
+    >>> order, index = param_grid.build_index(['b', 'a'])
+    >>> index  #doctest: +NORMALIZE_WHITESPACE
+    array([[0, 2], [1, 3]])
+    >>> numpy.asarray(list(param_grid))[index] #doctest: +NORMALIZE_WHITESPACE
+    array([[{'a': 1, 'b': True}, {'a': 2, 'b': True}],
+           [{'a': 1, 'b': False}, {'a': 2, 'b': False}]], dtype=object)
 
     See also
     --------
@@ -77,18 +86,66 @@ class ParameterGrid(object):
         """
         for p in self.param_grid:
             # Always sort the keys of a dictionary, for reproducibility
-            items = sorted(p.items())
+            items = self._ordered_items(p)
             keys, values = zip(*items)
             for v in product(*values):
                 params = dict(zip(keys, v))
                 yield params
 
+    @staticmethod
+    def _ordered_items(p):
+        return sorted(p.items())
+
     def __len__(self):
         """Number of points on the grid."""
         # Product function that can handle iterables (np.product can't).
-        product = partial(reduce, operator.mul)
-        return sum(product(len(v) for v in p.values())
-                   for p in self.param_grid)
+        return sum(self._len(p) for p in self.param_grid)
+
+    @staticmethod
+    def _len(params, product=partial(reduce, operator.mul)):
+        """Number of points for a single param dict"""
+        return product(len(v) for v in params.values())
+
+    def build_index(self, order=(), grid=0):
+        """Build an index over grid points by parameter values.
+
+        Parameters
+        ----------
+        `order` : sequence of strings, optional
+            Parameter names corresponding to the first axes of the returned
+            index. Any remaining parameters will be returned in arbitrary order.
+        `grid` : integer, default 0
+            The grid index if an array of grids are represented.
+        
+        Returns
+        -------
+        `order` : sequence of strings
+            Parameter names corresponding to axes in `index`.
+        `index` : array
+            An integer index into the list of grid points, such that each
+            parameter corresponds to an axis.
+        """
+        n = self._len(self.param_grid[grid])
+        offset = sum(self._len(p) for p in self.param_grid[:grid])
+        keys, values = zip(*self._ordered_items(self.param_grid[grid]))
+        index = np.arange(offset, offset + n).reshape([len(v) for v in values])
+
+        if order:
+            axis_order = []
+            for key in order:
+                try:
+                    axis_order.append(keys.index(key))
+                except IndexError:
+                    raise ValueError('Key {!r} unknown'.format(key))
+            if len(axis_order) > len(set(axis_order)):
+                raise ValueError('order contains duplicate keys')
+            axis_order.extend(i for i in xrange(len(keys))
+                    if i not in axis_order)
+
+            keys = np.asarray(keys)[axis_order]
+            index = index.transpose(axis_order)
+
+        return list(keys), index
 
 
 class IterGrid(ParameterGrid):
