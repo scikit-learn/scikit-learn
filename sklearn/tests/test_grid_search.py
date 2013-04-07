@@ -157,8 +157,11 @@ def test_build_index():
                  np.asarray([{"foo": y, "bar": x}
                      for x, y in product(params["bar"], params["foo"])]))
 
+    # Test bad `order`s
     assert_raises(ValueError, grid.build_index, ['foo', 'foo'])
     assert_raises(ValueError, grid.build_index, ['argh'])
+
+    # Test a list of grids and the `grid` parameter
 
     grid2 = ParameterGrid([params, {'foo': [3]}])
 
@@ -174,6 +177,18 @@ def test_build_index():
     assert_equal(keys, ['foo'])
     assert_array_equal(index3, np.array([len(grid2) - 1]))
 
+    params3 = {"foo": [4, 2],
+               "bar": ["ham", "spam", "eggs"],
+               "jon": [2.0, 1.0]}
+    grid3 = ParameterGrid(params3)
+    keys, index = grid3.build_index(['foo'])
+    assert_true(keys == ['foo', 'bar', 'jon'] or keys == ['foo', 'jon', 'bar'])
+    keys, index_ravel = grid3.build_index(['foo'], ravel=True)
+    assert_equal(keys, ['foo'])
+    assert_equal(index.ndim, 3)
+    assert_equal(index_ravel.ndim, 2)
+    for row, row_ravel in zip(index, index_ravel):
+        assert_equal(sorted(row.flat), sorted(row_ravel))
 
 
 def test_grid_search():

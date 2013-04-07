@@ -106,7 +106,7 @@ class ParameterGrid(object):
         """Number of points for a single param dict"""
         return product(len(v) for v in params.values())
 
-    def build_index(self, order=(), grid=0):
+    def build_index(self, order=(), grid=0, ravel=False):
         """Build an index over grid points by parameter values.
 
         Parameters
@@ -116,11 +116,17 @@ class ParameterGrid(object):
             index. Any remaining parameters will be returned in arbitrary order.
         `grid` : integer, default 0
             The grid index if an array of grids are represented.
+        `ravel` : boolean, default False
+            When True, only parameters listed in `order` are assigned their own
+            dimension, so the output index has `len(order) + 1` dimensions.
+            This simplifies aggregating over the indexed data grouped by
+            selected parameters.
         
         Returns
         -------
         `order` : sequence of strings
-            Parameter names corresponding to axes in `index`.
+            Parameter names corresponding to axes in `index`. Where `ravel` is
+            True, the final axis is not included.
         `index` : array
             An integer index into the list of grid points, such that each
             parameter corresponds to an axis.
@@ -144,6 +150,10 @@ class ParameterGrid(object):
 
             keys = np.asarray(keys)[axis_order]
             index = index.transpose(axis_order)
+
+        if ravel:
+            keys = keys[:len(order)]
+            index = index.reshape(index.shape[:len(order)] + (-1,))
 
         return list(keys), index
 
