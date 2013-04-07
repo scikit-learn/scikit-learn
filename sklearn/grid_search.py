@@ -9,7 +9,7 @@ from __future__ import print_function
 # License: BSD Style.
 
 from abc import ABCMeta, abstractmethod
-from collections import Mapping, namedtuple
+from collections import Mapping
 from functools import partial, reduce
 from itertools import product
 import numbers
@@ -23,12 +23,12 @@ from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
 from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
-from .externals.six import string_types
-from .utils import safe_mask, check_random_state
+from .externals.six import string_types, iterkeys
+from .utils import safe_mask, check_random_state, deprecated
 from .utils.validation import _num_samples, check_arrays
 from .metrics import SCORERS, Scorer
 
-__all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
+__all__ = ['GridSearchCV', 'ParameterGrid', 'fit_fold', 'fit_grid_point',
            'ParameterSampler', 'RandomizedSearchCV']
 
 
@@ -189,9 +189,123 @@ class ParameterSampler(object):
         return self.n_iter
 
 
+def fit_fold(X, y, base_clf, clf_params, train, test, scorer,
+                   verbose, loss_func=None, **fit_params):
+    """Run fit on one set of parameters.
+
+    Parameters
+    ----------
+    X : array-like, sparse matrix or list
+        Input data.
+
+    y : array-like or None
+        Targets for input data.
+
+    base_clf : estimator object
+        This estimator will be cloned and then fitted.
+
+    clf_params : dict
+        Parameters to be set on base_estimator clone for this grid point.
+
+    train : ndarray, dtype int or bool
+        Boolean mask or indices for training set.
+
+    test : ndarray, dtype int or bool
+        Boolean mask or indices for test set.
+
+    scorer : callable or None.
+        If provided must be a scoring object / function with signature
+        ``scorer(estimator, X, y)``.
+
+    verbose : int
+        Verbosity level.
+
+    **fit_params : kwargs
+        Additional parameter passed to the fit function of the estimator.
+
+
+    Returns
+    -------
+    results : dict of string to any
+        An extensible storage of fold results including the following keys:
+
+        ``'test_score'`` : float
+            The estimator's score on the test set.
+        ``'test_n_samples'`` : int
+            The number of samples in the test set.
+    """
+    if verbose > 1:
+        start_time = time.time()
+        msg = '%s' % (', '.join('%s=%s' % (k, v)
+                      for k, v in clf_params.items()))
+        print("[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.'))
+
+    # update parameters of the classifier after a copy of its base structure
+    clf = clone(base_clf)
+    clf.set_params(**clf_params)
+
+    if hasattr(base_clf, 'kernel') and callable(base_clf.kernel):
+        # cannot compute the kernel values with custom function
+        raise ValueError("Cannot use a custom kernel function. "
+                         "Precompute the kernel matrix instead.")
+
+    if not hasattr(X, "shape"):
+        if getattr(base_clf, "_pairwise", False):
+            raise ValueError("Precomputed kernels or affinity matrices have "
+                             "to be passed as arrays or sparse matrices.")
+        X_train = [X[idx] for idx in train]
+        X_test = [X[idx] for idx in test]
+    else:
+        if getattr(base_clf, "_pairwise", False):
+            # X is a precomputed square kernel matrix
+            if X.shape[0] != X.shape[1]:
+                raise ValueError("X should be a square kernel matrix")
+            X_train = X[np.ix_(train, train)]
+            X_test = X[np.ix_(test, train)]
+        else:
+            X_train = X[safe_mask(X, train)]
+            X_test = X[safe_mask(X, test)]
+
+    if scorer is None:
+        scorer = lambda clf, *args: clf.score(*args)
+
+    if y is not None:
+        y_test = y[safe_mask(y, test)]
+        y_train = y[safe_mask(y, train)]
+        fit_args = (X_train, y_train)
+        score_args = (X_test, y_test)
+    else:
+        fit_args = (X_train,)
+        score_args = (X_test,)
+
+    # do actual fitting
+    clf.fit(*fit_args, **fit_params)
+    test_score = scorer(clf, *score_args)
+
+    if not isinstance(test_score, numbers.Number):
+        raise ValueError("scoring must return a number, got %s (%s)"
+                         " instead." % (str(test_score), type(test_score)))
+
+    if verbose > 2:
+        msg += ", score=%f" % test_score
+    if verbose > 1:
+        end_msg = "%s -%s" % (msg,
+                              logger.short_format_time(time.time() -
+                                                       start_time))
+        print("[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
+    return {
+            'test_score': test_score,
+            'test_n_samples': _num_samples(X_test),
+    }
+
+
+@deprecated('fit_grid_point is deprecated and will be removed in 0.15. '
+        'Use fit_fold instead.')
 def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
                    verbose, loss_func=None, **fit_params):
     """Run fit on one set of parameters.
+
+    This function is DEPRECATED. Use `fit_fold` instead.
 
     Parameters
     ----------
@@ -229,73 +343,15 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
     score : float
         Score of this parameter setting on given training / test split.
 
-    estimator : estimator object
-        Estimator object of type base_clf that was fitted using clf_params
-        and provided train / test split.
+    clf_params : dict
+        The parameters used to train this estimator.
 
     n_samples_test : int
         Number of test samples in this split.
     """
-    if verbose > 1:
-        start_time = time.time()
-        msg = '%s' % (', '.join('%s=%s' % (k, v)
-                      for k, v in clf_params.items()))
-        print("[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.'))
-
-    # update parameters of the classifier after a copy of its base structure
-    clf = clone(base_clf)
-    clf.set_params(**clf_params)
-
-    if hasattr(base_clf, 'kernel') and callable(base_clf.kernel):
-        # cannot compute the kernel values with custom function
-        raise ValueError("Cannot use a custom kernel function. "
-                         "Precompute the kernel matrix instead.")
-
-    if not hasattr(X, "shape"):
-        if getattr(base_clf, "_pairwise", False):
-            raise ValueError("Precomputed kernels or affinity matrices have "
-                             "to be passed as arrays or sparse matrices.")
-        X_train = [X[idx] for idx in train]
-        X_test = [X[idx] for idx in test]
-    else:
-        if getattr(base_clf, "_pairwise", False):
-            # X is a precomputed square kernel matrix
-            if X.shape[0] != X.shape[1]:
-                raise ValueError("X should be a square kernel matrix")
-            X_train = X[np.ix_(train, train)]
-            X_test = X[np.ix_(test, train)]
-        else:
-            X_train = X[safe_mask(X, train)]
-            X_test = X[safe_mask(X, test)]
-
-    if y is not None:
-        y_test = y[safe_mask(y, test)]
-        y_train = y[safe_mask(y, train)]
-        clf.fit(X_train, y_train, **fit_params)
-
-        if scorer is not None:
-            this_score = scorer(clf, X_test, y_test)
-        else:
-            this_score = clf.score(X_test, y_test)
-    else:
-        clf.fit(X_train, **fit_params)
-        if scorer is not None:
-            this_score = scorer(clf, X_test)
-        else:
-            this_score = clf.score(X_test)
-
-    if not isinstance(this_score, numbers.Number):
-        raise ValueError("scoring must return a number, got %s (%s)"
-                         " instead." % (str(this_score), type(this_score)))
-
-    if verbose > 2:
-        msg += ", score=%f" % this_score
-    if verbose > 1:
-        end_msg = "%s -%s" % (msg,
-                              logger.short_format_time(time.time() -
-                                                       start_time))
-        print("[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
-    return this_score, clf_params, _num_samples(X_test)
+    res = fit_fold(X, y, base_clf, clf_params, train, test, scorer,
+                   verbose, loss_func=None, **fit_params)
+    return res['test_score'], clf_params, res['test_n_samples']
 
 
 def _check_param_grid(param_grid):
@@ -314,11 +370,6 @@ def _check_param_grid(param_grid):
             if len(v) == 0:
                 raise ValueError("Parameter values should be a non-empty "
                                  "list.")
-
-
-_CVScoreTuple = namedtuple('_CVScoreTuple',
-                           ('parameters', 'mean_validation_score',
-                            'cv_validation_scores'))
 
 
 class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
@@ -387,6 +438,26 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
     def transform(self):
         return self.best_estimator_.transform
 
+    @property
+    def grid_scores_(self):
+        warnings.warn("grid_scores_ is deprecated and will be removed in 0.15."
+                      " Use grid_results_ and fold_results_ instead.", DeprecationWarning)
+        return zip(self.grid_results_['parameters'],
+                   self.grid_results_['test_score'],
+                   self.fold_results_['test_score'])
+
+    @property
+    def best_score_(self):
+        if not hasattr(self, 'best_index_'):
+            raise AttributeError('Call fit() to calculate best_score_')
+        return self.grid_results_['test_score'][self.best_index_]
+
+    @property
+    def best_params_(self):
+        if not hasattr(self, 'best_index_'):
+            raise AttributeError('Call fit() to calculate best_params_')
+        return self.grid_results_['parameters'][self.best_index_]
+
     def _check_estimator(self):
         """Check that estimator can be fitted and score can be computed."""
         if (not hasattr(self.estimator, 'fit') or
@@ -403,6 +474,36 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
                     "If no scoring is specified, the estimator passed "
                     "should have a 'score' method. The estimator %s "
                     "does not." % self.estimator)
+
+    def _set_methods(self):
+        """Create predict and  predict_proba if present in best estimator."""
+        if hasattr(self.best_estimator_, 'predict'):
+            self.predict = self.best_estimator_.predict
+        if hasattr(self.best_estimator_, 'predict_proba'):
+            self.predict_proba = self.best_estimator_.predict_proba
+
+    def _aggregate_scores(self, scores, n_samples):
+        """Take 2d arrays of scores and samples and calculate weighted
+        means/sums of each row"""
+        if self.iid:
+            scores = scores * n_samples
+            scores = scores.sum(axis=1) / n_samples.sum(axis=1)
+        else:
+            scores = scores.sum(axis=1) / scores.shape[1]
+        return scores
+
+    def _merge_result_dicts(self, result_dicts):
+        """
+        From a result dict for each fold, produce a single dict with an array
+        for each key.
+        For example [[{'score': 1}, {'score': 2}], [{'score': 3}, {'score': 4}]]
+                 -> {'score': np.array([[1, 2], [3, 4]])}"""
+        # assume keys are same throughout
+        result_keys = list(iterkeys(result_dicts[0][0])) 
+        arrays = ([[fold_results[key] for fold_results in point]
+                              for point in result_dicts]
+                 for key in result_keys)
+        return np.rec.fromarrays(arrays, names=result_keys)
 
     def _fit(self, X, y, parameter_iterator, **params):
         """Actual fitting,  performing the search over parameters."""
@@ -446,37 +547,25 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         out = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch)(
-                delayed(fit_grid_point)(
+                delayed(fit_fold)(
                     X, y, base_clf, clf_params, train, test, scorer,
                     self.verbose, **self.fit_params) for clf_params in
                 parameter_iterator for train, test in cv)
 
-        # Out is a list of triplet: score, estimator, n_test_samples
         n_param_points = len(list(parameter_iterator))
         n_fits = len(out)
         n_folds = n_fits // n_param_points
 
-        scores = list()
-        cv_scores = list()
-        for grid_start in range(0, n_fits, n_folds):
-            n_test_samples = 0
-            score = 0
-            these_points = list()
-            for this_score, clf_params, this_n_test_samples in \
-                    out[grid_start:grid_start + n_folds]:
-                these_points.append(this_score)
-                if self.iid:
-                    this_score *= this_n_test_samples
-                    n_test_samples += this_n_test_samples
-                score += this_score
-            if self.iid:
-                score /= float(n_test_samples)
-            else:
-                score /= float(n_folds)
-            scores.append((score, clf_params))
-            cv_scores.append(these_points)
+        cv_results = self._merge_result_dicts([
+            [fold_results for fold_results in out[start:start + n_folds]]
+            for start in range(0, n_fits, n_folds)
+        ])
 
-        cv_scores = np.asarray(cv_scores)
+        field_defs = [('parameters', 'object'), ('test_score', cv_results['test_score'].dtype)]
+        grid_results = np.zeros(n_param_points, dtype=field_defs)
+        grid_results['parameters'] = list(parameter_iterator)
+        grid_results['test_score'] = self._aggregate_scores(
+                cv_results['test_score'], cv_results['test_n_samples'])
 
         # Note: we do not use max(out) to make ties deterministic even if
         # comparison on estimator instances is not deterministic
@@ -490,30 +579,27 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         else:
             best_score = np.inf
 
-        for score, params in scores:
+        for i, score in enumerate(grid_results['test_score']):
             if ((score > best_score and greater_is_better)
-                    or (score < best_score and not greater_is_better)):
+                    or (score < best_score
+                        and not greater_is_better)):
                 best_score = score
-                best_params = params
+                best_index = i
 
-        self.best_params_ = best_params
-        self.best_score_ = best_score
+        self.best_index_ = best_index
+        self.fold_results_ = cv_results
+        self.grid_results_ = grid_results
 
         if self.refit:
             # fit the best estimator using the entire dataset
             # clone first to work around broken estimators
-            best_estimator = clone(base_clf).set_params(**best_params)
+            best_estimator = clone(base_clf).set_params(**self.best_params_)
             if y is not None:
                 best_estimator.fit(X, y, **self.fit_params)
             else:
                 best_estimator.fit(X, **self.fit_params)
             self.best_estimator_ = best_estimator
 
-        # Store the computed scores
-        self.cv_scores_ = [
-            _CVScoreTuple(clf_params, score, all_scores)
-            for clf_params, (score, _), all_scores
-            in zip(parameter_iterator, scores, cv_scores)]
         return self
 
 
@@ -604,26 +690,37 @@ class GridSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    `cv_scores_` : list of named tuples
-        Contains scores for all parameter combinations in param_grid.
-        Each entry corresponds to one parameter setting.
-        Each named tuple has the attributes:
+    `grid_results_` : structured array of shape [# param combinations]
+        For each parameter combination in ``param_grid`` includes these fields:
 
-            * ``parameters``, a dict of parameter settings
-            * ``mean_validation_score``, the mean score over the
+            * ``parameters``, dict of parameter settings
+            * ``test_score``, the mean score over the
               cross-validation folds
-            * ``cv_validation_scores``, the list of scores for each fold
+
+    `fold_results_` : structured array of shape [# param combinations, # folds]
+        For each cross-validation fold includes these fields:
+
+            * ``test_score``, the score for this fold
+            * ``test_n_samples``, the number of samples in testing
 
     `best_estimator_` : estimator
         Estimator that was choosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data.
+        on the left out data. Available only if refit=True.
+
+    `best_index_` : int
+        The index of the best parameter setting into ``grid_results_`` and
+        ``fold_results_`` data.
 
     `best_score_` : float
         Score of best_estimator on the left out data.
 
     `best_params_` : dict
         Parameter setting that gave the best results on the hold out data.
+
+    `grid_scores_` : list of tuples (deprecated)
+        Contains scores for all parameter combinations in ``param_grid``:
+        each tuple is (parameters, mean score, fold scores).
 
     Notes
     ------
@@ -658,12 +755,6 @@ class GridSearchCV(BaseSearchCV):
             refit, cv, verbose, pre_dispatch)
         self.param_grid = param_grid
         _check_param_grid(param_grid)
-
-    @property
-    def grid_scores_(self):
-        warnings.warn("grid_scores_ is deprecated and will be removed in 0.15."
-                      " Use cv_scores_ instead.", DeprecationWarning)
-        return self.cv_scores_
 
     def fit(self, X, y=None, **params):
         """Run fit with all sets of parameters.
@@ -760,26 +851,37 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    `cv_scores_` : list of named tuples
-        Contains scores for all parameter combinations in param_grid.
-        Each entry corresponds to one parameter setting.
-        Each named tuple has the attributes:
+    `grid_results_` : structured array of shape [# param combinations]
+        For each parameter combination in ``param_grid`` includes these fields:
 
-            * ``parameters``, a dict of parameter settings
-            * ``mean_validation_score``, the mean score over the
+            * ``parameters``, dict of parameter settings
+            * ``test_score``, the mean score over the
               cross-validation folds
-            * ``cv_validation_scores``, the list of scores for each fold
+
+    `fold_results_` : structured array of shape [# param combinations, # folds]
+        For each cross-validation fold includes these fields:
+
+            * ``test_score``, the score for this fold
+            * ``test_n_samples``, the number of samples in testing
 
     `best_estimator_` : estimator
         Estimator that was choosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
-        on the left out data.
+        on the left out data. Available only if refit=True.
+
+    `best_index_` : int
+        The index of the best parameter setting into ``grid_results_`` and
+        ``fold_results_`` data.
 
     `best_score_` : float
         Score of best_estimator on the left out data.
 
     `best_params_` : dict
         Parameter setting that gave the best results on the hold out data.
+
+    `grid_scores_` : list of tuples (deprecated)
+        Contains scores for all parameter combinations in ``param_grid``:
+        each tuple is (parameters, mean score, fold scores).
 
     Notes
     -----
