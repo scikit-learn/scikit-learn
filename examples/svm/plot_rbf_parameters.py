@@ -28,7 +28,7 @@ from sklearn.svm import SVC
 from sklearn.preprocessing import StandardScaler
 from sklearn.datasets import load_iris
 from sklearn.cross_validation import StratifiedKFold
-from sklearn.grid_search import GridSearchCV
+from sklearn.grid_search import GridSearchCV, ParameterGrid
 
 ##############################################################################
 # Load and prepare data set
@@ -110,7 +110,8 @@ score_dict = grid.cv_scores_
 
 # We extract just the scores
 scores = [x[1] for x in score_dict]
-scores = np.array(scores).reshape(len(C_range), len(gamma_range))
+_, index = ParameterGrid(grid.param_grid).build_index(['C', 'gamma'])
+scores = np.asarray(scores)[index]
 
 # draw heatmap of accuracy as a function of gamma and C
 pl.figure(figsize=(8, 6))
