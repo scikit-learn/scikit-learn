@@ -17,6 +17,7 @@ from ..base import BaseEstimator, RegressorMixin
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..utils import array2d, atleast2d_or_csr, check_arrays, deprecated
 from ..utils.extmath import safe_sparse_dot
+from ..externals import six
 
 from .sgd_fast import plain_sgd as plain_sgd
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
@@ -44,10 +45,8 @@ DEFAULT_EPSILON = 0.1
 """Default value of ``epsilon`` parameter. """
 
 
-class BaseSGD(BaseEstimator, SparseCoefMixin):
+class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
     """Base class for SGD classification and regression."""
-
-    __metaclass__ = ABCMeta
 
     def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
