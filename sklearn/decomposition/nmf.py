@@ -30,18 +30,6 @@ def safe_vstack(Xs):
         return np.vstack(Xs)
 
 
-def _pos(x):
-    """Positive part of a vector / matrix"""
-    return (x >= 0) * x
-
-
-def _neg(x):
-    """Negative part of a vector / matrix"""
-    neg_x = -x
-    neg_x *= x < 0
-    return neg_x
-
-
 def norm(x):
     """Dot product-based Euclidean norm implementation
 
@@ -127,8 +115,8 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
         x, y = U[:, j], V[j, :]
 
         # extract positive and negative parts of column vectors
-        x_p, y_p = _pos(x), _pos(y)
-        x_n, y_n = _neg(x), _neg(y)
+        x_p, y_p = np.maximum(x, 0), np.maximum(y, 0)
+        x_n, y_n = np.minimum(x, 0), np.minimum(y, 0)
 
         # and their norms
         x_p_nrm, y_p_nrm = norm(x_p), norm(y_p)
@@ -216,9 +204,10 @@ def _nls_subproblem(V, W, H_init, tol, max_iter):
             break
 
         for inner_iter in range(1, 20):
+            # Gradient step.
             Hn = H - alpha * grad
-            # Hn = np.where(Hn > 0, Hn, 0)
-            Hn = _pos(Hn)
+            # Projection step.
+            Hn = np.maximum(Hn, 0)
             d = Hn - H
             gradd = np.sum(grad * d)
             dQd = np.sum(np.dot(WtW, d) * d)
