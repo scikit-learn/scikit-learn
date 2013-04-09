@@ -116,7 +116,7 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
 
         # extract positive and negative parts of column vectors
         x_p, y_p = np.maximum(x, 0), np.maximum(y, 0)
-        x_n, y_n = np.minimum(x, 0), np.minimum(y, 0)
+        x_n, y_n = np.abs(np.minimum(x, 0)), np.abs(np.minimum(y, 0))
 
         # and their norms
         x_p_nrm, y_p_nrm = norm(x_p), norm(y_p)
