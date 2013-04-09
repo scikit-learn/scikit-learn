@@ -4,7 +4,9 @@ Confusion matrix
 ================
 
 Example of confusion matrix usage to evaluate the quality
-of the output of a classifier.
+of the output of a classifier on the iris data set. The
+higher the diagonal values of the confusion matrix the
+better, indicating many correct predictions.
 """
 print(__doc__)
 
@@ -37,4 +39,6 @@ print(cm)
 pl.matshow(cm)
 pl.title('Confusion matrix')
 pl.colorbar()
+pl.ylabel('True label')
+pl.xlabel('Predicted label')
 pl.show()
