@@ -292,6 +292,19 @@ def test_ovo_ties():
     assert_greater(scores[2, 0] - scores[0, 0], -scores[1, 0] - scores[2, 0])
 
 
+def test_ovo_ties2():
+    # test that ties can not only be won by the first two labels
+    X = np.array([[1, 2], [2, 1], [-2, 1], [-2, -1]])
+    y_ref = np.array([2, 0, 1, 2])
+
+    # cycle through labels so that each label wins once
+    for i in range(3):
+        y = (y_ref + i) % 3
+        multi_clf = OneVsOneClassifier(Perceptron())
+        ovo_prediction = multi_clf.fit(X, y).predict(X)
+        assert_equal(ovo_prediction[0], (1 + i) % 3)
+
+
 def test_ecoc_exceptions():
     ecoc = OutputCodeClassifier(LinearSVC(random_state=0))
     assert_raises(ValueError, ecoc.predict, [])
