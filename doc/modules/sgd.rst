@@ -119,12 +119,13 @@ SGD supports the following penalties:
 
   * ``penalty="l2"``: L2 norm penalty on ``coef_``.
   * ``penalty="l1"``: L1 norm penalty on ``coef_``.
-  * ``penalty="elasticnet"``: Convex combination of L2 and L1; `rho * L2 + (1 - rho) * L1`.
+  * ``penalty="elasticnet"``: Convex combination of L2 and L1; `(1 - l1_ratio) * L2 + l1_ratio * L1`.
 
 The default setting is ``penalty="l2"``. The L1 penalty leads to sparse
 solutions, driving most coefficients to zero. The Elastic Net solves
 some deficiencies of the L1 penalty in the presence of highly correlated
-attributes. The parameter ``rho`` has to be specified by the user.
+attributes. The parameter ``l1_ratio`` controls the convex combination
+of L1 and L2 penalty.
 
 :class:`SGDClassifier` supports multi-class classification by combining
 multiple binary classifiers in a "one versus all" (OVA) scheme. For each
@@ -301,7 +302,7 @@ Popular choices for the regularization term :math:`R` include:
    - L2 norm: :math:`R(w) := \frac{1}{2} \sum_{i=1}^{n} w_i^2`,
    - L1 norm: :math:`R(w) := \sum_{i=1}^{n} |w_i|`, which leads to sparse
      solutions.
-   - Elastic Net: :math:`R(w) := \rho \frac{1}{2} \sum_{i=1}^{n} w_i^2 + (1-\rho) \sum_{i=1}^{n} |w_i|`, a convex combination of L2 and L1.
+   - Elastic Net: :math:`R(w) := \rho \frac{1}{2} \sum_{i=1}^{n} w_i^2 + (1-\rho) \sum_{i=1}^{n} |w_i|`, a convex combination of L2 and L1, where :math:`\rho` is given by ``1 - l1_ratio``.
 
 The Figure below shows the contours of the different regularization terms
 in the parameter space when :math:`R(w) = 1`.
