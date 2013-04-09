@@ -336,7 +336,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
                 sparseness='components', tol=0.0001)
     >>> model.components_
     array([[ 1.67481991,  0.29614922],
-           [-0.        ,  0.4681982 ]])
+           [ 0.        ,  0.4681982 ]])
     >>> model.reconstruction_err_ #doctest: +ELLIPSIS
     0.513...
 
