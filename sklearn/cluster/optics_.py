@@ -10,6 +10,7 @@ import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
 from ..metrics import pairwise_distances
+from scipy.spatial.distance import cdist
 
 def hierarchical_extraction(ordering, reachability_distances, min_cluster_size,
         significant_ratio=0.75, similarity_ratio=0.4):
@@ -196,13 +197,10 @@ def optics(X, eps=float('inf'), min_samples=5, metric='euclidean',
     """
     X = np.asarray(X)
     n = X.shape[0]
-    # Calculate the pairwise distances
-    D = pairwise_distances(X, metric=metric)
     ordering = []
+    core_distances = np.ndarray(len(X))
     # Initiate reachability distances to infinity
     reachability_distances = float('inf') * np.ones(n)
-    # Calculate core distance for each sample
-    core_distances = np.asarray([np.sort(row)[min_samples] for row in D])
 
     seeds = range(n)
     i = 0
@@ -211,13 +209,18 @@ def optics(X, eps=float('inf'), min_samples=5, metric='euclidean',
         seeds.remove(i)
         # Add current point to the ordering
         ordering.append(i)
-        core_dist = core_distances[i]
+        # Calculate the pairwise distances
+        D = cdist([X[i]], X).reshape(len(X))
+        # Calculate core distance
+        core_dist = np.sort(D)[min_samples]
+        core_distances[i] = core_dist
+
         if core_dist <= eps:
             seeds_array = np.asarray(seeds)
             # Get the neighbors of the current point
-            neighbors = seeds_array[np.where(D[i][seeds] <= eps)[0]]
+            neighbors = seeds_array[np.where(D[seeds] <= eps)[0]]
             cd = core_dist * np.ones(neighbors.size)
-            d = D[i][neighbors]
+            d = D[neighbors]
             # Set the new reachability distances to
             # max(core_distance, distance)
             new_reach_dists = np.maximum(cd, d)
