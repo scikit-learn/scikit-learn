@@ -229,15 +229,15 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
 
 def _dump_svmlight(X, y, f, one_based, comment, query_id):
     is_sp = int(hasattr(X, "tocsr"))
-    if X.dtype == np.float64:
-        value_pattern = u("%d:%0.16e")
+    if X.dtype.kind == 'i':
+        value_pattern = u("%d:%d")
     else:
-        value_pattern = u("%d:%f")
+        value_pattern = u("%d:%.16g")
 
     if y.dtype.kind == 'i':
         line_pattern = u("%d")
     else:
-        line_pattern = u("%f")
+        line_pattern = u("%.16g")
 
     if query_id is not None:
         line_pattern += u(" qid:%d")
