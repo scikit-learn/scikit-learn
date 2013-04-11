@@ -13,7 +13,7 @@ from ..metrics import pairwise_distances
 from scipy.spatial.distance import cdist
 
 def hierarchical_extraction(ordering, reachability_distances, min_cluster_size,
-        significant_ratio=0.75, similarity_ratio=0.4):
+        significant_ratio=0.75, similarity_ratio=0.4, min_reach_ratio=0.1):
     """
     Constructs a tree structure from an OPTICS ordering and a set of
     reachability distances and extracts clusters from this structure.
@@ -37,6 +37,10 @@ def hierarchical_extraction(ordering, reachability_distances, min_cluster_size,
         The ratio for the reachability score of a split point
         compared to the parent split point for it to be considered
         similar.
+
+    min_reach_ratio : float
+        The ratio of the largest reachability score that a local
+        maximum needs to reach in order to be considered.
 
     Returns
     -------
@@ -65,7 +69,9 @@ def hierarchical_extraction(ordering, reachability_distances, min_cluster_size,
         if np.argmax(R[i - min_cluster_size:i + min_cluster_size + 1]) == min_cluster_size:
             L.append(i)
     # Sort local maximas in order of their reachability
-    L.sort(key=lambda x: R[x])
+    L.sort(key=lambda x: R[x]) 
+    R_max = R[L[-1]]
+    L = filter(lambda x: R[x] >= min_reach_ratio * R_max, L)
 
     class Node:
         def __init__(self, left, right):
@@ -81,7 +87,7 @@ def hierarchical_extraction(ordering, reachability_distances, min_cluster_size,
 
         s = node.split = L.pop()
         child_left = Node(node.left, s)
-        child_right = Node(s + 1, node.right)
+        child_right = Node(s, node.right)
         L_left  = [L[i] for i in np.where(np.asarray(L) < s)[0]]
         L_right = [L[i] for i in np.where(np.asarray(L) > s)[0]]
         R_left  = R[child_left.left:child_left.right]
@@ -98,11 +104,14 @@ def hierarchical_extraction(ordering, reachability_distances, min_cluster_size,
 
         if avg_reach_left <= significant_ratio * R[s] >= avg_reach_right:
             children = []
-            if child_left.right - child_left.left >= min_cluster_size:
+            left_size = child_left.right - child_left.left
+            if left_size >= min_cluster_size or left_size == child_left.right:
                 children.append((child_left, L_left))
-            if child_right.right - child_right.left >= min_cluster_size:
+            right_size = child_right.right - child_right.left
+            if right_size >= min_cluster_size or right_size == n - child_right.left:
                 children.append((child_right, L_right))
             if not children:
+                leaves.append(node)
                 return
 
             if parent and R[s] / R[parent.split] >= similarity_ratio:
@@ -123,11 +132,9 @@ def hierarchical_extraction(ordering, reachability_distances, min_cluster_size,
     cluster_tree(root, None, L)
 
     labels = -np.ones(n)
-    count = 0
-    for leaf in leaves:
-        for i in xrange(leaf.left, leaf.right):
-            labels[ordering[i]] = count
-        count += 1
+    for (i, leaf) in enumerate(leaves):
+        for j in xrange(leaf.left, leaf.right):
+            labels[ordering[j]] = i
 
     return labels
 
