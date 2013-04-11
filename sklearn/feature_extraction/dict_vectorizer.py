@@ -50,6 +50,15 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         Whether transform should produce scipy.sparse matrices.
         True by default.
 
+    Attributes
+    ----------
+    `feature_names_` : list
+        A list of length n_features containing the feature names (e.g., "f=ham"
+        and "f=spam").
+
+    `vocabulary_` : dict
+        A dictionary mapping feature names to feature indices.
+
     Examples
     --------
     >>> from sklearn.feature_extraction import DictVectorizer
