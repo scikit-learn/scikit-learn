@@ -547,7 +547,7 @@ def roc_curve(y_true, y_score, pos_label=None):
 
     y_true : array, shape = [n_samples]
         True binary labels in range {0, 1} or {-1, 1}.  If labels are not
-        binary, pos_label should be explictly given.
+        binary, pos_label should be explicitly given.
 
     y_score : array, shape = [n_samples]
         Target scores, can either be probability estimates of the positive
@@ -709,7 +709,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
         Estimated targets as returned by a classifier.
 
     labels : array, shape = [n_classes]
-        List of all labels occuring in the dataset.
+        List of all labels occurring in the dataset.
         If none is given, those that appear at least once
         in ``y_true`` or ``y_pred`` are used.
 
@@ -1838,7 +1838,7 @@ def explained_variance_score(y_true, y_pred):
         if numerator == 0.0:
             return 1.0
         else:
-            # arbitary set to zero to avoid -inf scores, having a constant
+            # arbitrary set to zero to avoid -inf scores, having a constant
             # y_true is not interesting for scoring a regression anyway
             return 0.0
     return 1 - numerator / denominator
@@ -1903,7 +1903,7 @@ def r2_score(y_true, y_pred):
         if numerator == 0.0:
             return 1.0
         else:
-            # arbitary set to zero to avoid -inf scores, having a constant
+            # arbitrary set to zero to avoid -inf scores, having a constant
             # y_true is not interesting for scoring a regression anyway
             return 0.0
 

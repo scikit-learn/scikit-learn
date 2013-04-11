@@ -132,7 +132,7 @@ Note the use of the ``-l nmf.py`` that restricts the output to lines that
 contains the "nmf.py" string. This is useful to have a quick look at the hotspot
 of the nmf Python module it-self ignoring anything else.
 
-Here is the begining of the output of the same command without the ``-l nmf.py``
+Here is the beginning of the output of the same command without the ``-l nmf.py``
 filter::
 
   In [5] %prun NMF(n_components=16, tol=1e-2).fit(X)

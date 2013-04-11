@@ -893,7 +893,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
     Attributes
     ----------
     ``alpha_`` : float
-        The amount of penalization choosen by cross validation
+        The amount of penalization chosen by cross validation
 
     ``coef_`` : array, shape = (n_features,) | (n_targets, n_features)
         parameter vector (w in the cost function formula)
@@ -996,10 +996,10 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     Attributes
     ----------
     ``alpha_`` : float
-        The amount of penalization choosen by cross validation
+        The amount of penalization chosen by cross validation
 
     ``l1_ratio_`` : float
-        The compromise between l1 and l2 penalization choosen by
+        The compromise between l1 and l2 penalization chosen by
         cross validation
 
     ``coef_`` : array, shape = (n_features,) | (n_targets, n_features)

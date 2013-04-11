@@ -24,7 +24,7 @@ The module structure is the following:
 
 - The ``ExtraTreesClassifier`` and ``ExtraTreesRegressor`` derived
   classes provide the user with concrete implementations of the
-  forest ensemble method using the extremly randomized trees
+  forest ensemble method using the extremely randomized trees
   ``ExtraTreeClassifier`` and ``ExtraTreeRegressor`` as
   sub-estimator implementations.
 

@@ -95,7 +95,7 @@ def test_pipeline_init():
     pipe2 = clone(pipe)
     assert_false(pipe.named_steps['svc'] is pipe2.named_steps['svc'])
 
-    # Check that appart from estimators, the parameters are the same
+    # Check that apart from estimators, the parameters are the same
     params = pipe.get_params()
     params2 = pipe2.get_params()
     # Remove estimators that where copied

@@ -58,7 +58,7 @@ def cpu_count():
 # For verbosity
 
 def _verbosity_filter(index, verbose):
-    """ Returns False for indices increasingly appart, the distance
+    """ Returns False for indices increasingly apart, the distance
         depending on the value of verbose.
 
         We use a lag increasing as the square of index
@@ -367,7 +367,7 @@ class Parallel(Logger):
 
     def print_progress(self, index):
         """Display the process of the parallel execution only a fraction
-           of time, controled by self.verbose.
+           of time, controlled by self.verbose.
         """
         if not self.verbose:
             return

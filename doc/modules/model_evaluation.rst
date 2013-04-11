@@ -202,7 +202,7 @@ Classification report
 ---------------------
 The :func:`classification_report` function builds a text report showing the
 main classification metrics. Here a small example with custom ``target_names``
-and infered labels:
+and inferred labels:
 
    >>> from sklearn.metrics import classification_report
    >>> y_true = [0, 1, 2, 2, 0]

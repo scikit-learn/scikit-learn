@@ -1,6 +1,6 @@
 """This test for the LFW require medium-size data dowloading and processing
 
-If the data has not been already downloaded by runnning the examples,
+If the data has not been already downloaded by running the examples,
 the tests won't run (skipped).
 
 If the test are run, the first execution will be long (typically a bit

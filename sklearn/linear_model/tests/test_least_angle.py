@@ -403,7 +403,7 @@ def test_lars_cv():
     """ Test the LassoLarsCV object by checking that the optimal alpha
         increases as the number of samples increases.
 
-        This property is not actualy garantied in general and is just a
+        This property is not actually garantied in general and is just a
         property of the given dataset, with the given steps chosen.
     """
     old_alpha = 0

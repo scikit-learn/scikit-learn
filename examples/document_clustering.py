@@ -33,7 +33,7 @@ quality of the clustering by quite a lot as measured against the "ground truth"
 provided by the class label assignments of the 20 newsgroups dataset.
 
 This improvement is not visible in the Silhouette Coefficient which is small
-for both as this measure seem to suffer from the phenomenom called
+for both as this measure seem to suffer from the phenomenon called
 "Concentration of Measure" or "Curse of Dimensionality" for high dimensional
 datasets such as text data. Other measures such as V-measure and Adjusted Rand
 Index are information theoretic based evaluation scores: as they are only based

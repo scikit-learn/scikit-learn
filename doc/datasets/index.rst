@@ -106,7 +106,7 @@ Sample generators
 =================
 
 In addition, scikit-learn includes various random sample generators that
-can be used to build artifical datasets of controled size and complexity.
+can be used to build artificial datasets of controlled size and complexity.
 
 .. image:: ../auto_examples/datasets/images/plot_random_dataset_1.png
    :target: ../auto_examples/datasets/plot_random_dataset.html

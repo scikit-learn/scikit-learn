@@ -42,7 +42,7 @@ add one more observation to that data set. Is the new observation so
 different from the others that we can doubt it is regular? (i.e. does
 it come from the same distribution?) Or on the contrary, is it so
 similar to the other that we cannot distinguish it from the original
-observations? This is the question adressed by the novelty detection
+observations? This is the question addressed by the novelty detection
 tools and methods.
 
 In general, it is about to learn a rough, close frontier delimiting
@@ -58,7 +58,7 @@ implemented in the :ref:`svm` module in the
 :class:`svm.OneClassSVM` object. It requires the choice of a
 kernel and a scalar parameter to define a frontier.  The RBF kernel is
 usually chosen although there exist no exact formula or algorithm to
-set its bandwith parameter. This is the default in the scikit-learn
+set its bandwidth parameter. This is the default in the scikit-learn
 implementation. The :math:`\nu` parameter, also known as the margin of
 the One-Class SVM, corresponds to the probability of finding a new,
 but regular, observation outside the frontier.
@@ -90,7 +90,7 @@ Fitting an elliptic envelop
 
 One common way of performing outlier detection is to assume that the
 regular data come from a known distribution (e.g. data are Gaussian
-distributed). From this assumption, we generaly try to define the
+distributed). From this assumption, we generally try to define the
 "shape" of the data, and can define outlying observations as
 observations which stand far enough from the fit shape. 
 

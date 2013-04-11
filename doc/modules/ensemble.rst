@@ -601,7 +601,7 @@ used for model selection (e.g. to determine the optimal number of iterations).
 
 Another strategy to reduce the variance is by subsampling the features
 analogous to the random splits in Random Forests. The size of the subsample
-can be controled via the ``max_features`` parameter.
+can be controlled via the ``max_features`` parameter.
 
 .. topic:: Examples:
 

@@ -510,7 +510,7 @@ instead of :class:`PCA` or its variants, in the cases where the data matrix
 does not contain negative values.
 
 Unlike :class:`PCA`, the representation of a vector is obtained in an additive
-fashion, by superimposing the components, without substracting. Such additive
+fashion, by superimposing the components, without subtracting. Such additive
 models are efficient for representing images and text.
 
 It has been observed in [Hoyer, 04] that, when carefully constrained,

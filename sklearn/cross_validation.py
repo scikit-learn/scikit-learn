@@ -1150,7 +1150,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
 
 
 def _permutation_test_score(estimator, X, y, cv, scorer):
-    """Auxilary function for permutation_test_score"""
+    """Auxiliary function for permutation_test_score"""
     avg_score = []
     for train, test in cv:
         estimator.fit(X[train], y[train])

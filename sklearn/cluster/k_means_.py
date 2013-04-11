@@ -546,7 +546,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
         centers = centers.toarray()
 
     if len(centers) != k:
-        raise ValueError('The shape of the inital centers (%s) '
+        raise ValueError('The shape of the initial centers (%s) '
                          'does not match the number of clusters %i'
                          % (centers.shape, k))
 
@@ -948,7 +948,7 @@ def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
         print(progress_msg)
 
     # Early stopping based on absolute tolerance on squared change of
-    # centers postion (using EWA smoothing)
+    # centers position (using EWA smoothing)
     if tol > 0.0 and ewa_diff < tol:
         if verbose:
             print('Converged (small centers change) at iteration %d/%d'
@@ -972,7 +972,7 @@ def _mini_batch_convergence(model, iteration_idx, n_iter, tol,
                   % (iteration_idx + 1, n_iter))
         return True
 
-    # update the convergence context to maintain state across sucessive calls:
+    # update the convergence context to maintain state across successive calls:
     context['ewa_diff'] = ewa_diff
     context['ewa_inertia'] = ewa_inertia
     context['ewa_inertia_min'] = ewa_inertia_min

@@ -38,7 +38,7 @@ h = .02  # step size in the mesh
 clf = svm.SVC(kernel=my_kernel)
 clf.fit(X, Y)
 
-# Plot the decision boundary. For that, we will asign a color to each
+# Plot the decision boundary. For that, we will assign a color to each
 # point in the mesh [x_min, m_max]x[y_min, y_max].
 x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
 y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
