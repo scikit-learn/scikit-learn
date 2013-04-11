@@ -58,7 +58,7 @@ def get_func_code(func):
         else:
             # Weird objects like numpy ufunc don't have __code__
             # This is fragile, as quite often the id of the object is
-            # in the repr, so it might not persist accross sessions,
+            # in the repr, so it might not persist across sessions,
             # however it will work for ufuncs.
             return repr(func), source_file, -1
 

@@ -540,7 +540,7 @@ The prior for the parameter :math:`w` is given by a spherical Gaussian:
 .. math:: p(w|\lambda) =
     \mathcal{N}(w|0,\lambda^{-1}\bold{I_{p}})
 
-The priors over :math:`\alpha` and :math:`\lambda` are choosen to be `gamma
+The priors over :math:`\alpha` and :math:`\lambda` are chosen to be `gamma
 distributions <http://en.wikipedia.org/wiki/Gamma_distribution>`__, the
 conjugate prior for the precision of the Gaussian.
 
@@ -548,7 +548,7 @@ The resulting model is called *Bayesian Ridge Regression*, and is similar to the
 classical :class:`Ridge`.  The parameters :math:`w`, :math:`\alpha` and
 :math:`\lambda` are estimated jointly during the fit of the model.  The
 remaining hyperparameters are the parameters of the gamma priors over
-:math:`\alpha` and :math:`\lambda`.  These are usually choosen to be
+:math:`\alpha` and :math:`\lambda`.  These are usually chosen to be
 *non-informative*.  The parameters are estimated by maximizing the *marginal
 log likelihood*.
 
@@ -673,7 +673,7 @@ Stochastic Gradient Descent - SGD
 =================================
 
 Stochastic gradient descent is a simple yet very efficient approach
-to fit linear models. It is particulary useful when the number of samples
+to fit linear models. It is particularly useful when the number of samples
 (and the number of features) is very large.
 
 

@@ -118,7 +118,7 @@ The class :class:`AdditiveChi2Sampler` implements this component wise
 deterministic sampling. Each component is sampled `n` times, yielding
 `2n+1` dimensions per input dimension (the multiple of two stems
 from the real and complex part of the Fourier transform).
-In the literature, `n` is usually choosen to be `1` or `2`, transforming
+In the literature, `n` is usually chosen to be `1` or `2`, transforming
 the dataset to size `n_samples x 5 * n_features` (in the case of `n=2`).
 
 The approximate feature map provided by :class:`AdditiveChi2Sampler` can be combined

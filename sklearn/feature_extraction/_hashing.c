@@ -1995,7 +1995,7 @@ static CYTHON_UNUSED int __pyx_pw_7cpython_5array_5array_1__getbuffer__(PyObject
  * 
  *         def __getbuffer__(array self, Py_buffer* info, int flags):             # <<<<<<<<<<<<<<
  *             # This implementation of getbuffer is geared towards Cython
- *             # requirements, and does not yet fullfill the PEP.
+ *             # requirements, and does not yet fulfill the PEP.
  */
 
 static int __pyx_pf_7cpython_5array_5array___getbuffer__(arrayobject *__pyx_v_self, Py_buffer *__pyx_v_info, CYTHON_UNUSED int __pyx_v_flags) {
@@ -2331,7 +2331,7 @@ static CYTHON_INLINE arrayobject *__pyx_f_7cpython_5array_copy(arrayobject *__py
  *     return op
  * 
  * cdef inline int extend_buffer(array self, char* stuff, Py_ssize_t n):             # <<<<<<<<<<<<<<
- *     """ efficent appending of new stuff of same type
+ *     """ efficient appending of new stuff of same type
  *     (e.g. of same array type)
  */
 
@@ -2509,7 +2509,7 @@ static CYTHON_UNUSED int __pyx_pw_5numpy_7ndarray_1__getbuffer__(PyObject *__pyx
  *         # -- the details of this may change.
  *         def __getbuffer__(ndarray self, Py_buffer* info, int flags):             # <<<<<<<<<<<<<<
  *             # This implementation of getbuffer is geared towards Cython
- *             # requirements, and does not yet fullfill the PEP.
+ *             # requirements, and does not yet fulfill the PEP.
  */
 
 static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info, int __pyx_v_flags) {

@@ -6,10 +6,10 @@
 SVM Margins Example
 =========================================================
 The plots below illustrate the effect the parameter `C` has
-on the seperation line. A large value of `C` basically tells
+on the separation line. A large value of `C` basically tells
 our model that we do not have that much faith in our data's
-distrubution, and will only consider points close to line
-of seperation.
+distribution, and will only consider points close to line
+of separation.
 
 A small value of `C` includes more/all the observations, allowing
 the margins to be calculated using all the data in the area.

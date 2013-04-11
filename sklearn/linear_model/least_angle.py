@@ -264,7 +264,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
             # regressors. Time to bail out
             warnings.warn('Early stopping the lars path, as the residues '
                           'are small and the current value of alpha is no '
-                          'longer well controled. %i iterations, alpha=%.3e, '
+                          'longer well controlled. %i iterations, alpha=%.3e, '
                           'previous alpha=%.3e, with an active set of %i '
                           'regressors.'
                           % (n_iter, alpha, prev_alpha, n_active))
@@ -1052,7 +1052,7 @@ class LassoLarsCV(LarsCV):
     -----
 
     The object solves the same problem as the LassoCV object. However,
-    unlike the LassoCV, it find the relevent alphas values by itself.
+    unlike the LassoCV, it find the relevant alphas values by itself.
     In general, because of this property, it will be more stable.
     However, it is more fragile to heavily multicollinear datasets.
 

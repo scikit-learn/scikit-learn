@@ -575,10 +575,10 @@ class Binarizer(BaseEstimator, TransformerMixin):
 
     Binarization is a common operation on text count data where the
     analyst can decide to only consider the presence or absence of a
-    feature rather than a quantified number of occurences for instance.
+    feature rather than a quantified number of occurrences for instance.
 
     It can also be used as a pre-processing step for estimators that
-    consider boolean random variables (e.g. modeled using the Bernoulli
+    consider boolean random variables (e.g. modelled using the Bernoulli
     distribution in a Bayesian setting).
 
     Parameters

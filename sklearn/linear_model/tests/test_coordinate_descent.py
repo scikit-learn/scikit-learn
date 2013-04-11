@@ -82,7 +82,7 @@ def test_enet_toy():
     """
     Test ElasticNet for various parameters of alpha and l1_ratio.
 
-    Actualy, the parameters alpha = 0 should not be alowed. However,
+    Actually, the parameters alpha = 0 should not be allowed. However,
     we test it as a border case.
 
     ElasticNet is tested with and without precomputed Gram matrix

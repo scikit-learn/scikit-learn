@@ -173,7 +173,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
                             contour_kw=None, **fig_kw):
     """Partial dependence plots for ``features``.
 
-    The ``len(features)`` plots are aranged in a grid with ``n_cols``
+    The ``len(features)`` plots are arranged in a grid with ``n_cols``
     columns. Two-way partial dependence plots are plotted as contour
     plots.
 

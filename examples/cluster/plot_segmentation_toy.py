@@ -65,7 +65,7 @@ img += 1 + 0.2 * np.random.randn(*img.shape)
 graph = image.img_to_graph(img, mask=mask)
 
 # Take a decreasing function of the gradient: we take it weakly
-# dependant from the gradient the segmentation is close to a voronoi
+# dependent from the gradient the segmentation is close to a voronoi
 graph.data = np.exp(-graph.data / graph.data.std())
 
 # Force the solver to be arpack, since amg is numerically

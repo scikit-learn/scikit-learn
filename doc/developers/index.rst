@@ -467,7 +467,7 @@ hence the validation in ``fit``, not ``__init__``.
 Deprecation
 -----------
 
-If any publically accessible method, function, attribute or parameter
+If any publicly accessible method, function, attribute or parameter
 is renamed, we still support the old one for two releases and issue
 a deprecation warning when it is called/passed/accessed.
 E.g., if the function ``zero_one`` is renamed to ``zero_one_loss``,
