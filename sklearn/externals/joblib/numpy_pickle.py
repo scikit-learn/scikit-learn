@@ -132,7 +132,7 @@ class NDArrayWrapper(object):
 class ZNDArrayWrapper(NDArrayWrapper):
     """An object to be persisted instead of numpy arrays.
 
-    This object store the Zfile filename in wich
+    This object store the Zfile filename in which
     the data array has been persisted, and the meta information to
     retrieve it.
 

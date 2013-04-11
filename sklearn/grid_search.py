@@ -556,7 +556,7 @@ class GridSearchCV(BaseSearchCV):
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
 
-            - None, in which case all the jobs are immediatly
+            - None, in which case all the jobs are immediately
               created and spawned. Use this for lightweight and
               fast-running jobs, to avoid delays due to on-demand
               spawning of the jobs
@@ -615,7 +615,7 @@ class GridSearchCV(BaseSearchCV):
             * ``cv_validation_scores``, the list of scores for each fold
 
     `best_estimator_` : estimator
-        Estimator that was choosen by the search, i.e. estimator
+        Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data.
 
@@ -728,7 +728,7 @@ class RandomizedSearchCV(BaseSearchCV):
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
 
-            - None, in which case all the jobs are immediatly
+            - None, in which case all the jobs are immediately
               created and spawned. Use this for lightweight and
               fast-running jobs, to avoid delays due to on-demand
               spawning of the jobs
@@ -771,7 +771,7 @@ class RandomizedSearchCV(BaseSearchCV):
             * ``cv_validation_scores``, the list of scores for each fold
 
     `best_estimator_` : estimator
-        Estimator that was choosen by the search, i.e. estimator
+        Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data.
 

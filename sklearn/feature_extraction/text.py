@@ -339,7 +339,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
         or more letters characters (punctuation is completely ignored
         and always treated as a token separator).
 
-    n_features : interger, optional, (2 ** 20) by default
+    n_features : integer, optional, (2 ** 20) by default
         The number of features (columns) in the output matrices. Small numbers
         of features are likely to cause hash collisions, but large numbers
         will cause larger coefficient dimensions in linear learners.

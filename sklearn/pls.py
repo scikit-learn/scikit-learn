@@ -286,20 +286,20 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
             # ----------------------
             # Possible memory footprint reduction may done here: in order to
             # avoid the allocation of a data chunk for the rank-one
-            # approximations matrix which is then substracted to Xk, we suggest
+            # approximations matrix which is then subtracted to Xk, we suggest
             # to perform a column-wise deflation.
             #
             # - regress Xk's on x_score
             x_loadings = np.dot(Xk.T, x_scores) / np.dot(x_scores.T, x_scores)
-            # - substract rank-one approximations to obtain remainder matrix
+            # - subtract rank-one approximations to obtain remainder matrix
             Xk -= np.dot(x_scores, x_loadings.T)
             if self.deflation_mode == "canonical":
-                # - regress Yk's on y_score, then substract rank-one approx.
+                # - regress Yk's on y_score, then subtract rank-one approx.
                 y_loadings = (np.dot(Yk.T, y_scores)
                               / np.dot(y_scores.T, y_scores))
                 Yk -= np.dot(y_scores, y_loadings.T)
             if self.deflation_mode == "regression":
-                # - regress Yk's on x_score, then substract rank-one approx.
+                # - regress Yk's on x_score, then subtract rank-one approx.
                 y_loadings = (np.dot(Yk.T, x_scores)
                               / np.dot(x_scores.T, x_scores))
                 Yk -= np.dot(x_scores, y_loadings.T)
@@ -548,7 +548,7 @@ class PLSRegression(_PLS):
 
 class PLSCanonical(_PLS):
     """ PLSCanonical implements the 2 blocks canonical PLS of the original Wold
-    algorithm [Tenenhaus 1998] p.204, refered as PLS-C2A in [Wegelin 2000].
+    algorithm [Tenenhaus 1998] p.204, referred as PLS-C2A in [Wegelin 2000].
 
     This class inherits from PLS with mode="A" and deflation_mode="canonical",
     norm_y_weights=True and algorithm="nipals", but svd should provide similar

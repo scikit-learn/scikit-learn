@@ -57,7 +57,7 @@ def contingency_matrix(labels_true, labels_pred, eps=None):
 
     eps: None or float
         If a float, that value is added to all values in the contingency
-        matrix. This helps to stop NaN propogation.
+        matrix. This helps to stop NaN propagation.
         If ``None``, nothing is adjusted.
 
     Returns
@@ -309,7 +309,7 @@ def homogeneity_score(labels_true, labels_pred):
       >>> homogeneity_score([0, 0, 1, 1], [1, 1, 0, 0])
       1.0
 
-    Non-pefect labelings that futher split classes into more clusters can be
+    Non-pefect labelings that further split classes into more clusters can be
     perfectly homogeneous::
 
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 0, 1, 2]))
@@ -499,8 +499,8 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
 
     The Mutual Information is a measure of the similarity between two labels of
     the same data. Where :math:`P(i)` is the probability of a random sample
-    occuring in cluster :math:`U_i` and :math:`P'(j)` is the probability of a
-    random sample occuring in cluster :math:`V_j`, the Mutual Information
+    occurring in cluster :math:`U_i` and :math:`P'(j)` is the probability of a
+    random sample occurring in cluster :math:`V_j`, the Mutual Information
     between clusterings :math:`U` and :math:`V` is given as:
 
     .. math::

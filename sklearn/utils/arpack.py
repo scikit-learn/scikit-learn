@@ -81,9 +81,9 @@ DNAUPD_ERRORS = {
     -8: "Error return from LAPACK eigenvalue calculation;",
     -9: "Starting vector is zero.",
     -10: "IPARAM(7) must be 1,2,3,4.",
-    -11: "IPARAM(7) = 1 and BMAT = 'G' are incompatable.",
+    -11: "IPARAM(7) = 1 and BMAT = 'G' are incompatible.",
     -12: "IPARAM(1) must be equal to 0 or 1.",
-    -13: "NEV and WHICH = 'BE' are incompatable.",
+    -13: "NEV and WHICH = 'BE' are incompatible.",
     -9999: "Could not build an Arnoldi factorization. "
            "IPARAM(5) returns the size of the current Arnoldi "
            "factorization. The user is advised to check that "
@@ -118,9 +118,9 @@ DSAUPD_ERRORS = {
         "Informational error from LAPACK routine dsteqr .",
     -9: "Starting vector is zero.",
     -10: "IPARAM(7) must be 1,2,3,4,5.",
-    -11: "IPARAM(7) = 1 and BMAT = 'G' are incompatable.",
+    -11: "IPARAM(7) = 1 and BMAT = 'G' are incompatible.",
     -12: "IPARAM(1) must be equal to 0 or 1.",
-    -13: "NEV and WHICH = 'BE' are incompatable. ",
+    -13: "NEV and WHICH = 'BE' are incompatible. ",
     -9999: "Could not build an Arnoldi factorization. "
            "IPARAM(5) returns the size of the current Arnoldi "
            "factorization. The user is advised to check that "

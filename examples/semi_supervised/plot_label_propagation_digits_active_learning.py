@@ -72,7 +72,7 @@ for i in range(5):
     # select five digit examples that the classifier is most uncertain about
     uncertainty_index = uncertainty_index = np.argsort(pred_entropies)[-5:]
 
-    # keep track of indicies that we get labels for
+    # keep track of indices that we get labels for
     delete_indices = np.array([])
 
     f.text(.05, (1 - (i + 1) * .183),

@@ -6,7 +6,7 @@ Automatic Relevance Determination Regression (ARD)
 Fit regression model with :ref:`bayesian_ridge_regression`.
 
 Compared to the OLS (ordinary least squares) estimator, the coefficient
-weights are slightly shifted toward zeros, wich stabilises them.
+weights are slightly shifted toward zeros, which stabilises them.
 
 The histogram of the estimated weights is very peaked, as a sparsity-inducing
 prior is implied on the weights.

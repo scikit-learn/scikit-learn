@@ -6,7 +6,7 @@
 Feature agglomeration
 =========================================================
 
-These images how similiar features are merged together using
+These images how similar features are merged together using
 feature agglomeration.
 """
 print(__doc__)

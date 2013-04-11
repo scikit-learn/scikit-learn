@@ -238,8 +238,8 @@ def test_numpy_scalar():
 
 
 def test_dict_hash():
-    # Check that dictionaries hash consistently, eventhough the ordering
-    # of the keys is not garanteed
+    # Check that dictionaries hash consistently, even though the ordering
+    # of the keys is not guaranteed
     k = KlassWithCachedMethod()
 
     d = {'#s12069__c_maps.nii.gz': [33],
@@ -264,8 +264,8 @@ def test_dict_hash():
 
 
 def test_set_hash():
-    # Check that sets hash consistently, eventhough their ordering
-    # is not garanteed
+    # Check that sets hash consistently, even though their ordering
+    # is not guaranteed
     k = KlassWithCachedMethod()
 
     s = set(['#s12069__c_maps.nii.gz',

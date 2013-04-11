@@ -11,7 +11,7 @@ must predict whether the two images are from the same person.
 
 An alternative task, Face Recognition or Face Identification is:
 given the picture of the face of an unknown person, identify the name
-of the person by refering to a gallery of previously seen pictures of
+of the person by referring to a gallery of previously seen pictures of
 identified persons.
 
 Both Face Verification and Face Recognition are tasks that are typically

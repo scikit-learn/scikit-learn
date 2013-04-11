@@ -57,8 +57,8 @@ cdef class ArrayDataset(SequentialDataset):
                   np.ndarray[DOUBLE, ndim=1, mode='c'] sample_weights):
         """A ``SequentialDataset`` backed by a two-dimensional numpy array.
 
-        Paramters
-        ---------
+        Parameters
+        ----------
         X : ndarray, dtype=np.float64, ndim=2, mode='c'
             The samples; a two-dimensional c-continuous numpy array of
             dtype np.float64.

@@ -85,8 +85,8 @@ def _load_coverage(F, header_length=6,
 def _load_csv(F):
     """Load csv file.
 
-    Paramters
-    ---------
+    Parameters
+    ----------
     F : string or file object
         file object or name of file
 

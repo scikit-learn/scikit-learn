@@ -7,7 +7,7 @@ An illustration of various embeddings on the digits dataset.
 
 The RandomTreesEmbedding, from the :mod:`sklearn.ensemble` module, is not
 technically a manifold embedding method, as it learn a high-dimensional
-representation on wich we apply a dimensionality reduction method.
+representation on which we apply a dimensionality reduction method.
 However, it is often useful to cast a dataset into a representation in
 which the classes are linearly-seperable.
 """

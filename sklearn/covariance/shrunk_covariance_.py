@@ -244,7 +244,7 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
 
     assume_centered: Boolean
       If True, data are not centered before computation.
-      Usefull to work with data whose mean is significantly equal to
+      Useful to work with data whose mean is significantly equal to
       zero but is not exactly zero.
       If False, data are centered before computation.
 

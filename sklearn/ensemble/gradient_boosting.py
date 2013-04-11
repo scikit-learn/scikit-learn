@@ -943,7 +943,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     loss : {'ls', 'lad', 'huber', 'quantile'}, optional (default='ls')
         loss function to be optimized. 'ls' refers to least squares
         regression. 'lad' (least absolute deviation) is a highly robust
-        loss function soley based on order information of the input
+        loss function solely based on order information of the input
         variables. 'huber' is a combination of the two. 'quantile'
         allows quantile regression (use `alpha` to specify the quantile).
 

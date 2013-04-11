@@ -354,7 +354,7 @@ For regression the default learning rate schedule is inverse scaling
 
     \eta^{(t)} = \frac{eta_0}{t^{power\_t}}
 
-where :math:`eta_0` and :math:`power\_t` are hyperparameters choosen by the
+where :math:`eta_0` and :math:`power\_t` are hyperparameters chosen by the
 user via ``eta0`` and ``power_t``, resp.
 
 For a constant learning rate use ``learning_rate='constant'`` and use ``eta0``

@@ -1639,7 +1639,7 @@ static void __pyx_pf_5numpy_7ndarray_2__releasebuffer__(PyArrayObject *__pyx_v_s
 static char __pyx_k_1[] = "-- Epoch %d";
 static char __pyx_k_2[] = "Norm: %.2f, NNZs: %d, Bias: %.6f, T: %d, Avg. loss: %.6f";
 static char __pyx_k_3[] = "Total training time: %.2f seconds.";
-static char __pyx_k_4[] = "floating-point under-/overflow occured.";
+static char __pyx_k_4[] = "floating-point under-/overflow occurred.";
 static char __pyx_k_6[] = "ndarray is not C contiguous";
 static char __pyx_k_8[] = "ndarray is not Fortran contiguous";
 static char __pyx_k_10[] = "Non-native byte order not supported";
@@ -8293,7 +8293,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sgd_fast_plain_sgd(CYTHON_UNU
  *         # floating-point under-/overflow check.
  *         if np.any(np.isinf(weights)) or np.any(np.isnan(weights)) \             # <<<<<<<<<<<<<<
  *            or np.isnan(intercept) or np.isinf(intercept):
- *             raise ValueError("floating-point under-/overflow occured.")
+ *             raise ValueError("floating-point under-/overflow occurred.")
  */
     __pyx_t_15 = __Pyx_GetName(__pyx_m, __pyx_n_s__np); if (unlikely(!__pyx_t_15)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 506; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
     __Pyx_GOTREF(__pyx_t_15);
@@ -8331,7 +8331,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sgd_fast_plain_sgd(CYTHON_UNU
  *         # floating-point under-/overflow check.
  *         if np.any(np.isinf(weights)) or np.any(np.isnan(weights)) \
  *            or np.isnan(intercept) or np.isinf(intercept):             # <<<<<<<<<<<<<<
- *             raise ValueError("floating-point under-/overflow occured.")
+ *             raise ValueError("floating-point under-/overflow occurred.")
  * 
  */
       __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__np); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 506; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -8345,7 +8345,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sgd_fast_plain_sgd(CYTHON_UNU
  *         # floating-point under-/overflow check.
  *         if np.any(np.isinf(weights)) or np.any(np.isnan(weights)) \             # <<<<<<<<<<<<<<
  *            or np.isnan(intercept) or np.isinf(intercept):
- *             raise ValueError("floating-point under-/overflow occured.")
+ *             raise ValueError("floating-point under-/overflow occurred.")
  */
       __pyx_t_3 = __Pyx_GetName(__pyx_m, __pyx_n_s__np); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 506; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
       __Pyx_GOTREF(__pyx_t_3);
@@ -8378,7 +8378,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sgd_fast_plain_sgd(CYTHON_UNU
  *         # floating-point under-/overflow check.
  *         if np.any(np.isinf(weights)) or np.any(np.isnan(weights)) \
  *            or np.isnan(intercept) or np.isinf(intercept):             # <<<<<<<<<<<<<<
- *             raise ValueError("floating-point under-/overflow occured.")
+ *             raise ValueError("floating-point under-/overflow occurred.")
  * 
  */
         __pyx_t_2 = __Pyx_GetName(__pyx_m, __pyx_n_s__np); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 507; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
@@ -8435,7 +8435,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sgd_fast_plain_sgd(CYTHON_UNU
       /* "sklearn/linear_model/sgd_fast.pyx":508
  *         if np.any(np.isinf(weights)) or np.any(np.isnan(weights)) \
  *            or np.isnan(intercept) or np.isinf(intercept):
- *             raise ValueError("floating-point under-/overflow occured.")             # <<<<<<<<<<<<<<
+ *             raise ValueError("floating-point under-/overflow occurred.")             # <<<<<<<<<<<<<<
  * 
  *     w.reset_wscale()
  */
@@ -8450,7 +8450,7 @@ static PyObject *__pyx_pf_7sklearn_12linear_model_8sgd_fast_plain_sgd(CYTHON_UNU
   }
 
   /* "sklearn/linear_model/sgd_fast.pyx":510
- *             raise ValueError("floating-point under-/overflow occured.")
+ *             raise ValueError("floating-point under-/overflow occurred.")
  * 
  *     w.reset_wscale()             # <<<<<<<<<<<<<<
  * 
@@ -8822,7 +8822,7 @@ static CYTHON_UNUSED int __pyx_pw_5numpy_7ndarray_1__getbuffer__(PyObject *__pyx
  *         # -- the details of this may change.
  *         def __getbuffer__(ndarray self, Py_buffer* info, int flags):             # <<<<<<<<<<<<<<
  *             # This implementation of getbuffer is geared towards Cython
- *             # requirements, and does not yet fullfill the PEP.
+ *             # requirements, and does not yet fulfill the PEP.
  */
 
 static int __pyx_pf_5numpy_7ndarray___getbuffer__(PyArrayObject *__pyx_v_self, Py_buffer *__pyx_v_info, int __pyx_v_flags) {
@@ -12776,7 +12776,7 @@ static int __Pyx_InitCachedConstants(void) {
   /* "sklearn/linear_model/sgd_fast.pyx":508
  *         if np.any(np.isinf(weights)) or np.any(np.isnan(weights)) \
  *            or np.isnan(intercept) or np.isinf(intercept):
- *             raise ValueError("floating-point under-/overflow occured.")             # <<<<<<<<<<<<<<
+ *             raise ValueError("floating-point under-/overflow occurred.")             # <<<<<<<<<<<<<<
  * 
  *     w.reset_wscale()
  */

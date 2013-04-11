@@ -130,7 +130,7 @@ class _BaseHMM(BaseEstimator):
     # which depend on the specific emission distribution.
     #
     # Subclasses will probably also want to implement properties for
-    # the emission distribution parameters to expose them publically.
+    # the emission distribution parameters to expose them publicly.
 
     def __init__(self, n_components=1, startprob=None, transmat=None,
                  startprob_prior=None, transmat_prior=None,
@@ -999,7 +999,7 @@ class MultinomialHMM(_BaseHMM):
             return False
 
         if np.any(symbols < 0):
-            # input containes negative intiger
+            # input contains negative intiger
             return False
 
         symbols.sort()
