@@ -161,7 +161,7 @@ def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
 
     X = (1 - weights) * X
     alphas_, _, coef_ = lars_path(X, y,
-                                  Gram=precompute, copy_X=False,
+                                  Gram=None, copy_X=False,
                                   copy_Gram=False, alpha_min=np.min(alpha),
                                   method='lasso', verbose=verbose,
                                   max_iter=max_iter, eps=eps)
