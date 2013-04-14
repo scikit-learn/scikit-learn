@@ -117,60 +117,6 @@ def test_xor():
     assert_equal(clf.score(X, y), 1.0)
 
 
-def test_graphviz_toy():
-    """Check correctness of graphviz output on a toy dataset."""
-    clf = tree.DecisionTreeClassifier(max_depth=3, min_samples_split=1)
-    clf.fit(X, y)
-
-    # test export code
-    out = StringIO()
-    tree.export_graphviz(clf, out_file=out)
-    contents1 = out.getvalue()
-
-    tree_toy = StringIO(
-        "digraph Tree {\n"
-        "0 [label=\"X[0] <= 0.0000\\nerror = 0.5"
-        "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
-        "1 [label=\"error = 0.0000\\nsamples = 3\\n"
-        "value = [ 3.  0.]\", shape=\"box\"] ;\n"
-        "0 -> 1 ;\n"
-        "2 [label=\"error = 0.0000\\nsamples = 3\\n"
-        "value = [ 0.  3.]\", shape=\"box\"] ;\n"
-        "0 -> 2 ;\n"
-        "}")
-    contents2 = tree_toy.getvalue()
-
-    assert contents1 == contents2, \
-        "graphviz output test failed\n: %s != %s" % (contents1, contents2)
-
-    # test with feature_names
-    out = StringIO()
-    out = tree.export_graphviz(clf, out_file=out,
-                               feature_names=["feature1", ""])
-    contents1 = out.getvalue()
-
-    tree_toy = StringIO(
-        "digraph Tree {\n"
-        "0 [label=\"feature1 <= 0.0000\\nerror = 0.5"
-        "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
-        "1 [label=\"error = 0.0000\\nsamples = 3\\n"
-        "value = [ 3.  0.]\", shape=\"box\"] ;\n"
-        "0 -> 1 ;\n"
-        "2 [label=\"error = 0.0000\\nsamples = 3\\n"
-        "value = [ 0.  3.]\", shape=\"box\"] ;\n"
-        "0 -> 2 ;\n"
-        "}")
-    contents2 = tree_toy.getvalue()
-
-    assert contents1 == contents2, \
-        "graphviz output test failed\n: %s != %s" % (contents1, contents2)
-
-    # test improperly formed feature_names
-    out = StringIO()
-    assert_raises(IndexError, tree.export_graphviz,
-                  clf, out, feature_names=[])
-
-
 def test_iris():
     """Check consistency on dataset iris."""
     for c in ('gini',
