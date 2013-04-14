@@ -153,7 +153,7 @@ def fit(
     set_problem(
         &problem, X.data, Y.data, sample_weight.data, X.shape, kernel_index)
     if problem.x == NULL:
-        raise MemoryError("Seems we've run out of of memory")
+        raise MemoryError("Seems we've run out of memory")
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
 
@@ -321,7 +321,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     with nogil:
         rv = copy_predict(X.data, model, X.shape, dec_values.data)
     if rv < 0:
-        raise MemoryError("We've run out of of memory")
+        raise MemoryError("We've run out of memory")
     free_model(model)
     return dec_values
 
@@ -395,7 +395,7 @@ def predict_proba(
     with nogil:
         rv = copy_predict_proba(X.data, model, X.shape, dec_values.data)
     if rv < 0:
-        raise MemoryError("We've run out of of memory")
+        raise MemoryError("We've run out of memory")
     # free model and param
     free_model(model)
     return dec_values
@@ -456,7 +456,7 @@ def decision_function(
     with nogil:
         rv = copy_predict_values(X.data, model, X.shape, dec_values.data, n_class)
     if rv < 0:
-        raise MemoryError("We've run out of of memory")
+        raise MemoryError("We've run out of memory")
     # free model and param
     free_model(model)
     return dec_values
@@ -542,7 +542,7 @@ def cross_validation(
     set_problem(
         &problem, X.data, Y.data, sample_weight.data, X.shape, kernel_index)
     if problem.x == NULL:
-        raise MemoryError("Seems we've run out of of memory")
+        raise MemoryError("Seems we've run out of memory")
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
 
