@@ -13,7 +13,8 @@ from ..externals import six
 from . import _tree
 
 
-def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None):
+def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
+                    max_depth=None, close=True):
     """Export a decision tree in DOT format.
 
     This function generates a GraphViz representation of the decision tree,
@@ -26,13 +27,17 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None):
     Parameters
     ----------
     decision_tree : decision tree classifier
-        The decision tree to be exported to graphviz.
+        The decision tree to be exported to GraphViz.
 
     out_file : file object or string, optional (default="tree.dot")
         Handle or name of the output file.
 
     feature_names : list of strings, optional (default=None)
         Names of each of the features.
+
+    max_depth : int, optional (default=None)
+        The maximum depth of the representation. If None, the tree is fully
+        generated.
 
     Returns
     -------
@@ -79,7 +84,7 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None):
                       tree.n_samples[node_id],
                       value)
 
-    def recurse(tree, node_id, parent=None):
+    def recurse(tree, node_id, parent=None, depth=0):
         if node_id == _tree.TREE_LEAF:
             raise ValueError("Invalid node_id %s" % _tree.TREE_LEAF)
 
@@ -87,16 +92,24 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None):
         right_child = tree.children_right[node_id]
 
         # Add node with description
-        out_file.write('%d [label="%s", shape="box"] ;\n' %
-                       (node_id, node_to_str(tree, node_id)))
+        if max_depth is None or depth <= max_depth:
+            out_file.write('%d [label="%s", shape="box"] ;\n' %
+                           (node_id, node_to_str(tree, node_id)))
 
-        if parent is not None:
-            # Add edge to parent
-            out_file.write('%d -> %d ;\n' % (parent, node_id))
+            if parent is not None:
+                # Add edge to parent
+                out_file.write('%d -> %d ;\n' % (parent, node_id))
 
-        if left_child != _tree.TREE_LEAF:  # and right_child != _tree.TREE_LEAF
-            recurse(tree, left_child, node_id)
-            recurse(tree, right_child, node_id)
+            if left_child != _tree.TREE_LEAF:
+                recurse(tree, left_child, parent=node_id, depth=depth + 1)
+                recurse(tree, right_child, parent=node_id, depth=depth + 1)
+
+        else:
+            out_file.write('%d [label="(...)", shape="box"] ;\n' % node_id)
+
+            if parent is not None:
+                # Add edge to parent
+                out_file.write('%d -> %d ;\n' % (parent, node_id))
 
     if isinstance(out_file, six.string_types):
         if six.PY3:
