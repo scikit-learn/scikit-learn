@@ -372,7 +372,7 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
     # iterations
     for i in range(max_iter):
         centers_old = centers.copy()
-        # labels assignement is also called the E-step of EM
+        # labels assignment is also called the E-step of EM
         labels, inertia = \
             _labels_inertia(X, x_squared_norms, centers,
                             precompute_distances=precompute_distances,
@@ -844,7 +844,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
         Controls the verbosity
 
     """
-    # Perform label assignement to nearest centers
+    # Perform label assignment to nearest centers
     nearest_center, inertia = _labels_inertia(X, x_squared_norms, centers,
                                               distances=distances)
     if random_reassign and reassignment_ratio > 0:
@@ -1036,7 +1036,7 @@ class MiniBatchKMeans(KMeans):
         and gives the initial centers.
 
     compute_labels : boolean
-        Compute label assignements and inertia for the complete dataset
+        Compute label assignment and inertia for the complete dataset
         once the minibatch optimization has converged in fit.
 
     random_state : integer or numpy.RandomState, optional
@@ -1158,7 +1158,7 @@ class MiniBatchKMeans(KMeans):
                 x_squared_norms=x_squared_norms,
                 init_size=init_size)
 
-            # Compute the label assignement on the init dataset
+            # Compute the label assignment on the init dataset
             batch_inertia, centers_squared_diff = _mini_batch_step(
                 X_valid, x_squared_norms[validation_indices],
                 cluster_centers, counts, old_center_buffer, False,
@@ -1211,7 +1211,7 @@ class MiniBatchKMeans(KMeans):
 
         if self.compute_labels:
             if self.verbose:
-                print('Computing label assignements and total inertia')
+                print('Computing label assignment and total inertia')
             self.labels_, self.inertia_ = _labels_inertia(
                 X, x_squared_norms, self.cluster_centers_)
 

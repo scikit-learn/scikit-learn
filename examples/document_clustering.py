@@ -37,7 +37,7 @@ for both as this measure seem to suffer from the phenomenon called
 "Concentration of Measure" or "Curse of Dimensionality" for high dimensional
 datasets such as text data. Other measures such as V-measure and Adjusted Rand
 Index are information theoretic based evaluation scores: as they are only based
-on cluster assignements rather than distances, hence not affected by the curse
+on cluster assignments rather than distances, hence not affected by the curse
 of dimensionality.
 
 Note: as k-means is optimizing a non-convex objective function, it will likely

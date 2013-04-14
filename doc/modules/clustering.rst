@@ -379,10 +379,10 @@ function of the gradient of the image.
     :target: ../auto_examples/cluster/plot_lena_segmentation.html
     :scale: 65
 
-Different label assignement strategies
+Different label assignment strategies
 ---------------------------------------
 
-Different label assignement strategies can be used, corresponding to the
+Different label assignment strategies can be used, corresponding to the
 `assign_labels` parameter of :class:`SpectralClustering`.
 The `kmeans` strategie can match finer details of the data, but it can be
 more unstable. In particular, unless you control the `random_state`, it
