@@ -1,5 +1,5 @@
 """
-This module defines export functions of decision trees.
+This module defines export functions for decision trees.
 """
 
 # Authors: Brian Holt,
