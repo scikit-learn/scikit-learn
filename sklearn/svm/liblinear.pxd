@@ -10,7 +10,7 @@ cdef extern from "src/liblinear/linear.h":
     ctypedef parameter* parameter_const_ptr "parameter const *"
     ctypedef char* char_const_ptr "char const *"
     char_const_ptr check_parameter(problem_const_ptr prob, parameter_const_ptr param)
-    model *train(problem_const_ptr prob, parameter_const_ptr param)
+    model *train(problem_const_ptr prob, parameter_const_ptr param) nogil
     int get_nr_feature (model *model)
     int get_nr_class (model *model)
     void free_and_destroy_model (model **)

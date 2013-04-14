@@ -153,7 +153,7 @@ def fit(
     set_problem(
         &problem, X.data, Y.data, sample_weight.data, X.shape, kernel_index)
     if problem.x == NULL:
-        raise MemoryError("Seems we've run out of of memory")
+        raise MemoryError("Seems we've run out of memory")
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
 
@@ -172,7 +172,8 @@ def fit(
 
     # this does the real work
     cdef int fit_status = 0
-    model = svm_train(&problem, &param, &fit_status)
+    with nogil:
+        model = svm_train(&problem, &param, &fit_status)
 
     # from here until the end, we just copy the data returned by
     # svm_train
@@ -300,6 +301,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] dec_values
     cdef svm_parameter param
     cdef svm_model *model
+    cdef int rv
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
@@ -317,8 +319,10 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
 
     #TODO: use check_model
     dec_values = np.empty(X.shape[0])
-    if copy_predict(X.data, model, X.shape, dec_values.data) < 0:
-        raise MemoryError("We've run out of of memory")
+    with nogil:
+        rv = copy_predict(X.data, model, X.shape, dec_values.data)
+    if rv < 0:
+        raise MemoryError("We've run out of memory")
     free_model(model)
     return dec_values
 
@@ -375,6 +379,7 @@ def predict_proba(
     cdef svm_model *model
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
+    cdef int rv
 
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
     set_parameter(&param, svm_type, kernel_index, degree, gamma,
@@ -389,8 +394,10 @@ def predict_proba(
 
     cdef np.npy_intp n_class = get_nr(model)
     dec_values = np.empty((X.shape[0], n_class), dtype=np.float64)
-    if copy_predict_proba(X.data, model, X.shape, dec_values.data) < 0:
-        raise MemoryError("We've run out of of memory")
+    with nogil:
+        rv = copy_predict_proba(X.data, model, X.shape, dec_values.data)
+    if rv < 0:
+        raise MemoryError("We've run out of memory")
     # free model and param
     free_model(model)
     return dec_values
@@ -430,6 +437,8 @@ def decision_function(
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
 
+    cdef int rv
+
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
     set_parameter(&param, svm_type, kernel_index, degree, gamma,
                           coef0, nu, cache_size, C, tol, epsilon, shrinking,
@@ -448,8 +457,10 @@ def decision_function(
         n_class = n_class * (n_class - 1) / 2
 
     dec_values = np.empty((X.shape[0], n_class), dtype=np.float64)
-    if copy_predict_values(X.data, model, X.shape, dec_values.data, n_class) < 0:
-        raise MemoryError("We've run out of of memory")
+    with nogil:
+        rv = copy_predict_values(X.data, model, X.shape, dec_values.data, n_class)
+    if rv < 0:
+        raise MemoryError("We've run out of memory")
     # free model and param
     free_model(model)
     return dec_values
@@ -535,7 +546,7 @@ def cross_validation(
     set_problem(
         &problem, X.data, Y.data, sample_weight.data, X.shape, kernel_index)
     if problem.x == NULL:
-        raise MemoryError("Seems we've run out of of memory")
+        raise MemoryError("Seems we've run out of memory")
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
 
@@ -552,7 +563,8 @@ def cross_validation(
 
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] target
     target = np.empty((X.shape[0]), dtype=np.float64)
-    svm_cross_validation(&problem, &param, n_fold, <double *> target.data)
+    with nogil:
+        svm_cross_validation(&problem, &param, n_fold, <double *> target.data)
 
     free(problem.x)
     return target
