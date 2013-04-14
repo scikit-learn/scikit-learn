@@ -39,7 +39,8 @@ def train_wrap(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
         raise ValueError(error_msg)
 
     # early return
-    model = train(problem, param)
+    with nogil:
+        model = train(problem, param)
 
     # coef matrix holder created as fortran since that's what's used in liblinear
     cdef np.ndarray[np.float64_t, ndim=2, mode='fortran'] w
