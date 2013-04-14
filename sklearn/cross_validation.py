@@ -452,19 +452,18 @@ class LeaveOneLabelOut(object):
     """
 
     def __init__(self, labels, indices=True):
-        self.labels = labels
-        self.n_unique_labels = len(unique(labels))
+        # We make a copy of labels to avoid side-effects during iteration
+        self.labels = np.array(labels, copy=True)
+        self.unique_labels = unique(labels)
+        self.n_unique_labels = len(self.unique_labels)
         self.indices = indices
 
     def __iter__(self):
-        # We make a copy here to avoid side-effects during iteration
-        labels = np.array(self.labels, copy=True)
         if self.indices:
-            ind = np.arange(len(labels))
-
-        for i in unique(labels):    # also a copy; XXX do we need this?
-            test_index = np.zeros(len(labels), dtype=np.bool)
-            test_index[labels == i] = True
+            ind = np.arange(len(self.labels))
+        for i in self.unique_labels:
+            test_index = np.zeros(len(self.labels), dtype=np.bool)
+            test_index[self.labels == i] = True
             train_index = np.logical_not(test_index)
             if self.indices:
                 train_index = ind[train_index]
@@ -539,24 +538,22 @@ class LeavePLabelOut(object):
     """
 
     def __init__(self, labels, p, indices=True):
-        self.labels = labels
-        self.unique_labels = unique(self.labels)
+        # We make a copy of labels to avoid side-effects during iteration
+        self.labels = np.array(labels, copy=True)
+        self.unique_labels = unique(labels)
         self.n_unique_labels = len(self.unique_labels)
         self.p = p
         self.indices = indices
 
     def __iter__(self):
-        # We make a copy here to avoid side-effects during iteration
-        labels = np.array(self.labels, copy=True)
-        unique_labels = unique(labels)
         comb = combinations(range(self.n_unique_labels), self.p)
         if self.indices:
-            ind = np.arange(len(labels))
+            ind = np.arange(len(self.labels))
         for idx in comb:
-            test_index = np.zeros(len(labels), dtype=np.bool)
+            test_index = np.zeros(len(self.labels), dtype=np.bool)
             idx = np.array(idx)
-            for l in unique_labels[idx]:
-                test_index[labels == l] = True
+            for l in self.unique_labels[idx]:
+                test_index[self.labels == l] = True
             train_index = np.logical_not(test_index)
             if self.indices:
                 train_index = ind[train_index]
