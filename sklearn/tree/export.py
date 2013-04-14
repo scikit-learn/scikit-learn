@@ -66,9 +66,19 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
         if tree.n_outputs == 1:
             value = value[0, :]
 
+        if isinstance(tree.criterion, _tree.Gini):
+            criterion = "gini"
+        elif isinstance(tree.criterion, _tree.Entropy):
+            criterion = "entropy"
+        elif isinstance(tree.criterion, _tree.MSE):
+            criterion = "mse"
+        else:
+            criterion = "impurity"
+
         if tree.children_left[node_id] == _tree.TREE_LEAF:
-            return "error = %.4f\\nsamples = %s\\nvalue = %s" \
-                   % (tree.init_error[node_id],
+            return "%s = %.4f\\nsamples = %s\\nvalue = %s" \
+                   % (criterion,
+                      tree.init_error[node_id],
                       tree.n_samples[node_id],
                       value)
         else:
@@ -77,9 +87,10 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
             else:
                 feature = "X[%s]" % tree.feature[node_id]
 
-            return "%s <= %.4f\\nerror = %s\\nsamples = %s\\nvalue = %s" \
+            return "%s <= %.4f\\n%s = %s\\nsamples = %s\\nvalue = %s" \
                    % (feature,
                       tree.threshold[node_id],
+                      criterion,
                       tree.init_error[node_id],
                       tree.n_samples[node_id],
                       value)
