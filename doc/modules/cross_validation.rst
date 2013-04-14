@@ -288,7 +288,7 @@ a training set using the samples of all the experiments except one::
 
   >>> lolo = LeaveOneLabelOut(labels)
   >>> print(lolo)
-  sklearn.cross_validation.LeaveOneLabelOut(labels=[1, 1, 2, 2])
+  sklearn.cross_validation.LeaveOneLabelOut(labels=[1 1 2 2])
 
   >>> for train, test in lolo:
   ...     print("%s %s" % (train, test))
@@ -315,7 +315,7 @@ Example of Leave-2-Label Out::
 
   >>> lplo = LeavePLabelOut(labels, 2)
   >>> print(lplo)
-  sklearn.cross_validation.LeavePLabelOut(labels=[1, 1, 2, 2, 3, 3], p=2)
+  sklearn.cross_validation.LeavePLabelOut(labels=[1 1 2 2 3 3], p=2)
 
   >>> for train, test in lplo:
   ...     print("%s %s" % (train, test))
