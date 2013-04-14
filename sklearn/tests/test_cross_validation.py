@@ -239,6 +239,22 @@ def test_stratified_shuffle_split_iter_no_indices():
     assert_array_equal(sorted(test_indices), np.where(test_mask)[0])
 
 
+def test_leave_label_out_changing_labels():
+    # Check that LeaveOneLabelOut and LeavePLabelOut work normally if the labels
+    # variable is changed before calling __iter__
+    labels = np.array([0, 1, 2, 1, 1, 2, 0, 0])
+    labels_changing = np.array(labels, copy=True)
+    lolo = cval.LeaveOneLabelOut(labels)
+    lolo_changing = cval.LeaveOneLabelOut(labels_changing)
+    lplo = cval.LeavePLabelOut(labels, p=2)
+    lplo_changing = cval.LeavePLabelOut(labels_changing, p=2)
+    labels_changing[:] = 0
+    for llo, llo_changing in [(lolo, lolo_changing), (lplo, lplo_changing)]:
+        for (train, test), (train_chan, test_chan) in zip(llo, llo_changing):
+            assert_array_equal(train, train_chan)
+            assert_array_equal(test, test_chan)
+
+
 def test_cross_val_score():
     clf = MockClassifier()
     for a in range(-10, 10):
