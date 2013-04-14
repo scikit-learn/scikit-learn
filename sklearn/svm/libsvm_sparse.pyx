@@ -131,7 +131,7 @@ def libsvm_sparse_train ( int n_features,
 
     # check parameters
     if (param == NULL or problem == NULL):
-        raise MemoryError("Seems we've run out of of memory")
+        raise MemoryError("Seems we've run out of memory")
     error_msg = svm_csr_check_parameter(problem, param);
     if error_msg:
         free_problem(problem)
@@ -277,7 +277,7 @@ def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
                               T_indptr.shape, T_indptr.data,
                               model, dec_values.data)
     if rv < 0:
-        raise MemoryError("We've run out of of memory")
+        raise MemoryError("We've run out of memory")
     # free model and param
     free_model_SV(model)
     free_model(model)
@@ -334,7 +334,7 @@ def libsvm_sparse_predict_proba(
                                     T_indptr.shape, T_indptr.data,
                                     model, dec_values.data)
     if rv < 0:
-        raise MemoryError("We've run out of of memory")
+        raise MemoryError("We've run out of memory")
     # free model and param
     free_model_SV(model)
     free_model(model)
