@@ -240,8 +240,8 @@ def test_stratified_shuffle_split_iter_no_indices():
 
 
 def test_leave_label_out_changing_labels():
-    # Check that LeaveOneLabelOut and LeavePLabelOut work normally if the labels
-    # variable is changed before calling __iter__
+    """Check that LeaveOneLabelOut and LeavePLabelOut work normally if
+    the labels variable is changed before calling __iter__"""
     labels = np.array([0, 1, 2, 1, 1, 2, 0, 0])
     labels_changing = np.array(labels, copy=True)
     lolo = cval.LeaveOneLabelOut(labels)
