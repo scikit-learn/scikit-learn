@@ -37,3 +37,40 @@ def test_fit_transform():
     Xt2 = rbm2.fit_transform(X)
 
     assert_array_equal(Xt1, Xt2)
+
+
+def test_transform():
+    X = Xdigits[:100]
+    rbm1 = BernoulliRBM(n_components=16, batch_size=5,
+                        n_iter=5, random_state=42)
+    rbm1.fit(X)
+    
+    Xt1 = rbm1.transform(X)
+    Xt2 = rbm1.mean_hiddens(X)
+
+    assert_array_equal(Xt1, Xt2)
+
+
+def test_sample_hiddens():
+    X = Xdigits[:100]
+    rbm1 = BernoulliRBM(n_components=2, batch_size=5,
+                        n_iter=5, random_state=42)
+    rbm1.fit(X)
+    
+    h = rbm1.mean_hiddens(X[0])
+    hs = np.mean([rbm1.sample_hiddens(X[0]) for i in range(100)], 0)
+    
+    assert_almost_equal(h, hs, decimal=1)
+
+
+def test_gibbs():
+    X = Xdigits[:100]
+    rbm1 = BernoulliRBM(n_components=2, batch_size=5,
+                        n_iter=5, random_state=42)
+    rbm1.fit(X)
+    
+    Xt1 = np.mean([rbm1.gibbs(X[0]) for i in range(100)], 0)
+    Xt2 = np.mean([rbm1.sample_visibles(rbm1.sample_hiddens(X[0]))
+        for i in range(100)], 0)
+    
+    assert_almost_equal(Xt1, Xt2, decimal=1)
