@@ -61,3 +61,16 @@ def test_sample_hiddens():
     hs = np.mean([rbm1.sample_hiddens(X[0]) for i in range(100)], 0)
     
     assert_almost_equal(h, hs, decimal=1)
+
+
+def test_gibbs():
+    X = Xdigits[:100]
+    rbm1 = BernoulliRBM(n_components=2, batch_size=5,
+                        n_iter=5, random_state=42)
+    rbm1.fit(X)
+    
+    Xt1 = np.mean([rbm1.gibbs(X[0]) for i in range(100)], 0)
+    Xt2 = np.mean([rbm1.sample_visibles(rbm1.sample_hiddens(X[0]))
+        for i in range(100)], 0)
+    
+    assert_almost_equal(Xt1, Xt2, decimal=1)
