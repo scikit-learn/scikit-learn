@@ -257,6 +257,7 @@ def libsvm_sparse_predict (np.ndarray[np.float64_t, ndim=1, mode='c'] T_data,
     cdef svm_csr_model *model
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
+    cdef int rv
     param = set_parameter(svm_type, kernel_type, degree, gamma,
                           coef0, nu,
                           100., # cache size has no effect on predict
@@ -327,6 +328,7 @@ def libsvm_sparse_predict_proba(
                           nSV.data, label.data, probA.data, probB.data)
     #TODO: use check_model
     cdef np.npy_intp n_class = get_nr(model)
+    cdef int rv
     dec_values = np.empty((T_indptr.shape[0]-1, n_class), dtype=np.float64)
     with nogil:
         rv = csr_copy_predict_proba(T_data.shape, T_data.data,

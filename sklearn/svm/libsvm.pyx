@@ -301,6 +301,7 @@ def predict(np.ndarray[np.float64_t, ndim=2, mode='c'] X,
     cdef np.ndarray[np.float64_t, ndim=1, mode='c'] dec_values
     cdef svm_parameter param
     cdef svm_model *model
+    cdef int rv
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
@@ -378,6 +379,7 @@ def predict_proba(
     cdef svm_model *model
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
+    cdef int rv
 
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
     set_parameter(&param, svm_type, kernel_index, degree, gamma,
@@ -434,6 +436,8 @@ def decision_function(
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
+
+    cdef int rv
 
     kernel_index = LIBSVM_KERNEL_TYPES.index(kernel)
     set_parameter(&param, svm_type, kernel_index, degree, gamma,
