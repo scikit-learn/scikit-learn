@@ -7,20 +7,30 @@ Principal Component Analysis
 =========================================================
 
 These figures aid in illustrating how a the point cloud
-can be very flad in one direction - which is where PCA
-would come in to choose a direction that is not flat.
+can be very flat in one direction i.e. a plane.
+Using PCA we can determine the normal of the plane. Most
+of the variance is along the plane meaning the third 
+and orthogonal component is the plane normal.
 
 """
 print(__doc__)
 
 # Code source: Gael Varoquaux
 # Modified for Documentation merge by Jaques Grobler
+# Modified again by Kevin Hughes
 # License: BSD
 
 import pylab as pl
 import numpy as np
+
 from scipy import stats, linalg
+from sklearn.decomposition import PCA
+
 from mpl_toolkits.mplot3d import Axes3D
+
+
+###############################################################################
+# Create the data
 
 e = np.exp(1)
 np.random.seed(4)
@@ -57,7 +67,17 @@ def plot_figs(fig_num, elev, azim):
 
     ax.scatter(a[::10], b[::10], c[::10], c=density, marker='+', alpha=.4)
     Y = np.c_[a, b, c]
-    U, pca_score, V = linalg.svd(Y, full_matrices=False)
+    
+    # Using manual SVD
+    #U, pca_score, V = linalg.svd(Y, full_matrices=False)
+    
+    # Using scikit-learn PCA
+    pca = PCA(n_components=3)
+    pca.fit(Y)
+    U = pca.components_.T
+    pca_score = pca.explained_variance_ratio_
+    V = pca.components_
+    
     x_pca_axis, y_pca_axis, z_pca_axis = V.T * pca_score / pca_score.min()
 
     x_pca_axis, y_pca_axis, z_pca_axis = 3 * V.T
