@@ -646,14 +646,13 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
     def __init__(self, n_clusters=8, init='k-means++', n_init=10, max_iter=300,
                  tol=1e-4, precompute_distances=True,
-                 verbose=0, random_state=None, copy_x=True, n_jobs=1, k=None):
+                 verbose=0, random_state=None, copy_x=True, n_jobs=1):
 
         if hasattr(init, '__array__'):
             n_clusters = init.shape[0]
             init = np.asanyarray(init, dtype=np.float64)
 
         self.n_clusters = n_clusters
-        self.k = k
         self.init = init
         self.max_iter = max_iter
         self.tol = tol
@@ -1075,13 +1074,11 @@ class MiniBatchKMeans(KMeans):
     def __init__(self, n_clusters=8, init='k-means++', max_iter=100,
                  batch_size=100, verbose=0, compute_labels=True,
                  random_state=None, tol=0.0, max_no_improvement=10,
-                 init_size=None, n_init=3, k=None,
-                 reassignment_ratio=0.01):
+                 init_size=None, n_init=3, reassignment_ratio=0.01):
 
         super(MiniBatchKMeans, self).__init__(
             n_clusters=n_clusters, init=init, max_iter=max_iter,
-            verbose=verbose, random_state=random_state, tol=tol, n_init=n_init,
-            k=k)
+            verbose=verbose, random_state=random_state, tol=tol, n_init=n_init)
 
         self.max_no_improvement = max_no_improvement
         self.batch_size = batch_size
