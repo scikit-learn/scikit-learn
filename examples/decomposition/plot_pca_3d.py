@@ -74,7 +74,6 @@ def plot_figs(fig_num, elev, azim):
     # Using scikit-learn PCA
     pca = PCA(n_components=3)
     pca.fit(Y)
-    U = pca.components_.T
     pca_score = pca.explained_variance_ratio_
     V = pca.components_
     
