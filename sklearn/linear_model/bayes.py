@@ -427,6 +427,6 @@ class ARDRegression(LinearModel, RegressorMixin):
         self.coef_ = coef_
         self.alpha_ = alpha_
         self.sigma_ = sigma_
-
+        self.lambda_ = lambda_
         self._set_intercept(X_mean, y_mean, X_std)
         return self
