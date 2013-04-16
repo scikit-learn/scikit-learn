@@ -232,6 +232,39 @@ factorization, while larger values shrink many coefficients to zero.
      R. Jenatton, G. Obozinski, F. Bach, 2009
 
 
+.. _CCIPCA:
+
+Candid Covariance-Free Incremental Principal Component Analysis (CCIPCA)
+------------------------------------------------------------------------
+
+CCIPCA like PCA is used to decompose a multivariate dataset in a set of successive 
+orthogonal components. CCIPCA can recover these components online or when the data
+is streamed. CCIPCA doesn't estimate the covariance matrix thus "covariance-free" and converges quickly even on high dimensional data.
+
+The `amnesic=2.0` parameter controls how much the past data is weighted compared to the
+new data. `n_components` must be passed to CCIPCA because otherwise it is unable to estimate the dimension of the supspace.
+
+If the `fit()` method of CCIPCA is called multiple times on the same instance then this
+instance will take the new input and adjust the components to account for the new data. 
+This data must be the same dimension as the prior data.
+
+Otherwise the CCIPCA object should behave similarily to the PCA object.
+
+.. figure:: ../auto_examples/decomposition/images/plot_pca_vs_ccipca_1.png
+    :target: ../auto_examples/decomposition/plot_pca_vs_ccipca.html
+    :align: center
+    :scale: 75%
+
+.. topic:: Examples:
+
+    * :ref:`example_decomposition_plot_pca_vs_ccipca.py`
+
+.. topic:: References:
+
+  * `"Candid Covariance-Free Incremental Principal Component Analysis"
+    <http://web.cs.msu.edu/~stockman/Book/2002/Chapters/projects.html/F09Docs/Readings/CCIPCApamiWeng.pdf>`_
+    J. Weng, Y. Zhang, W. Hwang, 2003
+
 .. _DictionaryLearning:
 
 Dictionary Learning
