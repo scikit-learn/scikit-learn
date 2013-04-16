@@ -62,7 +62,8 @@ def normalize(A, axis=None):
         shape = list(A.shape)
         shape[axis] = 1
         Asum.shape = shape
-    return A / Asum
+    A /= Asum
+    return A
 
 
 class _BaseHMM(BaseEstimator):
