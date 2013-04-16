@@ -689,6 +689,7 @@ def test_normalize_1D():
     for axis in range(1):
         Anorm = hmm.normalize(A, axis)
         assert np.all(np.allclose(Anorm.sum(axis), 1.0))
+        assert np.all(np.allclose(A.sum(axis), 1.0))
 
 
 def test_normalize_3D():
@@ -696,3 +697,4 @@ def test_normalize_3D():
     for axis in range(3):
         Anorm = hmm.normalize(A, axis)
         assert np.all(np.allclose(Anorm.sum(axis), 1.0))
+        assert np.all(np.allclose(A.sum(axis), 1.0))

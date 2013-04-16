@@ -52,7 +52,7 @@ def normalize(A, axis=None):
     normalized_A: array, shape (n_samples, n_features)
         A with values normalized (summing to 1) along the prescribed axis
 
-    WARNING: Modifies inplace the array
+    WARNING: Modifies the array inplace
     """
     A += EPS
     Asum = A.sum(axis)
@@ -62,7 +62,8 @@ def normalize(A, axis=None):
         shape = list(A.shape)
         shape[axis] = 1
         Asum.shape = shape
-    return A / Asum
+    A /= Asum
+    return A
 
 
 class _BaseHMM(BaseEstimator):
