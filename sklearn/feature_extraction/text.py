@@ -358,9 +358,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
     non_negative : boolean, optional
         Whether output matrices should contain non-negative values only;
         effectively calls abs on the matrix prior to returning it.
-        When True, output values will be multinomially distributed.
-        When False, output values will be normally distributed (Gaussian) with
-        mean 0, assuming a good hash function.
+        When True, output values can be interpreted as frequencies.
+        When False, output values will have expected value zero.
 
     See also
     --------
