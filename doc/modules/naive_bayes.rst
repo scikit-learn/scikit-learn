@@ -96,6 +96,11 @@ are estimated using maximum likelihood.
     >>> print("Number of mislabeled points : %d" % (iris.target != y_pred).sum())
     Number of mislabeled points : 6
 
+.. topic:: Examples:
+
+  * :ref:`example_plot_naive_bayes.py`: an example of classification
+    using the Gaussian Naive Bayes classifier.
+
 .. _multinomial_naive_bayes:
 
 Multinomial Naive Bayes

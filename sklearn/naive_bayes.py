@@ -110,6 +110,11 @@ class GaussianNB(BaseNB):
     y : array, shape = [n_samples]
         Target vector relative to X
 
+    class_prior_override : array, shape [n_classes]
+        Overriding prior probability per class. If not None, will be used to
+        set the value of attribute `class_prior_` and override the default
+        class prior probabilities computed from the samples.
+
     Attributes
     ----------
     `class_prior_` : array, shape = [n_classes]
@@ -129,12 +134,26 @@ class GaussianNB(BaseNB):
     >>> from sklearn.naive_bayes import GaussianNB
     >>> clf = GaussianNB()
     >>> clf.fit(X, Y)
-    GaussianNB()
+    GaussianNB(class_prior_override=None)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
+    >>> print(clf.predict_proba([[-0.1, -0.1]]))
+    [[ 0.85814893  0.14185107]]
+    >>> clf = GaussianNB(class_prior_override=[0.4, 0.6])
+    >>> clf.fit(X, Y)
+    GaussianNB(class_prior_override=array([ 0.4,  0.6]))
+    >>> print(clf.predict_proba([[-0.1, -0.1]]))
+    [[ 0.80131523  0.19868477]]
+    >>> clf = GaussianNB()
+    >>> clf.fit(X, Y, sample_weight=[0.1, 0.1, 0.1, 1, 1, 1])
+    GaussianNB(class_prior_override=None)
+    >>> print(clf.predict_proba([[-0.1, -0.1]]))
+    [[ 0.37693335  0.62306665]]
     """
+    def __init__(self, class_prior_override=None):
+        self.class_prior_override = class_prior_override
 
-    def fit(self, X, y):
+    def fit(self, X, y, sample_weight=None):
         """Fit Gaussian Naive Bayes according to X, y
 
         Parameters
@@ -146,11 +165,15 @@ class GaussianNB(BaseNB):
         y : array-like, shape = [n_samples]
             Target values.
 
+        sample_weight : array-like, shape = [n_samples], optional
+            Weights applied to individual samples (1. for unweighted).
+
         Returns
         -------
         self : object
             Returns self.
         """
+        # TODO: Document sample_weight and class_prior in module doc.
 
         X, y = check_arrays(X, y, sparse_format='dense')
 
@@ -158,18 +181,44 @@ class GaussianNB(BaseNB):
 
         if n_samples != y.shape[0]:
             raise ValueError("X and y have incompatible shapes")
+        if sample_weight is not None:
+            sample_weight = np.asarray(sample_weight)
+            if len(sample_weight) != n_samples:
+                raise ValueError("X and sample_weight have"
+                                 "incompatible shapes")
 
         self.classes_ = unique_y = np.unique(y)
         n_classes = unique_y.shape[0]
 
         self.theta_ = np.zeros((n_classes, n_features))
         self.sigma_ = np.zeros((n_classes, n_features))
-        self.class_prior_ = np.zeros(n_classes)
+        if self.class_prior_override is not None:
+            self.class_prior_override = np.asarray(self.class_prior_override)
+            if len(self.class_prior_override) != n_classes:
+                raise ValueError("y and class_prior_override have"
+                                 "incompatible shapes")
+            self.class_prior_ = self.class_prior_override
+        else:
+            self.class_prior_ = np.zeros(n_classes)
         epsilon = 1e-9
         for i, y_i in enumerate(unique_y):
-            self.theta_[i, :] = np.mean(X[y == y_i, :], axis=0)
-            self.sigma_[i, :] = np.var(X[y == y_i, :], axis=0) + epsilon
-            self.class_prior_[i] = np.float(np.sum(y == y_i)) / n_samples
+            X_i = X[y == y_i, :]
+            if sample_weight is not None:
+                weight_i = sample_weight[y == y_i]
+                self.theta_[i, :] = np.average(X_i, axis=0, weights=weight_i)
+                self.sigma_[i, :] = (np.dot(weight_i,
+                                            (X_i - self.theta_[i, :]) ** 2) /
+                                     np.sum(weight_i))
+                if self.class_prior_override is None:
+                    self.class_prior_[i] = (np.float(np.dot(sample_weight,
+                                                            y == y_i)) /
+                                            np.sum(sample_weight))
+            else:
+                self.theta_[i, :] = np.mean(X_i, axis=0)
+                self.sigma_[i, :] = np.var(X_i, axis=0) + epsilon
+                if self.class_prior_override is None:
+                    self.class_prior_[i] = (np.float(np.sum(y == y_i)) /
+                                            n_samples)
         return self
 
     def _joint_log_likelihood(self, X):
