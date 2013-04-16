@@ -55,7 +55,8 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
     return scores_
 
 
-class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
+class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
+                                TransformerMixin)):
     """Base class to implement randomized linear models for feature selection
 
     This implements the strategy by Meinshausen and Buhlman:
@@ -160,7 +161,14 @@ def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
     alpha = np.atleast_1d(np.asarray(alpha, dtype=np.float))
 
     X = (1 - weights) * X
-    alphas_, _, coef_ = lars_path(X, y,
+    if precompute==True or precompute=='auto':
+        alphas_, _, coef_ = lars_path(X, y,
+                                  Gram='auto', copy_X=False,
+                                  copy_Gram=False, alpha_min=np.min(alpha),
+                                  method='lasso', verbose=verbose,
+                                  max_iter=max_iter, eps=eps)
+    else:
+        alphas_, _, coef_ = lars_path(X, y,
                                   Gram=None, copy_X=False,
                                   copy_Gram=False, alpha_min=np.min(alpha),
                                   method='lasso', verbose=verbose,
