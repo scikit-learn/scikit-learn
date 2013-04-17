@@ -561,7 +561,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         If True, the output matrix has the feature columns in order
         corresponding to sorted vocabulary.  If False, order of the
         columns is determined by features first encountered.
-        Computation is about 2% faster without sorting.
+        Computation is faster without sorting.
 
     Attributes
     ----------
@@ -623,7 +623,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.sort_features = sort_features
 
     def _term_counts_to_matrix(self, n_doc, i_indices,
-                                    j_indices, values, n_features):
+                               j_indices, values, n_features):
         """Construct COO matrix from indices and values.
 
         i_indices and j_indices should be constructed with _make_int_array.
@@ -664,7 +664,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         return cscmatrix[:, new_positions], sorted_by_name_dict
 
     def _remove_highandlow(self, cscmatrix,
-                                feature_to_position, high, low):
+                           feature_to_position, high, low):
         """Remove too rare or too common features.
 
         Prune features that are non zero in more samples than high or less
@@ -676,7 +676,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         kept_indices = []
         removed_indices = set()
         for colptr in xrange(len(cscmatrix.indptr) - 1):
-            len_data_slice = len(cscmatrix.data[cscmatrix.indptr[colptr]:\
+            len_data_slice = len(cscmatrix.data[cscmatrix.indptr[colptr]:
                                                 cscmatrix.indptr[colptr + 1]])
             if len_data_slice <= high and len_data_slice >= low:
                 kept_indices.append(colptr)
@@ -684,8 +684,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 removed_indices.add(colptr)
         s_kept_indices = set(kept_indices)
         new_mapping = dict((v, i) for i, v in enumerate(kept_indices))
-        feature_to_position = dict((k, new_mapping[v]) for k, v in \
-                    six.iteritems(feature_to_position) if v in s_kept_indices)
+        feature_to_position = dict((k, new_mapping[v]) for k, v in
+                                   six.iteritems(feature_to_position) if
+                                   v in s_kept_indices)
         return cscmatrix[:, kept_indices], feature_to_position, removed_indices
 
     def _get_kept_features(self, csc_m, max_features):
@@ -695,7 +696,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         return to_keep
 
     def _get_max_features(self, csc_m, feature_to_position,
-                                                stop_words_, max_features):
+                          stop_words_, max_features):
         '''Remove maximum features using a sparse matrix.
 
         Cut only the top max_features from the matrix and
@@ -789,34 +790,33 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             del feature_to_count  # free memory
             n_doc = i + 1
             max_doc_count = (max_df if isinstance(max_df, numbers.Integral)
-                                         else int(round(max_df * n_doc)))
+                             else int(round(max_df * n_doc)))
             min_doc_count = (min_df if isinstance(min_df, numbers.Integral)
-                                         else int(round(min_df * n_doc)))
+                             else int(round(min_df * n_doc)))
             if max_doc_count < min_doc_count:
-                raise ValueError(\
+                raise ValueError(
                     "max_df corresponds to < documents than min_df")
         n_features = len(feature_to_position)
         if n_features == 0:
-            raise ValueError(\
-            "empty vocabulary; Perhaps the document only contains stop words")
-        csc_m = self._term_counts_to_matrix(
-                                n_doc, i_indices,
-                                j_indices, values, n_features).tocsc()
+            raise ValueError(
+                "empty vocabulary; " +
+                "Perhaps the document only contains stop words")
+        csc_m = self._term_counts_to_matrix(n_doc, i_indices,
+                                            j_indices, values, n_features)\
+                    .tocsc()
         del i_indices, j_indices, values  # free memory
         if binary:
             csc_m.data.fill(1)
         if not fixed_vocab:
             if sort_features:
                 csc_m, feature_to_position = self.\
-                                            _sort_features_and_matrix(
-                                                    csc_m, feature_to_position)
+                    _sort_features_and_matrix(csc_m, feature_to_position)
             stop_words_ = set()
             # get rid of features between max_df and min_df
             if max_doc_count < n_doc or min_doc_count > 1:
-                csc_m, feature_to_position, stop_words_ = \
-                                    self._remove_highandlow(
-                                    csc_m, feature_to_position,
-                                    max_doc_count, min_doc_count)
+                csc_m, feature_to_position, stop_words_ =\
+                    self._remove_highandlow(csc_m, feature_to_position,
+                                            max_doc_count, min_doc_count)
             # get rid of features that are not in the top max_features
             # overall occurance wise
             if max_features and max_features < csc_m.shape[1]:
@@ -861,8 +861,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                     pass
         n_doc += 1
         n_features = len(self.vocabulary_)
-        m = self._term_counts_to_matrix(n_doc, \
-                                    i_indices, j_indices, values, n_features)
+        m = self._term_counts_to_matrix(n_doc, i_indices, j_indices,
+                                        values, n_features)
         del i_indices, j_indices, values  # free memory
         if binary:
             m.data.fill(1)
@@ -914,9 +914,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
 def _make_int_array():
     """Construct an array.array of a type suitable for scipy.sparse indices."""
-    # This is nasty: Python 2.x wants str (bytes) for the typecodes, but 3.x
-    # wants str (unicode). Neither will accept the other string type.
-    return array.array("i" if six.PY3 else b"i")
+    return array.array(str("i"))
 
 
 class TfidfTransformer(BaseEstimator, TransformerMixin):
@@ -1175,6 +1173,12 @@ class TfidfVectorizer(CountVectorizer):
     sublinear_tf : boolean, optional
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
+    sort_features : boolean, True by default.
+        If True, the output matrix has the feature columns in order
+        corresponding to sorted vocabulary.  If False, order of the
+        columns is determined by features first encountered.
+        Computation is faster without sorting.
+
     See also
     --------
     CountVectorizer
@@ -1194,7 +1198,7 @@ class TfidfVectorizer(CountVectorizer):
                  ngram_range=(1, 1), max_df=1.0, min_df=1,
                  max_features=None, vocabulary=None, binary=False,
                  dtype=np.int64, norm='l2', use_idf=True, smooth_idf=True,
-                 sublinear_tf=False):
+                 sublinear_tf=False, sort_features=True):
 
         super(TfidfVectorizer, self).__init__(
             input=input, charset=charset, charset_error=charset_error,
@@ -1203,7 +1207,7 @@ class TfidfVectorizer(CountVectorizer):
             stop_words=stop_words, token_pattern=token_pattern,
             ngram_range=ngram_range, max_df=max_df, min_df=min_df,
             max_features=max_features, vocabulary=vocabulary, binary=False,
-            dtype=dtype)
+            dtype=dtype, sort_features=sort_features)
 
         self._tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
                                        smooth_idf=smooth_idf,
