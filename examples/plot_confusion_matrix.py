@@ -17,6 +17,7 @@ print(__doc__)
 from sklearn import svm, datasets
 from sklearn.cross_validation import train_test_split
 from sklearn.metrics import confusion_matrix
+from sklearn.cross_validation import train_test_split
 
 import pylab as pl
 
