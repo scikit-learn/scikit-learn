@@ -1,6 +1,6 @@
 from .base import BaseLibLinear, BaseSVC, BaseLibSVM
 from ..base import RegressorMixin
-from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin
+from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, LinearRegressorMixin
 from ..feature_selection.selector_mixin import SelectorMixin
 
 
@@ -385,6 +385,104 @@ class NuSVC(BaseSVC):
             'nu_svc', kernel, degree, gamma, coef0, tol, 0., nu, 0., shrinking,
             probability, cache_size, None, verbose, max_iter)
 
+        
+class LinearSVR(BaseLibLinear,LinearRegressorMixin,SelectorMixin,SparseCoefMixin):
+    """Linear Support Vector Regression.
+
+    The implementation is based on liblinear.
+    This class supports both dense and sparse input.
+    It currently supports L2-regularized L2-loss/L1-loss support vector regression.
+
+    Parameters
+    ----------
+    C : float, optional (default=1.0)
+        Penalty parameter C of the error term.
+
+    loss : string, 'l1' or 'l2' (default='l2')
+        Specifies the loss function. 
+
+    penalty : string, 'l2' (default='l2')
+        Specifies the norm used in the penalization. Only 'l2' is supported.
+
+    epsilon : float, optional (default=0.1)
+        epsilon in the epsilon-SVR model. It specifies the epsilon-tube
+        within which no penalty is associated in the training loss function
+        with points predicted within a distance epsilon from the actual
+        value.
+
+    dual : bool, (default=True)
+        Select the algorithm to either solve the dual or primal
+        optimization problem. Prefer dual=False when n_samples > n_features.
+
+    tol : float, optional (default=1e-1)
+        Tolerance for stopping criteria
+
+    fit_intercept : boolean, optional (default=True)
+        Whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    intercept_scaling : float, optional (default=1)
+        when self.fit_intercept is True, instance vector x becomes
+        [x, self.intercept_scaling],
+        i.e. a "synthetic" feature with constant value equals to
+        intercept_scaling is appended to the instance vector.
+        The intercept becomes intercept_scaling * synthetic feature weight
+        Note! the synthetic feature weight is subject to l1/l2 regularization
+        as all other features.
+        To lessen the effect of regularization on synthetic feature weight
+        (and therefore on the intercept) intercept_scaling has to be increased
+
+    verbose : int, default: 0
+        Enable verbose output. Note that this setting takes advantage of a
+        per-process runtime setting in liblinear that, if enabled, may not work
+        properly in a multithreaded context.
+
+    random_state: int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data.
+
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_features]
+        Weights asigned to the features (coefficients in the primal
+        problem).
+
+        `coef_` is readonly property derived from `raw_coef_` that \
+        follows the internal memory layout of liblinear.
+
+    `intercept_` : array, shape = [1]
+        Constants in decision function.
+
+    Notes
+    -----
+    The underlying C implementation uses a random number generator to
+    select features when fitting the model. It is thus not uncommon,
+    to have slightly different results for the same input data. If
+    that happens, try with a smaller tol parameter.
+
+    The underlying implementation (liblinear) uses a sparse internal
+    representation for the data that will incur a memory copy.
+
+    **References:**
+    `LIBLINEAR: A Library for Large Linear Classification
+    <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`__
+
+    See also
+    --------
+    SVR
+        Support Vector Machine for Regression implemented using libsvm.
+
+    """
+    def __init__(self, C=1.0, loss="l2", penalty="l2", epsilon=0.1, dual=True, tol=1e-1,
+                 fit_intercept=True, intercept_scaling=1,
+                 class_weight=None, verbose=0, random_state=None):
+        super(LinearSVR,self).__init__(
+            penalty=penalty, loss=loss, svr=True, dual=dual, tol=tol, epsilon=epsilon, C=C,
+            fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
+            class_weight=class_weight, verbose=verbose ,random_state=random_state)
+    
 
 class SVR(BaseLibSVM, RegressorMixin):
     """epsilon-Support Vector Regression.

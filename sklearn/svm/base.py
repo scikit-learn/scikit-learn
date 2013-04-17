@@ -586,16 +586,21 @@ class BaseLibLinear(BaseEstimator):
         'PL1_LL2_D0': 5,  # L1 penalty, L2 Loss, primal form
         'PL1_LLR_D0': 6,  # L1 penalty, logistic regression
         'PL2_LLR_D1': 7,  # L2 penalty, logistic regression, dual form
+        'PL2_LL2R_D0': 11, # L2 penalty, L2 loss, support vector regression , primal form
+        'PL2_LL2R_D1': 12, # L2 penalty, L2 loss, support vector regression , dual form
+        'PL2_LL1R_D1': 13, # L2 penalty, L1 loss, support vector regression , dual form
     }
 
-    def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
+    def __init__(self, penalty='l2', loss='l2', svr=False, dual=True, tol=1e-4, epsilon=0.1, C=1.0,
                  multi_class='ovr', fit_intercept=True, intercept_scaling=1,
                  class_weight=None, verbose=0, random_state=None):
 
         self.penalty = penalty
         self.loss = loss
+        self.svr = svr
         self.dual = dual
         self.tol = tol
+        self.epsilon = epsilon
         self.C = C
         self.fit_intercept = fit_intercept
         self.intercept_scaling = intercept_scaling
@@ -622,8 +627,12 @@ class BaseLibLinear(BaseEstimator):
             if self.multi_class != 'ovr':
                 raise ValueError("`multi_class` must be one of `ovr`, "
                                  "`crammer_singer`")
-            solver_type = "P%s_L%s_D%d" % (
-                self.penalty.upper(), self.loss.upper(), int(self.dual))
+            if self.svr:
+                solver_type = "P%s_L%sR_D%d" % (
+                    self.penalty.upper(), self.loss.upper(), int(self.dual))
+            else:
+                solver_type = "P%s_L%s_D%d" % (
+                    self.penalty.upper(), self.loss.upper(), int(self.dual))
         if not solver_type in self._solver_type_dict:
             if self.penalty.upper() == 'L1' and self.loss.upper() == 'L1':
                 error_string = ("The combination of penalty='l1' "
@@ -661,16 +670,19 @@ class BaseLibLinear(BaseEstimator):
         self : object
             Returns self.
         """
-        self._enc = LabelEncoder()
-        y = self._enc.fit_transform(y)
-        if len(self.classes_) < 2:
-            raise ValueError("The number of classes has to be greater than"
-                             " one.")
+        if not self.svr:
+            self._enc = LabelEncoder()
+            y = self._enc.fit_transform(y)
+            if len(self.classes_) < 2:
+                raise ValueError("The number of classes has to be greater than"
+                                 " one.")
+            self.class_weight_ = compute_class_weight(self.class_weight,
+                                                      self.classes_, y)
+        else:
+            self.class_weight_ = np.empty(0)
+            y=np.asarray(y)
 
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
-
-        self.class_weight_ = compute_class_weight(self.class_weight,
-                                                  self.classes_, y)
 
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n"
@@ -687,7 +699,7 @@ class BaseLibLinear(BaseEstimator):
         y = np.asarray(y, dtype=np.float64).ravel()
         self.raw_coef_ = liblinear.train_wrap(X, y, sp.isspmatrix(X),
                                self._get_solver_type(),
-                               self.tol, self._get_bias(), self.C,
+                               self.tol, self.epsilon, self._get_bias(), self.C,
                                self.class_weight_,
                                # seed for srand in range [0..INT_MAX);
                                # due to limitations in Numpy on 32-bit

@@ -166,6 +166,42 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
             self.intercept_ = 0.
 
 
+class LinearRegressorMixin(RegressorMixin):
+    """Mixin for linear regressors.
+
+    Handles prediction for sparse and dense X.
+    """
+    def decision_function(self,X):
+        """Predict using the linear model
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        array, shape = [n_samples]
+           Predicted target values per element in X.
+        """
+        X = atleast2d_or_csr(X)
+        scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
+        return scores.ravel()
+    
+    def predict(self,X):
+        """Predict using the linear model
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        array, shape = [n_samples]
+           Predicted target values per element in X.
+        """
+        return self.decision_function(X)
+
+
 # XXX Should this derive from LinearModel? It should be a mixin, not an ABC.
 # Maybe the n_features checking can be moved to LinearModel.
 class LinearClassifierMixin(ClassifierMixin):
