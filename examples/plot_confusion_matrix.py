@@ -24,12 +24,6 @@ from sklearn.cross_validation import train_test_split
 iris = datasets.load_iris()
 X = iris.data
 y = iris.target
-n_samples, n_features = X.shape
-p = range(n_samples)
-random.seed(0)
-random.shuffle(p)
-X, y = X[p], y[p]
-half = int(n_samples / 2)
 
 # Split the data into a training set and a test set
 X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
