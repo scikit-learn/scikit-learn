@@ -519,9 +519,9 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
 
 
 # Deprecated class
-@deprecated("Use lasso_path_cg instead, as it returns the coefficients, alphas and
-active variable indices instead of just a list of models as lasso_path does.
-lasso_path will be removed in 0.15.")
+#@deprecated("Use lasso_path_cg instead, as it returns the coefficients, alphas and
+#active variable indices instead of just a list of models as lasso_path does.
+#lasso_path will be removed in 0.15.")
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, fit_intercept=True,
                normalize=False, copy_X=True, verbose=False,
@@ -633,9 +633,9 @@ fit_intercept=False)]
                      fit_intercept=fit_intercept, normalize=normalize,
                      copy_X=copy_X, verbose=verbose, **params)
 
-@deprecated("Use enet_path_cg instead, as it returns the coefficients, alphas and
-active variable indices instead of just a list of models as enet_path does.
-lasso_path will be removed in 0.15.")
+#@deprecated("Use enet_path_cg instead, as it returns the coefficients, alphas and
+#active variable indices instead of just a list of models as enet_path does.
+#lasso_path will be removed in 0.15.")
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, fit_intercept=True,
               normalize=False, copy_X=True, verbose=False, rho=None,
@@ -1009,6 +1009,7 @@ def enet_path_cg(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
     coef_ = None  # init coef_
     models = []
+    coefs = []
 
     n_alphas = len(alphas)
     for i, alpha in enumerate(alphas):
@@ -1028,9 +1029,9 @@ def enet_path_cg(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 print('Path: %03i out of %03i' % (i, n_alphas))
             else:
                 sys.stderr.write('.')
-        coef_ = model.coef_.copy()
-        models.append(model)
-    return models
+        coefs.append(model.coef_)
+        # needs 'active' output (?)
+    return coefs, alphas
 
 
 def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
