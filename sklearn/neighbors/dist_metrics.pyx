@@ -841,8 +841,8 @@ cdef class HaversineDistance(DistanceMetric):
 
     The Haversine distance is the angular distance between two points on
     the surface of a sphere.  The first distance of each point is assumed
-    to be the latitude, the second is the longitude.  The size of the
-    points must be 2:
+    to be the latitude, the second is the longitude, given in radians.
+    The dimension of the points must be 2:
 
     .. math::
        D(x, y) = 2\arcsin[\sqrt{\sin^2((x1 - y1) / 2)

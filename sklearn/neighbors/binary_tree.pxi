@@ -218,7 +218,7 @@ Compute a two-point auto-correlation function
 # Note: Kernels assume dist is non-negative and and h is positive
 #       All kernel functions are normalized such that K(0, h) = 1.
 #       The fully normalized kernel is:
-#         kernel_norm(h, kernel) * compute_kernel(dist, h, kernel)
+#         kernel_norm(h, d, kernel) * compute_kernel(dist, h, kernel)
 #       The code only works with non-negative kernels: i.e. K(d, h) >= 0
 #       for all valid d and h.
 cdef enum KernelType:
@@ -245,10 +245,7 @@ cdef inline DTYPE_t epanechnikov_kernel(DTYPE_t dist, DTYPE_t h):
         return 0.0
 
 cdef inline DTYPE_t exponential_kernel(DTYPE_t dist, DTYPE_t h):
-    if dist < h:
-        return exp(-dist / h)
-    else:
-        return 0.0
+    return exp(-dist / h)
 
 cdef inline DTYPE_t linear_kernel(DTYPE_t dist, DTYPE_t h):
     if dist < h:
@@ -268,29 +265,78 @@ cdef inline DTYPE_t compute_kernel(DTYPE_t dist, DTYPE_t h, KernelType kernel):
         return gaussian_kernel(dist, h)
     elif kernel == TOPHAT_KERNEL:
         return tophat_kernel(dist, h)
-    if kernel == EPANECHNIKOV_KERNEL:
+    elif kernel == EPANECHNIKOV_KERNEL:
         return epanechnikov_kernel(dist, h)
     elif kernel == EXPONENTIAL_KERNEL:
         return exponential_kernel(dist, h)
-    if kernel == LINEAR_KERNEL:
+    elif kernel == LINEAR_KERNEL:
         return linear_kernel(dist, h)
     elif kernel == COSINE_KERNEL:
         return cosine_kernel(dist, h)
 
 
-cdef inline DTYPE_t kernel_norm(DTYPE_t h, KernelType kernel):
+#------------------------------------------------------------
+# Kernel norms are defined via the volume element V_n
+# and surface element S_(n-1) of an n-sphere.
+cdef DTYPE_t V_n(ITYPE_t n):
+    """V_n = pi^(n/2) / gamma(n/2 - 1)"""
+    if n <= 0:
+        return 1.0
+    elif n == 1:
+        return 2.0
+    else:
+        return 2.0 * PI * V_n(n - 2) / n
+
+
+cdef DTYPE_t S_n(ITYPE_t n):
+    """V_(n+1) = int_0^1 S_n r^n dr"""
+    return 2.0 * PI * V_n(n - 1)
+
+
+cdef DTYPE_t factorial(DTYPE_t n):
+    if n <= 1:
+        return 1
+    else:
+        return n * factorial(n - 1)
+
+
+cdef DTYPE_t _kernel_norm(DTYPE_t h, ITYPE_t d, KernelType kernel):
+    cdef DTYPE_t tmp, factor
     if kernel == GAUSSIAN_KERNEL:
-        return 1. / (h * ROOT_2PI)
+        factor = ROOT_2PI ** d
     elif kernel == TOPHAT_KERNEL:
-        return 0.5 / h
-    if kernel == EPANECHNIKOV_KERNEL:
-        return 0.75 / h
+        factor = V_n(d)
+    elif kernel == EPANECHNIKOV_KERNEL:
+        factor = V_n(d) * 2. / (d + 2.)
     elif kernel == EXPONENTIAL_KERNEL:
-        return 0.5 / h
-    if kernel == LINEAR_KERNEL:
-        return 1.0 / h
+        factor = S_n(d - 1) * factorial(d - 1)
+    elif kernel == LINEAR_KERNEL:
+        factor = V_n(d) / (d + 1.)
     elif kernel == COSINE_KERNEL:
-        return 0.25 * PI / h
+        factor = 0
+        tmp = 2. / PI
+        for k in range(1, d + 1, 2):
+            factor += tmp
+            tmp *= -(d - k) * (d - k - 1) * (2. / PI) ** 2
+        factor *= S_n(d - 1)
+    return 1 / factor / h ** d
+
+
+def kernel_norm(h, d, kernel):
+    if kernel == 'gaussian':
+        return _kernel_norm(h, d, GAUSSIAN_KERNEL)
+    elif kernel == 'tophat':
+        return _kernel_norm(h, d, TOPHAT_KERNEL)
+    elif kernel == 'epanechnikov':
+        return _kernel_norm(h, d, EPANECHNIKOV_KERNEL)
+    elif kernel == 'exponential':
+        return _kernel_norm(h, d, EXPONENTIAL_KERNEL)
+    elif kernel == 'linear':
+        return _kernel_norm(h, d, LINEAR_KERNEL)
+    elif kernel == 'cosine':
+        return _kernel_norm(h, d, COSINE_KERNEL)
+    else:
+        raise ValueError('kernel not recognized')
 
 
 ######################################################################
@@ -1266,7 +1312,7 @@ cdef class BinaryTree:
                     pt += n_features
 
         # normalize the results
-        cdef DTYPE_t knorm = kernel_norm(h_c, kernel_c)
+        cdef DTYPE_t knorm = _kernel_norm(h_c, n_features, kernel_c)
         for i in range(density.shape[0]):
             density[i] *= knorm
 
@@ -1767,7 +1813,7 @@ cdef class BinaryTree:
         cdef NodeData_t* node_data = &self.node_data[0]
         cdef ITYPE_t N = self.data.shape[0]
         cdef ITYPE_t n_features = self.data.shape[1]
-        cdef DTYPE_t knorm = kernel_norm(h, kernel)
+        cdef DTYPE_t knorm = _kernel_norm(h, n_features, kernel)
 
         cdef NodeData_t node_info
         cdef DTYPE_t dist_pt, dens_contribution
@@ -1866,7 +1912,7 @@ cdef class BinaryTree:
         cdef DTYPE_t* data = &self.data[0, 0]
         cdef ITYPE_t* idx_array = &self.idx_array[0]
         cdef ITYPE_t n_features = self.data.shape[1]
-        cdef DTYPE_t knorm = kernel_norm(h, kernel)
+        cdef DTYPE_t knorm = _kernel_norm(h, n_features, kernel)
 
         cdef NodeData_t node_info = self.node_data[i_node]
         cdef DTYPE_t dist_pt, dens_contribution
@@ -1964,7 +2010,7 @@ cdef class BinaryTree:
         nodeheap_item.i2 = 0
         nodeheap.push(nodeheap_item)
 
-        cdef DTYPE_t knorm = kernel_norm(h, kernel)
+        cdef DTYPE_t knorm = _kernel_norm(h, n_features, kernel)
 
         while nodeheap.n > 0:
             nodeheap_item = nodeheap.pop()
@@ -2049,7 +2095,7 @@ cdef class BinaryTree:
 
         cdef DTYPE_t dens_UB = compute_kernel(dist_LB, h, kernel)
         cdef DTYPE_t dens_LB = compute_kernel(dist_UB, h, kernel)
-        cdef DTYPE_t knorm = kernel_norm(h, kernel)
+        cdef DTYPE_t knorm = _kernel_norm(h, n_features, kernel)
 
         #------------------------------------------------------------
         # Case 1: points are all far enough that contribution is zero

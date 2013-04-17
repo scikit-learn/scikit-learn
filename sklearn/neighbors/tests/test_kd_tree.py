@@ -1,7 +1,7 @@
 import numpy as np
 from numpy.testing import assert_allclose
 from sklearn.neighbors.kd_tree import (KDTree, NeighborsHeap,
-                                       simultaneous_sort,
+                                       simultaneous_sort, kernel_norm,
                                        nodeheap_sort, DTYPE, ITYPE)
 from sklearn.neighbors.dist_metrics import DistanceMetric
 
@@ -87,21 +87,20 @@ def test_kd_tree_query_radius_distance(n_samples=100, n_features=10):
 
 def compute_kernel_slow(Y, X, kernel, h):
     d = np.sqrt(((Y[:, None, :] - X) ** 2).sum(-1))
+    norm = kernel_norm(h, X.shape[1], kernel)
 
     if kernel == 'gaussian':
-        return (1. / (h * np.sqrt(2 * np.pi))) * np.exp(-0.5 * (d * d)
-                                                         / (h * h)).sum(-1)
+        return norm * np.exp(-0.5 * (d * d) / (h * h)).sum(-1)
     elif kernel == 'tophat':
-        return (0.5 / h) * (d < h).sum(-1)
+        return norm * (d < h).sum(-1)
     elif kernel == 'epanechnikov':
-        return (0.75 / h) * ((1.0 - (d * d) / (h * h)) * (d < h)).sum(-1)
+        return norm * ((1.0 - (d * d) / (h * h)) * (d < h)).sum(-1)
     elif kernel == 'exponential':
-        return (0.5 / h) * (np.exp(-d / h) * (d < h)).sum(-1)
+        return norm * (np.exp(-d / h)).sum(-1)
     elif kernel == 'linear':
-        return (1. / h) * ((1 - d / h) * (d < h)).sum(-1)
+        return norm * ((1 - d / h) * (d < h)).sum(-1)
     elif kernel == 'cosine':
-        return (0.25 * np.pi / h) * (np.cos(0.5 * np.pi * d / h)
-                                     * (d < h)).sum(-1)
+        return norm * (np.cos(0.5 * np.pi * d / h) * (d < h)).sum(-1)
     else:
         raise ValueError('kernel not recognized')
     
@@ -114,16 +113,17 @@ def test_kd_tree_KDE(n_samples=100, n_features=3):
 
     for kernel in ['gaussian', 'tophat', 'epanechnikov',
                    'exponential', 'linear', 'cosine']:
-        for h in [0.001, 0.01, 0.1]:
+        for h in [0.01, 0.1, 1]:
             dens_true = compute_kernel_slow(Y, X, kernel, h)
             def check_results(kernel, h, atol, rtol, dualtree, breadth_first):
                 dens = kdt.kernel_density(Y, h, atol=atol, rtol=rtol,
                                          kernel=kernel, dualtree=dualtree,
                                          breadth_first=breadth_first)
-                assert_allclose(dens, dens_true, atol=atol, rtol=rtol)
+                assert_allclose(dens, dens_true, atol=atol,
+                                rtol=max(1E-7, rtol))
 
             for rtol in [0, 1E-5]:
-                for atol in [1E-10, 1E-5, 0.1]:
+                for atol in [1E-6, 1E-2]:
                     for dualtree in (True, False):
                         if dualtree and rtol > 0:
                             continue
