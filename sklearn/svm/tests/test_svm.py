@@ -185,13 +185,21 @@ def test_liblinear_svr():
     """
 
     diabetes = datasets.load_diabetes()
-    for clf in (svm.LinearSVR(C=1.0,epsilon=0.1,random_state=0),
-                svm.LinearSVR(C=10.,epsilon=0.1,random_state=0),
-                svm.LinearSVR(loss="l1",C=10.,epsilon=0.1,random_state=0),
-                svm.LinearSVR(loss="l1",C=100.,epsilon=0.1,random_state=0),
-				):
+    # compare the fist coefficient with the result of original liblinear
+    configuration=[
+        (svm.LinearSVR(dual=False,C=1.0,epsilon=0.1,random_state=0),0.6880),
+        (svm.LinearSVR(dual=False,C=10,epsilon=0.1,random_state=0),0.6887),
+        (svm.LinearSVR(dual=False,C=10,epsilon=100,random_state=0),1.5533),
+        (svm.LinearSVR(C=1.0,epsilon=0.1,random_state=0),21.7576),
+        (svm.LinearSVR(C=10,epsilon=0.1,random_state=0),-3.7987),
+        (svm.LinearSVR(C=10,epsilon=1,random_state=0),-3.6420),
+        (svm.LinearSVR(loss="l1",C=1.0,epsilon=0.1,random_state=0),2.4735),
+        (svm.LinearSVR(loss="l1",C=10,epsilon=0.1,random_state=0),18.7391),
+        (svm.LinearSVR(loss="l1",C=10,epsilon=10,random_state=0),19.4156),
+        ]
+    for clf,w0 in configuration:
         clf.fit(diabetes.data, diabetes.target)
-        assert_greater(clf.score(diabetes.data, diabetes.target), 0.1)
+        assert_almost_equal(clf.coef_[0][0], w0,decimal=3)
 
 
 def test_svr_errors():
