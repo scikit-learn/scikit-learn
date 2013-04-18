@@ -626,17 +626,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         # wants for indices, so they won't be copied by the coo_matrix ctor.
         # The length check works around a bug in old NumPy versions:
         # http://projects.scipy.org/numpy/ticket/1943
-        if len(i_indices) > 0:
-            i_indices = np.frombuffer(i_indices, dtype=np.intc)
         if len(j_indices) > 0:
             j_indices = np.frombuffer(j_indices, dtype=np.intc)
-        if self.dtype == np.intc and len(values) > 0:
-            values = np.frombuffer(values, dtype=np.intc)
-        else:
-            # In Python 3.2, SciPy 0.10.1, the coo_matrix ctor won't accept an
-            # array.array.
-            values = np.asarray(values, dtype=self.dtype)
-
         shape = (n_doc, n_features)
         spmatrix = sp.coo_matrix((values, (i_indices, j_indices)),
                                  shape=shape, dtype=self.dtype)
@@ -666,8 +657,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         kept_indices = []
         removed_indices = set()
         for colptr in xrange(len(cscmatrix.indptr) - 1):
-            len_slice = (cscmatrix.indptr[colptr + 1]
-                       - cscmatrix.indptr[colptr])
+            len_slice = cscmatrix.indptr[colptr + 1] - cscmatrix.indptr[colptr]
             if len_slice <= high and len_slice >= low:
                 kept_indices.append(colptr)
             else:
@@ -705,6 +695,79 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                 stop_words_.add(k)
         return csc_m[:, np.sort(to_keep)], new_feature_to_pos, stop_words_
 
+    def _count_fixed_vocab(self, raw_documents):
+        """Make feature position indices, count number of features per doc.
+
+        Follow the same strategy as _count_new_vocab but with known
+        feature_to_position.
+
+        """
+        j_indices = _make_int_array()
+        analyze = self.build_analyzer()
+        features_per_doc = []
+        for i, doc in enumerate(raw_documents):
+            k = 0
+            for feature in analyze(doc):
+                try:
+                    j_indices.append(self.vocabulary_[feature])
+                    k += 1
+                except KeyError:
+                    continue
+            features_per_doc.append(k)
+        n_doc = i + 1
+        return j_indices, n_doc, features_per_doc
+
+    def _count_new_vocab(self, raw_documents):
+        """Create feature position indices and idx to matrix column mapping.
+
+        Here we create j_indices and count how many i_indices we need per doc.
+        feature_to_position is a mapping between features as strings
+        and the final location in the matrix.
+
+        """
+        analyze = self.build_analyzer()
+        j = 0  # counts new features
+        feature_to_count = defaultdict(int)
+        feature_to_position = {}
+        j_indices = _make_int_array()
+        features_per_doc = []
+        for i, doc in enumerate(raw_documents):
+            k = 0
+            for feature in analyze(doc):
+                k += 1
+                feature_to_count[feature] += 1
+                if feature_to_count[feature] == 1:  # new feature
+                    feature_to_position[feature] = j
+                    j += 1
+                j_indices.append(feature_to_position[feature])
+            features_per_doc.append(k)
+        # assert j == len(feature_to_count)
+        n_doc = i + 1
+        return j_indices, feature_to_position, n_doc, features_per_doc
+
+    def _make_i_indices(self, features_per_doc):
+        '''Create i_indices from features_per_doc.
+
+        features_per_doc is a list of the number of kept features in each doc
+        in order.
+
+        '''
+        combined_arrays = []
+        number_of_docs_with_features = 0
+        for i, num_features in enumerate(features_per_doc):
+            if num_features > 0:  # some features found in the doc
+                number_of_docs_with_features += 1
+                i_vals = np.empty(num_features, dtype=np.int32)
+                fill_val = i
+                i_vals.fill(fill_val)
+                combined_arrays.append(i_vals)
+        if number_of_docs_with_features == 1:
+            return combined_arrays[0]
+        elif number_of_docs_with_features == 0:  # no docs found with features
+            return None
+        else:  # more than one doc with features
+            return np.concatenate(combined_arrays)
+
     def fit(self, raw_documents, y=None):
         """Learn a vocabulary dictionary of all tokens in the raw documents.
 
@@ -738,7 +801,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         # fit_transform overridable without unwanted side effects in
         # TfidfVectorizer.
         fixed_vocab = self.fixed_vocabulary
-        analyze = self.build_analyzer()
         max_df = self.max_df
         min_df = self.min_df
         max_features = self.max_features
@@ -755,31 +817,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         # matrix is constructed.
         if fixed_vocab:
             feature_to_pos = self.vocabulary_
-            for i, doc in enumerate(raw_documents):
-                for feature in analyze(doc):
-                    try:
-                        j_indices.append(feature_to_pos[feature])
-                        i_indices.append(i)
-                        values.append(1)
-                    except KeyError:
-                        continue
-            n_doc = i + 1
+            j_indices, n_doc, features_per_doc = \
+                self._count_fixed_vocab(raw_documents)
         else:
-            j = 0
-            feature_to_count = defaultdict(int)
-            feature_to_pos = defaultdict(int)
-            for i, doc in enumerate(raw_documents):
-                for feature in analyze(doc):
-                    feature_to_count[feature] += 1
-                    if feature_to_count[feature] == 1:  # new feature
-                        feature_to_pos[feature] = j
-                        j += 1
-                    i_indices.append(i)
-                    j_indices.append(feature_to_pos[feature])
-                    values.append(1)
-            # assert j == len(feature_to_count)
-            del feature_to_count  # free memory
-            n_doc = i + 1
+            j_indices, feature_to_pos, n_doc, features_per_doc = \
+                self._count_new_vocab(raw_documents)
             max_doc_count = (max_df if isinstance(max_df, numbers.Integral)
                                     else int(round(max_df * n_doc)))
             min_doc_count = (min_df if isinstance(min_df, numbers.Integral)
@@ -793,21 +835,24 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             raise ValueError("empty vocabulary;"
                              " perhaps the document only contains stop words")
 
+        i_indices = self._make_i_indices(features_per_doc)
+        del features_per_doc  # free memory
+        values = np.ones(len(i_indices), dtype=np.int32)
         csc_m = self._term_counts_to_matrix(n_doc, i_indices, j_indices,
                                             values, n_features).tocsc()
         del i_indices, j_indices, values  # free memory
+
         if binary:
             csc_m.data.fill(1)
         if not fixed_vocab:
-            csc_m, feature_to_pos = self._sort_features_and_matrix(csc_m,
-                                                               feature_to_pos)
+            csc_m, feature_to_pos = \
+                self._sort_features_and_matrix(csc_m, feature_to_pos)
             stop_words_ = set()
             # get rid of features between max_df and min_df
             if max_doc_count < n_doc or min_doc_count > 1:
                 csc_m, feature_to_pos, stop_words_ = \
-                                    self._remove_highandlow(
-                                    csc_m, feature_to_pos,
-                                    max_doc_count, min_doc_count)
+                    self._remove_highandlow(csc_m, feature_to_pos,
+                                            max_doc_count, min_doc_count)
             # get rid of features that are not in the top max_features
             # overall occurance wise
             if max_features and max_features < csc_m.shape[1]:
@@ -834,31 +879,24 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         """
         if not hasattr(self, 'vocabulary_') or len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary wasn't fitted or is empty!")
-
-        # raw_documents can be an iterable so we don't know its size in
-        # advance
-        i_indices = _make_int_array()
-        j_indices = _make_int_array()
-        values = _make_int_array()
         binary = self.binary
-        analyze = self.build_analyzer()
+
         # use the same matrix-building strategy as fit_transform
-        for n_doc, doc in enumerate(raw_documents):
-            for feature in analyze(doc):
-                try:
-                    j_indices.append(self.vocabulary_[feature])
-                    i_indices.append(n_doc)
-                    values.append(1)
-                except KeyError:  # feature not in the vectorizer vocabulary
-                    pass
-        n_doc += 1
+        j_indices, n_doc, features_per_doc = \
+            self._count_fixed_vocab(raw_documents)
+        i_indices = self._make_i_indices(features_per_doc)
+        if i_indices is None:
+            i_indices = np.empty(0, dtype=np.int32)
+        values = np.ones(len(i_indices), dtype=np.int32)
         n_features = len(self.vocabulary_)
-        m = self._term_counts_to_matrix(n_doc, i_indices, j_indices, values)
+        # keep the same sparse format as fit_transform
+        m = self._term_counts_to_matrix(n_doc, i_indices, j_indices,
+                                        values, n_features).tocsc()
 
         del i_indices, j_indices, values  # free memory
         if binary:
             m.data.fill(1)
-        return m.tocsc()  # keep the same sparse format as fit_transform
+        return m
 
     def inverse_transform(self, X):
         """Return terms per document with nonzero entries in X.
