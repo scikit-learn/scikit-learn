@@ -45,22 +45,22 @@ Others also work in the multiclass case:
 .. autosummary::
    :template: function.rst
 
-  classification_report
-  confusion_matrix
-  f1_score
-  fbeta_score
-  precision_recall_fscore_support
-  precision_score
-  recall_score
+   classification_report
+   confusion_matrix
+   f1_score
+   fbeta_score
+   precision_recall_fscore_support
+   precision_score
+   recall_score
 
 And some also work in the multilabel case:
 
 .. autosummary::
    :template: function.rst
 
-  accuracy_score
-  hamming_loss
-  zero_one_loss
+   accuracy_score
+   hamming_loss
+   zero_one_loss
 
 
 Some metrics might require probability estimates of the positive class,

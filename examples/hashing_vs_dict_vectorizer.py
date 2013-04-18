@@ -1,8 +1,7 @@
 """
-===================================================================
-Comparison of hashing-based and dictionary based text vectorization
-===================================================================
-
+===========================================
+FeatureHasher and DictVectorizer Comparison
+===========================================
 
 Compares FeatureHasher and DictVectorizer by using both to vectorize
 text documents.
