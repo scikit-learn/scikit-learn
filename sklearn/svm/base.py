@@ -697,6 +697,7 @@ class BaseLibLinear(BaseEstimator):
 
         # LibLinear wants targets as doubles, even for classification
         y = np.asarray(y, dtype=np.float64).ravel()
+        # epsilon, tol are named p, eps respectively in struct parameter of C source code
         self.raw_coef_ = liblinear.train_wrap(X, y, sp.isspmatrix(X),
                                self._get_solver_type(),
                                self.tol, self.epsilon, self._get_bias(), self.C,
