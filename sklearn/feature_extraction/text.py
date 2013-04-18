@@ -889,31 +889,22 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         """
         if not hasattr(self, 'vocabulary_') or len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary wasn't fitted or is empty!")
-
-        # raw_documents can be an iterable so we don't know its size in
-        # advance
-        i_indices = _make_int_array()
-        j_indices = _make_int_array()
-        values = _make_int_array()
         binary = self.binary
-        analyze = self.build_analyzer()
         # use the same matrix-building strategy as fit_transform
-        for n_doc, doc in enumerate(raw_documents):
-            for feature in analyze(doc):
-                try:
-                    j_indices.append(self.vocabulary_[feature])
-                    i_indices.append(n_doc)
-                    values.append(1)
-                except KeyError:  # feature not in the vectorizer vocabulary
-                    pass
-        n_doc += 1
+        j_indices, n_doc, features_per_doc = \
+            self._count_fixed_vocab(raw_documents)
+        i_indices = self._make_i_indices(features_per_doc)
+        if i_indices is None:
+            i_indices = np.empty(0, dtype=np.int32)
+        values = np.ones(len(i_indices), dtype=np.int32)
         n_features = len(self.vocabulary_)
         m = self._term_counts_to_matrix(n_doc, i_indices, j_indices,
-                                        values, n_features)
+                                        values, n_features).tocsc()
+        # keep the same sparse format as fit_transform
         del i_indices, j_indices, values  # free memory
         if binary:
             m.data.fill(1)
-        return m.tocsc()  # keep the same sparse format as fit_transform
+        return m
 
     def inverse_transform(self, X):
         """Return terms per document with nonzero entries in X.
