@@ -516,16 +516,9 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
 """ % file(os.path.join(src_dir, 'README.txt')).read())
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
-
-    #sorted_listdir = line_count_sort(os.listdir(src_dir),
-    #                                 target_dir)
-    #for fname in sorted_listdir:
-    def sort_key(a):
-        # put last elements without a plot
-        if not a.startswith('plot') and a.endswith('.py'):
-            return 'zz' + a
-        return a
-    for fname in sorted(os.listdir(src_dir), key=sort_key):
+    sorted_listdir = line_count_sort(os.listdir(src_dir),
+                                     src_dir)
+    for fname in sorted_listdir:
         if fname.endswith('py'):
             generate_file_rst(fname, target_dir, src_dir, plot_gallery)
             thumb = os.path.join(dir, 'images', 'thumb', fname[:-3] + '.png')
