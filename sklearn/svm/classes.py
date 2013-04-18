@@ -477,11 +477,11 @@ class LinearSVR(BaseLibLinear,LinearRegressorMixin,SelectorMixin,SparseCoefMixin
     """
     def __init__(self, C=1.0, loss="l2", penalty="l2", epsilon=0.1, dual=True, tol=1e-1,
                  fit_intercept=True, intercept_scaling=1,
-                 class_weight=None, verbose=0, random_state=None):
+                 verbose=0, random_state=None):
         super(LinearSVR,self).__init__(
             penalty=penalty, loss=loss, svr=True, dual=dual, tol=tol, epsilon=epsilon, C=C,
             fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
-            class_weight=class_weight, verbose=verbose ,random_state=random_state)
+            class_weight=None, verbose=verbose ,random_state=random_state)
     
 
 class SVR(BaseLibSVM, RegressorMixin):
