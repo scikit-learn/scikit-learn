@@ -5,6 +5,11 @@ Recursive feature elimination
 
 A recursive feature elimination example showing the relevance of pixels in
 a digit classification task.
+
+.. note::
+
+    See also :ref:`example_plot_rfe_with_cross_validation.py`
+
 """
 print(__doc__)
 
