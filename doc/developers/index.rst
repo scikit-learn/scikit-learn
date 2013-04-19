@@ -135,14 +135,8 @@ rules before submitting a pull request:
 
     * At least one paragraph of narrative documentation with links to
       references in the literature (with PDF links when possible) and
-      the example.
-
-      The documentation should also include expected time and space
-      complexity of the algorithm and scalability, e.g. "this algorithm can
-      scale to a large number of samples > 100000, but does not scale in
-      dimensionality: n_features is expected to be lower than 100".
-
-      To build the documentation, see the `documentation`_ section below.
+      the example. For more details on writing and building the
+      documentation, see the :ref:`contribute_documentation` section.
 
 You can also check for common programming errors with the following tools:
 
@@ -223,12 +217,31 @@ For building the documentation, you will need `sphinx
 <http://sphinx.pocoo.org/>`_ and `matplotlib
 <http://matplotlib.sourceforge.net/>`_.
 
-When you are writing documentation, it is important to keep a good
+**When you are writing documentation**, it is important to keep a good
 compromise between mathematical and algorithmic details, and give
-intuition to the reader on what the algorithm does. It is best to always
+intuition to the reader on what the algorithm does.
+
+Basically, to elaborate on the above, it is best to always
 start with a small paragraph with a hand-waiving explanation of what the
-method does to the data and a figure (coming from an example) illustrating
-it.
+method does to the data. Then, it is very helpful
+to point out why the feature is useful and when it should be used -
+the latter also including the expected time and space
+complexity of the algorithm and scalability, e.g. "this algorithm can
+scale to a large number of samples > 100000, but does not scale in
+dimensionality: n_features is expected to be lower than 100".
+
+Secondly, a generated figure from an example (as mentioned in the previous
+paragraph) should then be included to further further provide some
+intuition.
+
+Next, one or two small code examples to show its use can be added.
+
+Finally, any math and equations, followed by references,
+can be added to further the documentation. Not starting the
+documentation with the maths makes it more friendly towards
+users that are just intersted in what the feature will do, as
+opposed to how it works `under the hood`.
+
 
 .. warning:: **Sphinx version**
 
