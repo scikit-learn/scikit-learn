@@ -515,8 +515,8 @@ def test_feature_names():
 
     feature_names = cv.get_feature_names()
     assert_equal(len(feature_names), n_features)
-    assert_array_equal(['beer', 'burger', 'celeri', 'coke', 'pizza',
-                        'salad', 'sparkling', 'tomato', 'water'],
+    assert_array_equal(['pizza', 'beer', 'burger', 'coke', 'salad',
+                        'celeri', 'sparkling', 'water', 'tomato'],
                        feature_names)
 
     for idx, name in enumerate(feature_names):

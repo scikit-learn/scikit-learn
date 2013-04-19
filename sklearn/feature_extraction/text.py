@@ -557,12 +557,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     dtype : type, optional
         Type of the matrix returned by fit_transform() or transform().
 
-    sort_features : boolean, True by default.
-        If True, the output matrix has the feature columns in order
-        corresponding to sorted vocabulary.  If False, order of the
-        columns is determined by features first encountered.
-        Computation is faster without sorting.
-
     Attributes
     ----------
     `vocabulary_` : dict
@@ -585,8 +579,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                  stop_words=None, token_pattern=r"(?u)\b\w\w+\b",
                  ngram_range=(1, 1), analyzer='word',
                  max_df=1.0, min_df=1, max_features=None,
-                 vocabulary=None, binary=False, dtype=np.int64,
-                 sort_features=True):
+                 vocabulary=None, binary=False, dtype=np.int64):
         self.input = input
         self.charset = charset
         self.charset_error = charset_error
@@ -620,7 +613,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             self.fixed_vocabulary = False
         self.binary = binary
         self.dtype = dtype
-        self.sort_features = sort_features
 
     def _term_counts_to_matrix(self, n_doc, i_indices,
                                j_indices, values, n_features):
@@ -644,16 +636,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         #     print "self.binary", self.binary
         #     print spmatrix.todense()
         return spmatrix
-
-    def _sort_features_and_matrix(self, cscmatrix, feature_to_position):
-        '''sort dict by keys and assign values to the sorted key index'''
-        sorted_by_name_dict = {}
-        sorted_features = sorted(feature_to_position)
-        new_positions = []
-        for i, k in enumerate(sorted_features):
-            sorted_by_name_dict[k] = i
-            new_positions.append(feature_to_position[k])
-        return cscmatrix[:, new_positions], sorted_by_name_dict
 
     def _remove_highandlow(self, cscmatrix,
                            feature_to_position, high, low):
@@ -814,7 +796,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         max_df = self.max_df
         min_df = self.min_df
         max_features = self.max_features
-        sort_features = self.sort_features
         binary = self.binary
         i_indices = _make_int_array()
         j_indices = _make_int_array()
@@ -855,9 +836,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         if binary:
             csc_m.data.fill(1)
         if not fixed_vocab:
-            if sort_features:
-                csc_m, feature_to_position = self.\
-                    _sort_features_and_matrix(csc_m, feature_to_position)
             stop_words_ = set()
             # get rid of features between max_df and min_df
             if max_doc_count < n_doc or min_doc_count > 1:
@@ -1211,12 +1189,6 @@ class TfidfVectorizer(CountVectorizer):
     sublinear_tf : boolean, optional
         Apply sublinear tf scaling, i.e. replace tf with 1 + log(tf).
 
-    sort_features : boolean, True by default.
-        If True, the output matrix has the feature columns in order
-        corresponding to sorted vocabulary.  If False, order of the
-        columns is determined by features first encountered.
-        Computation is faster without sorting.
-
     See also
     --------
     CountVectorizer
@@ -1236,7 +1208,7 @@ class TfidfVectorizer(CountVectorizer):
                  ngram_range=(1, 1), max_df=1.0, min_df=1,
                  max_features=None, vocabulary=None, binary=False,
                  dtype=np.int64, norm='l2', use_idf=True, smooth_idf=True,
-                 sublinear_tf=False, sort_features=True):
+                 sublinear_tf=False):
 
         super(TfidfVectorizer, self).__init__(
             input=input, charset=charset, charset_error=charset_error,
@@ -1245,7 +1217,7 @@ class TfidfVectorizer(CountVectorizer):
             stop_words=stop_words, token_pattern=token_pattern,
             ngram_range=ngram_range, max_df=max_df, min_df=min_df,
             max_features=max_features, vocabulary=vocabulary, binary=False,
-            dtype=dtype, sort_features=sort_features)
+            dtype=dtype)
 
         self._tfidf = TfidfTransformer(norm=norm, use_idf=use_idf,
                                        smooth_idf=smooth_idf,
