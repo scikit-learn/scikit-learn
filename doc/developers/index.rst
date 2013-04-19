@@ -225,7 +225,15 @@ Basically, to elaborate on the above, it is best to always
 start with a small paragraph with a hand-waiving explanation of what the
 method does to the data. Then, it is very helpful
 to point out why the feature is useful and when it should be used -
-the latter also including the expected time and space
+the latter also including expected *big-O*
+( :math:`O\left(g\left(n\right)\right)` )and
+*soft-O* ( :math:`\tilde{O}\left(g\left(n\right)\right)` )
+complexities of the algorithm, as opposed to just *rules of thumb*,
+as the latter can be very machine-dependent.
+If those complexities are not available, then rules of thumb
+may be provided instead.
+
+including the expected time and space
 complexity of the algorithm and scalability, e.g. "this algorithm can
 scale to a large number of samples > 100000, but does not scale in
 dimensionality: n_features is expected to be lower than 100".
