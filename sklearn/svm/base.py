@@ -611,6 +611,7 @@ class LibLinearMixin():
         X, y, class_weight_ = self._transform_data(X, y)
         self._validate_data(X, y)
 
+        # LogisticRegression has no verbose attribute
         verbose = self.verbose if hasattr(self, 'verbose') else 0
 
         liblinear.set_verbosity_wrap(verbose)
@@ -623,6 +624,7 @@ class LibLinearMixin():
         self.raw_coef_ = liblinear.train_wrap(X, y, sp.isspmatrix(X),
                                self._get_solver_type(),
                                self.tol,
+                               # LinearSVC, LogisticRegression have no epsilon attribute
                                self.epsilon if hasattr(self, 'epsilon') else 0.1,
                                self._get_bias(), self.C,
                                class_weight_,
