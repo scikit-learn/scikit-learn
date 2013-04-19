@@ -75,6 +75,50 @@ def test_randomized_lasso():
     assert_raises(ValueError, clf.fit, X, y)
 
 
+def test_randomized_lasso_precompute():
+    """Check randomized lasso for different values of precompute"""
+    scaling = 0.3
+    selection_threshold = 0.5
+
+    #  with true
+    clf = RandomizedLasso(verbose=False, alpha=1, random_state=42,
+                          precompute=True, scaling=scaling,
+                          selection_threshold=selection_threshold)
+    feature_scores = clf.fit(X, y).scores_
+    assert_array_equal(np.argsort(F)[-3:], np.argsort(feature_scores)[-3:])
+
+    # or with False
+    clf = RandomizedLasso(verbose=False, alpha=[1, 0.8], random_state=42,
+                          precompute=False, scaling=scaling,
+                          selection_threshold=selection_threshold)
+    feature_scores = clf.fit(X, y).scores_
+    assert_equal(clf.all_scores_.shape, (X.shape[1], 2))
+    assert_array_equal(np.argsort(F)[-3:], np.argsort(feature_scores)[-3:])
+
+    X_r = clf.transform(X)
+    X_full = clf.inverse_transform(X_r)
+    assert_equal(X_r.shape[1], np.sum(feature_scores > selection_threshold))
+    assert_equal(X_full.shape, X.shape)
+
+    # with None
+    clf = RandomizedLasso(verbose=False, alpha='aic', random_state=42,
+                          precompute=None, scaling=scaling)
+    feature_scores = clf.fit(X, y).scores_
+    assert_array_equal(feature_scores, X.shape[1] * [1.])
+
+    # with 'auto'
+    clf = RandomizedLasso(verbose=False, alpha='aic', random_state=42,
+                          precompute='auto', scaling=scaling)
+    feature_scores = clf.fit(X, y).scores_
+    assert_array_equal(feature_scores, X.shape[1] * [1.])
+
+    clf = RandomizedLasso(verbose=False, scaling=-0.1)
+    assert_raises(ValueError, clf.fit, X, y)
+
+    clf = RandomizedLasso(verbose=False, scaling=1.1)
+    assert_raises(ValueError, clf.fit, X, y)
+
+
 def test_randomized_logistic():
     """Check randomized sparse logistic regression"""
     iris = load_iris()
