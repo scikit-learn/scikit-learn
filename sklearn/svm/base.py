@@ -679,19 +679,15 @@ class BaseLibLinear(BaseEstimator):
 
         liblinear.set_verbosity_wrap(self.verbose)
 
-        if sp.isspmatrix(X):
-            train = liblinear.csr_train_wrap
-        else:
-            train = liblinear.train_wrap
-
         rnd = check_random_state(self.random_state)
         if self.verbose:
             print('[LibLinear]', end='')
 
         # LibLinear wants targets as doubles, even for classification
         y = np.asarray(y, dtype=np.float64).ravel()
-        self.raw_coef_ = train(X, y, self._get_solver_type(), self.tol,
-                               self._get_bias(), self.C,
+        self.raw_coef_ = liblinear.train_wrap(X, y, sp.isspmatrix(X),
+                               self._get_solver_type(),
+                               self.tol, self._get_bias(), self.C,
                                self.class_weight_,
                                # seed for srand in range [0..INT_MAX);
                                # due to limitations in Numpy on 32-bit
