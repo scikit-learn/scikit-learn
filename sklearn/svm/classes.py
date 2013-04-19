@@ -1,11 +1,12 @@
-from .base import BaseLibLinear, BaseSVC, BaseLibSVM
-from ..base import RegressorMixin
+from .base import BaseSVC, BaseLibSVM, LibLinearClassifierMixin, LibLinearRegressorMixin
+from ..base import RegressorMixin, BaseEstimator
 from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, LinearRegressorMixin
 from ..feature_selection.selector_mixin import SelectorMixin
+from ..utils import atleast2d_or_csr
 
 
-class LinearSVC(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
-                SparseCoefMixin):
+class LinearSVC(BaseEstimator, LibLinearClassifierMixin, LinearClassifierMixin,
+                SelectorMixin, SparseCoefMixin):
     """Linear Support Vector Classification.
 
     Similar to SVC with parameter kernel='linear', but implemented in terms of
@@ -133,15 +134,44 @@ class LinearSVC(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
         memory copy if the input is C-contiguous or CSR.
 
     """
-    
+
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
                  multi_class='ovr', fit_intercept=True, intercept_scaling=1,
                  class_weight=None, verbose=0, random_state=None):
-        super(LinearSVC, self).__init__(
-            penalty=penalty, loss=loss, dual=dual, tol=tol, C=C,
-            multi_class=multi_class,  fit_intercept=fit_intercept,
-            intercept_scaling=intercept_scaling, class_weight=class_weight,
-            verbose=verbose, random_state=random_state)
+
+        self.penalty = penalty
+        self.loss = loss
+        self.dual = dual
+        self.tol = tol
+        self.C = C
+        self.fit_intercept = fit_intercept
+        self.intercept_scaling = intercept_scaling
+        self.multi_class = multi_class
+        self.class_weight = class_weight
+        self.verbose = verbose
+        self.random_state = random_state
+        self._get_solver_type()
+
+    def _get_solver_type(self):
+        """Find the liblinear magic number for the solver.
+
+        This number depends on the values of the following attributes:
+          - multi_class
+          - penalty
+          - loss
+          - dual
+        """
+        if self.multi_class == 'crammer_singer':
+            solver_type = 'MC_SVC'
+        else:
+            if self.multi_class != 'ovr':
+                raise ValueError("`multi_class` must be one of `ovr`, "
+                                 "`crammer_singer`")
+            solver_type = "P%s_L%s_D%d" % (
+                self.penalty.upper(), self.loss.upper(), int(self.dual))
+        if not solver_type in self._solver_type_dict:
+            raise ValueError('This solver_type is not supported in liblinear ')
+        return self._solver_type_dict[solver_type]
 
 
 class SVC(BaseSVC):
@@ -391,8 +421,9 @@ class NuSVC(BaseSVC):
             'nu_svc', kernel, degree, gamma, coef0, tol, 0., nu, 0., shrinking,
             probability, cache_size, None, verbose, max_iter)
 
-        
-class LinearSVR(BaseLibLinear, LinearRegressorMixin, SelectorMixin, SparseCoefMixin):
+
+class LinearSVR(BaseEstimator, LibLinearRegressorMixin, LinearRegressorMixin,
+                SelectorMixin, SparseCoefMixin):
     """Linear Support Vector Regression.
 
     The implementation is based on liblinear.
@@ -405,7 +436,7 @@ class LinearSVR(BaseLibLinear, LinearRegressorMixin, SelectorMixin, SparseCoefMi
         Penalty parameter C of the error term.
 
     loss : string, 'l1' or 'l2' (default='l2')
-        Specifies the loss function. 
+        Specifies the loss function.
 
     penalty : string, 'l2' (default='l2')
         Specifies the norm used in the penalization. Only 'l2' is supported.
@@ -484,11 +515,33 @@ class LinearSVR(BaseLibLinear, LinearRegressorMixin, SelectorMixin, SparseCoefMi
     def __init__(self, C=1.0, loss="l2", penalty="l2", epsilon=0.1, dual=True, tol=1e-1,
                  fit_intercept=True, intercept_scaling=1,
                  verbose=0, random_state=None):
-        super(LinearSVR, self).__init__(
-            penalty=penalty, loss=loss, svr=True, dual=dual, tol=tol, epsilon=epsilon, C=C,
-            fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
-            class_weight=None, verbose=verbose ,random_state=random_state)
-    
+
+        self.penalty = penalty
+        self.loss = loss
+        self.epsilon = epsilon
+        self.dual = dual
+        self.tol = tol
+        self.C = C
+        self.fit_intercept = fit_intercept
+        self.intercept_scaling = intercept_scaling
+        self.verbose = verbose
+        self.random_state = random_state
+        self._get_solver_type()
+
+    def _get_solver_type(self):
+        """Find the liblinear magic number for the solver.
+
+        This number depends on the values of the following attributes:
+          - penalty
+          - loss
+          - dual
+        """
+        solver_type = "P%s_L%sR_D%d" % (
+            self.penalty.upper(), self.loss.upper(), int(self.dual))
+        if not solver_type in self._solver_type_dict:
+            raise ValueError('This solver_type is not supported in liblinear ')
+        return self._solver_type_dict[solver_type]
+
 
 class SVR(BaseLibSVM, RegressorMixin):
     """epsilon-Support Vector Regression.

@@ -1,12 +1,12 @@
 import numpy as np
 
-from .base import LinearClassifierMixin, SparseCoefMixin
+from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ..feature_selection.selector_mixin import SelectorMixin
-from ..svm.base import BaseLibLinear
+from ..svm.base import LibLinearClassifierMixin
 
 
-class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
-                         SparseCoefMixin):
+class LogisticRegression(BaseEstimator, LibLinearClassifierMixin, LinearClassifierMixin,
+                         SelectorMixin, SparseCoefMixin):
     """Logistic Regression (aka logit, MaxEnt) classifier.
 
     In the multiclass case, the training algorithm uses a one-vs.-all (OvA)
@@ -99,10 +99,27 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None):
 
-        super(LogisticRegression, self).__init__(
-            penalty=penalty, dual=dual, loss='lr', tol=tol, C=C,
-            fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
-            class_weight=class_weight, random_state=None)
+        self.penalty = penalty
+        self.dual = dual
+        self.tol = tol
+        self.C = C
+        self.fit_intercept = fit_intercept
+        self.intercept_scaling = intercept_scaling
+        self.class_weight = class_weight
+        self.random_state = random_state
+        self._get_solver_type()
+
+    def _get_solver_type(self):
+        """Find the liblinear magic number for the solver.
+
+        This number depends on the values of the following attributes:
+          - penalty
+          - dual
+        """
+        solver_type = "P%s_LLR_D%d" % (self.penalty.upper(), int(self.dual))
+        if not solver_type in self._solver_type_dict:
+            raise ValueError('This solver_type is not supported in liblinear ')
+        return self._solver_type_dict[solver_type]
 
     def predict_proba(self, X):
         """Probability estimates.

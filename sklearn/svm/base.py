@@ -574,7 +574,7 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
         return self.classes_
 
 
-class BaseLibLinear(BaseEstimator):
+class LibLinearMixin():
     """Base for classes binding liblinear (dense and sparse versions)"""
 
     _solver_type_dict = {
@@ -586,68 +586,10 @@ class BaseLibLinear(BaseEstimator):
         'PL1_LL2_D0': 5,  # L1 penalty, L2 Loss, primal form
         'PL1_LLR_D0': 6,  # L1 penalty, logistic regression
         'PL2_LLR_D1': 7,  # L2 penalty, logistic regression, dual form
-        'PL2_LL2R_D0': 11, # L2 penalty, L2 loss, support vector regression , primal form
-        'PL2_LL2R_D1': 12, # L2 penalty, L2 loss, support vector regression , dual form
-        'PL2_LL1R_D1': 13, # L2 penalty, L1 loss, support vector regression , dual form
+        'PL2_LL2R_D0': 11,  # L2 penalty, L2 loss, support vector regression , primal form
+        'PL2_LL2R_D1': 12,  # L2 penalty, L2 loss, support vector regression , dual form
+        'PL2_LL1R_D1': 13,  # L2 penalty, L1 loss, support vector regression , dual form
     }
-
-    def __init__(self, penalty='l2', loss='l2', svr=False, dual=True, tol=1e-4, epsilon=0.1, C=1.0,
-                 multi_class='ovr', fit_intercept=True, intercept_scaling=1,
-                 class_weight=None, verbose=0, random_state=None):
-
-        self.penalty = penalty
-        self.loss = loss
-        self.svr = svr
-        self.dual = dual
-        self.tol = tol
-        self.epsilon = epsilon
-        self.C = C
-        self.fit_intercept = fit_intercept
-        self.intercept_scaling = intercept_scaling
-        self.multi_class = multi_class
-        self.class_weight = class_weight
-        self.verbose = verbose
-        self.random_state = random_state
-
-        # Check that the arguments given are valid:
-        self._get_solver_type()
-
-    def _get_solver_type(self):
-        """Find the liblinear magic number for the solver.
-
-        This number depends on the values of the following attributes:
-          - multi_class
-          - penalty
-          - loss
-          - dual
-        """
-        if self.multi_class == 'crammer_singer':
-            solver_type = 'MC_SVC'
-        else:
-            if self.multi_class != 'ovr':
-                raise ValueError("`multi_class` must be one of `ovr`, "
-                                 "`crammer_singer`")
-            if self.svr:
-                solver_type = "P%s_L%sR_D%d" % (
-                    self.penalty.upper(), self.loss.upper(), int(self.dual))
-            else:
-                solver_type = "P%s_L%s_D%d" % (
-                    self.penalty.upper(), self.loss.upper(), int(self.dual))
-        if not solver_type in self._solver_type_dict:
-            if self.penalty.upper() == 'L1' and self.loss.upper() == 'L1':
-                error_string = ("The combination of penalty='l1' "
-                                "and loss='l1' is not supported.")
-            elif self.penalty.upper() == 'L2' and self.loss.upper() == 'L1':
-                # this has to be in primal
-                error_string = ("penalty='l2' and ploss='l1' is "
-                                "only supported when dual='true'.")
-            else:
-                # only PL1 in dual remains
-                error_string = ("penalty='l1' is only supported "
-                                "when dual='false'.")
-            raise ValueError('Not supported set of arguments: '
-                             + error_string)
-        return self._solver_type_dict[solver_type]
 
     def fit(self, X, y):
         """Fit the model according to the given training data.
@@ -661,47 +603,29 @@ class BaseLibLinear(BaseEstimator):
         y : array-like, shape = [n_samples]
             Target vector relative to X
 
-        class_weight : {dict, 'auto'}, optional
-            Weights associated with classes. If not given, all classes
-            are supposed to have weight one.
-
         Returns
         -------
         self : object
             Returns self.
         """
-        if not self.svr:
-            self._enc = LabelEncoder()
-            y = self._enc.fit_transform(y)
-            if len(self.classes_) < 2:
-                raise ValueError("The number of classes has to be greater than"
-                                 " one.")
-            self.class_weight_ = compute_class_weight(self.class_weight,
-                                                      self.classes_, y)
-        else:
-            self.class_weight_ = np.empty(0)
-            y=np.asarray(y)
+        X, y, class_weight_ = self._transform_data(X, y)
+        self._validate_data(X, y)
 
-        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        verbose = self.verbose if hasattr(self, 'verbose') else 0
 
-        if X.shape[0] != y.shape[0]:
-            raise ValueError("X and y have incompatible shapes.\n"
-                             "X has %s samples, but y has %s." %
-                             (X.shape[0], y.shape[0]))
-
-        liblinear.set_verbosity_wrap(self.verbose)
+        liblinear.set_verbosity_wrap(verbose)
 
         rnd = check_random_state(self.random_state)
-        if self.verbose:
+        if verbose:
             print('[LibLinear]', end='')
 
-        # LibLinear wants targets as doubles, even for classification
-        y = np.asarray(y, dtype=np.float64).ravel()
         # epsilon, tol are named p, eps respectively in struct parameter of C source code
         self.raw_coef_ = liblinear.train_wrap(X, y, sp.isspmatrix(X),
                                self._get_solver_type(),
-                               self.tol, self.epsilon, self._get_bias(), self.C,
-                               self.class_weight_,
+                               self.tol,
+                               self.epsilon if hasattr(self, 'epsilon') else 0.1,
+                               self._get_bias(), self.C,
+                               class_weight_,
                                # seed for srand in range [0..INT_MAX);
                                # due to limitations in Numpy on 32-bit
                                # platforms, we can't get to the UINT_MAX
@@ -717,6 +641,46 @@ class BaseLibLinear(BaseEstimator):
 
         return self
 
+    def _get_bias(self):
+        if self.fit_intercept:
+            return self.intercept_scaling
+        else:
+            return -1.0
+
+
+class LibLinearRegressorMixin(LibLinearMixin):
+    def _transform_data(self, X, y):
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        y = np.asarray(y, dtype=np.float64).ravel()
+        return X, y, np.empty(0)
+
+    def _validate_data(self, X, y):
+        if X.shape[0] != y.shape[0]:
+            raise ValueError("X and y have incompatible shapes.\n"
+                             "X has %s samples, but y has %s." %
+                             (X.shape[0], y.shape[0]))
+
+
+class LibLinearClassifierMixin(LibLinearMixin):
+    def _transform_data(self, X, y):
+        self._enc = LabelEncoder()
+        y = self._enc.fit_transform(y)
+        class_weight_ = compute_class_weight(self.class_weight, self.classes_, y)
+
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        # LibLinear wants targets as doubles, even for classification
+        y = np.asarray(y, dtype=np.float64).ravel()
+        return X, y, class_weight_
+
+    def _validate_data(self, X, y):
+        if len(self.classes_) < 2:
+            raise ValueError("The number of classes has to be greater than"
+                             " one.")
+        if X.shape[0] != y.shape[0]:
+            raise ValueError("X and y have incompatible shapes.\n"
+                             "X has %s samples, but y has %s." %
+                             (X.shape[0], y.shape[0]))
+
     @property
     def classes_(self):
         return self._enc.classes_
@@ -726,12 +690,6 @@ class BaseLibLinear(BaseEstimator):
                 "for consistency and will be removed in 0.15.")
     def label_(self):
         return self._enc.classes_
-
-    def _get_bias(self):
-        if self.fit_intercept:
-            return self.intercept_scaling
-        else:
-            return -1.0
 
 
 libsvm.set_verbosity_wrap(0)
