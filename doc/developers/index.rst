@@ -233,11 +233,6 @@ as the latter can be very machine-dependent.
 If those complexities are not available, then rules of thumb
 may be provided instead.
 
-including the expected time and space
-complexity of the algorithm and scalability, e.g. "this algorithm can
-scale to a large number of samples > 100000, but does not scale in
-dimensionality: n_features is expected to be lower than 100".
-
 Secondly, a generated figure from an example (as mentioned in the previous
 paragraph) should then be included to further further provide some
 intuition.
