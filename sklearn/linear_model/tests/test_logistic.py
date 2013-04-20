@@ -125,6 +125,24 @@ def test_inconsistent_input():
                   rng.random_sample((3, 12)))
 
 
+def test_parameters():
+    """
+    Test possible parameter combinations in LogisticRegression
+    """
+    # generate list of possible parameter combinations
+    params = [(dual, penalty) for dual in [True, False]
+              for penalty in ['l1', 'l2']]
+
+    for dual, penalty in params:
+        clf =  logistic.LogisticRegression(penalty = penalty, dual = dual)
+        if penalty == 'l2':
+            clf.fit(X,Y1)
+        elif penalty == 'l1' and not dual:
+            clf.fit(X,Y1)
+        else:
+            assert_raises(ValueError, clf.fit, X, Y1)
+
+    
 def test_write_parameters():
     """Test that we can write to coef_ and intercept_"""
     #rng = np.random.RandomState(0)

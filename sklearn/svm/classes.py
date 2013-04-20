@@ -150,7 +150,6 @@ class LinearSVC(BaseEstimator, LibLinearClassifierMixin, LinearClassifierMixin,
         self.class_weight = class_weight
         self.verbose = verbose
         self.random_state = random_state
-        self._get_solver_type()
 
     def _get_solver_type(self):
         """Find the liblinear magic number for the solver.
@@ -170,7 +169,9 @@ class LinearSVC(BaseEstimator, LibLinearClassifierMixin, LinearClassifierMixin,
             solver_type = "P%s_L%s_D%d" % (
                 self.penalty.upper(), self.loss.upper(), int(self.dual))
         if not solver_type in self._solver_type_dict:
-            raise ValueError('This solver_type is not supported in liblinear ')
+            raise ValueError('%s-regularized %s-loss SVC (%s) not supported in liblinear' %
+                             (self.penalty.upper(), self.loss.upper(),
+                              'dual' if self.dual else 'primal'))
         return self._solver_type_dict[solver_type]
 
 
@@ -526,7 +527,6 @@ class LinearSVR(BaseEstimator, LibLinearRegressorMixin, LinearRegressorMixin,
         self.intercept_scaling = intercept_scaling
         self.verbose = verbose
         self.random_state = random_state
-        self._get_solver_type()
 
     def _get_solver_type(self):
         """Find the liblinear magic number for the solver.
@@ -539,7 +539,9 @@ class LinearSVR(BaseEstimator, LibLinearRegressorMixin, LinearRegressorMixin,
         solver_type = "P%s_L%sR_D%d" % (
             self.penalty.upper(), self.loss.upper(), int(self.dual))
         if not solver_type in self._solver_type_dict:
-            raise ValueError('This solver_type is not supported in liblinear ')
+            raise ValueError('%s-regularized %s-loss SVR (%s) not supported in liblinear' %
+                             (self.penalty.upper(), self.loss.upper(),
+                              'dual' if self.dual else 'primal'))
         return self._solver_type_dict[solver_type]
 
 

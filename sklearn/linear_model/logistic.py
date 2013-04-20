@@ -107,7 +107,6 @@ class LogisticRegression(BaseEstimator, LibLinearClassifierMixin, LinearClassifi
         self.intercept_scaling = intercept_scaling
         self.class_weight = class_weight
         self.random_state = random_state
-        self._get_solver_type()
 
     def _get_solver_type(self):
         """Find the liblinear magic number for the solver.
@@ -118,7 +117,8 @@ class LogisticRegression(BaseEstimator, LibLinearClassifierMixin, LinearClassifi
         """
         solver_type = "P%s_LLR_D%d" % (self.penalty.upper(), int(self.dual))
         if not solver_type in self._solver_type_dict:
-            raise ValueError('This solver_type is not supported in liblinear ')
+            raise ValueError('%s-regularized logistic regression (%s) not supported in liblinear' %
+                             (self.penalty.upper(), 'dual' if self.dual else 'primal'))
         return self._solver_type_dict[solver_type]
 
     def predict_proba(self, X):

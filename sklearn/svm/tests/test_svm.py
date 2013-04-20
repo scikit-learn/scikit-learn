@@ -179,29 +179,6 @@ def test_svr():
     # len(np.unique(y)) < 2, which must only be done for SVC
     svm.SVR().fit(diabetes.data, np.ones(len(diabetes.data)))
         
-def test_liblinear_svr():
-    """
-    Test Liblinear SVR
-    """
-
-    diabetes = datasets.load_diabetes()
-    # compare the fist coefficient with the result of original liblinear
-    configuration=[
-        (svm.LinearSVR(dual=False,C=1.0,epsilon=0.1,random_state=0),0.6880),
-        (svm.LinearSVR(dual=False,C=10,epsilon=0.1,random_state=0),0.6887),
-        (svm.LinearSVR(dual=False,C=10,epsilon=100,random_state=0),1.5533),
-        (svm.LinearSVR(C=1.0,epsilon=0.1,random_state=0),21.7576),
-        (svm.LinearSVR(C=10,epsilon=0.1,random_state=0),-3.7987),
-        (svm.LinearSVR(C=10,epsilon=1,random_state=0),-3.6420),
-        (svm.LinearSVR(loss="l1",C=1.0,epsilon=0.1,random_state=0),2.4735),
-        (svm.LinearSVR(loss="l1",C=10,epsilon=0.1,random_state=0),18.7391),
-        (svm.LinearSVR(loss="l1",C=10,epsilon=10,random_state=0),19.4156),
-        ]
-    for clf,w0 in configuration:
-        clf.fit(diabetes.data, diabetes.target)
-        assert_almost_equal(clf.coef_[0][0], w0,decimal=3)
-
-
 def test_svr_errors():
     X = [[0.0], [1.0]]
     y = [0.0, 0.5]
@@ -441,20 +418,18 @@ def test_linearsvc_parameters():
     """
     # generate list of possible parameter combinations
     params = [(dual, loss, penalty) for dual in [True, False]
-              for loss in ['l1', 'l2', 'lr'] for penalty in ['l1', 'l2']]
+              for loss in ['l1', 'l2'] for penalty in ['l1', 'l2']]
 
     for dual, loss, penalty in params:
-            if loss == 'l1' and penalty == 'l1':
-                assert_raises(ValueError, svm.LinearSVC, penalty=penalty,
-                              loss=loss, dual=dual)
-            elif loss == 'l1' and penalty == 'l2' and not dual:
-                assert_raises(ValueError, svm.LinearSVC, penalty=penalty,
-                              loss=loss, dual=dual)
-            elif penalty == 'l1' and dual:
-                assert_raises(ValueError, svm.LinearSVC, penalty=penalty,
-                              loss=loss, dual=dual)
-            else:
-                svm.LinearSVC(penalty=penalty, loss=loss, dual=dual)
+        clf =  svm.LinearSVC(penalty = penalty, loss = loss, dual = dual)
+        if penalty == 'l2' and loss == 'l2':
+            clf.fit(X,Y)
+        elif penalty == 'l2' and loss == 'l1' and dual:
+            clf.fit(X,Y)
+        elif penalty == 'l1' and loss == 'l2' and not dual:
+            clf.fit(X,Y)
+        else:
+            assert_raises(ValueError, clf.fit, X, Y)
 
 
 def test_linearsvc():
@@ -623,6 +598,46 @@ def test_linearsvc_verbose():
 
     # stdout: restore
     os.dup2(stdout, 1)  # restore original stdout
+
+
+def test_linearsvr_parameters():
+    """
+    Test possible parameter combinations in LinearSVR
+    """
+    # generate list of possible parameter combinations
+    params = [(dual, loss, penalty) for dual in [True, False]
+              for loss in ['l1', 'l2'] for penalty in ['l1', 'l2']]
+    
+    for dual, loss, penalty in params:
+        clf =  svm.LinearSVR(penalty = penalty, loss = loss, dual = dual)
+        if penalty == 'l2' and loss == 'l2':
+            clf.fit(X, Y)
+        elif penalty == 'l2' and loss == 'l1' and dual:
+            clf.fit(X, Y)
+        else:
+            assert_raises(ValueError, clf.fit, X, Y)
+
+
+def test_linearsvr():
+    """
+    Test LinearSVR againt orginal liblinear
+    """
+    diabetes = datasets.load_diabetes()
+    # compare the fist coefficient with the result of original liblinear
+    configuration=[
+        (svm.LinearSVR(dual=False,C=1.0,epsilon=0.1,random_state=0),0.6880),
+        (svm.LinearSVR(dual=False,C=10,epsilon=0.1,random_state=0),0.6887),
+        (svm.LinearSVR(dual=False,C=10,epsilon=100,random_state=0),1.5533),
+        (svm.LinearSVR(C=1.0,epsilon=0.1,random_state=0),21.7576),
+        (svm.LinearSVR(C=10,epsilon=0.1,random_state=0),-3.7987),
+        (svm.LinearSVR(C=10,epsilon=1,random_state=0),-3.6420),
+        (svm.LinearSVR(loss="l1",C=1.0,epsilon=0.1,random_state=0),2.4735),
+        (svm.LinearSVR(loss="l1",C=10,epsilon=0.1,random_state=0),18.7391),
+        (svm.LinearSVR(loss="l1",C=10,epsilon=10,random_state=0),19.4156),
+        ]
+    for clf,w0 in configuration:
+        clf.fit(diabetes.data, diabetes.target)
+        assert_almost_equal(clf.coef_[0][0], w0,decimal=3)
 
 
 def test_svc_clone_with_callable_kernel():
