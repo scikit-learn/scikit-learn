@@ -14,6 +14,7 @@ from .base import BaseEstimator, ClassifierMixin
 from .externals.six.moves import xrange
 from .utils.fixes import unique
 from .utils import check_arrays, array2d
+from .preprocessing import normalize_proba
 
 __all__ = ['QDA']
 
@@ -213,7 +214,10 @@ class QDA(BaseEstimator, ClassifierMixin):
         # up to a multiplicative constant.
         likelihood = np.exp(values - values.min(axis=1)[:, np.newaxis])
         # compute posterior probabilities
-        return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
+        probabilities = normalize_proba(likelihood, copy=True)
+        
+        return probabilities
+
 
     def predict_log_proba(self, X):
         """Return posterior probabilities of classification.
