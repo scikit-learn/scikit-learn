@@ -38,6 +38,7 @@ __all__ = ['Binarizer',
            'StandardScaler',
            'binarize',
            'normalize',
+           'normalize_proba',
            'scale']
 
 
@@ -455,6 +456,44 @@ def normalize(X, norm='l2', axis=1, copy=True):
     if axis == 0:
         X = X.T
 
+    return X
+
+
+def normalize_proba(X, copy=True):
+    """Normalize a probability or an array of probabilties.
+
+    Parameters
+    ----------
+    X : array with shape [n_probabilties, n_values] or [n_values]
+
+    copy : boolean, optional, default is True
+        set to False to perform inplace normalization and avoid a
+        copy.
+
+    See also
+    --------
+    :func:`sklearn.preprocessing.normalize` to perform L1 or L2
+    normalization.
+    """
+    if hasattr(X, 'ndim') and X.ndim not in (1,2):
+        raise ValueError(
+            "Number of dimensions other than 1 or 2 not supported.")
+    
+    X = check_arrays(X, copy=copy)[0]
+    warn_if_not_float(X, 'The normalize_proba function')
+    
+    if np.any(X < 0.0):
+        raise ValueError("X is not a probability or probability array.")
+
+    if X.ndim == 1:
+        norms = X.sum()
+        norms = 1.0 if norms == 0.0 else norms
+    else:
+        norms = X.sum(axis=1)[:, np.newaxis]
+        norms[norms == 0.0] = 1.0
+
+    X /= norms
+    
     return X
 
 
