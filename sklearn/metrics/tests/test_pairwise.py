@@ -344,8 +344,11 @@ def test_check_sparse_arrays():
     XB = rng.random_sample((5, 4))
     XB_sparse = csr_matrix(XB)
     XA_checked, XB_checked = check_pairwise_arrays(XA_sparse, XB_sparse)
-    assert_equal(XA_sparse, XA_checked)
-    assert_equal(XB_sparse, XB_checked)
+
+    # compare their difference because testing csr matrices for
+    # equality with '==' does not work as expected.
+    assert_true(abs(XA_sparse - XA_checked).nnz == 0)
+    assert_true(abs(XB_sparse - XB_checked).nnz == 0)
 
 
 def tuplify(X):
@@ -369,3 +372,29 @@ def test_check_tuple_input():
     XA_checked, XB_checked = check_pairwise_arrays(XA_tuples, XB_tuples)
     assert_array_equal(XA_tuples, XA_checked)
     assert_array_equal(XB_tuples, XB_checked)
+
+
+def test_check_preserve_type():
+    """ Ensures that type float32 is preserved. """
+    XA = np.resize(np.arange(40), (5, 8)).astype(np.float32)
+    XB = np.resize(np.arange(40), (5, 8)).astype(np.float32)
+
+    XA_checked, XB_checked = check_pairwise_arrays(XA, None)
+    assert_equal(XA_checked.dtype, np.float32)
+
+    # both float32
+    XA_checked, XB_checked = check_pairwise_arrays(XA, XB)
+    assert_equal(XA_checked.dtype, np.float32)
+    assert_equal(XB_checked.dtype, np.float32)
+
+    # mismatched A
+    XA_checked, XB_checked = check_pairwise_arrays(XA.astype(np.float),
+                                                   XB)
+    assert_equal(XA_checked.dtype, np.float)
+    assert_equal(XB_checked.dtype, np.float)
+
+    # mismatched B
+    XA_checked, XB_checked = check_pairwise_arrays(XA,
+                                                   XB.astype(np.float))
+    assert_equal(XA_checked.dtype, np.float)
+    assert_equal(XB_checked.dtype, np.float)

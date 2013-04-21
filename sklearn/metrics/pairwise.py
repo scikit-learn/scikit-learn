@@ -84,14 +84,21 @@ def check_pairwise_arrays(X, Y):
 
     """
     if Y is X or Y is None:
-        X = Y = atleast2d_or_csr(X, dtype=np.float)
+        X = Y = atleast2d_or_csr(X)
     else:
-        X = atleast2d_or_csr(X, dtype=np.float)
-        Y = atleast2d_or_csr(Y, dtype=np.float)
+        X = atleast2d_or_csr(X)
+        Y = atleast2d_or_csr(Y)
     if X.shape[1] != Y.shape[1]:
         raise ValueError("Incompatible dimension for X and Y matrices: "
                          "X.shape[1] == %d while Y.shape[1] == %d" % (
                              X.shape[1], Y.shape[1]))
+
+    if not (X.dtype == Y.dtype == np.float32):
+        if Y is X:
+            X = Y = X.astype(np.float)
+        else:
+            X = X.astype(np.float)
+            Y = Y.astype(np.float)
     return X, Y
 
 
@@ -435,34 +442,11 @@ def additive_chi2_kernel(X, Y=None):
     """
     if issparse(X) or issparse(Y):
         raise ValueError("additive_chi2 does not support sparse matrices.")
-    ### we don't use check_pairwise to preserve float32.
-
-    if Y is None:
-        # optimize this case!
-        X = array2d(X)
-        if X.dtype != np.float32:
-            X.astype(np.float)
-        Y = X
-        if (X < 0).any():
-            raise ValueError("X contains negative values.")
-    else:
-        X = array2d(X)
-        Y = array2d(Y)
-
-        if X.shape[1] != Y.shape[1]:
-            raise ValueError("Incompatible dimension for X and Y matrices: "
-                             "X.shape[1] == %d while Y.shape[1] == %d" % (
-                                 X.shape[1], Y.shape[1]))
-
-        if X.dtype != np.float32 or Y.dtype != np.float32:
-            # if not both are 32bit float, convert to 64bit float
-            X = X.astype(np.float)
-            Y = Y.astype(np.float)
-
-        if (X < 0).any():
-            raise ValueError("X contains negative values.")
-        if (Y < 0).any():
-            raise ValueError("Y contains negative values.")
+    X, Y = check_pairwise_arrays(X, Y)
+    if (X < 0).any():
+        raise ValueError("X contains negative values.")
+    if Y is not X and (Y < 0).any():
+        raise ValueError("Y contains negative values.")
 
     result = np.zeros((X.shape[0], Y.shape[0]), dtype=X.dtype)
     _chi2_kernel_fast(X, Y, result)
