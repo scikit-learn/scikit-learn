@@ -475,13 +475,13 @@ def normalize_proba(X, copy=True):
     :func:`sklearn.preprocessing.normalize` to perform L1 or L2
     normalization.
     """
-    if hasattr(X, 'ndim') and X.ndim not in (1,2):
+    if hasattr(X, 'ndim') and X.ndim not in (1, 2):
         raise ValueError(
             "Number of dimensions other than 1 or 2 not supported.")
-    
+
     X = check_arrays(X, copy=copy)[0]
     warn_if_not_float(X, 'The normalize_proba function')
-    
+
     if np.any(X < 0.0):
         raise ValueError("X is not a probability or probability array.")
 
@@ -493,7 +493,7 @@ def normalize_proba(X, copy=True):
         norms[norms == 0.0] = 1.0
 
     X /= norms
-    
+
     return X
 
 

@@ -113,7 +113,7 @@ def predict_proba_ovr(estimators, X, is_multilabel):
 
     if not is_multilabel:
         # Then, probabilities should be normalized to 1.
-        Y = normalize_proba(Y, copy=False) 
+        Y = normalize_proba(Y, copy=False)
     return Y
 
 

@@ -37,6 +37,7 @@ EPS = np.finfo(float).eps
 NEGINF = -np.inf
 decoder_algorithms = ("viterbi", "map")
 
+
 @deprecated("Function `sklearn.hmm.normalize` has "
             "been superseded by `sklearn.preprocessing.normalize_proba`")
 def normalize(A, axis=None):
@@ -569,11 +570,11 @@ class _BaseHMM(BaseEstimator):
 
         if 's' in params:
             self.startprob_ = normalize_proba(
-                np.maximum(self.startprob_prior - 1.0 + stats['start'], 1e-20), 
+                np.maximum(self.startprob_prior - 1.0 + stats['start'], 1e-20),
                 copy=False)
         if 't' in params:
             transmat_ = normalize_proba(
-                np.maximum(self.transmat_prior - 1.0 + stats['trans'], 1e-20), 
+                np.maximum(self.transmat_prior - 1.0 + stats['trans'], 1e-20),
                 copy=False)
             self.transmat_ = transmat_
 

@@ -181,7 +181,7 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator, Classifier
         else:
             weight_matrices = weight_matrices.T
             probabilities = np.dot(weight_matrices, self.label_distributions_)
-        
+
         probabilities = normalize_proba(probabilities, copy=False)
         return probabilities
 

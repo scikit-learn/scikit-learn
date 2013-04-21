@@ -215,9 +215,8 @@ class QDA(BaseEstimator, ClassifierMixin):
         likelihood = np.exp(values - values.min(axis=1)[:, np.newaxis])
         # compute posterior probabilities
         probabilities = normalize_proba(likelihood, copy=True)
-        
-        return probabilities
 
+        return probabilities
 
     def predict_log_proba(self, X):
         """Return posterior probabilities of classification.

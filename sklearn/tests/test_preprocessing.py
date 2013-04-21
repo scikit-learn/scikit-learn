@@ -434,9 +434,9 @@ def test_probability_normalize():
             X0_norm is not X0
         else:
             X0_norm is X0
-        assert_almost_equal(X0_norm, X0) 
-        
-        for ndim in (1,2):
+        assert_almost_equal(X0_norm, X0)
+
+        for ndim in (1, 2):
             X1 = np.abs(rng.randn(*([5]*ndim)))
             X1_norm = normalize_proba(X1, copy=copy)
             if copy:
@@ -444,7 +444,7 @@ def test_probability_normalize():
             else:
                 X1_norm is X1
             for component in X1_norm.sum(
-                    axis=(0 if ndim==1 else 1), 
+                    axis=(0 if ndim == 1 else 1),
                     keepdims=(True if ndim == 1 else 2)):
                 assert_almost_equal(component, 1.0)
 
@@ -457,14 +457,15 @@ def test_probability_normalize_errors():
                 [[-1.0, 1.0], [1.0, 1.0]]
             ],
             [False, True]
-        ):
+    ):
         assert_raises(ValueError, normalize_proba, X, copy=copy)
-    
+
     for X, copy in product(
-            [np.ones([1, 1, 1]), np.ones([])], 
+            [np.ones([1, 1, 1]), np.ones([])],
             [False, True]
-        ):
+    ):
         assert_raises(ValueError, normalize_proba, X, copy=copy)
+
 
 def test_binarizer():
     X_ = np.array([[1, 0, 5], [2, 3, 0]])

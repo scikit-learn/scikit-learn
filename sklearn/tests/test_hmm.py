@@ -500,10 +500,10 @@ class MultinomialHMMTestCase(TestCase):
 
         # Mess up the parameters and see if we can re-learn them.
         h.startprob_ = normalize_proba(
-            self.prng.rand(self.n_components), 
+            self.prng.rand(self.n_components),
             copy=False)
         h.transmat_ = normalize_proba(
-            self.prng.rand(self.n_components, self.n_components), 
+            self.prng.rand(self.n_components, self.n_components),
             copy=False)
         h.emissionprob_ = normalize_proba(
             self.prng.rand(self.n_components, self.n_symbols),
@@ -648,7 +648,7 @@ class GMMHMMBaseTester(object):
             self.prng.rand(self.n_components, self.n_components),
             copy=False)
         h.startprob_ = normalize_proba(
-            self.prng.rand(self.n_components), 
+            self.prng.rand(self.n_components),
             copy=False)
 
         trainll = train_hmm_and_keep_track_of_log_likelihood(
