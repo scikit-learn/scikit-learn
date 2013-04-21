@@ -59,6 +59,7 @@ from scipy import sparse
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin
+from ..preprocessing import normalize_proba
 from ..metrics.pairwise import rbf_kernel
 from ..utils.graph import graph_laplacian
 from ..utils.extmath import safe_sparse_dot
@@ -180,8 +181,8 @@ class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator, Classifier
         else:
             weight_matrices = weight_matrices.T
             probabilities = np.dot(weight_matrices, self.label_distributions_)
-        normalizer = np.atleast_2d(np.sum(probabilities, axis=1)).T
-        probabilities /= normalizer
+        
+        probabilities = normalize_proba(probabilities, copy=False)
         return probabilities
 
     def fit(self, X, y):
