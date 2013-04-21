@@ -48,7 +48,7 @@ from ..externals import six
 from ..externals.six.moves import xrange
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..metrics import r2_score
-from ..preprocessing import OneHotEncoder
+from ..preprocessing import OneHotEncoder, normalize_proba
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
@@ -411,9 +411,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble, SelectorMixin)):
                         warn("Some inputs do not have OOB scores. "
                              "This probably means too few trees were used "
                              "to compute any reliable oob estimates.")
-
-                    decision = (predictions[k] /
-                                predictions[k].sum(axis=1)[:, np.newaxis])
+                    decision = normalize_proba(predictions[k])
                     self.oob_decision_function_.append(decision)
                     self.oob_score_ += np.mean(
                         (y[:, k] == classes_[k].take(
