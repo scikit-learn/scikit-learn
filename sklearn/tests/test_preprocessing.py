@@ -436,17 +436,18 @@ def test_probability_normalize():
             X0_norm is X0
         assert_almost_equal(X0_norm, X0)
 
+        size = 5
         for ndim in (1, 2):
-            X1 = np.abs(rng.randn(*([5]*ndim)))
+            X1 = np.abs(rng.randn(*([size]*ndim)))
             X1_norm = normalize_proba(X1, copy=copy)
             if copy:
                 X1_norm is not X1
             else:
                 X1_norm is X1
-            for component in X1_norm.sum(
-                    axis=(0 if ndim == 1 else 1),
-                    keepdims=(True if ndim == 1 else 2)):
-                assert_almost_equal(component, 1.0)
+            if ndim == 1:
+                assert_almost_equal(X1_norm.sum(), 1.0)
+            else:
+                assert_almost_equal(X1_norm.sum(axis=1), np.ones((size,)))
 
 
 def test_probability_normalize_errors():
