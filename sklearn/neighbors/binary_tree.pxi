@@ -697,6 +697,12 @@ def newObj(obj):
 
 
 ######################################################################
+# define the reverse mapping of VALID_METRICS
+from dist_metrics import get_valid_metric_ids
+VALID_METRIC_IDS = get_valid_metric_ids(VALID_METRICS)
+
+
+######################################################################
 # Binary Tree class
 
 cdef struct NodeData_t:
@@ -713,8 +719,6 @@ NodeData = np.asarray(dummy_view).dtype
 
 cdef class BinaryTree:
     __doc__ = CLASS_DOC
-
-    cdef public object valid_metrics
 
     cdef readonly DTYPE_t[:, ::1] data
     cdef public ITYPE_t[::1] idx_array
@@ -733,6 +737,8 @@ cdef class BinaryTree:
     cdef int n_leaves
     cdef int n_splits
     cdef int n_calls
+
+    valid_metrics = VALID_METRIC_IDS
 
     # Use cinit to initialize all arrays to empty: this will prevent memory
     # errors and seg-faults in rare cases where __init__ is not called
@@ -755,14 +761,13 @@ cdef class BinaryTree:
 
     def __init__(self, data,
                  leaf_size=40, metric='minkowski', **kwargs):
-        self.valid_metrics = VALID_METRICS
         self.data = np.asarray(data, dtype=DTYPE, order='C')
         self.leaf_size = leaf_size
         self.dm = DistanceMetric.get_metric(metric, **kwargs)
         self.euclidean = (self.dm.__class__.__name__ == 'EuclideanDistance')
 
         metric = self.dm.__class__.__name__
-        if metric not in self.valid_metrics:
+        if metric not in VALID_METRICS:
             raise ValueError('metric {metric} is not valid for '
                              '{BinaryTree}'.format(metric=metric,
                                                    **DOC_DICT))
