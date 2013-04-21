@@ -385,6 +385,7 @@ def test_check_preserve_type():
     # both float32
     XA_checked, XB_checked = check_pairwise_arrays(XA, XB)
     assert_equal(XA_checked.dtype, np.float32)
+    assert_equal(XB_checked.dtype, np.float32)
 
     # mismatched A
     XA_checked, XB_checked = check_pairwise_arrays(XA.astype(np.float),
