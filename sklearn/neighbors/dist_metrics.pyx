@@ -41,6 +41,50 @@ def newObj(obj):
 
 
 ######################################################################
+# metric mappings
+#  These map from metric id strings to class names
+METRIC_MAPPING = {'euclidean':EuclideanDistance,
+                  'l2':EuclideanDistance,
+                  'minkowski':MinkowskiDistance,
+                  'p':MinkowskiDistance,
+                  'manhattan':ManhattanDistance,
+                  'cityblock':ManhattanDistance,
+                  'l1':ManhattanDistance,
+                  'chebyshev':ChebyshevDistance,
+                  'infinity':ChebyshevDistance,
+                  'seuclidean':SEuclideanDistance,
+                  'mahalanobis':MahalanobisDistance,
+                  'wminkowski':WMinkowskiDistance,
+                  'hamming':HammingDistance,
+                  'canberra':CanberraDistance,
+                  'braycurtis':BrayCurtisDistance,
+                  'matching':MatchingDistance,
+                  'hamming':HammingDistance,
+                  'jaccard':JaccardDistance,
+                  'dice':DiceDistance,
+                  'kulsinski':KulsinskiDistance,
+                  'rogerstanimoto':RogerStanimotoDistance,
+                  'russellrao':RussellRaoDistance,
+                  'sokalmichener':SokalMichenerDistance,
+                  'sokalsneath':SokalSneathDistance,
+                  'haversine':HaversineDistance,
+                  'pyfunc':PyFuncDistance}
+
+
+def get_valid_metric_ids(L):
+    """Given an iterable of metric class names or class identifiers,
+    return a list of metric IDs which map to those classes.
+
+    Example:
+    >>> L = get_valid_metric_ids([EuclideanDistance, 'ManhattanDistance'])
+    >>> sorted(L)
+    ['cityblock', 'euclidean', 'l1', 'l2', 'manhattan']
+    """
+    return [key for (key, val) in METRIC_MAPPING.iteritems()
+            if (val.__name__ in L) or (val in L)]
+
+
+######################################################################
 # Distance Metric Classes
 cdef class DistanceMetric:
     """DistanceMetric class
@@ -192,61 +236,29 @@ cdef class DistanceMetric:
         """
         if isinstance(metric, DistanceMetric):
             return metric
-        elif isinstance(metric, type) and issubclass(metric, DistanceMetric):
-            return metric(**kwargs)
-        elif metric in [None, 'euclidean', 'l2']:
-            p = kwargs.pop('p', 2)
-            return EuclideanDistance(**kwargs)
-        elif metric in ['minkowski', 'p']:
+        
+        # Map the metric string ID to the metric class
+        if isinstance(metric, type) and issubclass(metric, DistanceMetric):
+            pass
+        else:
+            try:
+                metric = METRIC_MAPPING[metric]
+            except:
+                raise ValueError("Unrecognized metric '%s'" % metric)
+
+        # In Minkowski special cases, return more efficient methods
+        if metric is MinkowskiDistance:
             p = kwargs.pop('p', 2)
             if p == 1:
                 return ManhattanDistance(**kwargs)
-            if p == 2:
+            elif p == 2:
                 return EuclideanDistance(**kwargs)
             elif np.isinf(p):
                 return ChebyshevDistance(**kwargs)
             else:
                 return MinkowskiDistance(p, **kwargs)
-        elif metric in ['manhattan', 'cityblock', 'l1']:
-            return ManhattanDistance(**kwargs)
-        elif metric in ['chebyshev', 'infinity']:
-            return ChebyshevDistance(**kwargs)
-        elif metric == 'seuclidean':
-            return SEuclideanDistance(**kwargs)
-        elif metric == 'mahalanobis':
-            return MahalanobisDistance(**kwargs)
-        elif metric == 'wminkowski':
-            return WMinkowskiDistance(**kwargs)
-        elif metric == 'hamming':
-            return HammingDistance(**kwargs)
-        elif metric == 'canberra':
-            return CanberraDistance(**kwargs)
-        elif metric == 'braycurtis':
-            return BrayCurtisDistance(**kwargs)
-        elif metric == 'matching':
-            return MatchingDistance(**kwargs)
-        elif metric == 'hamming':
-            return HammingDistance(**kwargs)
-        elif metric == 'jaccard':
-            return JaccardDistance(**kwargs)
-        elif metric == 'dice':
-            return DiceDistance(**kwargs)
-        elif metric == 'kulsinski':
-            return KulsinskiDistance(**kwargs)
-        elif metric == 'rogerstanimoto':
-            return RogerStanimotoDistance(**kwargs)
-        elif metric == 'russellrao':
-            return RussellRaoDistance(**kwargs)
-        elif metric == 'sokalmichener':
-            return SokalMichenerDistance(**kwargs)
-        elif metric == 'sokalsneath':
-            return SokalSneathDistance(**kwargs)
-        elif metric == 'haversine':
-            return HaversineDistance(**kwargs)
-        elif metric == 'pyfunc':
-            return PyFuncDistance(**kwargs)
         else:
-            raise ValueError('metric = "%s" not recognized' % str(metric))
+            return metric(**kwargs)
 
     def __init__(self):
         if self.__class__ is DistanceMetric:
