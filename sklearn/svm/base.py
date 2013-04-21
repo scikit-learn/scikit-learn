@@ -594,11 +594,10 @@ class LibLinearMixin(object):
         self : object
             Returns self.
         """
-        X, y, class_weight_ = self._transform_data(X, y)
-        self._validate_data(X, y)
+        X, y = self._prepare_fit(X, y)
 
         # LogisticRegression has no verbose attribute
-        verbose = self.verbose if hasattr(self, 'verbose') else 0
+        verbose = getattr(self, 'verbose', 0)
 
         liblinear.set_verbosity_wrap(verbose)
 
@@ -611,9 +610,9 @@ class LibLinearMixin(object):
                                self._get_solver_type(),
                                self.tol,
                                # LinearSVC, LogisticRegression have no epsilon attribute
-                               self.epsilon if hasattr(self, 'epsilon') else 0.1,
+                               getattr(self, 'epsilon', 0.1),
                                self._get_bias(), self.C,
-                               class_weight_,
+                               getattr(self, 'class_weight_', np.empty(0)),
                                # seed for srand in range [0..INT_MAX);
                                # due to limitations in Numpy on 32-bit
                                # platforms, we can't get to the UINT_MAX
@@ -637,30 +636,26 @@ class LibLinearMixin(object):
 
 
 class LibLinearRegressorMixin(LibLinearMixin):
-    def _transform_data(self, X, y):
+    def _prepare_fit(self, X, y):
+        """ X, y conversion and  validation"""
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         y = np.asarray(y, dtype=np.float64).ravel()
-        return X, y, np.empty(0)
-
-    def _validate_data(self, X, y):
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have incompatible shapes.\n"
                              "X has %s samples, but y has %s." %
                              (X.shape[0], y.shape[0]))
+        return X, y
 
 
 class LibLinearClassifierMixin(LibLinearMixin):
-    def _transform_data(self, X, y):
+    def _prepare_fit(self, X, y):
+        """ X, y conversion and validation, class weight calculation"""
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         self._enc = LabelEncoder()
         y = self._enc.fit_transform(y)
-        class_weight_ = compute_class_weight(self.class_weight, self.classes_, y)
-
-        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+        self.class_weight_ = compute_class_weight(self.class_weight, self.classes_, y)
         # LibLinear wants targets as doubles, even for classification
         y = np.asarray(y, dtype=np.float64).ravel()
-        return X, y, class_weight_
-
-    def _validate_data(self, X, y):
         if len(self.classes_) < 2:
             raise ValueError("The number of classes has to be greater than"
                              " one.")
@@ -668,6 +663,7 @@ class LibLinearClassifierMixin(LibLinearMixin):
             raise ValueError("X and y have incompatible shapes.\n"
                              "X has %s samples, but y has %s." %
                              (X.shape[0], y.shape[0]))
+        return X, y
 
     @property
     def classes_(self):
