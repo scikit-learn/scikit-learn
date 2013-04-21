@@ -434,6 +434,8 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
 
     eta = eta0
 
+    dataset.precompute_norms()
+
     t_start = time()
     for epoch in range(n_iter):
         if verbose > 0:
@@ -460,12 +462,12 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
                 class_weight = weight_neg
 
             if learning_rate == PA1:
-                update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
+                update = dataset.get_norm()
                 if update == 0:
                     continue
                 update = min(C, loss.loss(p, y) / update)
             elif learning_rate == PA2:
-                update = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
+                update = dataset.get_norm()
                 update = loss.loss(p, y) / (update + 0.5 / C)
             else:
                 update = -eta * loss.dloss(p, y)
@@ -519,14 +521,6 @@ cdef inline double max(double a, double b):
 cdef inline double min(double a, double b):
     return a if a <= b else b
 
-cdef double sqnorm(DOUBLE * x_data_ptr, INTEGER * x_ind_ptr, int xnnz):
-    cdef double x_norm = 0.0
-    cdef int j
-    cdef double z
-    for j in range(xnnz):
-        z = x_data_ptr[j]
-        x_norm += z * z
-    return x_norm
 
 cdef void l1penalty(WeightVector w, DOUBLE * q_data_ptr,
                     INTEGER * x_ind_ptr, int xnnz, double u):
