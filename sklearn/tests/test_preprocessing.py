@@ -1,4 +1,5 @@
 import warnings
+from itertools import product
 import numpy as np
 import numpy.linalg as la
 import scipy.sparse as sp
@@ -19,6 +20,7 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import Normalizer
 from sklearn.preprocessing import normalize
+from sklearn.preprocessing import normalize_proba
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import scale
 from sklearn.preprocessing import MinMaxScaler
@@ -420,6 +422,49 @@ def test_normalize_errors():
     assert_raises(ValueError, normalize, [[0]], axis=2)
     assert_raises(ValueError, normalize, [[0]], norm='l3')
 
+
+def test_probability_normalize():
+    """Test probability normalization"""
+    rng = np.random.RandomState(0)
+
+    for copy in (False, True):
+        X0 = np.array([0.0, 0.0, 0.0])
+        X0_norm = normalize_proba(X0, copy=copy)
+        if copy:
+            X0_norm is not X0
+        else:
+            X0_norm is X0
+        assert_almost_equal(X0_norm, X0) 
+        
+        for ndim in (1,2):
+            X1 = np.abs(rng.randn(*([5]*ndim)))
+            X1_norm = normalize_proba(X1, copy=copy)
+            if copy:
+                X1_norm is not X1
+            else:
+                X1_norm is X1
+            for component in X1_norm.sum(
+                    axis=(0 if ndim==1 else 1), 
+                    keepdims=(True if ndim == 1 else 2)):
+                assert_almost_equal(component, 1.0)
+
+
+def test_probability_normalize_errors():
+    """Check that invalid arguments yield ValueError"""
+    for X, copy in product(
+            [
+                [-1.0, 1.0],
+                [[-1.0, 1.0], [1.0, 1.0]]
+            ],
+            [False, True]
+        ):
+        assert_raises(ValueError, normalize_proba, X, copy=copy)
+    
+    for X, copy in product(
+            [np.ones([1, 1, 1]), np.ones([])], 
+            [False, True]
+        ):
+        assert_raises(ValueError, normalize_proba, X, copy=copy)
 
 def test_binarizer():
     X_ = np.array([[1, 0, 5], [2, 3, 0]])
