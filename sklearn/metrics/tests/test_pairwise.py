@@ -344,8 +344,11 @@ def test_check_sparse_arrays():
     XB = rng.random_sample((5, 4))
     XB_sparse = csr_matrix(XB)
     XA_checked, XB_checked = check_pairwise_arrays(XA_sparse, XB_sparse)
-    assert_equal(XA_sparse, XA_checked)
-    assert_equal(XB_sparse, XB_checked)
+
+    # compare their difference because testing csr matrices for
+    # equality with '==' does not work as expected.
+    assert_true(abs(XA_sparse - XA_checked).nnz == 0)
+    assert_true(abs(XB_sparse - XB_checked).nnz == 0)
 
 
 def tuplify(X):
