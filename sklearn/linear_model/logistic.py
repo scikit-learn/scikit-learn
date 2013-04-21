@@ -95,6 +95,12 @@ class LogisticRegression(BaseEstimator, LibLinearClassifierMixin, LinearClassifi
         http://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
     """
 
+    _solver_type_dict = {
+        'PL2_LLR_D0': 0,  # L2 penalty, logistic regression
+        'PL1_LLR_D0': 6,  # L1 penalty, logistic regression
+        'PL2_LLR_D1': 7,  # L2 penalty, logistic regression, dual form
+    }
+
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None):

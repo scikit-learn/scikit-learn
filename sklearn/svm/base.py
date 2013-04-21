@@ -577,20 +577,6 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
 class LibLinearMixin(object):
     """Base for classes binding liblinear (dense and sparse versions)"""
 
-    _solver_type_dict = {
-        'PL2_LLR_D0': 0,  # L2 penalty, logistic regression
-        'PL2_LL2_D1': 1,  # L2 penalty, L2 loss, dual form
-        'PL2_LL2_D0': 2,  # L2 penalty, L2 loss, primal form
-        'PL2_LL1_D1': 3,  # L2 penalty, L1 Loss, dual form
-        'MC_SVC': 4,      # Multi-class Support Vector Classification
-        'PL1_LL2_D0': 5,  # L1 penalty, L2 Loss, primal form
-        'PL1_LLR_D0': 6,  # L1 penalty, logistic regression
-        'PL2_LLR_D1': 7,  # L2 penalty, logistic regression, dual form
-        'PL2_LL2R_D0': 11,  # L2 penalty, L2 loss, support vector regression , primal form
-        'PL2_LL2R_D1': 12,  # L2 penalty, L2 loss, support vector regression , dual form
-        'PL2_LL1R_D1': 13,  # L2 penalty, L1 loss, support vector regression , dual form
-    }
-
     def fit(self, X, y):
         """Fit the model according to the given training data.
 

@@ -135,6 +135,14 @@ class LinearSVC(BaseEstimator, LibLinearClassifierMixin, LinearClassifierMixin,
 
     """
 
+    _solver_type_dict = {
+        'PL2_LL2_D1': 1,  # L2 penalty, L2 loss, dual form
+        'PL2_LL2_D0': 2,  # L2 penalty, L2 loss, primal form
+        'PL2_LL1_D1': 3,  # L2 penalty, L1 Loss, dual form
+        'MC_SVC': 4,      # Multi-class Support Vector Classification
+        'PL1_LL2_D0': 5,  # L1 penalty, L2 Loss, primal form
+    }
+
     def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
                  multi_class='ovr', fit_intercept=True, intercept_scaling=1,
                  class_weight=None, verbose=0, random_state=None):
@@ -513,6 +521,13 @@ class LinearSVR(BaseEstimator, LibLinearRegressorMixin, LinearRegressorMixin,
         Support Vector Machine for Regression implemented using libsvm.
 
     """
+
+    _solver_type_dict = {
+        'PL2_LL2R_D0': 11,  # L2 penalty, L2 loss, support vector regression , primal form
+        'PL2_LL2R_D1': 12,  # L2 penalty, L2 loss, support vector regression , dual form
+        'PL2_LL1R_D1': 13,  # L2 penalty, L1 loss, support vector regression , dual form
+    }
+
     def __init__(self, C=1.0, loss="l2", penalty="l2", epsilon=0.1, dual=True, tol=1e-1,
                  fit_intercept=True, intercept_scaling=1,
                  verbose=0, random_state=None):
