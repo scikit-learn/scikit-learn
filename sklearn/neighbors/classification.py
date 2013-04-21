@@ -12,6 +12,7 @@ import warnings
 import numpy as np
 from scipy import stats
 from ..utils.extmath import weighted_mode
+from ..preprocessing import normalize_proba
 
 from .base import \
     _check_weights, _get_weights, \
@@ -168,16 +169,15 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         if weights is None:
             weights = np.ones_like(pred_labels)
 
-        probabilities = np.zeros((X.shape[0], self.classes_.size))
+        votes = np.zeros((X.shape[0], self.classes_.size))
 
         # a simple ':' index doesn't work right
         all_rows = np.arange(X.shape[0])
 
         for i, idx in enumerate(pred_labels.T):  # loop is O(n_neighbors)
-            probabilities[all_rows, idx] += weights[:, i]
+            votes[all_rows, idx] += weights[:, i]
 
-        # normalize 'votes' into real [0,1] probabilities
-        probabilities = (probabilities.T / probabilities.sum(axis=1)).T
+        probabilities = normalize_proba(votes, copy=True)
 
         return probabilities
 
