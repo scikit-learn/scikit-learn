@@ -184,7 +184,8 @@ class LinearRegressorMixin(RegressorMixin):
            Predicted target values per element in X.
         """
         X = atleast2d_or_csr(X)
-        return safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
+        scores = safe_sparse_dot(X, self.coef_.T, dense_output=True) + self.intercept_
+        return scores.ravel()
     
     def predict(self,X):
         """Predict using the linear model

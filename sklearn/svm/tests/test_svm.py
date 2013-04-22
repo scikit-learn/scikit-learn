@@ -617,6 +617,12 @@ def test_linearsvr_parameters():
         else:
             assert_raises(ValueError, clf.fit, X, Y)
 
+def test_linearsvr_prediction_shape():
+    """
+    Test if LinearSVR return a vector
+    """
+    pred = svm.LinearSVR(random_state=0).fit(X,Y).predict(X)
+    assert_equal(len(pred.shape),1)
 
 def test_linearsvr():
     """
