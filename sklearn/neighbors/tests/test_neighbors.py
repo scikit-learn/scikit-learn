@@ -28,7 +28,7 @@ SPARSE_TYPES = (bsr_matrix, coo_matrix, csc_matrix, csr_matrix, dok_matrix,
                 lil_matrix)
 SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 
-ALGORITHMS = ('ball_tree', 'brute', 'kd_tree', 'auto')
+ALGORITHMS = ('ball_tree', 'brute', 'kd_tree', 'ckd_tree', 'auto')
 P = (1, 2, 3, 4, np.inf)
 
 
@@ -45,8 +45,7 @@ def _weight_func(dist):
 
 
 def test_unsupervised_kneighbors(n_samples=20, n_features=5,
-                                 n_query_pts=2, n_neighbors=5,
-                                 random_state=0):
+                                 n_query_pts=2, n_neighbors=5):
     """Test unsupervised neighbors methods"""
     X = rng.rand(n_samples, n_features)
 
@@ -57,7 +56,6 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
         results = []
 
         for algorithm in ALGORITHMS:
-            print algorithm
             neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
                                                algorithm=algorithm,
                                                p=p)
@@ -68,7 +66,6 @@ def test_unsupervised_kneighbors(n_samples=20, n_features=5,
             results.append(neigh.kneighbors(test, return_distance=True))
 
         for i in range(len(results) - 1):
-            print i
             assert_array_almost_equal(results_nodist[i], results[i][1])
             assert_array_almost_equal(results[i][0], results[i + 1][0])
             assert_array_almost_equal(results[i][1], results[i + 1][1])
@@ -582,6 +579,43 @@ def test_neighbors_deprecation_arg():
             warnings.simplefilter("always")
             cls(warn_on_equidistant=True)
             assert_equal(len(w), 1)
+
+
+def test_neighbors_metrics(n_samples=20, n_features=3,
+                           n_query_pts=2, n_neighbors=5):
+    """Test computing the neighbors for various metrics"""
+    # create a symmetric matrix
+    V = rng.rand(n_features, n_features)
+    VI = np.dot(V, V.T)
+
+    metrics = {'euclidean':{},
+               'manhattan':{},
+               'minkowski':dict(p=3),
+               'chebyshev':{},
+               'seuclidean':dict(V=rng.rand(n_features)),
+               'wminkowski':dict(p=3, w=rng.rand(n_features)),
+               'mahalanobis':dict(VI=VI)}
+    algorithms = ['brute', 'ball_tree', 'kd_tree']
+    X = rng.rand(n_samples, n_features)
+
+    test = rng.rand(n_query_pts, n_features)
+
+    for metric, kwds in metrics.iteritems():
+        results = []
+
+        for algorithm in algorithms:
+            # KD tree doesn't support all metrics
+            if algorithm == 'kd_tree':
+                if metric not in neighbors.KDTree.valid_metrics:
+                    continue
+            neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
+                                               algorithm=algorithm,
+                                               metric=metric, **kwds)
+            neigh.fit(X)
+            results.append(neigh.kneighbors(test, return_distance=True))    
+
+        assert_array_almost_equal(results[0][0], results[1][0])
+        assert_array_almost_equal(results[0][1], results[1][1])
 
 
 if __name__ == '__main__':

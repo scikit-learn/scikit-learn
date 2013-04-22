@@ -44,11 +44,12 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Uniform weights are used by default.
 
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'ckd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
 
         - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`scipy.spatial.cKDtree`
+        - 'kd_tree' will use :class:`KDTree`
+        - 'ckd_tree' will use :class:`scipy.spatial.cKDtree`
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
           based on the values passed to :meth:`fit` method.
@@ -206,11 +207,12 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         Uniform weights are used by default.
 
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'ckd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
 
         - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`scipy.spatial.cKDtree`
+        - 'kd_tree' will use :class:`KDtree`
+        - 'ckd_tree' will use :class:`scipy.spatial.cKDtree`
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
           based on the values passed to :meth:`fit` method.

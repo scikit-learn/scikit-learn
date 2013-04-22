@@ -13,10 +13,45 @@ from scipy.sparse import csr_matrix, issparse
 from scipy.spatial.ckdtree import cKDTree
 
 from .ball_tree import BallTree
+from .kd_tree import KDTree
 from ..base import BaseEstimator
 from ..metrics import pairwise_distances
+from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import safe_asarray, atleast2d_or_csr, check_arrays
 from ..utils.fixes import unique
+
+
+VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
+                     kd_tree=KDTree.valid_metrics,
+                     ckd_tree=('manhattan', 'cityblock', 'l1',
+                               'euclidean', 'l2',
+                               'minkowski', 'chebyshev', 'infinity'),
+                     # The following list comes from the
+                     # sklearn.metrics.pairwise doc string
+                     brute=(PAIRWISE_DISTANCE_FUNCTIONS.keys() +
+                            ['braycurtis', 'canberra', 'chebyshev',
+                             'correlation', 'cosine', 'dice', 'hamming',
+                             'jaccard', 'kulsinski', 'mahalanobis',
+                             'matching', 'minkowski', 'rogerstanimoto',
+                             'russellrao', 'seuclidean', 'sokalmichener',
+                             'sokalsneath', 'sqeuclidean', 'yule', 'wminkowski']))
+
+
+VALID_METRICS_SPARSE = dict(ball_tree=[],
+                            kd_tree=[],
+                            ckd_tree=[],
+                            brute=PAIRWISE_DISTANCE_FUNCTIONS.keys())
+
+
+def _get_p_from_metric(metric):
+    if metric in ['l1', 'manhattan', 'cityblock']:
+        return 1.0
+    elif metric in ['euclidean', 'l2']:
+        return 2.0
+    elif metric in ['chebyshev', 'infinity']:
+        return np.inf
+    else:
+        raise ValueError("unrecognized metric: '%s'" % metric)
 
 
 class NeighborsWarning(UserWarning):
@@ -73,21 +108,48 @@ class NeighborsBase(BaseEstimator):
     def __init__(self):
         pass
 
-    #FIXME: include float parameter p for using different distance metrics.
-    # this can be passed directly to BallTree and cKDTree.  Brute-force will
-    # rely on soon-to-be-updated functionality in the pairwise module.
     def _init_params(self, n_neighbors=None, radius=None,
-                     algorithm='auto', leaf_size=30, p=2):
+                     algorithm='auto', leaf_size=30, metric='minkowski',
+                     **kwargs):
         self.n_neighbors = n_neighbors
         self.radius = radius
         self.algorithm = algorithm
         self.leaf_size = leaf_size
-        self.p = p
+        self.metric = metric
+        self.metric_kwds = kwargs
+        self.p = kwargs.get('p', 2)  # needed for ckdtree
 
-        if algorithm not in ['auto', 'brute', 'kd_tree', 'ball_tree']:
+        if algorithm not in ['auto', 'brute', 'ckd_tree',
+                             'kd_tree', 'ball_tree']:
             raise ValueError("unrecognized algorithm: '%s'" % algorithm)
-        if p < 1:
-            raise ValueError("p must be greater than or equal to 1")
+
+        if algorithm == 'auto':
+            alg_check = 'ball_tree'
+        else:
+            alg_check = algorithm
+
+        if metric not in VALID_METRICS[alg_check]:
+            # callable metric is valid for brute force, kd_tree, and ball_tree
+            if callable(metric) and algorithm != 'ckd_tree':
+                pass
+            else:
+                raise ValueError("metric '%s' not valid for algorithm '%s'"
+                                 % (metric, algorithm))
+
+        # For minkowski distance, use more efficient methods where available
+        if self.metric == 'minkowski':
+            p = self.metric_kwds.pop('p', 2)
+            if p < 1:
+                raise ValueError("p must be greater than zero "
+                                 "for minkowski metric")
+            elif p == 1:
+                self.metric = 'manhattan'
+            elif p == 2:
+                self.metric = 'euclidean'
+            elif p == np.inf:
+                self.metric = 'chebyshev'
+            else:
+                self.metric_kwds['p'] = p
 
         self._fit_X = None
         self._tree = None
@@ -106,10 +168,16 @@ class NeighborsBase(BaseEstimator):
             self._fit_method = 'ball_tree'
             return self
 
-        elif isinstance(X, cKDTree):
+        elif isinstance(X, KDTree):
             self._fit_X = X.data
             self._tree = X
             self._fit_method = 'kd_tree'
+            return self
+
+        elif isinstance(X, cKDTree):
+            self._fit_X = X.data
+            self._tree = X
+            self._fit_method = 'ckd_tree'
             return self
 
         X = safe_asarray(X)
@@ -125,6 +193,9 @@ class NeighborsBase(BaseEstimator):
             if self.algorithm not in ('auto', 'brute'):
                 warnings.warn("cannot use tree with sparse input: "
                               "using brute force")
+            if self.metric not in VALID_METRICS_SPARSE['brute']:
+                raise ValueError("metric '%s' not valid for sparse input"
+                                 % self.metric)
             self._fit_X = X.tocsr()
             self._tree = None
             self._fit_method = 'brute'
@@ -134,18 +205,26 @@ class NeighborsBase(BaseEstimator):
         self._fit_X = X
 
         if self._fit_method == 'auto':
-            # BallTree outperforms the others in nearly any circumstance.
-            if self.n_neighbors is None:
-                self._fit_method = 'ball_tree'
-            elif self.n_neighbors < self._fit_X.shape[0] // 2:
-                self._fit_method = 'ball_tree'
+            # A tree approach is better for small number of neighbors,
+            # and KDTree is generally faster when available
+            if (self.n_neighbors is None
+                   or self.n_neighbors < self._fit_X.shape[0] // 2):
+                if (callable(self.metric)
+                       or self.metric in VALID_METRICS['kd_tree']):
+                    self._fit_method = 'kd_tree'
+                else:
+                    self._fit_method = 'ball_tree'
             else:
                 self._fit_method = 'brute'
 
-        if self._fit_method == 'kd_tree':
+        if self._fit_method == 'ckd_tree':
             self._tree = cKDTree(X, self.leaf_size)
         elif self._fit_method == 'ball_tree':
-            self._tree = BallTree(X, self.leaf_size, p=self.p)
+            self._tree = BallTree(X, self.leaf_size, metric=self.metric,
+                                  **self.metric_kwds)
+        elif self._fit_method == 'kd_tree':
+            self._tree = KDTree(X, self.leaf_size, metric=self.metric,
+                                **self.metric_kwds)
         elif self._fit_method == 'brute':
             self._tree = None
         else:
@@ -216,32 +295,30 @@ class KNeighborsMixin(object):
             n_neighbors = self.n_neighbors
 
         if self._fit_method == 'brute':
-            if self.p == 1:
-                dist = pairwise_distances(X, self._fit_X, 'manhattan')
-            elif self.p == 2:
+            # for efficiency, use squared euclidean distances
+            if self.metric == 'euclidean':
                 dist = pairwise_distances(X, self._fit_X, 'euclidean',
                                           squared=True)
-            elif self.p == np.inf:
-                dist = pairwise_distances(X, self._fit_X, 'chebyshev')
             else:
-                dist = pairwise_distances(X, self._fit_X, 'minkowski',
-                                          p=self.p)
+                dist = pairwise_distances(X, self._fit_X, self.metric,
+                                          **self.metric_kwds)
+
             # XXX: should be implemented with a partial sort
             neigh_ind = dist.argsort(axis=1)
             neigh_ind = neigh_ind[:, :n_neighbors]
             if return_distance:
                 j = np.arange(neigh_ind.shape[0])[:, None]
-                if self.p == 2:
+                if self.metric == 'euclidean':
                     return np.sqrt(dist[j, neigh_ind]), neigh_ind
                 else:
                     return dist[j, neigh_ind], neigh_ind
             else:
                 return neigh_ind
-        elif self._fit_method == 'ball_tree':
+        elif self._fit_method in ['ball_tree', 'kd_tree']:
             result = self._tree.query(X, n_neighbors,
                                       return_distance=return_distance)
             return result
-        elif self._fit_method == 'kd_tree':
+        elif self._fit_method == 'ckd_tree':
             dist, ind = self._tree.query(X, n_neighbors, p=self.p)
             # kd_tree returns a 1D array for n_neighbors = 1
             if n_neighbors == 1:
@@ -389,18 +466,14 @@ class RadiusNeighborsMixin(object):
             radius = self.radius
 
         if self._fit_method == 'brute':
-            if self.p == 1:
-                dist = pairwise_distances(X, self._fit_X, 'manhattan')
-            elif self.p == 2:
+            # for efficiency, use squared euclidean distances
+            if self.metric == 'euclidean':
                 dist = pairwise_distances(X, self._fit_X, 'euclidean',
                                           squared=True)
                 radius *= radius
-            elif self.p == np.inf:
-                dist = pairwise_distances(X, self._fit_X, 'chebyshev')
             else:
-                dist = pairwise_distances(X, self._fit_X, 'minkowski',
-                                          p=self.p)
-
+                dist = pairwise_distances(X, self._fit_X, self.metric,
+                                          **self.metric_kwds)
             neigh_ind = [np.where(d < radius)[0] for d in dist]
 
             # if there are the same number of neighbors for each point,
@@ -425,7 +498,7 @@ class RadiusNeighborsMixin(object):
                 return dist, neigh_ind
             else:
                 return neigh_ind
-        elif self._fit_method == 'ball_tree':
+        elif self._fit_method in ['ball_tree', 'kd_tree']:
             if return_distance:
                 ind, dist = self._tree.query_radius(X, radius,
                                                     return_distance=True)
@@ -434,7 +507,7 @@ class RadiusNeighborsMixin(object):
                 ind = self._tree.query_radius(X, radius,
                                               return_distance=False)
                 return ind
-        elif self._fit_method == 'kd_tree':
+        elif self._fit_method == 'ckd_tree':
             Npts = self._fit_X.shape[0]
             dist, ind = self._tree.query(X, Npts,
                                          distance_upper_bound=radius,
@@ -544,7 +617,7 @@ class SupervisedFloatMixin(object):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, BallTree, cKDTree}
+        X : {array-like, sparse matrix, BallTree, KDTree, cKDTree}
             Training data. If array or matrix, then the shape
             is [n_samples, n_features]
 
@@ -562,7 +635,7 @@ class SupervisedIntegerMixin(object):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, BallTree, cKDTree}
+        X : {array-like, sparse matrix, BallTree, KDTree, cKDTree}
             Training data. If array or matrix, then the shape
             is [n_samples, n_features]
 
@@ -580,7 +653,7 @@ class UnsupervisedMixin(object):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, BallTree, cKDTree}
+        X : {array-like, sparse matrix, BallTree, KDTree, cKDTree}
             Training data. If array or matrix, shape = [n_samples, n_features]
         """
         return self._fit(X)

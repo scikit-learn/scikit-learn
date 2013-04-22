@@ -12,6 +12,7 @@ from .regression import KNeighborsRegressor, RadiusNeighborsRegressor
 from .nearest_centroid import NearestCentroid
 
 __all__ = ['BallTree',
+           'KDTree',
            'KNeighborsClassifier',
            'KNeighborsRegressor',
            'NearestCentroid',

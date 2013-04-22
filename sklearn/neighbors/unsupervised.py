@@ -19,11 +19,12 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
         Range of parameter space to use by default for :meth`radius_neighbors`
         queries.
 
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'ckd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
 
         - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`scipy.spatial.cKDtree`
+        - 'kd_tree' will use :class:`KDtree`
+        - 'ckd_tree' will use :class:`scipy.spatial.cKDtree`
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
           based on the values passed to :meth:`fit` method.
@@ -76,8 +77,8 @@ class NearestNeighbors(NeighborsBase, KNeighborsMixin,
     """
 
     def __init__(self, n_neighbors=5, radius=1.0,
-                 algorithm='auto', leaf_size=30, p=2):
+                 algorithm='auto', leaf_size=30, metric='minkowski', **kwargs):
         self._init_params(n_neighbors=n_neighbors,
                           radius=radius,
                           algorithm=algorithm,
-                          leaf_size=leaf_size, p=p)
+                          leaf_size=leaf_size, metric=metric, **kwargs)
