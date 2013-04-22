@@ -234,7 +234,7 @@ If those complexities are not available, then rules of thumb
 may be provided instead.
 
 Secondly, a generated figure from an example (as mentioned in the previous
-paragraph) should then be included to further further provide some
+paragraph) should then be included to further provide some
 intuition.
 
 Next, one or two small code examples to show its use can be added.
