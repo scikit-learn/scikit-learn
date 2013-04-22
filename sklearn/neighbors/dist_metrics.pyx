@@ -63,7 +63,7 @@ METRIC_MAPPING = {'euclidean':EuclideanDistance,
                   'jaccard':JaccardDistance,
                   'dice':DiceDistance,
                   'kulsinski':KulsinskiDistance,
-                  'rogerstanimoto':RogerStanimotoDistance,
+                  'rogerstanimoto':RogersTanimotoDistance,
                   'russellrao':RussellRaoDistance,
                   'sokalmichener':SokalMichenerDistance,
                   'sokalsneath':SokalSneathDistance,
@@ -160,7 +160,7 @@ cdef class DistanceMetric:
     "maching"         MatchingDistance        NNEQ / N
     "dice"            DiceDistance            NNEQ / (NTT + NNZ)
     "kulsinski"       KulsinskiDistance       (NNEQ + N - NTT) / (NNEQ + N)
-    "rogerstanimoto"  RogerStanimotoDistance  2 * NNEQ / (N + NNEQ)
+    "rogerstanimoto"  RogersTanimotoDistance  2 * NNEQ / (N + NNEQ)
     "russellrao"      RussellRaoDistance      NNZ / N
     "sokalmichener"   SokalMichenerDistance   2 * NNEQ / (N + NNEQ)
     "sokalsneath"     SokalSneathDistance     NNEQ / (NNEQ + 0.5 * NTT)
@@ -755,12 +755,12 @@ cdef class KulsinskiDistance(DistanceMetric):
 
 
 #------------------------------------------------------------
-# Roger-Stanimoto Distance (boolean)
+# Rogers-Tanimoto Distance (boolean)
 #  D(x, y) = 2 * n_neq / (n + n_neq)
-cdef class RogerStanimotoDistance(DistanceMetric):
-    """Roger-Stanimoto Distance
+cdef class RogersTanimotoDistance(DistanceMetric):
+    """Rogers-Tanimoto Distance
 
-    Roger-Stanimoto Distance is a dissimilarity measure for boolean-valued
+    Rogers-Tanimoto Distance is a dissimilarity measure for boolean-valued
     vectors. All nonzero entries will be treated as True, zero entries will
     be treated as False.
 
