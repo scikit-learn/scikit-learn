@@ -22,9 +22,9 @@ consists of 64x64 images.
 # Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
 # License: Simplified BSD
 
+from io import BytesIO
 from os.path import join, exists
 from os import makedirs
-from io import StringIO
 try:
     # Python 2
     import urllib2
@@ -92,8 +92,8 @@ def fetch_olivetti_faces(data_home=None, shuffle=False, random_state=0,
     if not exists(join(data_home, TARGET_FILENAME)):
         print('downloading Olivetti faces from %s to %s'
               % (DATA_URL, data_home))
-        fhandle = urllib2.urlopen(DATA_URL)
-        buf = StringIO(fhandle.read())
+        fhandle = urlopen(DATA_URL)
+        buf = BytesIO(fhandle.read())
         mfile = loadmat(buf)
         faces = mfile['faces'].T.copy()
         joblib.dump(faces, join(data_home, TARGET_FILENAME), compress=6)
