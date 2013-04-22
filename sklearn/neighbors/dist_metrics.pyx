@@ -236,6 +236,9 @@ cdef class DistanceMetric:
         """
         if isinstance(metric, DistanceMetric):
             return metric
+
+        if callable(metric):
+            return PyFuncDistance(metric)
         
         # Map the metric string ID to the metric class
         if isinstance(metric, type) and issubclass(metric, DistanceMetric):
