@@ -61,7 +61,8 @@ How to contribute
 -----------------
 
 The preferred way to contribute to scikit-learn is to fork the `main
-repository <http://github.com/scikit-learn/scikit-learn/>`__ on GitHub:
+repository <http://github.com/scikit-learn/scikit-learn/>`__ on GitHub,
+then submit a "pull request" (PR):
 
  1. `Create an account <https://github.com/signup/free>`_ on
     GitHub if you do not already have one.
