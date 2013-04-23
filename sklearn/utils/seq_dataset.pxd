@@ -2,6 +2,8 @@
 
 cimport numpy as np
 
+from cpython cimport bool
+
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INTEGER
 
@@ -14,7 +16,7 @@ cdef class SequentialDataset:
     cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
                    int *nnz, DOUBLE *y, DOUBLE *sample_weight)
     cdef void shuffle(self, seed)
-    cdef void precompute_norms(self)
+    cdef void precompute_norms(self, bool square=*)
     cdef double get_norm(self)
 
 
@@ -32,7 +34,7 @@ cdef class ArrayDataset(SequentialDataset):
     cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
                    int *nnz, DOUBLE *y, DOUBLE *sample_weight)
     cdef void shuffle(self, seed)
-    cdef void precompute_norms(self)
+    cdef void precompute_norms(self, bool square=*)
     cdef double get_norm(self)
 
 
@@ -51,5 +53,5 @@ cdef class CSRDataset(SequentialDataset):
     cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
                    int *nnz, DOUBLE *y, DOUBLE *sample_weight)
     cdef void shuffle(self, seed)
-    cdef void precompute_norms(self)
+    cdef void precompute_norms(self, bool square=*)
     cdef double get_norm(self)

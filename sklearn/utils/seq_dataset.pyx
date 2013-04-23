@@ -12,6 +12,8 @@ import numpy as np
 cimport numpy as np
 cimport cython
 
+from cpython cimport bool
+
 np.import_array()
 
 
@@ -44,7 +46,7 @@ cdef class SequentialDataset:
         """Permutes the ordering of examples.  """
         raise NotImplementedError()
 
-    cdef void precompute_norms(self):
+    cdef void precompute_norms(self, bool square=True):
         cdef int current_index_backup = self.current_index
         self.current_index = 0
         cdef DOUBLE * x_data_ptr = NULL
@@ -58,10 +60,15 @@ cdef class SequentialDataset:
                                                   dtype=np.float64)
         self.norms = norms
 
+        if square:
+            fn = sqnorm
+        else:
+            fn = onenorm
+
         for _ in range(self.n_samples):
             self.next( & x_data_ptr, & x_ind_ptr, & xnnz, & y,
                        & sample_weight)
-            self.norms[self.current_index] = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
+            self.norms[self.current_index] = fn(x_data_ptr, x_ind_ptr, xnnz)
         self.current_index = current_index_backup
 
     cdef double get_norm(self):
@@ -204,6 +211,18 @@ cdef class CSRDataset(SequentialDataset):
 
     cdef void shuffle(self, seed):
         np.random.RandomState(seed).shuffle(self.index)
+
+
+# TODO: code duplication
+
+cdef double onenorm(DOUBLE * x_data_ptr, INTEGER * x_ind_ptr, int xnnz):
+    cdef double x_norm = 0.0
+    cdef int j
+    cdef double z
+    for j in range(xnnz):
+        z = x_data_ptr[j]
+        x_norm += z
+    return x_norm
 
 
 cdef double sqnorm(DOUBLE * x_data_ptr, INTEGER * x_ind_ptr, int xnnz):
