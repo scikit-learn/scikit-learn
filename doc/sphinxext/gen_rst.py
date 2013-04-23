@@ -32,6 +32,7 @@ import token
 import tokenize
 import numpy as np
 
+
 ###############################################################################
 # A tee object to redict streams to multiple outputs
 
@@ -469,6 +470,7 @@ def extract_line_count(filename, target_dir):
         start_row = 1
     tokens = tokenize.generate_tokens(lines.__iter__().next)
     check_docstring = True
+    erow_docstring = 0
     for tok_type, _, _, (erow, _), _ in tokens:
         tok_type = token.tok_name[tok_type]
         if tok_type in ('NEWLINE', 'COMMENT', 'NL', 'INDENT', 'DEDENT'):
