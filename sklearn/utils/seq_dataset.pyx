@@ -47,6 +47,17 @@ cdef class SequentialDataset:
         raise NotImplementedError()
 
     cdef void precompute_norms(self, bool square=True):
+        """Computes and stores the norm of each example.
+
+        The norm for the current example can then be retrieved via
+        get_norm().
+
+        If bool == True, computes the square norm, else computes the 1 norm.
+
+        """
+        # by only using self.next() to iterate over our data, we make
+        # no assumptions about our internal data structures (except
+        # the presence of self.current_index)
         cdef int current_index_backup = self.current_index
         self.current_index = 0
         cdef DOUBLE * x_data_ptr = NULL
@@ -72,7 +83,7 @@ cdef class SequentialDataset:
         self.current_index = current_index_backup
 
     cdef double get_norm(self):
-        """squared norm for the current example.
+        """Squared norm for the current example.
 
         self.precompute_norms() must have been called first.
 
@@ -213,8 +224,6 @@ cdef class CSRDataset(SequentialDataset):
         np.random.RandomState(seed).shuffle(self.index)
 
 
-# TODO: code duplication
-
 cdef double onenorm(DOUBLE * x_data_ptr, INTEGER * x_ind_ptr, int xnnz):
     cdef double x_norm = 0.0
     cdef int j
@@ -225,6 +234,7 @@ cdef double onenorm(DOUBLE * x_data_ptr, INTEGER * x_ind_ptr, int xnnz):
     return x_norm
 
 
+# TODO: code duplication
 cdef double sqnorm(DOUBLE * x_data_ptr, INTEGER * x_ind_ptr, int xnnz):
     cdef double x_norm = 0.0
     cdef int j
