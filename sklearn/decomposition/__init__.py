@@ -6,7 +6,7 @@ this module can be regarded as dimensionality reduction techniques.
 
 from .nmf import NMF, ProjectedGradientNMF
 from .pca import PCA, RandomizedPCA, ProbabilisticPCA
-from .ccipca import CCIPCA
+from .ipca import IPCA, CCIPCA
 from .kernel_pca import KernelPCA
 from .sparse_pca import SparsePCA, MiniBatchSparsePCA
 from .fastica_ import FastICA, fastica
@@ -22,6 +22,7 @@ __all__ = ['DictionaryLearning',
            'MiniBatchSparsePCA',
            'NMF',
            'PCA',
+           'IPCA',
            'CCIPCA',
            'ProbabilisticPCA',
            'ProjectedGradientNMF',

@@ -9,8 +9,8 @@ ellipitical.
 Principal Component Analysis (PCA) applied to this data identifies the
 primary and secondary axis of the ellipse.
 
-Candid Covariance-free Principal Component Analysis CCIPCA identifies
-the same axes but processed the data in a stream rather than in a batch.
+Candid Covariance-free Incremental Principal Component Analysis CCIPCA 
+identifies the same axes but processed the data in a stream rather than in a batch.
 """
 
 import pylab as pl

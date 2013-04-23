@@ -232,6 +232,26 @@ factorization, while larger values shrink many coefficients to zero.
      R. Jenatton, G. Obozinski, F. Bach, 2009
 
 
+.. _IPCA
+Incremental Principal Component Analysis (IPCA)
+-----------------------------------------------
+
+IPCA like PCA is used to decompose a multivariate dataset in a set of successive 
+orthogonal components. IPCA can recover these components online or when the data
+is streamed.
+
+If the `fit()` method of IPCA is called multiple times on the same instance then this
+instance will take the new input and adjust the components to account for the new data. 
+This data must be the same dimension as the prior data.
+
+Otherwise the IPCA object should behave similarily to the PCA object.
+
+.. topic:: References:
+  * `"Incremental Eigenalysis for Classification"
+    <http://www.bmva.org/bmvc/1998/pdf/p186.pdf>
+    P.Hall, D. Marshall and R. Martin 1998.
+    
+    
 .. _CCIPCA:
 
 Candid Covariance-Free Incremental Principal Component Analysis (CCIPCA)
