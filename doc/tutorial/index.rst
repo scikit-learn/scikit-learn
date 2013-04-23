@@ -31,6 +31,19 @@ Tutorials: From the bottom up with scikit-learn
 
    statistical_inference/index.rst
 
+
+.. topic:: **Machine Learning Cheat Sheet (for scikit-learn)**
+
+    This flowchart is useful for newcomers regarding how to go about
+    solving problems using scikit-learn.  FINISH ME
+
+
+.. image:: ../../_static/ml_map_thumb.png
+    :target: ../_static/drop_shadows.html
+    :align: center
+    :scale: 50
+
+
 .. topic:: **External Tutorials**
 
     There are several online tutorials available which are geared toward
