@@ -426,6 +426,72 @@ def matthews_corrcoef(y_true, y_pred):
         return mcc
 
 
+def _binary_clf_curve(y_true, y_score, pos_label=None):
+    """Calculate true and false positives per binary classification threshold.
+
+    Parameters
+    ----------
+    y_true : array, shape = [n_samples]
+        True targets of binary classification
+
+    y_score : array, shape = [n_samples]
+        Estimated probabilities or decision function
+
+    pos_label : int, optional (default=1)
+        The label of the positive class
+
+    Returns
+    -------
+    fps : array, shape = [n_thresholds]
+        A count of false positives, at index i being the number of negative
+        samples assigned a score >= thresholds[i]. The total number of
+        negative samples is equal to fps[-1] (thus true negatives are given by
+        fps[-1] - fps).
+
+    tps : array, shape = [n_thresholds := len(np.unique(y_score))]
+        An increasing count of true positives, at index i being the number
+        of positive samples assigned a score >= thresholds[i]. The total
+        number of positive samples is equal to tps[-1] (thus false negatives
+        are given by tps[-1] - tps).
+
+    thresholds : array, shape = [n_thresholds]
+        Decreasing score values.
+    """
+    y_true, y_score = check_arrays(y_true, y_score)
+    y_true, y_score = _check_1d_array(y_true, y_score, ravel=True)
+
+    # ensure binary classification if pos_label is not specified
+    classes = np.unique(y_true)
+    if (pos_label is None and
+        not (np.all(classes == [0, 1]) or
+             np.all(classes == [-1, 1]) or
+             np.all(classes == [0]) or
+             np.all(classes == [-1]) or
+             np.all(classes == [1]))):
+        raise ValueError("Data is not binary and pos_label is not specified")
+    elif pos_label is None:
+        pos_label = 1.
+
+    # make y_true a boolean vector
+    y_true = (y_true == pos_label)
+
+    # Sort scores and corresponding truth values
+    desc_score_indices = np.argsort(y_score, kind="mergesort")[::-1]
+    y_score = y_score[desc_score_indices]
+    y_true = y_true[desc_score_indices]
+
+    # y_score typically has many tied values. Here we extract
+    # the indices associated with the distinct values. We also
+    # concatenate a value for the end of the curve.
+    distinct_value_indices = np.where(np.diff(y_score))[0]
+    threshold_idxs = np.r_[distinct_value_indices, y_true.size - 1]
+
+    # accumulate the true positives with decreasing threshold
+    tps = y_true.cumsum()[threshold_idxs]
+    fps = 1 + threshold_idxs - tps
+    return fps, tps, y_score[threshold_idxs]
+
+
 def precision_recall_curve(y_true, probas_pred):
     """Compute precision-recall pairs for different probability thresholds
 
@@ -454,14 +520,17 @@ def precision_recall_curve(y_true, probas_pred):
 
     Returns
     -------
-    precision : array, shape = [n + 1]
-        Precision values.
+    precision : array, shape = [n_thresholds + 1]
+        Precision values such that element i is the precision of
+        predictions with score >= thresholds[i] and the last element is 1.
 
-    recall : array, shape = [n + 1]
-        Recall values.
+    recall : array, shape = [n_thresholds + 1]
+        Decreasing recall values such that element i is the recall of
+        predictions with score >= thresholds[i] and the last element is 0.
 
-    thresholds : array, shape = [n]
-        Thresholds on y_score used to compute precision and recall.
+    thresholds : array, shape = [n_thresholds := len(np.unique(probas_pred))]
+        Increasing thresholds on the decision function used to compute
+        precision and recall.
 
     Examples
     --------
@@ -469,73 +538,26 @@ def precision_recall_curve(y_true, probas_pred):
     >>> from sklearn.metrics import precision_recall_curve
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> precision, recall, threshold = precision_recall_curve(y_true, y_scores)
+    >>> precision, recall, thresholds = precision_recall_curve(
+    ...     y_true, y_scores)
     >>> precision  # doctest: +ELLIPSIS
     array([ 0.66...,  0.5       ,  1.        ,  1.        ])
     >>> recall
     array([ 1. ,  0.5,  0.5,  0. ])
-    >>> threshold
+    >>> thresholds
     array([ 0.35,  0.4 ,  0.8 ])
 
     """
-    y_true = np.ravel(y_true)
-    probas_pred = np.ravel(probas_pred)
+    fps, tps, thresholds = _binary_clf_curve(y_true, probas_pred)
 
-    # Make sure input is boolean
-    labels = np.unique(y_true)
-    if np.all(labels == np.array([-1, 1])):
-        # convert {-1, 1} to boolean {0, 1} repr
-        y_true = y_true.copy()
-        y_true[y_true == -1] = 0
-    elif not np.all(labels == np.array([0, 1])):
-        raise ValueError("y_true contains non binary labels: %r" % labels)
+    precision = tps / (tps + fps)
+    recall = tps / tps[-1]
 
-    # Sort pred_probas (and corresponding true labels) by pred_proba value
-    decreasing_probas_indices = np.argsort(probas_pred, kind="mergesort")[::-1]
-    probas_pred = probas_pred[decreasing_probas_indices]
-    y_true = y_true[decreasing_probas_indices]
-
-    # probas_pred typically has many tied values. Here we extract
-    # the indices associated with the distinct values. We also
-    # concatenate values for the beginning and end of the curve.
-    distinct_value_indices = np.where(np.diff(probas_pred))[0] + 1
-    threshold_idxs = np.hstack([0,
-                                distinct_value_indices,
-                                len(probas_pred)])
-
-    # Initialize true and false positive counts, precision and recall
-    total_positive = float(y_true.sum())
-    tp_count, fp_count = 0., 0.  # Must remain floats to prevent int division
-    precision = [1.]
-    recall = [0.]
-    thresholds = []
-
-    # Iterate over indices which indicate distinct values (thresholds) of
-    # probas_pred. Each of these threshold values will be represented in the
-    # curve with a coordinate in precision-recall space. To calculate the
-    # precision and recall associated with each point, we use these indices to
-    # select all labels associated with the predictions. By incrementally
-    # keeping track of the number of positive and negative labels seen so far,
-    # we can calculate precision and recall.
-    for l_idx, r_idx in zip(threshold_idxs[:-1], threshold_idxs[1:]):
-        threshold_labels = y_true[l_idx:r_idx]
-        n_at_threshold = r_idx - l_idx
-        n_pos_at_threshold = threshold_labels.sum()
-        n_neg_at_threshold = n_at_threshold - n_pos_at_threshold
-        tp_count += n_pos_at_threshold
-        fp_count += n_neg_at_threshold
-        fn_count = total_positive - tp_count
-        precision.append(tp_count / (tp_count + fp_count))
-        recall.append(tp_count / (tp_count + fn_count))
-        thresholds.append(probas_pred[l_idx])
-        if tp_count == total_positive:
-            break
-
-    # sklearn expects these in reverse order
-    thresholds = np.array(thresholds)[::-1]
-    precision = np.array(precision)[::-1]
-    recall = np.array(recall)[::-1]
-    return precision, recall, thresholds
+    # stop when full recall attained
+    # and reverse the outputs so recall is decreasing
+    last_ind = tps.searchsorted(tps[-1])
+    sl = slice(last_ind, None, -1)
+    return np.r_[precision[sl], 1], np.r_[recall[sl], 0], thresholds[sl]
 
 
 def roc_curve(y_true, y_score, pos_label=None):
@@ -560,13 +582,16 @@ def roc_curve(y_true, y_score, pos_label=None):
     Returns
     -------
     fpr : array, shape = [>2]
-        False Positive Rates.
+        Increasing false positive rates such that element i is the false
+        positive rate of predictions with score >= thresholds[i].
 
     tpr : array, shape = [>2]
-        True Positive Rates.
+        Increasing false positive rates such that element i is the true
+        positive rate of predictions with score >= thresholds[i].
 
-    thresholds : array, shape = [>2]
-        Thresholds on ``y_score`` used to compute ``fpr`` and ``fpr``.
+    thresholds : array, shape = [n_thresholds]
+        Decreasing thresholds on the decision function used to compute
+        fpr and tpr.
 
     See also
     --------
@@ -593,105 +618,38 @@ def roc_curve(y_true, y_score, pos_label=None):
     >>> fpr, tpr, thresholds = metrics.roc_curve(y, scores, pos_label=2)
     >>> fpr
     array([ 0. ,  0.5,  0.5,  1. ])
+    >>> tpr
+    array([ 0.5,  0.5,  1. ,  1. ])
+    >>> thresholds
+    array([ 0.8 ,  0.4 ,  0.35,  0.1 ])
 
     """
-    y_true = np.ravel(y_true)
-    y_score = np.ravel(y_score)
-    classes = np.unique(y_true)
+    fps, tps, thresholds = _binary_clf_curve(y_true, y_score, pos_label)
 
-    # ROC only for binary classification if pos_label not given
-    if (pos_label is None and
-        not (np.all(classes == [0, 1]) or
-             np.all(classes == [-1, 1]) or
-             np.all(classes == [0]) or
-             np.all(classes == [-1]) or
-             np.all(classes == [1]))):
-        raise ValueError("ROC is defined for binary classification only or "
-                         "pos_label should be explicitly given")
-    elif pos_label is None:
-        pos_label = 1.
+    if tps.size == 0 or fps[0] != 0:
+        # Add an extra threshold position if necessary
+        tps = np.r_[0, tps]
+        fps = np.r_[0, fps]
+        thresholds = np.r_[thresholds[0] + 1, thresholds]
 
-    # y_true will be transformed into a boolean vector
-    y_true = (y_true == pos_label)
-    n_pos = float(y_true.sum())
-    n_neg = y_true.shape[0] - n_pos
-
-    if n_pos == 0:
-        warnings.warn("No positive samples in y_true, "
-                      "true positive value should be meaningless")
-        n_pos = np.nan
-    if n_neg == 0:
+    if fps[-1] == 0:
         warnings.warn("No negative samples in y_true, "
                       "false positive value should be meaningless")
-        n_neg = np.nan
-
-    thresholds = np.unique(y_score)
-    neg_value, pos_value = False, True
-
-    tpr = np.empty(thresholds.size, dtype=np.float)  # True positive rate
-    fpr = np.empty(thresholds.size, dtype=np.float)  # False positive rate
-
-    # Build tpr/fpr vector
-    current_pos_count = current_neg_count = sum_pos = sum_neg = idx = 0
-
-    signal = np.c_[y_score, y_true]
-    sorted_signal = signal[signal[:, 0].argsort(), :][::-1]
-    last_score = sorted_signal[0][0]
-    for score, value in sorted_signal:
-        if score == last_score:
-            if value == pos_value:
-                current_pos_count += 1
-            else:
-                current_neg_count += 1
-        else:
-            tpr[idx] = (sum_pos + current_pos_count) / n_pos
-            fpr[idx] = (sum_neg + current_neg_count) / n_neg
-            sum_pos += current_pos_count
-            sum_neg += current_neg_count
-            current_pos_count = 1 if value == pos_value else 0
-            current_neg_count = 1 if value == neg_value else 0
-            idx += 1
-            last_score = score
+        fpr = np.repeat(np.nan, fps.shape)
     else:
-        tpr[-1] = (sum_pos + current_pos_count) / n_pos
-        fpr[-1] = (sum_neg + current_neg_count) / n_neg
+        fpr = fps / fps[-1]
 
-    thresholds = thresholds[::-1]
-
-    if not (n_pos is np.nan or n_neg is np.nan):
-        # add (0,0) and (1, 1)
-        if not (fpr[0] == 0 and fpr[-1] == 1):
-            fpr = np.r_[0., fpr, 1.]
-            tpr = np.r_[0., tpr, 1.]
-            thresholds = np.r_[thresholds[0] + 1, thresholds,
-                               thresholds[-1] - 1]
-        elif not fpr[0] == 0:
-            fpr = np.r_[0., fpr]
-            tpr = np.r_[0., tpr]
-            thresholds = np.r_[thresholds[0] + 1, thresholds]
-        elif not fpr[-1] == 1:
-            fpr = np.r_[fpr, 1.]
-            tpr = np.r_[tpr, 1.]
-            thresholds = np.r_[thresholds, thresholds[-1] - 1]
-    elif fpr.shape[0] == 2:
-        # trivial decisions, add (0,0)
-        fpr = np.array([0.0, fpr[0], fpr[1]])
-        tpr = np.array([0.0, tpr[0], tpr[1]])
-        # trivial decisions, add (0,0) and (1,1)
-    elif fpr.shape[0] == 1:
-        fpr = np.array([0.0, fpr[0], 1.0])
-        tpr = np.array([0.0, tpr[0], 1.0])
-
-    if n_pos is np.nan:
-        tpr[0] = np.nan
-
-    if n_neg is np.nan:
-        fpr[0] = np.nan
+    if tps[-1] == 0:
+        warnings.warn("No positive samples in y_true, "
+                      "true positive value should be meaningless")
+        tpr = np.repeat(np.nan, tps.shape)
+    else:
+        tpr = tps / tps[-1]
 
     return fpr, tpr, thresholds
 
 
-###############################################################################
+##############################################################################
 # Multiclass general function
 ###############################################################################
 def confusion_matrix(y_true, y_pred, labels=None):
