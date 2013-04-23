@@ -35,7 +35,9 @@ Tutorials: From the bottom up with scikit-learn
 .. topic:: **Machine Learning Cheat Sheet (for scikit-learn)**
 
     This flowchart is useful for newcomers regarding how to go about
-    solving problems using scikit-learn.  FINISH ME
+    solving problems using scikit-learn. It provides a rough guide on
+    how to approach problems and which estimators to try out on your
+    data. Click the image below to begin..
 
 
 .. image:: ../../_static/ml_map_thumb.png
