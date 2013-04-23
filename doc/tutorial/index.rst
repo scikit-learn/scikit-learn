@@ -41,7 +41,7 @@ Tutorials: From the bottom up with scikit-learn
 
 
 .. image:: ../../_static/ml_map_thumb.png
-    :target: ../_static/drop_shadows.html
+    :target: ../_static/ml_map.html
     :align: center
     :scale: 50
 
