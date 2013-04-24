@@ -550,7 +550,7 @@ def precision_recall_curve(y_true, probas_pred):
     precision = tps / (tps + fps)
     recall = tps / tps[-1]
 
-    # stop when full recall attained:
+    # stop when full recall attained and reverse the outputs
     last_ind = tps.searchsorted(tps[-1])
     sl = slice(last_ind, None, -1)
     return np.r_[precision[sl], 1], np.r_[recall[sl], 0], thresholds[sl]
