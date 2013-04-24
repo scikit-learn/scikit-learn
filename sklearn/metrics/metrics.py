@@ -521,14 +521,17 @@ def precision_recall_curve(y_true, probas_pred):
 
     Returns
     -------
-    precision : array, shape = [n + 1]
-        Precision values.
+    precision : array, shape = [n_thresholds + 1]
+        Precision values such that element i is the precision of predictions
+        with score >= thresholds[i] and the last element is 1.
 
-    recall : array, shape = [n + 1]
-        Recall values.
+    recall : array, shape = [n_thresholds + 1]
+        Recall values such that element i is the recall of predictions with
+        score >= thresholds[i] and the last element is 0.
 
-    thresholds : array, shape = [n]
-        Thresholds on y_score used to compute precision and recall.
+    thresholds : array, shape = [n_thresholds := len(np.unique(probas_pred))]
+        Increasing thresholds on the decision function used to compute
+        precision and recall.
 
     Examples
     --------
@@ -578,13 +581,16 @@ def roc_curve(y_true, y_score, pos_label=None):
     Returns
     -------
     fpr : array, shape = [>2]
-        False Positive Rates.
+        False Positive Rates such that element i is the false positive rate of
+        predictions with score >= thresholds[i].
 
     tpr : array, shape = [>2]
-        True Positive Rates.
+        False Positive Rates such that element i is the true positive rate of
+        predictions with score >= thresholds[i].
 
-    thresholds : array, shape = [>2]
-        Thresholds on ``y_score`` used to compute ``fpr`` and ``fpr``.
+    thresholds : array, shape = [n_thresholds]
+        Decreasing thresholds on the decision function used to compute
+        fpr and tpr.
 
     See also
     --------
