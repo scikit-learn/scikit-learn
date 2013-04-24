@@ -465,7 +465,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
     """ Compute the grid of alpha values for elastic net parameter search
 
     Parameters
-    ==========
+    ----------
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training data. Pass directly as Fortran-contiguous data to avoid
         unnecessary memory duplication
@@ -776,7 +776,7 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
     """ Returns the MSE for the models computed by 'path'
 
         Parameters
-        ==========
+        ----------
         X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data.
 
