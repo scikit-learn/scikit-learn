@@ -16,6 +16,9 @@ from cpython cimport bool
 
 np.import_array()
 
+cdef extern from "math.h":
+    double sqrt(double x)
+
 
 cdef class SequentialDataset:
     """Base class for datasets with sequential data access. """
@@ -72,15 +75,14 @@ cdef class SequentialDataset:
                                                   dtype=np.float64)
         self.norms = norms
 
-        if square:
-            fn = sqnorm
-        else:
-            fn = onenorm
-
         for _ in range(self.n_samples):
             self.next( & x_data_ptr, & x_ind_ptr, & xnnz, & y,
                        & sample_weight)
-            self.norms[self.current_index] = fn(x_data_ptr, x_ind_ptr, xnnz)
+            self.norms[self.current_index] = sqnorm(x_data_ptr,
+                                                    x_ind_ptr, xnnz)
+            if not square:
+                self.norms[self.current_index] = sqrt(
+                    self.norms[self.current_index])
         self.current_index = current_index_backup
 
     cdef double get_norm(self):
@@ -225,17 +227,6 @@ cdef class CSRDataset(SequentialDataset):
         np.random.RandomState(seed).shuffle(self.index)
 
 
-cdef double onenorm(DOUBLE * x_data_ptr, INTEGER * x_ind_ptr, int xnnz):
-    cdef double x_norm = 0.0
-    cdef int j
-    cdef double z
-    for j in range(xnnz):
-        z = x_data_ptr[j]
-        x_norm += abs(z)
-    return x_norm
-
-
-# TODO: code duplication
 cdef double sqnorm(DOUBLE * x_data_ptr, INTEGER * x_ind_ptr, int xnnz):
     cdef double x_norm = 0.0
     cdef int j
