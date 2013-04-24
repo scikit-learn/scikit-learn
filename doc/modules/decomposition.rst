@@ -233,7 +233,7 @@ factorization, while larger values shrink many coefficients to zero.
 
 
 .. _IPCA
-Incremental Principal Component Analysis (IPCA)
+Incremental Principal Component Analysis (IncrementalPCA)
 -----------------------------------------------
 
 IPCA like PCA is used to decompose a multivariate dataset in a set of successive 
@@ -257,15 +257,15 @@ Otherwise the IPCA object should behave similarily to the PCA object.
 Candid Covariance-Free Incremental Principal Component Analysis (CCIPCA)
 ------------------------------------------------------------------------
 
-CCIPCA like PCA is used to decompose a multivariate dataset in a set of successive 
-orthogonal components. CCIPCA can recover these components online or when the data
-is streamed. CCIPCA doesn't estimate the covariance matrix thus "covariance-free" and converges quickly even on high dimensional data.
+CCIPCA is a variantion of IncrementalPCA however that doesn't estimate the 
+covariance matrix thus "covariance-free" and converges quickly even on high dimensional data.
 
 The `amnesic=2.0` parameter controls how much the past data is weighted compared to the
-new data. `n_components` must be passed to CCIPCA because otherwise it is unable to estimate the dimension of the supspace.
+new data. `n_components` must be passed to CCIPCA because otherwise it is unable to
+estimate the dimension of the supspace.
 
-If the `fit()` method of CCIPCA is called multiple times on the same instance then this
-instance will take the new input and adjust the components to account for the new data. 
+Like IncrementalPCA the `fit()` method can be called multiple times using the 
+same object and it will update the subspace according to the new input data.
 This data must be the same dimension as the prior data.
 
 Otherwise the CCIPCA object should behave similarily to the PCA object.

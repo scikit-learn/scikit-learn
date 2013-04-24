@@ -11,8 +11,8 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import array2d, as_float_array
 from ..utils.extmath import safe_sparse_dot
 
-class IPCA(BaseEstimator, TransformerMixin):
-    """Incremental principal component analysis (IPCA)
+class IncrementalPCA(BaseEstimator, TransformerMixin):
+    """Incremental principal component analysis (IncrementalPCA)
     
     Linear dimensionality reduction using an online incremental PCA algorithm.
     Components are updated sequentially as new observations are introduced. 
@@ -56,11 +56,11 @@ class IPCA(BaseEstimator, TransformerMixin):
     --------
 
     >>> import numpy as np
-    >>> from sklearn.decomposition import IPCA
+    >>> from sklearn.decomposition import IncrementalPCA
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
-    >>> ipca = IPCA(n_components=2)
+    >>> ipca = IncrementalPCA(n_components=2)
     >>> ipca.fit(X)
-    IPCA(copy=True, n_components=2)
+    IncrementalPCA(copy=True, n_components=2)
     >>> print(ipca.explained_variance_ratio_) # doctest: +ELLIPSIS
     [ 0.99244...  0.00755...]
 
@@ -112,14 +112,14 @@ class IPCA(BaseEstimator, TransformerMixin):
         
         # incrementally fit the model
         for i in range(0,X.shape[0]):
-            self.inc_fit(X[i,:])
+            self.partial_fit(X[i,:])
         
         # normalize explained_variance_ratio_
         self.explained_variance_ratio_ = (self.explained_variance_ratio_ / self.explained_variance_ratio_.sum())
         
         return self
       
-    def inc_fit(self, u):
+    def partial_fit(self, u):
         """ Updates the mean and components to account for a new vector.
 
         Parameters
@@ -322,7 +322,7 @@ class CCIPCA(BaseEstimator, TransformerMixin):
         
         # incrementally fit the model
         for i in range(0,X.shape[0]):
-            self.inc_fit(X[i,:])
+            self.partial_fit(X[i,:])
         
         # update explained_variance_ratio_
         self.explained_variance_ratio_ = np.sqrt(np.sum(self.components_**2,axis=1))
@@ -340,7 +340,7 @@ class CCIPCA(BaseEstimator, TransformerMixin):
         
         return self
       
-    def inc_fit(self, u):
+    def partial_fit(self, u):
         """ Updates the mean and components to account for a new vector.
         
         Parameters

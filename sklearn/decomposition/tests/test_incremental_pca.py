@@ -9,26 +9,26 @@ from sklearn.utils.testing import assert_less, assert_greater
 
 from sklearn import datasets
 from sklearn.decomposition import PCA
-from sklearn.decomposition import IPCA, CCIPCA
+from sklearn.decomposition import IncrementalPCA, CCIPCA
 
 iris = datasets.load_iris()
 
-def test_ipca():
+def test_incremental_pca():
     """IPCA on dense arrays"""
     X = iris.data
     
     # test shape
-    ipca = IPCA(n_components=2)
+    ipca = IncrementalPCA(n_components=2)
     X_r1 = ipca.fit(X).transform(X)
     np.testing.assert_equal(X_r1.shape[1], 2)
     
     # test equivalence of separate fits
-    ipca = IPCA(n_components=2)
+    ipca = IncrementalPCA(n_components=2)
     X_r2 = ipca.fit(X).transform(X)
     assert_array_almost_equal(X_r1, X_r2)
     
     # check that the subspace represents the variance well
-    ipca = IPCA(n_components=4)
+    ipca = IncrementalPCA(n_components=4)
     ipca.fit(X)
     assert_almost_equal(ipca.explained_variance_ratio_.sum(), 1.0, 3)
     
@@ -40,7 +40,7 @@ def test_ipca():
     assert_array_almost_equal(pca.explained_variance_ratio_, ipca.explained_variance_ratio_,3)
     
 
-def test_ipca_check_projection():
+def test_incremental_pca_check_projection():
     """Test that the projection of data is correct"""
     rng = np.random.RandomState(0)
     n, p = 100, 3
@@ -48,13 +48,13 @@ def test_ipca_check_projection():
     X[:10] += np.array([3, 4, 5])
     Xt = 0.1 * rng.randn(1, p) + np.array([3, 4, 5])
 
-    Yt = IPCA(n_components=2).fit(X).transform(Xt)
+    Yt = IncrementalPCA(n_components=2).fit(X).transform(Xt)
 
     Yt /= np.sqrt((Yt * Yt).sum())
     assert_almost_equal(np.abs(Yt[0][0]), 1., 1)
 
 
-def test_ipca_inverse():
+def test_incremental_pca_inverse():
     """Test that the projection of data can be inverted"""
     rng = np.random.RandomState(0)
     n, p = 50, 3
@@ -64,7 +64,7 @@ def test_ipca_inverse():
 
     # same check that we can find the original data from the transformed
     # signal (since the data is almost of rank n_components)
-    ipca = IPCA(n_components=2).fit(X)
+    ipca = IncrementalPCA(n_components=2).fit(X)
     Y = ipca.transform(X)
     Y_inverse = ipca.inverse_transform(Y)
     assert_almost_equal(X, Y_inverse, decimal=3)
