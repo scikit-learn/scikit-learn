@@ -233,7 +233,6 @@ cdef class CSRDataset(SequentialDataset):
 
 cdef double sqnorm(DOUBLE * x_data_ptr, INTEGER * x_ind_ptr, int xnnz):
     cdef double x_norm = 0.0
-    cdef int j
     cdef double z
     for j in range(xnnz):
         z = x_data_ptr[j]
