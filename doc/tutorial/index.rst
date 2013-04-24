@@ -39,11 +39,10 @@ Tutorials: From the bottom up with scikit-learn
     how to approach problems and which estimators to try out on your
     data. Click the image below to begin..
 
+.. toctree::
+   :maxdepth: 2
 
-.. image:: ../../_static/ml_map_thumb.png
-    :target: ../_static/ml_map.html
-    :align: center
-    :scale: 50
+   machine_learning_map/index.rst
 
 
 .. topic:: **External Tutorials**
