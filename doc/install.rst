@@ -40,7 +40,7 @@ and a working C++ compiler.
 Under Debian-based operating systems, which include Ubuntu,
 you can install all these requirements by issuing::
 
-    sudo apt-get install build-essential python-dev python-numpy python-setuptools python-scipy libatlas-dev
+    sudo apt-get install build-essential python-dev python-numpy python-setuptools python-scipy libatlas-dev libatlas3-base
 
 .. note::
 
