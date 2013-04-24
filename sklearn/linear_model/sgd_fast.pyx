@@ -434,7 +434,8 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
 
     eta = eta0
 
-    dataset.precompute_norms()
+    if learning_rate == PA1 or learning_rate == PA2:
+        dataset.precompute_norms()
 
     t_start = time()
     for epoch in range(n_iter):
