@@ -52,7 +52,8 @@ cdef class SequentialDataset:
         The norm for the current example can then be retrieved via
         get_norm().
 
-        If bool == True, computes the square norm, else computes the 1 norm.
+        If bool == True, computes the square norm, else computes the
+        L1 norm.
 
         """
         # by only using self.next() to iterate over our data, we make
@@ -230,7 +231,7 @@ cdef double onenorm(DOUBLE * x_data_ptr, INTEGER * x_ind_ptr, int xnnz):
     cdef double z
     for j in range(xnnz):
         z = x_data_ptr[j]
-        x_norm += z
+        x_norm += abs(z)
     return x_norm
 
 
