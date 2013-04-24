@@ -19,6 +19,7 @@ import numpy as np
 from .utils import check_random_state
 from .utils.extmath import logsumexp
 from .base import BaseEstimator
+from .utils.validation import safe_asarray
 from .mixture import (
     GMM, log_multivariate_normal_density, sample_gaussian,
     distribute_covar_matrix_to_match_covariance_type, _validate_covars)
@@ -460,7 +461,7 @@ class _BaseHMM(BaseEstimator):
         if not np.allclose(np.sum(startprob), 1.0):
             raise ValueError('startprob must sum to 1.0')
 
-        self._log_startprob = np.log(np.asarray(startprob).copy())
+        self._log_startprob = np.log(safe_asarray(startprob))
 
     startprob_ = property(_get_startprob, _set_startprob)
 
@@ -485,7 +486,7 @@ class _BaseHMM(BaseEstimator):
         if not np.all(np.allclose(np.sum(transmat, axis=1), 1.0)):
             raise ValueError('Rows of transmat must sum to 1.0')
 
-        self._log_transmat = np.log(np.asarray(transmat).copy())
+        self._log_transmat = np.log(safe_asarray(transmat))
         underflow_idx = np.isnan(self._log_transmat)
         self._log_transmat[underflow_idx] = NEGINF
 
@@ -930,7 +931,7 @@ class MultinomialHMM(_BaseHMM):
         if not np.alltrue(emissionprob):
             normalize(emissionprob)
 
-        self._log_emissionprob = np.log(emissionprob)
+        self._log_emissionprob = np.log(safe_asarray(emissionprob))
         underflow_idx = np.isnan(self._log_emissionprob)
         self._log_emissionprob[underflow_idx] = NEGINF
         self.n_symbols = self._log_emissionprob.shape[1]
