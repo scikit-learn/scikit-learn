@@ -18,10 +18,14 @@ np.import_array()
 
 cdef extern from "math.h":
     double sqrt(double x)
+from libc.stdlib cimport free, malloc
 
 
 cdef class SequentialDataset:
     """Base class for datasets with sequential data access. """
+
+    def __dealloc__(self):
+        free(self.norms)
 
     cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
                    int *nnz, DOUBLE *y, DOUBLE *sample_weight):
@@ -69,20 +73,17 @@ cdef class SequentialDataset:
         cdef int xnnz
         cdef DOUBLE y = 0.0
         cdef DOUBLE sample_weight
+        cdef DOUBLE result
 
-        cdef np.ndarray[DOUBLE, ndim=1,
-                        mode='c'] norms= np.zeros((self.n_samples,),
-                                                  dtype=np.float64)
-        self.norms = norms
+        self.norms = <double*> malloc(self.n_samples * sizeof(DOUBLE))
 
         for _ in range(self.n_samples):
             self.next( & x_data_ptr, & x_ind_ptr, & xnnz, & y,
                        & sample_weight)
-            self.norms[self.current_index] = sqnorm(x_data_ptr,
-                                                    x_ind_ptr, xnnz)
+            result = sqnorm(x_data_ptr, x_ind_ptr, xnnz)
             if not square:
-                self.norms[self.current_index] = sqrt(
-                    self.norms[self.current_index])
+                result = sqrt(result)
+            self.norms[self.current_index] = result
         self.current_index = current_index_backup
 
     cdef double get_norm(self):
@@ -137,6 +138,7 @@ cdef class ArrayDataset(SequentialDataset):
                                                     dtype=np.int32)
         self.index = index
         self.index_data_ptr = <INTEGER *> index.data
+        self.norms = NULL
 
     cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
                    int *nnz, DOUBLE *y, DOUBLE *sample_weight):
@@ -205,6 +207,8 @@ cdef class CSRDataset(SequentialDataset):
                                                     dtype=np.int32)
         self.index = index
         self.index_data_ptr = <INTEGER *> index.data
+
+        self.norms = NULL
 
     cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
                    int *nnz, DOUBLE *y, DOUBLE *sample_weight):

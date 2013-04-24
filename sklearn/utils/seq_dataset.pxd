@@ -10,7 +10,7 @@ ctypedef np.int32_t INTEGER
 
 cdef class SequentialDataset:
     cdef Py_ssize_t n_samples
-    cdef np.ndarray norms
+    cdef DOUBLE *norms
     cdef int current_index
 
     cdef void next(self, DOUBLE **x_data_ptr, INTEGER **x_ind_ptr,
