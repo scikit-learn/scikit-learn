@@ -426,9 +426,7 @@ def matthews_corrcoef(y_true, y_pred):
 
 
 def _binary_clf_curve(y_true, y_score, pos_label=None):
-    """
-    Calculate true and false positives across a moving threshold for binary
-    classification.
+    """Calculate true and false positives per binary classification threshold.
 
     Parameters
     ----------
