@@ -95,7 +95,8 @@ cdef _csr_train_wrap(np.int32_t n_features,
         raise ValueError(error_msg)
 
     # early return
-    model = train(problem, param)
+    with nogil:
+        model = train(problem, param)
 
     # fortran order since that's what liblinear does
     cdef np.ndarray[np.float64_t, ndim=2, mode='fortran'] w
