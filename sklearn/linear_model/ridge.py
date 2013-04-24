@@ -392,7 +392,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
             copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver)
         self.class_weight = class_weight
 
-    def fit(self, X, y, class_weight=None):
+    def fit(self, X, y):
         """Fit Ridge regression model.
 
         Parameters
@@ -403,26 +403,15 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         y : array-like, shape = [n_samples]
             Target values
 
-       class_weight : dict, optional
-             Weights associated with classes in the form
-            {class_label : weight}. If not given, all classes are
-            supposed to have weight one.
-
         Returns
         -------
         self : returns an instance of self.
         """
-        if class_weight is None:
-            class_weight = self.class_weight
-        else:
-            warnings.warn("'class_weight' is now an initialization parameter."
-                          "Using it in the 'fit' method is deprecated and "
-                          "will be removed in 0.15.", DeprecationWarning,
-                          stacklevel=2)
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
-        cw = compute_class_weight(class_weight,
+        cw = compute_class_weight(self.class_weight,
                                   self.classes_, Y)
+        # get the class weight corresponding to each sample
         sample_weight_classes = cw[np.searchsorted(self.classes_, y)]
         super(RidgeClassifier, self).fit(X, Y,
                                          sample_weight=sample_weight_classes)
@@ -879,7 +868,8 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         class_weight : dict, optional
              Weights associated with classes in the form
             {class_label : weight}. If not given, all classes are
-            supposed to have weight one.
+            supposed to have weight one. This is parameter is
+            deprecated.
 
         Returns
         -------
@@ -898,6 +888,7 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         Y = self._label_binarizer.fit_transform(y)
         cw = compute_class_weight(class_weight,
                                   self.classes_, Y)
+        # modify the sample weights with the corresponding class weight
         sample_weight *= cw[np.searchsorted(self.classes_, y)]
         _BaseRidgeCV.fit(self, X, Y, sample_weight=sample_weight)
         return self
