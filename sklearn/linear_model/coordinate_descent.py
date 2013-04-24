@@ -466,7 +466,7 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
     """ Compute the grid of alpha values for elastic net parameter search
 
     Parameters
-    ==========
+    ----------
     X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training data. Pass directly as Fortran-contiguous data to avoid
         unnecessary memory duplication
@@ -504,8 +504,8 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
                                 and not sparse.isspmatrix(X))
         if not sparse.isspmatrix(X):
             # X can be touched inplace thanks to the above line
-            X, y, X_mean, y_mean, X_std = center_data(X, y, fit_intercept,
-                                                    normalize, copy=False)
+            X, y, _, _, _ = center_data(X, y, fit_intercept,
+                                        normalize, copy=False)
 
         Xy = safe_sparse_dot(X.T, y, dense_output=True)
         n_samples = X.shape[0]
@@ -776,41 +776,40 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
                     X_order=None, dtype=None):
     """ Returns the MSE for the models computed by 'path'
 
-        Parameters
-        ==========
-        X : {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data.
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Training data.
 
-        y : narray, shape (n_samples,) or (n_samples, n_targets)
-            Target values
+    y : narray, shape (n_samples,) or (n_samples, n_targets)
+        Target values
 
-        train : list of indices
-            The indices of the train set
+    train : list of indices
+        The indices of the train set
 
-        test : list of indices
-            The indices of the test set
+    test : list of indices
+        The indices of the test set
 
-        path : callable
-            function returning a list of models on the path. See
-            enet_path for an example of signature
+    path : callable
+        function returning a list of models on the path. See
+        enet_path for an example of signature
 
-        path_params : dictionary
-            Parameters passed to the path function
+    path_params : dictionary
+        Parameters passed to the path function
 
-        l1_ratio : float, optional
-            float between 0 and 1 passed to ElasticNet (scaling between
-            l1 and l2 penalties). For ``l1_ratio = 0`` the penalty is an
-            L2 penalty. For ``l1_ratio = 1`` it is an L1 penalty. For ``0
-            < l1_ratio < 1``, the penalty is a combination of L1 and L2
+    l1_ratio : float, optional
+        float between 0 and 1 passed to ElasticNet (scaling between
+        l1 and l2 penalties). For ``l1_ratio = 0`` the penalty is an
+        L2 penalty. For ``l1_ratio = 1`` it is an L1 penalty. For ``0
+        < l1_ratio < 1``, the penalty is a combination of L1 and L2
 
+    X_order : {'F', 'C', or None}, optional
+        The order of the arrays expected by the path function to
+        avoid memory copies
 
-        X_order : {'F', 'C', or None}, optional
-            The order of the arrays expected by the path function to
-            avoid memory copies
-
-        dtype: a numpy dtype or None
-            The dtype of the arrays expected by the path function to
-            avoid memory copies
+    dtype: a numpy dtype or None
+        The dtype of the arrays expected by the path function to
+        avoid memory copies
     """
     this_mses = list()
     if 'l1_ratio' in path_params:
