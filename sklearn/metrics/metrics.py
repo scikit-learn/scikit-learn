@@ -436,22 +436,22 @@ def _binary_clf_curve(y_true, y_score, pos_label=None):
     y_score : array, shape = [n_samples]
         Estimated probabilities or decision function
 
-    pos_label : int, optional
-        The label of the positive class, defaulting to 1
+    pos_label : int, optional (default=1)
+        The label of the positive class
 
     Returns
     -------
-    tps : array, shape = [n_thresholds := len(np.unique(y_score))]
-        An increasing count of true positives, at index i being the number
-        of positive samples assigned a score >= thresholds[i]. The total
-        number of positive samples is equal to tps[-1] (thus false negatives
-        are given by tps[-1] - tps).
-
     fps : array, shape = [n_thresholds]
         A count of false positives, at index i being the number of negative
         samples assigned a score >= thresholds[i]. The total number of
         negative samples is equal to fps[-1] (thus true negatives are given by
         fps[-1] - fps).
+
+    tps : array, shape = [n_thresholds := len(np.unique(y_score))]
+        An increasing count of true positives, at index i being the number
+        of positive samples assigned a score >= thresholds[i]. The total
+        number of positive samples is equal to tps[-1] (thus false negatives
+        are given by tps[-1] - tps).
 
     thresholds : array, shape = [n_thresholds]
         Decreasing score values.
@@ -479,7 +479,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None):
     y_score = y_score[desc_score_indices]
     y_true = y_true[desc_score_indices]
 
-    # Probas_pred typically has many tied values. Here we extract
+    # y_score typically has many tied values. Here we extract
     # the indices associated with the distinct values. We also
     # concatenate a value for the end of the curve.
     distinct_value_indices = np.where(np.diff(y_score))[0]
@@ -488,7 +488,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None):
     # accumulate the true positives with decreasing threshold
     tps = y_true.cumsum()[threshold_idxs]
     fps = 1 + threshold_idxs - tps
-    return tps, fps, y_score[threshold_idxs]
+    return fps, tps, y_score[threshold_idxs]
 
 
 def precision_recall_curve(y_true, probas_pred):
@@ -520,12 +520,12 @@ def precision_recall_curve(y_true, probas_pred):
     Returns
     -------
     precision : array, shape = [n_thresholds + 1]
-        Precision values such that element i is the precision of predictions
-        with score >= thresholds[i] and the last element is 1.
+        Precision values such that element i is the precision of
+        predictions with score >= thresholds[i] and the last element is 1.
 
     recall : array, shape = [n_thresholds + 1]
-        Recall values such that element i is the recall of predictions with
-        score >= thresholds[i] and the last element is 0.
+        Decreasing recall values such that element i is the recall of
+        predictions with score >= thresholds[i] and the last element is 0.
 
     thresholds : array, shape = [n_thresholds := len(np.unique(probas_pred))]
         Increasing thresholds on the decision function used to compute
@@ -537,21 +537,22 @@ def precision_recall_curve(y_true, probas_pred):
     >>> from sklearn.metrics import precision_recall_curve
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> precision, recall, threshold = precision_recall_curve(y_true, y_scores)
+    >>> precision, recall, thresholds = precision_recall_curve(y_true, y_scores)
     >>> precision  # doctest: +ELLIPSIS
     array([ 0.66...,  0.5       ,  1.        ,  1.        ])
     >>> recall
     array([ 1. ,  0.5,  0.5,  0. ])
-    >>> threshold
+    >>> thresholds
     array([ 0.35,  0.4 ,  0.8 ])
 
     """
-    tps, fps, thresholds = _binary_clf_curve(y_true, probas_pred)
+    fps, tps, thresholds = _binary_clf_curve(y_true, probas_pred)
 
     precision = tps / (tps + fps)
     recall = tps / tps[-1]
 
-    # stop when full recall attained and reverse the outputs
+    # stop when full recall attained
+    # and reverse the outputs so recall is decreasing
     last_ind = tps.searchsorted(tps[-1])
     sl = slice(last_ind, None, -1)
     return np.r_[precision[sl], 1], np.r_[recall[sl], 0], thresholds[sl]
@@ -579,12 +580,12 @@ def roc_curve(y_true, y_score, pos_label=None):
     Returns
     -------
     fpr : array, shape = [>2]
-        False Positive Rates such that element i is the false positive rate of
-        predictions with score >= thresholds[i].
+        Increasing false positive rates such that element i is the false
+        positive rate of predictions with score >= thresholds[i].
 
     tpr : array, shape = [>2]
-        False Positive Rates such that element i is the true positive rate of
-        predictions with score >= thresholds[i].
+        Increasing false positive rates such that element i is the true
+        positive rate of predictions with score >= thresholds[i].
 
     thresholds : array, shape = [n_thresholds]
         Decreasing thresholds on the decision function used to compute
@@ -617,9 +618,11 @@ def roc_curve(y_true, y_score, pos_label=None):
     array([ 0. ,  0.5,  0.5,  1. ])
     >>> tpr
     array([ 0.5,  0.5,  1. ,  1. ])
+    >>> thresholds
+    array([ 0.8 ,  0.4 ,  0.35,  0.1 ])
 
     """
-    tps, fps, thresholds = _binary_clf_curve(y_true, y_score, pos_label)
+    fps, tps, thresholds = _binary_clf_curve(y_true, y_score, pos_label)
 
     if tps.size == 0 or fps[0] != 0:
         # Add an extra threshold position if necessary
