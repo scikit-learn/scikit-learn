@@ -1259,6 +1259,8 @@ cdef class BinaryTree:
         else:
             raise ValueError("kernel = '%s' not recognized" % kernel)
 
+        cdef DTYPE_t knorm = kernel_norm(h_c, n_features, kernel)
+
         # validate X and prepare for query
         X = array2d(X, dtype=DTYPE, order='C')
 
@@ -1282,12 +1284,13 @@ cdef class BinaryTree:
             other = self.__class__(Xarr, metric=self.dm,
                                    leaf_size=self.leaf_size)
             if breadth_first:
-                self._kde_dual_breadthfirst(other, kernel_c, h_c,
+                self._kde_dual_breadthfirst(other, kernel_c, h_c, knorm,
                                             atol_c / self.data.shape[0],
                                             &density[0], nodeheap)
             else:
                 self._kde_dual_depthfirst(0, other, 0, kernel_c,
-                                          h_c, atol_c / self.data.shape[0],
+                                          h_c, knorm,
+                                          atol_c / self.data.shape[0],
                                           &density[0])
         else:
             if breadth_first:
@@ -1296,7 +1299,7 @@ cdef class BinaryTree:
                 for i in range(Xarr.shape[0]):
                     density[i] = self._kde_single_breadthfirst(
                                             pt, kernel_c,
-                                            h_c, atol_c,
+                                            h_c, knorm, atol_c,
                                             rtol_c, nodeheap,
                                             &node_min_bounds[0],
                                             &node_max_bounds[0])
@@ -1309,7 +1312,7 @@ cdef class BinaryTree:
                                                            h_c, kernel_c)
                     max_bound = n_samples * compute_kernel(dist_LB,
                                                            h_c, kernel_c)
-                    self._kde_single_depthfirst(0, pt, kernel_c, h_c,
+                    self._kde_single_depthfirst(0, pt, kernel_c, h_c, knorm,
                                                 atol_c, rtol_c,
                                                 min_bound, max_bound,
                                                 &min_bound, &max_bound)
@@ -1317,7 +1320,6 @@ cdef class BinaryTree:
                     pt += n_features
 
         # normalize the results
-        cdef DTYPE_t knorm = _kernel_norm(h_c, n_features, kernel_c)
         for i in range(density.shape[0]):
             density[i] *= knorm
 
@@ -1806,10 +1808,17 @@ cdef class BinaryTree:
 
     cdef DTYPE_t _kde_single_breadthfirst(self, DTYPE_t* pt,
                                           KernelType kernel, DTYPE_t h,
+                                          DTYPE_t knorm,
                                           DTYPE_t atol, DTYPE_t rtol,
                                           NodeHeap nodeheap,
                                           DTYPE_t* node_min_bounds,
                                           DTYPE_t* node_max_bounds) except -1:
+        # For the given point, node_min_bounds and node_max_bounds will
+        # store the current min/max bounds on the density between the point
+        # and the associated node.  global_min_bound and global_max_bound
+        # keep track of the global bounds on density.  The procedure here is
+        # to split nodes, updating these bounds, until the bounds are within
+        # atol & rtol.
         cdef ITYPE_t i, i1, i2, N1, N2, i_node
         cdef DTYPE_t global_min_bound, global_max_bound
 
@@ -1818,7 +1827,6 @@ cdef class BinaryTree:
         cdef NodeData_t* node_data = &self.node_data[0]
         cdef ITYPE_t N = self.data.shape[0]
         cdef ITYPE_t n_features = self.data.shape[1]
-        cdef DTYPE_t knorm = _kernel_norm(h, n_features, kernel)
 
         cdef NodeData_t node_info
         cdef DTYPE_t dist_pt, dens_contribution
@@ -1907,17 +1915,22 @@ cdef class BinaryTree:
 
     cdef int _kde_single_depthfirst(self, ITYPE_t i_node, DTYPE_t* pt,
                                     KernelType kernel, DTYPE_t h,
+                                    DTYPE_t knorm,
                                     DTYPE_t atol, DTYPE_t rtol,
                                     DTYPE_t local_min_bound,
                                     DTYPE_t local_max_bound,
                                     DTYPE_t* global_min_bound,
                                     DTYPE_t* global_max_bound) except -1:
+        # For the given point, local_min_bound and local_max_bound give the
+        # minimum and maximum density for the current node, while
+        # global_min_bound and global_max_bound give the minimum and maximum
+        # density over the entire tree.  We recurse down until global_min_bound
+        # and global_max_bound are within rtol and atol.
         cdef ITYPE_t i, i1, i2, N1, N2
 
         cdef DTYPE_t* data = &self.data[0, 0]
         cdef ITYPE_t* idx_array = &self.idx_array[0]
         cdef ITYPE_t n_features = self.data.shape[1]
-        cdef DTYPE_t knorm = _kernel_norm(h, n_features, kernel)
 
         cdef NodeData_t node_info = self.node_data[i_node]
         cdef DTYPE_t dist_pt, dens_contribution
@@ -1975,11 +1988,11 @@ cdef class BinaryTree:
             global_max_bound[0] += (child1_max_bound + child2_max_bound
                                     - local_max_bound)
 
-            self._kde_single_depthfirst(i1, pt, kernel, h,
+            self._kde_single_depthfirst(i1, pt, kernel, h, knorm,
                                         atol, rtol,
                                         child1_min_bound, child1_max_bound,
                                         global_min_bound, global_max_bound)
-            self._kde_single_depthfirst(i2, pt, kernel, h,
+            self._kde_single_depthfirst(i2, pt, kernel, h, knorm,
                                         atol, rtol,
                                         child2_min_bound, child2_max_bound,
                                         global_min_bound, global_max_bound)
@@ -1987,7 +2000,7 @@ cdef class BinaryTree:
 
     cdef int _kde_dual_breadthfirst(BinaryTree self, BinaryTree other,
                                     KernelType kernel,
-                                    DTYPE_t h, DTYPE_t atol,
+                                    DTYPE_t h, DTYPE_t knorm, DTYPE_t atol,
                                     DTYPE_t* density,
                                     NodeHeap nodeheap) except -1:
         # note that atol here is absolute tolerance *per point*
@@ -2014,8 +2027,6 @@ cdef class BinaryTree:
         nodeheap_item.i1 = 0
         nodeheap_item.i2 = 0
         nodeheap.push(nodeheap_item)
-
-        cdef DTYPE_t knorm = _kernel_norm(h, n_features, kernel)
 
         while nodeheap.n > 0:
             nodeheap_item = nodeheap.pop()
@@ -2077,7 +2088,7 @@ cdef class BinaryTree:
     cdef int _kde_dual_depthfirst(BinaryTree self, ITYPE_t i_node1,
                                   BinaryTree other, ITYPE_t i_node2,
                                   KernelType kernel,
-                                  DTYPE_t h, DTYPE_t atol,
+                                  DTYPE_t h, DTYPE_t knorm, DTYPE_t atol,
                                   DTYPE_t* density) except -1:
         # note that atol here is absolute tolerance *per point*
         cdef ITYPE_t i1, i2
@@ -2100,7 +2111,6 @@ cdef class BinaryTree:
 
         cdef DTYPE_t dens_UB = compute_kernel(dist_LB, h, kernel)
         cdef DTYPE_t dens_LB = compute_kernel(dist_UB, h, kernel)
-        cdef DTYPE_t knorm = _kernel_norm(h, n_features, kernel)
 
         #------------------------------------------------------------
         # Case 1: points are all far enough that contribution is zero
@@ -2126,12 +2136,12 @@ cdef class BinaryTree:
         elif node_info1.is_leaf:
             for i2 in range(2 * i_node2 + 1, 2 * i_node2 + 3):
                 self._kde_dual_depthfirst(i_node1, other, i2, kernel,
-                                          h, atol, density)
+                                          h, knorm, atol, density)
 
         elif node_info2.is_leaf:
             for i1 in range(2 * i_node1 + 1, 2 * i_node1 + 3):
                 self._kde_dual_depthfirst(i1, other, i_node2, kernel,
-                                          h, atol, density)
+                                          h, knorm, atol, density)
 
         #------------------------------------------------------------
         # Case 3b: both nodes need to be split
@@ -2139,7 +2149,7 @@ cdef class BinaryTree:
             for i1 in range(2 * i_node1 + 1, 2 * i_node1 + 3):
                 for i2 in range(2 * i_node2 + 1, 2 * i_node2 + 3):
                     self._kde_dual_depthfirst(i1, other, i2, kernel,
-                                              h, atol, density)
+                                              h, knorm, atol, density)
         return 0
 
     cdef int _two_point_single(self, ITYPE_t i_node, DTYPE_t* pt, DTYPE_t* r,
