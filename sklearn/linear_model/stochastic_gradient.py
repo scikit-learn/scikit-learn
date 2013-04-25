@@ -113,8 +113,8 @@ class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
     def _init_t(self, loss_function):
         """Initialize iteration counter attr ``t_``.
 
-        If ``self.loss=='optimal'`` initialize ``t_`` such that ``eta`` at
-        first sample equals ``self.eta0``.
+        If ``self.learning_rate=='optimal'`` initialize ``t_`` such that
+        ``eta`` at first sample equals ``self.eta0``.
         """
         self.t_ = 1.0
         if self.learning_rate == "optimal":
