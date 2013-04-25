@@ -133,6 +133,23 @@ def test_kd_tree_KDE(n_samples=100, n_features=3):
                                    dualtree, breadth_first)
 
 
+def test_gaussian_kde(n_samples=1000):
+    """Compare gaussian KDE results to scipy.stats.gaussian_kde"""
+    from scipy.stats import gaussian_kde
+    np.random.seed(0)
+    x_in = np.random.normal(0, 1, n_samples)
+    x_out = np.linspace(-5, 5, 30)
+
+    for h in [0.01, 0.1, 1]:
+        kdt = KDTree(x_in[:, None])
+        gkde = gaussian_kde(x_in, bw_method=h / np.std(x_in))
+
+        dens_kdt = kdt.kernel_density(x_out[:, None], h) / n_samples
+        dens_gkde = gkde.evaluate(x_out)
+
+        assert_allclose(dens_kdt, dens_gkde, rtol=1E-3, atol=1E-3)
+
+
 def test_kd_tree_two_point(n_samples=100, n_features=3):
     np.random.seed(0)
     X = np.random.random((n_samples, n_features))
