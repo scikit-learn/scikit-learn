@@ -1025,9 +1025,7 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
             # avoid division by zeros for features that occur in all documents
             idf = np.log(float(n_samples) / df) + 1.0
-            idf_diag = sp.lil_matrix((n_features, n_features))
-            idf_diag.setdiag(idf)
-            self._idf_diag = sp.csc_matrix(idf_diag)
+            self._idf_diag = sp.spdiags(idf,diags=0,m=n_features,n=n_features)
 
         return self
 
