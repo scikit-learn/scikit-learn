@@ -628,7 +628,7 @@ def roc_curve(y_true, y_score, pos_label=None):
         # Add an extra threshold position if necessary
         tps = np.r_[0, tps]
         fps = np.r_[0, fps]
-        thresholds = np.r_[np.inf, thresholds]
+        thresholds = np.r_[thresholds[0] + 1, thresholds]
     
     if fps[-1] == 0:
         warnings.warn("No negative samples in y_true, "
