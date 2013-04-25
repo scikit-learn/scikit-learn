@@ -6,7 +6,20 @@
 Choosing the right estimator
 =======================================================
 
-It is often
+
+Often the hardest part of solving a machine learning problem can
+be finding the right estimator for the job.
+
+Different estimators are better suited for different types of data
+and different problems.
+
+The flowchart below is designed to give users a bit of
+a rough guide on how to approach problems with regard to
+which estimators to try on your data.
+
+Click on any estimator in the chart below to see it's documentation.
+
+
 
 .. raw:: html
 
@@ -17,9 +30,16 @@ It is often
     div.content-wrapper {
         max-width: 100%;
     }
+    div.bodywrapper h1 {
+        text-align: left;
+    }
     div.content {
         margin-left: 0;
-	height: 1480px
+	height: 1660px;
+	width: 2330px;
+    }
+    div.map {
+    	width: 2117px;
     }
     div.body img {
         max-width: 100%;
@@ -30,7 +50,6 @@ It is often
 	margin-right: auto;
 	padding-left: 200px;
     }
-
     p.logo {
     	padding-left: 0px;
     }
