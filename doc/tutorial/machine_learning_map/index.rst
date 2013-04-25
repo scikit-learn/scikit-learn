@@ -1,27 +1,25 @@
 .. _ml_map:
 
 
-
 .. include:: ../includes/big_toc_css.rst
 
 Choosing the right estimator
 =======================================================
 
+It is often
+
 .. raw:: html
 
     <style>
     body {
-    	display: inline-block
+    	display: inline-block;
     }
-
     div.content-wrapper {
         max-width: 100%;
     }
     div.content {
         margin-left: 0;
-    }
-    div.sphinxsidebar {
-        display: none;
+	height: 1480px
     }
     div.body img {
         max-width: 100%;
@@ -30,7 +28,11 @@ Choosing the right estimator
         max-width: 2150px;
 	margin-left: auto;
 	margin-right: auto;
-	display: block
+	padding-left: 200px;
+    }
+
+    p.logo {
+    	padding-left: 0px;
     }
     </style>
 
