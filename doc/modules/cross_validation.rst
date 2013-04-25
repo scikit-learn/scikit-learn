@@ -48,13 +48,23 @@ However, by defining these two sets, we drastically reduce the number
 of samples which can be used for learning the model, and the results can
 depend on a particular random choice for the pair of (train, test) sets.
 
-A solution is to **split the whole data several consecutive times in
-different train set and test set**, and to return the averaged value of
-the prediction scores obtained with the different sets. Such a procedure
-is called **cross-validation**. This approach can be **computationally
-expensive, but does not waste too much data** (as it is the case when
-fixing an arbitrary test set), which is a major advantage in problem
-such as inverse inference where the number of samples is very small.
+A solution to this problem is to split the whole data several consecutive times
+into different training and test sets, then train and test on these.
+Thus in every round of this procedure,
+the data is partitioned into complementary subsets:
+
+ * Analysis is performed on one of the subsets (training set)
+ * Validation of that analysis is then done on the other subset (testing set).
+
+This is done for several rounds and the averaged value
+of the prediction scores obtained with the different sets is returned.
+Such a procedure is called
+`cross-validation <http://en.wikipedia.org/wiki/Cross-validation_(statistics)>`_.
+This approach can be computationally expensive,
+but does not waste too much data
+(as it is the case when fixing an arbitrary test set),
+which is a major advantage in problem such as inverse inference
+where the number of samples is very small.
 
 
 Computing cross-validated metrics
