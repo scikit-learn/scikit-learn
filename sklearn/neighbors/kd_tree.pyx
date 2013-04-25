@@ -27,6 +27,7 @@ cdef int init_node(BinaryTree bt, ITYPE_t i_node,
                    ITYPE_t idx_start, ITYPE_t idx_end) except -1:
     cdef ITYPE_t n_features = bt.data.shape[1]
     cdef ITYPE_t i, j
+    cdef DTYPE_t rad = 0
 
     cdef DTYPE_t* lower_bounds = &bt.node_bounds[0, i_node, 0]
     cdef DTYPE_t* upper_bounds = &bt.node_bounds[1, i_node, 0]
@@ -40,15 +41,28 @@ cdef int init_node(BinaryTree bt, ITYPE_t i_node,
         lower_bounds[j] = INF
         upper_bounds[j] = -INF
 
+    # Compute the actual data range.  At build time, this is slightly
+    # slower than using the previously-computed bounds of the parent node,
+    # but leads to more compact trees and thus faster queries.
     for i in range(idx_start, idx_end):
         data_row = data + idx_array[i] * n_features
         for j in range(n_features):
             lower_bounds[j] = fmin(lower_bounds[j], data_row[j])
             upper_bounds[j] = fmax(upper_bounds[j], data_row[j])
+        if bt.dm.p == INF:
+            rad = fmax(rad, 0.5 * (upper_bounds[j] - lower_bounds[j]))
+        else:
+            rad += pow(0.5 * abs(upper_bounds[j] - lower_bounds[j]), bt.dm.p)
 
     bt.node_data[i_node].idx_start = idx_start
     bt.node_data[i_node].idx_end = idx_end
+
+    # The radius will hold the size of the circumscribed hypersphere measured
+    # with the specified metric: in querying, this is used as a measure of the
+    # size of each node when deciding which nodes to split.
+    bt.node_data[i_node].radius = pow(rad, 1. / bt.dm.p)
     return 0
+
 
 cdef DTYPE_t min_rdist(BinaryTree bt, ITYPE_t i_node, DTYPE_t* pt) except -1:
     cdef ITYPE_t n_features = bt.data.shape[1]

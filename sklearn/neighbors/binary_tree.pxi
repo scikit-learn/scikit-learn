@@ -300,8 +300,8 @@ cdef DTYPE_t factorial(DTYPE_t n):
         return n * factorial(n - 1)
 
 
-cdef DTYPE_t _kernel_norm(DTYPE_t h, ITYPE_t d, KernelType kernel):
-    cdef DTYPE_t tmp, factor
+cdef DTYPE_t _kernel_norm(DTYPE_t h, ITYPE_t d, KernelType kernel) except -1:
+    cdef DTYPE_t tmp, factor = 0
     if kernel == GAUSSIAN_KERNEL:
         factor = ROOT_2PI ** d
     elif kernel == TOPHAT_KERNEL:
@@ -319,6 +319,8 @@ cdef DTYPE_t _kernel_norm(DTYPE_t h, ITYPE_t d, KernelType kernel):
             factor += tmp
             tmp *= -(d - k) * (d - k - 1) * (2. / PI) ** 2
         factor *= S_n(d - 1)
+    else:
+        raise ValueError("Kernel code not recognized")
     return 1 / factor / h ** d
 
 
@@ -1556,9 +1558,10 @@ cdef class BinaryTree:
                     break
             
         #------------------------------------------------------------
-        # Case 3a: node 1 is a leaf: split node 2 and recursively
-        #          query, starting with the nearest node
-        elif node_info1.is_leaf:
+        # Case 3a: node 1 is a leaf or is smaller: split node 2 and
+        #          recursively query, starting with the nearest subnode
+        elif node_info1.is_leaf or (not node_info2.is_leaf
+                                    and node_info2.radius > node_info1.radius):
             reduced_dist_LB1 = min_rdist_dual(self, i_node1,
                                               other, 2 * i_node2 + 1)
             reduced_dist_LB2 = min_rdist_dual(self, i_node1,
@@ -1576,66 +1579,23 @@ cdef class BinaryTree:
                                             bounds, heap, reduced_dist_LB1)
             
         #------------------------------------------------------------
-        # Case 3b: node 2 is a leaf: split node 1 and recursively
-        #          query, starting with the nearest node
-        elif node_info2.is_leaf:
-            reduced_dist_LB1 = min_rdist_dual(self, 2 * i_node1 + 1,
-                                              other, i_node2)
-            reduced_dist_LB2 = min_rdist_dual(self, 2 * i_node1 + 2,
-                                              other, i_node2)
-
-            if reduced_dist_LB1 < reduced_dist_LB2:
-                self._query_dual_depthfirst(2 * i_node1 + 1, other, i_node2,
-                                            bounds, heap, reduced_dist_LB1)
-                self._query_dual_depthfirst(2 * i_node1 + 2, other, i_node2,
-                                            bounds, heap, reduced_dist_LB2)
-            else:
-                self._query_dual_depthfirst(2 * i_node1 + 2, other, i_node2,
-                                            bounds, heap, reduced_dist_LB2)
-                self._query_dual_depthfirst(2 * i_node1 + 1, other, i_node2,
-                                            bounds, heap, reduced_dist_LB1)
-        
-        #------------------------------------------------------------
-        # Case 4: neither node is a leaf:
-        #         split both and recursively query all four pairs
+        # Case 3b: node 2 is a leaf or is smaller: split node 1 and
+        #          recursively query, starting with the nearest subnode
         else:
             reduced_dist_LB1 = min_rdist_dual(self, 2 * i_node1 + 1,
-                                              other, 2 * i_node2 + 1)
+                                              other, i_node2)
             reduced_dist_LB2 = min_rdist_dual(self, 2 * i_node1 + 2,
-                                              other, 2 * i_node2 + 1)
+                                              other, i_node2)
 
             if reduced_dist_LB1 < reduced_dist_LB2:
-                self._query_dual_depthfirst(2 * i_node1 + 1,
-                                            other, 2 * i_node2 + 1,
+                self._query_dual_depthfirst(2 * i_node1 + 1, other, i_node2,
                                             bounds, heap, reduced_dist_LB1)
-                self._query_dual_depthfirst(2 * i_node1 + 2,
-                                            other, 2 * i_node2 + 1,
+                self._query_dual_depthfirst(2 * i_node1 + 2, other, i_node2,
                                             bounds, heap, reduced_dist_LB2)
             else:
-                self._query_dual_depthfirst(2 * i_node1 + 2,
-                                            other, 2 * i_node2 + 1,
+                self._query_dual_depthfirst(2 * i_node1 + 2, other, i_node2,
                                             bounds, heap, reduced_dist_LB2)
-                self._query_dual_depthfirst(2 * i_node1 + 1,
-                                            other, 2 * i_node2 + 1,
-                                            bounds, heap, reduced_dist_LB1)
-
-            reduced_dist_LB1 = min_rdist_dual(self, 2 * i_node1 + 1,
-                                              other, 2 * i_node2 + 2)
-            reduced_dist_LB2 = min_rdist_dual(self, 2 * i_node1 + 2,
-                                              other, 2 * i_node2 + 2)
-            if reduced_dist_LB1 < reduced_dist_LB2:
-                self._query_dual_depthfirst(2 * i_node1 + 1,
-                                            other, 2 * i_node2 + 2,
-                                            bounds, heap, reduced_dist_LB1)
-                self._query_dual_depthfirst(2 * i_node1 + 2,
-                                            other, 2 * i_node2 + 2,
-                                            bounds, heap, reduced_dist_LB2)
-            else:
-                self._query_dual_depthfirst(2 * i_node1 + 2,
-                                            other, 2 * i_node2 + 2,
-                                            bounds, heap, reduced_dist_LB2)
-                self._query_dual_depthfirst(2 * i_node1 + 1,
-                                            other, 2 * i_node2 + 2,
+                self._query_dual_depthfirst(2 * i_node1 + 1, other, i_node2,
                                             bounds, heap, reduced_dist_LB1)
         return 0
 
@@ -1699,9 +1659,11 @@ cdef class BinaryTree:
                                            heap.largest(i_pt))
             
             #------------------------------------------------------------
-            # Case 3a: node 1 is a leaf: split node 2 and recursively
-            #          query, starting with the nearest node
-            elif node_info1.is_leaf:
+            # Case 3a: node 1 is a leaf or is smaller: split node 2 and
+            #          recursively query, starting with the nearest subnode
+            elif node_info1.is_leaf or (not node_info2.is_leaf
+                                        and (node_info2.radius
+                                             > node_info1.radius)):
                 nodeheap_item.i1 = i_node1
                 for i2 in range(2 * i_node2 + 1, 2 * i_node2 + 3):
                     nodeheap_item.i2 = i2
@@ -1709,25 +1671,14 @@ cdef class BinaryTree:
                     nodeheap.push(nodeheap_item)
             
             #------------------------------------------------------------
-            # Case 3b: node 2 is a leaf: split node 1 and recursively
-            #          query, starting with the nearest node
-            elif node_info2.is_leaf:
+            # Case 3b: node 2 is a leaf or is smaller: split node 1 and
+            #          recursively query, starting with the nearest subnode
+            else:
                 nodeheap_item.i2 = i_node2
                 for i1 in range(2 * i_node1 + 1, 2 * i_node1 + 3):
                     nodeheap_item.i1 = i1
                     nodeheap_item.val = min_rdist_dual(self, i1, other, i_node2)
                     nodeheap.push(nodeheap_item)
-        
-            #------------------------------------------------------------
-            # Case 4: neither node is a leaf:
-            #         split both and recursively query all four pairs
-            else:
-                for i1 in range(2 * i_node1 + 1, 2 * i_node1 + 3):
-                    for i2 in range(2 * i_node2 + 1, 2 * i_node2 + 3):
-                        nodeheap_item.i1 = i1
-                        nodeheap_item.i2 = i2
-                        nodeheap_item.val = min_rdist_dual(self, i1, other, i2)
-                        nodeheap.push(nodeheap_item)
         return 0
 
     cdef ITYPE_t _query_radius_single(BinaryTree self,
