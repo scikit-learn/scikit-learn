@@ -456,8 +456,8 @@ def _binary_clf_curve(y_true, y_score, pos_label=None):
     thresholds : array, shape = [n_thresholds]
         Decreasing score values.
     """
-    y_true = np.ravel(y_true)
-    y_score = np.ravel(y_score)
+    y_true, y_score = check_arrays(y_true, y_score)
+    y_true, y_score = _check_1d_array(y_true, y_score, ravel=True)
 
     # ensure binary classification if pos_label is not specified
     classes = np.unique(y_true)
