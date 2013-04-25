@@ -543,12 +543,18 @@ class SGDClassifier(BaseSGDClassifier, SelectorMixin):
 
     Parameters
     ----------
-    loss : str, 'hinge' or 'log' or 'modified_huber'
+    loss : str, 'hinge', 'log', 'modified_huber', 'squared_hinge', 'perceptron',
+                or a regression loss: 'squared_loss', 'huber',
+                'epsilon_insensitive', or 'squared_epsilon_insensitive'
         The loss function to be used. Defaults to 'hinge'. The hinge loss is
         a margin loss used by standard linear SVM models. The 'log' loss is
         the loss of logistic regression models and can be used for
         probability estimation in binary classifiers. 'modified_huber'
         is another smooth loss that brings tolerance to outliers.
+        'squared_hinge' is like hinge but is quadratically penalized.
+        'perceptron'is the linear loss used by the perceptron algorithm.
+        The other losses are designed for regression but can be useful in
+        classification as well; see SGDRegressor for a description.
 
     penalty : str, 'l2' or 'l1' or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
@@ -584,10 +590,12 @@ class SGDClassifier(BaseSGDClassifier, SelectorMixin):
         The verbosity level
 
     epsilon: float
-        Epsilon in the epsilon-insensitive loss functions;
-        only if `loss=='huber'` or `loss='epsilon_insensitive'`.
-        If the difference between the current prediction and the correct label
-        is below this threshold, the model is not updated.
+        Epsilon in the epsilon-insensitive loss functions; only if `loss` is
+        'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
+        For 'huber', determines the threshold at which it becomes less important
+        to get the prediction exactly right.
+        For epsilon-insensitive, any differences between the current prediction
+        and the correct label are ignored if they are less than this threshold.
 
     n_jobs: integer, optional
         The number of CPUs to use to do the OVA (One Versus All, for
@@ -948,10 +956,15 @@ class SGDRegressor(BaseSGDRegressor, SelectorMixin):
 
     Parameters
     ----------
-    loss : str, 'squared_loss' or 'huber'
+    loss : str, 'squared_loss', 'huber', 'epsilon_insensitive',
+                or 'squared_epsilon_insensitive'
         The loss function to be used. Defaults to 'squared_loss' which refers
-        to the ordinary least squares fit. 'huber' is an epsilon insensitive
-        loss function for robust regression.
+        to the ordinary least squares fit. 'huber' modifies 'squared_loss' to
+        focus less on getting outliers correct by switching from squared to
+        linear loss past a distance of epsilon. 'epsilon_insensitive' ignores
+        errors less than epsilon and is linear past that; this is the loss
+        function used in SVR. 'squared_epsilon_insensitive' is the same but
+        becomes squared loss past a tolerance of epsilon.
 
     penalty : str, 'l2' or 'l1' or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
@@ -987,10 +1000,12 @@ class SGDRegressor(BaseSGDRegressor, SelectorMixin):
         The verbosity level.
 
     epsilon: float
-        Epsilon in the epsilon-insensitive loss functions;
-        only if `loss=='huber'` or `loss='epsilon_insensitive'`.
-        If the difference between the current prediction and the correct label
-        is below this threshold, the model is not updated.
+        Epsilon in the epsilon-insensitive loss functions; only if `loss` is
+        'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
+        For 'huber', determines the threshold at which it becomes less important
+        to get the prediction exactly right.
+        For epsilon-insensitive, any differences between the current prediction
+        and the correct label are ignored if they are less than this threshold.
 
     learning_rate : string, optional
         The learning rate:
