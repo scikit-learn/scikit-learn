@@ -5,14 +5,14 @@ EAC: Evidence Accumulation Clustering
 
 # Author: Robert Layton <robertlayton@gmail.com>
 #
-# License: BSD
+# License: 3-clause BSD.
 
 import numpy as np
 
 from sklearn.cluster import KMeans, SpectralClustering
 
 from ..base import BaseEstimator, ClusterMixin
-from ..utils import check_random_state
+from ..utils import check_random_state, atleast2d_or_csr
 
 
 def eac(X, initial_clusterers=None, final_clusterer=None, use_distance=False,
@@ -37,7 +37,7 @@ def eac(X, initial_clusterers=None, final_clusterer=None, use_distance=False,
     use_distance: boolean, or callable TODO: default should be false
         If True, convert the coassociation matrix to distance using
         `D=1./(C + 1)`. If callable, the function is called with the
-        coassication matrix as input. If False (default), then the matrix is
+        coassociation matrix as input. If False (default), then the matrix is
         given as input to the `final_clusterer`.
     random_state: numpy.RandomState, optional
         The generator used to initialize the initial_clusterers.
@@ -59,7 +59,7 @@ def eac(X, initial_clusterers=None, final_clusterer=None, use_distance=False,
     accumulation." Pattern Recognition, 2002. Proceedings. 16th International
     Conference on. Vol. 4. IEEE, 2002.
     """
-    X = np.asarray(X)
+    X = atleast2d_or_csr(X)
     n_samples = X.shape[0]
     # If index order not given, create random order.
     random_state = check_random_state(random_state)
@@ -87,7 +87,6 @@ def eac(X, initial_clusterers=None, final_clusterer=None, use_distance=False,
             C = 1. - C
         elif callable(use_distance):  # If a callable
             C = use_distance(C)
-    np.savetxt(open("/home/bob/test_eac_data.txt", 'w'), C, fmt='%.3f')
     final_clusterer.fit(C)
     return final_clusterer
 
