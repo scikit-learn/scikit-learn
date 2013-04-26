@@ -8,6 +8,12 @@
 Changelog
 ---------
 
+   - Added an interactive version of `Andreas Müller`_'s
+     `Machine Learning Cheat Sheet (for scikit-learn)
+     <http://peekaboo-vision.blogspot.de/2013/01/machine-learning-cheat-sheet-for-scikit.html>`_
+     to the documentation. See :ref:`Choosing the right estimator <ml_map>`.
+     By `Jaques Grobler`_.
+
    - :class:`grid_search.GridSearchCV` and
      :func:`cross_validation.cross_val_score` now support the use of advanced
      scoring function such as area under the ROC curve and f-beta scores.
