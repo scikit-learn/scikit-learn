@@ -288,7 +288,7 @@ class KFold(object):
         current = 0
         if self.indices:
             ind = np.arange(n)
-        for i, fold_size in enumerate(fold_sizes):
+        for fold_size in fold_sizes:
             test_index = np.zeros(n, dtype=np.bool)
             start, stop = current, current + fold_size
             test_index[self.idxs[start:stop]] = True

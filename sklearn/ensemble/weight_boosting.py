@@ -628,8 +628,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         pred = None
         norm = 0.
 
-        for i, (weight, estimator) in enumerate(
-                zip(self.estimator_weights_, self.estimators_)):
+        for weight, estimator in zip(self.estimator_weights_,
+                                     self.estimators_):
 
             norm += weight
 
@@ -681,8 +681,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         pred = None
         norm = 0.
 
-        for i, (weight, estimator) in enumerate(
-                zip(self.estimator_weights_, self.estimators_)):
+        for weight, estimator in zip(self.estimator_weights_, 
+                                     self.estimators_):
 
             norm += weight
 
@@ -725,8 +725,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         n_classes = self.n_classes_
         proba = None
 
-        for i, (weight, estimator) in enumerate(
-                zip(self.estimator_weights_, self.estimators_)):
+        for weight, estimator in zip(self.estimator_weights_,
+                                     self.estimators_):
 
             current_proba = _samme_proba(estimator, n_classes, X)
 
@@ -768,8 +768,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         n_classes = self.n_classes_
         proba = None
 
-        for i, (weight, estimator) in enumerate(
-                zip(self.estimator_weights_, self.estimators_)):
+        for weight, estimator in zip(self.estimator_weights_,
+                                     self.estimators_):
 
             current_proba = _samme_proba(estimator, n_classes, X)
 

@@ -176,7 +176,7 @@ class ParameterSampler(object):
         rnd = check_random_state(self.random_state)
         # Always sort the keys of a dictionary, for reproducibility
         items = sorted(self.param_distributions.items())
-        for i in range(self.n_iter):
+        for _ in range(self.n_iter):
             params = dict()
             for k, v in items:
                 if hasattr(v, "rvs"):
