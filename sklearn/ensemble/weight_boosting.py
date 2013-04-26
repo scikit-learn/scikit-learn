@@ -611,11 +611,12 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         Returns
         -------
         score : array, shape = [n_samples, k]
-            The decision function of the input samples. Classes are
-            ordered by arithmetical order. Binary classification is a
-            special cases with ``k == 1``, otherwise ``k==n_classes``.
-            For binary classification, values closer to -1 or 1 mean more
-            like the first or second class in ``classes_``, respectively.
+            The decision function of the input samples. The order of
+            outputs is the same of that of the `classes_` attribute.
+            Binary classification is a special cases with ``k == 1``,
+            otherwise ``k==n_classes``. For binary classification,
+            values closer to -1 or 1 mean more like the first or second
+            class in ``classes_``, respectively.
         """
         if not self.estimators_:
             raise RuntimeError(
@@ -663,11 +664,12 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         Returns
         -------
         score : generator of array, shape = [n_samples, k]
-            The decision function of the input samples. Classes are
-            ordered by arithmetical order. Binary classification is a
-            special cases with ``k == 1``, otherwise ``k==n_classes``.
-            For binary classification, values closer to -1 or 1 mean more
-            like the first or second class in ``classes_``, respectively.
+            The decision function of the input samples. The order of
+            outputs is the same of that of the `classes_` attribute.
+            Binary classification is a special cases with ``k == 1``,
+            otherwise ``k==n_classes``. For binary classification,
+            values closer to -1 or 1 mean more like the first or second
+            class in ``classes_``, respectively.
         """
         if not self.estimators_:
             raise RuntimeError(
@@ -717,8 +719,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         Returns
         -------
         p : array of shape = [n_samples]
-            The class probabilities of the input samples. Classes are
-            ordered by arithmetical order.
+            The class probabilities of the input samples. The order of
+            outputs is the same of that of the `classes_` attribute.
         """
         n_classes = self.n_classes_
         proba = None
@@ -760,8 +762,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         Returns
         -------
         p : generator of array, shape = [n_samples]
-            The class probabilities of the input samples. Classes are
-            ordered by arithmetical order.
+            The class probabilities of the input samples. The order of
+            outputs is the same of that of the `classes_` attribute.
         """
         n_classes = self.n_classes_
         proba = None
@@ -798,8 +800,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         Returns
         -------
         p : array of shape = [n_samples]
-            The class log-probabilities of the input samples. Classes are
-            ordered by arithmetical order.
+            The class probabilities of the input samples. The order of
+            outputs is the same of that of the `classes_` attribute.
         """
         return np.log(self.predict_proba(X))
 
