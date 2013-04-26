@@ -433,12 +433,14 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
     """ABC for LibSVM-based classifiers."""
 
     def _validate_targets(self, y):
-        self.classes_, y = unique(y, return_inverse=True)
-        self.class_weight_ = compute_class_weight(self.class_weight,
-                                                  self.classes_, y)
-        if len(np.unique(y)) < 2:
+        cls, y = unique(y, return_inverse=True)
+        self.class_weight_ = compute_class_weight(self.class_weight, cls, y)
+        if len(cls) < 2:
             raise ValueError(
-                "The number of classes has to be greater than one")
+                "The number of classes has to be greater than one; got %d"
+                % len(cls))
+
+        self.classes_ = cls
 
         return np.asarray(y, dtype=np.float64, order='C')
 
