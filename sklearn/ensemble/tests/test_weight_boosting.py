@@ -210,7 +210,7 @@ def test_base_estimator():
     clf = AdaBoostRegressor(RandomForestRegressor(), random_state=0)
     clf.fit(X, y)
 
-    clf = AdaBoostRegressor(SVR(), radom_state=0)
+    clf = AdaBoostRegressor(SVR(), random_state=0)
     clf.fit(X, y)
 
 
