@@ -131,19 +131,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                              "by not using the ``sparse`` parameter")
 
         X = atleast2d_or_csr(X, dtype=np.float64, order='C')
-
-        if self._impl in ['c_svc', 'nu_svc']:
-            # classification
-            self.classes_, y = unique(y, return_inverse=True)
-            self.class_weight_ = compute_class_weight(self.class_weight,
-                                                      self.classes_, y)
-        else:
-            self.class_weight_ = np.empty(0)
-        if self._impl != "one_class" and len(np.unique(y)) < 2:
-            raise ValueError("The number of classes has to be greater than"
-                             " one.")
-
-        y = np.asarray(y, dtype=np.float64, order='C')
+        y = self._validate_targets(y)
 
         sample_weight = np.asarray([]
                                    if sample_weight is None
@@ -189,6 +177,16 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         if self._impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
             self.intercept_ *= -1
         return self
+
+    def _validate_targets(self, y):
+        """Validation of y and class_weight.
+
+        Default implementation for SVR and one-class; overridden in BaseSVC.
+        """
+        # XXX this is ugly.
+        # Regression models should not have a class_weight_ attribute.
+        self.class_weight_ = np.empty(0)
+        return np.asarray(y, dtype=np.float64, order='C')
 
     def _warn_from_fit_status(self):
         assert self.fit_status_ in (0, 1)
@@ -433,6 +431,16 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
 class BaseSVC(BaseLibSVM, ClassifierMixin):
     """ABC for LibSVM-based classifiers."""
+
+    def _validate_targets(self, y):
+        self.classes_, y = unique(y, return_inverse=True)
+        self.class_weight_ = compute_class_weight(self.class_weight,
+                                                  self.classes_, y)
+        if len(np.unique(y)) < 2:
+            raise ValueError(
+                "The number of classes has to be greater than one")
+
+        return np.asarray(y, dtype=np.float64, order='C')
 
     def predict(self, X):
         """Perform classification on samples in X.
