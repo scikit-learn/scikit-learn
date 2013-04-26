@@ -205,7 +205,7 @@ class GMMTester():
         # the log likelihood to make sure that it increases after each
         # iteration.
         trainll = []
-        for iter in range(5):
+        for _ in range(5):
             g.params = params
             g.init_params = ''
             g.fit(X)
