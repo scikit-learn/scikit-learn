@@ -47,7 +47,7 @@ def test_classification_toy():
 
 def test_regression_toy():
     """Check classification on a toy dataset."""
-    clf = AdaBoostRegressor()
+    clf = AdaBoostRegressor(random_state=0)
     clf.fit(X, y)
     assert_array_equal(clf.predict(T), true_result)
 
@@ -64,7 +64,7 @@ def test_iris():
 
 def test_boston():
     """Check consistency on dataset boston house prices."""
-    clf = AdaBoostRegressor()
+    clf = AdaBoostRegressor(random_state=0)
     clf.fit(boston.data, boston.target)
     score = clf.score(boston.data, boston.target)
     assert score > 0.85
@@ -92,7 +92,7 @@ def test_staged_predict():
         assert_array_almost_equal(score, staged_scores[-1])
 
     # AdaBoost regression
-    clf = AdaBoostRegressor(n_estimators=10)
+    clf = AdaBoostRegressor(n_estimators=10, random_state=0)
     clf.fit(boston.data, boston.target)
 
     predictions = clf.predict(boston.data)
@@ -117,7 +117,7 @@ def test_gridsearch():
     clf.fit(iris.data, iris.target)
 
     # AdaBoost regression
-    boost = AdaBoostRegressor()
+    boost = AdaBoostRegressor(random_state=0)
     parameters = {'n_estimators': (1, 2),
                   'base_estimator__max_depth': (1, 2)}
     clf = GridSearchCV(boost, parameters)
@@ -141,7 +141,7 @@ def test_pickle():
         assert_equal(score, score2)
 
     # Adaboost regressor
-    obj = AdaBoostRegressor()
+    obj = AdaBoostRegressor(random_state=0)
     obj.fit(boston.data, boston.target)
     score = obj.score(boston.data, boston.target)
     s = pickle.dumps(obj)
@@ -188,7 +188,8 @@ def test_error():
                   X, y)
 
     assert_raises(TypeError,
-                  AdaBoostRegressor(base_estimator=DummyClassifier()).fit,
+                  AdaBoostRegressor(base_estimator=DummyClassifier(),
+                                    random_state=0).fit,
                   X, y)
 
 
@@ -206,10 +207,10 @@ def test_base_estimator():
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.svm import SVR
 
-    clf = AdaBoostRegressor(RandomForestRegressor())
+    clf = AdaBoostRegressor(RandomForestRegressor(), random_state=0)
     clf.fit(X, y)
 
-    clf = AdaBoostRegressor(SVR())
+    clf = AdaBoostRegressor(SVR(), radom_state=0)
     clf.fit(X, y)
 
 
