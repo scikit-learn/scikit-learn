@@ -500,8 +500,8 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
         If ``True``, X will be copied; else, it may be overwritten.
     """
     if Xy is None:
-        X = atleast2d_or_csc(X, copy=copy_X and fit_intercept
-                                and not sparse.isspmatrix(X))
+        X = atleast2d_or_csc(X, copy=(copy_X and fit_intercept and not
+                                      sparse.isspmatrix(X)))
         if not sparse.isspmatrix(X):
             # X can be touched inplace thanks to the above line
             X, y, _, _, _ = center_data(X, y, fit_intercept,
@@ -1019,7 +1019,8 @@ class LassoCV(LinearModelCV, RegressorMixin):
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
         Specific crossvalidation objects can be passed, see the
-        :mod:`sklearn.cross_validation` module for the list of possible objects.
+        :mod:`sklearn.cross_validation` module for the list of possible
+        objects.
 
     verbose : bool or integer
         amount of verbosity
@@ -1117,7 +1118,8 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
         Specific crossvalidation objects can be passed, see the
-        :mod:`sklearn.cross_validation` module for the list of possible objects.
+        :mod:`sklearn.cross_validation` module for the list of possible
+        objects.
 
     verbose : bool or integer
         amount of verbosity

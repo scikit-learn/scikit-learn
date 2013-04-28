@@ -822,10 +822,12 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         else:
             j_indices, feature_to_pos, n_doc, features_per_doc = \
                 self._count_new_vocab(raw_documents)
-            max_doc_count = (max_df if isinstance(max_df, numbers.Integral)
-                                    else int(round(max_df * n_doc)))
-            min_doc_count = (min_df if isinstance(min_df, numbers.Integral)
-                                    else int(round(min_df * n_doc)))
+            max_doc_count = (max_df
+                             if isinstance(max_df, numbers.Integral)
+                             else int(round(max_df * n_doc)))
+            min_doc_count = (min_df
+                             if isinstance(min_df, numbers.Integral)
+                             else int(round(min_df * n_doc)))
             if max_doc_count < min_doc_count:
                 raise ValueError(
                     "max_df corresponds to < documents than min_df")

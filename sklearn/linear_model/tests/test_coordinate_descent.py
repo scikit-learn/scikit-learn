@@ -179,9 +179,8 @@ def test_lasso_path():
 def test_enet_path():
     # We use a large number of samples and of informative features so that
     # the l1_ratio selected is more toward ridge than lasso
-    X, y, X_test, y_test = build_dataset(n_samples=200,
-                                n_features=100,
-                                n_informative_features=100)
+    X, y, X_test, y_test = build_dataset(n_samples=200, n_features=100,
+                                         n_informative_features=100)
     max_iter = 150
 
     with warnings.catch_warnings():

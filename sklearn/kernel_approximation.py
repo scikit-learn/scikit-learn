@@ -16,8 +16,8 @@ from scipy.linalg import svd
 
 from .base import BaseEstimator
 from .base import TransformerMixin
-from .utils import array2d, atleast2d_or_csr, check_random_state, \
-        as_float_array
+from .utils import (array2d, atleast2d_or_csr, check_random_state,
+                    as_float_array)
 from .utils.extmath import safe_sparse_dot
 from .metrics.pairwise import pairwise_kernels
 

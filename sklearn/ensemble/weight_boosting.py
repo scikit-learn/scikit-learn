@@ -681,7 +681,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         pred = None
         norm = 0.
 
-        for weight, estimator in zip(self.estimator_weights_, 
+        for weight, estimator in zip(self.estimator_weights_,
                                      self.estimators_):
 
             norm += weight

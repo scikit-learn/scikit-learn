@@ -2,7 +2,6 @@
 Testing for export functions of decision trees (sklearn.tree.export).
 """
 
-import numpy as np
 from numpy.testing import assert_equal
 from nose.tools import assert_raises
 
