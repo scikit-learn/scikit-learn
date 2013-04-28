@@ -823,9 +823,9 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             j_indices, feature_to_pos, n_doc, features_per_doc = \
                 self._count_new_vocab(raw_documents)
             max_doc_count = (max_df if isinstance(max_df, numbers.Integral)
-                                    else int(round(max_df * n_doc)))
+                             else int(round(max_df * n_doc)))
             min_doc_count = (min_df if isinstance(min_df, numbers.Integral)
-                                    else int(round(min_df * n_doc)))
+                             else int(round(min_df * n_doc)))
             if max_doc_count < min_doc_count:
                 raise ValueError(
                     "max_df corresponds to < documents than min_df")
@@ -1025,9 +1025,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
 
             # avoid division by zeros for features that occur in all documents
             idf = np.log(float(n_samples) / df) + 1.0
-            idf_diag = sp.lil_matrix((n_features, n_features))
-            idf_diag.setdiag(idf)
-            self._idf_diag = sp.csc_matrix(idf_diag)
+            self._idf_diag = sp.spdiags(idf,
+                                        diags=0, m=n_features, n=n_features)
 
         return self
 
