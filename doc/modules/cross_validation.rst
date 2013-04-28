@@ -1,7 +1,7 @@
 .. _cross_validation:
 
 ===================================================
-Cross-Validation: evaluating estimator performance
+Cross-validation: evaluating estimator performance
 ===================================================
 
 .. currentmodule:: sklearn.cross_validation
@@ -48,18 +48,18 @@ However, by defining these two sets, we drastically reduce the number
 of samples which can be used for learning the model, and the results can
 depend on a particular random choice for the pair of (train, test) sets.
 
-A solution to this problem is to split the whole data several consecutive times
-into different training and test sets, then train and test on these.
-Thus in every round of this procedure,
-the data is partitioned into complementary subsets:
-
- * Analysis is performed on one of the subsets (training set)
- * Validation of that analysis is then done on the other subset (testing set).
-
-This is done for several rounds and the averaged value
-of the prediction scores obtained with the different sets is returned.
-Such a procedure is called
+A solution to this problem is a procedure called *k*-fold
 `cross-validation <http://en.wikipedia.org/wiki/Cross-validation_(statistics)>`_.
+In *k*-fold CV, the whole data set is split into *k* smaller sets.
+Then, the following is done for each of the *k* "folds":
+
+ * A model is trained using *k*-1 of the folds as training data;
+ * the resulting model is validated on the remaining part of the data
+   (i.e., it is used as a test set to compute a performance measure
+   such as accuracy).
+
+The performance measure reported by *k*-fold cross-validation
+is then the average of the values computed in the loop.
 This approach can be computationally expensive,
 but does not waste too much data
 (as it is the case when fixing an arbitrary test set),
@@ -74,7 +74,7 @@ The simplest way to use perform cross-validation in to call the
 :func:`cross_val_score` helper function on the estimator and the dataset.
 
 The following example demonstrates how to estimate the accuracy of a
-linear kernel Support Vector Machine on the iris dataset by splitting
+linear kernel support vector machine on the iris dataset by splitting
 the data and fitting a model and computing the score 5 consecutive times
 (with different splits each time)::
 
