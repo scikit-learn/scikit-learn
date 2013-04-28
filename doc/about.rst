@@ -43,7 +43,8 @@ events.
 
 `Google <http://code.google.com/opensource/>`_ sponsored David
 Cournapeau with a Summer of Code Scholarship in the summer of 2007 and
-`Vlad Niculae`_ in 2011. If
+`Vlad Niculae`_ in 2011. It also provided funding for sprints and events
+around scikit-learn. If
 you would like to participate in the next Google Summer of code
 program, please see `this page
 <http://github.com/scikit-learn/scikit-learn/wiki/SummerOfCode>`_
@@ -53,3 +54,9 @@ The `NeuroDebian <http://neuro.debian.net>`_ project providing `Debian
 `Dr. James V. Haxby <http://haxbylab.dartmouth.edu/>`_ (`Dartmouth
 College <http://www.dartmouth.edu/~psych/>`_).
 
+The `PSF <http://www.python.org/psf/>`_ helped find and manage funding for our
+2011 Grenada sprint. More information can be found `here
+<https://github.com/scikit-learn/scikit-learn/wiki/Past-sprints#granada-19th-21th-dec-2011>`_
+
+`tinyclues <http://www.tinyclues.com/>`_ funded the 2011 international Grenada
+sprint.
