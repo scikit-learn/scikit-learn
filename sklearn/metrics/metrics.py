@@ -1275,7 +1275,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
-        labels = np.asarray(labels, dtype=np.int)
+        labels = np.asarray(labels)
 
     n_labels = labels.size
     true_pos = np.zeros(n_labels, dtype=np.double)
