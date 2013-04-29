@@ -265,24 +265,33 @@ def test_precision_recall_f1_score_binary():
     """Test Precision Recall and F1 Score for binary classification task"""
     y_true, y_pred, _ = make_prediction(binary=True)
 
-    # detailed measures for each class
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average=None)
-    assert_array_almost_equal(p, [0.73, 0.85], 2)
-    assert_array_almost_equal(r, [0.88, 0.68], 2)
-    assert_array_almost_equal(f, [0.80, 0.76], 2)
-    assert_array_equal(s, [25, 25])
+    def test(y_true, y_pred, string_type=False):
+        # detailed measures for each class
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average=None)
+        assert_array_almost_equal(p, [0.73, 0.85], 2)
+        assert_array_almost_equal(r, [0.88, 0.68], 2)
+        assert_array_almost_equal(f, [0.80, 0.76], 2)
+        assert_array_equal(s, [25, 25])
 
-    # individual scoring function that can be used for grid search: in the
-    # binary class case the score is the value of the measure for the positive
-    # class (e.g. label == 1)
-    ps = precision_score(y_true, y_pred)
-    assert_array_almost_equal(ps, 0.85, 2)
+        # individual scoring function that can be used for grid search: in
+        # the binary class case the score is the value of the measure for
+        # the positive class (e.g. label == 1)
+        pos_label = '1' if string_type else 1
 
-    rs = recall_score(y_true, y_pred)
-    assert_array_almost_equal(rs, 0.68, 2)
+        ps = precision_score(y_true, y_pred, pos_label=pos_label)
+        assert_array_almost_equal(ps, 0.85, 2)
 
-    fs = f1_score(y_true, y_pred)
-    assert_array_almost_equal(fs, 0.76, 2)
+        rs = recall_score(y_true, y_pred, pos_label=pos_label)
+        assert_array_almost_equal(rs, 0.68, 2)
+
+        fs = f1_score(y_true, y_pred, pos_label=pos_label)
+        assert_array_almost_equal(fs, 0.76, 2)
+
+    test(y_true,
+         y_pred)
+    test(map(str, y_true),
+         map(str, y_pred), True)
 
 
 def test_average_precision_score_duplicate_values():
