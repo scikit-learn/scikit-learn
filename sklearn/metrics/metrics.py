@@ -737,7 +737,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
-        labels = np.asarray(labels, dtype=np.int)
+        labels = np.asarray(labels)
 
     n_labels = labels.size
     label_to_ind = dict((y, x) for x, y in enumerate(labels))
@@ -750,9 +750,14 @@ def confusion_matrix(y_true, y_pred, labels=None):
     y_pred = y_pred[ind]
     y_true = y_true[ind]
 
-    CM = np.asarray(coo_matrix((np.ones(y_true.shape[0]), (y_true, y_pred)),
-                               shape=(n_labels, n_labels),
-                               dtype=np.int).todense())
+    CM = np.asarray(
+        coo_matrix(
+            (np.ones(y_true.shape[0], dtype=np.int), (y_true, y_pred)),
+            shape=(n_labels, n_labels),
+            dtype=np.long
+        ).todense()
+    )
+
     return CM
 
 
