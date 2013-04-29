@@ -367,48 +367,73 @@ def test_precision_recall_f1_score_multiclass():
     """Test Precision Recall and F1 Score for multiclass classification task"""
     y_true, y_pred, _ = make_prediction(binary=False)
 
-    # compute scores with default labels introspection
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average=None)
-    assert_array_almost_equal(p, [0.83, 0.33, 0.42], 2)
-    assert_array_almost_equal(r, [0.79, 0.09, 0.90], 2)
-    assert_array_almost_equal(f, [0.81, 0.15, 0.57], 2)
-    assert_array_equal(s, [24, 31, 20])
+    def test(y_true, y_pred, string_type=False):
+        # compute scores with default labels introspection
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average=None)
+        assert_array_almost_equal(p, [0.83, 0.33, 0.42], 2)
+        assert_array_almost_equal(r, [0.79, 0.09, 0.90], 2)
+        assert_array_almost_equal(f, [0.81, 0.15, 0.57], 2)
+        assert_array_equal(s, [24, 31, 20])
 
-    # averaging tests
-    ps = precision_score(y_true, y_pred, pos_label=1, average='micro')
-    assert_array_almost_equal(ps, 0.53, 2)
+        # averaging tests
+        pos_label = '1' if string_type else 1
 
-    rs = recall_score(y_true, y_pred, average='micro')
-    assert_array_almost_equal(rs, 0.53, 2)
+        ps = precision_score(y_true, y_pred,
+                             pos_label=pos_label,
+                             average='micro')
+        assert_array_almost_equal(ps, 0.53, 2)
 
-    fs = f1_score(y_true, y_pred, average='micro')
-    assert_array_almost_equal(fs, 0.53, 2)
+        rs = recall_score(y_true, y_pred,
+                          average='micro')
+        assert_array_almost_equal(rs, 0.53, 2)
 
-    ps = precision_score(y_true, y_pred, average='macro')
-    assert_array_almost_equal(ps, 0.53, 2)
+        fs = f1_score(y_true, y_pred,
+                      average='micro')
+        assert_array_almost_equal(fs, 0.53, 2)
 
-    rs = recall_score(y_true, y_pred, average='macro')
-    assert_array_almost_equal(rs, 0.60, 2)
+        ps = precision_score(y_true, y_pred,
+                             pos_label=pos_label,
+                             average='macro')
+        assert_array_almost_equal(ps, 0.53, 2)
 
-    fs = f1_score(y_true, y_pred, average='macro')
-    assert_array_almost_equal(fs, 0.51, 2)
+        rs = recall_score(y_true, y_pred,
+                          average='macro')
+        assert_array_almost_equal(rs, 0.60, 2)
 
-    ps = precision_score(y_true, y_pred, average='weighted')
-    assert_array_almost_equal(ps, 0.51, 2)
+        fs = f1_score(y_true, y_pred,
+                      average='macro')
+        assert_array_almost_equal(fs, 0.51, 2)
 
-    rs = recall_score(y_true, y_pred, average='weighted')
-    assert_array_almost_equal(rs, 0.53, 2)
+        ps = precision_score(y_true, y_pred,
+                             pos_label=pos_label,
+                             average='weighted')
+        assert_array_almost_equal(ps, 0.51, 2)
 
-    fs = f1_score(y_true, y_pred, average='weighted')
-    assert_array_almost_equal(fs, 0.47, 2)
+        rs = recall_score(y_true, y_pred,
+                          average='weighted')
+        assert_array_almost_equal(rs, 0.53, 2)
 
-    # same prediction but with and explicit label ordering
-    p, r, f, s = precision_recall_fscore_support(
-        y_true, y_pred, labels=[0, 2, 1], average=None)
-    assert_array_almost_equal(p, [0.83, 0.41, 0.33], 2)
-    assert_array_almost_equal(r, [0.79, 0.90, 0.10], 2)
-    assert_array_almost_equal(f, [0.81, 0.57, 0.15], 2)
-    assert_array_equal(s, [24, 20, 31])
+        fs = f1_score(y_true, y_pred,
+                      average='weighted')
+        assert_array_almost_equal(fs, 0.47, 2)
+
+        # same prediction but with and explicit label ordering
+        labels = ['0', '2', '1'] if string_type else [0, 2, 1]
+
+        p, r, f, s = precision_recall_fscore_support(
+            y_true, y_pred, labels=labels, average=None)
+
+        assert_array_almost_equal(p, [0.83, 0.41, 0.33], 2)
+        assert_array_almost_equal(r, [0.79, 0.90, 0.10], 2)
+        assert_array_almost_equal(f, [0.81, 0.57, 0.15], 2)
+        assert_array_equal(s, [24, 20, 31])
+
+    test(y_true,
+         y_pred)
+    test(map(str, y_true),
+         map(str, y_pred),
+         string_type=True)
 
 
 def test_precision_recall_f1_score_multiclass_pos_label_none():
