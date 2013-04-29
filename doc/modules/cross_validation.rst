@@ -10,15 +10,18 @@ Learning the parameters of a prediction function and testing it on the
 same data is a methodological mistake: a model that would just repeat
 the labels of the samples that it has just seen would have a perfect
 score but would fail to predict anything useful on yet-unseen data.
+This situation is called **overfitting**.
+To avoid it, it is common practice when performing
+a (supervised) machine learning experiment
+to hold out part of the available data as a **test set** ``X_test, y_test``.
+Note that the word "experiment" is not intended
+to denote academic use only,
+because even in commercial settings
+machine learning usually starts out experimentally.
 
-To **avoid over-fitting**, we have to define two different sets :
-a **training set** ``X_train, y_train`` which is used for learning
-the parameters of a predictive model, and a **testing set** ``X_test,
-y_test`` which is used for evaluating the fitted predictive model.
-
-In scikit-learn such a random split can be quickly computed with the
-:func:`train_test_split` helper function. Let's load the iris data set to
-fit a linear Support Vector Machine model on it::
+In scikit-learn a random split into training and test sets
+can be quickly computed with the :func:`train_test_split` helper function.
+Let's load the iris data set to fit a linear support vector machine on it::
 
   >>> import numpy as np
   >>> from sklearn import cross_validation
@@ -44,16 +47,36 @@ data for testing (evaluating) our classifier::
   >>> clf.score(X_test, y_test)                           # doctest: +ELLIPSIS
   0.96...
 
-However, by defining these two sets, we drastically reduce the number
-of samples which can be used for learning the model, and the results can
-depend on a particular random choice for the pair of (train, test) sets.
+When evaluating different settings ("hyperparameters") for estimators,
+such as the ``C`` setting that must be manually set for an SVM,
+there is still a risk of overfitting *on the test set*
+because the parameters can be tweaked until the estimator performs optimally.
+This way, knowledge about the test set can "leak" into the model
+and evaluation metrics no longer report on generalization performance.
+To solve this problem, yet another part of the dataset can be held out
+as a so-called "validation set": training proceeds on the training set,
+after which evaluation is done on the validation set,
+and when the experiment seems to successful,
+final evaluation can be done on the test set.
 
-A solution to this problem is a procedure called *k*-fold
-`cross-validation <http://en.wikipedia.org/wiki/Cross-validation_(statistics)>`_.
-In *k*-fold CV, the whole data set is split into *k* smaller sets.
-Then, the following is done for each of the *k* "folds":
+However, by the available data into three sets,
+we drastically reduce the number of samples
+which can be used for learning the model,
+and the results can depend on a particular random choice for the pair of
+(train, validation) sets.
 
- * A model is trained using *k*-1 of the folds as training data;
+A solution to this problem is a procedure called
+`cross-validation <http://en.wikipedia.org/wiki/Cross-validation_(statistics)>`_
+(CV for short).
+A test set should still be held out for final evaluation,
+but the validation set is no longer needed when doing CV.
+In the basic approach, called *k*-fold CV,
+the training set is split into *k* smaller sets
+(other approaches are described below,
+but generally follow the same principles).
+The following is procedure is followed for each of the *k* "folds":
+
+ * A model is trained using :math:`k-1` of the folds as training data;
  * the resulting model is validated on the remaining part of the data
    (i.e., it is used as a test set to compute a performance measure
    such as accuracy).
@@ -155,10 +178,10 @@ validation strategies.
 K-fold
 ------
 
-:class:`KFold` divides all the samples in math:`K` groups of samples,
-called folds (if :math:`K = n`, this is equivalent to the *Leave One
+:class:`KFold` divides all the samples in math:`k` groups of samples,
+called folds (if :math:`k = n`, this is equivalent to the *Leave One
 Out* strategy), of equal sizes (if possible). The prediction function is
-learned using :math:`K - 1` folds, and the fold left out is used for test.
+learned using :math:`k - 1` folds, and the fold left out is used for test.
 
 Example of 2-fold::
 
@@ -196,12 +219,13 @@ when creating the cross-validation procedure::
   [0 1] [2 3]
 
 
-Stratified K-Fold
+Stratified k-fold
 -----------------
 
-:class:`StratifiedKFold` is a variation of *K-fold*, which returns
-stratified folds, *i.e* which creates folds by preserving the same
-percentage for each target class as in the complete set.
+:class:`StratifiedKFold` is a variation of *k-fold* which returns
+*stratified* folds:
+each set contains the same percentage of samples
+of each target class as the complete set.
 
 Example of stratified 2-fold::
 
