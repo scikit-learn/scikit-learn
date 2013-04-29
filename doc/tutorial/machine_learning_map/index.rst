@@ -1,7 +1,7 @@
 .. _ml_map:
 
 
-.. include:: ../includes/big_toc_css.rst
+.. include:: ../../includes/big_toc_css.rst
 
 Choosing the right estimator
 =======================================================
@@ -35,11 +35,19 @@ Click on any estimator in the chart below to see it's documentation.
     }
     div.content {
         margin-left: 0;
-	height: 1660px;
-	width: 2330px;
+	height: 1300px;
+	width: 1680px;
     }
     div.map {
-    	width: 2117px;
+    	position: absolute;
+	left: -145px;
+	top: 195px;
+	width: 2117px;
+  	-webkit-transform: scale(0.67); /* Saf3.1+, Chrome */
+     	-moz-transform: scale(0.67); /* FF3.5+ */
+     	-ms-transform: scale(0.67); /* IE9 */
+       	-o-transform: scale(0.67); /* Opera 10.5+ */
+        transform: scale(0.67);
     }
     div.body img {
         max-width: 100%;
@@ -48,7 +56,7 @@ Click on any estimator in the chart below to see it's documentation.
         max-width: 2150px;
 	margin-left: auto;
 	margin-right: auto;
-	padding-left: 200px;
+
     }
     p.logo {
     	padding-left: 0px;
@@ -58,6 +66,7 @@ Click on any estimator in the chart below to see it's documentation.
     <body>
         <script type="text/javascript" src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.0/jquery.min.js"></script>
 	<script type="text/javascript" src="../../_static/jquery.maphilight.min.js"></script>
+	<script type="text/javascript" src="../../_static/jquery.min.js"></script>
 	<script type="text/javascript">$(function() {
 		$('.map').maphilight({
 	            fade: true
