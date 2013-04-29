@@ -16,7 +16,7 @@ print(__doc__)
 # Authors: Gael Varoquaux
 #          Jaques Grobler
 #          Kevin Hughes
-# License: BSD
+# License: BSD 3 clause
 
 from sklearn.decomposition import PCA
 

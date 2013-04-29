@@ -22,7 +22,7 @@ randomly) is also shown.
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #
-# License: BSD
+# License: BSD 3 clause
 
 print(__doc__)
 import numpy as np

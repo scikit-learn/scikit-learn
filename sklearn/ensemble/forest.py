@@ -33,7 +33,7 @@ Single and multi-output problems are both handled.
 """
 
 # Authors: Gilles Louppe, Brian Holt
-# License: BSD 3
+# License: BSD 3 clause
 
 from __future__ import division
 

@@ -20,7 +20,7 @@ The bar plot indicates the accuracy, training time (normalized) and test time
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Mathieu Blondel <mathieu@mblondel.org>
 #         Lars Buitinck <L.J.Buitinck@uva.nl>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 from __future__ import print_function
 

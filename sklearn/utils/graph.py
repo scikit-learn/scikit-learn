@@ -8,7 +8,7 @@ sparse matrices.
 # Authors: Aric Hagberg <hagberg@lanl.gov>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Jake Vanderplas <vanderplas@astro.washington.edu>
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 from scipy import sparse

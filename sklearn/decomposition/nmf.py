@@ -5,7 +5,7 @@
 # Author: Chih-Jen Lin, National Taiwan University (original projected gradient
 #     NMF implementation)
 # Author: Anthony Di Franco (original Python and NumPy port)
-# License: BSD
+# License: BSD 3 clause
 
 
 from __future__ import division

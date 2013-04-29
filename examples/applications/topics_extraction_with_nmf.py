@@ -36,7 +36,7 @@ edu reply pain health david article medical medicine 16
 """
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 from __future__ import print_function
 

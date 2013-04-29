@@ -23,7 +23,7 @@ value of k on various overlapping sub-samples of the dataset.
 print(__doc__)
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 import numpy as np
 import pylab as pl
