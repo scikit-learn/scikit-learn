@@ -44,7 +44,7 @@ Here is a sample output of a run on a quad-core machine::
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Mathieu Blondel <mathieu@mblondel.org>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 from __future__ import print_function
 
@@ -92,9 +92,9 @@ pipeline = Pipeline([
     ('clf', SGDClassifier()),
 ])
 
+# uncommenting more parameters will give better exploring power but will
+# increase processing time in a combinatorial way
 parameters = {
-    # uncommenting more parameters will give better exploring power but will
-    # increase processing time in a combinatorial way
     'vect__max_df': (0.5, 0.75, 1.0),
     #'vect__max_features': (None, 5000, 10000, 50000),
     'vect__ngram_range': ((1, 1), (1, 2)),  # unigrams or bigrams

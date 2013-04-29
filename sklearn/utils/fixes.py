@@ -7,7 +7,7 @@ at which the fixe is no longer needed.
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Fabian Pedregosa <fpedregosa@acm.org>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
-# License: BSD
+# License: BSD 3 clause
 
 import collections
 from operator import itemgetter

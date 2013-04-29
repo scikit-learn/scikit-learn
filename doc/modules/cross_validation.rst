@@ -1,7 +1,7 @@
 .. _cross_validation:
 
 ===================================================
-Cross-Validation: evaluating estimator performance
+Cross-validation: evaluating estimator performance
 ===================================================
 
 .. currentmodule:: sklearn.cross_validation
@@ -17,7 +17,7 @@ the parameters of a predictive model, and a **testing set** ``X_test,
 y_test`` which is used for evaluating the fitted predictive model.
 
 In scikit-learn such a random split can be quickly computed with the
-:func:`train_test_split` helper function. Let load the iris data set to
+:func:`train_test_split` helper function. Let's load the iris data set to
 fit a linear Support Vector Machine model on it::
 
   >>> import numpy as np
@@ -48,13 +48,23 @@ However, by defining these two sets, we drastically reduce the number
 of samples which can be used for learning the model, and the results can
 depend on a particular random choice for the pair of (train, test) sets.
 
-A solution is to **split the whole data several consecutive times in
-different train set and test set**, and to return the averaged value of
-the prediction scores obtained with the different sets. Such a procedure
-is called **cross-validation**. This approach can be **computationally
-expensive, but does not waste too much data** (as it is the case when
-fixing an arbitrary test set), which is a major advantage in problem
-such as inverse inference where the number of samples is very small.
+A solution to this problem is a procedure called *k*-fold
+`cross-validation <http://en.wikipedia.org/wiki/Cross-validation_(statistics)>`_.
+In *k*-fold CV, the whole data set is split into *k* smaller sets.
+Then, the following is done for each of the *k* "folds":
+
+ * A model is trained using *k*-1 of the folds as training data;
+ * the resulting model is validated on the remaining part of the data
+   (i.e., it is used as a test set to compute a performance measure
+   such as accuracy).
+
+The performance measure reported by *k*-fold cross-validation
+is then the average of the values computed in the loop.
+This approach can be computationally expensive,
+but does not waste too much data
+(as it is the case when fixing an arbitrary test set),
+which is a major advantage in problem such as inverse inference
+where the number of samples is very small.
 
 
 Computing cross-validated metrics
@@ -64,7 +74,7 @@ The simplest way to use perform cross-validation in to call the
 :func:`cross_val_score` helper function on the estimator and the dataset.
 
 The following example demonstrates how to estimate the accuracy of a
-linear kernel Support Vector Machine on the iris dataset by splitting
+linear kernel support vector machine on the iris dataset by splitting
 the data and fitting a model and computing the score 5 consecutive times
 (with different splits each time)::
 
@@ -288,7 +298,7 @@ a training set using the samples of all the experiments except one::
 
   >>> lolo = LeaveOneLabelOut(labels)
   >>> print(lolo)
-  sklearn.cross_validation.LeaveOneLabelOut(labels=[1, 1, 2, 2])
+  sklearn.cross_validation.LeaveOneLabelOut(labels=[1 1 2 2])
 
   >>> for train, test in lolo:
   ...     print("%s %s" % (train, test))
@@ -315,7 +325,7 @@ Example of Leave-2-Label Out::
 
   >>> lplo = LeavePLabelOut(labels, 2)
   >>> print(lplo)
-  sklearn.cross_validation.LeavePLabelOut(labels=[1, 1, 2, 2, 3, 3], p=2)
+  sklearn.cross_validation.LeavePLabelOut(labels=[1 1 2 2 3 3], p=2)
 
   >>> for train, test in lplo:
   ...     print("%s %s" % (train, test))

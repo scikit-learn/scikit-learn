@@ -24,10 +24,10 @@ Changelog
      multi-label classification and a new metric :func:`metrics.hamming_loss`
      is added with multi-label support by `Arnaud Joly`_.
 
-   - Much reduced memory usage in
+   - Speed and memory usage improvements in
      :class:`feature_extraction.text.CountVectorizer` and
      :class:`feature_extraction.text.TfidfVectorizer`,
-     by Jochen Wersdörfer.
+     by Jochen Wersdörfer and Roman Sinayev.
 
    - The ``min_df`` parameter in
      :class:`feature_extraction.text.CountVectorizer` and
@@ -50,6 +50,9 @@ Changelog
      :class:`linear_model.SGDRegressor` now have a ``sparsify`` method that
      converts their ``coef_`` into a sparse matrix, meaning stored models
      trained using these estimators can be made much more compact.
+
+   - :class:`linear_model.SGDClassifier` now produces multiclass probability
+     estimates when trained under log loss or modified Huber loss.
 
    - Hyperlinks to documentation in example code on the website by
      `Martin Luessi`_.

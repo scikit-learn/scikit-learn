@@ -15,7 +15,7 @@ from ..neighbors import NearestNeighbors
 
 
 def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
-    """Estimate the bandwith to use with MeanShift algorithm
+    """Estimate the bandwidth to use with MeanShift algorithm
 
     Parameters
     ----------
@@ -206,7 +206,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
     Parameters
     ----------
     bandwidth : float, optional
-        Bandwith used in the RBF kernel
+        Bandwidth used in the RBF kernel
         If not set, the bandwidth is estimated.
         See clustering.estimate_bandwidth.
 

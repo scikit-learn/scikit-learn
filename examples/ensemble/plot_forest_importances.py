@@ -4,7 +4,7 @@ Feature importances with forests of trees
 =========================================
 
 This examples shows the use of forests of trees to evaluate the importance of
-features on an artifical classification task. The red bars are the feature
+features on an artificial classification task. The red bars are the feature
 importances of the forest, along with their inter-trees variability.
 
 As expected, the plot suggests that 3 features are informative, while the

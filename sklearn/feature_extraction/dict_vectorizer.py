@@ -1,8 +1,8 @@
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
-# License: BSD-style.
+# License: BSD 3 clause
 
 from array import array
-from collections import Mapping, Sequence
+from collections import Mapping
 from operator import itemgetter
 
 import numpy as np
@@ -49,6 +49,15 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     sparse: boolean, optional.
         Whether transform should produce scipy.sparse matrices.
         True by default.
+
+    Attributes
+    ----------
+    `feature_names_` : list
+        A list of length n_features containing the feature names (e.g., "f=ham"
+        and "f=spam").
+
+    `vocabulary_` : dict
+        A dictionary mapping feature names to feature indices.
 
     Examples
     --------

@@ -126,7 +126,6 @@ def test_remove_zero_eig():
     assert_equal(Xt.shape, (3, 0))
 
 
-
 def test_kernel_pca_precomputed():
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((5, 4))

@@ -47,7 +47,7 @@ def configuration(parent_package='', top_path=None):
     liblinear_depends = [join('src', 'liblinear', '*.h'),
                          join('src', 'liblinear', 'liblinear_helper.c')]
 
-    # we try to link agains system-wide blas
+    # we try to link against system-wide blas
     blas_info = get_info('blas_opt', 0)
 
     if not blas_info:

@@ -7,7 +7,7 @@ Maximum likelihood covariance estimator.
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Virgile Fritsch <virgile.fritsch@inria.fr>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 # avoid division truncation
 from __future__ import division

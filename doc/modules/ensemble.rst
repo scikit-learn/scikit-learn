@@ -249,9 +249,8 @@ the transformation performs an implicit, non-parametric density estimation.
 AdaBoost
 ========
 
-The module :mod:`sklearn.ensemble.weight_boosting` implements the popular
-boosting algorithm known as AdaBoost introduced in 1995 by Freud and
-Schapire [FS1995]_.
+The module :mod:`sklearn.ensemble` includes the popular boosting algorithm
+AdaBoost, introduced in 1995 by Freud and Schapire [FS1995]_.
 
 The core principle of AdaBoost is to fit a sequence of weak learners (i.e.,
 models that are only slightly better than random guessing, such as small
@@ -601,7 +600,7 @@ used for model selection (e.g. to determine the optimal number of iterations).
 
 Another strategy to reduce the variance is by subsampling the features
 analogous to the random splits in Random Forests. The size of the subsample
-can be controled via the ``max_features`` parameter.
+can be controlled via the ``max_features`` parameter.
 
 .. topic:: Examples:
 

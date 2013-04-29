@@ -45,7 +45,7 @@ class LinearSVC(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
         While `crammer_singer` is interesting from an theoretical perspective
         as it is consistent it is seldom used in practice and rarely leads to
         better accuracy and is more expensive to compute.
-        If `crammer_singer` is choosen, the options loss, penalty and dual will
+        If `crammer_singer` is chosen, the options loss, penalty and dual will
         be ignored.
 
     fit_intercept : boolean, optional (default=True)

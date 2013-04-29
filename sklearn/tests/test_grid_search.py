@@ -7,6 +7,7 @@ from collections import Iterable, Sized
 from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.externals.six.moves import xrange
 from itertools import chain, product
+import pickle
 import sys
 import warnings
 
@@ -46,6 +47,10 @@ class MockClassifier(object):
 
     def predict(self, T):
         return T.shape[0]
+
+    predict_proba = predict
+    decision_function = predict
+    transform = predict
 
     def score(self, X=None, Y=None):
         if self.foo_param > 1:
@@ -133,8 +138,11 @@ def test_grid_search():
     for i, foo_i in enumerate([1, 2, 3]):
         assert_true(grid_search.cv_scores_[i][0]
                     == {'foo_param': foo_i})
-    # Smoke test the score:
+    # Smoke test the score etc:
     grid_search.score(X, y)
+    grid_search.predict_proba(X)
+    grid_search.decision_function(X)
+    grid_search.transform(X)
 
 
 def test_trivial_cv_scores():
@@ -484,3 +492,16 @@ def test_grid_search_score_consistency():
                                               clf.decision_function(X[test]))
                 assert_almost_equal(correct_score, scores[i])
                 i += 1
+
+
+def test_pickle():
+    """Test that a fit search can be pickled"""
+    clf = MockClassifier()
+    grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, refit=True)
+    grid_search.fit(X, y)
+    pickle.dumps(grid_search)  # smoke test
+
+    random_search = RandomizedSearchCV(clf, {'foo_param': [1, 2, 3]},
+                                       refit=True)
+    random_search.fit(X, y)
+    pickle.dumps(random_search)  # smoke test

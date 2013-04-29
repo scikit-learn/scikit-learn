@@ -2,7 +2,7 @@
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
-# License: BSD
+# License: BSD 3 clause
 
 import warnings
 import numbers
@@ -575,10 +575,10 @@ class Binarizer(BaseEstimator, TransformerMixin):
 
     Binarization is a common operation on text count data where the
     analyst can decide to only consider the presence or absence of a
-    feature rather than a quantified number of occurences for instance.
+    feature rather than a quantified number of occurrences for instance.
 
     It can also be used as a pre-processing step for estimators that
-    consider boolean random variables (e.g. modeled using the Bernoulli
+    consider boolean random variables (e.g. modelled using the Bernoulli
     distribution in a Bayesian setting).
 
     Parameters
@@ -672,8 +672,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     >>> from sklearn.preprocessing import OneHotEncoder
     >>> enc = OneHotEncoder()
-    >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])
-    OneHotEncoder(dtype=<type 'float'>, n_values='auto')
+    >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])  # doctest: +ELLIPSIS
+    OneHotEncoder(dtype=<... 'float'>, n_values='auto')
     >>> enc.n_values_
     array([2, 3, 4])
     >>> enc.feature_indices_

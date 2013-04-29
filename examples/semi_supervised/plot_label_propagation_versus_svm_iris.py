@@ -59,7 +59,7 @@ titles = ['Label Spreading 30% data',
 color_map = {-1: (1, 1, 1), 0: (0, 0, .9), 1: (1, 0, 0), 2: (.8, .6, 0)}
 
 for i, (clf, y_train) in enumerate((ls30, ls50, ls100, rbf_svc)):
-    # Plot the decision boundary. For that, we will asign a color to each
+    # Plot the decision boundary. For that, we will assign a color to each
     # point in the mesh [x_min, m_max]x[y_min, y_max].
     pl.subplot(2, 2, i + 1)
     Z = clf.predict(np.c_[xx.ravel(), yy.ravel()])

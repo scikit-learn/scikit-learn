@@ -5,7 +5,7 @@ Ridge regression
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 #         Reuben Fletcher-Costin <reuben.fletchercostin@gmail.com>
 #         Fabian Pedregosa <fabian@fseoane.net>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 
 from abc import ABCMeta, abstractmethod
@@ -20,8 +20,10 @@ from .base import LinearClassifierMixin, LinearModel
 from ..base import RegressorMixin
 from ..utils.extmath import safe_sparse_dot
 from ..utils import safe_asarray
+from ..utils import compute_class_weight
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
+from ..externals import six
 
 
 def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
@@ -191,8 +193,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         return coef.T
 
 
-class _BaseRidge(LinearModel):
-    __metaclass__ = ABCMeta
+class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
 
     @abstractmethod
     def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
@@ -406,14 +407,12 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         -------
         self : returns an instance of self.
         """
-        if self.class_weight is None:
-            class_weight = {}
-        else:
-            class_weight = self.class_weight
-
-        sample_weight_classes = np.array([class_weight.get(k, 1.0) for k in y])
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
+        cw = compute_class_weight(self.class_weight,
+                                  self.classes_, Y)
+        # get the class weight corresponding to each sample
+        sample_weight_classes = cw[np.searchsorted(self.classes_, y)]
         super(RidgeClassifier, self).fit(X, Y,
                                          sample_weight=sample_weight_classes)
         return self
@@ -866,17 +865,31 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
         sample_weight : float or numpy array of shape [n_samples]
             Sample weight
 
+        class_weight : dict, optional
+             Weights associated with classes in the form
+            {class_label : weight}. If not given, all classes are
+            supposed to have weight one. This is parameter is
+            deprecated.
+
         Returns
         -------
         self : object
             Returns self.
         """
-        if self.class_weight is not None:
-            get_cw = self.class_weight.get
-            sample_weight = (sample_weight
-                             * np.array([get_cw(k, 1.0) for k in y]))
+        if class_weight is None:
+            class_weight = self.class_weight
+        else:
+            warnings.warn("'class_weight' is now an initialization parameter."
+                          "Using it in the 'fit' method is deprecated and "
+                          "will be removed in 0.15.", DeprecationWarning,
+                          stacklevel=2)
+
         self._label_binarizer = LabelBinarizer(pos_label=1, neg_label=-1)
         Y = self._label_binarizer.fit_transform(y)
+        cw = compute_class_weight(class_weight,
+                                  self.classes_, Y)
+        # modify the sample weights with the corresponding class weight
+        sample_weight *= cw[np.searchsorted(self.classes_, y)]
         _BaseRidgeCV.fit(self, X, Y, sample_weight=sample_weight)
         return self
 

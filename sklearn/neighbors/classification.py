@@ -5,7 +5,7 @@
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Sparseness support by Lars Buitinck <L.J.Buitinck@uva.nl>
 #
-# License: BSD, (C) INRIA, University of Amsterdam
+# License: BSD 3 clause (C) INRIA, University of Amsterdam
 
 import warnings
 
@@ -308,7 +308,8 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                             dtype=np.int)
         else:
             mode = np.array([weighted_mode(pl, w)[0]
-                             for (pl, w) in zip(pred_labels[inliers], weights)],
+                             for (pl, w)
+                             in zip(pred_labels[inliers], weights)],
                             dtype=np.int)
 
         mode = mode.ravel().astype(np.int)

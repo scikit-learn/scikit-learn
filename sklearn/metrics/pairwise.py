@@ -34,7 +34,7 @@ kernel:
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Robert Layton <robertlayton@gmail.com>
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 from scipy.spatial import distance
@@ -44,7 +44,6 @@ from scipy.sparse import issparse
 from ..utils import atleast2d_or_csr
 from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
-from ..utils.validation import array2d
 from ..preprocessing import normalize
 from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
@@ -76,22 +75,29 @@ def check_pairwise_arrays(X, Y):
     Returns
     -------
     safe_X : {array-like, sparse matrix}, shape = [n_samples_a, n_features]
-        An array equal to X, guarenteed to be a numpy array.
+        An array equal to X, guaranteed to be a numpy array.
 
     safe_Y : {array-like, sparse matrix}, shape = [n_samples_b, n_features]
-        An array equal to Y if Y was not None, guarenteed to be a numpy array.
+        An array equal to Y if Y was not None, guaranteed to be a numpy array.
         If Y was None, safe_Y will be a pointer to X.
 
     """
     if Y is X or Y is None:
-        X = Y = atleast2d_or_csr(X, dtype=np.float)
+        X = Y = atleast2d_or_csr(X)
     else:
-        X = atleast2d_or_csr(X, dtype=np.float)
-        Y = atleast2d_or_csr(Y, dtype=np.float)
+        X = atleast2d_or_csr(X)
+        Y = atleast2d_or_csr(Y)
     if X.shape[1] != Y.shape[1]:
         raise ValueError("Incompatible dimension for X and Y matrices: "
                          "X.shape[1] == %d while Y.shape[1] == %d" % (
                              X.shape[1], Y.shape[1]))
+
+    if not (X.dtype == Y.dtype == np.float32):
+        if Y is X:
+            X = Y = X.astype(np.float)
+        else:
+            X = X.astype(np.float)
+            Y = Y.astype(np.float)
     return X, Y
 
 
@@ -435,34 +441,11 @@ def additive_chi2_kernel(X, Y=None):
     """
     if issparse(X) or issparse(Y):
         raise ValueError("additive_chi2 does not support sparse matrices.")
-    ### we don't use check_pairwise to preserve float32.
-
-    if Y is None:
-        # optimize this case!
-        X = array2d(X)
-        if X.dtype != np.float32:
-            X.astype(np.float)
-        Y = X
-        if (X < 0).any():
-            raise ValueError("X contains negative values.")
-    else:
-        X = array2d(X)
-        Y = array2d(Y)
-
-        if X.shape[1] != Y.shape[1]:
-            raise ValueError("Incompatible dimension for X and Y matrices: "
-                             "X.shape[1] == %d while Y.shape[1] == %d" % (
-                                 X.shape[1], Y.shape[1]))
-
-        if X.dtype != np.float32 or Y.dtype != np.float32:
-            # if not both are 32bit float, convert to 64bit float
-            X = X.astype(np.float)
-            Y = Y.astype(np.float)
-
-        if (X < 0).any():
-            raise ValueError("X contains negative values.")
-        if (Y < 0).any():
-            raise ValueError("Y contains negative values.")
+    X, Y = check_pairwise_arrays(X, Y)
+    if (X < 0).any():
+        raise ValueError("X contains negative values.")
+    if Y is not X and (Y < 0).any():
+        raise ValueError("Y contains negative values.")
 
     result = np.zeros((X.shape[0], Y.shape[0]), dtype=X.dtype)
     _chi2_kernel_fast(X, Y, result)
@@ -573,7 +556,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
     computed. If the input is a distances matrix, it is returned instead.
 
     This method provides a safe way to take a distance matrix as input, while
-    preserving compatability with many other algorithms that take a vector
+    preserving compatibility with many other algorithms that take a vector
     array.
 
     If Y is given (default is None), then the returned matrix is the pairwise
@@ -743,7 +726,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
     computed. If the input is a kernel matrix, it is returned instead.
 
     This method provides a safe way to take a kernel matrix as input, while
-    preserving compatability with many other algorithms that take a vector
+    preserving compatibility with many other algorithms that take a vector
     array.
 
     If Y is given (default is None), then the returned matrix is the pairwise

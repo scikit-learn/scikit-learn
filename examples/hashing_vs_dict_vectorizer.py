@@ -1,8 +1,7 @@
 """
-===================================================================
-Comparison of hashing-based and dictionary based text vectorization
-===================================================================
-
+===========================================
+FeatureHasher and DictVectorizer Comparison
+===========================================
 
 Compares FeatureHasher and DictVectorizer by using both to vectorize
 text documents.
@@ -17,7 +16,7 @@ for FeatureHasher is to be expected due to hash collisions.
 """
 
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
-# License: 3-clause BSD
+# License: BSD 3 clause
 
 from __future__ import print_function
 from collections import defaultdict

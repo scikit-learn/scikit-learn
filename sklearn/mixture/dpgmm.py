@@ -546,9 +546,9 @@ class DPGMM(GMM):
                 self.dof_ = (1 + self.n_components + X.shape[0])
                 self.dof_ *= np.ones(self.n_components)
                 self.scale_ = [2 * np.identity(n_features)
-                               for i in range(self.n_components)]
+                               for _ in range(self.n_components)]
                 self.precs_ = [np.identity(n_features)
-                               for i in range(self.n_components)]
+                               for _ in range(self.n_components)]
                 self.det_scale_ = np.ones(self.n_components)
                 self.bound_prec_ = np.zeros(self.n_components)
                 for k in range(self.n_components):

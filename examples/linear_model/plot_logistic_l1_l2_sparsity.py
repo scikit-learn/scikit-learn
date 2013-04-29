@@ -18,7 +18,7 @@ print(__doc__)
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 import pylab as pl

@@ -15,7 +15,7 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 
 """
 # Authors: Peter Prettenhofer
-# License: Simplified BSD
+# License: BSD 3 clause
 
 from io import BytesIO
 from os.path import join, exists

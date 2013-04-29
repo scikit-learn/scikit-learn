@@ -56,7 +56,7 @@ def test_kmeans_dtype():
         assert_equal(len(w), 1)
 
 
-def test_labels_assignement_and_inertia():
+def test_labels_assignment_and_inertia():
     # pure numpy implementation as easily auditable reference gold
     # implementation
     rng = np.random.RandomState(42)
@@ -72,14 +72,14 @@ def test_labels_assignement_and_inertia():
     assert_true((mindist >= 0.0).all())
     assert_true((labels_gold != -1).all())
 
-    # perform label assignement using the dense array input
+    # perform label assignment using the dense array input
     x_squared_norms = (X ** 2).sum(axis=1)
     labels_array, inertia_array = _labels_inertia(
         X, x_squared_norms, noisy_centers)
     assert_array_almost_equal(inertia_array, inertia_gold)
     assert_array_equal(labels_array, labels_gold)
 
-    # perform label assignement using the sparse CSR input
+    # perform label assignment using the sparse CSR input
     x_squared_norms_from_csr = csr_row_norm_l2(X_csr)
     labels_csr, inertia_csr = _labels_inertia(
         X_csr, x_squared_norms_from_csr, noisy_centers)
@@ -161,7 +161,7 @@ def _check_fitted_model(km):
     labels = km.labels_
     assert_equal(np.unique(labels).shape[0], n_clusters)
 
-    # check that the labels assignements are perfect (up to a permutation)
+    # check that the labels assignment are perfect (up to a permutation)
     assert_equal(v_measure_score(true_labels, labels), 1.0)
     assert_greater(km.inertia_, 0.0)
 
@@ -611,7 +611,7 @@ def test_k_means_function():
     labels = labels
     assert_equal(np.unique(labels).shape[0], n_clusters)
 
-    # check that the labels assignements are perfect (up to a permutation)
+    # check that the labels assignment are perfect (up to a permutation)
     assert_equal(v_measure_score(true_labels, labels), 1.0)
     assert_greater(inertia, 0.0)
 

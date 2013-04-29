@@ -50,7 +50,7 @@ iteratively refined in the neighborhood of the maximum.
 """
 print(__doc__)
 # author: Gael Varoquaux <gael.varoquaux@inria.fr>
-# License: BSD Style
+# License: BSD 3 clause
 # Copyright: INRIA
 
 import numpy as np

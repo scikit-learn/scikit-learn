@@ -17,7 +17,7 @@ print(__doc__)
 
 # Code source: Gael Varoqueux
 # Modified for Documentation merge by Jaques Grobler
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 import pylab as pl
@@ -35,7 +35,7 @@ clf = svm.SVC(C=1.0, kernel='linear')
 # we create an instance of SVM Classifier and fit the data.
 clf.fit(X, Y)
 
-# Plot the decision boundary. For that, we will asign a color to each
+# Plot the decision boundary. For that, we will assign a color to each
 # point in the mesh [x_min, m_max]x[y_min, y_max].
 x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
 y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5

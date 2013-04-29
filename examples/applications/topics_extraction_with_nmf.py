@@ -14,29 +14,29 @@ is polynomial.
 
 Here are some sample extracted topics that look quite good:
 
-Topic #0:
+*Topic #0*:
 god people bible israel jesus christian true moral think christians
 believe don say human israeli church life children jewish
 
-Topic #1:
+*Topic #1*:
 drive windows card drivers video scsi software pc thanks vga
 graphics help disk uni dos file ide controller work
 
-Topic #2:
+*Topic #2*:
 game team nhl games ca hockey players buffalo edu cc year play
 university teams baseball columbia league player toronto
 
-Topic #3:
+*Topic #3*:
 window manager application mit motif size display widget program
 xlib windows user color event information use events x11r5 values
 
-Topic #4:
+*Topic #4*:
 pitt gordon banks cs science pittsburgh univ computer soon disease
 edu reply pain health david article medical medicine 16
 """
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 from __future__ import print_function
 

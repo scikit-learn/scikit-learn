@@ -3,7 +3,7 @@ Several basic tests for hierarchical clustering procedures
 
 """
 # Authors: Vincent Michel, 2010, Gael Varoquaux 2012
-# License: BSD-like
+# License: BSD 3 clause
 import warnings
 from tempfile import mkdtemp
 

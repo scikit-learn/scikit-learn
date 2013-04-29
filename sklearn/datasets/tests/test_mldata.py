@@ -128,8 +128,7 @@ def test_fetch_multiple_column():
         dataname = 'threecol-order'
         datasets.mldata.urlopen = mock_mldata_urlopen({
             dataname: ({'y': y, 'x': x, 'z': z},
-                       ['y', 'x', 'z']),
-            })
+                       ['y', 'x', 'z']), })
 
         dset = fetch_mldata(dataname, data_home=tmpdir)
         for n in ["COL_NAMES", "DESCR", "target", "data", "z"]:

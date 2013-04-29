@@ -6,7 +6,7 @@ from __future__ import print_function
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
-# License: BSD Style.
+# License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
 from collections import Mapping, namedtuple
@@ -23,10 +23,11 @@ from .base import BaseEstimator, is_classifier, clone
 from .base import MetaEstimatorMixin
 from .cross_validation import check_cv
 from .externals.joblib import Parallel, delayed, logger
-from .externals.six import string_types
+from .externals import six
 from .utils import safe_mask, check_random_state
 from .utils.validation import _num_samples, check_arrays
 from .metrics import SCORERS, Scorer
+
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
            'ParameterSampler', 'RandomizedSearchCV']
@@ -175,7 +176,7 @@ class ParameterSampler(object):
         rnd = check_random_state(self.random_state)
         # Always sort the keys of a dictionary, for reproducibility
         items = sorted(self.param_distributions.items())
-        for i in range(self.n_iter):
+        for _ in range(self.n_iter):
             params = dict()
             for k, v in items:
                 if hasattr(v, "rvs"):
@@ -316,10 +317,14 @@ def _check_param_grid(param_grid):
                                  "list.")
 
 
-class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
+_CVScoreTuple = namedtuple('_CVScoreTuple',
+                           ('parameters', 'mean_validation_score',
+                            'cv_validation_scores'))
+
+
+class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator, MetaEstimatorMixin)):
     """Base class for hyper parameter search with cross-validation.
     """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self, estimator, scoring=None, loss_func=None,
@@ -340,7 +345,9 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         self._check_estimator()
 
     def score(self, X, y=None):
-        """Returns the mean accuracy on the given test data and labels.
+        """Returns the score on the given test data and labels, if the search
+        estimator has been refit. The ``score`` function of the best estimator
+        is used, or the ``scoring`` parameter where unavailable.
 
         Parameters
         ----------
@@ -364,6 +371,22 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         y_predicted = self.predict(X)
         return self.scorer(y, y_predicted)
 
+    @property
+    def predict(self):
+        return self.best_estimator_.predict
+
+    @property
+    def predict_proba(self):
+        return self.best_estimator_.predict_proba
+
+    @property
+    def decision_function(self):
+        return self.best_estimator_.decision_function
+
+    @property
+    def transform(self):
+        return self.best_estimator_.transform
+
     def _check_estimator(self):
         """Check that estimator can be fitted and score can be computed."""
         if (not hasattr(self.estimator, 'fit') or
@@ -380,13 +403,6 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
                     "If no scoring is specified, the estimator passed "
                     "should have a 'score' method. The estimator %s "
                     "does not." % self.estimator)
-
-    def _set_methods(self):
-        """Create predict and  predict_proba if present in best estimator."""
-        if hasattr(self.best_estimator_, 'predict'):
-            self.predict = self.best_estimator_.predict
-        if hasattr(self.best_estimator_, 'predict_proba'):
-            self.predict_proba = self.best_estimator_.predict_proba
 
     def _fit(self, X, y, parameter_iterator, **params):
         """Actual fitting,  performing the search over parameters."""
@@ -408,7 +424,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
                           "Either use strings or score objects."
                           "The relevant new parameter is called ''scoring''.")
             scorer = Scorer(self.score_func)
-        elif isinstance(self.scoring, string_types):
+        elif isinstance(self.scoring, six.string_types):
             scorer = SCORERS[self.scoring]
         else:
             scorer = self.scoring
@@ -492,14 +508,10 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
             else:
                 best_estimator.fit(X, **self.fit_params)
             self.best_estimator_ = best_estimator
-            self._set_methods()
 
         # Store the computed scores
-        CVScoreTuple = namedtuple('CVScoreTuple', ('parameters',
-                                                   'mean_validation_score',
-                                                   'cv_validation_scores'))
         self.cv_scores_ = [
-            CVScoreTuple(clf_params, score, all_scores)
+            _CVScoreTuple(clf_params, score, all_scores)
             for clf_params, (score, _), all_scores
             in zip(parameter_iterator, scores, cv_scores)]
         return self
@@ -544,7 +556,7 @@ class GridSearchCV(BaseSearchCV):
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
 
-            - None, in which case all the jobs are immediatly
+            - None, in which case all the jobs are immediately
               created and spawned. Use this for lightweight and
               fast-running jobs, to avoid delays due to on-demand
               spawning of the jobs
@@ -560,9 +572,9 @@ class GridSearchCV(BaseSearchCV):
         the folds, and the loss minimized is the total loss per sample,
         and not the mean loss across the folds.
 
-    cv : integer or crossvalidation generator, optional
-        If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see
+    cv : integer or cross-validation generator, optional
+        If an integer is passed, it is the number of folds (default 3).
+        Specific cross-validation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects
 
     refit : boolean
@@ -603,7 +615,7 @@ class GridSearchCV(BaseSearchCV):
             * ``cv_validation_scores``, the list of scores for each fold
 
     `best_estimator_` : estimator
-        Estimator that was choosen by the search, i.e. estimator
+        Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data.
 
@@ -716,7 +728,7 @@ class RandomizedSearchCV(BaseSearchCV):
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
 
-            - None, in which case all the jobs are immediatly
+            - None, in which case all the jobs are immediately
               created and spawned. Use this for lightweight and
               fast-running jobs, to avoid delays due to on-demand
               spawning of the jobs
@@ -732,9 +744,9 @@ class RandomizedSearchCV(BaseSearchCV):
         the folds, and the loss minimized is the total loss per sample,
         and not the mean loss across the folds.
 
-    cv : integer or crossvalidation generator, optional
-        If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see
+    cv : integer or cross-validation generator, optional
+        If an integer is passed, it is the number of folds (default 3).
+        Specific cross-validation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects
 
     refit : boolean
@@ -759,7 +771,7 @@ class RandomizedSearchCV(BaseSearchCV):
             * ``cv_validation_scores``, the list of scores for each fold
 
     `best_estimator_` : estimator
-        Estimator that was choosen by the search, i.e. estimator
+        Estimator that was chosen by the search, i.e. estimator
         which gave highest score (or smallest loss if specified)
         on the left out data.
 

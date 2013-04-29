@@ -20,7 +20,7 @@ The bar plot indicates the accuracy, training time (normalized) and test time
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Mathieu Blondel <mathieu@mblondel.org>
 #         Lars Buitinck <L.J.Buitinck@uva.nl>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 from __future__ import print_function
 
@@ -288,6 +288,7 @@ clf_names, score, training_time, test_time = results
 training_time = np.array(training_time) / np.max(training_time)
 test_time = np.array(test_time) / np.max(test_time)
 
+pl.figure(figsize=(12,10))
 pl.title("Score")
 pl.barh(indices, score, .2, label="score", color='r')
 pl.barh(indices + .3, training_time, .2, label="training time", color='g')
@@ -295,6 +296,8 @@ pl.barh(indices + .6, test_time, .2, label="test time", color='b')
 pl.yticks(())
 pl.legend(loc='best')
 pl.subplots_adjust(left=.25)
+pl.subplots_adjust(top=.95)
+pl.subplots_adjust(bottom=.05)
 
 for i, c in zip(indices, clf_names):
     pl.text(-.3, i, c)

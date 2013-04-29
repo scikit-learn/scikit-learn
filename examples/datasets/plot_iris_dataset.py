@@ -21,7 +21,7 @@ print(__doc__)
 
 # Code source: Gael Varoqueux
 # Modified for Documentation merge by Jaques Grobler
-# License: BSD
+# License: BSD 3 clause
 
 import pylab as pl
 from mpl_toolkits.mplot3d import Axes3D
@@ -58,10 +58,10 @@ ax.scatter(X_reduced[:, 0], X_reduced[:, 1], X_reduced[:, 2], c=Y,
            cmap=pl.cm.Paired)
 ax.set_title("First three PCA directions")
 ax.set_xlabel("1st eigenvector")
-ax.set_xticks(())
+ax.w_xaxis.set_ticklabels([])
 ax.set_ylabel("2nd eigenvector")
-ax.set_yticks(())
+ax.w_yaxis.set_ticklabels([])
 ax.set_zlabel("3rd eigenvector")
-ax.set_zticks(())
+ax.w_zaxis.set_ticklabels([])
 
 pl.show()

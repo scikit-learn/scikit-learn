@@ -40,7 +40,7 @@ and a working C++ compiler.
 Under Debian-based operating systems, which include Ubuntu,
 you can install all these requirements by issuing::
 
-    sudo apt-get install build-essential python-dev python-numpy python-setuptools python-scipy libatlas-dev
+    sudo apt-get install build-essential python-dev python-numpy python-setuptools python-scipy libatlas-dev libatlas3-base
 
 .. note::
 
@@ -215,11 +215,11 @@ where ``XY`` denotes the Python version.
 It can be installed by typing the following
 command::
 
-    sudo port install py26-scikits-learn
+    sudo port install py26-scikit-learn
 
 or::
 
-    sudo port install py27-scikits-learn
+    sudo port install py27-scikit-learn
 
 
 Archlinux
