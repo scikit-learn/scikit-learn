@@ -55,8 +55,8 @@ The `NeuroDebian <http://neuro.debian.net>`_ project providing `Debian
 College <http://www.dartmouth.edu/~psych/>`_).
 
 The `PSF <http://www.python.org/psf/>`_ helped find and manage funding for our
-2011 Grenada sprint. More information can be found `here
+2011 Granada sprint. More information can be found `here
 <https://github.com/scikit-learn/scikit-learn/wiki/Past-sprints#granada-19th-21th-dec-2011>`_
 
-`tinyclues <http://www.tinyclues.com/>`_ funded the 2011 international Grenada
+`tinyclues <http://www.tinyclues.com/>`_ funded the 2011 international Granada
 sprint.
