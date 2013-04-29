@@ -2,7 +2,7 @@
 
 # Authors: Robert Layton <robertlayton@gmail.com>
 #
-# License: BSD 3 clause.
+# License: BSD 3 clause
 
 import numpy as np
 

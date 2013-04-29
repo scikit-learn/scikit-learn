@@ -45,7 +45,7 @@ from __future__ import division, print_function
 print(__doc__)
 
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
-# License: BSD 3 clause.
+# License: BSD 3 clause
 
 import logging
 import os

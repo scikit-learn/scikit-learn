@@ -1,5 +1,5 @@
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
-# License: BSD 3 clause.
+# License: BSD 3 clause
 
 from array import array
 from collections import Mapping

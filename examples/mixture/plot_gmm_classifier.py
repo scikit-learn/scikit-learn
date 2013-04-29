@@ -22,7 +22,7 @@ dimensions.
 print(__doc__)
 
 # Author: Ron Weiss <ronweiss@gmail.com>, Gael Varoquaux
-# License: BSD 3 clause.
+# License: BSD 3 clause
 
 # $Id$
 

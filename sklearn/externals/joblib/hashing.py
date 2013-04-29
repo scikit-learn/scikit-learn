@@ -5,7 +5,7 @@ hashing of numpy arrays.
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2009 Gael Varoquaux
-# License: BSD 3 clause.
+# License: BSD 3 clause
 
 import warnings
 import pickle

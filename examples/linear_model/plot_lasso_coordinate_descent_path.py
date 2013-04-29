@@ -11,7 +11,7 @@ The coefficients can be forced to be positive.
 print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD 3 clause.
+# License: BSD 3 clause
 
 import numpy as np
 import pylab as pl

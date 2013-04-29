@@ -6,7 +6,7 @@ This module needs much love to become useful.
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2008 Gael Varoquaux
-# License: BSD 3 clause.
+# License: BSD 3 clause
 
 from __future__ import print_function
 

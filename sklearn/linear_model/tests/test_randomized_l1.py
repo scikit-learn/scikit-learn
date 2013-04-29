@@ -1,5 +1,5 @@
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD 3 clause.
+# License: BSD 3 clause
 
 import numpy as np
 from scipy import sparse

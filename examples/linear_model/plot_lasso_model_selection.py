@@ -44,7 +44,7 @@ data.
 print(__doc__)
 
 # Author: Olivier Grisel, Gael Varoquaux, Alexandre Gramfort
-# License: BSD 3 clause.
+# License: BSD 3 clause
 
 import time
 

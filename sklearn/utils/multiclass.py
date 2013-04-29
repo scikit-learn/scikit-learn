@@ -1,6 +1,6 @@
 # Author: Arnaud Joly
 #
-# License: BSD 3 clause.
+# License: BSD 3 clause
 """
 Multi-class / multi-label utility function
 ==========================================

@@ -12,7 +12,7 @@ randomized trees. Single and multi-output problems are both handled.
 #          Satrajit Ghosh,
 #          Gilles Louppe,
 #          Noel Dawe
-# License: BSD 3 clause.
+# License: BSD 3 clause
 
 from __future__ import division
 

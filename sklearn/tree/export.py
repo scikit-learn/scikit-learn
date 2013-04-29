@@ -7,7 +7,7 @@ This module defines export functions for decision trees.
 #          Satrajit Ghosh,
 #          Gilles Louppe,
 #          Noel Dawe
-# License: BSD 3 clause.
+# License: BSD 3 clause
 
 from ..externals import six
 from . import _tree

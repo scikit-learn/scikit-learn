@@ -1,7 +1,7 @@
 # Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com> (main author)
 #          Mathieu Blondel (partial_fit support)
 #
-# License: BSD 3 clause.
+# License: BSD 3 clause
 """Classification and regression using Stochastic Gradient Descent (SGD)."""
 
 import numpy as np
