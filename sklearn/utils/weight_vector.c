@@ -4036,7 +4036,7 @@ PyMODINIT_FUNC PyInit_weight_vector(void)
   /*--- Execution code ---*/
 
   /* "sklearn/utils/weight_vector.pyx":10
- * # License: BSD Style.
+ * # License: BSD 3 clause
  * 
  * import numpy as np             # <<<<<<<<<<<<<<
  * cimport numpy as np

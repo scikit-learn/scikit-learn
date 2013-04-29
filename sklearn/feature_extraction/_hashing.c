@@ -4846,7 +4846,7 @@ PyMODINIT_FUNC PyInit__hashing(void)
   /*--- Execution code ---*/
 
   /* "sklearn/feature_extraction/_hashing.pyx":4
- * # License: 3-clause BSD.
+ * # License: BSD 3 clause
  * 
  * import array             # <<<<<<<<<<<<<<
  * from cpython cimport array
@@ -4892,7 +4892,7 @@ PyMODINIT_FUNC PyInit__hashing(void)
 
   /* "sklearn/feature_extraction/_hashing.pyx":1
  * # Author: Lars Buitinck <L.J.Buitinck@uva.nl>             # <<<<<<<<<<<<<<
- * # License: 3-clause BSD.
+ * # License: BSD 3 clause
  * 
  */
   __pyx_t_2 = PyDict_New(); if (unlikely(!__pyx_t_2)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}

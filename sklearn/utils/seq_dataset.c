@@ -5260,7 +5260,7 @@ PyMODINIT_FUNC PyInit_seq_dataset(void)
   /*--- Execution code ---*/
 
   /* "sklearn/utils/seq_dataset.pyx":10
- * # License: BSD Style.
+ * # License: BSD 3 clause
  * 
  * import numpy as np             # <<<<<<<<<<<<<<
  * 
