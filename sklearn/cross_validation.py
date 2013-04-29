@@ -950,6 +950,9 @@ class StratifiedShuffleSplit(object):
         mask array. Integer indices are required when dealing with sparse
         matrices, since those cannot be indexed by boolean masks.
 
+    random_state : int or RandomState
+        Pseudo-random number generator state used for random sampling.
+
     Examples
     --------
     >>> from sklearn.cross_validation import StratifiedShuffleSplit
