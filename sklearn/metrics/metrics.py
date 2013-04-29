@@ -1270,10 +1270,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         labels = np.asarray(labels, dtype=np.int)
 
     n_labels = labels.size
-    true_pos = np.zeros(n_labels, dtype=np.double)
-    false_pos = np.zeros(n_labels, dtype=np.double)
-    false_neg = np.zeros(n_labels, dtype=np.double)
-    support = np.zeros(n_labels, dtype=np.long)
+    true_pos = np.empty(n_labels, dtype=np.long)
+    false_pos = np.empty(n_labels, dtype=np.long)
+    false_neg = np.empty(n_labels, dtype=np.long)
+    support = np.empty(n_labels, dtype=np.long)
 
     for i, label_i in enumerate(labels):
         true_pos[i] = np.sum(y_pred[y_true == label_i] == label_i)
@@ -1286,20 +1286,21 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         old_err_settings = np.seterr(divide='ignore', invalid='ignore')
 
         # precision and recall
-        precision = true_pos / (true_pos + false_pos)
-        recall = true_pos / (true_pos + false_neg)
+        precision = np.divide(true_pos, true_pos + false_pos, dtype=np.double)
+        recall = np.divide(true_pos, true_pos + false_neg, dtype=np.double)
 
-        # handle division by 0.0 in precision and recall
-        precision[(true_pos + false_pos) == 0.0] = 0.0
-        recall[(true_pos + false_neg) == 0.0] = 0.0
+        # handle division by 0 in precision and recall
+        precision[(true_pos + false_pos) == 0] = 0.0
+        recall[(true_pos + false_neg) == 0] = 0.0
 
         # fbeta score
         beta2 = beta ** 2
-        fscore = (1 + beta2) * (precision * recall) / (
-            beta2 * precision + recall)
+        fscore = np.divide((1 + beta2) * precision * recall,
+                           beta2 * precision + recall,
+                           dtype=np.double)
 
-        # handle division by 0.0 in fscore
-        fscore[(precision + recall) == 0.0] = 0.0
+        # handle division by 0 in fscore
+        fscore[(precision + recall) == 0] = 0.0
     finally:
         np.seterr(**old_err_settings)
 
@@ -1316,11 +1317,15 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     else:
         average_options = (None, 'micro', 'macro', 'weighted')
         if average == 'micro':
-            avg_precision = true_pos.sum() / (true_pos.sum() +
-                                              false_pos.sum())
-            avg_recall = true_pos.sum() / (true_pos.sum() + false_neg.sum())
-            avg_fscore = (1 + beta2) * (avg_precision * avg_recall) / \
-                         (beta2 * avg_precision + avg_recall)
+            avg_precision = np.divide(true_pos.sum(),
+                                      true_pos.sum() + false_pos.sum(),
+                                      dtype=np.double)
+            avg_recall = np.divide(true_pos.sum(),
+                                   true_pos.sum() + false_neg.sum(),
+                                   dtype=np.double)
+            avg_fscore = np.divide((1 + beta2) * (avg_precision * avg_recall),
+                                   beta2 * avg_precision + avg_recall,
+                                   dtype=np.double)
         elif average == 'macro':
             avg_precision = np.mean(precision)
             avg_recall = np.mean(recall)
