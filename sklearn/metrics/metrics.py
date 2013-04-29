@@ -744,6 +744,9 @@ def confusion_matrix(y_true, y_pred, labels=None):
            [1, 0, 2]])
 
     """
+    y_true, y_pred = check_arrays(y_true, y_pred)
+    y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=True)
+
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
