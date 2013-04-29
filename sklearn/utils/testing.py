@@ -10,9 +10,12 @@
 import inspect
 import pkgutil
 
-import urllib2
 import scipy as sp
 from functools import wraps
+try:
+    from urllib2 import HTTPError
+except ImportError:
+    from urllib.error import HTTPError
 
 import sklearn
 from sklearn.base import BaseEstimator
@@ -122,10 +125,10 @@ def fake_mldata_cache(columns_dict, dataname, matfile, ordering=None):
     savemat(matfile, datasets, oned_as='column')
 
 
-class mock_urllib2(object):
+class mock_mldata_urlopen(object):
 
     def __init__(self, mock_datasets):
-        """Object that mocks the urllib2 module to fake requests to mldata.
+        """Object that mocks the urlopen function to fake requests to mldata.
 
         `mock_datasets` is a dictionary of {dataset_name: data_dict}, or
         {dataset_name: (data_dict, ordering).
@@ -135,14 +138,11 @@ class mock_urllib2(object):
 
         When requesting a dataset with a name that is in mock_datasets,
         this object creates a fake dataset in a StringIO object and
-        returns it. Otherwise, it raises an URLError.
+        returns it. Otherwise, it raises an HTTPError.
         """
         self.mock_datasets = mock_datasets
 
-    class HTTPError(urllib2.URLError):
-        code = 404
-
-    def urlopen(self, urlname):
+    def __call__(self, urlname):
         dataset_name = urlname.split('/')[-1]
         if dataset_name in self.mock_datasets:
             resource_name = '_' + dataset_name
@@ -158,17 +158,15 @@ class mock_urllib2(object):
             matfile.seek(0)
             return matfile
         else:
-            raise mock_urllib2.HTTPError('%s not found.' % urlname)
-
-    def quote(self, string, safe='/'):
-        return urllib2.quote(string, safe)
+            raise HTTPError(urlname, 404, dataset_name + " is not available",
+                            [], None)
 
 # Meta estimators need another estimator to be instantiated.
 meta_estimators = ["OneVsOneClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier", "RFE",
                    "RFECV", "BaseEnsemble"]
 # estimators that there is no way to default-construct sensibly
-other = ["Pipeline", "FeatureUnion", "GridSearchCV"]
+other = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV"]
 
 
 def all_estimators(include_meta_estimators=False, include_other=False,

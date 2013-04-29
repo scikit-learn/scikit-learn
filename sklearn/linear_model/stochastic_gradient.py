@@ -326,7 +326,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
         self.n_jobs = int(n_jobs)
 
     @property
-    @deprecated("Parameter 'seed' war renamed to 'random_state' for"
+    @deprecated("Parameter 'seed' was renamed to 'random_state' for"
                 " consistency and will be removed in 0.15")
     def seed(self):
         return self.random_state
@@ -356,8 +356,9 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
         n_classes = self.classes_.shape[0]
 
         # Allocate datastructures from input arguments
+        y_ind = np.searchsorted(self.classes_, y)   # XXX use a LabelBinarizer?
         self._expanded_class_weight = compute_class_weight(self.class_weight,
-                                                           self.classes_, y)
+                                                           self.classes_, y_ind)
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
         if self.coef_ is None:
@@ -388,6 +389,9 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
     def _fit(self, X, y, alpha, C, loss, learning_rate,
              coef_init=None, intercept_init=None, class_weight=None,
              sample_weight=None):
+        if hasattr(self, "classes_"):
+            self.classes_ = None
+
         if class_weight is not None:
             warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
                           "method is deprecated and will be removed in 0.13. "

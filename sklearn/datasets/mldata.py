@@ -7,7 +7,16 @@ import os
 from os.path import join, exists
 import re
 import numbers
-import urllib2
+try:
+    # Python 2
+    from urllib2 import HTTPError
+    from urllib2 import quote
+    from urllib2 import urlopen
+except ImportError:
+    # Python 3+
+    from urllib.error import HTTPError
+    from urllib.parse import quote
+    from urllib.request import urlopen
 
 import scipy as sp
 from scipy import io
@@ -116,10 +125,10 @@ def fetch_mldata(dataname, target_name='label', data_name='data',
 
     # if the file does not exist, download it
     if not exists(filename):
-        urlname = MLDATA_BASE_URL % urllib2.quote(dataname)
+        urlname = MLDATA_BASE_URL % quote(dataname)
         try:
-            mldata_url = urllib2.urlopen(urlname)
-        except urllib2.HTTPError as e:
+            mldata_url = urlopen(urlname)
+        except HTTPError as e:
             if e.code == 404:
                 e.msg = "Dataset '%s' not found on mldata.org." % dataname
             raise

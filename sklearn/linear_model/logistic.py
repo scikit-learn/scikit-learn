@@ -28,8 +28,9 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
         n_samples > n_features.
 
     C : float, optional (default=1.0)
-        Specifies the strength of the regularization. The smaller it is
-        the bigger is the regularization.
+        Inverse of regularization strength; must be a positive float.
+        Like in support vector machines, smaller values specify stronger
+        regularization.
 
     fit_intercept : bool, default: True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -67,6 +68,10 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
     `intercept_` : array, shape = [n_classes-1]
         Intercept (a.k.a. bias) added to the decision function.
         It is available only when parameter intercept is set to True.
+
+    random_state: int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data.
 
     See also
     --------

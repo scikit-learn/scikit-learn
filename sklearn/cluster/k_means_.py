@@ -18,7 +18,7 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, ClusterMixin, TransformerMixin
 from ..metrics.pairwise import euclidean_distances
-from ..utils.sparsefuncs import mean_variance_axis0
+from ..utils.sparsefuncs import assign_rows_csr, mean_variance_axis0
 from ..utils import check_arrays
 from ..utils import check_random_state
 from ..utils import atleast2d_or_csr
@@ -567,7 +567,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         Maximum number of iterations of the k-means algorithm for a
         single run.
 
-    n_init: int, optional, default: 10
+    n_init : int, optional, default: 10
         Number of time the k-means algorithm will be run with different
         centroid seeds. The final results will be the best output of
         n_init consecutive runs in terms of inertia.
@@ -588,10 +588,10 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
     precompute_distances : boolean
         Precompute distances (faster but takes more memory).
 
-    tol: float, optional default: 1e-4
+    tol : float, optional default: 1e-4
         Relative tolerance w.r.t. inertia to declare convergence
 
-    n_jobs: int
+    n_jobs : int
         The number of jobs to use for the computation. This works by breaking
         down the pairwise matrix into n_jobs even slices and computing them in
         parallel.
@@ -601,20 +601,20 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
-    random_state: integer or numpy.RandomState, optional
+    random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
     Attributes
     ----------
-    `cluster_centers_`: array, [n_clusters, n_features]
+    `cluster_centers_` : array, [n_clusters, n_features]
         Coordinates of cluster centers
 
-    `labels_`:
+    `labels_` :
         Labels of each point
 
-    `inertia_`: float
+    `inertia_` : float
         The value of the inertia criterion associated with the chosen
         partition.
 
@@ -739,7 +739,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             New data to transform.
 
         Returns
@@ -764,7 +764,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             New data to predict.
 
         Returns
@@ -782,12 +782,12 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             New data.
 
         Returns
         -------
-        score: float
+        score : float
             Opposite of the value of X on the K-means objective.
         """
         self._check_fitted()
@@ -798,7 +798,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
 def _mini_batch_step(X, x_squared_norms, centers, counts,
                      old_center_buffer, compute_squared_diff,
-                     distances=None, random_reassign=False,
+                     distances, random_reassign=False,
                      random_state=None, reassignment_ratio=.01,
                      verbose=False):
     """Incremental update of the centers for the Minibatch K-Means algorithm
@@ -822,6 +822,7 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
     distances: array, dtype float64, shape (n_samples), optional
         If not None, should be a pre-allocated array that will be used to store
         the distances of each sample to it's closest center.
+        May not be None when random_reassign is True.
 
     random_state: integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
@@ -853,27 +854,26 @@ def _mini_batch_step(X, x_squared_norms, centers, counts,
             (counts <= 1), counts <= reassignment_ratio * counts.max())
         number_of_reassignments = to_reassign.sum()
         if number_of_reassignments:
-            # Pick new clusters amongst observations with a probability
-            # proportional to their closeness to their center
-            distance_to_centers = np.asarray(centers[nearest_center] - X)
-            distance_to_centers **= 2
-            distance_to_centers = distance_to_centers.sum(axis=1)
-            # Flip the ordering of the distances
-            distance_to_centers -= distance_to_centers.max()
-            distance_to_centers *= -1
+            # Pick new clusters amongst observations with probability
+            # proportional to their closeness to their center.
+            # Flip the ordering of the distances.
+            distances -= distances.max()
+            distances *= -1
             rand_vals = random_state.rand(number_of_reassignments)
-            rand_vals *= distance_to_centers.sum()
-            new_centers = np.searchsorted(distance_to_centers.cumsum(),
+            rand_vals *= distances.sum()
+            new_centers = np.searchsorted(distances.cumsum(),
                                           rand_vals)
-            new_centers = X[new_centers]
             if verbose:
                 n_reassigns = to_reassign.sum()
                 if n_reassigns:
-                    print("[_mini_batch_step] Reassigning %i cluster centers."
+                    print("[MiniBatchKMeans] Reassigning %i cluster centers."
                           % n_reassigns)
-            if sp.issparse(new_centers) and not sp.issparse(centers):
-                new_centers = new_centers.toarray()
-            centers[to_reassign] = new_centers
+
+            if sp.issparse(X) and not sp.issparse(centers):
+                assign_rows_csr(X, new_centers, np.where(to_reassign)[0],
+                                centers)
+            else:
+                centers[to_reassign] = X[new_centers]
 
     # implementation for the sparse CSR reprensation completely written in
     # cython
@@ -1012,10 +1012,10 @@ class MiniBatchKMeans(KMeans):
         To disable convergence detection based on normalized center
         change, set tol to 0.0 (default).
 
-    batch_size: int, optional, default: 100
+    batch_size : int, optional, default: 100
         Size of the mini batches.
 
-    init_size: int, optional, default: 3 * batch_size
+    init_size : int, optional, default: 3 * batch_size
         Number of samples to randomly sample for speeding up the
         initialization (sometimes at the expense of accurracy): the
         only algorithm is initialized by running a batch KMeans on a
@@ -1035,16 +1035,16 @@ class MiniBatchKMeans(KMeans):
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
-    compute_labels: boolean
+    compute_labels : boolean
         Compute label assignements and inertia for the complete dataset
         once the minibatch optimization has converged in fit.
 
-    random_state: integer or numpy.RandomState, optional
+    random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
 
-    reassignment_ratio: float, optional
+    reassignment_ratio : float, optional
         Control the fraction of the maximum number of counts for a
         center to be reassigned. A higher value means that low count
         centers are more easily reassigned, which means that the
@@ -1055,13 +1055,13 @@ class MiniBatchKMeans(KMeans):
     Attributes
     ----------
 
-    `cluster_centers_`: array, [n_clusters, n_features]
+    `cluster_centers_` : array, [n_clusters, n_features]
         Coordinates of cluster centers
 
-    `labels_`:
+    `labels_` :
         Labels of each point (if compute_labels is set to True).
 
-    `inertia_`: float
+    `inertia_` : float
         The value of the inertia criterion associated with the chosen
         partition (if compute_labels is set to True). The inertia is
         defined as the sum of square distances of samples to their nearest
@@ -1094,7 +1094,7 @@ class MiniBatchKMeans(KMeans):
 
         Parameters
         ----------
-        X: array-like, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             Coordinates of the data points to cluster
         """
         random_state = check_random_state(self.random_state)
@@ -1222,7 +1222,7 @@ class MiniBatchKMeans(KMeans):
 
         Parameters
         ----------
-        X: array-like, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             Coordinates of the data points to cluster.
         """
 
@@ -1247,16 +1247,18 @@ class MiniBatchKMeans(KMeans):
 
             self.counts_ = np.zeros(self.n_clusters, dtype=np.int32)
             random_reassign = False
+            distances = None
         else:
             # The lower the minimum count is, the more we do random
             # reassignment, however, we don't want to do random
             # reassignment too often, to allow for building up counts
             random_reassign = self.random_state_.randint(
                 10 * (1 + self.counts_.min())) == 0
+            distances = np.zeros(self.n_clusters, dtype=np.float64)
 
         _mini_batch_step(X, x_squared_norms, self.cluster_centers_,
                          self.counts_, np.zeros(0, np.double), 0,
-                         random_reassign=random_reassign,
+                         random_reassign=random_reassign, distances=distances,
                          random_state=self.random_state_,
                          reassignment_ratio=self.reassignment_ratio,
                          verbose=self.verbose)

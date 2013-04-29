@@ -94,7 +94,11 @@ class SelectorMixin(TransformerMixin):
             threshold = float(threshold)
 
         # Selection
-        mask = importances >= threshold
+        try:
+            mask = importances >= threshold
+        except TypeError:
+            # Fails in Python 3.x when threshold is str; result is array of True
+            raise ValueError("Invalid threshold: all features are discarded.")
 
         if np.any(mask):
             mask = safe_mask(X, mask)

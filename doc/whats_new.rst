@@ -20,19 +20,70 @@ Changelog
      `Gilles Louppe`_. See the :ref:`AdaBoost <adaboost>` section of the user
      guide for details and examples.
 
+   - :func:`metrics.accuracy_score`, :func:`metrics.zero_one_loss` support
+     multi-label classification and a new metric :func:`metrics.hamming_loss`
+     is added with multi-label support by `Arnaud Joly`_.
+
+   - Much reduced memory usage in
+     :class:`feature_extraction.text.CountVectorizer` and
+     :class:`feature_extraction.text.TfidfVectorizer`,
+     by Jochen Wersdörfer.
+
+   - The ``min_df`` parameter in
+     :class:`feature_extraction.text.CountVectorizer` and
+     :class:`feature_extraction.text.TfidfVectorizer`, which used to be 2,
+     has been reset to 1 to avoid unpleasant surprises (empty vocabularies)
+     for novice users who try it out on tiny document collections.
+     A value of at least 2 is still recommended for practical use.
+
    - Feature importances in :class:`tree.DecisionTreeClassifier`,
      :class:`tree.DecisionTreeRegressor` and all derived ensemble estimators
      are now computed on the fly when accessing  the ``feature_importances_``
      attribute. Setting ``compute_importances=True`` is no longer required.
      By `Gilles Louppe`_.
 
-   - :class:`LinearSVC`, :class:`SGDClassifier` and :class:`SGDRegressor`
-     now have a ``sparsify`` method that converts their ``coef_`` into a
-     sparse matrix, meaning stored models trained using these estimators
-     can be made much more compact.
+   - Added :class:`grid_search.RandomizedSearchCV` and
+     :class:`grid_search.ParameterSampler` for randomized hyperparameter
+     optimization. By `Andreas Müller`_.
+
+   - :class:`svm.LinearSVC`, :class:`linear_model.SGDClassifier` and
+     :class:`linear_model.SGDRegressor` now have a ``sparsify`` method that
+     converts their ``coef_`` into a sparse matrix, meaning stored models
+     trained using these estimators can be made much more compact.
 
    - Hyperlinks to documentation in example code on the website by
      `Martin Luessi`_.
+
+   - Fixed bug in :class:`preprocessing.MinMaxScaler` causing incorrect scaling
+     of the features for non-default ``feature_range`` settings. By `Andreas
+     Müller`_.
+
+   - ``max_features`` in :class:`tree.DecisionTreeClassifier`,
+     :class:`tree.DecisionTreeRegressor` and all derived ensemble estimators
+     now supports percentage values. By `Gilles Louppe`_.
+
+   - Performance improvements in :class:`isotonic.IsotonicRegression` by
+     Nelle Varoquaux.
+
+   - :func:`metrics.accuracy_score` has an option normalize to return
+     the fraction or the number of correctly classified sample
+     by `Arnaud Joly`_.
+
+
+API changes summary
+-------------------
+
+   - :class:`grid_search.IterGrid` was renamed to
+     :class:`grid_search.ParameterGrid`.
+
+   - Fixed bug in :class:`KFold` causing imperfect class balance in some
+     cases. By `Alexandre Gramfort`_ and Tadej Janež.
+
+   - :class:`sklearn.decomposition.KernelPCA` now always returns output with
+     ``n_components`` components, unless the new parameter ``remove_zero_eig``
+     is set to ``True``. This new behavior is consistent with the way
+     kernel PCA was always documented; previously, the removal of components
+     with zero eigenvalues was tacitly performed on all data.
 
 
 .. _changes_0_13_1:
@@ -133,11 +184,13 @@ New Estimator Classes
      sparse representations using ensembles of totally random trees by  `Andreas Müller`_.
      See :ref:`random_trees_embedding` in the user guide.
 
-
    - :class:`manifold.SpectralEmbedding` and function
      :func:`manifold.spectral_embedding`, implementing the "laplacian
      eigenmaps" transformation for nonlinear dimensionality reduction by Wei
      Li. See :ref:`spectral_embedding` in the user guide.
+
+   - :class:`isotonic.IsotonicRegression` by `Fabian Pedregosa`_, `Alexandre Gramfort`_
+     and Nelle Varoquaux.
 
 
 Changelog

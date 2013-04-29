@@ -73,13 +73,13 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
     Parameters
     ----------
 
-    X: array, [n_samples, n_features]
+    X : array, [n_samples, n_features]
         The data matrix to be decomposed.
 
-    n_components: array, [n_components, n_features]
+    n_components : array, [n_components, n_features]
         The number of components desired in the approximation.
 
-    variant: None | 'a' | 'ar'
+    variant : None | 'a' | 'ar'
         The variant of the NNDSVD algorithm.
         Accepts None, 'a', 'ar'
         None: leaves the zero entries as zero
@@ -90,14 +90,14 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
     eps: float
         Truncate all values less then this in output to zero.
 
-    random_state: numpy.RandomState | int, optional
+    random_state : numpy.RandomState | int, optional
         The generator used to fill in the zeros, when using variant='ar'
         Default: numpy.random
 
     Returns
     -------
 
-    (W, H):
+    (W, H) :
         Initial guesses for solving X ~= WH such that
         the number of columns in W is n_components.
 
@@ -252,11 +252,11 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_components: int or None
+    n_components : int or None
         Number of components, if n_components is not set all components
         are kept
 
-    init:  'nndsvd' |  'nndsvda' | 'nndsvdar' | 'random'
+    init :  'nndsvd' |  'nndsvda' | 'nndsvdar' | 'random'
         Method used to initialize the procedure.
         Default: 'nndsvdar' if n_components < n_features, otherwise random.
         Valid options::
@@ -270,24 +270,24 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
                 for when sparsity is not desired)
             'random': non-negative random matrices
 
-    sparseness: 'data' | 'components' | None, default: None
+    sparseness : 'data' | 'components' | None, default: None
         Where to enforce sparsity in the model.
 
-    beta: double, default: 1
+    beta : double, default: 1
         Degree of sparseness, if sparseness is not None. Larger values mean
         more sparseness.
 
-    eta: double, default: 0.1
+    eta : double, default: 0.1
         Degree of correctness to mantain, if sparsity is not None. Smaller
         values mean larger error.
 
-    tol: double, default: 1e-4
+    tol : double, default: 1e-4
         Tolerance value used in stopping conditions.
 
-    max_iter: int, default: 200
+    max_iter : int, default: 200
         Number of iterations to compute.
 
-    nls_max_iter: int, default: 2000
+    nls_max_iter : int, default: 2000
         Number of iterations in NLS subproblem.
 
     random_state : int or RandomState
@@ -296,12 +296,12 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     Attributes
     ----------
     `components_` : array, [n_components, n_features]
-        Non-negative components of the data
+        Non-negative components of the data.
 
     `reconstruction_err_` : number
-        Frobenius norm of the matrix difference between the
-        training data and the reconstructed data from the
-        fit produced by the model. ``|| X - WH ||_2``
+        Frobenius norm of the matrix difference between
+        the training data and the reconstructed data from
+        the fit produced by the model. ``|| X - WH ||_2``
 
     Examples
     --------

@@ -52,7 +52,7 @@ def alt_nnmf(V, r, max_iter=1000, tol=1e-3, R=None):
     n, m = V.shape
     if R == "svd":
         W, H = _initialize_nmf(V, r)
-    elif R == None:
+    elif R is None:
         R = np.random.mtrand._rand
         W = np.abs(R.standard_normal((n, r)))
         H = np.abs(R.standard_normal((r, m)))
@@ -94,7 +94,7 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-7):
             print(m.reconstruction_err_, tend)
 
             gc.collect()
-            print "benching nndsvda-nmf: "
+            print("benching nndsvda-nmf: ")
             tstart = time()
             m = NMF(n_components=30, init='nndsvda',
                     tol=tolerance).fit(X)
@@ -137,6 +137,7 @@ def compute_bench(samples_range, features_range, rank=50, tolerance=1e-7):
 
 if __name__ == '__main__':
     from mpl_toolkits.mplot3d import axes3d  # register the 3d projection
+    axes3d
     import matplotlib.pyplot as plt
 
     samples_range = np.linspace(50, 500, 3).astype(np.int)

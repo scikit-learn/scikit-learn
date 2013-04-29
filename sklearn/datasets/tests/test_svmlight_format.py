@@ -13,6 +13,8 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import assert_in
 
+from sklearn.externals.six import b
+
 import sklearn
 from sklearn.datasets import (load_svmlight_file, load_svmlight_files,
                               dump_svmlight_file)
@@ -137,13 +139,13 @@ def test_load_invalid_order_file():
 
 @raises(ValueError)
 def test_load_zero_based():
-    f = BytesIO("-1 4:1.\n1 0:1\n")
+    f = BytesIO(b("-1 4:1.\n1 0:1\n"))
     load_svmlight_file(f, zero_based=False)
 
 
 def test_load_zero_based_auto():
-    data1 = "-1 1:1 2:2 3:3\n"
-    data2 = "-1 0:0 1:1\n"
+    data1 = b("-1 1:1 2:2 3:3\n")
+    data2 = b("-1 0:0 1:1\n")
 
     f1 = BytesIO(data1)
     X, y = load_svmlight_file(f1, zero_based="auto")
@@ -158,10 +160,10 @@ def test_load_zero_based_auto():
 
 def test_load_with_qid():
     # load svmfile with qid attribute
-    data = """
+    data = b("""
     3 qid:1 1:0.53 2:0.12
     2 qid:1 1:0.13 2:0.1
-    7 qid:2 1:0.87 2:0.12"""
+    7 qid:2 1:0.87 2:0.12""")
     X, y = load_svmlight_file(BytesIO(data), query_id=False)
     assert_array_equal(y, [3, 2, 7])
     assert_array_equal(X.todense(), [[.53, .12], [.13, .1], [.87, .12]])
@@ -210,8 +212,19 @@ def test_dump():
                 f.seek(0)
 
                 comment = f.readline()
+                try:
+                    comment = str(comment, "utf-8")
+                except TypeError:  # fails in Python 2.x
+                    pass
+
                 assert_in("scikit-learn %s" % sklearn.__version__, comment)
+
                 comment = f.readline()
+                try:
+                    comment = str(comment, "utf-8")
+                except TypeError:  # fails in Python 2.x
+                    pass
+
                 assert_in(["one", "zero"][zero_based] + "-based", comment)
 
                 X2, y2 = load_svmlight_file(f, dtype=dtype,
@@ -243,7 +256,7 @@ def test_dump_comment():
     assert_array_equal(y, y2)
 
     # XXX we have to update this to support Python 3.x
-    utf8_comment = "It is true that\n\xc2\xbd\xc2\xb2 = \xc2\xbc"
+    utf8_comment = b("It is true that\n\xc2\xbd\xc2\xb2 = \xc2\xbc")
     f = BytesIO()
     assert_raises(UnicodeDecodeError,
                   dump_svmlight_file, X, y, f, comment=utf8_comment)

@@ -86,12 +86,12 @@ L1-based feature selection
 Selecting non-zero coefficients
 ---------------------------------
 
-:ref:`Linear models <linear_model>` penalized with the L1 norm have 
+:ref:`Linear models <linear_model>` penalized with the L1 norm have
 sparse solutions: many of their estimated coefficients are zero. When the goal
-is to reduce the dimensionality of the data to use with another classifier, 
+is to reduce the dimensionality of the data to use with another classifier,
 they expose a `transform` method to select the non-zero coefficient. In
 particular, sparse estimators useful for this purpose are the
-:class:`linear_model.Lasso` for regression, and 
+:class:`linear_model.Lasso` for regression, and
 of :class:`linear_model.LogisticRegression` and :class:`svm.LinearSVC`
 for classification::
 
@@ -105,7 +105,7 @@ for classification::
   >>> X_new.shape
   (150, 3)
 
-With SVMs and logistic-regression, the parameter C controls the sparsity: 
+With SVMs and logistic-regression, the parameter C controls the sparsity:
 the smaller C the fewer features selected. With Lasso, the higher the
 alpha parameter, the fewer features selected.
 
@@ -139,7 +139,7 @@ alpha parameter, the fewer features selected.
 
    **Reference** Richard G. Baraniuk `Compressive Sensing`, IEEE Signal
    Processing Magazine [120] July 2007
-   http://dsp.rice.edu/files/cs/baraniukCSlecture07.pdf 
+   http://dsp.rice.edu/files/cs/baraniukCSlecture07.pdf
 
 .. _randomized_l1:
 
@@ -167,7 +167,7 @@ path of stability scores you can use :func:`lasso_stability_path`.
 Note that for randomized sparse models to be more powerful than standard
 F statistics at detecting non-zero features, the ground truth model
 should be sparse, in other words, there should be only a small fraction
-of features non zero. 
+of features non zero.
 
 .. topic:: Examples:
 
@@ -177,7 +177,7 @@ of features non zero.
 
 .. topic:: References:
 
-   * N. Meinshausen, P. Buhlmann, "Stability selection", 
+   * N. Meinshausen, P. Buhlmann, "Stability selection",
      Journal of the Royal Statistical Society, 72 (2010)
      http://arxiv.org/pdf/0809.2932
 
@@ -200,8 +200,8 @@ features::
   (150, 4)
   >>> clf = ExtraTreesClassifier(random_state=0)
   >>> X_new = clf.fit(X, y).transform(X)
-  >>> clf.feature_importances_
-  array([ 0.12604616,  0.07234783,  0.38787583,  0.41373018])
+  >>> clf.feature_importances_  # doctest: +ELLIPSIS
+  array([ 0.12...,  0.07...,  0.38...,  0.41...])
   >>> X_new.shape
   (150, 2)
 

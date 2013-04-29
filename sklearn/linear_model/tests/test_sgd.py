@@ -15,9 +15,9 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_equal
 
 from sklearn import linear_model, datasets, metrics
-from sklearn import preprocessing
-from sklearn.linear_model import SGDClassifier, SGDRegressor
 from sklearn.base import clone
+from sklearn.linear_model import SGDClassifier, SGDRegressor
+from sklearn.preprocessing import LabelEncoder, scale
 
 
 class SparseSGDClassifier(SGDClassifier):
@@ -146,7 +146,9 @@ class CommonTest(object):
         clf.fit(X, Y)
         assert_true(hasattr(clf, "coef_"))
 
-        clf.fit(X[:, :-1], Y)
+        # Non-regression test: try fitting with a different label set.
+        y = [["ham", "spam"][i] for i in LabelEncoder().fit_transform(Y)]
+        clf.fit(X[:, :-1], y)
 
     def test_input_format(self):
         """Input format tests. """
@@ -411,7 +413,7 @@ class DenseSGDClassifierTestCase(unittest.TestCase, CommonTest):
         # compute reference metrics on iris dataset that is quite balanced by
         # default
         X, y = iris.data, iris.target
-        X = preprocessing.scale(X)
+        X = scale(X)
         idx = np.arange(X.shape[0])
         rng = np.random.RandomState(0)
         rng.shuffle(idx)

@@ -178,7 +178,7 @@ def load_files(container_path, description=None, categories=None,
         target = target[indices]
 
     if load_content:
-        data = [open(filename).read() for filename in filenames]
+        data = [open(filename, 'rb').read() for filename in filenames]
         if charset is not None:
             data = [d.decode(charset, charse_error) for d in data]
         return Bunch(data=data,

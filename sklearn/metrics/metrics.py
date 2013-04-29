@@ -14,17 +14,141 @@ the lower the better
 #          Arnaud Joly <a.joly@ulg.ac.be>
 # License: BSD Style.
 
-from itertools import izip
+from __future__ import division
+
 import warnings
 import numpy as np
-from scipy.sparse import coo_matrix
 
-from ..utils import check_arrays, deprecated
+from scipy.sparse import coo_matrix
+from scipy.spatial.distance import hamming as sp_hamming
+
+from ..externals.six.moves import zip
+from ..preprocessing import LabelBinarizer
+from ..utils import check_arrays
+from ..utils import deprecated
+from ..utils.multiclass import is_label_indicator_matrix
+from ..utils.multiclass import is_multilabel
+from ..utils.multiclass import unique_labels
 
 
 ###############################################################################
 # General utilities
 ###############################################################################
+def _is_1d(x):
+    """Return True if x can be considered as a 1d vector.
+
+    This function allows to distinguish between a 1d vector, e.g. :
+        - ``np.array([1, 2])``
+        - ``np.array([[1, 2]])``
+        - ``np.array([[1], [2]])``
+
+    and 2d matrix, e.g.:
+        - ``np.array([[1, 2], [3, 4]])``
+
+
+    Parameters
+    ----------
+    x : numpy array.
+
+    Return
+    ------
+    is_1d : boolean,
+        Return True if x can be considered as a 1d vector.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics.metrics import _is_1d
+    >>> _is_1d([1, 2, 3])
+    True
+    >>> _is_1d(np.array([1, 2, 3]))
+    True
+    >>> _is_1d([[1, 2, 3]])
+    True
+    >>> _is_1d(np.array([[1, 2, 3]]))
+    True
+    >>> _is_1d([[1], [2], [3]])
+    True
+    >>> _is_1d(np.array([[1], [2], [3]]))
+    True
+    >>> _is_1d([[1, 2], [3, 4]])
+    False
+    >>> _is_1d(np.array([[1, 2], [3, 4]]))
+    False
+
+    See also
+    --------
+    _check_1d_array
+
+    """
+    return np.size(x) == np.max(np.shape(x))
+
+
+def _check_1d_array(y1, y2, ravel=False):
+    """Check that y1 and y2 are vectors of the same shape.
+
+    It convert 1d arrays (y1 and y2) of various shape to a common shape
+    representation. Note that ``y1`` and ``y2`` should have the same number of
+    element.
+
+    Parameters
+    ----------
+    y1 : array-like,
+        y1 must be a "vector".
+
+    y2 : array-like
+        y2 must be a "vector".
+
+    ravel : boolean, optional (default=False),
+        If ``ravel``` is set to ``True``, then ``y1`` and ``y2`` are raveled.
+
+    Returns
+    -------
+    y1 : numpy array,
+        If ``ravel`` is set to ``True``, return np.ravel(y1), else
+        return y1.
+
+    y2 : numpy array,
+        Return y2  reshaped to have the shape of y1.
+
+    Examples
+    --------
+    >>> from numpy import array
+    >>> from sklearn.metrics.metrics import _check_1d_array
+    >>> _check_1d_array([1, 2], [[3, 4]])
+    (array([1, 2]), array([3, 4]))
+    >>> _check_1d_array([[1, 2]], [[3], [4]])
+    (array([[1, 2]]), array([[3, 4]]))
+    >>> _check_1d_array([[1], [2]], [[3, 4]])
+    (array([[1],
+           [2]]), array([[3],
+           [4]]))
+    >>> _check_1d_array([[1], [2]], [[3, 4]], ravel=True)
+    (array([1, 2]), array([3, 4]))
+
+    See also
+    --------
+    _is_1d
+
+    """
+    y1 = np.asarray(y1)
+    y2 = np.asarray(y2)
+
+    if not _is_1d(y1):
+        raise ValueError("y1 can't be considered as a vector")
+
+    if not _is_1d(y2):
+        raise ValueError("y2 can't be considered as a vector")
+
+    if ravel:
+        return np.ravel(y1), np.ravel(y2)
+    else:
+        if np.shape(y1) != np.shape(y2):
+            y2 = np.reshape(y2, np.shape(y1))
+
+        return y1, y2
+
+
 def auc(x, y, reorder=False):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
@@ -39,7 +163,7 @@ def auc(x, y, reorder=False):
     y : array, shape = [n]
         y coordinates.
 
-    reorder : boolean, optional
+    reorder : boolean, optional (default=False)
         If True, assume that the curve is ascending in the case of ties, as for
         an ROC curve. If the curve is non-ascending, the result will be wrong.
 
@@ -59,7 +183,7 @@ def auc(x, y, reorder=False):
 
     See also
     --------
-    auc_score Computes the area under the ROC curve
+    auc_score : Computes the area under the ROC curve
 
     """
     # XXX: Consider using  ``scipy.integrate`` instead, or moving to
@@ -83,13 +207,6 @@ def auc(x, y, reorder=False):
 
     area = np.sum(h * (y[1:] + y[:-1])) / 2.0
     return area
-
-
-def unique_labels(*lists_of_labels):
-    """Extract an ordered array of unique labels"""
-    labels = set().union(*(l.ravel() if hasattr(l, "ravel") else l
-                           for l in lists_of_labels))
-    return np.asarray(sorted(labels))
 
 
 ###############################################################################
@@ -118,7 +235,8 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=-1):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/Hinge_loss
+    .. [1] `Wikipedia entry on the Hinge loss
+            <http://en.wikipedia.org/wiki/Hinge_loss>`_
 
     Examples
     --------
@@ -179,11 +297,15 @@ def average_precision_score(y_true, y_score):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/Information_retrieval#Average_precision
+    .. [1] `Wikipedia entry for the Average precision
+            <http://en.wikipedia.org/wiki/Information_retrieval#Average_precision>`_
 
     See also
     --------
-    auc_score: Area under the ROC curve
+    auc_score : Area under the ROC curve
+
+    precision_recall_curve :
+        Compute precision-recall pairs for different probability thresholds
 
     Examples
     --------
@@ -220,11 +342,14 @@ def auc_score(y_true, y_score):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/Receiver_operating_characteristic
+    .. [1] `Wikipedia entry for the Receiver operating characteristic
+            <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
 
     See also
     --------
-    average_precision_score: Area under the precision-recall curve
+    average_precision_score : Area under the precision-recall curve
+
+    roc_curve : Compute Receiver operating characteristic (ROC)
 
     Examples
     --------
@@ -236,7 +361,8 @@ def auc_score(y_true, y_score):
     0.75
 
     """
-
+    if len(np.unique(y_true)) != 2:
+        raise ValueError("AUC is defined for binary classification only")
     fpr, tpr, tresholds = roc_curve(y_true, y_score)
     return auc(fpr, tpr, reorder=True)
 
@@ -273,7 +399,6 @@ def matthews_corrcoef(y_true, y_pred):
 
     References
     ----------
-
     .. [1] `Baldi, Brunak, Chauvin, Andersen and Nielsen, (2000). Assessing the
        accuracy of prediction algorithms for classification: an overview
        <http://dx.doi.org/10.1093/bioinformatics/16.5.412>`_
@@ -290,6 +415,9 @@ def matthews_corrcoef(y_true, y_pred):
     -0.33...
 
     """
+    y_true, y_pred = check_arrays(y_true, y_pred)
+    y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=True)
+
     mcc = np.corrcoef(y_true, y_pred)[0, 1]
     if np.isnan(mcc):
         return 0.
@@ -388,7 +516,7 @@ def precision_recall_curve(y_true, probas_pred):
     # select all labels associated with the predictions. By incrementally
     # keeping track of the number of positive and negative labels seen so far,
     # we can calculate precision and recall.
-    for l_idx, r_idx in izip(threshold_idxs[:-1], threshold_idxs[1:]):
+    for l_idx, r_idx in zip(threshold_idxs[:-1], threshold_idxs[1:]):
         threshold_labels = y_true[l_idx:r_idx]
         n_at_threshold = r_idx - l_idx
         n_pos_at_threshold = threshold_labels.sum()
@@ -439,6 +567,10 @@ def roc_curve(y_true, y_score, pos_label=None):
     thresholds : array, shape = [>2]
         Thresholds on ``y_score`` used to compute ``fpr`` and ``fpr``.
 
+    See also
+    --------
+    auc_score : Compute Area Under the Curve (AUC) from prediction scores
+
     Notes
     -----
     Since the thresholds are sorted from low to high values, they
@@ -447,7 +579,9 @@ def roc_curve(y_true, y_score, pos_label=None):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/Receiver_operating_characteristic
+    .. [1] `Wikipedia entry for the Receiver operating characteristic
+            <http://en.wikipedia.org/wiki/Receiver_operating_characteristic>`_
+
 
     Examples
     --------
@@ -586,7 +720,8 @@ def confusion_matrix(y_true, y_pred, labels=None):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/Confusion_matrix
+    .. [2] `Wikipedia entry for the Confusion matrix
+           <http://en.wikipedia.org/wiki/Confusion_matrix>`_
 
     Examples
     --------
@@ -625,7 +760,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
 # Multiclass loss function
 ###############################################################################
 def zero_one_loss(y_true, y_pred, normalize=True):
-    """Zero-One classification loss
+    """Zero-one classification loss.
 
     If normalize is ``True``, return the fraction of misclassifications
     (float), else it returns the number of misclassifications (int). The best
@@ -633,12 +768,14 @@ def zero_one_loss(y_true, y_pred, normalize=True):
 
     Parameters
     ----------
-    y_true : array-like
+    y_true : array-like or list of labels or label indicator matrix
+        Ground truth (correct) labels.
 
-    y_pred : array-like
+    y_pred : array-like or list of labels or label indicator matrix
+        Predicted labels, as returned by a classifier.
 
-    normalize : bool, optional
-        If ``False`` (default), return the number of misclassifications.
+    normalize : bool, optional (default=True)
+        If ``False``, return the number of misclassifications.
         Otherwise, return the fraction of misclassifications.
 
     Returns
@@ -646,6 +783,17 @@ def zero_one_loss(y_true, y_pred, normalize=True):
     loss : float or int,
         If ``normalize == True``, return the fraction of misclassifications
         (float), else it returns the number of misclassifications (int).
+
+    Notes
+    -----
+    In multilabel classification, the zero_one_loss function corresponds to
+    the subset zero-one loss: for each sample, the entire set of labels must be
+    correctly predicted, otherwise the loss for that sample is equal to one.
+
+    See also
+    --------
+    accuracy_score : Compute the accuracy score
+    hamming_loss : Compute the average Hamming loss
 
     Examples
     --------
@@ -657,12 +805,29 @@ def zero_one_loss(y_true, y_pred, normalize=True):
     >>> zero_one_loss(y_true, y_pred, normalize=False)
     1
 
+    In the multilabel case with binary indicator format
+    >>> zero_one_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+    1.0
+
+    and with a list of labels format
+    >>> zero_one_loss([(1, 2), (3,)], [(1, 2), tuple()])
+    0.5
+
     """
-    y_true, y_pred = check_arrays(y_true, y_pred)
-    if not normalize:
-        return np.sum(y_pred != y_true)
+    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
+    score = accuracy_score(y_true, y_pred, normalize=normalize)
+
+    if normalize:
+        return 1 - score
     else:
-        return np.mean(y_pred != y_true)
+        if hasattr(y_true, "shape"):
+            n_samples = (np.max(y_true.shape) if _is_1d(y_true)
+                         else y_true.shape[0])
+
+        else:
+            n_samples = len(y_true)
+
+        return n_samples - score
 
 
 @deprecated("Function 'zero_one' has been renamed to "
@@ -682,7 +847,7 @@ def zero_one(y_true, y_pred, normalize=False):
 
     y_pred : array-like
 
-    normalize : bool, optional
+    normalize : bool, optional (default=False)
         If ``False`` (default), return the number of misclassifications.
         Otherwise, return the fraction of misclassifications.
 
@@ -710,16 +875,20 @@ def zero_one(y_true, y_pred, normalize=False):
 ###############################################################################
 # Multiclass score functions
 ###############################################################################
-def accuracy_score(y_true, y_pred):
-    """Accuracy classification score
+def accuracy_score(y_true, y_pred, normalize=True):
+    """Accuracy classification score.
 
     Parameters
     ----------
-    y_true : array-like, shape = n_samples
+    y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) labels.
 
-    y_pred : array-like, shape = n_samples
+    y_pred : array-like or list of labels or label indicator matrix
         Predicted labels, as returned by a classifier.
+
+    normalize : bool, optional (default=True)
+        If ``False``, return the number of correctly classified samples.
+        Otherwise, return the fraction of correctly classified samples.
 
     Returns
     -------
@@ -729,19 +898,68 @@ def accuracy_score(y_true, y_pred):
 
     See also
     --------
-    zero_one_loss Zero-One classification loss
+    zero_one_loss : zero-one classification loss
+
+    Notes
+    -----
+    In multilabel classification, this function computes subset accuracy:
+    the set of labels predicted for a sample must *exactly* match the
+    corresponding set of labels in y_true.
 
     Examples
     --------
+    >>> import numpy as np
     >>> from sklearn.metrics import accuracy_score
     >>> y_pred = [0, 2, 1, 3]
     >>> y_true = [0, 1, 2, 3]
     >>> accuracy_score(y_true, y_pred)
     0.5
+    >>> accuracy_score(y_true, y_pred, normalize=False)
+    2
+
+    In the multilabel case with binary indicator format:
+
+    >>> accuracy_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+    0.0
+
+    and with a list of labels format:
+    >>> accuracy_score([(1, 2), (3,)], [(1, 2), tuple()])
+    0.5
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred)
-    return np.mean(y_pred == y_true)
+    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
+
+    # Compute accuracy for each possible representation
+    if is_multilabel(y_true):
+        # Handle mix representation
+        if type(y_true) != type(y_pred):
+            labels = unique_labels(y_true, y_pred)
+            lb = LabelBinarizer()
+            lb.fit([labels.tolist()])
+            y_true = lb.transform(y_true)
+            y_pred = lb.transform(y_pred)
+
+        if is_label_indicator_matrix(y_true):
+            score = (y_pred != y_true).sum(axis=1) == 0
+        else:
+            # numpy 1.3 : it is required to perform a unique before setxor1d
+            #             to get unique label in numpy 1.3.
+            #             This is needed in order to handle redundant labels.
+            # FIXME : check if this can be simplified when 1.3 is removed
+            score = np.array([np.size(np.setxor1d(np.unique(pred),
+                                                  np.unique(true))) == 0
+                             for pred, true in zip(y_pred, y_true)])
+    else:
+        y_true, y_pred = check_arrays(y_true, y_pred)
+
+        # Handle mix shape
+        y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=True)
+        score = y_true == y_pred
+
+    if normalize:
+        return np.mean(score)
+    else:
+        return np.sum(score)
 
 
 def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
@@ -768,24 +986,21 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     labels : array
         Integer array of labels.
 
-    pos_label : int
-        In the binary classification case, give the label of the positive class
-        (default is 1). Everything else but ``pos_label`` is considered to
-        belong to the negative class.  Set to ``None`` in the case of
-        multiclass classification.
+    pos_label : int, 1 by default
+        If ``average`` is not ``None`` and the classification target is binary,
+        only this class's scores will be returned.
 
     average : string, [None, 'micro', 'macro', 'weighted' (default)]
-        In the multiclass classification case, this determines the type of
-        averaging performed on the data.
+        If ``None``, the scores for each class are returned. Otherwise,
+        unless ``pos_label`` is given in binary classification, this
+        determines the type of averaging performed on the data:
 
-        None:
-            Do not perform any averaging, return the score for each class.
-        'macro':
+        ``'macro'``:
             Average over classes (does not take imbalance into account).
-        'micro':
+        ``'micro'``:
             Average over instances (takes imbalance into account).  This
             implies that ``precision == recall == F1``.
-        'weighted':
+        ``'weighted'``:
             Average weighted by support (takes imbalance into account).  Can
             result in F-score that is not between precision and recall.
 
@@ -797,7 +1012,8 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
 
     References
     ----------
-    http://en.wikipedia.org/wiki/F1_score
+    .. [1] `Wikipedia entry for the F1-score
+           <http://en.wikipedia.org/wiki/F1_score>`_
 
     Examples
     --------
@@ -854,18 +1070,15 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     labels : array
         Integer array of labels.
 
-    pos_label : int
-        In the binary classification case, give the label of the positive class
-        (default is 1). Everything else but ``pos_label`` is considered to
-        belong to the negative class.  Set to ``None`` in the case of
-        multiclass classification.
+    pos_label : int, 1 by default
+        If ``average`` is not ``None`` and the classification target is binary,
+        only this class's scores will be returned.
 
     average : string, [None, 'micro', 'macro', 'weighted' (default)]
-        In the multiclass classification case, this determines the type of
-        averaging performed on the data.
+        If ``None``, the scores for each class are returned. Otherwise,
+        unless ``pos_label`` is given in binary classification, this
+        determines the type of averaging performed on the data:
 
-        ``None``:
-            Do not perform any averaging, return the scores for each class.
         ``'macro'``:
             Average over classes (does not take imbalance into account).
         ``'micro'``:
@@ -874,7 +1087,6 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
         ``'weighted'``:
             Average weighted by support (takes imbalance into account).  Can
             result in F-score that is not between precision and recall.
-            Do not perform any averaging, return the score for each class.
 
     Returns
     -------
@@ -885,10 +1097,11 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     References
     ----------
-    R. Baeza-Yates and B. Ribeiro-Neto (2011). Modern Information Retrieval.
-    Addison Wesley, pp. 327-328.
+    .. [1] R. Baeza-Yates and B. Ribeiro-Neto (2011).
+           Modern Information Retrieval. Addison Wesley, pp. 327-328.
 
-    http://en.wikipedia.org/wiki/F1_score
+    .. [2] `Wikipedia entry for the F1-score
+           <http://en.wikipedia.org/wiki/F1_score>`_
 
     Examples
     --------
@@ -971,18 +1184,15 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     labels : array
         Integer array of labels.
 
-    pos_label : int
-        In the binary classification case, give the label of the positive class
-        (default is 1). Everything else but ``pos_label`` is considered to
-        belong to the negative class.  Set to ``None`` in the case of
-        multiclass classification.
+    pos_label : int, 1 by default
+        If ``average`` is not ``None`` and the classification target is binary,
+        only this class's scores will be returned.
 
     average : string, [None (default), 'micro', 'macro', 'weighted']
-        In the multiclass classification case, this determines the type of
-        averaging performed on the data.
+        If ``None``, the scores for each class are returned. Otherwise,
+        unless ``pos_label`` is given in binary classification, this
+        determines the type of averaging performed on the data:
 
-        ``None``:
-            Do not perform any averaging, return the scores for each class.
         ``'macro'``:
             Average over classes (does not take imbalance into account).
         ``'micro'``:
@@ -1000,7 +1210,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     recall: float (if average is not None) or array of float, , shape =\
         [n_unique_labels]
 
-    f1_score: float (if average is not None) or array of float, shape =\
+    fbeta_score: float (if average is not None) or array of float, shape =\
         [n_unique_labels]
 
     support: int (if average is not None) or array of int, shape =\
@@ -1008,7 +1218,12 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     References
     ----------
-    http://en.wikipedia.org/wiki/Precision_and_recall
+    .. [1] `Wikipedia entry for the Precision and recall
+           <http://en.wikipedia.org/wiki/Precision_and_recall>`_
+
+    .. [2] `Wikipedia entry for the F1-score
+           <http://en.wikipedia.org/wiki/F1_score>`_
+
 
     Examples
     --------
@@ -1047,6 +1262,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         raise ValueError("beta should be >0 in the F-beta score")
 
     y_true, y_pred = check_arrays(y_true, y_pred)
+    y_true, y_pred = _check_1d_array(y_true, y_pred)
+
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
@@ -1141,18 +1358,15 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     labels : array
         Integer array of labels.
 
-    pos_label : int
-        In the binary classification case, give the label of the positive class
-        (default is 1). Everything else but ``pos_label`` is considered to
-        belong to the negative class.  Set to ``None`` in the case of
-        multiclass classification.
+    pos_label : int, 1 by default
+        If ``average`` is not ``None`` and the classification target is binary,
+        only this class's scores will be returned.
 
     average : string, [None, 'micro', 'macro', 'weighted' (default)]
-        In the multiclass classification case, this determines the type of
-        averaging performed on the data.
+        If ``None``, the scores for each class are returned. Otherwise,
+        unless ``pos_label`` is given in binary classification, this
+        determines the type of averaging performed on the data:
 
-        ``None``:
-            Do not perform any averaging, return the scores for each class.
         ``'macro'``:
             Average over classes (does not take imbalance into account).
         ``'micro'``:
@@ -1222,18 +1436,15 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     labels : array
         Integer array of labels.
 
-    pos_label : int
-        In the binary classification case, give the label of the positive class
-        (default is 1). Everything else but ``pos_label`` is considered to
-        belong to the negative class.  Set to ``None`` in the case of
-        multiclass classification.
+    pos_label : int, 1 by default
+        If ``average`` is not ``None`` and the classification target is binary,
+        only this class's scores will be returned.
 
     average : string, [None, 'micro', 'macro', 'weighted' (default)]
-        In the multiclass classification case, this determines the type of
-        averaging performed on the data.
+        If ``None``, the scores for each class are returned. Otherwise,
+        unless ``pos_label`` is given in binary classification, this
+        determines the type of averaging performed on the data:
 
-        ``None``:
-            Do not perform any averaging, return the scores for each class.
         ``'macro'``:
             Average over classes (does not take imbalance into account).
         ``'micro'``:
@@ -1397,6 +1608,112 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
 
 
 ###############################################################################
+# Multilabel loss function
+###############################################################################
+def hamming_loss(y_true, y_pred, classes=None):
+    """Compute the average Hamming loss.
+
+    The Hamming loss is the fraction of labels that are incorrectly predicted.
+
+    Parameters
+    ----------
+    y_true : array-like or list of labels or label indicator matrix
+        Ground truth (correct) labels.
+
+    y_pred : array-like or list of labels or label indicator matrix
+        Predicted labels, as returned by a classifier.
+
+    classes : array, shape = [n_labels], optional
+        Integer array of labels.
+
+    Returns
+    -------
+    loss : float or int,
+        Return the average Hamming loss between element of ``y_true`` and
+        ``y_pred``.
+
+    See Also
+    --------
+    zero_one_loss : Zero-one classification loss
+
+    Notes
+    -----
+    In multiclass classification, the Hamming loss correspond to the Hamming
+    distance between ``y_true`` and ``y_pred`` which is equivalent to the
+    ``zero_one_loss`` function.
+
+    In multilabel classification, the Hamming loss is different from the
+    zero-one loss. The zero-one loss considers the entire set of labels for a
+    given sample incorrect if it does entirely match the true set of labels.
+    Hamming loss is more forgiving in that it penalizes the individual labels.
+
+    The Hamming loss is upperbounded by the zero-one loss. When normalized
+    over samples, the Hamming loss is always between 0 and 1.
+
+    References
+    ----------
+    .. [1] Grigorios Tsoumakas, Ioannis Katakis. Multi-Label Classification:
+           An Overview. International Journal of Data Warehousing & Mining,
+           3(3), 1-13, July-September 2007.
+
+    .. [2] `Wikipedia entry on the Hamming distance
+           <http://en.wikipedia.org/wiki/Hamming_distance>`_
+
+    Examples
+    --------
+    >>> from sklearn.metrics import hamming_loss
+    >>> y_pred = [1, 2, 3, 4]
+    >>> y_true = [2, 2, 3, 4]
+    >>> hamming_loss(y_true, y_pred)
+    0.25
+
+    In the multilabel case with binary indicator format:
+
+    >>> hamming_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+    0.75
+
+    and with a list of labels format:
+
+    >>> hamming_loss([(1, 2), (3,)], [(1, 2), tuple()])  # doctest: +ELLIPSIS
+    0.166...
+
+    """
+    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
+
+    if classes is None:
+        classes = unique_labels(y_true, y_pred)
+    else:
+        classes = np.asarray(classes, dtype=np.int)
+
+    if is_multilabel(y_true):
+        lb = LabelBinarizer()
+        lb.fit([classes.tolist()])
+
+        if type(y_true) != type(y_pred):
+            y_true = lb.transform(y_true)
+            y_pred = lb.transform(y_pred)
+
+        if is_label_indicator_matrix(y_true):
+            return np.mean(y_true != y_pred)
+        else:
+            # numpy 1.3 : it is required to perform a unique before setxor1d
+            #             to get unique label in numpy 1.3.
+            #             This is needed in order to handle redundant labels.
+            # FIXME : check if this can be simplified when 1.3 is removed
+            loss = np.array([np.size(np.setxor1d(np.unique(pred),
+                                                 np.unique(true)))
+                             for pred, true in zip(y_pred, y_true)])
+
+            return np.mean(loss) / np.size(classes)
+
+    else:
+        y_true, y_pred = check_arrays(y_true, y_pred)
+        y_true, y_pred = _check_1d_array(y_true, y_pred)
+
+        return sp_hamming(y_true, y_pred)
+
+
+###############################################################################
 # Regression loss functions
 ###############################################################################
 def mean_absolute_error(y_true, y_pred):
@@ -1429,6 +1746,11 @@ def mean_absolute_error(y_true, y_pred):
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
+
+    # Handle mix 1d representation
+    if _is_1d(y_true):
+        y_true, y_pred = _check_1d_array(y_true, y_pred)
+
     return np.mean(np.abs(y_pred - y_true))
 
 
@@ -1462,6 +1784,11 @@ def mean_squared_error(y_true, y_pred):
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
+
+    # Handle mix 1d representation
+    if _is_1d(y_true):
+        y_true, y_pred = _check_1d_array(y_true, y_pred)
+
     return np.mean((y_pred - y_true) ** 2)
 
 
@@ -1500,6 +1827,11 @@ def explained_variance_score(y_true, y_pred):
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
+
+    # Handle mix 1d representation
+    if _is_1d(y_true):
+        y_true, y_pred = _check_1d_array(y_true, y_pred)
+
     numerator = np.var(y_true - y_pred)
     denominator = np.var(y_true)
     if denominator == 0.0:
@@ -1539,8 +1871,8 @@ def r2_score(y_true, y_pred):
 
     References
     ----------
-    https://en.wikipedia.org/wiki/Coefficient_of_determination
-    http://stats.stackexchange.com/a/12991/8517
+    .. [1] `Wikipedia entry on the Coefficient of determination
+            <http://en.wikipedia.org/wiki/Coefficient_of_determination>`_
 
     Examples
     --------
@@ -1556,6 +1888,11 @@ def r2_score(y_true, y_pred):
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
+
+    # Handle mix 1d representation
+    if _is_1d(y_true):
+        y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=True)
+
     if len(y_true) == 1:
         raise ValueError("r2_score can only be computed given more than one"
                          " sample.")
