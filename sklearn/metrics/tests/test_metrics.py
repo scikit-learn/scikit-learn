@@ -329,22 +329,23 @@ def test_confusion_matrix_binary():
     """Test confusion matrix - binary classification case"""
     y_true, y_pred, _ = make_prediction(binary=True)
 
-    cm = confusion_matrix(y_true, y_pred)
-    assert_array_equal(cm, [[22, 3], [8, 17]])
+    def test(y_true, y_pred):
+        cm = confusion_matrix(y_true, y_pred)
+        assert_array_equal(cm, [[22, 3], [8, 17]])
 
-    tp = cm[0, 0]
-    tn = cm[1, 1]
-    fp = cm[0, 1]
-    fn = cm[1, 0]
-    num = (tp * tn - fp * fn)
-    den = np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
-    if den == 0.:
-        true_mcc = 0
-    else:
-        true_mcc = num / den
-    mcc = matthews_corrcoef(y_true, y_pred)
-    assert_array_almost_equal(mcc, true_mcc, decimal=2)
-    assert_array_almost_equal(mcc, 0.57, decimal=2)
+        tp, fp, fn, tn = cm.flatten()
+        num = (tp * tn - fp * fn)
+        den = np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
+
+        true_mcc = 0 if den == 0 else num / den
+        mcc = matthews_corrcoef(y_true, y_pred)
+        assert_array_almost_equal(mcc, true_mcc, decimal=2)
+        assert_array_almost_equal(mcc, 0.57, decimal=2)
+
+    test(y_true,
+         y_pred)
+    test(map(str, y_true),
+         map(str, y_pred))
 
 
 def test_matthews_corrcoef_nan():
