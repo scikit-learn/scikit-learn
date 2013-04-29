@@ -441,17 +441,26 @@ def test_confusion_matrix_multiclass():
     """Test confusion matrix - multi-class case"""
     y_true, y_pred, _ = make_prediction(binary=False)
 
-    # compute confusion matrix with default labels introspection
-    cm = confusion_matrix(y_true, y_pred)
-    assert_array_equal(cm, [[19, 4, 1],
-                            [4, 3, 24],
-                            [0, 2, 18]])
+    def test(y_true, y_pred, string_type=False):
+        # compute confusion matrix with default labels introspection
+        cm = confusion_matrix(y_true, y_pred)
+        assert_array_equal(cm, [[19, 4, 1],
+                                [4, 3, 24],
+                                [0, 2, 18]])
 
-    # compute confusion matrix with explicit label ordering
-    cm = confusion_matrix(y_true, y_pred, labels=[0, 2, 1])
-    assert_array_equal(cm, [[19, 1, 4],
-                            [0, 18, 2],
-                            [4, 24, 3]])
+        # compute confusion matrix with explicit label ordering
+        labels = ['0', '2', '1'] if string_type else [0, 2, 1]
+        cm = confusion_matrix(y_true,
+                              y_pred,
+                              labels=labels)
+        assert_array_equal(cm, [[19, 1, 4],
+                                [0, 18, 2],
+                                [4, 24, 3]])
+
+    test(y_true,
+         y_pred)
+    test(map(str, y_true),
+         map(str, y_pred), string_type=True)
 
 
 def test_confusion_matrix_multiclass_subset_labels():
