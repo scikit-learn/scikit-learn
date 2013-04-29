@@ -991,10 +991,12 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     y_pred : array, shape = [n_samples]
         Estimated targets as returned by a classifier.
 
-    labels : array
-        Integer array of labels.
+    labels : array, shape = [n_classes]
+        List of all labels occurring in the dataset.
+        If ``None`` is given, those that appear at least once
+        in ``y_true`` or ``y_pred`` are used.
 
-    pos_label : int, 1 by default
+    pos_label : 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
@@ -1075,10 +1077,12 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     beta: float
         Weight of precision in harmonic mean.
 
-    labels : array
-        Integer array of labels.
+    labels : array, shape = [n_classes]
+        List of all labels occurring in the dataset.
+        If ``None`` is given, those that appear at least once
+        in ``y_true`` or ``y_pred`` are used.
 
-    pos_label : int, 1 by default
+    pos_label : 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
@@ -1189,10 +1193,12 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     beta : float, 1.0 by default
         The strength of recall versus precision in the F-score.
 
-    labels : array
-        Integer array of labels.
+    labels : array, shape = [n_classes]
+        List of all labels occurring in the dataset.
+        If ``None`` is given, those that appear at least once
+        in ``y_true`` or ``y_pred`` are used.
 
-    pos_label : int, 1 by default
+    pos_label : 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
@@ -1368,10 +1374,12 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     y_pred : array, shape = [n_samples]
         Estimated targets as returned by a classifier.
 
-    labels : array
-        Integer array of labels.
+    labels : array, shape = [n_classes]
+        List of all labels occurring in the dataset.
+        If ``None`` is given, those that appear at least once
+        in ``y_true`` or ``y_pred`` are used.
 
-    pos_label : int, 1 by default
+    pos_label : 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
@@ -1446,10 +1454,12 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     y_pred : array, shape = [n_samples]
         Estimated targets as returned by a classifier.
 
-    labels : array
-        Integer array of labels.
+    labels : array, shape = [n_classes]
+        List of all labels occurring in the dataset.
+        If ``None`` is given, those that appear at least once
+        in ``y_true`` or ``y_pred`` are used.
 
-    pos_label : int, 1 by default
+    pos_label : 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
