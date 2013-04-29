@@ -42,8 +42,8 @@ events.
 .. image:: images/inria-logo.jpg
 
 `Google <http://code.google.com/opensource/>`_ sponsored David
-Cournapeau with a Summer of Code Scholarship in the summer of 2007 and
-`Vlad Niculae`_ in 2011. It also provided funding for sprints and events
+Cournapeau with a Summer of Code Scholarship in the summer of 2007,
+`Vlad Niculae`_ in 2011, and `Vlad Niculae`_ and Immanuel Bayer in 2012 . It also provided funding for sprints and events
 around scikit-learn. If
 you would like to participate in the next Google Summer of code
 program, please see `this page
