@@ -5,7 +5,7 @@
 #
 # Author: Peter Prettenhofer, Brian Holt, Gilles Louppe, Noel Dawe
 #
-# Licence: BSD 3 clause$
+# Licence: BSD 3 clause
 
 
 # =============================================================================

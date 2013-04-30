@@ -5,7 +5,7 @@
 #
 # Author: Peter Prettenhofer
 #
-# Licence: BSD 3 clause$
+# Licence: BSD 3 clause
 
 cimport cython
 

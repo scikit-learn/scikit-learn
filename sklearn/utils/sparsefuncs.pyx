@@ -2,7 +2,7 @@
 #          Olivier Grisel
 #          Lars Buitinck
 #
-# Licence: BSD 3 clause$
+# Licence: BSD 3 clause
 
 from libc.math cimport fabs, sqrt
 cimport numpy as np

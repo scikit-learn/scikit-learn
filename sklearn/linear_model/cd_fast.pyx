@@ -3,7 +3,7 @@
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Alexis Mignon <alexis.mignon@gmail.com>
 #
-# Licence: BSD 3 clause$
+# Licence: BSD 3 clause
 
 from libc.math cimport fabs, sqrt
 cimport numpy as np

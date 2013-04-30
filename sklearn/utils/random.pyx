@@ -2,7 +2,7 @@
 #
 # Author: Arnaud Joly
 #
-# Licence: BSD 3 clause$
+# Licence: BSD 3 clause
 """
 Random utility function
 =======================

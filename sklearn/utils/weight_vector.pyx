@@ -5,7 +5,7 @@
 #
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #
-# Licence: BSD 3 clause$
+# Licence: BSD 3 clause
 
 import numpy as np
 cimport numpy as np
