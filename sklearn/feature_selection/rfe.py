@@ -2,7 +2,7 @@
 #          Vincent Michel <vincent.michel@inria.fr>
 #          Gilles Louppe <g.louppe@gmail.com>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 """Recursive feature elimination for feature ranking"""
 

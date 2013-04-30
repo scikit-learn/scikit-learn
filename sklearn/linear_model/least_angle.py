@@ -8,7 +8,7 @@ from __future__ import print_function
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Gael Varoquaux
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 from math import log
 import sys

@@ -5,7 +5,7 @@ Ridge regression
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 #         Reuben Fletcher-Costin <reuben.fletchercostin@gmail.com>
 #         Fabian Pedregosa <fabian@fseoane.net>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 
 from abc import ABCMeta, abstractmethod

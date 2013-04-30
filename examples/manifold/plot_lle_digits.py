@@ -16,7 +16,7 @@ which the classes are linearly-seperable.
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Gael Varoquaux
-# License: BSD, (C) INRIA 2011
+# License: BSD 3 clause (C) INRIA 2011
 
 print(__doc__)
 from time import time

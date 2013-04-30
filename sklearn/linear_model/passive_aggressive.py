@@ -1,5 +1,5 @@
 # Authors: Rob Zinkov, Mathieu Blondel
-# License: BSD Style.
+# License: BSD 3 clause
 
 from .stochastic_gradient import BaseSGDClassifier
 from .stochastic_gradient import BaseSGDRegressor

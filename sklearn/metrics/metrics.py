@@ -12,7 +12,7 @@ the lower the better
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Arnaud Joly <a.joly@ulg.ac.be>
-# License: BSD Style.
+# License: BSD 3 clause
 
 from __future__ import division
 

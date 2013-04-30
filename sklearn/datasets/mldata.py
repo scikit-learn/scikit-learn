@@ -1,7 +1,7 @@
 """Automatically download MLdata datasets."""
 
 # Copyright (c) 2011 Pietro Berkes
-# License: Simplified BSD
+# License: BSD 3 clause
 
 import os
 from os.path import join, exists

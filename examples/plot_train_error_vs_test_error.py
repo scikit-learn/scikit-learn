@@ -14,7 +14,7 @@ measured using the explained variance a.k.a. R^2.
 print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 from sklearn import linear_model

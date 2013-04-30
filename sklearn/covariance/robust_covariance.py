@@ -6,7 +6,7 @@ Here are implemented estimators that are resistant to outliers.
 """
 # Author: Virgile Fritsch <virgile.fritsch@inria.fr>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 import warnings
 import numbers
 import numpy as np

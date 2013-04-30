@@ -13,7 +13,7 @@ libsvm command line programs.
 # Authors: Mathieu Blondel <mathieu@mblondel.org>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 #          Olivier Grisel <olivier.grisel@ensta.org>
-# License: Simple BSD.
+# License: BSD 3 clause
 
 from bz2 import BZ2File
 from contextlib import closing

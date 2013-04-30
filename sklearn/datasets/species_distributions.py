@@ -33,7 +33,7 @@ Notes:
 # Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Jake Vanderplas <vanderplas@astro.washington.edu>
 #
-# License: Simplified BSD
+# License: BSD 3 clause
 
 from io import BytesIO
 from os import makedirs

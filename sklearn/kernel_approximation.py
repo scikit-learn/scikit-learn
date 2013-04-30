@@ -6,7 +6,7 @@ approximate kernel feature maps base on Fourier transforms.
 
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 import warnings
 

@@ -1,6 +1,6 @@
 """Matrix factorization with Sparse PCA"""
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 

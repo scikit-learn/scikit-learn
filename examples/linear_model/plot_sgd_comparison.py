@@ -8,7 +8,7 @@ on the hand-written digits dataset.
 
 """
 # Author: Rob Zinkov <rob at zinkov dot com>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 import numpy as np
 import pylab as pl

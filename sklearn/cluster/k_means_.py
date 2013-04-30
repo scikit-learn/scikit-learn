@@ -9,7 +9,7 @@
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Robert Layton <robertlayton@gmail.com>
-# License: BSD
+# License: BSD 3 clause
 
 import warnings
 

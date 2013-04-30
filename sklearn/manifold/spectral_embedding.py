@@ -2,7 +2,7 @@
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Wei LI <kuantkid@gmail.com>
-# License: BSD Style.
+# License: BSD 3 clause
 
 import warnings
 import numpy as np

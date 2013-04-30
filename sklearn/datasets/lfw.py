@@ -21,7 +21,7 @@ implemented in the OpenCV library. The LFW faces were extracted by this face
 detector from various online websites.
 """
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 from os import listdir, makedirs, remove
 from os.path import join, exists, isdir

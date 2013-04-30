@@ -1,5 +1,5 @@
 # Authors: Gilles Louppe, Mathieu Blondel
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 

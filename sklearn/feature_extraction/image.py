@@ -7,7 +7,7 @@ extract features from images.
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Olivier Grisel
 #          Vlad Niculae
-# License: BSD
+# License: BSD 3 clause
 
 from itertools import product
 import numbers

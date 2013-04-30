@@ -6,7 +6,7 @@ validation and performance evaluation.
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>,
 #         Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD Style.
+# License: BSD 3 clause
 
 from __future__ import print_function
 

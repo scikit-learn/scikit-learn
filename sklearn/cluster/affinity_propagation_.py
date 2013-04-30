@@ -5,7 +5,7 @@ clustering.
 # Author: Alexandre Gramfort alexandre.gramfort@inria.fr
 #        Gael Varoquaux gael.varoquaux@normalesup.org
 
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 import warnings

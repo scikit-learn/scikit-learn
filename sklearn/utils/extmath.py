@@ -2,7 +2,7 @@
 Extended math utilities.
 """
 # Authors: G. Varoquaux, A. Gramfort, A. Passos, O. Grisel
-# License: BSD
+# License: BSD 3 clause
 
 import warnings
 import numpy as np
