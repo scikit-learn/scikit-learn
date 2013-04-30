@@ -265,24 +265,33 @@ def test_precision_recall_f1_score_binary():
     """Test Precision Recall and F1 Score for binary classification task"""
     y_true, y_pred, _ = make_prediction(binary=True)
 
-    # detailed measures for each class
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average=None)
-    assert_array_almost_equal(p, [0.73, 0.85], 2)
-    assert_array_almost_equal(r, [0.88, 0.68], 2)
-    assert_array_almost_equal(f, [0.80, 0.76], 2)
-    assert_array_equal(s, [25, 25])
+    def test(y_true, y_pred, string_type=False):
+        # detailed measures for each class
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average=None)
+        assert_array_almost_equal(p, [0.73, 0.85], 2)
+        assert_array_almost_equal(r, [0.88, 0.68], 2)
+        assert_array_almost_equal(f, [0.80, 0.76], 2)
+        assert_array_equal(s, [25, 25])
 
-    # individual scoring function that can be used for grid search: in the
-    # binary class case the score is the value of the measure for the positive
-    # class (e.g. label == 1)
-    ps = precision_score(y_true, y_pred)
-    assert_array_almost_equal(ps, 0.85, 2)
+        # individual scoring function that can be used for grid search: in
+        # the binary class case the score is the value of the measure for
+        # the positive class (e.g. label == 1)
+        pos_label = '1' if string_type else 1
 
-    rs = recall_score(y_true, y_pred)
-    assert_array_almost_equal(rs, 0.68, 2)
+        ps = precision_score(y_true, y_pred, pos_label=pos_label)
+        assert_array_almost_equal(ps, 0.85, 2)
 
-    fs = f1_score(y_true, y_pred)
-    assert_array_almost_equal(fs, 0.76, 2)
+        rs = recall_score(y_true, y_pred, pos_label=pos_label)
+        assert_array_almost_equal(rs, 0.68, 2)
+
+        fs = f1_score(y_true, y_pred, pos_label=pos_label)
+        assert_array_almost_equal(fs, 0.76, 2)
+
+    test(y_true,
+         y_pred)
+    test(map(str, y_true),
+         map(str, y_pred), True)
 
 
 def test_average_precision_score_duplicate_values():
@@ -329,22 +338,23 @@ def test_confusion_matrix_binary():
     """Test confusion matrix - binary classification case"""
     y_true, y_pred, _ = make_prediction(binary=True)
 
-    cm = confusion_matrix(y_true, y_pred)
-    assert_array_equal(cm, [[22, 3], [8, 17]])
+    def test(y_true, y_pred):
+        cm = confusion_matrix(y_true, y_pred)
+        assert_array_equal(cm, [[22, 3], [8, 17]])
 
-    tp = cm[0, 0]
-    tn = cm[1, 1]
-    fp = cm[0, 1]
-    fn = cm[1, 0]
-    num = (tp * tn - fp * fn)
-    den = np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
-    if den == 0.:
-        true_mcc = 0
-    else:
-        true_mcc = num / den
-    mcc = matthews_corrcoef(y_true, y_pred)
-    assert_array_almost_equal(mcc, true_mcc, decimal=2)
-    assert_array_almost_equal(mcc, 0.57, decimal=2)
+        tp, fp, fn, tn = cm.flatten()
+        num = (tp * tn - fp * fn)
+        den = np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
+
+        true_mcc = 0 if den == 0 else num / den
+        mcc = matthews_corrcoef(y_true, y_pred)
+        assert_array_almost_equal(mcc, true_mcc, decimal=2)
+        assert_array_almost_equal(mcc, 0.57, decimal=2)
+
+    test(y_true,
+         y_pred)
+    test(map(str, y_true),
+         map(str, y_pred))
 
 
 def test_matthews_corrcoef_nan():
@@ -357,48 +367,73 @@ def test_precision_recall_f1_score_multiclass():
     """Test Precision Recall and F1 Score for multiclass classification task"""
     y_true, y_pred, _ = make_prediction(binary=False)
 
-    # compute scores with default labels introspection
-    p, r, f, s = precision_recall_fscore_support(y_true, y_pred, average=None)
-    assert_array_almost_equal(p, [0.83, 0.33, 0.42], 2)
-    assert_array_almost_equal(r, [0.79, 0.09, 0.90], 2)
-    assert_array_almost_equal(f, [0.81, 0.15, 0.57], 2)
-    assert_array_equal(s, [24, 31, 20])
+    def test(y_true, y_pred, string_type=False):
+        # compute scores with default labels introspection
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average=None)
+        assert_array_almost_equal(p, [0.83, 0.33, 0.42], 2)
+        assert_array_almost_equal(r, [0.79, 0.09, 0.90], 2)
+        assert_array_almost_equal(f, [0.81, 0.15, 0.57], 2)
+        assert_array_equal(s, [24, 31, 20])
 
-    # averaging tests
-    ps = precision_score(y_true, y_pred, pos_label=1, average='micro')
-    assert_array_almost_equal(ps, 0.53, 2)
+        # averaging tests
+        pos_label = '1' if string_type else 1
 
-    rs = recall_score(y_true, y_pred, average='micro')
-    assert_array_almost_equal(rs, 0.53, 2)
+        ps = precision_score(y_true, y_pred,
+                             pos_label=pos_label,
+                             average='micro')
+        assert_array_almost_equal(ps, 0.53, 2)
 
-    fs = f1_score(y_true, y_pred, average='micro')
-    assert_array_almost_equal(fs, 0.53, 2)
+        rs = recall_score(y_true, y_pred,
+                          average='micro')
+        assert_array_almost_equal(rs, 0.53, 2)
 
-    ps = precision_score(y_true, y_pred, average='macro')
-    assert_array_almost_equal(ps, 0.53, 2)
+        fs = f1_score(y_true, y_pred,
+                      average='micro')
+        assert_array_almost_equal(fs, 0.53, 2)
 
-    rs = recall_score(y_true, y_pred, average='macro')
-    assert_array_almost_equal(rs, 0.60, 2)
+        ps = precision_score(y_true, y_pred,
+                             pos_label=pos_label,
+                             average='macro')
+        assert_array_almost_equal(ps, 0.53, 2)
 
-    fs = f1_score(y_true, y_pred, average='macro')
-    assert_array_almost_equal(fs, 0.51, 2)
+        rs = recall_score(y_true, y_pred,
+                          average='macro')
+        assert_array_almost_equal(rs, 0.60, 2)
 
-    ps = precision_score(y_true, y_pred, average='weighted')
-    assert_array_almost_equal(ps, 0.51, 2)
+        fs = f1_score(y_true, y_pred,
+                      average='macro')
+        assert_array_almost_equal(fs, 0.51, 2)
 
-    rs = recall_score(y_true, y_pred, average='weighted')
-    assert_array_almost_equal(rs, 0.53, 2)
+        ps = precision_score(y_true, y_pred,
+                             pos_label=pos_label,
+                             average='weighted')
+        assert_array_almost_equal(ps, 0.51, 2)
 
-    fs = f1_score(y_true, y_pred, average='weighted')
-    assert_array_almost_equal(fs, 0.47, 2)
+        rs = recall_score(y_true, y_pred,
+                          average='weighted')
+        assert_array_almost_equal(rs, 0.53, 2)
 
-    # same prediction but with and explicit label ordering
-    p, r, f, s = precision_recall_fscore_support(
-        y_true, y_pred, labels=[0, 2, 1], average=None)
-    assert_array_almost_equal(p, [0.83, 0.41, 0.33], 2)
-    assert_array_almost_equal(r, [0.79, 0.90, 0.10], 2)
-    assert_array_almost_equal(f, [0.81, 0.57, 0.15], 2)
-    assert_array_equal(s, [24, 20, 31])
+        fs = f1_score(y_true, y_pred,
+                      average='weighted')
+        assert_array_almost_equal(fs, 0.47, 2)
+
+        # same prediction but with and explicit label ordering
+        labels = ['0', '2', '1'] if string_type else [0, 2, 1]
+
+        p, r, f, s = precision_recall_fscore_support(
+            y_true, y_pred, labels=labels, average=None)
+
+        assert_array_almost_equal(p, [0.83, 0.41, 0.33], 2)
+        assert_array_almost_equal(r, [0.79, 0.90, 0.10], 2)
+        assert_array_almost_equal(f, [0.81, 0.57, 0.15], 2)
+        assert_array_equal(s, [24, 20, 31])
+
+    test(y_true,
+         y_pred)
+    test(map(str, y_true),
+         map(str, y_pred),
+         string_type=True)
 
 
 def test_precision_recall_f1_score_multiclass_pos_label_none():
@@ -440,17 +475,26 @@ def test_confusion_matrix_multiclass():
     """Test confusion matrix - multi-class case"""
     y_true, y_pred, _ = make_prediction(binary=False)
 
-    # compute confusion matrix with default labels introspection
-    cm = confusion_matrix(y_true, y_pred)
-    assert_array_equal(cm, [[19, 4, 1],
-                            [4, 3, 24],
-                            [0, 2, 18]])
+    def test(y_true, y_pred, string_type=False):
+        # compute confusion matrix with default labels introspection
+        cm = confusion_matrix(y_true, y_pred)
+        assert_array_equal(cm, [[19, 4, 1],
+                                [4, 3, 24],
+                                [0, 2, 18]])
 
-    # compute confusion matrix with explicit label ordering
-    cm = confusion_matrix(y_true, y_pred, labels=[0, 2, 1])
-    assert_array_equal(cm, [[19, 1, 4],
-                            [0, 18, 2],
-                            [4, 24, 3]])
+        # compute confusion matrix with explicit label ordering
+        labels = ['0', '2', '1'] if string_type else [0, 2, 1]
+        cm = confusion_matrix(y_true,
+                              y_pred,
+                              labels=labels)
+        assert_array_equal(cm, [[19, 1, 4],
+                                [0, 18, 2],
+                                [4, 24, 3]])
+
+    test(y_true,
+         y_pred)
+    test(map(str, y_true),
+         map(str, y_pred), string_type=True)
 
 
 def test_confusion_matrix_multiclass_subset_labels():
