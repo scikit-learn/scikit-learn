@@ -4,7 +4,7 @@ General tests for all estimators in sklearn.
 
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Gael Varoquaux gael.varoquaux@normalesup.org
-# License: BSD 3 clause
+# License: BSD Style.
 from __future__ import print_function
 
 import os
@@ -500,10 +500,7 @@ def test_clustering():
 
         assert_equal(alg.labels_.shape, (n_samples,))
         pred = alg.labels_
-        score = adjusted_rand_score(pred, y)
-        error_message = "{} failed with score {} (<0.4 benchmark)".format(name,
-                                                                          score)
-        assert_greater(score, 0.4, error_message)
+        assert_greater(adjusted_rand_score(pred, y), 0.4)
         # fit another time with ``fit_predict`` and compare results
         if name is 'SpectralClustering':
             # there is no way to make Spectral clustering deterministic :(
