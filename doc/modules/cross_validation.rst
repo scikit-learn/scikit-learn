@@ -56,10 +56,10 @@ and evaluation metrics no longer report on generalization performance.
 To solve this problem, yet another part of the dataset can be held out
 as a so-called "validation set": training proceeds on the training set,
 after which evaluation is done on the validation set,
-and when the experiment seems to successful,
+and when the experiment seems to be successful,
 final evaluation can be done on the test set.
 
-However, by the available data into three sets,
+However, by partitioning the available data into three sets,
 we drastically reduce the number of samples
 which can be used for learning the model,
 and the results can depend on a particular random choice for the pair of
