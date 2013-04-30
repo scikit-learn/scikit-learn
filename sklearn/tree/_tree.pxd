@@ -1,5 +1,5 @@
 # Author: Peter Prettenhofer, Brian Holt, Gilles Louppe
-# License: BSD Style.
+# Licence: BSD 3 clause$
 
 # See _tree.pyx for details.
 
