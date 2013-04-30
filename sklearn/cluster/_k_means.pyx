@@ -5,7 +5,7 @@
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #
-# Licence: BSD 3 clause$
+# Licence: BSD 3 clause
 
 from libc.math cimport sqrt
 import numpy as np
