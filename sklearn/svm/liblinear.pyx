@@ -12,7 +12,7 @@ np.import_array()
 
 
 def train_wrap(X, np.ndarray[np.float64_t,   ndim=1, mode='c'] Y,
-               bint is_sparse, int solver_type, double eps, double bias,
+               bint is_sparse, int solver_type, double eps, double p, double bias,
                double C, np.ndarray[np.float64_t, ndim=1] class_weight,
                unsigned random_seed):
     cdef parameter *param
@@ -38,7 +38,7 @@ def train_wrap(X, np.ndarray[np.float64_t,   ndim=1, mode='c'] Y,
 
     cdef np.ndarray[np.int32_t, ndim=1, mode='c'] \
         class_weight_label = np.arange(class_weight.shape[0], dtype=np.int32)
-    param = set_parameter(solver_type, eps, C, class_weight.shape[0],
+    param = set_parameter(solver_type, eps, p, C, class_weight.shape[0],
                           class_weight_label.data, class_weight.data,
                           random_seed)
 

@@ -1,12 +1,12 @@
 import numpy as np
 
-from .base import LinearClassifierMixin, SparseCoefMixin
+from .base import LinearClassifierMixin, SparseCoefMixin, BaseEstimator
 from ..feature_selection.selector_mixin import SelectorMixin
-from ..svm.base import BaseLibLinear
+from ..svm.base import LibLinearClassifierMixin
 
 
-class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
-                         SparseCoefMixin):
+class LogisticRegression(BaseEstimator, LibLinearClassifierMixin, LinearClassifierMixin,
+                         SelectorMixin, SparseCoefMixin):
     """Logistic Regression (aka logit, MaxEnt) classifier.
 
     In the multiclass case, the training algorithm uses a one-vs.-all (OvA)
@@ -95,14 +95,37 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
         http://www.csie.ntu.edu.tw/~cjlin/papers/maxent_dual.pdf
     """
 
+    _solver_type_dict = {
+        'PL2_LLR_D0': 0,  # L2 penalty, logistic regression
+        'PL1_LLR_D0': 6,  # L1 penalty, logistic regression
+        'PL2_LLR_D1': 7,  # L2 penalty, logistic regression, dual form
+    }
+
     def __init__(self, penalty='l2', dual=False, tol=1e-4, C=1.0,
                  fit_intercept=True, intercept_scaling=1, class_weight=None,
                  random_state=None):
 
-        super(LogisticRegression, self).__init__(
-            penalty=penalty, dual=dual, loss='lr', tol=tol, C=C,
-            fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
-            class_weight=class_weight, random_state=None)
+        self.penalty = penalty
+        self.dual = dual
+        self.tol = tol
+        self.C = C
+        self.fit_intercept = fit_intercept
+        self.intercept_scaling = intercept_scaling
+        self.class_weight = class_weight
+        self.random_state = random_state
+
+    def _get_solver_type(self):
+        """Find the liblinear magic number for the solver.
+
+        This number depends on the values of the following attributes:
+          - penalty
+          - dual
+        """
+        solver_type = "P%s_LLR_D%d" % (self.penalty.upper(), int(self.dual))
+        if not solver_type in self._solver_type_dict:
+            raise ValueError('%s-regularized logistic regression (%s) not supported in liblinear' %
+                             (self.penalty.upper(), 'dual' if self.dual else 'primal'))
+        return self._solver_type_dict[solver_type]
 
     def predict_proba(self, X):
         """Probability estimates.

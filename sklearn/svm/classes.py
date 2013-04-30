@@ -1,11 +1,12 @@
-from .base import BaseLibLinear, BaseSVC, BaseLibSVM
-from ..base import RegressorMixin
-from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin
+from .base import BaseSVC, BaseLibSVM, LibLinearClassifierMixin, LibLinearRegressorMixin
+from ..base import RegressorMixin, BaseEstimator
+from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin, LinearRegressorMixin
 from ..feature_selection.selector_mixin import SelectorMixin
+from ..utils import atleast2d_or_csr
 
 
-class LinearSVC(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
-                SparseCoefMixin):
+class LinearSVC(BaseEstimator, LibLinearClassifierMixin, LinearClassifierMixin,
+                SelectorMixin, SparseCoefMixin):
     """Linear Support Vector Classification.
 
     Similar to SVC with parameter kernel='linear', but implemented in terms of
@@ -134,8 +135,52 @@ class LinearSVC(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
 
     """
 
-    # all the implementation is provided by the mixins
-    pass
+    _solver_type_dict = {
+        'PL2_LL2_D1': 1,  # L2 penalty, L2 loss, dual form
+        'PL2_LL2_D0': 2,  # L2 penalty, L2 loss, primal form
+        'PL2_LL1_D1': 3,  # L2 penalty, L1 Loss, dual form
+        'MC_SVC': 4,      # Multi-class Support Vector Classification
+        'PL1_LL2_D0': 5,  # L1 penalty, L2 Loss, primal form
+    }
+
+    def __init__(self, penalty='l2', loss='l2', dual=True, tol=1e-4, C=1.0,
+                 multi_class='ovr', fit_intercept=True, intercept_scaling=1,
+                 class_weight=None, verbose=0, random_state=None):
+
+        self.penalty = penalty
+        self.loss = loss
+        self.dual = dual
+        self.tol = tol
+        self.C = C
+        self.fit_intercept = fit_intercept
+        self.intercept_scaling = intercept_scaling
+        self.multi_class = multi_class
+        self.class_weight = class_weight
+        self.verbose = verbose
+        self.random_state = random_state
+
+    def _get_solver_type(self):
+        """Find the liblinear magic number for the solver.
+
+        This number depends on the values of the following attributes:
+          - multi_class
+          - penalty
+          - loss
+          - dual
+        """
+        if self.multi_class == 'crammer_singer':
+            solver_type = 'MC_SVC'
+        else:
+            if self.multi_class != 'ovr':
+                raise ValueError("`multi_class` must be one of `ovr`, "
+                                 "`crammer_singer`")
+            solver_type = "P%s_L%s_D%d" % (
+                self.penalty.upper(), self.loss.upper(), int(self.dual))
+        if not solver_type in self._solver_type_dict:
+            raise ValueError('%s-regularized %s-loss SVC (%s) not supported in liblinear' %
+                             (self.penalty.upper(), self.loss.upper(),
+                              'dual' if self.dual else 'primal'))
+        return self._solver_type_dict[solver_type]
 
 
 class SVC(BaseSVC):
@@ -384,6 +429,135 @@ class NuSVC(BaseSVC):
         super(NuSVC, self).__init__(
             'nu_svc', kernel, degree, gamma, coef0, tol, 0., nu, 0., shrinking,
             probability, cache_size, None, verbose, max_iter)
+
+
+class LinearSVR(BaseEstimator, LibLinearRegressorMixin, LinearRegressorMixin,
+                SelectorMixin, SparseCoefMixin):
+    """Linear Support Vector Regression.
+
+    The implementation is based on liblinear.
+    This class supports both dense and sparse input.
+    It currently supports L2-regularized L2-loss/L1-loss support vector regression.
+
+    Parameters
+    ----------
+    C : float, optional (default=1.0)
+        Penalty parameter C of the error term.
+
+    loss : string, 'l1' or 'l2' (default='l2')
+        Specifies the loss function.
+
+    penalty : string, 'l2' (default='l2')
+        Specifies the norm used in the penalization. Only 'l2' is supported.
+
+    epsilon : float, optional (default=0.1)
+        epsilon in the epsilon-SVR model. It specifies the epsilon-tube
+        within which no penalty is associated in the training loss function
+        with points predicted within a distance epsilon from the actual
+        value.
+
+    dual : bool, (default=True)
+        Select the algorithm to either solve the dual or primal
+        optimization problem. Prefer dual=False when n_samples > n_features.
+
+    tol : float, optional (default=1e-1)
+        Tolerance for stopping criteria
+
+    fit_intercept : boolean, optional (default=True)
+        Whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    intercept_scaling : float, optional (default=1)
+        when self.fit_intercept is True, instance vector x becomes
+        [x, self.intercept_scaling],
+        i.e. a "synthetic" feature with constant value equals to
+        intercept_scaling is appended to the instance vector.
+        The intercept becomes intercept_scaling * synthetic feature weight
+        Note! the synthetic feature weight is subject to l1/l2 regularization
+        as all other features.
+        To lessen the effect of regularization on synthetic feature weight
+        (and therefore on the intercept) intercept_scaling has to be increased
+
+    verbose : int, default: 0
+        Enable verbose output. Note that this setting takes advantage of a
+        per-process runtime setting in liblinear that, if enabled, may not work
+        properly in a multithreaded context.
+
+    random_state: int seed, RandomState instance, or None (default)
+        The seed of the pseudo random number generator to use when
+        shuffling the data.
+
+
+    Attributes
+    ----------
+    `coef_` : array, shape = [n_features]
+        Weights asigned to the features (coefficients in the primal
+        problem).
+
+        `coef_` is readonly property derived from `raw_coef_` that \
+        follows the internal memory layout of liblinear.
+
+    `intercept_` : array, shape = [1]
+        Constants in decision function.
+
+    Notes
+    -----
+    The underlying C implementation uses a random number generator to
+    select features when fitting the model. It is thus not uncommon,
+    to have slightly different results for the same input data. If
+    that happens, try with a smaller tol parameter.
+
+    The underlying implementation (liblinear) uses a sparse internal
+    representation for the data that will incur a memory copy.
+
+    **References:**
+    `LIBLINEAR: A Library for Large Linear Classification
+    <http://www.csie.ntu.edu.tw/~cjlin/liblinear/>`__
+
+    See also
+    --------
+    SVR
+        Support Vector Machine for Regression implemented using libsvm.
+
+    """
+
+    _solver_type_dict = {
+        'PL2_LL2R_D0': 11,  # L2 penalty, L2 loss, support vector regression , primal form
+        'PL2_LL2R_D1': 12,  # L2 penalty, L2 loss, support vector regression , dual form
+        'PL2_LL1R_D1': 13,  # L2 penalty, L1 loss, support vector regression , dual form
+    }
+
+    def __init__(self, C=1.0, loss="l2", penalty="l2", epsilon=0.1, dual=True, tol=1e-1,
+                 fit_intercept=True, intercept_scaling=1,
+                 verbose=0, random_state=None):
+
+        self.penalty = penalty
+        self.loss = loss
+        self.epsilon = epsilon
+        self.dual = dual
+        self.tol = tol
+        self.C = C
+        self.fit_intercept = fit_intercept
+        self.intercept_scaling = intercept_scaling
+        self.verbose = verbose
+        self.random_state = random_state
+
+    def _get_solver_type(self):
+        """Find the liblinear magic number for the solver.
+
+        This number depends on the values of the following attributes:
+          - penalty
+          - loss
+          - dual
+        """
+        solver_type = "P%s_L%sR_D%d" % (
+            self.penalty.upper(), self.loss.upper(), int(self.dual))
+        if not solver_type in self._solver_type_dict:
+            raise ValueError('%s-regularized %s-loss SVR (%s) not supported in liblinear' %
+                             (self.penalty.upper(), self.loss.upper(),
+                              'dual' if self.dual else 'primal'))
+        return self._solver_type_dict[solver_type]
 
 
 class SVR(BaseLibSVM, RegressorMixin):
