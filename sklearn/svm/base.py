@@ -13,6 +13,7 @@ from ..utils import atleast2d_or_csr, array2d, check_random_state
 from ..utils import ConvergenceWarning, compute_class_weight, deprecated
 from ..utils.fixes import unique
 from ..utils.extmath import safe_sparse_dot
+from ..externals import six
 
 
 LIBSVM_IMPL = ['c_svc', 'nu_svc', 'one_class', 'epsilon_svr', 'nu_svr']
@@ -51,7 +52,7 @@ def _one_vs_one_coef(dual_coef, n_support, support_vectors):
     return coef
 
 
-class BaseLibSVM(BaseEstimator):
+class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for estimators that use libsvm as backing library
 
     This implements support vector machine classification and regression.
@@ -60,7 +61,6 @@ class BaseLibSVM(BaseEstimator):
     """
     # see ./classes.py for SVC class.
 
-    __metaclass__ = ABCMeta
     _sparse_kernels = ["linear", "poly", "rbf", "sigmoid", "precomputed"]
 
     @abstractmethod
@@ -131,19 +131,7 @@ class BaseLibSVM(BaseEstimator):
                              "by not using the ``sparse`` parameter")
 
         X = atleast2d_or_csr(X, dtype=np.float64, order='C')
-
-        if self._impl in ['c_svc', 'nu_svc']:
-            # classification
-            self.classes_, y = unique(y, return_inverse=True)
-            self.class_weight_ = compute_class_weight(self.class_weight,
-                                                      self.classes_, y)
-        else:
-            self.class_weight_ = np.empty(0)
-        if self._impl != "one_class" and len(np.unique(y)) < 2:
-            raise ValueError("The number of classes has to be greater than"
-                             " one.")
-
-        y = np.asarray(y, dtype=np.float64, order='C')
+        y = self._validate_targets(y)
 
         sample_weight = np.asarray([]
                                    if sample_weight is None
@@ -189,6 +177,16 @@ class BaseLibSVM(BaseEstimator):
         if self._impl in ['c_svc', 'nu_svc'] and len(self.classes_) == 2:
             self.intercept_ *= -1
         return self
+
+    def _validate_targets(self, y):
+        """Validation of y and class_weight.
+
+        Default implementation for SVR and one-class; overridden in BaseSVC.
+        """
+        # XXX this is ugly.
+        # Regression models should not have a class_weight_ attribute.
+        self.class_weight_ = np.empty(0)
+        return np.asarray(y, dtype=np.float64, order='C')
 
     def _warn_from_fit_status(self):
         assert self.fit_status_ in (0, 1)
@@ -434,6 +432,18 @@ class BaseLibSVM(BaseEstimator):
 class BaseSVC(BaseLibSVM, ClassifierMixin):
     """ABC for LibSVM-based classifiers."""
 
+    def _validate_targets(self, y):
+        cls, y = unique(y, return_inverse=True)
+        self.class_weight_ = compute_class_weight(self.class_weight, cls, y)
+        if len(cls) < 2:
+            raise ValueError(
+                "The number of classes has to be greater than one; got %d"
+                % len(cls))
+
+        self.classes_ = cls
+
+        return np.asarray(y, dtype=np.float64, order='C')
+
     def predict(self, X):
         """Perform classification on samples in X.
 
@@ -669,19 +679,15 @@ class BaseLibLinear(BaseEstimator):
 
         liblinear.set_verbosity_wrap(self.verbose)
 
-        if sp.isspmatrix(X):
-            train = liblinear.csr_train_wrap
-        else:
-            train = liblinear.train_wrap
-
         rnd = check_random_state(self.random_state)
         if self.verbose:
             print('[LibLinear]', end='')
 
         # LibLinear wants targets as doubles, even for classification
         y = np.asarray(y, dtype=np.float64).ravel()
-        self.raw_coef_ = train(X, y, self._get_solver_type(), self.tol,
-                               self._get_bias(), self.C,
+        self.raw_coef_ = liblinear.train_wrap(X, y, sp.isspmatrix(X),
+                               self._get_solver_type(),
+                               self.tol, self._get_bias(), self.C,
                                self.class_weight_,
                                # seed for srand in range [0..INT_MAX);
                                # due to limitations in Numpy on 32-bit

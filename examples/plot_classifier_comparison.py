@@ -25,7 +25,7 @@ print(__doc__)
 # Code source: Gael Varoqueux
 #              Andreas Mueller
 # Modified for Documentation merge by Jaques Grobler
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 import pylab as pl
@@ -101,7 +101,7 @@ for ds in datasets:
         clf.fit(X_train, y_train)
         score = clf.score(X_test, y_test)
 
-        # Plot the decision boundary. For that, we will asign a color to each
+        # Plot the decision boundary. For that, we will assign a color to each
         # point in the mesh [x_min, m_max]x[y_min, y_max].
         if hasattr(clf, "decision_function"):
             Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])

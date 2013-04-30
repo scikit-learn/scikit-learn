@@ -28,7 +28,7 @@ print(__doc__)
 
 # Authors:  Emmanuelle Gouillart <emmanuelle.gouillart@normalesup.org>
 #           Gael Varoquaux <gael.varoquaux@normalesup.org>
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 import pylab as pl
@@ -65,7 +65,7 @@ img += 1 + 0.2 * np.random.randn(*img.shape)
 graph = image.img_to_graph(img, mask=mask)
 
 # Take a decreasing function of the gradient: we take it weakly
-# dependant from the gradient the segmentation is close to a voronoi
+# dependent from the gradient the segmentation is close to a voronoi
 graph.data = np.exp(-graph.data / graph.data.std())
 
 # Force the solver to be arpack, since amg is numerically

@@ -1,6 +1,6 @@
 """Hierarchical Agglomerative Clustering
 
-These routines perform some hierachical agglomerative clustering of some
+These routines perform some hierarchical agglomerative clustering of some
 input data. Currently, only Ward's algorithm is implemented.
 
 Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,

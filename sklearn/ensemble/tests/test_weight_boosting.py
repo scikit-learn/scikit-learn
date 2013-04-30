@@ -22,9 +22,11 @@ rng = np.random.RandomState(0)
 
 # Toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
-y = [-1, -1, -1, 1, 1, 1]
+y_class = ["foo", "foo", "foo", 1, 1, 1]    # test string class labels
+y_regr = [-1, -1, -1, 1, 1, 1]
 T = [[-1, -1], [2, 2], [3, 2]]
-true_result = [-1, 1, 1]
+y_t_class = ["foo", 1, 1]
+y_t_regr = [-1, 1, 1]
 
 # Load the iris dataset and randomly permute it
 iris = datasets.load_iris()
@@ -41,22 +43,33 @@ def test_classification_toy():
     """Check classification on a toy dataset."""
     for alg in ['SAMME', 'SAMME.R']:
         clf = AdaBoostClassifier(algorithm=alg)
-        clf.fit(X, y)
-        assert_array_equal(clf.predict(T), true_result)
+        clf.fit(X, y_class)
+        assert_array_equal(clf.predict(T), y_t_class)
+        assert_array_equal(np.unique(y_t_class), clf.classes_)
+        assert_equal(clf.predict_proba(T).shape, (len(T), 2))
+        assert_equal(clf.decision_function(T).shape, (len(T),))
 
 
 def test_regression_toy():
     """Check classification on a toy dataset."""
+    clf = AdaBoostRegressor(random_state=0)
     clf = AdaBoostRegressor()
-    clf.fit(X, y)
-    assert_array_equal(clf.predict(T), true_result)
+    clf.fit(X, y_regr)
+    assert_array_equal(clf.predict(T), y_t_regr)
 
 
 def test_iris():
     """Check consistency on dataset iris."""
+    classes = np.unique(iris.target)
+
     for alg in ['SAMME', 'SAMME.R']:
         clf = AdaBoostClassifier(algorithm=alg)
         clf.fit(iris.data, iris.target)
+
+        assert_array_equal(classes, clf.classes_)
+        assert_equal(clf.predict_proba(iris.data).shape[1], len(classes))
+        assert_equal(clf.decision_function(iris.data).shape[1], len(classes))
+
         score = clf.score(iris.data, iris.target)
         assert score > 0.9, "Failed with algorithm %s and score = %f" % \
             (alg, score)
@@ -64,7 +77,7 @@ def test_iris():
 
 def test_boston():
     """Check consistency on dataset boston house prices."""
-    clf = AdaBoostRegressor()
+    clf = AdaBoostRegressor(random_state=0)
     clf.fit(boston.data, boston.target)
     score = clf.score(boston.data, boston.target)
     assert score > 0.85
@@ -92,7 +105,7 @@ def test_staged_predict():
         assert_array_almost_equal(score, staged_scores[-1])
 
     # AdaBoost regression
-    clf = AdaBoostRegressor(n_estimators=10)
+    clf = AdaBoostRegressor(n_estimators=10, random_state=0)
     clf.fit(boston.data, boston.target)
 
     predictions = clf.predict(boston.data)
@@ -117,7 +130,7 @@ def test_gridsearch():
     clf.fit(iris.data, iris.target)
 
     # AdaBoost regression
-    boost = AdaBoostRegressor()
+    boost = AdaBoostRegressor(random_state=0)
     parameters = {'n_estimators': (1, 2),
                   'base_estimator__max_depth': (1, 2)}
     clf = GridSearchCV(boost, parameters)
@@ -141,7 +154,7 @@ def test_pickle():
         assert_equal(score, score2)
 
     # Adaboost regressor
-    obj = AdaBoostRegressor()
+    obj = AdaBoostRegressor(random_state=0)
     obj.fit(boston.data, boston.target)
     score = obj.score(boston.data, boston.target)
     s = pickle.dumps(obj)
@@ -177,19 +190,20 @@ def test_error():
     """Test that it gives proper exception on deficient input."""
     assert_raises(ValueError,
                   AdaBoostClassifier(learning_rate=-1).fit,
-                  X, y)
+                  X, y_class)
 
     assert_raises(ValueError,
                   AdaBoostClassifier(algorithm="foo").fit,
-                  X, y)
+                  X, y_class)
 
     assert_raises(TypeError,
                   AdaBoostClassifier(base_estimator=DummyRegressor()).fit,
-                  X, y)
+                  X, y_class)
 
     assert_raises(TypeError,
-                  AdaBoostRegressor(base_estimator=DummyClassifier()).fit,
-                  X, y)
+                  AdaBoostRegressor(base_estimator=DummyClassifier(),
+                                    random_state=0).fit,
+                  X, y_regr)
 
 
 def test_base_estimator():
@@ -197,20 +211,22 @@ def test_base_estimator():
     from sklearn.ensemble import RandomForestClassifier
     from sklearn.svm import SVC
 
+    # XXX doesn't work with y_class because RF doesn't support classes_
+    # Shouldn't AdaBoost run a LabelBinarizer?
     clf = AdaBoostClassifier(RandomForestClassifier())
-    clf.fit(X, y)
+    clf.fit(X, y_regr)
 
     clf = AdaBoostClassifier(SVC(), algorithm="SAMME")
-    clf.fit(X, y)
+    clf.fit(X, y_class)
 
     from sklearn.ensemble import RandomForestRegressor
     from sklearn.svm import SVR
 
-    clf = AdaBoostRegressor(RandomForestRegressor())
-    clf.fit(X, y)
+    clf = AdaBoostRegressor(RandomForestRegressor(), random_state=0)
+    clf.fit(X, y_regr)
 
-    clf = AdaBoostRegressor(SVR())
-    clf.fit(X, y)
+    clf = AdaBoostRegressor(SVR(), random_state=0)
+    clf.fit(X, y_regr)
 
 
 if __name__ == "__main__":

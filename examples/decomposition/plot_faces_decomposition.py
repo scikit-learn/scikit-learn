@@ -12,7 +12,7 @@ matrix decomposition (dimension reduction) methods from the module
 print(__doc__)
 
 # Authors: Vlad Niculae, Alexandre Gramfort
-# License: BSD
+# License: BSD 3 clause
 
 import logging
 from time import time

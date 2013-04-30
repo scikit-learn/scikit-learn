@@ -1,5 +1,5 @@
 # Authors: Vlad Niculae, Mathieu Blondel
-# License: BSD
+# License: BSD 3 clause
 """
 =========================
 Multilabel classification

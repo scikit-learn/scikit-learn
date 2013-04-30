@@ -2,7 +2,7 @@
 
 # Author: Jake Vanderplas <vanderplas@astro.washington.edu>
 #
-# License: BSD, (C) INRIA, University of Amsterdam
+# License: BSD 3 clause (C) INRIA, University of Amsterdam
 
 from .base import KNeighborsMixin, RadiusNeighborsMixin
 from .unsupervised import NearestNeighbors

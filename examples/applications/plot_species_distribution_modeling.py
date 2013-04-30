@@ -39,7 +39,7 @@ References
 # Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Jake Vanderplas <vanderplas@astro.washington.edu>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 from __future__ import print_function
 

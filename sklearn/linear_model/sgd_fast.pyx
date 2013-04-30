@@ -5,7 +5,7 @@
 #
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #
-# License: BSD Style.
+# Licence: BSD 3 clause
 
 
 import numpy as np
@@ -505,7 +505,7 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         # floating-point under-/overflow check.
         if np.any(np.isinf(weights)) or np.any(np.isnan(weights)) \
            or np.isnan(intercept) or np.isinf(intercept):
-            raise ValueError("floating-point under-/overflow occured.")
+            raise ValueError("floating-point under-/overflow occurred.")
 
     w.reset_wscale()
 

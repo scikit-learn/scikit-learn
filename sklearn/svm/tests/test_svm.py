@@ -175,6 +175,10 @@ def test_svr():
         clf.fit(diabetes.data, diabetes.target)
         assert_greater(clf.score(diabetes.data, diabetes.target), 0.02)
 
+    # non-regression test; previously, BaseLibSVM would check that
+    # len(np.unique(y)) < 2, which must only be done for SVC
+    svm.SVR().fit(diabetes.data, np.ones(len(diabetes.data)))
+
 
 def test_svr_errors():
     X = [[0.0], [1.0]]

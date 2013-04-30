@@ -5,10 +5,9 @@ sparse Logistic Regression
 
 # Author: Gael Varoquaux, Alexandre Gramfort
 #
-# License: BSD Style.
+# License: BSD 3 clause
 import itertools
 from abc import ABCMeta, abstractmethod
-import sys
 
 import numpy as np
 from scipy.sparse import issparse
@@ -56,14 +55,13 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
     return scores_
 
 
-class BaseRandomizedLinearModel(BaseEstimator, TransformerMixin):
+class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
     """Base class to implement randomized linear models for feature selection
 
     This implements the strategy by Meinshausen and Buhlman:
     stability selection with randomized sampling, and random re-weighting of
     the penalty.
     """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self):
@@ -244,7 +242,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
 
-            - None, in which case all the jobs are immediatly
+            - None, in which case all the jobs are immediately
               created and spawned. Use this for lightweight and
               fast-running jobs, to avoid delays due to on-demand
               spawning of the jobs
@@ -406,7 +404,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
 
-            - None, in which case all the jobs are immediatly
+            - None, in which case all the jobs are immediately
               created and spawned. Use this for lightweight and
               fast-running jobs, to avoid delays due to on-demand
               spawning of the jobs

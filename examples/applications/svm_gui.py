@@ -19,7 +19,7 @@ print(__doc__)
 
 # Author: Peter Prettenhoer <peter.prettenhofer@gmail.com>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 import matplotlib
 matplotlib.use('TkAgg')

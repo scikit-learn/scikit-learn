@@ -2,7 +2,7 @@
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Virgile Fritsch <virgile.fritsch@inria.fr>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 import warnings

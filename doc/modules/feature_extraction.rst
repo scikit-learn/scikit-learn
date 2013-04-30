@@ -294,9 +294,9 @@ reasonable (please see  the :ref:`reference documentation
   CountVectorizer(analyzer=u'word', binary=False, charset=u'utf-8',
           charset_error=u'strict', dtype=<type 'numpy.int64'>,
           input=u'content', lowercase=True, max_df=1.0, max_features=None,
-          min_df=1, ngram_range=(1, 1), preprocessor=None, stop_words=None,
-          strip_accents=None, token_pattern=u'(?u)\\b\\w\\w+\\b',
-          tokenizer=None, vocabulary=None)
+          min_df=1, ngram_range=(1, 1), preprocessor=None, 
+          stop_words=None, strip_accents=None,
+          token_pattern=u'(?u)\\b\\w\\w+\\b', tokenizer=None, vocabulary=None)
 
 Let's use it to tokenize and count the word occurrences of a minimalistic
 corpus of text documents::
@@ -310,7 +310,7 @@ corpus of text documents::
   >>> X = vectorizer.fit_transform(corpus)
   >>> X                                       # doctest: +NORMALIZE_WHITESPACE
   <4x9 sparse matrix of type '<type 'numpy.int64'>'
-      with 19 stored elements in COOrdinate format>
+      with 19 stored elements in Compressed Sparse Column format>
 
 The default configuration tokenizes the string by extracting words of
 at least 2 letters. The specific function that does this step can be
@@ -394,7 +394,7 @@ suitable for usage by a classifier it is very common to use the tf–idf
 transform.
 
 Tf means **term-frequency** while tf–idf means term-frequency times
-**inverse document-frequency**. This is a orginally a term weighting
+**inverse document-frequency**. This is a originally a term weighting
 scheme developed for information retrieval (as a ranking function
 for search engines results), that has also found good use in document
 classification and clustering.
@@ -488,7 +488,7 @@ together by applying clustering algorithms such as :ref:`k_means`:
   * :ref:`example_document_clustering.py`
 
 Finally it is possible to discover the main topics of a corpus by
-relaxing the hard assignement constraint of clustering, for instance by
+relaxing the hard assignment constraint of clustering, for instance by
 using :ref:`NMF`:
 
   * :ref:`example_applications_topics_extraction_with_nmf.py`
@@ -504,7 +504,7 @@ misspellings or word derivations.
 
 N-grams to the rescue! Instead of building a simple collection of
 unigrams (n=1), one might prefer a collection of bigrams (n=2), where
-occurences of pairs of consecutive words are counted.
+occurrences of pairs of consecutive words are counted.
 
 One might alternatively consider a collection of character n-grams, a
 representation resiliant against misspellings and derivations.
@@ -535,7 +535,7 @@ span across words::
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   ...                                         # doctest: +NORMALIZE_WHITESPACE
   <1x4 sparse matrix of type '<type 'numpy.int64'>'
-     with 4 stored elements in COOrdinate format>
+     with 4 stored elements in Compressed Sparse Column format>
   >>> ngram_vectorizer.get_feature_names()
   [u' fox ', u' jump', u'jumpy', u'umpy ']
 
@@ -543,7 +543,7 @@ span across words::
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   ...                                         # doctest: +NORMALIZE_WHITESPACE
   <1x5 sparse matrix of type '<type 'numpy.int64'>'
-      with 5 stored elements in COOrdinate format>
+      with 5 stored elements in Compressed Sparse Column format>
   >>> ngram_vectorizer.get_feature_names()
   [u'jumpy', u'mpy f', u'py fo', u'umpy ', u'y fox']
 

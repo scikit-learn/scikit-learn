@@ -6,7 +6,7 @@ validation and performance evaluation.
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>,
 #         Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD Style.
+# License: BSD 3 clause
 
 from __future__ import print_function
 
@@ -288,7 +288,7 @@ class KFold(object):
         current = 0
         if self.indices:
             ind = np.arange(n)
-        for i, fold_size in enumerate(fold_sizes):
+        for fold_size in fold_sizes:
             test_index = np.zeros(n, dtype=np.bool)
             start, stop = current, current + fold_size
             test_index[self.idxs[start:stop]] = True
@@ -452,19 +452,18 @@ class LeaveOneLabelOut(object):
     """
 
     def __init__(self, labels, indices=True):
-        self.labels = labels
-        self.n_unique_labels = len(unique(labels))
+        # We make a copy of labels to avoid side-effects during iteration
+        self.labels = np.array(labels, copy=True)
+        self.unique_labels = unique(labels)
+        self.n_unique_labels = len(self.unique_labels)
         self.indices = indices
 
     def __iter__(self):
-        # We make a copy here to avoid side-effects during iteration
-        labels = np.array(self.labels, copy=True)
         if self.indices:
-            ind = np.arange(len(labels))
-
-        for i in unique(labels):    # also a copy; XXX do we need this?
-            test_index = np.zeros(len(labels), dtype=np.bool)
-            test_index[labels == i] = True
+            ind = np.arange(len(self.labels))
+        for i in self.unique_labels:
+            test_index = np.zeros(len(self.labels), dtype=np.bool)
+            test_index[self.labels == i] = True
             train_index = np.logical_not(test_index)
             if self.indices:
                 train_index = ind[train_index]
@@ -539,24 +538,22 @@ class LeavePLabelOut(object):
     """
 
     def __init__(self, labels, p, indices=True):
-        self.labels = labels
-        self.unique_labels = unique(self.labels)
+        # We make a copy of labels to avoid side-effects during iteration
+        self.labels = np.array(labels, copy=True)
+        self.unique_labels = unique(labels)
         self.n_unique_labels = len(self.unique_labels)
         self.p = p
         self.indices = indices
 
     def __iter__(self):
-        # We make a copy here to avoid side-effects during iteration
-        labels = np.array(self.labels, copy=True)
-        unique_labels = unique(labels)
         comb = combinations(range(self.n_unique_labels), self.p)
         if self.indices:
-            ind = np.arange(len(labels))
+            ind = np.arange(len(self.labels))
         for idx in comb:
-            test_index = np.zeros(len(labels), dtype=np.bool)
+            test_index = np.zeros(len(self.labels), dtype=np.bool)
             idx = np.array(idx)
-            for l in unique_labels[idx]:
-                test_index[labels == l] = True
+            for l in self.unique_labels[idx]:
+                test_index[self.labels == l] = True
             train_index = np.logical_not(test_index)
             if self.indices:
                 train_index = ind[train_index]
@@ -953,6 +950,9 @@ class StratifiedShuffleSplit(object):
         mask array. Integer indices are required when dealing with sparse
         matrices, since those cannot be indexed by boolean masks.
 
+    random_state : int or RandomState
+        Pseudo-random number generator state used for random sampling.
+
     Examples
     --------
     >>> from sklearn.cross_validation import StratifiedShuffleSplit
@@ -1150,7 +1150,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
 
 
 def _permutation_test_score(estimator, X, y, cv, scorer):
-    """Auxilary function for permutation_test_score"""
+    """Auxiliary function for permutation_test_score"""
     avg_score = []
     for train, test in cv:
         estimator.fit(X[train], y[train])

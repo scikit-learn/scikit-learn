@@ -14,7 +14,7 @@ the poles are cut from the sphere, as well as a thin slice down its
 side. This enables the manifold learning techniques to
 'spread it open' whilst projecting it onto two dimensions.
 
-For a similiar example, where the methods are applied to the
+For a similar example, where the methods are applied to the
 S-curve dataset, see :ref:`example_manifold_plot_compare_methods.py`
 
 Note that the purpose of the :ref:`MDS <multidimensional_scaling>` is
@@ -28,7 +28,7 @@ that of representing a flat map of the Earth, as with
 """
 
 # Author: Jaques Grobler <jaques.grobler@inria.fr>
-# License: BSD
+# License: BSD 3 clause
 
 print(__doc__)
 

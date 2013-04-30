@@ -9,15 +9,14 @@ Tutorials: From the bottom up with scikit-learn
 
 .. topic:: Quick start
 
-    In this section, we introduce the `machine learning 
+    In this section, we introduce the `machine learning
     <http://en.wikipedia.org/wiki/Machine_learning>`_
-    vocabulary that we use through-out `scikit-learn` and give a 
+    vocabulary that we use through-out `scikit-learn` and give a
     simple learning example.
 
 
 .. toctree::
    :maxdepth: 2
-   :numbered:
 
    basic/tutorial.rst
 
@@ -33,7 +32,7 @@ Tutorials: From the bottom up with scikit-learn
    statistical_inference/index.rst
 
 .. topic:: **External Tutorials**
-    
+
     There are several online tutorials available which are geared toward
     specific subject areas:
 
@@ -49,9 +48,9 @@ Tutorials: From the bottom up with scikit-learn
    The code-examples in the above tutorials are written in a
    *python-console* format. If you wish to easily execute these examples
    in **iPython**, use::
-   	
+
 	%doctest_mode
 
-   in the iPython-console. You can then simply copy and paste the examples 
-   directly into iPython without having to worry about removing the **>>>** 
+   in the iPython-console. You can then simply copy and paste the examples
+   directly into iPython without having to worry about removing the **>>>**
    manually.

@@ -3,7 +3,7 @@
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Gael Varoquaux <gael.varoquaux@inria.fr>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 import sys
 import warnings
@@ -20,6 +20,7 @@ from .base import sparse_center_data, center_data
 from ..utils import array2d, atleast2d_or_csc, deprecated
 from ..cross_validation import check_cv
 from ..externals.joblib import Parallel, delayed
+from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
 
@@ -460,6 +461,63 @@ class Lasso(ElasticNet):
 ###############################################################################
 # Classes to store linear models along a regularization path
 
+def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
+                eps=1e-3, n_alphas=100, normalize=False, copy_X=True):
+    """ Compute the grid of alpha values for elastic net parameter search
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Training data. Pass directly as Fortran-contiguous data to avoid
+        unnecessary memory duplication
+
+    y : ndarray, shape = (n_samples,)
+        Target values
+
+    Xy : array-like, optional
+        Xy = np.dot(X.T, y) that can be precomputed.
+
+    l1_ratio : float
+        The ElasticNet mixing parameter, with ``0 <= l1_ratio <= 1``.
+        For ``l1_ratio = 0`` the penalty is an L2 penalty. ``For
+        l1_ratio = 1`` it is an L1 penalty.  For ``0 < l1_ratio <
+        1``, the penalty is a combination of L1 and L2.
+
+    eps : float, optional
+        Length of the path. ``eps=1e-3`` means that
+        ``alpha_min / alpha_max = 1e-3``
+
+    n_alphas : int, optional
+        Number of alphas along the regularization path
+
+    fit_intercept : bool
+        Fit or not an intercept
+
+    normalize : boolean, optional, default False
+        If ``True``, the regressors X will be normalized before regression.
+
+    copy_X : boolean, optional, default True
+        If ``True``, X will be copied; else, it may be overwritten.
+    """
+    if Xy is None:
+        X = atleast2d_or_csc(X, copy=(copy_X and fit_intercept and not
+                                      sparse.isspmatrix(X)))
+        if not sparse.isspmatrix(X):
+            # X can be touched inplace thanks to the above line
+            X, y, _, _, _ = center_data(X, y, fit_intercept,
+                                        normalize, copy=False)
+
+        Xy = safe_sparse_dot(X.T, y, dense_output=True)
+        n_samples = X.shape[0]
+    else:
+        n_samples = len(y)
+
+    alpha_max = np.abs(Xy).max() / (n_samples * l1_ratio)
+    alphas = np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
+                         num=n_alphas)[::-1]
+    return alphas
+
+
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, fit_intercept=True,
                normalize=False, copy_X=True, verbose=False,
@@ -472,7 +530,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Parameters
     ----------
-    X : ndarray, shape = (n_samples, n_features)
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training data. Pass directly as Fortran-contiguous data to avoid
         unnecessary memory duplication
 
@@ -584,7 +642,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     Parameters
     ----------
-    X : ndarray, shape = (n_samples, n_features)
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
         Training data. Pass directly as Fortran-contiguous data to avoid
         unnecessary memory duplication
 
@@ -660,6 +718,19 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     n_samples, n_features = X.shape
 
+    if Xy is None:
+        Xy = safe_sparse_dot(X.T, y, dense_output=True)
+
+    n_samples = X.shape[0]
+    if alphas is None:
+        # No need to normalize of fit_intercept: it has been done
+        # above
+        alphas = _alpha_grid(X, y, Xy=Xy, l1_ratio=l1_ratio,
+                             fit_intercept=False, eps=1e-3, n_alphas=100,
+                             normalize=False, copy_X=False)
+    else:
+        alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
+
     if (hasattr(precompute, '__array__')
             and not np.allclose(X_mean, np.zeros(n_features))
             and not np.allclose(X_std, np.ones(n_features))):
@@ -674,16 +745,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         else:
             precompute = np.dot(X.T, X)
 
-    if Xy is None:
-        Xy = safe_sparse_dot(X.T, y, dense_output=True)
-
-    n_samples = X.shape[0]
-    if alphas is None:
-        alpha_max = np.abs(Xy).max() / (n_samples * l1_ratio)
-        alphas = np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
-                             num=n_alphas)[::-1]
-    else:
-        alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
     coef_ = None  # init coef_
     models = []
 
@@ -694,6 +755,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             fit_intercept=fit_intercept if sparse.isspmatrix(X) else False,
             precompute=precompute)
         model.set_params(**params)
+        model.copy_X = False
         model.fit(X, y, coef_init=coef_, Xy=Xy)
         if fit_intercept and not sparse.isspmatrix(X):
             model.fit_intercept = True
@@ -710,11 +772,54 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     return models
 
 
-def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1):
+def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
+                    X_order=None, dtype=None):
+    """ Returns the MSE for the models computed by 'path'
+
+    Parameters
+    ----------
+    X : {array-like, sparse matrix}, shape (n_samples, n_features)
+        Training data.
+
+    y : narray, shape (n_samples,) or (n_samples, n_targets)
+        Target values
+
+    train : list of indices
+        The indices of the train set
+
+    test : list of indices
+        The indices of the test set
+
+    path : callable
+        function returning a list of models on the path. See
+        enet_path for an example of signature
+
+    path_params : dictionary
+        Parameters passed to the path function
+
+    l1_ratio : float, optional
+        float between 0 and 1 passed to ElasticNet (scaling between
+        l1 and l2 penalties). For ``l1_ratio = 0`` the penalty is an
+        L2 penalty. For ``l1_ratio = 1`` it is an L1 penalty. For ``0
+        < l1_ratio < 1``, the penalty is a combination of L1 and L2
+
+    X_order : {'F', 'C', or None}, optional
+        The order of the arrays expected by the path function to
+        avoid memory copies
+
+    dtype: a numpy dtype or None
+        The dtype of the arrays expected by the path function to
+        avoid memory copies
+    """
     this_mses = list()
     if 'l1_ratio' in path_params:
         path_params['l1_ratio'] = l1_ratio
-    models_train = path(X[train], y[train], **path_params)
+    X_train = X[train]
+    # Do the ordering and type casting here, as if it is done in the path,
+    # X is copied and a reference is kept here
+    X_train = atleast2d_or_csc(X_train, dtype=dtype, order=X_order)
+    models_train = path(X_train, y[train], **path_params)
+    del X_train
     this_mses = np.empty(len(models_train))
     for i_model, model in enumerate(models_train):
         y_ = model.predict(X[test])
@@ -722,9 +827,8 @@ def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1):
     return this_mses, l1_ratio
 
 
-class LinearModelCV(LinearModel):
+class LinearModelCV(six.with_metaclass(ABCMeta, LinearModel)):
     """Base class for iterative model fitting along a regularization path"""
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self, eps=1e-3, n_alphas=100, alphas=None, fit_intercept=True,
@@ -750,17 +854,39 @@ class LinearModelCV(LinearModel):
         Parameters
         ----------
 
-        X : array-like, shape (n_samples, n_features)
-            Training data. Pass directly as Fortran-contiguous data to avoid
-            unnecessary memory duplication
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
+            Training data. Pass directly as float64, Fortran-contiguous data
+            to avoid unnecessary memory duplication
 
         y : narray, shape (n_samples,) or (n_samples, n_targets)
             Target values
 
         """
-        X = atleast2d_or_csc(X, dtype=np.float64, order='F',
-                             copy=self.copy_X and self.fit_intercept)
-        # From now on X can be touched inplace
+        # Dealing right with copy_X is important in the following:
+        # multiple functions touch X and subsamples of X and can induce a
+        # lot of duplication of memory
+        copy_X = self.copy_X and self.fit_intercept
+
+        if isinstance(X, np.ndarray) or sparse.isspmatrix(X):
+            # Keep a reference to X
+            reference_to_old_X = X
+            # Let us not impose fortran ordering or float64 so far: it is
+            # not useful for the cross-validation loop and will be done
+            # by the model fitting itself
+            X = atleast2d_or_csc(X, copy=False)
+            if sparse.isspmatrix(X):
+                if not np.may_share_memory(reference_to_old_X.data, X.data):
+                    # X is a sparse matrix and has been copied
+                    copy_X = False
+            elif not np.may_share_memory(reference_to_old_X, X):
+                # X has been copied
+                copy_X = False
+            del reference_to_old_X
+        else:
+            X = atleast2d_or_csc(X, dtype=np.float64, order='F',
+                                 copy=copy_X)
+            copy_X = False
+
         y = np.asarray(y, dtype=np.float64)
         if X.shape[0] != y.shape[0]:
             raise ValueError("X and y have inconsistent dimensions (%d != %d)"
@@ -777,15 +903,24 @@ class LinearModelCV(LinearModel):
         path_params.pop('cv', None)
         path_params.pop('n_jobs', None)
 
-        # Start to compute path on full data
-        # XXX: is this really useful: we are fitting models that we won't
-        # use later
-        models = self.path(X, y, **path_params)
-
-        # Update the alphas list
-        alphas = [model.alpha for model in models]
+        alphas = self.alphas
+        if alphas is None:
+            mean_l1_ratio = 1.
+            if hasattr(self, 'l1_ratio'):
+                mean_l1_ratio = np.mean(self.l1_ratio)
+            alphas = _alpha_grid(X, y, l1_ratio=mean_l1_ratio,
+                                 fit_intercept=self.fit_intercept,
+                                 eps=self.eps, n_alphas=self.n_alphas,
+                                 normalize=self.normalize,
+                                 copy_X=self.copy_X)
         n_alphas = len(alphas)
         path_params.update({'alphas': alphas, 'n_alphas': n_alphas})
+
+        path_params['copy_X'] = copy_X
+        # We are not computing in parallel, we can modify X
+        # inplace in the folds
+        if not (self.n_jobs == 1 or self.n_jobs is None):
+            path_params['copy_X'] = False
 
         # init cross-validation generator
         cv = check_cv(self.cv, X)
@@ -801,7 +936,8 @@ class LinearModelCV(LinearModel):
                 Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                     delayed(_path_residuals)(
                         X, y, train, test, self.path, path_params,
-                        l1_ratio=l1_ratio)
+                        l1_ratio=l1_ratio, X_order='F',
+                        dtype=np.float64)
                     for l1_ratio in l1_ratios for train, test in folds
                 ), operator.itemgetter(1)):
 
@@ -812,21 +948,29 @@ class LinearModelCV(LinearModel):
             this_best_mse = mse[i_best_alpha]
             all_mse_paths.append(mse_alphas.T)
             if this_best_mse < best_mse:
-                model = models[i_best_alpha]
+                best_alpha = alphas[i_best_alpha]
                 best_l1_ratio = l1_ratio
+                best_mse = this_best_mse
 
-        if hasattr(model, 'l1_ratio'):
-            if model.l1_ratio != best_l1_ratio:
-                # Need to refit the model
-                model.l1_ratio = best_l1_ratio
-                model.fit(X, y)
-            self.l1_ratio_ = model.l1_ratio
+        self.l1_ratio_ = best_l1_ratio
+        self.alpha_ = best_alpha
+        self.alphas_ = np.asarray(alphas)
+        self.mse_path_ = np.squeeze(all_mse_paths)
+
+        # Refit the model with the parameters selected
+        model = ElasticNet()
+        common_params = dict((name, value)
+                             for name, value in self.get_params().items()
+                             if name in model.get_params())
+        model.set_params(**common_params)
+        model.alpha = best_alpha
+        model.l1_ratio = best_l1_ratio
+        model.copy_X = copy_X
+        model.fit(X, y)
         self.coef_ = model.coef_
         self.intercept_ = model.intercept_
-        self.alpha_ = model.alpha
-        self.alphas_ = np.asarray(alphas)
-        self.coef_path_ = np.asarray([model.coef_ for model in models])
-        self.mse_path_ = np.squeeze(all_mse_paths)
+        self.dual_gap_ = model.dual_gap_
+        self.eps_ = model.eps_
         return self
 
     @property
@@ -875,7 +1019,8 @@ class LassoCV(LinearModelCV, RegressorMixin):
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
         Specific crossvalidation objects can be passed, see the
-        :mod:`sklearn.cross_validation` module for the list of possible objects.
+        :mod:`sklearn.cross_validation` module for the list of possible
+        objects.
 
     verbose : bool or integer
         amount of verbosity
@@ -883,7 +1028,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
     Attributes
     ----------
     ``alpha_`` : float
-        The amount of penalization choosen by cross validation
+        The amount of penalization chosen by cross validation
 
     ``coef_`` : array, shape = (n_features,) | (n_targets, n_features)
         parameter vector (w in the cost function formula)
@@ -973,7 +1118,8 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
         Specific crossvalidation objects can be passed, see the
-        :mod:`sklearn.cross_validation` module for the list of possible objects.
+        :mod:`sklearn.cross_validation` module for the list of possible
+        objects.
 
     verbose : bool or integer
         amount of verbosity
@@ -986,10 +1132,10 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     Attributes
     ----------
     ``alpha_`` : float
-        The amount of penalization choosen by cross validation
+        The amount of penalization chosen by cross validation
 
     ``l1_ratio_`` : float
-        The compromise between l1 and l2 penalization choosen by
+        The compromise between l1 and l2 penalization chosen by
         cross validation
 
     ``coef_`` : array, shape = (n_features,) | (n_targets, n_features)

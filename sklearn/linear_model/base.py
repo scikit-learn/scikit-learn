@@ -10,7 +10,7 @@ Generalized Linear models.
 #         Mathieu Blondel <mathieu@mblondel.org>
 #         Lars Buitinck <L.J.Buitinck@uva.nl>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
 import numbers
@@ -19,6 +19,7 @@ import numpy as np
 import scipy.sparse as sp
 from scipy import linalg
 
+from ..externals import six
 from ..externals.joblib import Parallel, delayed
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..utils import as_float_array, atleast2d_or_csr, safe_asarray
@@ -116,9 +117,8 @@ def center_data(X, y, fit_intercept, normalize=False, copy=True,
     return X, y, X_mean, y_mean, X_std
 
 
-class LinearModel(BaseEstimator):
+class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for Linear Models"""
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def fit(self, X, y):
@@ -222,6 +222,25 @@ class LinearClassifierMixin(ClassifierMixin):
             indices = scores.argmax(axis=1)
         return self.classes_[indices]
 
+    def _predict_proba_lr(self, X):
+        """Probability estimation for OvR logistic regression.
+
+        Positive class probabilities are computed as
+        1. / (1. + np.exp(-self.decision_function(X)));
+        multiclass is handled by normalizing that over all classes.
+        """
+        prob = self.decision_function(X)
+        prob *= -1
+        np.exp(prob, prob)
+        prob += 1
+        np.reciprocal(prob, prob)
+        if len(prob.shape) == 1:
+            return np.vstack([1 - prob, prob]).T
+        else:
+            # OvR normalization, like LibLinear's predict_probability
+            prob /= prob.sum(axis=1).reshape((prob.shape[0], -1))
+            return prob
+
 
 class SparseCoefMixin(object):
     """Mixin for converting coef_ to and from CSR format.
@@ -297,7 +316,7 @@ class LinearRegression(LinearModel, RegressorMixin):
         Estimated coefficients for the linear regression problem.
         If multiple targets are passed during the fit (y 2D), this
         is a 2D array of shape (n_targets, n_features), while if only
-        one target is passed, this is a 1D array of lenght n_features.
+        one target is passed, this is a 1D array of length n_features.
 
     `intercept_` : array
         Independent term in the linear model.

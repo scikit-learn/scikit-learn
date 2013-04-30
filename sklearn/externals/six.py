@@ -329,6 +329,7 @@ else:
 _add_doc(reraise, """Reraise an exception.""")
 
 
-def with_metaclass(meta, base=object):
+def with_metaclass(meta, *bases):
     """Create a base class with a metaclass."""
-    return meta("NewBase", (base,), {})
+    bases = bases or (object,)
+    return meta("NewBase", bases, {})

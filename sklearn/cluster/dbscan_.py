@@ -5,7 +5,7 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 
 # Author: Robert Layton <robertlayton@gmail.com>
 #
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 
@@ -165,7 +165,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         self.random_state = random_state
 
     def fit(self, X):
-        """Perform DBSCAN clustering from vector array or distance matrix.
+        """Perform DBSCAN clustering from features or distance matrix.
 
         Parameters
         ----------

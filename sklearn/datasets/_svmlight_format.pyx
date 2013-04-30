@@ -3,7 +3,7 @@
 # Authors: Mathieu Blondel <mathieu@mblondel.org>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 #          Olivier Grisel <olivier.grisel@ensta.org>
-# License: Simple BSD.
+# License: BSD 3 clause
 
 from libc.string cimport strchr
 cimport numpy as np

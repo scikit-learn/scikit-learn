@@ -41,7 +41,7 @@ precision-recall.
 print(__doc__)
 
 # Author: Alexandre Gramfort and Gael Varoquaux
-# License: BSD
+# License: BSD 3 clause
 
 import warnings
 

@@ -6,7 +6,7 @@ real-valued features.
 
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
-# License: 3-clause BSD.
+# License: BSD 3 clause
 
 import errno
 from gzip import GzipFile

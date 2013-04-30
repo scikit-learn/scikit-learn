@@ -1,5 +1,5 @@
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
-# License: 3-clause BSD.
+# License: BSD 3 clause
 
 import array
 from cpython cimport array

@@ -4,7 +4,7 @@ Test the memory module.
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2009 Gael Varoquaux
-# License: BSD Style, 3 clauses.
+# License: BSD 3 clause
 
 import shutil
 import os
@@ -307,7 +307,7 @@ def test_memory_eval():
 def count_and_append(x=[]):
     """ A function with a side effect in its arguments.
 
-        Return the lenght of its argument and append one element.
+        Return the length of its argument and append one element.
     """
     len_x = len(x)
     x.append(None)

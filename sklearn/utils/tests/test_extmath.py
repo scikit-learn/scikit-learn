@@ -1,6 +1,6 @@
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
-# License: BSD
+# License: BSD 3 clause
 import numpy as np
 from scipy import sparse
 from scipy import linalg

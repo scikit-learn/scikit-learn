@@ -11,7 +11,7 @@ must predict whether the two images are from the same person.
 
 An alternative task, Face Recognition or Face Identification is:
 given the picture of the face of an unknown person, identify the name
-of the person by refering to a gallery of previously seen pictures of
+of the person by referring to a gallery of previously seen pictures of
 identified persons.
 
 Both Face Verification and Face Recognition are tasks that are typically
@@ -21,7 +21,7 @@ implemented in the OpenCV library. The LFW faces were extracted by this face
 detector from various online websites.
 """
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 from os import listdir, makedirs, remove
 from os.path import join, exists, isdir
@@ -319,7 +319,7 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
             try:
                 person_folder = join(data_folder_path, name)
             except TypeError:
-                person_folder = join(data_folder_path, str(name,'UTF-8'))
+                person_folder = join(data_folder_path, str(name, 'UTF-8'))
             filenames = list(sorted(listdir(person_folder)))
             file_path = join(person_folder, filenames[idx])
             file_paths.append(file_path)

@@ -3,7 +3,7 @@
 
 # Author: Vlad Niculae
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 import warnings
 

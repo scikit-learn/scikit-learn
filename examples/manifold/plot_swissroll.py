@@ -8,7 +8,7 @@ with locally linear embedding
 """
 
 # Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
-# License: BSD, (C) INRIA 2011
+# License: BSD 3 clause (C) INRIA 2011
 
 print(__doc__)
 

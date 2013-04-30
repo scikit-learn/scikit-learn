@@ -1,5 +1,5 @@
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
-# License: BSD-style
+# License: BSD 3 clause
 
 cimport cython
 cimport numpy as np

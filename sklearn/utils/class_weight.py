@@ -1,5 +1,5 @@
 # Authors: Andreas Mueller
-# License: Simplified BSD
+# License: BSD 3 clause
 
 import numpy as np
 
@@ -19,7 +19,7 @@ def compute_class_weight(class_weight, classes, y_ind):
         If None is given, the class weights will be uniform.
 
     classes : ndarray
-        Array of the classes occuring in the data, as given by
+        Array of the classes occurring in the data, as given by
         ``np.unique(y_org)`` with ``y_org`` the original class labels.
 
     y_ind : array-like, shape=(n_samples,), dtype=int

@@ -69,7 +69,7 @@ ax.set_title("PCA reduction (2d) of transformed data (%dd)" %
 ax.set_xticks(())
 ax.set_yticks(())
 
-# Plot the decision in original space. For that, we will asign a color to each
+# Plot the decision in original space. For that, we will assign a color to each
 # point in the mesh [x_min, m_max] x [y_min, y_max].
 h = .01
 x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5

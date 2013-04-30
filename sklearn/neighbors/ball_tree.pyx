@@ -1,6 +1,6 @@
 
 # Author: Jake Vanderplas <vanderplas@astro.washington.edu>
-# License: BSD
+# Licence: BSD 3 clause
 
 """
 =========

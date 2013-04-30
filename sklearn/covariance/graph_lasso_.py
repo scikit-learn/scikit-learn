@@ -3,7 +3,7 @@ estimator.
 """
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-# License: BSD Style
+# License: BSD 3 clause
 # Copyright: INRIA
 import warnings
 import operator
@@ -486,7 +486,7 @@ class GraphLassoCV(GraphLasso):
 
             # Refine our grid
             if best_index == 0:
-                # We do not need to go back: we have choosen
+                # We do not need to go back: we have chosen
                 # the highest value of alpha for which there are
                 # non-zero coefficients
                 alpha_1 = path[0][0]

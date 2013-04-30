@@ -9,7 +9,7 @@
  * but libsvm does not expose this structure, so we define it here
  * along some utilities to convert from numpy arrays.
  *
- * License: New BSD.
+ * License: BSD 3 clause
  *
  * Author: 2010 Fabian Pedregosa <fabian.pedregosa@inria.fr>
  */

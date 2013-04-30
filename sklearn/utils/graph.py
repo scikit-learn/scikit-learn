@@ -8,7 +8,7 @@ sparse matrices.
 # Authors: Aric Hagberg <hagberg@lanl.gov>
 #          Gael Varoquaux <gael.varoquaux@normalesup.org>
 #          Jake Vanderplas <vanderplas@astro.washington.edu>
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 from scipy import sparse
@@ -134,12 +134,12 @@ def _laplacian_sparse(graph, normed=False, return_diag=False):
         # The sparsity pattern of the matrix has holes on the diagonal,
         # we need to fix that
         diag_idx = lap.row[diag_mask]
-        diagonal_holes = list(set(range(n_nodes)).difference(
-                                diag_idx))
+        diagonal_holes = list(set(range(n_nodes)).difference(diag_idx))
         new_data = np.concatenate([lap.data, np.ones(len(diagonal_holes))])
         new_row = np.concatenate([lap.row, diagonal_holes])
         new_col = np.concatenate([lap.col, diagonal_holes])
-        lap = sparse.coo_matrix((new_data, (new_row, new_col)), shape=lap.shape)
+        lap = sparse.coo_matrix((new_data, (new_row, new_col)),
+                                shape=lap.shape)
         diag_mask = (lap.row == lap.col)
 
     lap.data[diag_mask] = 0
@@ -150,7 +150,8 @@ def _laplacian_sparse(graph, normed=False, return_diag=False):
         w[w_zeros] = 1
         lap.data /= w[lap.row]
         lap.data /= w[lap.col]
-        lap.data[diag_mask] = (1 - w_zeros[lap.row[diag_mask]]).astype(lap.data.dtype)
+        lap.data[diag_mask] = (1 - w_zeros[lap.row[diag_mask]]).astype(
+            lap.data.dtype)
     else:
         lap.data[diag_mask] = w[lap.row[diag_mask]]
 

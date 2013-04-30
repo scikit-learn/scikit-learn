@@ -4,7 +4,7 @@ from __future__ import print_function
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         (mostly translation, see implementation details)
-# License: BSD style
+# Licence: BSD 3 clause
 
 import numpy as np
 from scipy import linalg, optimize, rand
@@ -458,7 +458,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     # Light storage mode (need to recompute C, F, Ft and G)
                     if self.verbose:
                         print("This GaussianProcess used 'light' storage mode "
-                              "at instanciation. Need to recompute "
+                              "at instantiation. Need to recompute "
                               "autocorrelation matrix...")
                     reduced_likelihood_function_value, par = \
                         self.reduced_likelihood_function()
