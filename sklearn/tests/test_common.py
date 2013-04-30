@@ -505,7 +505,7 @@ def test_clustering():
                                                                           score)
         assert_greater(score, 0.4, error_message)
         # fit another time with ``fit_predict`` and compare results
-        if name is 'SpectralClustering' or name is "EAC":
+        if name is 'SpectralClustering':
             # there is no way to make Spectral clustering deterministic :(
             continue
         set_random_state(alg)
