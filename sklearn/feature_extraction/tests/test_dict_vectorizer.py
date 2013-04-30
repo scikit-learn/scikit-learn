@@ -1,5 +1,5 @@
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
-# License: BSD-style.
+# License: BSD 3 clause
 
 from random import Random
 import numpy as np

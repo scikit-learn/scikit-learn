@@ -25,7 +25,7 @@ The main theoretical result behind the efficiency of random projection is the
 """
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>,
 #          Arnaud Joly <a.joly@ulg.ac.be>
-# License: Simple BSD
+# License: BSD 3 clause
 
 from __future__ import division
 import warnings

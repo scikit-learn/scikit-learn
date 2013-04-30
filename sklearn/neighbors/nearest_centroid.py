@@ -6,7 +6,7 @@ Nearest Centroid Classification
 # Author: Robert Layton <robertlayton@gmail.com>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 from scipy import sparse as sp

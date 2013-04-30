@@ -17,7 +17,7 @@ The module structure is the following:
 """
 
 # Authors: Noel Dawe, Gilles Louppe
-# License: BSD Style
+# License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
 

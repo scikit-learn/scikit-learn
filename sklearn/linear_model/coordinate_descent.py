@@ -3,7 +3,7 @@
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Gael Varoquaux <gael.varoquaux@inria.fr>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 import sys
 import warnings

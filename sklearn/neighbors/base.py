@@ -4,7 +4,7 @@
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Sparseness support by Lars Buitinck <L.J.Buitinck@uva.nl>
 #
-# License: BSD, (C) INRIA, University of Amsterdam
+# License: BSD 3 clause (C) INRIA, University of Amsterdam
 import warnings
 from abc import ABCMeta, abstractmethod
 

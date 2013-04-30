@@ -20,7 +20,7 @@ The original dataset consisted of 92 x 112, while the Roweis version
 consists of 64x64 images.
 """
 # Copyright (c) 2011 David Warde-Farley <wardefar at iro dot umontreal dot ca>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 from io import BytesIO
 from os.path import join, exists

@@ -28,7 +28,7 @@ that of representing a flat map of the Earth, as with
 """
 
 # Author: Jaques Grobler <jaques.grobler@inria.fr>
-# License: BSD
+# License: BSD 3 clause
 
 print(__doc__)
 

@@ -1,5 +1,5 @@
 # Copyright (c) 2010 Olivier Grisel <olivier.grisel@ensta.org>
-# License: Simplified BSD
+# License: BSD 3 clause
 """Glue code to load http://mlcomp.org data as a scikit.learn dataset"""
 
 import os

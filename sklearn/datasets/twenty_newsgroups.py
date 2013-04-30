@@ -33,7 +33,7 @@ vectorization step.
 
 """
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 import os
 import urllib

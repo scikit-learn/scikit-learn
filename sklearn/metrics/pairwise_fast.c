@@ -18669,7 +18669,7 @@ PyMODINIT_FUNC PyInit_pairwise_fast(void)
   /*--- Execution code ---*/
 
   /* "sklearn/metrics/pairwise_fast.pyx":5
- * # License: Simplified BSD
+ * # License: BSD 3 clause
  * 
  * import numpy as np             # <<<<<<<<<<<<<<
  * cimport numpy as np
@@ -18749,7 +18749,7 @@ PyMODINIT_FUNC PyInit_pairwise_fast(void)
   /* "sklearn/metrics/pairwise_fast.pyx":1
  * # Author: Andreas Mueller <amueller@ais.uni-bonn.de>             # <<<<<<<<<<<<<<
  * #
- * # License: Simplified BSD
+ * # License: BSD 3 clause
  */
   __pyx_t_3 = PyDict_New(); if (unlikely(!__pyx_t_3)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 1; __pyx_clineno = __LINE__; goto __pyx_L1_error;}
   __Pyx_GOTREF(((PyObject *)__pyx_t_3));

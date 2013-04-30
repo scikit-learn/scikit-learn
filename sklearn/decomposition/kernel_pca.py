@@ -1,7 +1,7 @@
 """Kernel Principal Components Analysis"""
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 from scipy import linalg

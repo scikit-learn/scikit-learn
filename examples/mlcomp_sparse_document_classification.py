@@ -35,7 +35,7 @@ Then you are ready to run this example using your favorite python shell::
 """
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 from __future__ import print_function
 

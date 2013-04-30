@@ -14,7 +14,7 @@ a BayesianRidge as supervised estimator.
 """
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD Style.
+# License: BSD 3 clause
 
 print(__doc__)
 

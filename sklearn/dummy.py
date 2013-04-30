@@ -1,7 +1,7 @@
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 #         Arnaud Joly <a.joly@ulg.ac.be>
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 

@@ -4,7 +4,7 @@ My own variation on function-specific inspect-like features.
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2009 Gael Varoquaux
-# License: BSD Style, 3 clauses.
+# License: BSD 3 clause
 
 from itertools import islice
 import inspect

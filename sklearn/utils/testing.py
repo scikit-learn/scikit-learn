@@ -6,7 +6,7 @@
 #          Mathieu Blondel
 #          Olivier Grisel
 #          Arnaud Joly
-# License: BSD
+# License: BSD 3 clause
 import inspect
 import pkgutil
 

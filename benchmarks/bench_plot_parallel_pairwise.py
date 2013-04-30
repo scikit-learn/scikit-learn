@@ -1,5 +1,5 @@
 # Author: Mathieu Blondel <mathieu@mblondel.org>
-# License: BSD Style.
+# License: BSD 3 clause
 import time
 
 import pylab as pl

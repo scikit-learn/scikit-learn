@@ -3,7 +3,7 @@ Testing for the forest module (sklearn.ensemble.forest).
 """
 
 # Authors: Gilles Louppe, Brian Holt, Andreas Mueller
-# License: BSD 3
+# License: BSD 3 clause
 
 import numpy as np
 from numpy.testing import assert_array_equal

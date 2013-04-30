@@ -5,7 +5,7 @@ sparse Logistic Regression
 
 # Author: Gael Varoquaux, Alexandre Gramfort
 #
-# License: BSD Style.
+# License: BSD 3 clause
 import itertools
 from abc import ABCMeta, abstractmethod
 

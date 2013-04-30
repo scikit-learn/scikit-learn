@@ -2,7 +2,7 @@
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
-# License: BSD
+# License: BSD 3 clause
 
 import warnings
 import numbers

@@ -5,7 +5,7 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 
 # Author: Robert Layton <robertlayton@gmail.com>
 #
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 

@@ -13,7 +13,7 @@ This example is commented in the
 print(__doc__)
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 # Standard scientific Python imports
 import pylab as pl

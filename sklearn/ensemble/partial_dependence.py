@@ -1,7 +1,7 @@
 """Partial dependence plots for tree ensembles. """
 
 # Authors: Peter Prettenhofer
-# License: BSD Style.
+# License: BSD 3 clause
 
 from itertools import count
 

@@ -24,7 +24,7 @@ induce very high (even infinite) dimensional feature spaces.
 print(__doc__)
 
 # Author: Mathieu Blondel
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 import pylab as pl

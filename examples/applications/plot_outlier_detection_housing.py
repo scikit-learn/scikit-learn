@@ -48,7 +48,7 @@ risk of over-fitting the data.
 print(__doc__)
 
 # Author: Virgile Fritsch <virgile.fritsch@inria.fr>
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 from sklearn.covariance import EllipticEnvelope

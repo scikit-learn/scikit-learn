@@ -4,7 +4,7 @@ from __future__ import print_function
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         (mostly translation, see implementation details)
-# License: BSD style
+# Licence: BSD 3 clause
 
 import numpy as np
 from scipy import linalg, optimize, rand

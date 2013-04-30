@@ -1,6 +1,6 @@
 """Utilities for input validation"""
 # Authors: Olivier Grisel and Gael Varoquaux and others (please update me)
-# License: BSD 3
+# License: BSD 3 clause
 
 import warnings
 import numbers

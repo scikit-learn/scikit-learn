@@ -7,7 +7,7 @@ better.
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Wei LI <kuantkid@gmail.com>
 #          Diego Molla <dmolla-aliod@gmail.com>
-# License: BSD Style.
+# License: BSD 3 clause
 
 from math import log
 

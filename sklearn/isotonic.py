@@ -1,7 +1,7 @@
 # Authors: Fabian Pedregosa <fabian@fseoane.net>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Nelle Varoquaux <nelle.varoquaux@gmail.com>
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 from scipy import interpolate

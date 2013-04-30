@@ -14,7 +14,7 @@ print(__doc__)
 
 # Author: Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 import pylab as pl

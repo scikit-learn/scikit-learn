@@ -27,7 +27,7 @@ print(__doc__)
 
 # Author: Noel Dawe <noel.dawe@gmail.com>
 #
-# License: BSD
+# License: BSD 3 clause
 
 from sklearn.externals.six.moves import zip
 
