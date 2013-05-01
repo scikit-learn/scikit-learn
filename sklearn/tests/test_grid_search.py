@@ -123,9 +123,10 @@ def test_parameter_grid():
                      set(("foo", x, "bar", y)
                          for x, y in product(params2["foo"], params2["bar"])))
 
+
 def test_build_index():
     params = {"foo": [4, 2],
-               "bar": ["ham", "spam", "eggs"]}
+              "bar": ["ham", "spam", "eggs"]}
     grid = ParameterGrid(params)
 
     keys, index1a = grid.build_index(['foo', 'bar'])
@@ -144,18 +145,20 @@ def test_build_index():
     assert_equal(keys, ['bar', 'foo'])
     assert_array_equal(index2a, index2b)
 
-    keys, index = grid.build_index()  # dimensions are implementation-specific? 
+    keys, index = grid.build_index()  # dimensions are implementation-specific?
     assert_true(keys == ['foo', 'bar'] or keys == ['bar', 'foo'])
     assert_true(np.all(index == index1a) or np.all(index == index2a))
 
     points = np.asarray(list(grid))
     points[index1a]
-    assert_array_equal(points[index1a].ravel(),
-                 np.asarray([{"foo": x, "bar": y}
-                     for x, y in product(params["foo"], params["bar"])]))
-    assert_array_equal(points[index2a].ravel(),
-                 np.asarray([{"foo": y, "bar": x}
-                     for x, y in product(params["bar"], params["foo"])]))
+    assert_array_equal(
+        points[index1a].ravel(),
+        np.asarray([{"foo": x, "bar": y}
+                    for x, y in product(params["foo"], params["bar"])]))
+    assert_array_equal(
+        points[index2a].ravel(),
+        np.asarray([{"foo": y, "bar": x}
+                    for x, y in product(params["bar"], params["foo"])]))
 
     # Test bad `order`s
     assert_raises(ValueError, grid.build_index, ['foo', 'foo'])

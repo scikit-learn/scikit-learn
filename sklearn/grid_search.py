@@ -113,7 +113,8 @@ class ParameterGrid(object):
         ----------
         `order` : sequence of strings, optional
             Parameter names corresponding to the first axes of the returned
-            index. Any remaining parameters will be returned in arbitrary order.
+            index. Any remaining parameters will be returned in arbitrary
+            order.
         `grid` : integer, default 0
             The grid index if an array of grids are represented.
         `ravel` : boolean, default False
@@ -121,7 +122,7 @@ class ParameterGrid(object):
             dimension, so the output index has `len(order) + 1` dimensions.
             This simplifies aggregating over the indexed data grouped by
             selected parameters.
-        
+
         Returns
         -------
         `order` : sequence of strings
@@ -146,7 +147,7 @@ class ParameterGrid(object):
             if len(axis_order) > len(set(axis_order)):
                 raise ValueError('order contains duplicate keys')
             axis_order.extend(i for i in xrange(len(keys))
-                    if i not in axis_order)
+                              if i not in axis_order)
 
             keys = np.asarray(keys)[axis_order]
             index = index.transpose(axis_order)
