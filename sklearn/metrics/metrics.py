@@ -537,7 +537,8 @@ def precision_recall_curve(y_true, probas_pred):
     >>> from sklearn.metrics import precision_recall_curve
     >>> y_true = np.array([0, 0, 1, 1])
     >>> y_scores = np.array([0.1, 0.4, 0.35, 0.8])
-    >>> precision, recall, thresholds = precision_recall_curve(y_true, y_scores)
+    >>> precision, recall, thresholds = precision_recall_curve(
+    ...     y_true, y_scores)
     >>> precision  # doctest: +ELLIPSIS
     array([ 0.66...,  0.5       ,  1.        ,  1.        ])
     >>> recall
@@ -629,7 +630,7 @@ def roc_curve(y_true, y_score, pos_label=None):
         tps = np.r_[0, tps]
         fps = np.r_[0, fps]
         thresholds = np.r_[thresholds[0] + 1, thresholds]
-    
+
     if fps[-1] == 0:
         warnings.warn("No negative samples in y_true, "
                       "false positive value should be meaningless")
@@ -643,7 +644,7 @@ def roc_curve(y_true, y_score, pos_label=None):
         tpr = np.repeat(np.nan, tps.shape)
     else:
         tpr = tps / tps[-1]
-    
+
     return fpr, tpr, thresholds
 
 
