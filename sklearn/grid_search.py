@@ -187,10 +187,8 @@ class ParameterSampler(object):
         return self.n_iter
 
 
-
-
 @deprecated('fit_grid_point is deprecated and will be removed in 0.15. '
-        'Use cross_validation.fit_fold instead.')
+            'Use cross_validation.fit_fold instead.')
 def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
                    verbose, loss_func=None, **fit_params):
     """Run fit on one set of parameters.
@@ -239,8 +237,10 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
     n_samples_test : int
         Number of test samples in this split.
     """
-    res = fit_fold(base_clf, X, y, train, test, scorer, verbose,
-            loss_func=None, est_params=clf_params, fit_params=fit_params)
+    res = fit_fold(
+        base_clf, X, y, train, test, scorer, verbose,
+        loss_func=None, est_params=clf_params, fit_params=fit_params
+    )
     return res['test_score'], clf_params, res['test_n_samples']
 
 
@@ -331,7 +331,8 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
     @property
     def grid_scores_(self):
         warnings.warn("grid_scores_ is deprecated and will be removed in 0.15."
-                      " Use grid_results_ and fold_results_ instead.", DeprecationWarning)
+                      " Use grid_results_ and fold_results_ instead.",
+                      DeprecationWarning)
         return zip(self.grid_results_['parameters'],
                    self.grid_results_['test_score'],
                    self.fold_results_['test_score'])
@@ -376,13 +377,14 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         """
         From a result dict for each fold, produce a single dict with an array
         for each key.
-        For example [[{'score': 1}, {'score': 2}], [{'score': 3}, {'score': 4}]]
+        For example [[{'score': 1}, {'score': 2}],
+                     [{'score': 3}, {'score': 4}]]
                  -> {'score': np.array([[1, 2], [3, 4]])}"""
         # assume keys are same throughout
-        result_keys = list(iterkeys(result_dicts[0][0])) 
+        result_keys = list(iterkeys(result_dicts[0][0]))
         arrays = ([[fold_results[key] for fold_results in point]
-                              for point in result_dicts]
-                 for key in result_keys)
+                   for point in result_dicts]
+                  for key in result_keys)
         return np.rec.fromarrays(arrays, names=result_keys)
 
     def _fit(self, X, y, parameter_iterator, **params):
@@ -415,18 +417,21 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
                                  % (len(y), n_samples))
             y = np.asarray(y)
 
-        cv_eval = CVEvaluator(self.estimator, X, y, scoring=self.scorer_,
-                cv=self.cv, iid=self.iid, fit_params=self.fit_params,
-                n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch,
-                verbose=self.verbose)
+        cv_eval = CVEvaluator(
+            self.estimator, X, y, scoring=self.scorer_, cv=self.cv,
+            iid=self.iid, fit_params=self.fit_params, n_jobs=self.n_jobs,
+            pre_dispatch=self.pre_dispatch, verbose=self.verbose
+        )
         grid_results, cv_results = cv_eval(parameter_iterator)
 
         # Append 'parameters' to grid_results
         # Broken due to https://github.com/numpy/numpy/issues/2346:
         # grid_results = recfunctions.append_fields(grid_results, 'parameters',
         #        np.asarray(list(parameter_iterator)), usemask=False)
-        new_grid_results = np.zeros(grid_results.shape,
-                dtype=grid_results.dtype.descr + [('parameters', 'O')])
+        new_grid_results = np.zeros(
+            grid_results.shape,
+            dtype=grid_results.dtype.descr + [('parameters', 'O')]
+        )
         for name in grid_results.dtype.names:
             new_grid_results[name] = grid_results[name]
         new_grid_results['parameters'] = list(parameter_iterator)
@@ -458,7 +463,9 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         if self.refit:
             # fit the best estimator using the entire dataset
             # clone first to work around broken estimators
-            best_estimator = clone(self.estimator).set_params(**self.best_params_)
+            best_estimator = clone(self.estimator).set_params(
+                **self.best_params_
+            )
             if y is not None:
                 best_estimator.fit(X, y, **self.fit_params)
             else:

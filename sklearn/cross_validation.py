@@ -1042,7 +1042,7 @@ class StratifiedShuffleSplit(object):
 ##############################################################################
 
 def fit_fold(estimator, X, y, train, test, scorer,
-                   verbose, est_params=None, fit_params=None):
+             verbose, est_params=None, fit_params=None):
     """Run fit on one set of parameters.
 
     Parameters
@@ -1159,8 +1159,8 @@ def fit_fold(estimator, X, y, train, test, scorer,
                                                        start_time))
         print("[CVEvaluator]%s %s" % ((64 - len(end_msg)) * '.', end_msg))
     return {
-            'test_score': test_score,
-            'test_n_samples': _num_samples(X_test),
+        'test_score': test_score,
+        'test_n_samples': _num_samples(X_test),
     }
 
 
@@ -1221,8 +1221,8 @@ class CVEvaluator(object):
     """
 
     def __init__(self, estimator, X, y=None, scoring=None, cv=None, iid=True,
-            n_jobs=1, pre_dispatch='2*n_jobs', verbose=0, fit_params=None,
-            score_func=None):
+                 n_jobs=1, pre_dispatch='2*n_jobs', verbose=0, fit_params=None,
+                 score_func=None):
 
         X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
         self.cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
@@ -1245,14 +1245,14 @@ class CVEvaluator(object):
                 "does not." % estimator)
 
         self.parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
-                pre_dispatch=pre_dispatch)
+                                 pre_dispatch=pre_dispatch)
         self.fit_fold_kwargs = {
-                'X': X,
-                'y': y,
-                'estimator': clone(estimator),
-                'scorer': scorer,
-                'verbose': verbose,
-                'fit_params': fit_params,
+            'X': X,
+            'y': y,
+            'estimator': clone(estimator),
+            'scorer': scorer,
+            'verbose': verbose,
+            'fit_params': fit_params,
         }
 
     def calc_means(self, scores, n_samples):
@@ -1290,16 +1290,16 @@ class CVEvaluator(object):
         ]
 
         # dicts to structured arrays (assume keys are same throughout):
-        keys = sorted(iterkeys(out[0][0])) 
-        arrays = ([[fold_results[key] for fold_results in point]
-                              for point in out]
-                 for key in keys)
+        keys = sorted(iterkeys(out[0][0]))
+        arrays = (
+            [[fold_results[key] for fold_results in point] for point in out]
+            for key in keys)
         out = np.rec.fromarrays(arrays, names=keys)
 
         # for now, only one mean:
         means = np.rec.fromarrays(
-                [self.calc_means(out['test_score'], out['test_n_samples'])],
-                names=['test_score']
+            [self.calc_means(out['test_score'], out['test_n_samples'])],
+            names=['test_score']
         )
 
         return means, out
@@ -1312,8 +1312,8 @@ class CVEvaluator(object):
         ----------
         parameters : dict or iterable of dicts, optional
             If provided, the estimator will be cloned and have these parameters
-            set. If an iterable of parameter settings is given, cross-validation
-            is performed for each set of parameters.
+            set. If an iterable of parameter settings is given,
+            cross-validation is performed for each set of parameters.
 
         Returns
         -------
@@ -1343,9 +1343,10 @@ class CVEvaluator(object):
             out_slice = slice(None)
 
         out = self.parallel(
-            delayed(fit_fold)(est_params=est_params,
-                train=train, test=test,
-                **self.fit_fold_kwargs)
+            delayed(fit_fold)(
+                est_params=est_params, train=train, test=test,
+                **self.fit_fold_kwargs
+            )
             for est_params in param_iter for train, test in self.cv)
 
         means, out = self._format_results(out)
@@ -1361,8 +1362,8 @@ class CVEvaluator(object):
         ----------
         parameters : dict or iterable of dicts, optional
             If provided, the estimator will be cloned and have these parameters
-            set. If an iterable of parameter settings is given, cross-validation
-            is performed for each set of parameters.
+            set. If an iterable of parameter settings is given,
+            cross-validation is performed for each set of parameters.
 
         Returns
         -------
@@ -1381,8 +1382,8 @@ class CVEvaluator(object):
         ----------
         parameters : dict or iterable of dicts, optional
             If provided, the estimator will be cloned and have these parameters
-            set. If an iterable of parameter settings is given, cross-validation
-            is performed for each set of parameters.
+            set. If an iterable of parameter settings is given,
+            cross-validation is performed for each set of parameters.
 
         Returns
         -------
@@ -1395,8 +1396,9 @@ class CVEvaluator(object):
 
 def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
                     verbose=0, fit_params=None, score_func=None):
-    cv_eval = CVEvaluator(estimator, X, y, scoring=scoring, cv=cv, n_jobs=n_jobs,
-            verbose=verbose, fit_params=fit_params, score_func=score_func)
+    cv_eval = CVEvaluator(
+        estimator, X, y, scoring=scoring, cv=cv, n_jobs=n_jobs,
+        verbose=verbose, fit_params=fit_params, score_func=score_func)
     return cv_eval.score_folds()
 
 

@@ -164,11 +164,15 @@ def test_grid_scores():
             assert_true(grid_search.grid_scores_[i][0]
                         == {'foo_param': foo_i})
             # mean score
-            assert_almost_equal(grid_search.grid_scores_[i][1],
-                        (1. if foo_i > 1 else 0.))
+            assert_almost_equal(
+                grid_search.grid_scores_[i][1],
+                (1. if foo_i > 1 else 0.)
+            )
             # all fold scores
-            assert_array_equal(grid_search.grid_scores_[i][2],
-                        [1. if foo_i > 1 else 0.] * n_folds)
+            assert_array_equal(
+                grid_search.grid_scores_[i][2],
+                [1. if foo_i > 1 else 0.] * n_folds
+            )
 
 
 def test_trivial_results():
