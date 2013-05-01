@@ -7,7 +7,7 @@ from sklearn.utils.testing import assert_raises
 
 from sklearn.metrics import f1_score, r2_score, auc_score, fbeta_score
 from sklearn.metrics.metrics import (needs_threshold, greater_is_better,
-        lesser_is_better)
+                                     lesser_is_better)
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.metrics import SCORERS, Scorer
 from sklearn.svm import LinearSVC
@@ -48,7 +48,7 @@ def test_scorer_annotated_params():
 def test_scorer_wrapped_annotated_params():
     """Test to ensure metric annotations are found within functools.partial"""
     metric = functools.partial(
-            lesser_is_better(lambda test, pred, param=5: 1.), param=1)
+        lesser_is_better(lambda test, pred, param=5: 1.), param=1)
     scorer = Scorer(metric)
     assert_equal(scorer.greater_is_better, False)
     assert_equal(scorer.needs_threshold, False)

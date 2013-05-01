@@ -67,13 +67,13 @@ class Scorer(object):
         self.kwargs = kwargs
 
         if greater_is_better is None:
-            greater_is_better = self._get_annotation(score_func,
-                    'greater_is_better', True)
+            greater_is_better = self._get_annotation(
+                score_func, 'greater_is_better', True)
         self.greater_is_better = greater_is_better
 
         if needs_threshold is None:
-            needs_threshold = self._get_annotation(score_func,
-                    'needs_threshold', False)
+            needs_threshold = self._get_annotation(
+                score_func, 'needs_threshold', False)
         self.needs_threshold = needs_threshold
 
     @staticmethod
@@ -81,7 +81,7 @@ class Scorer(object):
         if hasattr(func, attr):
             return getattr(func, attr)
         while hasattr(func, 'func'):
-            func = getattr(func, 'func') # unwrap functools.partial
+            func = getattr(func, 'func')  # unwrap functools.partial
             if hasattr(func, attr):
                 return getattr(func, attr)
         return default
@@ -129,8 +129,9 @@ class Scorer(object):
             return self.score_func(y, y_pred, **self.kwargs)
 
 
-SCORERS = {name: Scorer(metric)
-        for name, metric in [
+SCORERS = {
+    name: Scorer(metric)
+    for name, metric in [
         # Regression
         ('r2', r2_score),
         ('mse', mean_squared_error),
@@ -144,4 +145,5 @@ SCORERS = {name: Scorer(metric)
         ('average_precision', average_precision_score),
         # Clustering
         ('ari', adjusted_rand_score),
-]}
+    ]
+}

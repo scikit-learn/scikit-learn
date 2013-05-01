@@ -39,9 +39,11 @@ def needs_threshold(metric):
     metric.needs_threshold = True
     return metric
 
+
 def greater_is_better(metric):
     metric.greater_is_better = True
     return metric
+
 
 def lesser_is_better(metric):
     metric.greater_is_better = False
@@ -724,7 +726,7 @@ def zero_one_loss(y_true, y_pred, normalize=True):
     """
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
 
-    if is_multilabel(y_true):    
+    if is_multilabel(y_true):
         # Handle mix representation
         if type(y_true) != type(y_pred):
             labels = unique_labels(y_true, y_pred)
@@ -739,7 +741,7 @@ def zero_one_loss(y_true, y_pred, normalize=True):
             # numpy 1.3 : it is required to perform a unique before setxor1d
             #             to get unique label in numpy 1.3.
             #             This is needed in order to handle redundant labels.
-            # FIXME : check if this can be simplified when 1.3 is removed        
+            # FIXME : check if this can be simplified when 1.3 is removed
             loss = np.array([np.size(np.setxor1d(np.unique(pred),
                                                  np.unique(true))) > 0
                              for pred, true in zip(y_pred, y_true)])
