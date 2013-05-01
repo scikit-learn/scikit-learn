@@ -342,10 +342,8 @@ def test_confusion_matrix_binary():
         assert_array_almost_equal(mcc, true_mcc, decimal=2)
         assert_array_almost_equal(mcc, 0.57, decimal=2)
 
-    test(y_true,
-         y_pred)
-    test(map(str, y_true),
-         map(str, y_pred))
+    test(y_true, y_pred)
+    test(map(str, y_true), map(str, y_pred))
 
 
 def test_matthews_corrcoef_nan():
@@ -457,10 +455,8 @@ def test_confusion_matrix_multiclass():
                                 [0, 18, 2],
                                 [4, 24, 3]])
 
-    test(y_true,
-         y_pred)
-    test(map(str, y_true),
-         map(str, y_pred), string_type=True)
+    test(y_true, y_pred)
+    test(map(str, y_true), map(str, y_pred), string_type=True)
 
 
 def test_confusion_matrix_multiclass_subset_labels():
