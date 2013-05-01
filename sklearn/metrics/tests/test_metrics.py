@@ -288,10 +288,8 @@ def test_precision_recall_f1_score_binary():
         fs = f1_score(y_true, y_pred, pos_label=pos_label)
         assert_array_almost_equal(fs, 0.76, 2)
 
-    test(y_true,
-         y_pred)
-    test(map(str, y_true),
-         map(str, y_pred), True)
+    test(y_true, y_pred)
+    test(map(str, y_true), map(str, y_pred), True)
 
 
 def test_average_precision_score_duplicate_values():
@@ -428,11 +426,8 @@ def test_precision_recall_f1_score_multiclass():
         assert_array_almost_equal(f, [0.81, 0.57, 0.15], 2)
         assert_array_equal(s, [24, 20, 31])
 
-    test(y_true,
-         y_pred)
-    test(map(str, y_true),
-         map(str, y_pred),
-         string_type=True)
+    test(y_true, y_pred)
+    test(map(str, y_true), map(str, y_pred), string_type=True)
 
 
 def test_precision_recall_f1_score_multiclass_pos_label_none():
