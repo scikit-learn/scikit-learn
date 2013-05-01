@@ -366,27 +366,6 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
                     "should have a 'score' method. The estimator %s "
                     "does not." % self.estimator)
 
-    def _set_methods(self):
-        """Create predict and  predict_proba if present in best estimator."""
-        if hasattr(self.best_estimator_, 'predict'):
-            self.predict = self.best_estimator_.predict
-        if hasattr(self.best_estimator_, 'predict_proba'):
-            self.predict_proba = self.best_estimator_.predict_proba
-
-    def _merge_result_dicts(self, result_dicts):
-        """
-        From a result dict for each fold, produce a single dict with an array
-        for each key.
-        For example [[{'score': 1}, {'score': 2}],
-                     [{'score': 3}, {'score': 4}]]
-                 -> {'score': np.array([[1, 2], [3, 4]])}"""
-        # assume keys are same throughout
-        result_keys = list(iterkeys(result_dicts[0][0]))
-        arrays = ([[fold_results[key] for fold_results in point]
-                   for point in result_dicts]
-                  for key in result_keys)
-        return np.rec.fromarrays(arrays, names=result_keys)
-
     def _fit(self, X, y, parameter_iterator, **params):
         """Actual fitting,  performing the search over parameters."""
 
