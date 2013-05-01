@@ -258,7 +258,7 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=None):
     """
     if neg_label is not None:
         warnings.warn("'neg_label' is unused and will be removed in "
-                "release 0.15.", DeprecationWarning)
+                      "release 0.15.", DeprecationWarning)
 
     # TODO: multi-class hinge-loss
 

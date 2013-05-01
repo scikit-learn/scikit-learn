@@ -784,8 +784,8 @@ def test_hinge_loss_binary():
 
     with warnings.catch_warnings():
         assert_equal(
-                hinge_loss(-y_true, pred_decision),
-                hinge_loss(y_true, pred_decision, pos_label=-1, neg_label=1))
+            hinge_loss(-y_true, pred_decision),
+            hinge_loss(y_true, pred_decision, pos_label=-1, neg_label=1))
 
     y_true = np.array([0, 2, 2, 0])
     pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
