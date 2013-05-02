@@ -691,14 +691,11 @@ class BaseLibLinear(BaseEstimator):
                                               self.tol, self._get_bias(),
                                               self.C,
                                               self.class_weight_,
-                                              # seed for srand in range
-                                              # [0..INT_MAX);
-                                              # due to limitations in Numpy
-                                              # on 32-bit
-                                              # platforms, we can't get to the
-                                              # UINT_MAX
-                                              # limit that srand supports
                                               rnd.randint(np.iinfo('i').max))
+        # Regarding rnd.randint(..) in the above signature:
+        # seed for srand in range [0..INT_MAX); due to limitations in Numpy
+        # on 32-bit platforms, we can't get to the UINT_MAX limit that
+        # srand supports
 
         if self.fit_intercept:
             self.coef_ = self.raw_coef_[:, :-1]
