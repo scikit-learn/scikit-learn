@@ -246,7 +246,8 @@ def f_regression(X, y, center=True):
 ######################################################################
 # Base classes
 
-class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
+class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator,
+                                     TransformerMixin)):
 
     def __init__(self, score_func):
         """ Initialize the univariate feature selection.
