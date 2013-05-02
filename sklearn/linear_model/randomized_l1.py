@@ -55,7 +55,8 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
     return scores_
 
 
-class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
+class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
+                                                   TransformerMixin)):
     """Base class to implement randomized linear models for feature selection
 
     This implements the strategy by Meinshausen and Buhlman:
