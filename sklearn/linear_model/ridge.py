@@ -167,9 +167,6 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         d[idx] = (s / (s ** 2 + alpha))
         Ud = np.dot(U.T, y).T * d
         coef_ = np.dot(Ud, Vt)
-        if y.ndim == 1:
-            coef_ = coef_.ravel()
-            assert coef_.size == X.shape[1]
         return coef_
     elif solver in ('dense_cholesky', 'cholesky'):
         # normal equations (cholesky) method
