@@ -461,7 +461,8 @@ class Lars(LinearModel, RegressorMixin):
     ``active_`` : list, length: [n_alphas] | list of n_targets such lists
         Indices of active variables at the end of the path.
 
-    ``coef_path_`` : array, shape = [n_features, n_alphas + 1] | list of n_targets such arrays
+    ``coef_path_`` : array, shape = [n_features, n_alphas + 1] \
+        | list of n_targets such arrays
         The varying values of the coefficients along the path. It is not
         present if the ``fit_path`` parameter is ``False``.
 
@@ -615,9 +616,9 @@ class LassoLars(Lars):
     alpha : float
         Constant that multiplies the penalty term. Defaults to 1.0.
         ``alpha = 0`` is equivalent to an ordinary least square, solved
-        by :class:`LinearRegression`. For numerical reasons, using ``alpha = 0``
-        with the LassoLars object is not advised and you should prefer the
-        LinearRegression object.
+        by :class:`LinearRegression`. For numerical reasons, using
+        ``alpha = 0`` with the LassoLars object is not advised and you
+        should prefer the LinearRegression object.
 
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
@@ -665,7 +666,8 @@ class LassoLars(Lars):
     ``active_`` : list, length = [n_alphas] | list of n_targets such lists
         Indices of active variables at the end of the path.
 
-    ``coef_path_`` : array, shape = [n_features, n_alphas + 1] | list of n_targets such arrays
+    ``coef_path_`` : array, shape = [n_features, n_alphas + 1] or list
+        If a list is passed it's expected to be one of n_targets such arrays.
         The varying values of the coefficients along the path. It is not
         present if the ``fit_path`` parameter is ``False``.
 

@@ -482,7 +482,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble, SelectorMixin)):
                    for tree in self.estimators_) / self.n_estimators
 
 
-class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest, ClassifierMixin)):
+class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
+                                          ClassifierMixin)):
     """Base class for forest of trees-based classifiers.
 
     Warning: This class should not be used directly. Use derived classes

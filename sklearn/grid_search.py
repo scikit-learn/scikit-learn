@@ -322,7 +322,8 @@ _CVScoreTuple = namedtuple('_CVScoreTuple',
                             'cv_validation_scores'))
 
 
-class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator, MetaEstimatorMixin)):
+class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
+                                      MetaEstimatorMixin)):
     """Base class for hyper parameter search with cross-validation.
     """
 
