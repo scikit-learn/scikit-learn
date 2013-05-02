@@ -49,7 +49,8 @@ REGRESSION = {
 }
 
 
-class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator, SelectorMixin)):
+class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
+                                          SelectorMixin)):
     """Base class for decision trees.
 
     Warning: This class should not be used directly.
