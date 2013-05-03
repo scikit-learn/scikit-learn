@@ -88,6 +88,9 @@ API changes summary
      kernel PCA was always documented; previously, the removal of components
      with zero eigenvalues was tacitly performed on all data.
 
+   - ``gcv_mode="auto"`` no longer tries to perform SVD on a densified
+     sparse matrix in :class:`sklearn.linear_model.RidgeCV`.
+
 
 .. _changes_0_13_1:
 

@@ -7,6 +7,7 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_raises
 
 from sklearn import datasets
 from sklearn.metrics import mean_squared_error
@@ -343,6 +344,12 @@ def test_dense_sparse():
         # test that the outputs are the same
         if ret_dense is not None and ret_sparse is not None:
             assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
+
+
+def test_ridge_cv_sparse_svd():
+    X = sp.csr_matrix(X_diabetes)
+    ridge = RidgeCV(gcv_mode="svd")
+    assert_raises(TypeError, RidgeCV.fit, X)
 
 
 def test_class_weights():
