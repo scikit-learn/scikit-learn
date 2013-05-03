@@ -297,6 +297,14 @@ misclassification error (Zero-one loss) as shown in the Figure below.
    :align: center
    :scale: 75
 
+The x-axis is a difference measure between a known :math:`y` and a modeled :math:`f(x)`.
+For example, if :math:`y_i = 1` and :math:`f(x_i) = 1`, then the :math:`i` th observation
+is correctly classified and :math:`y_i * f(x_i) = 1`. Correctly classified points
+are penalized very little or not at all (penalties on the y-axis). However, if
+:math:`f(x_i) = -1`, then :math:`y_i * f(x_i) = -1` (misclassified) and the loss function
+is large. In this case, Huber would return a penality of about 3 and
+the Log loss and Hinge loss functions would return values of about 2.
+
 Popular choices for the regularization term :math:`R` include:
 
    - L2 norm: :math:`R(w) := \frac{1}{2} \sum_{i=1}^{n} w_i^2`,
