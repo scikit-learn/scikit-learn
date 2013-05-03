@@ -414,8 +414,7 @@ def cartesian(arrays, out=None):
 
     References
     ----------
-    http://stackoverflow.com/questions/1208118/using-numpy-to-build\
--an-array-of-all-combinations-of-two-arrays
+    http://stackoverflow.com/questions/1208118/using-numpy-to-build-an-array-of-all-combinations-of-two-arrays
 
     """
     arrays = [np.asarray(x).ravel() for x in arrays]

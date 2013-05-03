@@ -666,8 +666,8 @@ class LassoLars(Lars):
     ``active_`` : list, length = [n_alphas] | list of n_targets such lists
         Indices of active variables at the end of the path.
 
-    ``coef_path_`` : array, shape = [n_features, n_alphas + 1] \
-        | list of n_targets such arrays
+    ``coef_path_`` : array, shape = [n_features, n_alphas + 1] or list
+        If a list is passed it's expected to be one of n_targets such arrays.
         The varying values of the coefficients along the path. It is not
         present if the ``fit_path`` parameter is ``False``.
 
