@@ -47,7 +47,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     y : array, shape: (n_samples)
         Input targets.
 
-    max_iter : integer, optional
+    max_iter : integer, optional (default=500)
         Maximum number of iterations to perform, set to infinity for no limit.
 
     Gram : None, 'auto', array, shape: (n_features, n_features), optional
@@ -55,27 +55,31 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         matrix is precomputed from the given X, if there are more samples
         than features.
 
-    alpha_min : float, optional
+    alpha_min : float, optional (default=0)
         Minimum correlation along the path. It corresponds to the
         regularization parameter alpha parameter in the Lasso.
 
-    method : {'lar', 'lasso'}
+    method : {'lar', 'lasso'}, optional (default='lar')
         Specifies the returned model. Select ``'lar'`` for Least Angle
         Regression, ``'lasso'`` for the Lasso.
 
-    eps : float, optional
+    eps : float, optional (default=``np.finfo(np.float).eps``)
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems.
 
-    copy_X : bool
+    copy_X : bool, optional (default=True)
         If ``False``, ``X`` is overwritten.
 
-    copy_Gram : bool
+    copy_Gram : bool, optional (default=True)
         If ``False``, ``Gram`` is overwritten.
 
     verbose : int (default=0)
         Controls output verbosity.
+
+    return_path: bool, (optional=True)
+        If ``return_path==True`` returns the entire path, else returns only the
+        last point of the path.
 
     Returns
     --------
@@ -100,16 +104,17 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     LarsCV
     sklearn.decomposition.sparse_encode
 
-    Notes
-    ------
-    * http://en.wikipedia.org/wiki/Least-angle_regression
-
-    * http://en.wikipedia.org/wiki/Lasso_(statistics)#LASSO_method
-
     References
     ----------
-    [1] "Least Angle Regression", Effron et al.
-    http://www-stat.stanford.edu/~tibs/ftp/lars.pdf
+    .. [1] "Least Angle Regression", Effron et al.
+           http://www-stat.stanford.edu/~tibs/ftp/lars.pdf
+
+    .. [2] `Wikipedia entry on the Least-angle regression
+           <http://en.wikipedia.org/wiki/Least-angle_regression>`_
+
+    .. [3] `Wikipedia entry on the Lasso
+           <http://en.wikipedia.org/wiki/Lasso_(statistics)#Lasso_method>`_
+
     """
 
     n_features = X.shape[1]
