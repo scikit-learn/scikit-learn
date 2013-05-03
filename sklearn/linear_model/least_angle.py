@@ -63,7 +63,7 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
         Specifies the returned model. Select ``'lar'`` for Least Angle
         Regression, ``'lasso'`` for the Lasso.
 
-    eps : float, optional (default=np.finfo(np.float).eps)
+    eps : float, optional (default=``np.finfo(np.float).eps``)
         The machine-precision regularization in the computation of the
         Cholesky diagonal factors. Increase this for very ill-conditioned
         systems.
@@ -104,16 +104,17 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
     LarsCV
     sklearn.decomposition.sparse_encode
 
-    Notes
-    ------
-    * http://en.wikipedia.org/wiki/Least-angle_regression
-
-    * http://en.wikipedia.org/wiki/Lasso_(statistics)#LASSO_method
-
     References
     ----------
-    [1] "Least Angle Regression", Effron et al.
-    http://www-stat.stanford.edu/~tibs/ftp/lars.pdf
+    .. [1] "Least Angle Regression", Effron et al.
+           http://www-stat.stanford.edu/~tibs/ftp/lars.pdf
+
+    .. [2] `Wikipedia entry on the Least-angle regression
+           <http://en.wikipedia.org/wiki/Least-angle_regression>`_
+
+    .. [3] `Wikipedia entry on the Lasso
+           <http://en.wikipedia.org/wiki/Lasso_(statistics)#Lasso_method>`_
+
     """
 
     n_features = X.shape[1]
