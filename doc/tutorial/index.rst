@@ -7,6 +7,14 @@
 Tutorials: From the bottom up with scikit-learn
 =======================================================================
 
+.. topic:: New to Scientific Python?
+
+    For those that are still new to the scientific Python ecosystem,
+    we highly recommend the `Python Scientific Lecture
+    Notes <http://scipy-lectures.github.io/>`_. This will help you
+    find your footing a bit and will definitely improve your
+    scikit-learn experience.
+
 .. topic:: Quick start
 
     In this section, we introduce the `machine learning
