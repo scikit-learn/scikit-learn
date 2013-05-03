@@ -512,8 +512,8 @@ class _RidgeGCV(LinearModel):
         return y - (c / G_diag), c
 
     def _pre_compute_svd(self, X, y):
-        if sparse.issparse(X) and hasattr(X, 'toarray'):
-            X = X.toarray()
+        if sparse.issparse(X):
+            raise TypeError("SVD not supported for sparse matrices")
         U, s, _ = np.linalg.svd(X, full_matrices=0)
         v = s ** 2
         UT_y = np.dot(U.T, y)
@@ -568,7 +568,7 @@ class _RidgeGCV(LinearModel):
         with_sw = len(np.shape(sample_weight))
 
         if gcv_mode is None or gcv_mode == 'auto':
-            if n_features > n_samples or with_sw:
+            if sparse.issparse(X) or n_features > n_samples or with_sw:
                 gcv_mode = 'eigen'
             else:
                 gcv_mode = 'svd'
@@ -735,12 +735,15 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
         Flag indicating which strategy to use when performing
         Generalized Cross-Validation. Options are::
 
-            'auto' : use svd if n_samples > n_features, otherwise use eigen
+            'auto' : use svd if n_samples > n_features or when X is a sparse
+                     matrix, otherwise use eigen
             'svd' : force computation via singular value decomposition of X
+                    (does not work for sparse matrices)
             'eigen' : force computation via eigendecomposition of X^T X
 
-        The 'auto' mode is the default and is intended to pick the cheaper \
-        option of the two depending upon the shape of the training data.
+        The 'auto' mode is the default and is intended to pick the cheaper
+        option of the two depending upon the shape and format of the training
+        data.
 
     store_cv_values : boolean, default=False
         Flag indicating if the cross-validation values corresponding to
