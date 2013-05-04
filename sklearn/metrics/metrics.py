@@ -212,7 +212,7 @@ def auc(x, y, reorder=False):
 ###############################################################################
 # Binary classification loss
 ###############################################################################
-def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=None):
+def hinge_loss(y_true, pred_decision, pos_label=None, neg_label=None):
     """Average hinge loss (non-regularized)
 
     Assuming labels in y_true are encoded with +1 and -1, when a prediction
@@ -224,7 +224,8 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=None):
     Parameters
     ----------
     y_true : array, shape = [n_samples]
-        True target (integers).
+        True target, consisting of integers of two values. The positive label
+        must be greater than the negative label.
 
     pred_decision : array, shape = [n_samples] or [n_samples, n_classes]
         Predicted decisions, as output by decision_function (floats).
@@ -256,6 +257,9 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=None):
     0.30...
 
     """
+    if pos_label is not None:
+        warnings.warn("'pos_label' is deprecated and will be removed in "
+                      "release 0.15.", DeprecationWarning)
     if neg_label is not None:
         warnings.warn("'neg_label' is unused and will be removed in "
                       "release 0.15.", DeprecationWarning)
@@ -264,7 +268,10 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=None):
 
     # the rest of the code assumes that positive and negative labels
     # are encoded as +1 and -1 respectively
-    y_true = (np.asarray(y_true) == pos_label) * 2 - 1
+    if pos_label is not None:
+        y_true = (np.asarray(y_true) == pos_label) * 2 - 1
+    else:
+        y_true = LabelBinarizer(neg_label=-1).fit_transform(y_true)[:, 0]
 
     margin = y_true * np.asarray(pred_decision)
     losses = 1 - margin
