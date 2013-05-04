@@ -98,6 +98,12 @@ class MockListClassifier(object):
         return self
 
 
+class LinearSVCNoScore(LinearSVC):
+    """An LinearSVC classifier that has no score method."""
+    @property
+    def score(self):
+        raise AttributeError
+
 X = np.array([[-1, -1], [-2, -1], [1, 1], [2, 1]])
 y = np.array([1, 1, 2, 2])
 
@@ -143,6 +149,26 @@ def test_grid_search():
     grid_search.predict_proba(X)
     grid_search.decision_function(X)
     grid_search.transform(X)
+
+
+def test_grid_search_no_score():
+    # Test grid-search on classifier that has no score function.
+    clf = LinearSVC(random_state=0)
+    X, y = make_blobs(random_state=0, centers=2)
+    Cs = [.1, 1, 10]
+    clf_no_score = LinearSVCNoScore(random_state=0)
+    grid_search = GridSearchCV(clf, {'C': Cs})
+    grid_search.fit(X, y)
+
+    grid_search_no_score = GridSearchCV(clf_no_score, {'C': Cs},
+                                        scoring='accuracy')
+    # smoketest grid search
+    grid_search_no_score.fit(X, y)
+
+    # check that best params are equal
+    assert_equal(grid_search_no_score.best_params_, grid_search.best_params_)
+    # check that we can call score and that it gives the correct result
+    assert_equal(grid_search.score(X, y), grid_search_no_score.score(X, y))
 
 
 def test_trivial_cv_scores():
