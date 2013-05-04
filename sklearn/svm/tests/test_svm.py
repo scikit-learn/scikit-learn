@@ -604,13 +604,27 @@ def test_linearsvc_verbose():
 
 
 def test_svc_clone_with_callable_kernel():
-    a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T), probability=True)
-    b = base.clone(a)
+    # create SVM with callable linear kernel, check that results are the same
+    # as with built-in linear kernel
+    svm_callable = svm.SVC(kernel=lambda x, y: np.dot(x, y.T),
+                           probability=True)
+    # clone for checking clonability with lambda functions..
+    svm_cloned = base.clone(svm_callable)
+    svm_cloned.fit(X, Y)
 
-    b.fit(X, Y)
-    b.predict(X)
-    b.predict_proba(X)
-    b.decision_function(X)
+    svm_builtin = svm.SVC(kernel='linear', probability=True)
+    svm_builtin.fit(X, Y)
+
+    assert_array_almost_equal(svm_cloned.dual_coef_,
+                              svm_builtin.dual_coef_)
+    assert_array_almost_equal(svm_cloned.intercept_,
+                              svm_builtin.intercept_)
+    assert_array_equal(svm_cloned.predict(X), svm_builtin.predict(X))
+
+    assert_array_almost_equal(svm_cloned.predict_proba(X),
+                              svm_builtin.predict_proba(X))
+    assert_array_almost_equal(svm_cloned.decision_function(X),
+                              svm_builtin.decision_function(X))
 
 
 def test_svc_bad_kernel():

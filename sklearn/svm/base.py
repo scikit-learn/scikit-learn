@@ -352,6 +352,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                                       " sparse SVM.")
 
         X = self._validate_for_predict(X)
+        X = self._compute_kernel(X)
 
         C = 0.0  # C is not useful here
 
