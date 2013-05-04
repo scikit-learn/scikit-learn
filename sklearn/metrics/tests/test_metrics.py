@@ -72,7 +72,10 @@ ALL_METRICS = {
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
     "explained_variance_score": explained_variance_score,
-    "r2_score": r2_score}
+    "r2_score": r2_score,
+    "confusion_matrix":
+    lambda y1, y2: confusion_matrix(y1, y2, labels=range(3)),
+}
 
 METRICS_WITH_NORMALIZE_OPTION = {
     "accuracy_score ": lambda y1, y2, normalize:
@@ -97,7 +100,6 @@ MULTILABELS_METRICS = {
     "zero_one_loss": zero_one_loss,
     "unnormalized_zero_one_loss":
     lambda y1, y2: zero_one_loss(y1, y2, normalize=False),
-
 }
 
 SYMETRIC_METRICS = {
@@ -118,7 +120,8 @@ SYMETRIC_METRICS = {
     "f1_score": f1_score,
     "matthews_corrcoef_score": matthews_corrcoef,
     "mean_absolute_error": mean_absolute_error,
-    "mean_squared_error": mean_squared_error}
+    "mean_squared_error": mean_squared_error,
+}
 
 NOT_SYMETRIC_METRICS = {
     "precision_score": precision_score,
@@ -126,7 +129,11 @@ NOT_SYMETRIC_METRICS = {
     "f2_score": lambda y1, y2: fbeta_score(y1, y2, beta=2),
     "f0.5_score": lambda y1, y2: fbeta_score(y1, y2, beta=0.5),
     "explained_variance_score": explained_variance_score,
-    "r2_score": r2_score}
+    "r2_score": r2_score,
+    
+    "confusion_matrix":
+    lambda y1, y2: confusion_matrix(y1, y2, labels=range(3)),
+}
 
 
 def make_prediction(dataset=None, binary=False):
@@ -724,7 +731,7 @@ def test_symmetry():
 
     # Not symmetric metrics
     for name, metric in NOT_SYMETRIC_METRICS.items():
-        assert_true(metric(y_true, y_pred) != metric(y_pred, y_true),
+        assert_true(np.any(metric(y_true, y_pred) != metric(y_pred, y_true)),
                     msg="%s seems to be symetric" % name)
 
     # Deprecated metrics
@@ -791,7 +798,6 @@ def test_format_invariance_with_1d_vectors():
                             metric(y1_row, y2_row),
                             err_msg="%s is not representation invariant "
                                     "with np-array-row" % metric)
-
         # Mix format support
         assert_almost_equal(measure,
                             metric(y1_1d, y2_list),
