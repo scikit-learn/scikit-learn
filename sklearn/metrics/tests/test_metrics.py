@@ -59,7 +59,8 @@ ALL_METRICS = [accuracy_score,
                mean_absolute_error,
                mean_squared_error,
                explained_variance_score,
-               r2_score]
+               r2_score,
+               confusion_matrix]
 
 
 def make_prediction(dataset=None, binary=False):
