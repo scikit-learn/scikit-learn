@@ -264,9 +264,9 @@ def hinge_loss(y_true, pred_decision, pos_label=1, neg_label=None):
 
     # the rest of the code assumes that positive and negative labels
     # are encoded as +1 and -1 respectively
-    y_true = (y_true == pos_label) * 2 - 1
+    y_true = (np.asarray(y_true) == pos_label) * 2 - 1
 
-    margin = y_true * pred_decision
+    margin = y_true * np.asarray(pred_decision)
     losses = 1 - margin
     # The hinge doesn't penalize good enough predictions.
     losses[losses <= 0] = 0
