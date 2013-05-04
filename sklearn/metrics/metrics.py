@@ -26,6 +26,7 @@ from ..externals.six.moves import zip
 from ..preprocessing import LabelBinarizer
 from ..utils import check_arrays
 from ..utils import deprecated
+from ..utils.fixes import divide
 from ..utils.multiclass import is_label_indicator_matrix
 from ..utils.multiclass import is_multilabel
 from ..utils.multiclass import unique_labels
@@ -1286,8 +1287,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         old_err_settings = np.seterr(divide='ignore', invalid='ignore')
 
         # precision and recall
-        precision = np.divide(true_pos.astype(np.float), true_pos + false_pos)
-        recall = np.divide(true_pos.astype(np.float), true_pos + false_neg)
+        precision = divide(true_pos.astype(np.float), true_pos + false_pos)
+        recall = divide(true_pos.astype(np.float), true_pos + false_neg)
 
         # handle division by 0 in precision and recall
         precision[(true_pos + false_pos) == 0] = 0.0
@@ -1295,9 +1296,9 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
         # fbeta score
         beta2 = beta ** 2
-        fscore = np.divide((1 + beta2) * precision * recall,
-                           beta2 * precision + recall,
-                           dtype=np.double)
+        fscore = divide((1 + beta2) * precision * recall,
+                        beta2 * precision + recall,
+                        dtype=np.double)
 
         # handle division by 0 in fscore
         fscore[(precision + recall) == 0] = 0.0
@@ -1317,15 +1318,15 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     else:
         average_options = (None, 'micro', 'macro', 'weighted')
         if average == 'micro':
-            avg_precision = np.divide(true_pos.sum(),
+            avg_precision = divide(true_pos.sum(),
                                       true_pos.sum() + false_pos.sum(),
                                       dtype=np.double)
-            avg_recall = np.divide(true_pos.sum(),
-                                   true_pos.sum() + false_neg.sum(),
-                                   dtype=np.double)
-            avg_fscore = np.divide((1 + beta2) * (avg_precision * avg_recall),
-                                   beta2 * avg_precision + avg_recall,
-                                   dtype=np.double)
+            avg_recall = divide(true_pos.sum(),
+                                true_pos.sum() + false_neg.sum(),
+                                dtype=np.double)
+            avg_fscore = divide((1 + beta2) * (avg_precision * avg_recall),
+                                beta2 * avg_precision + avg_recall,
+                                dtype=np.double)
         elif average == 'macro':
             avg_precision = np.mean(precision)
             avg_recall = np.mean(recall)

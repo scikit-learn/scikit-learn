@@ -211,3 +211,25 @@ else:
     # Before an 'order' argument was introduced, numpy wouldn't muck with
     # the ordering
     safe_copy = np.copy
+
+try:
+    np.divide(1, 1, dtype=np.float)
+    divide = np.divide
+except TypeError:
+    # Compat for old versions of np.divide that do not provide support for
+    # the dtype args
+    def divide(x1, x2, out=None, dtype=None):
+        out_orig = out
+        if out is None:
+            out = np.asarray(x1, dtype=dtype)
+            if out is x1:
+                out = x1.copy()
+        else:
+            if out is not x1:
+                out[:] = x1
+        if dtype is not None and out.dtype != dtype:
+            out = out.astype(dtype)
+        out /= x2
+        if out_orig is None and np.isscalar(x1):
+            out = np.asscalar(out)
+        return out
