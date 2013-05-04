@@ -69,12 +69,20 @@ def test_one_of_k():
     assert_false("version" in names)
 
 
-def test_unseen_features():
+def test_unseen_or_no_features():
     D = [{"camelot": 0, "spamalot": 1}]
-    v = DictVectorizer(sparse=False).fit(D)
-    X = v.transform({"push the pram a lot": 2})
+    for sparse in [True, False]:
+        v = DictVectorizer(sparse=sparse).fit(D)
 
-    assert_array_equal(X, np.zeros((1, 2)))
+        X = v.transform({"push the pram a lot": 2})
+        if sparse:
+            X = X.toarray()
+        assert_array_equal(X, np.zeros((1, 2)))
+
+        X = v.transform({})
+        if sparse:
+            X = X.toarray()
+        assert_array_equal(X, np.zeros((1, 2)))
 
 
 def test_deterministic_vocabulary():
