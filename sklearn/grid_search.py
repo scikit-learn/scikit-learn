@@ -406,6 +406,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
     def _fit(self, X, y, parameter_iterator, **params):
         """Actual fitting,  performing the search over parameters."""
+
+        if params:
+            warnings.warn("Passing additional parameters to GridSearchCV "
+                          "is ignored! The option will be removed in 0.15.")
         estimator = self.estimator
         cv = self.cv
 
