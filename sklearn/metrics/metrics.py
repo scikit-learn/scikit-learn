@@ -1286,8 +1286,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         old_err_settings = np.seterr(divide='ignore', invalid='ignore')
 
         # precision and recall
-        precision = np.divide(true_pos, true_pos + false_pos, dtype=np.double)
-        recall = np.divide(true_pos, true_pos + false_neg, dtype=np.double)
+        precision = np.divide(true_pos.astype(np.float), true_pos + false_pos)
+        recall = np.divide(true_pos.astype(np.float), true_pos + false_neg)
 
         # handle division by 0 in precision and recall
         precision[(true_pos + false_pos) == 0] = 0.0
