@@ -298,7 +298,7 @@ misclassification error (Zero-one loss) as shown in the Figure below.
    :scale: 75
 
 The x-axis is a difference measure between an observed :math:`y_i` and a modeled :math:`f(x_i)`.
-For example, if :math:`y_i = 1` and :math:`f(x_i) = 1`, then the :math:`i`th observation
+For example, if :math:`y_i = 1` and :math:`f(x_i) = 1`, then the :math:`i`\th observation
 is correctly classified and :math:`y_i * f(x_i) = 1`. Correct classifications are penalized
 lightly or not at all. Penalties are shown on the y-axis. If however, :math:`y_i = 1` and
 :math:`f(x_i) = -1`, then :math:`y_i * f(x_i) = -1` (misclassified) and the loss function
