@@ -59,7 +59,9 @@ ALL_METRICS = [accuracy_score,
                mean_absolute_error,
                mean_squared_error,
                explained_variance_score,
-               r2_score]
+               r2_score,
+               auc_score,
+               average_precision_score]
 
 
 def make_prediction(dataset=None, binary=False):
@@ -114,6 +116,8 @@ def test_roc_curve():
     roc_auc = auc(fpr, tpr)
     assert_array_almost_equal(roc_auc, 0.90, decimal=2)
     assert_almost_equal(roc_auc, auc_score(y_true, probas_pred))
+    assert_equal(fpr.shape, tpr.shape)
+    assert_equal(fpr.shape, thresholds.shape)
 
 
 def test_roc_curve_end_points():
@@ -125,6 +129,8 @@ def test_roc_curve_end_points():
     fpr, tpr, thr = roc_curve(y_true, y_pred)
     assert_equal(fpr[0], 0)
     assert_equal(fpr[-1], 1)
+    assert_equal(fpr.shape, tpr.shape)
+    assert_equal(fpr.shape, thr.shape)
 
 
 def test_roc_returns_consistency():
@@ -142,6 +148,8 @@ def test_roc_returns_consistency():
 
     # compare tpr and tpr_correct to see if the thresholds' order was correct
     assert_array_almost_equal(tpr, tpr_correct, decimal=2)
+    assert_equal(fpr.shape, tpr.shape)
+    assert_equal(fpr.shape, thresholds.shape)
 
 
 def test_roc_curve_multi():
@@ -158,6 +166,8 @@ def test_roc_curve_confidence():
     fpr, tpr, thresholds = roc_curve(y_true, probas_pred - 0.5)
     roc_auc = auc(fpr, tpr)
     assert_array_almost_equal(roc_auc, 0.90, decimal=2)
+    assert_equal(fpr.shape, tpr.shape)
+    assert_equal(fpr.shape, thresholds.shape)
 
 
 def test_roc_curve_hard():
@@ -169,17 +179,23 @@ def test_roc_curve_hard():
     fpr, tpr, thresholds = roc_curve(y_true, trivial_pred)
     roc_auc = auc(fpr, tpr)
     assert_array_almost_equal(roc_auc, 0.50, decimal=2)
+    assert_equal(fpr.shape, tpr.shape)
+    assert_equal(fpr.shape, thresholds.shape)
 
     # always predict zero
     trivial_pred = np.zeros(y_true.shape)
     fpr, tpr, thresholds = roc_curve(y_true, trivial_pred)
     roc_auc = auc(fpr, tpr)
     assert_array_almost_equal(roc_auc, 0.50, decimal=2)
+    assert_equal(fpr.shape, tpr.shape)
+    assert_equal(fpr.shape, thresholds.shape)
 
     # hard decisions
     fpr, tpr, thresholds = roc_curve(y_true, pred)
     roc_auc = auc(fpr, tpr)
     assert_array_almost_equal(roc_auc, 0.78, decimal=2)
+    assert_equal(fpr.shape, tpr.shape)
+    assert_equal(fpr.shape, thresholds.shape)
 
 
 def test_roc_curve_one_label():
@@ -191,7 +207,10 @@ def test_roc_curve_one_label():
         assert_equal(len(w), 1)
     # all true labels, all fpr should be nan
     assert_array_equal(fpr,
-                       np.nan * np.ones(len(thresholds) + 1))
+                       np.nan * np.ones(len(thresholds)))
+    assert_equal(fpr.shape, tpr.shape)
+    assert_equal(fpr.shape, thresholds.shape)
+
     # assert there are warnings
     with warnings.catch_warnings(record=True) as w:
         fpr, tpr, thresholds = roc_curve([1 - x for x in y_true],
@@ -199,7 +218,9 @@ def test_roc_curve_one_label():
         assert_equal(len(w), 1)
     # all negative labels, all tpr should be nan
     assert_array_equal(tpr,
-                       np.nan * np.ones(len(thresholds) + 1))
+                       np.nan * np.ones(len(thresholds)))
+    assert_equal(fpr.shape, tpr.shape)
+    assert_equal(fpr.shape, thresholds.shape)
 
 
 def test_auc():
@@ -528,6 +549,8 @@ def test_precision_recall_curve():
     assert_array_almost_equal(p, np.array([0.5, 0.33333333, 0.5, 1., 1.]))
     assert_array_almost_equal(r, np.array([1., 0.5, 0.5, 0.5, 0.]))
     assert_array_almost_equal(t, np.array([1, 2, 3, 4]))
+    assert_equal(p.size, r.size)
+    assert_equal(p.size, t.size + 1)
 
 
 def _test_precision_recall_curve(y_true, probas_pred):
@@ -537,11 +560,15 @@ def _test_precision_recall_curve(y_true, probas_pred):
     assert_array_almost_equal(precision_recall_auc, 0.85, 2)
     assert_array_almost_equal(precision_recall_auc,
                               average_precision_score(y_true, probas_pred))
+    assert_equal(p.size, r.size)
+    assert_equal(p.size, thresholds.size + 1)
     # Smoke test in the case of proba having only one value
     p, r, thresholds = precision_recall_curve(y_true,
                                               np.zeros_like(probas_pred))
     precision_recall_auc = auc(r, p)
     assert_array_almost_equal(precision_recall_auc, 0.75, 3)
+    assert_equal(p.size, r.size)
+    assert_equal(p.size, thresholds.size + 1)
 
 
 def test_precision_recall_curve_errors():
