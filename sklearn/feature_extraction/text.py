@@ -805,9 +805,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         min_df = self.min_df
         max_features = self.max_features
         binary = self.binary
-        i_indices = _make_int_array()
-        j_indices = _make_int_array()
-        values = _make_int_array()
         # we create 3 arrays with i_indices corresponding to samples
         # ordered in the order first encountered,
         # j_indices corresponding to features also ordered in order
