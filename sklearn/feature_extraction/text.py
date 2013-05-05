@@ -613,26 +613,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.binary = binary
         self.dtype = dtype
 
-    def _term_counts_to_matrix(self, n_doc, i_indices, j_indices, values,
-                               n_features=None):
-        """Construct COO matrix from indices and values.
-
-        i_indices and j_indices should be constructed with _make_int_array.
-
-        """
-        n_features = n_features or len(self.vocabulary_)
-
-        # array("i") corresponds to np.intc, which is also what scipy.sparse
-        # wants for indices, so they won't be copied by the coo_matrix ctor.
-        # The length check works around a bug in old NumPy versions:
-        # http://projects.scipy.org/numpy/ticket/1943
-        if len(j_indices) > 0:
-            j_indices = np.frombuffer(j_indices, dtype=np.intc)
-        shape = (n_doc, n_features)
-        spmatrix = sp.coo_matrix((values, (i_indices, j_indices)),
-                                 shape=shape, dtype=self.dtype)
-        return spmatrix
-
     def _sort_features_and_matrix(self, cscmatrix, feature_to_pos):
         '''sort dict by keys and assign values to the sorted key index'''
         sorted_by_name = {}
@@ -696,12 +676,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         return csc_m[:, np.sort(to_keep)], new_feature_to_pos, stop_words_
 
     def _count_vocab(self, raw_documents, fixed_vocab):
-        """Create feature position indices and idx to matrix column mapping.
-
-        Here we create j_indices and count how many i_indices we need per doc.
-        vocabulary is a mapping between features as strings
-        and the final location in the matrix.
-
+        """Create sparse feature matrix, and vocabulary where fixed_vocab=False
         """
         if fixed_vocab:
             vocabulary = self.vocabulary_
@@ -712,46 +687,34 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         analyze = self.build_analyzer()
         j_indices = _make_int_array()
-        features_per_doc = []
-        for i, doc in enumerate(raw_documents):
-            k = 0
+        indptr = _make_int_array()
+        indptr.append(0)
+        for doc in raw_documents:
             for feature in analyze(doc):
                 try:
                     j_indices.append(vocabulary[feature])
                 except KeyError:
                     # Ignore out-of-vocabulary items for fixed_vocab=True
                     continue
-                k += 1
-            features_per_doc.append(k)
+            indptr.append(len(j_indices))
 
-        n_doc = i + 1
         if not fixed_vocab:
             # disable defaultdict behaviour
             vocabulary = dict(vocabulary)
-        return j_indices, vocabulary, n_doc, features_per_doc
+            if not vocabulary:
+                raise ValueError("empty vocabulary; perhaps the documents only"
+                                 " contain stop words")
 
-    def _make_i_indices(self, features_per_doc):
-        '''Create i_indices from features_per_doc.
+        # some Python/Scipy versions won't accept an array.array:
+        j_indices = np.frombuffer(j_indices, dtype=np.intc)
+        indptr = np.frombuffer(indptr, dtype=np.intc)
+        values = np.ones(len(j_indices))
 
-        features_per_doc is a list of the number of kept features in each doc
-        in order.
-
-        '''
-        combined_arrays = []
-        number_of_docs_with_features = 0
-        for i, num_features in enumerate(features_per_doc):
-            if num_features > 0:  # some features found in the doc
-                number_of_docs_with_features += 1
-                i_vals = np.empty(num_features, dtype=np.int32)
-                fill_val = i
-                i_vals.fill(fill_val)
-                combined_arrays.append(i_vals)
-        if number_of_docs_with_features == 1:
-            return combined_arrays[0]
-        elif number_of_docs_with_features == 0:  # no docs found with features
-            return None
-        else:  # more than one doc with features
-            return np.concatenate(combined_arrays)
+        m = sp.csr_matrix(
+            (values, j_indices, indptr),
+            shape=(len(indptr) - 1, len(vocabulary)), dtype=self.dtype)
+        m = m.tocoo()  # trigger duplicate feature summation
+        return vocabulary, m
 
     def fit(self, raw_documents, y=None):
         """Learn a vocabulary dictionary of all tokens in the raw documents.
@@ -789,36 +752,19 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         max_df = self.max_df
         min_df = self.min_df
         max_features = self.max_features
-        binary = self.binary
-        # we create 3 arrays with i_indices corresponding to samples
-        # ordered in the order first encountered,
-        # j_indices corresponding to features also ordered in order
-        # first encountered.  Values corresponds to the value in that
-        # position.  We take advantage of the fact that values in
-        # the same position get implicitly added together when the COO
-        # matrix is constructed.
-        j_indices, feature_to_pos, n_doc, features_per_doc = \
-            self._count_vocab(raw_documents, fixed_vocab)
 
-        n_features = len(feature_to_pos)
-        if n_features == 0:
-            raise ValueError("empty vocabulary;"
-                             " perhaps the document only contains stop words")
+        feature_to_pos, m = self._count_vocab(raw_documents, fixed_vocab)
+        csc_m = m.tocsc()
+        del m
 
-        i_indices = self._make_i_indices(features_per_doc)
-        del features_per_doc  # free memory
-        values = np.ones(len(i_indices), dtype=np.int32)
-        csc_m = self._term_counts_to_matrix(n_doc, i_indices, j_indices,
-                                            values, n_features).tocsc()
-        del i_indices, j_indices, values  # free memory
-
-        if binary:
+        if self.binary:
             csc_m.data.fill(1)
         if not fixed_vocab:
             csc_m, feature_to_pos = \
                 self._sort_features_and_matrix(csc_m, feature_to_pos)
             stop_words_ = set()
 
+            n_doc = csc_m.shape[0]
             max_doc_count = (max_df
                              if isinstance(max_df, numbers.Integral)
                              else int(round(max_df * n_doc)))
@@ -859,22 +805,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         """
         if not hasattr(self, 'vocabulary_') or len(self.vocabulary_) == 0:
             raise ValueError("Vocabulary wasn't fitted or is empty!")
-        binary = self.binary
 
         # use the same matrix-building strategy as fit_transform
-        j_indices, _, n_doc, features_per_doc = \
-            self._count_vocab(raw_documents, fixed_vocab=True)
-        i_indices = self._make_i_indices(features_per_doc)
-        if i_indices is None:
-            i_indices = np.empty(0, dtype=np.int32)
-        values = np.ones(len(i_indices), dtype=np.int32)
-        n_features = len(self.vocabulary_)
-        # keep the same sparse format as fit_transform
-        m = self._term_counts_to_matrix(n_doc, i_indices, j_indices,
-                                        values, n_features).tocsc()
-
-        del i_indices, j_indices, values  # free memory
-        if binary:
+        _, m = self._count_vocab(raw_documents, fixed_vocab=True)
+        if self.binary:
             m.data.fill(1)
         return m
 
