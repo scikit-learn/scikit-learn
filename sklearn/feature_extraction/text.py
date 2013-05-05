@@ -613,17 +613,17 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         self.binary = binary
         self.dtype = dtype
 
-    def _sort_features_and_matrix(self, cscmatrix, feature_to_pos):
-        '''sort dict by keys and assign values to the sorted key index'''
-        sorted_by_name = {}
-        sorted_features = sorted(feature_to_pos)
-        new_positions = []
+    def _sort_features(self, cscmatrix, vocabulary):
+        """Sort features by name
 
-        for i, k in enumerate(sorted_features):
-            sorted_by_name[k] = i
-            new_positions.append(feature_to_pos[k])
-
-        return cscmatrix[:, new_positions], sorted_by_name
+        Returns a reordered matrix and modifies the vocabulary in place
+        """
+        sorted_features = sorted(six.iteritems(vocabulary))
+        map_index = np.empty(len(sorted_features), dtype=np.int32)
+        for new_val, (term, old_val) in enumerate(sorted_features):
+            map_index[new_val] = old_val
+            vocabulary[term] = new_val
+        return cscmatrix[:, map_index]
 
     def _limit_features(self, cscmatrix, vocabulary, high=None, low=None,
                         limit=None):
@@ -749,8 +749,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         if self.binary:
             csc_m.data.fill(1)
         if not fixed_vocab:
-            csc_m, vocabulary = \
-                self._sort_features_and_matrix(csc_m, vocabulary)
+            csc_m = self._sort_features(csc_m, vocabulary)
 
             n_doc = csc_m.shape[0]
             max_doc_count = (max_df
