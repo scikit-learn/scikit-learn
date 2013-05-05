@@ -625,55 +625,44 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
         return cscmatrix[:, new_positions], sorted_by_name
 
-    def _remove_highandlow(self, cscmatrix, feature_to_pos, high, low):
+    def _limit_features(self, cscmatrix, vocabulary, high=None, low=None,
+                        limit=None):
         """Remove too rare or too common features.
 
         Prune features that are non zero in more samples than high or less
-        documents than low.
+        documents than low, modifying the vocabulary, and restricting it to
+        at most the limit most frequent.
 
         This does not prune samples with zero features.
-
         """
-        kept_indices = []
-        removed_indices = set()
-        for colptr in xrange(len(cscmatrix.indptr) - 1):
-            len_slice = cscmatrix.indptr[colptr + 1] - cscmatrix.indptr[colptr]
-            if len_slice <= high and len_slice >= low:
-                kept_indices.append(colptr)
+        if high is None and low is None and limit is None:
+            return cscmatrix, set()
+
+        # Calculate a mask based on document frequencies
+        dfs = np.diff(cscmatrix.indptr)
+        mask = np.ones(len(dfs), dtype=bool)
+        if high is not None:
+            mask &= dfs <= high
+        if low is not None:
+            mask &= dfs >= low
+        if limit is not None and mask.sum() > limit:
+            # backward compatibility requires us to keep lower indices in ties!
+            # (and hence to reverse the sort by negating dfs)
+            mask_inds = (-dfs[mask]).argsort()[:limit]
+            new_mask = np.zeros(len(dfs), dtype=bool)
+            new_mask[np.where(mask)[0][mask_inds]] = True
+            mask = new_mask
+
+        new_indices = np.cumsum(mask) - 1  # maps old indices to new
+        removed_terms = set()
+        for term, old_index in list(six.iteritems(vocabulary)):
+            if mask[old_index]:
+                vocabulary[term] = new_indices[old_index]
             else:
-                removed_indices.add(colptr)
-
-        s_kept_indices = set(kept_indices)
-        new_mapping = dict((v, i) for i, v in enumerate(kept_indices))
-        feature_to_pos = dict((k, new_mapping[v])
-                              for k, v in six.iteritems(feature_to_pos)
-                              if v in s_kept_indices)
-
-        return cscmatrix[:, kept_indices], feature_to_pos, removed_indices
-
-    def _get_kept_features(self, csc_m, max_features):
-        '''helper method for _get_max_features to use less memory'''
-        feature_freqs = np.asarray(csc_m.sum(axis=0)).ravel()
-        to_keep = np.argsort(feature_freqs)[::-1][:max_features]
-        return to_keep
-
-    def _get_max_features(self, csc_m, feature_to_pos,
-                          stop_words_, max_features):
-        '''Remove maximum features using a sparse matrix.
-
-        Cut only the top max_features from the matrix and
-        feature_to_pos. Cut features are added to stop_words_.
-
-        '''
-        to_keep = self._get_kept_features(csc_m, max_features)
-        s_to_keep = set(to_keep)
-        new_feature_to_pos = {}
-        for k, v in six.iteritems(feature_to_pos):
-            if v in s_to_keep:
-                new_feature_to_pos[k] = v
-            else:
-                stop_words_.add(k)
-        return csc_m[:, np.sort(to_keep)], new_feature_to_pos, stop_words_
+                del vocabulary[term]
+                removed_terms.add(term)
+        kept_indices = np.where(mask)[0]
+        return cscmatrix[:, kept_indices], removed_terms
 
     def _count_vocab(self, raw_documents, fixed_vocab):
         """Create sparse feature matrix, and vocabulary where fixed_vocab=False
@@ -753,16 +742,15 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         min_df = self.min_df
         max_features = self.max_features
 
-        feature_to_pos, m = self._count_vocab(raw_documents, fixed_vocab)
+        vocabulary, m = self._count_vocab(raw_documents, fixed_vocab)
         csc_m = m.tocsc()
         del m
 
         if self.binary:
             csc_m.data.fill(1)
         if not fixed_vocab:
-            csc_m, feature_to_pos = \
-                self._sort_features_and_matrix(csc_m, feature_to_pos)
-            stop_words_ = set()
+            csc_m, vocabulary = \
+                self._sort_features_and_matrix(csc_m, vocabulary)
 
             n_doc = csc_m.shape[0]
             max_doc_count = (max_df
@@ -774,19 +762,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             if max_doc_count < min_doc_count:
                 raise ValueError(
                     "max_df corresponds to < documents than min_df")
-            # get rid of features between max_df and min_df
-            if max_doc_count < n_doc or min_doc_count > 1:
-                csc_m, feature_to_pos, stop_words_ = \
-                    self._remove_highandlow(csc_m, feature_to_pos,
-                                            max_doc_count, min_doc_count)
-            # get rid of features that are not in the top max_features
-            # overall occurance wise
-            if max_features and max_features < csc_m.shape[1]:
-                csc_m, feature_to_pos, stop_words_ = \
-                    self._get_max_features(
-                        csc_m, feature_to_pos, stop_words_, max_features)
-            self.stop_words_ = stop_words_
-            self.vocabulary_ = feature_to_pos
+            csc_m, self.stop_words_ = self._limit_features(
+                csc_m, vocabulary,
+                max_doc_count, min_doc_count, max_features)
+
+            self.vocabulary_ = vocabulary
 
         return csc_m
 
