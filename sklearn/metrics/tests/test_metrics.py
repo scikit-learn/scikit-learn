@@ -420,6 +420,19 @@ def test_confusion_matrix_binary():
     test(map(str, y_true), map(str, y_pred))
 
 
+def test_confusion_matrix_errors():
+    """Test confusion matrix - bad input"""
+    correct_shape = np.ones((3, 1))
+    bad_shape = np.zeros((3, 2))
+
+    assert_raise_message(ValueError, "y1 can't be considered as a vector",
+                         confusion_matrix, bad_shape, bad_shape)
+    assert_raise_message(ValueError, "y2 can't be considered as a vector",
+                         confusion_matrix, correct_shape, bad_shape)
+    assert_raise_message(ValueError, "y1 can't be considered as a vector",
+                         confusion_matrix, bad_shape, correct_shape)
+
+
 def test_matthews_corrcoef_nan():
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
