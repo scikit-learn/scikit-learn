@@ -695,7 +695,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
                                  " contain stop words")
 
         # some Python/Scipy versions won't accept an array.array:
-        j_indices = np.frombuffer(j_indices, dtype=np.intc)
+        if j_indices:
+            j_indices = np.frombuffer(j_indices, dtype=np.intc)
+        else:
+            j_indices = np.array([], dtype=np.int32)
         indptr = np.frombuffer(indptr, dtype=np.intc)
         values = np.ones(len(j_indices))
 
