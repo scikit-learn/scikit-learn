@@ -148,5 +148,7 @@ $(function() {
 
   add_sidebar_button();
   var sidebarbutton = $('#sidebarbutton');
-  set_position_from_cookie();
+  // set_position_from_cookie();
+  // Uncomment the above to have cookies remember sidebar position
+  // Causes problems on pages without sidebar like index
 });
