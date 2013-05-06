@@ -988,7 +988,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
         If ``None`` is given, those that appear at least once
         in ``y_true`` or ``y_pred`` are used.
 
-    pos_label : 1 by default
+    pos_label : int or str, 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
@@ -1074,7 +1074,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
         If ``None`` is given, those that appear at least once
         in ``y_true`` or ``y_pred`` are used.
 
-    pos_label : 1 by default
+    pos_label : int or str, 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
@@ -1190,7 +1190,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         If ``None`` is given, those that appear at least once
         in ``y_true`` or ``y_pred`` are used.
 
-    pos_label : 1 by default
+    pos_label : int or str, 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
@@ -1366,7 +1366,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
         If ``None`` is given, those that appear at least once
         in ``y_true`` or ``y_pred`` are used.
 
-    pos_label : 1 by default
+    pos_label : int or str, 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
@@ -1446,7 +1446,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
         If ``None`` is given, those that appear at least once
         in ``y_true`` or ``y_pred`` are used.
 
-    pos_label : 1 by default
+    pos_label : int or str, 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
         only this class's scores will be returned.
 
