@@ -958,6 +958,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True, pos_label=1):
     0.25
 
     """
+
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
 
     # Compute accuracy for each possible representation
@@ -979,16 +980,18 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True, pos_label=1):
                                              invalid='ignore')
                 y_pred_pos_label = y_pred == pos_label
                 y_true_pos_label = y_true == pos_label
-                score = (np.sum(np.logical_and(y_pred_pos_label,
-                                               y_true_pos_label),
-                                axis=1) /
-                         np.sum(np.logical_or(y_pred_pos_label,
-                                              y_true_pos_label),
-                                axis=1))
+                pred_inter_true = np.sum(np.logical_and(y_pred_pos_label,
+                                                        y_true_pos_label),
+                                         axis=1)
+                pred_union_true = np.sum(np.logical_or(y_pred_pos_label,
+                                                       y_true_pos_label),
+                                         axis=1)
+                score = pred_inter_true / pred_union_true
 
                 # If there is no label, it results in a Nan instead, we set
                 # the jaccard to 1: lim_{x->0} x/x = 1
-                score[np.isnan(score)] = 1.0
+                # Note with py2.6 and np 1.3: we can't check safely for nan.
+                score[pred_union_true == 0.0] = 1.0
             finally:
                 np.seterr(**old_err_settings)
 
@@ -1005,7 +1008,6 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True, pos_label=1):
                 else:
                     score[i] = (len(true_set & pred_set) /
                                 size_true_union_pred)
-
     else:
         y_true, y_pred = check_arrays(y_true, y_pred)
 
