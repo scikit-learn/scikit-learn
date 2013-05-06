@@ -12,6 +12,7 @@ from ..utils import safe_mask, atleast2d_or_csc
 from .etc import SelectBetween
 >>>>>>> Reimplement SelectorMixin using SelectBetween
 
+
 class SelectorMixin(TransformerMixin):
     """Transformer mixin selecting features based on importance weights.
 
@@ -21,7 +22,7 @@ class SelectorMixin(TransformerMixin):
     """
 
     def make_transformer(self):
-        if getattr(self, 'penalty') == 'l1':
+        if getattr(self, 'penalty', None) == 'l1':
             # the natural default threshold is 0 when l1 penalty was used
             default_threshold = 1e-5
         else:
