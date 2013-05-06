@@ -24,10 +24,6 @@ from sklearn import datasets
 diabetes = datasets.load_diabetes()
 X, y = diabetes.data, diabetes.target
 
-def check_warnings():
-    if version_info < (2, 6):
-        raise SkipTest("Testing for warnings is not supported in versions \
-        older than Python 2.6")
 
 def test_nng_zero():
     """Check that the nng can handle zero data without crashing"""
@@ -37,6 +33,7 @@ def test_nng_zero():
     pred = clf.predict([[1], [2], [3]])
     assert_array_almost_equal(clf.coef_, [0])
     assert_array_almost_equal(pred, [0, 0, 0])
+
 
 def test_nng_toy():
     """
@@ -71,6 +68,7 @@ def test_nng_toy():
     assert_array_almost_equal(clf.coef_, [.0])
     assert_array_almost_equal(pred, [0, 0, 0])
 
+
 def test_nng_alpha_warning():
     check_warnings()  # Skip if unsupported Python version
     with warnings.catch_warnings(record=True) as w:
@@ -82,6 +80,7 @@ def test_nng_alpha_warning():
         clf.fit(X, Y)
 
         assert_greater(len(w), 0)  # warnings should be raised
+
 
 def test_nng_positive_constraint():
     """
@@ -113,6 +112,7 @@ def test_small_alpha():
     ols_coef = LinearRegression().fit(X, y).coef_
     assert_array_almost_equal(nng_coef, ols_coef)
 
+
 def build_dataset(n_samples=50, n_features=200, n_informative_features=10,
                   n_targets=1):
     """
@@ -131,8 +131,10 @@ def build_dataset(n_samples=50, n_features=200, n_informative_features=10,
     y_test = np.dot(X_test, w)
     return X, y, X_test, y_test
 
+
 def test_positive_well_conditioned():
     pass
+
 
 def test_less_sample_than_dimentions():
     pass
@@ -147,6 +149,7 @@ def test_lasso_gives_lstsq_solution():
     coef_lstsq = np.linalg.lstsq(X, y)[0]
     assert_array_almost_equal(coef_lstsq, coef_path_[:, -1])
 
+
 def test_singular_matrix():
     """
     Test when input is a singular matrix
@@ -155,6 +158,7 @@ def test_singular_matrix():
     y1 = np.array([1, 1])
     coef_path, scp = non_negative_garrote_path(X1, y1)
     assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0]])
+
 
 def test_lars_add_features():
     """
@@ -264,7 +268,7 @@ def test_lars_add_features():
 #        lasso_cd.fit(X, y)
 #        error = np.linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
 #        assert_less(error, 0.01)
-
+#
 #    alphas_min = [10, 0.9, 1e-4]
 #    # same test, with normalization
 #    for alphas_min in alphas_min:
@@ -276,9 +280,8 @@ def test_lars_add_features():
 #        lasso_cd.fit(X, y)
 #        error = np.linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
 #        assert_less(error, 0.01)
-
-
-
+#
+#
 #def test_multitarget():
 #    """
 #    Assure that estimators receiving multidimensional y do the right thing
@@ -297,9 +300,6 @@ def test_lars_add_features():
 #            assert_array_almost_equal(active[k, :], estimator.active_)
 #            assert_array_almost_equal(coef[k, :], estimator.coef_)
 #            assert_array_almost_equal(path[k, :, :], estimator.coef_path_)
-
-
-
 if __name__ == '__main__':
     import nose
     nose.runmodule()

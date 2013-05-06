@@ -15,6 +15,7 @@ from ..utils import array2d
 from .base import LinearModel
 from ..linear_model import LinearRegression, Lasso, lars_path
 
+
 def non_negative_garrote(X, y, alpha, tol=0.001, fit_intercept=False,
                          normalize=True, max_iter=1000, precompute='auto'):
     """Function that implements the Non-negative garrote method
@@ -67,6 +68,7 @@ def non_negative_garrote(X, y, alpha, tol=0.001, fit_intercept=False,
     # Shrunken betas
     coef = coef_ols * shrink_coef
     return coef, shrink_coef
+
 
 def non_negative_garrote_path(X, y, eps=1e-10, n_alphas=100, alphas=None,
                               precompute='auto', fit_intercept=False,
@@ -128,6 +130,7 @@ def non_negative_garrote_path(X, y, eps=1e-10, n_alphas=100, alphas=None,
     # Shrunken betas
     coef_path = shrink_coef_path * coef_ols[:, np.newaxis]
     return coef_path, shrink_coef_path
+
 
 class NonNegativeGarrote(LinearModel):
     """
@@ -232,17 +235,14 @@ class NonNegativeGarrote(LinearModel):
                     copy=self.copy_X and self.fit_intercept)
         y = np.asarray(y, dtype=np.float64)
 
-        X, y, X_mean, y_mean, X_std = LinearModel._center_data(X, y,
-                self.fit_intercept, self.normalize, self.copy_X)
+        X, y, X_mean, y_mean, X_std =\
+            LinearModel._center_data(X, y, self.fit_intercept,
+                                     self.normalize, self.copy_X)
 
         self.coef_, self.shrink_coef_ = \
-                                    non_negative_garrote(X, y, self.alpha,
-                                                         self.tol,
-                                                         self.fit_intercept,
-                                                         self.normalize,
-                                                         self.max_iter,
-                                                         self.precompute)
+            non_negative_garrote(X, y, self.alpha,
+                                 self.tol, self.fit_intercept, self.normalize,
+                                 self.max_iter, self.precompute)
         self._set_intercept(X_mean, y_mean, X_std)
 
         return self
-
