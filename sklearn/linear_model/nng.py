@@ -28,9 +28,25 @@ def non_negative_garrote(X, y, alpha, tol=0.001, fit_intercept=False,
     y : array, shape: (n_samples)
         Input targets.
 
+
+    tol: float, optional
+        The tolerance for the optimization
+
+    fit_intercept : boolean
+        Whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional, default False
+        If ``True``, the regressors X will be normalized before regression.
+
     max_iter : integer, optional
         Maximum number of iterations to perform, set to infinity for no limit.
 
+    precompute : True | False | 'auto' | array-like
+        Whether to use a precomputed Gram matrix to speed up
+        calculations. If set to ``'auto'`` let us decide. The Gram
+        matrix can also be passed as argument.
 
     Returns
     --------
