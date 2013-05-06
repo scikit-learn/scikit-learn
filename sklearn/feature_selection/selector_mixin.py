@@ -4,9 +4,13 @@
 import numpy as np
 
 from ..base import TransformerMixin
+<<<<<<< HEAD
 from ..externals import six
 from ..utils import safe_mask, atleast2d_or_csc
 
+=======
+from .etc import SelectBetween
+>>>>>>> Reimplement SelectorMixin using SelectBetween
 
 class SelectorMixin(TransformerMixin):
     """Transformer mixin selecting features based on importance weights.
@@ -15,6 +19,37 @@ class SelectorMixin(TransformerMixin):
     ``feature_importances_`` or ``coef_`` attribute to evaluate the relative
     importance of individual features for feature selection.
     """
+
+    def make_transformer(self):
+        if getattr(self, 'penalty') == 'l1':
+            # the natural default threshold is 0 when l1 penalty was used
+            default_threshold = 1e-5
+        else:
+            default_threshold = 'mean'
+        return SelectBetween(self.__get_feature_importances,
+                             minimum=default_threshold)
+
+    def __get_feature_importances(self, X=None, y=None):
+        if hasattr(self, "feature_importances_"):
+            importances = self.feature_importances_
+            if importances is None:
+                raise ValueError("Importance weights not computed. Please set"
+                                 " the compute_importances parameter before "
+                                 "fit.")
+
+        elif hasattr(self, "coef_"):
+            if self.coef_.ndim == 1:
+                importances = np.abs(self.coef_)
+
+            else:
+                importances = np.sum(np.abs(self.coef_), axis=0)
+
+        else:
+            raise ValueError("Missing `feature_importances_` or `coef_`"
+                             " attribute, did you forget to set the "
+                             "estimator's parameter to compute it?")
+        return importances
+
     def transform(self, X, threshold=None):
         """Reduce X to its most important features.
 
@@ -37,72 +72,7 @@ class SelectorMixin(TransformerMixin):
         X_r : array of shape [n_samples, n_selected_features]
             The input samples with only the selected features.
         """
-        X = atleast2d_or_csc(X)
-        # Retrieve importance vector
-        if hasattr(self, "feature_importances_"):
-            importances = self.feature_importances_
-            if importances is None:
-                raise ValueError("Importance weights not computed. Please set"
-                                 " the compute_importances parameter before "
-                                 "fit.")
-
-        elif hasattr(self, "coef_"):
-            if self.coef_.ndim == 1:
-                importances = np.abs(self.coef_)
-
-            else:
-                importances = np.sum(np.abs(self.coef_), axis=0)
-
-        else:
-            raise ValueError("Missing `feature_importances_` or `coef_`"
-                             " attribute, did you forget to set the "
-                             "estimator's parameter to compute it?")
-        if len(importances) != X.shape[1]:
-            raise ValueError("X has different number of features than"
-                             " during model fitting.")
-
-        # Retrieve threshold
-        if threshold is None:
-            if hasattr(self, "penalty") and self.penalty == "l1":
-                # the natural default threshold is 0 when l1 penalty was used
-                threshold = getattr(self, "threshold", 1e-5)
-            else:
-                threshold = getattr(self, "threshold", "mean")
-
-        if isinstance(threshold, six.string_types):
-            if "*" in threshold:
-                scale, reference = threshold.split("*")
-                scale = float(scale.strip())
-                reference = reference.strip()
-
-                if reference == "median":
-                    reference = np.median(importances)
-                elif reference == "mean":
-                    reference = np.mean(importances)
-                else:
-                    raise ValueError("Unknown reference: " + reference)
-
-                threshold = scale * reference
-
-            elif threshold == "median":
-                threshold = np.median(importances)
-
-            elif threshold == "mean":
-                threshold = np.mean(importances)
-
-        else:
-            threshold = float(threshold)
-
-        # Selection
-        try:
-            mask = importances >= threshold
-        except TypeError:
-            # Fails in Python 3.x when threshold is str;
-            # result is array of True
-            raise ValueError("Invalid threshold: all features are discarded.")
-
-        if np.any(mask):
-            mask = safe_mask(X, mask)
-            return X[:, mask]
-        else:
-            raise ValueError("Invalid threshold: all features are discarded.")
+        transformer = self.make_transformer()
+        if threshold is not None:
+            transformer.minimum = threshold
+        return transformer.fit_transform(X)

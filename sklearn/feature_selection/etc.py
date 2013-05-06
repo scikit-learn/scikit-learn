@@ -6,6 +6,7 @@ from scipy.stats import rankdata
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import atleast2d_or_csc
+from ..externals import six
 
 from .univariate_selection import _BaseFilter
 
@@ -48,6 +49,14 @@ class SelectBetween(_BaseFilter):
         'decrank': lambda X, scores: rankdata(-scores),
     }
 
+    THRESHOLD_SUBS = {
+        'mean': np.mean,
+        'median': np.median,
+        'min': np.min,
+        'max': np.max,
+        'sum': np.sum,
+    }
+
     def _scale(self, X, scores):
         scaling = self.scaling
         if scaling is None:
@@ -58,19 +67,43 @@ class SelectBetween(_BaseFilter):
         return scaling(X, scores)
 
     def fit(self, X, y=None):
-        scores = self._scale(self.score_func(X, y))
+        scores = self.score_func(X, y)
+        if len(scores) != X.shape[1]:
+            raise ValueError("Scores size differs from number of features")
+        # TODO: deal with nan...?
+        scores = self._scale(X, scores)
         self.scaled_scores_ = scores
+        return self
+
+    def _calc_threshold(self, scores, val):
+        if callable(val):
+            return val(scores)
+        elif isinstance(val, six.string_types):
+            res = 1.
+            for part in val.split('*'):
+                try:
+                    res *= float(part)
+                except ValueError:
+                    try:
+                        part = self.THRESHOLD_SUBS[part.strip()]
+                    except KeyError:
+                        raise ValueError('Unknown reference: %r' % part)
+                    else:
+                        res *= part(scores)
+            return res
+        return val
 
     def _get_support_mask(self):
-        support = np.ones(self.scores_.shape, dtype=bool)
-        lo, hi = self.minimum, self.maximum
+        support = np.ones(self.scaled_scores_.shape, dtype=bool)
+        lo = self._calc_threshold(self.scaled_scores_, self.minimum)
+        hi = self._calc_threshold(self.scaled_scores_, self.maximum)
         if lo is None and hi is None:
             return support
 
         if lo is not None:
-            support &= self.scores_ >= lo
+            support &= self.scaled_scores_ >= lo
         if hi is not None:
-            support &= self.scores_ <= hi
+            support &= self.scaled_scores_ <= hi
         return support
 
 
