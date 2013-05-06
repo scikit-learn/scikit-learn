@@ -139,7 +139,7 @@ def test_less_sample_than_dimentions():
     pass
 
 
-def test_lasso_gives_lstsq_solution():
+def test_nng_path_gives_lstsq_solution():
     """
     Test that Non-Negative Garrote gives least square solution at the end
     of the path
@@ -159,11 +159,10 @@ def test_singular_matrix():
     assert_array_almost_equal(coef_path.T, [[0, 0], [1, 0]])
 
 
-def test_lars_add_features():
+def test_nng_add_features():
     """
     assure that at least some features get added if necessary
 
-    test for 6d2b4c
     """
     # Hilbert matrix
     n = 5
