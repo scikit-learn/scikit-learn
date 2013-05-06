@@ -9,7 +9,7 @@ import time
 import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import array2d, check_random_state
+from ..utils import array2d, check_random_state, as_float_array
 from ..utils.extmath import safe_sparse_dot
 
 
@@ -244,6 +244,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
             Approximations to the Likelihood Gradient. International Conference
             on Machine Learning (ICML) 2008
         """
+        v_pos = as_float_array(v_pos)
         h_pos = self.mean_hiddens(v_pos)
         v_neg = self.sample_visibles(self.h_samples_)
         h_neg = self.mean_hiddens(v_neg)
@@ -297,14 +298,15 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self
         """
         X = array2d(X)
+        dtype = np.float32 if X.dtype.itemsize == 4 else np.float64
         self.random_state = check_random_state(self.random_state)
 
         self.components_ = np.asarray(self.random_state.normal(0, 0.01,
-            (self.n_components, X.shape[1])), dtype=X.dtype, order='fortran')
-        self.intercept_hidden_ = np.zeros(self.n_components, dtype=X.dtype)
-        self.intercept_visible_ = np.zeros(X.shape[1], dtype=X.dtype)
+            (self.n_components, X.shape[1])), dtype=dtype, order='fortran')
+        self.intercept_hidden_ = np.zeros(self.n_components, dtype=dtype)
+        self.intercept_visible_ = np.zeros(X.shape[1], dtype=dtype)
         self.h_samples_ = np.zeros((self.batch_size, self.n_components),
-            dtype=X.dtype)
+                                   dtype=dtype)
 
         inds = np.arange(X.shape[0])
         self.random_state.shuffle(inds)
