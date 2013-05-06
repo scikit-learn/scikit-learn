@@ -296,9 +296,11 @@ class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator,
         Transform a new matrix using the selected features
         """
         support_ = self.get_support()
+        if issparse(X):
+            X = X.tocsc()
         if X.ndim == 1:
             X = X[None, :]
-        Xt = np.zeros((X.shape[0], support_.size))
+        Xt = np.zeros((X.shape[0], support_.size), dtype=X.dtype)
         Xt[:, support_] = X
         return Xt
 

@@ -294,6 +294,9 @@ def test_select_percentile_regression():
     X_2 = X.copy()
     X_2[:, np.logical_not(support)] = 0
     assert_array_equal(X_2, univariate_filter.inverse_transform(X_r))
+    # Check inverse_transform respects dtype
+    assert_array_equal(X_2.astype(bool),
+                       univariate_filter.inverse_transform(X_r.astype(bool)))
 
 
 def test_select_percentile_regression_full():
