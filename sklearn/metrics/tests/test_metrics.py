@@ -129,6 +129,29 @@ NOT_SYMETRIC_METRICS = {
     "r2_score": r2_score}
 
 
+class ComparableObject(object):
+    def __init__(self, a):
+        self.a = a
+
+    def __eq__(self, other):
+        return self.a == other.a
+
+    def __ne__(self, other):
+        return self.a != other.a
+
+    def __lt__(self, other):
+        return self.a < other.a
+
+    def __hash__(self):
+        return hash(self.a)
+
+    def __str__(self):
+        return "ComparableObject({})".format(self.a)
+
+    def __repr__(self):
+        return self.__str__()
+
+
 def make_prediction(dataset=None, binary=False):
     """Make some classification predictions on a toy dataset using a SVC
 
