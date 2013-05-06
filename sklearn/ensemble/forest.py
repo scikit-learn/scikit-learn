@@ -46,7 +46,7 @@ from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals import six
 from ..externals.six.moves import xrange
-from ..feature_selection.selector_mixin import SelectorMixin
+from ..feature_selection.from_model import _LearntSelectorMixin
 from ..metrics import r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
@@ -207,7 +207,8 @@ def _partition_features(forest, n_total_features):
     return n_jobs, n_features, starts
 
 
-class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble, SelectorMixin)):
+class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
+                                    _LearntSelectorMixin)):
     """Base class for forests of trees.
 
     Warning: This class should not be used directly. Use derived classes

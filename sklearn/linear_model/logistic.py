@@ -1,12 +1,12 @@
 import numpy as np
 
 from .base import LinearClassifierMixin, SparseCoefMixin
-from ..feature_selection.selector_mixin import SelectorMixin
+from ..feature_selection.from_model import _LearntSelectorMixin
 from ..svm.base import BaseLibLinear
 
 
-class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
-                         SparseCoefMixin):
+class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
+                         _LearntSelectorMixin, SparseCoefMixin):
     """Logistic Regression (aka logit, MaxEnt) classifier.
 
     In the multiclass case, the training algorithm uses a one-vs.-all (OvA)
