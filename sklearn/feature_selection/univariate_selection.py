@@ -301,6 +301,9 @@ class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator,
         support_ = self.get_support()
         if issparse(X):
             X = X.tocsc()
+            # insert additional entries in indptr:
+            # e.g. if transform changed indptr from [0 2 6 7] to [0 2 3]
+            # col_nonzeros here will be [2 0 1] so indptr becomes [0 2 2 3]
             col_nonzeros = self.inverse_transform(np.diff(X.indptr)).ravel()
             indptr = np.concatenate([[0], np.cumsum(col_nonzeros)])
             Xt = csc_matrix((X.data, X.indices, indptr),
