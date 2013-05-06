@@ -16,8 +16,9 @@ from scipy.sparse import issparse, csc_matrix
 
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelBinarizer
-from ..utils import (array2d, as_float_array, atleast2d_or_csr, check_arrays,
-                     safe_asarray, safe_sqr, safe_mask)
+from ..utils import (array2d, as_float_array, atleast2d_or_csc,
+                     atleast2d_or_csr, check_arrays, safe_asarray, safe_sqr,
+                     safe_mask)
 from ..utils.extmath import safe_sparse_dot
 from ..externals import six
 
@@ -285,11 +286,11 @@ class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         Transform a new matrix using the selected features
         """
-        X = atleast2d_or_csr(X)
+        X = atleast2d_or_csc(X)
         mask = self._get_support_mask()
         if len(mask) != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
-        return atleast2d_or_csr(X)[:, safe_mask(X, mask)]
+        return X[:, safe_mask(X, mask)]
 
     def inverse_transform(self, X):
         """
