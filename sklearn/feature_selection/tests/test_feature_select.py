@@ -11,6 +11,7 @@ from nose.tools import assert_equal, assert_raises, assert_true
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from sklearn.utils.testing import assert_not_in
 
+from sklearn.utils import safe_mask
 from sklearn.datasets.samples_generator import (make_classification,
                                                 make_regression)
 from sklearn.feature_selection import (chi2, f_classif, f_oneway, f_regression,
@@ -154,13 +155,22 @@ def test_select_percentile_classif_sparse():
     X = sparse.csr_matrix(X)
     univariate_filter = SelectPercentile(f_classif, percentile=25)
     X_r = univariate_filter.fit(X, y).transform(X)
-    X_r2 = GenericUnivariateSelect(f_classif, mode='percentile',
-                                   param=25).fit(X, y).transform(X)
+    sel = GenericUnivariateSelect(f_classif, mode='percentile',
+                                  param=25).fit(X, y)
+    X_r2 = sel.transform(X)
     assert_array_equal(X_r.toarray(), X_r2.toarray())
     support = univariate_filter.get_support()
     gtruth = np.zeros(20)
     gtruth[:5] = 1
     assert_array_equal(support, gtruth)
+
+    X_r2inv = sel.inverse_transform(X_r2)
+    assert_true(sparse.issparse(X_r2inv))
+    support_mask = safe_mask(X_r2inv, support)
+    assert_equal(X_r2inv.shape, X_r.shape)
+    assert_array_equal(X_r2inv[:, support_mask].toarray(), X_r.toarray())
+    # Check other columns are empty
+    assert_equal(X_r2inv.getnnz(), X_r.getnnz())
 
 
 ##############################################################################

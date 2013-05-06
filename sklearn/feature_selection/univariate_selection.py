@@ -12,7 +12,7 @@ from functools import reduce
 
 import numpy as np
 from scipy import stats
-from scipy.sparse import issparse
+from scipy.sparse import issparse, csc_matrix
 
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelBinarizer
@@ -299,6 +299,13 @@ class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator,
         been removed by `transform`.
         """
         support_ = self.get_support()
+        if issparse(X):
+            X = X.tocsc()
+            col_nonzeros = self.inverse_transform(np.diff(X.indptr)).ravel()
+            indptr = np.concatenate([[0], np.cumsum(col_nonzeros)])
+            Xt = csc_matrix((X.data, X.indices, indptr),
+                            shape=(X.shape[0], len(indptr) - 1), dtype=X.dtype)
+            return Xt
         if X.ndim == 1:
             X = X[None, :]
         Xt = np.zeros((X.shape[0], support_.size), dtype=X.dtype)
