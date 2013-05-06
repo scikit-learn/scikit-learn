@@ -13,7 +13,7 @@ import numpy as np
 from ..utils import array2d
 
 from .base import LinearModel
-from ..linear_model import LinearRegression, Lasso, lars_path
+from ..linear_model import LinearRegression, Lasso, lars_path, lasso_path
 
 
 def non_negative_garrote(X, y, alpha, tol=0.001, fit_intercept=False,
@@ -127,6 +127,10 @@ def non_negative_garrote_path(X, y, eps=1e-10, n_alphas=100, alphas=None,
     X = X * coef_ols[np.newaxis, :]
     _, _, shrink_coef_path = lars_path(X, y, method='lasso')
 
+    # Lasso_path version
+    #shrink_coef_path = lasso_path(X, y, positive=True, n_alphas=n_alphas)[1].coef_
+    #coef_path = coef_ols * shrink_coef_path
+
     # Shrunken betas
     coef_path = shrink_coef_path * coef_ols[:, np.newaxis]
     return coef_path, shrink_coef_path
@@ -184,6 +188,7 @@ class NonNegativeGarrote(LinearModel):
 
     Examples
     --------
+    >>> from sklearn import linear_model
     >>> clf = linear_model.NonNegativeGarrote(alpha=0.1)
     >>> clf.fit ([[0, 0], [0, 0], [1, 1]], [0, .1, 1])
     ... # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE

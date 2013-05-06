@@ -70,7 +70,6 @@ def test_nng_toy():
 
 
 def test_nng_alpha_warning():
-    check_warnings()  # Skip if unsupported Python version
     with warnings.catch_warnings(record=True) as w:
         warnings.simplefilter('always')
         X = [[-1], [0], [1]]
@@ -173,133 +172,7 @@ def test_lars_add_features():
         H, np.arange(n))
     assert_true(np.all(np.isfinite(clf.coef_)))
 
-#def test_simple():
-#    """
-#    Principle of Lars is to keep covariances tied and decreasing
-#    """
-#
-#    alphas_, active, coef_path_ = linear_model.lars_path(
-#        diabetes.data, diabetes.target, method="lar")
-#
-#    for (i, coef_) in enumerate(coef_path_.T):
-#        res = y - np.dot(X, coef_)
-#        cov = np.dot(X.T, res)
-#        C = np.max(abs(cov))
-#        eps = 1e-3
-#        ocur = len(cov[C - eps < abs(cov)])
-#        if i < X.shape[1]:
-#            assert_true(ocur == i + 1)
-#        else:
-#            # no more than max_pred variables can go into the active set
-#            assert_true(ocur == X.shape[1])
 
-#def test_collinearity():
-#    """Check that lars_path is robust to collinearity in input"""
-#    X = np.array([[3., 3., 1.],
-#                  [2., 2., 0.],
-#                  [1., 1., 0]])
-#    y = np.array([1., 0., 0])
-
-#    _, _, coef_path_ = linear_model.lars_path(X, y, alpha_min=0.01)
-#    assert_true(not np.isnan(coef_path_).any())
-#    residual = np.dot(X, coef_path_[:, -1]) - y
-#    assert_less((residual ** 2).sum(), 1.)  # just make sure it's bounded
-
-#    n_samples = 10
-#    X = np.random.rand(n_samples, 5)
-#    y = np.zeros(n_samples)
-#    _, _, coef_path_ = linear_model.lars_path(X, y, Gram='auto', copy_X=False,
-#            copy_Gram=False, alpha_min=0., method='lasso', verbose=0,
-#            max_iter=500)
-#    assert_array_almost_equal(coef_path_, np.zeros_like(coef_path_))
-
-
-#def test_lasso_lars_vs_lasso_cd(verbose=False):
-#    """
-#    Test that LassoLars and Lasso using coordinate descent give the
-#    same results
-#    """
-#    X = 3 * diabetes.data
-
-#    alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso')
-#    lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8)
-#    for c, a in zip(lasso_path.T, alphas):
-#        if a == 0:
-#            continue
-#        lasso_cd.alpha = a
-#        lasso_cd.fit(X, y)
-#        error = np.linalg.norm(c - lasso_cd.coef_)
-#        assert_less(error, 0.01)
-
-    # similar test, with the classifiers
-#    for alpha in np.linspace(1e-2, 1 - 1e-2):
-#        clf1 = linear_model.LassoLars(alpha=alpha, normalize=False).fit(X, y)
-#        clf2 = linear_model.Lasso(alpha=alpha, tol=1e-8,
-#                                  normalize=False).fit(X, y)
-#        err = np.linalg.norm(clf1.coef_ - clf2.coef_)
-#        assert_less(err, 1e-3)
-
-    # same test, with normalized data
-#    X = diabetes.data
-#    alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso')
-#    lasso_cd = linear_model.Lasso(fit_intercept=False, normalize=True,
-#                                  tol=1e-8)
-#    for c, a in zip(lasso_path.T, alphas):
-#        if a == 0:
-#            continue
-#        lasso_cd.alpha = a
-#        lasso_cd.fit(X, y)
-#        error = np.linalg.norm(c - lasso_cd.coef_)
-#        assert_less(error, 0.01)
-
-
-#def test_lasso_lars_vs_lasso_cd_early_stopping(verbose=False):
-#    """
-#    Test that LassoLars and Lasso using coordinate descent give the
-#    same results when early stopping is used.
-#    (test : before, in the middle, and in the last part of the path)
-#    """
-#    alphas_min = [10, 0.9, 1e-4]
-#    for alphas_min in alphas_min:
-#        alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso',
-#                                                    alpha_min=0.9)
-#        lasso_cd = linear_model.Lasso(fit_intercept=False, tol=1e-8)
-#        lasso_cd.alpha = alphas[-1]
-#        lasso_cd.fit(X, y)
-#        error = np.linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
-#        assert_less(error, 0.01)
-#
-#    alphas_min = [10, 0.9, 1e-4]
-#    # same test, with normalization
-#    for alphas_min in alphas_min:
-#        alphas, _, lasso_path = linear_model.lars_path(X, y, method='lasso',
-#                                                    alpha_min=0.9)
-#        lasso_cd = linear_model.Lasso(fit_intercept=True, normalize=True,
-#                                      tol=1e-8)
-#        lasso_cd.alpha = alphas[-1]
-#        lasso_cd.fit(X, y)
-#        error = np.linalg.norm(lasso_path[:, -1] - lasso_cd.coef_)
-#        assert_less(error, 0.01)
-#
-#
-#def test_multitarget():
-#    """
-#    Assure that estimators receiving multidimensional y do the right thing
-#    """
-#    X = diabetes.data
-#    Y = np.vstack([diabetes.target, diabetes.target ** 2]).T
-#    n_targets = Y.shape[1]
-
-#    for estimator in (linear_model.LassoLars(), linear_model.Lars()):
-#        estimator.fit(X, Y)
-#        alphas, active, coef, path = (estimator.alphas_, estimator.active_,
-#                                      estimator.coef_, estimator.coef_path_)
-#        for k in xrange(n_targets):
-#            estimator.fit(X, Y[:, k])
-#            assert_array_almost_equal(alphas[k, :], estimator.alphas_)
-#            assert_array_almost_equal(active[k, :], estimator.active_)
-#            assert_array_almost_equal(coef[k, :], estimator.coef_)
-#            assert_array_almost_equal(path[k, :, :], estimator.coef_path_)
 if __name__ == '__main__':
     import nose
     nose.runmodule()
