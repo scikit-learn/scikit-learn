@@ -288,7 +288,7 @@ def test_precision_recall_f1_score_binary():
     """Test Precision Recall and F1 Score for binary classification task"""
     y_true, y_pred, _ = make_prediction(binary=True)
 
-    def test(y_true, y_pred, string_type=False):
+    def test(y_true, y_pred, data_type):
         # detailed measures for each class
         p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
                                                      average=None)
@@ -300,7 +300,8 @@ def test_precision_recall_f1_score_binary():
         # individual scoring function that can be used for grid search: in
         # the binary class case the score is the value of the measure for
         # the positive class (e.g. label == 1)
-        pos_label = '1' if string_type else 1
+
+        pos_label = data_type(1)
 
         ps = precision_score(y_true, y_pred, pos_label=pos_label)
         assert_array_almost_equal(ps, 0.85, 2)
@@ -311,8 +312,9 @@ def test_precision_recall_f1_score_binary():
         fs = f1_score(y_true, y_pred, pos_label=pos_label)
         assert_array_almost_equal(fs, 0.76, 2)
 
-    test(y_true, y_pred)
-    test(map(str, y_true), map(str, y_pred), True)
+    for data_type in (int, str, ComparableObject):
+        test(map(data_type, y_true), map(data_type, y_pred),
+             data_type=data_type)
 
 
 def test_average_precision_score_duplicate_values():
@@ -387,7 +389,7 @@ def test_precision_recall_f1_score_multiclass():
     """Test Precision Recall and F1 Score for multiclass classification task"""
     y_true, y_pred, _ = make_prediction(binary=False)
 
-    def test(y_true, y_pred, string_type=False):
+    def test(y_true, y_pred, data_type):
         # compute scores with default labels introspection
         p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
                                                      average=None)
@@ -397,7 +399,7 @@ def test_precision_recall_f1_score_multiclass():
         assert_array_equal(s, [24, 31, 20])
 
         # averaging tests
-        pos_label = '1' if string_type else 1
+        pos_label = data_type(1)
 
         ps = precision_score(y_true, y_pred,
                              pos_label=pos_label,
@@ -439,7 +441,7 @@ def test_precision_recall_f1_score_multiclass():
         assert_array_almost_equal(fs, 0.47, 2)
 
         # same prediction but with and explicit label ordering
-        labels = ['0', '2', '1'] if string_type else [0, 2, 1]
+        labels = map(data_type, [0, 2, 1])
 
         p, r, f, s = precision_recall_fscore_support(
             y_true, y_pred, labels=labels, average=None)
@@ -449,8 +451,9 @@ def test_precision_recall_f1_score_multiclass():
         assert_array_almost_equal(f, [0.81, 0.57, 0.15], 2)
         assert_array_equal(s, [24, 20, 31])
 
-    test(y_true, y_pred)
-    test(map(str, y_true), map(str, y_pred), string_type=True)
+    for data_type in (int, str, ComparableObject):
+        test(map(data_type, y_true), map(data_type, y_pred),
+             data_type=data_type)
 
 
 def test_precision_recall_f1_score_multiclass_pos_label_none():
