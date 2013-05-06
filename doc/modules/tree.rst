@@ -272,23 +272,23 @@ Complexity
 ==========
 
 In general, the run time cost to construct a balanced binary tree is
-:math:`O(n_{samples}n_{features}log(n_{samples}))` and query time
-:math:`O(log(n_{samples}))`.  Although the tree construction algorithm attempts
+:math:`O(n_{samples}n_{features}\log(n_{samples}))` and query time
+:math:`O(\log(n_{samples}))`.  Although the tree construction algorithm attempts
 to generate balanced trees, they will not always be balanced.  Assuming that the
 subtrees remain approximately balanced, the cost at each node consists of
 searching through :math:`O(n_{features})` to find the feature that offers the
 largest reduction in entropy.  This has a cost of
-:math:`O(n_{features}n_{samples}log(n_{samples}))` at each node, leading to a
+:math:`O(n_{features}n_{samples}\log(n_{samples}))` at each node, leading to a
 total cost over the entire trees (by summing the cost at each node) of
-:math:`O(n_{features}n_{samples}^{2}log(n_{samples}))`.
+:math:`O(n_{features}n_{samples}^{2}\log(n_{samples}))`.
 
 Scikit-learn offers a more efficient implementation for the construction of
 decision trees.  A naive implementation (as above) would recompute the class
 label histograms (for classification) or the means (for regression) at for each
 new split point along a given feature. By presorting the feature over all
 relevant samples, and retaining a running label count, we reduce the complexity
-at each node to :math:`O(n_{features}log(n_{samples}))`, which results in a
-total cost of :math:`O(n_{features}n_{samples}log(n_{samples}))`.
+at each node to :math:`O(n_{features}\log(n_{samples}))`, which results in a
+total cost of :math:`O(n_{features}n_{samples}\log(n_{samples}))`.
 
 This implementation also offers a parameter `min_density` to control an
 optimization heuristic. A sample mask is used to mask data points that are
@@ -422,11 +422,11 @@ Select the parameters that minimises the impurity
 
 .. math::
 
-    \theta^* = argmin_\theta  G(Q, \theta)
+    \theta^* = \operatorname{argmin}_\theta  G(Q, \theta)
 
 Recurse for subsets :math:`Q_{left}(\theta^*)` and
 :math:`Q_{right}(\theta^*)` until the maximum allowable depth is reached,
-:math:`N_m < min\_samples` or :math:`N_m = 1`.
+:math:`N_m < \min\_samples` or :math:`N_m = 1`.
 
 Classification criteria
 -----------------------
@@ -451,13 +451,13 @@ Cross-Entropy
 
 .. math::
 
-    H(X_m) = \sum_k p_{mk} log(p_{mk})
+    H(X_m) = \sum_k p_{mk} \log(p_{mk})
 
 and Misclassification
 
 .. math::
 
-    H(X_m) = 1 - max(p_{mk})
+    H(X_m) = 1 - \max(p_{mk})
 
 Regression criteria
 -------------------
