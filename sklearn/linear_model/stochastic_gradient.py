@@ -14,7 +14,7 @@ from ..externals.joblib import Parallel, delayed
 
 from .base import LinearClassifierMixin, SparseCoefMixin
 from ..base import BaseEstimator, RegressorMixin
-from ..feature_selection.selector_mixin import SelectorMixin
+from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import array2d, atleast2d_or_csr, check_arrays, deprecated
 from ..utils.extmath import safe_sparse_dot
 from ..externals import six
@@ -524,7 +524,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
                          sample_weight=sample_weight)
 
 
-class SGDClassifier(BaseSGDClassifier, SelectorMixin):
+class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     """Linear model fitted by minimizing a regularized empirical loss with SGD.
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is
@@ -937,7 +937,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         self.intercept_ = np.atleast_1d(intercept)
 
 
-class SGDRegressor(BaseSGDRegressor, SelectorMixin):
+class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     """Linear model fitted by minimizing a regularized empirical loss with SGD
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is

@@ -7,15 +7,16 @@
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
-from ..utils import check_arrays, safe_sqr, safe_mask, atleast2d_or_csc
+from ..utils import check_arrays, safe_sqr
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
 from ..cross_validation import check_cv
+from .base import SelectorMixin
 
 
-class RFE(BaseEstimator, MetaEstimatorMixin):
+class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     """Feature ranking with recursive feature elimination.
 
     Given an external estimator that assigns weights to features (e.g., the
@@ -196,21 +197,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
         """
         return self.estimator_.score(self.transform(X), y)
 
-    def transform(self, X):
-        """Reduce X to the selected features during the elimination.
-
-        Parameters
-        ----------
-        X : array of shape [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        X_r : array of shape [n_samples, n_selected_features]
-            The input samples with only the features selected during the \
-            elimination.
-        """
-        return atleast2d_or_csc(X)[:, safe_mask(X, self.support_)]
+    def _get_support_mask(self):
+        return self.support_
 
     def decision_function(self, X):
         return self.estimator_.decision_function(self.transform(X))
