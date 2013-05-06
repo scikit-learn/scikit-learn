@@ -470,18 +470,6 @@ that can compete with that of ridge regression. It will eliminate some variables
 shrinking others and is relatively stable.
 Unless a large part of the `true` coefficients are nonnegligible, it gives
 an accuracy better than or comparable to ridge methods[1].
-It aims to minimize a function
-similiar to that of the :class:`Lasso`:
-
-.. math::  \underset{c}{min\,} { \frac{1}{2n_{samples}} ||X c \beta - y||_2 ^ 2 + \alpha ||w||_1}
-
-where :math:`c` must follow the constraint:
-
-.. math::  c => 0
-
-:math:`\beta` are ordinary least square coefficients.
-The new predictor coefficients are thusly obtained by the product of :math:`c` and
-:math:`\beta`.
 
 
 ::
@@ -494,6 +482,20 @@ The new predictor coefficients are thusly obtained by the product of :math:`c` a
    array([ 0.00263158,  0.        ])
    >>> clf.intercept_    # doctest: +ELLIPSIS
    0.36578947368421072
+
+
+Ultimately, it aims to minimize a function
+similiar to that of the :class:`Lasso`:
+
+.. math::  \underset{c}{min\,} { \frac{1}{2n_{samples}} ||X c \beta - y||_2 ^ 2 + \alpha ||w||_1}
+
+where :math:`c` must follow the constraint:
+
+.. math::  c => 0
+
+:math:`\beta` are ordinary least square coefficients.
+The new predictor coefficients are thusly obtained by the product of :math:`c` and
+:math:`\beta`.
 
 There is also the :func:`non_negative_garrote_path` function that is
 useful for lower-level tasks by computing the coefficients along the full

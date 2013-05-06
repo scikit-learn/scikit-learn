@@ -2,8 +2,8 @@
 Non-Negative Garrote
 """
 
-# Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-#         Jaques Grobler <jaques.grobler@inria.fr>
+# Author: Jaques Grobler <jaques.grobler@inria.fr>
+#         Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #
 # License: BSD Style.
 
@@ -86,7 +86,7 @@ def non_negative_garrote(X, y, alpha, tol=0.001, fit_intercept=False,
     return coef, shrink_coef
 
 
-def non_negative_garrote_path(X, y, eps=1e-10, n_alphas=100, alphas=None,
+def non_negative_garrote_path(X, y, n_alphas=100, alphas=None,
                               precompute='auto', fit_intercept=False,
                               **params):
     """
