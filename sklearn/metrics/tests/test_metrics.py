@@ -437,8 +437,8 @@ def test_confusion_matrix_binary():
         cm = confusion_matrix(y_true, y_pred)
         assert_array_equal(cm, [[22, 3], [8, 17]])
 
-    test(y_true, y_pred)
-    test(map(str, y_true), map(str, y_pred))
+    for data_type in (int, str, ComparableObject):
+        test(map(data_type, y_true), map(data_type, y_pred))
 
 
 def test_matthews_corrcoef_nan():
@@ -534,7 +534,7 @@ def test_confusion_matrix_multiclass():
     """Test confusion matrix - multi-class case"""
     y_true, y_pred, _ = make_prediction(binary=False)
 
-    def test(y_true, y_pred, string_type=False):
+    def test(y_true, y_pred, data_type):
         # compute confusion matrix with default labels introspection
         cm = confusion_matrix(y_true, y_pred)
         assert_array_equal(cm, [[19, 4, 1],
@@ -542,7 +542,7 @@ def test_confusion_matrix_multiclass():
                                 [0, 2, 18]])
 
         # compute confusion matrix with explicit label ordering
-        labels = ['0', '2', '1'] if string_type else [0, 2, 1]
+        labels = map(data_type, [0, 2, 1])
         cm = confusion_matrix(y_true,
                               y_pred,
                               labels=labels)
@@ -550,8 +550,9 @@ def test_confusion_matrix_multiclass():
                                 [0, 18, 2],
                                 [4, 24, 3]])
 
-    test(y_true, y_pred)
-    test(map(str, y_true), map(str, y_pred), string_type=True)
+    for data_type in (int, str, ComparableObject):
+        test(map(data_type, y_true), map(data_type, y_pred),
+             data_type=data_type)
 
 
 def test_confusion_matrix_multiclass_subset_labels():
