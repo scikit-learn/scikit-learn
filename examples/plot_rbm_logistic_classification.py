@@ -23,14 +23,13 @@ print __doc__
 # Code source: Yann N. Dauphin
 # License: BSD
 
-
 import numpy as np
+import pylab as pl
 
-from sklearn import linear_model, datasets, metrics, preprocessing
+from sklearn import linear_model, datasets, metrics
 from sklearn.cross_validation import train_test_split
 from sklearn.neural_network import BernoulliRBM
 from sklearn.pipeline import Pipeline
-from sklearn.grid_search import GridSearchCV
 
 ###############################################################################
 # Setting up
@@ -48,32 +47,27 @@ X_train, X_test, Y_train, Y_test = train_test_split(X, Y,
 logistic = linear_model.LogisticRegression()
 rbm = BernoulliRBM()
 
-pipe = Pipeline(steps=[('rbm', rbm), ('logistic', logistic)])
+classifier = Pipeline(steps=[('rbm', rbm), ('logistic', logistic)])
 
 ###############################################################################
 # Training
 
-# Hyper-parameters
-n_components = [350, 400, 450]
-learning_rate = [0.01, 0.01]
-Cs = np.logspace(-4, 4, 2)
-n_iter = [20, 30]
+# Hyper-parameters. These were set with cross_validation,
+# using a GridSearchCV. Here we are not performing cross_validation to
+# save time.
+rbm.learning_rate = 0.2
+rbm.n_iter = 30
+# More component tend to give better prediction performance, but larger
+# fitting time
+rbm.n_components = 500
+logistic.C = 1e4
 
 # Training RBM-Logistic Pipeline
-estimator = GridSearchCV(pipe,
-                         dict(rbm__n_components=n_components,
-                              rbm__learning_rate=learning_rate,
-                              rbm__n_iter=n_iter,
-                              logistic__C=Cs))
-estimator.fit(X_train, Y_train)
-classifier = estimator.best_estimator_
+classifier.fit(X_train, Y_train)
 
 # Training Logistic regression
-logistic_estimator = GridSearchCV(logistic,
-                                  dict(C=Cs))
-logistic_estimator.fit(X_train, Y_train)
-logistic_classifier = logistic_estimator.best_estimator_
-
+logistic_classifier = linear_model.LogisticRegression(C=1e4)
+logistic_classifier.fit(X_train, Y_train)
 
 ###############################################################################
 # Evaluation
@@ -85,3 +79,18 @@ print "Classification report for classifier %s:\n%s\n" % (
 print "Classification report for classifier %s:\n%s\n" % (
     logistic_classifier, metrics.classification_report(Y_test,
         logistic_classifier.predict(X_test)))
+
+###############################################################################
+# Plotting
+
+pl.figure(figsize=(4.2, 4))
+for i, comp in enumerate(rbm.components_[:100]):
+    pl.subplot(10, 10, i + 1)
+    pl.imshow(comp.reshape((8, 8)), cmap=pl.cm.gray_r,
+              interpolation='nearest')
+    pl.xticks(())
+    pl.yticks(())
+pl.suptitle('100 Components extracted by RBM', fontsize=16)
+pl.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
+
+pl.show()
