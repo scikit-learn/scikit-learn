@@ -8,7 +8,7 @@ from ..base import BaseEstimator, TransformerMixin
 from ..utils import atleast2d_or_csc
 from ..externals import six
 
-from .univariate_selection import _BaseFilter
+from .base import FeatureSelectionMixin
 
 
 def count_nonzero(X, y=None):
@@ -31,10 +31,10 @@ def _calc_percentiles(X, scores):
     return ranks
 
 
-class SelectBetween(_BaseFilter):
+class SelectBetween(FeatureSelectionMixin):
     def __init__(self, score_func=count_nonzero, minimum=None, maximum=None,
                  scaling=None):
-        super(SelectBetween, self).__init__(score_func)
+        self.score_func = score_func
         self.minimum = minimum
         self.maximum = maximum
         self.scaling = scaling
