@@ -17,7 +17,8 @@ from sklearn.utils.testing import (assert_true,
                                    assert_almost_equal,
                                    assert_not_equal,
                                    assert_array_equal,
-                                   assert_array_almost_equal)
+                                   assert_array_almost_equal,
+                                   assert_greater)
 
 
 from sklearn.metrics import (accuracy_score,
@@ -31,6 +32,7 @@ from sklearn.metrics import (accuracy_score,
                              fbeta_score,
                              hamming_loss,
                              hinge_loss,
+                             jaccard_similarity_score,
                              matthews_corrcoef,
                              mean_squared_error,
                              mean_absolute_error,
@@ -45,21 +47,86 @@ from sklearn.metrics import (accuracy_score,
                              zero_one_loss)
 from sklearn.externals.six.moves import xrange
 
-ALL_METRICS = [accuracy_score,
-               lambda y1, y2: accuracy_score(y1, y2, normalize=False),
-               hamming_loss,
-               zero_one_loss,
-               lambda y1, y2: zero_one_loss(y1, y2, normalize=False),
-               precision_score,
-               recall_score,
-               f1_score,
-               lambda y1, y2: fbeta_score(y1, y2, beta=2),
-               lambda y1, y2: fbeta_score(y1, y2, beta=0.5),
-               matthews_corrcoef,
-               mean_absolute_error,
-               mean_squared_error,
-               explained_variance_score,
-               r2_score]
+ALL_METRICS = {
+    "accuracy_score": accuracy_score,
+    "unormalized_accuracy_score":
+    lambda y1, y2: accuracy_score(y1, y2, normalize=False),
+
+    "hamming_loss": hamming_loss,
+
+    "jaccard_similarity_score": jaccard_similarity_score,
+    "unormalized_jaccard_similarity_score":
+    lambda y1, y2: jaccard_similarity_score(y1, y2, normalize=False),
+
+    "zero_one_loss": zero_one_loss,
+    "unnormalized_zero_one_loss":
+    lambda y1, y2: zero_one_loss(y1, y2, normalize=False),
+
+    "precision_score": precision_score,
+    "recall_score": recall_score,
+    "f1_score": f1_score,
+    "f2_score": lambda y1, y2: fbeta_score(y1, y2, beta=2),
+    "f0.5_score": lambda y1, y2: fbeta_score(y1, y2, beta=0.5),
+    "matthews_corrcoef_score": matthews_corrcoef,
+
+    "mean_absolute_error": mean_absolute_error,
+    "mean_squared_error": mean_squared_error,
+    "explained_variance_score": explained_variance_score,
+    "r2_score": r2_score}
+
+METRICS_WITH_NORMALIZE_OPTION = {
+    "accuracy_score ": lambda y1, y2, normalize:
+    accuracy_score(y1, y2, normalize=normalize),
+    "jaccard_similarity_score": lambda y1, y2, normalize:
+    jaccard_similarity_score(y1, y2, normalize=normalize),
+    "zero_one_loss": lambda y1, y2, normalize:
+    zero_one_loss(y1, y2, normalize=normalize),
+}
+
+MULTILABELS_METRICS = {
+    "accuracy_score": accuracy_score,
+    "unormalized_accuracy_score":
+    lambda y1, y2: accuracy_score(y1, y2, normalize=False),
+
+    "hamming_loss": hamming_loss,
+
+    "jaccard_similarity_score": jaccard_similarity_score,
+    "unormalized_jaccard_similarity_score":
+    lambda y1, y2: jaccard_similarity_score(y1, y2, normalize=False),
+
+    "zero_one_loss": zero_one_loss,
+    "unnormalized_zero_one_loss":
+    lambda y1, y2: zero_one_loss(y1, y2, normalize=False),
+
+}
+
+SYMETRIC_METRICS = {
+    "accuracy_score": accuracy_score,
+    "unormalized_accuracy_score":
+    lambda y1, y2: accuracy_score(y1, y2, normalize=False),
+
+    "hamming_loss": hamming_loss,
+
+    "jaccard_similarity_score": jaccard_similarity_score,
+    "unormalized_jaccard_similarity_score":
+    lambda y1, y2: jaccard_similarity_score(y1, y2, normalize=False),
+
+    "zero_one_loss": zero_one_loss,
+    "unnormalized_zero_one_loss":
+    lambda y1, y2: zero_one_loss(y1, y2, normalize=False),
+
+    "f1_score": f1_score,
+    "matthews_corrcoef_score": matthews_corrcoef,
+    "mean_absolute_error": mean_absolute_error,
+    "mean_squared_error": mean_squared_error}
+
+NOT_SYMETRIC_METRICS = {
+    "precision_score": precision_score,
+    "recall_score": recall_score,
+    "f2_score": lambda y1, y2: fbeta_score(y1, y2, beta=2),
+    "f0.5_score": lambda y1, y2: fbeta_score(y1, y2, beta=0.5),
+    "explained_variance_score": explained_variance_score,
+    "r2_score": r2_score}
 
 
 def make_prediction(dataset=None, binary=False):
@@ -585,25 +652,19 @@ def test_losses():
     with warnings.catch_warnings(record=True):
     # Throw deprecated warning
         assert_equal(zero_one(y_true, y_pred), 11)
-        assert_almost_equal(zero_one(y_true, y_pred, normalize=True),
-                            11 / float(n_samples), 2)
 
     assert_almost_equal(zero_one_loss(y_true, y_pred),
                         11 / float(n_samples), 2)
     assert_equal(zero_one_loss(y_true, y_pred, normalize=False), 11)
-    assert_almost_equal(zero_one_loss(y_true, y_true), 0.0, 2)
-    assert_almost_equal(zero_one_loss(y_true, y_true, normalize=False), 0, 2)
 
+    assert_almost_equal(zero_one_loss(y_true, y_true), 0.0, 2)
     assert_almost_equal(hamming_loss(y_true, y_pred),
                         2 * 11. / (n_samples * n_classes), 2)
 
     assert_equal(accuracy_score(y_true, y_pred),
                  1 - zero_one_loss(y_true, y_pred))
 
-    assert_equal(accuracy_score(y_true, y_pred, normalize=False),
-                 n_samples - zero_one_loss(y_true, y_pred, normalize=False))
-
-    with warnings.catch_warnings(record=True):
+    with warnings.catch_warnings(True):
     # Throw deprecated warning
         assert_equal(zero_one_score(y_true, y_pred),
                      1 - zero_one_loss(y_true, y_pred))
@@ -648,31 +709,23 @@ def test_symmetry():
     """Test the symmetry of score and loss functions"""
     y_true, y_pred, _ = make_prediction(binary=True)
 
-    # Symmetric metric
-    for metric in [accuracy_score,
-                   lambda y1, y2: accuracy_score(y1, y2, normalize=False),
-                   zero_one_loss,
-                   lambda y1, y2: zero_one_loss(y1, y2, normalize=False),
-                   hamming_loss,
-                   f1_score,
-                   matthews_corrcoef,
-                   mean_squared_error,
-                   mean_absolute_error]:
+    # We shouldn't forget any metrics
+    assert_equal(set(SYMETRIC_METRICS).union(set(NOT_SYMETRIC_METRICS)),
+                 set(ALL_METRICS))
 
+    assert_equal(set(SYMETRIC_METRICS).intersection(set(NOT_SYMETRIC_METRICS)),
+                 set([]))
+
+    # Symmetric metric
+    for name, metric in SYMETRIC_METRICS.items():
         assert_equal(metric(y_true, y_pred),
                      metric(y_pred, y_true),
-                     msg="%s is not symetric" % metric)
+                     msg="%s is not symetric" % name)
 
     # Not symmetric metrics
-    for metric in [precision_score,
-                   recall_score,
-                   lambda y1, y2: fbeta_score(y1, y2, beta=0.5),
-                   lambda y1, y2: fbeta_score(y1, y2, beta=2),
-                   explained_variance_score,
-                   r2_score]:
-
+    for name, metric in NOT_SYMETRIC_METRICS.items():
         assert_true(metric(y_true, y_pred) != metric(y_pred, y_true),
-                    msg="%s seems to be symetric" % metric)
+                    msg="%s seems to be symetric" % name)
 
     # Deprecated metrics
     with warnings.catch_warnings(record=True):
@@ -693,7 +746,7 @@ def test_sample_order_invariance():
     y_true_shuffle, y_pred_shuffle = shuffle(y_true, y_pred,
                                              random_state=0)
 
-    for metric in ALL_METRICS:
+    for name, metric in ALL_METRICS.items():
 
         assert_almost_equal(metric(y_true, y_pred),
                             metric(y_true_shuffle, y_pred_shuffle),
@@ -715,7 +768,7 @@ def test_format_invariance_with_1d_vectors():
     y1_row = np.reshape(y1_1d, (1, -1))
     y2_row = np.reshape(y2_1d, (1, -1))
 
-    for metric in ALL_METRICS:
+    for name, metric in ALL_METRICS.items():
 
         measure = metric(y1, y2)
 
@@ -851,11 +904,6 @@ def test_multioutput_regression_invariance_to_dimension_shuffling():
 
 
 def test_multilabel_representation_invariance():
-
-    MULTILABELS_METRICS = [hamming_loss,
-                           zero_one_loss,
-                           accuracy_score]
-
     # Generate some data
     n_classes = 4
     n_samples = 50
@@ -887,7 +935,7 @@ def test_multilabel_representation_invariance():
     y1_shuffle_binary_indicator = lb.transform(y1_shuffle)
     y2_shuffle_binary_indicator = lb.transform(y2_shuffle)
 
-    for metric in MULTILABELS_METRICS:
+    for name, metric in MULTILABELS_METRICS.items():
         measure = metric(y1, y2)
 
         # Check representation invariance
@@ -896,30 +944,30 @@ def test_multilabel_representation_invariance():
                             err_msg="%s failed representation invariance  "
                                     "between list of list of labels format "
                                     "and dense binary indicator format."
-                                    % metric)
+                                    % name)
 
         # Check invariance with redundant labels with list of labels
         assert_almost_equal(measure,
                             metric(y1, y2_redundant),
                             err_msg="%s failed rendundant label invariance"
-                                    % metric)
+                                    % name)
 
         assert_almost_equal(measure,
                             metric(y1_redundant, y2_redundant),
                             err_msg="%s failed rendundant label invariance"
-                                    % metric)
+                                    % name)
 
         assert_almost_equal(measure,
                             metric(y1_redundant, y2),
                             err_msg="%s failed rendundant label invariance"
-                                    % metric)
+                                    % name)
 
         # Check shuffling invariance with list of labels
         assert_almost_equal(measure,
                             metric(y1_shuffle, y2_shuffle),
                             err_msg="%s failed shuffling invariance "
                                     "with list of list of labels format."
-                                    % metric)
+                                    % name)
 
         # Check shuffling invariance with dense binary indicator matrix
         assert_almost_equal(measure,
@@ -927,7 +975,7 @@ def test_multilabel_representation_invariance():
                                    y2_shuffle_binary_indicator),
                             err_msg="%s failed shuffling invariance "
                                     " with dense binary indicator format."
-                                    % metric)
+                                    % name)
 
         # Check invariance with mix input representation
         assert_almost_equal(measure,
@@ -937,7 +985,7 @@ def test_multilabel_representation_invariance():
                                     "invariance: y_true in list of list of "
                                     "labels format and y_pred in dense binary"
                                     "indicator format"
-                                    % metric)
+                                    % name)
 
         assert_almost_equal(measure,
                             metric(y1_binary_indicator,
@@ -946,15 +994,15 @@ def test_multilabel_representation_invariance():
                                     "invariance: y_true in dense binary "
                                     "indicator format and y_pred in list of "
                                     "list of labels format."
-                                    % metric)
+                                    % name)
 
 
-def test_multilabel_zero_one_loss():
+def test_multilabel_zero_one_loss_subset():
     # Dense label indicator matrix format
-    y1 = np.array([[0.0, 1.0, 1.0],
-                   [1.0, 0.0, 1.0]])
-    y2 = np.array([[0.0, 0.0, 1.0],
-                   [1.0, 0.0, 1.0]])
+    y1 = np.array([[0, 1, 1],
+                   [1, 0, 1]])
+    y2 = np.array([[0, 0, 1],
+                   [1, 0, 1]])
 
     assert_equal(0.5, zero_one_loss(y1, y2))
     assert_equal(0.0, zero_one_loss(y1, y1))
@@ -964,20 +1012,9 @@ def test_multilabel_zero_one_loss():
     assert_equal(1.0, zero_one_loss(y1, np.zeros(y1.shape)))
     assert_equal(1.0, zero_one_loss(y2, np.zeros(y1.shape)))
 
-    assert_equal(1, zero_one_loss(y1, y2, normalize=False))
-    assert_equal(0, zero_one_loss(y1, y1, normalize=False))
-    assert_equal(0, zero_one_loss(y2, y2, normalize=False))
-    assert_equal(2, zero_one_loss(y2, np.logical_not(y2), normalize=False))
-    assert_equal(2, zero_one_loss(y1, np.logical_not(y1), normalize=False))
-    assert_equal(2, zero_one_loss(y1, np.zeros(y1.shape), normalize=False))
-    assert_equal(2, zero_one_loss(y2, np.zeros(y1.shape), normalize=False))
-
     # List of tuple of label
-    y1 = [(1, 2,),
-          (0, 2,)]
-
-    y2 = [(2,),
-          (0, 2,)]
+    y1 = [(1, 2,), (0, 2,)]
+    y2 = [(2,), (0, 2,)]
 
     assert_equal(0.5, zero_one_loss(y1, y2))
     assert_equal(0.0, zero_one_loss(y1, y1))
@@ -985,19 +1022,13 @@ def test_multilabel_zero_one_loss():
     assert_equal(1.0, zero_one_loss(y2, [(), ()]))
     assert_equal(1.0, zero_one_loss(y2, [tuple(), (10, )]))
 
-    assert_equal(1, zero_one_loss(y1, y2, normalize=False))
-    assert_equal(0, zero_one_loss(y1, y1, normalize=False))
-    assert_equal(0, zero_one_loss(y2, y2, normalize=False))
-    assert_equal(2, zero_one_loss(y2, [(), ()], normalize=False))
-    assert_equal(2, zero_one_loss(y2, [tuple(), (10, )], normalize=False))
-
 
 def test_multilabel_hamming_loss():
     # Dense label indicator matrix format
-    y1 = np.array([[0.0, 1.0, 1.0],
-                   [1.0, 0.0, 1.0]])
-    y2 = np.array([[0.0, 0.0, 1.0],
-                   [1.0, 0.0, 1.0]])
+    y1 = np.array([[0, 1, 1],
+                   [1, 0, 1]])
+    y2 = np.array([[0, 0, 1],
+                   [1, 0, 1]])
 
     assert_equal(1 / 6., hamming_loss(y1, y2))
     assert_equal(0.0, hamming_loss(y1, y1))
@@ -1008,11 +1039,9 @@ def test_multilabel_hamming_loss():
     assert_equal(0.5, hamming_loss(y2, np.zeros(y1.shape)))
 
     # List of tuple of label
-    y1 = [(1, 2,),
-          (0, 2,)]
+    y1 = [(1, 2,), (0, 2,)]
 
-    y2 = [(2,),
-          (0, 2,)]
+    y2 = [(2,), (0, 2,)]
 
     assert_equal(1 / 6., hamming_loss(y1, y2))
     assert_equal(0.0, hamming_loss(y1, y1))
@@ -1023,12 +1052,12 @@ def test_multilabel_hamming_loss():
                                              classes=np.arange(11)), 2)
 
 
-def test_multilabel_accuracy_score():
+def test_multilabel_accuracy_score_subset_accuracy():
     # Dense label indicator matrix format
-    y1 = np.array([[0.0, 1.0, 1.0],
-                   [1.0, 0.0, 1.0]])
-    y2 = np.array([[0.0, 0.0, 1.0],
-                   [1.0, 0.0, 1.0]])
+    y1 = np.array([[0, 1, 1],
+                   [1, 0, 1]])
+    y2 = np.array([[0, 0, 1],
+                   [1, 0, 1]])
 
     assert_equal(0.5, accuracy_score(y1, y2))
     assert_equal(1.0, accuracy_score(y1, y1))
@@ -1038,27 +1067,128 @@ def test_multilabel_accuracy_score():
     assert_equal(0.0, accuracy_score(y1, np.zeros(y1.shape)))
     assert_equal(0.0, accuracy_score(y2, np.zeros(y1.shape)))
 
-    assert_equal(1, accuracy_score(y1, y2, normalize=False))
-    assert_equal(2, accuracy_score(y1, y1, normalize=False))
-    assert_equal(2, accuracy_score(y2, y2, normalize=False))
-    assert_equal(0, accuracy_score(y2, np.logical_not(y2), normalize=False))
-    assert_equal(0, accuracy_score(y1, np.logical_not(y1), normalize=False))
-    assert_equal(0, accuracy_score(y1, np.zeros(y1.shape), normalize=False))
-    assert_equal(0, accuracy_score(y2, np.zeros(y1.shape), normalize=False))
-
     # List of tuple of label
-    y1 = [(1, 2,),
-          (0, 2,)]
-
-    y2 = [(2,),
-          (0, 2,)]
+    y1 = [(1, 2,), (0, 2,)]
+    y2 = [(2,), (0, 2,)]
 
     assert_equal(0.5, accuracy_score(y1, y2))
     assert_equal(1.0, accuracy_score(y1, y1))
     assert_equal(1.0, accuracy_score(y2, y2))
     assert_equal(0.0, accuracy_score(y2, [(), ()]))
 
-    assert_equal(1, accuracy_score(y1, y2, normalize=False))
-    assert_equal(2, accuracy_score(y1, y1, normalize=False))
-    assert_equal(2, accuracy_score(y2, y2, normalize=False))
-    assert_equal(0, accuracy_score(y2, [(), ()], normalize=False))
+
+def test_multilabel_jaccard_similarity_score():
+    # Dense label indicator matrix format
+    y1 = np.array([[0.0, 1.0, 1.0],
+                   [1.0, 0.0, 1.0]])
+    y2 = np.array([[0.0, 0.0, 1.0],
+                   [1.0, 0.0, 1.0]])
+
+    # size(y1 \inter y2) = [1, 2]
+    # size(y1 \union y2) = [2, 2]
+
+    assert_equal(0.75, jaccard_similarity_score(y1, y2))
+    assert_equal(1.0, jaccard_similarity_score(y1, y1))
+
+    assert_equal(1.0, jaccard_similarity_score(y2, y2))
+    assert_equal(0.0, jaccard_similarity_score(y2, np.logical_not(y2)))
+    assert_equal(0.0, jaccard_similarity_score(y1, np.logical_not(y1)))
+    assert_equal(0.0, jaccard_similarity_score(y1, np.zeros(y1.shape)))
+    assert_equal(0.0, jaccard_similarity_score(y2, np.zeros(y1.shape)))
+
+    # With a given pos_label
+    assert_equal(0.75, jaccard_similarity_score(y1, y2, pos_label=0))
+    assert_equal(0.5, jaccard_similarity_score(y2, np.zeros(y1.shape),
+                                               pos_label=0))
+    assert_equal(1, jaccard_similarity_score(y1, y2, pos_label=10))
+
+   # List of tuple of label
+    y1 = [(1, 2,), (0, 2,)]
+    y2 = [(2,), (0, 2,)]
+
+    assert_equal(0.75, jaccard_similarity_score(y1, y2))
+    assert_equal(1.0, jaccard_similarity_score(y1, y1))
+    assert_equal(1.0, jaccard_similarity_score(y2, y2))
+    assert_equal(0.0, jaccard_similarity_score(y2, [(), ()]))
+
+    # |y3 inter y4 | = [0, 1, 1]
+    # |y3 union y4 | = [2, 1, 3]
+    y3 = [(0,), (1,), (3,)]
+    y4 = [(4,), (4,), (5, 6)]
+    assert_almost_equal(0, jaccard_similarity_score(y3, y4))
+
+    # |y5 inter y6 | = [0, 1, 1]
+    # |y5 union y6 | = [2, 1, 3]
+    y5 = [(0,), (1,), (2, 3)]
+    y6 = [(1,), (1,), (2, 0)]
+
+    assert_almost_equal((1 + 1. / 3) / 3, jaccard_similarity_score(y5, y6))
+
+
+def test_normalize_option_binary_classification():
+    # Test in the binary case
+    y_true, y_pred, _ = make_prediction(binary=True)
+    n_samples = y_true.shape[0]
+
+    for name, metrics in METRICS_WITH_NORMALIZE_OPTION.items():
+        measure = metrics(y_true, y_pred, normalize=True)
+        assert_greater(measure, 0,
+                       msg="We failed to test correctly the normalize option")
+        assert_almost_equal(metrics(y_true, y_pred, normalize=False)
+                            / n_samples, measure)
+
+
+def test_normalize_option_multiclasss_classification():
+    # Test in the multiclass case
+    y_true, y_pred, _ = make_prediction(binary=False)
+    n_samples = y_true.shape[0]
+
+    for name, metrics in METRICS_WITH_NORMALIZE_OPTION.items():
+        measure = metrics(y_true, y_pred, normalize=True)
+        assert_greater(measure, 0,
+                       msg="We failed to test correctly the normalize option")
+        assert_almost_equal(metrics(y_true, y_pred, normalize=False)
+                            / n_samples, measure)
+
+
+def test_normalize_option_multilabel_classification():
+    # Test in the multilabel case
+    n_classes = 4
+    n_samples = 100
+    _, y_true = make_multilabel_classification(n_features=1,
+                                               n_classes=n_classes,
+                                               random_state=0,
+                                               n_samples=n_samples)
+    _, y_pred = make_multilabel_classification(n_features=1,
+                                               n_classes=n_classes,
+                                               random_state=1,
+                                               n_samples=n_samples)
+
+    # Be sure to have at least one empty label
+    y_true += ([], )
+    y_pred += ([], )
+    n_samples += 1
+
+    lb = LabelBinarizer().fit([range(n_classes)])
+    y_true_binary_indicator = lb.transform(y_true)
+    y_pred_binary_indicator = lb.transform(y_pred)
+
+    for name, metrics in METRICS_WITH_NORMALIZE_OPTION.items():
+        # List of list of labels
+        measure = metrics(y_true, y_pred, normalize=True)
+        assert_greater(measure, 0,
+                       msg="We failed to test correctly the normalize option")
+        assert_almost_equal(metrics(y_true, y_pred, normalize=False)
+                            / n_samples, measure,
+                            err_msg="Failed with %s" % name)
+
+        # Indicator matrix format
+        measure = metrics(y_true_binary_indicator,
+                          y_pred_binary_indicator, normalize=True)
+        assert_greater(measure, 0,
+                       msg="We failed to test correctly the normalize option")
+        assert_almost_equal(metrics(y_true_binary_indicator,
+                                    y_pred_binary_indicator, normalize=False)
+                            / n_samples,
+                            measure,
+                            err_msg="Failed with %s" % name)

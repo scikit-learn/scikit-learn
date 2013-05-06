@@ -27,8 +27,9 @@ Changelog
      guide for details and examples.
 
    - :func:`metrics.accuracy_score`, :func:`metrics.zero_one_loss` support
-     multi-label classification and a new metric :func:`metrics.hamming_loss`
-     is added with multi-label support by `Arnaud Joly`_.
+     multi-label classification and two new metrics :func:`metrics.hamming_loss`
+     and :func:`metrics.jaccard_similarity_score`
+     are added with multi-label support by `Arnaud Joly`_.
 
    - Speed and memory usage improvements in
      :class:`feature_extraction.text.CountVectorizer` and
