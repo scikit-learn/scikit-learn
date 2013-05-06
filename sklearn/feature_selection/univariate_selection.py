@@ -293,11 +293,12 @@ class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator,
 
     def inverse_transform(self, X):
         """
-        Transform a new matrix using the selected features
+        Reverse the transformation operation
+
+        Returns `X` with columns of zeros inserted where features would have
+        been removed by `transform`.
         """
         support_ = self.get_support()
-        if issparse(X):
-            X = X.tocsc()
         if X.ndim == 1:
             X = X[None, :]
         Xt = np.zeros((X.shape[0], support_.size), dtype=X.dtype)
