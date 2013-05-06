@@ -392,6 +392,20 @@ def test_precision_recall_fscore_support_errors():
                   [0, 1, 2], [1, 2, 0], average='mega')
 
 
+def test_matthews_corrcoef():
+    y_true, y_pred, _ = make_prediction(binary=True)
+
+    cm = np.array([[22, 3], [8, 17]], dtype=np.int)
+    tp, fp, fn, tn = cm.flatten()
+    num = (tp * tn - fp * fn)
+    den = np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
+
+    true_mcc = 0 if den == 0 else num / den
+    mcc = matthews_corrcoef(y_true, y_pred)
+    assert_array_almost_equal(mcc, true_mcc, decimal=2)
+    assert_array_almost_equal(mcc, 0.57, decimal=2)
+
+
 def test_confusion_matrix_binary():
     """Test confusion matrix - binary classification case"""
     y_true, y_pred, _ = make_prediction(binary=True)
@@ -399,15 +413,6 @@ def test_confusion_matrix_binary():
     def test(y_true, y_pred):
         cm = confusion_matrix(y_true, y_pred)
         assert_array_equal(cm, [[22, 3], [8, 17]])
-
-        tp, fp, fn, tn = cm.flatten()
-        num = (tp * tn - fp * fn)
-        den = np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
-
-        true_mcc = 0 if den == 0 else num / den
-        mcc = matthews_corrcoef(y_true, y_pred)
-        assert_array_almost_equal(mcc, true_mcc, decimal=2)
-        assert_array_almost_equal(mcc, 0.57, decimal=2)
 
     test(y_true, y_pred)
     test(map(str, y_true), map(str, y_pred))
