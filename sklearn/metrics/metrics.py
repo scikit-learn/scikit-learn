@@ -1678,9 +1678,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         recall[(true_pos + false_neg) == 0] = 0.0
 
         # fbeta score
-        fscore = np.divide((1 + beta2) * precision * recall,
-                           beta2 * precision + recall,
-                           dtype=np.double)
+        fscore = divide((1 + beta2) * precision * recall,
+                        beta2 * precision + recall)
 
         # handle division by 0 in fscore
         fscore[(beta2 * precision + recall) == 0] = 0.0
