@@ -211,9 +211,9 @@ class NonNegativeGarrote(LinearModel):
     NonNegativeGarrote(alpha=0.1, copy_X=True, fit_intercept=True, max_iter=1000,
        normalize=False, precompute='auto', tol=0.0001)
     >>> clf.coef_ # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    array([ 0.00263158,  0.        ])
+    array([ 0.0026...,  0.        ])
     >>> clf.intercept_ # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
-    0.36578947368421072
+    0.36...
 
     See also
     --------
