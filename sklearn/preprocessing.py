@@ -1246,3 +1246,68 @@ def balance_weights(y):
     weights *= bins.min()
 
     return weights
+
+
+class DataFrameMapper(BaseEstimator, TransformerMixin):
+    """DataFrameMapper
+
+    Let K(x_i, x_j) be a kernel defined by K(x_i, x_j) = phi(x_i)^T phi(x_j),
+    where phi(x) is a function mapping x to a hilbert space. KernelCenterer is
+    a class to center (i.e., normalize to have zero-mean) the data without
+    explicitly computing phi(x). It is equivalent equivalent to centering
+    phi(x) with sklearn.preprocessing.StandardScaler(with_std=False).
+    """
+
+    def __init__(self, features, sub=None):
+        if sub is None:
+            self.features = features
+        else:
+            self.features = [(column, transformer) for column, transformer in features if column in sub]
+
+        self.columns = [column for column, transformer in features]
+
+    def fit(self, X, y=None):
+        """Fit KernelCenterer
+
+        Parameters
+        ----------
+        K : numpy array of shape [n_samples, n_samples]
+            Kernel matrix.
+
+        Returns
+        -------
+        self : returns an instance of self.
+        """
+        for columns, transformer in self.features:
+            try:
+                transformer.fit(X[columns], y)
+            except TypeError:
+                transformer.fit(X[columns])
+        return self
+
+    def transform(self, X):
+        """Center kernel
+
+        Parameters
+        ----------
+        K : numpy array of shape [n_samples1, n_samples2]
+            Kernel matrix.
+
+        Returns
+        -------
+        K_new : numpy array of shape [n_samples1, n_samples2]
+        """
+        extracted = []
+        for columns, transformer in self.features:
+            fea = transformer.transform(X[columns])
+            if hasattr(fea, "toarray"):
+                extracted.append(fea.toarray())
+            else:
+                if len(fea.shape) == 1:
+                    fea = np.array([fea]).T
+                extracted.append(fea)
+        if len(extracted) > 1:
+            return np.concatenate(extracted, axis=1)
+        else:
+            return extracted[0]
+

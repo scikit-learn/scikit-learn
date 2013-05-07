@@ -208,6 +208,8 @@ def check_arrays(*arrays, **options):
                 else:
                     array.data = np.asarray(array.data, dtype=dtype)
                 _assert_all_finite(array.data)
+            elif hasattr(array, "__array__") and not isinstance(array, np.ndarray):  # pandas dataframe
+                _assert_all_finite(array.__array__())
             else:
                 if check_ccontiguous:
                     array = np.ascontiguousarray(array, dtype=dtype)
