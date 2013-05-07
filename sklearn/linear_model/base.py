@@ -324,7 +324,7 @@ class LinearRegression(LinearModel, RegressorMixin):
     Notes
     -----
     From the implementation point of view, this is just plain Ordinary
-    Least Squares (numpy.linalg.lstsq) wrapped as a predictor object.
+    Least Squares (scipy.linalg.lstsq) wrapped as a predictor object.
 
     """
 
