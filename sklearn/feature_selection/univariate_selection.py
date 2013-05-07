@@ -12,7 +12,7 @@ from functools import reduce
 
 import numpy as np
 from scipy import stats
-from scipy.sparse import issparse
+from scipy.sparse import issparse, csc_matrix
 
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelBinarizer
@@ -293,12 +293,25 @@ class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator,
 
     def inverse_transform(self, X):
         """
-        Transform a new matrix using the selected features
+        Reverse the transformation operation
+
+        Returns `X` with columns of zeros inserted where features would have
+        been removed by `transform`.
         """
         support_ = self.get_support()
+        if issparse(X):
+            X = X.tocsc()
+            # insert additional entries in indptr:
+            # e.g. if transform changed indptr from [0 2 6 7] to [0 2 3]
+            # col_nonzeros here will be [2 0 1] so indptr becomes [0 2 2 3]
+            col_nonzeros = self.inverse_transform(np.diff(X.indptr)).ravel()
+            indptr = np.concatenate([[0], np.cumsum(col_nonzeros)])
+            Xt = csc_matrix((X.data, X.indices, indptr),
+                            shape=(X.shape[0], len(indptr) - 1), dtype=X.dtype)
+            return Xt
         if X.ndim == 1:
             X = X[None, :]
-        Xt = np.zeros((X.shape[0], support_.size))
+        Xt = np.zeros((X.shape[0], support_.size), dtype=X.dtype)
         Xt[:, support_] = X
         return Xt
 
