@@ -184,8 +184,9 @@ def test_lasso_path_old_return_vs_new_return_gives_same_coefficients():
     # Some toy data
     X = np.array([[1, 2, 3.1], [2.3, 5.4, 4.3]]).T
     y = np.array([1, 2, 3.1])
+    alphas = [5., 1., .5]
     # Compute the lasso_path
-    coef_path = [e.coef_ for e in lasso_path(X, y, alphas=[5., 1., .5],
+    coef_path = [e.coef_ for e in lasso_path(X, y, alphas=alphas,
                                              fit_intercept=False)]
 
     # Use lars_path and lasso_path(new output) with 1D linear interpolation
@@ -193,16 +194,16 @@ def test_lasso_path_old_return_vs_new_return_gives_same_coefficients():
     alphas_lars, _, coef_path_lars = lars_path(X, y, method='lasso')
     coef_path_cont_lars = interpolate.interp1d(alphas_lars[::-1],
                                                coef_path_lars[:, ::-1])
-    alphas_lasso2, coef_path_lasso2 = lasso_path(X, y, alphas=[5., 1., .5],
+    alphas_lasso2, coef_path_lasso2 = lasso_path(X, y, alphas=alphas,
                                                  fit_intercept=False,
                                                  old_return=False)
     coef_path_cont_lasso = interpolate.interp1d(alphas_lasso2[::-1],
                                                 coef_path_lasso2[:, ::-1])
 
-    np.testing.assert_array_almost_equal(coef_path_cont_lasso([5., 1., .5]),
+    np.testing.assert_array_almost_equal(coef_path_cont_lasso(alphas),
                                          np.asarray(coef_path).T, decimal=1)
-    np.testing.assert_array_almost_equal(coef_path_cont_lasso([5., 1., .5]),
-                                         coef_path_cont_lars([5., 1., .5]),
+    np.testing.assert_array_almost_equal(coef_path_cont_lasso(alphas),
+                                         coef_path_cont_lars(alphas),
                                          decimal=1)
 
 
