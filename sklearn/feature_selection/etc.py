@@ -1,5 +1,7 @@
+from __future__ import division
 from abc import ABCMeta, abstractmethod
 import array
+from warnings import warn
 
 import numpy as np
 from scipy.sparse import issparse
@@ -157,20 +159,78 @@ class SelectBetweenMixin(FeatureSelectionMixin):
         self.__scores = _clean_nans(scores)
         return self
 
-    def _get_support_mask(self, minimum=None, maximum=None, scaling=None):
-        scale = self._make_scaler(scaling)
+    def _get_support_mask(self, minimum=None, maximum=None, scaling=None, limit=None):
         support = np.ones(self.__scores.shape, dtype=bool)
+
         lo = self._calc_threshold(minimum)
         hi = self._calc_threshold(maximum)
-        if lo is None and hi is None:
-            return support
+        if lo is not None or hi is not None:
+            scale = self._make_scaler(scaling)
+            scaled_scores = getattr(scale, 'scaled_scores', self.__scores)
+            if lo is not None:
+                support &= scaled_scores >= scale(lo)
+            if hi is not None:
+                support &= scaled_scores <= scale(hi)
 
-        scaled_scores = getattr(scale, 'scaled_scores', self.__scores)
-        if lo is not None:
-            support &= scaled_scores >= scale(lo)
-        if hi is not None:
-            support &= scaled_scores <= scale(hi)
+        if limit is not None:
+            self._limit_support(support, self.__scores, limit)
+
         return support
+
+    @staticmethod
+    def _limit_support(support, scores, limit):
+        """
+        Limits the number of True values in support to limit
+
+        Modifies support in-place: if it had more than limit True values,
+        it will be left with exactly limit True values.
+
+        A positive limit keeps the highest supported scores, while a negative
+        limit keeps the lowest supported scores.
+
+        If limit is a float strictly between 0 and +-1, it will be treated as a
+        proportion of the number of scores.
+        """
+        limit, greatest = abs(limit), limit > 0
+        if limit <= 0 or (limit >= 1 and int(limit) != limit):
+            raise ValueError(
+                'Require 0 < limit < 1 or integer limit >= 1')
+        elif limit < 1.:
+            limit = int(limit * len(scores))
+
+        n_support = support.sum()
+        if n_support <= limit:
+            # already meet the limit
+            return
+
+        percentile = 100. * min(limit - 1, n_support - 1) / (n_support - 1)
+        if greatest:
+            percentile = 100. - percentile
+
+        kept_scores = scores[support]
+        cutoff = np.percentile(scores[support], percentile)
+
+        print('_limit_support', support, scores, limit, greatest, percentile, cutoff)
+        # take features strictly better than the cutoff
+        if greatest:
+            support_mask = kept_scores > cutoff
+        else:
+            support_mask = kept_scores < cutoff
+
+        # Because we chose percentile to exactly match some score, there
+        # will always be at least one remaining. Where it matches multiple
+        # score, we may need to arbitrarily break the tie.
+        n_remaining = limit - support_mask.sum()
+        ties = np.where(kept_scores == cutoff)[0]
+        if len(ties) > n_remaining:
+            warn("Tied features are being arbitrarily split. "
+                 "There may be duplicate features, or you used a "
+                 "classification score for a regression task.")
+        kept_ties = ties[:n_remaining]
+        support_mask[kept_ties] = True
+
+        # finally, update support
+        support[support] = support_mask
 
 
 class SelectBetween(BaseEstimator, SelectBetweenMixin):

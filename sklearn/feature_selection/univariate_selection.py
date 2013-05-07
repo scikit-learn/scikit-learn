@@ -357,22 +357,12 @@ class SelectPercentile(_ScoreFilter):
         if percentile > 100:
             raise ValueError("percentile should be between 0 and 100"
                              " (%f given)" % (percentile))
-        # Cater for NaNs
         if percentile == 100:
             return np.ones(len(self.scores_), dtype=np.bool)
         elif percentile == 0:
             return np.zeros(len(self.scores_), dtype=np.bool)
-        mask = super(SelectPercentile, self)._get_support_mask(
-            minimum=100 - percentile, scaling='percentile')
-
-        # TODO: put limiting behaviour in SelectBetween
-        inds = np.where(mask)[0]
-        # if we selected too many features because of equal scores,
-        # we throw them away now
-        inds = inds[:len(self.scores_) * percentile // 100]
-        mask = np.zeros(self.scores_.shape, dtype=np.bool)
-        mask[inds] = True
-        return mask
+        return super(SelectPercentile, self)._get_support_mask(
+            limit=percentile / 100.)
 
 
 class SelectKBest(_ScoreFilter, SelectBetweenMixin):
@@ -407,8 +397,6 @@ class SelectKBest(_ScoreFilter, SelectBetweenMixin):
         self.k = k
         super(SelectKBest, self).__init__(score_func)
 
-    scaling = 'decorder'
-
     def _get_support_mask(self):
         k = self.k
         if k == 'all':
@@ -417,8 +405,7 @@ class SelectKBest(_ScoreFilter, SelectBetweenMixin):
             raise ValueError("Cannot select %d features among %d. "
                              "Use k='all' to return all features."
                              % (k, len(self.scores_)))
-        return super(SelectKBest, self)._get_support_mask(maximum=k - 1,
-                                                          scaling=self.scaling)
+        return super(SelectKBest, self)._get_support_mask(limit=k)
 
 
 class SelectFpr(_PvalueFilter):
