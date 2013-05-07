@@ -11,6 +11,7 @@ from nose.tools import assert_equal, assert_raises, assert_true
 from numpy.testing import assert_array_equal, assert_array_almost_equal
 from sklearn.utils.testing import assert_not_in
 
+from sklearn.utils import safe_mask
 from sklearn.datasets.samples_generator import (make_classification,
                                                 make_regression)
 from sklearn.feature_selection import (chi2, f_classif, f_oneway, f_regression,
@@ -162,6 +163,14 @@ def test_select_percentile_classif_sparse():
     gtruth[:5] = 1
     assert_array_equal(support, gtruth)
 
+    X_r2inv = univariate_filter.inverse_transform(X_r2)
+    assert_true(sparse.issparse(X_r2inv))
+    support_mask = safe_mask(X_r2inv, support)
+    assert_equal(X_r2inv.shape, X.shape)
+    assert_array_equal(X_r2inv[:, support_mask].toarray(), X_r.toarray())
+    # Check other columns are empty
+    assert_equal(X_r2inv.getnnz(), X_r.getnnz())
+
 
 ##############################################################################
 # Test univariate selection in classification settings
@@ -303,6 +312,9 @@ def test_select_percentile_regression():
     X_2 = X.copy()
     X_2[:, np.logical_not(support)] = 0
     assert_array_equal(X_2, univariate_filter.inverse_transform(X_r))
+    # Check inverse_transform respects dtype
+    assert_array_equal(X_2.astype(bool),
+                       univariate_filter.inverse_transform(X_r.astype(bool)))
 
 
 def test_select_percentile_regression_full():
