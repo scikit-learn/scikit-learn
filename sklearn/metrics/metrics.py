@@ -963,7 +963,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True, pos_label=1):
                 np.seterr(**old_err_settings)
 
         else:
-            score = np.empty(len(y_true))
+            score = np.empty(len(y_true), dtype=np.float)
             for i, (true, pred) in enumerate(zip(y_pred, y_true)):
                 true_set = set(true)
                 pred_set = set(pred)
@@ -1629,9 +1629,9 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 size_pred = np.sum(y_pred_pos_label, axis=1)
 
             else:
-                size_inter = np.empty(len(y_true))
-                size_true = np.empty(len(y_true))
-                size_pred = np.empty(len(y_true))
+                size_inter = np.empty(len(y_true), dtype=np.int)
+                size_true = np.empty(len(y_true), dtype=np.int)
+                size_pred = np.empty(len(y_true), dtype=np.int)
                 for i, (true, pred) in enumerate(zip(y_true, y_pred)):
                     true_set = set(true)
                     pred_set = set(pred)
