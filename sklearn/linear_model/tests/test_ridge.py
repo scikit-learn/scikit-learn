@@ -349,7 +349,7 @@ def test_dense_sparse():
 def test_ridge_cv_sparse_svd():
     X = sp.csr_matrix(X_diabetes)
     ridge = RidgeCV(gcv_mode="svd")
-    assert_raises(TypeError, RidgeCV.fit, X)
+    assert_raises(TypeError, ridge.fit, X)
 
 
 def test_class_weights():
