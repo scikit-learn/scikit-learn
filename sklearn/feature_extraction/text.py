@@ -702,11 +702,11 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         indptr = np.frombuffer(indptr, dtype=np.intc)
         values = np.ones(len(j_indices))
 
-        m = sp.csr_matrix(
-            (values, j_indices, indptr),
-            shape=(len(indptr) - 1, len(vocabulary)), dtype=self.dtype)
-        m = m.tocoo()  # trigger duplicate feature summation
-        return vocabulary, m
+        X = sp.csr_matrix((values, j_indices, indptr),
+                          shape=(len(indptr) - 1, len(vocabulary)),
+                          dtype=self.dtype)
+        X = X.tocoo()  # trigger duplicate feature summation
+        return vocabulary, X
 
     def fit(self, raw_documents, y=None):
         """Learn a vocabulary dictionary of all tokens in the raw documents.
@@ -740,21 +740,20 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         # We intentionally don't call the transform method to make
         # fit_transform overridable without unwanted side effects in
         # TfidfVectorizer.
-        fixed_vocab = self.fixed_vocabulary
         max_df = self.max_df
         min_df = self.min_df
         max_features = self.max_features
 
-        vocabulary, m = self._count_vocab(raw_documents, fixed_vocab)
-        csc_m = m.tocsc()
-        del m
+        vocabulary, X = self._count_vocab(raw_documents, self.fixed_vocabulary)
+        X = X.tocsc()
 
         if self.binary:
-            csc_m.data.fill(1)
-        if not fixed_vocab:
-            csc_m = self._sort_features(csc_m, vocabulary)
+            X.data.fill(1)
 
-            n_doc = csc_m.shape[0]
+        if not self.fixed_vocabulary:
+            X = self._sort_features(X, vocabulary)
+
+            n_doc = X.shape[0]
             max_doc_count = (max_df
                              if isinstance(max_df, numbers.Integral)
                              else int(round(max_df * n_doc)))
@@ -764,13 +763,14 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             if max_doc_count < min_doc_count:
                 raise ValueError(
                     "max_df corresponds to < documents than min_df")
-            csc_m, self.stop_words_ = self._limit_features(
-                csc_m, vocabulary,
-                max_doc_count, min_doc_count, max_features)
+            X, self.stop_words_ = self._limit_features(X, vocabulary,
+                                                       max_doc_count,
+                                                       min_doc_count,
+                                                       max_features)
 
             self.vocabulary_ = vocabulary
 
-        return csc_m
+        return X
 
     def transform(self, raw_documents):
         """Extract token counts out of raw text documents using the vocabulary
