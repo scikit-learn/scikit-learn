@@ -99,7 +99,7 @@ class _scale_order(BaseScaler):
         self.scaled_scores = np.argsort(scores).argsort()
 
 
-class SelectBetweenMixin(FeatureSelectionMixin):
+class SelectByScoreMixin(FeatureSelectionMixin):
     SCALERS = {
         '%range': _scale_percent_range,
         '%samples': _scale_percent_samples,
@@ -233,7 +233,7 @@ class SelectBetweenMixin(FeatureSelectionMixin):
         support[support] = support_mask
 
 
-class SelectBetween(BaseEstimator, SelectBetweenMixin):
+class SelectByScore(BaseEstimator, SelectByScoreMixin):
     def __init__(self, score_func=count_nonzero, minimum=None, maximum=None,
                  scaling=None):
         self.score_func = score_func
@@ -242,10 +242,10 @@ class SelectBetween(BaseEstimator, SelectBetweenMixin):
         self.scaling = scaling
 
     def fit(self, X, y=None):
-        return super(SelectBetween, self)._fit(self.score_func(X, y), X)
+        return super(SelectByScore, self)._fit(self.score_func(X, y), X)
 
     def _get_support_mask(self):
-        return super(SelectBetween, self)._get_support_mask(
+        return super(SelectByScore, self)._get_support_mask(
             self.minimum, self.maximum, self.scaling)
 
 

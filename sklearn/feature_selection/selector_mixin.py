@@ -5,7 +5,7 @@ import numpy as np
 
 from ..base import TransformerMixin
 
-from .etc import SelectBetween
+from .etc import SelectByScore
 
 
 class SelectorMixin(TransformerMixin):
@@ -22,7 +22,7 @@ class SelectorMixin(TransformerMixin):
             default_threshold = 1e-5
         else:
             default_threshold = 'mean'
-        return SelectBetween(self.__get_feature_importances,
+        return SelectByScore(self.__get_feature_importances,
                              minimum=default_threshold)
 
     def __get_feature_importances(self, X=None, y=None):

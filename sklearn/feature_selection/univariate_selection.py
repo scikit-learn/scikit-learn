@@ -21,7 +21,7 @@ from ..utils import (array2d, as_float_array,
                      safe_mask)
 from ..utils.extmath import safe_sparse_dot
 from ..externals import six
-from .etc import SelectBetweenMixin, BaseScaler
+from .etc import SelectByScoreMixin, BaseScaler
 
 
 def _clean_nans(scores):
@@ -249,7 +249,7 @@ def f_regression(X, y, center=True):
 # Base classes
 
 class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator,
-                                     SelectBetweenMixin)):
+                                     SelectByScoreMixin)):
 
     def __init__(self, score_func):
         """ Initialize the univariate feature selection.
@@ -365,7 +365,7 @@ class SelectPercentile(_ScoreFilter):
             limit=percentile / 100.)
 
 
-class SelectKBest(_ScoreFilter, SelectBetweenMixin):
+class SelectKBest(_ScoreFilter, SelectByScoreMixin):
     """Select features according to the k highest scores.
 
     Parameters
