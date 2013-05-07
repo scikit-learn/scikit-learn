@@ -426,7 +426,7 @@ Select the parameters that minimises the impurity
 
 Recurse for subsets :math:`Q_{left}(\theta^*)` and
 :math:`Q_{right}(\theta^*)` until the maximum allowable depth is reached,
-:math:`N_m < \min\_samples` or :math:`N_m = 1`.
+:math:`N_m < \min_{samples}` or :math:`N_m = 1`.
 
 Classification criteria
 -----------------------
