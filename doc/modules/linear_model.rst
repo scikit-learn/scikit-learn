@@ -510,7 +510,7 @@ path of possible values.
 
  * Original Algorithm is detailed in the paper
    `Better Subset Regression Using the Nonnegative Garrote
-   <http://www.tandfonline.com/doi/abs/10.1080/00401706.1995.10484371#.UYddOKC1K7A>`_
+   <http://www-personal.umich.edu/~jizhu/jizhu/wuke/Breiman-Technometrics95.pdf>`_
    by Leo Breiman.
 
 .. _omp:
