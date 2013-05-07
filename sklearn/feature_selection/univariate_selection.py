@@ -21,7 +21,7 @@ from ..utils import (array2d, as_float_array,
                      safe_mask)
 from ..utils.extmath import safe_sparse_dot
 from ..externals import six
-from .base import FeatureSelectionMixin
+from .etc import SelectBetweenMixin, BaseScaler
 
 
 def _clean_nans(scores):
@@ -249,7 +249,7 @@ def f_regression(X, y, center=True):
 # Base classes
 
 class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator,
-                                     FeatureSelectionMixin)):
+                                     SelectBetweenMixin)):
 
     def __init__(self, score_func):
         """ Initialize the univariate feature selection.
@@ -272,6 +272,10 @@ class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator,
 
 
 class _PvalueFilter(_BaseFilter):
+    def __init__(self, score_func=f_classif, alpha=5e-2):
+        self.alpha = alpha
+        super(_PvalueFilter, self).__init__(score_func)
+
     def fit(self, X, y):
         """Evaluate the score function on samples X with outputs y.
 
@@ -285,7 +289,12 @@ class _PvalueFilter(_BaseFilter):
             warn("Duplicate p-values. Result may depend on feature ordering."
                  "There are probably duplicate features, or you used a "
                  "classification score for a regression task.")
+        super(_PvalueFilter, self)._fit(self.pvalues_, X)
         return self
+
+    def _get_support_mask(self):
+        return super(_PvalueFilter, self)._get_support_mask(
+            maximum=self.alpha, scaling=self.scaling)
 
 
 class _ScoreFilter(_BaseFilter):
@@ -301,6 +310,7 @@ class _ScoreFilter(_BaseFilter):
             warn("Duplicate scores. Result may depend on feature ordering."
                  "There are probably duplicate features, or you used a "
                  "classification score for a regression task.")
+        super(_ScoreFilter, self)._fit(self.scores_, X)
         return self
 
 
@@ -352,19 +362,20 @@ class SelectPercentile(_ScoreFilter):
             return np.ones(len(self.scores_), dtype=np.bool)
         elif percentile == 0:
             return np.zeros(len(self.scores_), dtype=np.bool)
-        scores = _clean_nans(self.scores_)
+        mask = super(SelectPercentile, self)._get_support_mask(
+            minimum=100 - percentile, scaling='percentile')
 
-        alpha = stats.scoreatpercentile(scores, 100 - percentile)
-        mask = scores > alpha
-        ties = np.where(scores == alpha)[0]
-        if len(ties):
-            max_feats = len(scores) * percentile // 100
-            kept_ties = ties[:max_feats - mask.sum()]
-            mask[kept_ties] = True
+        # TODO: put limiting behaviour in SelectBetween
+        inds = np.where(mask)[0]
+        # if we selected too many features because of equal scores,
+        # we throw them away now
+        inds = inds[:len(self.scores_) * percentile // 100]
+        mask = np.zeros(self.scores_.shape, dtype=np.bool)
+        mask[inds] = True
         return mask
 
 
-class SelectKBest(_ScoreFilter):
+class SelectKBest(_ScoreFilter, SelectBetweenMixin):
     """Select features according to the k highest scores.
 
     Parameters
@@ -396,6 +407,8 @@ class SelectKBest(_ScoreFilter):
         self.k = k
         super(SelectKBest, self).__init__(score_func)
 
+    scaling = 'decorder'
+
     def _get_support_mask(self):
         k = self.k
         if k == 'all':
@@ -404,14 +417,8 @@ class SelectKBest(_ScoreFilter):
             raise ValueError("Cannot select %d features among %d. "
                              "Use k='all' to return all features."
                              % (k, len(self.scores_)))
-
-        scores = _clean_nans(self.scores_)
-        # XXX This should be refactored; we're getting an array of indices
-        # from argsort, which we transform to a mask, which we probably
-        # transform back to indices later.
-        mask = np.zeros(scores.shape, dtype=bool)
-        mask[np.argsort(scores)[-k:]] = 1
-        return mask
+        return super(SelectKBest, self)._get_support_mask(maximum=k - 1,
+                                                          scaling=self.scaling)
 
 
 class SelectFpr(_PvalueFilter):
@@ -438,13 +445,7 @@ class SelectFpr(_PvalueFilter):
         p-values of feature scores.
     """
 
-    def __init__(self, score_func=f_classif, alpha=5e-2):
-        self.alpha = alpha
-        super(SelectFpr, self).__init__(score_func)
-
-    def _get_support_mask(self):
-        alpha = self.alpha
-        return self.pvalues_ < alpha
+    scaling = None
 
 
 class SelectFdr(_PvalueFilter):
@@ -472,15 +473,13 @@ class SelectFdr(_PvalueFilter):
         p-values of feature scores.
     """
 
-    def __init__(self, score_func=f_classif, alpha=5e-2):
-        self.alpha = alpha
-        super(SelectFdr, self).__init__(score_func)
+    class scaling(BaseScaler):
+        def __init__(self, scores, num_samples):
+            self.sorted_scores = np.sort(scores)
 
-    def _get_support_mask(self):
-        alpha = self.alpha
-        sv = np.sort(self.pvalues_)
-        threshold = sv[sv < alpha * np.arange(len(self.pvalues_))].max()
-        return self.pvalues_ <= threshold
+        def __call__(self, t):
+            sv = self.sorted_scores
+            return sv[sv < np.arange(0, t * len(sv), t)].max()
 
 
 class SelectFwe(_PvalueFilter):
@@ -504,13 +503,12 @@ class SelectFwe(_PvalueFilter):
         p-values of feature scores.
     """
 
-    def __init__(self, score_func=f_classif, alpha=5e-2):
-        self.alpha = alpha
-        super(SelectFwe, self).__init__(score_func)
+    class scaling(BaseScaler):
+        def __init__(self, scores, num_samples):
+            self.scores = scores
 
-    def _get_support_mask(self):
-        alpha = self.alpha
-        return (self.pvalues_ < alpha / len(self.pvalues_))
+        def __call__(self, t):
+            return t / len(self.scores)
 
 
 ######################################################################
@@ -565,6 +563,11 @@ class GenericUnivariateSelect(_PvalueFilter):
         selector = self._selection_modes[self.mode](lambda x: x)
         selector.pvalues_ = self.pvalues_
         selector.scores_ = self.scores_
+        # Hack!:
+        if isinstance(selector, _PvalueFilter):
+            selector._fit(self.pvalues_, X=None)
+        else:
+            selector._fit(self.scores_, X=None)
         # Now perform some acrobatics to set the right named parameter in
         # the selector
         possible_params = selector._get_param_names()

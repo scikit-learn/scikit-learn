@@ -4,13 +4,8 @@
 import numpy as np
 
 from ..base import TransformerMixin
-<<<<<<< HEAD
-from ..externals import six
-from ..utils import safe_mask, atleast2d_or_csc
 
-=======
 from .etc import SelectBetween
->>>>>>> Reimplement SelectorMixin using SelectBetween
 
 
 class SelectorMixin(TransformerMixin):
