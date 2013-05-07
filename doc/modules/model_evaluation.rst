@@ -596,22 +596,6 @@ Here an example where ``average`` is set to ``None``::
   ... # doctest: +ELLIPSIS
   (array([ 0.66...,  0.        ,  0.        ]), array([ 1.,  0.,  0.]), array([ 0.71...,  0.        ,  0.        ]), array([2, 2, 2]...))
 
-
-Those functions also support the multilabel case.
-
-  >>> from sklearn import metrics
-  >>> y_true = np.array([[0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
-  >>> y_pred = np.ones((3, 3))
-
-  >>> metrics.f1_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
-  0.59...
-  >>> metrics.f1_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
-  0.61...
-  >>> metrics.f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
-  0.59...
-  >>> metrics.f1_score(y_true, y_pred, average=None)
-  array([ 0.5,  0.8,  0.5])
-
 Hinge loss
 ----------
 
