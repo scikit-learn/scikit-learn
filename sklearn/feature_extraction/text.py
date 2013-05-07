@@ -806,10 +806,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         X_inv : list of arrays, len = n_samples
             List of arrays of terms.
         """
-        if sp.isspmatrix_coo(X) or sp.isspmatrix_csc(X):
-            # COO matrix is not indexable, CSC is slow for row manipulations
+        if sp.issparse(X):
+            # We need CSR format for fast row manipulations.
             X = X.tocsr()
-        elif not sp.issparse(X):
+        else:
             # We need to convert X to a matrix, so that the indexing
             # returns 2D objects
             X = np.asmatrix(X)
