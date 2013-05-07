@@ -1985,15 +1985,16 @@ def zero_one_score(y_true, y_pred):
 ###############################################################################
 # Multiclass utility function
 ###############################################################################
-def classification_report(y_true, y_pred, labels=None, target_names=None):
+def classification_report(y_true, y_pred, labels=None, target_names=None,
+                          pos_label=1):
     """Build a text report showing the main classification metrics
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples]
+    y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) target values.
 
-    y_pred : array, shape = [n_samples]
+    y_true : array-like or list of labels or label indicator matrix
         Estimated targets as returned by a classifier.
 
     labels : array, shape = [n_labels]
@@ -2001,6 +2002,10 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
 
     target_names : list of strings
         Optional display names matching the labels (same order).
+
+    pos_label : int, 1 by default
+        In multilabel classification, it is used to infer what is a
+        positive label in the label indicator matrix format.
 
     Returns
     -------
@@ -2051,6 +2056,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
 
     p, r, f1, s = precision_recall_fscore_support(y_true, y_pred,
                                                   labels=labels,
+                                                  pos_label=pos_label,
                                                   average=None)
 
     for i, label in enumerate(labels):

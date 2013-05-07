@@ -45,7 +45,6 @@ Others also work in the multiclass case:
 .. autosummary::
    :template: function.rst
 
-   classification_report
    confusion_matrix
 
 
@@ -55,6 +54,7 @@ And some also work in the multilabel case:
    :template: function.rst
 
    accuracy_score
+   classification_report
    f1_score
    fbeta_score
    hamming_loss

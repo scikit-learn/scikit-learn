@@ -168,6 +168,45 @@ MULTILABELS_METRICS = {
     lambda y1, y2: recall_score(y1, y2, average="macro"),
 }
 
+MULTILABELS_METRICS_WITH_POS_LABELS = {
+    "jaccard_similarity_score": jaccard_similarity_score,
+    "unormalized_jaccard_similarity_score": lambda y1, y2, pos_label=1:
+    jaccard_similarity_score(y1, y2, pos_label=pos_label, normalize=False),
+
+    "weighted_f0.5_score": lambda y1, y2, pos_label=1:
+    fbeta_score(y1, y2, pos_label=pos_label, average="weighted", beta=0.5),
+    "weighted_f1_score": lambda y1, y2, pos_label=1:
+    f1_score(y1, y2, pos_label=pos_label, average="weighted"),
+    "weighted_f2_score": lambda y1, y2, pos_label=1:
+    fbeta_score(y1, y2, pos_label=pos_label, average="weighted", beta=2),
+    "weighted_precision_score": lambda y1, y2, pos_label=1:
+    precision_score(y1, y2, pos_label=pos_label, average="weighted"),
+    "weighted_recall_score": lambda y1, y2, pos_label=1:
+    recall_score(y1, y2, pos_label=pos_label, average="weighted"),
+
+    "micro_f0.5_score": lambda y1, y2, pos_label=1:
+    fbeta_score(y1, y2, pos_label=pos_label, average="micro", beta=0.5),
+    "micro_f1_score": lambda y1, y2, pos_label=1:
+    f1_score(y1, y2, pos_label=pos_label, average="micro"),
+    "micro_f2_score": lambda y1, y2, pos_label=1:
+    fbeta_score(y1, y2, pos_label=pos_label, average="micro", beta=2),
+    "micro_precision_score": lambda y1, y2, pos_label=1:
+    precision_score(y1, y2, pos_label=pos_label, average="micro"),
+    "micro_recall_score": lambda y1, y2, pos_label=1:
+    recall_score(y1, y2, pos_label=pos_label, average="micro"),
+
+    "macro_f0.5_score": lambda y1, y2, pos_label=1:
+    fbeta_score(y1, y2, pos_label=pos_label, average="macro", beta=0.5),
+    "macro_f1_score": lambda y1, y2, pos_label=1:
+    f1_score(y1, y2, pos_label=pos_label, average="macro"),
+    "macro_f2_score": lambda y1, y2, pos_label=1:
+    fbeta_score(y1, y2, pos_label=pos_label, average="macro", beta=2),
+    "macro_precision_score": lambda y1, y2, pos_label=1:
+    precision_score(y1, y2, pos_label=pos_label, average="macro"),
+    "macro_recall_score": lambda y1, y2, pos_label=1:
+    recall_score(y1, y2, pos_label=pos_label, average="macro"),
+}
+
 SYMETRIC_METRICS = {
     "accuracy_score": accuracy_score,
     "unormalized_accuracy_score":
@@ -680,7 +719,25 @@ def test_confusion_matrix_multiclass_subset_labels():
                             [24, 3]])
 
 
-def test_classification_report():
+def test_classification_report_binary_classification_with_pos_label():
+    iris = datasets.load_iris()
+    y_true, y_pred, _ = make_prediction(dataset=iris, binary=True)
+
+    print y_true
+    expected_report = """\
+             precision    recall  f1-score   support
+
+          0       0.73      0.88      0.80        25
+          1       0.85      0.68      0.76        25
+
+avg / total       0.79      0.78      0.78        50
+"""
+    for pos_label in [0, 1]:
+        report = classification_report(y_true, y_pred, pos_label=pos_label)
+        assert_equal(report, expected_report)
+
+
+def test_classification_report_multiclass():
     """Test performance report"""
     iris = datasets.load_iris()
     y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
@@ -720,6 +777,58 @@ avg / total       0.62      0.61      0.56        75
 avg / total       0.51      0.53      0.47        75
 """
     report = classification_report(y_true, y_pred)
+    assert_equal(report, expected_report)
+
+
+def test_multilabel_classification_report():
+
+    n_classes = 4
+    n_samples = 50
+    _, y_true_ll = make_multilabel_classification(n_features=1,
+                                                  n_classes=n_classes,
+                                                  random_state=0,
+                                                  n_samples=n_samples)
+    _, y_pred_ll = make_multilabel_classification(n_features=1,
+                                                  n_classes=n_classes,
+                                                  random_state=1,
+                                                  n_samples=n_samples)
+
+    expected_report = """\
+             precision    recall  f1-score   support
+
+          0       0.39      0.73      0.51        15
+          1       0.57      0.75      0.65        28
+          2       0.33      0.11      0.17        18
+          3       0.44      0.50      0.47        24
+
+avg / total       0.45      0.54      0.47        85
+"""
+
+    lb = LabelBinarizer()
+    lb.fit([range(4)])
+    y_true_bi = lb.transform(y_true_ll)
+    y_pred_bi = lb.transform(y_pred_ll)
+
+    for y_true, y_pred in [(y_true_ll, y_pred_ll), (y_true_bi, y_pred_bi)]:
+        report = classification_report(y_true, y_pred)
+        assert_equal(report, expected_report)
+
+    # With a given pos_label
+    pos_label = 5
+    y_true_bi = y_true_bi * pos_label
+    y_pred_bi = y_pred_bi * pos_label
+
+    expected_report = """\
+             precision    recall  f1-score   support
+
+          0       0.39      0.73      0.51        15
+          1       0.57      0.75      0.65        28
+          2       0.33      0.11      0.17        18
+          3       0.44      0.50      0.47        24
+
+avg / total       0.45      0.54      0.47        85
+"""
+    report = classification_report(y_true_bi, y_pred_bi, pos_label=pos_label)
     assert_equal(report, expected_report)
 
 
@@ -1543,3 +1652,28 @@ def test_precision_recall_f1_no_labels():
     assert_almost_equal(r, 1)
     assert_almost_equal(f, 1)
     assert_equal(None, s)
+
+
+def test_multilabel_invariance_with_pos_labels():
+    n_classes = 4
+    n_samples = 50
+    _, y1 = make_multilabel_classification(n_features=1, n_classes=n_classes,
+                                           random_state=0, n_samples=n_samples)
+    _, y2 = make_multilabel_classification(n_features=1, n_classes=n_classes,
+                                           random_state=1, n_samples=n_samples)
+
+    lb = LabelBinarizer().fit([range(n_classes)])
+    y1_binary_indicator = lb.transform(y1)
+    y2_binary_indicator = lb.transform(y2)
+
+    for name, metric in MULTILABELS_METRICS_WITH_POS_LABELS.items():
+        measure = metric(y1, y2)
+
+        for pos_label in [1, 3]:
+            assert_almost_equal(measure,
+                                metric(y1_binary_indicator * pos_label,
+                                       y2_binary_indicator * pos_label,
+                                       pos_label=pos_label),
+                                err_msg="%s is not representation invariant"
+                                        "with pos_label=%s"
+                                        % (metric, pos_label))
