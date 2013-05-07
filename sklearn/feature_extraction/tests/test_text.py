@@ -530,12 +530,15 @@ def test_vectorizer_max_features():
     )
 
     expected_vocabulary = set(['burger', 'beer', 'salad', 'pizza'])
+    expected_stop_words = set([u'celeri', u'tomato', u'copyright', u'coke',
+                               u'sparkling', u'water', u'the'])
 
     for vec_factory in vec_factories:
         # test bounded number of extracted features
         vectorizer = vec_factory(max_df=0.6, max_features=4)
         vectorizer.fit(ALL_FOOD_DOCS)
         assert_equal(set(vectorizer.vocabulary_), expected_vocabulary)
+        assert_equal(vectorizer.stop_words_, expected_stop_words)
 
 
 def test_vectorizer_max_df():
@@ -544,17 +547,22 @@ def test_vectorizer_max_df():
     vect.fit(test_data)
     assert_true('a' in vect.vocabulary_.keys())
     assert_equal(len(vect.vocabulary_.keys()), 5)
+    assert_equal(len(vect.stop_words_), 0)
 
     vect.max_df = 0.5
     vect.fit(test_data)
     assert_true('a' not in vect.vocabulary_.keys())  # 'a' is ignored
     assert_equal(len(vect.vocabulary_.keys()), 4)  # the others remain
+    assert_true('a' in vect.stop_words_)
+    assert_equal(len(vect.stop_words_), 1)
 
     # absolute count: if in more than one
     vect.max_df = 1
     vect.fit(test_data)
     assert_true('a' not in vect.vocabulary_.keys())  # 'a' is ignored
     assert_equal(len(vect.vocabulary_.keys()), 4)  # the others remain
+    assert_true('a' in vect.stop_words_)
+    assert_equal(len(vect.stop_words_), 1)
 
 
 def test_vectorizer_min_df():
@@ -563,16 +571,21 @@ def test_vectorizer_min_df():
     vect.fit(test_data)
     assert_true('a' in vect.vocabulary_.keys())
     assert_equal(len(vect.vocabulary_.keys()), 6)
+    assert_equal(len(vect.stop_words_), 0)
 
     vect.min_df = 2
     vect.fit(test_data)
     assert_true('c' not in vect.vocabulary_.keys())  # 'c' is ignored
     assert_equal(len(vect.vocabulary_.keys()), 2)  # only e, a remain
+    assert_true('c' in vect.stop_words_)
+    assert_equal(len(vect.stop_words_), 4)
 
     vect.min_df = .5
     vect.fit(test_data)
     assert_true('c' not in vect.vocabulary_.keys())  # 'c' is ignored
     assert_equal(len(vect.vocabulary_.keys()), 2)  # only e, a remain
+    assert_true('c' in vect.stop_words_)
+    assert_equal(len(vect.stop_words_), 4)
 
 
 def test_count_binary_occurrences():
