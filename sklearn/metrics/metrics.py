@@ -114,7 +114,6 @@ def _check_1d_array(y1, y2, ravel=False):
 
     Examples
     --------
-    >>> from numpy import array
     >>> from sklearn.metrics.metrics import _check_1d_array
     >>> _check_1d_array([1, 2], [[3, 4]])
     (array([1, 2]), array([3, 4]))
@@ -964,7 +963,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True, pos_label=1):
                 np.seterr(**old_err_settings)
 
         else:
-            score = np.empty(len(y_true))
+            score = np.empty(len(y_true), dtype=np.float)
             for i, (true, pred) in enumerate(zip(y_pred, y_true)):
                 true_set = set(true)
                 pred_set = set(pred)
@@ -1090,15 +1089,15 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
 
         F1 = 2 * (precision * recall) / (precision + recall)
 
-    In the multi-class case, this is the weighted average of the F1 score of
-    each class.
+    In the multi-class and multi-label case, this is the weighted average of
+    the F1 score of each class.
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples]
+    y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) target values.
 
-    y_pred : array, shape = [n_samples]
+    y_true : array-like or list of labels or label indicator matrix
         Estimated targets as returned by a classifier.
 
     labels : array
@@ -1106,21 +1105,30 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
 
     pos_label : int, 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
-        only this class's scores will be returned.
+        only this class's scores will be returned. In multilabel
+        classification, it is used to infer what is a positive label in the
+        label indicator matrix format.
 
-    average : string, [None, 'micro', 'macro', 'weighted' (default)]
+    average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
 
+        ``'samples'``:
+            Average over instance. Only meaningful and available in multilabel
+            classification.
         ``'macro'``:
             Average over classes (does not take imbalance into account).
         ``'micro'``:
-            Average over instances (takes imbalance into account).  This
-            implies that ``precision == recall == F1``.
+            Aggregate classes and average over instances (takes imbalance into
+            account).  This implies that ``precision == recall == F1``.
+            In multilabel classification, this is true only if every sample
+            has a label.
         ``'weighted'``:
-            Average weighted by support (takes imbalance into account).  Can
-            result in F-score that is not between precision and recall.
+            Average over classes weighted by support (takes imbalance into
+            account).  Can result in F-score that is not between
+            precision and recall.
+
 
     Returns
     -------
@@ -1157,6 +1165,38 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     >>> f1_score(y_true, y_pred, average=None)
     array([ 0.8,  0. ,  0. ])
 
+    In the multilabel case with binary indicator format:
+
+    >>> from sklearn.metrics import f1_score
+    >>> y_true = np.array([[0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+    >>> y_pred = np.ones((3, 3))
+    >>> f1_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+    0.59...
+    >>> f1_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+    0.61...
+    >>> f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+    0.65...
+    >>> f1_score(y_true, y_pred, average='samples')  # doctest: +ELLIPSIS
+    0.59...
+    >>> f1_score(y_true, y_pred, average=None)
+    array([ 0.5,  0.8,  0.5])
+
+    and with a list of labels format:
+
+    >>> from sklearn.metrics import f1_score
+    >>> y_true = [(1, 2), (3,)]
+    >>> y_pred = [(1, 2), tuple()]
+    >>> f1_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+    0.66...
+    >>> f1_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+    0.80...
+    >>> f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+    0.66...
+    >>> f1_score(y_true, y_pred, average='samples')  # doctest: +ELLIPSIS
+    0.5
+    >>> f1_score(y_true, y_pred, average=None)
+    array([ 1.,  1.,  0.])
+
     """
     return fbeta_score(y_true, y_pred, 1, labels=labels,
                        pos_label=pos_label, average=average)
@@ -1176,10 +1216,10 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples]
+    y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) target values.
 
-    y_pred : array, shape = [n_samples]
+    y_true : array-like or list of labels or label indicator matrix
         Estimated targets as returned by a classifier.
 
     beta: float
@@ -1190,21 +1230,29 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     pos_label : int, 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
-        only this class's scores will be returned.
+        only this class's scores will be returned. In multilabel
+        classification, it is used to infer what is a positive label in the
+        label indicator matrix format.
 
-    average : string, [None, 'micro', 'macro', 'weighted' (default)]
+    average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
 
+        ``'samples'``:
+            Average over instance. Only meaningful and available in multilabel
+            classification.
         ``'macro'``:
             Average over classes (does not take imbalance into account).
         ``'micro'``:
-            Average over instances (takes imbalance into account).  This
-            implies that ``precision == recall == F1``.
+            Aggregate classes and average over instances (takes imbalance into
+            account).  This implies that ``precision == recall == F1``.
+            In multilabel classification, this is true only if every sample
+            has a label.
         ``'weighted'``:
-            Average weighted by support (takes imbalance into account).  Can
-            result in F-score that is not between precision and recall.
+            Average over classes weighted by support (takes imbalance into
+            account).  Can result in F-score that is not between
+            precision and recall.
 
     Returns
     -------
@@ -1240,18 +1288,59 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     >>> from sklearn.metrics import fbeta_score
     >>> y_true = [0, 1, 2, 0, 1, 2]
     >>> y_pred = [0, 2, 1, 0, 0, 1]
-    >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)\
-        # doctest: +ELLIPSIS
+    >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)
+    ... # doctest: +ELLIPSIS
     0.23...
-    >>> fbeta_score(y_true, y_pred, average='micro', beta=0.5)\
-        # doctest: +ELLIPSIS
+    >>> fbeta_score(y_true, y_pred, average='micro', beta=0.5)
+    ... # doctest: +ELLIPSIS
     0.33...
-    >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)\
-        # doctest: +ELLIPSIS
+    >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
+    ... # doctest: +ELLIPSIS
     0.23...
-    >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)\
-        # doctest: +ELLIPSIS
+    >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
+    ... # doctest: +ELLIPSIS
     array([ 0.71...,  0.        ,  0.        ])
+
+
+    In the multilabel case with binary indicator format:
+
+    >>> from sklearn.metrics import fbeta_score
+    >>> y_true = np.array([[0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+    >>> y_pred = np.ones((3, 3))
+    >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)
+    ... # doctest: +ELLIPSIS
+    0.49...
+    >>> fbeta_score(y_true, y_pred, average='micro', beta=0.5)
+    0.5
+    >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
+    ... # doctest: +ELLIPSIS
+    0.54...
+    >>> fbeta_score(y_true, y_pred, average='samples', beta=0.5)
+    ... # doctest: +ELLIPSIS
+    0.66...
+    >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
+    ... # doctest: +ELLIPSIS
+    array([ 0.38...,  0.71...,  0.38...])
+
+    and with a list of labels format:
+
+    >>> from sklearn.metrics import fbeta_score
+    >>> y_true = [(1, 2), (3,)]
+    >>> y_pred = [(1, 2), tuple()]
+    >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)
+    ... # doctest: +ELLIPSIS
+    0.66...
+    >>> fbeta_score(y_true, y_pred, average='micro', beta=0.5)
+    ... # doctest: +ELLIPSIS
+    0.90...
+    >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
+    ... # doctest: +ELLIPSIS
+    0.66...
+    >>> fbeta_score(y_true, y_pred, average='samples', beta=0.5)
+    ... # doctest: +ELLIPSIS
+    0.42...
+    >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
+    array([ 1.,  1.,  0.])
 
     """
     _, _, f, _ = precision_recall_fscore_support(y_true, y_pred,
@@ -1260,6 +1349,128 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
                                                  pos_label=pos_label,
                                                  average=average)
     return f
+
+
+def _tp_tn_fp_fn(y_true, y_pred, labels=None, pos_label=1):
+    """Compute the number of true/false positives/negative for each class
+
+    Parameters
+    ----------
+    y_true : array-like or list of labels or label indicator matrix
+        Ground truth (correct) labels.
+
+    y_pred : array-like or list of labels or label indicator matrix
+        Predicted labels, as returned by a classifier.
+
+    labels : array, shape = [n_labels], optional
+        Integer array of labels.
+
+    pos_label : int, 1 by default
+        In multilabel classification, it is used to infer what is a positive
+        label in the label indicator matrix format.
+
+    Returns
+    -------
+    true_pos : array of int, shape = [n_unique_labels]
+        Number of true positives
+
+    true_neg : array of int, shape = [n_unique_labels]
+        Number of true negative
+
+    false_pos : array of int, shape = [n_unique_labels]
+        Number of false positives
+
+    false_pos : array of int, shape = [n_unique_labels]
+        Number of false positives
+
+    Examples
+    --------
+    In the binary case:
+
+    >>> from sklearn.metrics.metrics import _tp_tn_fp_fn
+    >>> y_pred = [0, 1, 0, 0]
+    >>> y_true = [0, 1, 0, 1]
+    >>> _tp_tn_fp_fn(y_true, y_pred)
+    (array([2, 1]), array([1, 2]), array([1, 0]), array([0, 1]))
+
+    In the multiclass case:
+    >>> y_true = np.array([0, 1, 2, 0, 1, 2])
+    >>> y_pred = np.array([0, 2, 1, 0, 0, 1])
+    >>> _tp_tn_fp_fn(y_true, y_pred)
+    (array([2, 0, 0]), array([3, 2, 3]), array([1, 2, 1]), array([0, 2, 2]))
+
+    In the multilabel case with binary indicator format:
+
+    >>> _tp_tn_fp_fn(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+    (array([0, 0]), array([1, 0]), array([0, 0]), array([1, 2]))
+
+    and with a list of labels format:
+
+    >>> _tp_tn_fp_fn([(1, 2), (3,)], [(1, 2), tuple()])  # doctest: +ELLIPSIS
+    (array([1, 1, 0]), array([1, 1, 1]), array([0, 0, 0]), array([0, 0, 1]))
+
+    """
+    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
+
+    if labels is None:
+        labels = unique_labels(y_true, y_pred)
+    else:
+        labels = np.asarray(labels, dtype=np.int)
+
+    n_labels = labels.size
+    true_pos = np.zeros((n_labels), dtype=np.int)
+    false_pos = np.zeros((n_labels), dtype=np.int)
+    false_neg = np.zeros((n_labels), dtype=np.int)
+
+    if is_multilabel(y_true):
+        # Handle mix representation
+        if type(y_true) != type(y_pred):
+            labels = unique_labels(y_true, y_pred)
+            lb = LabelBinarizer()
+            lb.fit([labels.tolist()])
+            y_true = lb.transform(y_true)
+            y_pred = lb.transform(y_pred)
+
+        if is_label_indicator_matrix(y_true):
+            true_pos = np.sum(np.logical_and(y_true == pos_label,
+                                             y_pred == pos_label), axis=0)
+            false_pos = np.sum(np.logical_and(y_true != pos_label,
+                                              y_pred == pos_label), axis=0)
+            false_neg = np.sum(np.logical_and(y_true == pos_label,
+                                              y_pred != pos_label), axis=0)
+
+        else:
+            idx_to_label = dict((label_i, i)
+                                for i, label_i in enumerate(labels))
+
+            for true, pred in zip(y_true, y_pred):
+                true_set = np.array([idx_to_label[l] for l in set(true)],
+                                    dtype=np.int)
+                pred_set = np.array([idx_to_label[l] for l in set(pred)],
+                                    dtype=np.int)
+                true_pos[np.intersect1d(true_set, pred_set)] += 1
+                false_pos[np.setdiff1d(pred_set, true_set)] += 1
+                false_neg[np.setdiff1d(true_set, pred_set)] += 1
+
+    else:
+        y_true, y_pred = check_arrays(y_true, y_pred)
+        y_true, y_pred = _check_1d_array(y_true, y_pred)
+
+        for i, label_i in enumerate(labels):
+            true_pos[i] = np.sum(y_pred[y_true == label_i] == label_i)
+            false_pos[i] = np.sum(y_pred[y_true != label_i] == label_i)
+            false_neg[i] = np.sum(y_pred[y_true == label_i] != label_i)
+
+    # Compute the true_neg using the tp, fp and fn
+    if hasattr(y_true, "shape"):
+        n_samples = (np.max(y_true.shape) if _is_1d(y_true)
+                     else y_true.shape[0])
+    else:
+        n_samples = len(y_true)
+
+    true_neg = n_samples - true_pos - false_pos - false_neg
+
+    return true_pos, true_neg, false_pos, false_neg
 
 
 def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
@@ -1284,16 +1495,16 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     The support is the number of occurrences of each class in ``y_true``.
 
-    If ``pos_label is None``, this function returns the average precision,
-    recall and F-measure if ``average`` is one of ``'micro'``, ``'macro'``,
-    ``'weighted'``.
+    If ``pos_label is None`` and in binary classification, this function
+    returns the average precision, recall and F-measure if ``average``
+    is one of ``'micro'``, ``'macro'``, ``'weighted'``.
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples]
+    y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) target values.
 
-    y_pred : array, shape = [n_samples]
+    y_true : array-like or list of labels or label indicator matrix
         Estimated targets as returned by a classifier.
 
     beta : float, 1.0 by default
@@ -1304,9 +1515,11 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     pos_label : int, 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
-        only this class's scores will be returned.
+        only this class's scores will be returned. In multilabel
+        classification, it is used to infer what is a positive label in the
+        label indicator matrix format.
 
-    average : string, [None (default), 'micro', 'macro', 'weighted']
+    average : string, [None (default), 'micro', 'macro', 'samples', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
@@ -1314,11 +1527,18 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         ``'macro'``:
             Average over classes (does not take imbalance into account).
         ``'micro'``:
-            Average over instances (takes imbalance into account).  This
-            implies that ``precision == recall == F1``.
-        ``'weighted'``:
-            Average weighted by support (takes imbalance into account).  Can
-            result in F-score that is not between precision and recall.
+            Aggregate classes and average over instances (takes imbalance into
+            account).  This implies that ``precision == recall == F1``.
+            In multilabel classification, this is true only if every sample
+            has a label.
+        ``'samples'``:
+            Average over instance. Only meaningful and available in multilabel
+            classification.
+         ``'weighted'``:
+            Average over classes weighted by support (takes imbalance into
+            account).  Can result in F-score that is not between
+            precision and recall.
+
 
     Returns
     -------
@@ -1342,6 +1562,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     .. [2] `Wikipedia entry for the F1-score
            <http://en.wikipedia.org/wiki/F1_score>`_
 
+    .. [3] `Discriminative Methods for Multi-labeled Classification Advances
+           in Knowledge Discovery and Data Mining (2004), pp. 22-30 by Shantanu
+           Godbole, Sunita Sarawagi
+           <http://www.godbole.net/shantanu/pubs/multilabelsvm-pakdd04.pdf>`
 
     Examples
     --------
@@ -1365,22 +1589,58 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     >>> from sklearn.metrics import precision_recall_fscore_support
     >>> y_true = np.array([0, 1, 2, 0, 1, 2])
     >>> y_pred = np.array([0, 2, 1, 0, 0, 1])
-    >>> precision_recall_fscore_support(y_true, y_pred, average='macro')\
-        # doctest: +ELLIPSIS
+    >>> precision_recall_fscore_support(y_true, y_pred, average='macro')
+    ... # doctest: +ELLIPSIS
     (0.22..., 0.33..., 0.26..., None)
-    >>> precision_recall_fscore_support(y_true, y_pred, average='micro')\
-        # doctest: +ELLIPSIS
+    >>> precision_recall_fscore_support(y_true, y_pred, average='micro')
+    ... # doctest: +ELLIPSIS
     (0.33..., 0.33..., 0.33..., None)
-    >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')\
-        # doctest: +ELLIPSIS
+    >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
+    ... # doctest: +ELLIPSIS
     (0.22..., 0.33..., 0.26..., None)
+
+    In the multilabel case with binary indicator format:
+
+    >>> from sklearn.metrics import precision_recall_fscore_support
+    >>> y_true = np.array([[0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+    >>> y_pred = np.ones((3, 3))
+    >>> precision_recall_fscore_support(y_true, y_pred, average='macro')
+    ... # doctest: +ELLIPSIS
+    (0.44..., 1.0, 0.59..., None)
+    >>> precision_recall_fscore_support(y_true, y_pred, average='micro')
+    ... # doctest: +ELLIPSIS
+    (0.44..., 1.0, 0.61..., None)
+    >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
+    ... # doctest: +ELLIPSIS
+    (0.499..., 1.0, 0.65..., None)
+    >>> precision_recall_fscore_support(y_true, y_pred, average='samples')
+    ... # doctest: +ELLIPSIS
+    (1.0, 0.44..., 0.59..., None)
+
+    and with a list of labels format:
+
+    >>> from sklearn.metrics import precision_recall_fscore_support
+    >>> y_true = [(1, 2), (3,)]
+    >>> y_pred = [(1, 2), tuple()]
+    >>> precision_recall_fscore_support(y_true, y_pred, average='macro')
+    ... # doctest: +ELLIPSIS
+    (0.66..., 0.66..., 0.66..., None)
+    >>> precision_recall_fscore_support(y_true, y_pred, average='micro')
+    ... # doctest: +ELLIPSIS
+    (1.0, 0.66..., 0.80..., None)
+    >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
+    ... # doctest: +ELLIPSIS
+    (0.66..., 0.66..., 0.66..., None)
+    >>> precision_recall_fscore_support(y_true, y_pred, average='samples')
+    ... # doctest: +ELLIPSIS
+    (0.5, 1.0, 0.5, None)
 
     """
     if beta <= 0:
         raise ValueError("beta should be >0 in the F-beta score")
+    beta2 = beta ** 2
 
-    y_true, y_pred = check_arrays(y_true, y_pred)
-    y_true, y_pred = _check_1d_array(y_true, y_pred)
+    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
 
     if labels is None:
         labels = unique_labels(y_true, y_pred)
@@ -1388,16 +1648,65 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         labels = np.asarray(labels, dtype=np.int)
 
     n_labels = labels.size
-    true_pos = np.empty(n_labels, dtype=np.long)
-    false_pos = np.empty(n_labels, dtype=np.long)
-    false_neg = np.empty(n_labels, dtype=np.long)
-    support = np.empty(n_labels, dtype=np.long)
 
-    for i, label_i in enumerate(labels):
-        true_pos[i] = np.sum(y_pred[y_true == label_i] == label_i)
-        false_pos[i] = np.sum(y_pred[y_true != label_i] == label_i)
-        false_neg[i] = np.sum(y_pred[y_true == label_i] != label_i)
-        support[i] = np.sum(y_true == label_i)
+    if average == "samples":
+        if is_multilabel(y_true):
+            # Handle mix representation
+            if type(y_true) != type(y_pred):
+                labels = unique_labels(y_true, y_pred)
+                lb = LabelBinarizer()
+                lb.fit([labels.tolist()])
+                y_true = lb.transform(y_true)
+                y_pred = lb.transform(y_pred)
+
+            if is_label_indicator_matrix(y_true):
+                y_true_pos_label = y_true == pos_label
+                y_pred_pos_label = y_pred == pos_label
+                size_inter = np.sum(np.logical_and(y_true_pos_label,
+                                                   y_pred_pos_label), axis=1)
+                size_true = np.sum(y_true_pos_label, axis=1)
+                size_pred = np.sum(y_pred_pos_label, axis=1)
+
+            else:
+                size_inter = np.empty(len(y_true), dtype=np.int)
+                size_true = np.empty(len(y_true), dtype=np.int)
+                size_pred = np.empty(len(y_true), dtype=np.int)
+                for i, (true, pred) in enumerate(zip(y_true, y_pred)):
+                    true_set = set(true)
+                    pred_set = set(pred)
+                    size_inter[i] = len(true_set & pred_set)
+                    size_pred[i] = len(pred_set)
+                    size_true[i] = len(true_set)
+        else:
+            raise ValueError("Example-based precision, recall, fscore is "
+                             "not meaning full outside multilabe"
+                             "classification. See the accuracy_score instead.")
+
+        try:
+            # oddly, we may get an "invalid" rather than a "divide" error
+            # here
+            old_err_settings = np.seterr(divide='ignore', invalid='ignore')
+
+            precision = size_inter / size_true
+            recall = size_inter / size_pred
+            f_score = ((1 + beta2 ** 2) * size_inter /
+                       (beta2 * size_pred + size_true))
+        finally:
+            np.seterr(**old_err_settings)
+
+        precision[size_true == 0] = 1.0
+        recall[size_pred == 0] = 1.0
+        f_score[(beta2 * size_pred + size_true) == 0] = 1.0
+
+        precision = np.mean(precision)
+        recall = np.mean(recall)
+        f_score = np.mean(f_score)
+
+        return precision, recall, f_score, None
+
+    true_pos, _, false_pos, false_neg = _tp_tn_fp_fn(y_true, y_pred, labels,
+                                                     pos_label)
+    support = true_pos + false_neg
 
     try:
         # oddly, we may get an "invalid" rather than a "divide" error here
@@ -1412,13 +1721,11 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         recall[(true_pos + false_neg) == 0] = 0.0
 
         # fbeta score
-        beta2 = beta ** 2
         fscore = divide((1 + beta2) * precision * recall,
-                        beta2 * precision + recall,
-                        dtype=np.double)
+                        beta2 * precision + recall)
 
         # handle division by 0 in fscore
-        fscore[(precision + recall) == 0] = 0.0
+        fscore[(beta2 * precision + recall) == 0] = 0.0
     finally:
         np.seterr(**old_err_settings)
 
@@ -1433,25 +1740,42 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         return (precision[pos_label_idx], recall[pos_label_idx],
                 fscore[pos_label_idx], support[pos_label_idx])
     else:
-        average_options = (None, 'micro', 'macro', 'weighted')
+        average_options = (None, 'micro', 'macro', 'weighted', 'samples')
         if average == 'micro':
             avg_precision = divide(true_pos.sum(),
-                                      true_pos.sum() + false_pos.sum(),
-                                      dtype=np.double)
+                                   true_pos.sum() + false_pos.sum(),
+                                   dtype=np.double)
             avg_recall = divide(true_pos.sum(),
                                 true_pos.sum() + false_neg.sum(),
                                 dtype=np.double)
             avg_fscore = divide((1 + beta2) * (avg_precision * avg_recall),
                                 beta2 * avg_precision + avg_recall,
                                 dtype=np.double)
+
+            if np.isnan(avg_precision):
+                avg_precision = 0.
+
+            if np.isnan(avg_recall):
+                avg_recall = 0.
+
+            if np.isnan(avg_fscore):
+                avg_fscore = 0.
+
         elif average == 'macro':
             avg_precision = np.mean(precision)
             avg_recall = np.mean(recall)
             avg_fscore = np.mean(fscore)
+
         elif average == 'weighted':
-            avg_precision = np.average(precision, weights=support)
-            avg_recall = np.average(recall, weights=support)
-            avg_fscore = np.average(fscore, weights=support)
+            if np.all(support == 0):
+                avg_precision = 0.
+                avg_recall = 0.
+                avg_fscore = 0.
+            else:
+                avg_precision = np.average(precision, weights=support)
+                avg_recall = np.average(recall, weights=support)
+                avg_fscore = np.average(fscore, weights=support)
+
         else:
             raise ValueError('average has to be one of ' +
                              str(average_options))
@@ -1472,10 +1796,10 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples]
+    y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) target values.
 
-    y_pred : array, shape = [n_samples]
+    y_true : array-like or list of labels or label indicator matrix
         Estimated targets as returned by a classifier.
 
     labels : array
@@ -1483,9 +1807,11 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
 
     pos_label : int, 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
-        only this class's scores will be returned.
+        only this class's scores will be returned. In multilabel
+        classification, it is used to infer what is a positive label in the
+        label indicator matrix format.
 
-    average : string, [None, 'micro', 'macro', 'weighted' (default)]
+    average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
@@ -1493,11 +1819,17 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
         ``'macro'``:
             Average over classes (does not take imbalance into account).
         ``'micro'``:
-            Average over instances (takes imbalance into account).  This
-            implies that ``precision == recall == F1``.
+            Aggregate classes and average over instances (takes imbalance into
+            account).  This implies that ``precision == recall == F1``.
+            In multilabel classification, this is true only if every sample
+            has a label.
+        ``'samples'``:
+            Average over instance. Only meaningful and available in multilabel
+            classification.
         ``'weighted'``:
-            Average weighted by support (takes imbalance into account).  Can
-            result in F-score that is not between precision and recall.
+            Average over classes weighted by support (takes imbalance into
+            account).  Can result in F-score that is not between
+            precision and recall.
 
     Returns
     -------
@@ -1525,11 +1857,48 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     0.22...
     >>> precision_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
     0.33...
-    >>> precision_score(y_true, y_pred, average='weighted')\
-        # doctest: +ELLIPSIS
+    >>> precision_score(y_true, y_pred, average='weighted')
+    ... # doctest: +ELLIPSIS
     0.22...
     >>> precision_score(y_true, y_pred, average=None)  # doctest: +ELLIPSIS
     array([ 0.66...,  0.        ,  0.        ])
+
+    In the multilabel case with binary indicator format:
+
+    >>> from sklearn.metrics import precision_score
+    >>> y_true = np.array([[0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+    >>> y_pred = np.ones((3, 3))
+    >>> precision_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+    0.44...
+    >>> precision_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+    0.44...
+    >>> precision_score(y_true, y_pred, average='weighted')
+    ... # doctest: +ELLIPSIS
+    0.49...
+    >>> precision_score(y_true, y_pred, average='samples')
+    1.0
+    >>> precision_score(y_true, y_pred, average=None)
+    ... # doctest: +ELLIPSIS
+    array([ 0.33...,  0.66...,  0.33...])
+
+    and with a list of labels format:
+
+    >>> from sklearn.metrics import precision_score
+    >>> y_true = [(1, 2), (3,)]
+    >>> y_pred = [(1, 2), tuple()]
+    >>> precision_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+    0.66...
+    >>> precision_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+    1.0
+    >>> precision_score(y_true, y_pred, average='weighted')
+    ... # doctest: +ELLIPSIS
+    0.66...
+    >>> precision_score(y_true, y_pred, average='samples')
+    ... # doctest: +ELLIPSIS
+    0.5
+    >>> precision_score(y_true, y_pred, average=None)
+    array([ 1.,  1.,  0.])
+
 
     """
     p, _, _, _ = precision_recall_fscore_support(y_true, y_pred,
@@ -1550,10 +1919,10 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples]
+    y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) target values.
 
-    y_pred : array, shape = [n_samples]
+    y_true : array-like or list of labels or label indicator matrix
         Estimated targets as returned by a classifier.
 
     labels : array
@@ -1561,9 +1930,11 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
 
     pos_label : int, 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
-        only this class's scores will be returned.
+        only this class's scores will be returned. In multilabel
+        classification, it is used to infer what is a positive label in the
+        label indicator matrix format.
 
-    average : string, [None, 'micro', 'macro', 'weighted' (default)]
+    average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
@@ -1571,11 +1942,17 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
         ``'macro'``:
             Average over classes (does not take imbalance into account).
         ``'micro'``:
-            Average over instances (takes imbalance into account).  This
-            implies that ``precision == recall == F1``.
+            Aggregate classes and average over instances (takes imbalance into
+            account).  This implies that ``precision == recall == F1``.
+            In multilabel classification, this is true only if every sample
+            has a label.
+        ``'samples'``:
+            Average over instance. Only meaningful and available in multilabel
+            classification.
         ``'weighted'``:
-            Average weighted by support (takes imbalance into account).  Can
-            result in F-score that is not between precision and recall.
+            Average over classes weighted by support (takes imbalance into
+            account).  Can result in F-score that is not between
+            precision and recall.
 
     Returns
     -------
@@ -1608,6 +1985,37 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     >>> recall_score(y_true, y_pred, average=None)
     array([ 1.,  0.,  0.])
 
+    In the multilabel case with binary indicator format:
+
+    >>> from sklearn.metrics import recall_score
+    >>> y_true = np.array([[0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+    >>> y_pred = np.ones((3, 3))
+    >>> recall_score(y_true, y_pred, average='macro')
+    1.0
+    >>> recall_score(y_true, y_pred, average='micro')
+    1.0
+    >>> recall_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+    1.0
+    >>> recall_score(y_true, y_pred, average='samples')  # doctest: +ELLIPSIS
+    0.44...
+    >>> recall_score(y_true, y_pred, average=None)
+    array([ 1.,  1.,  1.])
+
+    and with a list of labels format:
+
+    >>> from sklearn.metrics import recall_score
+    >>> y_true = [(1, 2), (3,)]
+    >>> y_pred = [(1, 2), tuple()]
+    >>> recall_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+    0.66...
+    >>> recall_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+    0.66...
+    >>> recall_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+    0.66...
+    >>> recall_score(y_true, y_pred, average='samples')
+    1.0
+    >>> recall_score(y_true, y_pred, average=None)
+    array([ 1.,  1.,  0.])
     """
     _, r, _, _ = precision_recall_fscore_support(y_true, y_pred,
                                                  labels=labels,
@@ -1642,15 +2050,16 @@ def zero_one_score(y_true, y_pred):
 ###############################################################################
 # Multiclass utility function
 ###############################################################################
-def classification_report(y_true, y_pred, labels=None, target_names=None):
+def classification_report(y_true, y_pred, labels=None, target_names=None,
+                          pos_label=1):
     """Build a text report showing the main classification metrics
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples]
+    y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) target values.
 
-    y_pred : array, shape = [n_samples]
+    y_true : array-like or list of labels or label indicator matrix
         Estimated targets as returned by a classifier.
 
     labels : array, shape = [n_labels]
@@ -1658,6 +2067,10 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
 
     target_names : list of strings
         Optional display names matching the labels (same order).
+
+    pos_label : int, 1 by default
+        In multilabel classification, it is used to infer what is a
+        positive label in the label indicator matrix format.
 
     Returns
     -------
@@ -1708,6 +2121,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
 
     p, r, f1, s = precision_recall_fscore_support(y_true, y_pred,
                                                   labels=labels,
+                                                  pos_label=pos_label,
                                                   average=None)
 
     for i, label in enumerate(labels):
