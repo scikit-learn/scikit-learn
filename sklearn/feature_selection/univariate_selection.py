@@ -387,13 +387,12 @@ class SelectPercentile(_ScoreFilter):
         scores = _clean_nans(self.scores_)
 
         alpha = stats.scoreatpercentile(scores, 100 - percentile)
-        # XXX refactor the indices -> mask -> indices -> mask thing
-        inds = np.where(scores >= alpha)[0]
-        # if we selected too many features because of equal scores,
-        # we throw them away now
-        inds = inds[:len(scores) * percentile // 100]
-        mask = np.zeros(scores.shape, dtype=np.bool)
-        mask[inds] = True
+        mask = scores > alpha
+        ties = np.where(scores == alpha)[0]
+        if len(ties):
+            max_feats = len(scores) * percentile // 100
+            kept_ties = ties[:max_feats - mask.sum()]
+            mask[kept_ties] = True
         return mask
 
 
