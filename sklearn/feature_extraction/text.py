@@ -789,10 +789,10 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             raise ValueError("Vocabulary wasn't fitted or is empty!")
 
         # use the same matrix-building strategy as fit_transform
-        _, m = self._count_vocab(raw_documents, fixed_vocab=True)
+        _, X = self._count_vocab(raw_documents, fixed_vocab=True)
         if self.binary:
-            m.data.fill(1)
-        return m
+            X.data.fill(1)
+        return X
 
     def inverse_transform(self, X):
         """Return terms per document with nonzero entries in X.
