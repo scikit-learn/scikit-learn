@@ -85,10 +85,10 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
     has_sw = isinstance(sample_weight, np.ndarray) or sample_weight != 1.0
 
     if solver == 'auto':
-        # svd if it's a dense array and cg in
+        # cholesky if it's a dense array and cg in
         # any other case
         if hasattr(X, '__array__'):
-            solver = 'svd'
+            solver = 'dense_cholesky'
         else:
             solver = 'sparse_cg'
 
@@ -99,6 +99,9 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
 
     if has_sw:
         solver = 'dense_cholesky'
+
+    if solver not in ('sparse_cg', 'dense_cholesky', 'svd', 'lsqr'):
+        NotImplementedError('Solver %s not understood' % solver)
 
     if solver == 'sparse_cg':
         # gradient descent
@@ -140,7 +143,8 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             coefs = np.ravel(coefs)
 
         return coefs
-    elif solver == "lsqr":
+
+    if solver == "lsqr":
         if y.ndim == 1:
             y1 = np.reshape(y, (-1, 1))
         else:
@@ -159,16 +163,8 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             coefs = np.ravel(coefs)
 
         return coefs
-    elif solver == 'svd':
-        U, s, Vt = linalg.svd(X, full_matrices=False)
-        idx = s > 1e-15 # same default value as scipy.linalg.pinv
-        d = np.zeros_like(s)
-        s = s[idx]
-        d[idx] = (s / (s ** 2 + alpha))
-        Ud = np.dot(U.T, y).T * d
-        coef_ = np.dot(Ud, Vt)
-        return coef_
-    elif solver in ('dense_cholesky', 'cholesky'):
+
+    if solver == 'dense_cholesky':
         # normal equations (cholesky) method
         if n_features > n_samples or has_sw:
             # kernel ridge
@@ -185,26 +181,42 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                     y = y * sw[:, np.newaxis]
                 K *= np.outer(sw, sw)
             K.flat[::n_samples + 1] += alpha
-            dual_coef = linalg.solve(K, y,
-                                     sym_pos=True, overwrite_a=True)
-            if has_sw:
-                if dual_coef.ndim == 1:
-                    dual_coef *= sw
-                else:
-                    # Deal with multiple-output problems
-                    dual_coef *= sw[:, np.newaxis]
-            coef = safe_sparse_dot(X.T, dual_coef, dense_output=True)
+            try:
+                dual_coef = linalg.solve(K, y,
+                                         sym_pos=True, overwrite_a=True)
+                if has_sw:
+                    if dual_coef.ndim == 1:
+                        dual_coef *= sw
+                    else:
+                        # Deal with multiple-output problems
+                        dual_coef *= sw[:, np.newaxis]
+                return safe_sparse_dot(X.T, dual_coef, dense_output=True).T
+            except linalg.LinAlgError:
+                # use SVD solver if matrix is singular
+                solver = 'svd'
         else:
             # ridge
             # w = inv(X^t X + alpha*Id) * X.T y
             A = safe_sparse_dot(X.T, X, dense_output=True)
             A.flat[::n_features + 1] += alpha
             Xy = safe_sparse_dot(X.T, y, dense_output=True)
-            coef = linalg.solve(A, Xy, sym_pos=True, overwrite_a=True)
+            try:
+                return linalg.solve(A, Xy, sym_pos=True, overwrite_a=True).T
+            except linalg.LinAlgError:
+                # use SVD solver if matrix is singular
+                solver = 'svd'
 
-        return coef.T
-    else:
-        raise NotImplementedError('Solver %s not understood' % solver)
+    if solver == 'svd':
+        # slower than cholesky but does not break with
+        # singular matrices
+        U, s, Vt = linalg.svd(X, full_matrices=False)
+        idx = s > 1e-15  # same default value as scipy.linalg.pinv
+        d = np.zeros_like(s)
+        s = s[idx]
+        d[idx] = (s / (s ** 2 + alpha))
+        Ud = np.dot(U.T, y).T * d
+        coef_ = np.dot(Ud, Vt)
+        return coef_
 
 
 class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
