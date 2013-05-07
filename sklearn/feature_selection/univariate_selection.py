@@ -311,6 +311,8 @@ class _PvalueFilter(_BaseFilter):
         score function.
         """
         self.scores_, self.pvalues_ = self.score_func(X, y)
+        self.scores_ = np.asarray(self.scores_)
+        self.pvalues_ = np.asarray(self.pvalues_)
         if len(np.unique(self.pvalues_)) < len(self.pvalues_):
             warn("Duplicate p-values. Result may depend on feature ordering."
                  "There are probably duplicate features, or you used a "
@@ -325,6 +327,8 @@ class _ScoreFilter(_BaseFilter):
         Records and selects features according to their scores.
         """
         self.scores_, self.pvalues_ = self.score_func(X, y)
+        self.scores_ = np.asarray(self.scores_)
+        self.pvalues_ = np.asarray(self.pvalues_)
         if len(np.unique(self.scores_)) < len(self.scores_):
             warn("Duplicate scores. Result may depend on feature ordering."
                  "There are probably duplicate features, or you used a "
