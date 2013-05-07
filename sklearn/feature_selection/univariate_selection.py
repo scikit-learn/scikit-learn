@@ -311,6 +311,8 @@ class _PvalueFilter(_BaseFilter):
         score function.
         """
         self.scores_, self.pvalues_ = self.score_func(X, y)
+        self.scores_ = np.asarray(self.scores_)
+        self.pvalues_ = np.asarray(self.pvalues_)
         if len(np.unique(self.pvalues_)) < len(self.pvalues_):
             warn("Duplicate p-values. Result may depend on feature ordering."
                  "There are probably duplicate features, or you used a "
@@ -325,6 +327,8 @@ class _ScoreFilter(_BaseFilter):
         Records and selects features according to their scores.
         """
         self.scores_, self.pvalues_ = self.score_func(X, y)
+        self.scores_ = np.asarray(self.scores_)
+        self.pvalues_ = np.asarray(self.pvalues_)
         if len(np.unique(self.scores_)) < len(self.scores_):
             warn("Duplicate scores. Result may depend on feature ordering."
                  "There are probably duplicate features, or you used a "
@@ -383,13 +387,12 @@ class SelectPercentile(_ScoreFilter):
         scores = _clean_nans(self.scores_)
 
         alpha = stats.scoreatpercentile(scores, 100 - percentile)
-        # XXX refactor the indices -> mask -> indices -> mask thing
-        inds = np.where(scores >= alpha)[0]
-        # if we selected too many features because of equal scores,
-        # we throw them away now
-        inds = inds[:len(scores) * percentile // 100]
-        mask = np.zeros(scores.shape, dtype=np.bool)
-        mask[inds] = True
+        mask = scores > alpha
+        ties = np.where(scores == alpha)[0]
+        if len(ties):
+            max_feats = len(scores) * percentile // 100
+            kept_ties = ties[:max_feats - mask.sum()]
+            mask[kept_ties] = True
         return mask
 
 
