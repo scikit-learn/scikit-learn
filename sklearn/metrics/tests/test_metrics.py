@@ -68,14 +68,47 @@ ALL_METRICS = {
     "f2_score": lambda y1, y2: fbeta_score(y1, y2, beta=2),
     "f0.5_score": lambda y1, y2: fbeta_score(y1, y2, beta=0.5),
     "matthews_corrcoef_score": matthews_corrcoef,
-
     "auc_score": auc_score,
     "average_precision_score": average_precision_score,
+
+    "weighted_f0.5_score":
+    lambda y1, y2: fbeta_score(y1, y2, average="weighted", beta=0.5),
+    "weighted_f1_score":
+    lambda y1, y2: f1_score(y1, y2, average="weighted"),
+    "weighted_f2_score":
+    lambda y1, y2: fbeta_score(y1, y2, average="weighted", beta=2),
+    "weighted_precision_score":
+    lambda y1, y2: precision_score(y1, y2, average="weighted"),
+    "weighted_recall_score":
+    lambda y1, y2: recall_score(y1, y2, average="weighted"),
+
+    "micro_f0.5_score":
+    lambda y1, y2: fbeta_score(y1, y2, average="micro", beta=0.5),
+    "micro_f1_score":
+    lambda y1, y2: f1_score(y1, y2, average="micro"),
+    "micro_f2_score":
+    lambda y1, y2: fbeta_score(y1, y2, average="micro", beta=2),
+    "micro_precision_score":
+    lambda y1, y2: precision_score(y1, y2, average="micro"),
+    "micro_recall_score":
+    lambda y1, y2: recall_score(y1, y2, average="micro"),
+
+    "macro_f0.5_score":
+    lambda y1, y2: fbeta_score(y1, y2, average="macro", beta=0.5),
+    "macro_f1_score":
+    lambda y1, y2: f1_score(y1, y2, average="macro"),
+    "macro_f2_score":
+    lambda y1, y2: fbeta_score(y1, y2, average="macro", beta=2),
+    "macro_precision_score":
+    lambda y1, y2: precision_score(y1, y2, average="macro"),
+    "macro_recall_score":
+    lambda y1, y2: recall_score(y1, y2, average="macro"),
 
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
     "explained_variance_score": explained_variance_score,
-    "r2_score": r2_score}
+    "r2_score": r2_score
+}
 
 METRICS_WITH_NORMALIZE_OPTION = {
     "accuracy_score ": lambda y1, y2, normalize:
@@ -101,6 +134,38 @@ MULTILABELS_METRICS = {
     "unnormalized_zero_one_loss":
     lambda y1, y2: zero_one_loss(y1, y2, normalize=False),
 
+    "weighted_f0.5_score":
+    lambda y1, y2: fbeta_score(y1, y2, average="weighted", beta=0.5),
+    "weighted_f1_score":
+    lambda y1, y2: f1_score(y1, y2, average="weighted"),
+    "weighted_f2_score":
+    lambda y1, y2: fbeta_score(y1, y2, average="weighted", beta=2),
+    "weighted_precision_score":
+    lambda y1, y2: precision_score(y1, y2, average="weighted"),
+    "weighted_recall_score":
+    lambda y1, y2: recall_score(y1, y2, average="weighted"),
+
+    "micro_f0.5_score":
+    lambda y1, y2: fbeta_score(y1, y2, average="micro", beta=0.5),
+    "micro_f1_score":
+    lambda y1, y2: f1_score(y1, y2, average="micro"),
+    "micro_f2_score":
+    lambda y1, y2: fbeta_score(y1, y2, average="micro", beta=2),
+    "micro_precision_score":
+    lambda y1, y2: precision_score(y1, y2, average="micro"),
+    "micro_recall_score":
+    lambda y1, y2: recall_score(y1, y2, average="micro"),
+
+    "macro_f0.5_score":
+    lambda y1, y2: fbeta_score(y1, y2, average="macro", beta=0.5),
+    "macro_f1_score":
+    lambda y1, y2: f1_score(y1, y2, average="macro"),
+    "macro_f2_score":
+    lambda y1, y2: fbeta_score(y1, y2, average="macro", beta=2),
+    "macro_precision_score":
+    lambda y1, y2: precision_score(y1, y2, average="macro"),
+    "macro_recall_score":
+    lambda y1, y2: recall_score(y1, y2, average="macro"),
 }
 
 SYMETRIC_METRICS = {
@@ -119,17 +184,54 @@ SYMETRIC_METRICS = {
     lambda y1, y2: zero_one_loss(y1, y2, normalize=False),
 
     "f1_score": f1_score,
+    "weighted_f1_score":
+    lambda y1, y2: f1_score(y1, y2, average="weighted"),
+    "micro_f1_score":
+    lambda y1, y2: f1_score(y1, y2, average="micro"),
+    "macro_f1_score":
+    lambda y1, y2: f1_score(y1, y2, average="macro"),
+
     "matthews_corrcoef_score": matthews_corrcoef,
     "mean_absolute_error": mean_absolute_error,
-    "mean_squared_error": mean_squared_error}
+    "mean_squared_error": mean_squared_error
+}
 
 NOT_SYMETRIC_METRICS = {
+    "explained_variance_score": explained_variance_score,
+    "r2_score": r2_score,
+
     "precision_score": precision_score,
     "recall_score": recall_score,
     "f2_score": lambda y1, y2: fbeta_score(y1, y2, beta=2),
     "f0.5_score": lambda y1, y2: fbeta_score(y1, y2, beta=0.5),
-    "explained_variance_score": explained_variance_score,
-    "r2_score": r2_score}
+
+    "weighted_f0.5_score":
+    lambda y1, y2: fbeta_score(y1, y2, average="weighted", beta=0.5),
+    "weighted_f2_score":
+    lambda y1, y2: fbeta_score(y1, y2, average="weighted", beta=2),
+    "weighted_precision_score":
+    lambda y1, y2: precision_score(y1, y2, average="weighted"),
+    "weighted_recall_score":
+    lambda y1, y2: recall_score(y1, y2, average="weighted"),
+
+    "micro_f0.5_score":
+    lambda y1, y2: fbeta_score(y1, y2, average="micro", beta=0.5),
+    "micro_f2_score":
+    lambda y1, y2: fbeta_score(y1, y2, average="micro", beta=2),
+    "micro_precision_score":
+    lambda y1, y2: precision_score(y1, y2, average="micro"),
+    "micro_recall_score":
+    lambda y1, y2: recall_score(y1, y2, average="micro"),
+
+    "macro_f0.5_score":
+    lambda y1, y2: fbeta_score(y1, y2, average="macro", beta=0.5),
+    "macro_f2_score":
+    lambda y1, y2: fbeta_score(y1, y2, average="macro", beta=2),
+    "macro_precision_score":
+    lambda y1, y2: precision_score(y1, y2, average="macro"),
+    "macro_recall_score":
+    lambda y1, y2: recall_score(y1, y2, average="macro"),
+}
 
 THRESHOLDED_METRICS = {
     "auc_score": auc_score,
@@ -956,6 +1058,7 @@ def test_multioutput_regression_invariance_to_dimension_shuffling():
 
 
 def test_multilabel_representation_invariance():
+
     # Generate some data
     n_classes = 4
     n_samples = 50
@@ -1127,6 +1230,10 @@ def test_multilabel_accuracy_score_subset_accuracy():
     assert_equal(1.0, accuracy_score(y1, y1))
     assert_equal(1.0, accuracy_score(y2, y2))
     assert_equal(0.0, accuracy_score(y2, [(), ()]))
+    assert_equal(1, accuracy_score(y1, y2, normalize=False))
+    assert_equal(2, accuracy_score(y1, y1, normalize=False))
+    assert_equal(2, accuracy_score(y2, y2, normalize=False))
+    assert_equal(0, accuracy_score(y2, [(), ()], normalize=False))
 
 
 def test_multilabel_jaccard_similarity_score():
@@ -1244,3 +1351,195 @@ def test_normalize_option_multilabel_classification():
                             / n_samples,
                             measure,
                             err_msg="Failed with %s" % name)
+
+
+def test_precision_recall_f1_score_multilabel_1():
+    """ Test precision_recall_f1_score on a crafted multilabel example
+    """
+    # First crafted example
+    y_true_ll = [(0,), (1,), (2, 3)]
+    y_pred_ll = [(1,), (1,), (2, 0)]
+    lb = LabelBinarizer()
+    lb.fit([range(4)])
+    y_true_bi = lb.transform(y_true_ll)
+    y_pred_bi = lb.transform(y_pred_ll)
+
+    for y_true, y_pred in [(y_true_ll, y_pred_ll), (y_true_bi, y_pred_bi)]:
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average=None)
+        #tp = [0, 1, 1, 0]
+        #fn = [1, 0, 0, 1]
+        #fp = [1, 1, 0, 0]
+
+        # Check per class
+        assert_array_almost_equal(p, [0.0, 0.5, 1.0, 0.0], 2)
+        assert_array_almost_equal(r, [0.0, 1.0, 1.0, 0.0], 2)
+        assert_array_almost_equal(f, [0.0, 1 / 1.5, 1, 0.0], 2)
+        assert_array_almost_equal(s, [1, 1, 1, 1], 2)
+
+        # Check macro
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average="macro")
+        assert_almost_equal(1.5 / 4, p)
+        assert_almost_equal(0.5, r)
+        assert_almost_equal(2.5 / 1.5 * 0.25, f)
+        assert_equal(None, s)
+
+        # Check micro
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average="micro")
+        assert_almost_equal(0.5, p)
+        assert_almost_equal(0.5, r)
+        assert_almost_equal(0.5, f)
+        assert_equal(None, s)
+
+        # Check weigted
+        # |h(x_i) inter y_i | = [0, 1, 1]
+        # |y_i| = [1, 1, 2]
+        # |h(x_i)| = [1, 1, 2]
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average="weighted")
+        assert_almost_equal(0.5, p)
+        assert_almost_equal(0.5, r)
+        assert_almost_equal(0.5, f)
+        assert_equal(None, s)
+
+
+def test_precision_recall_f1_score_multilabel_2():
+    """ Test precision_recall_f1_score on a crafted multilabel example 2
+    """
+    # Second crafted example
+    y_true_ll = [(1,), (2,), (2, 3)]
+    y_pred_ll = [(4,), (4,), (2, 1)]
+    lb = LabelBinarizer()
+    lb.fit([range(1, 5)])
+    y_true_bi = lb.transform(y_true_ll)
+    y_pred_bi = lb.transform(y_pred_ll)
+
+    for y_true, y_pred in [(y_true_ll, y_pred_ll), (y_true_bi, y_pred_bi)]:
+        # tp = [ 0.  1.  0.  0.]
+        # fp = [ 1.  0.  0.  2.]
+        # fn = [ 1.  1.  1.  0.]
+
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average=None)
+        assert_array_almost_equal(p, [0.0, 1.0, 0.0, 0.0], 2)
+        assert_array_almost_equal(r, [0.0, 0.5, 0.0, 0.0], 2)
+        assert_array_almost_equal(f, [0.0, 0.66, 0.0, 0.0], 2)
+        assert_array_almost_equal(s, [1, 2, 1, 0], 2)
+
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average="micro")
+        assert_almost_equal(0.25, p)
+        assert_almost_equal(0.25, r)
+        assert_almost_equal(2 * 0.25 * 0.25 / 0.5, f)
+        assert_equal(None, s)
+
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average="macro")
+        assert_almost_equal(0.25, p)
+        assert_almost_equal(0.125, r)
+        assert_almost_equal(2 / 12, f)
+        assert_equal(None, s)
+
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average="weighted")
+        # Check weigted
+        # |h(x_i) inter y_i | = [0, 0, 1]
+        # |y_i| = [1, 1, 2]
+        # |h(x_i)| = [1, 1, 2]
+        assert_almost_equal(1 / 6, p)
+        assert_almost_equal(1 / 6, r)
+        assert_almost_equal(2 / 4 * 1 / 3, f)
+        assert_equal(None, s)
+
+
+def test_precision_recall_f1_score_with_an_empty_prediction():
+    y_true_ll = [(1,), (0,), (2, 1,)]
+    y_pred_ll = [tuple(), (3,), (2, 1)]
+
+    lb = LabelBinarizer()
+    lb.fit([range(4)])
+    y_true_bi = lb.transform(y_true_ll)
+    y_pred_bi = lb.transform(y_pred_ll)
+
+    for y_true, y_pred in [(y_true_ll, y_pred_ll), (y_true_bi, y_pred_bi)]:
+        # true_pos = [ 0.  1.  1.  0.]
+        # false_pos = [ 0.  0.  0.  1.]
+        # false_neg = [ 1.  1.  0.  0.]
+
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average=None)
+        assert_array_almost_equal(p, [0.0, 1.0, 1.0, 0.0], 2)
+        assert_array_almost_equal(r, [0.0, 0.5, 1.0, 0.0], 2)
+        assert_array_almost_equal(f, [0.0, 1 / 1.5, 1, 0.0], 2)
+        assert_array_almost_equal(s, [1, 2, 1, 0], 2)
+
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average="macro")
+        assert_almost_equal(0.5, p)
+        assert_almost_equal(1.5 / 4, r)
+        assert_almost_equal(2.5 / (4 * 1.5), f)
+        assert_equal(None, s)
+
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average="micro")
+        assert_almost_equal(2 / 3, p)
+        assert_almost_equal(0.5, r)
+        assert_almost_equal(2 / 3 / (2 / 3 + 0.5), f)
+        assert_equal(None, s)
+
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average="weighted")
+        # Check weigted
+        # |h(x_i) inter y_i | = [0, 0, 2]
+        # |y_i| = [1, 1, 2]
+        # |h(x_i)| = [0, 1, 2]
+        assert_almost_equal(1 / 3, p)
+        assert_almost_equal(2 / 3, r)
+        assert_almost_equal(1 / 3, f)
+        assert_equal(None, s)
+
+
+def test_precision_recall_f1_no_labels():
+    y_true = np.zeros((20, 3))
+    y_pred = np.zeros_like(y_true)
+
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average=None)
+    #tp = [0, 0, 0]
+    #fn = [0, 0, 0]
+    #fp = [0, 0, 0]
+
+    # Check per class
+    assert_array_almost_equal(p, [0, 0, 0], 2)
+    assert_array_almost_equal(r, [0, 0, 0], 2)
+    assert_array_almost_equal(f, [0, 0, 0], 2)
+    assert_array_almost_equal(s, [0, 0, 0], 2)
+
+    # Check macro
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average="macro")
+    assert_almost_equal(p, 0)
+    assert_almost_equal(r, 0)
+    assert_almost_equal(f, 0)
+    assert_equal(None, s)
+
+    # Check micro
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average="micro")
+    assert_almost_equal(p, 0)
+    assert_almost_equal(r, 0)
+    assert_almost_equal(f, 0)
+    assert_equal(None, s)
+
+    # # Check weigted
+    # |h(x_i) inter y_i | = [0, 0, 0]
+    # |y_i| = [0, 0, 0]
+    # |h(x_i)| = [1, 1, 2]
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average="weighted")
+    assert_almost_equal(p, 1)
+    assert_almost_equal(r, 1)
+    assert_almost_equal(f, 1)
+    assert_equal(None, s)

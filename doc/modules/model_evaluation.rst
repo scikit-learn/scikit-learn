@@ -47,21 +47,22 @@ Others also work in the multiclass case:
 
    classification_report
    confusion_matrix
-   f1_score
-   fbeta_score
-   precision_recall_fscore_support
-   precision_score
-   recall_score
+
 
 And some also work in the multilabel case:
 
 .. autosummary::
    :template: function.rst
 
-  accuracy_score
-  hamming_loss
-  jaccard_similarity_score
-  zero_one_loss
+   accuracy_score
+   f1_score
+   fbeta_score
+   hamming_loss
+   jaccard_similarity_score
+   precision_recall_fscore_support
+   precision_score
+   recall_score
+   zero_one_loss
 
 
 Some metrics might require probability estimates of the positive class,
@@ -465,11 +466,6 @@ Moreover, these notions can be further extended. The functions
    It can result in F1 score that is not between precision and recall.
  * ``None``: no averaging is performed.
 
-.. warning::
-
-  Currently those functions support only the multiclass case. However the
-  following definitions are general and remain valid in the multilabel
-  case.
 
 Let's define some notations:
 
@@ -566,15 +562,19 @@ Here an example where ``average`` is set to to ``weighted``::
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
   >>> y_pred = [0, 2, 1, 0, 0, 1]
-  >>> metrics.precision_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+  >>> metrics.precision_score(y_true, y_pred, average='weighted')
+  ... # doctest: +ELLIPSIS
   0.22...
-  >>> metrics.recall_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+  >>> metrics.recall_score(y_true, y_pred, average='weighted')
+  ... # doctest: +ELLIPSIS
   0.33...
-  >>> metrics.fbeta_score(y_true, y_pred, average='weighted', beta=0.5)  # doctest: +ELLIPSIS
+  >>> metrics.fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
+  ... # doctest: +ELLIPSIS
   0.23...
   >>> metrics.f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
   0.26...
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred,
+  ... average='weighted')  # doctest: +ELLIPSIS
   (0.22..., 0.33..., 0.26..., None)
 
 Here an example where ``average`` is set to ``None``::
@@ -582,17 +582,35 @@ Here an example where ``average`` is set to ``None``::
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
   >>> y_pred = [0, 2, 1, 0, 0, 1]
-  >>> metrics.precision_score(y_true, y_pred, average=None)  # doctest: +ELLIPSIS
+  >>> metrics.precision_score(y_true, y_pred, average=None)
+  ... # doctest: +ELLIPSIS
   array([ 0.66...,  0.        ,  0.        ])
   >>> metrics.recall_score(y_true, y_pred, average=None)
   array([ 1.,  0.,  0.])
   >>> metrics.f1_score(y_true, y_pred, average=None)  # doctest: +ELLIPSIS
   array([ 0.8,  0. ,  0. ])
-  >>> metrics.fbeta_score(y_true, y_pred, average=None, beta=0.5)  # doctest: +ELLIPSIS
+  >>> metrics.fbeta_score(y_true, y_pred, average=None, beta=0.5)
+  ... # doctest: +ELLIPSIS
   array([ 0.71...,  0.        ,  0.        ])
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)  # doctest: +ELLIPSIS
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)
+  ... # doctest: +ELLIPSIS
   (array([ 0.66...,  0.        ,  0.        ]), array([ 1.,  0.,  0.]), array([ 0.71...,  0.        ,  0.        ]), array([2, 2, 2]...))
 
+
+Those functions also support the multilabel case.
+
+  >>> from sklearn import metrics
+  >>> y_true = np.array([[0.0, 1.0, 0.0], [1.0, 1.0, 0.0], [0.0, 0.0, 1.0]])
+  >>> y_pred = np.ones((3, 3))
+
+  >>> metrics.f1_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
+  0.59...
+  >>> metrics.f1_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+  0.61...
+  >>> metrics.f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+  0.59...
+  >>> metrics.f1_score(y_true, y_pred, average=None)
+  array([ 0.5,  0.8,  0.5])
 
 Hinge loss
 ----------
