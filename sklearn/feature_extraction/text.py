@@ -705,7 +705,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
         X = sp.csr_matrix((values, j_indices, indptr),
                           shape=(len(indptr) - 1, len(vocabulary)),
                           dtype=self.dtype)
-        X = X.tocoo()  # trigger duplicate feature summation
+        X.sum_duplicates()
         return vocabulary, X
 
     def fit(self, raw_documents, y=None):
