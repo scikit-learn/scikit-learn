@@ -128,6 +128,9 @@ def is_multilabel(y):
     False
 
     """
+    if hasattr(y, "__array__"):  # in case of pandas DataFrames/Series
+        y = y.__array__()
+
     # the explicit check for ndarray is for forward compatibility; future
     # versions of Numpy might want to register ndarray as a Sequence
     return (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) and
