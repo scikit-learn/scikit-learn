@@ -129,6 +129,29 @@ NOT_SYMETRIC_METRICS = {
     "r2_score": r2_score}
 
 
+class ComparableObject(object):
+    def __init__(self, a):
+        self.a = a
+
+    def __eq__(self, other):
+        return self.a == other.a
+
+    def __ne__(self, other):
+        return self.a != other.a
+
+    def __lt__(self, other):
+        return self.a < other.a
+
+    def __hash__(self):
+        return hash(self.a)
+
+    def __str__(self):
+        return "ComparableObject({})".format(self.a)
+
+    def __repr__(self):
+        return self.__str__()
+
+
 def make_prediction(dataset=None, binary=False):
     """Make some classification predictions on a toy dataset using a SVC
 
@@ -392,6 +415,20 @@ def test_precision_recall_fscore_support_errors():
                   [0, 1, 2], [1, 2, 0], average='mega')
 
 
+def test_matthews_corrcoef():
+    y_true, y_pred, _ = make_prediction(binary=True)
+
+    cm = np.array([[22, 3], [8, 17]], dtype=np.int)
+    tp, fp, fn, tn = cm.flatten()
+    num = (tp * tn - fp * fn)
+    den = np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
+
+    true_mcc = 0 if den == 0 else num / den
+    mcc = matthews_corrcoef(y_true, y_pred)
+    assert_array_almost_equal(mcc, true_mcc, decimal=2)
+    assert_array_almost_equal(mcc, 0.57, decimal=2)
+
+
 def test_confusion_matrix_binary():
     """Test confusion matrix - binary classification case"""
     y_true, y_pred, _ = make_prediction(binary=True)
@@ -400,17 +437,8 @@ def test_confusion_matrix_binary():
         cm = confusion_matrix(y_true, y_pred)
         assert_array_equal(cm, [[22, 3], [8, 17]])
 
-        tp, fp, fn, tn = cm.flatten()
-        num = (tp * tn - fp * fn)
-        den = np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
-
-        true_mcc = 0 if den == 0 else num / den
-        mcc = matthews_corrcoef(y_true, y_pred)
-        assert_array_almost_equal(mcc, true_mcc, decimal=2)
-        assert_array_almost_equal(mcc, 0.57, decimal=2)
-
-    test(y_true, y_pred)
-    test(map(str, y_true), map(str, y_pred))
+    for data_type in (int, str, ComparableObject):
+        test(map(data_type, y_true), map(data_type, y_pred))
 
 
 def test_matthews_corrcoef_nan():
@@ -506,7 +534,7 @@ def test_confusion_matrix_multiclass():
     """Test confusion matrix - multi-class case"""
     y_true, y_pred, _ = make_prediction(binary=False)
 
-    def test(y_true, y_pred, string_type=False):
+    def test(y_true, y_pred, data_type):
         # compute confusion matrix with default labels introspection
         cm = confusion_matrix(y_true, y_pred)
         assert_array_equal(cm, [[19, 4, 1],
@@ -514,7 +542,7 @@ def test_confusion_matrix_multiclass():
                                 [0, 2, 18]])
 
         # compute confusion matrix with explicit label ordering
-        labels = ['0', '2', '1'] if string_type else [0, 2, 1]
+        labels = map(data_type, [0, 2, 1])
         cm = confusion_matrix(y_true,
                               y_pred,
                               labels=labels)
@@ -522,8 +550,9 @@ def test_confusion_matrix_multiclass():
                                 [0, 18, 2],
                                 [4, 24, 3]])
 
-    test(y_true, y_pred)
-    test(map(str, y_true), map(str, y_pred), string_type=True)
+    for data_type in (int, str, ComparableObject):
+        test(map(data_type, y_true), map(data_type, y_pred),
+             data_type=data_type)
 
 
 def test_confusion_matrix_multiclass_subset_labels():
