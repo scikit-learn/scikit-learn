@@ -15,7 +15,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_warns_message
 
-from sklearn.base import clone
+from sklearn.base import clone, BaseEstimator
 from sklearn.pipeline import Pipeline, FeatureUnion, make_pipeline, make_union
 from sklearn.svm import SVC
 from sklearn.linear_model import LogisticRegression
@@ -61,7 +61,6 @@ class T(IncorrectT):
 
 
 class TransfT(T):
-
     def transform(self, X, y=None):
         return X
 
@@ -69,7 +68,22 @@ class TransfT(T):
         return X
 
 
-class FitParamT(object):
+class MultT(TransfT):
+    def __init__(self, mult=1, *args, **kwargs):
+        super(TransfT, self).__init__(*args, **kwargs)
+        self.mult = mult
+
+    def transform(self, X):
+        return X * self.mult
+
+    def inverse_transform(self, X):
+        return X / self.mult
+
+    def predict(self, X):
+        return (X * self.mult).sum(axis=1)
+
+
+class FitParamT(BaseEstimator):
     """Mock classifier
     """
 
@@ -345,10 +359,88 @@ def test_pipeline_fit_transform():
     assert_array_almost_equal(X_trans, X_trans2)
 
 
+def test_set_pipeline_steps():
+    transft1 = TransfT()
+    transft2 = TransfT()
+    pipeline = Pipeline([('mock', transft1)])
+    assert_true(pipeline.named_steps['mock'] is transft1)
+
+    # Directly setting attr
+    pipeline.steps = [('mock2', transft2)]
+    assert_true('mock' not in pipeline.named_steps)
+    assert_true(pipeline.named_steps['mock2'] is transft2)
+    assert_equal([('mock2', transft2)], pipeline.steps)
+
+    # Using set_params
+    pipeline.set_params(steps=[('mock', transft1)])
+    assert_equal([('mock', transft1)], pipeline.steps)
+
+    # Using set_params to replace single step
+    pipeline.set_params(mock=transft2)
+    assert_equal([('mock', transft2)], pipeline.steps)
+
+    # With invalid data
+    assert_raises(TypeError, pipeline.set_params, steps=[('junk', ())])
+
+
+def test_set_pipeline_step_none():
+    """Test setting Pipeline steps to None"""
+    X = np.array([[1]])
+    y = np.array([1])
+    mult2 = MultT(mult=2)
+    mult3 = MultT(mult=3)
+    mult5 = MultT(mult=5)
+
+    def make():
+        return Pipeline([('m2', mult2), ('m3', mult3), ('est', mult5)])
+
+    pipeline = make()
+    fit_transform = lambda: pipeline.fit_transform(X, y)
+    predict = lambda: pipeline.predict(X)
+    inverse_transform = lambda Xinv: pipeline.inverse_transform(
+        np.asarray(Xinv))
+
+    exp = 2 * 3 * 5
+    assert_array_equal([[exp]], fit_transform())
+    assert_array_equal([exp], predict())
+    assert_array_equal(X, inverse_transform([[exp]]))
+
+    pipeline.set_params(m3=None)
+    exp = 2 * 5
+    assert_array_equal([[exp]], fit_transform())
+    assert_array_equal([exp], predict())
+    assert_array_equal(X, inverse_transform([[exp]]))
+
+    pipeline.set_params(m2=None)
+    exp = 5
+    assert_array_equal([[exp]], fit_transform())
+    assert_array_equal([exp], predict())
+    assert_array_equal(X, inverse_transform([[exp]]))
+
+    pipeline.set_params(m2=mult2)
+    exp = 2 * 5
+    assert_array_equal([[exp]], fit_transform())
+    assert_array_equal([exp], predict())
+    assert_array_equal(X, inverse_transform([[exp]]))
+
+    pipeline = make()
+    assert_raises(TypeError, pipeline.set_params, est=None)
+
+
+def test_pipeline_attributes():
+    """Ensure that the Pipeline only provides post-fit methods that are present
+    on the last step"""
+
+    def make(method):
+        """Make a pipeline whose estimator has specified method"""
+        transf = TransfT()
+        setattr(transf, method, lambda *args, **kwargs: True)
+        return Pipeline([('est', transf)]).fit([[1]], [1])
+
+
 def test_make_pipeline():
     t1 = TransfT()
     t2 = TransfT()
-
     pipe = make_pipeline(t1, t2)
     assert_true(isinstance(pipe, Pipeline))
     assert_equal(pipe.steps[0][0], "transft-1")
@@ -472,3 +564,49 @@ def test_X1d_inverse_transform():
     X = np.ones(10)
     msg = "1d X will not be reshaped in pipeline.inverse_transform"
     assert_warns_message(FutureWarning, msg, pipeline.inverse_transform, X)
+
+def test_set_feature_union_steps():
+    mult2 = MultT(2)
+    mult2.get_feature_names = lambda: ['x2']
+    mult3 = MultT(3)
+    mult3.get_feature_names = lambda: ['x3']
+    mult5 = MultT(5)
+    mult5.get_feature_names = lambda: ['x5']
+
+    ft = FeatureUnion([('m2', mult2), ('m3', mult3)])
+    assert_array_equal([[2, 3]], ft.transform(np.asarray([[1]])))
+    assert_equal(['m2__x2', 'm3__x3'], ft.get_feature_names())
+
+    # Directly setting attr
+    ft.transformer_list = [('m5', mult5)]
+    assert_array_equal([[5]], ft.transform(np.asarray([[1]])))
+    assert_equal(['m5__x5'], ft.get_feature_names())
+
+    # Using set_params
+    ft.set_params(transformer_list=[('mock', mult3)])
+    assert_array_equal([[3]], ft.transform(np.asarray([[1]])))
+    assert_equal(['mock__x3'], ft.get_feature_names())
+
+    # Using set_params to replace single step
+    ft.set_params(mock=mult5)
+    assert_array_equal([[5]], ft.transform(np.asarray([[1]])))
+    assert_equal(['mock__x5'], ft.get_feature_names())
+
+
+def test_set_feature_union_step_none():
+    mult2 = MultT(2)
+    mult2.get_feature_names = lambda: ['x2']
+    mult3 = MultT(3)
+    mult3.get_feature_names = lambda: ['x3']
+
+    ft = FeatureUnion([('m2', mult2), ('m3', mult3)])
+    assert_array_equal([[2, 3]], ft.transform(np.asarray([[1]])))
+    assert_equal(['m2__x2', 'm3__x3'], ft.get_feature_names())
+
+    ft.set_params(m2=None)
+    assert_array_equal([[3]], ft.transform(np.asarray([[1]])))
+    assert_equal(['m3__x3'], ft.get_feature_names())
+
+    ft.set_params(m3=None)
+    assert_array_equal([[]], ft.transform(np.asarray([[1]])))
+    assert_equal([], ft.get_feature_names())

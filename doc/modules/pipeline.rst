@@ -47,7 +47,6 @@ is an estimator object::
     kernel='rbf', max_iter=-1, probability=False, random_state=None,
     shrinking=True, tol=0.001, verbose=False))])
 
-
 The utility function :func:`make_pipeline` is a shorthand
 for constructing pipelines;
 it takes a variable number of estimators and returns a pipeline,
@@ -90,9 +89,17 @@ This is particularly important for doing grid searches::
 
     >>> from sklearn.model_selection import GridSearchCV
     >>> params = dict(reduce_dim__n_components=[2, 5, 10],
-    ...               svm__C=[0.1, 10, 100])
+    ...               clf__C=[0.1, 10, 100])
     >>> grid_search = GridSearchCV(clf, param_grid=params)
 
+Individual steps may also be replaced as parameters, and non-final steps may be
+ignored by setting them to ``None``::
+
+    >>> from sklearn.linear_model import LogisticRegression
+    >>> params = dict(reduce_dim=[None, PCA(5), PCA(10)],
+    ...               clf=[SVC(), LogisticRegression()],
+    ...               clf__C=[0.1, 10, 100])
+    >>> grid_search = GridSearchCV(clf, param_grid=params)
 
 .. topic:: Examples:
 
@@ -171,6 +178,15 @@ and ``value`` is an estimator object::
 Like pipelines, feature unions have a shorthand constructor called
 :func:`make_union` that does not require explicit naming of the components.
 
+
+Like ``Pipeline``, individual steps may be replaced using ``set_params``,
+and ignored by setting to ``None``::
+
+    >>> combined.set_params(kernel_pca=None) # doctest: +NORMALIZE_WHITESPACE
+    FeatureUnion(n_jobs=1, transformer_list=[('linear_pca', PCA(copy=True,
+          iterated_power=4, n_components=None, random_state=None,
+          svd_solver='auto', tol=0.0, whiten=False)), ('kernel_pca', None)],
+        transformer_weights=None)
 
 .. topic:: Examples:
 
