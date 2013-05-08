@@ -202,7 +202,8 @@ def auc(x, y, reorder=False):
         if np.any(dx < 0):
             dx *= -1
             assert not np.any(dx < 0), ("Reordering is not turned on, and "
-                                       "The x array is not increasing: %s" % x)
+                                        "The x array is not increasing: "
+                                        "%s" % x)
             direction = -1
 
     area = direction * np.trapz(y, x)
