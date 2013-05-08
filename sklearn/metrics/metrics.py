@@ -187,26 +187,28 @@ def auc(x, y, reorder=False):
     auc_score : Computes the area under the ROC curve
 
     """
-    # XXX: Consider using  ``scipy.integrate`` instead, or moving to
-    # ``utils.extmath``
     x, y = check_arrays(x, y)
     if x.shape[0] < 2:
         raise ValueError('At least 2 points are needed to compute'
                          ' area under curve, but x.shape = %s' % x.shape)
 
+    direction = 1
     if reorder:
         # reorder the data points according to the x axis and using y to
         # break ties
-        x, y = np.array(sorted(points for points in zip(x, y))).T
-        h = np.diff(x)
+        order = np.lexsort((y, x))
+        x, y = x[order], y[order]
     else:
-        h = np.diff(x)
-        if np.any(h < 0):
-            h *= -1
-            assert not np.any(h < 0), ("Reordering is not turned on, and "
-                                       "The x array is not increasing: %s" % x)
+        dx = np.diff(x)
+        if np.any(dx < 0):
+            if np.all(dx <= 0):
+                direction = -1
+            else:
+                raise ValueError("Reordering is not turned on, and "
+                                 "the x array is not increasing: %s" % x)
 
-    area = np.sum(h * (y[1:] + y[:-1])) / 2.0
+    area = direction * np.trapz(y, x)
+
     return area
 
 
