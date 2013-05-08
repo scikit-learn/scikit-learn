@@ -196,7 +196,7 @@ def auc(x, y, reorder=False):
     if reorder:
         # reorder the data points according to the x axis and using y to
         # break ties
-        
+
         order = x.argsort(kind="mergesort")
         x, y = x[order], y[order]
     else:
