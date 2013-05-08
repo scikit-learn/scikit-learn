@@ -217,8 +217,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         l2_reg = self.alpha * (1.0 - self.l1_ratio) * n_samples
 
         # precompute if n_samples > n_features
-        if precompute == "auto" and n_samples > n_features:
-            precompute = True
+        if precompute == 'auto':
+            precompute = (n_samples > n_features)
 
         if hasattr(precompute, '__array__'):
             Gram = precompute
@@ -740,7 +740,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         precompute = 'auto'
         Xy = None
 
-    if precompute or ((precompute == 'auto') and (n_samples > n_features)):
+    # precompute if n_samples > n_features
+    if precompute == 'auto':
+        precompute = (n_samples > n_features)
+
+    if precompute:
         if sparse.isspmatrix(X):
             warnings.warn("precompute is ignored for sparse data")
             precompute = False
