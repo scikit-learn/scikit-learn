@@ -197,7 +197,7 @@ def auc(x, y, reorder=False):
         # reorder the data points according to the x axis and using y to
         # break ties
 
-        order = x.argsort(kind="mergesort")
+        order = np.lexsort((y, x))
         x, y = x[order], y[order]
     else:
         dx = np.diff(x)
