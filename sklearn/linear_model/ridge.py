@@ -101,7 +101,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         solver = 'dense_cholesky'
 
     if solver not in ('sparse_cg', 'dense_cholesky', 'svd', 'lsqr'):
-        NotImplementedError('Solver %s not understood' % solver)
+        ValueError('Solver %s not understood' % solver)
 
     if solver == 'sparse_cg':
         # gradient descent
