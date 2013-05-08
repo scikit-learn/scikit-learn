@@ -289,6 +289,28 @@ def test_make_pipeline():
     assert_equal(pipe.steps[2][0], "fitparamt")
 
 
+def test_pipeline_attributes():
+    """Ensure that the Pipeline only provides post-fit methods that are present
+    on the last step"""
+
+    def make(method):
+        """Make a pipeline whose estimator has specified method"""
+        transf = TransfT()
+        setattr(transf, method, lambda *args, **kwargs: True)
+        return Pipeline([('est', transf)]).fit([[1]], [1])
+
+    attribs = ['predict_proba', 'predict_log_proba', 'predict',
+               'decision_function', 'score', 'inverse_transform']
+
+    for attrib in attribs:
+        pipeline = make(attrib)
+        getattr(pipeline, attrib)(np.asarray([[1]]))
+        for attrib2 in attribs:
+            if attrib2 != attrib:
+                assert_false(hasattr(pipeline, attrib2))
+>>>>>>> FIX make Pipeline methods properties as per #1805
+
+
 def test_feature_union_weights():
     # test feature union with transformer weights
     iris = load_iris()
