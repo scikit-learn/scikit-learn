@@ -2,7 +2,7 @@
 
 # Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
 #         Jake Vanderplas  -- <vanderplas@astro.washington.edu>
-# License: BSD, (C) INRIA 2011
+# License: BSD 3 clause (C) INRIA 2011
 
 import numpy as np
 from scipy.linalg import eigh, svd, qr, solve

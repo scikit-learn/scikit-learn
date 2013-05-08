@@ -23,7 +23,7 @@ print(__doc__)
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>,
 #         Noel Dawe <noel.dawe@gmail.com>
 #
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 from sklearn import datasets

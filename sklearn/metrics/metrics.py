@@ -12,7 +12,7 @@ the lower the better
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Arnaud Joly <a.joly@ulg.ac.be>
-# License: BSD Style.
+# License: BSD 3 clause
 
 from __future__ import division
 
@@ -26,6 +26,7 @@ from ..externals.six.moves import zip
 from ..preprocessing import LabelBinarizer
 from ..utils import check_arrays
 from ..utils import deprecated
+from ..utils.fixes import divide
 from ..utils.multiclass import is_label_indicator_matrix
 from ..utils.multiclass import is_multilabel
 from ..utils.multiclass import unique_labels
@@ -89,7 +90,7 @@ def _check_1d_array(y1, y2, ravel=False):
 
     It convert 1d arrays (y1 and y2) of various shape to a common shape
     representation. Note that ``y1`` and ``y2`` should have the same number of
-    element.
+    elements.
 
     Parameters
     ----------
@@ -298,7 +299,7 @@ def average_precision_score(y_true, y_score):
     References
     ----------
     .. [1] `Wikipedia entry for the Average precision
-            <http://en.wikipedia.org/wiki/Information_retrieval#Average_precision>`_
+           <http://en.wikipedia.org/wiki/Information_retrieval#Average_precision>`_
 
     See also
     --------
@@ -720,7 +721,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
 
     References
     ----------
-    .. [2] `Wikipedia entry for the Confusion matrix
+    .. [1] `Wikipedia entry for the Confusion matrix
            <http://en.wikipedia.org/wiki/Confusion_matrix>`_
 
     Examples
@@ -737,7 +738,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
-        labels = np.asarray(labels, dtype=np.int)
+        labels = np.asarray(labels)
 
     n_labels = labels.size
     label_to_ind = dict((y, x) for x, y in enumerate(labels))
@@ -750,9 +751,13 @@ def confusion_matrix(y_true, y_pred, labels=None):
     y_pred = y_pred[ind]
     y_true = y_true[ind]
 
-    CM = np.asarray(coo_matrix((np.ones(y_true.shape[0]), (y_true, y_pred)),
-                               shape=(n_labels, n_labels),
-                               dtype=np.int).todense())
+    CM = np.asarray(
+        coo_matrix(
+            (np.ones(y_true.shape[0], dtype=np.int), (y_true, y_pred)),
+            shape=(n_labels, n_labels)
+        ).todense()
+    )
+
     return CM
 
 
@@ -792,8 +797,7 @@ def zero_one_loss(y_true, y_pred, normalize=True):
 
     See also
     --------
-    accuracy_score : Compute the accuracy score
-    hamming_loss : Compute the average Hamming loss
+    accuracy_score, hamming_loss, jaccard_similarity_score
 
     Examples
     --------
@@ -805,17 +809,21 @@ def zero_one_loss(y_true, y_pred, normalize=True):
     >>> zero_one_loss(y_true, y_pred, normalize=False)
     1
 
-    In the multilabel case with binary indicator format
-    >>> zero_one_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+    In the multilabel case with binary indicator format:
+
+    >>> zero_one_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
+    0.5
+
+    and with a list of labels format:
+
+    >>> zero_one_loss([(1,), (3,)], [(1, 2), tuple()])
     1.0
 
-    and with a list of labels format
-    >>> zero_one_loss([(1, 2), (3,)], [(1, 2), tuple()])
-    0.5
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
-    score = accuracy_score(y_true, y_pred, normalize=normalize)
+    score = accuracy_score(y_true, y_pred,
+                           normalize=normalize)
 
     if normalize:
         return 1 - score
@@ -875,8 +883,150 @@ def zero_one(y_true, y_pred, normalize=False):
 ###############################################################################
 # Multiclass score functions
 ###############################################################################
+
+def jaccard_similarity_score(y_true, y_pred, normalize=True, pos_label=1):
+    """Jaccard similarity coefficient score
+
+    The Jaccard index [1], or Jaccard similarity coefficient, defined as
+    the size of the intersection divided by the size of the union of two label
+    sets, is used to compare set of predicted labels for a sample to the
+    corresponding set of labels in ``y_true``.
+
+    Parameters
+    ----------
+    y_true : array-like or list of labels or label indicator matrix
+        Ground truth (correct) labels.
+
+    y_pred : array-like or list of labels or label indicator matrix
+        Predicted labels, as returned by a classifier.
+
+    normalize : bool, optional (default=True)
+        If ``False``, return the sum of the Jaccard similarity coefficient
+        over the sample set. Otherwise, return the average of Jaccard
+        similarity coefficient.
+
+    pos_label : int, 1 by default
+        It is used to infer what is a positive label in the label indicator
+        matrix format.
+
+    Returns
+    -------
+    score : float
+        If ``normalize == True``, return the average Jaccard similarity
+        coefficient, else it returns the sum of the Jaccard similarity
+        coefficient over the sample set.
+
+        The best performance is 1 with ``normalize == True`` and the number
+        of samples with ``normalize == False``.
+
+    See also
+    --------
+    accuracy_score, hamming_loss, zero_one_loss
+
+    Notes
+    -----
+    In binary and multiclass classification, this function is equivalent
+    to the ``accuracy_score``. It differs in the multilabel classification
+    problem.
+
+    References
+    ----------
+    .. [1] `Wikipedia entry for the Jaccard index
+           <http://en.wikipedia.org/wiki/Jaccard_index>`_
+
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> from sklearn.metrics import jaccard_similarity_score
+    >>> y_pred = [0, 2, 1, 3]
+    >>> y_true = [0, 1, 2, 3]
+    >>> jaccard_similarity_score(y_true, y_pred)
+    0.5
+    >>> jaccard_similarity_score(y_true, y_pred, normalize=False)
+    2
+
+    In the multilabel case with binary indicator format:
+
+    >>> jaccard_similarity_score(np.array([[0.0, 1.0], [1.0, 1.0]]),\
+        np.ones((2, 2)))
+    0.75
+
+    and with a list of labels format:
+
+    >>> jaccard_similarity_score([(1,), (3,)], [(1, 2), tuple()])
+    0.25
+
+    """
+
+    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
+
+    # Compute accuracy for each possible representation
+    if is_multilabel(y_true):
+
+        # Handle mix representation
+        if type(y_true) != type(y_pred):
+            labels = unique_labels(y_true, y_pred)
+            lb = LabelBinarizer()
+            lb.fit([labels.tolist()])
+            y_true = lb.transform(y_true)
+            y_pred = lb.transform(y_pred)
+
+        if is_label_indicator_matrix(y_true):
+            try:
+                # oddly, we may get an "invalid" rather than a "divide"
+                # error here
+                old_err_settings = np.seterr(divide='ignore',
+                                             invalid='ignore')
+                y_pred_pos_label = y_pred == pos_label
+                y_true_pos_label = y_true == pos_label
+                pred_inter_true = np.sum(np.logical_and(y_pred_pos_label,
+                                                        y_true_pos_label),
+                                         axis=1)
+                pred_union_true = np.sum(np.logical_or(y_pred_pos_label,
+                                                       y_true_pos_label),
+                                         axis=1)
+                score = pred_inter_true / pred_union_true
+
+                # If there is no label, it results in a Nan instead, we set
+                # the jaccard to 1: lim_{x->0} x/x = 1
+                # Note with py2.6 and np 1.3: we can't check safely for nan.
+                score[pred_union_true == 0.0] = 1.0
+            finally:
+                np.seterr(**old_err_settings)
+
+        else:
+            score = np.empty(len(y_true))
+            for i, (true, pred) in enumerate(zip(y_pred, y_true)):
+                true_set = set(true)
+                pred_set = set(pred)
+                size_true_union_pred = len(true_set | pred_set)
+                # If there is no label, it results in a Nan instead, we set
+                # the jaccard to 1: lim_{x->0} x/x = 1
+                if size_true_union_pred == 0:
+                    score[i] = 1.
+                else:
+                    score[i] = (len(true_set & pred_set) /
+                                size_true_union_pred)
+    else:
+        y_true, y_pred = check_arrays(y_true, y_pred)
+
+        # Handle mix shape
+        y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=True)
+        score = y_true == y_pred
+
+    if normalize:
+        return np.mean(score)
+    else:
+        return np.sum(score)
+
+
 def accuracy_score(y_true, y_pred, normalize=True):
     """Accuracy classification score.
+
+    In multilabel classification, this function computes subset accuracy:
+    the set of labels predicted for a sample must *exactly* match the
+    corresponding set of labels in y_true.
 
     Parameters
     ----------
@@ -893,18 +1043,21 @@ def accuracy_score(y_true, y_pred, normalize=True):
     Returns
     -------
     score : float
-        The fraction of correct predictions in ``y_pred``.
-        The best performance is 1.
+        If ``normalize == True``, return the correctly classified samples
+        (float), else it returns the number of correctly classified samples
+        (int).
+
+        The best performance is 1 with ``normalize == True`` and the number
+        of samples with ``normalize == False``.
 
     See also
     --------
-    zero_one_loss : zero-one classification loss
+    jaccard_similarity_score, hamming_loss, zero_one_loss
 
     Notes
     -----
-    In multilabel classification, this function computes subset accuracy:
-    the set of labels predicted for a sample must *exactly* match the
-    corresponding set of labels in y_true.
+    In binary and multiclass classification, this function is equal
+    to the ``jaccard_similarity_score`` function.
 
     Examples
     --------
@@ -919,18 +1072,20 @@ def accuracy_score(y_true, y_pred, normalize=True):
 
     In the multilabel case with binary indicator format:
 
-    >>> accuracy_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
-    0.0
+    >>> accuracy_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
+    0.5
 
     and with a list of labels format:
-    >>> accuracy_score([(1, 2), (3,)], [(1, 2), tuple()])
-    0.5
+
+    >>> accuracy_score([(1,), (3,)], [(1, 2), tuple()])
+    0.0
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
 
     # Compute accuracy for each possible representation
     if is_multilabel(y_true):
+
         # Handle mix representation
         if type(y_true) != type(y_pred):
             labels = unique_labels(y_true, y_pred)
@@ -942,13 +1097,8 @@ def accuracy_score(y_true, y_pred, normalize=True):
         if is_label_indicator_matrix(y_true):
             score = (y_pred != y_true).sum(axis=1) == 0
         else:
-            # numpy 1.3 : it is required to perform a unique before setxor1d
-            #             to get unique label in numpy 1.3.
-            #             This is needed in order to handle redundant labels.
-            # FIXME : check if this can be simplified when 1.3 is removed
-            score = np.array([np.size(np.setxor1d(np.unique(pred),
-                                                  np.unique(true))) == 0
-                             for pred, true in zip(y_pred, y_true)])
+            score = np.array([len(set(true) ^ set(pred)) == 0
+                              for pred, true in zip(y_pred, y_true)])
     else:
         y_true, y_pred = check_arrays(y_true, y_pred)
 
@@ -1276,10 +1426,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         labels = np.asarray(labels)
 
     n_labels = labels.size
-    true_pos = np.zeros(n_labels, dtype=np.double)
-    false_pos = np.zeros(n_labels, dtype=np.double)
-    false_neg = np.zeros(n_labels, dtype=np.double)
-    support = np.zeros(n_labels, dtype=np.long)
+    true_pos = np.empty(n_labels, dtype=np.long)
+    false_pos = np.empty(n_labels, dtype=np.long)
+    false_neg = np.empty(n_labels, dtype=np.long)
+    support = np.empty(n_labels, dtype=np.long)
 
     for i, label_i in enumerate(labels):
         true_pos[i] = np.sum(y_pred[y_true == label_i] == label_i)
@@ -1292,20 +1442,21 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         old_err_settings = np.seterr(divide='ignore', invalid='ignore')
 
         # precision and recall
-        precision = true_pos / (true_pos + false_pos)
-        recall = true_pos / (true_pos + false_neg)
+        precision = divide(true_pos.astype(np.float), true_pos + false_pos)
+        recall = divide(true_pos.astype(np.float), true_pos + false_neg)
 
-        # handle division by 0.0 in precision and recall
-        precision[(true_pos + false_pos) == 0.0] = 0.0
-        recall[(true_pos + false_neg) == 0.0] = 0.0
+        # handle division by 0 in precision and recall
+        precision[(true_pos + false_pos) == 0] = 0.0
+        recall[(true_pos + false_neg) == 0] = 0.0
 
         # fbeta score
         beta2 = beta ** 2
-        fscore = (1 + beta2) * (precision * recall) / (
-            beta2 * precision + recall)
+        fscore = divide((1 + beta2) * precision * recall,
+                        beta2 * precision + recall,
+                        dtype=np.double)
 
-        # handle division by 0.0 in fscore
-        fscore[(precision + recall) == 0.0] = 0.0
+        # handle division by 0 in fscore
+        fscore[(precision + recall) == 0] = 0.0
     finally:
         np.seterr(**old_err_settings)
 
@@ -1322,11 +1473,15 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     else:
         average_options = (None, 'micro', 'macro', 'weighted')
         if average == 'micro':
-            avg_precision = true_pos.sum() / (true_pos.sum() +
-                                              false_pos.sum())
-            avg_recall = true_pos.sum() / (true_pos.sum() + false_neg.sum())
-            avg_fscore = (1 + beta2) * (avg_precision * avg_recall) / \
-                         (beta2 * avg_precision + avg_recall)
+            avg_precision = divide(true_pos.sum(),
+                                      true_pos.sum() + false_pos.sum(),
+                                      dtype=np.double)
+            avg_recall = divide(true_pos.sum(),
+                                true_pos.sum() + false_neg.sum(),
+                                dtype=np.double)
+            avg_fscore = divide((1 + beta2) * (avg_precision * avg_recall),
+                                beta2 * avg_precision + avg_recall,
+                                dtype=np.double)
         elif average == 'macro':
             avg_precision = np.mean(precision)
             avg_recall = np.mean(recall)
@@ -1644,21 +1799,22 @@ def hamming_loss(y_true, y_pred, classes=None):
 
     See Also
     --------
-    zero_one_loss : Zero-one classification loss
+    accuracy_score, jaccard_similarity_score, zero_one_loss
 
     Notes
     -----
     In multiclass classification, the Hamming loss correspond to the Hamming
     distance between ``y_true`` and ``y_pred`` which is equivalent to the
-    ``zero_one_loss`` function.
+    subset ``zero_one_loss`` function.
 
     In multilabel classification, the Hamming loss is different from the
-    zero-one loss. The zero-one loss considers the entire set of labels for a
-    given sample incorrect if it does entirely match the true set of labels.
-    Hamming loss is more forgiving in that it penalizes the individual labels.
+    subset zero-one loss. The zero-one loss considers the entire set of labels
+    for a given sample incorrect if it does entirely match the true set of
+    labels. Hamming loss is more forgiving in that it penalizes the individual
+    labels.
 
-    The Hamming loss is upperbounded by the zero-one loss. When normalized
-    over samples, the Hamming loss is always between 0 and 1.
+    The Hamming loss is upperbounded by the subset zero-one loss. When
+    normalized over samples, the Hamming loss is always between 0 and 1.
 
     References
     ----------
@@ -1706,12 +1862,7 @@ def hamming_loss(y_true, y_pred, classes=None):
         if is_label_indicator_matrix(y_true):
             return np.mean(y_true != y_pred)
         else:
-            # numpy 1.3 : it is required to perform a unique before setxor1d
-            #             to get unique label in numpy 1.3.
-            #             This is needed in order to handle redundant labels.
-            # FIXME : check if this can be simplified when 1.3 is removed
-            loss = np.array([np.size(np.setxor1d(np.unique(pred),
-                                                 np.unique(true)))
+            loss = np.array([len(set(pred) ^ set(true))
                              for pred, true in zip(y_pred, y_true)])
 
             return np.mean(loss) / np.size(classes)

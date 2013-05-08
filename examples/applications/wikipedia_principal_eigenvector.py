@@ -30,7 +30,7 @@ of the latent structured data of the Wikipedia content.
 """
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 from __future__ import print_function
 

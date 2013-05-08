@@ -30,7 +30,7 @@ case.
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 import warnings
@@ -315,8 +315,8 @@ def predict_ovo(estimators, classes, X):
         for j in range(i + 1, n_classes):
             pred = estimators[k].predict(X)
             score = _predict_binary(estimators[k], X)
-            scores[:, 0] += score
-            scores[:, 1] -= score
+            scores[:, i] += score
+            scores[:, j] -= score
             votes[pred == 0, i] += 1
             votes[pred == 1, j] += 1
             k += 1

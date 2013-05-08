@@ -4,7 +4,7 @@ General tests for all estimators in sklearn.
 
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Gael Varoquaux gael.varoquaux@normalesup.org
-# License: BSD Style.
+# License: BSD 3 clause
 from __future__ import print_function
 
 import os
@@ -181,6 +181,9 @@ def test_transformers():
             transformer.n_components = 1
         elif name == "MiniBatchDictionaryLearning":
             transformer.set_params(n_iter=5)    # default = 1000
+
+        elif name == "KernelPCA":
+            transformer.remove_zero_eig = False
 
         # fit
 

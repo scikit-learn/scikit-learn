@@ -3,7 +3,7 @@
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Gael Varoquaux <gael.varoquaux@inria.fr>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 import sys
 import warnings
@@ -500,8 +500,8 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
         If ``True``, X will be copied; else, it may be overwritten.
     """
     if Xy is None:
-        X = atleast2d_or_csc(X, copy=copy_X and fit_intercept
-                                and not sparse.isspmatrix(X))
+        X = atleast2d_or_csc(X, copy=(copy_X and fit_intercept and not
+                                      sparse.isspmatrix(X)))
         if not sparse.isspmatrix(X):
             # X can be touched inplace thanks to the above line
             X, y, _, _, _ = center_data(X, y, fit_intercept,
@@ -597,7 +597,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     >>> X = np.array([[1, 2, 3.1], [2.3, 5.4, 4.3]]).T
     >>> y = np.array([1, 2, 3.1])
     >>> # Use lasso_path to compute a coefficient path
-    >>> coef_path = [e.coef_ for e in lasso_path(X, y, alphas=[5., 1., .5], fit_intercept=False)]
+    >>> coef_path = [e.coef_ for e in lasso_path(X, y, alphas=[5., 1., .5], \
+fit_intercept=False)]
     >>> print(np.array(coef_path).T)
     [[ 0.          0.          0.46874778]
      [ 0.2159048   0.4425765   0.23689075]]
@@ -607,7 +608,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     >>> from sklearn.linear_model import lars_path
     >>> alphas, active, coef_path_lars = lars_path(X, y, method='lasso')
     >>> from scipy import interpolate
-    >>> coef_path_continuous = interpolate.interp1d(alphas[::-1], coef_path_lars[:, ::-1])
+    >>> coef_path_continuous = interpolate.interp1d(alphas[::-1],
+    ...     coef_path_lars[:, ::-1])
     >>> print(coef_path_continuous([5., 1., .5]))
     [[ 0.          0.          0.46915237]
      [ 0.2159048   0.4425765   0.23668876]]
@@ -1019,7 +1021,8 @@ class LassoCV(LinearModelCV, RegressorMixin):
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
         Specific crossvalidation objects can be passed, see the
-        :mod:`sklearn.cross_validation` module for the list of possible objects.
+        :mod:`sklearn.cross_validation` module for the list of possible
+        objects.
 
     verbose : bool or integer
         amount of verbosity
@@ -1117,7 +1120,8 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
         Specific crossvalidation objects can be passed, see the
-        :mod:`sklearn.cross_validation` module for the list of possible objects.
+        :mod:`sklearn.cross_validation` module for the list of possible
+        objects.
 
     verbose : bool or integer
         amount of verbosity

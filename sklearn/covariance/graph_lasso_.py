@@ -3,7 +3,7 @@ estimator.
 """
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-# License: BSD Style
+# License: BSD 3 clause
 # Copyright: INRIA
 import warnings
 import operator

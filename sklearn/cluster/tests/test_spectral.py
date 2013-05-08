@@ -178,7 +178,8 @@ def test_affinities():
         # Additive chi^2 gives a negative similarity matrix which
         # doesn't make sense for spectral clustering
         if kern != 'additive_chi2':
-            sp = SpectralClustering(n_clusters=2, affinity=kern, random_state=0)
+            sp = SpectralClustering(n_clusters=2, affinity=kern,
+                                    random_state=0)
             labels = sp.fit(X).labels_
             print(labels)
             assert_equal((X.shape[0],), labels.shape)

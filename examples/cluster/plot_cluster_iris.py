@@ -21,7 +21,7 @@ print(__doc__)
 
 # Code source: Gael Varoqueux
 # Modified for Documentation merge by Jaques Grobler
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 import pylab as pl

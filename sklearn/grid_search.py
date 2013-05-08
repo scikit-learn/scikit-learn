@@ -6,7 +6,7 @@ from __future__ import print_function
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
-# License: BSD Style.
+# License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
 from collections import Mapping, namedtuple
@@ -176,7 +176,7 @@ class ParameterSampler(object):
         rnd = check_random_state(self.random_state)
         # Always sort the keys of a dictionary, for reproducibility
         items = sorted(self.param_distributions.items())
-        for i in range(self.n_iter):
+        for _ in range(self.n_iter):
             params = dict()
             for k, v in items:
                 if hasattr(v, "rvs"):
@@ -322,7 +322,8 @@ _CVScoreTuple = namedtuple('_CVScoreTuple',
                             'cv_validation_scores'))
 
 
-class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator, MetaEstimatorMixin)):
+class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
+                                      MetaEstimatorMixin)):
     """Base class for hyper parameter search with cross-validation.
     """
 
@@ -368,8 +369,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator, MetaEstimatorMixin
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
-        y_predicted = self.predict(X)
-        return self.scorer(y, y_predicted)
+        return self.scorer_(self.best_estimator_, X, y)
 
     @property
     def predict(self):
@@ -406,6 +406,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator, MetaEstimatorMixin
 
     def _fit(self, X, y, parameter_iterator, **params):
         """Actual fitting,  performing the search over parameters."""
+
+        if params:
+            warnings.warn("Passing additional parameters to GridSearchCV "
+                          "is ignored! The option will be removed in 0.15.")
         estimator = self.estimator
         cv = self.cv
 

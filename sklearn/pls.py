@@ -3,7 +3,7 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 """
 
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
-# License: BSD Style.
+# License: BSD 3 clause
 
 from .base import BaseEstimator, RegressorMixin, TransformerMixin
 from .utils import check_arrays

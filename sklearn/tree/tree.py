@@ -12,7 +12,7 @@ randomized trees. Single and multi-output problems are both handled.
 #          Satrajit Ghosh,
 #          Gilles Louppe,
 #          Noel Dawe
-# License: BSD Style.
+# License: BSD 3 clause
 
 from __future__ import division
 
@@ -49,7 +49,8 @@ REGRESSION = {
 }
 
 
-class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator, SelectorMixin)):
+class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
+                                          SelectorMixin)):
     """Base class for decision trees.
 
     Warning: This class should not be used directly.

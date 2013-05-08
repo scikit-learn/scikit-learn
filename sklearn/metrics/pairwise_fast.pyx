@@ -1,6 +1,6 @@
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
 #
-# License: Simplified BSD
+# Licence: BSD 3 clause
 
 import numpy as np
 cimport numpy as np

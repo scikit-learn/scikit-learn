@@ -21,7 +21,7 @@ print(__doc__)
 
 # Code source: Gael Varoqueux
 # Modified for Documentation merge by Jaques Grobler
-# License: BSD
+# License: BSD 3 clause
 
 import pylab as pl
 from mpl_toolkits.mplot3d import Axes3D

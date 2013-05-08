@@ -7,6 +7,14 @@
 Tutorials: From the bottom up with scikit-learn
 =======================================================================
 
+.. topic:: New to Scientific Python?
+
+    For those that are still new to the scientific Python ecosystem,
+    we highly recommend the `Python Scientific Lecture
+    Notes <http://scipy-lectures.github.io/>`_. This will help you
+    find your footing a bit and will definitely improve your
+    scikit-learn experience.
+
 .. topic:: Quick start
 
     In this section, we introduce the `machine learning
@@ -30,6 +38,20 @@ Tutorials: From the bottom up with scikit-learn
    :maxdepth: 2
 
    statistical_inference/index.rst
+
+
+.. topic:: **Machine Learning Cheat Sheet (for scikit-learn)**
+
+    This flowchart is useful for newcomers regarding how to go about
+    solving problems using scikit-learn. It provides a rough guide on
+    how to approach problems and which estimators to try out on your
+    data. Click the image below to begin..
+
+.. toctree::
+   :maxdepth: 2
+
+   machine_learning_map/index.rst
+
 
 .. topic:: **External Tutorials**
 

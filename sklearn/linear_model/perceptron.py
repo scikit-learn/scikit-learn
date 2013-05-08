@@ -1,5 +1,5 @@
 # Author: Mathieu Blondel
-# License: BSD Style.
+# License: BSD 3 clause
 
 from .stochastic_gradient import BaseSGDClassifier
 from ..feature_selection.selector_mixin import SelectorMixin

@@ -13,7 +13,7 @@ print(__doc__)
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #
-# License: BSD, (C) INRIA
+# License: BSD 3 clause (C) INRIA
 
 
 ###############################################################################

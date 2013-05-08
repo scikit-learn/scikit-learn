@@ -8,6 +8,12 @@
 Changelog
 ---------
 
+   - Added an interactive version of `Andreas Müller`_'s
+     `Machine Learning Cheat Sheet (for scikit-learn)
+     <http://peekaboo-vision.blogspot.de/2013/01/machine-learning-cheat-sheet-for-scikit.html>`_
+     to the documentation. See :ref:`Choosing the right estimator <ml_map>`.
+     By `Jaques Grobler`_.
+
    - :class:`grid_search.GridSearchCV` and
      :func:`cross_validation.cross_val_score` now support the use of advanced
      scoring function such as area under the ROC curve and f-beta scores.
@@ -21,8 +27,9 @@ Changelog
      guide for details and examples.
 
    - :func:`metrics.accuracy_score`, :func:`metrics.zero_one_loss` support
-     multi-label classification and a new metric :func:`metrics.hamming_loss`
-     is added with multi-label support by `Arnaud Joly`_.
+     multi-label classification and two new metrics :func:`metrics.hamming_loss`
+     and :func:`metrics.jaccard_similarity_score`
+     are added with multi-label support by `Arnaud Joly`_.
 
    - Speed and memory usage improvements in
      :class:`feature_extraction.text.CountVectorizer` and
@@ -87,6 +94,9 @@ API changes summary
      is set to ``True``. This new behavior is consistent with the way
      kernel PCA was always documented; previously, the removal of components
      with zero eigenvalues was tacitly performed on all data.
+
+   - ``gcv_mode="auto"`` no longer tries to perform SVD on a densified
+     sparse matrix in :class:`sklearn.linear_model.RidgeCV`.
 
 
 .. _changes_0_13_1:

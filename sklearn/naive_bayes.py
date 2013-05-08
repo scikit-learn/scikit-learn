@@ -13,7 +13,7 @@ are supervised learning methods based on applying Bayes' theorem with strong
 #         Lars Buitinck <L.J.Buitinck@uva.nl>
 #         (parts based on earlier work by Mathieu Blondel)
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
 

@@ -10,7 +10,7 @@ covariance estimator (the Minimum Covariance Determinant).
 """
 # Author: Virgile Fritsch <virgile.fritsch@inria.fr>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 import scipy as sp

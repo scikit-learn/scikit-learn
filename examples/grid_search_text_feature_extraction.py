@@ -44,7 +44,7 @@ Here is a sample output of a run on a quad-core machine::
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Mathieu Blondel <mathieu@mblondel.org>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 from __future__ import print_function
 

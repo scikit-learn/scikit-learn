@@ -12,12 +12,13 @@ from functools import reduce
 
 import numpy as np
 from scipy import stats
-from scipy.sparse import issparse
+from scipy.sparse import issparse, csc_matrix
 
 from ..base import BaseEstimator, TransformerMixin
 from ..preprocessing import LabelBinarizer
-from ..utils import (array2d, as_float_array, atleast2d_or_csr, check_arrays,
-                     safe_asarray, safe_sqr, safe_mask)
+from ..utils import (array2d, as_float_array, atleast2d_or_csc,
+                     atleast2d_or_csr, check_arrays, safe_asarray, safe_sqr,
+                     safe_mask)
 from ..utils.extmath import safe_sparse_dot
 from ..externals import six
 
@@ -246,7 +247,8 @@ def f_regression(X, y, center=True):
 ######################################################################
 # Base classes
 
-class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
+class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator,
+                                     TransformerMixin)):
 
     def __init__(self, score_func):
         """ Initialize the univariate feature selection.
@@ -284,20 +286,33 @@ class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
         """
         Transform a new matrix using the selected features
         """
-        X = atleast2d_or_csr(X)
+        X = atleast2d_or_csc(X)
         mask = self._get_support_mask()
         if len(mask) != X.shape[1]:
             raise ValueError("X has a different shape than during fitting.")
-        return atleast2d_or_csr(X)[:, safe_mask(X, mask)]
+        return X[:, safe_mask(X, mask)]
 
     def inverse_transform(self, X):
         """
-        Transform a new matrix using the selected features
+        Reverse the transformation operation
+
+        Returns `X` with columns of zeros inserted where features would have
+        been removed by `transform`.
         """
         support_ = self.get_support()
+        if issparse(X):
+            X = X.tocsc()
+            # insert additional entries in indptr:
+            # e.g. if transform changed indptr from [0 2 6 7] to [0 2 3]
+            # col_nonzeros here will be [2 0 1] so indptr becomes [0 2 2 3]
+            col_nonzeros = self.inverse_transform(np.diff(X.indptr)).ravel()
+            indptr = np.concatenate([[0], np.cumsum(col_nonzeros)])
+            Xt = csc_matrix((X.data, X.indices, indptr),
+                            shape=(X.shape[0], len(indptr) - 1), dtype=X.dtype)
+            return Xt
         if X.ndim == 1:
             X = X[None, :]
-        Xt = np.zeros((X.shape[0], support_.size))
+        Xt = np.zeros((X.shape[0], support_.size), dtype=X.dtype)
         Xt[:, support_] = X
         return Xt
 
@@ -310,6 +325,8 @@ class _PvalueFilter(_BaseFilter):
         score function.
         """
         self.scores_, self.pvalues_ = self.score_func(X, y)
+        self.scores_ = np.asarray(self.scores_)
+        self.pvalues_ = np.asarray(self.pvalues_)
         if len(np.unique(self.pvalues_)) < len(self.pvalues_):
             warn("Duplicate p-values. Result may depend on feature ordering."
                  "There are probably duplicate features, or you used a "
@@ -324,6 +341,8 @@ class _ScoreFilter(_BaseFilter):
         Records and selects features according to their scores.
         """
         self.scores_, self.pvalues_ = self.score_func(X, y)
+        self.scores_ = np.asarray(self.scores_)
+        self.pvalues_ = np.asarray(self.pvalues_)
         if len(np.unique(self.scores_)) < len(self.scores_):
             warn("Duplicate scores. Result may depend on feature ordering."
                  "There are probably duplicate features, or you used a "
@@ -382,13 +401,12 @@ class SelectPercentile(_ScoreFilter):
         scores = _clean_nans(self.scores_)
 
         alpha = stats.scoreatpercentile(scores, 100 - percentile)
-        # XXX refactor the indices -> mask -> indices -> mask thing
-        inds = np.where(scores >= alpha)[0]
-        # if we selected too many features because of equal scores,
-        # we throw them away now
-        inds = inds[:len(scores) * percentile // 100]
-        mask = np.zeros(scores.shape, dtype=np.bool)
-        mask[inds] = True
+        mask = scores > alpha
+        ties = np.where(scores == alpha)[0]
+        if len(ties):
+            max_feats = len(scores) * percentile // 100
+            kept_ties = ties[:max_feats - mask.sum()]
+            mask[kept_ties] = True
         return mask
 
 

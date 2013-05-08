@@ -64,7 +64,7 @@ axis.
 print(__doc__)
 
 # Author: Gael Varoquaux gael.varoquaux@normalesup.org
-# License: BSD
+# License: BSD 3 clause
 
 import datetime
 

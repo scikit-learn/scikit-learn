@@ -11,7 +11,6 @@ from nose.tools import assert_raises
 
 from sklearn import tree
 from sklearn import datasets
-from sklearn.externals.six import StringIO
 from sklearn.preprocessing import balance_weights
 
 # toy sample

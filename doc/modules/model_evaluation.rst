@@ -58,9 +58,10 @@ And some also work in the multilabel case:
 .. autosummary::
    :template: function.rst
 
-   accuracy_score
-   hamming_loss
-   zero_one_loss
+  accuracy_score
+  hamming_loss
+  jaccard_similarity_score
+  zero_one_loss
 
 
 Some metrics might require probability estimates of the positive class,
@@ -72,11 +73,11 @@ Accuracy score
 ---------------
 The :func:`accuracy_score` function computes the
 `accuracy <http://en.wikipedia.org/wiki/Accuracy_and_precision>`_, the fraction
-(default) or the number of correct predictions. In multilabel classification,
-the function returns the subset accuracy:
-the entire set of labels for a sample must be entirely correct
-or the sample has an accuracy of zero.
-(See the Hamming loss for a more forgiving evaluation metric.)
+(default) or the number of correct predictions.
+
+In multilabel classification, the function returns the subset accuracy: if
+the entire set of predicted labels for a sample strictly match with the true
+set of labels, then the subset accuracy is 1.0, otherwise it is 0.0.
 
 If :math:`\hat{y}_i` is the predicted value of
 the :math:`i`-th sample and :math:`y_i` is the corresponding true value,
@@ -99,15 +100,15 @@ where :math:`1(x)` is the `indicator function
   >>> accuracy_score(y_true, y_pred, normalize=False)
   2
 
-  In the multilabel case with binary indicator format:
+In the multilabel case with binary indicator format:
 
-  >>> accuracy_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
-  0.0
-
-  and with a list of labels format:
-
-  >>> accuracy_score([(1, 2), (3,)], [(1, 2), tuple()])
+  >>> accuracy_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
   0.5
+
+and with a list of labels format:
+
+  >>> accuracy_score([(1,), (3,)], [(1, 2), tuple()])
+  0.0
 
 .. topic:: Example:
 
@@ -281,6 +282,48 @@ and with a list of labels format:
 
     The Hamming loss is upperbounded by the zero-one loss. When normalized
     over samples, the Hamming loss is always between zero and one.
+
+
+Jaccard similarity coefficient score
+------------------------------------
+
+The :func:`jaccard_similarity_score` function computes the average (default)
+or sum of `Jaccard similarity coefficients
+<http://en.wikipedia.org/wiki/Jaccard_index>`_, also called Jaccard index,
+between pairs of label sets.
+
+The Jaccard similarity coefficient of the :math:`i`-th samples
+with a ground truth label set :math:`y_i` and a predicted label set
+:math:`\hat{y}_i`  is defined as
+
+.. math::
+
+    J(y_i, \hat{y}_i) = \frac{|y_i \cap \hat{y}_i|}{|y_i \cup \hat{y}_i|}.
+
+In binary and multiclass classification, the Jaccard similarity coefficient
+score is equal to the classification accuracy.
+
+::
+
+  >>> import numpy as np
+  >>> from sklearn.metrics import jaccard_similarity_score
+  >>> y_pred = [0, 2, 1, 3]
+  >>> y_true = [0, 1, 2, 3]
+  >>> jaccard_similarity_score(y_true, y_pred)
+  0.5
+  >>> jaccard_similarity_score(y_true, y_pred, normalize=False)
+  2
+
+In the multilabel case with binary indicator format:
+
+  >>> jaccard_similarity_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
+  0.75
+
+and with a list of labels format:
+
+  >>> jaccard_similarity_score([(1,), (3,)], [(1, 2), tuple()])
+  0.25
+
 
 
 .. _precision_recall_f_measure_metrics:
@@ -690,6 +733,7 @@ then the 0-1 loss :math:`L_{0-1}` is defined as:
 where :math:`1(x)` is the `indicator function
 <http://en.wikipedia.org/wiki/Indicator_function>`_.
 
+
   >>> from sklearn.metrics import zero_one_loss
   >>> y_pred = [1, 2, 3, 4]
   >>> y_true = [2, 2, 3, 4]
@@ -698,15 +742,16 @@ where :math:`1(x)` is the `indicator function
   >>> zero_one_loss(y_true, y_pred, normalize=False)
   1
 
-  In the multilabel case with binary indicator format:
+In the multilabel case with binary indicator format:
 
-  >>> zero_one_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+  >>> zero_one_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
+  0.5
+
+and with a list of labels format:
+
+  >>> zero_one_loss([(1,), (3,)], [(1, 2), tuple()])
   1.0
 
-  and with a list of labels format:
-
-  >>> zero_one_loss([(1, 2), (3,)], [(1, 2), tuple()])
-  0.5
 
 .. topic:: Example:
 

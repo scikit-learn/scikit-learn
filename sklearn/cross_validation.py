@@ -6,7 +6,7 @@ validation and performance evaluation.
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>,
 #         Olivier Grisel <olivier.grisel@ensta.org>
-# License: BSD Style.
+# License: BSD 3 clause
 
 from __future__ import print_function
 
@@ -288,7 +288,7 @@ class KFold(object):
         current = 0
         if self.indices:
             ind = np.arange(n)
-        for i, fold_size in enumerate(fold_sizes):
+        for fold_size in fold_sizes:
             test_index = np.zeros(n, dtype=np.bool)
             start, stop = current, current + fold_size
             test_index[self.idxs[start:stop]] = True
@@ -949,6 +949,9 @@ class StratifiedShuffleSplit(object):
         Return train/test split as arrays of indices, rather than a boolean
         mask array. Integer indices are required when dealing with sparse
         matrices, since those cannot be indexed by boolean masks.
+
+    random_state : int or RandomState
+        Pseudo-random number generator state used for random sampling.
 
     Examples
     --------

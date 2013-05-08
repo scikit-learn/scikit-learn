@@ -12197,7 +12197,7 @@ PyMODINIT_FUNC PyInit_ball_tree(void)
   /* "sklearn/neighbors/ball_tree.pyx":2
  * 
  * # Author: Jake Vanderplas <vanderplas@astro.washington.edu>             # <<<<<<<<<<<<<<
- * # License: BSD
+ * # License: BSD 3 clause
  * 
  */
   __pyx_t_1 = PyDict_New(); if (unlikely(!__pyx_t_1)) {__pyx_filename = __pyx_f[0]; __pyx_lineno = 2; __pyx_clineno = __LINE__; goto __pyx_L1_error;}

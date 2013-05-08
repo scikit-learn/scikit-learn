@@ -6819,7 +6819,7 @@ PyMODINIT_FUNC PyInit_graph_shortest_path(void)
   /*--- Execution code ---*/
 
   /* "sklearn/utils/graph_shortest_path.pyx":12
- * # License: BSD, (C) 2011
+ * # License: BSD 3 clause, (C) 2011
  * 
  * import numpy as np             # <<<<<<<<<<<<<<
  * cimport numpy as np

@@ -12,7 +12,7 @@ obtained in the first place.
 """
 
 # Author:  Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD
+# License: BSD 3 clause
 
 print(__doc__)
 

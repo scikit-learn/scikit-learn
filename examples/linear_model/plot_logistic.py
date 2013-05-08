@@ -15,7 +15,7 @@ print(__doc__)
 
 
 # Code source: Gael Varoquaux
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 import pylab as pl

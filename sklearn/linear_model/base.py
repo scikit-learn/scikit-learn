@@ -10,7 +10,7 @@ Generalized Linear models.
 #         Mathieu Blondel <mathieu@mblondel.org>
 #         Lars Buitinck <L.J.Buitinck@uva.nl>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
 import numbers
@@ -324,7 +324,7 @@ class LinearRegression(LinearModel, RegressorMixin):
     Notes
     -----
     From the implementation point of view, this is just plain Ordinary
-    Least Squares (numpy.linalg.lstsq) wrapped as a predictor object.
+    Least Squares (scipy.linalg.lstsq) wrapped as a predictor object.
 
     """
 

@@ -16,7 +16,7 @@ exhibit big oscillations.
 """
 
 # Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
-# License: BSD Style.
+# License: BSD 3 clause
 
 print(__doc__)
 

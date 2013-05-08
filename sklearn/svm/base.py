@@ -352,6 +352,7 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                                       " sparse SVM.")
 
         X = self._validate_for_predict(X)
+        X = self._compute_kernel(X)
 
         C = 0.0  # C is not useful here
 
@@ -679,25 +680,23 @@ class BaseLibLinear(BaseEstimator):
 
         liblinear.set_verbosity_wrap(self.verbose)
 
-        if sp.isspmatrix(X):
-            train = liblinear.csr_train_wrap
-        else:
-            train = liblinear.train_wrap
-
         rnd = check_random_state(self.random_state)
         if self.verbose:
             print('[LibLinear]', end='')
 
         # LibLinear wants targets as doubles, even for classification
         y = np.asarray(y, dtype=np.float64).ravel()
-        self.raw_coef_ = train(X, y, self._get_solver_type(), self.tol,
-                               self._get_bias(), self.C,
-                               self.class_weight_,
-                               # seed for srand in range [0..INT_MAX);
-                               # due to limitations in Numpy on 32-bit
-                               # platforms, we can't get to the UINT_MAX
-                               # limit that srand supports
-                               rnd.randint(np.iinfo('i').max))
+        self.raw_coef_ = liblinear.train_wrap(X, y,
+                                              sp.isspmatrix(X),
+                                              self._get_solver_type(),
+                                              self.tol, self._get_bias(),
+                                              self.C,
+                                              self.class_weight_,
+                                              rnd.randint(np.iinfo('i').max))
+        # Regarding rnd.randint(..) in the above signature:
+        # seed for srand in range [0..INT_MAX); due to limitations in Numpy
+        # on 32-bit platforms, we can't get to the UINT_MAX limit that
+        # srand supports
 
         if self.fit_intercept:
             self.coef_ = self.raw_coef_[:, :-1]

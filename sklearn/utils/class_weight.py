@@ -1,5 +1,5 @@
 # Authors: Andreas Mueller
-# License: Simplified BSD
+# License: BSD 3 clause
 
 import numpy as np
 
