@@ -1717,7 +1717,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             avg_recall = np.mean(recall)
             avg_fscore = np.mean(fscore)
 
-        elif average == 'weighted' and not is_multilabel(y_true):
+        elif average == 'weighted':
             avg_precision = np.average(precision, weights=support)
             avg_recall = np.average(recall, weights=support)
             avg_fscore = np.average(fscore, weights=support)
