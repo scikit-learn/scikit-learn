@@ -109,9 +109,8 @@ convenience and joint parameter estimation and validation.
 create complex models.
 
 (A :class:`FeatureUnion` has no way of checking whether two transformers
-might produce identical features. It only produces a union when the
-feature sets are disjoint, and making sure they are is the caller's
-responsibility.)
+might produce identical features. Making sure the features are disjoint
+is the caller's responsibility.)
 
 
 Usage
@@ -135,6 +134,9 @@ and ``value`` is an estimator object::
         n_components=None, remove_zero_eig=False, tol=0))],
         transformer_weights=None)
 
+After ``fit_transform`` is called, ``FeatureUnion`` will store a `feature_ptr_`
+attribute indicating which slices of the transfiormed matrix's features
+correspond to which constituent transformers.
 
                                                                        
 .. topic:: Examples:

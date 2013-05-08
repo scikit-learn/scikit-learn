@@ -252,6 +252,13 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
         Multiplicative weights for features per transformer.
         Keys are transformer names, values the weights.
 
+    Attributes
+    ----------
+    feature_ptr_: array of shape (len(transformers) + 1)
+        Stores the feature slice corresponding to each transformer.
+        Transformer `i` generates feature columns `k` where
+       `feature_ptr_[i] <= k < feature_ptr_[i + 1]`.
+       Only available if `fit_transform` is used.
     """
     def __init__(self, transformer_list, n_jobs=1, transformer_weights=None):
         self.transformer_list = transformer_list
@@ -307,6 +314,8 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
             delayed(_fit_transform_one)(trans, name, X, y,
                                         self.transformer_weights, **fit_params)
             for name, trans in self.transformer_list)
+        print(len(Xs), len(self.transformer_list), [f.shape for f in Xs])
+        self.feature_ptr_ = np.hstack([0, np.cumsum([f.shape[1] for f in Xs])])
         if any(sparse.issparse(f) for f in Xs):
             Xs = sparse.hstack(Xs).tocsr()
         else:

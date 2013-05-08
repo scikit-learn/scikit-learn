@@ -196,25 +196,39 @@ def test_feature_union():
     assert_equal(X_transformed.shape, (X.shape[0], 3))
 
     # check if it does the expected thing
-    assert_array_almost_equal(X_transformed[:, :-1], pca.fit_transform(X))
-    assert_array_equal(X_transformed[:, -1],
-                       select.fit_transform(X, y).ravel())
+    pca_expected = pca.fit_transform(X)
+    select_expected = select.fit_transform(X, y)
+    assert_array_almost_equal(X_transformed[:, :-1], pca_expected)
+    assert_array_equal(X_transformed[:, -1:], select_expected)
+
+    # use fit_transform as an alternative, providing feature_ptr_
+    X_transformed = fs.fit_transform(X, y)
+    assert_equal(len(fs.feature_ptr_), len(fs.transformer_list) + 1)
+    pca_slice = slice(*fs.feature_ptr_[0:0 + 2])
+    select_slice = slice(*fs.feature_ptr_[1:1 + 2])
+    print(fs.feature_ptr_, pca_slice, select_slice)
+    assert_array_almost_equal(X_transformed[:, pca_slice], pca_expected)
+    assert_array_equal(X_transformed[:, select_slice], select_expected)
 
     # test if it also works for sparse input
     # We use a different pca object to control the random_state stream
     fs = FeatureUnion([("pca", pca), ("select", select)])
     X_sp = sparse.csr_matrix(X)
     X_sp_transformed = fs.fit_transform(X_sp, y)
-    assert_array_almost_equal(X_transformed, X_sp_transformed.toarray())
+    assert_array_almost_equal(X_transformed,
+                              X_sp_transformed.tocsr().todense())
 
     # test setting parameters
     fs.set_params(select__k=2)
     assert_equal(fs.fit_transform(X, y).shape, (X.shape[0], 4))
+    assert_equal(2, fs.feature_ptr_[2] - fs.feature_ptr_[1])
 
     # test it works with transformers missing fit_transform
     fs = FeatureUnion([("mock", TransfT()), ("pca", pca), ("select", select)])
     X_transformed = fs.fit_transform(X, y)
     assert_equal(X_transformed.shape, (X.shape[0], 8))
+    assert_array_equal(fs.feature_ptr_, [0, 4, 6, 8])
+    assert_equal(len(fs.feature_ptr_), len(fs.transformer_list) + 1)
 
 
 def test_pipeline_transform():
