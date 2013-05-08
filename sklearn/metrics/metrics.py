@@ -196,7 +196,9 @@ def auc(x, y, reorder=False):
     if reorder:
         # reorder the data points according to the x axis and using y to
         # break ties
-        x, y = np.array(sorted(points for points in zip(x, y))).T
+        
+        order = x.argsort(kind="mergesort")
+        x, y = x[order], y[order]
     else:
         dx = np.diff(x)
         if np.any(dx < 0):
