@@ -1419,13 +1419,17 @@ def _tp_tn_fp_fn(y_true, y_pred, labels=None, pos_label=1):
                                               y_pred != pos_label), axis=0)
 
         else:
+            idx_to_label = dict((label_i, i)
+                                for i, label_i in enumerate(labels))
+
             for true, pred in zip(y_true, y_pred):
-                for i, label_i in enumerate(labels):
-                    label_i_in_true = label_i in true
-                    label_i_in_pred = label_i in pred
-                    true_pos[i] += label_i_in_true and label_i_in_pred
-                    false_pos[i] += not label_i_in_true and label_i_in_pred
-                    false_neg[i] += label_i_in_true and not label_i_in_pred
+                true_set = np.array([idx_to_label[l] for l in set(true)],
+                                    dtype=np.int)
+                pred_set = np.array([idx_to_label[l] for l in set(pred)],
+                                    dtype=np.int)
+                true_pos[np.intersect1d(true_set, pred_set)] += 1
+                false_pos[np.setdiff1d(pred_set, true_set)] += 1
+                false_neg[np.setdiff1d(true_set, pred_set)] += 1
 
     else:
         y_true, y_pred = check_arrays(y_true, y_pred)
