@@ -128,6 +128,12 @@ NOT_SYMETRIC_METRICS = {
     "explained_variance_score": explained_variance_score,
     "r2_score": r2_score}
 
+GENERAL_LABEL_METRICS = {
+    "precision_recall_fscore_support": precision_recall_fscore_support,
+
+    "confusion_matrix": confusion_matrix,
+}
+
 
 class ComparableObject(object):
     def __init__(self, a):
@@ -807,6 +813,27 @@ def test_sample_order_invariance():
                             metric(y_true_shuffle, y_pred_shuffle),
                             err_msg="%s is not sample order invariant"
                                     % metric)
+
+
+def test_general_labels():
+    y1, y2, _ = make_prediction(binary=True)
+
+    for metric_name, metric in GENERAL_LABEL_METRICS.items():
+
+        measure = metric(y1, y2)
+
+        for data_type_name, data_type in {"String": str,
+                                          "ComparableObject": ComparableObject
+                                          }.items():
+
+            assert_almost_equal(measure,
+                                metric(
+                                    map(data_type, y1),
+                                    map(data_type, y2)
+                                ),
+                                err_msg="%s is not label type invariant with"
+                                "labels of type %s"
+                                % (metric_name, data_type_name))
 
 
 def test_format_invariance_with_1d_vectors():
