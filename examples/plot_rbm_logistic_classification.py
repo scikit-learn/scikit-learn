@@ -40,19 +40,17 @@ from sklearn.pipeline import Pipeline
 ###############################################################################
 # Setting up
 
-np.random.seed(0xfeeb)
-
 # Load Data
 digits = datasets.load_digits()
 X = np.asarray(digits.data, 'float32') / digits.data.max()
 Y = digits.target
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y,
                                                     test_size=0.2,
-                                                    random_state=0xfeeb)
+                                                    random_state=0)
 
 # Models we will use
 logistic = linear_model.LogisticRegression()
-rbm = BernoulliRBM()
+rbm = BernoulliRBM(random_state=0)
 
 classifier = Pipeline(steps=[('rbm', rbm), ('logistic', logistic)])
 
