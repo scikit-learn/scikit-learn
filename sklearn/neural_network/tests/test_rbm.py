@@ -20,7 +20,7 @@ def test_fit():
                        batch_size=10, n_iter=7, random_state=9)
     rbm.fit(X)
 
-    assert_almost_equal(rbm.pseudo_likelihood(X).mean(), -20., decimal=0)
+    assert_almost_equal(rbm.pseudo_likelihood(X).mean(), -21., decimal=0)
 
     # in-place tricks shouldn't have modified X
     assert_array_equal(X, Xdigits)
@@ -44,33 +44,35 @@ def test_transform():
     rbm1 = BernoulliRBM(n_components=16, batch_size=5,
                         n_iter=5, random_state=42)
     rbm1.fit(X)
-    
+
     Xt1 = rbm1.transform(X)
-    Xt2 = rbm1.mean_hiddens(X)
+    Xt2 = rbm1._mean_hiddens(X)
 
     assert_array_equal(Xt1, Xt2)
 
 
 def test_sample_hiddens():
+    rng = np.random.RandomState(0)
     X = Xdigits[:100]
     rbm1 = BernoulliRBM(n_components=2, batch_size=5,
                         n_iter=5, random_state=42)
     rbm1.fit(X)
-    
-    h = rbm1.mean_hiddens(X[0])
-    hs = np.mean([rbm1.sample_hiddens(X[0]) for i in range(100)], 0)
-    
+
+    h = rbm1._mean_hiddens(X[0])
+    hs = np.mean([rbm1._sample_hiddens(X[0], rng) for i in range(100)], 0)
+
     assert_almost_equal(h, hs, decimal=1)
 
 
 def test_gibbs():
+    rng = np.random.RandomState(42)
     X = Xdigits[:100]
     rbm1 = BernoulliRBM(n_components=2, batch_size=5,
-                        n_iter=5, random_state=42)
+                        n_iter=5, random_state=rng)
     rbm1.fit(X)
-    
+
     Xt1 = np.mean([rbm1.gibbs(X[0]) for i in range(100)], 0)
-    Xt2 = np.mean([rbm1.sample_visibles(rbm1.sample_hiddens(X[0]))
-        for i in range(100)], 0)
-    
+    Xt2 = np.mean([rbm1._sample_visibles(rbm1._sample_hiddens(X[0], rng), rng)
+                   for i in range(1000)], 0)
+
     assert_almost_equal(Xt1, Xt2, decimal=1)
