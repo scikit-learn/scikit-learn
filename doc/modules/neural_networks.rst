@@ -29,6 +29,16 @@ scikit-learn only provides :class:`BernoulliRBM`, which assumes the input are
 either binary values or values between 0 and 1, each encoding the probability
 that the specific feature would be turned on.
 
+.. figure:: ../auto_examples/images/plot_rbm_logistic_classification_1.png
+   :target: ../auto_examples/plot_rbm_logistic_classification.html
+   :align: center
+   :scale: 100%
+
+.. topic:: Examples:
+
+   * :ref:`example_plot_rbm_logistic_classification.py`
+
+
 Graphical model and parametrization
 -----------------------------------
 
