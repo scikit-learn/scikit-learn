@@ -300,7 +300,7 @@ def test_auc_duplicate_values():
           1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
 
     for y in (y1, y2):
-        assert_array_almost_equal(auc(x, y), 1.0)
+        assert_array_almost_equal(auc(x, y, reorder=True), 1.0)
 
 
 def test_auc_errors():
