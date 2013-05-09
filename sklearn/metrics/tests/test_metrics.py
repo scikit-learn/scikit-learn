@@ -591,7 +591,8 @@ def test_matthews_corrcoef_nan():
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")
         assert_equal(matthews_corrcoef([0], [1]), 0.0)
-
+        warnings.simplefilter("error")
+        assert_equal(matthews_corrcoef([0,0],[0,1]), 0.0)
 
 def test_precision_recall_f1_score_multiclass():
     """Test Precision Recall and F1 Score for multiclass classification task"""
