@@ -88,7 +88,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         http://www.cs.toronto.edu/~hinton/absps/fastnc.pdf
     """
     def __init__(self, n_components=256, learning_rate=0.1, batch_size=10,
-                       n_iter=10, verbose=False, random_state=None):
+                 n_iter=10, verbose=False, random_state=None):
         self.n_components = n_components
         self.learning_rate = learning_rate
         self.batch_size = batch_size
@@ -145,7 +145,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         h: array-like, shape (n_samples, n_components)
         """
         return logistic_sigmoid(safe_sparse_dot(v, self.components_.T)
-            + self.intercept_hidden_)
+                                + self.intercept_hidden_)
 
     def sample_hiddens(self, v):
         """
@@ -174,7 +174,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         v: array-like, shape (n_samples, n_features)
         """
         return logistic_sigmoid(np.dot(h, self.components_)
-            + self.intercept_visible_)
+                                + self.intercept_visible_)
 
     def sample_visibles(self, h):
         """
@@ -301,8 +301,10 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         dtype = np.float32 if X.dtype.itemsize == 4 else np.float64
         self.random_state = check_random_state(self.random_state)
 
-        self.components_ = np.asarray(self.random_state.normal(0, 0.01,
-            (self.n_components, X.shape[1])), dtype=dtype, order='fortran')
+        self.components_ = np.asarray(
+            self.random_state.normal(0, 0.01, (self.n_components, X.shape[1])),
+            dtype=dtype,
+            order='fortran')
         self.intercept_hidden_ = np.zeros(self.n_components, dtype=dtype)
         self.intercept_visible_ = np.zeros(X.shape[1], dtype=dtype)
         self.h_samples_ = np.zeros((self.batch_size, self.n_components),
