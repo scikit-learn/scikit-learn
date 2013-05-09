@@ -2,20 +2,26 @@
 # -*- coding: utf-8 -*-
 
 """
-====================================================
-Pipelining: chaining a RBM and a logistic regression
-====================================================
+===============================================================
+Restricted Boltzmann Machine features for digits classification
+===============================================================
 
-The BernoulliRBM does unsupervised feature extraction, while the logistic
-regression does the prediction.
+For greyscale image data where pixel values can be interpreted as degrees of
+blackness on a white background, like handwritten digit recognition, the
+Bernoulli Restricted Boltzmann machine model (:class:`BernoulliRBM
+<sklearn.neural_network.BernoulliRBM>`) can perform effective non-linear
+feature extraction.
 
-We use a GridSearchCV to set the number of hidden units and the learning rate
-of the Bernoulli Restricted Boltzmann Machine.
+This example shows how to build a classification pipeline with a BernoulliRBM
+feature extractor and a :class:`LogisticRegression
+<sklearn.linear_model.LogisticRegression>` classifier.  The hyperparameters
+of the entire model (learning rate, hidden layer size, regularization)
+were optimized by grid search, but the search is not reproduced here because
+of runtime constraints.
 
-We also train a simple logistic regression for comparison. The example shows
-that the features extracted by the BernoulliRBM help improve the classification
-accuracy.
-
+Logistic regression on raw pixel values is presented for comparison. The
+example shows that the features extracted by the BernoulliRBM help improve the
+classification accuracy.
 """
 print __doc__
 
