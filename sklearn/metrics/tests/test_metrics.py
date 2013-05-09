@@ -301,8 +301,7 @@ def test_auc_duplicate_values():
     for y in (y1, y2):
         assert_array_almost_equal(auc(x, y), 1.0)
 
-    y = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
-         1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+
 def test_auc_errors():
     # Incompatible shapes
     assert_raises(ValueError, auc, [0.0, 0.5, 1.0], [0.1, 0.2])
