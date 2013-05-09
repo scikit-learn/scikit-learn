@@ -711,7 +711,6 @@ def confusion_matrix(y_true, y_pred, labels=None):
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
 
-
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
