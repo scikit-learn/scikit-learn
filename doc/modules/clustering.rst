@@ -539,6 +539,13 @@ the order is determined randomly within the code. Other than the ordering of,
 the dataset, the algorithm is deterministic, making the results relatively
 stable between iterations on the same data.
 
+The current implementation relies heavily on :class:'NearestNeighbors': 
+to determine the number of samples within distance eps. This is to take
+advantage of the ball tree and kd-tree methods of speeding up neighbor
+searching and to avoid calculating the full distance matrix.
+We also retain the flexibility of custom metrics -- for details, 
+see :class:'NearestNeighbors':.
+
 In the figure below, the color indicates cluster membership, with large circles
 indicating core samples found by the algorithm. Smaller circles are non-core
 samples that are still part of a cluster. Moreover, the outliers are indicated
