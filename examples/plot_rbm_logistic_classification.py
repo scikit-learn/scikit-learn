@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 
 """
-=========================================================
+====================================================
 Pipelining: chaining a RBM and a logistic regression
-=========================================================
+====================================================
 
 The BernoulliRBM does unsupervised feature extraction,
 while the logistic regression does the prediction.
@@ -52,12 +52,12 @@ classifier = Pipeline(steps=[('rbm', rbm), ('logistic', logistic)])
 ###############################################################################
 # Training
 
-# Hyper-parameters. These were set with cross_validation,
-# using a GridSearchCV. Here we are not performing cross_validation to
+# Hyper-parameters. These were set by cross-validation,
+# using a GridSearchCV. Here we are not performing cross-validation to
 # save time.
 rbm.learning_rate = 0.2
 rbm.n_iter = 30
-# More component tend to give better prediction performance, but larger
+# More components tend to give better prediction performance, but larger
 # fitting time
 rbm.n_components = 500
 logistic.C = 1e4
@@ -90,7 +90,7 @@ for i, comp in enumerate(rbm.components_[:100]):
               interpolation='nearest')
     pl.xticks(())
     pl.yticks(())
-pl.suptitle('100 Components extracted by RBM', fontsize=16)
+pl.suptitle('100 components extracted by RBM', fontsize=16)
 pl.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
 
 pl.show()
