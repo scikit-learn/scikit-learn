@@ -54,9 +54,10 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     verbose: bool, optional
         When True (False by default) the method outputs the progress
         of learning after each iteration.
-    random_state : RandomState or an int seed (0 by default)
+    random_state : integer or numpy.RandomState, optional
         A random number generator instance to define the state of the
-        random permutations generator.
+        random permutations generator. If an integer is given, it fixes the
+        seed. Defaults to the global numpy random number generator.
 
     Attributes
     ----------
@@ -75,10 +76,9 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     >>> from sklearn.neural_network import BernoulliRBM
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> model = BernoulliRBM(n_components=2)
-    >>> model.fit(X)  # doctest: +ELLIPSIS
+    >>> model.fit(X)
     BernoulliRBM(batch_size=10, learning_rate=0.1, n_components=2, n_iter=10,
-           random_state=...,
-           verbose=False)
+           random_state=None, verbose=False)
 
     References
     ----------
@@ -96,13 +96,14 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self.verbose = verbose
         self.random_state = random_state
 
-    def _sample_binomial(self, p):
+    def _sample_binomial(self, p, rng):
         """
         Compute the element-wise binomial using the probabilities p.
 
         Parameters
         ----------
         x: array-like, shape (M, N)
+        rng: numpy RandomState object
 
         Notes
         -----
@@ -113,7 +114,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         -------
         x_new: array-like, shape (M, N)
         """
-        p[self.random_state.uniform(size=p.shape) < p] = 1.
+        p[rng.uniform(size=p.shape) < p] = 1.
 
         return np.floor(p, p)
 
@@ -130,9 +131,9 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         h: array-like, shape (n_samples, n_components)
         """
         X = array2d(X)
-        return self.mean_hiddens(X)
+        return self._mean_hiddens(X)
 
-    def mean_hiddens(self, v):
+    def _mean_hiddens(self, v):
         """
         Computes the probabilities ``P({\bf h}_j=1|{\bf v})``.
 
@@ -147,21 +148,22 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         return logistic_sigmoid(safe_sparse_dot(v, self.components_.T)
                                 + self.intercept_hidden_)
 
-    def sample_hiddens(self, v):
+    def _sample_hiddens(self, v, rng):
         """
         Sample from the distribution ``P({\bf h}|{\bf v})``.
 
         Parameters
         ----------
         v: array-like, shape (n_samples, n_features)
+        rng: numpy RandomState object
 
         Returns
         -------
         h: array-like, shape (n_samples, n_components)
         """
-        return self._sample_binomial(self.mean_hiddens(v))
+        return self._sample_binomial(self._mean_hiddens(v), rng)
 
-    def mean_visibles(self, h):
+    def _mean_visibles(self, h):
         """
         Computes the probabilities ``P({\bf v}_i=1|{\bf h})``.
 
@@ -176,19 +178,20 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         return logistic_sigmoid(np.dot(h, self.components_)
                                 + self.intercept_visible_)
 
-    def sample_visibles(self, h):
+    def _sample_visibles(self, h, rng):
         """
         Sample from the distribution ``P({\bf v}|{\bf h})``.
 
         Parameters
         ----------
         h: array-like, shape (n_samples, n_components)
+        rng: numpy RandomState object
 
         Returns
         -------
         v: array-like, shape (n_samples, n_features)
         """
-        return self._sample_binomial(self.mean_visibles(h))
+        return self._sample_binomial(self._mean_visibles(h), rng)
 
     def free_energy(self, v):
         """
@@ -219,12 +222,13 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         -------
         v_new: array-like, shape (n_samples, n_features)
         """
-        h_ = self.sample_hiddens(v)
-        v_ = self.sample_visibles(h_)
+        rng = check_random_state(self.random_state)
+        h_ = self._sample_hiddens(v, rng)
+        v_ = self._sample_visibles(h_, rng)
 
         return v_
 
-    def _fit(self, v_pos):
+    def _fit(self, v_pos, rng):
         """
         Adjust the parameters to maximize the likelihood of ``{\bf v}``
         using Stochastic Maximum Likelihood (SML) [1].
@@ -232,6 +236,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         v_pos: array-like, shape (n_samples, n_features)
+        rng: numpy RandomState object
 
         Returns
         -------
@@ -245,9 +250,9 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
             on Machine Learning (ICML) 2008
         """
         v_pos = as_float_array(v_pos)
-        h_pos = self.mean_hiddens(v_pos)
-        v_neg = self.sample_visibles(self.h_samples_)
-        h_neg = self.mean_hiddens(v_neg)
+        h_pos = self._mean_hiddens(v_pos)
+        v_neg = self._sample_visibles(self.h_samples_, rng)
+        h_neg = self._mean_hiddens(v_neg)
 
         lr = self.learning_rate / self.batch_size
         v_pos *= lr
@@ -257,7 +262,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self.intercept_hidden_ += lr * (h_pos.sum(0) - h_neg.sum(0))
         self.intercept_visible_ += (v_pos.sum(0) - v_neg.sum(0))
 
-        self.h_samples_ = self._sample_binomial(h_neg)
+        self.h_samples_ = self._sample_binomial(h_neg, rng)
 
         if self.verbose:
             return self.pseudo_likelihood(v_pos)
@@ -274,10 +279,11 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         -------
         pseudo_likelihood: array-like, shape (n_samples,)
         """
+        rng = check_random_state(self.random_state)
         fe = self.free_energy(v)
 
         v_ = v.copy()
-        i_ = self.random_state.randint(0, v.shape[1], v.shape[0])
+        i_ = rng.randint(0, v.shape[1], v.shape[0])
         v_[np.arange(v.shape[0]), i_] = 1 - v_[np.arange(v.shape[0]), i_]
         fe_ = self.free_energy(v_)
 
@@ -299,10 +305,10 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         """
         X = array2d(X)
         dtype = np.float32 if X.dtype.itemsize == 4 else np.float64
-        self.random_state = check_random_state(self.random_state)
+        rng = check_random_state(self.random_state)
 
         self.components_ = np.asarray(
-            self.random_state.normal(0, 0.01, (self.n_components, X.shape[1])),
+            rng.normal(0, 0.01, (self.n_components, X.shape[1])),
             dtype=dtype,
             order='fortran')
         self.intercept_hidden_ = np.zeros(self.n_components, dtype=dtype)
@@ -311,7 +317,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
                                    dtype=dtype)
 
         inds = np.arange(X.shape[0])
-        self.random_state.shuffle(inds)
+        rng.shuffle(inds)
 
         n_batches = int(np.ceil(len(inds) / float(self.batch_size)))
 
@@ -321,7 +327,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
             if verbose:
                 begin = time.time()
             for minibatch in xrange(n_batches):
-                pl_batch = self._fit(X[inds[minibatch::n_batches]])
+                pl_batch = self._fit(X[inds[minibatch::n_batches]], rng)
 
                 if verbose:
                     pl += pl_batch.sum()
