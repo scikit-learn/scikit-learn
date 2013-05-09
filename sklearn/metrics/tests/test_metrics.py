@@ -292,15 +292,13 @@ def test_auc_duplicate_values():
     # from numpy.argsort(x), which was reordering the tied 0's in this example
     # and resulting in an incorrect area computation. This test detects the
     # error.
-    x = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
-         0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.5, 1.0]
-    y1 = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
-          1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-    y2 = [0.3, 0.2, 0.1, 0.7, 0.6, 0.5, 0.4, 0.8, 0.9,
-          1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    x = [-2.0, 0.0, 0.0, 0.0, 1.0]
+    y1 = [2.0, 0.0, 0.5, 1.0, 1.0]
+    y2 = [2.0, 1.0, 0.0, 0.5, 1.0]
+    y3 = [2.0, 1.0, 0.5, 0.0, 1.0]
 
-    for y in (y1, y2):
-        assert_array_almost_equal(auc(x, y, reorder=True), 1.0)
+    for y in (y1, y2, y3):
+        assert_array_almost_equal(auc(x, y, reorder=True), 3.0)
 
 
 def test_auc_errors():
