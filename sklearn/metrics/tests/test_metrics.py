@@ -310,6 +310,9 @@ def test_auc_errors():
     # Too few x values
     assert_raises(ValueError, auc, [0.0], [0.1])
 
+    # x is not in order
+    assert_raises(ValueError, auc, [1.0, 0.0, 0.5], [0.0, 0.0, 0.0])
+
 
 def test_auc_score_non_binary_class():
     """Test that auc_score function returns an error when trying to compute AUC
