@@ -460,12 +460,18 @@ Moreover, these notions can be further extended. The functions
 :func:`precision_score`  and :func:`recall_score` support an argument called
 ``average`` which defines the type of averaging:
 
- * ``"macro"``: average over classes (does not take imbalance into account).
- * ``"micro"``: average over instances (takes imbalance into account).
- * ``"weighted"``: average weighted by support (takes imbalance into account).
-   It can result in F1 score that is not between precision and recall.
+ * ``"macro"``: average over classes (does not take imbalance
+   into account).
+ * ``"micro"``: aggregate classes and average over instances
+   (takes imbalance into account). This implies that
+   ``precision == recall == F1``.
+   In multilabel classification, this is true only if every sample has a label.
+ * ``"weighted"``: average over classes weighted by support (takes imbalance
+   into account). Can result in F-score that is not between
+   precision and recall.
+ * ``'example'``: average over instances. Only available and
+   meaningful with multilabel data.
  * ``None``: no averaging is performed.
-
 
 Let's define some notations:
 
@@ -477,11 +483,13 @@ Let's define some notations:
    * :math:`tp_j`, :math:`fp_j` and :math:`fn_j` respectively the number of
      true positives, false positives and false negatives for the :math:`j`-th
      label;
+   * :math:`w_j = \frac{tp_j + fn_j}{\sum_{k=0}^{n_\text{labels} - 1} tp_k + f
+     n_k}` is the weighted support associated to the :math:`j`-th label;
    * :math:`y_i` is the set of true label and
      :math:`\hat{y}_i` is the set of predicted for the
      :math:`i`-th sample;
 
-The macro precision, recall and :math:`F_\beta` are averaged over all labels
+The macro precision, recall and :math:`F_\beta` is defined as
 
 .. math::
 
@@ -495,7 +503,7 @@ The macro precision, recall and :math:`F_\beta` are averaged over all labels
 
   \texttt{macro\_{}F\_{}beta} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} {F_\beta}_j.
 
-The micro precision, recall and :math:`F_\beta` are averaged over all instances
+The micro precision, recall and :math:`F_\beta` is defined as
 
 .. math::
 
@@ -509,21 +517,34 @@ The micro precision, recall and :math:`F_\beta` are averaged over all instances
 
   \texttt{micro\_{}F\_{}beta} = (1 + \beta^2) \frac{\texttt{micro\_{}precision} \times  \texttt{micro\_{}recall}}{\beta^2 \texttt{micro\_{}precision} +  \texttt{micro\_{}recall}}.
 
-
-The weighted precision, recall and :math:`F_\beta` are averaged weighted by
-their support
+The weighted precision, recall and :math:`F_\beta` is defined as
 
 .. math::
 
-  \texttt{weighted\_{}precision}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} \frac{|y_i \cap \hat{y}_i|}{|y_i|},
+  \texttt{weighted\_{}precision} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} w_j \texttt{precision}_j,
 
 .. math::
 
-  \texttt{weighted\_{}recall}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} \frac{|y_i \cap \hat{y}_i|}{|\hat{y}_i|},
+  \texttt{weighted\_{}recall} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} w_j \texttt{recall}_j,
 
 .. math::
 
-  \texttt{weighted\_{}F\_{}beta}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (1 + \beta^2)\frac{|y_i \cap \hat{y}_i|}{\beta^2 |\hat{y}_i| + |y_i|}.
+  \texttt{weighted\_{}F\_{}beta} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} w_j {F_\beta}_j.
+
+
+The example precision, recall and :math:`F_\beta` is defined as
+
+.. math::
+
+  \texttt{example\_{}precision}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} \frac{|y_i \cap \hat{y}_i|}{|y_i|},
+
+.. math::
+
+  \texttt{example\_{}recall}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} \frac{|y_i \cap \hat{y}_i|}{|\hat{y}_i|},
+
+.. math::
+
+  \texttt{example\_{}F\_{}beta}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (1 + \beta^2)\frac{|y_i \cap \hat{y}_i|}{\beta^2 |\hat{y}_i| + |y_i|}.
 
 Here an example where ``average`` is set to ``average`` to ``macro``::
 
@@ -546,15 +567,20 @@ Here an example where ``average`` is set to to ``micro``::
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
   >>> y_pred = [0, 2, 1, 0, 0, 1]
-  >>> metrics.precision_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+  >>> metrics.precision_score(y_true, y_pred, average='micro')
+  ... # doctest: +ELLIPSIS
   0.33...
-  >>> metrics.recall_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+  >>> metrics.recall_score(y_true, y_pred, average='micro')
+  ... # doctest: +ELLIPSIS
   0.33...
-  >>> metrics.f1_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+  >>> metrics.f1_score(y_true, y_pred, average='micro')
+  ... # doctest: +ELLIPSIS
   0.33...
-  >>> metrics.fbeta_score(y_true, y_pred, average='micro', beta=0.5)  # doctest: +ELLIPSIS
+  >>> metrics.fbeta_score(y_true, y_pred, average='micro', beta=0.5)
+  ... # doctest: +ELLIPSIS
   0.33...
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='micro')
+  ... # doctest: +ELLIPSIS
   (0.33..., 0.33..., 0.33..., None)
 
 Here an example where ``average`` is set to to ``weighted``::

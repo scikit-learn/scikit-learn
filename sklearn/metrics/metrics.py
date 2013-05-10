@@ -1109,27 +1109,26 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
         classification, it is used to infer what is a positive label in the
         label indicator matrix format.
 
-    average : string, [None (default), 'micro', 'macro', 'weighted', 'example']
+    average : string, [None, 'example', 'micro', 'macro', 'weighted' (default)]
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
 
-        ``'macro'``:
-            Average and aggregate over classes (does not take imbalance into
-            account).
-        ``'micro'``:
-            Average over instances (takes imbalance into account) and aggregate
-            over classes.  This implies that ``precision == recall == F1``.
-            In multilabel classification, this is true only if every sample has
-            a label.
-        ``'weighted'``:
-            Average weighted by support (takes imbalance into account) and
-            aggregate over class.  Can result in F-score that is not between
-            precision and recall.
         ``'example'``:
-            Average and aggregate over instance. [3] Only meaningful and
-            available in multilabel classification. For binary or multiclass
-            classification, use the :func:`accuracy_score` function instead.
+            Average over instance. Only meaningful and available in multilabel
+            classification.
+        ``'macro'``:
+            Average over classes (does not take imbalance into account).
+        ``'micro'``:
+            Aggregate classes and average over instances (takes imbalance into
+            account).  This implies that ``precision == recall == F1``.
+            In multilabel classification, this is true only if every sample
+            has a label.
+        ``'weighted'``:
+            Average over classes weighted by support (takes imbalance into
+            account).  Can result in F-score that is not between
+            precision and recall.
+
 
     Returns
     -------
@@ -1235,27 +1234,25 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
         classification, it is used to infer what is a positive label in the
         label indicator matrix format.
 
-    average : string, [None (default), 'micro', 'macro', 'weighted', 'example']
+    average : string, [None, 'example', 'micro', 'macro', 'weighted' (default)]
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
 
-        ``'macro'``:
-            Average and aggregate over classes (does not take imbalance into
-            account).
-        ``'micro'``:
-            Average over instances (takes imbalance into account) and aggregate
-            over classes.  This implies that ``precision == recall == F1``.
-            In multilabel classification, this is true only if every sample has
-            a label.
-        ``'weighted'``:
-            Average weighted by support (takes imbalance into account) and
-            aggregate over class.  Can result in F-score that is not between
-            precision and recall.
         ``'example'``:
-            Average and aggregate over instance. [3] Only meaningful and
-            available in multilabel classification. For binary or multiclass
-            classification, use the :func:`accuracy_score` function instead.
+            Average over instance. Only meaningful and available in multilabel
+            classification.
+        ``'macro'``:
+            Average over classes (does not take imbalance into account).
+        ``'micro'``:
+            Aggregate classes and average over instances (takes imbalance into
+            account).  This implies that ``precision == recall == F1``.
+            In multilabel classification, this is true only if every sample
+            has a label.
+        ``'weighted'``:
+            Average over classes weighted by support (takes imbalance into
+            account).  Can result in F-score that is not between
+            precision and recall.
 
     Returns
     -------
@@ -1522,27 +1519,25 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         classification, it is used to infer what is a positive label in the
         label indicator matrix format.
 
-    average : string, [None (default), 'micro', 'macro', 'weighted', 'example']
+    average : string, [None (default), 'example', 'micro', 'macro', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
 
-        ``'macro'``:
-            Average and aggregate over classes (does not take imbalance into
-            account).
-        ``'micro'``:
-            Average over instances (takes imbalance into account) and aggregate
-            over classes.  This implies that ``precision == recall == F1``.
-            In multilabel classification, this is true only if every sample has
-            a label.
-        ``'weighted'``:
-            Average weighted by support (takes imbalance into account) and
-            aggregate over class.  Can result in F-score that is not between
-            precision and recall.
         ``'example'``:
-            Average and aggregate over instance. [3] Only meaningful and
-            available in multilabel classification. For binary or multiclass
-            classification, use the :func:`accuracy_score` function instead.
+            Average over instance. Only meaningful and available in multilabel
+            classification.
+        ``'macro'``:
+            Average over classes (does not take imbalance into account).
+        ``'micro'``:
+            Aggregate classes and average over instances (takes imbalance into
+            account).  This implies that ``precision == recall == F1``.
+            In multilabel classification, this is true only if every sample
+            has a label.
+        ``'weighted'``:
+            Average over classes weighted by support (takes imbalance into
+            account).  Can result in F-score that is not between
+            precision and recall.
 
 
     Returns
@@ -1816,27 +1811,25 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
         classification, it is used to infer what is a positive label in the
         label indicator matrix format.
 
-    average : string, [None (default), 'micro', 'macro', 'weighted', 'example']
+    average : string, [None, 'example', 'micro', 'macro', 'weighted' (default)]
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
 
-        ``'macro'``:
-            Average and aggregate over classes (does not take imbalance into
-            account).
-        ``'micro'``:
-            Average over instances (takes imbalance into account) and aggregate
-            over classes.  This implies that ``precision == recall == F1``.
-            In multilabel classification, this is true only if every sample has
-            a label.
-        ``'weighted'``:
-            Average weighted by support (takes imbalance into account) and
-            aggregate over class.  Can result in F-score that is not between
-            precision and recall.
         ``'example'``:
-            Average and aggregate over instance. [3] Only meaningful and
-            available in multilabel classification. For binary or multiclass
-            classification, use the :func:`accuracy_score` function instead.
+            Average over instance. Only meaningful and available in multilabel
+            classification.
+        ``'macro'``:
+            Average over classes (does not take imbalance into account).
+        ``'micro'``:
+            Aggregate classes and average over instances (takes imbalance into
+            account).  This implies that ``precision == recall == F1``.
+            In multilabel classification, this is true only if every sample
+            has a label.
+        ``'weighted'``:
+            Average over classes weighted by support (takes imbalance into
+            account).  Can result in F-score that is not between
+            precision and recall.
 
     Returns
     -------
@@ -1941,27 +1934,25 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
         classification, it is used to infer what is a positive label in the
         label indicator matrix format.
 
-    average : string, [None (default), 'micro', 'macro', 'weighted', 'example']
+    average : string, [None, 'example', 'micro', 'macro', 'weighted' (default)]
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
 
-        ``'macro'``:
-            Average and aggregate over classes (does not take imbalance into
-            account).
-        ``'micro'``:
-            Average over instances (takes imbalance into account) and aggregate
-            over classes.  This implies that ``precision == recall == F1``.
-            In multilabel classification, this is true only if every sample has
-            a label.
-        ``'weighted'``:
-            Average weighted by support (takes imbalance into account) and
-            aggregate over class.  Can result in F-score that is not between
-            precision and recall.
         ``'example'``:
-            Average and aggregate over instance. [3] Only meaningful and
-            available in multilabel classification. For binary or multiclass
-            classification, use the :func:`accuracy_score` function instead.
+            Average over instance. Only meaningful and available in multilabel
+            classification.
+        ``'macro'``:
+            Average over classes (does not take imbalance into account).
+        ``'micro'``:
+            Aggregate classes and average over instances (takes imbalance into
+            account).  This implies that ``precision == recall == F1``.
+            In multilabel classification, this is true only if every sample
+            has a label.
+        ``'weighted'``:
+            Average over classes weighted by support (takes imbalance into
+            account).  Can result in F-score that is not between
+            precision and recall.
 
     Returns
     -------
