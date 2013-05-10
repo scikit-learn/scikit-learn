@@ -277,6 +277,9 @@ def test_auc():
     x = [1, 0]
     y = [0, 1]
     assert_array_almost_equal(auc(x, y), 0.5)
+    x = [1, 0, 0]
+    y = [0, 1, 1]
+    assert_array_almost_equal(auc(x, y), 0.5)
     x = [0, 1]
     y = [1, 1]
     assert_array_almost_equal(auc(x, y), 1)
