@@ -201,11 +201,11 @@ def auc(x, y, reorder=False):
     else:
         dx = np.diff(x)
         if np.any(dx < 0):
-            dx *= -1
-            if np.any(dx < 0):
+            if np.all(dx <= 0):
+                direction = -1
+            else:
                 raise ValueError("Reordering is not turned on, and "
                                  "the x array is not increasing: %s" % x)
-            direction = -1
 
     area = direction * np.trapz(y, x)
 
