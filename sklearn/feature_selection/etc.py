@@ -27,18 +27,6 @@ def sum_values(X, y=None):
     return X.sum(axis=1)
 
 
-def _clean_nans(scores):
-    """
-    Fixes Issue #1240: NaNs can't be properly compared, so change them to the
-    smallest value of scores's dtype. -inf seems to be unreliable.
-    """
-    # XXX where should this function be called? fit? scoring functions
-    # themselves?
-    scores = as_float_array(scores, copy=True)
-    scores[np.isnan(scores)] = np.finfo(scores.dtype).min
-    return scores
-
-
 class BaseScaler(object):
     __slots__ = ()
     """
@@ -156,7 +144,6 @@ class SelectByScoreMixin(FeatureSelectionMixin):
         else:
             # Hack!
             self.__n_samples = None
-        self.__scores = _clean_nans(scores)
         return self
 
     def _get_support_mask(self, minimum=None, maximum=None, scaling=None, limit=None):
@@ -206,11 +193,14 @@ class SelectByScoreMixin(FeatureSelectionMixin):
         percentile = 100. * min(limit - 1, n_support - 1) / (n_support - 1)
         if greatest:
             percentile = 100. - percentile
+            nan_sub = np.finfo(scores.dtype).min
+        else:
+            nan_sub = np.finfo(scores.dtype).max
 
         kept_scores = scores[support]
-        cutoff = np.percentile(scores[support], percentile)
+        kept_scores[np.isnan(kept_scores)] = nan_sub
+        cutoff = np.percentile(kept_scores, percentile)
 
-        print('_limit_support', support, scores, limit, greatest, percentile, cutoff)
         # take features strictly better than the cutoff
         if greatest:
             support_mask = kept_scores > cutoff
@@ -220,12 +210,13 @@ class SelectByScoreMixin(FeatureSelectionMixin):
         # Because we chose percentile to exactly match some score, there
         # will always be at least one remaining. Where it matches multiple
         # score, we may need to arbitrarily break the tie.
-        n_remaining = limit - support_mask.sum()
+        n_remaining = limit - n_support
         ties = np.where(kept_scores == cutoff)[0]
         if len(ties) > n_remaining:
             warn("Tied features are being arbitrarily split. "
                  "There may be duplicate features, or you used a "
                  "classification score for a regression task.")
+        ties.extend(nans)
         kept_ties = ties[:n_remaining]
         support_mask[kept_ties] = True
 
