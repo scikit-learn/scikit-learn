@@ -704,7 +704,7 @@ class RandomizedSearchCV(BaseSearchCV):
     estimator : object type that implements the "fit" and "predict" methods
         A object of that type is instantiated for each parameter setting.
 
-    param_distribution : dict
+    param_distributions : dict
         Dictionary with parameters names (string) as keys and distributions
         or lists of parameters to try. Distributions must provide a ``rvs``
         method for sampling (such as those from scipy.stats.distributions).
