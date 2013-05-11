@@ -1165,7 +1165,7 @@ def fit_fold(estimator, X, y, train, test, scorer,
 
 
 class CVEvaluator(object):
-    """Evaluate a score by cross-validation
+    """Parallelized cross-validation for a given estimator and dataset
 
     Parameters
     ----------
@@ -1186,7 +1186,8 @@ class CVEvaluator(object):
         for details.
 
     cv : integer or cross-validation generator, optional
-        A cross-validation generator or number of stratified folds (default 3).
+        A cross-validation generator or number of folds (default 3). Folds will
+        be stratified if the estimator is a classifier.
 
     iid : boolean, optional
         If True (default), the data is assumed to be identically distributed
@@ -1394,8 +1395,63 @@ class CVEvaluator(object):
         return self(parameters)[0]['test_score']
 
 
-def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
-                    verbose=0, fit_params=None, score_func=None):
+def cross_val_score(estimator, X, y=None, scoring=None, cv=None, iid=True,
+                    n_jobs=1, verbose=0, fit_params=None, score_func=None):
+    """Evaluate a score by cross-validation
+
+    Parameters
+    ----------
+    estimator : estimator object implementing 'fit'
+        The object to use to fit the data.
+
+    X : array-like of shape at least 2D
+        The data to fit.
+
+    y : array-like, optional
+        The target variable to try to predict in the case of
+        supervised learning.
+
+    scoring : string or callable, optional
+        Either one of either a string ("zero_one", "f1", "roc_auc", ... for
+        classification, "mse", "r2", ... for regression) or a callable.
+        See 'Scoring objects' in the model evaluation section of the user guide
+        for details.
+
+    cv : integer or cross-validation generator, optional
+        A cross-validation generator or number of folds (default 3). Folds will
+        be stratified if the estimator is a classifier.
+
+    iid : boolean, optional
+        If True (default), the data is assumed to be identically distributed
+        across the folds, and the mean score is the total score per sample,
+        and not the mean score across the folds.
+
+    n_jobs : integer, optional
+        The number of jobs to run in parallel (default 1). -1 means 'all CPUs'.
+
+    pre_dispatch : int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediatly
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
+    verbose : integer, optional
+        The verbosity level.
+
+    fit_params : dict, optional
+        Parameters to pass to the fit method of the estimator.
+    """
     cv_eval = CVEvaluator(
         estimator, X, y, scoring=scoring, cv=cv, n_jobs=n_jobs,
         verbose=verbose, fit_params=fit_params, score_func=score_func)
