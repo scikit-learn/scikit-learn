@@ -1070,7 +1070,7 @@ def fit_fold(estimator, X, y, train, test, scorer,
         Verbosity level.
 
     est_params : dict
-        Parameters to be set on estimator for this grid point.
+        Parameters to be set on estimator for this fold.
 
     **fit_params : kwargs
         Additional parameter passed to the fit function of the estimator.

@@ -331,23 +331,23 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
     @property
     def grid_scores_(self):
         warnings.warn("grid_scores_ is deprecated and will be removed in 0.15."
-                      " Use grid_results_ and fold_results_ instead.",
+                      " Use search_results_ and fold_results_ instead.",
                       DeprecationWarning)
-        return zip(self.grid_results_['parameters'],
-                   self.grid_results_['test_score'],
+        return zip(self.search_results_['parameters'],
+                   self.search_results_['test_score'],
                    self.fold_results_['test_score'])
 
     @property
     def best_score_(self):
         if not hasattr(self, 'best_index_'):
             raise AttributeError('Call fit() to calculate best_score_')
-        return self.grid_results_['test_score'][self.best_index_]
+        return self.search_results_['test_score'][self.best_index_]
 
     @property
     def best_params_(self):
         if not hasattr(self, 'best_index_'):
             raise AttributeError('Call fit() to calculate best_params_')
-        return self.grid_results_['parameters'][self.best_index_]
+        return self.search_results_['parameters'][self.best_index_]
 
     def _check_estimator(self):
         """Check that estimator can be fitted and score can be computed."""
@@ -401,20 +401,21 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
             iid=self.iid, fit_params=self.fit_params, n_jobs=self.n_jobs,
             pre_dispatch=self.pre_dispatch, verbose=self.verbose
         )
-        grid_results, cv_results = cv_eval(parameter_iterator)
+        search_results, cv_results = cv_eval(parameter_iterator)
 
-        # Append 'parameters' to grid_results
+        # Append 'parameters' to search_results
         # Broken due to https://github.com/numpy/numpy/issues/2346:
-        # grid_results = recfunctions.append_fields(grid_results, 'parameters',
-        #        np.asarray(list(parameter_iterator)), usemask=False)
-        new_grid_results = np.zeros(
-            grid_results.shape,
-            dtype=grid_results.dtype.descr + [('parameters', 'O')]
+        # search_results = recfunctions.append_fields(
+        #     search_results, 'parameters',
+        #     np.asarray(list(parameter_iterator)), usemask=False)
+        new_search_results = np.zeros(
+            search_results.shape,
+            dtype=search_results.dtype.descr + [('parameters', 'O')]
         )
-        for name in grid_results.dtype.names:
-            new_grid_results[name] = grid_results[name]
-        new_grid_results['parameters'] = list(parameter_iterator)
-        grid_results = new_grid_results
+        for name in search_results.dtype.names:
+            new_search_results[name] = search_results[name]
+        new_search_results['parameters'] = list(parameter_iterator)
+        search_results = new_search_results
 
         # Note: we do not use max(out) to make ties deterministic even if
         # comparison on estimator instances is not deterministic
@@ -428,7 +429,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
         else:
             best_score = np.inf
 
-        for i, score in enumerate(grid_results['test_score']):
+        for i, score in enumerate(search_results['test_score']):
             if ((score > best_score and greater_is_better)
                     or (score < best_score
                         and not greater_is_better)):
@@ -437,7 +438,7 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
 
         self.best_index_ = best_index
         self.fold_results_ = cv_results
-        self.grid_results_ = grid_results
+        self.search_results_ = search_results
 
         if self.refit:
             # fit the best estimator using the entire dataset
@@ -541,7 +542,7 @@ class GridSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    `grid_results_` : structured array of shape [# param combinations]
+    `search_results_` : structured array of shape [# param combinations]
         For each parameter combination in ``param_grid`` includes these fields:
 
             * ``parameters``, dict of parameter settings
@@ -560,7 +561,7 @@ class GridSearchCV(BaseSearchCV):
         on the left out data. Available only if refit=True.
 
     `best_index_` : int
-        The index of the best parameter setting into ``grid_results_`` and
+        The index of the best parameter setting into ``search_results_`` and
         ``fold_results_`` data.
 
     `best_score_` : float
@@ -702,7 +703,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
     Attributes
     ----------
-    `grid_results_` : structured array of shape [# param combinations]
+    `search_results_` : structured array of shape [# param combinations]
         For each parameter combination in ``param_grid`` includes these fields:
 
             * ``parameters``, dict of parameter settings
@@ -721,7 +722,7 @@ class RandomizedSearchCV(BaseSearchCV):
         on the left out data. Available only if refit=True.
 
     `best_index_` : int
-        The index of the best parameter setting into ``grid_results_`` and
+        The index of the best parameter setting into ``search_results_`` and
         ``fold_results_`` data.
 
     `best_score_` : float

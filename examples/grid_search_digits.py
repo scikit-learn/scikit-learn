@@ -59,9 +59,10 @@ for score in scores:
     print()
     print("Grid scores on development set:")
     print()
-    means = clf.grid_results_['test_score']
+    candidates = clf.search_results_['parameters']
+    means = clf.search_results_['test_score']
     stds = clf.fold_results_['test_score'].std(axis=1)
-    for params, mean, std in zip(clf.grid_results_['parameters'], means, stds):
+    for params, mean, std in zip(candidates, means, stds):
         print("%0.3f (+/-%0.03f) for %r"
               % (mean, std / 2, params))
     print()

@@ -138,7 +138,7 @@ def test_grid_search():
     assert_equal(grid_search.best_score_, 1.)
 
     for i, foo_i in enumerate([1, 2, 3]):
-        assert_true(grid_search.grid_results_['parameters'][i]
+        assert_true(grid_search.search_results_['parameters'][i]
                     == {'foo_param': foo_i})
     # Smoke test the score etc:
     grid_search.score(X, y)
@@ -178,19 +178,19 @@ def test_grid_scores():
 def test_trivial_results():
     """Test search over a "grid" with only one point.
 
-    Non-regression test: grid_results_, etc. wouldn't be set by GridSearchCV.
+    Non-regression test: search_results_, etc. wouldn't be set by GridSearchCV.
     """
     clf = MockClassifier()
     grid_search = GridSearchCV(clf, {'foo_param': [1]})
     grid_search.fit(X, y)
     # Ensure attributes are set
-    grid_search.grid_results_
+    grid_search.search_results_
     grid_search.fold_results_
     grid_search.best_index_
 
     random_search = RandomizedSearchCV(clf, {'foo_param': [0]})
     random_search.fit(X, y)
-    grid_search.grid_results_
+    grid_search.search_results_
     grid_search.fold_results_
     grid_search.best_index_
 
@@ -235,7 +235,7 @@ def test_grid_search_iid():
     assert_array_almost_equal(scores, [1, 1. / 3.])
     # for first split, 1/4 of dataset is in test, for second 3/4.
     # take weighted average
-    average_score = grid_search.grid_results_[0]['test_score']
+    average_score = grid_search.search_results_[0]['test_score']
     assert_almost_equal(average_score, 1 * 1. / 4. + 1. / 3. * 3. / 4.)
 
     # once with iid=False (default)
@@ -246,7 +246,7 @@ def test_grid_search_iid():
     scores = grid_search.fold_results_[0]['test_score']
     assert_array_almost_equal(scores, [1, 1. / 3.])
     # averaged score is just mean of scores
-    average_score = grid_search.grid_results_[0]['test_score']
+    average_score = grid_search.search_results_[0]['test_score']
     assert_almost_equal(average_score, np.mean(scores))
 
 
@@ -457,7 +457,7 @@ def test_X_as_list():
     grid_search = GridSearchCV(clf, {'foo_param': [1, 2, 3]}, cv=cv)
     grid_search.fit(X.tolist(), y).score(X, y)
     # Ensure result attributes are set
-    grid_search.grid_results_
+    grid_search.search_results_
     grid_search.fold_results_
     grid_search.best_index_
 
@@ -506,7 +506,7 @@ def test_randomized_search():
     params = dict(C=distributions.expon())
     search = RandomizedSearchCV(LinearSVC(), param_distributions=params)
     search.fit(X, y)
-    assert_equal(len(search.grid_results_['test_score']), 10)
+    assert_equal(len(search.search_results_['test_score']), 10)
 
 
 def test_grid_search_score_consistency():

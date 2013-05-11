@@ -105,7 +105,7 @@ for (k, (C, gamma, clf)) in enumerate(classifiers):
     pl.axis('tight')
 
 # plot the scores of the grid
-scores = grid.grid_results_['test_score']
+scores = grid.search_results_['test_score']
 scores = scores.reshape(len(C_range), len(gamma_range))
 
 # draw heatmap of accuracy as a function of gamma and C
