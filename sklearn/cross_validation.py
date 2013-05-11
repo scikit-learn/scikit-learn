@@ -1093,7 +1093,7 @@ def fit_fold(estimator, X, y, train, test, scorer,
         else:
             msg = '%s' % (', '.join('%s=%s' % (k, v)
                           for k, v in est_params.items()))
-        print("[CVEvaluator]%s %s" % (msg, (64 - len(msg)) * '.'))
+        print("[fit_fold]%s %s" % (msg, (64 - len(msg)) * '.'))
 
     n_samples = _num_samples(X)
 
@@ -1157,7 +1157,7 @@ def fit_fold(estimator, X, y, train, test, scorer,
         end_msg = "%s -%s" % (msg,
                               logger.short_format_time(time.time() -
                                                        start_time))
-        print("[CVEvaluator]%s %s" % ((64 - len(end_msg)) * '.', end_msg))
+        print("[fit_fold]%s %s" % ((64 - len(end_msg)) * '.', end_msg))
     return {
         'test_score': test_score,
         'test_n_samples': _num_samples(X_test),
