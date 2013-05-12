@@ -8,15 +8,15 @@ Grid Search: setting estimator parameters
 
 Grid Search is used to optimize the parameters of a model (e.g. ``C``,
 ``kernel`` and ``gamma`` for Support Vector Classifier, ``alpha`` for
-Lasso, etc.) using an internal :ref:`cross_validation` scheme).
+Lasso, etc.) using an internal :ref:`cross_validation` scheme.
 
 
 GridSearchCV
 ============
 
-The main class for implementing hyperparameters grid search in
+The main class implementing hyperparameter grid search in
 scikit-learn is :class:`GridSearchCV`. This class is passed
-a base model instance (for example ``sklearn.svm.SVC()``) along with a
+a base estimator instance (for example ``sklearn.svm.SVC()``) along with a
 grid of potential hyper-parameter values specified with the `param_grid`
 attribute. For instance the following `param_grid`::
 
@@ -26,14 +26,14 @@ attribute. For instance the following `param_grid`::
    ]
 
 specifies that two grids should be explored: one with a linear kernel and
-C values in [1, 10, 100, 1000], and the second one with an RBG kernel,
+C values in [1, 10, 100, 1000], and the second one with an RBF kernel,
 and the cross-product of C values ranging in [1, 10, 100, 1000] and gamma
 values in [0.001, 0.0001].
 
 The :class:`GridSearchCV` instance implements the usual
 estimator API: when "fitting" it on a dataset all the possible
 combinations of hyperparameter values are evaluated and the best
-combinations is retained.
+combination is retained.
 
 .. topic:: Model selection: development and evaluation
 
