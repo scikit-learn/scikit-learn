@@ -825,26 +825,22 @@ Drawbacks
 
 Mathematical formulation
 ~~~~~~~~~~~~~~~~~~~~~~~~
-Assume two label assignments (of the same data), :math:`U` with :math:`R`
-classes and :math:`V` with :math:`C` classes. The entropy of either is the
-amount of uncertaintly for an array, and can be calculated as:
+Assume two label assignments (of the same N objects), :math:`U` with :math:`R`
+classes and :math:`V` with :math:`C` classes. Their entropy is the
+amount of uncertainty for a partition set, defined by:
 
-.. math:: H(U) = \sum_{i=1}^{|R|}P(i)\log(P(i))
+.. math:: H(U) = \sum_{i=1}^{R}P(i)\log(P(i))
 
-Where P(i) is the number of instances in U that are in class :math:`R_i`.
-Likewise, for :math:`V`:
+Where :math:`P(i) = |R_i| / N` is the probability that an object picked at random from U falls into class :math:`R_i`. Likewise for :math:`V`:
 
-.. math:: H(V) = \sum_{j=1}^{|C|}P'(j)\log(P'(j))
+.. math:: H(V) = \sum_{j=1}^{C}P'(j)\log(P'(j))
 
-Where P'(j) is the number of instances in V that are in class :math:`C_j`.
-
-The mutual information between :math:`U` and :math:`V` is
+With :math:`P'(j) = |C_j| / N`. The mutual information (MI) between :math:`U` and :math:`V` is
 calculated by:
 
-.. math:: \text{MI}(U, V) = \sum_{i=1}^{|R|}\sum_{j=1}^{|C|}P(i, j)\log\left(\frac{P(i,j)}{P(i)P'(j)}\right)
+.. math:: \text{MI}(U, V) = \sum_{i=1}^{R}\sum_{j=1}^{C}P(i, j)\log\left(\frac{P(i,j)}{P(i)P'(j)}\right)
 
-Where P(i, j) is the number of instances with label :math:`R_i` 
-and also with label :math:`C_j`.
+Where :math:`P(i, j) = |R_i \cap C_j| / N` is the probability that an object picked at random falls into both classes :math:`R_i` and :math:`C_j`.
 
 The normalized mutual information is defined as
 
