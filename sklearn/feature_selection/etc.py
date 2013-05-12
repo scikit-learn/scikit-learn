@@ -210,7 +210,7 @@ class SelectByScoreMixin(FeatureSelectionMixin):
         # Because we chose percentile to exactly match some score, there
         # will always be at least one remaining. Where it matches multiple
         # score, we may need to arbitrarily break the tie.
-        n_remaining = limit - n_support
+        n_remaining = limit - support_mask.sum()
         ties = np.where(kept_scores == cutoff)[0]
         if len(ties) > n_remaining:
             warn("Tied features are being arbitrarily split. "
