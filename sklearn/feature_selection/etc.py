@@ -135,6 +135,7 @@ class SelectByScoreMixin(FeatureSelectionMixin):
         return val
 
     def _fit(self, scores, X):
+        self.__scores = scores
         if X is not None:
             if not issparse(X):
                 X = np.asarray(X)
@@ -193,12 +194,11 @@ class SelectByScoreMixin(FeatureSelectionMixin):
         percentile = 100. * min(limit - 1, n_support - 1) / (n_support - 1)
         if greatest:
             percentile = 100. - percentile
-            nan_sub = np.finfo(scores.dtype).min
-        else:
-            nan_sub = np.finfo(scores.dtype).max
 
         kept_scores = scores[support]
-        kept_scores[np.isnan(kept_scores)] = nan_sub
+        if isinstance(scores.dtype, np.inexact):
+            nan_sub = getattr(np.finfo(scores.dtype), 'min' if greatest else 'max')
+            kept_scores[np.isnan(kept_scores)] = nan_sub
         cutoff = np.percentile(kept_scores, percentile)
 
         # take features strictly better than the cutoff
@@ -216,7 +216,6 @@ class SelectByScoreMixin(FeatureSelectionMixin):
             warn("Tied features are being arbitrarily split. "
                  "There may be duplicate features, or you used a "
                  "classification score for a regression task.")
-        ties.extend(nans)
         kept_ties = ties[:n_remaining]
         support_mask[kept_ties] = True
 
@@ -226,18 +225,19 @@ class SelectByScoreMixin(FeatureSelectionMixin):
 
 class SelectByScore(BaseEstimator, SelectByScoreMixin):
     def __init__(self, score_func=count_nonzero, minimum=None, maximum=None,
-                 scaling=None):
+                 scaling=None, limit=None):
         self.score_func = score_func
         self.minimum = minimum
         self.maximum = maximum
         self.scaling = scaling
+        self.limit = limit
 
     def fit(self, X, y=None):
         return super(SelectByScore, self)._fit(self.score_func(X, y), X)
 
     def _get_support_mask(self):
         return super(SelectByScore, self)._get_support_mask(
-            self.minimum, self.maximum, self.scaling)
+            self.minimum, self.maximum, self.scaling, self.limit)
 
 
 class SelectByName(BaseEstimator, TransformerMixin):
