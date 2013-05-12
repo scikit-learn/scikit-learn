@@ -831,16 +831,16 @@ amount of uncertainty for a partition set, defined by:
 
 .. math:: H(U) = \sum_{i=1}^{R}P(i)\log(P(i))
 
-Where :math:`P(i) = |R_i| / N` is the probability that an object picked at random from U falls into class :math:`R_i`. Likewise for :math:`V`:
+Where :math:`P(i) = |U_i| / N` is the probability that an object picked at random from :math:`U` falls into class :math:`U_i`. Likewise for :math:`V`:
 
 .. math:: H(V) = \sum_{j=1}^{C}P'(j)\log(P'(j))
 
-With :math:`P'(j) = |C_j| / N`. The mutual information (MI) between :math:`U` and :math:`V` is
+With :math:`P'(j) = |V_j| / N`. The mutual information (MI) between :math:`U` and :math:`V` is
 calculated by:
 
 .. math:: \text{MI}(U, V) = \sum_{i=1}^{R}\sum_{j=1}^{C}P(i, j)\log\left(\frac{P(i,j)}{P(i)P'(j)}\right)
 
-Where :math:`P(i, j) = |R_i \cap C_j| / N` is the probability that an object picked at random falls into both classes :math:`R_i` and :math:`C_j`.
+Where :math:`P(i, j) = |U_i \cap V_j| / N` is the probability that an object picked at random falls into both classes :math:`U_i` and :math:`V_j`.
 
 The normalized mutual information is defined as
 
