@@ -133,6 +133,12 @@ Changelog
 API changes summary
 -------------------
 
+   - :class:`linear_model.lasso_path` and
+     :class:`linear_model.enet_path` can return its results in the same
+     format as that of :class:`linear_model.lars_path`. This is done by
+     setting the `return_models` parameter to `False`. By
+     `Jaques Grobler`_
+
    - :class:`grid_search.IterGrid` was renamed to
      :class:`grid_search.ParameterGrid`.
 
