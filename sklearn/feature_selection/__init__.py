@@ -4,6 +4,8 @@ algorithms. It currently includes univariate filter selection methods and the
 recursive feature elimination algorithm.
 """
 
+from .base import FeatureSelectionMixin
+
 from .univariate_selection import chi2
 from .univariate_selection import f_classif
 from .univariate_selection import f_oneway
@@ -18,7 +20,8 @@ from .univariate_selection import GenericUnivariateSelect
 from .rfe import RFE
 from .rfe import RFECV
 
-__all__ = ['GenericUnivariateSelect',
+__all__ = ['FeatureSelectionMixin',
+           'GenericUnivariateSelect',
            'RFE',
            'RFECV',
            'SelectFdr',

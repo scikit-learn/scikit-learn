@@ -5,7 +5,7 @@ import numpy as np
 from scipy.sparse import issparse, csc_matrix
 
 from ..base import TransformerMixin
-from ..utils import atleast2d_or_csr, safe_mask
+from ..utils import array2d, atleast2d_or_csr, safe_mask
 from ..externals import six
 
 
@@ -87,7 +87,6 @@ class FeatureSelectionMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
             `X` with columns of zeros inserted where features would have
             been removed by `transform`.
         """
-        support_ = self.get_support()
         if issparse(X):
             X = X.tocsc()
             # insert additional entries in indptr:
@@ -98,9 +97,15 @@ class FeatureSelectionMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
             Xt = csc_matrix((X.data, X.indices, indptr),
                             shape=(X.shape[0], len(indptr) - 1), dtype=X.dtype)
             return Xt
+
+        support = self.get_support()
+        X = array2d(X)
+        if support.sum() != X.shape[1]:
+            raise ValueError("X has a different shape than during fitting.")
+
         if X.ndim == 1:
             X = X[None, :]
-        Xt = np.zeros((X.shape[0], support_.size), dtype=X.dtype)
-        Xt[:, support_] = X
+        Xt = np.zeros((X.shape[0], support.size), dtype=X.dtype)
+        Xt[:, support] = X
         return Xt
 
