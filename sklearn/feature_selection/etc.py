@@ -196,7 +196,7 @@ class SelectByScoreMixin(FeatureSelectionMixin):
             percentile = 100. - percentile
 
         kept_scores = scores[support]
-        if isinstance(scores.dtype, np.inexact):
+        if issubclass(scores.dtype.type, np.inexact):
             nan_sub = getattr(np.finfo(scores.dtype), 'min' if greatest else 'max')
             kept_scores[np.isnan(kept_scores)] = nan_sub
         cutoff = np.percentile(kept_scores, percentile)
