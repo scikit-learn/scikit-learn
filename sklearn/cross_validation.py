@@ -1082,7 +1082,8 @@ def _cross_val_score(estimator, X, y, scorer, train, test, verbose,
 
 
 def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
-                    verbose=0, fit_params=None, score_func=None):
+                    verbose=0, fit_params=None, score_func=None,
+                    pre_dispatch='2*n_jobs'):
     """Evaluate a score by cross-validation
 
     Parameters
@@ -1118,6 +1119,23 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     fit_params : dict, optional
         Parameters to pass to the fit method of the estimator.
 
+    pre_dispatch : int, or string, optional
+        Controls the number of jobs that get dispatched during parallel
+        execution. Reducing this number can be useful to avoid an
+        explosion of memory consumption when more jobs get dispatched
+        than CPUs can process. This parameter can be:
+
+            - None, in which case all the jobs are immediately
+              created and spawned. Use this for lightweight and
+              fast-running jobs, to avoid delays due to on-demand
+              spawning of the jobs
+
+            - An int, giving the exact number of total jobs that are
+              spawned
+
+            - A string, giving an expression as a function of n_jobs,
+              as in '2*n_jobs'
+
     Returns
     -------
     scores : array of float, shape=(len(list(cv)),)
@@ -1142,7 +1160,8 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     fit_params = fit_params if fit_params is not None else {}
-    scores = Parallel(n_jobs=n_jobs, verbose=verbose)(
+    scores = Parallel(n_jobs=n_jobs, verbose=verbose,
+        pre_dispatch=pre_dispatch)(
         delayed(_cross_val_score)(
             clone(estimator), X, y, scorer, train, test, verbose, fit_params)
         for train, test in cv)
