@@ -650,15 +650,13 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                      alphas=alphas, precompute=precompute, Xy=Xy,
                      fit_intercept=fit_intercept, normalize=normalize,
                      copy_X=copy_X, verbose=verbose,
-                     return_models=return_models,
-                     **params)
+                     return_models=return_models, **params)
 
 
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, fit_intercept=True,
               normalize=False, copy_X=True, verbose=False, rho=None,
-              return_models=True,
-              **params):
+              return_models=True, **params):
     """Compute Elastic-Net path with coordinate descent
 
     The Elastic Net optimization function is::
