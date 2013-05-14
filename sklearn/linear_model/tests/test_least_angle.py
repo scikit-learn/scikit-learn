@@ -301,7 +301,7 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     # Test lasso lars on a very ill-conditioned design, and check that
     # it does not blow up, and stays somewhat close to a solution given
     # by the coordinate descent solver
-    # Also test that lasso_path_cd (using lars_path output style) gives
+    # Also test that lasso_path (using lars_path output style) gives
     # the same result as lars_path and previous lasso output style
     rng = np.random.RandomState(42)
 
@@ -330,16 +330,18 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
 
     with warnings.catch_warnings(record=True) as warning_list:
         warnings.simplefilter("always", UserWarning)
-        lasso_cd_alphas, lasso_cd_coef = linear_model.lasso_path_cd(X, y,alphas=lars_alphas,
-                                                              tol=1e-6)
+        _, lasso_coef2 = linear_model.lasso_path(X, y,
+                                                 alphas=lars_alphas,
+                                                 tol=1e-6,
+                                                 old_return=False)
 
     lasso_coef = np.zeros((w.shape[0], len(lars_alphas)))
     for i, model in enumerate(linear_model.lasso_path(X, y, alphas=lars_alphas,
                                                       tol=1e-6)):
         lasso_coef[:, i] = model.coef_
     np.testing.assert_array_almost_equal(lars_coef, lasso_coef, decimal=1)
-    np.testing.assert_array_almost_equal(lars_coef, lasso_cd_coef, decimal=1)
-    np.testing.assert_array_almost_equal(lasso_coef, lasso_cd_coef, decimal=1)
+    np.testing.assert_array_almost_equal(lars_coef, lasso_coef2, decimal=1)
+    np.testing.assert_array_almost_equal(lasso_coef, lasso_coef2, decimal=1)
 
 
 def test_lars_drop_for_good():

@@ -518,13 +518,15 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
     return alphas
 
 
-# Deprecated class
-#@deprecated("Use lasso_path_cd instead, as it returns the coefficients, alphas and
-#active variable indices instead of just a list of models as lasso_path does.
-#lasso_path will be removed in 0.15.")
+# Deprecation Warning
+@deprecated("Use lasso_path(old_return=False), as it returns the coefficients"
+            " and alphas instead of just a list of models as previousely"
+            " lasso_path did. `old_return` will eventually be removed in"
+            " 0.15, after which, returning alphas and coefs will become"
+            " the norm.")
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, fit_intercept=True,
-               normalize=False, copy_X=True, verbose=False,
+               normalize=False, copy_X=True, verbose=False, old_return=True,
                **params):
     """Compute Lasso path with coordinate descent
 
@@ -573,12 +575,29 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     verbose : bool or integer
         Amount of verbosity
 
+    old_return : boolean, optional, default True
+        If ``True``, the function will return list of models. Setting it
+        to ``False`` will change the function output returning the values
+        of the alphas and the coefficients along the path. Returning the
+        model list will be removed in version 0.15.
+
     params : kwargs
         keyword arguments passed to the Lasso objects
 
     Returns
     -------
     models : a list of models along the regularization path
+        (Is returned if ``old_return`` is set ``True`` (default).
+
+    alphas : array, shape: [n_alphas + 1]
+        The alphas along the path where models are computed.
+        (Is returned, along with ``coefs``, when ``old_return`` is set
+        to ``False``)
+
+    coefs : shape (n_features, n_alphas + 1)
+        Coefficients along the path.
+        (Is returned, along with ``alphas``, when ``old_return`` is set
+        to ``False``).
 
     Notes
     -----
@@ -593,6 +612,11 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     interpolation can be used to retrieve model coefficents between the
     values output by lars_path
 
+    Deprecation Notice: Setting ``old_return`` to ``False`` will make
+    the Lasso Path return an output in the style used by :func:`lars_path`.
+    This will be become the norm as of version 0.15. Leaving ``old_return``
+    set to `True` will let the function return a list of models as before.
+
     Examples
     ---------
 
@@ -601,9 +625,9 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     >>> X = np.array([[1, 2, 3.1], [2.3, 5.4, 4.3]]).T
     >>> y = np.array([1, 2, 3.1])
     >>> # Use lasso_path to compute a coefficient path
-    >>> coef_path = [e.coef_ for e in lasso_path(X, y, alphas=[5., 1., .5], \
-fit_intercept=False)]
-    >>> print(np.array(coef_path).T)
+    >>> coef_path = [e.coef_ for e in lasso_path(X, y, alphas=[5., 1., .5],
+    ...                                             fit_intercept=False)]
+    >>> print np.array(coef_path).T
     [[ 0.          0.          0.46874778]
      [ 0.2159048   0.4425765   0.23689075]]
 
@@ -613,8 +637,8 @@ fit_intercept=False)]
     >>> alphas, active, coef_path_lars = lars_path(X, y, method='lasso')
     >>> from scipy import interpolate
     >>> coef_path_continuous = interpolate.interp1d(alphas[::-1],
-    ...     coef_path_lars[:, ::-1])
-    >>> print(coef_path_continuous([5., 1., .5]))
+    ...                                             coef_path_lars[:, ::-1])
+    >>> print coef_path_continuous([5., 1., .5])
     [[ 0.          0.          0.46915237]
      [ 0.2159048   0.4425765   0.23668876]]
 
@@ -631,14 +655,20 @@ fit_intercept=False)]
     return enet_path(X, y, l1_ratio=1., eps=eps, n_alphas=n_alphas,
                      alphas=alphas, precompute=precompute, Xy=Xy,
                      fit_intercept=fit_intercept, normalize=normalize,
-                     copy_X=copy_X, verbose=verbose, **params)
+                     copy_X=copy_X, verbose=verbose, old_return=old_return,
+                     **params)
 
-#@deprecated("Use enet_path_cd instead, as it returns the coefficients, alphas and
-#active variable indices instead of just a list of models as enet_path does.
-#lasso_path will be removed in 0.15.")
+
+# Deprecation Warning
+@deprecated("Use enet_path(old_return=False), as it returns the coefficients"
+            " and alphas instead of just a list of models as previousely"
+            " enet_path did. `old_return` will eventually be removed in"
+            " 0.15, after which, returning alphas and coefs will become"
+            " the norm.")
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, fit_intercept=True,
               normalize=False, copy_X=True, verbose=False, rho=None,
+              old_return=True,
               **params):
     """Compute Elastic-Net path with coordinate descent
 
@@ -693,274 +723,38 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     verbose : bool or integer
         Amount of verbosity
 
+    old_return : boolean, optional, default True
+        If ``True``, the function will return list of models. Setting it
+        to ``False`` will change the function output returning the values
+        of the alphas and the coefficients along the path. Returning the
+        model list will be removed in version 0.15.
+
     params : kwargs
         keyword arguments passed to the Lasso objects
 
     Returns
     -------
     models : a list of models along the regularization path
+        (Is returned if ``old_return`` is set ``True`` (default).
+
+    alphas : array, shape: [n_alphas + 1]
+        The alphas along the path where models are computed.
+        (Is returned, along with ``coefs``, when ``old_return`` is set
+        to ``False``)
+
+    coefs : shape (n_features, n_alphas + 1)
+        Coefficients along the path.
+        (Is returned, along with ``alphas``, when ``old_return`` is set
+        to ``False``).
 
     Notes
     -----
     See examples/plot_lasso_coordinate_descent_path.py for an example.
 
-    See also
-    --------
-    ElasticNet
-    ElasticNetCV
-    """
-
-    if rho is not None:
-        l1_ratio = rho
-        warnings.warn("rho was renamed to l1_ratio and will be removed "
-                      "in 0.15", DeprecationWarning)
-
-    X = atleast2d_or_csc(X, dtype=np.float64, order='F',
-                         copy=copy_X and fit_intercept)
-    # From now on X can be touched inplace
-    if not sparse.isspmatrix(X):
-        X, y, X_mean, y_mean, X_std = center_data(X, y, fit_intercept,
-                                                  normalize, copy=False)
-        # XXX : in the sparse case the data will be centered
-        # at each fit...
-
-    n_samples, n_features = X.shape
-
-    if Xy is None:
-        Xy = safe_sparse_dot(X.T, y, dense_output=True)
-
-    n_samples = X.shape[0]
-    if alphas is None:
-        # No need to normalize of fit_intercept: it has been done
-        # above
-        alphas = _alpha_grid(X, y, Xy=Xy, l1_ratio=l1_ratio,
-                             fit_intercept=False, eps=1e-3, n_alphas=100,
-                             normalize=False, copy_X=False)
-    else:
-        alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
-
-    if (hasattr(precompute, '__array__')
-            and not np.allclose(X_mean, np.zeros(n_features))
-            and not np.allclose(X_std, np.ones(n_features))):
-        # recompute Gram
-        precompute = 'auto'
-        Xy = None
-
-    # precompute if n_samples > n_features
-    if precompute == 'auto':
-        precompute = (n_samples > n_features)
-
-    if precompute:
-        if sparse.isspmatrix(X):
-            warnings.warn("precompute is ignored for sparse data")
-            precompute = False
-        else:
-            precompute = np.dot(X.T, X)
-
-    coef_ = None  # init coef_
-    models = []
-
-    n_alphas = len(alphas)
-    for i, alpha in enumerate(alphas):
-        model = ElasticNet(
-            alpha=alpha, l1_ratio=l1_ratio,
-            fit_intercept=fit_intercept if sparse.isspmatrix(X) else False,
-            precompute=precompute)
-        model.set_params(**params)
-        model.copy_X = False
-        model.fit(X, y, coef_init=coef_, Xy=Xy)
-        if fit_intercept and not sparse.isspmatrix(X):
-            model.fit_intercept = True
-            model._set_intercept(X_mean, y_mean, X_std)
-        if verbose:
-            if verbose > 2:
-                print(model)
-            elif verbose > 1:
-                print('Path: %03i out of %03i' % (i, n_alphas))
-            else:
-                sys.stderr.write('.')
-        coef_ = model.coef_.copy()
-        models.append(model)
-    return models
-
-
-def lasso_path_cg(X, y, eps=1e-3, n_alphas=100, alphas=None,
-               precompute='auto', Xy=None, fit_intercept=True,
-               normalize=False, copy_X=True, verbose=False,
-               **params):
-    """Compute Lasso path with coordinate descent
-
-    The optimization objective for Lasso is::
-
-        (1 / (2 * n_samples)) * ||y - Xw||^2_2 + alpha * ||w||_1
-
-    Parameters
-    ----------
-    X : ndarray, shape = (n_samples, n_features)
-        Training data. Pass directly as Fortran-contiguous data to avoid
-        unnecessary memory duplication
-
-    y : ndarray, shape = (n_samples,)
-        Target values
-
-    eps : float, optional
-        Length of the path. ``eps=1e-3`` means that
-        ``alpha_min / alpha_max = 1e-3``
-
-    n_alphas : int, optional
-        Number of alphas along the regularization path
-
-    alphas : ndarray, optional
-        List of alphas where to compute the models.
-        If ``None`` alphas are set automatically
-
-    precompute : True | False | 'auto' | array-like
-        Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to ``'auto'`` let us decide. The Gram
-        matrix can also be passed as argument.
-
-    Xy : array-like, optional
-        Xy = np.dot(X.T, y) that can be precomputed. It is useful
-        only when the Gram matrix is precomputed.
-
-    fit_intercept : bool
-        Fit or not an intercept
-
-    normalize : boolean, optional, default False
-        If ``True``, the regressors X will be normalized before regression.
-
-    copy_X : boolean, optional, default True
-        If ``True``, X will be copied; else, it may be overwritten.
-
-    verbose : bool or integer
-        Amount of verbosity
-
-    params : kwargs
-        keyword arguments passed to the Lasso objects
-
-    Returns
-    -------
-    models : a list of models along the regularization path
-
-    Notes
-    -----
-    See examples/linear_model/plot_lasso_coordinate_descent_path.py
-    for an example.
-
-    To avoid unnecessary memory duplication the X argument of the fit method
-    should be directly passed as a Fortran-contiguous numpy array.
-
-    Note that in certain cases, the Lars solver may be significantly
-    faster to implement this functionality. In particular, linear
-    interpolation can be used to retrieve model coefficents between the
-    values output by lars_path
-
-    Examples
-    ---------
-
-    Comparing lasso_path and lars_path with interpolation:
-
-    >>> X = np.array([[1, 2, 3.1], [2.3, 5.4, 4.3]]).T
-    >>> y = np.array([1, 2, 3.1])
-    >>> # Use lasso_path to compute a coefficient path
-    >>> coef_path = [e.coef_ for e in lasso_path(X, y, alphas=[5., 1., .5], fit_intercept=False)]
-    >>> print np.array(coef_path).T
-    [[ 0.          0.          0.46874778]
-     [ 0.2159048   0.4425765   0.23689075]]
-
-    >>> # Now use lars_path and 1D linear interpolation to compute the
-    >>> # same path
-    >>> from sklearn.linear_model import lars_path
-    >>> alphas, active, coef_path_lars = lars_path(X, y, method='lasso')
-    >>> from scipy import interpolate
-    >>> coef_path_continuous = interpolate.interp1d(alphas[::-1], coef_path_lars[:, ::-1])
-    >>> print coef_path_continuous([5., 1., .5])
-    [[ 0.          0.          0.46915237]
-     [ 0.2159048   0.4425765   0.23668876]]
-
-
-    See also
-    --------
-    lars_path
-    Lasso
-    LassoLars
-    LassoCV
-    LassoLarsCV
-    sklearn.decomposition.sparse_encode
-    """
-    return enet_path_cd(X, y, l1_ratio=1., eps=eps, n_alphas=n_alphas,
-                     alphas=alphas, precompute=precompute, Xy=Xy,
-                     fit_intercept=fit_intercept, normalize=normalize,
-                     copy_X=copy_X, verbose=verbose, **params)
-
-
-def enet_path_cd(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
-              precompute='auto', Xy=None, fit_intercept=True,
-              normalize=False, copy_X=True, verbose=False, rho=None,
-              **params):
-    """Compute Elastic-Net path with coordinate descent
-
-    The Elastic Net optimization function is::
-
-        1 / (2 * n_samples) * ||y - Xw||^2_2 +
-        + alpha * l1_ratio * ||w||_1
-        + 0.5 * alpha * (1 - l1_ratio) * ||w||^2_2
-
-    Parameters
-    ----------
-    X : ndarray, shape = (n_samples, n_features)
-        Training data. Pass directly as Fortran-contiguous data to avoid
-        unnecessary memory duplication
-
-    y : ndarray, shape = (n_samples,)
-        Target values
-
-    l1_ratio : float, optional
-        float between 0 and 1 passed to ElasticNet (scaling between
-        l1 and l2 penalties). ``l1_ratio=1`` corresponds to the Lasso
-
-    eps : float
-        Length of the path. ``eps=1e-3`` means that
-        ``alpha_min / alpha_max = 1e-3``
-
-    n_alphas : int, optional
-        Number of alphas along the regularization path
-
-    alphas : ndarray, optional
-        List of alphas where to compute the models.
-        If None alphas are set automatically
-
-    precompute : True | False | 'auto' | array-like
-        Whether to use a precomputed Gram matrix to speed up
-        calculations. If set to ``'auto'`` let us decide. The Gram
-        matrix can also be passed as argument.
-
-    Xy : array-like, optional
-        Xy = np.dot(X.T, y) that can be precomputed. It is useful
-        only when the Gram matrix is precomputed.
-
-    fit_intercept : bool
-        Fit or not an intercept
-
-    normalize : boolean, optional, default False
-        If ``True``, the regressors X will be normalized before regression.
-
-    copy_X : boolean, optional, default True
-        If ``True``, X will be copied; else, it may be overwritten.
-
-    verbose : bool or integer
-        Amount of verbosity
-
-    params : kwargs
-        keyword arguments passed to the Lasso objects
-
-    Returns
-    -------
-    models : a list of models along the regularization path
-
-    Notes
-    -----
-    See examples/plot_lasso_coordinate_descent_path.py for an example.
+    Deprecation Notice: Setting ``old_return`` to ``False`` will make
+    the Lasso Path return an output in the style used by :func:`lars_path`.
+    This will be become the norm as of version 0.15. Leaving ``old_return``
+    set to `True` will let the function return a list of models as before.
 
     See also
     --------
@@ -1031,8 +825,12 @@ def enet_path_cd(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 sys.stderr.write('.')
         coef_ = model.coef_.copy()
         coefs.append(model.coef_)
-        # needs 'active' output (?)
-    return alphas, np.asarray(coefs).T
+        models.append(model)
+
+    if (old_return):
+        return models
+    else:
+        return alphas, np.asarray(coefs).T
 
 def _path_residuals(X, y, train, test, path, path_params, l1_ratio=1,
                     X_order=None, dtype=None):
