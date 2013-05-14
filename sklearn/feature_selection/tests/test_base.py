@@ -7,10 +7,10 @@ from nose.tools import assert_raises, assert_equal
 from numpy.testing import assert_array_equal
 
 from sklearn.base import BaseEstimator
-from sklearn.feature_selection import FeatureSelectionMixin
+from sklearn.feature_selection import SelectorMixin
 from sklearn.utils import atleast2d_or_csc
 
-class StepSelector(FeatureSelectionMixin, BaseEstimator):
+class StepSelector(SelectorMixin, BaseEstimator):
     """Retain every `step` features (beginning with 0)"""
     def __init__(self, step=2):
         self.step = step

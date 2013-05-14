@@ -13,10 +13,10 @@ from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
 from ..cross_validation import check_cv
-from .base import FeatureSelectionMixin
+from .base import SelectorMixin
 
 
-class RFE(BaseEstimator, MetaEstimatorMixin, FeatureSelectionMixin):
+class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     """Feature ranking with recursive feature elimination.
 
     Given an external estimator that assigns weights to features (e.g., the

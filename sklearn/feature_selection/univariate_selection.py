@@ -21,7 +21,7 @@ from ..utils import (array2d, as_float_array,
                      safe_mask)
 from ..utils.extmath import safe_sparse_dot
 from ..externals import six
-from .base import FeatureSelectionMixin
+from .base import SelectorMixin
 
 
 def _clean_nans(scores):
@@ -249,7 +249,7 @@ def f_regression(X, y, center=True):
 # Base classes
 
 class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator,
-                                     FeatureSelectionMixin)):
+                                     SelectorMixin)):
 
     def __init__(self, score_func):
         """ Initialize the univariate feature selection.

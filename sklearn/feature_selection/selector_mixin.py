@@ -8,9 +8,9 @@ from ..externals import six
 from ..utils import safe_mask, atleast2d_or_csc
 
 
-class SelectorMixin(TransformerMixin):
+class _LearntSelectorMixin(TransformerMixin):
     # Note because of the extra threshold parameter in transform, this does
-    # not naturally extend from FeatureSelectorMixin
+    # not naturally extend from SelectorMixin
     """Transformer mixin selecting features based on importance weights.
 
     This implementation can be mixin on any estimator that exposes a

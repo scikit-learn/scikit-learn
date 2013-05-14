@@ -9,7 +9,7 @@ from ..utils import array2d, atleast2d_or_csr, safe_mask
 from ..externals import six
 
 
-class FeatureSelectionMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
+class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
     """
     This mixin provides a feature selector implementation with `transform` and
     `inverse_transform` functionality given an implementation of
