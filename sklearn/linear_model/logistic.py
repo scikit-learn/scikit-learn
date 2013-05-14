@@ -1,7 +1,7 @@
 import numpy as np
 
 from .base import LinearClassifierMixin, SparseCoefMixin
-from ..feature_selection.selector_mixin import _LearntSelectorMixin
+from ..feature_selection.from_model import _LearntSelectorMixin
 from ..svm.base import BaseLibLinear
 
 

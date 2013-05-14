@@ -46,7 +46,7 @@ from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
 from ..externals import six
 from ..externals.six.moves import xrange
-from ..feature_selection.selector_mixin import _LearntSelectorMixin
+from ..feature_selection.from_model import _LearntSelectorMixin
 from ..metrics import r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,

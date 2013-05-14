@@ -14,7 +14,7 @@ from ..externals.joblib import Parallel, delayed
 
 from .base import LinearClassifierMixin, SparseCoefMixin
 from ..base import BaseEstimator, RegressorMixin
-from ..feature_selection.selector_mixin import _LearntSelectorMixin
+from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import array2d, atleast2d_or_csr, check_arrays, deprecated
 from ..utils.extmath import safe_sparse_dot
 from ..externals import six

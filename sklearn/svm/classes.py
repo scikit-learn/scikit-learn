@@ -1,7 +1,7 @@
 from .base import BaseLibLinear, BaseSVC, BaseLibSVM
 from ..base import RegressorMixin
 from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin
-from ..feature_selection.selector_mixin import _LearntSelectorMixin
+from ..feature_selection.from_model import _LearntSelectorMixin
 
 
 class LinearSVC(BaseLibLinear, LinearClassifierMixin, _LearntSelectorMixin,
