@@ -820,8 +820,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
                 print('Path: %03i out of %03i' % (i, n_alphas))
             else:
                 sys.stderr.write('.')
-        coef_ = model.coef_.copy()
-        coefs.append(coef_)
+        coefs.append(model.coef_)
+        coef_ = coefs[-1].copy()
         models.append(model)
 
     if return_models:
