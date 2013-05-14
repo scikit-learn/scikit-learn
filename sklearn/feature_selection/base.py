@@ -1,3 +1,8 @@
+# -*- coding: utf-8 -*-
+"""Generic feature selection mixin"""
+
+# Authors: G. Varoquaux, A. Gramfort, L. Buitinck, J. Nothman
+# License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
 
