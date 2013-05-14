@@ -11,6 +11,8 @@ from ..externals import six
 
 class SelectorMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
     """
+    Tranformer mixin that performs feature selection given a support mask
+
     This mixin provides a feature selector implementation with `transform` and
     `inverse_transform` functionality given an implementation of
     `_get_support_mask`.
