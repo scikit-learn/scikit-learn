@@ -144,7 +144,7 @@ class IncrementalPCA(BaseEstimator, TransformerMixin):
         # the normalized residual vector
         g = np.dot(u,V.T)       
         r = u - (np.dot(g,V))
-        if np.fabs(r).min() > 1e-9:
+        if np.linalg.norm(r) > 1e-9:
             r = (r / np.linalg.norm(r))
         else:
             r = np.zeros_like(r)    
