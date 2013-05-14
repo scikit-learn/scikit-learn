@@ -16,8 +16,9 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_greater
 
 from sklearn.linear_model.coordinate_descent import Lasso, \
-    LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet
-from sklearn.linear_model import LassoLarsCV
+    LassoCV, ElasticNet, ElasticNetCV, MultiTaskLasso, MultiTaskElasticNet, \
+    lasso_path, lasso_path_cd
+from sklearn.linear_model import LassoLarsCV, lars_path
 
 
 def check_warnings():
@@ -175,6 +176,26 @@ def test_lasso_path():
     # test set
     assert_greater(clf.score(X_test, y_test), 0.99)
 
+
+def test_lasso_path_cd_vs_lasso_path_gives_same_coefficients():
+    # Test that lasso_path with lars_path style output gives the
+    # same result
+
+    # Some toy data
+    X = np.array([[1, 2, 3.1], [2.3, 5.4, 4.3]]).T
+    y = np.array([1, 2, 3.1])
+    # Compute the lasso_path
+    coef_path = [e.coef_ for e in lasso_path(X, y, alphas=[5., 1., .5], fit_intercept=False)]
+
+    # Use lars_path and lasso_path_cd with 1D linear interpolation
+    # to compute the the same path
+    alphas_lars, _, coef_path_lars = lars_path(X, y, method='lasso')
+    coef_path_cont_lars = interpolate.interp1d(alphas_lars[::-1], coef_path_lars[:, ::-1])
+    alphas_lasso_cd, coef_path_lasso_cd = lasso_path_cd(X, y, alphas=[5., 1., .5], fit_intercept=False)
+    coef_path_cont_lasso = interpolate.interp1d(alphas_lasso_cd[::-1], coef_path_lasso_cd[:, ::-1])
+    # MUST PEP8 HERE - long lines
+    np.testing.assert_array_almost_equal(coef_path_cont_lasso([5., 1., .5]), np.asarray(coef_path).T, decimal=1)
+    np.testing.assert_array_almost_equal(coef_path_cont_lasso([5., 1., .5]), coef_path_cont_lars([5., 1., .5]), decimal=1)
 
 def test_enet_path():
     # We use a large number of samples and of informative features so that
