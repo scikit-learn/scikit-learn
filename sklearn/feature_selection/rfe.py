@@ -7,7 +7,7 @@
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
-from ..utils import check_arrays, safe_sqr, safe_mask, atleast2d_or_csc
+from ..utils import check_arrays, safe_sqr
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
