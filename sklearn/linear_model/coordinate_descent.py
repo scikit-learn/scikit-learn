@@ -518,15 +518,9 @@ def _alpha_grid(X, y, Xy=None, l1_ratio=1.0, fit_intercept=True,
     return alphas
 
 
-# Deprecation Warning
-@deprecated("Use lasso_path(old_return=False), as it returns the coefficients"
-            " and alphas instead of just a list of models as previousely"
-            " lasso_path did. `old_return` will eventually be removed in"
-            " 0.15, after which, returning alphas and coefs will become"
-            " the norm.")
 def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
                precompute='auto', Xy=None, fit_intercept=True,
-               normalize=False, copy_X=True, verbose=False, old_return=True,
+               normalize=False, copy_X=True, verbose=False, return_models=True,
                **params):
     """Compute Lasso path with coordinate descent
 
@@ -575,7 +569,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     verbose : bool or integer
         Amount of verbosity
 
-    old_return : boolean, optional, default True
+    return_models : boolean, optional, default True
         If ``True``, the function will return list of models. Setting it
         to ``False`` will change the function output returning the values
         of the alphas and the coefficients along the path. Returning the
@@ -587,16 +581,16 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     Returns
     -------
     models : a list of models along the regularization path
-        (Is returned if ``old_return`` is set ``True`` (default).
+        (Is returned if ``return_models`` is set ``True`` (default).
 
     alphas : array, shape: [n_alphas + 1]
         The alphas along the path where models are computed.
-        (Is returned, along with ``coefs``, when ``old_return`` is set
+        (Is returned, along with ``coefs``, when ``return_models`` is set
         to ``False``)
 
     coefs : shape (n_features, n_alphas + 1)
         Coefficients along the path.
-        (Is returned, along with ``alphas``, when ``old_return`` is set
+        (Is returned, along with ``alphas``, when ``return_models`` is set
         to ``False``).
 
     Notes
@@ -612,9 +606,9 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     interpolation can be used to retrieve model coefficents between the
     values output by lars_path
 
-    Deprecation Notice: Setting ``old_return`` to ``False`` will make
+    Deprecation Notice: Setting ``return_models`` to ``False`` will make
     the Lasso Path return an output in the style used by :func:`lars_path`.
-    This will be become the norm as of version 0.15. Leaving ``old_return``
+    This will be become the norm as of version 0.15. Leaving ``return_models``
     set to `True` will let the function return a list of models as before.
 
     Examples
@@ -655,20 +649,15 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     return enet_path(X, y, l1_ratio=1., eps=eps, n_alphas=n_alphas,
                      alphas=alphas, precompute=precompute, Xy=Xy,
                      fit_intercept=fit_intercept, normalize=normalize,
-                     copy_X=copy_X, verbose=verbose, old_return=old_return,
+                     copy_X=copy_X, verbose=verbose,
+                     return_models=return_models,
                      **params)
 
 
-# Deprecation Warning
-@deprecated("Use enet_path(old_return=False), as it returns the coefficients"
-            " and alphas instead of just a list of models as previousely"
-            " enet_path did. `old_return` will eventually be removed in"
-            " 0.15, after which, returning alphas and coefs will become"
-            " the norm.")
 def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
               precompute='auto', Xy=None, fit_intercept=True,
               normalize=False, copy_X=True, verbose=False, rho=None,
-              old_return=True,
+              return_models=True,
               **params):
     """Compute Elastic-Net path with coordinate descent
 
@@ -723,7 +712,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     verbose : bool or integer
         Amount of verbosity
 
-    old_return : boolean, optional, default True
+    return_models : boolean, optional, default True
         If ``True``, the function will return list of models. Setting it
         to ``False`` will change the function output returning the values
         of the alphas and the coefficients along the path. Returning the
@@ -735,25 +724,25 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     Returns
     -------
     models : a list of models along the regularization path
-        (Is returned if ``old_return`` is set ``True`` (default).
+        (Is returned if ``return_models`` is set ``True`` (default).
 
     alphas : array, shape: [n_alphas + 1]
         The alphas along the path where models are computed.
-        (Is returned, along with ``coefs``, when ``old_return`` is set
+        (Is returned, along with ``coefs``, when ``return_models`` is set
         to ``False``)
 
     coefs : shape (n_features, n_alphas + 1)
         Coefficients along the path.
-        (Is returned, along with ``alphas``, when ``old_return`` is set
+        (Is returned, along with ``alphas``, when ``return_models`` is set
         to ``False``).
 
     Notes
     -----
     See examples/plot_lasso_coordinate_descent_path.py for an example.
 
-    Deprecation Notice: Setting ``old_return`` to ``False`` will make
+    Deprecation Notice: Setting ``return_models`` to ``False`` will make
     the Lasso Path return an output in the style used by :func:`lars_path`.
-    This will be become the norm as of version 0.15. Leaving ``old_return``
+    This will be become the norm as of version 0.15. Leaving ``return_models``
     set to `True` will let the function return a list of models as before.
 
     See also
@@ -761,6 +750,14 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     ElasticNet
     ElasticNetCV
     """
+    if return_models:
+        warnings.warn("Use enet_path(return_models=False), as it returns the"
+                      " coefficients and alphas instead of just a list of"
+                      " models as previousely `lasso_path`/`enet_path` did."
+                      " `return_models` will eventually be removed in 0.15,"
+                      " after which, returning alphas and coefs"
+                      " will become the norm.",
+                      DeprecationWarning, stacklevel=2)
     if rho is not None:
         l1_ratio = rho
         warnings.warn("rho was renamed to l1_ratio and will be removed "
@@ -824,10 +821,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
             else:
                 sys.stderr.write('.')
         coef_ = model.coef_.copy()
-        coefs.append(model.coef_)
+        coefs.append(coef_)
         models.append(model)
 
-    if (old_return):
+    if return_models:
         return models
     else:
         return alphas, np.asarray(coefs).T

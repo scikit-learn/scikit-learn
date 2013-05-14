@@ -177,7 +177,7 @@ def test_lasso_path():
     assert_greater(clf.score(X_test, y_test), 0.99)
 
 
-def test_lasso_path_old_return_vs_new_return_gives_same_coefficients():
+def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
     # Test that lasso_path with lars_path style output gives the
     # same result
 
@@ -196,7 +196,7 @@ def test_lasso_path_old_return_vs_new_return_gives_same_coefficients():
                                                coef_path_lars[:, ::-1])
     alphas_lasso2, coef_path_lasso2 = lasso_path(X, y, alphas=alphas,
                                                  fit_intercept=False,
-                                                 old_return=False)
+                                                 return_models=False)
     coef_path_cont_lasso = interpolate.interp1d(alphas_lasso2[::-1],
                                                 coef_path_lasso2[:, ::-1])
 

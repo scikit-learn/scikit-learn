@@ -16,8 +16,7 @@ print(__doc__)
 import numpy as np
 import pylab as pl
 
-from sklearn.linear_model import lasso_path, enet_path, lasso_path_cd, \
-    enet_path_cd
+from sklearn.linear_model import lasso_path, enet_path
 from sklearn import datasets
 
 diabetes = datasets.load_diabetes()
@@ -32,34 +31,22 @@ X /= X.std(0)  # Standardize data (easier to set the l1_ratio parameter)
 eps = 5e-3  # the smaller it is the longer is the path
 
 print("Computing regularization path using the lasso...")
-#models = lasso_path(X, y, eps=eps)
-#alphas_lasso = np.array([model.alpha for model in models])
-#coefs_lasso = np.array([model.coef_ for model in models])
-
-alphas_lasso, coefs_lasso = lasso_path_cd(X, y, eps)
+alphas_lasso, coefs_lasso = lasso_path(X, y, eps, return_models=False)
 
 print("Computing regularization path using the positive lasso...")
-#models = lasso_path(X, y, eps=eps, positive=True)
-#alphas_positive_lasso = np.array([model.alpha for model in models])
-#coefs_positive_lasso = np.array([model.coef_ for model in models])
-
-alphas_positve_lasso, coefs_positive_lasso = lasso_path_cd(X, y,
-                                                                 eps,
-                                                                 positive=True)
+alphas_positve_lasso, coefs_positive_lasso = lasso_path(X, y,
+                                                        eps,
+                                                        positive=True,
+                                                        return_models=False)
 print("Computing regularization path using the elastic net...")
-#models = enet_path(X, y, eps=eps, l1_ratio=0.8)
-#alphas_enet = np.array([model.alpha for model in models])
-#coefs_enet = np.array([model.coef_ for model in models])
-
-alphas_enet, coefs_enet = enet_path_cd(X, y, eps=eps, l1_ratio=0.8)
+alphas_enet, coefs_enet = enet_path(X, y, eps=eps, l1_ratio=0.8,
+                                    return_models=False)
 
 print("Computing regularization path using the positve elastic net...")
-#models = enet_path(X, y, eps=eps, l1_ratio=0.8, positive=True)
-#alphas_positive_enet = np.array([model.alpha for model in models])
-#coefs_positive_enet = np.array([model.coef_ for model in models])
-alphas_positive_enet, coefs_positive_enet = enet_path_cd(X, y,
-                                                         eps=eps,l1_ratio=0.8,
-                                                         positive=True)
+alphas_positive_enet, coefs_positive_enet = enet_path(X, y,
+                                                      eps=eps,l1_ratio=0.8,
+                                                      positive=True,
+                                                      return_models=False)
 
 ###############################################################################
 # Display results
