@@ -485,15 +485,23 @@ cdef class WMinkowskiDistance(DistanceMetric):
     """Weighted Minkowski Distance
 
     .. math::
-       D(x, y) = [\sum_i (x_i - y_i)^p] ^ (1/p)
+       D(x, y) = [\sum_i w_i (x_i - y_i)^p] ^ (1/p)
 
     Weighted Minkowski Distance requires p >= 1 and finite. 
+    
+    Parameters
+    ----------
+    p : int
+        The order of the norm of the difference :math:`{||u-v||}_p`.
+    w : (N,) array_like
+        The weight vector.
+
     """
     def __init__(self, p, w):
         if p < 1:
             raise ValueError("p must be greater than 1")
         elif np.isinf(p):
-            raise ValueError("MinkowskiDistance requires finite p. "
+            raise ValueError("WMinkowskiDistance requires finite p. "
                              "For p=inf, use ChebyshevDistance.")
         self.p = p
         self.vec = np.asarray(w, dtype=DTYPE)
@@ -503,7 +511,7 @@ cdef class WMinkowskiDistance(DistanceMetric):
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) except -1:
         if size != self.size:
-            raise ValueError('SEuclidean dist: size of V does not match')
+            raise ValueError('WMinkowskiDistance dist: size of w does not match')
         cdef DTYPE_t d=0
         for j in range(size):
             d += pow(self.vec_ptr[j] * fabs(x1[j] - x2[j]), self.p)
