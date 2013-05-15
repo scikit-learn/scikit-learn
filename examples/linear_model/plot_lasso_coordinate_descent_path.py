@@ -59,7 +59,7 @@ ax.set_color_cycle(2 * ['b', 'r', 'g', 'c', 'k'])
 l1 = pl.plot(-np.log10(alphas_lasso), coefs_lasso)
 l2 = pl.plot(-np.log10(alphas_enet), coefs_enet, linestyle='--')
 
-pl.xlabel('-Log(lambda)')
+pl.xlabel('-Log(alpha)')
 pl.ylabel('coefficients')
 pl.title('Lasso and Elastic-Net Paths')
 pl.legend((l1[-1], l2[-1]), ('Lasso', 'Elastic-Net'), loc='lower left')
@@ -73,7 +73,7 @@ l1 = pl.plot(-np.log10(alphas_lasso), coefs_lasso)
 l2 = pl.plot(-np.log10(alphas_positive_lasso), coefs_positive_lasso,
              linestyle='--')
 
-pl.xlabel('-Log(lambda)')
+pl.xlabel('-Log(alpha)')
 pl.ylabel('coefficients')
 pl.title('Lasso and positive Lasso')
 pl.legend((l1[-1], l2[-1]), ('Lasso', 'positive Lasso'), loc='lower left')
@@ -87,7 +87,7 @@ l1 = pl.plot(-np.log10(alphas_enet), coefs_enet)
 l2 = pl.plot(-np.log10(alphas_positive_enet), coefs_positive_enet,
              linestyle='--')
 
-pl.xlabel('-Log(lambda)')
+pl.xlabel('-Log(alpha)')
 pl.ylabel('coefficients')
 pl.title('Elastic-Net and positive Elastic-Net')
 pl.legend((l1[-1], l2[-1]), ('Elastic-Net', 'positive Elastic-Net'),
