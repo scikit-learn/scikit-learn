@@ -3,9 +3,39 @@
 
 import numpy as np
 
-from ..base import TransformerMixin
+from ..base import TransformerMixin, BaseEstimator
 
-from .etc import SelectByScore
+from .etc import SelectByScoreMixin
+
+
+class _Selector(BaseEstimator, SelectByScoreMixin):
+
+    def __init__(self, estimator, minimum=None, maximum=None, scaling=None,
+                 limit=None):
+        self.estimator = estimator
+        self.minimum = minimum
+        self.maximum = maximum
+        self.limit = limit
+        self.scaling = scaling
+        try:
+            self._fit()
+        except ValueError:
+            # assume underlying estimator needs fitting
+            pass
+
+    def fit(self, X, y=None):
+        self.estimator.fit(X, y)
+        self._fit(X)
+        return self
+
+    def _fit(self, X=None):
+        super(_Selector, self)._fit(self._get_feature_importances(), X)
+
+    def _get_support_mask(self, minimum=None, maximum=None, scaling=None,
+                          limit=None):
+
+        return super(_Selector, self)._get_support_mask(
+            minimum=minimum, maximum=maximum, scaling=scaling, limit=limit)
 
 
 class SelectorMixin(TransformerMixin):
@@ -22,10 +52,9 @@ class SelectorMixin(TransformerMixin):
             default_threshold = 1e-5
         else:
             default_threshold = 'mean'
-        return SelectByScore(self.__get_feature_importances,
-                             minimum=default_threshold)
+        return _Selector(self, minimum=default_threshold)
 
-    def __get_feature_importances(self, X=None, y=None):
+    def _get_feature_importances(self, X=None, y=None):
         if hasattr(self, "feature_importances_"):
             importances = self.feature_importances_
             if importances is None:

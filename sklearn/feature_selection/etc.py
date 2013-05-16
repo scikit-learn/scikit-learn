@@ -134,7 +134,7 @@ class SelectByScoreMixin(FeatureSelectionMixin):
             return res
         return val
 
-    def _fit(self, scores, X):
+    def _fit(self, scores, X=None):
         self.__scores = scores
         if X is not None:
             if not issparse(X):
@@ -143,7 +143,7 @@ class SelectByScoreMixin(FeatureSelectionMixin):
                 raise ValueError("Scores size differs from number of features")
             self.__n_samples  = X.shape[0]
         else:
-            # Hack!
+            # Hack?
             self.__n_samples = None
         return self
 
