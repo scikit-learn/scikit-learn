@@ -414,7 +414,7 @@ class GMM(BaseEstimator):
             corresponds to a single data point.
         y : (optional) array, shape = [n]
             If provided 'm' in init_params will be ignored
-                         n_components and means_ will be re-calculated
+            n_components and means_ will be re-calculated
         """
         ## initialization step
         X = np.asarray(X, dtype=np.float)
