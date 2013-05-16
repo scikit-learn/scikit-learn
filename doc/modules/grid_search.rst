@@ -6,13 +6,13 @@
 Grid Search: Searching for estimator parameters
 ===============================================
 
-Parameters that are not directly learnt within estimators (e.g. ``C``,
-``kernel`` and ``gamma`` for Support Vector Classifier, ``alpha`` for Lasso,
-etc.) can be set by searching a parameter space for the best
-:ref:`cross_validation` score.
+Parameters that are not directly learnt within estimators can be set by
+searching a parameter space for the best :ref:`cross_validation` score.
+Typical examples include ``C``, ``kernel`` and ``gamma`` for Support Vector
+Classifier, ``alpha`` for Lasso, etc.
 
 Any parameter provided when constructing an estimator may be optimized in this
-manner.  In particular, to find the names and current values for all parameters
+manner.  Specifically, to find the names and current values for all parameters
 for a given estimator, use::
 
   estimator.get_params()
@@ -32,7 +32,8 @@ A search consists of:
 Two generic approaches to sampling search candidates are provided in
 scikit-learn: for given values, :class:`GridSearchCV` exhaustively considers
 all parameter combinations, while :class:`RandomizedSearchCV` can sample a
-specified number of candidates from a continuous parameter space.
+given number of candidates from a parameter space with a specified
+distribution.
 
 Exhaustive Grid Search
 ======================
