@@ -79,6 +79,9 @@ Changelog
      the fraction or the number of correctly classified sample
      by `Arnaud Joly`_.
 
+   - A bug that caused :class:`ensemble.AdaBoostClassifier`'s to output
+     incorrect probabilities has been fixed.
+
 
 API changes summary
 -------------------
