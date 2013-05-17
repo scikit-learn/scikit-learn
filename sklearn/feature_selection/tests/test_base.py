@@ -10,6 +10,7 @@ from sklearn.base import BaseEstimator
 from sklearn.feature_selection import SelectorMixin
 from sklearn.utils import atleast2d_or_csc
 
+
 class StepSelector(SelectorMixin, BaseEstimator):
     """Retain every `step` features (beginning with 0)"""
     def __init__(self, step=2):
@@ -24,6 +25,7 @@ class StepSelector(SelectorMixin, BaseEstimator):
         mask = np.zeros(self.n_input_feats, dtype=bool)
         mask[::self.step] = True
         return mask
+
 
 support = [True, False] * 5
 support_inds = [0, 2, 4, 6, 8]
@@ -113,4 +115,3 @@ def test_get_support():
     sel.fit(X, y)
     assert_array_equal(support, sel.get_support())
     assert_array_equal(support_inds, sel.get_support(indices=True))
-
