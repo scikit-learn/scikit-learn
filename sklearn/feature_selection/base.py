@@ -66,4 +66,3 @@ class FeatureSelectionMixin(six.with_metaclass(ABCMeta, TransformerMixin)):
         Xt = np.zeros((X.shape[0], support_.size), dtype=X.dtype)
         Xt[:, support_] = X
         return Xt
-

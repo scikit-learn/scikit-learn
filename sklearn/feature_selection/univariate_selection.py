@@ -7,7 +7,6 @@
 
 
 from abc import ABCMeta, abstractmethod
-from warnings import warn
 from functools import reduce
 
 import numpy as np
@@ -21,7 +20,8 @@ from ..utils import (array2d, as_float_array,
                      safe_mask)
 from ..utils.extmath import safe_sparse_dot
 from ..externals import six
-from .etc import SelectByScoreMixin, BaseScaler
+from .etc import mask_by_score, BaseScaler
+from .base import FeatureSelectionMixin
 
 
 def _clean_nans(scores):
@@ -249,8 +249,9 @@ def f_regression(X, y, center=True):
 # Base classes
 
 class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator,
-                                     SelectByScoreMixin)):
+                                     FeatureSelectionMixin)):
 
+    @abstractmethod
     def __init__(self, score_func):
         """ Initialize the univariate feature selection.
 
@@ -266,59 +267,45 @@ class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator,
                 "was passed." % (score_func, type(score_func)))
         self.score_func = score_func
 
-    @abstractmethod
     def fit(self, X, y):
-        """Run score function on (X, y) and get the appropriate features."""
+        """Evaluate the score function on samples X with outputs y.
+        """
+        if not issparse(X):
+            X = np.asarray(X)
+        print('fit of {}'.format(self))
+        self._X_shape = X.shape
+        self.scores_, self.pvalues_ = self.score_func(X, y)
+        self.scores_ = np.asarray(self.scores_)
+        self.pvalues_ = np.asarray(self.pvalues_)
+        return self
+
+    def _get_support_mask(self, scores, minimum=None, maximum=None,
+                          scaling=None, limit=None):
+        return mask_by_score(scores, self._X_shape, minimum=minimum,
+                             maximum=maximum, scaling=scaling, limit=limit)
 
 
-class _PvalueFilter(_BaseFilter):
+class _PvalueCutoffFilter(_BaseFilter):
     def __init__(self, score_func=f_classif, alpha=5e-2):
         self.alpha = alpha
-        super(_PvalueFilter, self).__init__(score_func)
-
-    def fit(self, X, y):
-        """Evaluate the score function on samples X with outputs y.
-
-        Records and selects features according to the p-values output by the
-        score function.
-        """
-        self.scores_, self.pvalues_ = self.score_func(X, y)
-        self.scores_ = np.asarray(self.scores_)
-        self.pvalues_ = np.asarray(self.pvalues_)
-        if len(np.unique(self.pvalues_)) < len(self.pvalues_):
-            warn("Duplicate p-values. Result may depend on feature ordering."
-                 "There are probably duplicate features, or you used a "
-                 "classification score for a regression task.")
-        super(_PvalueFilter, self)._fit(self.pvalues_, X)
-        return self
+        super(_PvalueCutoffFilter, self).__init__(score_func)
 
     def _get_support_mask(self):
-        return super(_PvalueFilter, self)._get_support_mask(
-            maximum=self.alpha, scaling=self.scaling)
+        return super(_PvalueCutoffFilter, self)._get_support_mask(
+            self.pvalues_, maximum=self.alpha, scaling=self.scaling)
 
 
-class _ScoreFilter(_BaseFilter):
-    def fit(self, X, y):
-        """Evaluate the score function on samples X with outputs y.
-
-        Records and selects features according to their scores.
-        """
-        self.scores_, self.pvalues_ = self.score_func(X, y)
-        self.scores_ = np.asarray(self.scores_)
-        self.pvalues_ = np.asarray(self.pvalues_)
-        if len(np.unique(self.scores_)) < len(self.scores_):
-            warn("Duplicate scores. Result may depend on feature ordering."
-                 "There are probably duplicate features, or you used a "
-                 "classification score for a regression task.")
-        super(_ScoreFilter, self)._fit(self.scores_, X)
-        return self
+class _ScoreLimitFilter(_BaseFilter):
+    def _get_support_mask(self, limit):
+        return super(_ScoreLimitFilter, self)._get_support_mask(
+            self.scores_, limit=limit)
 
 
 ######################################################################
 # Specific filters
 ######################################################################
 
-class SelectPercentile(_ScoreFilter):
+class SelectPercentile(_ScoreLimitFilter):
     """Select features according to a percentile of the highest scores.
 
     Parameters
@@ -365,7 +352,7 @@ class SelectPercentile(_ScoreFilter):
             limit=percentile / 100.)
 
 
-class SelectKBest(_ScoreFilter, SelectByScoreMixin):
+class SelectKBest(_ScoreLimitFilter):
     """Select features according to the k highest scores.
 
     Parameters
@@ -408,7 +395,7 @@ class SelectKBest(_ScoreFilter, SelectByScoreMixin):
         return super(SelectKBest, self)._get_support_mask(limit=k)
 
 
-class SelectFpr(_PvalueFilter):
+class SelectFpr(_PvalueCutoffFilter):
     """Filter: Select the pvalues below alpha based on a FPR test.
 
     FPR test stands for False Positive Rate test. It controls the total
@@ -435,7 +422,7 @@ class SelectFpr(_PvalueFilter):
     scaling = None
 
 
-class SelectFdr(_PvalueFilter):
+class SelectFdr(_PvalueCutoffFilter):
     """Filter: Select the p-values for an estimated false discovery rate
 
     This uses the Benjamini-Hochberg procedure. ``alpha`` is the target false
@@ -469,7 +456,7 @@ class SelectFdr(_PvalueFilter):
             return sv[sv < np.arange(0, t * len(sv), t)].max()
 
 
-class SelectFwe(_PvalueFilter):
+class SelectFwe(_PvalueCutoffFilter):
     """Filter: Select the p-values corresponding to Family-wise error rate
 
     Parameters
@@ -504,7 +491,7 @@ class SelectFwe(_PvalueFilter):
 
 # TODO this class should fit on either p-values or scores,
 # depending on the mode.
-class GenericUnivariateSelect(_PvalueFilter):
+class GenericUnivariateSelect(_BaseFilter):
     """Univariate feature selector with configurable strategy.
 
     Parameters
@@ -550,11 +537,7 @@ class GenericUnivariateSelect(_PvalueFilter):
         selector = self._selection_modes[self.mode](lambda x: x)
         selector.pvalues_ = self.pvalues_
         selector.scores_ = self.scores_
-        # Hack!:
-        if isinstance(selector, _PvalueFilter):
-            selector._fit(self.pvalues_, X=None)
-        else:
-            selector._fit(self.scores_, X=None)
+        selector._X_shape = self._X_shape
         # Now perform some acrobatics to set the right named parameter in
         # the selector
         possible_params = selector._get_param_names()

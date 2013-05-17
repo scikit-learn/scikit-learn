@@ -2,13 +2,15 @@
 # License: BSD 3 clause
 
 import numpy as np
+from scipy.sparse import issparse
 
 from ..base import TransformerMixin, BaseEstimator
 
-from .etc import SelectByScoreMixin
+from .etc import mask_by_score
+from .base import FeatureSelectionMixin
 
 
-class _Selector(BaseEstimator, SelectByScoreMixin):
+class _Selector(BaseEstimator, FeatureSelectionMixin):
 
     def __init__(self, estimator, minimum=None, maximum=None, scaling=None,
                  limit=None):
@@ -29,13 +31,18 @@ class _Selector(BaseEstimator, SelectByScoreMixin):
         return self
 
     def _fit(self, X=None):
-        super(_Selector, self)._fit(self._get_feature_importances(), X)
+        self.scores_ = self.estimator._get_feature_importances()
+        if X is not None:
+            if not issparse(X):
+                X = np.array(X)
+            self._X_shape = X.shape
+        else:
+            self._X_shape = None
 
-    def _get_support_mask(self, minimum=None, maximum=None, scaling=None,
-                          limit=None):
-
-        return super(_Selector, self)._get_support_mask(
-            minimum=minimum, maximum=maximum, scaling=scaling, limit=limit)
+    def _get_support_mask(self):
+        return mask_by_score(self.scores_, self._X_shape, minimum=self.minimum,
+                             maximum=self.maximum, scaling=self.scaling,
+                             limit=self.limit)
 
 
 class SelectorMixin(TransformerMixin):
@@ -100,4 +107,4 @@ class SelectorMixin(TransformerMixin):
         transformer = self.make_transformer()
         if threshold is not None:
             transformer.minimum = threshold
-        return transformer.fit_transform(X)
+        return transformer.transform(X)
