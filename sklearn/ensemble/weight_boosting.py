@@ -548,8 +548,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     def predict(self, X):
         """Predict classes for X.
 
-        The predicted class of an input sample is computed
-        as the weighted mean prediction of the classifiers in the ensemble.
+        The predicted class of an input sample is computed as the weighted mean
+        prediction of the classifiers in the ensemble.
 
         Parameters
         ----------
@@ -571,8 +571,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     def staged_predict(self, X):
         """Return staged predictions for X.
 
-        The predicted class of an input sample is computed
-        as the weighted mean prediction of the classifiers in the ensemble.
+        The predicted class of an input sample is computed as the weighted mean
+        prediction of the classifiers in the ensemble.
 
         This generator method yields the ensemble prediction after each
         iteration of boosting and therefore allows monitoring, such as to
@@ -634,6 +634,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             norm += weight
 
             if self.algorithm == 'SAMME.R':
+                # The weights are all 1. for SAMME.R
                 current_pred = _samme_proba(estimator, n_classes, X)
             else:  # elif self.algorithm == "SAMME":
                 current_pred = estimator.predict(X)
@@ -683,10 +684,10 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         for weight, estimator in zip(self.estimator_weights_,
                                      self.estimators_):
-
             norm += weight
 
             if self.algorithm == 'SAMME.R':
+                # The weights are all 1. for SAMME.R
                 current_pred = _samme_proba(estimator, n_classes, X)
             else:  # elif self.algorithm == "SAMME":
                 current_pred = estimator.predict(X)
@@ -708,8 +709,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         """Predict class probabilities for X.
 
         The predicted class probabilities of an input sample is computed as
-        the weighted mean predicted class probabilities
-        of the classifiers in the ensemble.
+        the weighted mean predicted class probabilities of the classifiers
+        in the ensemble.
 
         Parameters
         ----------
@@ -724,17 +725,24 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         """
         n_classes = self.n_classes_
         proba = None
+        norm = 0.
 
         for weight, estimator in zip(self.estimator_weights_,
                                      self.estimators_):
+            norm += weight
 
-            current_proba = _samme_proba(estimator, n_classes, X)
+            if self.algorithm == 'SAMME.R':
+                # The weights are all 1. for SAMME.R
+                current_proba = _samme_proba(estimator, n_classes, X)
+            else:  # elif self.algorithm == "SAMME":
+                current_proba = estimator.predict_proba(X) * weight
 
             if proba is None:
                 proba = current_proba
             else:
                 proba += current_proba
 
+        proba /= norm
         proba = np.exp((1. / (n_classes - 1)) * proba)
         normalizer = proba.sum(axis=1)[:, np.newaxis]
         normalizer[normalizer == 0.0] = 1.0
@@ -746,8 +754,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         """Predict class probabilities for X.
 
         The predicted class probabilities of an input sample is computed as
-        the weighted mean predicted class probabilities
-        of the classifiers in the ensemble.
+        the weighted mean predicted class probabilities of the classifiers
+        in the ensemble.
 
         This generator method yields the ensemble predicted class probabilities
         after each iteration of boosting and therefore allows monitoring, such
@@ -767,18 +775,24 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         """
         n_classes = self.n_classes_
         proba = None
+        norm = 0.
 
         for weight, estimator in zip(self.estimator_weights_,
                                      self.estimators_):
+            norm += weight
 
-            current_proba = _samme_proba(estimator, n_classes, X)
+            if self.algorithm == 'SAMME.R':
+                # The weights are all 1. for SAMME.R
+                current_proba = _samme_proba(estimator, n_classes, X)
+            else:  # elif self.algorithm == "SAMME":
+                current_proba = estimator.predict_proba(X) * weight
 
             if proba is None:
                 proba = current_proba
             else:
                 proba += current_proba
 
-            real_proba = np.exp((1. / (n_classes - 1)) * proba)
+            real_proba = np.exp((1. / (n_classes - 1)) * (proba / norm))
             normalizer = real_proba.sum(axis=1)[:, np.newaxis]
             normalizer[normalizer == 0.0] = 1.0
             real_proba /= normalizer
@@ -789,8 +803,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         """Predict class log-probabilities for X.
 
         The predicted class log-probabilities of an input sample is computed as
-        the weighted mean predicted class log-probabilities
-        of the classifiers in the ensemble.
+        the weighted mean predicted class log-probabilities of the classifiers
+        in the ensemble.
 
         Parameters
         ----------
