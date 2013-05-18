@@ -20,8 +20,7 @@ from .univariate_selection import GenericUnivariateSelect
 from .rfe import RFE
 from .rfe import RFECV
 
-__all__ = ['SelectorMixin',
-           'GenericUnivariateSelect',
+__all__ = ['GenericUnivariateSelect',
            'RFE',
            'RFECV',
            'SelectFdr',
