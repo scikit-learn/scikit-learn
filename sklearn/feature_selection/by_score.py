@@ -23,6 +23,8 @@ from ..base import BaseEstimator
 from .base import FeatureSelectionMixin
 
 
+###### Simple scores ######
+
 def count_nonzero(X, y=None):
     # In IR/NLP, this is known as Document Frequency (df)
     X = atleast2d_or_csc(X)
@@ -36,15 +38,20 @@ def sum_values(X, y=None):
     return X.sum(axis=1)
 
 
+###### Scalers ######
+
 class BaseScaler(object):
-    __slots__ = ()
-    """
+    """An extensible implementation of null scaling
+
     Scalers, given scores and number of samples, create a closure in which to
     scale some threshold value. If the closure has an attribute
     `scaled_scores`, the threshold will be compared against it.
 
     These are implemented as classes because closures are not picklable
     """
+
+    __slots__ = ()
+
     def __init__(self, scores, num_samples):
         pass
 
@@ -96,6 +103,8 @@ class _scale_order(BaseScaler):
         self.scaled_scores = np.argsort(scores).argsort()
 
 
+###### Strings interpreted by mask_by_score ######
+
 SCALERS = {
     '%range': _scale_percent_range,
     '%samples': _scale_percent_samples,
@@ -117,6 +126,8 @@ THRESHOLD_SUBS = {
     'length': np.size,
 }
 
+
+###### mask_by_score and its helpers ######
 
 def _calc_threshold(scores, val):
     if callable(val):
@@ -205,8 +216,48 @@ def _limit_support(support, scores, limit):
 
 def mask_by_score(scores, X_shape=None, minimum=None, maximum=None,
                   scaling=None, limit=None):
-    """Get a support mask given a set of feature scores and thresholds
+    """Calculate a support mask given a set of feature scores and thresholds
+
+    Parameters
+    ----------
+    scores : array-like, shape [number of features]
+        A real number calculated for each feature representing its importance.
+
+    X_shape : pair of integers, optional
+        This is the shape of the training data, being the number of samples
+        and the number of features.  If present the number of samples may be
+        used in scaling, and the number of features is used for validation.
+
+    minimum : float, string or callable, optional
+        If specified, the value is scaled accoring to `scaling`, and where a
+        score is greater than the scaled minimum, `support` is set to False.
+
+        If a callable, the value is first calculated by applying to `scores`.
+        If a string, it is interpreted as the product of '*'-delimited
+        expressions, which may be floats or keywords 'mean', 'median', 'min',
+        'max', 'sum' or 'size' which evaluate as functions applied to `scores`.
+
+    maximum : float, string or callable, optional
+        If specified, the value is scaled accoring to `scaling`, and where a
+        score is greater than the scaled maximum, `support` is set to False.
+
+        If a callable, the value is first calculated by applying to `scores`.
+        If a string, it is interpreted as the product of '*'-delimited
+        expressions, which may be floats or keywords 'mean', 'median', 'min',
+        'max', 'sum' or 'size' which evaluate as functions applied to `scores`.
+
+    scaling : callable or string, optional
+        As a callable, `minimum` is replaced with `scaling(scores, X_shape[1])(minimum)`, and
+        similar for `maximum`.  If `scaling` has an attribute `scaled_scores`,
+        `minimum` and `maximum` are compared to that value rather than
+        `scores`.  A string value will apply a predefined scaler:
+            - 
+
+    Returns
+    -------
+    support : 
     """
+    scores = np.asarray(scores)
     if X_shape is not None:
         if len(scores) != X_shape[1]:
             raise ValueError("Scores size differs from number of features")
@@ -230,6 +281,8 @@ def mask_by_score(scores, X_shape=None, minimum=None, maximum=None,
 
     return support
 
+
+##### Standalone feature selector ######
 
 class SelectByScore(BaseEstimator, FeatureSelectionMixin):
     def __init__(self, score_func=count_nonzero, minimum=None, maximum=None,

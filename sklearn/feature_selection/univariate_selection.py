@@ -449,6 +449,7 @@ class SelectFdr(_PvalueCutoffFilter):
 
     class scaling(BaseScaler):
         def __init__(self, scores, num_samples):
+            # TODO: warn for non-unique values
             self.sorted_scores = np.sort(scores)
 
         def __call__(self, t):
