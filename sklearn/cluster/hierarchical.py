@@ -398,9 +398,12 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
 
     return children, n_components, n_leaves, parent
 
-
+# XXX: which MST algorithm is this?? Kruskal, I believe
+# We don't need to give X + connectivity to an MST algorithm??
+# We need a way to compute distances on a graph, and its not
+# 'neigbhor_graph', as we already have the graph
 def min_span_tree(X, connectivity=None, n_components=None, copy=True,
-              n_clusters=None):
+                  n_clusters=None):
     """Single linkage agglomerative clustering based on a Feature matrix.
 
     Parameters
@@ -513,10 +516,10 @@ def min_span_tree(X, connectivity=None, n_components=None, copy=True,
     A = np.empty(n_nodes, dtype=object)
 
     # XXX: we probably don't need a LIL anymore, but a CSR would do
-    for ind, (data, row)  in enumerate(zip(connectivity.data,
-                                           connectivity.rows)):
+    for ind, (data, row) in enumerate(zip(connectivity.data,
+                                          connectivity.rows)):
         A[ind] = IntFloatDict(np.asarray(row, dtype=np.int32),
-                        np.asarray(data, dtype=np.float64))
+                              np.asarray(data, dtype=np.float64))
         # We keep only the upper triangular for the heap
         # Generator expressions are faster than arrays on the following
     del connectivity
@@ -537,7 +540,7 @@ def min_span_tree(X, connectivity=None, n_components=None, copy=True,
                 break
         j, value = argmin(A[i])
         while not used_node[j]:
-            # XXX: would be faster to maitain a table of heads
+            # XXX: would be faster to maintain a table of heads
             print "Go up parents", j
             j = parent[j]
         parent[i] = parent[j] = k
