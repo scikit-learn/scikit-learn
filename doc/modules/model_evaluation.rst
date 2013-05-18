@@ -454,97 +454,66 @@ Multiclass and multilabel classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In multiclass and multilabel classification task, the notions of precision,
 recall and F-measures can be applied to each label independently.
-
-Moreover, these notions can be further extended. The functions
-:func:`f1_score`, :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
-:func:`precision_score`  and :func:`recall_score` support an argument called
-``average`` which defines the type of averaging:
-
- * ``"macro"``: average over classes (does not take imbalance
-   into account).
- * ``"micro"``: aggregate classes and average over instances
-   (takes imbalance into account). This implies that
-   ``precision == recall == F1``.
-   In multilabel classification, this is true only if every sample has a label.
- * ``'samples'``: average over instances. Only available and
-   meaningful with multilabel data.
- * ``"weighted"``: average over classes weighted by support (takes imbalance
-   into account). Can result in F-score that is not between
-   precision and recall.
- * ``None``: no averaging is performed.
-
-Let's define some notations:
-
-   * :math:`n_\text{labels}` and :math:`n_\text{samples}` denotes respectively
-     the number of labels and the number of samples.
-   * :math:`\texttt{precision}_j`, :math:`\texttt{recall}_j` and
-     :math:`{F_\beta}_j` are respectively the precision, the recall and
-     :math:`F_\beta` measure for the :math:`j`-th label;
-   * :math:`tp_j`, :math:`fp_j` and :math:`fn_j` respectively the number of
-     true positives, false positives and false negatives for the :math:`j`-th
-     label;
-   * :math:`w_j = \frac{tp_j + fn_j}{\sum_{k=0}^{n_\text{labels} - 1} tp_k + f
-     n_k}` is the weighted support associated to the :math:`j`-th label;
-   * :math:`y_i` is the set of true label and
-     :math:`\hat{y}_i` is the set of predicted for the
-     :math:`i`-th sample;
-
-The macro precision, recall and :math:`F_\beta` is defined as
+For these purposes, it is clearer to redefine our metrics in terms of sets.
+For a true set :math:`\hat{y}` and predicted set :math:`y`, we may redefine:
 
 .. math::
 
-  \texttt{macro\_{}precision} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} \texttt{precision}_j,
+    \text{precision} = \frac{\left| y \cap \hat{y} \right|}{\left|y\right|},
 
 .. math::
 
-  \texttt{macro\_{}recall} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} \texttt{recall}_j,
+    \text{recall} = \frac{\left| y \cap \hat{y} \right|}{\left|\hat{y}\right|}.
+
+(Where either of these denominators is zero, the metric is 1 by convention.)
+
+Defining :math:`y_l` and :math:`\hat{y}_l` to be sets of samples with label
+:math:`l`, metrics for each label can easily be calculated as in the binary
+classification case.  There are a few ways to combine results across labels,
+specified by the ``average`` argument to the :func:`f1_score`,
+:func:`fbeta_score`, :func:`precision_recall_fscore_support`,
+:func:`precision_score`  and :func:`recall_score` functions:
+
+    * ``"micro"``: calculate metrics globally where :math:`y` and
+      :math:`\hat{y}` are sets of :math:`(sample, label)` pairs. In the
+      single-label case, this implies that precision, recall and :math:`F`
+      are equal.
+    * ``"macro"``: calculate metrics for each label, and find their unweighted
+      mean.  This does not take label imbalance into account.
+    * ``"weighted"``: calculate metrics for each label, and find their average
+      weighted by :math:`support_l = \left|\hat{y}_l\right|`.
+    * ``"samples"``: calculate metrics for each sample, comparing sets of
+      labels assigned to each, and find the mean across all samples.
+      This is only meaningful and available in the multilabel case.
+   * ``None``: calculate metrics for each label and do not average them.
+
+More explicitly, we may notate:
 
 .. math::
 
-  \texttt{macro\_{}F\_{}beta} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} {F_\beta}_j.
-
-The micro precision, recall and :math:`F_\beta` is defined as
+    \text{avg\_{}precision} = \frac{1}{\sum_{w_j}} \sum_{j} w_j  \frac{\left| y_j \cap \hat{y}_j \right|}{\left|y_j\right|},
 
 .. math::
 
-  \texttt{micro\_{}precision} = \frac{\sum_{j=0}^{n_\text{labels} - 1} tp_j}{\sum_{j=0}^{n_\text{labels} - 1} tp_j + \sum_{j=0}^{n_\text{labels} - 1} fp_j},
+    \text{avg\_{}recall} = \frac{1}{\sum_{w_j}} \sum_{j} w_j  \frac{\left| y_j \cap \hat{y}_j \right|}{\left|y_j\right|},
 
 .. math::
 
-  \texttt{micro\_{}recall} = \frac{\sum_{j=0}^{n_\text{labels} - 1} tp_j}{\sum_{j=0}^{n_\text{labels} - 1} tp_j + \sum_{j=0}^{n_\text{labels} - 1} fn_j},
+    \text{avg\_{}F}_\beta = \frac{1}{\sum_{w_j}} \sum_{j} w_j (1 + \beta^2) \frac{\texttt{avg\_{}precision} \times  \texttt{avg\_{}recall}}{\beta^2 \texttt{avg\_{}precision} +  \texttt{avg\_{}recall}}
 
-.. math::
+with:
 
-  \texttt{micro\_{}F\_{}beta} = (1 + \beta^2) \frac{\texttt{micro\_{}precision} \times  \texttt{micro\_{}recall}}{\beta^2 \texttt{micro\_{}precision} +  \texttt{micro\_{}recall}}.
-
-The weighted precision, recall and :math:`F_\beta` is defined as
-
-.. math::
-
-  \texttt{weighted\_{}precision} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} w_j \texttt{precision}_j,
-
-.. math::
-
-  \texttt{weighted\_{}recall} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} w_j \texttt{recall}_j,
-
-.. math::
-
-  \texttt{weighted\_{}F\_{}beta} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} w_j {F_\beta}_j.
-
-
-The sample-based precision, recall and :math:`F_\beta` is defined as
-
-.. math::
-
-  \texttt{example\_{}precision}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} \frac{|y_i \cap \hat{y}_i|}{|y_i|},
-
-.. math::
-
-  \texttt{example\_{}recall}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} \frac{|y_i \cap \hat{y}_i|}{|\hat{y}_i|},
-
-.. math::
-
-  \texttt{example\_{}F\_{}beta}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (1 + \beta^2)\frac{|y_i \cap \hat{y}_i|}{\beta^2 |\hat{y}_i| + |y_i|}.
++---------------+-------------------------+---------------------------------+------------------------------------+
+|``average``    | :math:`j` iterates over | :math:`w_j` is                  | :math:`y_j` consists of            |
++===============+=========================+=================================+====================================+
+|``"micro"``    | [1]                     | 1                               | all (sample, label) pairs          |
++---------------+-------------------------+---------------------------------+------------------------------------+
+|``"macro"``    | labels                  | 1                               | samples assigned label :math:`j`   |
++---------------+-------------------------+---------------------------------+------------------------------------+
+|``"weighted"`` | labels                  | # true for label :math:`j`      | samples assigned label :math:`j`   |
++---------------+-------------------------+---------------------------------+------------------------------------+
+|``"samples"``  | samples                 | # labels for instance :math:`j` | labels assigned to sample :math:`j`|
++---------------+-------------------------+---------------------------------+------------------------------------+
 
 Here is an example where ``average`` is set to ``average`` to ``macro``::
 
