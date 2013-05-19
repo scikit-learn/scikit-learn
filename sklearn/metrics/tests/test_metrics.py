@@ -145,16 +145,16 @@ MULTILABELS_METRICS = {
     "weighted_recall_score":
     lambda y1, y2: recall_score(y1, y2, average="weighted"),
 
-    "example_f0.5_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="example", beta=0.5),
-    "example_f1_score":
-    lambda y1, y2: f1_score(y1, y2, average="example"),
-    "example_f2_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="example", beta=2),
-    "example_precision_score":
-    lambda y1, y2: precision_score(y1, y2, average="example"),
-    "example_recall_score":
-    lambda y1, y2: recall_score(y1, y2, average="example"),
+    "samples_f0.5_score":
+    lambda y1, y2: fbeta_score(y1, y2, average="samples", beta=0.5),
+    "samples_f1_score":
+    lambda y1, y2: f1_score(y1, y2, average="samples"),
+    "samples_f2_score":
+    lambda y1, y2: fbeta_score(y1, y2, average="samples", beta=2),
+    "samples_precision_score":
+    lambda y1, y2: precision_score(y1, y2, average="samples"),
+    "samples_recall_score":
+    lambda y1, y2: recall_score(y1, y2, average="samples"),
 
     "micro_f0.5_score":
     lambda y1, y2: fbeta_score(y1, y2, average="micro", beta=0.5),
@@ -195,16 +195,16 @@ MULTILABELS_METRICS_WITH_POS_LABELS = {
     "weighted_recall_score": lambda y1, y2, pos_label=1:
     recall_score(y1, y2, pos_label=pos_label, average="weighted"),
 
-    "example_f0.5_score": lambda y1, y2, pos_label=1:
-    fbeta_score(y1, y2, pos_label=pos_label, average="example", beta=0.5),
-    "example_f1_score": lambda y1, y2, pos_label=1:
-    f1_score(y1, y2, pos_label=pos_label, average="example"),
-    "example_f2_score": lambda y1, y2, pos_label=1:
-    fbeta_score(y1, y2, pos_label=pos_label, average="example", beta=2),
-    "example_precision_score": lambda y1, y2, pos_label=1:
-    precision_score(y1, y2, pos_label=pos_label, average="example"),
-    "example_recall_score": lambda y1, y2, pos_label=1:
-    recall_score(y1, y2, pos_label=pos_label, average="example"),
+    "samples_f0.5_score": lambda y1, y2, pos_label=1:
+    fbeta_score(y1, y2, pos_label=pos_label, average="samples", beta=0.5),
+    "samples_f1_score": lambda y1, y2, pos_label=1:
+    f1_score(y1, y2, pos_label=pos_label, average="samples"),
+    "samples_f2_score": lambda y1, y2, pos_label=1:
+    fbeta_score(y1, y2, pos_label=pos_label, average="samples", beta=2),
+    "samples_precision_score": lambda y1, y2, pos_label=1:
+    precision_score(y1, y2, pos_label=pos_label, average="samples"),
+    "samples_recall_score": lambda y1, y2, pos_label=1:
+    recall_score(y1, y2, pos_label=pos_label, average="samples"),
 
     "micro_f0.5_score": lambda y1, y2, pos_label=1:
     fbeta_score(y1, y2, pos_label=pos_label, average="micro", beta=0.5),
@@ -658,10 +658,10 @@ def test_precision_recall_f1_score_multiclass():
     assert_array_almost_equal(fs, 0.47, 2)
 
     assert_raises(ValueError, precision_score, y_true, y_pred,
-                  average="example")
-    assert_raises(ValueError, recall_score, y_true, y_pred, average="example")
-    assert_raises(ValueError, f1_score, y_true, y_pred, average="example")
-    assert_raises(ValueError, fbeta_score, y_true, y_pred, average="example",
+                  average="samples")
+    assert_raises(ValueError, recall_score, y_true, y_pred, average="samples")
+    assert_raises(ValueError, f1_score, y_true, y_pred, average="samples")
+    assert_raises(ValueError, fbeta_score, y_true, y_pred, average="samples",
                   beta=0.5)
 
     # same prediction but with and explicit label ordering
@@ -1501,7 +1501,7 @@ def test_precision_recall_f1_score_multilabel_1():
         # |y_i| = [1, 1, 2]
         # |h(x_i)| = [1, 1, 2]
         p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average="example")
+                                                     average="samples")
         assert_almost_equal(p, 0.5)
         assert_almost_equal(r, 0.5)
         assert_almost_equal(f, 0.5)
@@ -1553,7 +1553,7 @@ def test_precision_recall_f1_score_multilabel_2():
         assert_equal(s, None)
 
         p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average="example")
+                                                     average="samples")
         # Check weigted
         # |h(x_i) inter y_i | = [0, 0, 1]
         # |y_i| = [1, 1, 2]
@@ -1607,7 +1607,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction():
         assert_equal(s, None)
 
         p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average="example")
+                                                     average="samples")
         # |h(x_i) inter y_i | = [0, 0, 2]
         # |y_i| = [1, 1, 2]
         # |h(x_i)| = [0, 1, 2]
@@ -1663,7 +1663,7 @@ def test_precision_recall_f1_no_labels():
     # |y_i| = [0, 0, 0]
     # |h(x_i)| = [1, 1, 2]
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                 average="example")
+                                                 average="samples")
     assert_almost_equal(p, 1)
     assert_almost_equal(r, 1)
     assert_almost_equal(f, 1)

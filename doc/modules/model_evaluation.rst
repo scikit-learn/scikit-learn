@@ -466,11 +466,11 @@ Moreover, these notions can be further extended. The functions
    (takes imbalance into account). This implies that
    ``precision == recall == F1``.
    In multilabel classification, this is true only if every sample has a label.
+ * ``'samples'``: average over instances. Only available and
+   meaningful with multilabel data.
  * ``"weighted"``: average over classes weighted by support (takes imbalance
    into account). Can result in F-score that is not between
    precision and recall.
- * ``'example'``: average over instances. Only available and
-   meaningful with multilabel data.
  * ``None``: no averaging is performed.
 
 Let's define some notations:
@@ -532,7 +532,7 @@ The weighted precision, recall and :math:`F_\beta` is defined as
   \texttt{weighted\_{}F\_{}beta} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} w_j {F_\beta}_j.
 
 
-The example precision, recall and :math:`F_\beta` is defined as
+The sample-based precision, recall and :math:`F_\beta` is defined as
 
 .. math::
 
@@ -546,7 +546,7 @@ The example precision, recall and :math:`F_\beta` is defined as
 
   \texttt{example\_{}F\_{}beta}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (1 + \beta^2)\frac{|y_i \cap \hat{y}_i|}{\beta^2 |\hat{y}_i| + |y_i|}.
 
-Here an example where ``average`` is set to ``average`` to ``macro``::
+Here is an example where ``average`` is set to ``average`` to ``macro``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
@@ -562,7 +562,7 @@ Here an example where ``average`` is set to ``average`` to ``macro``::
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
   (0.22..., 0.33..., 0.26..., None)
 
-Here an example where ``average`` is set to to ``micro``::
+Here is an example where ``average`` is set to to ``micro``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
@@ -583,7 +583,7 @@ Here an example where ``average`` is set to to ``micro``::
   ... # doctest: +ELLIPSIS
   (0.33..., 0.33..., 0.33..., None)
 
-Here an example where ``average`` is set to to ``weighted``::
+Here is an example where ``average`` is set to to ``weighted``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
@@ -603,7 +603,7 @@ Here an example where ``average`` is set to to ``weighted``::
   ... average='weighted')  # doctest: +ELLIPSIS
   (0.22..., 0.33..., 0.26..., None)
 
-Here an example where ``average`` is set to ``None``::
+Here is an example where ``average`` is set to ``None``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]

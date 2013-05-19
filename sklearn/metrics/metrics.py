@@ -1109,12 +1109,12 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
         classification, it is used to infer what is a positive label in the
         label indicator matrix format.
 
-    average : string, [None, 'example', 'micro', 'macro', 'weighted' (default)]
+    average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
 
-        ``'example'``:
+        ``'samples'``:
             Average over instance. Only meaningful and available in multilabel
             classification.
         ``'macro'``:
@@ -1176,7 +1176,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     0.61...
     >>> f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
     0.65...
-    >>> f1_score(y_true, y_pred, average='example')  # doctest: +ELLIPSIS
+    >>> f1_score(y_true, y_pred, average='samples')  # doctest: +ELLIPSIS
     0.59...
     >>> f1_score(y_true, y_pred, average=None)
     array([ 0.5,  0.8,  0.5])
@@ -1192,7 +1192,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     0.80...
     >>> f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
     0.66...
-    >>> f1_score(y_true, y_pred, average='example')  # doctest: +ELLIPSIS
+    >>> f1_score(y_true, y_pred, average='samples')  # doctest: +ELLIPSIS
     0.5
     >>> f1_score(y_true, y_pred, average=None)
     array([ 1.,  1.,  0.])
@@ -1234,12 +1234,12 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
         classification, it is used to infer what is a positive label in the
         label indicator matrix format.
 
-    average : string, [None, 'example', 'micro', 'macro', 'weighted' (default)]
+    average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
 
-        ``'example'``:
+        ``'samples'``:
             Average over instance. Only meaningful and available in multilabel
             classification.
         ``'macro'``:
@@ -1315,7 +1315,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
     ... # doctest: +ELLIPSIS
     0.54...
-    >>> fbeta_score(y_true, y_pred, average='example', beta=0.5)
+    >>> fbeta_score(y_true, y_pred, average='samples', beta=0.5)
     ... # doctest: +ELLIPSIS
     0.66...
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
@@ -1336,7 +1336,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     >>> fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
     ... # doctest: +ELLIPSIS
     0.66...
-    >>> fbeta_score(y_true, y_pred, average='example', beta=0.5)
+    >>> fbeta_score(y_true, y_pred, average='samples', beta=0.5)
     ... # doctest: +ELLIPSIS
     0.42...
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
@@ -1519,14 +1519,11 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         classification, it is used to infer what is a positive label in the
         label indicator matrix format.
 
-    average : string, [None (default), 'example', 'micro', 'macro', 'weighted']
+    average : string, [None (default), 'micro', 'macro', 'samples', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
 
-        ``'example'``:
-            Average over instance. Only meaningful and available in multilabel
-            classification.
         ``'macro'``:
             Average over classes (does not take imbalance into account).
         ``'micro'``:
@@ -1534,7 +1531,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             account).  This implies that ``precision == recall == F1``.
             In multilabel classification, this is true only if every sample
             has a label.
-        ``'weighted'``:
+        ``'samples'``:
+            Average over instance. Only meaningful and available in multilabel
+            classification.
+         ``'weighted'``:
             Average over classes weighted by support (takes imbalance into
             account).  Can result in F-score that is not between
             precision and recall.
@@ -1613,7 +1613,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
     ... # doctest: +ELLIPSIS
     (0.499..., 1.0, 0.65..., None)
-    >>> precision_recall_fscore_support(y_true, y_pred, average='example')
+    >>> precision_recall_fscore_support(y_true, y_pred, average='samples')
     ... # doctest: +ELLIPSIS
     (1.0, 0.44..., 0.59..., None)
 
@@ -1631,7 +1631,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
     ... # doctest: +ELLIPSIS
     (0.66..., 0.66..., 0.66..., None)
-    >>> precision_recall_fscore_support(y_true, y_pred, average='example')
+    >>> precision_recall_fscore_support(y_true, y_pred, average='samples')
     ... # doctest: +ELLIPSIS
     (0.5, 1.0, 0.5, None)
 
@@ -1649,7 +1649,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     n_labels = labels.size
 
-    if average == "example":
+    if average == "samples":
         if is_multilabel(y_true):
             # Handle mix representation
             if type(y_true) != type(y_pred):
@@ -1740,7 +1740,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         return (precision[pos_label_idx], recall[pos_label_idx],
                 fscore[pos_label_idx], support[pos_label_idx])
     else:
-        average_options = (None, 'micro', 'macro', 'weighted', 'example')
+        average_options = (None, 'micro', 'macro', 'weighted', 'samples')
         if average == 'micro':
             avg_precision = divide(true_pos.sum(),
                                    true_pos.sum() + false_pos.sum(),
@@ -1811,14 +1811,11 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
         classification, it is used to infer what is a positive label in the
         label indicator matrix format.
 
-    average : string, [None, 'example', 'micro', 'macro', 'weighted' (default)]
+    average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
 
-        ``'example'``:
-            Average over instance. Only meaningful and available in multilabel
-            classification.
         ``'macro'``:
             Average over classes (does not take imbalance into account).
         ``'micro'``:
@@ -1826,6 +1823,9 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
             account).  This implies that ``precision == recall == F1``.
             In multilabel classification, this is true only if every sample
             has a label.
+        ``'samples'``:
+            Average over instance. Only meaningful and available in multilabel
+            classification.
         ``'weighted'``:
             Average over classes weighted by support (takes imbalance into
             account).  Can result in F-score that is not between
@@ -1875,7 +1875,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     >>> precision_score(y_true, y_pred, average='weighted')
     ... # doctest: +ELLIPSIS
     0.49...
-    >>> precision_score(y_true, y_pred, average='example')
+    >>> precision_score(y_true, y_pred, average='samples')
     1.0
     >>> precision_score(y_true, y_pred, average=None)
     ... # doctest: +ELLIPSIS
@@ -1893,7 +1893,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     >>> precision_score(y_true, y_pred, average='weighted')
     ... # doctest: +ELLIPSIS
     0.66...
-    >>> precision_score(y_true, y_pred, average='example')
+    >>> precision_score(y_true, y_pred, average='samples')
     ... # doctest: +ELLIPSIS
     0.5
     >>> precision_score(y_true, y_pred, average=None)
@@ -1934,14 +1934,11 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
         classification, it is used to infer what is a positive label in the
         label indicator matrix format.
 
-    average : string, [None, 'example', 'micro', 'macro', 'weighted' (default)]
+    average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
         If ``None``, the scores for each class are returned. Otherwise,
         unless ``pos_label`` is given in binary classification, this
         determines the type of averaging performed on the data:
 
-        ``'example'``:
-            Average over instance. Only meaningful and available in multilabel
-            classification.
         ``'macro'``:
             Average over classes (does not take imbalance into account).
         ``'micro'``:
@@ -1949,6 +1946,9 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
             account).  This implies that ``precision == recall == F1``.
             In multilabel classification, this is true only if every sample
             has a label.
+        ``'samples'``:
+            Average over instance. Only meaningful and available in multilabel
+            classification.
         ``'weighted'``:
             Average over classes weighted by support (takes imbalance into
             account).  Can result in F-score that is not between
@@ -1996,7 +1996,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     1.0
     >>> recall_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
     1.0
-    >>> recall_score(y_true, y_pred, average='example')  # doctest: +ELLIPSIS
+    >>> recall_score(y_true, y_pred, average='samples')  # doctest: +ELLIPSIS
     0.44...
     >>> recall_score(y_true, y_pred, average=None)
     array([ 1.,  1.,  1.])
@@ -2012,7 +2012,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     0.66...
     >>> recall_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
     0.66...
-    >>> recall_score(y_true, y_pred, average='example')
+    >>> recall_score(y_true, y_pred, average='samples')
     1.0
     >>> recall_score(y_true, y_pred, average=None)
     array([ 1.,  1.,  0.])
