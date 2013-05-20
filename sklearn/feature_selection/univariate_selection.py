@@ -12,15 +12,16 @@ from functools import reduce
 
 import numpy as np
 from scipy import stats
-from scipy.sparse import issparse, csc_matrix
+from scipy.sparse import issparse
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator
 from ..preprocessing import LabelBinarizer
-from ..utils import (array2d, as_float_array, atleast2d_or_csc,
+from ..utils import (array2d, as_float_array,
                      atleast2d_or_csr, check_arrays, safe_asarray, safe_sqr,
                      safe_mask)
 from ..utils.extmath import safe_sparse_dot
 from ..externals import six
+from .base import SelectorMixin
 
 
 def _clean_nans(scores):
@@ -248,7 +249,7 @@ def f_regression(X, y, center=True):
 # Base classes
 
 class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator,
-                                     TransformerMixin)):
+                                     SelectorMixin)):
 
     def __init__(self, score_func):
         """ Initialize the univariate feature selection.
@@ -268,53 +269,6 @@ class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator,
     @abstractmethod
     def fit(self, X, y):
         """Run score function on (X, y) and get the appropriate features."""
-
-    def get_support(self, indices=False):
-        """
-        Return a mask, or list, of the features/indices selected.
-        """
-        mask = self._get_support_mask()
-        return mask if not indices else np.where(mask)[0]
-
-    @abstractmethod
-    def _get_support_mask(self):
-        """
-        Must return a boolean mask indicating which features are selected.
-        """
-
-    def transform(self, X):
-        """
-        Transform a new matrix using the selected features
-        """
-        X = atleast2d_or_csc(X)
-        mask = self._get_support_mask()
-        if len(mask) != X.shape[1]:
-            raise ValueError("X has a different shape than during fitting.")
-        return X[:, safe_mask(X, mask)]
-
-    def inverse_transform(self, X):
-        """
-        Reverse the transformation operation
-
-        Returns `X` with columns of zeros inserted where features would have
-        been removed by `transform`.
-        """
-        support_ = self.get_support()
-        if issparse(X):
-            X = X.tocsc()
-            # insert additional entries in indptr:
-            # e.g. if transform changed indptr from [0 2 6 7] to [0 2 3]
-            # col_nonzeros here will be [2 0 1] so indptr becomes [0 2 2 3]
-            col_nonzeros = self.inverse_transform(np.diff(X.indptr)).ravel()
-            indptr = np.concatenate([[0], np.cumsum(col_nonzeros)])
-            Xt = csc_matrix((X.data, X.indices, indptr),
-                            shape=(X.shape[0], len(indptr) - 1), dtype=X.dtype)
-            return Xt
-        if X.ndim == 1:
-            X = X[None, :]
-        Xt = np.zeros((X.shape[0], support_.size), dtype=X.dtype)
-        Xt[:, support_] = X
-        return Xt
 
 
 class _PvalueFilter(_BaseFilter):
