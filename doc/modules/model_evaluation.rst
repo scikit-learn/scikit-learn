@@ -546,7 +546,7 @@ The sample-based precision, recall and :math:`F_\beta` is defined as
 
   \texttt{example\_{}F\_{}beta}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (1 + \beta^2)\frac{|y_i \cap \hat{y}_i|}{\beta^2 |\hat{y}_i| + |y_i|}.
 
-Here is an example where ``average`` is set to ``average`` to ``macro``::
+Here is an example where ``average`` is set to ``macro``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
@@ -562,7 +562,7 @@ Here is an example where ``average`` is set to ``average`` to ``macro``::
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
   (0.22..., 0.33..., 0.26..., None)
 
-Here is an example where ``average`` is set to to ``micro``::
+Here is an example where ``average`` is set to ``micro``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
@@ -583,7 +583,7 @@ Here is an example where ``average`` is set to to ``micro``::
   ... # doctest: +ELLIPSIS
   (0.33..., 0.33..., 0.33..., None)
 
-Here is an example where ``average`` is set to to ``weighted``::
+Here is an example where ``average`` is set to ``weighted``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
