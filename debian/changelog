@@ -1,3 +1,12 @@
+scikit-learn (0.13-3) unstable; urgency=low
+
+  * Upload to unstable
+  * debian/control
+    - move joblib to Depends from Recommends (Closes: #709056)
+  	- remove unused AFAIK XB-Python-Version
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Mon, 20 May 2013 11:01:00 -0400
+
 scikit-learn (0.13-2) experimental; urgency=low
 
   * CP from upstream commits to fix a problem with ROC curves lacking

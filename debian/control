@@ -15,10 +15,10 @@ Package: python-sklearn
 Replaces: python-scikits-learn (<< 0.9~)
 Breaks: python-scikits-learn (<< 0.9~)
 Architecture: all
-Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-scipy, python-sklearn-lib(>= ${source:Version})
+Depends: ${misc:Depends}, ${python:Depends}, python-numpy, python-scipy, python-sklearn-lib(>= ${source:Version}),
+         python-joblib (>= 0.4.5),
 Provides: ${python:Provides}
-XB-Python-Version: ${python:Versions}
-Recommends: python-nose, python-matplotlib, python-joblib (>= 0.4.5)
+Recommends: python-nose, python-matplotlib
 Suggests: python-dap, python-scikits-optimization, python-sklearn-doc, ipython
 Enhances: python-mvpa2, python-mdp
 Description: Python modules for machine learning and data mining
@@ -48,7 +48,6 @@ Replaces: python-scikits-learn-lib
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends}, ${python:Depends}, python-numpy
 Provides: ${python:Provides}
-XB-Python-Version: ${python:Versions}
 Description: low-level implementations and bindings for scikit-learn
  This is an add-on package for python-sklearn. It provides
  low-level implementations and custom Python bindings for the LIBSVM
