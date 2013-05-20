@@ -1,17 +1,22 @@
 """ Unsupervised evaluation metrics. """
 
 # Authors: Robert Layton <robertlayton@gmail.com>
+#          Alexandre Abraham <abraham.alexandre@gmail.com>
 #
 # License: BSD 3 clause
+
+import warnings
+from itertools import combinations
 
 import numpy as np
 
 from ...utils import check_random_state
 from ..pairwise import pairwise_distances
+from ...externals.joblib import Parallel, delayed
 
 
-def silhouette_score(X, labels, metric='euclidean', sample_size=None,
-                     random_state=None, **kwds):
+def silhouette_score(X, labels, metric='euclidean', method='global',
+                     sample_size=None, n_jobs=1, random_state=None, **kwds):
     """Compute the mean Silhouette Coefficient of all samples.
 
     The Silhouette Coefficient is calculated using the mean intra-cluster
@@ -47,10 +52,23 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
         <sklearn.metrics.pairwise.pairwise_distances>`. If X is the distance
         array itself, use ``metric="precomputed"``.
 
+    method: string
+        The method used to compute distance matrix between samples. Default is
+        ``global`` which means that the full distance matrix is computed
+        yielding in fast computation but high memory consumption. ``blockwise``
+        option compute clusterwise distance matrices, dividing approximately
+        memory consumption by the squared number of clusters. ``blockwise``
+        method allows parallelization though ``n_jobs`` parameter.
+
     sample_size : int or None
         The size of the sample to use when computing the Silhouette Coefficient 
         on a random subset of the data. 
         If ``sample_size is None``, no sampling is used.
+
+    n_jobs : integer, optional
+        The number of CPUs to use to do the computation. -1 means
+        'all CPUs'. This option can only be used with ``method="blockwise"``.
+        Memory consumption is proportional to the number of CPUs.
 
     random_state : integer or numpy.RandomState, optional
         The generator used to randomly select a subset of samples if 
@@ -89,13 +107,18 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
         random_state = check_random_state(random_state)
         indices = random_state.permutation(X.shape[0])[:sample_size]
         if metric == "precomputed":
+            if method == "blockwise":
+                raise ValueError('Precomputed matrix is not compatible with'
+                        ' blockwise computation')
             X, labels = X[indices].T[indices].T, labels[indices]
         else:
             X, labels = X[indices], labels[indices]
-    return np.mean(silhouette_samples(X, labels, metric=metric, **kwds))
+    return np.mean(silhouette_samples(X, labels, metric=metric, method=method,
+                                      n_jobs=n_jobs, **kwds))
 
 
-def silhouette_samples(X, labels, metric='euclidean', **kwds):
+def silhouette_samples(X, labels, metric='euclidean', method='global',
+                       n_jobs=1, **kwds):
     """Compute the Silhouette Coefficient for each sample.
 
     The Silhouette Coefficient is a measure of how well samples are clustered
@@ -133,6 +156,19 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
         allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`. If X is
         the distance array itself, use "precomputed" as the metric.
 
+    method: string
+        The method used to compute distance matrix between samples. Default is
+        ``global`` which means that the full distance matrix is computed
+        yielding in fast computation but high memory consumption. ``blockwise``
+        option compute clusterwise distance matrices, dividing approximately
+        memory consumption by the squared number of clusters. ``blockwise``
+        method allows parallelization though ``n_jobs`` parameter.
+
+    n_jobs : integer, optional
+        The number of CPUs to use to do the computation. -1 means
+        'all CPUs'. This option can only be used with ``method="blockwise"``.
+        Memory consumption is proportional to the number of CPUs.
+
     `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the distance function.
         If using a ``scipy.spatial.distance`` metric, the parameters are still
@@ -155,12 +191,50 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
        <http://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
-    distances = pairwise_distances(X, metric=metric, **kwds)
-    n = labels.shape[0]
-    A = np.array([_intra_cluster_distance(distances[i], labels, i)
-                  for i in range(n)])
-    B = np.array([_nearest_cluster_distance(distances[i], labels, i)
-                  for i in range(n)])
+    if method == 'global' and n_jobs != 1:
+        warnings.warn('Parallelization is only available for blockwise method')
+        n_jobs = 1
+    if method == 'global':
+        distances = pairwise_distances(X, metric=metric, **kwds)
+        n = labels.shape[0]
+        A = np.array([_intra_cluster_distance(distances[i], labels, i)
+                      for i in range(n)])
+        B = np.array([_nearest_cluster_distance(distances[i], labels, i)
+                      for i in range(n)])
+    elif method == 'blockwise':
+        # Intra distance
+        A = np.zeros(labels.size, dtype=float)
+        intra_dist = Parallel(n_jobs=n_jobs)(
+            delayed(_intra_cluster_distances_block)
+                (X[np.where(labels == label)[0]], metric, **kwds)
+            for label in np.unique(labels))
+        for label, dist in zip(np.unique(labels), intra_dist):
+            A[np.where(labels == label)[0]] = dist
+
+        # Nearest cluster distance
+        B = np.empty(labels.size, dtype=float)
+        B.fill(np.inf)
+
+        # Compute cluster distance between pairs of clusters
+        unique_labels = np.unique(labels)
+        values = Parallel(n_jobs=n_jobs)(
+            delayed(_inter_cluster_distance_block)(
+                    X[np.where(labels == label_a)[0]],
+                    X[np.where(labels == label_b)[0]],
+                    metric, **kwds)
+                for label_a, label_b in combinations(unique_labels, 2))
+
+        # Take the dist to the closest cluster
+        for (label_a, label_b), (values_a, values_b) in \
+                    zip(combinations(unique_labels, 2), values):
+                indices_a = np.where(labels == label_a)[0]
+                B[indices_a] = np.minimum(values_a, B[indices_a])
+                del indices_a
+                indices_b = np.where(labels == label_b)[0]
+                B[indices_b] = np.minimum(values_b, B[indices_b])
+                del indices_b
+    else:
+        raise ValueError('Unknow method: %s' % method)
     sil_samples = (B - A) / np.maximum(A, B)
     return sil_samples
 
@@ -218,3 +292,59 @@ def _nearest_cluster_distance(distances_row, labels, i):
     b = np.min([np.mean(distances_row[labels == cur_label])
                for cur_label in set(labels) if not cur_label == label])
     return b
+
+
+def _intra_cluster_distances_block(X_cluster, metric, **kwds):
+    ''' Calculate the mean intra-cluster distance for a given cluster
+
+    Parameters
+    ----------
+    X_cluster : array, shape = [n_samples, n_features]
+        Feature array of given cluster samples
+
+    metric : string, or callable
+        The metric to use when calculating distance between instances in a
+        feature array. If metric is a string, it must be one of the options
+        allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`. If X is
+        the distance array itself, use "precomputed" as the metric.
+
+    `**kwds` : optional keyword parameters
+        Any further parameters are passed directly to the distance function.
+        If using a ``scipy.spatial.distance`` metric, the parameters are still
+        metric dependent. See the scipy docs for usage examples.
+    '''
+    distances = pairwise_distances(X_cluster, metric=metric, **kwds)
+    return distances.sum(axis=1) / (distances.shape[0] - 1)
+
+
+def _inter_cluster_distance_block(X_cluster_a, X_cluster_b, metric, **kwds):
+    """Calculate the mean inter-cluster distance between two clusters.
+
+    Parameters
+    ----------
+    X_cluster_a : array, shape = [n_samples_a, n_features]
+        Feature array of first cluster
+
+    X_cluster_b : array, shape = [n_samples_b, n_features]
+        Feature array of second cluster
+
+    metric : string, or callable
+        The metric to use when calculating distance between instances in a
+        feature array. If metric is a string, it must be one of the options
+        allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`. If X is
+        the distance array itself, use "precomputed" as the metric.
+
+    `**kwds` : optional keyword parameters
+        Any further parameters are passed directly to the distance function.
+        If using a ``scipy.spatial.distance`` metric, the parameters are still
+        metric dependent. See the scipy docs for usage examples.
+
+    Returns
+    -------
+    (dist_a, dist_b) : tuple of array, shape = [n_samples_a] and [n_samples_b]
+        Mean inter-cluster distance betweens samples of two given clusters
+    """
+    dist = pairwise_distances(X_cluster_a, X_cluster_b, metric=metric, **kwds)
+    dist_a = dist.mean(axis=1)
+    dist_b = dist.mean(axis=0)
+    return dist_a, dist_b
