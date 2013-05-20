@@ -308,7 +308,7 @@ def average_precision_score(y_true, y_score):
     References
     ----------
     .. [1] `Wikipedia entry for the Average precision
-           <http://en.wikipedia.org/wiki/Information_retrieval#Average_precision>`_
+           <http://en.wikipedia.org/wiki/Average_precision>`_
 
     See also
     --------
