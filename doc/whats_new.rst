@@ -26,11 +26,11 @@ Changelog
      `Gilles Louppe`_. See the :ref:`AdaBoost <adaboost>` section of the user
      guide for details and examples.
 
-   - Multi-label classification output now support to
+   - Multi-label classification output is now supported by
      :func:`metrics.accuracy_score`, :func:`metrics.zero_one_loss`,
      :func:`metrics.f1_score`, :func:`metrics.fbeta_score`,
-     :func:`metrics.precision_scoreclassification_report`,
-     :func:`metrics.precision_score` and :func:`metrics.recal_score`
+     :func:`metrics.classification_report`,
+     :func:`metrics.precision_score` and :func:`metrics.recall_score`
      by `Arnaud Joly`_.
 
   -  Two new metrics :func:`metrics.hamming_loss` and
