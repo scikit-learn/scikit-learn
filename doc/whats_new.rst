@@ -91,6 +91,13 @@ Changelog
    - Feature selectors now share a mixin providing consistent `transform`,
      `inverse_transform` and `get_support` methods. By `Joel Nothman`_.
 
+   - A fitted :class:`grid_search.GridSearchCV` or
+     :class:`grid_search.RandomizedSearchCV` can now generally be pickled.
+     By `Joel Nothman`_.
+
+   - Refactored and vectorized implementation of :func:`metrics.roc_curve`
+     and :func:`metrics.precision_recall_curve`. By `Joel Nothman`_.
+
 
 API changes summary
 -------------------
@@ -1924,3 +1931,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Rob Zinkov: http://zinkov.com
 
 .. _Martin Luessi: https://github.com/mluessi
+
+.. _Joel Nothman: http://joelnothman.com
