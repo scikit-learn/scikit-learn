@@ -274,6 +274,7 @@ class BaseEstimator(object):
             self.set_params(**entries[0])
             self.fit(*args, **kwargs)
             for params in entries:
+                self.set_params(**params)
                 yield params, self
 
 
