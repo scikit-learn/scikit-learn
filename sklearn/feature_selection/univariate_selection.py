@@ -380,6 +380,7 @@ class SelectPercentile(_ScoreFilter):
     way.
 
     """
+    _non_fit_params = ['percentile']
 
     def __init__(self, score_func=f_classif, percentile=10):
         if not 0 <= percentile <= 100:
@@ -437,6 +438,7 @@ class SelectKBest(_ScoreFilter):
     way.
 
     """
+    _non_fit_params = ['k']
 
     def __init__(self, score_func=f_classif, k=10):
         self.k = k
@@ -483,6 +485,7 @@ class SelectFpr(_PvalueFilter):
     `pvalues_` : array-like, shape=(n_features,)
         p-values of feature scores.
     """
+    _non_fit_params = ['alpha']
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
         self.alpha = alpha
@@ -517,6 +520,7 @@ class SelectFdr(_PvalueFilter):
     `pvalues_` : array-like, shape=(n_features,)
         p-values of feature scores.
     """
+    _non_fit_params = ['alpha']
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
         self.alpha = alpha
@@ -549,6 +553,7 @@ class SelectFwe(_PvalueFilter):
     `pvalues_` : array-like, shape=(n_features,)
         p-values of feature scores.
     """
+    _non_fit_params = ['alpha']
 
     def __init__(self, score_func=f_classif, alpha=5e-2):
         self.alpha = alpha
@@ -588,6 +593,7 @@ class GenericUnivariateSelect(_PvalueFilter):
     `pvalues_` : array-like, shape=(n_features,)
         p-values of feature scores.
     """
+    _non_fit_params = ['param', 'mode']
 
     _selection_modes = {'percentile':   SelectPercentile,
                         'k_best':       SelectKBest,
