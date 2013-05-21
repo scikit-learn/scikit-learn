@@ -52,7 +52,7 @@ def silhouette_score(X, labels, metric='euclidean', method='global',
         <sklearn.metrics.pairwise.pairwise_distances>`. If X is the distance
         array itself, use ``metric="precomputed"``.
 
-    method: string
+    method: {'global', 'blockwise'}
         The method used to compute distance matrix between samples. Default is
         ``global`` which means that the full distance matrix is computed
         yielding in fast computation but high memory consumption. The
@@ -157,7 +157,7 @@ def silhouette_samples(X, labels, metric='euclidean', method='global',
         allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`. If X is
         the distance array itself, use "precomputed" as the metric.
 
-    method: string
+    method: {'global', 'blockwise'}
         The method used to compute distance matrix between samples. Default is
         ``global`` which means that the full distance matrix is computed
         yielding in fast computation but high memory consumption. The
