@@ -972,7 +972,7 @@ a score (``greater_is_better=True``) or a loss (``greater_is_better=False``),
 whether the function you provided takes predictions as input
 (``needs_threshold=False``) or needs confidence scores
 (``needs_threshold=True``) and any additional parameters, such as ``beta`` in
-the example above.
+the previous example.
 
 
 Implementing your own scoring object
