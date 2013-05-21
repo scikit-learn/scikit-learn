@@ -88,6 +88,9 @@ Changelog
    - A bug that caused :class:`ensemble.AdaBoostClassifier`'s to output
      incorrect probabilities has been fixed.
 
+   - Feature selectors now share a mixin providing consistent `transform`,
+     `inverse_transform` and `get_support` methods. By `Joel Nothman`_.
+
 
 API changes summary
 -------------------
