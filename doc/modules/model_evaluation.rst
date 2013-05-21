@@ -454,97 +454,58 @@ Multiclass and multilabel classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In multiclass and multilabel classification task, the notions of precision,
 recall and F-measures can be applied to each label independently.
+There are a few ways to combine results across labels,
+specified by the ``average`` argument to the :func:`f1_score`,
+:func:`fbeta_score`, :func:`precision_recall_fscore_support`,
+:func:`precision_score`  and :func:`recall_score` functions:
 
-Moreover, these notions can be further extended. The functions
-:func:`f1_score`, :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
-:func:`precision_score`  and :func:`recall_score` support an argument called
-``average`` which defines the type of averaging:
+* ``"micro"``: calculate metrics globally by counting the total true
+  positives, false negatives and false positives. Except in the multi-label
+  case this implies that precision, recall and :math:`F` are equal.
+* ``"samples"``: calculate metrics for each sample, comparing sets of
+  labels assigned to each, and find the mean across all samples.
+  This is only meaningful and available in the multilabel case.
+* ``"macro"``: calculate metrics for each label, and find their mean.
+  This does not take label imbalance into account.
+* ``"weighted"``: calculate metrics for each label, and find their average
+  weighted by the number of occurrences of the label in the true data.
+  This alters ``"macro"`` to account for label imbalance; it may produce an
+  F-score that is not between precision and recall.
+* ``None``: calculate metrics for each label and do not average them.
 
- * ``"macro"``: average over classes (does not take imbalance
-   into account).
- * ``"micro"``: aggregate classes and average over instances
-   (takes imbalance into account). This implies that
-   ``precision == recall == F1``.
-   In multilabel classification, this is true only if every sample has a label.
- * ``'samples'``: average over instances. Only available and
-   meaningful with multilabel data.
- * ``"weighted"``: average over classes weighted by support (takes imbalance
-   into account). Can result in F-score that is not between
-   precision and recall.
- * ``None``: no averaging is performed.
+To make this more explicit, consider the following notation:
 
-Let's define some notations:
+* :math:`y` the set of *predicted* :math:`(sample, label)` pairs
+* :math:`\hat{y}` the set of *true* :math:`(sample, label)` pairs
+* :math:`L` the set of labels
+* :math:`S` the set of samples
+* :math:`y_s` the subset of :math:`y` with sample :math:`s`,
+  i.e. :math:`y_s := \left\{(s', l) \in y | s' = s\right\}`
+* :math:`y_l` the subset of :math:`y` with label :math:`l`
+* similarly, :math:`\hat{y}_s` and :math:`\hat{y}_l` are subsets of
+  :math:`\hat{y}`
+* :math:`P(A, B) := \frac{\left| A \cap B \right|}{\left|A\right|}`
+  (Where :math:`A = \emptyset`, :math:`P(A, B):=1`.)
+* :math:`R(A, B) := \frac{\left| A \cap B \right|}{\left|B\right|}`
+  (Where :math:`B = \emptyset`, :math:`R(A, B):=1`.)
+* :math:`F_\beta(A, B) := \left(1 + \beta^2\right) \frac{P(A, B) \times R(A, B)}{\beta^2 P(A, B) + R(A, B)}`
 
-   * :math:`n_\text{labels}` and :math:`n_\text{samples}` denotes respectively
-     the number of labels and the number of samples.
-   * :math:`\texttt{precision}_j`, :math:`\texttt{recall}_j` and
-     :math:`{F_\beta}_j` are respectively the precision, the recall and
-     :math:`F_\beta` measure for the :math:`j`-th label;
-   * :math:`tp_j`, :math:`fp_j` and :math:`fn_j` respectively the number of
-     true positives, false positives and false negatives for the :math:`j`-th
-     label;
-   * :math:`w_j = \frac{tp_j + fn_j}{\sum_{k=0}^{n_\text{labels} - 1} tp_k + f
-     n_k}` is the weighted support associated to the :math:`j`-th label;
-   * :math:`y_i` is the set of true label and
-     :math:`\hat{y}_i` is the set of predicted for the
-     :math:`i`-th sample;
+Then the metrics are defined as:
 
-The macro precision, recall and :math:`F_\beta` is defined as
++---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
+|``average``    | Precision                                                                                                        | Recall                                                                                                           | F\_beta                                                                                                              |
++===============+==================================================================================================================+==================================================================================================================+======================================================================================================================+
+|``"micro"``    | :math:`P(y, \hat{y})`                                                                                            | :math:`R(y, \hat{y})`                                                                                            | :math:`F_\beta(y, \hat{y})`                                                                                          |
++---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
+|``"samples"``  | :math:`\frac{1}{\left|S\right|} \sum_{s \in S} P(y_s, \hat{y}_s)`                                                | :math:`\frac{1}{\left|S\right|} \sum_{s \in S} R(y_s, \hat{y}_s)`                                                | :math:`\frac{1}{\left|S\right|} \sum_{s \in S} F_\beta(y_s, \hat{y}_s)`                                              |
++---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
+|``"macro"``    | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} P(y_l, \hat{y}_l)`                                                | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} R(y_l, \hat{y}_l)`                                                | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} F_\beta(y_l, \hat{y}_l)`                                              |
++---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
+|``"weighted"`` | :math:`\frac{1}{\sum_{l \in L} \left|\hat{y}_l\right|} \sum_{l \in L} \left|\hat{y}_l\right| P(y_l, \hat{y}_l)`  | :math:`\frac{1}{\sum_{l \in L} \left|\hat{y}_l\right|} \sum_{l \in L} \left|\hat{y}_l\right| R(y_l, \hat{y}_l)`  | :math:`\frac{1}{\sum_{l \in L} \left|\hat{y}_l\right|} \sum_{l \in L} \left|\hat{y}_l\right| F_\beta(y_l, \hat{y}_l)`|
++---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
+|``None``       | :math:`\langle P(y_l, \hat{y}_l) | l \in L \rangle`                                                              | :math:`\langle R(y_l, \hat{y}_l) | l \in L \rangle`                                                              | :math:`\langle F_\beta(y_l, \hat{y}_l) | l \in L \rangle`                                                            |
++---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
 
-.. math::
-
-  \texttt{macro\_{}precision} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} \texttt{precision}_j,
-
-.. math::
-
-  \texttt{macro\_{}recall} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} \texttt{recall}_j,
-
-.. math::
-
-  \texttt{macro\_{}F\_{}beta} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} {F_\beta}_j.
-
-The micro precision, recall and :math:`F_\beta` is defined as
-
-.. math::
-
-  \texttt{micro\_{}precision} = \frac{\sum_{j=0}^{n_\text{labels} - 1} tp_j}{\sum_{j=0}^{n_\text{labels} - 1} tp_j + \sum_{j=0}^{n_\text{labels} - 1} fp_j},
-
-.. math::
-
-  \texttt{micro\_{}recall} = \frac{\sum_{j=0}^{n_\text{labels} - 1} tp_j}{\sum_{j=0}^{n_\text{labels} - 1} tp_j + \sum_{j=0}^{n_\text{labels} - 1} fn_j},
-
-.. math::
-
-  \texttt{micro\_{}F\_{}beta} = (1 + \beta^2) \frac{\texttt{micro\_{}precision} \times  \texttt{micro\_{}recall}}{\beta^2 \texttt{micro\_{}precision} +  \texttt{micro\_{}recall}}.
-
-The weighted precision, recall and :math:`F_\beta` is defined as
-
-.. math::
-
-  \texttt{weighted\_{}precision} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} w_j \texttt{precision}_j,
-
-.. math::
-
-  \texttt{weighted\_{}recall} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} w_j \texttt{recall}_j,
-
-.. math::
-
-  \texttt{weighted\_{}F\_{}beta} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} w_j {F_\beta}_j.
-
-
-The sample-based precision, recall and :math:`F_\beta` is defined as
-
-.. math::
-
-  \texttt{example\_{}precision}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} \frac{|y_i \cap \hat{y}_i|}{|y_i|},
-
-.. math::
-
-  \texttt{example\_{}recall}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} \frac{|y_i \cap \hat{y}_i|}{|\hat{y}_i|},
-
-.. math::
-
-  \texttt{example\_{}F\_{}beta}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (1 + \beta^2)\frac{|y_i \cap \hat{y}_i|}{\beta^2 |\hat{y}_i| + |y_i|}.
 
 Here is an example where ``average`` is set to ``macro``::
 
