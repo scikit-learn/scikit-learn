@@ -454,66 +454,56 @@ Multiclass and multilabel classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In multiclass and multilabel classification task, the notions of precision,
 recall and F-measures can be applied to each label independently.
-For these purposes, it is clearer to redefine our metrics in terms of sets.
-For a true set :math:`\hat{y}` and predicted set :math:`y`, we may redefine:
-
-.. math::
-
-    \text{precision} = \frac{\left| y \cap \hat{y} \right|}{\left|y\right|},
-
-.. math::
-
-    \text{recall} = \frac{\left| y \cap \hat{y} \right|}{\left|\hat{y}\right|}.
-
-(Where either of these denominators is zero, the metric is 1 by convention.)
-
-Defining :math:`y_l` and :math:`\hat{y}_l` to be sets of samples with label
-:math:`l`, metrics for each label can easily be calculated as in the binary
-classification case.  There are a few ways to combine results across labels,
+There are a few ways to combine results across labels,
 specified by the ``average`` argument to the :func:`f1_score`,
 :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
 :func:`precision_score`  and :func:`recall_score` functions:
 
-    * ``"micro"``: calculate metrics globally where :math:`y` and
-      :math:`\hat{y}` are sets of :math:`(sample, label)` pairs. In the
-      single-label case, this implies that precision, recall and :math:`F`
-      are equal.
-    * ``"macro"``: calculate metrics for each label, and find their unweighted
-      mean.  This does not take label imbalance into account.
-    * ``"weighted"``: calculate metrics for each label, and find their average
-      weighted by :math:`support_l = \left|\hat{y}_l\right|`.
-    * ``"samples"``: calculate metrics for each sample, comparing sets of
-      labels assigned to each, and find the mean across all samples.
-      This is only meaningful and available in the multilabel case.
-   * ``None``: calculate metrics for each label and do not average them.
+* ``"micro"``: calculate metrics globally by counting the total true
+  positives, false negatives and false positives. In the single-label case,
+  this implies that precision, recall and :math:`F` are equal.
+* ``"samples"``: calculate metrics for each sample, comparing sets of
+  labels assigned to each, and find the mean across all samples.
+  This is only meaningful and available in the multilabel case.
+* ``"macro"``: calculate metrics for each label, and find their mean.
+  This does not take label imbalance into account.
+* ``"weighted"``: calculate metrics for each label, and find their average
+  weighted by the number of occurrences of the label in the true data.
+* ``None``: calculate metrics for each label and do not average them.
 
-More explicitly, we may notate:
+To make this more explicit, consider the following notation:
 
-.. math::
+* :math:`y` the set of *predicted* :math:`(sample, label)` pairs
+* :math:`\hat{y}` the set of *true* :math:`(sample, label)` pairs
+* :math:`L` the set of labels
+* :math:`S` the set of samples
+* :math:`y_s` the subset of :math:`y` with sample :math:`s`,
+  i.e. :math:`y_s := \left\{(s', l) \in y | s' = s\right\}`
+* :math:`y_l` the subset of :math:`y` with label :math:`l`
+* similarly, :math:`\hat{y}_s` and :math:`\hat{y}_l` are subsets of
+  :math:`\hat{y}`
+* :math:`P(A, B) := \frac{\left| A \cap B \right|}{\left|A\right|}`
+  (Where :math:`A = \emptyset`, :math:`P(A, B):=1`.)
+* :math:`R(A, B) := \frac{\left| A \cap B \right|}{\left|B\right|}`
+  (Where :math:`B = \emptyset`, :math:`R(A, B):=1`.)
+* :math:`F_\beta(A, B) := \left(1 + \beta^2\right) \frac{P(A, B) \times R(A, B)}{\beta^2 P(A, B) + R(A, B)}`
 
-    \text{avg\_{}precision} = \frac{1}{\sum_{w_j}} \sum_{j} w_j  \frac{\left| y_j \cap \hat{y}_j \right|}{\left|y_j\right|},
+Then the metrics are defined as:
 
-.. math::
++---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
+|``average``    | Precision                                                                                                        | Recall                                                                                                           | F\_{}beta                                                                                                            |
++===============+==================================================================================================================+==================================================================================================================+======================================================================================================================+
+|``"micro"``    | :math:`P(y, \hat{y})`                                                                                            | :math:`R(y, \hat{y})`                                                                                            | :math:`F_\beta(y, \hat{y})`                                                                                          |
++---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
+|``"samples"``  | :math:`\frac{1}{\left|S\right|} \sum_{s \in S} P(y_s, \hat{y}_s)`                                                | :math:`\frac{1}{\left|S\right|} \sum_{s \in S} R(y_s, \hat{y}_s)`                                                | :math:`\frac{1}{\left|S\right|} \sum_{s \in S} F_\beta(y_s, \hat{y}_s)`                                              |
++---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
+|``"macro"``    | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} P(y_l, \hat{y}_l)`                                                | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} R(y_l, \hat{y}_l)`                                                | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} F_\beta(y_l, \hat{y}_l)`                                              |
++---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
+|``"weighted"`` | :math:`\frac{1}{\sum_{l \in L} \left|\hat{y}_l\right|} \sum_{l \in L} \left|\hat{y}_l\right| P(y_l, \hat{y}_l)`  | :math:`\frac{1}{\sum_{l \in L} \left|\hat{y}_l\right|} \sum_{l \in L} \left|\hat{y}_l\right| R(y_l, \hat{y}_l)`  | :math:`\frac{1}{\sum_{l \in L} \left|\hat{y}_l\right|} \sum_{l \in L} \left|\hat{y}_l\right| F_\beta(y_l, \hat{y}_l)`|
++---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
+|``None``       | :math:`\langle P(y_l, \hat{y}_l) | l \in L \rangle`                                                              | :math:`\langle R(y_l, \hat{y}_l) | l \in L \rangle`                                                              | :math:`\langle F_\beta(y_l, \hat{y}_l) | l \in L \rangle`                                                            |
++---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
 
-    \text{avg\_{}recall} = \frac{1}{\sum_{w_j}} \sum_{j} w_j  \frac{\left| y_j \cap \hat{y}_j \right|}{\left|y_j\right|},
-
-.. math::
-
-    \text{avg\_{}F}_\beta = \frac{1}{\sum_{w_j}} \sum_{j} w_j (1 + \beta^2) \frac{\texttt{avg\_{}precision} \times  \texttt{avg\_{}recall}}{\beta^2 \texttt{avg\_{}precision} +  \texttt{avg\_{}recall}}
-
-with:
-
-+---------------+-------------------------+---------------------------------+------------------------------------+
-|``average``    | :math:`j` iterates over | :math:`w_j` is                  | :math:`y_j` consists of            |
-+===============+=========================+=================================+====================================+
-|``"micro"``    | [1]                     | 1                               | all (sample, label) pairs          |
-+---------------+-------------------------+---------------------------------+------------------------------------+
-|``"macro"``    | labels                  | 1                               | samples assigned label :math:`j`   |
-+---------------+-------------------------+---------------------------------+------------------------------------+
-|``"weighted"`` | labels                  | # true for label :math:`j`      | samples assigned label :math:`j`   |
-+---------------+-------------------------+---------------------------------+------------------------------------+
-|``"samples"``  | samples                 | # labels for instance :math:`j` | labels assigned to sample :math:`j`|
-+---------------+-------------------------+---------------------------------+------------------------------------+
 
 Here is an example where ``average`` is set to ``average`` to ``macro``::
 
