@@ -1122,8 +1122,9 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
             mean.  This does not take label imbalance into account.
         ``'weighted'``:
             Calculate metrics for each label, and find their average, weighted
-            by support (the number of true instances for each label). This can
-            result in F-score that is not between precision and recall.
+            by support (the number of true instances for each label). This
+            alters 'macro' to account for label imbalance; it can result in an
+            F-score that is not between precision and recall.
         ``'samples'``:
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification where this differs from
@@ -1247,8 +1248,9 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
             mean.  This does not take label imbalance into account.
         ``'weighted'``:
             Calculate metrics for each label, and find their average, weighted
-            by support (the number of true instances for each label). This can
-            result in F-score that is not between precision and recall.
+            by support (the number of true instances for each label). This
+            alters 'macro' to account for label imbalance; it can result in an
+            F-score that is not between precision and recall.
         ``'samples'``:
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification where this differs from
@@ -1497,7 +1499,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     If ``pos_label is None`` and in binary classification, this function
     returns the average precision, recall and F-measure if ``average``
-    is one of ``'micro'``, ``'macro'``, ``'weighted'``.
+    is one of ``'micro'``, ``'macro'``, ``'weighted'`` or ``'samples'``.
 
     Parameters
     ----------
@@ -1532,8 +1534,9 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             mean.  This does not take label imbalance into account.
         ``'weighted'``:
             Calculate metrics for each label, and find their average, weighted
-            by support (the number of true instances for each label). This can
-            result in F-score that is not between precision and recall.
+            by support (the number of true instances for each label). This
+            alters 'macro' to account for label imbalance; it can result in an
+            F-score that is not between precision and recall.
         ``'samples'``:
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification where this differs from
@@ -1825,8 +1828,9 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
             mean.  This does not take label imbalance into account.
         ``'weighted'``:
             Calculate metrics for each label, and find their average, weighted
-            by support (the number of true instances for each label). This can
-            result in F-score that is not between precision and recall.
+            by support (the number of true instances for each label). This
+            alters 'macro' to account for label imbalance; it can result in an
+            F-score that is not between precision and recall.
         ``'samples'``:
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification where this differs from
@@ -1948,8 +1952,9 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
             mean.  This does not take label imbalance into account.
         ``'weighted'``:
             Calculate metrics for each label, and find their average, weighted
-            by support (the number of true instances for each label). This can
-            result in F-score that is not between precision and recall.
+            by support (the number of true instances for each label). This
+            alters 'macro' to account for label imbalance; it can result in an
+            F-score that is not between precision and recall.
         ``'samples'``:
             Calculate metrics for each instance, and find their average (only
             meaningful for multilabel classification where this differs from

@@ -469,6 +469,8 @@ specified by the ``average`` argument to the :func:`f1_score`,
   This does not take label imbalance into account.
 * ``"weighted"``: calculate metrics for each label, and find their average
   weighted by the number of occurrences of the label in the true data.
+  This alters ``"macro"`` to account for label imbalance; it may produce an
+  F-score that is not between precision and recall.
 * ``None``: calculate metrics for each label and do not average them.
 
 To make this more explicit, consider the following notation:
