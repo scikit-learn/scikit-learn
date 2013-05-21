@@ -102,7 +102,7 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
         super(LogisticRegression, self).__init__(
             penalty=penalty, dual=dual, loss='lr', tol=tol, C=C,
             fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
-            class_weight=class_weight, random_state=None)
+            class_weight=class_weight, random_state=random_state)
 
     def predict_proba(self, X):
         """Probability estimates.
