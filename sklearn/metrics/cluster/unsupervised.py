@@ -55,10 +55,11 @@ def silhouette_score(X, labels, metric='euclidean', method='global',
     method: string
         The method used to compute distance matrix between samples. Default is
         ``global`` which means that the full distance matrix is computed
-        yielding in fast computation but high memory consumption. ``blockwise``
-        option compute clusterwise distance matrices, dividing approximately
-        memory consumption by the squared number of clusters. ``blockwise``
-        method allows parallelization though ``n_jobs`` parameter.
+        yielding in fast computation but high memory consumption. The
+        ``blockwise`` option computes clusterwise distance matrices, dividing
+        memory consumption by approximately the squared number of clusters.
+        The ``blockwise`` method allows parallelization through ``n_jobs``
+        parameter.
 
     sample_size : int or None
         The size of the sample to use when computing the Silhouette Coefficient 
@@ -159,10 +160,11 @@ def silhouette_samples(X, labels, metric='euclidean', method='global',
     method: string
         The method used to compute distance matrix between samples. Default is
         ``global`` which means that the full distance matrix is computed
-        yielding in fast computation but high memory consumption. ``blockwise``
-        option compute clusterwise distance matrices, dividing approximately
-        memory consumption by the squared number of clusters. ``blockwise``
-        method allows parallelization though ``n_jobs`` parameter.
+        yielding in fast computation but high memory consumption. The
+        ``blockwise`` option computes clusterwise distance matrices, dividing
+        memory consumption by approximately the squared number of clusters.
+        The ``blockwise`` method allows parallelization through ``n_jobs``
+        parameter.
 
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
@@ -234,7 +236,7 @@ def silhouette_samples(X, labels, metric='euclidean', method='global',
                 B[indices_b] = np.minimum(values_b, B[indices_b])
                 del indices_b
     else:
-        raise ValueError('Unknow method: %s' % method)
+        raise ValueError('Unknown method: %s' % method)
     sil_samples = (B - A) / np.maximum(A, B)
     return sil_samples
 
