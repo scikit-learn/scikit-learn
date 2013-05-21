@@ -224,7 +224,7 @@ def silhouette_samples(X, labels, metric='euclidean', method='global',
                     metric, **kwds)
                 for label_a, label_b in combinations(unique_labels, 2))
 
-        # Take the dist to the closest cluster
+        # Take the distance to the closest cluster
         for (label_a, label_b), (values_a, values_b) in \
                     zip(combinations(unique_labels, 2), values):
                 indices_a = np.where(labels == label_a)[0]
