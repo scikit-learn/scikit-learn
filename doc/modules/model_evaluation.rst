@@ -460,8 +460,8 @@ specified by the ``average`` argument to the :func:`f1_score`,
 :func:`precision_score`  and :func:`recall_score` functions:
 
 * ``"micro"``: calculate metrics globally by counting the total true
-  positives, false negatives and false positives. In the single-label case,
-  this implies that precision, recall and :math:`F` are equal.
+  positives, false negatives and false positives. Except in the multi-label
+  case this implies that precision, recall and :math:`F` are equal.
 * ``"samples"``: calculate metrics for each sample, comparing sets of
   labels assigned to each, and find the mean across all samples.
   This is only meaningful and available in the multilabel case.
