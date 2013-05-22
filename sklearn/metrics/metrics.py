@@ -934,7 +934,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True):
             y_true = lb.transform(y_true)
             y_pred = lb.transform(y_pred)
 
-        if ml_type != 'sos':
+        if ml_type != 'sequences':
             try:
                 # oddly, we may get an "invalid" rather than a "divide"
                 # error here
@@ -1055,7 +1055,7 @@ def accuracy_score(y_true, y_pred, normalize=True):
             y_true = lb.transform(y_true)
             y_pred = lb.transform(y_pred)
 
-        if ml_type != 'sos':
+        if ml_type != 'sequences':
             score = (y_pred != y_true).sum(axis=1) == 0
         else:
             score = np.array([len(set(true) ^ set(pred)) == 0
@@ -1419,7 +1419,7 @@ def _tp_tn_fp_fn(y_true, y_pred, labels=None):
             y_true = lb.transform(y_true)
             y_pred = lb.transform(y_pred)
 
-        if ml_type != 'sos':
+        if ml_type != 'sequences':
             true_pos = np.sum(np.logical_and(y_true == 1,
                                              y_pred == 1), axis=0)
             false_pos = np.sum(np.logical_and(y_true != 1,
@@ -1647,7 +1647,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 y_true = lb.transform(y_true)
                 y_pred = lb.transform(y_pred)
 
-            if ml_type != 'sos':
+            if ml_type != 'sequences':
                 y_true_pos_label = y_true == 1
                 y_pred_pos_label = y_pred == 1
                 size_inter = np.sum(np.logical_and(y_true_pos_label,
@@ -2211,7 +2211,7 @@ def hamming_loss(y_true, y_pred, classes=None):
             y_true = lb.transform(y_true)
             y_pred = lb.transform(y_pred)
 
-        if ml_type != 'sos':
+        if ml_type != 'sequences':
             return np.mean(y_true != y_pred)
         else:
             loss = np.array([len(set(pred) ^ set(true))
