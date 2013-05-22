@@ -1,5 +1,6 @@
 from __future__ import division
 
+from functools import partial
 import warnings
 import numpy as np
 
@@ -49,60 +50,43 @@ from sklearn.externals.six.moves import xrange
 
 ALL_METRICS = {
     "accuracy_score": accuracy_score,
-    "unormalized_accuracy_score":
-    lambda y1, y2: accuracy_score(y1, y2, normalize=False),
+    "unormalized_accuracy_score": partial(accuracy_score, normalize=False),
 
     "hamming_loss": hamming_loss,
 
     "jaccard_similarity_score": jaccard_similarity_score,
     "unormalized_jaccard_similarity_score":
-    lambda y1, y2: jaccard_similarity_score(y1, y2, normalize=False),
+    partial(jaccard_similarity_score, normalize=False),
 
     "zero_one_loss": zero_one_loss,
-    "unnormalized_zero_one_loss":
-    lambda y1, y2: zero_one_loss(y1, y2, normalize=False),
+    "unnormalized_zero_one_loss": partial(zero_one_loss, normalize=False),
 
     "precision_score": precision_score,
     "recall_score": recall_score,
     "f1_score": f1_score,
-    "f2_score": lambda y1, y2: fbeta_score(y1, y2, beta=2),
-    "f0.5_score": lambda y1, y2: fbeta_score(y1, y2, beta=0.5),
+    "f2_score": partial(fbeta_score, beta=2),
+    "f0.5_score": partial(fbeta_score, beta=0.5),
     "matthews_corrcoef_score": matthews_corrcoef,
     "auc_score": auc_score,
     "average_precision_score": average_precision_score,
 
-    "weighted_f0.5_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="weighted", beta=0.5),
-    "weighted_f1_score":
-    lambda y1, y2: f1_score(y1, y2, average="weighted"),
-    "weighted_f2_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="weighted", beta=2),
-    "weighted_precision_score":
-    lambda y1, y2: precision_score(y1, y2, average="weighted"),
-    "weighted_recall_score":
-    lambda y1, y2: recall_score(y1, y2, average="weighted"),
+    "weighted_f0.5_score": partial(fbeta_score, average="weighted", beta=0.5),
+    "weighted_f1_score": partial(f1_score, average="weighted"),
+    "weighted_f2_score": partial(fbeta_score, average="weighted", beta=2),
+    "weighted_precision_score": partial(precision_score, average="weighted"),
+    "weighted_recall_score": partial(recall_score, average="weighted"),
 
-    "micro_f0.5_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="micro", beta=0.5),
-    "micro_f1_score":
-    lambda y1, y2: f1_score(y1, y2, average="micro"),
-    "micro_f2_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="micro", beta=2),
-    "micro_precision_score":
-    lambda y1, y2: precision_score(y1, y2, average="micro"),
-    "micro_recall_score":
-    lambda y1, y2: recall_score(y1, y2, average="micro"),
+    "micro_f0.5_score": partial(fbeta_score, average="micro", beta=0.5),
+    "micro_f1_score": partial(f1_score, average="micro"),
+    "micro_f2_score": partial(fbeta_score, average="micro", beta=2),
+    "micro_precision_score": partial(precision_score, average="micro"),
+    "micro_recall_score": partial(recall_score, average="micro"),
 
-    "macro_f0.5_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="macro", beta=0.5),
-    "macro_f1_score":
-    lambda y1, y2: f1_score(y1, y2, average="macro"),
-    "macro_f2_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="macro", beta=2),
-    "macro_precision_score":
-    lambda y1, y2: precision_score(y1, y2, average="macro"),
-    "macro_recall_score":
-    lambda y1, y2: recall_score(y1, y2, average="macro"),
+    "macro_f0.5_score": partial(fbeta_score, average="macro", beta=0.5),
+    "macro_f1_score": partial(f1_score, average="macro"),
+    "macro_f2_score": partial(fbeta_score, average="macro", beta=2),
+    "macro_precision_score": partial(precision_score, average="macro"),
+    "macro_recall_score": partial(recall_score, average="macro"),
 
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
@@ -111,146 +95,96 @@ ALL_METRICS = {
 }
 
 METRICS_WITH_NORMALIZE_OPTION = {
-    "accuracy_score ": lambda y1, y2, normalize:
-    accuracy_score(y1, y2, normalize=normalize),
-    "jaccard_similarity_score": lambda y1, y2, normalize:
-    jaccard_similarity_score(y1, y2, normalize=normalize),
-    "zero_one_loss": lambda y1, y2, normalize:
-    zero_one_loss(y1, y2, normalize=normalize),
+    "accuracy_score ": accuracy_score,
+    "jaccard_similarity_score": jaccard_similarity_score,
+    "zero_one_loss": zero_one_loss,
 }
 
 MULTILABELS_METRICS = {
     "accuracy_score": accuracy_score,
-    "unormalized_accuracy_score":
-    lambda y1, y2: accuracy_score(y1, y2, normalize=False),
+    "unormalized_accuracy_score": partial(accuracy_score, normalize=False),
 
     "hamming_loss": hamming_loss,
 
     "jaccard_similarity_score": jaccard_similarity_score,
     "unormalized_jaccard_similarity_score":
-    lambda y1, y2: jaccard_similarity_score(y1, y2, normalize=False),
+    partial(jaccard_similarity_score, normalize=False),
 
     "zero_one_loss": zero_one_loss,
-    "unnormalized_zero_one_loss":
-    lambda y1, y2: zero_one_loss(y1, y2, normalize=False),
+    "unnormalized_zero_one_loss": partial(zero_one_loss, normalize=False),
 
-    "weighted_f0.5_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="weighted", beta=0.5),
-    "weighted_f1_score":
-    lambda y1, y2: f1_score(y1, y2, average="weighted"),
-    "weighted_f2_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="weighted", beta=2),
-    "weighted_precision_score":
-    lambda y1, y2: precision_score(y1, y2, average="weighted"),
-    "weighted_recall_score":
-    lambda y1, y2: recall_score(y1, y2, average="weighted"),
+    "weighted_f0.5_score": partial(fbeta_score, average="weighted", beta=0.5),
+    "weighted_f1_score": partial(f1_score, average="weighted"),
+    "weighted_f2_score": partial(fbeta_score, average="weighted", beta=2),
+    "weighted_precision_score": partial(precision_score, average="weighted"),
+    "weighted_recall_score": partial(recall_score, average="weighted"),
 
-    "samples_f0.5_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="samples", beta=0.5),
-    "samples_f1_score":
-    lambda y1, y2: f1_score(y1, y2, average="samples"),
-    "samples_f2_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="samples", beta=2),
-    "samples_precision_score":
-    lambda y1, y2: precision_score(y1, y2, average="samples"),
-    "samples_recall_score":
-    lambda y1, y2: recall_score(y1, y2, average="samples"),
+    "samples_f0.5_score": partial(fbeta_score, average="samples", beta=0.5),
+    "samples_f1_score": partial(f1_score, average="samples"),
+    "samples_f2_score": partial(fbeta_score, average="samples", beta=2),
+    "samples_precision_score": partial(precision_score, average="samples"),
+    "samples_recall_score": partial(recall_score, average="samples"),
 
-    "micro_f0.5_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="micro", beta=0.5),
-    "micro_f1_score":
-    lambda y1, y2: f1_score(y1, y2, average="micro"),
-    "micro_f2_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="micro", beta=2),
-    "micro_precision_score":
-    lambda y1, y2: precision_score(y1, y2, average="micro"),
-    "micro_recall_score":
-    lambda y1, y2: recall_score(y1, y2, average="micro"),
+    "micro_f0.5_score": partial(fbeta_score, average="micro", beta=0.5),
+    "micro_f1_score": partial(f1_score, average="micro"),
+    "micro_f2_score": partial(fbeta_score, average="micro", beta=2),
+    "micro_precision_score": partial(precision_score, average="micro"),
+    "micro_recall_score": partial(recall_score, average="micro"),
 
-    "macro_f0.5_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="macro", beta=0.5),
-    "macro_f1_score":
-    lambda y1, y2: f1_score(y1, y2, average="macro"),
-    "macro_f2_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="macro", beta=2),
-    "macro_precision_score":
-    lambda y1, y2: precision_score(y1, y2, average="macro"),
-    "macro_recall_score":
-    lambda y1, y2: recall_score(y1, y2, average="macro"),
+    "macro_f0.5_score": partial(fbeta_score, average="macro", beta=0.5),
+    "macro_f1_score": partial(f1_score, average="macro"),
+    "macro_f2_score": partial(fbeta_score, average="macro", beta=2),
+    "macro_precision_score": partial(precision_score, average="macro"),
+    "macro_recall_score": partial(recall_score, average="macro"),
 }
 
 MULTILABELS_METRICS_WITH_POS_LABELS = {
     "jaccard_similarity_score": jaccard_similarity_score,
-    "unormalized_jaccard_similarity_score": lambda y1, y2, pos_label=1:
-    jaccard_similarity_score(y1, y2, pos_label=pos_label, normalize=False),
+    "unormalized_jaccard_similarity_score":
+    partial(jaccard_similarity_score, normalize=False),
 
-    "weighted_f0.5_score": lambda y1, y2, pos_label=1:
-    fbeta_score(y1, y2, pos_label=pos_label, average="weighted", beta=0.5),
-    "weighted_f1_score": lambda y1, y2, pos_label=1:
-    f1_score(y1, y2, pos_label=pos_label, average="weighted"),
-    "weighted_f2_score": lambda y1, y2, pos_label=1:
-    fbeta_score(y1, y2, pos_label=pos_label, average="weighted", beta=2),
-    "weighted_precision_score": lambda y1, y2, pos_label=1:
-    precision_score(y1, y2, pos_label=pos_label, average="weighted"),
-    "weighted_recall_score": lambda y1, y2, pos_label=1:
-    recall_score(y1, y2, pos_label=pos_label, average="weighted"),
+    "weighted_f0.5_score": partial(fbeta_score, average="weighted", beta=0.5),
+    "weighted_f1_score": partial(f1_score, average="weighted"),
+    "weighted_f2_score": partial(fbeta_score, average="weighted", beta=2),
+    "weighted_precision_score": partial(precision_score, average="weighted"),
+    "weighted_recall_score": partial(recall_score, average="weighted"),
 
-    "samples_f0.5_score": lambda y1, y2, pos_label=1:
-    fbeta_score(y1, y2, pos_label=pos_label, average="samples", beta=0.5),
-    "samples_f1_score": lambda y1, y2, pos_label=1:
-    f1_score(y1, y2, pos_label=pos_label, average="samples"),
-    "samples_f2_score": lambda y1, y2, pos_label=1:
-    fbeta_score(y1, y2, pos_label=pos_label, average="samples", beta=2),
-    "samples_precision_score": lambda y1, y2, pos_label=1:
-    precision_score(y1, y2, pos_label=pos_label, average="samples"),
-    "samples_recall_score": lambda y1, y2, pos_label=1:
-    recall_score(y1, y2, pos_label=pos_label, average="samples"),
+    "samples_f0.5_score": partial(fbeta_score, average="samples", beta=0.5),
+    "samples_f1_score": partial(f1_score, average="samples"),
+    "samples_f2_score": partial(fbeta_score, average="samples", beta=2),
+    "samples_precision_score": partial(precision_score, average="samples"),
+    "samples_recall_score": partial(recall_score, average="samples"),
 
-    "micro_f0.5_score": lambda y1, y2, pos_label=1:
-    fbeta_score(y1, y2, pos_label=pos_label, average="micro", beta=0.5),
-    "micro_f1_score": lambda y1, y2, pos_label=1:
-    f1_score(y1, y2, pos_label=pos_label, average="micro"),
-    "micro_f2_score": lambda y1, y2, pos_label=1:
-    fbeta_score(y1, y2, pos_label=pos_label, average="micro", beta=2),
-    "micro_precision_score": lambda y1, y2, pos_label=1:
-    precision_score(y1, y2, pos_label=pos_label, average="micro"),
-    "micro_recall_score": lambda y1, y2, pos_label=1:
-    recall_score(y1, y2, pos_label=pos_label, average="micro"),
+    "micro_f0.5_score": partial(fbeta_score, average="micro", beta=0.5),
+    "micro_f1_score": partial(f1_score, average="micro"),
+    "micro_f2_score": partial(fbeta_score, average="micro", beta=2),
+    "micro_precision_score": partial(precision_score, average="micro"),
+    "micro_recall_score": partial(recall_score, average="micro"),
 
-    "macro_f0.5_score": lambda y1, y2, pos_label=1:
-    fbeta_score(y1, y2, pos_label=pos_label, average="macro", beta=0.5),
-    "macro_f1_score": lambda y1, y2, pos_label=1:
-    f1_score(y1, y2, pos_label=pos_label, average="macro"),
-    "macro_f2_score": lambda y1, y2, pos_label=1:
-    fbeta_score(y1, y2, pos_label=pos_label, average="macro", beta=2),
-    "macro_precision_score": lambda y1, y2, pos_label=1:
-    precision_score(y1, y2, pos_label=pos_label, average="macro"),
-    "macro_recall_score": lambda y1, y2, pos_label=1:
-    recall_score(y1, y2, pos_label=pos_label, average="macro"),
+    "macro_f0.5_score": partial(fbeta_score, average="macro", beta=0.5),
+    "macro_f1_score": partial(f1_score, average="macro"),
+    "macro_f2_score": partial(fbeta_score, average="macro", beta=2),
+    "macro_precision_score": partial(precision_score, average="macro"),
+    "macro_recall_score": partial(recall_score, average="macro"),
 }
 
 SYMETRIC_METRICS = {
     "accuracy_score": accuracy_score,
-    "unormalized_accuracy_score":
-    lambda y1, y2: accuracy_score(y1, y2, normalize=False),
+    "unormalized_accuracy_score": partial(accuracy_score, normalize=False),
 
     "hamming_loss": hamming_loss,
 
     "jaccard_similarity_score": jaccard_similarity_score,
     "unormalized_jaccard_similarity_score":
-    lambda y1, y2: jaccard_similarity_score(y1, y2, normalize=False),
+    partial(jaccard_similarity_score, normalize=False),
 
     "zero_one_loss": zero_one_loss,
-    "unnormalized_zero_one_loss":
-    lambda y1, y2: zero_one_loss(y1, y2, normalize=False),
+    "unnormalized_zero_one_loss": partial(zero_one_loss, normalize=False),
 
     "f1_score": f1_score,
-    "weighted_f1_score":
-    lambda y1, y2: f1_score(y1, y2, average="weighted"),
-    "micro_f1_score":
-    lambda y1, y2: f1_score(y1, y2, average="micro"),
-    "macro_f1_score":
-    lambda y1, y2: f1_score(y1, y2, average="macro"),
+    "weighted_f1_score": partial(f1_score, average="weighted"),
+    "micro_f1_score": partial(f1_score, average="micro"),
+    "macro_f1_score": partial(f1_score, average="macro"),
 
     "matthews_corrcoef_score": matthews_corrcoef,
     "mean_absolute_error": mean_absolute_error,
@@ -263,35 +197,23 @@ NOT_SYMETRIC_METRICS = {
 
     "precision_score": precision_score,
     "recall_score": recall_score,
-    "f2_score": lambda y1, y2: fbeta_score(y1, y2, beta=2),
-    "f0.5_score": lambda y1, y2: fbeta_score(y1, y2, beta=0.5),
+    "f2_score": partial(fbeta_score, beta=2),
+    "f0.5_score": partial(fbeta_score, beta=0.5),
 
-    "weighted_f0.5_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="weighted", beta=0.5),
-    "weighted_f2_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="weighted", beta=2),
-    "weighted_precision_score":
-    lambda y1, y2: precision_score(y1, y2, average="weighted"),
-    "weighted_recall_score":
-    lambda y1, y2: recall_score(y1, y2, average="weighted"),
+    "weighted_f0.5_score": partial(fbeta_score, average="weighted", beta=0.5),
+    "weighted_f2_score": partial(fbeta_score, average="weighted", beta=2),
+    "weighted_precision_score": partial(precision_score, average="weighted"),
+    "weighted_recall_score": partial(recall_score, average="weighted"),
 
-    "micro_f0.5_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="micro", beta=0.5),
-    "micro_f2_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="micro", beta=2),
-    "micro_precision_score":
-    lambda y1, y2: precision_score(y1, y2, average="micro"),
-    "micro_recall_score":
-    lambda y1, y2: recall_score(y1, y2, average="micro"),
+    "micro_f0.5_score": partial(fbeta_score, average="micro", beta=0.5),
+    "micro_f2_score": partial(fbeta_score, average="micro", beta=2),
+    "micro_precision_score": partial(precision_score, average="micro"),
+    "micro_recall_score": partial(recall_score, average="micro"),
 
-    "macro_f0.5_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="macro", beta=0.5),
-    "macro_f2_score":
-    lambda y1, y2: fbeta_score(y1, y2, average="macro", beta=2),
-    "macro_precision_score":
-    lambda y1, y2: precision_score(y1, y2, average="macro"),
-    "macro_recall_score":
-    lambda y1, y2: recall_score(y1, y2, average="macro"),
+    "macro_f0.5_score": partial(fbeta_score, average="macro", beta=0.5),
+    "macro_f2_score": partial(fbeta_score, average="macro", beta=2),
+    "macro_precision_score": partial(precision_score, average="macro"),
+    "macro_recall_score": partial(recall_score, average="macro"),
 }
 
 THRESHOLDED_METRICS = {
