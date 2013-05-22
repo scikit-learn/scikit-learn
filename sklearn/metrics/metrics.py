@@ -1378,7 +1378,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     0.54...
     >>> fbeta_score(y_true, y_pred, average='samples', beta=0.5)
     ... # doctest: +ELLIPSIS
-    0.66...
+    0.779...
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
     ... # doctest: +ELLIPSIS
     array([ 0.38...,  0.71...,  0.38...])
@@ -1398,8 +1398,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     ... # doctest: +ELLIPSIS
     0.66...
     >>> fbeta_score(y_true, y_pred, average='samples', beta=0.5)
-    ... # doctest: +ELLIPSIS
-    0.42...
+    0.5
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
     array([ 1.,  1.,  0.])
 
@@ -1722,7 +1721,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
             precision = size_inter / size_true
             recall = size_inter / size_pred
-            f_score = ((1 + beta2 ** 2) * size_inter /
+            f_score = ((1 + beta2) * size_inter /
                        (beta2 * size_pred + size_true))
         finally:
             np.seterr(**old_err_settings)
