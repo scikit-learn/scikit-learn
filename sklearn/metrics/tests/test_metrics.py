@@ -1653,8 +1653,8 @@ def test_precision_recall_f1_score_with_an_empty_prediction():
         # |h(x_i) inter y_i | = [0, 0, 2]
         # |y_i| = [1, 1, 2]
         # |h(x_i)| = [0, 1, 2]
-        assert_almost_equal(p, 1 / 3)
-        assert_almost_equal(r, 2 / 3)
+        assert_almost_equal(p, 2 / 3)
+        assert_almost_equal(r, 1 / 3)
         assert_almost_equal(f, 1 / 3)
         assert_equal(s, None)
         assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
