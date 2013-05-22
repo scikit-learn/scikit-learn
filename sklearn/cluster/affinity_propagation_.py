@@ -220,7 +220,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
     Notes
     -----
-    See examples/plot_affinity_propagation.py for an example.
+    See examples/cluster/plot_affinity_propagation.py for an example.
 
     The algorithmic complexity of affinity propagation is quadratic
     in the number of points.
