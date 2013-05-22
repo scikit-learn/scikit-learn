@@ -1584,6 +1584,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     if beta <= 0:
         raise ValueError("beta should be >0 in the F-beta score")
 
+    label_order = labels  # save this for later
     labels, y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred,
                                                         ravel=True)
 
@@ -1721,6 +1722,12 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         recall = np.average(recall, weights=weights)
         f_score = np.average(f_score, weights=weights)
         true_sum = None  # return no support
+    elif label_order is not None:
+        indices = np.searchsorted(labels, label_order)
+        precision = precision[indices]
+        recall = recall[indices]
+        f_score = f_score[indices]
+        true_sum = true_sum[indices]
 
     return precision, recall, f_score, true_sum
 
