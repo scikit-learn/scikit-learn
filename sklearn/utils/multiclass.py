@@ -120,7 +120,9 @@ def is_multilabel(y):
     False
     >>> is_multilabel([[1], [0, 2], []])
     True
-    >>> is_multilabel(np.array([[1, 0], [0, 0]]))
+    >>> is_multilabel(np.array([np.array([1]), np.array([0, 2])]))
+    True
+    >>> is_multilabel(np.array([[1, 0], [0, 0]]))  # label indicator matrix
     True
     >>> is_multilabel(np.array([[1], [0], [0]]))
     False
@@ -130,5 +132,49 @@ def is_multilabel(y):
     """
     # the explicit check for ndarray is for forward compatibility; future
     # versions of Numpy might want to register ndarray as a Sequence
-    return (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) and
-            not isinstance(y[0], string_types) or is_label_indicator_matrix(y))
+    if getattr(y, 'ndim', 1) != 1:
+        return is_label_indicator_matrix(y)
+    return ((isinstance(y[0], Sequence) and not isinstance(y[0], string_types))
+            or isinstance(y[0], np.ndarray))
+
+
+def multilabel_as_array(y):
+    """Transform a sequence of sequences into an array of sequences
+
+    Parameters
+    ----------
+    y : sequence or array of sequences
+        Target values. In the multilabel case the nested sequences can
+        have variable lengths. Label indicator matrices are not supported.
+
+    Returns
+    -------
+    out : numpy array of shape [len(y)]
+        The elements of the returned array correspond to the elements of y.
+        If y is an array, it is returned without copying.
+    """
+    if hasattr(y, '__array__'):
+        return np.asarray(y)
+    out = np.empty(len(y), dtype=object)
+    out[:] = y
+    return out
+
+
+def multilabel_vectorize(func, otypes='O'):
+    """Vectorize a function suitably for sequence-of-sequence input and output
+
+    Parameters
+    ----------
+    func : a function to vectorize
+    otypes : the dtypes of the output arrays, default objects
+
+    Returns
+    -------
+    out : callable
+        The returned function will vectorize `func` over its arguments, first
+        ensuring they are arrays of sequences.
+    """
+    vfunc = np.vectorize(func, otypes=otypes)
+    def wrapper(*args):
+        return vfunc(*[multilabel_as_array(arg) for arg in args])
+    return wrapper
