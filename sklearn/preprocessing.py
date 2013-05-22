@@ -4,6 +4,7 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD 3 clause
 
+import functools
 import warnings
 import numbers
 
@@ -19,6 +20,7 @@ from .utils.fixes import unique
 from .utils.multiclass import unique_labels
 from .utils.multiclass import is_multilabel
 from .utils.multiclass import is_label_indicator_matrix
+from .utils.multiclass import multilabel_vectorize
 
 from .utils.sparsefuncs import inplace_csr_row_normalize_l1
 from .utils.sparsefuncs import inplace_csr_row_normalize_l2
@@ -829,6 +831,15 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     >>> list(le.inverse_transform([2, 2, 1]))
     ['tokyo', 'tokyo', 'paris']
 
+    It can also be used to transform multi-label sequences of sequences:
+
+    >>> le = preprocessing.LabelEncoder()
+    >>> targets = [["paris", "tokyo"], ["amsterdam", "paris"]]
+    >>> le.fit_transform(targets)
+    array([[1 2], [0 1]], dtype=object)
+    >>> list(map(list, le.inverse_transform([[1, 2], [0, 1]])))
+    [['paris', 'tokyo'], ['amsterdam', 'paris']]
+
     """
 
     def _check_fitted(self):
@@ -847,7 +858,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         self : returns an instance of self.
         """
-        self.classes_ = np.unique(y)
+        self.classes_ = unique_labels(y)
         return self
 
     def fit_transform(self, y):
@@ -862,6 +873,9 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         -------
         y : array-like of shape [n_samples]
         """
+        if is_multilabel(y):
+            self.fit(y)
+            return self.transform(y)
         self.classes_, y = unique(y, return_inverse=True)
         return y
 
@@ -878,12 +892,19 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : array-like of shape [n_samples]
         """
         self._check_fitted()
+        if is_multilabel(y):
+            if is_label_indicator_matrix(y):
+                raise ValueError(
+                    '{} does not support label indicator matrices'.format(
+                        self.__class__.__name__))
+            return multilabel_vectorize(self._transform)(y)
+            
+        return self._transform(y)
 
-        classes = np.unique(y)
-        if len(np.intersect1d(classes, self.classes_)) < len(classes):
-            diff = np.setdiff1d(classes, self.classes_)
+    def _transform(self, y):
+        diff = np.setdiff1d(y, self.classes_)
+        if len(diff):
             raise ValueError("y contains new labels: %s" % str(diff))
-
         return np.searchsorted(self.classes_, y)
 
     def inverse_transform(self, y):
@@ -900,6 +921,10 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         """
         self._check_fitted()
 
+        if is_multilabel(y):
+            # np.vectorize does not work with np.ndarray.take!
+            take = functools.partial(np.take, self.classes_)
+            return multilabel_vectorize(take)(y)
         y = np.asarray(y)
         return self.classes_[y]
 
