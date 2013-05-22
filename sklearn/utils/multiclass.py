@@ -146,12 +146,48 @@ def check_multilabel_type(*ys):
     type_name : string or False
         Returns False if none of `ys` is multilabel. Returns 'matrix' if all
         are label indicator matrices, 'sos' if all are sequence-of-sequences,
-        and 'mixed' if both occur. If all are label indicator matrices, but
-        not all have the same shape, or not all data has the same number of
-        samples, raises a `ValueError`.
+        and 'mixed' if both occur.
+
+    Any of the following raise `ValueError`s:
+
+        * All `ys` are label indicator matrices, but not all have the same
+          shape;
+        * All `ys` are multilabel but not all have the same sample size; or
+        * Some `ys` are multilabel and some are not.
 
     Examples:
-    >>> from 
+    >>> from sklearn.utils.multiclass import check_multilabel_type
+    >>> import numpy as np
+    >>> from nose.tools import assert_raises
+    >>> mat1 = np.array([[0, 1], [1, 0]])
+    >>> mat_long = np.array([[0, 1], [1, 0], [1, 0]])
+    >>> sos1 = [[0], [0, 2]]
+    >>> sos2 = np.array([[0, 2], [1]])
+    >>> sos_long = [[0], [1], [2]]
+    >>> other = [1, 2, 3]
+    >>> check_multilabel_type(mat1)
+    'matrix'
+    >>> check_multilabel_type(mat_long)
+    'matrix'
+    >>> check_multilabel_type(sos1)
+    'sos'
+    >>> check_multilabel_type(sos2)
+    'sos'
+    >>> check_multilabel_type(sos_long)
+    'sos'
+    >>> check_multilabel_type(sos1, sos2)
+    'sos'
+    >>> check_multilabel_type(mat1, mat1)
+    'matrix'
+    >>> check_multilabel_type(mat1, sos1)
+    'mixed'
+    >>> check_multilabel_type(other)
+    False
+    >>> assert_raises(ValueError, check_multilabel_type, mat1, mat_long)
+    >>> assert_raises(ValueError, check_multilabel_type, sos1, mat_long)
+    >>> assert_raises(ValueError, check_multilabel_type, sos1, sos_long)
+    >>> assert_raises(ValueError, check_multilabel_type, other, sos1)
+    >>> assert_raises(ValueError, check_multilabel_type, other, mat1)
     """
     if not ys:
         raise ValueError('Need at least one set of targets to check')
@@ -161,7 +197,7 @@ def check_multilabel_type(*ys):
             raise ValueError('Indicator matrices are not all the same shape')
         return 'matrix'
     
-    if all(is_multilabel(y) for y in ys[1:]):
+    if all(is_multilabel(y) for y in ys):
         if len(set(getattr(y, 'shape', (len(y),))[0] for y in ys)) > 1:
             raise ValueError('Multilabel targets have different sample sizes')
         if any(is_label_indicator_matrix(y) for y in ys):
