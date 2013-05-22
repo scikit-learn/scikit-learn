@@ -50,7 +50,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='euclidean',
 
     Notes
     -----
-    See examples/plot_dbscan.py for an example.
+    See examples/cluster/plot_cluster_comparison.py for an example.
 
     References
     ----------
@@ -147,7 +147,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
     Notes
     -----
-    See examples/plot_dbscan.py for an example.
+    See examples/cluster/plot_cluster_comparison.py for an example.
 
     References
     ----------

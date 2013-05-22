@@ -437,7 +437,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 
     Notes
     -----
-    See examples/linear_model/plot_randomized_lasso.py for an example.
+    See examples/linear_model/plot_sparse_recovery.py for an example.
 
     References
     ----------
@@ -565,7 +565,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
 
     Notes
     -----
-    See examples/linear_model/plot_randomized_lasso.py for an example.
+    See examples/linear_model/plot_sparse_recovery.py for an example.
     """
     rng = check_random_state(random_state)
 
