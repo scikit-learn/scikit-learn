@@ -213,12 +213,13 @@ class ElasticNet(LinearModel, RegressorMixin):
             precompute = np.dot(X.T, X)
         self.precompute = precompute
 
+        self.coef_ = coef_init  # XXX: even if warm_start = True?
         for params in param_iter:
             self.set_params(**params)
             yield params, self.fit(X, y, Xy, self.coef_)
 
     def iter_fits(self, param_iter, X, y, Xy=None, coef_init=None):
-        if self.precompute:
+        if self.precompute is not None:
             if sparse.isspmatrix(X):
                 warnings.warn("precompute is ignored for sparse data")
 
