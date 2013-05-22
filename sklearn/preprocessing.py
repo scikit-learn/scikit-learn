@@ -897,7 +897,9 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
                 raise ValueError(
                     '{} does not support label indicator matrices'.format(
                         self.__class__.__name__))
-            return multilabel_vectorize(self._transform)(y)
+            y = multilabel_vectorize(self._transform)(y)
+            # remove redundant labels:
+            return multilabel_vectorize(np.unique)(y)
             
         return self._transform(y)
 

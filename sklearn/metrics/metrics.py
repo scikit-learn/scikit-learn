@@ -1599,8 +1599,9 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             raise ValueError("Example-based precision, recall, fscore is "
                              "not meaningful outside multilabel"
                              "classification. See the accuracy_score instead.")
-        y_true = multilabel_as_array(y_true)
-        y_pred = multilabel_as_array(y_pred)
+        remove_dups = multilabel_vectorize(np.unique)
+        y_true = remove_dups(multilabel_as_array(y_true))
+        y_pred = remove_dups(multilabel_as_array(y_pred))
         intersect_all = multilabel_vectorize(np.intersect1d)
         len_all = multilabel_vectorize(len, otypes='i')
         tp_sum = len_all(intersect_all(y_true, y_pred))
@@ -1626,9 +1627,15 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             pos_bins = y_pred
             true_bins = y_true
 
-        tp_sum = np.bincount(tp_bins, minlength=len(labels))
-        pos_sum = np.bincount(pos_bins, minlength=len(labels))
-        true_sum = np.bincount(true_bins, minlength=len(labels))
+        if len(tp_bins):
+            tp_sum = np.bincount(tp_bins, minlength=len(labels))
+        else:
+            # Pathological case
+            true_sum = pos_sum = tp_sum = np.zeros(len(labels))
+        if len(pos_bins):
+            pos_sum = np.bincount(pos_bins, minlength=len(labels))
+        if len(true_bins):
+            true_sum = np.bincount(true_bins, minlength=len(labels))
 
     ### Select labels to keep ###
 
@@ -1643,10 +1650,12 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                               "in release 0.16. Use neg_label instead.",
                               DeprecationWarning)
 
-                if pos_label not in labels:
+                if pos_label is None:
+                    neg_label = None
+                elif pos_label not in labels:
                     raise ValueError("pos_label=%r is not a valid label: %r" %
                                      (pos_label, labels))
-                if pos_label == neg_label:
+                elif pos_label == neg_label:
                     neg_label = labels[1]
             elif neg_label == 1:
                 raise ValueError("neg_label was guessed to be 1 which is the "
@@ -1695,6 +1704,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     if average == 'weighted':
         weights = true_sum
+        if weights.sum() == 0:
+            return 0, 0, 0, None
     else:
         weights = None
 
