@@ -1378,7 +1378,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     0.54...
     >>> fbeta_score(y_true, y_pred, average='samples', beta=0.5)
     ... # doctest: +ELLIPSIS
-    0.779...
+    0.49...
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
     ... # doctest: +ELLIPSIS
     array([ 0.38...,  0.71...,  0.38...])
@@ -1661,7 +1661,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     (0.499..., 1.0, 0.65..., None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='samples')
     ... # doctest: +ELLIPSIS
-    (1.0, 0.44..., 0.59..., None)
+    (0.44..., 1.0, 0.59..., None)
 
     and with a list of labels format:
 
@@ -1679,7 +1679,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     (0.66..., 0.66..., 0.66..., None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='samples')
     ... # doctest: +ELLIPSIS
-    (0.5, 1.0, 0.5, None)
+    (1.0, 0.5, 0.5, None)
 
     """
     if beta <= 0:
@@ -1711,24 +1711,24 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 size_true[i] = len(true_set)
         else:
             raise ValueError("Example-based precision, recall, fscore is "
-                             "not meaning full outside multilabe"
-                             "classification. See the accuracy_score instead.")
+                             "not meaning full outside multilabel"
+                             "classification. Use accuracy_score instead.")
 
         try:
             # oddly, we may get an "invalid" rather than a "divide" error
             # here
             old_err_settings = np.seterr(divide='ignore', invalid='ignore')
 
-            precision = size_inter / size_true
-            recall = size_inter / size_pred
+            precision = size_inter / size_pred
+            recall = size_inter / size_true
             f_score = ((1 + beta2) * size_inter /
-                       (beta2 * size_pred + size_true))
+                       (beta2 * size_true + size_pred))
         finally:
             np.seterr(**old_err_settings)
 
-        precision[size_true == 0] = 1.0
-        recall[size_pred == 0] = 1.0
-        f_score[(beta2 * size_pred + size_true) == 0] = 1.0
+        precision[size_pred == 0] = 1.0
+        recall[size_true == 0] = 1.0
+        f_score[(beta2 * size_true + size_pred) == 0] = 1.0
 
         precision = np.mean(precision)
         recall = np.mean(recall)
@@ -1909,7 +1909,8 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     ... # doctest: +ELLIPSIS
     0.49...
     >>> precision_score(y_true, y_pred, average='samples')
-    1.0
+    ... # doctest: +ELLIPSIS
+    0.44...
     >>> precision_score(y_true, y_pred, average=None)
     ... # doctest: +ELLIPSIS
     array([ 0.33...,  0.66...,  0.33...])
@@ -1921,14 +1922,12 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     >>> y_pred = [(1, 2), tuple()]
     >>> precision_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
     0.66...
-    >>> precision_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+    >>> precision_score(y_true, y_pred, average='micro') # doctest: +ELLIPSIS
     1.0
-    >>> precision_score(y_true, y_pred, average='weighted')
-    ... # doctest: +ELLIPSIS
+    >>> precision_score(y_true, y_pred, average='weighted') # doctest: +ELLIPSIS
     0.66...
     >>> precision_score(y_true, y_pred, average='samples')
-    ... # doctest: +ELLIPSIS
-    0.5
+    1.0
     >>> precision_score(y_true, y_pred, average=None)
     array([ 1.,  1.,  0.])
 
@@ -2028,10 +2027,10 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     1.0
     >>> recall_score(y_true, y_pred, average='micro')
     1.0
-    >>> recall_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+    >>> recall_score(y_true, y_pred, average='weighted')
     1.0
-    >>> recall_score(y_true, y_pred, average='samples')  # doctest: +ELLIPSIS
-    0.44...
+    >>> recall_score(y_true, y_pred, average='samples')
+    1.0
     >>> recall_score(y_true, y_pred, average=None)
     array([ 1.,  1.,  1.])
 
@@ -2047,7 +2046,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     >>> recall_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
     0.66...
     >>> recall_score(y_true, y_pred, average='samples')
-    1.0
+    0.5
     >>> recall_score(y_true, y_pred, average=None)
     array([ 1.,  1.,  0.])
     """
