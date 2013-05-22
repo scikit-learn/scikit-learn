@@ -27,7 +27,7 @@ from numpy.core.umath_tests import inner1d
 from .base import BaseEnsemble
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals import six
-from ..externals.six.moves import xrange
+from ..externals.six.moves import xrange, zip
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..tree.tree import BaseDecisionTree
 from ..utils import check_arrays, check_random_state
@@ -59,8 +59,6 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             n_estimators=n_estimators,
             estimator_params=estimator_params)
 
-        self.estimator_weights_ = None
-        self.estimator_errors_ = None
         self.learning_rate = learning_rate
 
     def fit(self, X, y, sample_weight=None):
@@ -147,6 +145,10 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 sample_weight /= sample_weight_sum
 
         return self
+
+    def _check_fitted(self):
+        if not hasattr(self, "estimators_"):
+            raise ValueError("call fit first")
 
     @abstractmethod
     def _boost(self, iboost, X, y, sample_weight, X_argsorted=None):
@@ -369,7 +371,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                             "subclass of ClassifierMixin")
 
         # Check that algorithm is supported
-        if self.algorithm != 'SAMME' and self.algorithm != 'SAMME.R':
+        if self.algorithm not in ('SAMME', 'SAMME.R'):
             raise ValueError("algorithm %s is not supported"
                              % self.algorithm)
 
@@ -548,8 +550,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     def predict(self, X):
         """Predict classes for X.
 
-        The predicted class of an input sample is computed
-        as the weighted mean prediction of the classifiers in the ensemble.
+        The predicted class of an input sample is computed as the weighted mean
+        prediction of the classifiers in the ensemble.
 
         Parameters
         ----------
@@ -571,8 +573,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     def staged_predict(self, X):
         """Return staged predictions for X.
 
-        The predicted class of an input sample is computed
-        as the weighted mean prediction of the classifiers in the ensemble.
+        The predicted class of an input sample is computed as the weighted mean
+        prediction of the classifiers in the ensemble.
 
         This generator method yields the ensemble prediction after each
         iteration of boosting and therefore allows monitoring, such as to
@@ -618,33 +620,23 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             values closer to -1 or 1 mean more like the first or second
             class in ``classes_``, respectively.
         """
-        if not self.estimators_:
-            raise RuntimeError(
-                ("{0} is not initialized. "
-                 "Perform a fit first").format(self.__class__.__name__))
+        self._check_fitted()
+        X = np.asarray(X)
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
         pred = None
-        norm = 0.
 
-        for weight, estimator in zip(self.estimator_weights_,
-                                     self.estimators_):
+        if self.algorithm == 'SAMME.R':
+            # The weights are all 1. for SAMME.R
+            pred = sum(_samme_proba(estimator, n_classes, X)
+                       for estimator in self.estimators_)
+        else:   # self.algorithm == "SAMME"
+            pred = sum((estimator.predict(X) == classes).T * w
+                       for estimator, w in zip(self.estimators_,
+                                               self.estimator_weights_))
 
-            norm += weight
-
-            if self.algorithm == 'SAMME.R':
-                current_pred = _samme_proba(estimator, n_classes, X)
-            else:  # elif self.algorithm == "SAMME":
-                current_pred = estimator.predict(X)
-                current_pred = (current_pred == classes).T * weight
-
-            if pred is None:
-                pred = current_pred
-            else:
-                pred += current_pred
-
-        pred /= norm
+        pred /= self.estimator_weights_.sum()
         if n_classes == 2:
             pred[:, 0] *= -1
             return pred.sum(axis=1)
@@ -671,10 +663,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             values closer to -1 or 1 mean more like the first or second
             class in ``classes_``, respectively.
         """
-        if not self.estimators_:
-            raise RuntimeError(
-                ("{0} is not initialized. "
-                 "Perform a fit first").format(self.__class__.__name__))
+        self._check_fitted()
+        X = np.asarray(X)
 
         n_classes = self.n_classes_
         classes = self.classes_[:, np.newaxis]
@@ -683,10 +673,10 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         for weight, estimator in zip(self.estimator_weights_,
                                      self.estimators_):
-
             norm += weight
 
             if self.algorithm == 'SAMME.R':
+                # The weights are all 1. for SAMME.R
                 current_pred = _samme_proba(estimator, n_classes, X)
             else:  # elif self.algorithm == "SAMME":
                 current_pred = estimator.predict(X)
@@ -708,8 +698,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         """Predict class probabilities for X.
 
         The predicted class probabilities of an input sample is computed as
-        the weighted mean predicted class probabilities
-        of the classifiers in the ensemble.
+        the weighted mean predicted class probabilities of the classifiers
+        in the ensemble.
 
         Parameters
         ----------
@@ -722,19 +712,19 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
             The class probabilities of the input samples. The order of
             outputs is the same of that of the `classes_` attribute.
         """
+        X = np.asarray(X)
         n_classes = self.n_classes_
-        proba = None
 
-        for weight, estimator in zip(self.estimator_weights_,
-                                     self.estimators_):
+        if self.algorithm == 'SAMME.R':
+            # The weights are all 1. for SAMME.R
+            proba = sum(_samme_proba(estimator, n_classes, X)
+                        for estimator in self.estimators_)
+        else:   # self.algorithm == "SAMME"
+            proba = sum(estimator.predict_proba(X) * w
+                        for estimator, w in zip(self.estimators_,
+                                                self.estimator_weights_))
 
-            current_proba = _samme_proba(estimator, n_classes, X)
-
-            if proba is None:
-                proba = current_proba
-            else:
-                proba += current_proba
-
+        proba /= self.estimator_weights_.sum()
         proba = np.exp((1. / (n_classes - 1)) * proba)
         normalizer = proba.sum(axis=1)[:, np.newaxis]
         normalizer[normalizer == 0.0] = 1.0
@@ -746,8 +736,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         """Predict class probabilities for X.
 
         The predicted class probabilities of an input sample is computed as
-        the weighted mean predicted class probabilities
-        of the classifiers in the ensemble.
+        the weighted mean predicted class probabilities of the classifiers
+        in the ensemble.
 
         This generator method yields the ensemble predicted class probabilities
         after each iteration of boosting and therefore allows monitoring, such
@@ -767,18 +757,24 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         """
         n_classes = self.n_classes_
         proba = None
+        norm = 0.
 
         for weight, estimator in zip(self.estimator_weights_,
                                      self.estimators_):
+            norm += weight
 
-            current_proba = _samme_proba(estimator, n_classes, X)
+            if self.algorithm == 'SAMME.R':
+                # The weights are all 1. for SAMME.R
+                current_proba = _samme_proba(estimator, n_classes, X)
+            else:  # elif self.algorithm == "SAMME":
+                current_proba = estimator.predict_proba(X) * weight
 
             if proba is None:
                 proba = current_proba
             else:
                 proba += current_proba
 
-            real_proba = np.exp((1. / (n_classes - 1)) * proba)
+            real_proba = np.exp((1. / (n_classes - 1)) * (proba / norm))
             normalizer = real_proba.sum(axis=1)[:, np.newaxis]
             normalizer[normalizer == 0.0] = 1.0
             real_proba /= normalizer
@@ -789,8 +785,8 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         """Predict class log-probabilities for X.
 
         The predicted class log-probabilities of an input sample is computed as
-        the weighted mean predicted class log-probabilities
-        of the classifiers in the ensemble.
+        the weighted mean predicted class log-probabilities of the classifiers
+        in the ensemble.
 
         Parameters
         ----------
@@ -984,7 +980,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             error_vect /= error_vect.max()
 
         if self.loss == 'square':
-            error_vect *= error_vect
+            error_vect **= 2
         elif self.loss == 'exponential':
             error_vect = 1. - np.exp(- error_vect)
 
@@ -1013,15 +1009,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         return sample_weight, estimator_weight, estimator_error
 
-    def _get_median_predict(self, X, limit=-1):
-        if not self.estimators_:
-            raise RuntimeError(
-                ("{0} is not initialized. "
-                 "Perform a fit first").format(self.__class__.__name__))
-
-        if limit < 1:
-            limit = len(self.estimators_)
-
+    def _get_median_predict(self, X, limit):
         # Evaluate predictions of all estimators
         predictions = np.array([
             est.predict(X) for est in self.estimators_[:limit]]).T
@@ -1054,7 +1042,9 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         y : array of shape = [n_samples]
             The predicted regression values.
         """
-        return self._get_median_predict(X)
+        self._check_fitted()
+        X = np.asarray(X)
+        return self._get_median_predict(X, len(self.estimators_))
 
     def staged_predict(self, X):
         """Return staged predictions for X.
@@ -1076,5 +1066,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         y : generator of array, shape = [n_samples]
             The predicted regression values.
         """
-        for i in xrange(len(self.estimators_)):
-            yield self._get_median_predict(X, limit=i + 1)
+        self._check_fitted()
+        X = np.asarray(X)
+        for i, _ in enumerate(self.estimators_, 1):
+            yield self._get_median_predict(X, limit=i)

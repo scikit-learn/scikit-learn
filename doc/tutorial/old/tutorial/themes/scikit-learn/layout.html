@@ -1,0 +1,105 @@
+{#
+    scikit-learn/layout.html
+    ~~~~~~~~~~~~~~~~~
+
+    Layout for scikit-learn, after a design made by Angel Soler
+    (http://webylimonada.org)
+
+    :copyright: Fabian Pedregosa
+    :license: BSD
+#}
+{% extends "basic/layout.html" %}
+
+{%- if pagename == 'index' %}
+    {% set title = 'Applied Machine Learning in Python with scikit-learn' %}
+{%- endif %}
+
+{% block header %}
+    <div class="header-wrapper">
+      <div class="header">
+        {%- if logo %}
+          <p class="logo"><a href="{{ pathto(master_doc) }}">
+            <img src="{{ pathto('_static/' + logo, 1) }}" alt="Logo"/>
+          </a>
+          </p>
+        {%- endif %}
+
+          {%- block navbar -%}
+          <div class="navbar">
+          <ul>
+            <li><a href="http://github.com/scikit-learn/scikit-learn-tutorial">Source of this tutorial</a></li>
+            <li><a href="http://scikit-learn.sourceforge.net">Documentation for scikit-learn</a></li>
+       </ul>
+
+
+       </div> <!-- end navbar -->
+         {%- endblock -%}
+       </div>
+    </div>
+{% endblock %}
+
+{% block content %}
+    <div class="content-wrapper">
+
+    <!-- <div id="blue_tile"></div> -->
+
+        <div class="sphinxsidebar">
+
+       {%- if pagename != 'index' %}
+        <div class="rel">
+          {%- for rellink in rellinks|reverse %}
+          <a href="{{ pathto(rellink[0]) }}" title="{{ rellink[1]|striptags|e }}"
+             {{ accesskey(rellink[2]) }}>{{ rellink[3] }}</a>
+          {%- if not loop.last %}{{ reldelim2 }}{% endif %}
+          {%- endfor %}
+        </div>
+        {% else %}
+        <h3>News</h3>
+
+       <p>scikits.learn 0.7 is available
+         for <a href="https://sourceforge.net/projects/scikit-learn/files/">download</a>.
+         See <a href="{{pathto('whats_new')}}">what's new</a> and tips
+         on <a href="{{pathto('install')}}">installing</a>.</p>
+
+
+        {% endif %}
+
+        <h3>{{ _('Contents') }}</h3>
+         {{ toc }}
+
+      </div>
+
+      <div class="content">
+          {%- block document %}
+            {{ super() }}
+          {%- endblock %}
+        <div class="clearer"></div>
+      </div>
+    </div>
+{% endblock %}
+
+
+{% block relbar1 %}{% endblock %}
+{% block relbar2 %}{% endblock %}
+
+
+{%- block footer %}
+    <div class="footer">
+        <p style="text-align: center">This tutorial is for scikit-learn
+        version {{ release|e }}<p>
+
+    {%- if show_copyright %}
+      {%- if hasdoc('copyright') %}
+        {% trans path=pathto('copyright'), copyright=copyright|e %}&copy; {{ copyright }}.{% endtrans %}
+      {%- else %}
+        {% trans copyright=copyright|e %}&copy; {{ copyright }}.{% endtrans %}
+      {%- endif %}
+    {%- endif %}
+    {%- if last_updated %}
+      {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
+    {%- endif %}
+    {%- if show_sphinx %}
+      {% trans sphinx_version=sphinx_version|e %}Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> {{ sphinx_version }}{% endtrans %}. Design by <a href="http://webylimonada.com">Web y Limonada</a>.
+    {%- endif %}
+    </div>
+{%- endblock %}

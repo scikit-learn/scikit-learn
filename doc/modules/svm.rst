@@ -429,7 +429,7 @@ The *kernel function* can be any of the following:
   * rbf: :math:`\exp(-\gamma |x-x'|^2)`. :math:`\gamma` is
     specified by keyword ``gamma``, must be greater than 0.
 
-  * sigmoid (:math:`\tanh(\langle x,x'\rangle + r)`), where `r` is specified by
+  * sigmoid (:math:`\tanh(\gamma \langle x,x'\rangle + r)`), where `r` is specified by
     ``coef0``.
 
 Different kernels are specified by keyword kernel at initialization::

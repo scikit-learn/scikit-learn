@@ -26,9 +26,15 @@ Changelog
      `Gilles Louppe`_. See the :ref:`AdaBoost <adaboost>` section of the user
      guide for details and examples.
 
-   - :func:`metrics.accuracy_score`, :func:`metrics.zero_one_loss` support
-     multi-label classification and two new metrics :func:`metrics.hamming_loss`
-     and :func:`metrics.jaccard_similarity_score`
+   - Multi-label classification output now support to
+     :func:`metrics.accuracy_score`, :func:`metrics.zero_one_loss`,
+     :func:`metrics.f1_score`, :func:`metrics.fbeta_score`,
+     :func:`metrics.precision_scoreclassification_report`,
+     :func:`metrics.precision_score` and :func:`metrics.recal_score`
+     by `Arnaud Joly`_.
+
+  -  Two new metrics :func:`metrics.hamming_loss` and
+     :func:`metrics.jaccard_similarity_score`
      are added with multi-label support by `Arnaud Joly`_.
 
    - Speed and memory usage improvements in
@@ -78,6 +84,9 @@ Changelog
    - :func:`metrics.accuracy_score` has an option normalize to return
      the fraction or the number of correctly classified sample
      by `Arnaud Joly`_.
+
+   - A bug that caused :class:`ensemble.AdaBoostClassifier`'s to output
+     incorrect probabilities has been fixed.
 
 
 API changes summary

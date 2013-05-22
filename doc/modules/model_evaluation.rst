@@ -45,23 +45,24 @@ Others also work in the multiclass case:
 .. autosummary::
    :template: function.rst
 
-   classification_report
    confusion_matrix
-   f1_score
-   fbeta_score
-   precision_recall_fscore_support
-   precision_score
-   recall_score
+
 
 And some also work in the multilabel case:
 
 .. autosummary::
    :template: function.rst
 
-  accuracy_score
-  hamming_loss
-  jaccard_similarity_score
-  zero_one_loss
+   accuracy_score
+   classification_report
+   f1_score
+   fbeta_score
+   hamming_loss
+   jaccard_similarity_score
+   precision_recall_fscore_support
+   precision_score
+   recall_score
+   zero_one_loss
 
 
 Some metrics might require probability estimates of the positive class,
@@ -459,17 +460,18 @@ Moreover, these notions can be further extended. The functions
 :func:`precision_score`  and :func:`recall_score` support an argument called
 ``average`` which defines the type of averaging:
 
- * ``"macro"``: average over classes (does not take imbalance into account).
- * ``"micro"``: average over instances (takes imbalance into account).
- * ``"weighted"``: average weighted by support (takes imbalance into account).
-   It can result in F1 score that is not between precision and recall.
+ * ``"macro"``: average over classes (does not take imbalance
+   into account).
+ * ``"micro"``: aggregate classes and average over instances
+   (takes imbalance into account). This implies that
+   ``precision == recall == F1``.
+   In multilabel classification, this is true only if every sample has a label.
+ * ``'samples'``: average over instances. Only available and
+   meaningful with multilabel data.
+ * ``"weighted"``: average over classes weighted by support (takes imbalance
+   into account). Can result in F-score that is not between
+   precision and recall.
  * ``None``: no averaging is performed.
-
-.. warning::
-
-  Currently those functions support only the multiclass case. However the
-  following definitions are general and remain valid in the multilabel
-  case.
 
 Let's define some notations:
 
@@ -481,11 +483,13 @@ Let's define some notations:
    * :math:`tp_j`, :math:`fp_j` and :math:`fn_j` respectively the number of
      true positives, false positives and false negatives for the :math:`j`-th
      label;
+   * :math:`w_j = \frac{tp_j + fn_j}{\sum_{k=0}^{n_\text{labels} - 1} tp_k + f
+     n_k}` is the weighted support associated to the :math:`j`-th label;
    * :math:`y_i` is the set of true label and
      :math:`\hat{y}_i` is the set of predicted for the
      :math:`i`-th sample;
 
-The macro precision, recall and :math:`F_\beta` are averaged over all labels
+The macro precision, recall and :math:`F_\beta` is defined as
 
 .. math::
 
@@ -499,7 +503,7 @@ The macro precision, recall and :math:`F_\beta` are averaged over all labels
 
   \texttt{macro\_{}F\_{}beta} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} {F_\beta}_j.
 
-The micro precision, recall and :math:`F_\beta` are averaged over all instances
+The micro precision, recall and :math:`F_\beta` is defined as
 
 .. math::
 
@@ -513,23 +517,36 @@ The micro precision, recall and :math:`F_\beta` are averaged over all instances
 
   \texttt{micro\_{}F\_{}beta} = (1 + \beta^2) \frac{\texttt{micro\_{}precision} \times  \texttt{micro\_{}recall}}{\beta^2 \texttt{micro\_{}precision} +  \texttt{micro\_{}recall}}.
 
-
-The weighted precision, recall and :math:`F_\beta` are averaged weighted by
-their support
+The weighted precision, recall and :math:`F_\beta` is defined as
 
 .. math::
 
-  \texttt{weighted\_{}precision}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} \frac{|y_i \cap \hat{y}_i|}{|y_i|},
+  \texttt{weighted\_{}precision} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} w_j \texttt{precision}_j,
 
 .. math::
 
-  \texttt{weighted\_{}recall}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} \frac{|y_i \cap \hat{y}_i|}{|\hat{y}_i|},
+  \texttt{weighted\_{}recall} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} w_j \texttt{recall}_j,
 
 .. math::
 
-  \texttt{weighted\_{}F\_{}beta}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (1 + \beta^2)\frac{|y_i \cap \hat{y}_i|}{\beta^2 |\hat{y}_i| + |y_i|}.
+  \texttt{weighted\_{}F\_{}beta} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} w_j {F_\beta}_j.
 
-Here an example where ``average`` is set to ``average`` to ``macro``::
+
+The sample-based precision, recall and :math:`F_\beta` is defined as
+
+.. math::
+
+  \texttt{example\_{}precision}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} \frac{|y_i \cap \hat{y}_i|}{|y_i|},
+
+.. math::
+
+  \texttt{example\_{}recall}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} \frac{|y_i \cap \hat{y}_i|}{|\hat{y}_i|},
+
+.. math::
+
+  \texttt{example\_{}F\_{}beta}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (1 + \beta^2)\frac{|y_i \cap \hat{y}_i|}{\beta^2 |\hat{y}_i| + |y_i|}.
+
+Here is an example where ``average`` is set to ``macro``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
@@ -545,54 +562,65 @@ Here an example where ``average`` is set to ``average`` to ``macro``::
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
   (0.22..., 0.33..., 0.26..., None)
 
-Here an example where ``average`` is set to to ``micro``::
+Here is an example where ``average`` is set to ``micro``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
   >>> y_pred = [0, 2, 1, 0, 0, 1]
-  >>> metrics.precision_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+  >>> metrics.precision_score(y_true, y_pred, average='micro')
+  ... # doctest: +ELLIPSIS
   0.33...
-  >>> metrics.recall_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+  >>> metrics.recall_score(y_true, y_pred, average='micro')
+  ... # doctest: +ELLIPSIS
   0.33...
-  >>> metrics.f1_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+  >>> metrics.f1_score(y_true, y_pred, average='micro')
+  ... # doctest: +ELLIPSIS
   0.33...
-  >>> metrics.fbeta_score(y_true, y_pred, average='micro', beta=0.5)  # doctest: +ELLIPSIS
+  >>> metrics.fbeta_score(y_true, y_pred, average='micro', beta=0.5)
+  ... # doctest: +ELLIPSIS
   0.33...
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='micro')
+  ... # doctest: +ELLIPSIS
   (0.33..., 0.33..., 0.33..., None)
 
-Here an example where ``average`` is set to to ``weighted``::
+Here is an example where ``average`` is set to ``weighted``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
   >>> y_pred = [0, 2, 1, 0, 0, 1]
-  >>> metrics.precision_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+  >>> metrics.precision_score(y_true, y_pred, average='weighted')
+  ... # doctest: +ELLIPSIS
   0.22...
-  >>> metrics.recall_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+  >>> metrics.recall_score(y_true, y_pred, average='weighted')
+  ... # doctest: +ELLIPSIS
   0.33...
-  >>> metrics.fbeta_score(y_true, y_pred, average='weighted', beta=0.5)  # doctest: +ELLIPSIS
+  >>> metrics.fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
+  ... # doctest: +ELLIPSIS
   0.23...
   >>> metrics.f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
   0.26...
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred,
+  ... average='weighted')  # doctest: +ELLIPSIS
   (0.22..., 0.33..., 0.26..., None)
 
-Here an example where ``average`` is set to ``None``::
+Here is an example where ``average`` is set to ``None``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
   >>> y_pred = [0, 2, 1, 0, 0, 1]
-  >>> metrics.precision_score(y_true, y_pred, average=None)  # doctest: +ELLIPSIS
+  >>> metrics.precision_score(y_true, y_pred, average=None)
+  ... # doctest: +ELLIPSIS
   array([ 0.66...,  0.        ,  0.        ])
   >>> metrics.recall_score(y_true, y_pred, average=None)
   array([ 1.,  0.,  0.])
   >>> metrics.f1_score(y_true, y_pred, average=None)  # doctest: +ELLIPSIS
   array([ 0.8,  0. ,  0. ])
-  >>> metrics.fbeta_score(y_true, y_pred, average=None, beta=0.5)  # doctest: +ELLIPSIS
+  >>> metrics.fbeta_score(y_true, y_pred, average=None, beta=0.5)
+  ... # doctest: +ELLIPSIS
   array([ 0.71...,  0.        ,  0.        ])
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)  # doctest: +ELLIPSIS
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)
+  ... # doctest: +ELLIPSIS
   (array([ 0.66...,  0.        ,  0.        ]), array([ 1.,  0.,  0.]), array([ 0.71...,  0.        ,  0.        ]), array([2, 2, 2]...))
-
 
 Hinge loss
 ----------

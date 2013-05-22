@@ -168,10 +168,10 @@ class SVC(BaseSVC):
 
     degree : int, optional (default=3)
         Degree of kernel function.
-        It is significant only in 'poly' and 'sigmoid'.
+        It is significant only in 'poly'.
 
     gamma : float, optional (default=0.0)
-        Kernel coefficient for 'rbf' and 'poly'.
+        Kernel coefficient for 'rbf', 'poly' and 'sigm'.
         If gamma is 0.0 then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
