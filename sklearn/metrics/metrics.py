@@ -1644,7 +1644,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                               DeprecationWarning)
 
                 if pos_label not in labels:
-                    raise ValueError("pos_label=%d is not a valid label: %r" %
+                    raise ValueError("pos_label=%r is not a valid label: %r" %
                                      (pos_label, labels))
                 if pos_label == neg_label:
                     neg_label = labels[1]
@@ -1658,7 +1658,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         if y_type.startswith('multilabel'):
             raise ValueError('TODO')
         if neg_label not in labels:
-            raise ValueError("neg_label=%s is not a valid label: %r" %
+            raise ValueError("neg_label=%r is not a valid label: %r" %
                              (neg_label, labels))
         # XXX: is labels always sorted?
         mask = np.ones(tp_sum.shape, dtype=bool)
