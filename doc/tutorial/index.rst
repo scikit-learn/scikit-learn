@@ -40,6 +40,16 @@ Tutorials: From the bottom up with scikit-learn
    statistical_inference/index.rst
 
 
+.. topic:: Text Analysis Tutorial
+
+   Old tutorial description
+
+.. toctree::
+   :maxdepth: 2
+
+   text_analytics/index.rst
+
+
 .. topic:: **Machine Learning Cheat Sheet (for scikit-learn)**
 
     This flowchart is useful for newcomers regarding how to go about
