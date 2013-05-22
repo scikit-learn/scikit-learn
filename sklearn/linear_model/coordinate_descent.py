@@ -578,7 +578,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Notes
     -----
-    See examples/linear_model/plot_lasso_model_selection.py
+    See examples/linear_model/plot_lasso_coordinate_descent_path.py
     for an example.
 
     To avoid unnecessary memory duplication the X argument of the fit method
