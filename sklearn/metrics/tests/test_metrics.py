@@ -1001,9 +1001,9 @@ def test_symmetry():
 
     # Symmetric metric
     for name, metric in SYMETRIC_METRICS.items():
-        assert_equal(metric(y_true, y_pred),
-                     metric(y_pred, y_true),
-                     msg="%s is not symetric" % name)
+        assert_almost_equal(metric(y_true, y_pred),
+                            metric(y_pred, y_true),
+                            err_msg="%s is not symetric" % name)
 
     # Not symmetric metrics
     for name, metric in NOT_SYMETRIC_METRICS.items():
@@ -1013,14 +1013,14 @@ def test_symmetry():
     # Deprecated metrics
     with warnings.catch_warnings(record=True):
         # Throw deprecated warning
-        assert_equal(zero_one(y_true, y_pred),
-                     zero_one(y_pred, y_true))
+        assert_almost_equal(zero_one(y_true, y_pred),
+                            zero_one(y_pred, y_true))
 
-        assert_equal(zero_one(y_true, y_pred, normalize=False),
-                     zero_one(y_pred, y_true, normalize=False))
+        assert_almost_equal(zero_one(y_true, y_pred, normalize=False),
+                            zero_one(y_pred, y_true, normalize=False))
 
-        assert_equal(zero_one_score(y_true, y_pred),
-                     zero_one_score(y_pred, y_true))
+        assert_almost_equal(zero_one_score(y_true, y_pred),
+                            zero_one_score(y_pred, y_true))
 
 
 def test_sample_order_invariance():
