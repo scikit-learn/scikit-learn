@@ -1458,7 +1458,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
             precision = size_inter / size_true
             recall = size_inter / size_pred
-            f_score = ((1 + beta2 ** 2) * size_inter /
+            f_score = ((1 + beta2) * size_inter /
                        (beta2 * size_pred + size_true))
         finally:
             np.seterr(**old_err_settings)
