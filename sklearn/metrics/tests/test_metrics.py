@@ -956,7 +956,7 @@ def test_sample_order_invariance():
         assert_almost_equal(metric(y_true, y_pred),
                             metric(y_true_shuffle, y_pred_shuffle),
                             err_msg="%s is not sample order invariant"
-                                    % metric)
+                                    % name)
 
 
 def test_format_invariance_with_1d_vectors():
@@ -978,11 +978,11 @@ def test_format_invariance_with_1d_vectors():
         measure = metric(y1, y2)
 
         assert_almost_equal(metric(y1_list, y2_list), measure,
-                            err_msg="%s is not representation invariant"
+                            err_msg="%s is not representation invariant "
                                     "with list" % name)
 
         assert_almost_equal(metric(y1_1d, y2_1d), measure,
-                            err_msg="%s is not representation invariant"
+                            err_msg="%s is not representation invariant "
                                     "with np-array-1d" % name)
 
         assert_almost_equal(metric(y1_column, y2_column), measure,
@@ -1013,12 +1013,12 @@ def test_format_invariance_with_1d_vectors():
                                     % name)
 
         assert_almost_equal(metric(y1_list, y2_column), measure,
-                            err_msg="%s is not representation invariant"
+                            err_msg="%s is not representation invariant "
                                     "with mix list and np-array-column"
                                     % name)
 
         assert_almost_equal(metric(y1_column, y2_list), measure,
-                            err_msg="%s is not representation invariant"
+                            err_msg="%s is not representation invariant "
                                     "with mix list and np-array-column"
                                     % name)
 
@@ -1166,14 +1166,14 @@ def test_multilabel_representation_invariance():
 
         # Check invariance with mix input representation
         assert_almost_equal(metric(y1, y2_binary_indicator), measure,
-                            err_msg="%s failed mix input representation"
+                            err_msg="%s failed mix input representation "
                                     "invariance: y_true in list of list of "
-                                    "labels format and y_pred in dense binary"
+                                    "labels format and y_pred in dense binary "
                                     "indicator format"
                                     % name)
 
         assert_almost_equal(metric(y1_binary_indicator, y2), measure,
-                            err_msg="%s failed mix input representation"
+                            err_msg="%s failed mix input representation "
                                     "invariance: y_true in dense binary "
                                     "indicator format and y_pred in list of "
                                     "list of labels format."
@@ -1612,6 +1612,6 @@ def test_multilabel_invariance_with_pos_labels():
                                        y2_binary_indicator * pos_label,
                                        pos_label=pos_label),
                                 measure,
-                                err_msg="%s is not representation invariant"
+                                err_msg="%s is not representation invariant "
                                         "with pos_label=%s"
-                                        % (metric, pos_label))
+                                        % (name, pos_label))
