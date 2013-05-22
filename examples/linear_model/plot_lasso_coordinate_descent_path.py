@@ -25,7 +25,6 @@ y = diabetes.target
 
 X /= X.std(0)  # Standardize data (easier to set the l1_ratio parameter)
 
-###############################################################################
 # Compute paths
 
 eps = 5e-3  # the smaller it is the longer is the path
@@ -48,7 +47,6 @@ alphas_positive_enet, coefs_positive_enet = enet_path(X, y,
                                                       positive=True,
                                                       return_models=False)
 
-###############################################################################
 # Display results
 
 pl.figure(1)
