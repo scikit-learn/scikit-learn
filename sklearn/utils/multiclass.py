@@ -180,6 +180,10 @@ def is_multilabel(*ys):
     False
     >>> is_multilabel(other, other)
     False
+    >>> is_multilabel(['label1', 'label2'])
+    False
+    >>> is_multilabel([['label1', 'label2']])
+    'sequences'
     >>> assert_raises(ValueError, is_multilabel, other, seq1)
     >>> assert_raises(ValueError, is_multilabel, other, ind)
     >>> assert_raises(ValueError, is_multilabel, seq1, other)
