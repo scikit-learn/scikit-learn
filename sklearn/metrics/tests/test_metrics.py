@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, print_function
 
 from functools import partial
 import warnings
@@ -46,6 +46,7 @@ from sklearn.metrics import (accuracy_score,
                              zero_one,
                              zero_one_score,
                              zero_one_loss)
+from sklearn.metrics.metrics import _check_clf_targets
 from sklearn.externals.six.moves import xrange
 
 ALL_METRICS = {
@@ -441,6 +442,20 @@ def test_precision_recall_f1_score_binary():
 
     fs = f1_score(y_true, y_pred)
     assert_array_almost_equal(fs, 0.76, 2)
+
+
+def test_precision_recall_f_binary_single_class():
+    """Test precision, recall and F1 score behave with a single positive or
+    negative class
+
+    Such a case may occur with non-stratified cross-validation"""
+    assert_equal(1., precision_score([1, 1], [1, 1]))
+    assert_equal(1., recall_score([1, 1], [1, 1]))
+    assert_equal(1., f1_score([1, 1], [1, 1]))
+
+    assert_equal(0., precision_score([-1, -1], [-1, -1]))
+    assert_equal(0., recall_score([-1, -1], [-1, -1]))
+    assert_equal(0., f1_score([-1, -1], [-1, -1]))
 
 
 def test_average_precision_score_duplicate_values():
@@ -923,10 +938,6 @@ def test_format_invariance_with_1d_vectors():
                             err_msg="%s is not representation invariant "
                                     "with np-array-column" % name)
 
-        assert_almost_equal(metric(y1_row, y2_row), measure,
-                            err_msg="%s is not representation invariant "
-                                    "with np-array-row" % name)
-
         # Mix format support
         assert_almost_equal(metric(y1_1d, y2_list), measure,
                             err_msg="%s is not representation invariant "
@@ -963,6 +974,8 @@ def test_format_invariance_with_1d_vectors():
         assert_raises(ValueError, metric, y1_row, y2_list)
         assert_raises(ValueError, metric, y1_column, y2_row)
         assert_raises(ValueError, metric, y1_row, y2_column)
+        # NB: We do not test for y1_row, y2_row as these may be
+        # interpreted as multilabel or multioutput data.
 
 
 def test_hinge_loss_binary():
@@ -982,8 +995,8 @@ def test_hinge_loss_binary():
     assert_equal(hinge_loss(y_true, pred_decision), 1.2 / 4)
     with warnings.catch_warnings(True):
         # Test deprecated pos_label
-        assert_equal(hinge_loss(y_true, pred_decision, pos_label=2, neg_label=0),
-                     1.2 / 4)
+        assert_equal(hinge_loss(y_true, pred_decision, pos_label=2,
+                                neg_label=0), 1.2 / 4)
 
 
 def test_multioutput_regression():
@@ -1098,20 +1111,9 @@ def test_multilabel_representation_invariance():
                                     " with dense binary indicator format."
                                     % name)
 
-        # Check invariance with mix input representation
-        assert_almost_equal(metric(y1, y2_binary_indicator), measure,
-                            err_msg="%s failed mix input representation "
-                                    "invariance: y_true in list of list of "
-                                    "labels format and y_pred in dense binary "
-                                    "indicator format"
-                                    % name)
-
-        assert_almost_equal(metric(y1_binary_indicator, y2), measure,
-                            err_msg="%s failed mix input representation "
-                                    "invariance: y_true in dense binary "
-                                    "indicator format and y_pred in list of "
-                                    "list of labels format."
-                                    % name)
+        # Check raises error with mix input representation
+        assert_raises(ValueError, metric, y1, y2_binary_indicator)
+        assert_raises(ValueError, metric, y1_binary_indicator, y2)
 
 
 def test_multilabel_zero_one_loss_subset():
@@ -1518,3 +1520,80 @@ def test_precision_recall_f1_no_labels():
     assert_almost_equal(r, 1)
     assert_almost_equal(f, 1)
     assert_equal(s, None)
+
+
+def test__check_clf_targets():
+    """Check that _check_clf_targets correctly merges target types, squeezes
+    output and fails if input lengths differ."""
+    IND = 'multilabel-indicator'
+    SEQ = 'multilabel-sequences'
+    MC = 'multiclass'
+    BIN = 'binary'
+    CNT = 'continuous'
+    MMC = 'multiclass-multioutput'
+    MCN = 'continuous-multioutput'
+    # all of length 3
+    EXAMPLES = [
+        (IND, np.array([[0, 1, 1], [1, 0, 0], [0, 0, 1]])),
+        # must not be considered binary
+        (IND, np.array([[0, 1], [1, 0], [1, 1]])),
+        (SEQ, [[2, 3], [1], [3]]),
+        (MC, [2, 3, 1]),
+        (BIN, [0, 1, 1]),
+        (CNT, [0., 1.5, 1.]),
+        (MC, np.array([[2], [3], [1]])),
+        (BIN, np.array([[0], [1], [1]])),
+        (CNT, np.array([[0.], [1.5], [1.]])),
+        (MMC, np.array([[0, 2], [1, 3], [2, 3]])),
+        (MCN, np.array([[0.5, 2.], [1.1, 3.], [2., 3.]])),
+    ]
+    # expected type given input types, or None for error
+    # (types will be tried in either order)
+    EXPECTED = {
+        (IND, IND): IND,
+        (SEQ, SEQ): SEQ,
+        (MC, MC): MC,
+        (BIN, BIN): BIN,
+
+        (IND, SEQ): None,
+        (MC, SEQ): None,
+        (BIN, SEQ): None,
+        (MC, IND): None,
+        (BIN, IND): None,
+        (BIN, MC): MC,
+
+        # Disallowed types
+        (CNT, CNT): None,
+        (MMC, MMC): None,
+        (MCN, MCN): None,
+        (IND, CNT): None,
+        (SEQ, CNT): None,
+        (MC, CNT): None,
+        (BIN, CNT): None,
+        (MMC, CNT): None,
+        (MCN, CNT): None,
+        (IND, MMC): None,
+        (SEQ, MMC): None,
+        (MC, MMC): None,
+        (BIN, MMC): None,
+        (MCN, MMC): None,
+        (IND, MCN): None,
+        (SEQ, MCN): None,
+        (MC, MCN): None,
+        (BIN, MCN): None,
+    }
+
+    for type1, y1 in EXAMPLES:
+        for type2, y2 in EXAMPLES:
+            try:
+                expected = EXPECTED[type1, type2]
+            except KeyError:
+                expected = EXPECTED[type2, type1]
+            if expected is None:
+                assert_raises(ValueError, _check_clf_targets, y1, y2)
+            else:
+                merged_type, y1out, y2out = _check_clf_targets(y1, y2)
+                assert_equal(merged_type, expected)
+                assert_array_equal(y1out, np.squeeze(y1))
+                assert_array_equal(y2out, np.squeeze(y2))
+                assert_raises(ValueError, _check_clf_targets, y1[:-1], y2)
