@@ -1591,8 +1591,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     if y_type == 'indicator':
         sum_axis = 1 if average == 'samples' else 0
         tp_sum = np.sum(np.logical_and(y_true, y_pred), axis=sum_axis)
-        pos_sum = np.sum(y_pred, axis=sum_axis)
-        true_sum = np.sum(y_true, axis=sum_axis)
+        pos_sum = np.sum(y_pred, axis=sum_axis, dtype=int)
+        true_sum = np.sum(y_true, axis=sum_axis, dtype=int)
 
     elif average == 'samples':
         if y_type != 'multilabel-sequences':
