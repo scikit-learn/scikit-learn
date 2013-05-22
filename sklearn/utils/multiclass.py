@@ -132,3 +132,43 @@ def is_multilabel(y):
     # versions of Numpy might want to register ndarray as a Sequence
     return (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) and
             not isinstance(y[0], string_types) or is_label_indicator_matrix(y))
+
+
+def check_multilabel_type(*ys):
+    """Checks if all data is multilabel, and what types
+
+    Parameters
+    ----------
+    *ys : array-likes
+
+    Returns
+    -------
+    type_name : string or False
+        Returns False if none of `ys` is multilabel. Returns 'matrix' if all
+        are label indicator matrices, 'sos' if all are sequence-of-sequences,
+        and 'mixed' if both occur. If all are label indicator matrices, but
+        not all have the same shape, or not all data has the same number of
+        samples, raises a `ValueError`.
+
+    Examples:
+    >>> from 
+    """
+    if not ys:
+        raise ValueError('Need at least one set of targets to check')
+
+    if all(is_label_indicator_matrix(y) for y in ys):
+        if len(set(y.shape for y in ys)) > 1:
+            raise ValueError('Indicator matrices are not all the same shape')
+        return 'matrix'
+    
+    if all(is_multilabel(y) for y in ys[1:]):
+        if len(set(getattr(y, 'shape', (len(y),))[0] for y in ys)) > 1:
+            raise ValueError('Multilabel targets have different sample sizes')
+        if any(is_label_indicator_matrix(y) for y in ys):
+            return 'mixed'
+        return 'sos'
+
+    if any(is_multilabel(y) for y in ys):
+        raise ValueError('Received a mix of single-label and multi-label data')
+    return False
+

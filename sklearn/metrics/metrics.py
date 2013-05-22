@@ -27,8 +27,7 @@ from ..preprocessing import LabelBinarizer
 from ..utils import check_arrays
 from ..utils import deprecated
 from ..utils.fixes import divide
-from ..utils.multiclass import is_label_indicator_matrix
-from ..utils.multiclass import is_multilabel
+from ..utils.multiclass import check_multilabel_type
 from ..utils.multiclass import unique_labels
 
 
@@ -929,17 +928,16 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True, pos_label=1):
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
 
     # Compute accuracy for each possible representation
-    if is_multilabel(y_true):
-
-        # Handle mix representation
-        if type(y_true) != type(y_pred):
+    ml_type = check_multilabel_type(y_true, y_pred)
+    if ml_type:
+        if ml_type == 'mixed':
             labels = unique_labels(y_true, y_pred)
             lb = LabelBinarizer()
             lb.fit([labels.tolist()])
             y_true = lb.transform(y_true)
             y_pred = lb.transform(y_pred)
 
-        if is_label_indicator_matrix(y_true):
+        if ml_type != 'sos':
             try:
                 # oddly, we may get an "invalid" rather than a "divide"
                 # error here
@@ -1051,17 +1049,16 @@ def accuracy_score(y_true, y_pred, normalize=True):
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
 
     # Compute accuracy for each possible representation
-    if is_multilabel(y_true):
-
-        # Handle mix representation
-        if type(y_true) != type(y_pred):
+    ml_type = check_multilabel_type(y_true, y_pred)
+    if ml_type:
+        if ml_type == 'mixed':
             labels = unique_labels(y_true, y_pred)
             lb = LabelBinarizer()
             lb.fit([labels.tolist()])
             y_true = lb.transform(y_true)
             y_pred = lb.transform(y_pred)
 
-        if is_label_indicator_matrix(y_true):
+        if ml_type != 'sos':
             score = (y_pred != y_true).sum(axis=1) == 0
         else:
             score = np.array([len(set(true) ^ set(pred)) == 0
@@ -1424,16 +1421,16 @@ def _tp_tn_fp_fn(y_true, y_pred, labels=None, pos_label=1):
     false_pos = np.zeros((n_labels), dtype=np.int)
     false_neg = np.zeros((n_labels), dtype=np.int)
 
-    if is_multilabel(y_true):
-        # Handle mix representation
-        if type(y_true) != type(y_pred):
+    ml_type = check_multilabel_type(y_true, y_pred)
+    if ml_type:
+        if ml_type == 'mixed':
             labels = unique_labels(y_true, y_pred)
             lb = LabelBinarizer()
             lb.fit([labels.tolist()])
             y_true = lb.transform(y_true)
             y_pred = lb.transform(y_pred)
 
-        if is_label_indicator_matrix(y_true):
+        if ml_type != 'sos':
             true_pos = np.sum(np.logical_and(y_true == pos_label,
                                              y_pred == pos_label), axis=0)
             false_pos = np.sum(np.logical_and(y_true != pos_label,
@@ -1654,16 +1651,16 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     n_labels = labels.size
 
     if average == "samples":
-        if is_multilabel(y_true):
-            # Handle mix representation
-            if type(y_true) != type(y_pred):
+        ml_type = check_multilabel_type(y_true, y_pred)
+        if ml_type:
+            if ml_type == 'mixed':
                 labels = unique_labels(y_true, y_pred)
                 lb = LabelBinarizer()
                 lb.fit([labels.tolist()])
                 y_true = lb.transform(y_true)
                 y_pred = lb.transform(y_pred)
 
-            if is_label_indicator_matrix(y_true):
+            if ml_type != 'sos':
                 y_true_pos_label = y_true == pos_label
                 y_pred_pos_label = y_pred == pos_label
                 size_inter = np.sum(np.logical_and(y_true_pos_label,
@@ -2229,15 +2226,16 @@ def hamming_loss(y_true, y_pred, classes=None):
     else:
         classes = np.asarray(classes, dtype=np.int)
 
-    if is_multilabel(y_true):
+    ml_type = check_multilabel_type(y_true, y_pred)
+    if ml_type:
         lb = LabelBinarizer()
         lb.fit([classes.tolist()])
 
-        if type(y_true) != type(y_pred):
+        if ml_type == 'mixed':
             y_true = lb.transform(y_true)
             y_pred = lb.transform(y_pred)
 
-        if is_label_indicator_matrix(y_true):
+        if ml_type != 'sos':
             return np.mean(y_true != y_pred)
         else:
             loss = np.array([len(set(pred) ^ set(true))
