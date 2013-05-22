@@ -27,7 +27,7 @@ from ..preprocessing import LabelBinarizer
 from ..utils import check_arrays
 from ..utils import deprecated
 from ..utils.fixes import divide
-from ..utils.multiclass import check_multilabel_type
+from ..utils.multiclass import is_multilabel
 from ..utils.multiclass import unique_labels
 
 
@@ -928,7 +928,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True, pos_label=1):
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
 
     # Compute accuracy for each possible representation
-    ml_type = check_multilabel_type(y_true, y_pred)
+    ml_type = is_multilabel(y_true, y_pred)
     if ml_type:
         if ml_type == 'mixed':
             labels = unique_labels(y_true, y_pred)
@@ -1049,7 +1049,7 @@ def accuracy_score(y_true, y_pred, normalize=True):
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
 
     # Compute accuracy for each possible representation
-    ml_type = check_multilabel_type(y_true, y_pred)
+    ml_type = is_multilabel(y_true, y_pred)
     if ml_type:
         if ml_type == 'mixed':
             labels = unique_labels(y_true, y_pred)
@@ -1421,7 +1421,7 @@ def _tp_tn_fp_fn(y_true, y_pred, labels=None, pos_label=1):
     false_pos = np.zeros((n_labels), dtype=np.int)
     false_neg = np.zeros((n_labels), dtype=np.int)
 
-    ml_type = check_multilabel_type(y_true, y_pred)
+    ml_type = is_multilabel(y_true, y_pred)
     if ml_type:
         if ml_type == 'mixed':
             labels = unique_labels(y_true, y_pred)
@@ -1651,7 +1651,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     n_labels = labels.size
 
     if average == "samples":
-        ml_type = check_multilabel_type(y_true, y_pred)
+        ml_type = is_multilabel(y_true, y_pred)
         if ml_type:
             if ml_type == 'mixed':
                 labels = unique_labels(y_true, y_pred)
@@ -2226,7 +2226,7 @@ def hamming_loss(y_true, y_pred, classes=None):
     else:
         classes = np.asarray(classes, dtype=np.int)
 
-    ml_type = check_multilabel_type(y_true, y_pred)
+    ml_type = is_multilabel(y_true, y_pred)
     if ml_type:
         lb = LabelBinarizer()
         lb.fit([classes.tolist()])
