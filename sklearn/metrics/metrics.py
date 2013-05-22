@@ -1589,7 +1589,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     ### Calculate tp_sum, pos_sum, true_sum ###
 
-    if y_type == 'indicator':
+    if y_type == 'multilabel-indicator':
+        ## sum (common) 1s in each column, or each row for average='samples' ##
         sum_axis = 1 if average == 'samples' else 0
         tp_sum = np.sum(np.logical_and(y_true, y_pred), axis=sum_axis)
         pos_sum = np.sum(y_pred, axis=sum_axis, dtype=int)
@@ -1600,6 +1601,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             raise ValueError("Example-based precision, recall, fscore is "
                              "not meaningful outside multilabel"
                              "classification. See the accuracy_score instead.")
+        ## get the number of (common) distinct labels for each sample ##
         remove_dups = multilabel_vectorize(np.unique)
         y_true = remove_dups(multilabel_as_array(y_true))
         y_pred = remove_dups(multilabel_as_array(y_pred))
@@ -1610,6 +1612,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         true_sum = len_all(y_true)
 
     else:
+        ## count the (common) occurrences of each label ##
+        # first, make labels range from 0 to len(labels) - 1 -> use bincount
         lb = LabelEncoder()
         lb.fit([labels.tolist()])
         y_true = lb.transform(y_true)
@@ -1621,6 +1625,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         if y_type == 'multilabel-sequences':
             intersect_all = multilabel_vectorize(np.intersect1d)
             tp_bins = np.hstack(intersect_all(y_pred, y_true))
+            # merge samples
             pos_bins = np.hstack(y_pred)
             true_bins = np.hstack(y_true)
         else:
@@ -1678,6 +1683,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         pos_sum = pos_sum[mask]
         true_sum = true_sum[mask]
 
+    ### Collapse average='micro' stats ###
     if average == 'micro':
         tp_sum = np.array([tp_sum.sum()])
         pos_sum = np.array([pos_sum.sum()])
