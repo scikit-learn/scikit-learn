@@ -99,44 +99,49 @@ def is_label_indicator_matrix(y):
             y.shape[0] > 1 and np.size(np.unique(y)) <= 2)
 
 
-def is_multilabel(y):
-    """ Check if ``y`` is in a multilabel format.
+def is_sequence_of_sequences(y):
+    """ Check if ``y`` is in the sequence of sequences format (multilabel).
 
     Parameters
     ----------
-    y : numpy array of shape [n_samples] or sequence of sequences
-        Target values. In the multilabel case the nested sequences can
-        have variable lengths.
+    y : sequence or array.
 
     Returns
     -------
     out : bool,
-        Return ``True``, if ``y`` is in a multilabel format, else ```False``.
+        Return ``True``, if ``y`` is a sequence of sequences else ``False``.
 
-    Examples
-    --------
     >>> import numpy as np
     >>> from sklearn.utils.multiclass import is_multilabel
-    >>> is_multilabel([0, 1, 0, 1])
+    >>> is_sequence_of_sequences([0, 1, 0, 1])
     False
-    >>> is_multilabel([[1], [0, 2], []])
+    >>> is_sequence_of_sequences([[1], [0, 2], []])
     True
-    >>> is_multilabel(np.array([[1, 0], [0, 0]]))
+    >>> is_sequence_of_sequences(np.array([[1], [0, 2], []]))
     True
-    >>> is_multilabel(np.array([[1], [0], [0]]))
+    >>> is_sequence_of_sequences([(1,), (0, 2), ()])
+    True
+    >>> is_sequence_of_sequences(np.array([[1, 0], [0, 0]]))
     False
-    >>> is_multilabel(np.array([[1, 0, 0]]))
+    >>> is_sequence_of_sequences(np.array([[1], [0], [0]]))
     False
-
+    >>> is_sequence_of_sequences(np.array([[1, 0, 0]]))
+    False
     """
     # the explicit check for ndarray is for forward compatibility; future
     # versions of Numpy might want to register ndarray as a Sequence
     return (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) and
-            not isinstance(y[0], string_types) or is_label_indicator_matrix(y))
+            not isinstance(y[0], string_types))
 
 
-def check_multilabel_type(*ys):
-    """Checks if all data is multilabel, and what types
+_mixed_error = ValueError(
+    'Received a mix of single-label and multi-label data')
+
+
+def is_multilabel(*ys):
+    """Checks if all of `ys` are multilabel, and what types
+
+    If `ys` is a mix of multilabel and non-multilabel data, raises `ValueError`.
 
     Parameters
     ----------
@@ -149,49 +154,65 @@ def check_multilabel_type(*ys):
         are label indicator matrices, 'sos' if all are sequence-of-sequences,
         and 'mixed' if both occur.
 
-    Any of the following raise `ValueError`s:
-
-        * All `ys` are label indicator matrices, but not all have the same
-          shape;
-        * All `ys` are multilabel but not all have the same sample size; or
-        * Some `ys` are multilabel and some are not.
-
     Examples:
-    >>> from sklearn.utils.multiclass import check_multilabel_type
     >>> import numpy as np
+    >>> from sklearn.utils.multiclass import is_multilabel
     >>> from nose.tools import assert_raises
-    >>> mat1 = np.array([[0, 1], [1, 0]])
-    >>> mat_long = np.array([[0, 1], [1, 0], [1, 0]])
-    >>> sos1 = [[0], [0, 2]]
-    >>> sos2 = np.array([[0, 2], [1]])
-    >>> sos_long = [[0], [1], [2]]
+    >>> ind = np.array([[0, 1], [1, 0]])
+    >>> seq1 = [[0], [0, 2]]
+    >>> seq2 = np.array([[0, 2], [1]])
     >>> other = [1, 2, 3]
-    >>> check_multilabel_type(mat1)
-    'matrix'
-    >>> check_multilabel_type(mat_long)
-    'matrix'
-    >>> check_multilabel_type(sos1)
-    'sos'
-    >>> check_multilabel_type(sos2)
-    'sos'
-    >>> check_multilabel_type(sos_long)
-    'sos'
-    >>> check_multilabel_type(sos1, sos2)
-    'sos'
-    >>> check_multilabel_type(mat1, mat1)
-    'matrix'
-    >>> check_multilabel_type(mat1, sos1)
+    >>> is_multilabel(ind)
+    'indicator'
+    >>> is_multilabel(seq1)
+    'sequences'
+    >>> is_multilabel(seq2)
+    'sequences'
+    >>> is_multilabel(seq1, seq2)
+    'sequences'
+    >>> is_multilabel(ind, ind)
+    'indicator'
+    >>> is_multilabel(ind, seq1)
     'mixed'
-    >>> check_multilabel_type(other)
+    >>> is_multilabel(ind, seq1, ind)
+    'mixed'
+    >>> is_multilabel(other)
     False
-    >>> assert_raises(ValueError, check_multilabel_type, mat1, mat_long)
-    >>> assert_raises(ValueError, check_multilabel_type, sos1, mat_long)
-    >>> assert_raises(ValueError, check_multilabel_type, sos1, sos_long)
-    >>> assert_raises(ValueError, check_multilabel_type, other, sos1)
-    >>> assert_raises(ValueError, check_multilabel_type, other, mat1)
+    >>> is_multilabel(other, other)
+    False
+    >>> assert_raises(ValueError, is_multilabel, other, seq1)
+    >>> assert_raises(ValueError, is_multilabel, other, ind)
+    >>> assert_raises(ValueError, is_multilabel, seq1, other)
+    >>> assert_raises(ValueError, is_multilabel, ind, other)
     """
     if not ys:
         raise ValueError('Need at least one set of targets to check')
+
+    ret = None
+    for y in ys:
+        is_ml = is_label_indicator_matrix(y)
+        if is_ml:
+            if ret is None:
+                ret = 'indicator'
+            elif ret == 'sequences':
+                ret = 'mixed'
+            elif ret == False:
+                raise _mixed_error
+            continue
+
+        is_ml = is_sequence_of_sequences(y)
+        if not is_ml:
+            if ret:
+                raise _mixed_error
+            ret = False
+        elif ret is None:
+            ret = 'sequences'
+        elif ret == 'indicator':
+            ret = 'mixed'
+        elif ret == False:
+            raise _mixed_error
+    return ret
+
 
     if all(is_label_indicator_matrix(y) for y in ys):
         if len(set(y.shape for y in ys)) > 1:
