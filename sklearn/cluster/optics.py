@@ -106,11 +106,11 @@ def build_optics(SetOfObjects, epsilon, MinPts, Output_file_name):
         The minimum number of samples in a neighborhood to be considered a
         core point. Must be equal to MinPts used in 'prep_optics'
     Output_file_name: string
-        Valid path where write access is available. 
+        Valid path where write access is available.
         Stores cluster structure"""
 
     for point in SetOfObjects._index:
-        if SetOfObjects._processed[point] == False:
+        if not SetOfObjects._processed[point]:
             expandClusterOrder(SetOfObjects, point, epsilon,
                                MinPts, Output_file_name)
 
