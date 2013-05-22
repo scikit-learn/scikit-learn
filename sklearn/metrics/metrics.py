@@ -1415,6 +1415,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     ... # doctest: +ELLIPSIS
     (0.22..., 0.33..., 0.26..., None)
 
+
     """
     if beta <= 0:
         raise ValueError("beta should be >0 in the F-beta score")
@@ -1448,24 +1449,24 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 size_true[i] = len(true_set)
         else:
             raise ValueError("Example-based precision, recall, fscore is "
-                             "not meaning full outside multilabe"
-                             "classification. See the accuracy_score instead.")
+                             "not meaning full outside multilabel"
+                             "classification. Use accuracy_score instead.")
 
         try:
             # oddly, we may get an "invalid" rather than a "divide" error
             # here
             old_err_settings = np.seterr(divide='ignore', invalid='ignore')
 
-            precision = size_inter / size_true
-            recall = size_inter / size_pred
+            precision = size_inter / size_pred
+            recall = size_inter / size_true
             f_score = ((1 + beta2) * size_inter /
-                       (beta2 * size_pred + size_true))
+                       (beta2 * size_true + size_pred))
         finally:
             np.seterr(**old_err_settings)
 
-        precision[size_true == 0] = 1.0
-        recall[size_pred == 0] = 1.0
-        f_score[(beta2 * size_pred + size_true) == 0] = 1.0
+        precision[size_pred == 0] = 1.0
+        recall[size_true == 0] = 1.0
+        f_score[(beta2 * size_true + size_pred) == 0] = 1.0
 
         precision = np.mean(precision)
         recall = np.mean(recall)
@@ -1697,6 +1698,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     0.33...
     >>> recall_score(y_true, y_pred, average=None)
     array([ 1.,  0.,  0.])
+
 
     """
     _, r, _, _ = precision_recall_fscore_support(y_true, y_pred,
