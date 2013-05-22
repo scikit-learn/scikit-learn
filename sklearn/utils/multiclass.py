@@ -211,21 +211,3 @@ def is_multilabel(*ys):
         elif ret == False:
             raise _mixed_error
     return ret
-
-
-    if all(is_label_indicator_matrix(y) for y in ys):
-        if len(set(y.shape for y in ys)) > 1:
-            raise ValueError('Indicator matrices are not all the same shape')
-        return 'matrix'
-    
-    if all(is_multilabel(y) for y in ys):
-        if len(set(getattr(y, 'shape', (len(y),))[0] for y in ys)) > 1:
-            raise ValueError('Multilabel targets have different sample sizes')
-        if any(is_label_indicator_matrix(y) for y in ys):
-            return 'mixed'
-        return 'sos'
-
-    if any(is_multilabel(y) for y in ys):
-        raise ValueError('Received a mix of single-label and multi-label data')
-    return False
-
