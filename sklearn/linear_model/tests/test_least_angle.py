@@ -303,6 +303,7 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     # by the coordinate descent solver
     # Also test that lasso_path (using lars_path output style) gives
     # the same result as lars_path and previous lasso output style
+    # under these conditions.
     rng = np.random.RandomState(42)
 
     # Generate data
@@ -328,12 +329,9 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     assert_true(('Dropping a regressor' in warning_list[0].message.args[0])
                 or ('Early stopping' in warning_list[0].message.args[0]))
 
-    with warnings.catch_warnings(record=True) as warning_list:
-        warnings.simplefilter("always", UserWarning)
-        _, lasso_coef2 = linear_model.lasso_path(X, y,
-                                                 alphas=lars_alphas,
-                                                 tol=1e-6,
-                                                 return_models=False)
+    _, lasso_coef2 = linear_model.lasso_path(X, y,
+                                             alphas=lars_alphas, tol=1e-6,
+                                             return_models=False)
 
     lasso_coef = np.zeros((w.shape[0], len(lars_alphas)))
     for i, model in enumerate(linear_model.lasso_path(X, y, alphas=lars_alphas,
