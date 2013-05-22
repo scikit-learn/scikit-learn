@@ -190,7 +190,7 @@ class ParameterSampler(object):
         return self.n_iter
 
 
-def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
+def fit_grid_points(X, y, base_clf, param_iter, train, test, scorer,
                    verbose, loss_func=None, **fit_params):
     """Run fit on one set of parameters.
 
@@ -245,7 +245,6 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
 
     # update parameters of the classifier after a copy of its base structure
     clf = clone(base_clf)
-    clf.set_params(**clf_params)
 
     if hasattr(base_clf, 'kernel') and callable(base_clf.kernel):
         # cannot compute the kernel values with custom function
@@ -272,31 +271,34 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
     if y is not None:
         y_test = y[safe_mask(y, test)]
         y_train = y[safe_mask(y, train)]
-        clf.fit(X_train, y_train, **fit_params)
-
-        if scorer is not None:
-            this_score = scorer(clf, X_test, y_test)
-        else:
-            this_score = clf.score(X_test, y_test)
+        train_args = (X_train, y_train)
+        test_args = (X_test, y_test)
     else:
-        clf.fit(X_train, **fit_params)
+        train_args = (X_train, )
+        test_args = (X_test, )
+
+    results = []
+    for params, est in clf.iter_fits(param_iter, *train_args, **fit_params):
         if scorer is not None:
-            this_score = scorer(clf, X_test)
+            this_score = scorer(clf, *test_args)
         else:
-            this_score = clf.score(X_test)
+            this_score = clf.score(*test_args)
 
-    if not isinstance(this_score, numbers.Number):
-        raise ValueError("scoring must return a number, got %s (%s)"
-                         " instead." % (str(this_score), type(this_score)))
+        if not isinstance(this_score, numbers.Number):
+            raise ValueError("scoring must return a number, got %s (%s)"
+                             " instead." % (str(this_score), type(this_score)))
 
-    if verbose > 2:
-        msg += ", score=%f" % this_score
+        if verbose > 2:
+            msg += ", score=%f" % this_score
+
+        results.append((params, this_score))
+
     if verbose > 1:
         end_msg = "%s -%s" % (msg,
                               logger.short_format_time(time.time() -
                                                        start_time))
         print("[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
-    return this_score, clf_params, _num_samples(X_test)
+    return results, _num_samples(X_test)
 
 
 def _check_param_grid(param_grid):
@@ -450,13 +452,18 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         out = Parallel(
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch)(
-                delayed(fit_grid_point)(
-                    X, y, base_clf, clf_params, train, test, scorer,
-                    self.verbose, **self.fit_params) for clf_params in
-                parameter_iterator for train, test in cv)
+                delayed(fit_grid_points)(
+                    X, y, base_clf, parameter_iterator, train, test, scorer,
+                    self.verbose, **self.fit_params) for train, test in cv)
 
-        # Out is a list of triplet: score, estimator, n_test_samples
+        # transform out to a list of triplet: score, params, n_test_samples:
         n_param_points = len(list(parameter_iterator))
+        new_out = []
+        for i in range(n_param_points):
+            # XXX: assumes parameters iterated in same order!!!
+            new_out.extend((fold_out[0][i][1], fold_out[0][i][0], fold_out[1]) for fold_out in out)
+        out = new_out
+
         n_fits = len(out)
         n_folds = n_fits // n_param_points
 
