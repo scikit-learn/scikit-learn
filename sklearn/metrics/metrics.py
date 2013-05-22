@@ -1584,7 +1584,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     if beta <= 0:
         raise ValueError("beta should be >0 in the F-beta score")
 
-    labels, y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
+    labels, y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred,
+                                                        ravel=True)
 
     ### Calculate tp_sum, pos_sum, true_sum ###
 
