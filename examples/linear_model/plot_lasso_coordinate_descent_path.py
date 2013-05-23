@@ -33,7 +33,7 @@ print("Computing regularization path using the lasso...")
 alphas_lasso, coefs_lasso = lasso_path(X, y, eps, return_models=False)
 
 print("Computing regularization path using the positive lasso...")
-alphas_positve_lasso, coefs_positive_lasso = lasso_path(X, y,
+alphas_positive_lasso, coefs_positive_lasso = lasso_path(X, y,
                                                         eps,
                                                         positive=True,
                                                         return_models=False)
@@ -52,8 +52,8 @@ alphas_positive_enet, coefs_positive_enet = enet_path(X, y,
 pl.figure(1)
 ax = pl.gca()
 ax.set_color_cycle(2 * ['b', 'r', 'g', 'c', 'k'])
-l1 = pl.plot(coefs_lasso.T)
-l2 = pl.plot(coefs_enet.T, linestyle='--')
+l1 = pl.plot(-np.log10(alphas_lasso), coefs_lasso.T)
+l2 = pl.plot(-np.log10(alphas_enet), coefs_enet.T, linestyle='--')
 
 pl.xlabel('-Log(lambda)')
 pl.ylabel('coefficients')
@@ -65,8 +65,9 @@ pl.axis('tight')
 pl.figure(2)
 ax = pl.gca()
 ax.set_color_cycle(2 * ['b', 'r', 'g', 'c', 'k'])
-l1 = pl.plot(coefs_lasso.T)
-l2 = pl.plot(coefs_positive_lasso.T, linestyle='--')
+l1 = pl.plot(-np.log10(alphas_lasso), coefs_lasso.T)
+l2 = pl.plot(-np.log10(alphas_positive_lasso), coefs_positive_lasso.T,
+              linestyle='--')
 
 pl.xlabel('-Log(lambda)')
 pl.ylabel('coefficients')
@@ -78,8 +79,9 @@ pl.axis('tight')
 pl.figure(3)
 ax = pl.gca()
 ax.set_color_cycle(2 * ['b', 'r', 'g', 'c', 'k'])
-l1 = pl.plot(coefs_enet.T)
-l2 = pl.plot(coefs_positive_enet.T, linestyle='--')
+l1 = pl.plot(-np.log10(alphas_enet), coefs_enet.T)
+l2 = pl.plot(-np.log10(alphas_positive_enet), coefs_positive_enet.T,
+              linestyle='--')
 
 pl.xlabel('-Log(lambda)')
 pl.ylabel('coefficients')
