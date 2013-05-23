@@ -14,7 +14,7 @@ from .validation import (as_float_array, check_arrays, safe_asarray,
                          atleast2d_or_csr, warn_if_not_float,
                          check_random_state)
 from .class_weight import compute_class_weight
-from ._min_spanning_tree import minimum_spanning_tree
+from sklearn.utils.mst import minimum_spanning_tree
 
 
 __all__ = ["murmurhash3_32", "as_float_array", "check_arrays", "safe_asarray",
