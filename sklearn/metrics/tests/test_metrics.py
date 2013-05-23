@@ -1653,7 +1653,7 @@ def test_precision_recall_f1_score_with_an_empty_prediction():
         # |h(x_i) inter y_i | = [0, 0, 2]
         # |y_i| = [1, 1, 2]
         # |h(x_i)| = [0, 1, 2]
-        assert_almost_equal(p, 2 / 3)
+        assert_almost_equal(p, 1 / 3)
         assert_almost_equal(r, 1 / 3)
         assert_almost_equal(f, 1 / 3)
         assert_equal(s, None)
@@ -1701,7 +1701,6 @@ def test_precision_recall_f1_no_labels():
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
                                     average="micro"), 0)
 
-
     # Check weighted
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
                                                  average="weighted")
@@ -1718,12 +1717,12 @@ def test_precision_recall_f1_no_labels():
     # |h(x_i)| = [1, 1, 2]
     p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
                                                  average="samples")
-    assert_almost_equal(p, 1)
-    assert_almost_equal(r, 1)
-    assert_almost_equal(f, 1)
+    assert_almost_equal(p, 0)
+    assert_almost_equal(r, 0)
+    assert_almost_equal(f, 0)
     assert_equal(s, None)
     assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                    average="samples"), 1)
+                                    average="samples"), 0)
 
 
 def test__check_clf_targets():
