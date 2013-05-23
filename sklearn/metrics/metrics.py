@@ -1415,7 +1415,6 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     ... # doctest: +ELLIPSIS
     (0.22..., 0.33..., 0.26..., None)
 
-
     """
     if beta <= 0:
         raise ValueError("beta should be >0 in the F-beta score")
@@ -1464,9 +1463,9 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         finally:
             np.seterr(**old_err_settings)
 
-        precision[size_pred == 0] = 1.0
-        recall[size_true == 0] = 1.0
-        f_score[(beta2 * size_true + size_pred) == 0] = 1.0
+        precision[size_pred == 0] = 0.0
+        recall[size_true == 0] = 0.0
+        f_score[(beta2 * size_true + size_pred) == 0] = 0.0
 
         precision = np.mean(precision)
         recall = np.mean(recall)
