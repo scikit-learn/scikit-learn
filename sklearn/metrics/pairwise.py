@@ -260,7 +260,6 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
             tmp = np.abs(tmp, out=tmp)
             tmp = np.sum(tmp, axis=2)
             D[this_slice] = tmp
-            print "Iteration at index %i" % index
             index += increment
     else:
         D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
