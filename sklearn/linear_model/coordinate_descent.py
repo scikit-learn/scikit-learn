@@ -771,6 +771,18 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         # at each fit...
 
     n_samples, n_features = X.shape
+    if Xy is None:
+        Xy = safe_sparse_dot(X.T, y, dense_output=True)
+
+    n_samples = X.shape[0]
+    if alphas is None:
+        # No need to normalize of fit_intercept: it has been done
+        # above
+        alphas = _alpha_grid(X, y, Xy=Xy, l1_ratio=l1_ratio,
+                             fit_intercept=False, eps=1e-3, n_alphas=100,
+                             normalize=False, copy_X=False)
+    else:
+        alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
 
     if (hasattr(precompute, '__array__')
             and not np.allclose(X_mean, np.zeros(n_features))
@@ -779,6 +791,10 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         precompute = 'auto'
         Xy = None
 
+    # precompute if n_samples > n_features
+    if precompute == 'auto':
+        precompute = (n_samples > n_features)
+
     if precompute or ((precompute == 'auto') and (n_samples > n_features)):
         if sparse.isspmatrix(X):
             warnings.warn("precompute is ignored for sparse data")
@@ -786,16 +802,6 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         else:
             precompute = np.dot(X.T, X)
 
-    if Xy is None:
-        Xy = safe_sparse_dot(X.T, y, dense_output=True)
-
-    n_samples = X.shape[0]
-    if alphas is None:
-        alpha_max = np.abs(Xy).max() / (n_samples * l1_ratio)
-        alphas = np.logspace(np.log10(alpha_max * eps), np.log10(alpha_max),
-                             num=n_alphas)[::-1]
-    else:
-        alphas = np.sort(alphas)[::-1]  # make sure alphas are properly ordered
     coef_ = None  # init coef_
     models = []
     coefs = []
