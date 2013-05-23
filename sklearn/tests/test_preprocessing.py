@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_sequences_equal
 
 from sklearn.utils.sparsefuncs import mean_variance_axis0
 from sklearn.preprocessing import Binarizer
@@ -510,8 +511,7 @@ def test_label_binarizer_multilabel():
                               [1, 1, 0]])
     got = lb.fit_transform(inp)
     assert_array_equal(indicator_mat, got)
-    assert_equal(list(map(list, lb.inverse_transform(got))),
-                 list(map(list, inp)))
+    assert_sequences_equal(lb.inverse_transform(got), inp)
 
     # test input as label indicator matrix
     lb.fit(indicator_mat)
@@ -528,8 +528,7 @@ def test_label_binarizer_multilabel():
                          [1, 1]])
     got = lb.fit_transform(inp)
     assert_array_equal(expected, got)
-    assert_equal([set(x) for x in lb.inverse_transform(got)],
-                 [set(x) for x in inp])
+    assert_sequences_equal(lb.inverse_transform(got), inp)
 
 
 def test_label_binarizer_errors():

@@ -1055,7 +1055,7 @@ class LabelBinarizer(LabelEncoder, TransformerMixin):
         else:
             n_columns = 1
         Y = np.empty((len(y), n_columns), dtype=np.int)
-        Y[...] = self.neg_label
+        Y.fill(self.neg_label)
 
         y_is_multilabel = is_multilabel(y)
 
@@ -1126,9 +1126,9 @@ class LabelBinarizer(LabelEncoder, TransformerMixin):
         if threshold is None:
             threshold = np.mean([self.pos_label, self.neg_label])
 
-        Y = np.array(Y > threshold, dtype=int)
-
         if self.multilabel:
+            Y = np.array(Y > threshold, dtype=int)
+
             # Return the predictions in the same format as in fit
             if self.indicator_matrix_:
                 # Label indicator matrix format
