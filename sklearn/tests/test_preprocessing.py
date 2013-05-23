@@ -510,7 +510,8 @@ def test_label_binarizer_multilabel():
                               [1, 1, 0]])
     got = lb.fit_transform(inp)
     assert_array_equal(indicator_mat, got)
-    assert_equal(lb.inverse_transform(got), inp)
+    assert_equal(list(map(list, lb.inverse_transform(got))),
+                 list(map(list, inp)))
 
     # test input as label indicator matrix
     lb.fit(indicator_mat)
