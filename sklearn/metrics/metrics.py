@@ -31,8 +31,6 @@ from ..utils import deprecated
 from ..utils.fixes import divide
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
-from ..utils.multiclass import multilabel_as_array
-from ..utils.multiclass import multilabel_vectorize
 
 
 ###############################################################################
@@ -1606,14 +1604,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                              "not meaningful outside multilabel"
                              "classification. See the accuracy_score instead.")
         ## get the number of (common) distinct labels for each sample ##
-        remove_dups = multilabel_vectorize(np.unique)
-        y_true = remove_dups(multilabel_as_array(y_true))
-        y_pred = remove_dups(multilabel_as_array(y_pred))
-        intersect_all = multilabel_vectorize(np.intersect1d)
-        len_all = multilabel_vectorize(len, otypes='i')
-        tp_sum = len_all(intersect_all(y_true, y_pred))
-        pos_sum = len_all(y_pred)
-        true_sum = len_all(y_true)
+        tp_sum = np.array([len(np.intersect1d(sample1, sample2))
+                           for sample1, sample2 in zip(y_true, y_pred)])
+        pos_sum = np.array([len(np.unique(sample)) for sample in y_pred])
+        true_sum = np.array([len(np.unique(sample)) for sample in y_true])
 
     else:
         ## count the (common) occurrences of each label ##
@@ -1628,7 +1622,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
         if y_type == 'multilabel-sequences':
             intersect_all = multilabel_vectorize(np.intersect1d)
-            tp_bins = np.hstack(intersect_all(y_pred, y_true))
+            tp_bins = np.hstack([np.intersect1d(sample1, sample2)
+                                 for sample1, sample2 in zip(y_pred, y_true)])
             # merge samples
             pos_bins = np.hstack(y_pred)
             true_bins = np.hstack(y_true)
