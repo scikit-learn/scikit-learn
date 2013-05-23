@@ -1679,7 +1679,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     (0.66..., 0.66..., 0.66..., None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='samples')
     ... # doctest: +ELLIPSIS
-    (1.0, 0.5, 0.5, None)
+    (0.5, 0.5, 0.5, None)
 
     """
     if beta <= 0:
@@ -1726,9 +1726,9 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         finally:
             np.seterr(**old_err_settings)
 
-        precision[size_pred == 0] = 1.0
-        recall[size_true == 0] = 1.0
-        f_score[(beta2 * size_true + size_pred) == 0] = 1.0
+        precision[size_pred == 0] = 0.0
+        recall[size_true == 0] = 0.0
+        f_score[(beta2 * size_true + size_pred) == 0] = 0.0
 
         precision = np.mean(precision)
         recall = np.mean(recall)
@@ -1927,7 +1927,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     >>> precision_score(y_true, y_pred, average='weighted') # doctest: +ELLIPSIS
     0.66...
     >>> precision_score(y_true, y_pred, average='samples')
-    1.0
+    0.5
     >>> precision_score(y_true, y_pred, average=None)
     array([ 1.,  1.,  0.])
 
