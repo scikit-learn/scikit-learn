@@ -40,7 +40,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         Must be strictly less than the number of features.
         The default value is useful for visualisation. For LSA, a value of
         100 is recommended.
-    algorithm : string, optional
+    algorithm : string, default = "randomized"
         SVD solver to use. Either "arpack" for the ARPACK wrapper in SciPy
         (scipy.sparse.linalg.svds), or "randomized" for the randomized
         algorithm due to Halko (2009).
@@ -76,8 +76,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
     class to data once, then keep the instance around to do transformations.
 
     """
-    def __init__(self, n_components=2, algorithm="arpack", n_iterations=5,
-                 random_state=None, tol=0.):
+    def __init__(self, n_components=2, algorithm="randomized",
+                 n_iterations=5, random_state=None, tol=0.):
         self.algorithm = algorithm
         self.n_components = n_components
         self.n_iterations = n_iterations
@@ -120,7 +120,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
         return np.dot(U, Sigma.T)
 
     def _fit(self, X):
-        X = as_float_array(X)
+        X = as_float_array(X, copy=False)
         random_state = check_random_state(self.random_state)
 
         if self.algorithm == "arpack":
