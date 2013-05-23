@@ -127,7 +127,8 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
             U, Sigma, VT = svds(X, k=self.n_components, tol=self.tol)
             # svds doesn't abide by scipy.linalg.svd/randomized_svd
             # conventions, so reverse its outputs.
-            U, Sigma, VT = svd_flip(U[:, ::-1], Sigma[::-1], VT[::-1])
+            Sigma = Sigma[::-1]
+            U, VT = svd_flip(U[:, ::-1], VT[::-1])
 
         elif self.algorithm == "randomized":
             U, Sigma, VT = randomized_svd(X, self.n_components,
