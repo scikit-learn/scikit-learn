@@ -9,6 +9,7 @@
 import numpy as np
 from scipy import linalg
 from math import log
+import warnings
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import array2d, check_random_state, as_float_array
@@ -372,9 +373,6 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     Decomposition of the data and keeping only the most significant
     singular vectors to project the data to a lower dimensional space.
 
-    This implementation uses a randomized SVD implementation and can
-    handle both scipy.sparse and numpy dense arrays as input.
-
     Parameters
     ----------
     n_components : int
@@ -426,6 +424,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     --------
     PCA
     ProbabilisticPCA
+    TruncatedSVD
 
     References
     ----------
@@ -436,6 +435,13 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
     .. [MRT] `A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert`
+
+    Notes
+    -----
+    This class supports sparse matrix input for backward compatibility, but
+    actually computes a truncated SVD instead of a PCA in that case (i.e. no
+    centering is performed). This support is deprecated; use the class
+    TruncatedSVD for sparse matrix support.
 
     """
 
@@ -453,7 +459,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like or scipy.sparse matrix, shape (n_samples, n_features)
+        X: array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
 
@@ -463,7 +469,12 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
             Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
-        if not hasattr(X, 'todense'):
+        if hasattr(X, 'todense'):
+            warnings.warn("Sparse matrix support is deprecated"
+                          " and will be dropped in 0.16."
+                          " Use TruncatedSVD instead.",
+                          DeprecationWarning)
+        else:
             # not a sparse matrix, ensure this is a 2D array
             X = np.atleast_2d(as_float_array(X, copy=self.copy))
 
@@ -498,7 +509,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like or scipy.sparse matrix, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -507,6 +518,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
 
         """
+        # XXX remove scipy.sparse support here in 0.16
         X = atleast2d_or_csr(X)
         if self.mean_ is not None:
             X = X - self.mean_
@@ -521,7 +533,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like or scipy.sparse matrix, shape (n_samples, n_components)
+        X : array-like, shape (n_samples, n_components)
             New data, where n_samples in the number of samples
             and n_components is the number of components.
 
@@ -534,6 +546,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         If whitening is enabled, inverse_transform does not compute the
         exact inverse operation of transform.
         """
+        # XXX remove scipy.sparse support here in 0.16
         X_original = safe_sparse_dot(X, self.components_)
         if self.mean_ is not None:
             X_original = X_original + self.mean_
