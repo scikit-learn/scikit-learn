@@ -485,9 +485,9 @@ To make this more explicit, consider the following notation:
 * similarly, :math:`\hat{y}_s` and :math:`\hat{y}_l` are subsets of
   :math:`\hat{y}`
 * :math:`P(A, B) := \frac{\left| A \cap B \right|}{\left|A\right|}`
-  (Where :math:`A = \emptyset`, :math:`P(A, B):=1`.)
 * :math:`R(A, B) := \frac{\left| A \cap B \right|}{\left|B\right|}`
-  (Where :math:`B = \emptyset`, :math:`R(A, B):=1`.)
+  (Conventions vary on handling :math:`B = \emptyset`; this implementation uses
+  :math:`R(A, B):=0`, and similar for `P`.)
 * :math:`F_\beta(A, B) := \left(1 + \beta^2\right) \frac{P(A, B) \times R(A, B)}{\beta^2 P(A, B) + R(A, B)}`
 
 Then the metrics are defined as:
