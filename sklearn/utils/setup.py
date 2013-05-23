@@ -63,6 +63,16 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
+    config.add_extension('_min_spanning_tree',
+                         sources=['_min_spanning_tree.c'],
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries)
+
+    config.add_extension('_graph_tools',
+                         sources=['_graph_tools.c'],
+                         include_dirs=[numpy.get_include()],
+                         libraries=libraries)
+
     return config
 
 
