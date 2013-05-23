@@ -1702,7 +1702,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         old_err_settings = np.seterr(divide='ignore', invalid='ignore')
         precision = tp_sum / pos_sum
         recall = tp_sum / true_sum
-        precision[pos_sum == 0] = 0.0  # XXX: Joel thinks these should be set to 1.
+        # TODO: warn before setting these
+        precision[pos_sum == 0] = 0.0
         recall[true_sum == 0] = 0.0
 
         f_score = (1 + beta2) * precision * recall / (beta2 * precision + recall)
