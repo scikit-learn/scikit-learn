@@ -1484,20 +1484,46 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         precision = divide(true_pos.astype(np.float), true_pos + false_pos)
         recall = divide(true_pos.astype(np.float), true_pos + false_neg)
 
+        idx_ill_defined_precision = (true_pos + false_pos) == 0
+        idx_ill_defined_recall = (true_pos + false_neg) == 0
+
         # handle division by 0 in precision and recall
-        precision[(true_pos + false_pos) == 0] = 0.0
-        recall[(true_pos + false_neg) == 0] = 0.0
+        precision[idx_ill_defined_precision] = 0.0
+        recall[idx_ill_defined_recall] = 0.0
 
         # fbeta score
         fscore = divide((1 + beta2) * precision * recall,
                         beta2 * precision + recall)
 
         # handle division by 0 in fscore
-        fscore[(beta2 * precision + recall) == 0] = 0.0
+        idx_ill_defined_fbeta_score = (beta2 * precision + recall) == 0
+        fscore[idx_ill_defined_fbeta_score] = 0.0
     finally:
         np.seterr(**old_err_settings)
 
     if not average:
+        warning_msg = ""
+        if np.any(idx_ill_defined_precision):
+            warning_msg += ("The sum of true positives and false positives "
+                            "are equal to zero for some labels. Precision is "
+                            "ill defined for those labels %s. "
+                            % labels[idx_ill_defined_precision])
+
+        if np.any(idx_ill_defined_recall):
+            warning_msg += ("The sum of true positives and false negatives "
+                            "are equal to zero for some labels. Recall is ill "
+                            "defined for those labels %s. "
+                            % labels[idx_ill_defined_recall])
+
+        if np.any(idx_ill_defined_fbeta_score):
+            warning_msg += ("The precision and recall are equal to zero for "
+                            "some labels. fbeta_score is ill defined for "
+                            "those labels %s. "
+                            % labels[idx_ill_defined_fbeta_score])
+
+        if warning_msg:
+            warnings.warn(warning_msg)
+
         return precision, recall, fscore, support
 
     elif y_type == 'binary' and pos_label is not None:
@@ -1513,24 +1539,42 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     else:
         average_options = (None, 'micro', 'macro', 'weighted', 'samples')
         if average == 'micro':
-            avg_precision = divide(true_pos.sum(),
-                                   true_pos.sum() + false_pos.sum(),
-                                   dtype=np.double)
-            avg_recall = divide(true_pos.sum(),
-                                true_pos.sum() + false_neg.sum(),
-                                dtype=np.double)
-            avg_fscore = divide((1 + beta2) * (avg_precision * avg_recall),
-                                beta2 * avg_precision + avg_recall,
-                                dtype=np.double)
+            try:
+                # oddly, we may get an "invalid" rather than a "divide" error here
+                old_err_settings = np.seterr(divide='ignore', invalid='ignore')
+                avg_precision = divide(true_pos.sum(),
+                                       true_pos.sum() + false_pos.sum(),
+                                       dtype=np.double)
+                avg_recall = divide(true_pos.sum(),
+                                    true_pos.sum() + false_neg.sum(),
+                                    dtype=np.double)
+                avg_fscore = divide((1 + beta2) * (avg_precision * avg_recall),
+                                    beta2 * avg_precision + avg_recall,
+                                    dtype=np.double)
+            finally:
+                np.seterr(**old_err_settings)
+
+            warning_msg = ""
 
             if np.isnan(avg_precision):
                 avg_precision = 0.
+                warning_msg += ("The sum of true positives and false "
+                                "positives are equal to zero. Micro-precision"
+                                " is ill defined. ")
 
             if np.isnan(avg_recall):
                 avg_recall = 0.
+                warning_msg += ("The sum of true positives and false "
+                                "negatives are equal to zero. Micro-recall "
+                                "is ill defined. ")
 
             if np.isnan(avg_fscore):
                 avg_fscore = 0.
+                warning_msg += ("Micro-precision and micro-recall are equal "
+                                "to zero. Micro-fbeta_score is ill defined.")
+
+            if warning_msg:
+                warnings.warn(warning_msg)
 
         elif average == 'macro':
             avg_precision = np.mean(precision)
@@ -1542,6 +1586,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 avg_precision = 0.
                 avg_recall = 0.
                 avg_fscore = 0.
+                warnings.warn("There isn't any labels in y_true. "
+                              "Weighted-precision, weighted-recall and "
+                              "weighted-fbeta_score are ill defined.")
+
             else:
                 avg_precision = np.average(precision, weights=support)
                 avg_recall = np.average(recall, weights=support)
