@@ -21,15 +21,18 @@ Xdense = X.A
 
 
 def test_algorithms():
-    atsvd = TruncatedSVD(30, algorithm="arpack")
-    rtsvd = TruncatedSVD(30, algorithm="randomized", random_state=42)
+    svd_a = TruncatedSVD(30, algorithm="arpack")
+    svd_r = TruncatedSVD(30, algorithm="randomized", random_state=42)
 
-    # Test only the main components; for the rest, the algorithms don't give
-    # nearly the same results.
-    Xa = atsvd.fit_transform(X)[:, :6]
-    Xr = rtsvd.fit_transform(X)[:, :6]
+    Xa = svd_a.fit_transform(X)[:, :6]
+    Xr = svd_r.fit_transform(X)[:, :6]
     assert_array_almost_equal(Xa, Xr)
-    assert_array_almost_equal(atsvd.components_[:6], rtsvd.components_[:6])
+
+    comp_a = np.abs(svd_a.components_)
+    comp_r = np.abs(svd_r.components_)
+    # All elements are equal, but some elements are more equal than others.
+    assert_array_almost_equal(comp_a[:9], comp_r[:9])
+    assert_array_almost_equal(comp_a[9:], comp_r[9:], decimal=3)
 
 
 def test_attributes():
@@ -42,7 +45,7 @@ def test_attributes():
 def test_too_many_components():
     for algorithm in ["arpack", "randomized"]:
         for n_components in (n_features, n_features+1):
-            tsvd = TruncatedSVD(n_components=n_components, algorithm="algorithm")
+            tsvd = TruncatedSVD(n_components=n_components, algorithm=algorithm)
             assert_raises(ValueError, tsvd.fit, X)
 
 

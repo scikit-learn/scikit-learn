@@ -131,6 +131,11 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
             U, VT = svd_flip(U[:, ::-1], VT[::-1])
 
         elif self.algorithm == "randomized":
+            k = self.n_components
+            n_features = X.shape[1]
+            if k >= n_features:
+                raise ValueError("n_components must be < n_features;"
+                                 " got %d >= %d" % (k, n_features))
             U, Sigma, VT = randomized_svd(X, self.n_components,
                                           n_iter=self.n_iterations,
                                           random_state=random_state)
