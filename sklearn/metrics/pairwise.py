@@ -210,7 +210,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
 
     size_threshold : int, default=5e8
         Avoid creating temporary matrices bigger than size_threshold.
-        If the problem size gets too big, the implementation than
+        If the problem size gets too big, the implementation then
         breaks it down in smaller problems.
 
     Returns
