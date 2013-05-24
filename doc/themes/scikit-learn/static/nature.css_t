@@ -593,6 +593,40 @@ div.header-wrapper {
 }
 {% endif %}
 
+/*-----------------------The Code Sprint Sponser Banner---------------------*/
+
+div.sprint-wrapper {
+    font-weight: bold;
+    font-size: 110%;
+    padding: 5px;
+    margin: 7px 7px 3px 7px;
+    background-color: #FFC588;
+    border-radius: 15px;
+    -o-transition:.5s;
+    -ms-transition:.5s;
+    -moz-transition:.5s;
+    -webkit-transition:.5s;
+    transition:.5s;
+}
+
+div.sprint-wrapper a {
+    display: block;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+    cursor: pointer;
+    color: black;
+}
+
+div.sprint-wrapper p {
+    padding: 0px 0px 0px 2px;
+    font-weight: initial;
+}
+
+div.sprint-wrapper:hover  {
+    background-color: #FF9C34;
+}
+
 /*-----------------------The Examples Gallery-------------------------------*/
 
 /* ------- Fix maximum size of thumbnails in example gallery -------------- */

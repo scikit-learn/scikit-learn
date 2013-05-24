@@ -162,6 +162,16 @@
     for {{project}} <strong>version {{ release|e }}</strong>
     &mdash; <a href="http://scikit-learn.org/stable/support.html#documentation-resources">Other versions</a></p>
     {% else %}
+
+    {%- if theme_sprintbanner == true %}
+      <div class="sprint-wrapper"><a href="https://github.com/scikit-learn/administrative/blob/master/sprint_paris_2013/proposal.rst#13funding-contact-information">
+       <p>The <strong> {{project}} international code sprint</strong>
+	  is around the corner! <strong>Please, sponsor us</strong>
+       </p>
+       </a>
+      </div>
+    {%- endif %}
+
     <h3><a href="{{pathto('whats_new')}}">News</a></h3>
 
     <p>scikit-learn 0.13 is available
