@@ -49,7 +49,7 @@ Install
 This package uses distutils, which is the default way of installing
 python modules. To install in your home directory, use::
 
-  python setup.py install --home
+  python setup.py install --user
 
 To install for all users on Unix/Linux::
 
