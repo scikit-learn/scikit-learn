@@ -24,11 +24,12 @@ from scipy.spatial.distance import hamming as sp_hamming
 
 from ..externals.six.moves import zip
 from ..preprocessing import LabelBinarizer
+from ..preprocessing import LabelEncoder
 from ..utils import check_arrays
 from ..utils import deprecated
 from ..utils.fixes import divide
-from ..utils.multiclass import is_multilabel
 from ..utils.multiclass import unique_labels
+from ..utils.multiclass import type_of_target
 
 
 ###############################################################################
@@ -146,6 +147,95 @@ def _check_1d_array(y1, y2, ravel=False):
             y2 = np.reshape(y2, np.shape(y1))
 
         return y1, y2
+
+
+def _check_clf_targets(y_true, y_pred, encode=False, ravel=False, labels=None):
+    """Check that y1 and y2 correspond to the same classification task type.
+
+    This converts mixed multilabel targets to a common format, converts
+    multiclass or binary types to a common shape, and raises a ValueError
+    for a mix of multilabel and multiclass targets, or for the presence of
+    continuous-valued targets.
+
+    Parameters
+    ----------
+    y_true : array-like,
+
+    y_pred : array-like
+
+    encode : boolean, optional (default=False),
+        If ``encode`` is set to ``True``, then non-multilabel ``y_true`` and
+        ``y_pred`` are encoded as integers from 0 to ``len(labels)``.
+
+    ravel : boolean, optional (default=False),
+        If ``ravel``` is set to ``True``, then non-multilabel ``y_true`` and
+        ``y_pred`` are raveled.
+
+    labels : array-like, optional
+        When set, if ``y_true`` and ``y_pred`` are in different multilabel
+        formats, this specifies a label order for the label indicator matrix
+        output.
+
+    Returns
+    -------
+    labels : array
+        The sorted unique labels in ``y1`` and ``y2`` before encoding, or the
+        given ``labels``.
+
+    type_true : one of {'multilabel-indicator', 'multilabel-sequences', \
+                        'multiclass', 'binary'}
+        The type of the true target data, as output by
+        ``utils.multiclass.type_of_target``
+    
+    y_true : array or indicator matrix or sequence of sequences
+        A label indicator matrix, or sequence of sequences, or possibly-encoded
+        and/or raveled ``y_true``
+
+    y_pred : array or indicator matrix or sequence of sequences
+        ``y_pred`` in the shape of ``y_true``. Where ``y_pred`` had been a
+        label indicator matrix and ``y_true`` a sequence of sequences, an
+        exception is made: both are returned as label indicator matrices.
+    """
+    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
+    type_true = type_of_target(y_true)
+    type_pred = type_of_target(y_pred)
+    if labels is None:
+        labels = unique_labels(y_true, y_pred)
+    else:
+        labels = np.array(labels)
+
+    if type_true.startswith('multilabel'):
+        if not type_pred.startswith('multilabel'):
+            raise ValueError("Can't handle mix of multilabel and multiclass targets")
+
+        if type_true != type_pred:
+            enc = LabelBinarizer()
+            enc.fit([list(labels)])
+            y_true = enc.transform(y_true)
+            y_pred = enc.transform(y_pred)
+            type_true = type_pred = 'multilabel-indicator'
+
+    elif type_pred.startswith('multilabel'):
+        raise ValueError("Can't handle mix of multilabel and multiclass targets")
+
+    elif 'continuous' in (type_true, type_pred):
+        raise ValueError("Can't handle continuous targets")
+
+    else:
+        if 'multiclass' in (type_true, type_pred):
+            # 'binary' can be removed
+            type_true = type_pred = 'multiclass'
+
+        y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=ravel)
+
+    if encode and not type_true.startswith('multilabel'):
+        # TODO: support sequence of sequencs when LabelEncoder does
+        enc = LabelEncoder()
+        enc.fit(labels.tolist())
+        y_true = enc.transform(y_true)
+        y_pred = enc.transform(y_pred)
+
+    return labels, type_true, y_true, y_pred
 
 
 def auc(x, y, reorder=False):
@@ -925,59 +1015,45 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True, pos_label=1):
 
     """
 
-    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
-
     # Compute accuracy for each possible representation
-    ml_type = is_multilabel(y_true, y_pred)
-    if ml_type:
-        if ml_type == 'mixed':
-            labels = unique_labels(y_true, y_pred)
-            lb = LabelBinarizer()
-            lb.fit([labels.tolist()])
-            y_true = lb.transform(y_true)
-            y_pred = lb.transform(y_pred)
+    _, y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred, ravel=True)
+    if y_type == 'multilabel-indicator':
+        try:
+            # oddly, we may get an "invalid" rather than a "divide"
+            # error here
+            old_err_settings = np.seterr(divide='ignore',
+                                         invalid='ignore')
+            y_pred_pos_label = y_pred == pos_label
+            y_true_pos_label = y_true == pos_label
+            pred_inter_true = np.sum(np.logical_and(y_pred_pos_label,
+                                                    y_true_pos_label),
+                                     axis=1)
+            pred_union_true = np.sum(np.logical_or(y_pred_pos_label,
+                                                   y_true_pos_label),
+                                     axis=1)
+            score = pred_inter_true / pred_union_true
 
-        if ml_type != 'sequences':
-            try:
-                # oddly, we may get an "invalid" rather than a "divide"
-                # error here
-                old_err_settings = np.seterr(divide='ignore',
-                                             invalid='ignore')
-                y_pred_pos_label = y_pred == pos_label
-                y_true_pos_label = y_true == pos_label
-                pred_inter_true = np.sum(np.logical_and(y_pred_pos_label,
-                                                        y_true_pos_label),
-                                         axis=1)
-                pred_union_true = np.sum(np.logical_or(y_pred_pos_label,
-                                                       y_true_pos_label),
-                                         axis=1)
-                score = pred_inter_true / pred_union_true
+            # If there is no label, it results in a Nan instead, we set
+            # the jaccard to 1: lim_{x->0} x/x = 1
+            # Note with py2.6 and np 1.3: we can't check safely for nan.
+            score[pred_union_true == 0.0] = 1.0
+        finally:
+            np.seterr(**old_err_settings)
 
-                # If there is no label, it results in a Nan instead, we set
-                # the jaccard to 1: lim_{x->0} x/x = 1
-                # Note with py2.6 and np 1.3: we can't check safely for nan.
-                score[pred_union_true == 0.0] = 1.0
-            finally:
-                np.seterr(**old_err_settings)
-
-        else:
-            score = np.empty(len(y_true), dtype=np.float)
-            for i, (true, pred) in enumerate(zip(y_pred, y_true)):
-                true_set = set(true)
-                pred_set = set(pred)
-                size_true_union_pred = len(true_set | pred_set)
-                # If there is no label, it results in a Nan instead, we set
-                # the jaccard to 1: lim_{x->0} x/x = 1
-                if size_true_union_pred == 0:
-                    score[i] = 1.
-                else:
-                    score[i] = (len(true_set & pred_set) /
-                                size_true_union_pred)
+    elif y_type == 'multilabel-sequences':
+        score = np.empty(len(y_true), dtype=np.float)
+        for i, (true, pred) in enumerate(zip(y_pred, y_true)):
+            true_set = set(true)
+            pred_set = set(pred)
+            size_true_union_pred = len(true_set | pred_set)
+            # If there is no label, it results in a Nan instead, we set
+            # the jaccard to 1: lim_{x->0} x/x = 1
+            if size_true_union_pred == 0:
+                score[i] = 1.
+            else:
+                score[i] = (len(true_set & pred_set) /
+                            size_true_union_pred)
     else:
-        y_true, y_pred = check_arrays(y_true, y_pred)
-
-        # Handle mix shape
-        y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=True)
         score = y_true == y_pred
 
     if normalize:
@@ -1046,28 +1122,14 @@ def accuracy_score(y_true, y_pred, normalize=True):
     0.0
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
-
     # Compute accuracy for each possible representation
-    ml_type = is_multilabel(y_true, y_pred)
-    if ml_type:
-        if ml_type == 'mixed':
-            labels = unique_labels(y_true, y_pred)
-            lb = LabelBinarizer()
-            lb.fit([labels.tolist()])
-            y_true = lb.transform(y_true)
-            y_pred = lb.transform(y_pred)
-
-        if ml_type != 'sequences':
-            score = (y_pred != y_true).sum(axis=1) == 0
-        else:
-            score = np.array([len(set(true) ^ set(pred)) == 0
-                              for pred, true in zip(y_pred, y_true)])
+    _, y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred, ravel=True)
+    if y_type == 'multilabel-indicator':
+        score = (y_pred != y_true).sum(axis=1) == 0
+    elif y_type == 'multilabel-sequences':
+        score = np.array([len(set(true) ^ set(pred)) == 0
+                          for pred, true in zip(y_pred, y_true)])
     else:
-        y_true, y_pred = check_arrays(y_true, y_pred)
-
-        # Handle mix shape
-        y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=True)
         score = y_true == y_pred
 
     if normalize:
@@ -1409,52 +1471,36 @@ def _tp_tn_fp_fn(y_true, y_pred, labels=None, pos_label=1):
     (array([1, 1, 0]), array([1, 1, 1]), array([0, 0, 0]), array([0, 0, 1]))
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
-
-    if labels is None:
-        labels = unique_labels(y_true, y_pred)
-    else:
-        labels = np.asarray(labels, dtype=np.int)
+    labels, y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred,
+                                                        labels=labels)
 
     n_labels = labels.size
     true_pos = np.zeros((n_labels), dtype=np.int)
     false_pos = np.zeros((n_labels), dtype=np.int)
     false_neg = np.zeros((n_labels), dtype=np.int)
 
-    ml_type = is_multilabel(y_true, y_pred)
-    if ml_type:
-        if ml_type == 'mixed':
-            labels = unique_labels(y_true, y_pred)
-            lb = LabelBinarizer()
-            lb.fit([labels.tolist()])
-            y_true = lb.transform(y_true)
-            y_pred = lb.transform(y_pred)
+    if y_type == 'multilabel-indicator':
+        true_pos = np.sum(np.logical_and(y_true == pos_label,
+                                         y_pred == pos_label), axis=0)
+        false_pos = np.sum(np.logical_and(y_true != pos_label,
+                                          y_pred == pos_label), axis=0)
+        false_neg = np.sum(np.logical_and(y_true == pos_label,
+                                          y_pred != pos_label), axis=0)
 
-        if ml_type != 'sequences':
-            true_pos = np.sum(np.logical_and(y_true == pos_label,
-                                             y_pred == pos_label), axis=0)
-            false_pos = np.sum(np.logical_and(y_true != pos_label,
-                                              y_pred == pos_label), axis=0)
-            false_neg = np.sum(np.logical_and(y_true == pos_label,
-                                              y_pred != pos_label), axis=0)
+    elif y_type == 'multilabel-sequences':
+        idx_to_label = dict((label_i, i)
+                            for i, label_i in enumerate(labels))
 
-        else:
-            idx_to_label = dict((label_i, i)
-                                for i, label_i in enumerate(labels))
-
-            for true, pred in zip(y_true, y_pred):
-                true_set = np.array([idx_to_label[l] for l in set(true)],
-                                    dtype=np.int)
-                pred_set = np.array([idx_to_label[l] for l in set(pred)],
-                                    dtype=np.int)
-                true_pos[np.intersect1d(true_set, pred_set)] += 1
-                false_pos[np.setdiff1d(pred_set, true_set)] += 1
-                false_neg[np.setdiff1d(true_set, pred_set)] += 1
+        for true, pred in zip(y_true, y_pred):
+            true_set = np.array([idx_to_label[l] for l in set(true)],
+                                dtype=np.int)
+            pred_set = np.array([idx_to_label[l] for l in set(pred)],
+                                dtype=np.int)
+            true_pos[np.intersect1d(true_set, pred_set)] += 1
+            false_pos[np.setdiff1d(pred_set, true_set)] += 1
+            false_neg[np.setdiff1d(true_set, pred_set)] += 1
 
     else:
-        y_true, y_pred = check_arrays(y_true, y_pred)
-        y_true, y_pred = _check_1d_array(y_true, y_pred)
-
         for i, label_i in enumerate(labels):
             true_pos[i] = np.sum(y_pred[y_true == label_i] == label_i)
             false_pos[i] = np.sum(y_pred[y_true != label_i] == label_i)
@@ -1641,43 +1687,29 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         raise ValueError("beta should be >0 in the F-beta score")
     beta2 = beta ** 2
 
-    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
-
-    if labels is None:
-        labels = unique_labels(y_true, y_pred)
-    else:
-        labels = np.asarray(labels, dtype=np.int)
-
+    labels, y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred,
+                                                        labels=labels)
     n_labels = labels.size
 
     if average == "samples":
-        ml_type = is_multilabel(y_true, y_pred)
-        if ml_type:
-            if ml_type == 'mixed':
-                labels = unique_labels(y_true, y_pred)
-                lb = LabelBinarizer()
-                lb.fit([labels.tolist()])
-                y_true = lb.transform(y_true)
-                y_pred = lb.transform(y_pred)
+        if y_type == 'multilabel-indicator':
+            y_true_pos_label = y_true == pos_label
+            y_pred_pos_label = y_pred == pos_label
+            size_inter = np.sum(np.logical_and(y_true_pos_label,
+                                               y_pred_pos_label), axis=1)
+            size_true = np.sum(y_true_pos_label, axis=1)
+            size_pred = np.sum(y_pred_pos_label, axis=1)
 
-            if ml_type != 'sequences':
-                y_true_pos_label = y_true == pos_label
-                y_pred_pos_label = y_pred == pos_label
-                size_inter = np.sum(np.logical_and(y_true_pos_label,
-                                                   y_pred_pos_label), axis=1)
-                size_true = np.sum(y_true_pos_label, axis=1)
-                size_pred = np.sum(y_pred_pos_label, axis=1)
-
-            else:
-                size_inter = np.empty(len(y_true), dtype=np.int)
-                size_true = np.empty(len(y_true), dtype=np.int)
-                size_pred = np.empty(len(y_true), dtype=np.int)
-                for i, (true, pred) in enumerate(zip(y_true, y_pred)):
-                    true_set = set(true)
-                    pred_set = set(pred)
-                    size_inter[i] = len(true_set & pred_set)
-                    size_pred[i] = len(pred_set)
-                    size_true[i] = len(true_set)
+        elif y_type == 'multilabel-sequences':
+            size_inter = np.empty(len(y_true), dtype=np.int)
+            size_true = np.empty(len(y_true), dtype=np.int)
+            size_pred = np.empty(len(y_true), dtype=np.int)
+            for i, (true, pred) in enumerate(zip(y_true, y_pred)):
+                true_set = set(true)
+                pred_set = set(pred)
+                size_inter[i] = len(true_set & pred_set)
+                size_pred[i] = len(pred_set)
+                size_true[i] = len(true_set)
         else:
             raise ValueError("Example-based precision, recall, fscore is "
                              "not meaning full outside multilabe"
@@ -2219,34 +2251,18 @@ def hamming_loss(y_true, y_pred, classes=None):
     0.166...
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
+    classes, y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred,
+                                                         labels=classes)
 
-    if classes is None:
-        classes = unique_labels(y_true, y_pred)
-    else:
-        classes = np.asarray(classes, dtype=np.int)
-
-    ml_type = is_multilabel(y_true, y_pred)
-    if ml_type:
-        lb = LabelBinarizer()
-        lb.fit([classes.tolist()])
-
-        if ml_type == 'mixed':
-            y_true = lb.transform(y_true)
-            y_pred = lb.transform(y_pred)
-
-        if ml_type != 'sequences':
-            return np.mean(y_true != y_pred)
-        else:
+    if y_type == 'multilabel-indicator':
+        return np.mean(y_true != y_pred)
+    elif y_type == 'multilabel-sequences':
             loss = np.array([len(set(pred) ^ set(true))
                              for pred, true in zip(y_pred, y_true)])
 
             return np.mean(loss) / np.size(classes)
 
     else:
-        y_true, y_pred = check_arrays(y_true, y_pred)
-        y_true, y_pred = _check_1d_array(y_true, y_pred)
-
         return sp_hamming(y_true, y_pred)
 
 

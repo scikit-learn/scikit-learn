@@ -95,7 +95,8 @@ def is_label_indicator_matrix(y):
 
     """
     return (hasattr(y, "shape") and len(y.shape) == 2 and y.shape[1] > 1 and
-            y.shape[0] > 1 and np.size(np.unique(y)) <= 2)
+            y.shape[0] > 1 and np.size(np.unique(y)) <= 2
+            and np.all(y == y.astype(int)))
 
 
 def is_sequence_of_sequences(y):
@@ -129,89 +130,98 @@ def is_sequence_of_sequences(y):
     """
     # the explicit check for ndarray is for forward compatibility; future
     # versions of Numpy might want to register ndarray as a Sequence
-    return (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) and
-            not isinstance(y[0], string_types))
+    try:
+        return (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence)
+                and not isinstance(y[0], string_types))
+    except IndexError:
+        return False
 
 
-_mixed_error = ValueError(
-    'Received a mix of single-label and multi-label data')
-
-
-def is_multilabel(*ys):
-    """Checks if all of `ys` are multilabel, and what types
-
-    If `ys` is a mix of multilabel and non-multilabel data, raises `ValueError`.
+def is_multilabel(y):
+    """ Check if ``y`` is in a multilabel format.
 
     Parameters
     ----------
-    *ys : array-likes
+    y : numpy array of shape [n_samples] or sequence of sequences
+        Target values. In the multilabel case the nested sequences can
+        have variable lengths.
 
     Returns
     -------
-    type_name : string or False
-        Returns False if none of `ys` is multilabel. Returns 'matrix' if all
-        are label indicator matrices, 'sos' if all are sequence-of-sequences,
-        and 'mixed' if both occur.
+    out : bool,
+        Return ``True``, if ``y`` is in a multilabel format, else ```False``.
 
-    Examples:
+    Examples
+    --------
     >>> import numpy as np
     >>> from sklearn.utils.multiclass import is_multilabel
-    >>> from nose.tools import assert_raises
-    >>> ind = np.array([[0, 1], [1, 0]])
-    >>> seq1 = [[0], [0, 2]]
-    >>> seq2 = np.array([[0, 2], [1]])
-    >>> other = [1, 2, 3]
-    >>> is_multilabel(ind)
-    'indicator'
-    >>> is_multilabel(seq1)
-    'sequences'
-    >>> is_multilabel(seq2)
-    'sequences'
-    >>> is_multilabel(seq1, seq2)
-    'sequences'
-    >>> is_multilabel(ind, ind)
-    'indicator'
-    >>> is_multilabel(ind, seq1)
-    'mixed'
-    >>> is_multilabel(ind, seq1, ind)
-    'mixed'
-    >>> is_multilabel(other)
+    >>> is_multilabel([0, 1, 0, 1])
     False
-    >>> is_multilabel(other, other)
+    >>> is_multilabel([[1], [0, 2], []])
+    True
+    >>> is_multilabel(np.array([[1, 0], [0, 0]]))
+    True
+    >>> is_multilabel(np.array([[1], [0], [0]]))
     False
-    >>> is_multilabel(['label1', 'label2'])
+    >>> is_multilabel(np.array([[1, 0, 0]]))
     False
-    >>> is_multilabel([['label1', 'label2']])
-    'sequences'
-    >>> assert_raises(ValueError, is_multilabel, other, seq1)
-    >>> assert_raises(ValueError, is_multilabel, other, ind)
-    >>> assert_raises(ValueError, is_multilabel, seq1, other)
-    >>> assert_raises(ValueError, is_multilabel, ind, other)
+
     """
-    if not ys:
-        raise ValueError('Need at least one set of targets to check')
+    return is_label_indicator_matrix(y) or is_sequence_of_sequences(y)
 
-    ret = None
-    for y in ys:
-        is_ml = is_label_indicator_matrix(y)
-        if is_ml:
-            if ret is None:
-                ret = 'indicator'
-            elif ret == 'sequences':
-                ret = 'mixed'
-            elif ret == False:
-                raise _mixed_error
-            continue
 
-        is_ml = is_sequence_of_sequences(y)
-        if not is_ml:
-            if ret:
-                raise _mixed_error
-            ret = False
-        elif ret is None:
-            ret = 'sequences'
-        elif ret == 'indicator':
-            ret = 'mixed'
-        elif ret == False:
-            raise _mixed_error
-    return ret
+def type_of_target(y):
+    """Determine the type of data indicated by target `y`
+
+    Parameters
+    ----------
+    y : array-like
+
+    Returns
+    -------
+    target_type : string
+        One of:
+        * 'continuous': `y` is an array of floats that are not all integers.
+        * 'binary': `y` contains two values and is not an indicator matrix.
+        * 'multiclass': `y` contains more or less than two discrete values and
+          is not a sequence of sequences.
+        * 'multilabel-sequences': `y` is a sequence of sequences.
+        * 'multilabel-indicator': `y` is a label indicator matrix.
+
+    Examples
+    --------
+    >>> type_of_target([0.1, 0.6])
+    'continuous'
+    >>> type_of_target([1, -1, -1, 1])
+    'binary'
+    >>> type_of_target(['a', 'b', 'a'])
+    'binary'
+    >>> type_of_target([1, 0, 2])
+    'multiclass'
+    >>> type_of_target(['a', 'b', 'c'])
+    'multiclass'
+    >>> type_of_target(['a'])
+    'multiclass'
+    >>> type_of_target([])
+    'multiclass'
+    >>> type_of_target([['a', 'b'], ['c'], []])
+    'multilabel-sequences'
+    >>> type_of_target([[]])
+    'multilabel-sequences'
+    >>> import numpy as np
+    >>> type_of_target(np.array([[0, 1], [1, 1]]))
+    'multilabel-indicator'
+    """
+    if is_sequence_of_sequences(y):
+        return 'multilabel-sequences'
+    elif is_label_indicator_matrix(y):
+        return 'multilabel-indicator'
+    y = np.asarray(y)
+    # XXX: Should we check that ndim == 1?
+    if issubclass(y.dtype.type, np.float) and np.any(y != y.astype(int)):
+        return 'continuous'
+    if len(np.unique(y)) == 2:  # XXX: should this be <= 2?
+        return 'binary'
+    else:
+        # XXX: any validation?
+        return 'multiclass'
