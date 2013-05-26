@@ -24,7 +24,6 @@ from scipy.spatial.distance import hamming as sp_hamming
 
 from ..externals.six.moves import zip
 from ..preprocessing import LabelBinarizer
-from ..preprocessing import LabelEncoder
 from ..utils import check_arrays
 from ..utils import deprecated
 from ..utils.fixes import divide
@@ -149,7 +148,7 @@ def _check_1d_array(y1, y2, ravel=False):
         return y1, y2
 
 
-def _check_clf_targets(y_true, y_pred, encode=False, ravel=False, labels=None):
+def _check_clf_targets(y_true, y_pred, ravel=False, labels=None):
     """Check that y_true and y_pred correspond to the same classification task type.
 
     This converts mixed multilabel targets to a common format, converts
@@ -162,10 +161,6 @@ def _check_clf_targets(y_true, y_pred, encode=False, ravel=False, labels=None):
     y_true : array-like,
 
     y_pred : array-like
-
-    encode : boolean, optional (default=False),
-        If ``encode`` is set to ``True``, then non-multilabel ``y_true`` and
-        ``y_pred`` are encoded as integers from 0 to ``len(labels)``.
 
     ravel : boolean, optional (default=False),
         If ``ravel``` is set to ``True``, then non-multilabel ``y_true`` and
@@ -227,13 +222,6 @@ def _check_clf_targets(y_true, y_pred, encode=False, ravel=False, labels=None):
             type_true = type_pred = 'multiclass'
 
         y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=ravel)
-
-    if encode and not type_true.startswith('multilabel'):
-        # TODO: support sequence of sequencs when LabelEncoder does
-        enc = LabelEncoder()
-        enc.fit(labels.tolist())
-        y_true = enc.transform(y_true)
-        y_pred = enc.transform(y_pred)
 
     return labels, type_true, y_true, y_pred
 
