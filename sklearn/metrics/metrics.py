@@ -1412,6 +1412,44 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     return f
 
 
+def _prf_divide(numerator, denominator, metric, modifier, average):
+    """Performs division and handles divide-by-zero.
+    
+    On zero-division, sets the corresponding result elements to zero
+    and raises a warning.
+    """
+    result = numerator / denominator
+    mask = denominator == 0.0
+    if not np.any(mask):
+        return result
+
+    # remove infs
+    result[mask] = 0.0
+
+    # build appropriate warning
+    # E.g. "Precision and F-score are ill-defined and being set to 0.0 in 3/5
+    # labels with no predicted samples"
+    axis0 = 'sample'
+    axis1 = 'label'
+    if average == 'samples':
+        axis0, axis1 = axis1, axis0
+
+    msg = ('{} and F-score are ill-defined and being set to 0.0 {{}} '
+           'no {} {}s.'.format(metric.title(), modifier, axis0))
+    if len(mask) == 1:
+        msg = msg.format('due to')
+    else:
+        msg = msg.format(
+            'in {}/{} {}s with'.format(mask.sum(), len(mask), axis1))
+    warnings.warn(msg)
+    import traceback, sys, re, StringIO
+    o = StringIO.StringIO()
+    traceback.print_stack(file=o)
+    print >> sys.stderr, re.search('test_metrics.py", line [0-9]+', o.getvalue()).group()
+    
+    return result
+
+
 def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                                     pos_label=1, neg_label='binary',
                                     average=None):
@@ -1695,17 +1733,17 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         # oddly, we may get an "invalid" rather than a "divide" error
         # here
         old_err_settings = np.seterr(divide='ignore', invalid='ignore')
-        precision = tp_sum / pos_sum
-        recall = tp_sum / true_sum
-        # TODO: warn before setting these
-        precision[pos_sum == 0] = 0.0
-        recall[true_sum == 0] = 0.0
-
+        # Divide, and on zero-division, set scores to 0 and warn:
+        precision = _prf_divide(tp_sum, pos_sum,
+                                'precision', 'predicted', average)
+        recall = _prf_divide(tp_sum, true_sum,
+                             'recall', 'true', average)
+        # Don't need to warn for F: either P or R warned, or tp == 0 where pos
+        # and true are nonzero, in which case, F is well-defined and zero
         f_score = (1 + beta2) * precision * recall / (beta2 * precision + recall)
+        f_score[tp_sum == 0] = 0.0
     finally:
         np.seterr(**old_err_settings)
-
-    f_score[tp_sum == 0] = 0.0
 
     ## Average the results ##
 
