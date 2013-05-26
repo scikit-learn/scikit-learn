@@ -150,7 +150,7 @@ def _check_1d_array(y1, y2, ravel=False):
 
 
 def _check_clf_targets(y_true, y_pred, encode=False, ravel=False, labels=None):
-    """Check that y1 and y2 correspond to the same classification task type.
+    """Check that y_true and y_pred correspond to the same classification task type.
 
     This converts mixed multilabel targets to a common format, converts
     multiclass or binary types to a common shape, and raises a ValueError
@@ -179,8 +179,8 @@ def _check_clf_targets(y_true, y_pred, encode=False, ravel=False, labels=None):
     Returns
     -------
     labels : array
-        The sorted unique labels in ``y1`` and ``y2`` before encoding, or the
-        given ``labels``.
+        The sorted unique labels in ``y_true`` and ``y_pred`` before encoding,
+        or the given ``labels``.
 
     type_true : one of {'multilabel-indicator', 'multilabel-sequences', \
                         'multiclass', 'binary'}
