@@ -20,7 +20,7 @@ import numpy as np
 
 from . import (r2_score, mean_squared_error, accuracy_score, f1_score,
                auc_score, average_precision_score, precision_score,
-               recall_score)
+               recall_score, hamming_loss, jaccard_similarity_score)
 
 from .cluster import adjusted_rand_score
 
@@ -129,8 +129,12 @@ recall_scorer = Scorer(recall_score)
 # Clustering scores
 ari_scorer = Scorer(adjusted_rand_score)
 
+# Multilabel scores
+hamming_scorer = Scorer(hamming_loss, greater_is_better=False)
+jaccard_scorer = Scorer(jaccard_similarity_score)
+
 SCORERS = dict(r2=r2_scorer, mse=mse_scorer, accuracy=accuracy_scorer,
                f1=f1_scorer, roc_auc=auc_scorer,
                average_precision=average_precision_scorer,
                precision=precision_scorer, recall=recall_scorer,
-               ari=ari_scorer)
+               ari=ari_scorer, hamming=hamming_scorer, jaccard=jaccard_scorer)

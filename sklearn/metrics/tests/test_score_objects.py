@@ -3,13 +3,14 @@ import pickle
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_raises
 
-from sklearn.metrics import f1_score, r2_score, auc_score, fbeta_score
+from sklearn.metrics import f1_score, r2_score, auc_score, fbeta_score, hamming_loss, jaccard_similarity_score
 from sklearn.metrics.cluster import adjusted_rand_score
 from sklearn.metrics import SCORERS, Scorer
 from sklearn.svm import LinearSVC
 from sklearn.cluster import KMeans
 from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.datasets import make_blobs, load_diabetes
 from sklearn.cross_validation import train_test_split, cross_val_score
 from sklearn.grid_search import GridSearchCV
@@ -84,6 +85,23 @@ def test_unsupervised_scores():
     km.fit(X_train)
     score1 = SCORERS['ari'](km, X_test, y_test)
     score2 = adjusted_rand_score(y_test, km.predict(X_test))
+    assert_almost_equal(score1, score2)
+
+
+def test_multilabel_scores():
+    X, y = make_blobs(random_state=0, centers=4)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    clf = OneVsRestClassifier(LogisticRegression(random_state=0))
+    clf.fit(X_train, y_train)
+
+    # Hamming loss
+    score1 = SCORERS['hamming'](clf, X_test, y_test)
+    score2 = hamming_loss(y_test, clf.predict(X_test))
+    assert_almost_equal(score1, score2)
+
+    # Jaccard similarity
+    score1 = SCORERS['jaccard'](clf, X_test, y_test)
+    score2 = jaccard_similarity_score(y_test, clf.predict(X_test))
     assert_almost_equal(score1, score2)
 
 
