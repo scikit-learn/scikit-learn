@@ -110,7 +110,7 @@ def assert_sequences_equal(first, second, err_msg=''):
                  'Sequence of sequence lengths do not match.'
                  '{}'.format(err_msg))
     for i, (first_el, second_el) in enumerate(zip(first, second)):
-        assert_array_equal(len(first_el), len(second_el),
+        assert_array_equal(first_el, second_el,
                            'In sequence of sequence element {}'
                            '{}'.format(i, err_msg))
 
