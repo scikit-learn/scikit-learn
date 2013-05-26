@@ -38,6 +38,7 @@ import warnings
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MetaEstimatorMixin
 from .preprocessing import LabelBinarizer
+from .metrics import hamming_loss
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
 from .externals.joblib import Parallel
@@ -255,8 +256,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
     def score(self, X, y):
         if self.multilabel_:
-            raise NotImplementedError(
-                "score is not supported for multilabel classifiers")
+            # use Hamming loss as default score for multilabel classification
+            return hamming_loss(y, self.predict(X))
         else:
             return super(OneVsRestClassifier, self).score(X, y)
 
