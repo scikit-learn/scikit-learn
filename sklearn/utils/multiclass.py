@@ -1,4 +1,4 @@
-# Author: Arnaud Joly
+# Author: Arnaud Joly, Joel Nothman
 #
 # License: BSD 3 clause
 """
@@ -95,9 +95,10 @@ def is_label_indicator_matrix(y):
     False
 
     """
-    return (hasattr(y, "shape") and len(y.shape) == 2 and y.shape[1] > 1 and
-            y.shape[0] > 1 and np.size(np.unique(y)) <= 2
-            and np.all(y == y.astype(int)))
+    return (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1 and
+            y.shape[0] > 1 and np.size(np.unique(y)) <= 2 and
+            issubclass(y.dtype.type, (np.float, np.int)) and
+            np.all(y == y.astype(int)))
 
 
 def is_sequence_of_sequences(y):
@@ -182,12 +183,20 @@ def type_of_target(y):
     -------
     target_type : string
         One of:
-        * 'continuous': `y` is an array of floats that are not all integers.
+        * 'continuous': `y` is an array-like of floats that are not all
+          integers, and is a vector in 1 or 2 dimensions.
+        * 'continuous-multioutput': `y` is a 2d array of floats that are
+          not all integers, and both dimensions are of size > 1.
         * 'binary': `y` contains two values and is not an indicator matrix.
-        * 'multiclass': `y` contains more or less than two discrete values and
-          is not a sequence of sequences.
-        * 'multilabel-sequences': `y` is a sequence of sequences.
-        * 'multilabel-indicator': `y` is a label indicator matrix.
+        * 'multiclass': `y` contains more or less than two discrete values,
+          is not a sequence of sequences, and is a vector in 1 or 2 dimensions.
+        * 'mutliclass-multioutput': `y` is a 2d array that contains more
+          than two discrete values, is not a sequence of sequences, and both
+          dimensions are of size > 1.
+        * 'multilabel-sequences': `y` is a sequence of sequences, a 1d
+          array-like of objects that are sequences of labels.
+        * 'multilabel-indicator': `y` is a label indicator matrix, an array
+          of two dimensions each of size > 1, and at most 2 unique values.
 
     Examples
     --------
@@ -217,12 +226,22 @@ def type_of_target(y):
         return 'multilabel-sequences'
     elif is_label_indicator_matrix(y):
         return 'multilabel-indicator'
+
     y = np.asarray(y)
-    # XXX: Should we check that ndim == 1?
+    if y.ndim > 2 or y.dtype == object:
+        return 'unknown'
+    if y.ndim == 2 and y.shape[1] > 1 and y.shape[0] > 1:
+        suffix = '-multioutput'
+    else:
+        suffix = ''
+
     if issubclass(y.dtype.type, np.float) and np.any(y != y.astype(int)):
-        return 'continuous'
+        return 'continuous' + suffix
     if len(np.unique(y)) == 2:  # XXX: should this be <= 2?
+        if suffix:
+            # strange case... looks like a label indicator matrix, but did not
+            # meet its criteria (e.g. a list of lists, rather than an array)
+            return 'unknown'
         return 'binary'
     else:
-        # XXX: any validation?
-        return 'multiclass'
+        return 'multiclass' + suffix
