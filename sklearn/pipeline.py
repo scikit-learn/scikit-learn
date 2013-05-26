@@ -15,6 +15,8 @@ from .base import BaseEstimator, TransformerMixin
 from .externals.joblib import Parallel, delayed
 from .externals import six
 from .utils import tosequence
+from .utils.iter_fits import iter_fit_transforms, iter_fits, group_params, \
+        find_group
 from .externals.six import iteritems
 
 __all__ = ['Pipeline', 'FeatureUnion']
@@ -140,6 +142,35 @@ class Pipeline(BaseEstimator):
             return self.steps[-1][-1].fit_transform(Xt, y, **fit_params)
         else:
             return self.steps[-1][-1].fit(Xt, y, **fit_params).transform(Xt)
+
+    def iter_fits(self, param_iter, X, y=None, **fit_params):
+        for params, obj in self._iter_fits(param_iter, 0, False, X, y, **fit_params):
+            yield params, self
+
+    def iter_fit_transforms(self, param_iter, X, y=None, **fit_params):
+        return self._iter_fits(param_iter, 0, True, X, y, **fit_params)
+
+    def _iter_fits(self, param_iter, step, transform_last, X, y=None, **fit_params):
+        step_name, step_est = self.steps[step]
+
+        if step == len(self.steps) - 1:
+            step_param_iter = [{k.split('__', 1)[1]: v for k, v in iteritems(params)
+                           if k.startswith(step_name + '__')}
+                          for params in param_iter]
+            fn = iter_fit_transforms if transform_last else iter_fits
+            for params, obj in fn(step_est, step_param_iter, X, y, **fit_params):
+                yield {step_name + '__' + k: v for k, v in iteritems(params)}, obj
+            return
+
+        grouped = list(group_params(param_iter,
+                                    lambda k: k.startswith(step_name + '__')))
+        step_param_iter = [{k.split('__', 1)[1]: v for k, v in iteritems(group)} for group, entries in grouped]
+        for group, Xt in iter_fit_transforms(step_est, step_param_iter, X, y, **fit_params):
+            group = {step_name + '__' + k: v for k, v in iteritems(group)}
+            entries = find_group(grouped, group)
+            for params, obj in self._iter_fits(entries, step + 1, transform_last, Xt, y, **fit_params):
+                params.update(group)
+                yield params, obj
 
     def predict(self, X):
         """Applies transforms to the data, and the predict method of the

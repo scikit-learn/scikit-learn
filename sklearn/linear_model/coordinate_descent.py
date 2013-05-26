@@ -23,6 +23,7 @@ from ..externals.joblib import Parallel, delayed
 from ..externals import six
 from ..externals.six.moves import xrange
 from ..utils.extmath import safe_sparse_dot
+from ..utils.iter_fits import group_params
 
 from . import cd_fast
 
@@ -186,6 +187,49 @@ class ElasticNet(LinearModel, RegressorMixin):
         fit = self._sparse_fit if sparse.isspmatrix(X) else self._dense_fit
         fit(X, y, Xy, coef_init)
         return self
+
+    def _iter_fits(self, param_iter, X, y, Xy=None, coef_init=None):
+        # Expects param_iter where only alpha varies,
+        # and sorted by decreasing alpha
+        X = atleast2d_or_csc(X, dtype=np.float64, order='F',
+                             copy=self.copy_X and self.fit_intercept)
+        if not sparse.isspmatrix(X):
+            X, y, X_mean, y_mean, X_std = center_data(X, y, self.fit_intercept,
+                                                      self.normalize, copy=False)
+        if Xy is None:
+            Xy = safe_sparse_dot(X.T, y, dense_output=True)
+
+        n_samples, n_features = X.shape
+        precompute = self.precompute
+        if (hasattr(precompute, '__array__')
+                and not np.allclose(X_mean, np.zeros(n_features))
+                and not np.allclose(X_std, np.ones(n_features))):
+            # recompute Gram
+            precompute = 'auto'
+            Xy = None
+        if precompute == 'auto':
+            precompute = (n_samples > n_features)
+        if not sparse.isspmatrix(X):
+            precompute = np.dot(X.T, X)
+        self.precompute = precompute
+
+        self.coef_ = coef_init  # XXX: even if warm_start = True?
+        for params in param_iter:
+            self.set_params(**params)
+            yield params, self.fit(X, y, Xy, self.coef_)
+
+    def iter_fits(self, param_iter, X, y, Xy=None, coef_init=None):
+        if self.precompute is not None:
+            if sparse.isspmatrix(X):
+                warnings.warn("precompute is ignored for sparse data")
+
+        orig_params = self.get_params()
+        for group, entries in group_params(param_iter, lambda k: k != 'alpha'):
+            self.set_params(**orig_params)
+            self.set_params(**group)
+            entries = sorted(entries, key=lambda x: -x.get('alpha', self.alpha))
+            for tup in self._iter_fits(entries, X, y, Xy, coef_init):
+                yield tup
 
     def _dense_fit(self, X, y, Xy=None, coef_init=None):
 

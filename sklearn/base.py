@@ -10,6 +10,8 @@ import numpy as np
 from scipy import sparse
 from .externals import six
 
+from .utils.iter_fits import group_params
+
 
 ###############################################################################
 def clone(estimator, safe=True):
@@ -259,6 +261,21 @@ class BaseEstimator(object):
         return '%s(%s)' % (class_name,
                            _pprint(self.get_params(deep=True),
                                    offset=len(class_name), printer=str,),)
+
+    def iter_fits(self, param_iter, *args, **kwargs):
+        if not hasattr(self, '_non_fit_params'):
+            for params in param_iter:
+                self.set_params(**params)
+                yield params, self.fit(*args, **kwargs)
+            return
+        non_fit_params = set(self._non_fit_params)
+        for group, entries in group_params(param_iter, lambda k: k not in non_fit_params):
+            entries = list(entries)
+            self.set_params(**entries[0])
+            self.fit(*args, **kwargs)
+            for params in entries:
+                self.set_params(**params)
+                yield params, self
 
 
 ###############################################################################
