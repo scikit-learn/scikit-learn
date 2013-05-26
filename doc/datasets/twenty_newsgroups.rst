@@ -11,7 +11,7 @@ and after a specific date.
 
 This module contains two loaders. The first one,
 ``sklearn.datasets.fetch_20newsgroups``,
-returns a list of the raw text files that can be fed to text feature
+returns a list of the raw texts that can be fed to text feature
 extractors such as :class:`sklearn.feature_extraction.text.Vectorizer`
 with custom parameters so as to extract feature vectors.
 The second one, ``sklearn.datasets.fetch_20newsgroups_vectorized``,

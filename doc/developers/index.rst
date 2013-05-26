@@ -567,7 +567,7 @@ multiple interfaces):
 
     or::
 
-      estimator = obj.fit(data, targets)
+      estimator = obj.fit(data)
 
 :Predictor:
 
