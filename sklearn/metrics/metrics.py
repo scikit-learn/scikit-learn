@@ -34,103 +34,6 @@ from ..utils.multiclass import type_of_target
 ###############################################################################
 # General utilities
 ###############################################################################
-def _is_1d(x):
-    """Return True if x is 1d or a column vector
-
-    Parameters
-    ----------
-    x : numpy array.
-
-    Returns
-    -------
-    is_1d : boolean,
-        Return True if x can be considered as a 1d vector.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.metrics.metrics import _is_1d
-    >>> _is_1d([1, 2, 3])
-    True
-    >>> _is_1d(np.array([1, 2, 3]))
-    True
-    >>> _is_1d([[1, 2, 3]])
-    False
-    >>> _is_1d(np.array([[1, 2, 3]]))
-    False
-    >>> _is_1d([[1], [2], [3]])
-    True
-    >>> _is_1d(np.array([[1], [2], [3]]))
-    True
-    >>> _is_1d([[1, 2], [3, 4]])
-    False
-    >>> _is_1d(np.array([[1, 2], [3, 4]]))
-    False
-
-    See also
-    --------
-    _check_1d_array
-
-    """
-    shape = np.shape(x)
-    return len(shape) == 1 or len(shape) == 2 and shape[1] == 1
-
-
-def _check_1d_array(y1, y2, ravel=False):
-    """Check that y1 and y2 are vectors of the same shape.
-
-    It convert 1d arrays (y1 and y2) of various shape to a common shape
-    representation. Note that ``y1`` and ``y2`` should have the same number of
-    elements.
-
-    Parameters
-    ----------
-    y1 : array-like,
-        y1 must be a "vector".
-
-    y2 : array-like
-        y2 must be a "vector".
-
-    ravel : boolean, optional (default=False),
-        If ``ravel``` is set to ``True``, then ``y1`` and ``y2`` are raveled.
-
-    Returns
-    -------
-    y1 : numpy array,
-        If ``ravel`` is set to ``True``, return np.ravel(y1), else
-        return y1.
-
-    y2 : numpy array,
-        Return y2  reshaped to have the shape of y1.
-
-    Examples
-    --------
-    >>> from sklearn.metrics.metrics import _check_1d_array
-    >>> _check_1d_array([1, 2], [[3], [4]])
-    (array([1, 2]), array([3, 4]))
-
-    See also
-    --------
-    _is_1d
-
-    """
-    y1 = np.asarray(y1)
-    y2 = np.asarray(y2)
-
-    if not _is_1d(y1):
-        raise ValueError("y1 can't be considered as a vector")
-
-    if not _is_1d(y2):
-        raise ValueError("y2 can't be considered as a vector")
-
-    if ravel:
-        return np.ravel(y1), np.ravel(y2)
-    else:
-        if np.shape(y1) != np.shape(y2):
-            y2 = np.reshape(y2, np.shape(y1))
-
-        return y1, y2
-
 
 def _check_clf_targets(y_true, y_pred):
     """Check that y_true and y_pred belong to the same classification task
@@ -467,7 +370,8 @@ def matthews_corrcoef(y_true, y_pred):
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
-    y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=True)
+    y_true = np.squeeze(y_true)
+    y_pred = np.squeeze(y_pred)
 
     mcc = np.corrcoef(y_true, y_pred)[0, 1]
     if np.isnan(mcc):
@@ -508,7 +412,8 @@ def _binary_clf_curve(y_true, y_score, pos_label=None):
         Decreasing score values.
     """
     y_true, y_score = check_arrays(y_true, y_score)
-    y_true, y_score = _check_1d_array(y_true, y_score, ravel=True)
+    y_true = np.squeeze(y_true)
+    y_score = np.squeeze(y_score)
 
     # ensure binary classification if pos_label is not specified
     classes = np.unique(y_true)
@@ -745,7 +650,8 @@ def confusion_matrix(y_true, y_pred, labels=None):
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
-    y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=True)
+    y_true = np.squeeze(y_true)
+    y_pred = np.squeeze(y_pred)
 
     if labels is None:
         labels = unique_labels(y_true, y_pred)
@@ -840,13 +746,7 @@ def zero_one_loss(y_true, y_pred, normalize=True):
     if normalize:
         return 1 - score
     else:
-        if hasattr(y_true, "shape"):
-            n_samples = (np.max(y_true.shape) if _is_1d(y_true)
-                         else y_true.shape[0])
-
-        else:
-            n_samples = len(y_true)
-
+        n_samples = len(y_true)
         return n_samples - score
 
 
@@ -1006,6 +906,11 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True):
                 score[i] = (len(true_set & pred_set) /
                             size_true_union_pred)
     else:
+        y_true, y_pred = check_arrays(y_true, y_pred)
+
+        y_true = np.squeeze(y_true)
+        y_pred = np.squeeze(y_pred)
+
         score = y_true == y_pred
 
     if normalize:
@@ -1082,6 +987,11 @@ def accuracy_score(y_true, y_pred, normalize=True):
         score = np.array([len(set(true) ^ set(pred)) == 0
                           for pred, true in zip(y_pred, y_true)])
     else:
+        y_true, y_pred = check_arrays(y_true, y_pred)
+
+        y_true = np.squeeze(y_true)
+        y_pred = np.squeeze(y_pred)
+
         score = y_true == y_pred
 
     if normalize:
@@ -1422,9 +1332,9 @@ def _tp_tn_fp_fn(y_true, y_pred, labels=None):
     else:
         labels = np.asarray(labels)
     n_labels = labels.size
-    true_pos = np.zeros((n_labels), dtype=np.int)
-    false_pos = np.zeros((n_labels), dtype=np.int)
-    false_neg = np.zeros((n_labels), dtype=np.int)
+    true_pos = np.zeros((n_labels,), dtype=np.int)
+    false_pos = np.zeros((n_labels,), dtype=np.int)
+    false_neg = np.zeros((n_labels,), dtype=np.int)
 
     if y_type == 'multilabel-indicator':
         true_pos = np.sum(np.logical_and(y_true == 1,
@@ -1448,18 +1358,16 @@ def _tp_tn_fp_fn(y_true, y_pred, labels=None):
             false_neg[np.setdiff1d(true_set, pred_set)] += 1
 
     else:
+
+        y_true, y_pred = check_arrays(y_true, y_pred)
+
         for i, label_i in enumerate(labels):
             true_pos[i] = np.sum(y_pred[y_true == label_i] == label_i)
             false_pos[i] = np.sum(y_pred[y_true != label_i] == label_i)
             false_neg[i] = np.sum(y_pred[y_true == label_i] != label_i)
 
     # Compute the true_neg using the tp, fp and fn
-    if hasattr(y_true, "shape"):
-        n_samples = (np.max(y_true.shape) if _is_1d(y_true)
-                     else y_true.shape[0])
-    else:
-        n_samples = len(y_true)
-
+    n_samples = len(y_true)
     true_neg = n_samples - true_pos - false_pos - false_neg
 
     return true_pos, true_neg, false_pos, false_neg
@@ -2206,6 +2114,11 @@ def hamming_loss(y_true, y_pred, classes=None):
             return np.mean(loss) / np.size(classes)
 
     else:
+
+        y_true, y_pred = check_arrays(y_true, y_pred)
+        y_true = np.squeeze(y_true)
+        y_pred = np.squeeze(y_pred)
+
         return sp_hamming(y_true, y_pred)
 
 
@@ -2243,9 +2156,8 @@ def mean_absolute_error(y_true, y_pred):
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
 
-    # Handle mix 1d representation
-    if _is_1d(y_true):
-        y_true, y_pred = _check_1d_array(y_true, y_pred)
+    y_true = np.squeeze(y_true)
+    y_pred = np.squeeze(y_pred)
 
     return np.mean(np.abs(y_pred - y_true))
 
@@ -2281,9 +2193,8 @@ def mean_squared_error(y_true, y_pred):
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
 
-    # Handle mix 1d representation
-    if _is_1d(y_true):
-        y_true, y_pred = _check_1d_array(y_true, y_pred)
+    y_true = np.squeeze(y_true)
+    y_pred = np.squeeze(y_pred)
 
     return np.mean((y_pred - y_true) ** 2)
 
@@ -2324,9 +2235,8 @@ def explained_variance_score(y_true, y_pred):
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
 
-    # Handle mix 1d representation
-    if _is_1d(y_true):
-        y_true, y_pred = _check_1d_array(y_true, y_pred)
+    y_true = np.atleast_1d(np.squeeze(y_true))
+    y_pred = np.atleast_1d(np.squeeze(y_pred))
 
     numerator = np.var(y_true - y_pred)
     denominator = np.var(y_true)
@@ -2385,11 +2295,10 @@ def r2_score(y_true, y_pred):
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
 
-    # Handle mix 1d representation
-    if _is_1d(y_true):
-        y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=True)
+    y_true = np.squeeze(y_true)
+    y_pred = np.squeeze(y_pred)
 
-    if len(y_true) == 1:
+    if y_true.size == 1:
         raise ValueError("r2_score can only be computed given more than one"
                          " sample.")
     numerator = ((y_true - y_pred) ** 2).sum(dtype=np.float64)
