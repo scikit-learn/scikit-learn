@@ -825,20 +825,19 @@ Drawbacks
 
 Mathematical formulation
 ~~~~~~~~~~~~~~~~~~~~~~~~
-Assume two label assignments (of the same N objects), :math:`U` with :math:`R`
-classes and :math:`V` with :math:`C` classes. Their entropy is the
+Assume two label assignments (of the same N objects), :math:`U` and :math:`V`. Their entropy is the
 amount of uncertainty for a partition set, defined by:
 
-.. math:: H(U) = \sum_{i=1}^{R}P(i)\log(P(i))
+.. math:: H(U) = \sum_{i=1}^{|U|}P(i)\log(P(i))
 
 Where :math:`P(i) = |U_i| / N` is the probability that an object picked at random from :math:`U` falls into class :math:`U_i`. Likewise for :math:`V`:
 
-.. math:: H(V) = \sum_{j=1}^{C}P'(j)\log(P'(j))
+.. math:: H(V) = \sum_{j=1}^{|V|}P'(j)\log(P'(j))
 
 With :math:`P'(j) = |V_j| / N`. The mutual information (MI) between :math:`U` and :math:`V` is
 calculated by:
 
-.. math:: \text{MI}(U, V) = \sum_{i=1}^{R}\sum_{j=1}^{C}P(i, j)\log\left(\frac{P(i,j)}{P(i)P'(j)}\right)
+.. math:: \text{MI}(U, V) = \sum_{i=1}^{|U|}\sum_{j=1}^{|V|}P(i, j)\log\left(\frac{P(i,j)}{P(i)P'(j)}\right)
 
 Where :math:`P(i, j) = |U_i \cap V_j| / N` is the probability that an object picked at random falls into both classes :math:`U_i` and :math:`V_j`.
 
@@ -853,11 +852,11 @@ between the label assignments.
 
 The expected value for the mutual information can be calculated using the
 following equation, from Vinh, Epps, and Bailey, (2009). In this equation,
-:math:`a_i` is the number of instances with label :math:`U_i` and
-:math:`b_j` is the number of instances with label :math:`V_j`.
+:math:`a_i = |U_i|` (the number of elements in :math:`U_i`) and
+:math:`b_j = |V_j|` (the number of elements in :math:`V_j`).
 
 
-.. math:: E[\text{MI}(U,V)]=\sum_{i=1}^R \sum_{j=1}^C \sum_{n_{ij}=(a_i+b_j-N)^+
+.. math:: E[\text{MI}(U,V)]=\sum_{i=1}^|U| \sum_{j=1}^|V| \sum_{n_{ij}=(a_i+b_j-N)^+
    }^{\min(a_i, b_j)} \frac{n_{ij}}{N}\log \left( \frac{ N.n_{ij}}{a_i b_j}\right)
    \frac{a_i!b_j!(N-a_i)!(N-b_j)!}{N!n_{ij}!(a_i-n_{ij})!(b_j-n_{ij})!
    (N-a_i-b_j+n_{ij})!}
