@@ -213,15 +213,17 @@ def _check_clf_targets(y_true, y_pred, ravel=False, labels=None):
     elif type_pred.startswith('multilabel'):
         raise ValueError("Can't handle mix of multilabel and multiclass targets")
 
-    elif 'continuous' in (type_true, type_pred):
-        raise ValueError("Can't handle continuous targets")
+    elif (type_pred in ('multiclass', 'binary')
+          and type_true in ('multiclass', 'binary')):
 
-    else:
         if 'multiclass' in (type_true, type_pred):
             # 'binary' can be removed
             type_true = type_pred = 'multiclass'
 
         y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=ravel)
+
+    else:
+        raise ValueError("Can't handle %s/%s targets" % (type_true, type_pred))
 
     return labels, type_true, y_true, y_pred
 

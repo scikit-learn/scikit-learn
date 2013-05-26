@@ -97,7 +97,7 @@ def is_label_indicator_matrix(y):
     """
     return (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1 and
             y.shape[0] > 1 and np.size(np.unique(y)) <= 2 and
-            issubclass(y.dtype.type, (np.float, np.int)) and
+            issubclass(y.dtype.type, (np.int, np.bool_, np.float)) and
             np.all(y == y.astype(int)))
 
 
