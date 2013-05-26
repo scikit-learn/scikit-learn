@@ -852,7 +852,7 @@ def zero_one(y_true, y_pred, normalize=False):
 # Multiclass score functions
 ###############################################################################
 
-def jaccard_similarity_score(y_true, y_pred, normalize=True, pos_label=1):
+def jaccard_similarity_score(y_true, y_pred, normalize=True):
     """Jaccard similarity coefficient score
 
     The Jaccard index [1], or Jaccard similarity coefficient, defined as
@@ -872,10 +872,6 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True, pos_label=1):
         If ``False``, return the sum of the Jaccard similarity coefficient
         over the sample set. Otherwise, return the average of Jaccard
         similarity coefficient.
-
-    pos_label : int, 1 by default
-        It is used to infer what is a positive label in the label indicator
-        matrix format.
 
     Returns
     -------
@@ -946,8 +942,8 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True, pos_label=1):
                 # error here
                 old_err_settings = np.seterr(divide='ignore',
                                              invalid='ignore')
-                y_pred_pos_label = y_pred == pos_label
-                y_true_pos_label = y_true == pos_label
+                y_pred_pos_label = y_pred == 1
+                y_true_pos_label = y_true == 1
                 pred_inter_true = np.sum(np.logical_and(y_pred_pos_label,
                                                         y_true_pos_label),
                                          axis=1)
@@ -1106,9 +1102,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
 
     pos_label : int, 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
-        only this class's scores will be returned. In multilabel
-        classification, it is used to infer what is a positive label in the
-        label indicator matrix format.
+        only this class's scores will be returned.
 
     average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
         If ``None``, the scores for each class are returned. Otherwise,
@@ -1232,9 +1226,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
 
     pos_label : int, 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
-        only this class's scores will be returned. In multilabel
-        classification, it is used to infer what is a positive label in the
-        label indicator matrix format.
+        only this class's scores will be returned.
 
     average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
         If ``None``, the scores for each class are returned. Otherwise,
@@ -1354,7 +1346,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     return f
 
 
-def _tp_tn_fp_fn(y_true, y_pred, labels=None, pos_label=1):
+def _tp_tn_fp_fn(y_true, y_pred, labels=None):
     """Compute the number of true/false positives/negative for each class
 
     Parameters
@@ -1367,10 +1359,6 @@ def _tp_tn_fp_fn(y_true, y_pred, labels=None, pos_label=1):
 
     labels : array, shape = [n_labels], optional
         Integer array of labels.
-
-    pos_label : int, 1 by default
-        In multilabel classification, it is used to infer what is a positive
-        label in the label indicator matrix format.
 
     Returns
     -------
@@ -1435,12 +1423,12 @@ def _tp_tn_fp_fn(y_true, y_pred, labels=None, pos_label=1):
             y_pred = lb.transform(y_pred)
 
         if is_label_indicator_matrix(y_true):
-            true_pos = np.sum(np.logical_and(y_true == pos_label,
-                                             y_pred == pos_label), axis=0)
-            false_pos = np.sum(np.logical_and(y_true != pos_label,
-                                              y_pred == pos_label), axis=0)
-            false_neg = np.sum(np.logical_and(y_true == pos_label,
-                                              y_pred != pos_label), axis=0)
+            true_pos = np.sum(np.logical_and(y_true == 1,
+                                             y_pred == 1), axis=0)
+            false_pos = np.sum(np.logical_and(y_true != 1,
+                                              y_pred == 1), axis=0)
+            false_neg = np.sum(np.logical_and(y_true == 1,
+                                              y_pred != 1), axis=0)
 
         else:
             idx_to_label = dict((label_i, i)
@@ -1518,9 +1506,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     pos_label : int, 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
-        only this class's scores will be returned. In multilabel
-        classification, it is used to infer what is a positive label in the
-        label indicator matrix format.
+        only this class's scores will be returned.
 
     average : string, [None (default), 'micro', 'macro', 'samples', 'weighted']
         If ``None``, the scores for each class are returned. Otherwise,
@@ -1665,8 +1651,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 y_pred = lb.transform(y_pred)
 
             if is_label_indicator_matrix(y_true):
-                y_true_pos_label = y_true == pos_label
-                y_pred_pos_label = y_pred == pos_label
+                y_true_pos_label = y_true == 1
+                y_pred_pos_label = y_pred == 1
                 size_inter = np.sum(np.logical_and(y_true_pos_label,
                                                    y_pred_pos_label), axis=1)
                 size_true = np.sum(y_true_pos_label, axis=1)
@@ -1709,8 +1695,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
         return precision, recall, f_score, None
 
-    true_pos, _, false_pos, false_neg = _tp_tn_fp_fn(y_true, y_pred, labels,
-                                                     pos_label)
+    true_pos, _, false_pos, false_neg = _tp_tn_fp_fn(y_true, y_pred, labels)
     support = true_pos + false_neg
 
     try:
@@ -1812,9 +1797,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
 
     pos_label : int, 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
-        only this class's scores will be returned. In multilabel
-        classification, it is used to infer what is a positive label in the
-        label indicator matrix format.
+        only this class's scores will be returned.
 
     average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
         If ``None``, the scores for each class are returned. Otherwise,
@@ -1936,9 +1919,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
 
     pos_label : int, 1 by default
         If ``average`` is not ``None`` and the classification target is binary,
-        only this class's scores will be returned. In multilabel
-        classification, it is used to infer what is a positive label in the
-        label indicator matrix format.
+        only this class's scores will be returned.
 
     average : string, [None, 'micro', 'macro', 'samples', 'weighted' (default)]
         If ``None``, the scores for each class are returned. Otherwise,
@@ -2057,8 +2038,7 @@ def zero_one_score(y_true, y_pred):
 ###############################################################################
 # Multiclass utility function
 ###############################################################################
-def classification_report(y_true, y_pred, labels=None, target_names=None,
-                          pos_label=1):
+def classification_report(y_true, y_pred, labels=None, target_names=None):
     """Build a text report showing the main classification metrics
 
     Parameters
@@ -2074,10 +2054,6 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     target_names : list of strings
         Optional display names matching the labels (same order).
-
-    pos_label : int, 1 by default
-        In multilabel classification, it is used to infer what is a
-        positive label in the label indicator matrix format.
 
     Returns
     -------
@@ -2128,7 +2104,6 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
 
     p, r, f1, s = precision_recall_fscore_support(y_true, y_pred,
                                                   labels=labels,
-                                                  pos_label=pos_label,
                                                   average=None)
 
     for i, label in enumerate(labels):
