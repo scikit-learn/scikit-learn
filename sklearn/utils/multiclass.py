@@ -212,9 +212,9 @@ def type_of_target(y):
     'multiclass'
     >>> type_of_target(['a', 'b', 'c'])
     'multiclass'
-    >>> type_of_target([[1, 2], [3, 1]])
+    >>> type_of_target(np.array([[1, 2], [3, 1]]))
     'multiclass-multioutput'
-    >>> type_of_target([[1.5, 2.0], [3.0, 1.6]])
+    >>> type_of_target(np.array([[1.5, 2.0], [3.0, 1.6]]))
     'continuous-multioutput'
     >>> type_of_target([['a', 'b'], ['c'], []])
     'multilabel-sequences'
