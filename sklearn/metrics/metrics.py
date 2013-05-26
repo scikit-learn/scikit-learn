@@ -1676,7 +1676,6 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     labels, y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred,
                                                         labels=labels)
-    n_labels = labels.size
 
     if average == "samples":
         if y_type == 'multilabel-indicator':
@@ -1751,7 +1750,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     if not average:
         return precision, recall, fscore, support
 
-    elif n_labels == 2 and pos_label is not None:
+    elif y_type == 'binary' and pos_label is not None:
         if pos_label not in labels:
             raise ValueError("pos_label=%d is not a valid label: %r" %
                              (pos_label, labels))
