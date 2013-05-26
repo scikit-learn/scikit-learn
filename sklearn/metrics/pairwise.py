@@ -265,7 +265,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
             index += increment
     else:
         D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
-        D = np.abs(D, out=D)
+        D = np.abs(D, D)
         if sum_over_features:
             D = np.sum(D, axis=2)
         else:
