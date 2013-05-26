@@ -187,9 +187,10 @@ def type_of_target(y):
           integers, and is a vector in 1 or 2 dimensions.
         * 'continuous-multioutput': `y` is a 2d array of floats that are
           not all integers, and both dimensions are of size > 1.
-        * 'binary': `y` contains two values and is not an indicator matrix.
-        * 'multiclass': `y` contains more or less than two discrete values,
-          is not a sequence of sequences, and is a vector in 1 or 2 dimensions.
+        * 'binary': `y` contains 1 or 2 discrete values and is not an
+          indicator matrix.
+        * 'multiclass': `y` contains more than two discrete values, is not a
+          sequence of sequences, and is a vector in 1 or 2 dimensions.
         * 'mutliclass-multioutput': `y` is a 2d array that contains more
           than two discrete values, is not a sequence of sequences, and both
           dimensions are of size > 1.
@@ -237,7 +238,7 @@ def type_of_target(y):
 
     if issubclass(y.dtype.type, np.float) and np.any(y != y.astype(int)):
         return 'continuous' + suffix
-    if len(np.unique(y)) == 2:  # XXX: should this be <= 2?
+    if len(np.unique(y)) <= 2:
         if suffix:
             # strange case... looks like a label indicator matrix, but did not
             # meet its criteria (e.g. a list of lists, rather than an array)
