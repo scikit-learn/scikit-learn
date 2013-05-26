@@ -201,6 +201,7 @@ def type_of_target(y):
 
     Examples
     --------
+    >>> import numpy as np
     >>> type_of_target([0.1, 0.6])
     'continuous'
     >>> type_of_target([1, -1, -1, 1])
@@ -211,15 +212,14 @@ def type_of_target(y):
     'multiclass'
     >>> type_of_target(['a', 'b', 'c'])
     'multiclass'
-    >>> type_of_target(['a'])
-    'multiclass'
-    >>> type_of_target([])
-    'multiclass'
+    >>> type_of_target([[1, 2], [3, 1]])
+    'multiclass-multioutput'
+    >>> type_of_target([[1.5, 2.0], [3.0, 1.6]])
+    'continuous-multioutput'
     >>> type_of_target([['a', 'b'], ['c'], []])
     'multilabel-sequences'
     >>> type_of_target([[]])
     'multilabel-sequences'
-    >>> import numpy as np
     >>> type_of_target(np.array([[0, 1], [1, 1]]))
     'multilabel-indicator'
     """

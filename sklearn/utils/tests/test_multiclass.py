@@ -43,6 +43,7 @@ EXAMPLES = {
     ],
     'multiclass-multioutput': [
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]]),
+        np.array([['a', 'b'], ['c', 'd']]),
     ],
     'binary': [
         [0, 1],
