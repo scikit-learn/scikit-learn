@@ -259,7 +259,7 @@ def manhattan_distances(X, Y=None, sum_over_features=True,
         while index < X.shape[0]:
             this_slice = slice(index, index + increment)
             tmp = X[this_slice, np.newaxis, :] - Y[np.newaxis, :, :]
-            tmp = np.abs(tmp, out=tmp)
+            tmp = np.abs(tmp, tmp)
             tmp = np.sum(tmp, axis=2)
             D[this_slice] = tmp
             index += increment
