@@ -187,7 +187,7 @@ def type_of_target(y):
           integers, and is a vector in 1 or 2 dimensions.
         * 'continuous-multioutput': `y` is a 2d array of floats that are
           not all integers, and both dimensions are of size > 1.
-        * 'binary': `y` contains 1 or 2 discrete values and is not an
+        * 'binary': `y` contains <= 2 discrete values and is not an
           indicator matrix.
         * 'multiclass': `y` contains more than two discrete values, is not a
           sequence of sequences, and is a vector in 1 or 2 dimensions.
