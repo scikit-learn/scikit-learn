@@ -84,8 +84,16 @@ def _check_clf_targets(y_true, y_pred):
             # 'binary' can be removed
             type_true = type_pred = 'multiclass'
 
-        y_true = np.ravel(y_true)
-        y_pred = np.ravel(y_pred)
+        y_true, y_pred = check_arrays(y_true, y_pred)
+
+        if (not (y_true.ndim == 1 or
+                (y_true.ndim == 2 and y_true.shape[1] == 1)) or
+                not (y_pred.ndim == 1 or
+                    (y_pred.ndim == 2 and y_pred.shape[1] == 1))):
+            raise ValueError("Bad input shape")
+
+        y_true = np.atleast_1d(np.squeeze(y_true))
+        y_pred = np.atleast_1d(np.squeeze(y_pred))
 
     else:
         raise ValueError("Can't handle %s/%s targets" % (type_true, type_pred))
@@ -369,18 +377,10 @@ def matthews_corrcoef(y_true, y_pred):
     -0.33...
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred)
+    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
 
-    if not (y_true.ndim == 1 or (y_true.ndim == 2 and y_true.shape[1] == 1)):
-        raise ValueError("Bad y_true input shape")
-
-    if not (y_pred.ndim == 1 or
-            (y_pred.ndim == 2 and y_pred.shape[1] == 1)):
-        raise ValueError("Bad y_pred input shape")
-
-
-    y_true = np.squeeze(y_true)
-    y_pred = np.squeeze(y_pred)
+    if y_type != "binary":
+        raise ValueError("%s is not supported" % y_type)
 
     mcc = np.corrcoef(y_true, y_pred)[0, 1]
     if np.isnan(mcc):
@@ -422,12 +422,11 @@ def _binary_clf_curve(y_true, y_score, pos_label=None):
     """
     y_true, y_score = check_arrays(y_true, y_score)
 
-    if not (y_true.ndim == 1 or (y_true.ndim == 2 and y_true.shape[1] == 1)):
-        raise ValueError("Bad y_true input shape")
-
-    if not (y_score.ndim == 1 or
-            (y_score.ndim == 2 and y_score.shape[1] == 1)):
-        raise ValueError("Bad y_score input shape")
+    if (not (y_true.ndim == 1 or
+            (y_true.ndim == 2 and y_true.shape[1] == 1)) or
+            not (y_score.ndim == 1 or
+                (y_score.ndim == 2 and y_score.shape[1] == 1))):
+        raise ValueError("Bad input shape")
 
     y_true = np.squeeze(y_true)
     y_score = np.squeeze(y_score)
@@ -666,16 +665,9 @@ def confusion_matrix(y_true, y_pred, labels=None):
            [1, 0, 2]])
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred)
-
-    if not (y_true.ndim == 1 or (y_true.ndim == 2 and y_true.shape[1] == 1)):
-        raise ValueError("Bad y_true input shape")
-
-    if not (y_pred.ndim == 1 or (y_pred.ndim == 2 and y_pred.shape[1] == 1)):
-        raise ValueError("Bad y_pred input shape")
-
-    y_true = np.squeeze(y_true)
-    y_pred = np.squeeze(y_pred)
+    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
+    if y_type not in ("binary", "multiclass"):
+        raise ValueError("%s is not supported" % y_type)
 
     if labels is None:
         labels = unique_labels(y_true, y_pred)
@@ -929,11 +921,6 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True):
                 score[i] = (len(true_set & pred_set) /
                             size_true_union_pred)
     else:
-        y_true, y_pred = check_arrays(y_true, y_pred)
-
-        y_true = np.squeeze(y_true)
-        y_pred = np.squeeze(y_pred)
-
         score = y_true == y_pred
 
     if normalize:
@@ -1002,6 +989,7 @@ def accuracy_score(y_true, y_pred, normalize=True):
     0.0
 
     """
+
     # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
     if y_type == 'multilabel-indicator':
@@ -1010,11 +998,6 @@ def accuracy_score(y_true, y_pred, normalize=True):
         score = np.array([len(set(true) ^ set(pred)) == 0
                           for pred, true in zip(y_pred, y_true)])
     else:
-        y_true, y_pred = check_arrays(y_true, y_pred)
-
-        y_true = np.squeeze(y_true)
-        y_pred = np.squeeze(y_pred)
-
         score = y_true == y_pred
 
     if normalize:
@@ -1381,9 +1364,6 @@ def _tp_tn_fp_fn(y_true, y_pred, labels=None):
             false_neg[np.setdiff1d(true_set, pred_set)] += 1
 
     else:
-
-        y_true, y_pred = check_arrays(y_true, y_pred)
-
         for i, label_i in enumerate(labels):
             true_pos[i] = np.sum(y_pred[y_true == label_i] == label_i)
             false_pos[i] = np.sum(y_pred[y_true != label_i] == label_i)
@@ -2123,6 +2103,7 @@ def hamming_loss(y_true, y_pred, classes=None):
 
     """
     y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
+
     if classes is None:
         classes = unique_labels(y_true, y_pred)
     else:
@@ -2137,12 +2118,7 @@ def hamming_loss(y_true, y_pred, classes=None):
             return np.mean(loss) / np.size(classes)
 
     else:
-
-        y_true, y_pred = check_arrays(y_true, y_pred)
-        y_true = np.squeeze(y_true)
-        y_pred = np.squeeze(y_pred)
-
-        return sp_hamming(y_true, y_pred)
+         return sp_hamming(y_true, y_pred)
 
 
 ###############################################################################
@@ -2215,7 +2191,6 @@ def mean_squared_error(y_true, y_pred):
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
-
     y_true = np.squeeze(y_true)
     y_pred = np.squeeze(y_pred)
 

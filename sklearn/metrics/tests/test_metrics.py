@@ -988,19 +988,19 @@ def test_format_invariance_with_1d_vectors():
                                     "with mix list and np-array-column"
                                     % name)
 
-        # At the moment, these mix representations aren't allowed
-        if name not in MULTILABELS_METRICS and not name in MULTIOUTPUT_METRICS:
-            assert_raises(ValueError, metric, y1_row, y2_row)
-
+        # These mix representations aren't allowed
         assert_raises(ValueError, metric, y1_1d, y2_row)
         assert_raises(ValueError, metric, y1_row, y2_1d)
         assert_raises(ValueError, metric, y1_list, y2_row)
         assert_raises(ValueError, metric, y1_row, y2_list)
         assert_raises(ValueError, metric, y1_column, y2_row)
         assert_raises(ValueError, metric, y1_row, y2_column)
+
         # NB: We do not test for y1_row, y2_row as these may be
         # interpreted as multilabel or multioutput data.
-
+        if (name not in MULTIOUTPUT_METRICS and
+                name not in MULTILABELS_METRICS):
+            assert_raises(ValueError, metric, y1_row, y2_row)
 
 def test_clf_single_sample():
     """Non-regression test: scores should work with a single sample.
