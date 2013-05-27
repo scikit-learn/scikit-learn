@@ -233,6 +233,8 @@ def type_of_target(y):
         return 'unknown'
     if y.ndim == 2 and y.shape[1] > 1:
         suffix = '-multioutput'
+    elif y.shape == 0:
+        return 'unknown'
     else:
         suffix = ''
 

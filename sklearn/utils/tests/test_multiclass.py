@@ -70,10 +70,13 @@ EXAMPLES = {
     'unknown': [
         # Not currently multiclass-multioutput, nor indicator
         np.array([[0, 1]]),
+        # empty second dimension
+        np.array([[], []]),
         # 3d
         np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]]),
         # not currently supported sequence of sequences
         np.array([np.array([]), np.array([1, 2, 3])], dtype=object),
+        [np.array([]), np.array([1, 2, 3])],
     ]
 }
 
