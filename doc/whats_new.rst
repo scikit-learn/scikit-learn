@@ -79,6 +79,8 @@ Changelog
      the fraction or the number of correctly classified sample
      by `Arnaud Joly`_.
 
+   - Input checks for :func:`metrics.confusion_matrix`.
+
 
 API changes summary
 -------------------
