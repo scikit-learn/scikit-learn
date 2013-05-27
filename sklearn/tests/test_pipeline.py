@@ -163,7 +163,7 @@ def test_pipeline_methods_preprocessing_svm():
     clf = SVC(probability=True)
 
     for preprocessing in [scaler, pca]:
-        pipe = Pipeline([('scaler', scaler), ('svc', clf)])
+        pipe = Pipeline([('preprocess', preprocessing), ('svc', clf)])
         pipe.fit(X, y)
 
         # check shapes of various prediction functions
