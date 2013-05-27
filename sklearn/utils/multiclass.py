@@ -182,13 +182,13 @@ def type_of_target(y):
     target_type : string
         One of:
         * 'continuous': `y` is an array-like of floats that are not all
-          integers, and is a vector in 1 or 2 dimensions.
+          integers, and is 1d or a column vector.
         * 'continuous-multioutput': `y` is a 2d array of floats that are
           not all integers, and both dimensions are of size > 1.
-        * 'binary': `y` contains <= 2 discrete values and is not an
-          indicator matrix.
+        * 'binary': `y` contains <= 2 discrete values and is 1d or a column
+          vector.
         * 'multiclass': `y` contains more than two discrete values, is not a
-          sequence of sequences, and is a vector in 1 or 2 dimensions.
+          sequence of sequences, and is 1d or a column vector.
         * 'mutliclass-multioutput': `y` is a 2d array that contains more
           than two discrete values, is not a sequence of sequences, and both
           dimensions are of size > 1.
