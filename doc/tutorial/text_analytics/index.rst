@@ -1,4 +1,8 @@
+.. _text_analysis_tut_index:
 
+==========================================================================
+A tutorial on Text-analysis with scikit-learn
+==========================================================================
 
 .. topic:: Applied machine learning in Python with scikit-learn
 
@@ -14,7 +18,7 @@
     engineering**.
 
 
-.. include:: big_toc_css.rst
+.. include:: ../../includes/big_toc_css.rst
 
 .. note:: This document is meant to be used with **scikit-learn version
    0.11+** (i.e. the current state of the master branch at the time of
@@ -22,7 +26,6 @@
 
 
 .. toctree::
-   :numbered:
    :maxdepth: 2
 
    setup
