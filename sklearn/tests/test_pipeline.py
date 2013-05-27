@@ -20,6 +20,7 @@ from sklearn.decomposition.pca import PCA, RandomizedPCA
 from sklearn.datasets import load_iris
 from sklearn.preprocessing import StandardScaler
 from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction import DictVectorizer
 
 
 class IncorrectT(BaseEstimator):
@@ -301,3 +302,40 @@ def test_feature_union_feature_names():
     for feat in feature_names:
         assert_true("chars__" in feat or "words__" in feat)
     assert_equal(len(feature_names), 35)
+
+
+def test_feature_union_pipeline_feature_names():
+
+    JUNK_FOOD_DOCS = [
+        {'vendor': 'JunkyPizza', 'available': False, 'text': 'the pizza burger'},
+        {'vendor': 'FunkyPizza', 'available': True, 'text': 'the coke burger'}
+    ]
+
+    class DocsPrepareTransformer(BaseEstimator):
+        KNOWN_VENDORS = set(['JunkyPizza'])
+
+        def fit(self, X, y=None):
+            return self
+        def transform(self, X, y=None):
+            return [{
+                'vendor': doc['vendor'],
+                'vendor_is_known': doc['vendor'] in self.KNOWN_VENDORS,
+                'available': doc['available']
+            } for doc in X]
+
+    ft = FeatureUnion([
+        ('text', CountVectorizer(preprocessor=lambda doc: doc['text'])),
+        ('attrs', Pipeline([
+            ('prepare', DocsPrepareTransformer()),
+            ('vectorize', DictVectorizer()),
+        ]))
+    ])
+
+    ft.fit(JUNK_FOOD_DOCS)
+    assert_equal(
+        sorted(ft.get_feature_names()),
+        ['attrs__available',
+         'attrs__vendor=FunkyPizza', 'attrs__vendor=JunkyPizza',
+         'attrs__vendor_is_known',
+         'text__burger', 'text__coke', 'text__pizza', 'text__the']
+    )

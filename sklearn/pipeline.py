@@ -205,6 +205,21 @@ class Pipeline(BaseEstimator):
         # check if first estimator expects pairwise input
         return getattr(self.steps[0][1], '_pairwise', False)
 
+    def get_feature_names(self):
+        """Get feature names from the last step.
+
+        Returns
+        -------
+        feature_names : list of strings
+            Names of the features produced by transform.
+        """
+        name, trans = self.steps[-1]
+        if not hasattr(trans, 'get_feature_names'):
+            raise AttributeError("Transformer %s does not provide"
+                                 " get_feature_names." % str(name))
+        return trans.get_feature_names()
+
+
 
 def _fit_one_transformer(transformer, X, y):
     transformer.fit(X, y)
