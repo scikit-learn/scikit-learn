@@ -2118,7 +2118,7 @@ def hamming_loss(y_true, y_pred, classes=None):
             return np.mean(loss) / np.size(classes)
 
     else:
-         return sp_hamming(y_true, y_pred)
+        return sp_hamming(y_true, y_pred)
 
 
 ###############################################################################

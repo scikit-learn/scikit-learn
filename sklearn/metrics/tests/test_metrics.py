@@ -2,6 +2,7 @@ from __future__ import division, print_function
 
 from functools import partial
 import warnings
+from itertools import product
 import numpy as np
 
 from sklearn import datasets
@@ -47,6 +48,7 @@ from sklearn.metrics import (accuracy_score,
                              zero_one_score,
                              zero_one_loss)
 from sklearn.metrics.metrics import _check_clf_targets
+
 from sklearn.externals.six.moves import xrange
 
 ALL_METRICS = {
