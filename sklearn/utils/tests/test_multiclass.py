@@ -22,6 +22,7 @@ EXAMPLES = {
         np.array([[0, 0], [0, 0]]),
         np.array([[-1, 1], [1, -1]]),
         np.array([[-3, 3], [3, -3]]),
+        np.array([[0, 1]]),
     ],
     'multilabel-sequences': [
         [[0, 1]],
@@ -68,8 +69,6 @@ EXAMPLES = {
         np.array([[0, .5]]),
     ],
     'unknown': [
-        # Not currently multiclass-multioutput, nor indicator
-        np.array([[0, 1]]),
         # empty second dimension
         np.array([[], []]),
         # 3d

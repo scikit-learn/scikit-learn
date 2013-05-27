@@ -92,11 +92,11 @@ def is_label_indicator_matrix(y):
     >>> is_label_indicator_matrix(np.array([[1], [0], [0]]))
     False
     >>> is_label_indicator_matrix(np.array([[1, 0, 0]]))
-    False
+    True
 
     """
     return (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1 and
-            y.shape[0] > 1 and np.size(np.unique(y)) <= 2 and
+            np.size(np.unique(y)) <= 2 and
             issubclass(y.dtype.type, (np.int, np.bool_, np.float)) and
             np.all(y == y.astype(int)))
 
@@ -165,8 +165,6 @@ def is_multilabel(y):
     True
     >>> is_multilabel(np.array([[1], [0], [0]]))
     False
-    >>> is_multilabel(np.array([[1, 0, 0]]))
-    False
 
     """
     return is_label_indicator_matrix(y) or is_sequence_of_sequences(y)
@@ -197,7 +195,8 @@ def type_of_target(y):
         * 'multilabel-sequences': `y` is a sequence of sequences, a 1d
           array-like of objects that are sequences of labels.
         * 'multilabel-indicator': `y` is a label indicator matrix, an array
-          of two dimensions each of size > 1, and at most 2 unique values.
+          of two dimensions with at least two columns, and at most 2 unique
+          values.
 
     Examples
     --------
