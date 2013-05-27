@@ -212,6 +212,8 @@ def is_multilabel(y):
     True
     >>> is_multilabel(np.array([[1], [0], [0]]))
     False
+    >>> is_multilabel(np.array([[1, 0, 0]]))
+    True
 
     """
     return is_label_indicator_matrix(y) or is_sequence_of_sequences(y)
