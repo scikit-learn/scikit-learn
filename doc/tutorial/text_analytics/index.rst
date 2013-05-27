@@ -4,7 +4,9 @@
 A tutorial on Text-analysis with scikit-learn
 ==========================================================================
 
-.. topic:: Applied machine learning in Python with scikit-learn
+.. topic:: Text-analysis
+
+    TODO - new intro description
 
     ``scikit-learn`` is a Python module integrating classic machine
     learning algorithms in the tightly-knit world of scientific Python
@@ -19,10 +21,6 @@ A tutorial on Text-analysis with scikit-learn
 
 
 .. include:: ../../includes/big_toc_css.rst
-
-.. note:: This document is meant to be used with **scikit-learn version
-   0.11+** (i.e. the current state of the master branch at the time of
-   writing: 2012-02-13).
 
 
 .. toctree::
