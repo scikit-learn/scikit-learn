@@ -248,10 +248,7 @@ def type_of_target(y):
     if issubclass(y.dtype.type, np.float) and np.any(y != y.astype(int)):
         return 'continuous' + suffix
     if len(np.unique(y)) <= 2:
-        if suffix:
-            # strange case... looks like a label indicator matrix, but did not
-            # meet its criteria (e.g. a list of lists, rather than an array)
-            return 'unknown'
+        assert not suffix, "2d binary array-like should be multilabel"
         return 'binary'
     else:
         return 'multiclass' + suffix
