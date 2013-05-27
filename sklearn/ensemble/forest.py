@@ -411,7 +411,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble, SelectorMixin)):
                         warn("Some inputs do not have OOB scores. "
                              "This probably means too few trees were used "
                              "to compute any reliable oob estimates.")
-                    decision = normalize_proba(predictions[k])
+                    decision = normalize_proba(predictions[k], copy=False)
                     self.oob_decision_function_.append(decision)
                     self.oob_score_ += np.mean(
                         (y[:, k] == classes_[k].take(

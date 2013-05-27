@@ -177,7 +177,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         for i, idx in enumerate(pred_labels.T):  # loop is O(n_neighbors)
             votes[all_rows, idx] += weights[:, i]
 
-        probabilities = normalize_proba(votes, copy=True)
+        probabilities = normalize_proba(votes, copy=False)
 
         return probabilities
 

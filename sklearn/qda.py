@@ -214,7 +214,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         # up to a multiplicative constant.
         likelihood = np.exp(values - values.min(axis=1)[:, np.newaxis])
         # compute posterior probabilities
-        probabilities = normalize_proba(likelihood, copy=True)
+        probabilities = normalize_proba(likelihood, copy=False)
 
         return probabilities
 

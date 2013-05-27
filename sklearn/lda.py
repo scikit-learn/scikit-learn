@@ -274,7 +274,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
         # up to a multiplicative constant.
         likelihood = np.exp(values - values.max(axis=1)[:, np.newaxis])
         # compute posterior probabilities
-        probabilities = normalize_proba(likelihood, copy=True)
+        probabilities = normalize_proba(likelihood, copy=False)
         return probabilities
 
     def predict_log_proba(self, X):
