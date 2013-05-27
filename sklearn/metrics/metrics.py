@@ -1742,6 +1742,9 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     elif y_type == 'binary' and pos_label is not None:
         if pos_label not in labels:
+            if len(labels) == 1:
+                # Only negative labels
+                return (0., 0., 0., 0)
             raise ValueError("pos_label=%d is not a valid label: %r" %
                              (pos_label, labels))
         pos_label_idx = list(labels).index(pos_label)
