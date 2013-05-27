@@ -370,6 +370,13 @@ def matthews_corrcoef(y_true, y_pred):
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
+
+    if (y_true.ndim == 2 and y_true.shape[1] > 1):
+        raise ValueError("Bad y_true input shape")
+
+    if (y_pred.ndim == 2 and y_pred.shape[1] > 1):
+        raise ValueError("Bad y_pred input shape")
+
     y_true = np.squeeze(y_true)
     y_pred = np.squeeze(y_pred)
 
@@ -412,6 +419,13 @@ def _binary_clf_curve(y_true, y_score, pos_label=None):
         Decreasing score values.
     """
     y_true, y_score = check_arrays(y_true, y_score)
+
+    if (y_true.ndim == 2 and y_true.shape[1] > 1):
+        raise ValueError("Bad y_true input shape")
+
+    if (y_score.ndim == 2 and y_score.shape[1] > 1):
+        raise ValueError("Bad y_score input shape")
+
     y_true = np.squeeze(y_true)
     y_score = np.squeeze(y_score)
 
@@ -650,6 +664,12 @@ def confusion_matrix(y_true, y_pred, labels=None):
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
+
+    if (y_true.ndim == 2 and y_true.shape[1] > 1):
+        raise ValueError("Bad y_true input shape")
+    if (y_pred.ndim == 2 and y_pred.shape[1] > 1):
+        raise ValueError("Bad y_pred input shape")
+
     y_true = np.squeeze(y_true)
     y_pred = np.squeeze(y_pred)
 
@@ -739,7 +759,6 @@ def zero_one_loss(y_true, y_pred, normalize=True):
 
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
     score = accuracy_score(y_true, y_pred,
                            normalize=normalize)
 
@@ -2234,6 +2253,12 @@ def explained_variance_score(y_true, y_pred):
 
     """
     y_true, y_pred = check_arrays(y_true, y_pred)
+
+    if (y_true.ndim == 2 and y_true.shape[1] > 1):
+        raise ValueError("Bad y_true input shape")
+
+    if (y_pred.ndim == 2 and y_pred.shape[1] > 1):
+        raise ValueError("Bad y_pred input shape")
 
     y_true = np.atleast_1d(np.squeeze(y_true))
     y_pred = np.atleast_1d(np.squeeze(y_pred))
