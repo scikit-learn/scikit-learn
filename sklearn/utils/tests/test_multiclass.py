@@ -80,6 +80,16 @@ EXAMPLES = {
     ]
 }
 
+NON_ARRAY_LIKE_EXAMPLES = [
+    {1, 2, 3},
+    {0: 'a', 1: 'b'},
+    {0: [5], 1: [5]},
+    'abc',
+    frozenset({1, 2, 3}),
+    None,
+]
+
+
 def test_unique_labels():
     # Empty iterable
     assert_raises(ValueError, unique_labels)
@@ -147,3 +157,6 @@ def test_type_of_target():
             assert_equal(type_of_target(example), group,
                          msg='type_of_target(%r) should be %r, got %r'
                          % (example, group, type_of_target(example)))
+
+    for example in NON_ARRAY_LIKE_EXAMPLES:
+        assert_raises(ValueError, type_of_target, example)

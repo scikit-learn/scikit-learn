@@ -222,6 +222,13 @@ def type_of_target(y):
     >>> type_of_target(np.array([[0, 1], [1, 1]]))
     'multilabel-indicator'
     """
+    if (
+            not isinstance(y, (np.ndarray, Sequence))
+            or isinstance(y, string_types)):
+        # XXX: is there a way to duck-type this condition?
+        raise ValueError('Expected array-like (array or non-string sequence), '
+                         'got %r' % y)
+
     if is_sequence_of_sequences(y):
         return 'multilabel-sequences'
     elif is_label_indicator_matrix(y):
