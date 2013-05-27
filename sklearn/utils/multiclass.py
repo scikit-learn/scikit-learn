@@ -230,11 +230,12 @@ def type_of_target(y):
     y = np.asarray(y)
     if y.ndim > 2 or y.dtype == object:
         return 'unknown'
-    if y.ndim == 2 and y.shape[1] > 1:
-        suffix = '-multioutput'
-    elif y.shape == 0:
+    if y.ndim == 2 and y.shape[1] == 0:
         return 'unknown'
+    elif y.ndim == 2 and y.shape[1] > 1:
+        suffix = '-multioutput'
     else:
+        # column vector or 1d
         suffix = ''
 
     if issubclass(y.dtype.type, np.float) and np.any(y != y.astype(int)):
