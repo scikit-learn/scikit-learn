@@ -52,7 +52,7 @@ from sklearn.externals.six.moves import xrange
 ALL_METRICS = {
     "accuracy_score": accuracy_score,
     "unormalized_accuracy_score": partial(accuracy_score, normalize=False),
-
+    "confusion_matrix": confusion_matrix,
     "hamming_loss": hamming_loss,
 
     "jaccard_similarity_score": jaccard_similarity_score,
@@ -115,6 +115,12 @@ MULTILABELS_METRICS = {
     "zero_one_loss": zero_one_loss,
     "unnormalized_zero_one_loss": partial(zero_one_loss, normalize=False),
 
+    "precision_score": precision_score,
+    "recall_score": recall_score,
+    "f1_score": f1_score,
+    "f2_score": partial(fbeta_score, beta=2),
+    "f0.5_score": partial(fbeta_score, beta=0.5),
+
     "weighted_f0.5_score": partial(fbeta_score, average="weighted", beta=0.5),
     "weighted_f1_score": partial(f1_score, average="weighted"),
     "weighted_f2_score": partial(fbeta_score, average="weighted", beta=2),
@@ -139,6 +145,13 @@ MULTILABELS_METRICS = {
     "macro_precision_score": partial(precision_score, average="macro"),
     "macro_recall_score": partial(recall_score, average="macro"),
 }
+
+MULTIOUTPUT_METRICS = {
+    "mean_absolute_error": mean_absolute_error,
+    "mean_squared_error": mean_squared_error,
+    "r2_score": r2_score,
+}
+
 
 SYMMETRIC_METRICS = {
     "accuracy_score": accuracy_score,
@@ -166,6 +179,8 @@ SYMMETRIC_METRICS = {
 NOT_SYMMETRIC_METRICS = {
     "explained_variance_score": explained_variance_score,
     "r2_score": r2_score,
+
+    "confusion_matrix": confusion_matrix,
 
     "precision_score": precision_score,
     "recall_score": recall_score,
@@ -974,6 +989,9 @@ def test_format_invariance_with_1d_vectors():
                                     % name)
 
         # At the moment, these mix representations aren't allowed
+        if name not in MULTILABELS_METRICS and not name in MULTIOUTPUT_METRICS:
+            assert_raises(ValueError, metric, y1_row, y2_row)
+
         assert_raises(ValueError, metric, y1_1d, y2_row)
         assert_raises(ValueError, metric, y1_row, y2_1d)
         assert_raises(ValueError, metric, y1_list, y2_row)
@@ -1040,9 +1058,8 @@ def test_multioutput_number_of_output_differ():
     y_true = np.array([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]])
     y_pred = np.array([[0, 0], [1, 0], [0, 0]])
 
-    assert_raises(ValueError, mean_squared_error, y_true, y_pred)
-    assert_raises(ValueError, mean_absolute_error, y_true, y_pred)
-    assert_raises(ValueError, r2_score, y_true, y_pred)
+    for name, metrics in MULTIOUTPUT_METRICS.items():
+        assert_raises(ValueError, metrics, y_true, y_pred)
 
 
 def test_multioutput_regression_invariance_to_dimension_shuffling():
@@ -1053,13 +1070,15 @@ def test_multioutput_regression_invariance_to_dimension_shuffling():
     y_pred = np.reshape(y_pred, (-1, n_dims))
 
     rng = check_random_state(314159)
-    for metric in [r2_score, mean_squared_error, mean_absolute_error]:
+    for name, metric in MULTIOUTPUT_METRICS.items():
         error = metric(y_true, y_pred)
 
         for _ in xrange(3):
             perm = rng.permutation(n_dims)
             assert_almost_equal(metric(y_true[:, perm], y_pred[:, perm]),
-                                error)
+                                error,
+                                err_msg="%s is not dimension shuffling"
+                                        "invariant" % name)
 
 
 def test_multilabel_representation_invariance():
