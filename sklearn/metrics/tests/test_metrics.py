@@ -1,8 +1,6 @@
 from __future__ import division, print_function
 
 from functools import partial
-from collections import namedtuple
-from itertools import product
 import warnings
 import numpy as np
 
@@ -21,8 +19,7 @@ from sklearn.utils.testing import (assert_true,
                                    assert_not_equal,
                                    assert_array_equal,
                                    assert_array_almost_equal,
-                                   assert_greater,
-                                   assert_false)
+                                   assert_greater)
 
 
 from sklearn.metrics import (accuracy_score,
