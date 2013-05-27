@@ -231,7 +231,7 @@ def type_of_target(y):
     y = np.asarray(y)
     if y.ndim > 2 or y.dtype == object:
         return 'unknown'
-    if y.ndim == 2 and y.shape[1] > 1 and y.shape[0] > 1:
+    if y.ndim == 2 and y.shape[1] > 1:
         suffix = '-multioutput'
     else:
         suffix = ''

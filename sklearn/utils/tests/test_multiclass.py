@@ -37,13 +37,13 @@ EXAMPLES = {
         [1, 0, 2, 2, 1, 4, 2, 4, 4, 4],
         np.array([1, 0, 2]),
         np.array([[1], [0], [2]]),
-        np.array([[1, 0, 2]]),
         [0, 1, 2],
         ['a', 'b', 'c'],
     ],
     'multiclass-multioutput': [
         np.array([[1, 0, 2, 2], [1, 4, 2, 4]]),
         np.array([['a', 'b'], ['c', 'd']]),
+        np.array([[1, 0, 2]]),
     ],
     'binary': [
         [0, 1],
@@ -52,7 +52,6 @@ EXAMPLES = {
         [0],
         np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1]),
         np.array([[0], [1]]),
-        np.array([[0, 1]]),
         [1, -1],
         [3, 5],
         ['a'],
@@ -63,13 +62,16 @@ EXAMPLES = {
         [1e-5],
         [0, .5],
         np.array([[0], [.5]]),
-        np.array([[0, .5]]),
     ],
     'continuous-multioutput': [
         np.array([[0, .5], [.5, 0]]),
+        np.array([[0, .5]]),
     ],
     'unknown': [
-        np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]]),  # 3d
+        # Not currently multiclass-multioutput, nor indicator
+        np.array([[0, 1]]),
+        # 3d
+        np.array([[[0, 1], [2, 3]], [[4, 5], [6, 7]]]),
         # not currently supported sequence of sequences
         np.array([np.array([]), np.array([1, 2, 3])], dtype=object),
     ]
