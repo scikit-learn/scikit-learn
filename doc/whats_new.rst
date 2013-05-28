@@ -72,6 +72,11 @@ Changelog
      the fraction or the number of correctly classified sample
      by `Arnaud Joly`_.
 
+   - Fixed bug in :func:`hmm.normalize` causing non-inplace normalization.
+
+   - The :func:`hmm.normalize` is now deprecated and superseded by
+     :func:`utils.extmath.normalize_proba`.
+
 
 API changes summary
 -------------------
