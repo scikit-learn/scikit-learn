@@ -1624,7 +1624,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     labels, y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred,
                                                         ravel=True)
 
-    ### Calculate tp_sum, pos_sum, true_sum ###
+    ### Calculate tp_sum, pred_sum, true_sum ###
 
     if y_type == 'multilabel-indicator':
         ## sum (common) 1s in each column, or each row for average='samples' ##
@@ -1633,7 +1633,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         y_true = y_true == pos_label
         y_pred = y_pred == pos_label
         tp_sum = np.sum(np.logical_and(y_true, y_pred), axis=sum_axis)
-        pos_sum = np.sum(y_pred, axis=sum_axis, dtype=int)
+        pred_sum = np.sum(y_pred, axis=sum_axis, dtype=int)
         true_sum = np.sum(y_true, axis=sum_axis, dtype=int)
 
     elif average == 'samples':
@@ -1644,7 +1644,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         ## get the number of (common) distinct labels for each sample ##
         tp_sum = np.array([len(np.intersect1d(sample1, sample2))
                            for sample1, sample2 in zip(y_true, y_pred)])
-        pos_sum = np.array([len(np.unique(sample)) for sample in y_pred])
+        pred_sum = np.array([len(np.unique(sample)) for sample in y_pred])
         true_sum = np.array([len(np.unique(sample)) for sample in y_true])
 
     else:
@@ -1662,11 +1662,11 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             # if all samples were assured unique, could use np.bincount
             tp_sum = np.zeros(len(labels), dtype=int)
             true_sum = tp_sum.copy()
-            pos_sum = tp_sum.copy()
+            pred_sum = tp_sum.copy()
             for sample1, sample2 in zip(y_true, y_pred):
                 tp_sum[np.intersect1d(sample1, sample2)] += 1
                 true_sum[np.unique(sample1)] += 1
-                pos_sum[np.unique(sample2)] += 1
+                pred_sum[np.unique(sample2)] += 1
         else:
             tp_bins = y_true[y_true == y_pred]
             pos_bins = y_pred
@@ -1676,9 +1676,9 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 tp_sum = np.bincount(tp_bins, minlength=len(labels))
             else:
                 # Pathological case
-                true_sum = pos_sum = tp_sum = np.zeros(len(labels))
+                true_sum = pred_sum = tp_sum = np.zeros(len(labels))
             if len(pos_bins):
-                pos_sum = np.bincount(pos_bins, minlength=len(labels))
+                pred_sum = np.bincount(pos_bins, minlength=len(labels))
             if len(true_bins):
                 true_sum = np.bincount(true_bins, minlength=len(labels))
 
@@ -1719,13 +1719,13 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         mask[np.searchsorted(labels, neg_label)] = False
 
         tp_sum = tp_sum[mask]
-        pos_sum = pos_sum[mask]
+        pred_sum = pos_sum[mask]
         true_sum = true_sum[mask]
 
     ### Collapse average='micro' stats ###
     if average == 'micro':
         tp_sum = np.array([tp_sum.sum()])
-        pos_sum = np.array([pos_sum.sum()])
+        pred_sum = np.array([pos_sum.sum()])
         true_sum = np.array([true_sum.sum()])
 
     ### Finally, we have all our sufficient statistics. Divide! ###
@@ -1736,7 +1736,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         # here
         old_err_settings = np.seterr(divide='ignore', invalid='ignore')
         # Divide, and on zero-division, set scores to 0 and warn:
-        precision = _prf_divide(tp_sum, pos_sum,
+        precision = _prf_divide(tp_sum, pred_sum,
                                 'precision', 'predicted', average)
         recall = _prf_divide(tp_sum, true_sum,
                              'recall', 'true', average)
