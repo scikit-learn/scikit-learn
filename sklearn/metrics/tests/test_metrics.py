@@ -21,6 +21,7 @@ from sklearn.utils.testing import (assert_true,
                                    assert_not_equal,
                                    assert_array_equal,
                                    assert_array_almost_equal,
+                                   assert_warns,
                                    assert_greater)
 
 
@@ -54,6 +55,7 @@ from sklearn.metrics.metrics import _check_reg_targets
 
 
 from sklearn.externals.six.moves import xrange
+
 
 REGRESSION_METRICS = {
     "mean_absolute_error": mean_absolute_error,
@@ -1221,45 +1223,47 @@ def test_multilabel_representation_invariance():
     y2_shuffle_binary_indicator = lb.transform(y2_shuffle)
 
     for name, metric in MULTILABELS_METRICS.items():
-        measure = metric(y1, y2)
+        with warnings.catch_warnings(True):
+            measure = metric(y1, y2)
 
-        # Check representation invariance
-        assert_almost_equal(metric(y1_binary_indicator, y2_binary_indicator),
-                            measure,
-                            err_msg="%s failed representation invariance  "
-                                    "between list of list of labels format "
-                                    "and dense binary indicator format."
-                                    % name)
+            # Check representation invariance
+            assert_almost_equal(metric(y1_binary_indicator,
+                                       y2_binary_indicator),
+                                measure,
+                                err_msg="%s failed representation invariance  "
+                                        "between list of list of labels "
+                                        "format and dense binary indicator "
+                                        "format." % name)
 
-        # Check invariance with redundant labels with list of labels
-        assert_almost_equal(metric(y1, y2_redundant), measure,
-                            err_msg="%s failed rendundant label invariance"
-                                    % name)
+            # Check invariance with redundant labels with list of labels
+            assert_almost_equal(metric(y1, y2_redundant), measure,
+                                err_msg="%s failed rendundant label invariance"
+                                        % name)
 
-        assert_almost_equal(metric(y1_redundant, y2_redundant), measure,
-                            err_msg="%s failed rendundant label invariance"
-                                    % name)
+            assert_almost_equal(metric(y1_redundant, y2_redundant), measure,
+                                err_msg="%s failed rendundant label invariance"
+                                        % name)
 
-        assert_almost_equal(metric(y1_redundant, y2), measure,
-                            err_msg="%s failed rendundant label invariance"
-                                    % name)
+            assert_almost_equal(metric(y1_redundant, y2), measure,
+                                err_msg="%s failed rendundant label invariance"
+                                        % name)
 
-        # Check shuffling invariance with list of labels
-        assert_almost_equal(metric(y1_shuffle, y2_shuffle), measure,
-                            err_msg="%s failed shuffling invariance "
-                                    "with list of list of labels format."
-                                    % name)
+            # Check shuffling invariance with list of labels
+            assert_almost_equal(metric(y1_shuffle, y2_shuffle), measure,
+                                err_msg="%s failed shuffling invariance "
+                                        "with list of list of labels format."
+                                        % name)
 
-        # Check shuffling invariance with dense binary indicator matrix
-        assert_almost_equal(metric(y1_shuffle_binary_indicator,
-                                   y2_shuffle_binary_indicator), measure,
-                            err_msg="%s failed shuffling invariance "
-                                    " with dense binary indicator format."
-                                    % name)
+            # Check shuffling invariance with dense binary indicator matrix
+            assert_almost_equal(metric(y1_shuffle_binary_indicator,
+                                       y2_shuffle_binary_indicator), measure,
+                                err_msg="%s failed shuffling invariance "
+                                        " with dense binary indicator format."
+                                        % name)
 
-        # Check raises error with mix input representation
-        assert_raises(ValueError, metric, y1, y2_binary_indicator)
-        assert_raises(ValueError, metric, y1_binary_indicator, y2)
+            # Check raises error with mix input representation
+            assert_raises(ValueError, metric, y1, y2_binary_indicator)
+            assert_raises(ValueError, metric, y1_binary_indicator, y2)
 
 
 def test_multilabel_zero_one_loss_subset():
@@ -1587,6 +1591,7 @@ def test_precision_recall_f1_score_multilabel_2():
         # |h(x_i) inter y_i | = [0, 0, 1]
         # |y_i| = [1, 1, 2]
         # |h(x_i)| = [1, 1, 2]
+
         assert_almost_equal(p, 1 / 6)
         assert_almost_equal(r, 1 / 6)
         assert_almost_equal(f, 2 / 4 * 1 / 3)
@@ -1651,82 +1656,60 @@ def test_precision_recall_f1_score_with_an_empty_prediction():
                                         average="weighted"),
                             np.average(f2, weights=support))
 
-        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average="samples")
-        # |h(x_i) inter y_i | = [0, 0, 2]
-        # |y_i| = [1, 1, 2]
-        # |h(x_i)| = [0, 1, 2]
-        assert_almost_equal(p, 1 / 3)
-        assert_almost_equal(r, 1 / 3)
-        assert_almost_equal(f, 1 / 3)
-        assert_equal(s, None)
-        assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                        average="samples"),
-                            0.333, 2)
+        with warnings.catch_warnings(True):
+            p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                         average="samples")
+            # |h(x_i) inter y_i | = [0, 0, 2]
+            # |y_i| = [1, 1, 2]
+            # |h(x_i)| = [0, 1, 2]
+            assert_almost_equal(p, 1 / 3)
+            assert_almost_equal(r, 1 / 3)
+            assert_almost_equal(f, 1 / 3)
+            assert_equal(s, None)
+            assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
+                                            average="samples"),
+                                0.333, 2)
 
 
 def test_precision_recall_f1_no_labels():
     y_true = np.zeros((20, 3))
     y_pred = np.zeros_like(y_true)
 
-    with warnings.catch_warnings(True):
-        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average=None)
-        #tp = [0, 0, 0]
-        #fn = [0, 0, 0]
-        #fp = [0, 0, 0]
-        #support = [0, 0, 0]
+    # tp = [0, 0, 0]
+    # fn = [0, 0, 0]
+    # fp = [0, 0, 0]
+    # support = [0, 0, 0]
+    # |y_hat_i inter y_i | = [0, 0, 0]
+    # |y_i| = [0, 0, 0]
+    # |y_hat_i| = [1, 1, 2]
+    warnings.simplefilter("always")
 
-        # Check per class
+    for beta in [1]:
+        p, r, f, s = assert_warns(UserWarning,
+                                  precision_recall_fscore_support,
+                                  y_true, y_pred, average=None, beta=beta)
         assert_array_almost_equal(p, [0, 0, 0], 2)
         assert_array_almost_equal(r, [0, 0, 0], 2)
         assert_array_almost_equal(f, [0, 0, 0], 2)
         assert_array_almost_equal(s, [0, 0, 0], 2)
-        assert_array_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                              average=None), [0, 0, 0], 2)
 
-        # Check macro
-        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average="macro")
-        assert_almost_equal(p, 0)
-        assert_almost_equal(r, 0)
-        assert_almost_equal(f, 0)
-        assert_equal(s, None)
-        assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                        average="macro"), 0)
+        fbeta = assert_warns(UserWarning, fbeta_score, y_true, y_pred,
+                             beta=beta, average=None)
+        assert_array_almost_equal(fbeta, [0, 0, 0], 2)
 
-        # Check micro
-        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average="micro")
-        assert_almost_equal(p, 0)
-        assert_almost_equal(r, 0)
-        assert_almost_equal(f, 0)
-        assert_equal(s, None)
-        assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                        average="micro"), 0)
+        for average in ["macro", "micro", "weighted", "samples"]:
+            p, r, f, s = assert_warns(UserWarning,
+                                      precision_recall_fscore_support,
+                                      y_true, y_pred, average=average,
+                                      beta=beta)
+            assert_almost_equal(p, 0)
+            assert_almost_equal(r, 0)
+            assert_almost_equal(f, 0)
+            assert_equal(s, None)
 
-        # Check weighted
-        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average="weighted")
-        assert_almost_equal(p, 0)
-        assert_almost_equal(r, 0)
-        assert_almost_equal(f, 0)
-        assert_equal(s, None)
-        assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                        average="weighted"), 0)
-
-        # # Check example
-        # |h(x_i) inter y_i | = [0, 0, 0]
-        # |y_i| = [0, 0, 0]
-        # |h(x_i)| = [1, 1, 2]
-        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
-                                                     average="samples")
-        assert_almost_equal(p, 0)
-        assert_almost_equal(r, 0)
-        assert_almost_equal(f, 0)
-        assert_equal(s, None)
-        assert_almost_equal(fbeta_score(y_true, y_pred, beta=2,
-                                        average="samples"), 0)
+            fbeta = assert_warns(UserWarning, fbeta_score, y_true, y_pred,
+                                 beta=beta, average=average)
+            assert_almost_equal(fbeta, 0)
 
 
 def test__check_clf_targets():
