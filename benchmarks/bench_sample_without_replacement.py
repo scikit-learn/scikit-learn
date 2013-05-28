@@ -187,7 +187,7 @@ if __name__ == "__main__":
     print("Results are averaged over %s repetition(s)." % opts.n_times)
     print("")
 
-    fig = plt.figure()
+    fig = plt.figure('scikit-learn sample w/o replacement benchmark results')
     plt.title("n_population = %s, n_times = %s" %
               (opts.n_population, opts.n_times))
     ax = fig.add_subplot(111)

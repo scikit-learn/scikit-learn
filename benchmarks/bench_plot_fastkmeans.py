@@ -108,7 +108,7 @@ if __name__ == '__main__':
                         t for (label, t) in results.iteritems()
                             if "speed" not in label]])
 
-    fig = plt.figure()
+    fig = plt.figure('scikit-learn K-Means benchmark results')
     for c, (label, timings) in zip('brcy',
                                     sorted(results.iteritems())):
         if 'speed' in label:

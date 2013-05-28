@@ -46,6 +46,7 @@ if __name__ == '__main__':
         lasso.fit(X, Y)
         time_lasso[i] = total_seconds(datetime.now() - start)
 
+    pl.figure('scikit-learn GLM benchmark results')
     pl.xlabel('Dimesions')
     pl.ylabel('Time (in seconds)')
     pl.plot(dimensions, time_ridge, color='r')

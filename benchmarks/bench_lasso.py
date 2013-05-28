@@ -68,6 +68,7 @@ if __name__ == '__main__':
     lasso_results, lars_lasso_results = compute_bench(alpha, list_n_samples,
                                             [n_features], precompute=True)
 
+    pl.figure('scikit-learn LASSO benchmark results')
     pl.clf()
     pl.subplot(211)
     pl.plot(list_n_samples, lasso_results, 'b-',

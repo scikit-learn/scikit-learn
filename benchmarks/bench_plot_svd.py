@@ -61,7 +61,7 @@ if __name__ == '__main__':
     features_range = np.linspace(2, 1000, 4).astype(np.int)
     results = compute_bench(samples_range, features_range)
 
-    fig = plt.figure()
+    fig = plt.figure('scikit-learn singular values decomposition benchmark results')
     ax = fig.gca(projection='3d')
     for c, (label, timings) in zip('rbg', sorted(results.iteritems())):
         X, Y = np.meshgrid(samples_range, features_range)

@@ -145,7 +145,7 @@ if __name__ == '__main__':
     timeset, err = compute_bench(samples_range, features_range)
 
     for i, results in enumerate((timeset, err)):
-        fig = plt.figure()
+        fig = plt.figure('scikit-learn Non-Negative Matrix Factorization benchmkar results')
         ax = fig.gca(projection='3d')
         for c, (label, timings) in zip('rbgcm', sorted(results.iteritems())):
             X, Y = np.meshgrid(samples_range, features_range)

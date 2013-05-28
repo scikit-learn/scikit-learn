@@ -31,6 +31,7 @@ for i, n in enumerate(n_samples):
 
 ratio = scikits_time / scipy_time
 
+pl.figure("scikit-learn Ward's method benchmark results")
 pl.clf()
 pl.imshow(np.log(ratio), aspect='auto', origin="lower")
 pl.colorbar()

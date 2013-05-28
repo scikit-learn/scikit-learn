@@ -84,7 +84,7 @@ if __name__ == '__main__':
         bench_scikit_tree_regressor(X, Y)
 
     xx = range(0, n * step, step)
-    pl.figure(1)
+    pl.figure('scikit-learn tree benchmark results')
     pl.subplot(211)
     pl.title('Learning with varying number of samples')
     pl.plot(xx, scikit_classifier_results, 'g-', label='classification')

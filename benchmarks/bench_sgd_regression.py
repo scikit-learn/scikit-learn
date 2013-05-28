@@ -97,7 +97,8 @@ if __name__ == "__main__":
     # Plot results
     i = 0
     m = len(list_n_features)
-    pl.figure(figsize=(5 * 2, 4 * m))
+    pl.figure('scikit-learn SGD regression benchmark results',
+              figsize=(5 * 2, 4 * m))
     for j in range(m):
         pl.subplot(m, 2, i + 1)
         pl.plot(list_n_samples, np.sqrt(elnet_results[:, j, 0]),
