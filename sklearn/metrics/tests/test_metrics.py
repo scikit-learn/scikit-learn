@@ -36,10 +36,10 @@ from sklearn.metrics import (accuracy_score,
                              hamming_loss,
                              hinge_loss,
                              jaccard_similarity_score,
+                             log_loss,
                              matthews_corrcoef,
                              mean_squared_error,
                              mean_absolute_error,
-                             multiclass_log_loss,
                              precision_recall_curve,
                              precision_recall_fscore_support,
                              precision_score,
@@ -1781,9 +1781,28 @@ def test__check_reg_targets():
             assert_raises(ValueError, _check_reg_targets, y1, y2)
 
 
-def test_multiclass_log_loss():
-    y_true = np.array([0, 0, 0, 1, 1, 1])
+def test_log_loss():
+    # binary case with symbolic labels ("no" < "yes")
+    y_true = ["no", "no", "no", "yes", "yes", "yes"]
     y_pred = np.array([[0.5, 0.5], [0.1, 0.9], [0.01, 0.99],
-        [0.9, 0.1], [0.75, 0.25], [0.001, 0.999]])
-    loss = multiclass_log_loss(y_true, y_pred)
-    assert_equal(loss, 1.8817970689982668)
+                       [0.9, 0.1], [0.75, 0.25], [0.001, 0.999]])
+    loss = log_loss(y_true, y_pred)
+    assert_almost_equal(loss, 1.8817971)
+
+    # multiclass case; adapted from http://bit.ly/RJJHWA
+    y_true = [1, 0, 2]
+    y_pred = [[0.2, 0.7, 0.1], [0.6, 0.2, 0.2], [0.6, 0.1, 0.3]]
+    loss = log_loss(y_true, y_pred, normalize=True)
+    assert_almost_equal(loss, 0.6904911)
+
+    # check that we got all the shapes and axes right
+    # by doubling the length of y_true and y_pred
+    y_true *= 2
+    y_pred *= 2
+    loss = log_loss(y_true, y_pred, normalize=False)
+    assert_almost_equal(loss, 0.6904911 * 6, decimal=6)
+
+    # check eps and handling of absolute zero and one probabilities
+    y_pred = np.asarray(y_pred) > .5
+    loss = log_loss(y_true, y_pred, normalize=True, eps=.1)
+    assert_almost_equal(loss, log_loss(y_true, np.clip(y_pred, .1, .9)))

@@ -99,6 +99,9 @@ Changelog
      the fraction or the number of correctly classified sample
      by `Arnaud Joly`_.
 
+   - Added :func:`metrics.log_loss` that computes log loss, aka cross-entropy
+     loss. By Jochen Wersdörfer and `Lars Buitinck`_.
+
    - A bug that caused :class:`ensemble.AdaBoostClassifier`'s to output
      incorrect probabilities has been fixed.
 

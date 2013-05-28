@@ -2095,29 +2095,61 @@ def r2_score(y_true, y_pred):
     return 1 - numerator / denominator
 
 
-def multiclass_log_loss(y_true, y_pred, eps=1e-15):
-    """Multi class version of Logarithmic Loss metric.
-    https://www.kaggle.com/wiki/MultiClassLogLoss
+def log_loss(y_true, y_pred, eps=1e-15, normalize=True):
+    """Log loss, aka logistic loss or cross-entropy loss.
 
-    idea from this post:
-    http://www.kaggle.com/c/emc-data-science/forums/t/2149/is-anyone-noticing-difference-betwen-validation-and-leaderboard-error/12209#post12209
+    This is the loss function used in (multinomial) logistic regression
+    and extensions of it such as neural networks, defined as the negative
+    log-likelihood of the true labels given a probabilistic classifier's
+    predictions. For a single sample with true label yt in {0,1} and
+    estimated probability yp that yt = 1, the log loss is
+
+        -log P(yt|yp) = -(yt log(yp) + (1 - yt) log(1 - yp))
 
     Parameters
     ----------
-    y_true : array, shape = [n_samples]
-    y_pred : array, shape = [n_samples, n_classes]
+    y_true : array-like or list of labels or label indicator matrix
+        Ground truth (correct) labels for n_samples samples.
+
+    y_pred : array-like of float, shape = (n_samples, n_classes)
+        Predicted probabilities, as returned by a classifier's
+        predict_proba method.
+
+    eps : float
+        Log loss is undefined for p=0 or p=1, so probabilities are
+        clipped to max(eps, min(1 - eps, p)).
+
+    normalize : bool, optional (default=True)
+        If true, return the mean loss per sample.
+        Otherwise, return the total loss.
 
     Returns
     -------
     loss : float
+
+    Examples
+    --------
+    >>> log_loss(["spam", "ham", "ham", "spam"],  # doctest: +ELLIPSIS
+    ...          [[.1, .9], [.9, .1], [.8, .2], [.35, .65]])
+    0.21616...
+
+    References
+    ----------
+    C.M. Bishop (2006). Pattern Recognition and Machine Learning. Springer,
+    p. 209.
+
+    Notes
+    -----
+    The logarithm used is the natural logarithm (base-e).
     """
-    predictions = np.clip(y_pred, eps, 1 - eps)
+    lb = LabelBinarizer()
+    T = lb.fit_transform(y_true)
+    if T.shape[1] == 1:
+        T = np.append(1 - T, T, axis=1)
 
-    # normalize row sums to 1
-    predictions /= predictions.sum(axis=1)[:, np.newaxis]
+    # Clip and renormalize
+    Y = np.clip(y_pred, eps, 1 - eps)
+    Y /= Y.sum(axis=1)[:, np.newaxis]
 
-    actual = np.zeros(y_pred.shape)
-    rows = actual.shape[0]
-    actual[np.arange(rows), y_true.astype(int)] = 1
-    vsota = np.sum(actual * np.log(predictions))
-    return -1.0 / rows * vsota
+    loss = -(T * np.log(Y)).sum()
+    return loss / T.shape[0] if normalize else loss

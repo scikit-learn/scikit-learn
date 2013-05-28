@@ -727,6 +727,7 @@ details.
    metrics.hamming_loss
    metrics.hinge_loss
    metrics.jaccard_similarity_score
+   metrics.log_loss
    metrics.matthews_corrcoef
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
