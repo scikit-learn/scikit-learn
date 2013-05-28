@@ -1448,24 +1448,44 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 size_true[i] = len(true_set)
         else:
             raise ValueError("Example-based precision, recall, fscore is "
-                             "not meaning full outside multilabel"
+                             "not meaningful outside of multilabel"
                              "classification. Use accuracy_score instead.")
+
+        warning_msg = ""
+        if np.any(size_pred == 0):
+            warning_msg += ("Sample-based precision is undefined for some "
+                            "samples. ")
+
+        if np.any(size_true == 0):
+            warning_msg += ("Sample-based recall is undefined for some "
+                            "samples. ")
+
+        if np.any((beta2 * size_true + size_pred) == 0):
+            warning_msg += ("Sample-based f_score is undefined for some "
+                            "samples. ")
+
+        if warning_msg:
+            warnings.warn(warning_msg)
+
 
         try:
             # oddly, we may get an "invalid" rather than a "divide" error
             # here
             old_err_settings = np.seterr(divide='ignore', invalid='ignore')
 
-            precision = size_inter / size_pred
-            recall = size_inter / size_true
-            f_score = ((1 + beta2) * size_inter /
-                       (beta2 * size_true + size_pred))
+            precision = divide(size_inter, size_pred, dtype=np.double)
+            recall = divide(size_inter, size_true, dtype=np.double)
+            f_score = divide((1 + beta2) * size_inter,
+                             (beta2 * size_true + size_pred),
+                             dtype=np.double)
         finally:
             np.seterr(**old_err_settings)
 
         precision[size_pred == 0] = 0.0
         recall[size_true == 0] = 0.0
         f_score[(beta2 * size_true + size_pred) == 0] = 0.0
+
+
 
         precision = np.mean(precision)
         recall = np.mean(recall)
@@ -1501,7 +1521,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     finally:
         np.seterr(**old_err_settings)
 
-    if not average:
+    if average in (None, "macro", "weighted"):
         warning_msg = ""
         if np.any(idx_ill_defined_precision):
             warning_msg += ("The sum of true positives and false positives "
@@ -1524,6 +1544,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         if warning_msg:
             warnings.warn(warning_msg)
 
+    if not average:
         return precision, recall, fscore, support
 
     elif y_type == 'binary' and pos_label is not None:
@@ -1542,12 +1563,11 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             try:
                 # oddly, we may get an "invalid" rather than a "divide" error here
                 old_err_settings = np.seterr(divide='ignore', invalid='ignore')
-                avg_precision = divide(true_pos.sum(),
-                                       true_pos.sum() + false_pos.sum(),
-                                       dtype=np.double)
-                avg_recall = divide(true_pos.sum(),
-                                    true_pos.sum() + false_neg.sum(),
-                                    dtype=np.double)
+                tp_sum = true_pos.sum()
+                fp_sum = false_pos.sum()
+                fn_sum = false_neg.sum()
+                avg_precision = divide(tp_sum, tp_sum + fp_sum, dtype=np.double)
+                avg_recall = divide(tp_sum, tp_sum + fn_sum, dtype=np.double)
                 avg_fscore = divide((1 + beta2) * (avg_precision * avg_recall),
                                     beta2 * avg_precision + avg_recall,
                                     dtype=np.double)
@@ -1556,19 +1576,19 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
             warning_msg = ""
 
-            if np.isnan(avg_precision):
+            if tp_sum + fp_sum == 0:
                 avg_precision = 0.
                 warning_msg += ("The sum of true positives and false "
                                 "positives are equal to zero. Micro-precision"
                                 " is ill defined. ")
 
-            if np.isnan(avg_recall):
+            if tp_sum + fn_sum == 0:
                 avg_recall = 0.
                 warning_msg += ("The sum of true positives and false "
                                 "negatives are equal to zero. Micro-recall "
                                 "is ill defined. ")
 
-            if np.isnan(avg_fscore):
+            if beta2 * avg_precision + avg_recall == 0:
                 avg_fscore = 0.
                 warning_msg += ("Micro-precision and micro-recall are equal "
                                 "to zero. Micro-fbeta_score is ill defined.")
