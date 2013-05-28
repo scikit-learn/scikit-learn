@@ -222,10 +222,10 @@ def type_of_target(y):
     >>> type_of_target(np.array([[0, 1], [1, 1]]))
     'multilabel-indicator'
     """
-    if (
-            not isinstance(y, (np.ndarray, Sequence))
-            or isinstance(y, string_types)):
-        # XXX: is there a way to duck-type this condition?
+    # XXX: is there a way to duck-type this condition?
+    valid = (isinstance(y, (np.ndarray, Sequence))
+             and not isinstance(y, string_types))
+    if not valid:
         raise ValueError('Expected array-like (array or non-string sequence), '
                          'got %r' % y)
 
