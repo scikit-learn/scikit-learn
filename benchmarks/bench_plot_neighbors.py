@@ -146,7 +146,7 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
                     va='top',
                     bbox=dict(facecolor='w', edgecolor='w', alpha=0.5))
 
-            pl.ylabel('time (seconds)')
+            pl.ylabel('Time (s)')
 
         ax.xaxis.set_major_locator(ticker.FixedLocator(tick_vals))
         ax.xaxis.set_major_formatter(ticker.FixedFormatter(tick_labels))

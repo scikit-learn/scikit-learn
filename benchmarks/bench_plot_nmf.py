@@ -160,7 +160,7 @@ if __name__ == '__main__':
 
         ax.set_xlabel('n_samples')
         ax.set_ylabel('n_features')
-        zlabel = 'time (s)' if i == 0 else 'reconstruction error'
+        zlabel = 'Time (s)' if i == 0 else 'reconstruction error'
         ax.set_zlabel(zlabel)
         ax.legend()
         plt.show()

@@ -91,7 +91,7 @@ if __name__ == '__main__':
     pl.plot(xx, scikit_regressor_results, 'r-', label='regression')
     pl.legend()
     pl.xlabel('number of samples')
-    pl.ylabel('time (in seconds)')
+    pl.ylabel('Time (s)')
 
     scikit_classifier_results = []
     scikit_regressor_results = []
@@ -119,6 +119,6 @@ if __name__ == '__main__':
     pl.plot(xx, scikit_regressor_results, 'r-', label='regression')
     pl.legend()
     pl.xlabel('number of dimensions')
-    pl.ylabel('time (in seconds)')
+    pl.ylabel('Time (s)')
     pl.axis('tight')
     pl.show()

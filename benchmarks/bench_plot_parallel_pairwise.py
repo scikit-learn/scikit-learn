@@ -29,7 +29,7 @@ def plot(func):
     pl.plot(sample_sizes, one_core, label="one core")
     pl.plot(sample_sizes, multi_core, label="multi core")
     pl.xlabel('n_samples')
-    pl.ylabel('time')
+    pl.ylabel('Time (s)')
     pl.title('Parallel %s' % func.__name__)
     pl.legend()
 

@@ -77,7 +77,7 @@ if __name__ == '__main__':
     pl.title('Lasso benchmark (%d features - alpha=%s)' % (n_features, alpha))
     pl.legend(loc='upper left')
     pl.xlabel('number of samples')
-    pl.ylabel('time (in seconds)')
+    pl.ylabel('Time (s)')
     pl.axis('tight')
 
     n_samples = 2000
@@ -90,6 +90,6 @@ if __name__ == '__main__':
     pl.title('Lasso benchmark (%d samples - alpha=%s)' % (n_samples, alpha))
     pl.legend(loc='upper left')
     pl.xlabel('number of features')
-    pl.ylabel('time (in seconds)')
+    pl.ylabel('Time (s)')
     pl.axis('tight')
     pl.show()

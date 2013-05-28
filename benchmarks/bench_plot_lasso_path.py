@@ -109,7 +109,7 @@ if __name__ == '__main__':
 
         ax.set_xlabel('n_samples')
         ax.set_ylabel('n_features')
-        ax.set_zlabel('time (s)')
+        ax.set_zlabel('Time (s)')
         ax.set_zlim3d(0.0, max_time * 1.1)
         ax.set_title(label)
         #ax.legend()

@@ -76,6 +76,6 @@ if __name__ == '__main__':
 
     ax.set_xlabel('n_samples')
     ax.set_ylabel('n_features')
-    ax.set_zlabel('time (s)')
+    ax.set_zlabel('Time (s)')
     ax.legend()
     plt.show()

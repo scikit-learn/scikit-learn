@@ -195,7 +195,7 @@ if __name__ == "__main__":
         ax.plot(ratio, time[name], label=name)
 
     ax.set_xlabel('ratio of n_sample / n_population')
-    ax.set_ylabel('time [s]')
+    ax.set_ylabel('Time (s)')
     ax.legend()
 
     # Sort legend labels

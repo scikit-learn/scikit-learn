@@ -48,7 +48,7 @@ if __name__ == '__main__':
 
     pl.figure('scikit-learn GLM benchmark results')
     pl.xlabel('Dimesions')
-    pl.ylabel('Time (in seconds)')
+    pl.ylabel('Time (s)')
     pl.plot(dimensions, time_ridge, color='r')
     pl.plot(dimensions, time_ols, color='g')
     pl.plot(dimensions, time_lasso, color='b')
