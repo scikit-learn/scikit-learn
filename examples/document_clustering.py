@@ -160,6 +160,9 @@ if opts.n_components:
     t0 = time()
     lsa = TruncatedSVD(opts.n_components)
     X = lsa.fit_transform(X)
+    # Vectorizer results are normalized, which makes KMeans behave as
+    # spherical k-means for better results. Since LSA/SVD results are
+    # not normalized, we have to redo the normalization.
     X = Normalizer(copy=False).fit_transform(X)
 
     print("done in %fs" % (time() - t0))
