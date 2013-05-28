@@ -130,5 +130,7 @@ def is_multilabel(y):
     """
     # the explicit check for ndarray is for forward compatibility; future
     # versions of Numpy might want to register ndarray as a Sequence
-    return (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) and
-            not isinstance(y[0], string_types) or is_label_indicator_matrix(y))
+    if getattr(y, 'ndim', 1) != 1:
+        return is_label_indicator_matrix(y)
+    return ((isinstance(y[0], Sequence) and not isinstance(y[0], string_types))
+            or isinstance(y[0], np.ndarray))
