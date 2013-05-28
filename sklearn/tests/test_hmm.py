@@ -7,8 +7,7 @@ from unittest import TestCase
 from sklearn.datasets.samples_generator import make_spd_matrix
 from sklearn import hmm
 from sklearn import mixture
-from sklearn.preprocessing import normalize_proba
-from sklearn.utils.extmath import logsumexp
+from sklearn.utils.extmath import logsumexp, normalize_proba
 from sklearn.utils import check_random_state
 
 from nose import SkipTest

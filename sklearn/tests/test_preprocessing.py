@@ -11,6 +11,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
+from sklearn.utils.extmath import normalize_proba
 
 from sklearn.utils.sparsefuncs import mean_variance_axis0
 from sklearn.preprocessing import Binarizer
@@ -20,7 +21,6 @@ from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import Normalizer
 from sklearn.preprocessing import normalize
-from sklearn.preprocessing import normalize_proba
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import scale
 from sklearn.preprocessing import MinMaxScaler

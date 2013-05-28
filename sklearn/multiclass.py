@@ -37,9 +37,10 @@ import warnings
 
 from .base import BaseEstimator, ClassifierMixin, clone, is_classifier
 from .base import MetaEstimatorMixin
-from .preprocessing import LabelBinarizer, normalize_proba
+from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
+from .utils.extmath import normalize_proba
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
 

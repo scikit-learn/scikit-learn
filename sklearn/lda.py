@@ -11,10 +11,9 @@ import numpy as np
 from scipy import linalg
 
 from .base import BaseEstimator, ClassifierMixin, TransformerMixin
-from .utils.extmath import logsumexp
+from .utils.extmath import logsumexp, normalize_proba
 from .utils.fixes import unique
 from .utils import check_arrays, array2d
-from .preprocessing import normalize_proba
 
 __all__ = ['LDA']
 

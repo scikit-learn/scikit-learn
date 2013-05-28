@@ -48,12 +48,13 @@ from ..externals import six
 from ..externals.six.moves import xrange
 from ..feature_selection.selector_mixin import SelectorMixin
 from ..metrics import r2_score
-from ..preprocessing import OneHotEncoder, normalize_proba
+from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import array2d, check_random_state, check_arrays, safe_asarray
 from ..utils.fixes import bincount
+from ..utils.extmath import normalize_proba
 
 
 from .base import BaseEnsemble

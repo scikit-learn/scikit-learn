@@ -17,9 +17,8 @@ import string
 import numpy as np
 
 from .utils import check_random_state, deprecated
-from .utils.extmath import logsumexp
+from .utils.extmath import logsumexp, normalize_proba
 from .base import BaseEstimator
-from .preprocessing import normalize_proba
 from .mixture import (
     GMM, log_multivariate_normal_density, sample_gaussian,
     distribute_covar_matrix_to_match_covariance_type, _validate_covars)

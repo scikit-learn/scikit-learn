@@ -11,8 +11,7 @@ import warnings
 
 import numpy as np
 from scipy import stats
-from ..utils.extmath import weighted_mode
-from ..preprocessing import normalize_proba
+from ..utils.extmath import weighted_mode, normalize_proba
 
 from .base import \
     _check_weights, _get_weights, \

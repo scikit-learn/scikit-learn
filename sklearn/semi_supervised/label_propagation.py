@@ -59,10 +59,9 @@ from scipy import sparse
 import numpy as np
 
 from ..base import BaseEstimator, ClassifierMixin
-from ..preprocessing import normalize_proba
 from ..metrics.pairwise import rbf_kernel
 from ..utils.graph import graph_laplacian
-from ..utils.extmath import safe_sparse_dot
+from ..utils.extmath import safe_sparse_dot, normalize_proba
 from ..externals import six
 from ..neighbors.unsupervised import NearestNeighbors
 
