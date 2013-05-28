@@ -69,7 +69,6 @@ if __name__ == '__main__':
                                             [n_features], precompute=True)
 
     pl.figure('scikit-learn LASSO benchmark results')
-    pl.clf()
     pl.subplot(211)
     pl.plot(list_n_samples, lasso_results, 'b-',
                             label='Lasso (with precomputed Gram matrix)')
