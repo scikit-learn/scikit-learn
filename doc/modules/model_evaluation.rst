@@ -712,6 +712,52 @@ with a svm classifier::
   0.3...
 
 
+Log loss
+--------
+The log loss, also called logistic regression loss or cross-entropy loss,
+is a loss function defined on probability estimates.
+It is commonly used in (multinomial) logistic regression and neural networks,
+as well as some variants of expectation-maximization,
+and can be used to evaluate the probability outputs (``predict_proba``)
+of a classifier, rather than its discrete predictions.
+
+For binary classification with a true label :math:`y_t \in \{0,1\}`
+and a probability estimate :math:`y_p = P(y_t = 1)`,
+the log loss per sample is the negative log-likelihood
+of the true label given the prediction:
+
+.. math::
+
+    L_{\log}(y_t, y_p) = -\log P(y_t|y_p) = -(y_t \log y_p + (1 - y_t) \log (1 - y_p))
+
+This extends to the multiclass case as follows.
+Let the true labels for a set of samples
+be encoded as a 1-of-K binary indicator matrix :math:`T`,
+i.e. :math:`t_{i,k} = 1` if sample :math:`i` has label :math:`k`
+taken from a set of :math:`K` labels.
+Let :math:`Y` be a matrix of probability estimates,
+with :math:`y_{i,k} = P(t_{i,k} = 1)`.
+Then the total log loss of the whole set is
+
+.. math::
+
+    L_{\log}(T, Y) = -\log P(T|Y) = - \sum_i \sum_j t_{i,k} \log y_{i,k}
+
+The function :func:`log_loss` computes either total or mean log loss
+given a list of ground-truth labels and a probability matrix,
+as returned by an estimator's ``predict_proba`` method.
+
+    >>> from sklearn.metrics import log_loss
+    >>> y_true = [0, 0, 1, 1]
+    >>> y_pred = [[.9, .1], [.8, .2], [.3, .7], [.01, .99]]
+    >>> log_loss(y_true, y_pred)    # doctest: +ELLIPSIS
+    0.1738...
+
+The first ``[.9, .1]`` in ``y_pred``
+denotes 90% probability that the first sample has label 0.
+The log loss is non-negative.
+
+
 Matthews correlation coefficient
 .................................
 
