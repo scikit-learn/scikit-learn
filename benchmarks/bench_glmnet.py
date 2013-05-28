@@ -117,7 +117,7 @@ if __name__ == '__main__':
         glmnet_results.append(bench(GlmnetLasso, X, Y, X_test, Y_test, coef_))
 
     xx = np.arange(100, 100 + n * step, step)
-    pl.figure('scikit-learn glmnet benchmark results')
+    pl.figure()
     pl.title('Regression in high dimensional spaces (%d samples)' % n_samples)
     pl.plot(xx, scikit_results, 'b-', label='scikit-learn')
     pl.plot(xx, glmnet_results, 'r-', label='glmnet')
