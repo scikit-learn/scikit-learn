@@ -5,7 +5,6 @@
 # License: BSD 3 clause
 
 import functools
-import itertools
 import warnings
 import numbers
 
@@ -844,8 +843,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     def _check_fitted(self):
         if not hasattr(self, "classes_"):
-            raise ValueError(
-                "{} was not fitted yet.".format(self.__class__.__name__))
+            raise ValueError("LabelNormalizer was not fitted yet.")
 
     def fit(self, y):
         """Fit label encoder
@@ -929,7 +927,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         return self.classes_[y]
 
 
-class LabelBinarizer(LabelEncoder, TransformerMixin):
+class LabelBinarizer(BaseEstimator, TransformerMixin):
     """Binarize labels in a one-vs-all fashion
 
     Several regression and binary classification algorithms are
@@ -981,12 +979,15 @@ class LabelBinarizer(LabelEncoder, TransformerMixin):
     """
 
     def __init__(self, neg_label=0, pos_label=1):
-        super(LabelBinarizer, self).__init__()
         if neg_label >= pos_label:
             raise ValueError("neg_label must be strictly less than pos_label.")
 
         self.neg_label = neg_label
         self.pos_label = pos_label
+
+    def _check_fitted(self):
+        if not hasattr(self, "classes_"):
+            raise ValueError("LabelBinarizer was not fitted yet.")
 
     def fit(self, y):
         """Fit label binarizer
@@ -1001,30 +1002,13 @@ class LabelBinarizer(LabelEncoder, TransformerMixin):
         -------
         self : returns an instance of self.
         """
-        super(LabelBinarizer, self).fit(y)
         self.multilabel = is_multilabel(y)
         if self.multilabel:
             self.indicator_matrix_ = is_label_indicator_matrix(y)
+
+        self.classes_ = unique_labels(y)
+
         return self
-
-    def fit_transform(self, y):
-        """Fit and transform multi-class labels to binary labels
-
-        The output of transform is sometimes referred to by some authors as the
-        1-of-K coding scheme.
-
-        Parameters
-        ----------
-        y : numpy array of shape [n_samples] or sequence of sequences
-            Target values. In the multilabel case the nested sequences can
-            have variable lengths.
-
-        Returns
-        -------
-        Y : numpy array of shape [n_samples, n_classes]
-        """
-        self.fit(y)
-        return self.transform(y)
 
     def transform(self, y):
         """Transform multi-class labels to binary labels
@@ -1049,37 +1033,42 @@ class LabelBinarizer(LabelEncoder, TransformerMixin):
                 # nothing to do as y is already a label indicator matrix
                 return y
 
-            n_columns = len(self.classes_)
+            Y = np.zeros((len(y), len(self.classes_)), dtype=np.int)
         else:
-            n_columns = 1
-        Y = np.empty((len(y), n_columns), dtype=np.int)
-        Y.fill(self.neg_label)
+            Y = np.zeros((len(y), 1), dtype=np.int)
+
+        Y += self.neg_label
 
         y_is_multilabel = is_multilabel(y)
 
-        # convert y to column indices
-        indices = super(LabelBinarizer, self).transform(y)
-
         if y_is_multilabel and not self.multilabel:
-            raise ValueError("The object was not fitted with multilabel "
-                             "input!")
+            raise ValueError("The object was not fitted with multilabel"
+                             " input!")
 
         elif self.multilabel:
-            if not y_is_multilabel:
-                raise ValueError("y should be a list of label lists/tuples, "
+            if not is_multilabel(y):
+                raise ValueError("y should be a list of label lists/tuples,"
                                  "got %r" % (y,))
 
-            for Y_row, indices in itertools.izip(Y, indices):
-                Y_row[np.asarray(indices)] = self.pos_label
+            # inverse map: label => column index
+            imap = dict((v, k) for k, v in enumerate(self.classes_))
+
+            for i, label_tuple in enumerate(y):
+                for label in label_tuple:
+                    Y[i, imap[label]] = self.pos_label
+
             return Y
 
         else:
+            y = np.asarray(y)
+
             if len(self.classes_) == 2:
-                Y[indices == 1, 0] = self.pos_label
+                Y[y == self.classes_[1], 0] = self.pos_label
                 return Y
 
             elif len(self.classes_) >= 2:
-                Y[np.arange(Y.shape[0]), indices] = self.pos_label
+                for i, k in enumerate(self.classes_):
+                    Y[y == k, i] = self.pos_label
                 return Y
 
             else:
@@ -1122,26 +1111,27 @@ class LabelBinarizer(LabelEncoder, TransformerMixin):
         self._check_fitted()
 
         if threshold is None:
-            threshold = np.mean([self.pos_label, self.neg_label])
+            half = (self.pos_label - self.neg_label) / 2.0
+            threshold = self.neg_label + half
 
         if self.multilabel:
             Y = np.array(Y > threshold, dtype=int)
-
             # Return the predictions in the same format as in fit
             if self.indicator_matrix_:
                 # Label indicator matrix format
                 return Y
             else:
                 # Lists of tuples format
-                y = [np.flatnonzero(row) for row in Y]
+                return [tuple(self.classes_[np.flatnonzero(Y[i])])
+                        for i in range(Y.shape[0])]
 
-        elif len(Y.shape) == 1 or Y.shape[1] == 1:
+        if len(Y.shape) == 1 or Y.shape[1] == 1:
             y = np.array(Y.ravel() > threshold, dtype=int)
 
         else:
             y = Y.argmax(axis=1)
 
-        return super(LabelBinarizer, self).inverse_transform(y)
+        return self.classes_[y]
 
 
 class KernelCenterer(BaseEstimator, TransformerMixin):
