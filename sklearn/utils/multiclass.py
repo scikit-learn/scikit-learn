@@ -51,7 +51,7 @@ def unique_labels(*lists_of_labels):
             if is_label_indicator_matrix(y):
                 classes = np.arange(y.shape[1])
             else:
-                classes = np.array(sorted(set(chain.from_iterable(y))))
+                classes = np.array(sorted(set(chain(*y))))
 
         else:
             classes = np.unique(y)
