@@ -300,6 +300,10 @@ should be turned on (``sublinear_tf=True, use_idf=True``)
 to bring the feature values closer to a Gaussian distribution,
 compensating for LSA's erroneous assumptions about textual data.
 
+.. topic:: Examples:
+
+   * :ref:`example_document_clustering.py`
+
 .. topic:: References:
 
   * Christopher D. Manning, Prabhakar Raghavan and Hinrich Schütze (2008),

@@ -58,6 +58,7 @@ from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import Normalizer
 from sklearn import metrics
 
 from sklearn.cluster import KMeans, MiniBatchKMeans
@@ -157,8 +158,9 @@ print()
 if opts.n_components:
     print("Performing dimensionality reduction using LSA")
     t0 = time()
-    lsa = LatentSemanticAnalysis(opts.n_components)
+    lsa = TruncatedSVD(opts.n_components)
     X = lsa.fit_transform(X)
+    X = Normalizer(copy=False).fit_transform(X)
 
     print("done in %fs" % (time() - t0))
     print()
