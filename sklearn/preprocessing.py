@@ -21,7 +21,6 @@ from .utils.fixes import unique
 from .utils.multiclass import unique_labels
 from .utils.multiclass import is_multilabel
 from .utils.multiclass import is_label_indicator_matrix
-from .utils.multiclass import multilabel_vectorize
 
 from .utils.sparsefuncs import inplace_csr_row_normalize_l1
 from .utils.sparsefuncs import inplace_csr_row_normalize_l2
@@ -836,8 +835,8 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
     >>> le = preprocessing.LabelEncoder()
     >>> targets = [["paris", "tokyo"], ["amsterdam", "paris"]]
-    >>> le.fit_transform(targets)
-    array([[1 2], [0 1]], dtype=object)
+    >>> list(map(list, le.fit_transform(targets)))
+    [[1, 2], [0, 1]]
     >>> list(map(list, le.inverse_transform([[1, 2], [0, 1]])))
     [['paris', 'tokyo'], ['amsterdam', 'paris']]
 
@@ -886,7 +885,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : array-like of shape [n_samples]
+        y : array-like of shape [n_samples] or sequence of sequences
             Target values.
 
         Returns
@@ -899,7 +898,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
                 raise ValueError(
                     '{} does not support label indicator matrices'.format(
                         self.__class__.__name__))
-            return multilabel_vectorize(self._transform)(y)
+            return list(map(self._transform, y))
 
         return self._transform(y)
 
@@ -919,14 +918,13 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        y : numpy array of shape [n_samples]
+        y : numpy array of shape [n_samples] or list of arrays for multilabel
         """
         self._check_fitted()
 
         if is_multilabel(y):
             # np.vectorize does not work with np.ndarray.take!
-            take = functools.partial(np.take, self.classes_)
-            return multilabel_vectorize(take)(y)
+            return list(map(self.classes_.take, y))
         y = np.asarray(y)
         return self.classes_[y]
 
