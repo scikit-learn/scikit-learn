@@ -1659,26 +1659,28 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         # labels are now from 0 to len(labels) - 1 -> use bincount
 
         if y_type == 'multilabel-sequences':
-            intersect_all = multilabel_vectorize(np.intersect1d)
-            tp_bins = np.hstack([np.intersect1d(sample1, sample2)
-                                 for sample1, sample2 in zip(y_pred, y_true)])
-            # merge samples
-            pos_bins = np.hstack(y_pred)
-            true_bins = np.hstack(y_true)
+            # if all samples were assured unique, could use np.bincount
+            tp_sum = np.zeros(len(labels), dtype=int)
+            true_sum = tp_sum.copy()
+            pos_sum = tp_sum.copy()
+            for sample1, sample2 in zip(y_true, y_pred):
+                tp_sum[np.intersect1d(sample1, sample2)] += 1
+                true_sum[np.unique(sample1)] += 1
+                pos_sum[np.unique(sample2)] += 1
         else:
             tp_bins = y_true[y_true == y_pred]
             pos_bins = y_pred
             true_bins = y_true
 
-        if len(tp_bins):
-            tp_sum = np.bincount(tp_bins, minlength=len(labels))
-        else:
-            # Pathological case
-            true_sum = pos_sum = tp_sum = np.zeros(len(labels))
-        if len(pos_bins):
-            pos_sum = np.bincount(pos_bins, minlength=len(labels))
-        if len(true_bins):
-            true_sum = np.bincount(true_bins, minlength=len(labels))
+            if len(tp_bins):
+                tp_sum = np.bincount(tp_bins, minlength=len(labels))
+            else:
+                # Pathological case
+                true_sum = pos_sum = tp_sum = np.zeros(len(labels))
+            if len(pos_bins):
+                pos_sum = np.bincount(pos_bins, minlength=len(labels))
+            if len(true_bins):
+                true_sum = np.bincount(true_bins, minlength=len(labels))
 
     ### Select labels to keep ###
 
