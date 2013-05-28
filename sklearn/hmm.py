@@ -38,9 +38,9 @@ decoder_algorithms = ("viterbi", "map")
 
 
 @deprecated("Function `sklearn.hmm.normalize` has "
-            "been superseded by `sklearn.preprocessing.normalize_proba`")
+            "been superseded by `sklearn.utils.extmath.normalize_proba`")
 def normalize(A, axis=None):
-    """ Deprecated, use preprocessing.normalize_proba instead.
+    """ Deprecated, use utils.extmath.normalize_proba instead.
     Normalize the input array so that it sums to 1.
 
     Parameters
