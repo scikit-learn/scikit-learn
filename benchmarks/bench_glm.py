@@ -53,6 +53,6 @@ if __name__ == '__main__':
     pl.plot(dimensions, time_ols, color='g')
     pl.plot(dimensions, time_lasso, color='b')
 
-    pl.legend(['Ridge', 'OLS', 'LassoLars'])
+    pl.legend(['Ridge', 'OLS', 'LassoLars'], loc='upper left')
     pl.axis('tight')
     pl.show()

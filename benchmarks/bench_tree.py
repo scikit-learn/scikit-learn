@@ -89,7 +89,7 @@ if __name__ == '__main__':
     pl.title('Learning with varying number of samples')
     pl.plot(xx, scikit_classifier_results, 'g-', label='classification')
     pl.plot(xx, scikit_regressor_results, 'r-', label='regression')
-    pl.legend()
+    pl.legend(loc='upper left')
     pl.xlabel('number of samples')
     pl.ylabel('Time (s)')
 
@@ -117,7 +117,7 @@ if __name__ == '__main__':
     pl.title('Learning in high dimensional spaces')
     pl.plot(xx, scikit_classifier_results, 'g-', label='classification')
     pl.plot(xx, scikit_regressor_results, 'r-', label='regression')
-    pl.legend()
+    pl.legend(loc='upper left')
     pl.xlabel('number of dimensions')
     pl.ylabel('Time (s)')
     pl.axis('tight')
