@@ -40,8 +40,8 @@ def compute_bench(samples_range, features_range):
             print('Fast K-Means')
             # let's prepare the data in small chunks
             mbkmeans = MiniBatchKMeans(init='k-means++',
-                                      k=10,
-                                      batch_size=chunk)
+                                       n_clusters=10,
+                                       batch_size=chunk)
             tstart = time()
             mbkmeans.fit(data)
             delta = time() - tstart
