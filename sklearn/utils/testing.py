@@ -105,6 +105,7 @@ def assert_sequences_equal(first, second, err_msg=''):
     It is necessary because sequence types vary, `assert_array_equal` may
     misinterpret some formats as 2-dimensional.
     """
+    # TODO: first assert args are valid sequences of sequences
     if err_msg:
         err_msg = '\n' + err_msg
     assert_equal(len(first), len(second),

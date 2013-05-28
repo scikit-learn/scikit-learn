@@ -852,7 +852,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : array-like of shape [n_samples]
+        y : array-like of shape [n_samples] or sequence of sequences
             Target values.
 
         Returns
@@ -867,12 +867,12 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : array-like of shape [n_samples]
+        y : array-like of shape [n_samples] or sequence of sequences
             Target values.
 
         Returns
         -------
-        y : array-like of shape [n_samples]
+        y : array-like of shape [n_samples] or sequence of sequences
         """
         if is_multilabel(y):
             self.fit(y)
@@ -890,7 +890,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
         Returns
         -------
-        y : array-like of shape [n_samples]
+        y : array-like of shape [n_samples] or sequence of sequences
         """
         self._check_fitted()
         if is_multilabel(y):
@@ -913,12 +913,12 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : numpy array of shape [n_samples]
+        y : numpy array of shape [n_samples] or sequence of sequences
             Target values.
 
         Returns
         -------
-        y : numpy array of shape [n_samples] or list of arrays for multilabel
+        y : numpy array of shape [n_samples] or sequence of sequences
         """
         self._check_fitted()
 
