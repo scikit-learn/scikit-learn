@@ -40,6 +40,7 @@ from .base import MetaEstimatorMixin
 from .preprocessing import LabelBinarizer
 from .metrics.pairwise import euclidean_distances
 from .utils import check_random_state
+from .utils.extmath import normalize_proba
 from .externals.joblib import Parallel
 from .externals.joblib import delayed
 
@@ -113,7 +114,7 @@ def predict_proba_ovr(estimators, X, is_multilabel):
 
     if not is_multilabel:
         # Then, probabilities should be normalized to 1.
-        Y /= np.sum(Y, axis=1)[:, np.newaxis]
+        Y = normalize_proba(Y, copy=False)
     return Y
 
 

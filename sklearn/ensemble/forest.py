@@ -54,6 +54,7 @@ from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import array2d, check_random_state, check_arrays, safe_asarray
 from ..utils.fixes import bincount
+from ..utils.extmath import normalize_proba
 
 
 from .base import BaseEnsemble
@@ -412,9 +413,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
                         warn("Some inputs do not have OOB scores. "
                              "This probably means too few trees were used "
                              "to compute any reliable oob estimates.")
-
-                    decision = (predictions[k] /
-                                predictions[k].sum(axis=1)[:, np.newaxis])
+                    decision = normalize_proba(predictions[k], copy=False)
                     self.oob_decision_function_.append(decision)
                     self.oob_score_ += np.mean(
                         (y[:, k] == classes_[k].take(

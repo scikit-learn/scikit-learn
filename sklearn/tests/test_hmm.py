@@ -7,7 +7,7 @@ from unittest import TestCase
 from sklearn.datasets.samples_generator import make_spd_matrix
 from sklearn import hmm
 from sklearn import mixture
-from sklearn.utils.extmath import logsumexp
+from sklearn.utils.extmath import logsumexp, normalize_proba
 from sklearn.utils import check_random_state
 
 from nose import SkipTest
@@ -276,8 +276,9 @@ class GaussianHMMBaseTester(object):
     def test_fit(self, params='stmc', n_iter=5, verbose=False, **kwargs):
         h = hmm.GaussianHMM(self.n_components, self.covariance_type)
         h.startprob_ = self.startprob
-        h.transmat_ = hmm.normalize(
-            self.transmat + np.diag(self.prng.rand(self.n_components)), 1)
+        h.transmat_ = normalize_proba(
+            self.transmat + np.diag(self.prng.rand(self.n_components)),
+            copy=False)
         h.means_ = 20 * self.means
         h.covars_ = self.covars[self.covariance_type]
 
@@ -325,8 +326,9 @@ class GaussianHMMBaseTester(object):
         h = hmm.GaussianHMM(self.n_components, self.covariance_type)
         h.startprob_ = self.startprob
         h.startprob_prior = startprob_prior
-        h.transmat_ = hmm.normalize(
-            self.transmat + np.diag(self.prng.rand(self.n_components)), 1)
+        h.transmat_ = hmm.normalize_proba(
+            self.transmat + np.diag(self.prng.rand(self.n_components)),
+            copy=False)
         h.transmat_prior = transmat_prior
         h.means_ = 20 * self.means
         h.means_prior = means_prior
@@ -496,11 +498,15 @@ class MultinomialHMMTestCase(TestCase):
         train_obs = [h.sample(n=10)[0] for x in range(10)]
 
         # Mess up the parameters and see if we can re-learn them.
-        h.startprob_ = hmm.normalize(self.prng.rand(self.n_components))
-        h.transmat_ = hmm.normalize(self.prng.rand(self.n_components,
-                                                   self.n_components), axis=1)
-        h.emissionprob_ = hmm.normalize(
-            self.prng.rand(self.n_components, self.n_symbols), axis=1)
+        h.startprob_ = normalize_proba(
+            self.prng.rand(self.n_components),
+            copy=False)
+        h.transmat_ = normalize_proba(
+            self.prng.rand(self.n_components, self.n_components),
+            copy=False)
+        h.emissionprob_ = normalize_proba(
+            self.prng.rand(self.n_components, self.n_symbols),
+            copy=False)
 
         trainll = train_hmm_and_keep_track_of_log_likelihood(
             h, train_obs, n_iter=n_iter, params=params, **kwargs)[1:]
@@ -551,7 +557,7 @@ def create_random_gmm(n_mix, n_features, covariance_type, prng=0):
             [make_spd_matrix(n_features, random_state=prng)
              + mincv * np.eye(n_features) for x in range(n_mix)])
     }[covariance_type]
-    g.weights_ = hmm.normalize(prng.rand(n_mix))
+    g.weights_ = normalize_proba(prng.rand(n_mix), copy=False)
     return g
 
 
@@ -625,8 +631,9 @@ class GMMHMMBaseTester(object):
     def test_fit(self, params='stmwc', n_iter=5, verbose=False, **kwargs):
         h = hmm.GMMHMM(self.n_components, covars_prior=1.0)
         h.startprob_ = self.startprob
-        h.transmat_ = hmm.normalize(
-            self.transmat + np.diag(self.prng.rand(self.n_components)), 1)
+        h.transmat_ = normalize_proba(
+            self.transmat + np.diag(self.prng.rand(self.n_components)),
+            copy=False)
         h.gmms_ = self.gmms_
 
         # Create training data by sampling from the HMM.
@@ -636,9 +643,12 @@ class GMMHMMBaseTester(object):
         # Mess up the parameters and see if we can re-learn them.
         h.n_iter = 0
         h.fit(train_obs)
-        h.transmat_ = hmm.normalize(self.prng.rand(self.n_components,
-                                                   self.n_components), axis=1)
-        h.startprob_ = hmm.normalize(self.prng.rand(self.n_components))
+        h.transmat_ = normalize_proba(
+            self.prng.rand(self.n_components, self.n_components),
+            copy=False)
+        h.startprob_ = normalize_proba(
+            self.prng.rand(self.n_components),
+            copy=False)
 
         trainll = train_hmm_and_keep_track_of_log_likelihood(
             h, train_obs, n_iter=n_iter, params=params)[1:]

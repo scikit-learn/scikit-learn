@@ -16,8 +16,8 @@ import string
 
 import numpy as np
 
-from .utils import check_random_state
-from .utils.extmath import logsumexp
+from .utils import check_random_state, deprecated
+from .utils.extmath import logsumexp, normalize_proba
 from .base import BaseEstimator
 from .mixture import (
     GMM, log_multivariate_normal_density, sample_gaussian,
@@ -37,8 +37,11 @@ NEGINF = -np.inf
 decoder_algorithms = ("viterbi", "map")
 
 
+@deprecated("Function `sklearn.hmm.normalize` has "
+            "been superseded by `sklearn.preprocessing.normalize_proba`")
 def normalize(A, axis=None):
-    """ Normalize the input array so that it sums to 1.
+    """ Deprecated, use preprocessing.normalize_proba instead.
+    Normalize the input array so that it sums to 1.
 
     Parameters
     ----------
@@ -62,7 +65,9 @@ def normalize(A, axis=None):
         shape = list(A.shape)
         shape[axis] = 1
         Asum.shape = shape
-    return A / Asum
+    A /= Asum
+
+    return A
 
 
 class _BaseHMM(BaseEstimator):
@@ -453,7 +458,8 @@ class _BaseHMM(BaseEstimator):
         # check if there exists a component whose value is exactly zero
         # if so, add a small number and re-normalize
         if not np.alltrue(startprob):
-            normalize(startprob)
+            startprob += EPS
+            startprob = normalize_proba(startprob, copy=False)
 
         if len(startprob) != self.n_components:
             raise ValueError('startprob must have length n_components')
@@ -476,7 +482,8 @@ class _BaseHMM(BaseEstimator):
         # check if there exists a component whose value is exactly zero
         # if so, add a small number and re-normalize
         if not np.alltrue(transmat):
-            normalize(transmat, axis=1)
+            transmat += EPS
+            transmat = normalize_proba(transmat, copy=False)
 
         if (np.asarray(transmat).shape
                 != (self.n_components, self.n_components)):
@@ -561,12 +568,13 @@ class _BaseHMM(BaseEstimator):
             self.transmat_prior = 1.0
 
         if 's' in params:
-            self.startprob_ = normalize(
-                np.maximum(self.startprob_prior - 1.0 + stats['start'], 1e-20))
+            self.startprob_ = normalize_proba(
+                np.maximum(self.startprob_prior - 1.0 + stats['start'], 1e-20),
+                copy=False)
         if 't' in params:
-            transmat_ = normalize(
+            transmat_ = normalize_proba(
                 np.maximum(self.transmat_prior - 1.0 + stats['trans'], 1e-20),
-                axis=1)
+                copy=False)
             self.transmat_ = transmat_
 
 
@@ -928,7 +936,8 @@ class MultinomialHMM(_BaseHMM):
         # check if there exists a component whose value is exactly zero
         # if so, add a small number and re-normalize
         if not np.alltrue(emissionprob):
-            normalize(emissionprob)
+            emissionprob += EPS
+            emissionprob = normalize_proba(emissionprob, copy=False)
 
         self._log_emissionprob = np.log(emissionprob)
         underflow_idx = np.isnan(self._log_emissionprob)
@@ -957,8 +966,10 @@ class MultinomialHMM(_BaseHMM):
                 for o in obs:
                     symbols = symbols.union(set(o))
                 self.n_symbols = len(symbols)
-            emissionprob = normalize(self.random_state.rand(self.n_components,
-                                                            self.n_symbols), 1)
+            emissionprob = normalize_proba(
+                self.random_state.rand(self.n_components, self.n_symbols),
+                copy=False
+            )
             self.emissionprob_ = emissionprob
 
     def _initialize_sufficient_statistics(self):
@@ -1180,7 +1191,7 @@ class GMMHMM(_BaseHMM):
             n_features = g.means_.shape[1]
             norm = stats['norm'][state]
             if 'w' in params:
-                g.weights_ = normalize(norm)
+                g.weights_ = normalize_proba(norm)
             if 'm' in params:
                 g.means_ = stats['means'][state] / norm[:, np.newaxis]
             if 'c' in params:
