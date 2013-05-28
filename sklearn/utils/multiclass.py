@@ -7,6 +7,7 @@ Multi-class / multi-label utility function
 
 """
 from collections import Sequence
+from itertools import chain
 
 import numpy as np
 
@@ -50,7 +51,7 @@ def unique_labels(*lists_of_labels):
             if is_label_indicator_matrix(y):
                 classes = np.arange(y.shape[1])
             else:
-                classes = np.array(sorted(set.union(*map(set, y))))
+                classes = np.array(sorted(set(chain(*y))))
 
         else:
             classes = np.unique(y)
