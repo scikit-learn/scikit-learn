@@ -9,6 +9,7 @@ Files that generate images should start with 'plot'
 """
 from time import time
 import os
+import re
 import shutil
 import traceback
 import glob
@@ -355,7 +356,7 @@ SINGLE_IMAGE = """
 """
 
 
-def extract_docstring(filename):
+def extract_docstring(filename, ignore_heading=False):
     """ Extract a module-level docstring, if any
     """
     lines = file(filename).readlines()
@@ -363,7 +364,6 @@ def extract_docstring(filename):
     if lines[0].startswith('#!'):
         lines.pop(0)
         start_row = 1
-
     docstring = ''
     first_par = ''
     tokens = tokenize.generate_tokens(iter(lines).next)
@@ -378,7 +378,11 @@ def extract_docstring(filename):
             paragraphs = '\n'.join(line.rstrip()
                               for line in docstring.split('\n')).split('\n\n')
             if len(paragraphs) > 0:
-                first_par = paragraphs[0]
+                if ignore_heading:
+                    first_par = re.sub('\n', ' ', paragraphs[1])
+                else:
+                    first_par = paragraphs[0]
+
         break
     return docstring, first_par, erow + 1 + start_row
 
@@ -466,12 +470,12 @@ def generate_example_rst(app):
           clone.animate({
                 height: "270px",
                 width: "320px"
-            }, 500
+            }, 10
           );
           clone_fig.animate({
                height: "270px",
                width: "320px"
-            }, 200
+            }, 10
           );
           cloneImg.css({
                 'max-height': "200px",
@@ -480,7 +484,7 @@ def generate_example_rst(app):
           cloneImg.animate({
                 height: "200px",
                 width: "280px"
-            }, 200
+            }, 10
           );
           clone.bind("mouseleave", function(e){
               clone.animate({
@@ -589,13 +593,16 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
                                      src_dir)
     for fname in sorted_listdir:
         if fname.endswith('py'):
-            #_, fdocstring, _ = extract_docstring(fname)
             generate_file_rst(fname, target_dir, src_dir, plot_gallery)
+            new_fname = os.path.join(src_dir, fname)
+            _, fdocstring, _ = extract_docstring(new_fname, True)
+            print fdocstring
             thumb = os.path.join(dir, 'images', 'thumb', fname[:-3] + '.png')
             link_name = os.path.join(dir, fname).replace(os.path.sep, '_')
             fhindex.write("""
 
 .. raw:: html
+
 
     <div class="thumbnailContainer">
         <div class="docstringWrapper">
@@ -616,7 +623,10 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
 
 .. raw:: html
 
-    </div></div>
+
+    <p>%s
+    </p></div>
+    </div>
 
 
 .. toctree::
@@ -624,7 +634,7 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
 
    %s/%s
 
-""" % (link_name, dir, fname[:-3]))
+""" % (link_name, fdocstring, dir, fname[:-3]))
     fhindex.write("""
 .. raw:: html
 
