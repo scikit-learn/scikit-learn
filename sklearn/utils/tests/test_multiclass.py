@@ -234,6 +234,7 @@ def test_unique_labels():
     # Mix input type
     assert_raises(ValueError, unique_labels, [[1, 2], [3]],
                   [["a", "d"]])
+    assert_array_equal(unique_labels([(2,), (0, 2,)], [(), ()]), [0, 2])
 
 
 def test_is_multilabel():
