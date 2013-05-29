@@ -445,7 +445,10 @@ def generate_example_rst(app):
         <script type="text/javascript">
 
         function animateClone(e){
+          var position;
+          position = $(this).position();
           var clone = $(this).closest('.thumbnailContainer').find('.clonedItem');
+          clone.css("top", position.top).css("left", position.left).css("position", "absolute").css("z-index", 1000);
           var cloneImg = clone.find('img');
 
           $('.clonedItem').not(clone).hide();
@@ -479,12 +482,9 @@ def generate_example_rst(app):
 
             $(".figure").each(function(i, obj){
                 var clone;
-                var position;
                 var $obj = $(obj);
                 clone = $obj.clone();
                 clone.addClass("clonedItem");
-                position = $obj.position();
-                clone.css("top", position.top).css("left", position.left).css("position", "absolute").css("z-index", 1000);
                 clone.appendTo($obj.closest(".thumbnailContainer"));
                 clone.hide();
                 $obj.bind("mouseenter", animateClone);
@@ -570,6 +570,7 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
                                      src_dir)
     for fname in sorted_listdir:
         if fname.endswith('py'):
+            _, fdocstring, _ = extract_docstring(fname)
             generate_file_rst(fname, target_dir, src_dir, plot_gallery)
             thumb = os.path.join(dir, 'images', 'thumb', fname[:-3] + '.png')
             link_name = os.path.join(dir, fname).replace(os.path.sep, '_')
