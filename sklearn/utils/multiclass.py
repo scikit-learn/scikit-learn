@@ -14,16 +14,13 @@ import numpy as np
 from ..externals.six import string_types
 
 
-def unique_labels(*lists_of_labels):
+def unique_labels(*ys):
     """Extract an ordered array of unique labels
 
     Parameters
     ----------
-    lists_of_labels : list of labels,
-        The supported "list of labels" are:
-            - a list / tuple / numpy array of int
-            - a list of lists / tuples of int;
-            - a binary indicator matrix (2D numpy array)
+    ys : array-likes,
+        Must be either in binary, multiclass or multilabel format.
 
     Returns
     -------
@@ -45,23 +42,59 @@ def unique_labels(*lists_of_labels):
     array([1, 2, 3])
 
     """
-    def _unique_labels(y):
-        classes = None
-        if is_multilabel(y):
-            if is_label_indicator_matrix(y):
-                classes = np.arange(y.shape[1])
-            else:
-                classes = np.array(sorted(set(chain(*y))))
 
-        else:
-            classes = np.unique(y)
+    def _unique_multiclass(y):
+        return np.unique(y)
 
-        return classes
+    def _unique_sequence_of_sequence(y):
+        return np.array(sorted(set(chain(*y))))
 
-    if not lists_of_labels:
+    def _unique_indicator(y):
+        return np.arange(y.shape[1])
+
+    if not ys:
         raise ValueError('No list of labels has been passed.')
 
-    return np.unique(np.hstack(_unique_labels(y) for y in lists_of_labels))
+    ys_is_multilabels = [is_multilabel(y) for y in ys]
+
+    if len(set(ys_is_multilabels)) != 1:
+        raise ValueError("Mix of binary / mutliclass and multilabel type")
+
+    if all(ys_is_multilabels):
+        ys_is_indicator = [is_label_indicator_matrix(y) for y in ys]
+
+        # Mix of indicator and sequence of sequence multilabel format
+        if len(set(ys_is_indicator)) != 1:
+            labels = unique_labels(*[y for y in ys
+                                     if not is_label_indicator_matrix(y)])
+            labels_idx = unique_labels(*[y for y in ys
+                                         if is_label_indicator_matrix(y)])
+            if labels.size != labels_idx.size:
+                raise ValueError("Unable to infer mix multilabel type")
+
+            return labels
+
+        # Only indicator multilabel format
+        elif all(ys_is_indicator):
+            if len(set(y.shape[1] for y in ys)) > 1:
+                raise ValueError("Multi-label binary indicator input with "
+                                 "different number of labels")
+            else:
+                return _unique_indicator(ys[0])
+        else:
+            # Only indicator sequence of sequence multilabel format
+            _unique_labels = _unique_sequence_of_sequence
+
+    else:
+        _unique_labels = _unique_multiclass
+
+    # Combine every labels
+    ys_labels = [_unique_labels(y) for y in ys]
+
+    if len(set(y_labels.dtype.kind for y_labels in ys_labels)) > 1:
+        raise ValueError("Mix of dtype.kind, can't infered labels set")
+
+    return np.unique(np.hstack(ys_labels))
 
 
 def _is_integral_float(y):

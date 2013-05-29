@@ -1,5 +1,5 @@
 import numpy as np
-
+from itertools import product
 from sklearn.externals.six.moves import xrange
 from sklearn.externals.six import iteritems
 
@@ -117,6 +117,58 @@ NON_ARRAY_LIKE_EXAMPLES = [
 ]
 
 
+EXAMPLES = {
+    'multilabel-indicator': [
+        np.random.randint(2, size=(10, 10)),
+        np.array([[0, 1], [1, 0]]),
+        np.array([[0, 0], [0, 0]]),
+        np.array([[-1, 1], [1, -1]]),
+        np.array([[-3, 3], [3, -3]]),
+
+        # XXX : not considered as multilabel-indicator at the moment
+        #       see is_label_indicator_matrix
+        # np.array([[0, 1]]),
+    ],
+    'multilabel-sequences': [
+        [[0, 1]],
+        [[0], [1]],
+        [[1, 2, 3]],
+        [[1, 2, 1]],  # duplicate values, why not?
+        [[1], [2], [0, 1]],
+        [[1], [2]],
+        [[]],
+        [()],
+        np.array([[], [1, 2]], dtype='object'),
+    ],
+    'multiclass': [
+        [1, 0, 2, 2, 1, 4, 2, 4, 4, 4],
+        np.array([1, 0, 2]),
+        np.array([[1], [0], [2]]),
+        [0, 1, 2],
+        ['a', 'b', 'c'],
+    ],
+    'multiclass-multioutput': [
+        np.array([[1, 0, 2, 2], [1, 4, 2, 4]]),
+        np.array([['a', 'b'], ['c', 'd']]),
+        np.array([[1, 0, 2]]),
+    ],
+    'binary': [
+        [0, 1],
+        [1, 1],
+        [],
+        [0],
+        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1]),
+        np.array([[0], [1]]),
+        [1, -1],
+        [3, 5],
+        ['a'],
+        ['a', 'b'],
+        ['abc', 'def'],
+    ],
+
+}
+
+
 def test_unique_labels():
     # Empty iterable
     assert_raises(ValueError, unique_labels)
@@ -141,6 +193,47 @@ def test_unique_labels():
                        np.arange(5))
     assert_array_equal(unique_labels((0, 1, 2), (0,), (2, 1)),
                        np.arange(3))
+
+    # Border line case with binary indicator matrix
+    assert_raises(ValueError, unique_labels, [4, 0, 2], np.ones((5, 5)))
+    assert_raises(ValueError, unique_labels, np.ones((5, 4)), np.ones((5, 5)))
+    assert_array_equal(unique_labels(np.ones((4, 5)), np.ones((5, 5))),
+                       np.arange(5))
+
+    # Some tests with strings input
+    assert_array_equal(unique_labels(["a", "b", "c"], ["d"]),
+                       ["a", "b", "c", "d"])
+    assert_array_equal(unique_labels([["a", "b"], ["c"]], [["d"]]),
+                       ["a", "b", "c", "d"])
+
+    #Mix of multilabel-indicator and multilabel-sequences
+    assert_array_equal(unique_labels([["a", "b"], ["c"]], np.ones((3, 3))),
+                       ["a", "b", "c"])
+    assert_raises(ValueError, unique_labels, [["a", "b"], ["c"]],
+                  np.ones((3, 4)))
+    assert_raises(ValueError, unique_labels, [["a", "b"], ["c", 'd']],
+                  np.ones((3, 3)))
+
+    assert_array_equal(unique_labels([[1, 2], [3]], np.ones((3, 3))),
+                       [1, 2, 3])
+    assert_raises(ValueError, unique_labels, [[1, 2], [3]],
+                  np.ones((3, 4)))
+    assert_raises(ValueError, unique_labels, [[1, 2], [3, 4]],
+                  np.ones((3, 3)))
+
+    #Mix with binary or multiclass and multilabel
+    pair_multiclass_multilabel = product(EXAMPLES["multilabel-indicator"] +
+                                         EXAMPLES["multilabel-sequences"],
+                                         EXAMPLES["multiclass"] +
+                                         EXAMPLES["binary"])
+
+    for y_multilabel, y_multiclass in pair_multiclass_multilabel:
+        assert_raises(ValueError, unique_labels, y_multiclass, y_multilabel)
+        assert_raises(ValueError, unique_labels, y_multilabel, y_multiclass)
+
+    # Mix input type
+    assert_raises(ValueError, unique_labels, [[1, 2], [3]],
+                  [["a", "d"]])
 
 
 def test_is_multilabel():
