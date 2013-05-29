@@ -446,6 +446,7 @@ def generate_example_rst(app):
 
         function animateClone(e){
           var clone = $(this).closest('.thumbnailContainer').find('.clonedItem');
+          var cloneImg = clone.find('img');
 
           $('.clonedItem').not(clone).hide();
           clone.show();
@@ -454,12 +455,21 @@ def generate_example_rst(app):
                 width: "320px"
             }, 200
           );
-            clone.bind("mouseleave", function(e){
-                  clone.animate({
-                      height: "100px",
-                      width: "150px"
-                  }, 10, function(){$(this).hide();});
+          cloneImg.css({
+                'max-height': "200px",
+                'max-width': "280px"
             });
+          cloneImg.animate({
+                height: "200px",
+                width: "280px"
+            }, 200
+          );
+          clone.bind("mouseleave", function(e){
+              clone.animate({
+                  height: "100px",
+                  width: "150px"
+              }, 10, function(){$(this).hide();});
+          });
 
         } //end animateClone()
 
