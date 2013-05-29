@@ -71,10 +71,10 @@ if __name__ == '__main__':
     pl.figure('scikit-learn LASSO benchmark results')
     pl.subplot(211)
     pl.plot(list_n_samples, lasso_results, 'b-',
-                            label='Lasso (with precomputed Gram matrix)')
+                            label='Lasso')
     pl.plot(list_n_samples, lars_lasso_results, 'r-',
-                            label='LassoLars (with precomputed Gram matrix)')
-    pl.title('Lasso benchmark (%d features - alpha=%s)' % (n_features, alpha))
+                            label='LassoLars')
+    pl.title('precomputed Gram matrix, %d features, alpha=%s' % (n_features, alpha))
     pl.legend(loc='upper left')
     pl.xlabel('number of samples')
     pl.ylabel('Time (s)')
@@ -87,7 +87,7 @@ if __name__ == '__main__':
     pl.subplot(212)
     pl.plot(list_n_features, lasso_results, 'b-', label='Lasso')
     pl.plot(list_n_features, lars_lasso_results, 'r-', label='LassoLars')
-    pl.title('Lasso benchmark (%d samples - alpha=%s)' % (n_samples, alpha))
+    pl.title('%d samples, alpha=%s' % (n_samples, alpha))
     pl.legend(loc='upper left')
     pl.xlabel('number of features')
     pl.ylabel('Time (s)')
