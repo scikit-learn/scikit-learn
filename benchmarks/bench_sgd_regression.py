@@ -2,7 +2,7 @@
 Benchmark for SGD regression
 
 Compares SGD regression against coordinate descent and Ridge
-on synthetik data.
+on synthetic data.
 """
 
 print(__doc__)
