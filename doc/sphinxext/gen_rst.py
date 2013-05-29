@@ -422,7 +422,6 @@ def generate_example_rst(app):
         -moz-border-radius: 10px; /* FF1-3.6 */
         border-radius: 10px; /* Opera 10.5, IE9, Saf5, Chrome, FF4, iOS 4, Android 2.1+ */
         border: 2px solid #fff;
-        border-color: black;
         background-color: white;
         /* --> Thumbnail image size */
         width: 150px;
@@ -433,7 +432,16 @@ def generate_example_rst(app):
 
     .figure img {
         display: inline;
-        }
+    }
+
+    div.docstringWrapper p.caption {
+        display: block;
+    }
+
+    div.docstringWrapper p {
+        display: none;
+        background-color: white;
+    }
 
 
     </style>
@@ -448,14 +456,21 @@ def generate_example_rst(app):
           var position;
           position = $(this).position();
           var clone = $(this).closest('.thumbnailContainer').find('.clonedItem');
-          clone.css("top", position.top).css("left", position.left).css("position", "absolute").css("z-index", 1000);
-          var cloneImg = clone.find('img');
+          var clone_fig = clone.find('.figure');
+          clone.css("left", position.left - (position.left/10)).css("position", "absolute").css("z-index", 1000).css("background-color", "white");
+          clone.find('p').show();
+          var cloneImg = clone_fig.find('img');
 
-          $('.clonedItem').not(clone).hide();
           clone.show();
+          clone_fig.show();
           clone.animate({
                 height: "270px",
                 width: "320px"
+            }, 500
+          );
+          clone_fig.animate({
+               height: "270px",
+               width: "320px"
             }, 200
           );
           cloneImg.css({
@@ -472,6 +487,10 @@ def generate_example_rst(app):
                   height: "100px",
                   width: "150px"
               }, 10, function(){$(this).hide();});
+              clone_fig.animate({
+                  height: "100px",
+                  width: "150px"
+              }, 10, function(){$(this).hide();});
           });
 
         } //end animateClone()
@@ -480,7 +499,7 @@ def generate_example_rst(app):
         $(window).load(function () {
             $(".figure").css("z-index", 1);
 
-            $(".figure").each(function(i, obj){
+            $(".docstringWrapper").each(function(i, obj){
                 var clone;
                 var $obj = $(obj);
                 clone = $obj.clone();
@@ -570,7 +589,7 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
                                      src_dir)
     for fname in sorted_listdir:
         if fname.endswith('py'):
-            _, fdocstring, _ = extract_docstring(fname)
+            #_, fdocstring, _ = extract_docstring(fname)
             generate_file_rst(fname, target_dir, src_dir, plot_gallery)
             thumb = os.path.join(dir, 'images', 'thumb', fname[:-3] + '.png')
             link_name = os.path.join(dir, fname).replace(os.path.sep, '_')
@@ -579,6 +598,7 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
 .. raw:: html
 
     <div class="thumbnailContainer">
+        <div class="docstringWrapper">
 
 
 """)
@@ -596,7 +616,7 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
 
 .. raw:: html
 
-    </div>
+    </div></div>
 
 
 .. toctree::
@@ -838,11 +858,11 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
         # generate thumb file
         this_template = plot_rst_template
         if os.path.exists(first_image_file):
-            make_thumbnail(first_image_file, thumb_file, 350, 300)
+            make_thumbnail(first_image_file, thumb_file, 200, 140)
 
     if not os.path.exists(thumb_file):
         # create something to replace the thumbnail
-        make_thumbnail('images/no_image.png', thumb_file, 350, 300)
+        make_thumbnail('images/no_image.png', thumb_file, 200, 140)
 
     docstring, short_desc, end_row = extract_docstring(example_file)
 
