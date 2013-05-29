@@ -96,7 +96,47 @@ def is_label_indicator_matrix(y):
 
     """
     return (hasattr(y, "shape") and len(y.shape) == 2 and y.shape[1] > 1 and
-            y.shape[0] > 1 and np.size(np.unique(y)) <= 2)
+            y.shape[0] > 1 and np.size(np.unique(y)) <= 2
+            and np.all(y == y.astype(int)))
+
+
+def is_sequence_of_sequences(y):
+    """ Check if ``y`` is in the sequence of sequences format (multilabel).
+
+    Parameters
+    ----------
+    y : sequence or array.
+
+    Returns
+    -------
+    out : bool,
+        Return ``True``, if ``y`` is a sequence of sequences else ``False``.
+
+    >>> import numpy as np
+    >>> from sklearn.utils.multiclass import is_multilabel
+    >>> is_sequence_of_sequences([0, 1, 0, 1])
+    False
+    >>> is_sequence_of_sequences([[1], [0, 2], []])
+    True
+    >>> is_sequence_of_sequences(np.array([[1], [0, 2], []]))
+    True
+    >>> is_sequence_of_sequences([(1,), (0, 2), ()])
+    True
+    >>> is_sequence_of_sequences(np.array([np.array([1]), np.array([0, 2])]))
+    True
+    >>> is_sequence_of_sequences(np.array([[1, 0], [0, 0]]))
+    False
+    >>> is_sequence_of_sequences(np.array([[1], [0], [0]]))
+    False
+    >>> is_sequence_of_sequences(np.array([[1, 0, 0]]))
+    False
+    """
+    # the explicit check for ndarray is for forward compatibility; future
+    # versions of Numpy might want to register ndarray as a Sequence
+    if getattr(y, 'ndim', 1) != 1:
+        return False
+    return ((isinstance(y[0], Sequence) and not isinstance(y[0], string_types))
+            or isinstance(y[0], np.ndarray))
 
 
 def is_multilabel(y):
@@ -129,7 +169,103 @@ def is_multilabel(y):
     False
 
     """
-    # the explicit check for ndarray is for forward compatibility; future
-    # versions of Numpy might want to register ndarray as a Sequence
-    return (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) and
-            not isinstance(y[0], string_types) or is_label_indicator_matrix(y))
+    return is_label_indicator_matrix(y) or is_sequence_of_sequences(y)
+
+
+def type_of_target(y):
+    """Determine the type of data indicated by target `y`
+
+    Parameters
+    ----------
+    y : array-like
+
+    Returns
+    -------
+    target_type : string
+        One of:
+        * 'continuous': `y` is an array of floats that are not all integers.
+        * 'binary': `y` contains two values and is not an indicator matrix.
+        * 'multiclass': `y` contains more or less than two discrete values and
+          is not a sequence of sequences.
+        * 'multilabel-sequences': `y` is a sequence of sequences.
+        * 'multilabel-indicator': `y` is a label indicator matrix.
+
+    Examples
+    --------
+    >>> type_of_target([0.1, 0.6])
+    'continuous'
+    >>> type_of_target([1, -1, -1, 1])
+    'binary'
+    >>> type_of_target(['a', 'b', 'a'])
+    'binary'
+    >>> type_of_target([1, 0, 2])
+    'multiclass'
+    >>> type_of_target(['a', 'b', 'c'])
+    'multiclass'
+    >>> type_of_target(['a'])
+    'multiclass'
+    >>> type_of_target([])
+    'multiclass'
+    >>> type_of_target([['a', 'b'], ['c'], []])
+    'multilabel-sequences'
+    >>> type_of_target([[]])
+    'multilabel-sequences'
+    >>> import numpy as np
+    >>> type_of_target(np.array([[0, 1], [1, 1]]))
+    'multilabel-indicator'
+    """
+    if is_sequence_of_sequences(y):
+        return 'multilabel-sequences'
+    elif is_label_indicator_matrix(y):
+        return 'multilabel-indicator'
+    y = np.asarray(y)
+    # XXX: Should we check that ndim == 1?
+    if issubclass(y.dtype.type, np.float) and np.any(y != y.astype(int)):
+        return 'continuous'
+    if len(np.unique(y)) == 2:  # XXX: should this be <= 2?
+        return 'binary'
+    else:
+        # XXX: any validation?
+        return 'multiclass'
+
+
+def multilabel_as_array(y):
+    """Transform a sequence of sequences into an array of sequences
+
+    Parameters
+    ----------
+    y : sequence or array of sequences
+        Target values. In the multilabel case the nested sequences can
+        have variable lengths. Label indicator matrices are not supported.
+
+    Returns
+    -------
+    out : numpy array of shape [len(y)]
+        The elements of the returned array correspond to the elements of y.
+        If y is an array, it is returned without copying.
+    """
+    if hasattr(y, '__array__'):
+        return np.asarray(y)
+    out = np.empty(len(y), dtype=object)
+    out[:] = y
+    return out
+
+
+def multilabel_vectorize(func, otypes='O'):
+    """Vectorize a function suitably for sequence-of-sequence input and output
+
+    Parameters
+    ----------
+    func : a function to vectorize
+    otypes : the dtypes of the output arrays, default objects
+    
+    Returns
+    -------
+    out : callable
+        The returned function will vectorize `func` over its arguments, first
+        ensuring they are arrays of sequences.
+    """
+    vfunc = np.vectorize(func, otypes=otypes)
+    def wrapper(*args):
+        return vfunc(*[multilabel_as_array(arg) for arg in args])
+    return wrapper

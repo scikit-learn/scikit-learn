@@ -12,6 +12,7 @@ the lower the better
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Arnaud Joly <a.joly@ulg.ac.be>
+#          Joel Nothman
 # License: BSD 3 clause
 
 from __future__ import division
@@ -24,12 +25,12 @@ from scipy.spatial.distance import hamming as sp_hamming
 
 from ..externals.six.moves import zip
 from ..preprocessing import LabelBinarizer
+from ..preprocessing import LabelEncoder
 from ..utils import check_arrays
 from ..utils import deprecated
 from ..utils.fixes import divide
-from ..utils.multiclass import is_label_indicator_matrix
-from ..utils.multiclass import is_multilabel
 from ..utils.multiclass import unique_labels
+from ..utils.multiclass import type_of_target
 
 
 ###############################################################################
@@ -147,6 +148,95 @@ def _check_1d_array(y1, y2, ravel=False):
             y2 = np.reshape(y2, np.shape(y1))
 
         return y1, y2
+
+
+def _check_clf_targets(y_true, y_pred, encode=False, ravel=False, labels=None):
+    """Check that y1 and y2 correspond to the same classification task type.
+
+    This converts mixed multilabel targets to a common format, converts
+    multiclass or binary types to a common shape, and raises a ValueError
+    for a mix of multilabel and multiclass targets, or for the presence of
+    continuous-valued targets.
+
+    Parameters
+    ----------
+    y_true : array-like,
+
+    y_pred : array-like
+
+    encode : boolean, optional (default=False),
+        If ``encode`` is set to ``True``, then non-multilabel ``y_true`` and
+        ``y_pred`` are encoded as integers from 0 to ``len(labels)``.
+
+    ravel : boolean, optional (default=False),
+        If ``ravel``` is set to ``True``, then non-multilabel ``y_true`` and
+        ``y_pred`` are raveled.
+
+    labels : array-like, optional
+        When set, if ``y_true`` and ``y_pred`` are in different multilabel
+        formats, this specifies a label order for the label indicator matrix
+        output.
+
+    Returns
+    -------
+    labels : array
+        The sorted unique labels in ``y1`` and ``y2`` before encoding, or the
+        given ``labels``.
+
+    type_true : one of {'multilabel-indicator', 'multilabel-sequences', \
+                        'multiclass', 'binary'}
+        The type of the true target data, as output by
+        ``utils.multiclass.type_of_target``
+    
+    y_true : array or indicator matrix or sequence of sequences
+        A label indicator matrix, or sequence of sequences, or possibly-encoded
+        and/or raveled ``y_true``
+
+    y_pred : array or indicator matrix or sequence of sequences
+        ``y_pred`` in the shape of ``y_true``. Where ``y_pred`` had been a
+        label indicator matrix and ``y_true`` a sequence of sequences, an
+        exception is made: both are returned as label indicator matrices.
+    """
+    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
+    type_true = type_of_target(y_true)
+    type_pred = type_of_target(y_pred)
+    if labels is None:
+        labels = unique_labels(y_true, y_pred)
+    else:
+        labels = np.array(labels)
+
+    if type_true.startswith('multilabel'):
+        if not type_pred.startswith('multilabel'):
+            raise ValueError("Can't handle mix of multilabel and multiclass targets")
+
+        if type_true != type_pred:
+            enc = LabelBinarizer()
+            enc.fit([list(labels)])
+            y_true = enc.transform(y_true)
+            y_pred = enc.transform(y_pred)
+            type_true = type_pred = 'multilabel-indicator'
+
+    elif type_pred.startswith('multilabel'):
+        raise ValueError("Can't handle mix of multilabel and multiclass targets")
+
+    elif 'continuous' in (type_true, type_pred):
+        raise ValueError("Can't handle continuous targets")
+
+    else:
+        if 'multiclass' in (type_true, type_pred):
+            # 'binary' can be removed
+            type_true = type_pred = 'multiclass'
+
+        y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=ravel)
+
+    if encode and not type_true.startswith('multilabel'):
+        # TODO: support sequence of sequencs when LabelEncoder does
+        enc = LabelEncoder()
+        enc.fit(labels.tolist())
+        y_true = enc.transform(y_true)
+        y_pred = enc.transform(y_pred)
+
+    return labels, type_true, y_true, y_pred
 
 
 def auc(x, y, reorder=False):
@@ -927,60 +1017,45 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True, pos_label=1):
 
     """
 
-    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
-
     # Compute accuracy for each possible representation
-    if is_multilabel(y_true):
+    _, y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred, ravel=True)
+    if y_type == 'multilabel-indicator':
+        try:
+            # oddly, we may get an "invalid" rather than a "divide"
+            # error here
+            old_err_settings = np.seterr(divide='ignore',
+                                         invalid='ignore')
+            y_pred_pos_label = y_pred == pos_label
+            y_true_pos_label = y_true == pos_label
+            pred_inter_true = np.sum(np.logical_and(y_pred_pos_label,
+                                                    y_true_pos_label),
+                                     axis=1)
+            pred_union_true = np.sum(np.logical_or(y_pred_pos_label,
+                                                   y_true_pos_label),
+                                     axis=1)
+            score = pred_inter_true / pred_union_true
 
-        # Handle mix representation
-        if type(y_true) != type(y_pred):
-            labels = unique_labels(y_true, y_pred)
-            lb = LabelBinarizer()
-            lb.fit([labels.tolist()])
-            y_true = lb.transform(y_true)
-            y_pred = lb.transform(y_pred)
+            # If there is no label, it results in a Nan instead, we set
+            # the jaccard to 1: lim_{x->0} x/x = 1
+            # Note with py2.6 and np 1.3: we can't check safely for nan.
+            score[pred_union_true == 0.0] = 1.0
+        finally:
+            np.seterr(**old_err_settings)
 
-        if is_label_indicator_matrix(y_true):
-            try:
-                # oddly, we may get an "invalid" rather than a "divide"
-                # error here
-                old_err_settings = np.seterr(divide='ignore',
-                                             invalid='ignore')
-                y_pred_pos_label = y_pred == pos_label
-                y_true_pos_label = y_true == pos_label
-                pred_inter_true = np.sum(np.logical_and(y_pred_pos_label,
-                                                        y_true_pos_label),
-                                         axis=1)
-                pred_union_true = np.sum(np.logical_or(y_pred_pos_label,
-                                                       y_true_pos_label),
-                                         axis=1)
-                score = pred_inter_true / pred_union_true
-
-                # If there is no label, it results in a Nan instead, we set
-                # the jaccard to 1: lim_{x->0} x/x = 1
-                # Note with py2.6 and np 1.3: we can't check safely for nan.
-                score[pred_union_true == 0.0] = 1.0
-            finally:
-                np.seterr(**old_err_settings)
-
-        else:
-            score = np.empty(len(y_true), dtype=np.float)
-            for i, (true, pred) in enumerate(zip(y_pred, y_true)):
-                true_set = set(true)
-                pred_set = set(pred)
-                size_true_union_pred = len(true_set | pred_set)
-                # If there is no label, it results in a Nan instead, we set
-                # the jaccard to 1: lim_{x->0} x/x = 1
-                if size_true_union_pred == 0:
-                    score[i] = 1.
-                else:
-                    score[i] = (len(true_set & pred_set) /
-                                size_true_union_pred)
+    elif y_type == 'multilabel-sequences':
+        score = np.empty(len(y_true), dtype=np.float)
+        for i, (true, pred) in enumerate(zip(y_pred, y_true)):
+            true_set = set(true)
+            pred_set = set(pred)
+            size_true_union_pred = len(true_set | pred_set)
+            # If there is no label, it results in a Nan instead, we set
+            # the jaccard to 1: lim_{x->0} x/x = 1
+            if size_true_union_pred == 0:
+                score[i] = 1.
+            else:
+                score[i] = (len(true_set & pred_set) /
+                            size_true_union_pred)
     else:
-        y_true, y_pred = check_arrays(y_true, y_pred)
-
-        # Handle mix shape
-        y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=True)
         score = y_true == y_pred
 
     if normalize:
@@ -1049,29 +1124,14 @@ def accuracy_score(y_true, y_pred, normalize=True):
     0.0
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
-
     # Compute accuracy for each possible representation
-    if is_multilabel(y_true):
-
-        # Handle mix representation
-        if type(y_true) != type(y_pred):
-            labels = unique_labels(y_true, y_pred)
-            lb = LabelBinarizer()
-            lb.fit([labels.tolist()])
-            y_true = lb.transform(y_true)
-            y_pred = lb.transform(y_pred)
-
-        if is_label_indicator_matrix(y_true):
-            score = (y_pred != y_true).sum(axis=1) == 0
-        else:
-            score = np.array([len(set(true) ^ set(pred)) == 0
-                              for pred, true in zip(y_pred, y_true)])
+    _, y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred, ravel=True)
+    if y_type == 'multilabel-indicator':
+        score = (y_pred != y_true).sum(axis=1) == 0
+    elif y_type == 'multilabel-sequences':
+        score = np.array([len(set(true) ^ set(pred)) == 0
+                          for pred, true in zip(y_pred, y_true)])
     else:
-        y_true, y_pred = check_arrays(y_true, y_pred)
-
-        # Handle mix shape
-        y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=True)
         score = y_true == y_pred
 
     if normalize:
@@ -1320,7 +1380,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     0.54...
     >>> fbeta_score(y_true, y_pred, average='samples', beta=0.5)
     ... # doctest: +ELLIPSIS
-    0.66...
+    0.49...
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
     ... # doctest: +ELLIPSIS
     array([ 0.38...,  0.71...,  0.38...])
@@ -1340,8 +1400,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     ... # doctest: +ELLIPSIS
     0.66...
     >>> fbeta_score(y_true, y_pred, average='samples', beta=0.5)
-    ... # doctest: +ELLIPSIS
-    0.42...
+    0.5
     >>> fbeta_score(y_true, y_pred, average=None, beta=0.5)
     array([ 1.,  1.,  0.])
 
@@ -1354,130 +1413,47 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     return f
 
 
-def _tp_tn_fp_fn(y_true, y_pred, labels=None, pos_label=1):
-    """Compute the number of true/false positives/negative for each class
-
-    Parameters
-    ----------
-    y_true : array-like or list of labels or label indicator matrix
-        Ground truth (correct) labels.
-
-    y_pred : array-like or list of labels or label indicator matrix
-        Predicted labels, as returned by a classifier.
-
-    labels : array, shape = [n_labels], optional
-        Integer array of labels.
-
-    pos_label : int, 1 by default
-        In multilabel classification, it is used to infer what is a positive
-        label in the label indicator matrix format.
-
-    Returns
-    -------
-    true_pos : array of int, shape = [n_unique_labels]
-        Number of true positives
-
-    true_neg : array of int, shape = [n_unique_labels]
-        Number of true negative
-
-    false_pos : array of int, shape = [n_unique_labels]
-        Number of false positives
-
-    false_pos : array of int, shape = [n_unique_labels]
-        Number of false positives
-
-    Examples
-    --------
-    In the binary case:
-
-    >>> from sklearn.metrics.metrics import _tp_tn_fp_fn
-    >>> y_pred = [0, 1, 0, 0]
-    >>> y_true = [0, 1, 0, 1]
-    >>> _tp_tn_fp_fn(y_true, y_pred)
-    (array([2, 1]), array([1, 2]), array([1, 0]), array([0, 1]))
-
-    In the multiclass case:
-    >>> y_true = np.array([0, 1, 2, 0, 1, 2])
-    >>> y_pred = np.array([0, 2, 1, 0, 0, 1])
-    >>> _tp_tn_fp_fn(y_true, y_pred)
-    (array([2, 0, 0]), array([3, 2, 3]), array([1, 2, 1]), array([0, 2, 2]))
-
-    In the multilabel case with binary indicator format:
-
-    >>> _tp_tn_fp_fn(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
-    (array([0, 0]), array([1, 0]), array([0, 0]), array([1, 2]))
-
-    and with a list of labels format:
-
-    >>> _tp_tn_fp_fn([(1, 2), (3,)], [(1, 2), tuple()])  # doctest: +ELLIPSIS
-    (array([1, 1, 0]), array([1, 1, 1]), array([0, 0, 0]), array([0, 0, 1]))
-
+def _prf_divide(numerator, denominator, metric, modifier, average):
+    """Performs division and handles divide-by-zero.
+    
+    On zero-division, sets the corresponding result elements to zero
+    and raises a warning.
     """
-    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
+    result = numerator / denominator
+    mask = denominator == 0.0
+    if not np.any(mask):
+        return result
 
-    if labels is None:
-        labels = unique_labels(y_true, y_pred)
+    # remove infs
+    result[mask] = 0.0
+
+    # build appropriate warning
+    # E.g. "Precision and F-score are ill-defined and being set to 0.0 in 3/5
+    # labels with no predicted samples"
+    axis0 = 'sample'
+    axis1 = 'label'
+    if average == 'samples':
+        axis0, axis1 = axis1, axis0
+
+    msg = ('{} and F-score are ill-defined and being set to 0.0 {{}} '
+           'no {} {}s.'.format(metric.title(), modifier, axis0))
+    if len(mask) == 1:
+        msg = msg.format('due to')
     else:
-        labels = np.asarray(labels, dtype=np.int)
-
-    n_labels = labels.size
-    true_pos = np.zeros((n_labels), dtype=np.int)
-    false_pos = np.zeros((n_labels), dtype=np.int)
-    false_neg = np.zeros((n_labels), dtype=np.int)
-
-    if is_multilabel(y_true):
-        # Handle mix representation
-        if type(y_true) != type(y_pred):
-            labels = unique_labels(y_true, y_pred)
-            lb = LabelBinarizer()
-            lb.fit([labels.tolist()])
-            y_true = lb.transform(y_true)
-            y_pred = lb.transform(y_pred)
-
-        if is_label_indicator_matrix(y_true):
-            true_pos = np.sum(np.logical_and(y_true == pos_label,
-                                             y_pred == pos_label), axis=0)
-            false_pos = np.sum(np.logical_and(y_true != pos_label,
-                                              y_pred == pos_label), axis=0)
-            false_neg = np.sum(np.logical_and(y_true == pos_label,
-                                              y_pred != pos_label), axis=0)
-
-        else:
-            idx_to_label = dict((label_i, i)
-                                for i, label_i in enumerate(labels))
-
-            for true, pred in zip(y_true, y_pred):
-                true_set = np.array([idx_to_label[l] for l in set(true)],
-                                    dtype=np.int)
-                pred_set = np.array([idx_to_label[l] for l in set(pred)],
-                                    dtype=np.int)
-                true_pos[np.intersect1d(true_set, pred_set)] += 1
-                false_pos[np.setdiff1d(pred_set, true_set)] += 1
-                false_neg[np.setdiff1d(true_set, pred_set)] += 1
-
-    else:
-        y_true, y_pred = check_arrays(y_true, y_pred)
-        y_true, y_pred = _check_1d_array(y_true, y_pred)
-
-        for i, label_i in enumerate(labels):
-            true_pos[i] = np.sum(y_pred[y_true == label_i] == label_i)
-            false_pos[i] = np.sum(y_pred[y_true != label_i] == label_i)
-            false_neg[i] = np.sum(y_pred[y_true == label_i] != label_i)
-
-    # Compute the true_neg using the tp, fp and fn
-    if hasattr(y_true, "shape"):
-        n_samples = (np.max(y_true.shape) if _is_1d(y_true)
-                     else y_true.shape[0])
-    else:
-        n_samples = len(y_true)
-
-    true_neg = n_samples - true_pos - false_pos - false_neg
-
-    return true_pos, true_neg, false_pos, false_neg
+        msg = msg.format(
+            'in {}/{} {}s with'.format(mask.sum(), len(mask), axis1))
+    warnings.warn(msg)
+    import traceback, sys, re, StringIO
+    o = StringIO.StringIO()
+    traceback.print_stack(file=o)
+    print >> sys.stderr, re.search('test_metrics.py", line [0-9]+', o.getvalue()).group()
+    
+    return result
 
 
 def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
-                                    pos_label=1, average=None):
+                                    pos_label=1, neg_label='binary',
+                                    average=None):
     """Compute precision, recall, F-measure and support for each class
 
     The precision is the ratio ``tp / (tp + fp)`` where ``tp`` is the number of
@@ -1498,10 +1474,6 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
 
     The support is the number of occurrences of each class in ``y_true``.
 
-    If ``pos_label is None`` and in binary classification, this function
-    returns the average precision, recall and F-measure if ``average``
-    is one of ``'micro'``, ``'macro'``, ``'weighted'`` or ``'samples'``.
-
     Parameters
     ----------
     y_true : array-like or list of labels or label indicator matrix
@@ -1516,16 +1488,18 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     labels : array
         Integer array of labels.
 
-    pos_label : int, 1 by default
-        If ``average`` is not ``None`` and the classification target is binary,
-        only this class's scores will be returned. In multilabel
-        classification, it is used to infer what is a positive label in the
-        label indicator matrix format.
+    pos_label : deprecated, to be removed in version 0.16
+
+    neg_label : None, 'binary' (default), 'auto' or label
+        Selects a negative label to discard in binary and multi-class
+        classification.  If ``'auto'`` -- or ``'binary'`` when there are two
+        target labels -- the least-valued label is selected. If ``None``,
+        ``average`` applies to both classes in the binary case.
 
     average : string, [None (default), 'micro', 'macro', 'samples', 'weighted']
-        If ``None``, the scores for each class are returned. Otherwise,
-        unless ``pos_label`` is given in binary classification, this
-        determines the type of averaging performed on the data:
+        If ``None``, the scores for each class are returned. this
+        determines the type of averaging performed on the data (after removing
+        a negative label if specified):
 
         ``'micro'``:
             Calculate metrics globally by counting the total true positives,
@@ -1543,7 +1517,6 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             meaningful for multilabel classification where this differs from
             :func:`accuracy_score`).
 
-
     Returns
     -------
     precision: float (if average is not None) or array of float, shape =\
@@ -1555,8 +1528,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     fbeta_score: float (if average is not None) or array of float, shape =\
         [n_unique_labels]
 
-    support: int (if average is not None) or array of int, shape =\
-        [n_unique_labels]
+    support: array of int, shape = [n_unique_labels] if ``average`` is None, \
+            otherwise None
         The number of occurrences of each label in ``y_true``.
 
     References
@@ -1620,7 +1593,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     (0.499..., 1.0, 0.65..., None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='samples')
     ... # doctest: +ELLIPSIS
-    (1.0, 0.44..., 0.59..., None)
+    (0.44..., 1.0, 0.59..., None)
 
     and with a list of labels format:
 
@@ -1638,154 +1611,165 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     (0.66..., 0.66..., 0.66..., None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='samples')
     ... # doctest: +ELLIPSIS
-    (0.5, 1.0, 0.5, None)
+    (0.5, 0.5, 0.5, None)
 
     """
+    average_options = (None, 'micro', 'macro', 'weighted', 'samples')
+    if average not in average_options:
+        raise ValueError('average has to be one of ' +
+                         str(average_options))
     if beta <= 0:
         raise ValueError("beta should be >0 in the F-beta score")
-    beta2 = beta ** 2
 
-    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
+    label_order = labels  # save this for later
+    labels, y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred,
+                                                        ravel=True)
 
-    if labels is None:
-        labels = unique_labels(y_true, y_pred)
-    else:
-        labels = np.asarray(labels, dtype=np.int)
+    ### Calculate tp_sum, pred_sum, true_sum ###
 
-    n_labels = labels.size
+    if y_type == 'multilabel-indicator':
+        ## sum (common) 1s in each column, or each row for average='samples' ##
+        sum_axis = 1 if average == 'samples' else 0
+        # pos_label should always be 1, but we need to zero the negative indicators
+        y_true = y_true == pos_label
+        y_pred = y_pred == pos_label
+        tp_sum = np.sum(np.logical_and(y_true, y_pred), axis=sum_axis)
+        pred_sum = np.sum(y_pred, axis=sum_axis, dtype=int)
+        true_sum = np.sum(y_true, axis=sum_axis, dtype=int)
 
-    if average == "samples":
-        if is_multilabel(y_true):
-            # Handle mix representation
-            if type(y_true) != type(y_pred):
-                labels = unique_labels(y_true, y_pred)
-                lb = LabelBinarizer()
-                lb.fit([labels.tolist()])
-                y_true = lb.transform(y_true)
-                y_pred = lb.transform(y_pred)
-
-            if is_label_indicator_matrix(y_true):
-                y_true_pos_label = y_true == pos_label
-                y_pred_pos_label = y_pred == pos_label
-                size_inter = np.sum(np.logical_and(y_true_pos_label,
-                                                   y_pred_pos_label), axis=1)
-                size_true = np.sum(y_true_pos_label, axis=1)
-                size_pred = np.sum(y_pred_pos_label, axis=1)
-
-            else:
-                size_inter = np.empty(len(y_true), dtype=np.int)
-                size_true = np.empty(len(y_true), dtype=np.int)
-                size_pred = np.empty(len(y_true), dtype=np.int)
-                for i, (true, pred) in enumerate(zip(y_true, y_pred)):
-                    true_set = set(true)
-                    pred_set = set(pred)
-                    size_inter[i] = len(true_set & pred_set)
-                    size_pred[i] = len(pred_set)
-                    size_true[i] = len(true_set)
-        else:
+    elif average == 'samples':
+        if y_type != 'multilabel-sequences':
             raise ValueError("Example-based precision, recall, fscore is "
-                             "not meaning full outside multilabe"
+                             "not meaningful outside multilabel"
                              "classification. See the accuracy_score instead.")
+        ## get the number of (common) distinct labels for each sample ##
+        tp_sum = np.array([len(np.intersect1d(sample1, sample2))
+                           for sample1, sample2 in zip(y_true, y_pred)])
+        pred_sum = np.array([len(np.unique(sample)) for sample in y_pred])
+        true_sum = np.array([len(np.unique(sample)) for sample in y_true])
 
-        try:
-            # oddly, we may get an "invalid" rather than a "divide" error
-            # here
-            old_err_settings = np.seterr(divide='ignore', invalid='ignore')
+    else:
+        ## count the (common) occurrences of each label ##
+        # first, make labels range from 0 to len(labels) - 1 -> use bincount
+        lb = LabelEncoder()
+        lb.fit([labels.tolist()])
+        y_true = lb.transform(y_true)
+        y_pred = lb.transform(y_pred)
+        labels = lb.classes_
 
-            precision = size_inter / size_true
-            recall = size_inter / size_pred
-            f_score = ((1 + beta2 ** 2) * size_inter /
-                       (beta2 * size_pred + size_true))
-        finally:
-            np.seterr(**old_err_settings)
+        # labels are now from 0 to len(labels) - 1 -> use bincount
 
-        precision[size_true == 0] = 1.0
-        recall[size_pred == 0] = 1.0
-        f_score[(beta2 * size_pred + size_true) == 0] = 1.0
+        if y_type == 'multilabel-sequences':
+            # if all samples were assured unique, could use np.bincount
+            tp_sum = np.zeros(len(labels), dtype=int)
+            true_sum = tp_sum.copy()
+            pred_sum = tp_sum.copy()
+            for sample1, sample2 in zip(y_true, y_pred):
+                tp_sum[np.intersect1d(sample1, sample2)] += 1
+                true_sum[np.unique(sample1)] += 1
+                pred_sum[np.unique(sample2)] += 1
+        else:
+            tp_bins = y_true[y_true == y_pred]
+            pos_bins = y_pred
+            true_bins = y_true
 
-        precision = np.mean(precision)
-        recall = np.mean(recall)
-        f_score = np.mean(f_score)
+            if len(tp_bins):
+                tp_sum = np.bincount(tp_bins, minlength=len(labels))
+            else:
+                # Pathological case
+                true_sum = pred_sum = tp_sum = np.zeros(len(labels))
+            if len(pos_bins):
+                pred_sum = np.bincount(pos_bins, minlength=len(labels))
+            if len(true_bins):
+                true_sum = np.bincount(true_bins, minlength=len(labels))
 
-        return precision, recall, f_score, None
+    ### Select labels to keep ###
 
-    true_pos, _, false_pos, false_neg = _tp_tn_fp_fn(y_true, y_pred, labels,
-                                                     pos_label)
-    support = true_pos + false_neg
+    if average is not None:
+        if y_type == 'binary' or neg_label == 'auto':
+            # take the lowest value as negative
+            neg_label = labels[0]
+        if y_type == 'binary':
+            # handle deprecated pos_label
+            if pos_label != 1:
+                warnings.warn("'pos_label' is deprecated and will be removed "
+                              "in release 0.16. Use neg_label instead.",
+                              DeprecationWarning)
 
+                if pos_label is None:
+                    neg_label = None
+                elif pos_label not in labels:
+                    raise ValueError("pos_label=%r is not a valid label: %r" %
+                                     (pos_label, labels))
+                elif pos_label == neg_label:
+                    neg_label = labels[1]
+            elif neg_label == 1:
+                raise ValueError("neg_label was guessed to be 1 which is the "
+                              "same as pos_label. Modify one of them.")
+
+    if neg_label not in (None, 'binary'):
+        if average is None:
+            raise ValueError('TODO')
+        if y_type.startswith('multilabel'):
+            raise ValueError('TODO')
+        if neg_label not in labels:
+            raise ValueError("neg_label=%r is not a valid label: %r" %
+                             (neg_label, labels))
+        # XXX: is labels always sorted?
+        mask = np.ones(tp_sum.shape, dtype=bool)
+        mask[np.searchsorted(labels, neg_label)] = False
+
+        tp_sum = tp_sum[mask]
+        pred_sum = pos_sum[mask]
+        true_sum = true_sum[mask]
+
+    ### Collapse average='micro' stats ###
+    if average == 'micro':
+        tp_sum = np.array([tp_sum.sum()])
+        pred_sum = np.array([pos_sum.sum()])
+        true_sum = np.array([true_sum.sum()])
+
+    ### Finally, we have all our sufficient statistics. Divide! ###
+
+    beta2 = beta ** 2
     try:
-        # oddly, we may get an "invalid" rather than a "divide" error here
+        # oddly, we may get an "invalid" rather than a "divide" error
+        # here
         old_err_settings = np.seterr(divide='ignore', invalid='ignore')
-
-        # precision and recall
-        precision = divide(true_pos.astype(np.float), true_pos + false_pos)
-        recall = divide(true_pos.astype(np.float), true_pos + false_neg)
-
-        # handle division by 0 in precision and recall
-        precision[(true_pos + false_pos) == 0] = 0.0
-        recall[(true_pos + false_neg) == 0] = 0.0
-
-        # fbeta score
-        fscore = divide((1 + beta2) * precision * recall,
-                        beta2 * precision + recall)
-
-        # handle division by 0 in fscore
-        fscore[(beta2 * precision + recall) == 0] = 0.0
+        # Divide, and on zero-division, set scores to 0 and warn:
+        precision = _prf_divide(tp_sum, pred_sum,
+                                'precision', 'predicted', average)
+        recall = _prf_divide(tp_sum, true_sum,
+                             'recall', 'true', average)
+        # Don't need to warn for F: either P or R warned, or tp == 0 where pos
+        # and true are nonzero, in which case, F is well-defined and zero
+        f_score = (1 + beta2) * precision * recall / (beta2 * precision + recall)
+        f_score[tp_sum == 0] = 0.0
     finally:
         np.seterr(**old_err_settings)
 
-    if not average:
-        return precision, recall, fscore, support
+    ## Average the results ##
 
-    elif n_labels == 2 and pos_label is not None:
-        if pos_label not in labels:
-            raise ValueError("pos_label=%d is not a valid label: %r" %
-                             (pos_label, labels))
-        pos_label_idx = list(labels).index(pos_label)
-        return (precision[pos_label_idx], recall[pos_label_idx],
-                fscore[pos_label_idx], support[pos_label_idx])
+    if average == 'weighted':
+        weights = true_sum
+        if weights.sum() == 0:
+            return 0, 0, 0, None
     else:
-        average_options = (None, 'micro', 'macro', 'weighted', 'samples')
-        if average == 'micro':
-            avg_precision = divide(true_pos.sum(),
-                                   true_pos.sum() + false_pos.sum(),
-                                   dtype=np.double)
-            avg_recall = divide(true_pos.sum(),
-                                true_pos.sum() + false_neg.sum(),
-                                dtype=np.double)
-            avg_fscore = divide((1 + beta2) * (avg_precision * avg_recall),
-                                beta2 * avg_precision + avg_recall,
-                                dtype=np.double)
+        weights = None
 
-            if np.isnan(avg_precision):
-                avg_precision = 0.
+    if average is not None:
+        precision = np.average(precision, weights=weights)
+        recall = np.average(recall, weights=weights)
+        f_score = np.average(f_score, weights=weights)
+        true_sum = None  # return no support
+    elif label_order is not None:
+        indices = np.searchsorted(labels, label_order)
+        precision = precision[indices]
+        recall = recall[indices]
+        f_score = f_score[indices]
+        true_sum = true_sum[indices]
 
-            if np.isnan(avg_recall):
-                avg_recall = 0.
-
-            if np.isnan(avg_fscore):
-                avg_fscore = 0.
-
-        elif average == 'macro':
-            avg_precision = np.mean(precision)
-            avg_recall = np.mean(recall)
-            avg_fscore = np.mean(fscore)
-
-        elif average == 'weighted':
-            if np.all(support == 0):
-                avg_precision = 0.
-                avg_recall = 0.
-                avg_fscore = 0.
-            else:
-                avg_precision = np.average(precision, weights=support)
-                avg_recall = np.average(recall, weights=support)
-                avg_fscore = np.average(fscore, weights=support)
-
-        else:
-            raise ValueError('average has to be one of ' +
-                             str(average_options))
-
-        return avg_precision, avg_recall, avg_fscore, None
+    return precision, recall, f_score, true_sum
 
 
 def precision_score(y_true, y_pred, labels=None, pos_label=1,
@@ -1882,7 +1866,8 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     ... # doctest: +ELLIPSIS
     0.49...
     >>> precision_score(y_true, y_pred, average='samples')
-    1.0
+    ... # doctest: +ELLIPSIS
+    0.44...
     >>> precision_score(y_true, y_pred, average=None)
     ... # doctest: +ELLIPSIS
     array([ 0.33...,  0.66...,  0.33...])
@@ -1894,13 +1879,11 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     >>> y_pred = [(1, 2), tuple()]
     >>> precision_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
     0.66...
-    >>> precision_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+    >>> precision_score(y_true, y_pred, average='micro') # doctest: +ELLIPSIS
     1.0
-    >>> precision_score(y_true, y_pred, average='weighted')
-    ... # doctest: +ELLIPSIS
+    >>> precision_score(y_true, y_pred, average='weighted') # doctest: +ELLIPSIS
     0.66...
     >>> precision_score(y_true, y_pred, average='samples')
-    ... # doctest: +ELLIPSIS
     0.5
     >>> precision_score(y_true, y_pred, average=None)
     array([ 1.,  1.,  0.])
@@ -2001,10 +1984,10 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     1.0
     >>> recall_score(y_true, y_pred, average='micro')
     1.0
-    >>> recall_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+    >>> recall_score(y_true, y_pred, average='weighted')
     1.0
-    >>> recall_score(y_true, y_pred, average='samples')  # doctest: +ELLIPSIS
-    0.44...
+    >>> recall_score(y_true, y_pred, average='samples')
+    1.0
     >>> recall_score(y_true, y_pred, average=None)
     array([ 1.,  1.,  1.])
 
@@ -2020,7 +2003,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     >>> recall_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
     0.66...
     >>> recall_score(y_true, y_pred, average='samples')
-    1.0
+    0.5
     >>> recall_score(y_true, y_pred, average=None)
     array([ 1.,  1.,  0.])
     """
@@ -2223,33 +2206,18 @@ def hamming_loss(y_true, y_pred, classes=None):
     0.166...
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
+    classes, y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred,
+                                                         labels=classes)
 
-    if classes is None:
-        classes = unique_labels(y_true, y_pred)
-    else:
-        classes = np.asarray(classes, dtype=np.int)
-
-    if is_multilabel(y_true):
-        lb = LabelBinarizer()
-        lb.fit([classes.tolist()])
-
-        if type(y_true) != type(y_pred):
-            y_true = lb.transform(y_true)
-            y_pred = lb.transform(y_pred)
-
-        if is_label_indicator_matrix(y_true):
-            return np.mean(y_true != y_pred)
-        else:
+    if y_type == 'multilabel-indicator':
+        return np.mean(y_true != y_pred)
+    elif y_type == 'multilabel-sequences':
             loss = np.array([len(set(pred) ^ set(true))
                              for pred, true in zip(y_pred, y_true)])
 
             return np.mean(loss) / np.size(classes)
 
     else:
-        y_true, y_pred = check_arrays(y_true, y_pred)
-        y_true, y_pred = _check_1d_array(y_true, y_pred)
-
         return sp_hamming(y_true, y_pred)
 
 

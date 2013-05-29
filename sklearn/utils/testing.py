@@ -9,6 +9,7 @@
 # License: BSD 3 clause
 import inspect
 import pkgutil
+import warnings
 
 import scipy as sp
 from functools import wraps
@@ -293,3 +294,16 @@ def if_matplotlib(func):
         else:
             return func(*args, **kwargs)
     return run_test
+
+
+def ignore_warnings(func):
+    """Test decorator to ignore warnings
+    
+    Useful for invariance tests; functional warnings should otherwise be
+    tested for.
+    """
+    @wraps(func)
+    def run_without_warnings(*args, **kwargs):
+        with warnings.catch_warnings():
+            func(*args, **kwargs)
+    return run_without_warnings
