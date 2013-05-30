@@ -11,6 +11,8 @@ estimator, as a chain of transforms and estimators.
 
 from collections import defaultdict
 
+from functools import partial
+
 import numpy as np
 from scipy import sparse
 
@@ -78,7 +80,7 @@ class Pipeline(BaseEstimator):
     # BaseEstimator interface
 
     def __init__(self, steps):
-        self.named_steps = dict(steps)
+        self.steps = steps
         names, estimators = zip(*steps)
         if len(self.named_steps) != len(steps):
             raise ValueError("Names provided are not unique: %s" % (names,))
