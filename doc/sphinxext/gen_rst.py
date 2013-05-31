@@ -612,7 +612,6 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
             generate_file_rst(fname, target_dir, src_dir, plot_gallery)
             new_fname = os.path.join(src_dir, fname)
             _, fdocstring, _ = extract_docstring(new_fname, True)
-            print fdocstring
             thumb = os.path.join(dir, 'images', 'thumb', fname[:-3] + '.png')
             link_name = os.path.join(dir, fname).replace(os.path.sep, '_')
             fhindex.write("""
