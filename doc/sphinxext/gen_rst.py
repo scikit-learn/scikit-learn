@@ -440,11 +440,16 @@ def generate_example_rst(app):
 
     div.docstringWrapper p.caption {
         display: block;
+        -webkit-box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.0);
+        padding: 0px
     }
 
     div.docstringWrapper p {
         display: none;
         background-color: white;
+        -webkit-box-shadow: 0px 0px 20px rgba(0, 0, 0, 1.00);
+        padding: 13px;
+        margin-top: 0px;
     }
 
 
@@ -472,9 +477,12 @@ def generate_example_rst(app):
                 width: "320px"
             }, 10
           );
+          clone_fig.css({
+               'margin-top': '20px',
+          });
           clone_fig.animate({
-               height: "270px",
-               width: "320px"
+               height: "240px",
+               width: "305px"
             }, 10
           );
           cloneImg.css({
@@ -496,7 +504,6 @@ def generate_example_rst(app):
                   width: "150px"
               }, 10, function(){$(this).hide();});
           });
-
         } //end animateClone()
 
 
