@@ -8,6 +8,10 @@
 Changelog
 ---------
 
+   - Fixed :mod:`sklearn.linear_model.stochastic_gradient.py` L2 regularization
+     issue (minor practical significants).
+     By `Norbert Crombach`_ and `Mathieu Blondel`_ .
+
    - Added an interactive version of `Andreas Müller`_'s
      `Machine Learning Cheat Sheet (for scikit-learn)
      <http://peekaboo-vision.blogspot.de/2013/01/machine-learning-cheat-sheet-for-scikit.html>`_
@@ -1933,3 +1937,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Martin Luessi: https://github.com/mluessi
 
 .. _Joel Nothman: http://joelnothman.com
+
+.. _Norbert Crombach: https://github.com/norbert
