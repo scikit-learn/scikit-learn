@@ -446,6 +446,8 @@ def generate_example_rst(app):
     div.docstringWrapper p.caption {
         display: block;
         -webkit-box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.0);
+        -moz-box-shadow: 0px 0px 20px rgba(0, 0, 0, .0); /* FF3.5 - 3.6 */
+        box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.0); /* Opera 10.5, IE9, FF4+, Chrome 10+ */
         padding: 0px
     }
 
@@ -453,6 +455,8 @@ def generate_example_rst(app):
         display: none;
         background-color: white;
         -webkit-box-shadow: 0px 0px 20px rgba(0, 0, 0, 1.00);
+        -moz-box-shadow: 0px 0px 20px rgba(0, 0, 0, 1.00); /* FF3.5 - 3.6 */
+        box-shadow: 0px 0px 20px rgba(0, 0, 0, 1.00); /* Opera 10.5, IE9, FF4+, Chrome 10+ */
         padding: 13px;
         margin-top: 0px;
     }

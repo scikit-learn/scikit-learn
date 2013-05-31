@@ -610,12 +610,6 @@ div#examples.section .thumbnailContainer {
     overflow: auto;
 }
 
-* The hover-effect for the examples gallery was adapted from Martin Michálek's
-/* example: http://www.vzhurudolu.cz/test/image-gallery-enlarge-on-hover/
-
-/*------------------------------------------------------------------------*/
-
-
 /* ------- Zoom plots to make them fit in layout -------------------------- */
 div.body img {
     max-width:805px;
