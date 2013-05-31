@@ -377,9 +377,14 @@ def extract_docstring(filename, ignore_heading=False):
             # the first one:
             paragraphs = '\n'.join(line.rstrip()
                               for line in docstring.split('\n')).split('\n\n')
-            if len(paragraphs) > 0:
+            if paragraphs:
                 if ignore_heading:
-                    first_par = re.sub('\n', ' ', paragraphs[1])
+                    if len(paragraphs) > 1:
+                        first_par = re.sub('\n', ' ', paragraphs[1])
+                    else:
+                        raise ValueError("Docstring not found by gallery",
+                                         "Please check your example's layout",
+                                         " and make sure it's correct")
                 else:
                     first_par = paragraphs[0]
 
