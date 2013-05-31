@@ -11,7 +11,7 @@ from warnings import warn
 from functools import reduce
 
 import numpy as np
-from scipy import stats
+from scipy import special, stats
 from scipy.sparse import issparse
 
 from ..base import BaseEstimator
@@ -141,6 +141,24 @@ def f_classif(X, y):
     return f_oneway(*args)
 
 
+def _chisquare(f_exp, f_obs):
+    """Fast replacement for scipy.stats.chisquare.
+
+    Version from https://github.com/scipy/scipy/pull/2525 with additional
+    optimizations.
+    """
+    assert np.issubdtype(f_obs.dtype, np.floating)
+
+    k = len(f_obs)
+    # Reuse f_obs for χ² statistics
+    chisq = f_obs
+    chisq -= f_exp
+    chisq **= 2
+    chisq /= f_exp
+    chisq = chisq.sum(axis=0)
+    return chisq, special.chdtrc(k - 1, chisq)
+
+
 def chi2(X, y):
     """Compute χ² (chi-squared) statistic for each class/feature combination.
 
@@ -190,7 +208,7 @@ def chi2(X, y):
     class_prob = array2d(Y.mean(axis=0))
     expected = np.dot(class_prob.T, feature_count)
 
-    return stats.chisquare(observed, expected)
+    return _chisquare(observed, expected)
 
 
 def f_regression(X, y, center=True):
