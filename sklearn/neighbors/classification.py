@@ -280,42 +280,37 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
             List of class labels (one for each data sample).
         """
         X = atleast2d_or_csr(X)
+        n_samples = X.shape[0]
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
-        pred_labels = [self._y[ind] for ind in neigh_ind]
+        inliers = [i for i, nind in enumerate(neigh_ind) if len(nind) != 0]
+        outliers = [i for i, nind in enumerate(neigh_ind) if len(nind) == 0]
 
-        if self.outlier_label:
-            outlier_label = np.array((self.outlier_label, ))
-            small_value = np.array((1e-6, ))
-            for i, pl in enumerate(pred_labels):
-                # Check that all have at least 1 neighbor
-                if len(pl) < 1:
-                    pred_labels[i] = outlier_label
-                    neigh_dist[i] = small_value
-        else:
-            for pl in pred_labels:
-                # Check that all have at least 1 neighbor
-                if len(pl) < 1:
-                    raise ValueError('no neighbors found for a test sample, '
-                                     'you can try using larger radius, '
-                                     'give a label for outliers, '
-                                     'or consider removing them in your '
-                                     'dataset')
+        if self.outlier_label is not None:
+            neigh_dist[outliers] = 1e-6
+        elif outliers:
+            raise ValueError('No neighbors found for test samples %r, '
+                             'you can try using larger radius, '
+                             'give a label for outliers, '
+                             'or consider removing them from your dataset.'
+                             % outliers)
 
         weights = _get_weights(neigh_dist, self.weights)
 
+        pred_labels = np.array([self._y[ind] for ind in neigh_ind],
+                               dtype=object)
         if weights is None:
-            mode = np.array([stats.mode(pl)[0] for pl in pred_labels],
+            mode = np.array([stats.mode(pl)[0] for pl in pred_labels[inliers]],
                             dtype=np.int)
         else:
             mode = np.array([weighted_mode(pl, w)[0]
-                             for (pl, w) in zip(pred_labels, weights)],
+                             for (pl, w) in zip(pred_labels[inliers], weights)],
                             dtype=np.int)
 
-        mode = mode.flatten().astype(np.int)
-        # map indices to classes
-        prediction = self.classes_.take(mode)
-        if self.outlier_label:
-            # reset outlier label
-            prediction[mode == outlier_label] = self.outlier_label
+        mode = mode.ravel().astype(np.int)
+        prediction = np.empty(n_samples, dtype=self.classes_.dtype)
+        prediction[inliers] = self.classes_.take(mode)
+        if outliers:
+            prediction[outliers] = self.outlier_label
+
         return prediction

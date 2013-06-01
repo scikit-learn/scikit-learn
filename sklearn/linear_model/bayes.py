@@ -67,7 +67,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
         Default is True.
 
     normalize : boolean, optional, default False
-        If True, the regressors X are normalized
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -275,8 +275,8 @@ class ARDRegression(LinearModel, RegressorMixin):
         (e.g. data is expected to be already centered).
         Default is True.
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True.
         If True, X will be copied; else, it may be overwritten.

@@ -1,14 +1,13 @@
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import (assert_array_almost_equal, assert_less,
+                                   assert_equal, assert_not_equal,
+                                   assert_raises)
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
 from sklearn.linear_model import Perceptron
-from sklearn.utils.testing import assert_less
 from sklearn.pipeline import Pipeline
 from sklearn.grid_search import GridSearchCV
 from sklearn.metrics.pairwise import rbf_kernel
@@ -28,6 +27,10 @@ def test_kernel_pca():
             X_fit_transformed2 = kpca.fit(X_fit).transform(X_fit)
             assert_array_almost_equal(np.abs(X_fit_transformed),
                                       np.abs(X_fit_transformed2))
+
+            # non-regression test: previously, gamma would be 0 by default,
+            # forcing all eigenvalues to 0 under the poly kernel
+            assert_not_equal(X_fit_transformed, [])
 
             # transform new data
             X_pred_transformed = kpca.transform(X_pred)

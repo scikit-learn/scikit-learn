@@ -93,6 +93,17 @@ def test_roc_curve():
     assert_almost_equal(roc_auc, auc_score(y_true, probas_pred))
 
 
+def test_roc_curve_end_points():
+    # Make sure that roc_curve returns a curve start at 0 and ending and
+    # 1 even in corner cases
+    rng = np.random.RandomState(0)
+    y_true = np.array([0] * 50 + [1] * 50)
+    y_pred = rng.randint(3, size=100)
+    fpr, tpr, thr = roc_curve(y_true, y_pred)
+    assert_equal(fpr[0], 0)
+    assert_equal(fpr[-1], 1)
+
+
 def test_roc_returns_consistency():
     """Test whether the returned threshold matches up with tpr"""
     # make small toy dataset
@@ -101,8 +112,8 @@ def test_roc_returns_consistency():
 
     # use the given thresholds to determine the tpr
     tpr_correct = []
-    for t in range(len(thresholds)):
-        tp = np.sum((probas_pred >= thresholds[t]) & y_true)
+    for t in thresholds:
+        tp = np.sum((probas_pred >= t) & y_true)
         p = np.sum(y_true)
         tpr_correct.append(1.0 * tp / p)
 

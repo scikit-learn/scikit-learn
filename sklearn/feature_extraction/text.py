@@ -168,7 +168,7 @@ class VectorizerMixin(object):
 
         # unfortunately python functools package does not have an efficient
         # `compose` function that would have allowed us to chain a dynamic
-        # number of functions. However the however of a lambda call is a few
+        # number of functions. However the cost of a lambda call is a few
         # hundreds of nanoseconds which is negligible when compared to the
         # cost of tokenizing a string of 1000 chars for instance.
         noop = lambda x: x
@@ -319,8 +319,8 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
 
     stop_words: string {'english'}, list, or None (default)
         If a string, it is passed to _check_stop_list and the appropriate stop
-        list is returned is currently the only
-        supported string value.
+        list is returned. 'english' is currently the only supported string
+        value.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
@@ -500,8 +500,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
 
     stop_words : string {'english'}, list, or None (default)
         If a string, it is passed to _check_stop_list and the appropriate stop
-        list is returned is currently the only
-        supported string value.
+        list is returned. 'english' is currently the only supported string
+        value.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
@@ -829,8 +829,11 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
     corpus.
 
     In the SMART notation used in IR, this class implements several tf–idf
-    variants. Tf is always "n" (natural), idf is "t" iff use_idf is given,
-    "n" otherwise, and normalization is "c" iff norm='l2', "n" iff norm=None.
+    variants:
+
+    Tf is "n" (natural) by default, "l" (logarithmic) when sublinear_tf=True.
+    Idf is "t" idf is "t" when use_idf is given, "n" (none) otherwise.
+    Normalization is "c" (cosine) when norm='l2', "n" (none) when norm=None.
 
     Parameters
     ----------
@@ -922,6 +925,8 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
             X.data += 1
 
         if self.use_idf:
+            if not hasattr(self, "_idf_diag"):
+                raise ValueError("idf vector not fitted")
             expected_n_features = self._idf_diag.shape[0]
             if n_features != expected_n_features:
                 raise ValueError("Input has n_features=%d while the model"
@@ -1000,8 +1005,8 @@ class TfidfVectorizer(CountVectorizer):
 
     stop_words : string {'english'}, list, or None (default)
         If a string, it is passed to _check_stop_list and the appropriate stop
-        list is returned is currently the only
-        supported string value.
+        list is returned. 'english' is currently the only supported string
+        value.
 
         If a list, that list is assumed to contain stop words, all of which
         will be removed from the resulting tokens.
