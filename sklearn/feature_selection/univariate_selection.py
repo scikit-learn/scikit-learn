@@ -141,7 +141,7 @@ def f_classif(X, y):
     return f_oneway(*args)
 
 
-def _chisquare(f_exp, f_obs):
+def _chisquare(f_obs, f_exp):
     """Fast replacement for scipy.stats.chisquare.
 
     Version from https://github.com/scipy/scipy/pull/2525 with additional
