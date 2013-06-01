@@ -136,12 +136,15 @@ def test_pairwise_kernels():
         Y_tuples = tuple([tuple([v for v in row]) for row in Y])
         K2 = pairwise_kernels(X_tuples, Y_tuples, metric=metric)
         assert_array_almost_equal(K1, K2)
-        if metric in ["chi2", "additive_chi2"]:
-            # these don't support sparse matrices yet
-            continue
+
         # Test with sparse X and Y
         X_sparse = csr_matrix(X)
         Y_sparse = csr_matrix(Y)
+        if metric in ["chi2", "additive_chi2"]:
+            # these don't support sparse matrices yet
+            assert_raises(ValueError, pairwise_kernels,
+                          X_sparse, Y=Y_sparse, metric=metric)
+            continue
         K1 = pairwise_kernels(X_sparse, Y=Y_sparse, metric=metric)
         assert_array_almost_equal(K1, K2)
     # Test with a callable function, with given keywords.
@@ -234,6 +237,8 @@ def test_chi_square_kernel():
 
     # sparse matrices
     assert_raises(ValueError, chi2_kernel, csr_matrix(X), csr_matrix(Y))
+    assert_raises(ValueError, additive_chi2_kernel,
+                  csr_matrix(X), csr_matrix(Y))
 
 
 def test_kernel_symmetry():

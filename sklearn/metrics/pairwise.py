@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 The :mod:`sklearn.metrics.pairwise` submodule implements utilities to evaluate
 pairwise distances or affinity of sets of samples.
@@ -322,7 +323,7 @@ def rbf_kernel(X, Y=None, gamma=None):
     """
     Compute the rbf (gaussian) kernel between X and Y::
 
-        K(x, y) = exp(-gamma ||x-y||^2)
+        K(x, y) = exp(-γ ||x-y||²)
 
     for each pair of rows x in X and y in Y.
 
@@ -395,7 +396,7 @@ def additive_chi2_kernel(X, Y=None):
 
     The chi-squared kernel is given by::
 
-        k(x, y) = -\sum_i (x[i] - y[i]) ** 2 / (x[i] + y[i])
+        k(x, y) = -∑ᵢ [(xᵢ - yᵢ)² / (xᵢ + yᵢ)]
 
     It can be interpreted as a weighted difference per entry.
 
@@ -477,7 +478,7 @@ def chi2_kernel(X, Y=None, gamma=1.):
 
     The chi-squared kernel is given by::
 
-        k(x, y) = exp(-gamma * \sum_i (x[i] - y[i]) ** 2 / (x[i] + y[i]))
+        k(x, y) = exp(-γ ∑ᵢ [(xᵢ - yᵢ)² / (xᵢ + yᵢ)])
 
     It can be interpreted as a weighted difference per entry.
 

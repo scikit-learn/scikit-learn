@@ -8,6 +8,8 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 
+from sklearn.feature_extraction.text import ENGLISH_STOP_WORDS
+
 from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
 from sklearn.svm import LinearSVC
@@ -244,6 +246,19 @@ def test_countvectorizer_custom_vocabulary_pipeline():
     assert_equal(X.shape[1], len(what_we_like))
 
 
+def test_countvectorizer_stop_words():
+    cv = CountVectorizer()
+    cv.set_params(stop_words='english')
+    assert_equal(cv.get_stop_words(), ENGLISH_STOP_WORDS)
+    cv.set_params(stop_words='_bad_str_stop_')
+    assert_raises(ValueError, cv.get_stop_words)
+    cv.set_params(stop_words=u'_bad_unicode_stop_')
+    assert_raises(ValueError, cv.get_stop_words)
+    stoplist = ['some', 'other', 'words']
+    cv.set_params(stop_words=stoplist)
+    assert_equal(cv.get_stop_words(), stoplist)
+
+
 def test_countvectorizer_empty_vocabulary():
     try:
         CountVectorizer(vocabulary=[])
@@ -390,6 +405,18 @@ def test_vectorizer():
     tf = t2.fit(counts_train).transform(counts_train).toarray()
     assert_equal(t2.idf_, None)
 
+    # test idf transform with unlearned idf vector
+    t3 = TfidfTransformer(use_idf=True)
+    assert_raises(ValueError, t3.transform, counts_train)
+
+    # test idf transform with incompatible n_features
+    X = [[1, 1, 5],
+         [1, 1, 0]]
+    t3.fit(X)
+    X_incompt = [[1, 3],
+                 [1, 3]]
+    assert_raises(ValueError, t3.transform, X_incompt)
+
     # L1-normalized term frequencies sum to one
     assert_array_almost_equal(np.sum(tf, axis=1), [1.0] * n_train)
 
@@ -410,6 +437,31 @@ def test_vectorizer():
     # test transform on unfitted vectorizer with empty vocabulary
     v3 = CountVectorizer(vocabulary=None)
     assert_raises(ValueError, v3.transform, train_data)
+
+    # ascii preprocessor?
+    v3.set_params(strip_accents='ascii', lowercase=False)
+    assert_equal(v3.build_preprocessor(), strip_accents_ascii)
+
+    # error on bad strip_accents param
+    v3.set_params(strip_accents='_gabbledegook_', preprocessor=None)
+    assert_raises(ValueError, v3.build_preprocessor)
+
+    # error with bad analyzer type
+    v3.set_params = '_invalid_analyzer_type_'
+    assert_raises(ValueError, v3.build_analyzer)
+
+
+def test_tfidf_vectorizer_setters():
+    tv = TfidfVectorizer(norm='l2', use_idf=False, smooth_idf=False,
+                         sublinear_tf=False)
+    tv.norm = 'l1'
+    assert_equal(tv._tfidf.norm, 'l1')
+    tv.use_idf = True
+    assert_true(tv._tfidf.use_idf)
+    tv.smooth_idf = True
+    assert_true(tv._tfidf.smooth_idf)
+    tv.sublinear_tf = True
+    assert_true(tv._tfidf.sublinear_tf)
 
 
 def test_hashing_vectorizer():
@@ -452,8 +504,11 @@ def test_hashing_vectorizer():
 
 def test_feature_names():
     cv = CountVectorizer(max_df=0.5, min_df=1)
-    X = cv.fit_transform(ALL_FOOD_DOCS)
 
+    # test for Value error on unfitted/empty vocabulary
+    assert_raises(ValueError, cv.get_feature_names)
+
+    X = cv.fit_transform(ALL_FOOD_DOCS)
     n_samples, n_features = X.shape
     assert_equal(len(cv.vocabulary_), n_features)
 

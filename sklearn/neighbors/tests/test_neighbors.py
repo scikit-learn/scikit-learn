@@ -274,14 +274,20 @@ def test_radius_neighbors_classifier_when_no_neighbors():
 
     weight_func = _weight_func
 
-    for algorithm in ALGORITHMS:
-        for weights in ['uniform', 'distance', weight_func]:
-            clf = neighbors.RadiusNeighborsClassifier(radius=radius,
-                                                      weights=weights,
-                                                      algorithm=algorithm)
-            clf.fit(X, y)
-            clf.predict(z1)
-            assert_raises(ValueError, clf.predict, z2)
+    for outlier_label in [0, -1, None]:
+        for algorithm in ALGORITHMS:
+            for weights in ['uniform', 'distance', weight_func]:
+                rnc = neighbors.RadiusNeighborsClassifier
+                clf = rnc(radius=radius, weights=weights, algorithm=algorithm,
+                          outlier_label=outlier_label)
+                clf.fit(X, y)
+                assert_array_equal(np.array([1, 2]),
+                                   clf.predict(z1))
+                if outlier_label is None:
+                    assert_raises(ValueError, clf.predict, z2)
+                elif False:
+                    assert_array_equal(np.array([1, outlier_label]),
+                                       clf.predict(z2))
 
 
 def test_radius_neighbors_classifier_outlier_labeling():
