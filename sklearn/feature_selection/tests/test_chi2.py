@@ -70,8 +70,8 @@ def test_chi2_negative():
 
 def test_chisquare():
     """Test replacement for scipy.stats.chisquare against the original."""
-    obs = np.array([[2, 2],
-                    [1, 1]])
+    obs = np.array([[2., 2.],
+                    [1., 1.]])
     exp = np.array([[1.5, 1.5],
                     [1.5, 1.5]])
     # call SciPy first because our version overwrites obs

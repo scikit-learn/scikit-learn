@@ -147,7 +147,7 @@ def _chisquare(f_obs, f_exp):
     Version from https://github.com/scipy/scipy/pull/2525 with additional
     optimizations.
     """
-    assert np.issubdtype(f_obs.dtype, np.floating)
+    f_obs = np.asarray(f_obs, dtype=np.float64)
 
     k = len(f_obs)
     # Reuse f_obs for χ² statistics
