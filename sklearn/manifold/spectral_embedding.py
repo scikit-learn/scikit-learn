@@ -412,19 +412,18 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
                               "rbf affinity")
                 self.affinity = "rbf"
             else:
-                if self.gamma is None:
-                    self.gamma = 1.0 / X.shape[1]
-                if self.n_neighbors is None:
-                    self.n_neighbors = max(int(X.shape[0] / 10), 1)
-                self.affinity_matrix_ = kneighbors_graph(X, self.n_neighbors)
+                self.n_neighbors_ = (self.n_neighbors
+                                     if self.n_neighbors is not None
+                                     else max(int(X.shape[0] / 10), 1))
+                self.affinity_matrix_ = kneighbors_graph(X, self.n_neighbors_)
                 # currently only symmetric affinity_matrix supported
                 self.affinity_matrix_ = 0.5 * (self.affinity_matrix_ +
                                                self.affinity_matrix_.T)
                 return self.affinity_matrix_
         if self.affinity == 'rbf':
-            if self.gamma is None:
-                self.gamma = 1.0 / X.shape[1]
-            self.affinity_matrix_ = rbf_kernel(X, gamma=self.gamma)
+            self.gamma_ = (self.gamma
+                           if self.gamma is not None else 1.0 / X.shape[1])
+            self.affinity_matrix_ = rbf_kernel(X, gamma=self.gamma_)
             return self.affinity_matrix_
         self.affinity_matrix_ = self.affinity(X)
         return self.affinity_matrix_
@@ -448,7 +447,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         if isinstance(self.affinity, basestring):
             if self.affinity not in set(("nearest_neighbors", "rbf",
                                          "precomputed")):
@@ -463,7 +462,7 @@ class SpectralEmbedding(BaseEstimator, TransformerMixin):
         self.embedding_ = spectral_embedding(affinity_matrix,
                                              n_components=self.n_components,
                                              eigen_solver=self.eigen_solver,
-                                             random_state=self.random_state)
+                                             random_state=random_state)
         return self
 
     def fit_transform(self, X, y=None):

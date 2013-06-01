@@ -1110,6 +1110,11 @@ def cross_val_score(estimator, X, y=None, score_func=None, cv=None, n_jobs=1,
 
     fit_params : dict, optional
         Parameters to pass to the fit method of the estimator.
+
+    Returns
+    -------
+    scores : array of float, shape=(len(list(cv)),)
+        Array of scores of the estimator for each run of the cross validation.
     """
     X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
     cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
@@ -1314,6 +1319,11 @@ def train_test_split(*arrays, **options):
     dtype : a numpy dtype instance, None by default
         Enforce a specific dtype.
 
+    Returns
+    -------
+    splitting : list of arrays, length=2 * len(arrays)
+        List containing train-test split of input array.
+
     Examples
     --------
     >>> import numpy as np
@@ -1368,3 +1378,5 @@ def train_test_split(*arrays, **options):
         splitted.append(a[train])
         splitted.append(a[test])
     return splitted
+
+train_test_split.__test__ = False  # to avoid a pb with nosetests

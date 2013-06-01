@@ -232,8 +232,8 @@ class LinearRegression(LinearModel, RegressorMixin):
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     Attributes
     ----------

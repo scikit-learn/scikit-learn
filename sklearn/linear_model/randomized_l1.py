@@ -209,8 +209,8 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     precompute : True | False | 'auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -383,8 +383,8 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     tol : float, optional
          tolerance for stopping criteria of LogisticRegression

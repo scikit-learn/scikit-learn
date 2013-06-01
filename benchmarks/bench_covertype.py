@@ -44,17 +44,18 @@ from __future__ import division
 
 print __doc__
 
-# Author: Peter Prettenhoer <peter.prettenhofer@gmail.com>
+# Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 # License: BSD Style.
 
-# $Id$
-
-from time import time
+import logging
 import os
 import sys
-import numpy as np
+from time import time
 from optparse import OptionParser
 
+import numpy as np
+
+from sklearn.datasets import fetch_covtype
 from sklearn.svm import LinearSVC
 from sklearn.linear_model import SGDClassifier
 from sklearn.naive_bayes import GaussianNB
@@ -62,7 +63,10 @@ from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
 from sklearn import metrics
 from sklearn.externals.joblib import Memory
-from sklearn.utils import check_random_state
+
+logging.basicConfig(level=logging.INFO,
+                    format='%(asctime)s %(levelname)s %(message)s')
+logger = logging.getLogger(__name__)
 
 op = OptionParser()
 op.add_option("--classifiers",
@@ -80,8 +84,7 @@ op.add_option("--n-jobs",
 # estimators.
 op.add_option("--random-seed",
               dest="random_seed", default=13, type=int,
-              help="Common seed used by random number generator."
-              )
+              help="Common seed used by random number generator.")
 
 op.print_help()
 
@@ -97,57 +100,31 @@ original_archive = os.path.join(bench_folder, 'covtype.data.gz')
 joblib_cache_folder = os.path.join(bench_folder, 'bench_covertype_data')
 m = Memory(joblib_cache_folder, mmap_mode='r')
 
-# Set seed for rng
-rng = check_random_state(opts.random_seed)
-
 
 # Load the data, then cache and memmap the train/test split
 @m.cache
 def load_data(dtype=np.float32, order='F'):
     ######################################################################
-    ## Download the data, if not already on disk
-    if not os.path.exists(original_archive):
-        # Download the data
-        import urllib
-        print "Downloading data, Please Wait (11MB)..."
-        opener = urllib.urlopen(
-            'http://archive.ics.uci.edu/ml/'
-            'machine-learning-databases/covtype/covtype.data.gz')
-        open(original_archive, 'wb').write(opener.read())
-
-    ######################################################################
     ## Load dataset
     print("Loading dataset...")
-    import gzip
-    f = gzip.open(original_archive)
-    X = np.fromstring(f.read().replace(",", " "), dtype=dtype, sep=" ",
-                      count=-1)
-    X = X.reshape((581012, 55))
+    data = fetch_covtype(download_if_missing=True, shuffle=True,
+                         random_state=opts.random_seed)
+    X, y = data.data, data.target
     if order.lower() == 'f':
         X = np.asfortranarray(X)
-    f.close()
 
     # class 1 vs. all others.
-    y = np.ones(X.shape[0]) * -1
-    y[np.where(X[:, -1] == 1)] = 1
-    X = X[:, :-1]
+    y[np.where(y != 1)] = -1
 
     ######################################################################
     ## Create train-test split (as [Joachims, 2006])
-    print("Creating train-test split...")
-    idx = np.arange(X.shape[0])
-    rng.shuffle(idx)
-    train_idx = idx[:522911]
-    test_idx = idx[522911:]
+    logger.info("Creating train-test split...")
+    n_train = 522911
 
-    X_train = X[train_idx]
-    y_train = y[train_idx]
-    X_test = X[test_idx]
-    y_test = y[test_idx]
-
-    # free memory
-    del X
-    del y
+    X_train = X[:n_train]
+    y_train = y[:n_train]
+    X_test = X[n_train:]
+    y_test = y[n_train:]
 
     ######################################################################
     ## Standardize first 10 features (the numerical ones)
@@ -204,7 +181,7 @@ liblinear_parameters = {
     'dual': False,
     'tol': 1e-3,
     "random_state": opts.random_seed,
-    }
+}
 classifiers['liblinear'] = LinearSVC(**liblinear_parameters)
 
 ######################################################################
@@ -218,7 +195,7 @@ sgd_parameters = {
     'n_iter': 2,
     'n_jobs': opts.n_jobs,
     "random_state": opts.random_seed,
-    }
+}
 classifiers['SGD'] = SGDClassifier(**sgd_parameters)
 
 ######################################################################

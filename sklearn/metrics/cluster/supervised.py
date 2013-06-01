@@ -6,6 +6,7 @@ better.
 
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>
 #          Wei LI <kuantkid@gmail.com>
+#          Diego Molla <dmolla-aliod@gmail.com>
 # License: BSD Style.
 
 from math import log
@@ -169,10 +170,12 @@ def adjusted_rand_score(labels_true, labels_pred):
     n_samples = labels_true.shape[0]
     classes = np.unique(labels_true)
     clusters = np.unique(labels_pred)
-    # Special limit cases: no clustering since the data is not split.
-    # This is a perfect match hence return 1.0.
+    # Special limit cases: no clustering since the data is not split;
+    # or trivial clustering where each document is assigned a unique cluster.
+    # These are perfect matches hence return 1.0.
     if (classes.shape[0] == clusters.shape[0] == 1
-            or classes.shape[0] == clusters.shape[0] == 0):
+            or classes.shape[0] == clusters.shape[0] == 0
+            or classes.shape[0] == clusters.shape[0] == len(labels_true)):
         return 1.0
 
     contingency = contingency_matrix(labels_true, labels_pred)

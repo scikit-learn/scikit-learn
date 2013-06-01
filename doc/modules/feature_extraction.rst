@@ -124,9 +124,9 @@ and has no ``inverse_transform`` method.
 
 Since the hash function might cause collisions between (unrelated) features,
 a signed hash function is used and the sign of the hash value
-determines the sign of the value stored in the output matrix for a feature;
-this way, collisions are likely to cancel out rather than accumulate error,
-and the expected mean of any output feature's value is zero
+determines the sign of the value stored in the output matrix for a feature.
+This way, collisions are likely to cancel out rather than accumulate error,
+and the expected mean of any output feature's value is zero.
 
 If ``non_negative=True`` is passed to the constructor,
 the absolute value is taken.
@@ -139,14 +139,20 @@ or ``chi2`` feature selectors that expect non-negative inputs.
 ``(feature, value)`` pairs, or strings,
 depending on the constructor parameter ``input_type``.
 Mapping are treated as lists of ``(feature, value)`` pairs,
-while single strings have an implicit value of 1.
-If a feature occurs multiple times in a sample, the values will be summed.
+while single strings have an implicit value of 1,
+so ``['feat1', 'feat2', 'feat3']`` is interpreted as
+``[('feat1', 1), ('feat2', 1), ('feat3', 1)]``.
+If a single feature occurs multiple times in a sample,
+the associated values will be summed
+(so ``('feat', 2)`` and ``('feat', 3.5)`` become ``('feat', 5.5)``).
+The output from :class:`FeatureHasher` is always a ``scipy.sparse`` matrix
+in the CSR format.
+
 Feature hashing can be employed in document classification,
 but unlike :class:`text.CountVectorizer`,
 :class:`FeatureHasher` does not do word
-splitting or any other preprocessing except Unicode-to-UTF-8 encoding.
-The output from :class:`FeatureHasher` is always a ``scipy.sparse`` matrix
-in the CSR format.
+splitting or any other preprocessing except Unicode-to-UTF-8 encoding;
+see :ref:`hashing_vectorizer`, below, for a combined tokenizer/hasher.
 
 As an example, consider a word-level natural language processing task
 that needs features extracted from ``(token, part_of_speech)`` pairs.
@@ -192,6 +198,10 @@ used two separate hash functions :math:`h` and :math:`\xi`
 to determine the column index and sign of a feature, respectively.
 The present implementation works under the assumption
 that the sign bit of MurmurHash3 is independent of its other bits.
+
+Since a simple modulo is used to transform the hash function to a column index,
+it is advisable to use a power of two as the ``n_features`` parameter;
+otherwise the features will not be mapped evenly to the columns.
 
 
 .. topic:: References:
