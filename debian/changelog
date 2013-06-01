@@ -1,3 +1,10 @@
+scikit-learn (0.13.1-1) unstable; urgency=low
+
+  * "Fresh" bugfix release:
+    - dropping all cherry picked changesets
+
+ -- Yaroslav Halchenko <debian@onerussian.com>  Sat, 01 Jun 2013 11:36:44 -0400
+
 scikit-learn (0.13-3) unstable; urgency=low
 
   * Upload to unstable

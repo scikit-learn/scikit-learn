@@ -20,7 +20,7 @@ Subject: use system-wide joblib and do not attempt to install joblib/test
 +from joblib import *
 --- a/sklearn/metrics/pairwise.py
 +++ b/sklearn/metrics/pairwise.py
-@@ -47,7 +47,7 @@ from ..utils.validation import array2d
+@@ -48,7 +48,7 @@ from ..utils.validation import array2d
  from ..preprocessing import normalize
  from ..externals.joblib import Parallel
  from ..externals.joblib import delayed
@@ -29,7 +29,7 @@ Subject: use system-wide joblib and do not attempt to install joblib/test
  
  from .pairwise_fast import _chi2_kernel_fast
  
-@@ -552,7 +552,7 @@ def _parallel_pairwise(X, Y, func, n_job
+@@ -553,7 +553,7 @@ def _parallel_pairwise(X, Y, func, n_job
      """Break the pairwise matrix in n_jobs even slices
      and compute them in parallel"""
      if n_jobs < 0:
