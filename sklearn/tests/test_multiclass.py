@@ -7,6 +7,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_sequences_equal
 
 from sklearn.utils.testing import assert_greater
 from sklearn.multiclass import OneVsRestClassifier
@@ -64,7 +65,7 @@ def test_ovr_always_present():
         ovr = OneVsRestClassifier(DecisionTreeClassifier())
         ovr.fit(X, y)
         y_pred = ovr.predict(X)
-        assert_array_equal(np.array(y_pred), np.array(y))
+        assert_sequences_equal(y_pred, y)
 
 
 def test_ovr_multilabel():
@@ -146,13 +147,13 @@ def test_ovr_multilabel_predict_proba():
         decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
         assert_raises(AttributeError, decision_only.predict_proba, X_test)
 
-        Y_pred = clf.predict(X_test)
+        Y_pred = list(clf.predict(X_test))
         Y_proba = clf.predict_proba(X_test)
 
         # predict assigns a label if the probability that the
         # sample has the label is greater than 0.5.
         pred = [tuple(l.nonzero()[0]) for l in (Y_proba > 0.5)]
-        assert_equal(pred, Y_pred)
+        assert_sequences_equal(pred, Y_pred)
 
 
 def test_ovr_single_label_predict_proba():

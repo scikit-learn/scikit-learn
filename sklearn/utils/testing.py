@@ -10,6 +10,7 @@
 import inspect
 import pkgutil
 
+import numpy as np
 import scipy as sp
 from functools import wraps
 try:
@@ -95,6 +96,25 @@ def assert_raise_message(exception, message, function, *args, **kwargs):
     except exception as e:
         error_message = str(e)
         assert_in(message, error_message)
+
+
+def assert_sequences_equal(first, second, err_msg=''):
+    """Asserts equality of two sequences of sequences
+
+    This compares multilabel targets irrespective of the sequence types.
+    It is necessary because sequence types vary, `assert_array_equal` may
+    misinterpret some formats as 2-dimensional.
+    """
+    # TODO: first assert args are valid sequences of sequences
+    if err_msg:
+        err_msg = '\n' + err_msg
+    assert_equal(len(first), len(second),
+                 'Sequence of sequence lengths do not match.'
+                 '{}'.format(err_msg))
+    for i, (first_el, second_el) in enumerate(zip(first, second)):
+        assert_array_equal(np.unique(first_el), np.unique(second_el),
+                           'In sequence of sequence element {}'
+                           '{}'.format(i, err_msg))
 
 
 def fake_mldata(columns_dict, dataname, matfile, ordering=None):

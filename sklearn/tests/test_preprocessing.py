@@ -10,6 +10,7 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_false
+from sklearn.utils.testing import assert_sequences_equal
 
 from sklearn.utils.sparsefuncs import mean_variance_axis0
 from sklearn.preprocessing import Binarizer
@@ -510,7 +511,7 @@ def test_label_binarizer_multilabel():
                               [1, 1, 0]])
     got = lb.fit_transform(inp)
     assert_array_equal(indicator_mat, got)
-    assert_equal(lb.inverse_transform(got), inp)
+    assert_sequences_equal(lb.inverse_transform(got), inp)
 
     # test input as label indicator matrix
     lb.fit(indicator_mat)
@@ -527,8 +528,7 @@ def test_label_binarizer_multilabel():
                          [1, 1]])
     got = lb.fit_transform(inp)
     assert_array_equal(expected, got)
-    assert_equal([set(x) for x in lb.inverse_transform(got)],
-                 [set(x) for x in inp])
+    assert_sequences_equal(lb.inverse_transform(got), inp)
 
 
 def test_label_binarizer_errors():
@@ -612,15 +612,45 @@ def test_label_encoder():
     assert_raises(ValueError, le.transform, [0, 6])
 
 
+def test_label_encoder_multilabel():
+    """Test LabelEncoder's transform and inverse_transform methods with
+    multilabel data"""
+    le = LabelEncoder()
+    le.fit([[1], [1, 4], [5, -1, 0]])
+    assert_array_equal(le.classes_, [-1, 0, 1, 4, 5])
+    assert_sequences_equal(le.transform([[0, 1, 4], [4, 5, -1], [-1]]),
+                       [[1, 2, 3], [3, 4, 0], [0]])
+    assert_sequences_equal(le.inverse_transform([[1, 2, 3], [3, 4, 0], [0]]),
+                       [[0, 1, 4], [4, 5, -1], [-1]])
+    assert_raises(ValueError, le.transform, [[0, 6]])
+    # not handling label encoder matrices presently
+    assert_raises(ValueError, le.transform, np.array([[0, 1], [1, 0]]))
+
+
 def test_label_encoder_fit_transform():
     """Test fit_transform"""
     le = LabelEncoder()
     ret = le.fit_transform([1, 1, 4, 5, -1, 0])
     assert_array_equal(ret, [2, 2, 3, 4, 0, 1])
+    assert_array_equal(le.classes_, [-1, 0, 1, 4, 5])
 
     le = LabelEncoder()
     ret = le.fit_transform(["paris", "paris", "tokyo", "amsterdam"])
     assert_array_equal(ret, [1, 1, 2, 0])
+
+
+def test_label_encoder_fit_transform_multilabel():
+    """Test fit_transform for multilabel input"""
+    le = LabelEncoder()
+    ret = le.fit_transform([[1], [1, 4, 5], [-1, 0]])
+    assert_sequences_equal(ret, [[2], [2, 3, 4], [0, 1]])
+    assert_array_equal(le.classes_, [-1, 0, 1, 4, 5])
+
+    le = LabelEncoder()
+    ret = le.fit_transform([["paris"], ["paris", "tokyo", "amsterdam"]])
+    assert_sequences_equal(ret, [[1], [1, 2, 0]])
+    # not handling label encoder matrices presently
+    assert_raises(ValueError, le.transform, np.array([[0, 1], [1, 0]]))
 
 
 def test_label_encoder_string_labels():
@@ -633,6 +663,19 @@ def test_label_encoder_string_labels():
                        [2, 2, 1])
     assert_array_equal(le.inverse_transform([2, 2, 1]),
                        ["tokyo", "tokyo", "paris"])
+    assert_raises(ValueError, le.transform, ["london"])
+
+
+def test_label_encoder_strings_multilabel():
+    """Test LabelEncoder's transform and inverse_transform methods with
+    non-numeric multilabel data"""
+    le = LabelEncoder()
+    le.fit([["paris"], ["paris", "tokyo", "amsterdam"]])
+    assert_array_equal(le.classes_, ["amsterdam", "paris", "tokyo"])
+    assert_sequences_equal(le.transform([["tokyo"], ["tokyo", "paris"]]),
+                       [[2], [2, 1]])
+    assert_sequences_equal(le.inverse_transform([[2], [2, 1]]),
+                       [["tokyo"], ["tokyo", "paris"]])
     assert_raises(ValueError, le.transform, ["london"])
 
 

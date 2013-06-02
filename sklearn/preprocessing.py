@@ -4,6 +4,7 @@
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
 # License: BSD 3 clause
 
+import functools
 import warnings
 import numbers
 
@@ -829,6 +830,15 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
     >>> list(le.inverse_transform([2, 2, 1]))
     ['tokyo', 'tokyo', 'paris']
 
+    It can also be used to transform multi-label sequences of sequences:
+
+    >>> le = preprocessing.LabelEncoder()
+    >>> targets = [["paris", "tokyo"], ["amsterdam", "paris"]]
+    >>> list(map(list, le.fit_transform(targets)))
+    [[1, 2], [0, 1]]
+    >>> list(map(list, le.inverse_transform([[1, 2], [0, 1]])))
+    [['paris', 'tokyo'], ['amsterdam', 'paris']]
+
     """
 
     def _check_fitted(self):
@@ -840,14 +850,14 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : array-like of shape [n_samples]
+        y : array-like of shape [n_samples] or sequence of sequences
             Target values.
 
         Returns
         -------
         self : returns an instance of self.
         """
-        self.classes_ = np.unique(y)
+        self.classes_ = unique_labels(y)
         return self
 
     def fit_transform(self, y):
@@ -855,13 +865,16 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : array-like of shape [n_samples]
+        y : array-like of shape [n_samples] or sequence of sequences
             Target values.
 
         Returns
         -------
-        y : array-like of shape [n_samples]
+        y : array-like of shape [n_samples] or sequence of sequences
         """
+        if is_multilabel(y):
+            self.fit(y)
+            return self.transform(y)
         self.classes_, y = unique(y, return_inverse=True)
         return y
 
@@ -870,20 +883,27 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : array-like of shape [n_samples]
+        y : array-like of shape [n_samples] or sequence of sequences
             Target values.
 
         Returns
         -------
-        y : array-like of shape [n_samples]
+        y : array-like of shape [n_samples] or sequence of sequences
         """
         self._check_fitted()
+        if is_multilabel(y):
+            if is_label_indicator_matrix(y):
+                raise ValueError(
+                    '{} does not support label indicator matrices'.format(
+                        self.__class__.__name__))
+            return list(map(self._transform, y))
 
-        classes = np.unique(y)
-        if len(np.intersect1d(classes, self.classes_)) < len(classes):
-            diff = np.setdiff1d(classes, self.classes_)
+        return self._transform(y)
+
+    def _transform(self, y):
+        diff = np.setdiff1d(y, self.classes_)
+        if len(diff):
             raise ValueError("y contains new labels: %s" % str(diff))
-
         return np.searchsorted(self.classes_, y)
 
     def inverse_transform(self, y):
@@ -891,15 +911,18 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        y : numpy array of shape [n_samples]
+        y : numpy array of shape [n_samples] or sequence of sequences
             Target values.
 
         Returns
         -------
-        y : numpy array of shape [n_samples]
+        y : numpy array of shape [n_samples] or sequence of sequences
         """
         self._check_fitted()
 
+        if is_multilabel(y):
+            # np.vectorize does not work with np.ndarray.take!
+            return list(map(self.classes_.take, y))
         y = np.asarray(y)
         return self.classes_[y]
 
