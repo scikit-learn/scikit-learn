@@ -55,6 +55,7 @@ def test_ransac_is_model_valid():
 def test_ransac_max_trials():
     estimator = linear_model.LinearRegression()
     assert_raises(ValueError, ransac, X, y, estimator, 2, 5, max_trials=0)
+    assert ransac(X, y, estimator, 2, 5, max_trials=11)[0] == 11
 
 
 if __name__ == "__main__":

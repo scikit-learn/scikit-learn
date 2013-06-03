@@ -133,4 +133,4 @@ def ransac(X, y, estimator, min_n_samples, residual_threshold,
     # estimate final model using all inliers
     estimator.fit(best_inlier_X, best_inlier_y)
 
-    return n_trials, best_inlier_mask
+    return n_trials + 1, best_inlier_mask
