@@ -132,10 +132,10 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
             xvals = 0.1 + i * (1 + len(vals)) + np.arange(len(vals))
             width = 0.8
 
-            pl.bar(xvals, build_time[alg] - bottom,
-                   width, bottom, color='r')
-            pl.bar(xvals, query_time[alg],
-                   width, build_time[alg], color='b')
+            c_bar = pl.bar(xvals, build_time[alg] - bottom,
+                           width, bottom, color='r')
+            q_bar = pl.bar(xvals, query_time[alg],
+                           width, build_time[alg], color='b')
 
             tick_vals += list(xvals + 0.5 * width)
             tick_labels += ['%i' % val for val in vals]
@@ -175,10 +175,10 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
                 transform=ax.transAxes, rotation=-90,
                 ha='right', va='center')
 
-        pl.gcf().suptitle("%s data\nred = construction;  blue = N-point query"
-                          % (dataset[0].upper() + dataset[1:]),
-                          fontsize=16)
+        pl.gcf().suptitle("%s data set" % dataset.capitalize(), fontsize=16)
 
+    pl.figlegend((c_bar, q_bar), ('construction', 'N-point query'),
+                 'upper right')
 
 if __name__ == '__main__':
     barplot_neighbors(dataset='digits')
