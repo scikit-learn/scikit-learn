@@ -148,7 +148,7 @@ def _check_1d_array(y1, y2, ravel=False):
         return y1, y2
 
 
-def _check_clf_targets(y_true, y_pred, ravel=False, labels=None):
+def _check_clf_targets(y_true, y_pred, ravel=False):
     """Check that y_true and y_pred correspond to the same classification task type.
 
     This converts mixed multilabel targets to a common format, converts
@@ -166,17 +166,8 @@ def _check_clf_targets(y_true, y_pred, ravel=False, labels=None):
         If ``ravel``` is set to ``True``, then non-multilabel ``y_true`` and
         ``y_pred`` are raveled.
 
-    labels : array-like, optional
-        When set, if ``y_true`` and ``y_pred`` are in different multilabel
-        formats, this specifies a label order for the label indicator matrix
-        output.
-
     Returns
     -------
-    labels : array
-        The sorted unique labels in ``y_true`` and ``y_pred`` before encoding,
-        or the given ``labels``.
-
     type_true : one of {'multilabel-indicator', 'multilabel-sequences', \
                         'multiclass', 'binary'}
         The type of the true target data, as output by
@@ -194,22 +185,13 @@ def _check_clf_targets(y_true, y_pred, ravel=False, labels=None):
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
     type_true = type_of_target(y_true)
     type_pred = type_of_target(y_pred)
-    if labels is None:
-        labels = unique_labels(y_true, y_pred)
-    else:
-        labels = np.array(labels)
 
     if type_true.startswith('multilabel'):
         if not type_pred.startswith('multilabel'):
             raise ValueError("Can't handle mix of multilabel and multiclass targets")
-
         if type_true != type_pred:
-            enc = LabelBinarizer()
-            enc.fit([list(labels)])
-            y_true = enc.transform(y_true)
-            y_pred = enc.transform(y_pred)
-            type_true = type_pred = 'multilabel-indicator'
-
+            raise ValueError("Can't handle mix of multilabel formats (label "
+                             "indicator matrix and sequence of sequences)")
     elif type_pred.startswith('multilabel'):
         raise ValueError("Can't handle mix of multilabel and multiclass targets")
 
@@ -225,7 +207,7 @@ def _check_clf_targets(y_true, y_pred, ravel=False, labels=None):
     else:
         raise ValueError("Can't handle %s/%s targets" % (type_true, type_pred))
 
-    return labels, type_true, y_true, y_pred
+    return type_true, y_true, y_pred
 
 
 def auc(x, y, reorder=False):
@@ -1003,7 +985,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True):
     """
 
     # Compute accuracy for each possible representation
-    _, y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred, ravel=True)
+    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred, ravel=True)
     if y_type == 'multilabel-indicator':
         try:
             # oddly, we may get an "invalid" rather than a "divide"
@@ -1110,7 +1092,7 @@ def accuracy_score(y_true, y_pred, normalize=True):
 
     """
     # Compute accuracy for each possible representation
-    _, y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred, ravel=True)
+    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred, ravel=True)
     if y_type == 'multilabel-indicator':
         score = (y_pred != y_true).sum(axis=1) == 0
     elif y_type == 'multilabel-sequences':
@@ -1450,9 +1432,12 @@ def _tp_tn_fp_fn(y_true, y_pred, labels=None):
     (array([1, 1, 0]), array([1, 1, 1]), array([0, 0, 0]), array([0, 0, 1]))
 
     """
-    labels, y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred,
-                                                        labels=labels)
+    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
 
+    if labels is None:
+        labels = unique_labels(y_true, y_pred)
+    else:
+        labels = np.asarray(labels)
     n_labels = labels.size
     true_pos = np.zeros((n_labels), dtype=np.int)
     false_pos = np.zeros((n_labels), dtype=np.int)
@@ -1664,8 +1649,12 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         raise ValueError("beta should be >0 in the F-beta score")
     beta2 = beta ** 2
 
-    labels, y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred,
-                                                        labels=labels)
+    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
+
+    if labels is None:
+        labels = unique_labels(y_true, y_pred)
+    else:
+        labels = np.asarray(labels)
 
     if average == "samples":
         if y_type == 'multilabel-indicator':
@@ -2219,8 +2208,11 @@ def hamming_loss(y_true, y_pred, classes=None):
     0.166...
 
     """
-    classes, y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred,
-                                                         labels=classes)
+    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
+    if classes is None:
+        classes = unique_labels(y_true, y_pred)
+    else:
+        classes = np.asarray(classes)
 
     if y_type == 'multilabel-indicator':
         return np.mean(y_true != y_pred)
