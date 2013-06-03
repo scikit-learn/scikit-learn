@@ -676,10 +676,11 @@ def confusion_matrix(y_true, y_pred, labels=None):
     y_pred : array, shape = [n_samples]
         Estimated targets as returned by a classifier.
 
-    labels : array, shape = [n_classes]
-        List of all labels occurring in the dataset.
+    labels : array, shape = [n_classes], optional
+        List of labels to index the matrix. This may be used to reorder
+        or select a subset of labels.
         If none is given, those that appear at least once
-        in ``y_true`` or ``y_pred`` are used.
+        in ``y_true`` or ``y_pred`` are used in sorted order.
 
     Returns
     -------
@@ -2065,7 +2066,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None,
     y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) target values.
 
-    y_true : array-like or list of labels or label indicator matrix
+    y_pred : array-like or list of labels or label indicator matrix
         Estimated targets as returned by a classifier.
 
     labels : array, shape = [n_labels]

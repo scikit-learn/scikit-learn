@@ -13,6 +13,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 
 from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.metrics.pairwise import linear_kernel
 from sklearn.metrics.pairwise import chi2_kernel, additive_chi2_kernel
 from sklearn.metrics.pairwise import polynomial_kernel
@@ -60,6 +61,10 @@ def test_pairwise_distances():
     # manhattan does not support sparse matrices atm.
     assert_raises(ValueError, pairwise_distances, csr_matrix(X),
                   metric="manhattan")
+    # Low-level function for manhattan can divide in blocks to avoid
+    # using too much memory during the broadcasting
+    S3 = manhattan_distances(X, Y, size_threshold=10)
+    assert_array_almost_equal(S, S3)
     # Test cosine as a string metric versus cosine callable
     S = pairwise_distances(X, Y, metric="cosine")
     S2 = pairwise_distances(X, Y, metric=cosine)
