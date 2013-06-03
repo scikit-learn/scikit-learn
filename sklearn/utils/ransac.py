@@ -1,9 +1,9 @@
 import numpy as np
 
 
-def ransac(X, y, estimator_cls, min_n_samples, residual_threshold,
+def ransac(X, y, estimator, min_n_samples, residual_threshold,
            is_data_valid=None, is_model_valid=None, max_trials=100,
-           stop_n_inliers=np.inf, stop_score=1, estimator_kwargs={}):
+           stop_n_inliers=np.inf, stop_score=np.inf):
     """Fit a model to data with the RANSAC (random sample consensus) algorithm.
 
     RANSAC is an iterative algorithm for the robust estimation of parameters
@@ -22,6 +22,45 @@ def ransac(X, y, estimator_cls, min_n_samples, residual_threshold,
        maximal. In case the current estimated model has the same number of
        inliers, it is only considered as the best model if it has better score.
 
+    These steps are performed either a maximum number of times (`max_trials`)
+    or until one of the special stop criteria are met (see `stop_n_inliers` and
+    `stop_score`). The final model is estimated using all inlier samples of the
+    previously determined best model.
+
+    Parameters
+    ----------
+    X : numpy array or sparse matrix of shape [n_samples, n_features]
+        Training data.
+    y : numpy array of shape [n_samples, n_targets]
+        Target values
+    estimator_cls : object
+        Estimator object which implements the following methods:
+        * `fit(X, y)`: Fit model to given  training data and target values.
+        * `score(X)`: Returns the mean accuracy on the given test data.
+    residual_threshold : float
+        Maximum residual for a data sample to be classified as an inlier.
+    is_data_valid : function, optional
+        This function is called with the randomly selected data before the
+        model is fitted to it: `is_data_valid(X, y)`.
+    is_model_valid : function, optional
+        This function is called with the estimated model and the randomly
+        selected data: `is_model_valid(model, X, y)`, .
+    max_trials : int, optional
+        Maximum number of iterations for random sample selection.
+    stop_n_inliers : int, optional
+        Stop iteration if at least this number of inliers are found.
+    stop_score : float, optional
+        Stop iteration if score is greater equal than this threshold.
+
+    Returns
+    -------
+    inlier_mask : bool array of shape [n_samples]
+        Boolean mask of inliers classified as ``True``.
+
+    Raises
+    ------
+    ValueError: If no valid consensus set could be found.
+
     """
 
     best_estimator = None
@@ -30,9 +69,6 @@ def ransac(X, y, estimator_cls, min_n_samples, residual_threshold,
     best_inlier_mask = None
     best_inlier_X = None
     best_inlier_y = None
-
-    # estimator used for all iterations and for output
-    estimator = estimator_cls(**estimator_kwargs)
 
     # number of data samples
     n_samples = X.shape[0]
@@ -92,9 +128,9 @@ def ransac(X, y, estimator_cls, min_n_samples, residual_threshold,
 
     # if none of the iterations met the required criteria
     if best_inlier_mask is None:
-        return None, None
+        raise ValueError("RANSAC could not find valid consensus set.")
 
     # estimate final model using all inliers
     estimator.fit(best_inlier_X, best_inlier_y)
 
-    return estimator, best_inlier_mask
+    return best_inlier_mask
