@@ -174,7 +174,7 @@ class DPGMM(GMM):
     `means_` : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
 
-    `precisions_` : array
+    `precs_` : array
         Precision (inverse covariance) parameters for each mixture
         component.  The shape depends on `covariance_type`::
 
@@ -627,7 +627,7 @@ class VBGMM(DPGMM):
     `means_` : array, shape (`n_components`, `n_features`)
         Mean parameters for each mixture component.
 
-    `precisions_` : array
+    `precs_` : array
         Precision (inverse covariance) parameters for each mixture
         component.  The shape depends on `covariance_type`::
 
