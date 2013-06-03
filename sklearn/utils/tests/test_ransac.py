@@ -5,6 +5,8 @@ from sklearn import linear_model
 from sklearn.utils import ransac
 
 
+np.random.seed(1)
+
 # Generate coordinates of line
 X = np.arange(-200, 200)
 y = 0.2 * X + 20
@@ -21,8 +23,6 @@ y = data[:, 1]
 
 
 def test_ransac_inliers_outliers():
-    np.random.seed(1)
-
     # Estimate parameters of corrupted data
     _, inlier_mask = ransac(X, y, linear_model.LinearRegression(), 2, 5)
 
