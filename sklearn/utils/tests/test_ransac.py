@@ -63,5 +63,10 @@ def test_ransac_stop_n_inliers():
     assert ransac(X, y, estimator, 2, 5, stop_n_inliers=2)[0] == 1
 
 
+def test_ransac_stop_n_score():
+    estimator = linear_model.LinearRegression()
+    assert ransac(X, y, estimator, 2, 5, stop_score=0)[0] == 1
+
+
 if __name__ == "__main__":
     np.testing.run_module_suite()
