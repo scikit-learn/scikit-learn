@@ -1046,12 +1046,12 @@ def test_multilabel_representation_invariance():
     # allows to return the shuffled tuple.
     rng = check_random_state(42)
     shuffled = lambda x: sorted(x, key=lambda *args: rng.rand())
-    y1_shuffle = [shuffled(x) for x in y1]
-    y2_shuffle = [shuffled(x) for x in y2]
+    y1_shuffle = tuple(shuffled(x) for x in y1)
+    y2_shuffle = tuple(shuffled(x) for x in y2)
 
     # Let's have redundant labels
-    y1_redundant = [x * rng.randint(1, 4) for x in y1]
-    y2_redundant = [x * rng.randint(1, 4) for x in y2]
+    y1_redundant = tuple(x * rng.randint(1, 4) for x in y1)
+    y2_redundant = tuple(x * rng.randint(1, 4) for x in y2)
 
     # Binary indicator matrix format
     lb = LabelBinarizer().fit([range(n_classes)])
@@ -1099,19 +1099,9 @@ def test_multilabel_representation_invariance():
                                     % name)
 
         # Check invariance with mix input representation
-        assert_almost_equal(metric(y1, y2_binary_indicator), measure,
-                            err_msg="%s failed mix input representation "
-                                    "invariance: y_true in list of list of "
-                                    "labels format and y_pred in dense binary "
-                                    "indicator format"
-                                    % name)
-
-        assert_almost_equal(metric(y1_binary_indicator, y2), measure,
-                            err_msg="%s failed mix input representation "
-                                    "invariance: y_true in dense binary "
-                                    "indicator format and y_pred in list of "
-                                    "list of labels format."
-                                    % name)
+        print name
+        assert_raises(ValueError, metric, y1, y2_binary_indicator)
+        assert_raises(ValueError, metric, y1_binary_indicator, y2)
 
 
 def test_multilabel_zero_one_loss_subset():
