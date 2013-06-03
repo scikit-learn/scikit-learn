@@ -83,7 +83,7 @@ if __name__ == '__main__':
     pl.plot(xx, glmnet_results, 'r-', label='glmnet')
     pl.legend()
     pl.xlabel('number of samples to classify')
-    pl.ylabel('time (in seconds)')
+    pl.ylabel('Time (s)')
     pl.show()
 
     # now do a bench where the number of points is fixed
@@ -123,6 +123,6 @@ if __name__ == '__main__':
     pl.plot(xx, glmnet_results, 'r-', label='glmnet')
     pl.legend()
     pl.xlabel('number of features')
-    pl.ylabel('time (in seconds)')
+    pl.ylabel('Time (s)')
     pl.axis('tight')
     pl.show()
