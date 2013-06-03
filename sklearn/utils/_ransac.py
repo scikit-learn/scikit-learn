@@ -36,6 +36,7 @@ def ransac(X, y, estimator, min_n_samples, residual_threshold,
     estimator_cls : object
         Estimator object which implements the following methods:
         * `fit(X, y)`: Fit model to given  training data and target values.
+        * `predict(X)`: Predict using the estimated model.
         * `score(X)`: Returns the mean accuracy on the given test data.
     residual_threshold : float
         Maximum residual for a data sample to be classified as an inlier.
