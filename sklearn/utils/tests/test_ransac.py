@@ -1,26 +1,27 @@
 import numpy as np
-from numpy.testing import assert_equal
+from numpy.testing import assert_equal, assert_raises
 
 from sklearn import linear_model
 from sklearn.utils import ransac
 
 
+# Generate coordinates of line
+X = np.arange(-200, 200)
+y = 0.2 * X + 20
+data = np.column_stack([X, y])
+
+# Add some faulty data
+outliers = np.array((10, 30, 200))
+data[outliers[0], :] = (1000, 1000)
+data[outliers[1], :] = (-1000, -1000)
+data[outliers[2], :] = (-100, -50)
+
+X = data[:, 0][:, np.newaxis]
+y = data[:, 1]
+
+
 def test_ransac_inliers_outliers():
     np.random.seed(1)
-
-    # Generate coordinates of line
-    X = np.arange(-200, 200)
-    y = 0.2 * X + 20
-    data = np.column_stack([X, y])
-
-    # Add some faulty data
-    outliers = np.array((10, 30, 200))
-    data[outliers[0], :] = (1000, 1000)
-    data[outliers[1], :] = (-1000, -1000)
-    data[outliers[2], :] = (-100, -50)
-
-    X = data[:, 0][:, np.newaxis]
-    y = data[:, 1]
 
     # Estimate parameters of corrupted data
     inlier_mask = ransac(X, y, linear_model.LinearRegression(), 3, 5)
@@ -30,6 +31,26 @@ def test_ransac_inliers_outliers():
     ref_inlier_mask[outliers] = False
 
     assert_equal(inlier_mask, ref_inlier_mask)
+
+
+def test_ransac_is_data_valid():
+    def is_data_valid(X, y):
+        return False
+
+    X = np.random.rand(10, 2)
+    y = np.random.rand(10, 1)
+    estimator = linear_model.LinearRegression()
+    assert_raises(ValueError, ransac, X, y, estimator, 1, 1,
+                  is_data_valid=is_data_valid)
+
+
+def test_ransac_is_model_valid():
+    def is_model_valid(estimator, X, y):
+        return False
+    estimator = linear_model.LinearRegression()
+    assert_raises(ValueError, ransac, X, y, estimator, 1, 1,
+                  is_model_valid=is_model_valid)
+
 
 
 if __name__ == "__main__":
