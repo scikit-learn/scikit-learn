@@ -42,7 +42,8 @@ model.fit(X, y)
 
 # Robustly fit linear model with RANSAC algorithm
 model_robust = linear_model.LinearRegression()
-inlier_mask = ransac(X, y, model_robust, min_n_samples=2, residual_threshold=2)
+n, inlier_mask = ransac(X, y, model_robust, min_n_samples=2,
+                        residual_threshold=2)
 outlier_mask = ~inlier_mask
 
 # Generate coordinates of estimated models

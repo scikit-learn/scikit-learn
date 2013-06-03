@@ -24,7 +24,7 @@ def test_ransac_inliers_outliers():
     np.random.seed(1)
 
     # Estimate parameters of corrupted data
-    inlier_mask = ransac(X, y, linear_model.LinearRegression(), 2, 5)
+    _, inlier_mask = ransac(X, y, linear_model.LinearRegression(), 2, 5)
 
     # Ground truth / reference inlier mask
     ref_inlier_mask = np.ones_like(inlier_mask, dtype=np.bool_)
@@ -55,7 +55,6 @@ def test_ransac_is_model_valid():
 def test_ransac_max_trials():
     estimator = linear_model.LinearRegression()
     assert_raises(ValueError, ransac, X, y, estimator, 2, 5, max_trials=0)
-
 
 
 if __name__ == "__main__":
