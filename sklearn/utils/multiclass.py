@@ -81,10 +81,10 @@ def unique_labels(*ys):
 
     # Combine every labels
     ys_labels = [_unique_labels(y) for y in ys]
-    y_is_string = [y_labels.dtype.type is np.string_
-                   for y_labels in ys_labels]
+    ys_is_string = [y_labels.dtype.type is np.string_
+                    for y_labels in ys_labels]
 
-    if len(set(y_is_string)) != 1:
+    if len(set(ys_is_string)) != 1:
         raise ValueError("Mix of string and number type: "
                          "can't infered unique labels set")
 
