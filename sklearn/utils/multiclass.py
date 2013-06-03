@@ -58,7 +58,7 @@ def unique_labels(*ys):
     ys_is_multilabels = [is_multilabel(y) for y in ys]
 
     if len(set(ys_is_multilabels)) != 1:
-        raise ValueError("Mix of binary / mutliclass and multilabel type")
+        raise ValueError("Mix of binary / mutliclass and multilabel types")
 
     if all(ys_is_multilabels):
         ys_is_indicator = [is_label_indicator_matrix(y) for y in ys]
@@ -66,7 +66,7 @@ def unique_labels(*ys):
         # Only indicator multilabel format
         if all(ys_is_indicator):
             if len(set(y.shape[1] for y in ys)) > 1:
-                raise ValueError("Multi-label binary indicator input with "
+                raise ValueError("Multi-label binary indicator inputs with "
                                  "different number of labels")
             else:
                 return _unique_indicator(ys[0])
@@ -74,7 +74,7 @@ def unique_labels(*ys):
             # Only indicator sequence of sequence multilabel format
             _unique_labels = _unique_sequence_of_sequence
         else:
-            raise ValueError("Mix multilabel input format")
+            raise ValueError("Mix of multilabel input format")
 
     else:
         _unique_labels = _unique_multiclass
@@ -85,8 +85,7 @@ def unique_labels(*ys):
                     for y_labels in ys_labels]
 
     if len(set(ys_is_string)) != 1:
-        raise ValueError("Mix of string and number type: "
-                         "can't infered unique labels set")
+        raise ValueError("Mix of label input type s(string and number)")
 
     return np.unique(np.hstack(ys_labels))
 
