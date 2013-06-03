@@ -151,10 +151,9 @@ def _check_1d_array(y1, y2, ravel=False):
 def _check_clf_targets(y_true, y_pred, ravel=False):
     """Check that y_true and y_pred correspond to the same classification task type.
 
-    This converts mixed multilabel targets to a common format, converts
-    multiclass or binary types to a common shape, and raises a ValueError
-    for a mix of multilabel and multiclass targets, or for the presence of
-    continuous-valued targets.
+    This converts multiclass or binary types to a common shape, and raises a
+    ValueError for a mix of multilabel and multiclass targets, a mix of multilabel
+    formats, or for the presence of continuous-valued targets.
 
     Parameters
     ----------
