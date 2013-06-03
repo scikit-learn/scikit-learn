@@ -43,8 +43,8 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
     N_results_query = dict([(alg, np.zeros(len(Nrange)))
                             for alg in algorithms])
 
-    for i, NN in enumerate(Nrange, 1):
-        print("N = %i (%i out of %i)" % (NN, i, len(Nrange)))
+    for i, NN in enumerate(Nrange):
+        print("N = %i (%i out of %i)" % (NN, i + 1, len(Nrange)))
         X = get_data(NN, D, dataset)
         for algorithm in algorithms:
             nbrs = neighbors.NearestNeighbors(n_neighbors=min(NN, k),
@@ -66,8 +66,8 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
     D_results_query = dict([(alg, np.zeros(len(Drange)))
                             for alg in algorithms])
 
-    for i, DD in enumerate(Drange, 1):
-        print("D = %i (%i out of %i)" % (DD, i, len(Drange)))
+    for i, DD in enumerate(Drange):
+        print("D = %i (%i out of %i)" % (DD, i + 1, len(Drange)))
         X = get_data(N, DD, dataset)
         for algorithm in algorithms:
             nbrs = neighbors.NearestNeighbors(n_neighbors=k,
@@ -91,8 +91,8 @@ def barplot_neighbors(Nrange=2 ** np.arange(1, 11),
 
     X = get_data(N, DD, dataset)
 
-    for i, kk in enumerate(krange, 1):
-        print("k = %i (%i out of %i)" % (kk, i, len(krange)))
+    for i, kk in enumerate(krange):
+        print("k = %i (%i out of %i)" % (kk, i + 1, len(krange)))
         for algorithm in algorithms:
             nbrs = neighbors.NearestNeighbors(n_neighbors=kk,
                                               algorithm=algorithm,
