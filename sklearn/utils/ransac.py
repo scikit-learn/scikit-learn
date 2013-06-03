@@ -73,7 +73,7 @@ def ransac(X, y, estimator, min_n_samples, residual_threshold,
     # number of data samples
     n_samples = X.shape[0]
 
-    for _ in range(max_trials):
+    for n_trials in range(max_trials):
 
         # choose random sample set
         random_idxs = np.random.randint(0, n_samples, min_n_samples)
@@ -133,4 +133,4 @@ def ransac(X, y, estimator, min_n_samples, residual_threshold,
     # estimate final model using all inliers
     estimator.fit(best_inlier_X, best_inlier_y)
 
-    return best_inlier_mask
+    return n_trials, best_inlier_mask
