@@ -207,27 +207,19 @@ def test_unique_labels():
                        ["a", "b", "c", "d"])
 
     #Mix of multilabel-indicator and multilabel-sequences
-    assert_array_equal(unique_labels([["a", "b"], ["c"]], np.ones((3, 3))),
-                       ["a", "b", "c"])
-    assert_raises(ValueError, unique_labels, [["a", "b"], ["c"]],
-                  np.ones((3, 4)))
-    assert_raises(ValueError, unique_labels, [["a", "b"], ["c", 'd']],
-                  np.ones((3, 3)))
-
-    assert_array_equal(unique_labels([[1, 2], [3]], np.ones((3, 3))),
-                       [1, 2, 3])
-    assert_raises(ValueError, unique_labels, [[1, 2], [3]],
-                  np.ones((3, 4)))
-    assert_raises(ValueError, unique_labels, [[1, 2], [3, 4]],
-                  np.ones((3, 3)))
+    mix_multilabel_format = product(EXAMPLES["multilabel-indicator"],
+                                    EXAMPLES["multilabel-sequences"])
+    for y_multilabel, y_multiclass in mix_multilabel_format:
+        assert_raises(ValueError, unique_labels, y_multiclass, y_multilabel)
+        assert_raises(ValueError, unique_labels, y_multilabel, y_multiclass)
 
     #Mix with binary or multiclass and multilabel
-    pair_multiclass_multilabel = product(EXAMPLES["multilabel-indicator"] +
-                                         EXAMPLES["multilabel-sequences"],
-                                         EXAMPLES["multiclass"] +
-                                         EXAMPLES["binary"])
+    mix_clf_format = product(EXAMPLES["multilabel-indicator"] +
+                             EXAMPLES["multilabel-sequences"],
+                             EXAMPLES["multiclass"] +
+                             EXAMPLES["binary"])
 
-    for y_multilabel, y_multiclass in pair_multiclass_multilabel:
+    for y_multilabel, y_multiclass in mix_clf_format:
         assert_raises(ValueError, unique_labels, y_multiclass, y_multilabel)
         assert_raises(ValueError, unique_labels, y_multilabel, y_multiclass)
 
