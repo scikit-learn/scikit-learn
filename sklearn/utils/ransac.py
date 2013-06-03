@@ -42,7 +42,7 @@ def ransac(X, y, estimator_cls, min_samples, residual_threshold,
             continue
 
         # residuals of all data for current random sample model
-        rsample_residuals = np.abs(estimator.predict(rsample_X) - rsample_y)
+        rsample_residuals = np.abs(estimator.predict(X) - y)
 
         # classify data into inliers and outliers
         rsample_inlier_mask = rsample_residuals < residual_threshold
