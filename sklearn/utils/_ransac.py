@@ -65,7 +65,6 @@ def ransac(X, y, estimator, min_n_samples, residual_threshold,
 
     """
 
-    best_estimator = None
     best_n_inliers = 0
     best_score = np.inf
     best_inlier_mask = None
