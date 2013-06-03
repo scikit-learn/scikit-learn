@@ -50,8 +50,8 @@ def compute_bench(samples_range, features_range):
             print()
             print()
 
-            results['minibatchkmeans_speed'].append(delta)
-            results['minibatchkmeans_quality'].append(mbkmeans.inertia_)
+            results['Mini-Batch K-Means Speed'].append(delta)
+            results['Mini-Batch K-Means Quality'].append(mbkmeans.inertia_)
 
     return results
 
@@ -85,8 +85,8 @@ def compute_bench_2(chunks):
         print("Inertia: %0.3fs" % mbkmeans.inertia_)
         print()
 
-        results['minibatchkmeans_speed'].append(delta)
-        results['minibatchkmeans_quality'].append(mbkmeans.inertia_)
+        results['Mini-Batch K-Means Speed'].append(delta)
+        results['Mini-Batch K-Means Quality'].append(mbkmeans.inertia_)
 
     return results
 
