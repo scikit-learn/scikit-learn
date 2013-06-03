@@ -54,6 +54,8 @@ def ransac(X, y, estimator, min_n_samples, residual_threshold,
 
     Returns
     -------
+    n_trials : int
+        Number of random selection trials.
     inlier_mask : bool array of shape [n_samples]
         Boolean mask of inliers classified as ``True``.
 
