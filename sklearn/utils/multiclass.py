@@ -81,11 +81,12 @@ def unique_labels(*ys):
 
     # Combine every labels
     ys_labels = [_unique_labels(y) for y in ys]
-    labels_type_set = set(y_labels.dtype.kind for y_labels in ys_labels)
+    y_is_string = [y_labels.dtype.type is np.string_
+                   for y_labels in ys_labels]
 
-    if (not (labels_type_set <= set(["b", "i", "u", "f"])) and
-            not (labels_type_set <= set(["S", "a", " U"]))):
-        raise ValueError("Mix of dtype.kind, can't infered labels set")
+    if len(set(y_is_string)) != 1:
+        raise ValueError("Mix of string and number type: "
+                         "can't infered unique labels set")
 
     return np.unique(np.hstack(ys_labels))
 
