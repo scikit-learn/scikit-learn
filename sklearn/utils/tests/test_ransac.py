@@ -58,5 +58,10 @@ def test_ransac_max_trials():
     assert ransac(X, y, estimator, 2, 5, max_trials=11)[0] == 11
 
 
+def test_ransac_stop_n_inliers():
+    estimator = linear_model.LinearRegression()
+    assert ransac(X, y, estimator, 2, 5, stop_n_inliers=2)[0] == 1
+
+
 if __name__ == "__main__":
     np.testing.run_module_suite()
