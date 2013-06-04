@@ -66,6 +66,12 @@ def ransac(X, y, estimator, min_n_samples, residual_threshold,
     `stop_score`). The final model is estimated using all inlier samples of the
     previously determined best model.
 
+    References
+    ----------
+    .. [1] http://en.wikipedia.org/wiki/RANSAC
+    .. [2] http://www.cs.columbia.edu/~belhumeur/courses/compPhoto/ransac.pdf
+    .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
+
     """
 
     best_n_inliers = 0
