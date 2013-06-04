@@ -599,6 +599,33 @@ def test_one_hot_encoder():
     assert_raises(ValueError, enc.transform, [[0], [-1]])
 
 
+def test_one_hot_encoder_categorical_features():
+    """Test OneHotEncoder's fit and transform."""
+    X = [[3, 2, 1], [0, 1, 1]]
+    X2 = [[1, 1, 1]]
+
+    cat = [True, False, False]
+    enc = OneHotEncoder(categorical_features=cat)
+    Xtr = enc.fit_transform(X)
+    assert_equal(Xtr.shape, (2,4))
+    X2tr = enc.transform(X2)
+    assert_equal(X2tr.shape, (1,4))
+
+    cat = [False, False, False]
+    enc = OneHotEncoder(categorical_features=cat)
+    Xtr = enc.fit_transform(X)
+    assert_equal(Xtr.shape, (2,3))
+    X2tr = enc.transform(X2)
+    assert_equal(X2tr.shape, (1,3))
+
+    cat = [True, True, True]
+    enc = OneHotEncoder(categorical_features=cat)
+    Xtr = enc.fit_transform(X)
+    assert_equal(Xtr.shape, (2,5))
+    X2tr = enc.transform(X2)
+    assert_equal(X2tr.shape, (1,5))
+
+
 def test_label_encoder():
     """Test LabelEncoder's transform and inverse_transform methods"""
     le = LabelEncoder()
