@@ -12,7 +12,7 @@ def ransac(X, y, estimator, min_n_samples, residual_threshold,
         Training data.
     y : numpy array of shape [n_samples, n_targets]
         Target values
-    estimator_cls : object
+    estimator : object
         Estimator object which implements the following methods:
         * `fit(X, y)`: Fit model to given  training data and target values.
         * `predict(X)`: Predict using the estimated model.
