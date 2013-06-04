@@ -148,22 +148,21 @@ def _check_1d_array(y1, y2, ravel=False):
         return y1, y2
 
 
-def _check_clf_targets(y_true, y_pred, ravel=False):
+def _check_clf_targets(y_true, y_pred):
     """Check that y_true and y_pred correspond to the same classification task type.
 
     This converts multiclass or binary types to a common shape, and raises a
     ValueError for a mix of multilabel and multiclass targets, a mix of multilabel
-    formats, or for the presence of continuous-valued targets.
+    formats, for the presence of continuous-valued or multioutput targets, or
+    for targets of different lengths.
+
+    Column vectors are squeezed to 1d.
 
     Parameters
     ----------
     y_true : array-like,
 
     y_pred : array-like
-
-    ravel : boolean, optional (default=False),
-        If ``ravel``` is set to ``True``, then non-multilabel ``y_true`` and
-        ``y_pred`` are raveled.
 
     Returns
     -------
@@ -173,13 +172,8 @@ def _check_clf_targets(y_true, y_pred, ravel=False):
         ``utils.multiclass.type_of_target``
     
     y_true : array or indicator matrix or sequence of sequences
-        A label indicator matrix, or sequence of sequences, or possibly-encoded
-        and/or raveled ``y_true``
 
     y_pred : array or indicator matrix or sequence of sequences
-        ``y_pred`` in the shape of ``y_true``. Where ``y_pred`` had been a
-        label indicator matrix and ``y_true`` a sequence of sequences, an
-        exception is made: both are returned as label indicator matrices.
     """
     y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
     type_true = type_of_target(y_true)
@@ -201,10 +195,15 @@ def _check_clf_targets(y_true, y_pred, ravel=False):
             # 'binary' can be removed
             type_true = type_pred = 'multiclass'
 
-        y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=ravel)
+        y_true = np.squeeze(y_true)
+        y_pred = np.squeeze(y_pred)
 
     else:
         raise ValueError("Can't handle %s/%s targets" % (type_true, type_pred))
+
+    if len(y_true) != len(y_pred):
+        raise ValueError('True and predicted targets are different '
+                         'lengths: %d and %d' % (len(y_true), len(y_pred)))
 
     return type_true, y_true, y_pred
 
@@ -984,7 +983,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True):
     """
 
     # Compute accuracy for each possible representation
-    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred, ravel=True)
+    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
     if y_type == 'multilabel-indicator':
         try:
             # oddly, we may get an "invalid" rather than a "divide"
@@ -1091,7 +1090,7 @@ def accuracy_score(y_true, y_pred, normalize=True):
 
     """
     # Compute accuracy for each possible representation
-    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred, ravel=True)
+    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
     if y_type == 'multilabel-indicator':
         score = (y_pred != y_true).sum(axis=1) == 0
     elif y_type == 'multilabel-sequences':

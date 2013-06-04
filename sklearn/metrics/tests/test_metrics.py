@@ -1,4 +1,4 @@
-from __future__ import division
+from __future__ import division, print_function
 
 from functools import partial
 import warnings
@@ -46,6 +46,7 @@ from sklearn.metrics import (accuracy_score,
                              zero_one,
                              zero_one_score,
                              zero_one_loss)
+from sklearn.metrics.metrics import _check_clf_targets
 from sklearn.externals.six.moves import xrange
 
 ALL_METRICS = {
@@ -640,6 +641,27 @@ def test_confusion_matrix_multiclass_subset_labels():
                             [24, 3]])
 
 
+<<<<<<< HEAD
+=======
+def test_classification_report_binary_classification_with_pos_label():
+    iris = datasets.load_iris()
+    y_true, y_pred, _ = make_prediction(dataset=iris, binary=True)
+
+    print(y_true)
+    expected_report = """\
+             precision    recall  f1-score   support
+
+          0       0.73      0.88      0.80        25
+          1       0.85      0.68      0.76        25
+
+avg / total       0.79      0.78      0.78        50
+"""
+    for pos_label in [0, 1]:
+        report = classification_report(y_true, y_pred, pos_label=pos_label)
+        assert_equal(report, expected_report)
+
+
+>>>>>>> Test _check_clf_targets
 def test_classification_report_multiclass():
     """Test performance report"""
     iris = datasets.load_iris()
@@ -1518,3 +1540,80 @@ def test_precision_recall_f1_no_labels():
     assert_almost_equal(r, 1)
     assert_almost_equal(f, 1)
     assert_equal(s, None)
+
+
+def test__check_clf_targets():
+    """Check that _check_clf_targets correctly merges target types, squeezes
+    output and fails if input lengths differ."""
+    IND = 'multilabel-indicator'
+    SEQ = 'multilabel-sequences'
+    MC = 'multiclass'
+    BIN = 'binary'
+    CNT = 'continuous'
+    MMC = 'multiclass-multioutput'
+    MCN = 'continuous-multioutput'
+    # all of length 3
+    EXAMPLES = [
+        (IND, np.array([[0, 1, 1], [1, 0, 0], [0, 0, 1]])),
+        # must not be considered binary
+        (IND, np.array([[0, 1], [1, 0], [1, 1]])),
+        (SEQ, [[2, 3], [1], [3]]),
+        (MC, [2, 3, 1]),
+        (BIN, [0, 1, 1]),
+        (CNT, [0., 1.5, 1.]),
+        (MC, np.array([[2], [3], [1]])),
+        (BIN, np.array([[0], [1], [1]])),
+        (CNT, np.array([[0.], [1.5], [1.]])),
+        (MMC, np.array([[0, 2], [1, 3], [2, 3]])),
+        (MCN, np.array([[0.5, 2.], [1.1, 3.], [2., 3.]])),
+    ]
+    # expected type given input types, or None for error
+    # (types will be tried in either order)
+    EXPECTED = {
+        (IND, IND): IND,
+        (SEQ, SEQ): SEQ,
+        (MC, MC): MC,
+        (BIN, BIN): BIN,
+
+        (IND, SEQ): None,
+        (MC, SEQ): None,
+        (BIN, SEQ): None,
+        (MC, IND): None,
+        (BIN, IND): None,
+        (BIN, MC): MC,
+
+        # Disallowed types
+        (CNT, CNT): None,
+        (MMC, MMC): None,
+        (MCN, MCN): None,
+        (IND, CNT): None,
+        (SEQ, CNT): None,
+        (MC, CNT): None,
+        (BIN, CNT): None,
+        (MMC, CNT): None,
+        (MCN, CNT): None,
+        (IND, MMC): None,
+        (SEQ, MMC): None,
+        (MC, MMC): None,
+        (BIN, MMC): None,
+        (MCN, MMC): None,
+        (IND, MCN): None,
+        (SEQ, MCN): None,
+        (MC, MCN): None,
+        (BIN, MCN): None,
+    }
+
+    for type1, y1 in EXAMPLES:
+        for type2, y2 in EXAMPLES:
+            try:
+                expected = EXPECTED[type1, type2]
+            except KeyError:
+                expected = EXPECTED[type2, type1]
+            if expected is None:
+                assert_raises(ValueError, _check_clf_targets, y1, y2)
+            else:
+                merged_type, y1out, y2out = _check_clf_targets(y1, y2)
+                assert_equal(merged_type, expected)
+                assert_array_equal(y1out, np.squeeze(y1))
+                assert_array_equal(y2out, np.squeeze(y2))
+                assert_raises(ValueError, _check_clf_targets, y1[:-1], y2)
