@@ -103,7 +103,8 @@ def ransac(X, y, estimator, min_n_samples, residual_threshold,
         rsample_n_inliers = np.sum(rsample_inlier_mask)
 
         # less inliers -> skip current random sample
-        if rsample_n_inliers < best_n_inliers:
+        if rsample_n_inliers < best_n_inliers \
+           or rsample_n_inliers == best_n_inliers == 0:
             continue
 
         # extract inlier data set
