@@ -732,12 +732,12 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             categorical = np.zeros(n_features, dtype=bool)
             categorical[np.array(self.categorical_features)] = True
             not_categorical = np.logical_not(categorical)
-            n_categegorical = np.sum(categorical)
+            n_categorical = np.sum(categorical)
 
-            if n_categegorical == 0:
+            if n_categorical == 0:
                 # No categorical variables.
                 return X
-            elif n_categegorical == n_features:
+            elif n_categorical == n_features:
                 # All categorical variables.
                 return transform(X)
             else:
