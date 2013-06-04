@@ -995,8 +995,8 @@ def test_hinge_loss_binary():
     assert_equal(hinge_loss(y_true, pred_decision), 1.2 / 4)
     with warnings.catch_warnings(True):
         # Test deprecated pos_label
-        assert_equal(hinge_loss(y_true, pred_decision, pos_label=2, neg_label=0),
-                     1.2 / 4)
+        assert_equal(hinge_loss(y_true, pred_decision, pos_label=2,
+                                neg_label=0), 1.2 / 4)
 
 
 def test_multioutput_regression():

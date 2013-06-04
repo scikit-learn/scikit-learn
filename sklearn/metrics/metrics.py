@@ -133,12 +133,12 @@ def _check_1d_array(y1, y2, ravel=False):
 
 
 def _check_clf_targets(y_true, y_pred):
-    """Check that y_true and y_pred correspond to the same classification task type.
+    """Check that y_true and y_pred belong to the same classification task
 
     This converts multiclass or binary types to a common shape, and raises a
-    ValueError for a mix of multilabel and multiclass targets, a mix of multilabel
-    formats, for the presence of continuous-valued or multioutput targets, or
-    for targets of different lengths.
+    ValueError for a mix of multilabel and multiclass targets, a mix of
+    multilabel formats, for the presence of continuous-valued or multioutput
+    targets, or for targets of different lengths.
 
     Column vectors are squeezed to 1d.
 
@@ -154,7 +154,7 @@ def _check_clf_targets(y_true, y_pred):
                         'multiclass', 'binary'}
         The type of the true target data, as output by
         ``utils.multiclass.type_of_target``
-    
+
     y_true : array or indicator matrix or sequence of sequences
 
     y_pred : array or indicator matrix or sequence of sequences
@@ -165,12 +165,14 @@ def _check_clf_targets(y_true, y_pred):
 
     if type_true.startswith('multilabel'):
         if not type_pred.startswith('multilabel'):
-            raise ValueError("Can't handle mix of multilabel and multiclass targets")
+            raise ValueError("Can't handle mix of multilabel and multiclass "
+                             "targets")
         if type_true != type_pred:
             raise ValueError("Can't handle mix of multilabel formats (label "
                              "indicator matrix and sequence of sequences)")
     elif type_pred.startswith('multilabel'):
-        raise ValueError("Can't handle mix of multilabel and multiclass targets")
+        raise ValueError("Can't handle mix of multilabel and multiclass "
+                         "targets")
 
     elif (type_pred in ('multiclass', 'binary')
           and type_true in ('multiclass', 'binary')):
