@@ -599,31 +599,38 @@ def test_one_hot_encoder():
     assert_raises(ValueError, enc.transform, [[0], [-1]])
 
 
+def _run_one_hot(X, X2, cat):
+    enc = OneHotEncoder(categorical_features=cat)
+    Xtr = enc.fit_transform(X)
+    X2tr = enc.transform(X2)
+    return Xtr, X2tr
+
+
+def _check_one_hot(X, X2, cat, n_features):
+    ind = np.where(cat)[0]
+    A, B = _run_one_hot(X, X2, cat)
+    C, D = _run_one_hot(X, X2, ind)
+    assert_equal(A.shape, (2, n_features))
+    assert_equal(B.shape, (1, n_features))
+    assert_equal(C.shape, (2, n_features))
+    assert_equal(D.shape, (1, n_features))
+    assert_array_equal(toarray(A), toarray(C))
+    assert_array_equal(toarray(B), toarray(D))
+
 def test_one_hot_encoder_categorical_features():
-    """Test OneHotEncoder's fit and transform."""
     X = [[3, 2, 1], [0, 1, 1]]
     X2 = [[1, 1, 1]]
 
     cat = [True, False, False]
-    enc = OneHotEncoder(categorical_features=cat)
-    Xtr = enc.fit_transform(X)
-    assert_equal(Xtr.shape, (2,4))
-    X2tr = enc.transform(X2)
-    assert_equal(X2tr.shape, (1,4))
+    _check_one_hot(X, X2, cat, 4)
 
+    # Edge case: all non-categorical
     cat = [False, False, False]
-    enc = OneHotEncoder(categorical_features=cat)
-    Xtr = enc.fit_transform(X)
-    assert_equal(Xtr.shape, (2,3))
-    X2tr = enc.transform(X2)
-    assert_equal(X2tr.shape, (1,3))
+    _check_one_hot(X, X2, cat, 3)
 
+    # Edge case: all categorical
     cat = [True, True, True]
-    enc = OneHotEncoder(categorical_features=cat)
-    Xtr = enc.fit_transform(X)
-    assert_equal(Xtr.shape, (2,5))
-    X2tr = enc.transform(X2)
-    assert_equal(X2tr.shape, (1,5))
+    _check_one_hot(X, X2, cat, 5)
 
 
 def test_label_encoder():

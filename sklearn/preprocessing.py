@@ -12,7 +12,10 @@ import scipy.sparse as sp
 
 from .base import BaseEstimator, TransformerMixin
 from .externals.six import string_types
-from .utils import check_arrays, array2d, atleast2d_or_csr, safe_asarray
+from .utils import check_arrays
+from .utils import array2d
+from .utils import atleast2d_or_csr
+from .utils import safe_asarray
 from .utils import warn_if_not_float
 from .utils.fixes import unique
 
@@ -647,12 +650,14 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         - int : maximum value for all features.
         - array : maximum value per feature.
 
-    categorical_features: "all" or array of booleans with shape=(n_features,)
+    categorical_features: "all" or array of indices or mask
         Specify what features are treated as categorical.
 
         - 'all' (default): All features are treated as categorical.
-        - array: Array of length n_features specifying whether each feature is
-                 categorical or not.
+        - array of indices: Array of categorical feature indices.
+        - mask: Array of length n_features and with dtype=bool.
+
+        Non-categorical features are always stacked to the right of the matrix.
 
     dtype : number type, default=np.float
         Desired dtype of output.
@@ -693,7 +698,6 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    LabelEncoder : performs a one-hot encoding on arbitrary class labels.
     sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
       dictionary items (also handles string-valued features).
     """
@@ -719,29 +723,30 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         return self
 
     def _apply_transform(self, X, transform):
-        if isinstance(self.categorical_features, six.string_types) and \
-           self.categorical_features == "all":
+        if self.categorical_features == "all":
             return transform(X)
         else:
             X = check_arrays(X, sparse_format='dense')[0]
             n_features = X.shape[1]
-            cat = np.array(self.categorical_features, dtype=bool)
-            not_cat = np.logical_not(cat)
-            n_cat = np.sum(cat)
+            ind = np.arange(n_features)
+            categorical = np.zeros(n_features, dtype=bool)
+            categorical[np.array(self.categorical_features)] = True
+            not_categorical = np.logical_not(categorical)
+            n_categegorical = np.sum(categorical)
 
-            if n_cat == 0:
+            if n_categegorical == 0:
                 # No categorical variables.
                 return X
-            elif n_cat == n_features:
+            elif n_categegorical == n_features:
                 # All categorical variables.
                 return transform(X)
             else:
-                X_cat = transform(X[:, cat])
-                X_not_cat = X[:, not_cat]
+                X_cat = transform(X[:, categorical])
+                X_not_cat = X[:, not_categorical]
                 return sp.hstack((X_cat, X_not_cat))
 
     def _fit_transform(self, X):
-        """Asssumes X contains only categorical variables."""
+        """Asssumes X contains only categorical features."""
         X = check_arrays(X, sparse_format='dense', dtype=np.int)[0]
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
@@ -791,6 +796,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         return self._apply_transform(X, self._fit_transform)
 
     def _transform(self, X):
+        """Asssumes X contains only categorical features."""
         X = check_arrays(X, sparse_format='dense', dtype=np.int)[0]
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
@@ -822,7 +828,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like, shape=(n_samples, feature_indices_[-1])
+        X : array-like, shape=(n_samples, n_features)
             Input array of type int.
 
         Returns
