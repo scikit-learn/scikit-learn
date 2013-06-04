@@ -961,7 +961,7 @@ def test_format_invariance_with_1d_vectors():
         assert_raises(ValueError, metric, y1_column, y2_row)
         assert_raises(ValueError, metric, y1_row, y2_column)
         # NB: We do not test for y1_row, y2_row as these may be
-        # interpreted as multilabel data.
+        # interpreted as multilabel or multioutput data.
 
 
 def test_hinge_loss_binary():
@@ -1097,26 +1097,9 @@ def test_multilabel_representation_invariance():
                                     " with dense binary indicator format."
                                     % name)
 
-<<<<<<< HEAD
-        # Check invariance with mix input representation
-        assert_almost_equal(metric(y1, y2_binary_indicator), measure,
-                            err_msg="%s failed mix input representation "
-                                    "invariance: y_true in list of list of "
-                                    "labels format and y_pred in dense binary "
-                                    "indicator format"
-                                    % name)
-
-        assert_almost_equal(metric(y1_binary_indicator, y2), measure,
-                            err_msg="%s failed mix input representation "
-                                    "invariance: y_true in dense binary "
-                                    "indicator format and y_pred in list of "
-                                    "list of labels format."
-                                    % name)
-=======
         # Check raises error with mix input representation
         assert_raises(ValueError, metric, y1, y2_binary_indicator)
         assert_raises(ValueError, metric, y1_binary_indicator, y2)
->>>>>>> Invalidate row vector and mixed multilabel input
 
 
 def test_multilabel_zero_one_loss_subset():
