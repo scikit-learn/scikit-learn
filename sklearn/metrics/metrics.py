@@ -35,16 +35,7 @@ from ..utils.multiclass import type_of_target
 # General utilities
 ###############################################################################
 def _is_1d(x):
-    """Return True if x can be considered as a 1d vector.
-
-    This function allows to distinguish between a 1d vector, e.g. :
-        - ``np.array([1, 2])``
-        - ``np.array([[1, 2]])``
-        - ``np.array([[1], [2]])``
-
-    and 2d matrix, e.g.:
-        - ``np.array([[1, 2], [3, 4]])``
-
+    """Return True if x is 1d or a column vector
 
     Parameters
     ----------
@@ -64,9 +55,9 @@ def _is_1d(x):
     >>> _is_1d(np.array([1, 2, 3]))
     True
     >>> _is_1d([[1, 2, 3]])
-    True
+    False
     >>> _is_1d(np.array([[1, 2, 3]]))
-    True
+    False
     >>> _is_1d([[1], [2], [3]])
     True
     >>> _is_1d(np.array([[1], [2], [3]]))
@@ -81,7 +72,8 @@ def _is_1d(x):
     _check_1d_array
 
     """
-    return np.size(x) == np.max(np.shape(x))
+    shape = np.shape(x)
+    return len(shape) == 1 or len(shape) == 2 and shape[1] == 1
 
 
 def _check_1d_array(y1, y2, ravel=False):
@@ -114,15 +106,7 @@ def _check_1d_array(y1, y2, ravel=False):
     Examples
     --------
     >>> from sklearn.metrics.metrics import _check_1d_array
-    >>> _check_1d_array([1, 2], [[3, 4]])
-    (array([1, 2]), array([3, 4]))
-    >>> _check_1d_array([[1, 2]], [[3], [4]])
-    (array([[1, 2]]), array([[3, 4]]))
-    >>> _check_1d_array([[1], [2]], [[3, 4]])
-    (array([[1],
-           [2]]), array([[3],
-           [4]]))
-    >>> _check_1d_array([[1], [2]], [[3, 4]], ravel=True)
+    >>> _check_1d_array([1, 2], [[3], [4]])
     (array([1, 2]), array([3, 4]))
 
     See also

@@ -641,27 +641,6 @@ def test_confusion_matrix_multiclass_subset_labels():
                             [24, 3]])
 
 
-<<<<<<< HEAD
-=======
-def test_classification_report_binary_classification_with_pos_label():
-    iris = datasets.load_iris()
-    y_true, y_pred, _ = make_prediction(dataset=iris, binary=True)
-
-    print(y_true)
-    expected_report = """\
-             precision    recall  f1-score   support
-
-          0       0.73      0.88      0.80        25
-          1       0.85      0.68      0.76        25
-
-avg / total       0.79      0.78      0.78        50
-"""
-    for pos_label in [0, 1]:
-        report = classification_report(y_true, y_pred, pos_label=pos_label)
-        assert_equal(report, expected_report)
-
-
->>>>>>> Test _check_clf_targets
 def test_classification_report_multiclass():
     """Test performance report"""
     iris = datasets.load_iris()
@@ -945,10 +924,6 @@ def test_format_invariance_with_1d_vectors():
                             err_msg="%s is not representation invariant "
                                     "with np-array-column" % name)
 
-        assert_almost_equal(metric(y1_row, y2_row), measure,
-                            err_msg="%s is not representation invariant "
-                                    "with np-array-row" % name)
-
         # Mix format support
         assert_almost_equal(metric(y1_1d, y2_list), measure,
                             err_msg="%s is not representation invariant "
@@ -985,6 +960,8 @@ def test_format_invariance_with_1d_vectors():
         assert_raises(ValueError, metric, y1_row, y2_list)
         assert_raises(ValueError, metric, y1_column, y2_row)
         assert_raises(ValueError, metric, y1_row, y2_column)
+        # NB: We do not test for y1_row, y2_row as these may be
+        # interpreted as multilabel data.
 
 
 def test_hinge_loss_binary():
@@ -1120,6 +1097,7 @@ def test_multilabel_representation_invariance():
                                     " with dense binary indicator format."
                                     % name)
 
+<<<<<<< HEAD
         # Check invariance with mix input representation
         assert_almost_equal(metric(y1, y2_binary_indicator), measure,
                             err_msg="%s failed mix input representation "
@@ -1134,6 +1112,11 @@ def test_multilabel_representation_invariance():
                                     "indicator format and y_pred in list of "
                                     "list of labels format."
                                     % name)
+=======
+        # Check raises error with mix input representation
+        assert_raises(ValueError, metric, y1, y2_binary_indicator)
+        assert_raises(ValueError, metric, y1_binary_indicator, y2)
+>>>>>>> Invalidate row vector and mixed multilabel input
 
 
 def test_multilabel_zero_one_loss_subset():
