@@ -10,25 +10,33 @@ def ransac(X, y, estimator, min_n_samples, residual_threshold,
     ----------
     X : numpy array or sparse matrix of shape [n_samples, n_features]
         Training data.
+
     y : numpy array of shape [n_samples, n_targets]
-        Target values
+        Target values.
+
     estimator : object
         Estimator object which implements the following methods:
         * `fit(X, y)`: Fit model to given  training data and target values.
         * `predict(X)`: Predict using the estimated model.
         * `score(X)`: Returns the mean accuracy on the given test data.
+
     residual_threshold : float
         Maximum residual for a data sample to be classified as an inlier.
+
     is_data_valid : function, optional
         This function is called with the randomly selected data before the
         model is fitted to it: `is_data_valid(X, y)`.
+
     is_model_valid : function, optional
         This function is called with the estimated model and the randomly
         selected data: `is_model_valid(model, X, y)`, .
+
     max_trials : int, optional
         Maximum number of iterations for random sample selection.
+
     stop_n_inliers : int, optional
         Stop iteration if at least this number of inliers are found.
+
     stop_score : float, optional
         Stop iteration if score is greater equal than this threshold.
 
@@ -36,6 +44,7 @@ def ransac(X, y, estimator, min_n_samples, residual_threshold,
     -------
     n_trials : int
         Number of random selection trials.
+
     inlier_mask : bool array of shape [n_samples]
         Boolean mask of inliers classified as ``True``.
 
