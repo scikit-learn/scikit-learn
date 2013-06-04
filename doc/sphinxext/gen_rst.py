@@ -381,6 +381,7 @@ def extract_docstring(filename, ignore_heading=False):
                 if ignore_heading:
                     if len(paragraphs) > 1:
                         first_par = re.sub('\n', ' ', paragraphs[1])
+                        first_par = (first_par[:95] + '...') if len(first_par) > 95 else first_par
                     else:
                         raise ValueError("Docstring not found by gallery",
                                          "Please check your example's layout",
@@ -883,7 +884,7 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
         # generate thumb file
         this_template = plot_rst_template
         if os.path.exists(first_image_file):
-            make_thumbnail(first_image_file, thumb_file, 200, 140)
+            make_thumbnail(first_image_file, thumb_file, 400, 280)
 
     if not os.path.exists(thumb_file):
         # create something to replace the thumbnail
