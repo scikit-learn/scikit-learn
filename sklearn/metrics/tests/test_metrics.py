@@ -444,6 +444,20 @@ def test_precision_recall_f1_score_binary():
     assert_array_almost_equal(fs, 0.76, 2)
 
 
+def test_precision_recall_f_binary_single_class():
+    """Test precision, recall and F1 score behave with a single positive or
+    negative class
+
+    Such a case may occur with non-stratified cross-validation"""
+    assert_equal(1., precision_score([1, 1], [1, 1]))
+    assert_equal(1., recall_score([1, 1], [1, 1]))
+    assert_equal(1., f1_score([1, 1], [1, 1]))
+
+    assert_equal(0., precision_score([-1, -1], [-1, -1]))
+    assert_equal(0., recall_score([-1, -1], [-1, -1]))
+    assert_equal(0., f1_score([-1, -1], [-1, -1]))
+
+
 def test_average_precision_score_duplicate_values():
     # Duplicate values with precision-recall require a different
     # processing than when computing the AUC of a ROC, because the
