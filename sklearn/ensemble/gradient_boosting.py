@@ -138,7 +138,7 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
             The predictions.
         """
 
-    def update_terminal_regions(self, tree, X, y, residual, y_pred,
+    def update_terminal_regions(self, tree, X, y, residual, y_pred, y_pred_oob,
                                 sample_mask, learning_rate=1.0, k=0):
         """Update the terminal regions (=leaves) of the given tree and
         updates the current predictions of the model. Traverses tree
@@ -171,8 +171,9 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
                                          y_pred[:, k])
 
         # update predictions (both in-bag and out-of-bag)
-        y_pred[:, k] += (learning_rate
-                         * tree.value[:, 0, 0].take(terminal_regions, axis=0))
+        tree_pred = tree.value[:, 0, 0].take(terminal_regions, axis=0)
+        y_pred[:, k] += learning_rate * tree_pred
+        y_pred_oob[~sample_mask, k] += learning_rate * tree_pred[~sample_mask]
 
     @abstractmethod
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
@@ -201,14 +202,16 @@ class LeastSquaresError(RegressionLossFunction):
     def negative_gradient(self, y, pred, **kargs):
         return y - pred.ravel()
 
-    def update_terminal_regions(self, tree, X, y, residual, y_pred,
+    def update_terminal_regions(self, tree, X, y, residual, y_pred, y_pred_oob,
                                 sample_mask, learning_rate=1.0, k=0):
         """Least squares does not need to update terminal regions.
 
         But it has to update the predictions.
         """
         # update predictions
-        y_pred[:, k] += learning_rate * tree.predict(X).ravel()
+        tree_pred = tree.predict(X).ravel()
+        y_pred[:, k] += learning_rate * tree_pred
+        y_pred_oob[~sample_mask, k] += learning_rate * tree_pred[~sample_mask]
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, pred):
@@ -452,7 +455,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.verbose = verbose
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
-    def _fit_stage(self, i, X, X_argsorted, y, y_pred, sample_mask,
+    def _fit_stage(self, i, X, X_argsorted, y, y_pred, y_pred_oob, sample_mask,
                    random_state):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
         loss = self.loss_
@@ -478,7 +481,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
             # update tree leaves
             loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
-                                         sample_mask, self.learning_rate, k=k)
+                                         y_pred_oob, sample_mask,
+                                         self.learning_rate, k=k)
 
             # add tree to ensemble
             self.estimators_[i, k] = tree
@@ -564,6 +568,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         # init predictions
         y_pred = self.init_.predict(X)
+        y_pred_oob = self.init_.predict(X)
 
         self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
                                     dtype=np.object)
@@ -582,15 +587,15 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 sample_mask = _random_sample_mask(n_samples, n_inbag,
                                                   random_state)
             # fit next stage of trees
-            y_pred = self._fit_stage(i, X, X_argsorted, y, y_pred, sample_mask,
-                                     random_state)
+            y_pred = self._fit_stage(i, X, X_argsorted, y, y_pred, y_pred_oob,
+                                     sample_mask, random_state)
 
             # track deviance (= loss)
             if self.subsample < 1.0:
                 self.train_score_[i] = self.loss_(y[sample_mask],
                                                   y_pred[sample_mask])
                 self.oob_score_[i] = self.loss_(y[~sample_mask],
-                                                y_pred[~sample_mask])
+                                                y_pred_oob[~sample_mask])
                 if self.verbose > 1:
                     print("built tree %d of %d, train score = %.6e, "
                           "oob score = %.6e" % (i + 1, self.n_estimators,
