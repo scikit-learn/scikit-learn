@@ -12,7 +12,7 @@ from .k_means_ import k_means, KMeans, MiniBatchKMeans
 from .dbscan_ import dbscan, DBSCAN
 from .eac import EAC
 from ..utils import deprecated
-
+from .mst import MSTCluster
 
 # backward compatibility
 @deprecated("to be removed in 0.15;"
@@ -32,6 +32,8 @@ __all__ = ['AffinityPropagation',
            'Ward',
            'WardAgglomeration',
            'affinity_propagation',
+           'MSTCluster',
+           'EAC',
            'dbscan',
            'estimate_bandwidth',
            'get_bin_seeds',

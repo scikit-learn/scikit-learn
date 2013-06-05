@@ -13,9 +13,10 @@ from sklearn.cluster import KMeans, SpectralClustering
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, atleast2d_or_csr
+from .mst import MSTCluster
 
 
-def eac(X, initial_clusterers=None, final_clusterer=None, use_distance=False,
+def eac(X, initial_clusterers=None, final_clusterer=None, #use_distance=False,
         random_state=None):
     """Perform EAC clustering from vector array or distance matrix.
 
@@ -69,7 +70,7 @@ def eac(X, initial_clusterers=None, final_clusterer=None, use_distance=False,
         initial_clusterers = _kmeans_random_k(n_samples, random_state)
     # If the final_clusterer is None, create the default model
     if final_clusterer is None:
-        final_clusterer = create_default_final_clusterer(random_state)
+        final_clusterer = MSTCluster()
     # Co-association matrix, originally zeros everywhere
     C = np.zeros((n_samples, n_samples), dtype='float')
     num_initial_clusterers = 0
@@ -81,12 +82,12 @@ def eac(X, initial_clusterers=None, final_clusterer=None, use_distance=False,
         # Calculate new coassociation matrix and add that to the tally
         C = update_coassociation_matrix(C, model.labels_)
     C /= num_initial_clusterers
-    if use_distance:
-        if use_distance is True:
-            # Turn into a distance matrix
-            C = 1. - C
-        elif callable(use_distance):  # If a callable
-            C = use_distance(C)
+    #if use_distance:
+    #    if use_distance is True:
+    #        # Turn into a distance matrix
+    #        C = 1. - C
+    #    elif callable(use_distance):  # If a callable
+    #        C = use_distance(C)
     final_clusterer.fit(C)
     return final_clusterer
 
@@ -143,12 +144,6 @@ def _kmeans_random_k(n_samples, random_state=None, **kmeans_args):
     return (KMeans(n_clusters=k, **kmeans_args) for k in k_values)
 
 
-def create_default_final_clusterer(random_state=None):
-    random_state = check_random_state(random_state)
-    # TODO: MST clustering is the default in the paper, should use that, but it hasn't been implemented yet.
-    return SpectralClustering(n_clusters=3, affinity='precomputed')
-
-
 class EAC(BaseEstimator, ClusterMixin):
     """Perform EAC clustering from vector array or distance matrix.
 
@@ -158,7 +153,7 @@ class EAC(BaseEstimator, ClusterMixin):
     given in a co-association matrix, which is then clustered a final time to
     produce the 'final clustering'. In practice, this gives a more easily
     separable set of attributes that the original attributes.
-    
+
 
     Parameters
     ----------

@@ -39,6 +39,7 @@ from sklearn.metrics import accuracy_score, adjusted_rand_score, f1_score
 
 from sklearn.lda import LDA
 from sklearn.svm.base import BaseLibSVM
+from sklearn.cluster import MSTCluster
 
 from sklearn.cross_validation import train_test_split
 
@@ -498,17 +499,19 @@ def test_clustering():
             set_random_state(alg)
             if name == 'AffinityPropagation':
                 alg.set_params(preference=-100)
+            if name == "EAC":
+                alg.set_params(final_clusterer=MSTCluster(threshold=0.5))
             # fit
             alg.fit(X)
 
         assert_equal(alg.labels_.shape, (n_samples,))
         pred = alg.labels_
         score = adjusted_rand_score(pred, y)
-        error_message = "{} failed with score {} (<0.4 benchmark)".format(name,
-                                                                          score)
+        error_message = "{} failed with score {} (<0.4 benchmark) {}".format(name,
+                                                                          score, alg)
         assert_greater(score, 0.4, error_message)
         # fit another time with ``fit_predict`` and compare results
-        if name is 'SpectralClustering' or name is "EAC":
+        if name is 'SpectralClustering':
             # there is no way to make Spectral clustering deterministic :(
             continue
         set_random_state(alg)
