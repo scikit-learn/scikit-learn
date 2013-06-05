@@ -15,6 +15,7 @@ from .externals.six import string_types
 from .utils import check_arrays
 from .utils import array2d
 from .utils import atleast2d_or_csr
+from .utils import atleast2d_or_csc
 from .utils import safe_asarray
 from .utils import warn_if_not_float
 from .utils.fixes import unique
@@ -629,6 +630,53 @@ class Binarizer(BaseEstimator, TransformerMixin):
         return binarize(X, threshold=self.threshold, copy=copy)
 
 
+def _transform_selected(X, transform, selected):
+    """Apply a transform function to portion of selected features
+
+    Parameters
+    ----------
+    X : array-like or sparse matrix, shape=(n_samples, n_features)
+        Dense array or sparse matrix.
+
+    transform : callable
+        A callable transform(X) -> X_transformed
+
+    selected: "all" or array of indices or mask
+        Specify what features to apply the transform to.
+
+    Returns
+    -------
+    X : array or sparse matrix, shape=(n_samples, n_features_new)
+    """
+    if len(selected) == 0:
+        return X
+    elif selected == "all":
+        return transform(X)
+    else:
+        X = atleast2d_or_csc(X)
+        n_features = X.shape[1]
+        ind = np.arange(n_features)
+        sel = np.zeros(n_features, dtype=bool)
+        sel[np.array(selected)] = True
+        not_sel = np.logical_not(sel)
+        n_selected = np.sum(sel)
+
+        if n_selected == 0:
+            # No features selected.
+            return X
+        elif n_selected == n_features:
+            # All features selected.
+            return transform(X)
+        else:
+            X_sel = transform(X[:, ind[sel]])
+            X_not_sel = X[:, ind[not_sel]]
+
+            if sp.issparse(X_sel) or sp.issparse(X_not_sel):
+                return sp.hstack((X_sel, X_not_sel))
+            else:
+                return np.hstack((X_sel, X_not_sel))
+
+
 class OneHotEncoder(BaseEstimator, TransformerMixin):
     """Encode categorical integer features using a one-hot aka one-of-K scheme.
 
@@ -722,29 +770,6 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         self.fit_transform(X)
         return self
 
-    def _apply_transform(self, X, transform):
-        if self.categorical_features == "all":
-            return transform(X)
-        else:
-            X = check_arrays(X, sparse_format='dense')[0]
-            n_features = X.shape[1]
-            ind = np.arange(n_features)
-            categorical = np.zeros(n_features, dtype=bool)
-            categorical[np.array(self.categorical_features)] = True
-            not_categorical = np.logical_not(categorical)
-            n_categorical = np.sum(categorical)
-
-            if n_categorical == 0:
-                # No categorical variables.
-                return X
-            elif n_categorical == n_features:
-                # All categorical variables.
-                return transform(X)
-            else:
-                X_cat = transform(X[:, categorical])
-                X_not_cat = X[:, not_categorical]
-                return sp.hstack((X_cat, X_not_cat))
-
     def _fit_transform(self, X):
         """Asssumes X contains only categorical features."""
         X = check_arrays(X, sparse_format='dense', dtype=np.int)[0]
@@ -793,7 +818,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         Equivalent to self.fit(X).transform(X), but more convenient and more
         efficient. See fit for the parameters, transform for the return value.
         """
-        return self._apply_transform(X, self._fit_transform)
+        return _transform_selected(X, self._fit_transform,
+                                   self.categorical_features)
 
     def _transform(self, X):
         """Asssumes X contains only categorical features."""
@@ -836,7 +862,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         X_out : sparse matrix, dtype=int
             Transformed input.
         """
-        return self._apply_transform(X, self._transform)
+        return _transform_selected(X, self._transform,
+                                   self.categorical_features)
 
 
 class LabelEncoder(BaseEstimator, TransformerMixin):
