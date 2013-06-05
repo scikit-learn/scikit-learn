@@ -1,5 +1,5 @@
 """
-Bench the scikit's ward implement compared to scipy's
+Benchmark scikit-learn's Ward implement compared to SciPy's
 """
 
 import time

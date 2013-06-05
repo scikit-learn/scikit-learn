@@ -55,7 +55,7 @@ def compute_bench(samples_range, features_range):
             X = np.asfortranarray(X)
 
             gc.collect()
-            print("benching lars_path (with Gram):", end='')
+            print("benchmarking lars_path (with Gram):", end='')
             sys.stdout.flush()
             tstart = time()
             G = np.dot(X.T, X)  # precomputed Gram matrix
@@ -66,7 +66,7 @@ def compute_bench(samples_range, features_range):
             lars_gram[i_f, i_s] = delta
 
             gc.collect()
-            print("benching lars_path (without Gram):", end='')
+            print("benchmarking lars_path (without Gram):", end='')
             sys.stdout.flush()
             tstart = time()
             lars_path(X, y, Gram=None, max_iter=n_informative)
@@ -75,7 +75,7 @@ def compute_bench(samples_range, features_range):
             lars[i_f, i_s] = delta
 
             gc.collect()
-            print("benching orthogonal_mp (with Gram):", end='')
+            print("benchmarking orthogonal_mp (with Gram):", end='')
             sys.stdout.flush()
             tstart = time()
             orthogonal_mp(X, y, precompute_gram=True,
@@ -85,7 +85,7 @@ def compute_bench(samples_range, features_range):
             omp_gram[i_f, i_s] = delta
 
             gc.collect()
-            print("benching orthogonal_mp (without Gram):", end='')
+            print("benchmarking orthogonal_mp (without Gram):", end='')
             sys.stdout.flush()
             tstart = time()
             orthogonal_mp(X, y, precompute_gram=False,

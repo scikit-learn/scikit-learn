@@ -39,7 +39,7 @@ def compute_bench(alpha, n_samples, n_features, precompute):
             X /= np.sqrt(np.sum(X ** 2, axis=0))  # Normalize data
 
             gc.collect()
-            print("- benching Lasso")
+            print("- benchmarking Lasso")
             clf = Lasso(alpha=alpha, fit_intercept=False,
                         precompute=precompute)
             tstart = time()
@@ -47,7 +47,7 @@ def compute_bench(alpha, n_samples, n_features, precompute):
             lasso_results.append(time() - tstart)
 
             gc.collect()
-            print("- benching LassoLars")
+            print("- benchmarking LassoLars")
             clf = LassoLars(alpha=alpha, fit_intercept=False,
                             normalize=False, precompute=precompute)
             tstart = time()

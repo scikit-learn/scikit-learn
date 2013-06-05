@@ -42,7 +42,7 @@ def compute_bench(samples_range, features_range):
             X, y = make_regression(**dataset_kwargs)
 
             gc.collect()
-            print("benching lars_path (with Gram):", end='')
+            print("benchmarking lars_path (with Gram):", end='')
             sys.stdout.flush()
             tstart = time()
             G = np.dot(X.T, X)  # precomputed Gram matrix
@@ -53,7 +53,7 @@ def compute_bench(samples_range, features_range):
             results['lars_path (with Gram)'].append(delta)
 
             gc.collect()
-            print("benching lars_path (without Gram):", end='')
+            print("benchmarking lars_path (without Gram):", end='')
             sys.stdout.flush()
             tstart = time()
             lars_path(X, y, method='lasso')
@@ -62,7 +62,7 @@ def compute_bench(samples_range, features_range):
             results['lars_path (without Gram)'].append(delta)
 
             gc.collect()
-            print("benching lasso_path (with Gram):", end='')
+            print("benchmarking lasso_path (with Gram):", end='')
             sys.stdout.flush()
             tstart = time()
             lasso_path(X, y, precompute=True)
@@ -71,7 +71,7 @@ def compute_bench(samples_range, features_range):
             results['lasso_path (with Gram)'].append(delta)
 
             gc.collect()
-            print("benching lasso_path (without Gram):", end='')
+            print("benchmarking lasso_path (without Gram):", end='')
             sys.stdout.flush()
             tstart = time()
             lasso_path(X, y, precompute=False)
