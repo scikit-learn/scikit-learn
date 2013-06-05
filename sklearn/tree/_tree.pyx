@@ -64,7 +64,8 @@ cdef class Tree:
 
     The binary tree is represented as a number of parallel arrays.
     The i-th element of each array holds information about the
-    node `i`. You can find a detailed description of all arrays
+    node `i`. Node 0 is the tree's root.
+    You can find a detailed description of all arrays
     below. NOTE: Some of the arrays only apply to either leaves or
     split nodes, resp. In this case the values of nodes of the other
     type are arbitrary!
@@ -97,12 +98,16 @@ cdef class Tree:
         The current capacity (i.e., size) of the arrays.
 
     children_left : int*
-        children_left[i] holds the node id of the child if node i.
-        For leaves, children_left[i] == TREE_LEAF.
+        children_left[i] holds the node id of the left child of node i.
+        For leaves, children_left[i] == TREE_LEAF. Otherwise,
+        children_left[i] > i. This child handles the case where
+        X[:, feature[i]] <= threshold[i].
 
     children_right : int*
-        children_left[i] holds the node id of the child if node i.
-        For leaves, children_left[i] == TREE_LEAF.
+        children_right[i] holds the node id of the right child of node i.
+        For leaves, children_right[i] == TREE_LEAF. Otherwise,
+        children_right[i] > i. This child handles the case where
+        X[:, feature[i]] > threshold[i].
 
     feature : int*
         feature[i] holds the feature to split on, for the internal node i.
