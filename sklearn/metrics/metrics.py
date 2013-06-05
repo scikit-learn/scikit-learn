@@ -930,11 +930,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True):
 
         # Handle mix representation
         if type(y_true) != type(y_pred):
-            labels = unique_labels(y_true, y_pred)
-            lb = LabelBinarizer()
-            lb.fit([labels.tolist()])
-            y_true = lb.transform(y_true)
-            y_pred = lb.transform(y_pred)
+            raise ValueError("Mix of multilabel type input")
 
         if is_label_indicator_matrix(y_true):
             try:
@@ -1052,11 +1048,8 @@ def accuracy_score(y_true, y_pred, normalize=True):
 
         # Handle mix representation
         if type(y_true) != type(y_pred):
-            labels = unique_labels(y_true, y_pred)
-            lb = LabelBinarizer()
-            lb.fit([labels.tolist()])
-            y_true = lb.transform(y_true)
-            y_pred = lb.transform(y_pred)
+            raise ValueError("Mix of multilabel type input")
+
 
         if is_label_indicator_matrix(y_true):
             score = (y_pred != y_true).sum(axis=1) == 0
@@ -1416,11 +1409,8 @@ def _tp_tn_fp_fn(y_true, y_pred, labels=None):
     if is_multilabel(y_true):
         # Handle mix representation
         if type(y_true) != type(y_pred):
-            labels = unique_labels(y_true, y_pred)
-            lb = LabelBinarizer()
-            lb.fit([labels.tolist()])
-            y_true = lb.transform(y_true)
-            y_pred = lb.transform(y_pred)
+            raise ValueError("Mix of multilabel type input")
+
 
         if is_label_indicator_matrix(y_true):
             true_pos = np.sum(np.logical_and(y_true == 1,
@@ -1644,11 +1634,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         if is_multilabel(y_true):
             # Handle mix representation
             if type(y_true) != type(y_pred):
-                labels = unique_labels(y_true, y_pred)
-                lb = LabelBinarizer()
-                lb.fit([labels.tolist()])
-                y_true = lb.transform(y_true)
-                y_pred = lb.transform(y_pred)
+                raise ValueError("Mix of multilabel type input")
 
             if is_label_indicator_matrix(y_true):
                 y_true_pos_label = y_true == 1
@@ -2210,8 +2196,7 @@ def hamming_loss(y_true, y_pred, classes=None):
         lb.fit([classes.tolist()])
 
         if type(y_true) != type(y_pred):
-            y_true = lb.transform(y_true)
-            y_pred = lb.transform(y_pred)
+            raise ValueError("Mix of multilabel type input")
 
         if is_label_indicator_matrix(y_true):
             return np.mean(y_true != y_pred)
