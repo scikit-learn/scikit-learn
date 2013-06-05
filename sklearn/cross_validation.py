@@ -11,7 +11,7 @@ validation and performance evaluation.
 from __future__ import print_function
 
 import warnings
-from itertools import combinations
+from itertools import combinations, izip, count
 from math import ceil, floor, factorial
 import numbers
 
@@ -1038,9 +1038,17 @@ class StratifiedShuffleSplit(object):
 
 ##############################################################################
 
-def _cross_val_score(estimator, X, y, scorer, train, test, verbose,
+def _cross_val_score(cv_number, estimator, X, y, scorer, train, test, verbose,
                      fit_params):
     """Inner loop for cross validation"""
+
+    # set the cv_number on the estimator
+    estimator.cv_number = cv_number
+    # if the estimator is a pipeline, set cv_number on all of its components
+    if hasattr(estimator, 'named_steps'):
+        for _, est in estimator.named_steps.iteritems():
+            est.cv_number = cv_number
+
     n_samples = X.shape[0] if sp.issparse(X) else len(X)
     fit_params = dict([(k, np.asarray(v)[train]
                        if hasattr(v, '__len__') and len(v) == n_samples else v)
@@ -1163,8 +1171,9 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     scores = Parallel(n_jobs=n_jobs, verbose=verbose,
         pre_dispatch=pre_dispatch)(
         delayed(_cross_val_score)(
-            clone(estimator), X, y, scorer, train, test, verbose, fit_params)
-        for train, test in cv)
+            cv_number, clone(estimator), X, y, scorer, train, test, verbose,
+            fit_params)
+        for (cv_number, (train, test)) in izip(count(), cv))
     return np.array(scores)
 
 
