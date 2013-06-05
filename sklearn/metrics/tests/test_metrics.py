@@ -1,5 +1,6 @@
 from __future__ import division
 
+from functools import partial
 import warnings
 import numpy as np
 
@@ -17,7 +18,8 @@ from sklearn.utils.testing import (assert_true,
                                    assert_almost_equal,
                                    assert_not_equal,
                                    assert_array_equal,
-                                   assert_array_almost_equal)
+                                   assert_array_almost_equal,
+                                   assert_greater)
 
 
 from sklearn.metrics import (accuracy_score,
@@ -31,6 +33,7 @@ from sklearn.metrics import (accuracy_score,
                              fbeta_score,
                              hamming_loss,
                              hinge_loss,
+                             jaccard_similarity_score,
                              matthews_corrcoef,
                              mean_squared_error,
                              mean_absolute_error,
@@ -45,21 +48,148 @@ from sklearn.metrics import (accuracy_score,
                              zero_one_loss)
 from sklearn.externals.six.moves import xrange
 
-ALL_METRICS = [accuracy_score,
-               lambda y1, y2: accuracy_score(y1, y2, normalize=False),
-               hamming_loss,
-               zero_one_loss,
-               lambda y1, y2: zero_one_loss(y1, y2, normalize=False),
-               precision_score,
-               recall_score,
-               f1_score,
-               lambda y1, y2: fbeta_score(y1, y2, beta=2),
-               lambda y1, y2: fbeta_score(y1, y2, beta=0.5),
-               matthews_corrcoef,
-               mean_absolute_error,
-               mean_squared_error,
-               explained_variance_score,
-               r2_score]
+ALL_METRICS = {
+    "accuracy_score": accuracy_score,
+    "unormalized_accuracy_score": partial(accuracy_score, normalize=False),
+
+    "hamming_loss": hamming_loss,
+
+    "jaccard_similarity_score": jaccard_similarity_score,
+    "unormalized_jaccard_similarity_score":
+    partial(jaccard_similarity_score, normalize=False),
+
+    "zero_one_loss": zero_one_loss,
+    "unnormalized_zero_one_loss": partial(zero_one_loss, normalize=False),
+
+    "precision_score": precision_score,
+    "recall_score": recall_score,
+    "f1_score": f1_score,
+    "f2_score": partial(fbeta_score, beta=2),
+    "f0.5_score": partial(fbeta_score, beta=0.5),
+    "matthews_corrcoef_score": matthews_corrcoef,
+    "auc_score": auc_score,
+    "average_precision_score": average_precision_score,
+
+    "weighted_f0.5_score": partial(fbeta_score, average="weighted", beta=0.5),
+    "weighted_f1_score": partial(f1_score, average="weighted"),
+    "weighted_f2_score": partial(fbeta_score, average="weighted", beta=2),
+    "weighted_precision_score": partial(precision_score, average="weighted"),
+    "weighted_recall_score": partial(recall_score, average="weighted"),
+
+    "micro_f0.5_score": partial(fbeta_score, average="micro", beta=0.5),
+    "micro_f1_score": partial(f1_score, average="micro"),
+    "micro_f2_score": partial(fbeta_score, average="micro", beta=2),
+    "micro_precision_score": partial(precision_score, average="micro"),
+    "micro_recall_score": partial(recall_score, average="micro"),
+
+    "macro_f0.5_score": partial(fbeta_score, average="macro", beta=0.5),
+    "macro_f1_score": partial(f1_score, average="macro"),
+    "macro_f2_score": partial(fbeta_score, average="macro", beta=2),
+    "macro_precision_score": partial(precision_score, average="macro"),
+    "macro_recall_score": partial(recall_score, average="macro"),
+
+    "mean_absolute_error": mean_absolute_error,
+    "mean_squared_error": mean_squared_error,
+    "explained_variance_score": explained_variance_score,
+    "r2_score": r2_score
+}
+
+METRICS_WITH_NORMALIZE_OPTION = {
+    "accuracy_score ": accuracy_score,
+    "jaccard_similarity_score": jaccard_similarity_score,
+    "zero_one_loss": zero_one_loss,
+}
+
+MULTILABELS_METRICS = {
+    "accuracy_score": accuracy_score,
+    "unormalized_accuracy_score": partial(accuracy_score, normalize=False),
+
+    "hamming_loss": hamming_loss,
+
+    "jaccard_similarity_score": jaccard_similarity_score,
+    "unormalized_jaccard_similarity_score":
+    partial(jaccard_similarity_score, normalize=False),
+
+    "zero_one_loss": zero_one_loss,
+    "unnormalized_zero_one_loss": partial(zero_one_loss, normalize=False),
+
+    "weighted_f0.5_score": partial(fbeta_score, average="weighted", beta=0.5),
+    "weighted_f1_score": partial(f1_score, average="weighted"),
+    "weighted_f2_score": partial(fbeta_score, average="weighted", beta=2),
+    "weighted_precision_score": partial(precision_score, average="weighted"),
+    "weighted_recall_score": partial(recall_score, average="weighted"),
+
+    "samples_f0.5_score": partial(fbeta_score, average="samples", beta=0.5),
+    "samples_f1_score": partial(f1_score, average="samples"),
+    "samples_f2_score": partial(fbeta_score, average="samples", beta=2),
+    "samples_precision_score": partial(precision_score, average="samples"),
+    "samples_recall_score": partial(recall_score, average="samples"),
+
+    "micro_f0.5_score": partial(fbeta_score, average="micro", beta=0.5),
+    "micro_f1_score": partial(f1_score, average="micro"),
+    "micro_f2_score": partial(fbeta_score, average="micro", beta=2),
+    "micro_precision_score": partial(precision_score, average="micro"),
+    "micro_recall_score": partial(recall_score, average="micro"),
+
+    "macro_f0.5_score": partial(fbeta_score, average="macro", beta=0.5),
+    "macro_f1_score": partial(f1_score, average="macro"),
+    "macro_f2_score": partial(fbeta_score, average="macro", beta=2),
+    "macro_precision_score": partial(precision_score, average="macro"),
+    "macro_recall_score": partial(recall_score, average="macro"),
+}
+
+SYMETRIC_METRICS = {
+    "accuracy_score": accuracy_score,
+    "unormalized_accuracy_score": partial(accuracy_score, normalize=False),
+
+    "hamming_loss": hamming_loss,
+
+    "jaccard_similarity_score": jaccard_similarity_score,
+    "unormalized_jaccard_similarity_score":
+    partial(jaccard_similarity_score, normalize=False),
+
+    "zero_one_loss": zero_one_loss,
+    "unnormalized_zero_one_loss": partial(zero_one_loss, normalize=False),
+
+    "f1_score": f1_score,
+    "weighted_f1_score": partial(f1_score, average="weighted"),
+    "micro_f1_score": partial(f1_score, average="micro"),
+    "macro_f1_score": partial(f1_score, average="macro"),
+
+    "matthews_corrcoef_score": matthews_corrcoef,
+    "mean_absolute_error": mean_absolute_error,
+    "mean_squared_error": mean_squared_error
+}
+
+NOT_SYMETRIC_METRICS = {
+    "explained_variance_score": explained_variance_score,
+    "r2_score": r2_score,
+
+    "precision_score": precision_score,
+    "recall_score": recall_score,
+    "f2_score": partial(fbeta_score, beta=2),
+    "f0.5_score": partial(fbeta_score, beta=0.5),
+
+    "weighted_f0.5_score": partial(fbeta_score, average="weighted", beta=0.5),
+    "weighted_f2_score": partial(fbeta_score, average="weighted", beta=2),
+    "weighted_precision_score": partial(precision_score, average="weighted"),
+    "weighted_recall_score": partial(recall_score, average="weighted"),
+
+    "micro_f0.5_score": partial(fbeta_score, average="micro", beta=0.5),
+    "micro_f2_score": partial(fbeta_score, average="micro", beta=2),
+    "micro_precision_score": partial(precision_score, average="micro"),
+    "micro_recall_score": partial(recall_score, average="micro"),
+
+    "macro_f0.5_score": partial(fbeta_score, average="macro", beta=0.5),
+    "macro_f2_score": partial(fbeta_score, average="macro", beta=2),
+    "macro_precision_score": partial(precision_score, average="macro"),
+    "macro_recall_score": partial(recall_score, average="macro"),
+}
+
+THRESHOLDED_METRICS = {
+    "auc_score": auc_score,
+    "average_precision_score": average_precision_score,
+}
 
 
 def make_prediction(dataset=None, binary=False):
@@ -114,6 +244,8 @@ def test_roc_curve():
     roc_auc = auc(fpr, tpr)
     assert_array_almost_equal(roc_auc, 0.90, decimal=2)
     assert_almost_equal(roc_auc, auc_score(y_true, probas_pred))
+    assert_equal(fpr.shape, tpr.shape)
+    assert_equal(fpr.shape, thresholds.shape)
 
 
 def test_roc_curve_end_points():
@@ -125,6 +257,8 @@ def test_roc_curve_end_points():
     fpr, tpr, thr = roc_curve(y_true, y_pred)
     assert_equal(fpr[0], 0)
     assert_equal(fpr[-1], 1)
+    assert_equal(fpr.shape, tpr.shape)
+    assert_equal(fpr.shape, thr.shape)
 
 
 def test_roc_returns_consistency():
@@ -142,6 +276,8 @@ def test_roc_returns_consistency():
 
     # compare tpr and tpr_correct to see if the thresholds' order was correct
     assert_array_almost_equal(tpr, tpr_correct, decimal=2)
+    assert_equal(fpr.shape, tpr.shape)
+    assert_equal(fpr.shape, thresholds.shape)
 
 
 def test_roc_curve_multi():
@@ -158,6 +294,8 @@ def test_roc_curve_confidence():
     fpr, tpr, thresholds = roc_curve(y_true, probas_pred - 0.5)
     roc_auc = auc(fpr, tpr)
     assert_array_almost_equal(roc_auc, 0.90, decimal=2)
+    assert_equal(fpr.shape, tpr.shape)
+    assert_equal(fpr.shape, thresholds.shape)
 
 
 def test_roc_curve_hard():
@@ -169,17 +307,23 @@ def test_roc_curve_hard():
     fpr, tpr, thresholds = roc_curve(y_true, trivial_pred)
     roc_auc = auc(fpr, tpr)
     assert_array_almost_equal(roc_auc, 0.50, decimal=2)
+    assert_equal(fpr.shape, tpr.shape)
+    assert_equal(fpr.shape, thresholds.shape)
 
     # always predict zero
     trivial_pred = np.zeros(y_true.shape)
     fpr, tpr, thresholds = roc_curve(y_true, trivial_pred)
     roc_auc = auc(fpr, tpr)
     assert_array_almost_equal(roc_auc, 0.50, decimal=2)
+    assert_equal(fpr.shape, tpr.shape)
+    assert_equal(fpr.shape, thresholds.shape)
 
     # hard decisions
     fpr, tpr, thresholds = roc_curve(y_true, pred)
     roc_auc = auc(fpr, tpr)
     assert_array_almost_equal(roc_auc, 0.78, decimal=2)
+    assert_equal(fpr.shape, tpr.shape)
+    assert_equal(fpr.shape, thresholds.shape)
 
 
 def test_roc_curve_one_label():
@@ -191,7 +335,10 @@ def test_roc_curve_one_label():
         assert_equal(len(w), 1)
     # all true labels, all fpr should be nan
     assert_array_equal(fpr,
-                       np.nan * np.ones(len(thresholds) + 1))
+                       np.nan * np.ones(len(thresholds)))
+    assert_equal(fpr.shape, tpr.shape)
+    assert_equal(fpr.shape, thresholds.shape)
+
     # assert there are warnings
     with warnings.catch_warnings(record=True) as w:
         fpr, tpr, thresholds = roc_curve([1 - x for x in y_true],
@@ -199,7 +346,9 @@ def test_roc_curve_one_label():
         assert_equal(len(w), 1)
     # all negative labels, all tpr should be nan
     assert_array_equal(tpr,
-                       np.nan * np.ones(len(thresholds) + 1))
+                       np.nan * np.ones(len(thresholds)))
+    assert_equal(fpr.shape, tpr.shape)
+    assert_equal(fpr.shape, thresholds.shape)
 
 
 def test_auc():
@@ -209,6 +358,9 @@ def test_auc():
     assert_array_almost_equal(auc(x, y), 0.5)
     x = [1, 0]
     y = [0, 1]
+    assert_array_almost_equal(auc(x, y), 0.5)
+    x = [1, 0, 0]
+    y = [0, 1, 1]
     assert_array_almost_equal(auc(x, y), 0.5)
     x = [0, 1]
     y = [1, 1]
@@ -225,10 +377,13 @@ def test_auc_duplicate_values():
     # from numpy.argsort(x), which was reordering the tied 0's in this example
     # and resulting in an incorrect area computation. This test detects the
     # error.
-    x = [0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0., 0.5, 1.]
-    y = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9,
-         1., 1., 1., 1., 1., 1., 1., 1.]
-    assert_array_almost_equal(auc(x, y), 1.)
+    x = [-2.0, 0.0, 0.0, 0.0, 1.0]
+    y1 = [2.0, 0.0, 0.5, 1.0, 1.0]
+    y2 = [2.0, 1.0, 0.0, 0.5, 1.0]
+    y3 = [2.0, 1.0, 0.5, 0.0, 1.0]
+
+    for y in (y1, y2, y3):
+        assert_array_almost_equal(auc(x, y, reorder=True), 3.0)
 
 
 def test_auc_errors():
@@ -237,6 +392,9 @@ def test_auc_errors():
 
     # Too few x values
     assert_raises(ValueError, auc, [0.0], [0.1])
+
+    # x is not in order
+    assert_raises(ValueError, auc, [1.0, 0.0, 0.5], [0.0, 0.0, 0.0])
 
 
 def test_auc_score_non_binary_class():
@@ -329,22 +487,21 @@ def test_confusion_matrix_binary():
     """Test confusion matrix - binary classification case"""
     y_true, y_pred, _ = make_prediction(binary=True)
 
-    cm = confusion_matrix(y_true, y_pred)
-    assert_array_equal(cm, [[22, 3], [8, 17]])
+    def test(y_true, y_pred):
+        cm = confusion_matrix(y_true, y_pred)
+        assert_array_equal(cm, [[22, 3], [8, 17]])
 
-    tp = cm[0, 0]
-    tn = cm[1, 1]
-    fp = cm[0, 1]
-    fn = cm[1, 0]
-    num = (tp * tn - fp * fn)
-    den = np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
-    if den == 0.:
-        true_mcc = 0
-    else:
-        true_mcc = num / den
-    mcc = matthews_corrcoef(y_true, y_pred)
-    assert_array_almost_equal(mcc, true_mcc, decimal=2)
-    assert_array_almost_equal(mcc, 0.57, decimal=2)
+        tp, fp, fn, tn = cm.flatten()
+        num = (tp * tn - fp * fn)
+        den = np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
+
+        true_mcc = 0 if den == 0 else num / den
+        mcc = matthews_corrcoef(y_true, y_pred)
+        assert_array_almost_equal(mcc, true_mcc, decimal=2)
+        assert_array_almost_equal(mcc, 0.57, decimal=2)
+
+    test(y_true, y_pred)
+    test(map(str, y_true), map(str, y_pred))
 
 
 def test_matthews_corrcoef_nan():
@@ -391,6 +548,13 @@ def test_precision_recall_f1_score_multiclass():
 
     fs = f1_score(y_true, y_pred, average='weighted')
     assert_array_almost_equal(fs, 0.47, 2)
+
+    assert_raises(ValueError, precision_score, y_true, y_pred,
+                  average="samples")
+    assert_raises(ValueError, recall_score, y_true, y_pred, average="samples")
+    assert_raises(ValueError, f1_score, y_true, y_pred, average="samples")
+    assert_raises(ValueError, fbeta_score, y_true, y_pred, average="samples",
+                  beta=0.5)
 
     # same prediction but with and explicit label ordering
     p, r, f, s = precision_recall_fscore_support(
@@ -440,17 +604,24 @@ def test_confusion_matrix_multiclass():
     """Test confusion matrix - multi-class case"""
     y_true, y_pred, _ = make_prediction(binary=False)
 
-    # compute confusion matrix with default labels introspection
-    cm = confusion_matrix(y_true, y_pred)
-    assert_array_equal(cm, [[19, 4, 1],
-                            [4, 3, 24],
-                            [0, 2, 18]])
+    def test(y_true, y_pred, string_type=False):
+        # compute confusion matrix with default labels introspection
+        cm = confusion_matrix(y_true, y_pred)
+        assert_array_equal(cm, [[19, 4, 1],
+                                [4, 3, 24],
+                                [0, 2, 18]])
 
-    # compute confusion matrix with explicit label ordering
-    cm = confusion_matrix(y_true, y_pred, labels=[0, 2, 1])
-    assert_array_equal(cm, [[19, 1, 4],
-                            [0, 18, 2],
-                            [4, 24, 3]])
+        # compute confusion matrix with explicit label ordering
+        labels = ['0', '2', '1'] if string_type else [0, 2, 1]
+        cm = confusion_matrix(y_true,
+                              y_pred,
+                              labels=labels)
+        assert_array_equal(cm, [[19, 1, 4],
+                                [0, 18, 2],
+                                [4, 24, 3]])
+
+    test(y_true, y_pred)
+    test(map(str, y_true), map(str, y_pred), string_type=True)
 
 
 def test_confusion_matrix_multiclass_subset_labels():
@@ -469,7 +640,7 @@ def test_confusion_matrix_multiclass_subset_labels():
                             [24, 3]])
 
 
-def test_classification_report():
+def test_classification_report_multiclass():
     """Test performance report"""
     iris = datasets.load_iris()
     y_true, y_pred, _ = make_prediction(dataset=iris, binary=False)
@@ -512,6 +683,40 @@ avg / total       0.51      0.53      0.47        75
     assert_equal(report, expected_report)
 
 
+def test_multilabel_classification_report():
+
+    n_classes = 4
+    n_samples = 50
+    _, y_true_ll = make_multilabel_classification(n_features=1,
+                                                  n_classes=n_classes,
+                                                  random_state=0,
+                                                  n_samples=n_samples)
+    _, y_pred_ll = make_multilabel_classification(n_features=1,
+                                                  n_classes=n_classes,
+                                                  random_state=1,
+                                                  n_samples=n_samples)
+
+    expected_report = """\
+             precision    recall  f1-score   support
+
+          0       0.39      0.73      0.51        15
+          1       0.57      0.75      0.65        28
+          2       0.33      0.11      0.17        18
+          3       0.44      0.50      0.47        24
+
+avg / total       0.45      0.54      0.47        85
+"""
+
+    lb = LabelBinarizer()
+    lb.fit([range(4)])
+    y_true_bi = lb.transform(y_true_ll)
+    y_pred_bi = lb.transform(y_pred_ll)
+
+    for y_true, y_pred in [(y_true_ll, y_pred_ll), (y_true_bi, y_pred_bi)]:
+        report = classification_report(y_true, y_pred)
+        assert_equal(report, expected_report)
+
+
 def test_precision_recall_curve():
     y_true, _, probas_pred = make_prediction(binary=True)
     _test_precision_recall_curve(y_true, probas_pred)
@@ -528,6 +733,8 @@ def test_precision_recall_curve():
     assert_array_almost_equal(p, np.array([0.5, 0.33333333, 0.5, 1., 1.]))
     assert_array_almost_equal(r, np.array([1., 0.5, 0.5, 0.5, 0.]))
     assert_array_almost_equal(t, np.array([1, 2, 3, 4]))
+    assert_equal(p.size, r.size)
+    assert_equal(p.size, t.size + 1)
 
 
 def _test_precision_recall_curve(y_true, probas_pred):
@@ -537,11 +744,15 @@ def _test_precision_recall_curve(y_true, probas_pred):
     assert_array_almost_equal(precision_recall_auc, 0.85, 2)
     assert_array_almost_equal(precision_recall_auc,
                               average_precision_score(y_true, probas_pred))
+    assert_equal(p.size, r.size)
+    assert_equal(p.size, thresholds.size + 1)
     # Smoke test in the case of proba having only one value
     p, r, thresholds = precision_recall_curve(y_true,
                                               np.zeros_like(probas_pred))
     precision_recall_auc = auc(r, p)
     assert_array_almost_equal(precision_recall_auc, 0.75, 3)
+    assert_equal(p.size, r.size)
+    assert_equal(p.size, thresholds.size + 1)
 
 
 def test_precision_recall_curve_errors():
@@ -579,25 +790,19 @@ def test_losses():
     with warnings.catch_warnings(record=True):
     # Throw deprecated warning
         assert_equal(zero_one(y_true, y_pred), 11)
-        assert_almost_equal(zero_one(y_true, y_pred, normalize=True),
-                            11 / float(n_samples), 2)
 
     assert_almost_equal(zero_one_loss(y_true, y_pred),
                         11 / float(n_samples), 2)
     assert_equal(zero_one_loss(y_true, y_pred, normalize=False), 11)
-    assert_almost_equal(zero_one_loss(y_true, y_true), 0.0, 2)
-    assert_almost_equal(zero_one_loss(y_true, y_true, normalize=False), 0, 2)
 
+    assert_almost_equal(zero_one_loss(y_true, y_true), 0.0, 2)
     assert_almost_equal(hamming_loss(y_true, y_pred),
                         2 * 11. / (n_samples * n_classes), 2)
 
     assert_equal(accuracy_score(y_true, y_pred),
                  1 - zero_one_loss(y_true, y_pred))
 
-    assert_equal(accuracy_score(y_true, y_pred, normalize=False),
-                 n_samples - zero_one_loss(y_true, y_pred, normalize=False))
-
-    with warnings.catch_warnings(record=True):
+    with warnings.catch_warnings(True):
     # Throw deprecated warning
         assert_equal(zero_one_score(y_true, y_pred),
                      1 - zero_one_loss(y_true, y_pred))
@@ -642,43 +847,36 @@ def test_symmetry():
     """Test the symmetry of score and loss functions"""
     y_true, y_pred, _ = make_prediction(binary=True)
 
-    # Symmetric metric
-    for metric in [accuracy_score,
-                   lambda y1, y2: accuracy_score(y1, y2, normalize=False),
-                   zero_one_loss,
-                   lambda y1, y2: zero_one_loss(y1, y2, normalize=False),
-                   hamming_loss,
-                   f1_score,
-                   matthews_corrcoef,
-                   mean_squared_error,
-                   mean_absolute_error]:
+    # We shouldn't forget any metrics
+    assert_equal(set(SYMETRIC_METRICS).union(NOT_SYMETRIC_METRICS,
+                                             THRESHOLDED_METRICS),
+                 set(ALL_METRICS))
 
-        assert_equal(metric(y_true, y_pred),
-                     metric(y_pred, y_true),
-                     msg="%s is not symetric" % metric)
+    assert_equal(set(SYMETRIC_METRICS).intersection(set(NOT_SYMETRIC_METRICS)),
+                 set([]))
+
+    # Symmetric metric
+    for name, metric in SYMETRIC_METRICS.items():
+        assert_almost_equal(metric(y_true, y_pred),
+                            metric(y_pred, y_true),
+                            err_msg="%s is not symetric" % name)
 
     # Not symmetric metrics
-    for metric in [precision_score,
-                   recall_score,
-                   lambda y1, y2: fbeta_score(y1, y2, beta=0.5),
-                   lambda y1, y2: fbeta_score(y1, y2, beta=2),
-                   explained_variance_score,
-                   r2_score]:
-
+    for name, metric in NOT_SYMETRIC_METRICS.items():
         assert_true(metric(y_true, y_pred) != metric(y_pred, y_true),
-                    msg="%s seems to be symetric" % metric)
+                    msg="%s seems to be symetric" % name)
 
     # Deprecated metrics
     with warnings.catch_warnings(record=True):
         # Throw deprecated warning
-        assert_equal(zero_one(y_true, y_pred),
-                     zero_one(y_pred, y_true))
+        assert_almost_equal(zero_one(y_true, y_pred),
+                            zero_one(y_pred, y_true))
 
-        assert_equal(zero_one(y_true, y_pred, normalize=False),
-                     zero_one(y_pred, y_true, normalize=False))
+        assert_almost_equal(zero_one(y_true, y_pred, normalize=False),
+                            zero_one(y_pred, y_true, normalize=False))
 
-        assert_equal(zero_one_score(y_true, y_pred),
-                     zero_one_score(y_pred, y_true))
+        assert_almost_equal(zero_one_score(y_true, y_pred),
+                            zero_one_score(y_pred, y_true))
 
 
 def test_sample_order_invariance():
@@ -687,12 +885,12 @@ def test_sample_order_invariance():
     y_true_shuffle, y_pred_shuffle = shuffle(y_true, y_pred,
                                              random_state=0)
 
-    for metric in ALL_METRICS:
+    for name, metric in ALL_METRICS.items():
 
         assert_almost_equal(metric(y_true, y_pred),
                             metric(y_true_shuffle, y_pred_shuffle),
                             err_msg="%s is not sample order invariant"
-                                    % metric)
+                                    % name)
 
 
 def test_format_invariance_with_1d_vectors():
@@ -709,64 +907,54 @@ def test_format_invariance_with_1d_vectors():
     y1_row = np.reshape(y1_1d, (1, -1))
     y2_row = np.reshape(y2_1d, (1, -1))
 
-    for metric in ALL_METRICS:
+    for name, metric in ALL_METRICS.items():
 
         measure = metric(y1, y2)
 
-        assert_almost_equal(measure,
-                            metric(y1_list, y2_list),
-                            err_msg="%s is not representation invariant"
-                                    "with list" % metric)
-
-        assert_almost_equal(measure,
-                            metric(y1_1d, y2_1d),
-                            err_msg="%s is not representation invariant"
-                                    "with np-array-1d" % metric)
-
-        assert_almost_equal(measure,
-                            metric(y1_column, y2_column),
+        assert_almost_equal(metric(y1_list, y2_list), measure,
                             err_msg="%s is not representation invariant "
-                                    "with np-array-column" % metric)
+                                    "with list" % name)
 
-        assert_almost_equal(measure,
-                            metric(y1_row, y2_row),
+        assert_almost_equal(metric(y1_1d, y2_1d), measure,
                             err_msg="%s is not representation invariant "
-                                    "with np-array-row" % metric)
+                                    "with np-array-1d" % name)
+
+        assert_almost_equal(metric(y1_column, y2_column), measure,
+                            err_msg="%s is not representation invariant "
+                                    "with np-array-column" % name)
+
+        assert_almost_equal(metric(y1_row, y2_row), measure,
+                            err_msg="%s is not representation invariant "
+                                    "with np-array-row" % name)
 
         # Mix format support
-        assert_almost_equal(measure,
-                            metric(y1_1d, y2_list),
+        assert_almost_equal(metric(y1_1d, y2_list), measure,
                             err_msg="%s is not representation invariant "
-                                    "with mix np-array-1d and list" % metric)
+                                    "with mix np-array-1d and list" % name)
 
-        assert_almost_equal(measure,
-                            metric(y1_list, y2_1d),
+        assert_almost_equal(metric(y1_list, y2_1d), measure,
                             err_msg="%s is not representation invariant "
-                                    "with mix np-array-1d and list" % metric)
+                                    "with mix np-array-1d and list" % name)
 
-        assert_almost_equal(measure,
-                            metric(y1_1d, y2_column),
+        assert_almost_equal(metric(y1_1d, y2_column), measure,
                             err_msg="%s is not representation invariant "
                                     "with mix np-array-1d and np-array-column"
-                                    % metric)
+                                    % name)
 
-        assert_almost_equal(measure,
-                            metric(y1_column, y2_1d),
+        assert_almost_equal(metric(y1_column, y2_1d), measure,
                             err_msg="%s is not representation invariant "
                                     "with mix np-array-1d and np-array-column"
-                                    % metric)
+                                    % name)
 
-        assert_almost_equal(measure,
-                            metric(y1_list, y2_column),
-                            err_msg="%s is not representation invariant"
+        assert_almost_equal(metric(y1_list, y2_column), measure,
+                            err_msg="%s is not representation invariant "
                                     "with mix list and np-array-column"
-                                    % metric)
+                                    % name)
 
-        assert_almost_equal(measure,
-                            metric(y1_column, y2_list),
-                            err_msg="%s is not representation invariant"
+        assert_almost_equal(metric(y1_column, y2_list), measure,
+                            err_msg="%s is not representation invariant "
                                     "with mix list and np-array-column"
-                                    % metric)
+                                    % name)
 
         # At the moment, these mix representations aren't allowed
         assert_raises(ValueError, metric, y1_1d, y2_row)
@@ -780,24 +968,27 @@ def test_format_invariance_with_1d_vectors():
 def test_hinge_loss_binary():
     y_true = np.array([-1, 1, 1, -1])
     pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
-    assert_equal(1.2 / 4, hinge_loss(y_true, pred_decision))
+    assert_equal(hinge_loss(y_true, pred_decision), 1.2 / 4)
+
+    with warnings.catch_warnings(True):
+        # Test deprecated pos_label
+        assert_equal(
+            hinge_loss(-y_true, pred_decision),
+            hinge_loss(y_true, pred_decision, pos_label=-1, neg_label=1))
 
     y_true = np.array([0, 2, 2, 0])
     pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
-    assert_equal(1.2 / 4,
-                 hinge_loss(y_true, pred_decision, pos_label=2, neg_label=0))
+
+    assert_equal(hinge_loss(y_true, pred_decision), 1.2 / 4)
+    with warnings.catch_warnings(True):
+        # Test deprecated pos_label
+        assert_equal(hinge_loss(y_true, pred_decision, pos_label=2, neg_label=0),
+                     1.2 / 4)
 
 
 def test_multioutput_regression():
-    y_true = np.array([[1, 0, 0, 1],
-                       [0, 1, 1, 1],
-                       [1, 1, 0, 1],
-                       ])
-
-    y_pred = np.array([[0, 0, 0, 1],
-                       [1, 0, 1, 1],
-                       [0, 0, 0, 1],
-                       ])
+    y_true = np.array([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]])
+    y_pred = np.array([[0, 0, 0, 1], [1, 0, 1, 1], [0, 0, 0, 1]])
 
     error = mean_squared_error(y_true, y_pred)
     assert_almost_equal(error, (1. / 3 + 2. / 3 + 2. / 3) / 4.)
@@ -812,15 +1003,8 @@ def test_multioutput_regression():
 
 
 def test_multioutput_number_of_output_differ():
-    y_true = np.array([[1, 0, 0, 1],
-                       [0, 1, 1, 1],
-                       [1, 1, 0, 1],
-                       ])
-
-    y_pred = np.array([[0, 0],
-                       [1, 0],
-                       [0, 0],
-                       ])
+    y_true = np.array([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]])
+    y_pred = np.array([[0, 0], [1, 0], [0, 0]])
 
     assert_raises(ValueError, mean_squared_error, y_true, y_pred)
     assert_raises(ValueError, mean_absolute_error, y_true, y_pred)
@@ -840,15 +1024,11 @@ def test_multioutput_regression_invariance_to_dimension_shuffling():
 
         for _ in xrange(3):
             perm = rng.permutation(n_dims)
-            assert_almost_equal(error,
-                                metric(y_true[:, perm], y_pred[:, perm]))
+            assert_almost_equal(metric(y_true[:, perm], y_pred[:, perm]),
+                                error)
 
 
 def test_multilabel_representation_invariance():
-
-    MULTILABELS_METRICS = [hamming_loss,
-                           zero_one_loss,
-                           accuracy_score]
 
     # Generate some data
     n_classes = 4
@@ -881,178 +1061,460 @@ def test_multilabel_representation_invariance():
     y1_shuffle_binary_indicator = lb.transform(y1_shuffle)
     y2_shuffle_binary_indicator = lb.transform(y2_shuffle)
 
-    for metric in MULTILABELS_METRICS:
+    for name, metric in MULTILABELS_METRICS.items():
         measure = metric(y1, y2)
 
         # Check representation invariance
-        assert_almost_equal(measure,
-                            metric(y1_binary_indicator, y2_binary_indicator),
+        assert_almost_equal(metric(y1_binary_indicator, y2_binary_indicator),
+                            measure,
                             err_msg="%s failed representation invariance  "
                                     "between list of list of labels format "
                                     "and dense binary indicator format."
-                                    % metric)
+                                    % name)
 
         # Check invariance with redundant labels with list of labels
-        assert_almost_equal(measure,
-                            metric(y1, y2_redundant),
+        assert_almost_equal(metric(y1, y2_redundant), measure,
                             err_msg="%s failed rendundant label invariance"
-                                    % metric)
+                                    % name)
 
-        assert_almost_equal(measure,
-                            metric(y1_redundant, y2_redundant),
+        assert_almost_equal(metric(y1_redundant, y2_redundant), measure,
                             err_msg="%s failed rendundant label invariance"
-                                    % metric)
+                                    % name)
 
-        assert_almost_equal(measure,
-                            metric(y1_redundant, y2),
+        assert_almost_equal(metric(y1_redundant, y2), measure,
                             err_msg="%s failed rendundant label invariance"
-                                    % metric)
+                                    % name)
 
         # Check shuffling invariance with list of labels
-        assert_almost_equal(measure,
-                            metric(y1_shuffle, y2_shuffle),
+        assert_almost_equal(metric(y1_shuffle, y2_shuffle), measure,
                             err_msg="%s failed shuffling invariance "
                                     "with list of list of labels format."
-                                    % metric)
+                                    % name)
 
         # Check shuffling invariance with dense binary indicator matrix
-        assert_almost_equal(measure,
-                            metric(y1_shuffle_binary_indicator,
-                                   y2_shuffle_binary_indicator),
+        assert_almost_equal(metric(y1_shuffle_binary_indicator,
+                                   y2_shuffle_binary_indicator), measure,
                             err_msg="%s failed shuffling invariance "
                                     " with dense binary indicator format."
-                                    % metric)
+                                    % name)
 
         # Check invariance with mix input representation
-        assert_almost_equal(measure,
-                            metric(y1,
-                                   y2_binary_indicator),
-                            err_msg="%s failed mix input representation"
+        assert_almost_equal(metric(y1, y2_binary_indicator), measure,
+                            err_msg="%s failed mix input representation "
                                     "invariance: y_true in list of list of "
-                                    "labels format and y_pred in dense binary"
+                                    "labels format and y_pred in dense binary "
                                     "indicator format"
-                                    % metric)
+                                    % name)
 
-        assert_almost_equal(measure,
-                            metric(y1_binary_indicator,
-                                   y2),
-                            err_msg="%s failed mix input representation"
+        assert_almost_equal(metric(y1_binary_indicator, y2), measure,
+                            err_msg="%s failed mix input representation "
                                     "invariance: y_true in dense binary "
                                     "indicator format and y_pred in list of "
                                     "list of labels format."
-                                    % metric)
+                                    % name)
 
 
-def test_multilabel_zero_one_loss():
+def test_multilabel_zero_one_loss_subset():
     # Dense label indicator matrix format
-    y1 = np.array([[0.0, 1.0, 1.0],
-                   [1.0, 0.0, 1.0]])
-    y2 = np.array([[0.0, 0.0, 1.0],
-                   [1.0, 0.0, 1.0]])
+    y1 = np.array([[0, 1, 1], [1, 0, 1]])
+    y2 = np.array([[0, 0, 1], [1, 0, 1]])
 
-    assert_equal(0.5, zero_one_loss(y1, y2))
-    assert_equal(0.0, zero_one_loss(y1, y1))
-    assert_equal(0.0, zero_one_loss(y2, y2))
-    assert_equal(1.0, zero_one_loss(y2, np.logical_not(y2)))
-    assert_equal(1.0, zero_one_loss(y1, np.logical_not(y1)))
-    assert_equal(1.0, zero_one_loss(y1, np.zeros(y1.shape)))
-    assert_equal(1.0, zero_one_loss(y2, np.zeros(y1.shape)))
-
-    assert_equal(1, zero_one_loss(y1, y2, normalize=False))
-    assert_equal(0, zero_one_loss(y1, y1, normalize=False))
-    assert_equal(0, zero_one_loss(y2, y2, normalize=False))
-    assert_equal(2, zero_one_loss(y2, np.logical_not(y2), normalize=False))
-    assert_equal(2, zero_one_loss(y1, np.logical_not(y1), normalize=False))
-    assert_equal(2, zero_one_loss(y1, np.zeros(y1.shape), normalize=False))
-    assert_equal(2, zero_one_loss(y2, np.zeros(y1.shape), normalize=False))
+    assert_equal(zero_one_loss(y1, y2), 0.5)
+    assert_equal(zero_one_loss(y1, y1), 0)
+    assert_equal(zero_one_loss(y2, y2), 0)
+    assert_equal(zero_one_loss(y2, np.logical_not(y2)), 1)
+    assert_equal(zero_one_loss(y1, np.logical_not(y1)), 1)
+    assert_equal(zero_one_loss(y1, np.zeros(y1.shape)), 1)
+    assert_equal(zero_one_loss(y2, np.zeros(y1.shape)), 1)
 
     # List of tuple of label
-    y1 = [(1, 2,),
-          (0, 2,)]
+    y1 = [(1, 2,), (0, 2,)]
+    y2 = [(2,), (0, 2,)]
 
-    y2 = [(2,),
-          (0, 2,)]
-
-    assert_equal(0.5, zero_one_loss(y1, y2))
-    assert_equal(0.0, zero_one_loss(y1, y1))
-    assert_equal(0.0, zero_one_loss(y2, y2))
-    assert_equal(1.0, zero_one_loss(y2, [(), ()]))
-    assert_equal(1.0, zero_one_loss(y2, [tuple(), (10, )]))
-
-    assert_equal(1, zero_one_loss(y1, y2, normalize=False))
-    assert_equal(0, zero_one_loss(y1, y1, normalize=False))
-    assert_equal(0, zero_one_loss(y2, y2, normalize=False))
-    assert_equal(2, zero_one_loss(y2, [(), ()], normalize=False))
-    assert_equal(2, zero_one_loss(y2, [tuple(), (10, )], normalize=False))
+    assert_equal(zero_one_loss(y1, y2), 0.5)
+    assert_equal(zero_one_loss(y1, y1), 0)
+    assert_equal(zero_one_loss(y2, y2), 0)
+    assert_equal(zero_one_loss(y2, [(), ()]), 1)
+    assert_equal(zero_one_loss(y2, [tuple(), (10, )]), 1)
 
 
 def test_multilabel_hamming_loss():
     # Dense label indicator matrix format
-    y1 = np.array([[0.0, 1.0, 1.0],
-                   [1.0, 0.0, 1.0]])
-    y2 = np.array([[0.0, 0.0, 1.0],
-                   [1.0, 0.0, 1.0]])
+    y1 = np.array([[0, 1, 1], [1, 0, 1]])
+    y2 = np.array([[0, 0, 1], [1, 0, 1]])
 
-    assert_equal(1 / 6., hamming_loss(y1, y2))
-    assert_equal(0.0, hamming_loss(y1, y1))
-    assert_equal(0.0, hamming_loss(y2, y2))
-    assert_equal(1.0, hamming_loss(y2, np.logical_not(y2)))
-    assert_equal(1.0, hamming_loss(y1, np.logical_not(y1)))
-    assert_equal(4. / 6, hamming_loss(y1, np.zeros(y1.shape)))
-    assert_equal(0.5, hamming_loss(y2, np.zeros(y1.shape)))
+    assert_equal(hamming_loss(y1, y2), 1 / 6)
+    assert_equal(hamming_loss(y1, y1), 0)
+    assert_equal(hamming_loss(y2, y2), 0)
+    assert_equal(hamming_loss(y2, np.logical_not(y2)), 1)
+    assert_equal(hamming_loss(y1, np.logical_not(y1)), 1)
+    assert_equal(hamming_loss(y1, np.zeros(y1.shape)), 4 / 6)
+    assert_equal(hamming_loss(y2, np.zeros(y1.shape)), 0.5)
 
     # List of tuple of label
-    y1 = [(1, 2,),
-          (0, 2,)]
+    y1 = [(1, 2,), (0, 2,)]
+    y2 = [(2,), (0, 2,)]
 
-    y2 = [(2,),
-          (0, 2,)]
-
-    assert_equal(1 / 6., hamming_loss(y1, y2))
-    assert_equal(0.0, hamming_loss(y1, y1))
-    assert_equal(0.0, hamming_loss(y2, y2))
-    assert_equal(0.75, hamming_loss(y2, [(), ()]))
-    assert_equal(0.625, hamming_loss(y1, [tuple(), (10, )]))
-    assert_almost_equal(0.1818, hamming_loss(y2, [tuple(), (10, )],
-                                             classes=np.arange(11)), 2)
+    assert_equal(hamming_loss(y1, y2), 1 / 6)
+    assert_equal(hamming_loss(y1, y1), 0)
+    assert_equal(hamming_loss(y2, y2), 0)
+    assert_equal(hamming_loss(y2, [(), ()]), 0.75)
+    assert_equal(hamming_loss(y1, [tuple(), (10, )]), 0.625)
+    assert_almost_equal(hamming_loss(y2, [tuple(), (10, )],
+                                     classes=np.arange(11)), 0.1818, 2)
 
 
-def test_multilabel_accuracy_score():
+def test_multilabel_accuracy_score_subset_accuracy():
     # Dense label indicator matrix format
-    y1 = np.array([[0.0, 1.0, 1.0],
-                   [1.0, 0.0, 1.0]])
-    y2 = np.array([[0.0, 0.0, 1.0],
-                   [1.0, 0.0, 1.0]])
+    y1 = np.array([[0, 1, 1], [1, 0, 1]])
+    y2 = np.array([[0, 0, 1], [1, 0, 1]])
 
-    assert_equal(0.5, accuracy_score(y1, y2))
-    assert_equal(1.0, accuracy_score(y1, y1))
-    assert_equal(1.0, accuracy_score(y2, y2))
-    assert_equal(0.0, accuracy_score(y2, np.logical_not(y2)))
-    assert_equal(0.0, accuracy_score(y1, np.logical_not(y1)))
-    assert_equal(0.0, accuracy_score(y1, np.zeros(y1.shape)))
-    assert_equal(0.0, accuracy_score(y2, np.zeros(y1.shape)))
-
-    assert_equal(1, accuracy_score(y1, y2, normalize=False))
-    assert_equal(2, accuracy_score(y1, y1, normalize=False))
-    assert_equal(2, accuracy_score(y2, y2, normalize=False))
-    assert_equal(0, accuracy_score(y2, np.logical_not(y2), normalize=False))
-    assert_equal(0, accuracy_score(y1, np.logical_not(y1), normalize=False))
-    assert_equal(0, accuracy_score(y1, np.zeros(y1.shape), normalize=False))
-    assert_equal(0, accuracy_score(y2, np.zeros(y1.shape), normalize=False))
+    assert_equal(accuracy_score(y1, y2), 0.5)
+    assert_equal(accuracy_score(y1, y1), 1)
+    assert_equal(accuracy_score(y2, y2), 1)
+    assert_equal(accuracy_score(y2, np.logical_not(y2)), 0)
+    assert_equal(accuracy_score(y1, np.logical_not(y1)), 0)
+    assert_equal(accuracy_score(y1, np.zeros(y1.shape)), 0)
+    assert_equal(accuracy_score(y2, np.zeros(y1.shape)), 0)
 
     # List of tuple of label
-    y1 = [(1, 2,),
-          (0, 2,)]
+    y1 = [(1, 2,), (0, 2,)]
+    y2 = [(2,), (0, 2,)]
 
-    y2 = [(2,),
-          (0, 2,)]
+    assert_equal(accuracy_score(y1, y2), 0.5)
+    assert_equal(accuracy_score(y1, y1), 1)
+    assert_equal(accuracy_score(y2, y2), 1)
+    assert_equal(accuracy_score(y2, [(), ()]), 0)
+    assert_equal(accuracy_score(y1, y2, normalize=False), 1)
+    assert_equal(accuracy_score(y1, y1, normalize=False), 2)
+    assert_equal(accuracy_score(y2, y2, normalize=False), 2)
+    assert_equal(accuracy_score(y2, [(), ()], normalize=False), 0)
 
-    assert_equal(0.5, accuracy_score(y1, y2))
-    assert_equal(1.0, accuracy_score(y1, y1))
-    assert_equal(1.0, accuracy_score(y2, y2))
-    assert_equal(0.0, accuracy_score(y2, [(), ()]))
 
-    assert_equal(1, accuracy_score(y1, y2, normalize=False))
-    assert_equal(2, accuracy_score(y1, y1, normalize=False))
-    assert_equal(2, accuracy_score(y2, y2, normalize=False))
-    assert_equal(0, accuracy_score(y2, [(), ()], normalize=False))
+def test_multilabel_jaccard_similarity_score():
+    # Dense label indicator matrix format
+    y1 = np.array([[0, 1, 1], [1, 0, 1]])
+    y2 = np.array([[0, 0, 1], [1, 0, 1]])
+
+    # size(y1 \inter y2) = [1, 2]
+    # size(y1 \union y2) = [2, 2]
+
+    assert_equal(jaccard_similarity_score(y1, y2), 0.75)
+    assert_equal(jaccard_similarity_score(y1, y1), 1)
+    assert_equal(jaccard_similarity_score(y2, y2), 1)
+    assert_equal(jaccard_similarity_score(y2, np.logical_not(y2)), 0)
+    assert_equal(jaccard_similarity_score(y1, np.logical_not(y1)), 0)
+    assert_equal(jaccard_similarity_score(y1, np.zeros(y1.shape)), 0)
+    assert_equal(jaccard_similarity_score(y2, np.zeros(y1.shape)), 0)
+
+   # List of tuple of label
+    y1 = [(1, 2,), (0, 2,)]
+    y2 = [(2,), (0, 2,)]
+
+    assert_equal(jaccard_similarity_score(y1, y2), 0.75)
+    assert_equal(jaccard_similarity_score(y1, y1), 1)
+    assert_equal(jaccard_similarity_score(y2, y2), 1)
+    assert_equal(jaccard_similarity_score(y2, [(), ()]), 0)
+
+    # |y3 inter y4 | = [0, 1, 1]
+    # |y3 union y4 | = [2, 1, 3]
+    y3 = [(0,), (1,), (3,)]
+    y4 = [(4,), (4,), (5, 6)]
+    assert_almost_equal(jaccard_similarity_score(y3, y4), 0)
+
+    # |y5 inter y6 | = [0, 1, 1]
+    # |y5 union y6 | = [2, 1, 3]
+    y5 = [(0,), (1,), (2, 3)]
+    y6 = [(1,), (1,), (2, 0)]
+
+    assert_almost_equal(jaccard_similarity_score(y5, y6), (1 + 1 / 3) / 3)
+
+
+def test_normalize_option_binary_classification():
+    # Test in the binary case
+    y_true, y_pred, _ = make_prediction(binary=True)
+    n_samples = y_true.shape[0]
+
+    for name, metrics in METRICS_WITH_NORMALIZE_OPTION.items():
+        measure = metrics(y_true, y_pred, normalize=True)
+        assert_greater(measure, 0,
+                       msg="We failed to test correctly the normalize option")
+        assert_almost_equal(metrics(y_true, y_pred, normalize=False)
+                            / n_samples, measure)
+
+
+def test_normalize_option_multiclasss_classification():
+    # Test in the multiclass case
+    y_true, y_pred, _ = make_prediction(binary=False)
+    n_samples = y_true.shape[0]
+
+    for name, metrics in METRICS_WITH_NORMALIZE_OPTION.items():
+        measure = metrics(y_true, y_pred, normalize=True)
+        assert_greater(measure, 0,
+                       msg="We failed to test correctly the normalize option")
+        assert_almost_equal(metrics(y_true, y_pred, normalize=False)
+                            / n_samples, measure)
+
+
+def test_normalize_option_multilabel_classification():
+    # Test in the multilabel case
+    n_classes = 4
+    n_samples = 100
+    _, y_true = make_multilabel_classification(n_features=1,
+                                               n_classes=n_classes,
+                                               random_state=0,
+                                               n_samples=n_samples)
+    _, y_pred = make_multilabel_classification(n_features=1,
+                                               n_classes=n_classes,
+                                               random_state=1,
+                                               n_samples=n_samples)
+
+    # Be sure to have at least one empty label
+    y_true += ([], )
+    y_pred += ([], )
+    n_samples += 1
+
+    lb = LabelBinarizer().fit([range(n_classes)])
+    y_true_binary_indicator = lb.transform(y_true)
+    y_pred_binary_indicator = lb.transform(y_pred)
+
+    for name, metrics in METRICS_WITH_NORMALIZE_OPTION.items():
+        # List of list of labels
+        measure = metrics(y_true, y_pred, normalize=True)
+        assert_greater(measure, 0,
+                       msg="We failed to test correctly the normalize option")
+        assert_almost_equal(metrics(y_true, y_pred, normalize=False)
+                            / n_samples, measure,
+                            err_msg="Failed with %s" % name)
+
+        # Indicator matrix format
+        measure = metrics(y_true_binary_indicator,
+                          y_pred_binary_indicator, normalize=True)
+        assert_greater(measure, 0,
+                       msg="We failed to test correctly the normalize option")
+        assert_almost_equal(metrics(y_true_binary_indicator,
+                                    y_pred_binary_indicator, normalize=False)
+                            / n_samples, measure,
+                            err_msg="Failed with %s" % name)
+
+
+def test_precision_recall_f1_score_multilabel_1():
+    """ Test precision_recall_f1_score on a crafted multilabel example
+    """
+    # First crafted example
+    y_true_ll = [(0,), (1,), (2, 3)]
+    y_pred_ll = [(1,), (1,), (2, 0)]
+    lb = LabelBinarizer()
+    lb.fit([range(4)])
+    y_true_bi = lb.transform(y_true_ll)
+    y_pred_bi = lb.transform(y_pred_ll)
+
+    for y_true, y_pred in [(y_true_ll, y_pred_ll), (y_true_bi, y_pred_bi)]:
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average=None)
+        #tp = [0, 1, 1, 0]
+        #fn = [1, 0, 0, 1]
+        #fp = [1, 1, 0, 0]
+
+        # Check per class
+        assert_array_almost_equal(p, [0.0, 0.5, 1.0, 0.0], 2)
+        assert_array_almost_equal(r, [0.0, 1.0, 1.0, 0.0], 2)
+        assert_array_almost_equal(f, [0.0, 1 / 1.5, 1, 0.0], 2)
+        assert_array_almost_equal(s, [1, 1, 1, 1], 2)
+
+        # Check macro
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average="macro")
+        assert_almost_equal(p, 1.5 / 4)
+        assert_almost_equal(r, 0.5)
+        assert_almost_equal(f, 2.5 / 1.5 * 0.25)
+        assert_equal(s, None)
+
+        # Check micro
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average="micro")
+        assert_almost_equal(p, 0.5)
+        assert_almost_equal(r, 0.5)
+        assert_almost_equal(f, 0.5)
+        assert_equal(s, None)
+
+        # Check weigted
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average="weighted")
+        assert_almost_equal(p, 1.5 / 4)
+        assert_almost_equal(r, 0.5)
+        assert_almost_equal(f, 2.5 / 1.5 * 0.25)
+        assert_equal(s, None)
+
+        # Check weigted
+        # |h(x_i) inter y_i | = [0, 1, 1]
+        # |y_i| = [1, 1, 2]
+        # |h(x_i)| = [1, 1, 2]
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average="samples")
+        assert_almost_equal(p, 0.5)
+        assert_almost_equal(r, 0.5)
+        assert_almost_equal(f, 0.5)
+        assert_equal(s, None)
+
+
+def test_precision_recall_f1_score_multilabel_2():
+    """ Test precision_recall_f1_score on a crafted multilabel example 2
+    """
+    # Second crafted example
+    y_true_ll = [(1,), (2,), (2, 3)]
+    y_pred_ll = [(4,), (4,), (2, 1)]
+    lb = LabelBinarizer()
+    lb.fit([range(1, 5)])
+    y_true_bi = lb.transform(y_true_ll)
+    y_pred_bi = lb.transform(y_pred_ll)
+
+    for y_true, y_pred in [(y_true_ll, y_pred_ll), (y_true_bi, y_pred_bi)]:
+        # tp = [ 0.  1.  0.  0.]
+        # fp = [ 1.  0.  0.  2.]
+        # fn = [ 1.  1.  1.  0.]
+
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average=None)
+        assert_array_almost_equal(p, [0.0, 1.0, 0.0, 0.0], 2)
+        assert_array_almost_equal(r, [0.0, 0.5, 0.0, 0.0], 2)
+        assert_array_almost_equal(f, [0.0, 0.66, 0.0, 0.0], 2)
+        assert_array_almost_equal(s, [1, 2, 1, 0], 2)
+
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average="micro")
+        assert_almost_equal(p, 0.25)
+        assert_almost_equal(r, 0.25)
+        assert_almost_equal(f, 2 * 0.25 * 0.25 / 0.5)
+        assert_equal(s, None)
+
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average="macro")
+        assert_almost_equal(p, 0.25)
+        assert_almost_equal(r, 0.125)
+        assert_almost_equal(f, 2 / 12)
+        assert_equal(s, None)
+
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average="weighted")
+        assert_almost_equal(p, 2 / 4)
+        assert_almost_equal(r, 1 / 4)
+        assert_almost_equal(f, 2 / 3 * 2 / 4)
+        assert_equal(s, None)
+
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average="samples")
+        # Check weigted
+        # |h(x_i) inter y_i | = [0, 0, 1]
+        # |y_i| = [1, 1, 2]
+        # |h(x_i)| = [1, 1, 2]
+        assert_almost_equal(p, 1 / 6)
+        assert_almost_equal(r, 1 / 6)
+        assert_almost_equal(f, 2 / 4 * 1 / 3)
+        assert_equal(s, None)
+
+
+def test_precision_recall_f1_score_with_an_empty_prediction():
+    y_true_ll = [(1,), (0,), (2, 1,)]
+    y_pred_ll = [tuple(), (3,), (2, 1)]
+
+    lb = LabelBinarizer()
+    lb.fit([range(4)])
+    y_true_bi = lb.transform(y_true_ll)
+    y_pred_bi = lb.transform(y_pred_ll)
+
+    for y_true, y_pred in [(y_true_ll, y_pred_ll), (y_true_bi, y_pred_bi)]:
+        # true_pos = [ 0.  1.  1.  0.]
+        # false_pos = [ 0.  0.  0.  1.]
+        # false_neg = [ 1.  1.  0.  0.]
+
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average=None)
+        assert_array_almost_equal(p, [0.0, 1.0, 1.0, 0.0], 2)
+        assert_array_almost_equal(r, [0.0, 0.5, 1.0, 0.0], 2)
+        assert_array_almost_equal(f, [0.0, 1 / 1.5, 1, 0.0], 2)
+        assert_array_almost_equal(s, [1, 2, 1, 0], 2)
+
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average="macro")
+        assert_almost_equal(p, 0.5)
+        assert_almost_equal(r, 1.5 / 4)
+        assert_almost_equal(f, 2.5 / (4 * 1.5))
+        assert_equal(s, None)
+
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average="micro")
+        assert_almost_equal(p, 2 / 3)
+        assert_almost_equal(r, 0.5)
+        assert_almost_equal(f, 2 / 3 / (2 / 3 + 0.5))
+        assert_equal(s, None)
+
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average="weighted")
+        assert_almost_equal(p, 3 / 4)
+        assert_almost_equal(r, 0.5)
+        assert_almost_equal(f, (2 / 1.5 + 1) / 4)
+        assert_equal(s, None)
+
+        p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                     average="samples")
+        # |h(x_i) inter y_i | = [0, 0, 2]
+        # |y_i| = [1, 1, 2]
+        # |h(x_i)| = [0, 1, 2]
+        assert_almost_equal(p, 1 / 3)
+        assert_almost_equal(r, 2 / 3)
+        assert_almost_equal(f, 1 / 3)
+        assert_equal(s, None)
+
+
+def test_precision_recall_f1_no_labels():
+    y_true = np.zeros((20, 3))
+    y_pred = np.zeros_like(y_true)
+
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average=None)
+    #tp = [0, 0, 0]
+    #fn = [0, 0, 0]
+    #fp = [0, 0, 0]
+    #support = [0, 0, 0]
+
+    # Check per class
+    assert_array_almost_equal(p, [0, 0, 0], 2)
+    assert_array_almost_equal(r, [0, 0, 0], 2)
+    assert_array_almost_equal(f, [0, 0, 0], 2)
+    assert_array_almost_equal(s, [0, 0, 0], 2)
+
+    # Check macro
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average="macro")
+    assert_almost_equal(p, 0)
+    assert_almost_equal(r, 0)
+    assert_almost_equal(f, 0)
+    assert_equal(s, None)
+
+    # Check micro
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average="micro")
+    assert_almost_equal(p, 0)
+    assert_almost_equal(r, 0)
+    assert_almost_equal(f, 0)
+    assert_equal(s, None)
+
+    # Check weighted
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average="weighted")
+    assert_almost_equal(p, 0)
+    assert_almost_equal(r, 0)
+    assert_almost_equal(f, 0)
+    assert_equal(s, None)
+
+    # # Check example
+    # |h(x_i) inter y_i | = [0, 0, 0]
+    # |y_i| = [0, 0, 0]
+    # |h(x_i)| = [1, 1, 2]
+    p, r, f, s = precision_recall_fscore_support(y_true, y_pred,
+                                                 average="samples")
+    assert_almost_equal(p, 1)
+    assert_almost_equal(r, 1)
+    assert_almost_equal(f, 1)
+    assert_equal(s, None)

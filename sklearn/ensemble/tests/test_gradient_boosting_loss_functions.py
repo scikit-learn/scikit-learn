@@ -36,8 +36,10 @@ def test_binomial_deviance():
                                                    (2.0 * y - 1) * pred))
     test_data = [(np.array([1.0, 1.0, 1.0]), np.array([100.0, 100.0, 100.0])),
                  (np.array([0.0, 0.0, 0.0]), np.array([100.0, 100.0, 100.0])),
-                 (np.array([0.0, 0.0, 0.0]), np.array([-100.0, -100.0, -100.0])),
-                 (np.array([1.0, 1.0, 1.0]), np.array([-100.0, -100.0, -100.0]))]
+                 (np.array([0.0, 0.0, 0.0]),
+                  np.array([-100.0, -100.0, -100.0])),
+                 (np.array([1.0, 1.0, 1.0]),
+                  np.array([-100.0, -100.0, -100.0]))]
 
     for datum in test_data:
         assert_almost_equal(bd(*datum), alt_dev(*datum))

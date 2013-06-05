@@ -55,7 +55,8 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
     return scores_
 
 
-class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator, TransformerMixin)):
+class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
+                                                   TransformerMixin)):
     """Base class to implement randomized linear models for feature selection
 
     This implements the strategy by Meinshausen and Buhlman:
@@ -436,7 +437,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 
     Notes
     -----
-    See examples/linear_model/plot_randomized_lasso.py for an example.
+    See examples/linear_model/plot_sparse_recovery.py for an example.
 
     References
     ----------
@@ -564,7 +565,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
 
     Notes
     -----
-    See examples/linear_model/plot_randomized_lasso.py for an example.
+    See examples/linear_model/plot_sparse_recovery.py for an example.
     """
     rng = check_random_state(random_state)
 

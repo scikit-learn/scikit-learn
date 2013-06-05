@@ -13,8 +13,12 @@ import pkgutil
 import scipy as sp
 from functools import wraps
 try:
+    # Python 2
+    from urllib2 import urlopen
     from urllib2 import HTTPError
 except ImportError:
+    # Python 3+
+    from urllib.request import urlopen
     from urllib.error import HTTPError
 
 import sklearn
@@ -93,8 +97,8 @@ def assert_raise_message(exception, message, function, *args, **kwargs):
         assert_in(message, error_message)
 
 
-def fake_mldata_cache(columns_dict, dataname, matfile, ordering=None):
-    """Create a fake mldata data set in the cache_path.
+def fake_mldata(columns_dict, dataname, matfile, ordering=None):
+    """Create a fake mldata data set.
 
     Parameters
     ----------
@@ -134,7 +138,7 @@ class mock_mldata_urlopen(object):
         {dataset_name: (data_dict, ordering).
         `data_dict` itself is a dictionary of {column_name: data_array},
         and `ordering` is a list of column_names to determine the ordering
-        in the data set (see `fake_mldata_cache` for details).
+        in the data set (see `fake_mldata` for details).
 
         When requesting a dataset with a name that is in mock_datasets,
         this object creates a fake dataset in a StringIO object and
@@ -153,13 +157,26 @@ class mock_mldata_urlopen(object):
             ordering = None
             if isinstance(dataset, tuple):
                 dataset, ordering = dataset
-            fake_mldata_cache(dataset, resource_name, matfile, ordering)
+            fake_mldata(dataset, resource_name, matfile, ordering)
 
             matfile.seek(0)
             return matfile
         else:
             raise HTTPError(urlname, 404, dataset_name + " is not available",
                             [], None)
+
+
+def install_mldata_mock(mock_datasets):
+    # Lazy import to avoid mutually recursive imports
+    from sklearn import datasets
+    datasets.mldata.urlopen = mock_mldata_urlopen(mock_datasets)
+
+
+def uninstall_mldata_mock():
+    # Lazy import to avoid mutually recursive imports
+    from sklearn import datasets
+    datasets.mldata.urlopen = urlopen
+
 
 # Meta estimators need another estimator to be instantiated.
 meta_estimators = ["OneVsOneClassifier",

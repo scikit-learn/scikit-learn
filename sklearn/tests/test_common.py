@@ -182,6 +182,9 @@ def test_transformers():
         elif name == "MiniBatchDictionaryLearning":
             transformer.set_params(n_iter=5)    # default = 1000
 
+        elif name == "KernelPCA":
+            transformer.remove_zero_eig = False
+
         # fit
 
         if name in ('_PLS', 'PLSCanonical', 'PLSRegression', 'CCA', 'PLSSVD'):

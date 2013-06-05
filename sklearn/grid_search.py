@@ -322,7 +322,8 @@ _CVScoreTuple = namedtuple('_CVScoreTuple',
                             'cv_validation_scores'))
 
 
-class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator, MetaEstimatorMixin)):
+class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
+                                      MetaEstimatorMixin)):
     """Base class for hyper parameter search with cross-validation.
     """
 
@@ -368,8 +369,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator, MetaEstimatorMixin
             raise ValueError("No score function explicitly defined, "
                              "and the estimator doesn't provide one %s"
                              % self.best_estimator_)
-        y_predicted = self.predict(X)
-        return self.scorer(y, y_predicted)
+        return self.scorer_(self.best_estimator_, X, y)
 
     @property
     def predict(self):
@@ -406,6 +406,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator, MetaEstimatorMixin
 
     def _fit(self, X, y, parameter_iterator, **params):
         """Actual fitting,  performing the search over parameters."""
+
+        if params:
+            warnings.warn("Passing additional parameters to GridSearchCV "
+                          "is ignored! The option will be removed in 0.15.")
         estimator = self.estimator
         cv = self.cv
 
@@ -700,7 +704,7 @@ class RandomizedSearchCV(BaseSearchCV):
     estimator : object type that implements the "fit" and "predict" methods
         A object of that type is instantiated for each parameter setting.
 
-    param_distribution : dict
+    param_distributions : dict
         Dictionary with parameters names (string) as keys and distributions
         or lists of parameters to try. Distributions must provide a ``rvs``
         method for sampling (such as those from scipy.stats.distributions).

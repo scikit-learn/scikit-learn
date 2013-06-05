@@ -1034,6 +1034,11 @@ class MiniBatchKMeans(KMeans):
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
 
+    n_init : int, default=3
+        Number of random initializations that are tried.
+        In constrast to KMeans, the algorithm is only run once, using the
+        best of the ``n_init`` initializations as measured by inertia.
+
     compute_labels : boolean
         Compute label assignment and inertia for the complete dataset
         once the minibatch optimization has converged in fit.

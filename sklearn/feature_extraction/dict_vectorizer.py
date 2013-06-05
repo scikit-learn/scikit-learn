@@ -224,8 +224,14 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
                 indptr.append(len(indices))
 
-            indices = np.frombuffer(indices, dtype=np.int32)
-            indptr = np.frombuffer(indptr, dtype=np.int32)
+            if len(indptr) == 0:
+                raise ValueError("Sample sequence X is empty.")
+
+            if len(indices) > 0:
+                # workaround for bug in older NumPy:
+                # http://projects.scipy.org/numpy/ticket/1943
+                indices = np.frombuffer(indices, dtype=np.intc)
+            indptr = np.frombuffer(indptr, dtype=np.intc)
             shape = (len(indptr) - 1, len(vocab))
             return sp.csr_matrix((values, indices, indptr),
                                  shape=shape, dtype=dtype)

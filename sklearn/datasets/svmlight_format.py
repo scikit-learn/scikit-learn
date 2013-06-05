@@ -15,9 +15,7 @@ libsvm command line programs.
 #          Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
-from bz2 import BZ2File
 from contextlib import closing
-import gzip
 import io
 import os.path
 
@@ -122,8 +120,10 @@ def _gen_open(f):
 
     _, ext = os.path.splitext(f)
     if ext == ".gz":
+        import gzip
         return gzip.open(f, "rb")
     elif ext == ".bz2":
+        from bz2 import BZ2File
         return BZ2File(f, "rb")
     else:
         return open(f, "rb")

@@ -78,7 +78,7 @@ SGD fits a linear model to the training data. The member ``coef_`` holds
 the model parameters::
 
     >>> clf.coef_
-    array([[ 9.90090187,  9.90090187]])
+    array([[ 9.91080278,  9.91080278]])
 
 Member ``intercept_`` holds the intercept (aka offset or bias)::
 
@@ -91,7 +91,7 @@ hyperplane, is controlled by the parameter ``fit_intercept``.
 To get the signed distance to the hyperplane use :meth:`SGDClassifier.decision_function`::
 
     >>> clf.decision_function([[2., 2.]])
-    array([ 29.61357756])
+    array([ 29.65318117])
 
 The concrete loss function can be set via the ``loss``
 parameter. :class:`SGDClassifier` supports the following loss functions:
@@ -112,7 +112,7 @@ In the case of binary classification and ``loss="log"`` or
 
     >>> clf = SGDClassifier(loss="log").fit(X, y)
     >>> clf.predict_proba([[1., 1.]])
-    array([[ 0.00000051,  0.99999949]])
+    array([[ 0.0000005,  0.9999995]])
 
 The concrete penalty can be set via the ``penalty`` parameter.
 SGD supports the following penalties:

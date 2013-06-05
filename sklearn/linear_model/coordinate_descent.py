@@ -217,8 +217,8 @@ class ElasticNet(LinearModel, RegressorMixin):
         l2_reg = self.alpha * (1.0 - self.l1_ratio) * n_samples
 
         # precompute if n_samples > n_features
-        if precompute == "auto" and n_samples > n_features:
-            precompute = True
+        if precompute == 'auto':
+            precompute = (n_samples > n_features)
 
         if hasattr(precompute, '__array__'):
             Gram = precompute
@@ -597,7 +597,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     >>> X = np.array([[1, 2, 3.1], [2.3, 5.4, 4.3]]).T
     >>> y = np.array([1, 2, 3.1])
     >>> # Use lasso_path to compute a coefficient path
-    >>> coef_path = [e.coef_ for e in lasso_path(X, y, alphas=[5., 1., .5], fit_intercept=False)]
+    >>> coef_path = [e.coef_ for e in lasso_path(X, y, alphas=[5., 1., .5], \
+fit_intercept=False)]
     >>> print(np.array(coef_path).T)
     [[ 0.          0.          0.46874778]
      [ 0.2159048   0.4425765   0.23689075]]
@@ -607,7 +608,8 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     >>> from sklearn.linear_model import lars_path
     >>> alphas, active, coef_path_lars = lars_path(X, y, method='lasso')
     >>> from scipy import interpolate
-    >>> coef_path_continuous = interpolate.interp1d(alphas[::-1], coef_path_lars[:, ::-1])
+    >>> coef_path_continuous = interpolate.interp1d(alphas[::-1],
+    ...     coef_path_lars[:, ::-1])
     >>> print(coef_path_continuous([5., 1., .5]))
     [[ 0.          0.          0.46915237]
      [ 0.2159048   0.4425765   0.23668876]]
@@ -694,7 +696,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     Notes
     -----
-    See examples/plot_lasso_coordinate_descent_path.py for an example.
+    See examples/linear_model/plot_lasso_coordinate_descent_path.py
+    for an example.
 
     See also
     --------
@@ -738,7 +741,11 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
         precompute = 'auto'
         Xy = None
 
-    if precompute or ((precompute == 'auto') and (n_samples > n_features)):
+    # precompute if n_samples > n_features
+    if precompute == 'auto':
+        precompute = (n_samples > n_features)
+
+    if precompute:
         if sparse.isspmatrix(X):
             warnings.warn("precompute is ignored for sparse data")
             precompute = False
@@ -1044,7 +1051,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
     Notes
     -----
-    See examples/linear_model/lasso_path_with_crossvalidation.py
+    See examples/linear_model/plot_lasso_model_selection.py
     for an example.
 
     To avoid unnecessary memory duplication the X argument of the fit method
@@ -1150,7 +1157,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
     Notes
     -----
-    See examples/linear_model/lasso_path_with_crossvalidation.py
+    See examples/linear_model/plot_lasso_model_selection.py
     for an example.
 
     To avoid unnecessary memory duplication the X argument of the fit method

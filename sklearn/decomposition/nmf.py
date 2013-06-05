@@ -179,8 +179,9 @@ def _nls_subproblem(V, W, H_init, tol, max_iter, sigma=0.01, beta=0.1):
         Constant used in the sufficient decrease condition checked by the line
         search.  Smaller values lead to a looser sufficient decrease condition,
         thus reducing the time taken by the line search, but potentially
-        increasing the number of iterations of the projected gradient procedure.
-        0.01 is a commonly used value in the optimization literature.
+        increasing the number of iterations of the projected gradient
+        procedure. 0.01 is a commonly used value in the optimization
+        literature.
 
     beta : float
         Factor by which the step size is decreased (resp. increased) until

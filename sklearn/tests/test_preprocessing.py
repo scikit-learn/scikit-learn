@@ -23,7 +23,6 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import scale
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.preprocessing import add_dummy_feature
-from sklearn.preprocessing import balance_weights
 
 from sklearn import datasets
 from sklearn.linear_model.stochastic_gradient import SGDClassifier
@@ -725,14 +724,3 @@ def test_add_dummy_feature_csr():
     X = add_dummy_feature(X)
     assert_true(sp.isspmatrix_csr(X), X)
     assert_array_equal(X.toarray(), [[1, 1, 0], [1, 0, 1], [1, 0, 1]])
-
-
-def test_balance_weights():
-    weights = balance_weights([0, 0, 1, 1])
-    assert_array_equal(weights, [1., 1., 1., 1.])
-
-    weights = balance_weights([0, 1, 1, 1, 1])
-    assert_array_equal(weights, [1., 0.25, 0.25, 0.25, 0.25])
-
-    weights = balance_weights([0, 0])
-    assert_array_equal(weights, [1., 1.])

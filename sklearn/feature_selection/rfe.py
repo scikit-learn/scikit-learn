@@ -7,15 +7,16 @@
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
-from ..utils import check_arrays, safe_sqr, safe_mask
+from ..utils import check_arrays, safe_sqr
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
 from ..cross_validation import check_cv
+from .base import SelectorMixin
 
 
-class RFE(BaseEstimator, MetaEstimatorMixin):
+class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     """Feature ranking with recursive feature elimination.
 
     Given an external estimator that assigns weights to features (e.g., the
@@ -113,7 +114,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
         y : array-like, shape = [n_samples]
             The target values.
         """
-        X, y = check_arrays(X, y, sparse_format="csr")
+        X, y = check_arrays(X, y, sparse_format="csc")
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
@@ -180,7 +181,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
         y : array of shape [n_samples]
             The predicted target values.
         """
-        return self.estimator_.predict(X[:, safe_mask(X, self.support_)])
+        return self.estimator_.predict(self.transform(X))
 
     def score(self, X, y):
         """Reduce X to the selected features and then return the score of the
@@ -194,23 +195,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
         y : array of shape [n_samples]
             The target values.
         """
-        return self.estimator_.score(X[:, safe_mask(X, self.support_)], y)
+        return self.estimator_.score(self.transform(X), y)
 
-    def transform(self, X):
-        """Reduce X to the selected features during the elimination.
-
-        Parameters
-        ----------
-        X : array of shape [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        X_r : array of shape [n_samples, n_selected_features]
-            The input samples with only the features selected during the \
-            elimination.
-        """
-        return X[:, safe_mask(X, self.support_)]
+    def _get_support_mask(self):
+        return self.support_
 
     def decision_function(self, X):
         return self.estimator_.decision_function(self.transform(X))
@@ -378,12 +366,12 @@ class RFECV(RFE, MetaEstimatorMixin):
         rfe.fit(X, y)
 
         # Set final attributes
+        self.support_ = rfe.support_
+        self.n_features_ = rfe.n_features_
+        self.ranking_ = rfe.ranking_
         self.estimator_ = clone(self.estimator)
         self.estimator_.set_params(**self.estimator_params)
-        self.estimator_.fit(X[:, safe_mask(X, rfe.support_)], y)
-        self.n_features_ = rfe.n_features_
-        self.support_ = rfe.support_
-        self.ranking_ = rfe.ranking_
+        self.estimator_.fit(self.transform(X), y)
 
         self.cv_scores_ = scores / n
         return self

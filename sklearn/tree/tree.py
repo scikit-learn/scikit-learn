@@ -24,7 +24,7 @@ from warnings import warn
 from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
 from ..externals import six
 from ..externals.six.moves import xrange
-from ..feature_selection.selector_mixin import SelectorMixin
+from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import array2d, check_random_state
 from ..utils.validation import check_arrays
 
@@ -49,7 +49,8 @@ REGRESSION = {
 }
 
 
-class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator, SelectorMixin)):
+class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
+                                          _LearntSelectorMixin)):
     """Base class for decision trees.
 
     Warning: This class should not be used directly.

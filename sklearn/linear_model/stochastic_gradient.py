@@ -14,7 +14,7 @@ from ..externals.joblib import Parallel, delayed
 
 from .base import LinearClassifierMixin, SparseCoefMixin
 from ..base import BaseEstimator, RegressorMixin
-from ..feature_selection.selector_mixin import SelectorMixin
+from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import array2d, atleast2d_or_csr, check_arrays, deprecated
 from ..utils.extmath import safe_sparse_dot
 from ..externals import six
@@ -524,7 +524,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
                          sample_weight=sample_weight)
 
 
-class SGDClassifier(BaseSGDClassifier, SelectorMixin):
+class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     """Linear model fitted by minimizing a regularized empirical loss with SGD.
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is
@@ -543,8 +543,8 @@ class SGDClassifier(BaseSGDClassifier, SelectorMixin):
 
     Parameters
     ----------
-    loss : str, 'hinge', 'log', 'modified_huber', 'squared_hinge', 'perceptron',
-                or a regression loss: 'squared_loss', 'huber',
+    loss : str, 'hinge', 'log', 'modified_huber', 'squared_hinge',
+                'perceptron', or a regression loss: 'squared_loss', 'huber',
                 'epsilon_insensitive', or 'squared_epsilon_insensitive'
         The loss function to be used. Defaults to 'hinge'. The hinge loss is
         a margin loss used by standard linear SVM models. The 'log' loss is
@@ -592,8 +592,8 @@ class SGDClassifier(BaseSGDClassifier, SelectorMixin):
     epsilon: float
         Epsilon in the epsilon-insensitive loss functions; only if `loss` is
         'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
-        For 'huber', determines the threshold at which it becomes less important
-        to get the prediction exactly right.
+        For 'huber', determines the threshold at which it becomes less
+        important to get the prediction exactly right.
         For epsilon-insensitive, any differences between the current prediction
         and the correct label are ignored if they are less than this threshold.
 
@@ -937,7 +937,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         self.intercept_ = np.atleast_1d(intercept)
 
 
-class SGDRegressor(BaseSGDRegressor, SelectorMixin):
+class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     """Linear model fitted by minimizing a regularized empirical loss with SGD
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is
@@ -1002,8 +1002,8 @@ class SGDRegressor(BaseSGDRegressor, SelectorMixin):
     epsilon: float
         Epsilon in the epsilon-insensitive loss functions; only if `loss` is
         'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
-        For 'huber', determines the threshold at which it becomes less important
-        to get the prediction exactly right.
+        For 'huber', determines the threshold at which it becomes less
+        important to get the prediction exactly right.
         For epsilon-insensitive, any differences between the current prediction
         and the correct label are ignored if they are less than this threshold.
 

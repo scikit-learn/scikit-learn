@@ -691,6 +691,7 @@ Classification metrics
    metrics.fbeta_score
    metrics.hamming_loss
    metrics.hinge_loss
+   metrics.jaccard_similarity_score
    metrics.matthews_corrcoef
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
@@ -950,7 +951,6 @@ Pairwise metrics
    :template: function.rst
 
    preprocessing.add_dummy_feature
-   preprocessing.balance_weights
    preprocessing.binarize
    preprocessing.normalize
    preprocessing.scale
