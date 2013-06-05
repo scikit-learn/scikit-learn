@@ -11,7 +11,7 @@ from sklearn.cluster import KMeans
 from sklearn.linear_model import Ridge, LogisticRegression
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.multiclass import OneVsRestClassifier
-from sklearn.datasets import make_blobs, load_diabetes
+from sklearn.datasets import make_blobs, load_diabetes, make_multilabel_classification
 from sklearn.cross_validation import train_test_split, cross_val_score
 from sklearn.grid_search import GridSearchCV
 
@@ -89,7 +89,7 @@ def test_unsupervised_scores():
 
 
 def test_multilabel_scores():
-    X, y = make_blobs(random_state=0, centers=4)
+    X, y = make_multilabel_classification(n_samples=100, n_features=30, n_classes=5)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf = OneVsRestClassifier(LogisticRegression(random_state=0))
     clf.fit(X_train, y_train)
