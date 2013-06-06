@@ -19,7 +19,7 @@ from ..externals.joblib import Memory
 from ..externals import six
 from ..metrics import euclidean_distances
 from ..utils import array2d
-from ..utils._csgraph import cs_graph_components
+from ..utils.mst import connected_components
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
@@ -100,7 +100,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
 
     # Compute the number of nodes
     if n_components is None:
-        n_components, labels = cs_graph_components(connectivity)
+        n_components, labels = connected_components(connectivity)
 
     # Convert connectivity matrix to LIL with a copy if needed
     if sparse.isspmatrix_lil(connectivity) and copy:
