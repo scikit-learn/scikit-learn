@@ -5,6 +5,7 @@
 =========================================================
 Vector Quantization Example
 =========================================================
+
 The classic image processing example, Lena, an 8-bit grayscale
 bit-depth, 512 x 512 sized image, is used here to illustrate
 how `k`-means is used for vector quantization.
