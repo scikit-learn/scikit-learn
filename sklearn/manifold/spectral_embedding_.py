@@ -16,7 +16,7 @@ from ..externals import six
 from ..utils import check_random_state
 from ..utils.validation import atleast2d_or_csr
 from ..utils.graph import graph_laplacian
-from ..utils.mst import connected_components
+from ..utils.sparsetools import connected_components
 from ..utils.arpack import eigsh
 from ..metrics.pairwise import rbf_kernel
 from ..neighbors import kneighbors_graph
