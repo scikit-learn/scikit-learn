@@ -807,10 +807,11 @@ class RandomizedSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
                  loss_func=None, score_func=None, fit_params=None, n_jobs=1,
                  iid=True, refit=True, cv=None, verbose=0,
-                 pre_dispatch='2*n_jobs'):
+                 pre_dispatch='2*n_jobs', random_state=None):
 
         self.param_distributions = param_distributions
         self.n_iter = n_iter
+        self.random_state = random_state
         super(RandomizedSearchCV, self).__init__(
             estimator, scoring, loss_func, score_func, fit_params, n_jobs, iid,
             refit, cv, verbose, pre_dispatch)
@@ -831,5 +832,6 @@ class RandomizedSearchCV(BaseSearchCV):
 
         """
         sampled_params = ParameterSampler(self.param_distributions,
-                                          self.n_iter)
+                                          self.n_iter,
+                                          random_state=self.random_state)
         return self._fit(X, y, sampled_params, **params)
