@@ -68,10 +68,10 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
     return seen  # return all path lengths as dictionary
 
 
-if hasattr(sparse, 'cs_graph_components'):
-    cs_graph_components = sparse.cs_graph_components
+if hasattr(sparse, 'connected_components'):
+    connected_components = sparse.connected_components
 else:
-    from ._csgraph import cs_graph_components
+    from .mst import connected_components
 
 
 ###############################################################################
