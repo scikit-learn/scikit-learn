@@ -46,13 +46,16 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
     sample_weight : float or numpy array of shape [n_samples]
         Individual weights for each sample
 
-    solver : {'auto', 'dense_cholesky', 'lsqr', 'sparse_cg'}
+    solver : {'auto', 'svd', 'dense_cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
 
+        - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
+          coefficients. More stable for singular matrices than 'dense_cholesky'.
+
         - 'dense_cholesky' uses the standard scipy.linalg.solve function to
-          obtain a closed-form solution.
+          obtain a closed-form solution via a Cholesky decomposition of dot(X.T, X)
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
           scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
@@ -97,6 +100,9 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
     if has_sw:
         solver = 'dense_cholesky'
 
+    if solver not in ('sparse_cg', 'dense_cholesky', 'svd', 'lsqr'):
+        ValueError('Solver %s not understood' % solver)
+
     if solver == 'sparse_cg':
         # gradient descent
         X1 = sp_linalg.aslinearoperator(X)
@@ -137,7 +143,8 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             coefs = np.ravel(coefs)
 
         return coefs
-    elif solver == "lsqr":
+
+    if solver == "lsqr":
         if y.ndim == 1:
             y1 = np.reshape(y, (-1, 1))
         else:
@@ -156,7 +163,8 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             coefs = np.ravel(coefs)
 
         return coefs
-    else:
+
+    if solver == 'dense_cholesky':
         # normal equations (cholesky) method
         if n_features > n_samples or has_sw:
             # kernel ridge
@@ -173,24 +181,42 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                     y = y * sw[:, np.newaxis]
                 K *= np.outer(sw, sw)
             K.flat[::n_samples + 1] += alpha
-            dual_coef = linalg.solve(K, y,
-                                     sym_pos=True, overwrite_a=True)
-            if has_sw:
-                if dual_coef.ndim == 1:
-                    dual_coef *= sw
-                else:
-                    # Deal with multiple-output problems
-                    dual_coef *= sw[:, np.newaxis]
-            coef = safe_sparse_dot(X.T, dual_coef, dense_output=True)
+            try:
+                dual_coef = linalg.solve(K, y,
+                                         sym_pos=True, overwrite_a=True)
+                if has_sw:
+                    if dual_coef.ndim == 1:
+                        dual_coef *= sw
+                    else:
+                        # Deal with multiple-output problems
+                        dual_coef *= sw[:, np.newaxis]
+                return safe_sparse_dot(X.T, dual_coef, dense_output=True).T
+            except linalg.LinAlgError:
+                # use SVD solver if matrix is singular
+                solver = 'svd'
         else:
             # ridge
             # w = inv(X^t X + alpha*Id) * X.T y
             A = safe_sparse_dot(X.T, X, dense_output=True)
             A.flat[::n_features + 1] += alpha
             Xy = safe_sparse_dot(X.T, y, dense_output=True)
-            coef = linalg.solve(A, Xy, sym_pos=True, overwrite_a=True)
+            try:
+                return linalg.solve(A, Xy, sym_pos=True, overwrite_a=True).T
+            except linalg.LinAlgError:
+                # use SVD solver if matrix is singular
+                solver = 'svd'
 
-        return coef.T
+    if solver == 'svd':
+        # slower than cholesky but does not break with
+        # singular matrices
+        U, s, Vt = linalg.svd(X, full_matrices=False)
+        idx = s > 1e-15  # same default value as scipy.linalg.pinv
+        d = np.zeros_like(s)
+        s = s[idx]
+        d[idx] = (s / (s ** 2 + alpha))
+        Ud = np.dot(U.T, y).T * d
+        coef_ = np.dot(Ud, Vt)
+        return coef_
 
 
 class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
@@ -218,7 +244,8 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
                                       alpha=self.alpha,
                                       sample_weight=sample_weight,
                                       max_iter=self.max_iter,
-                                      tol=self.tol)
+                                      tol=self.tol,
+                                      solver=self.solver)
         self._set_intercept(X_mean, y_mean, X_std)
         return self
 
@@ -255,10 +282,13 @@ class Ridge(_BaseRidge, RegressorMixin):
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
 
-    solver : {'auto', 'dense_cholesky', 'lsqr', 'sparse_cg'}
+    solver : {'auto', 'svd', 'dense_cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational routines:
 
         - 'auto' chooses the solver automatically based on the type of data.
+
+        - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
+          coefficients. More stable for singular matrices than 'dense_cholesky'.
 
         - 'dense_cholesky' uses the standard scipy.linalg.solve function to
           obtain a closed-form solution.
@@ -357,9 +387,10 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
 
-    solver : {'auto', 'dense_cholesky', 'lsqr', 'sparse_cg'}
+    solver : {'auto', 'svd', 'dense_cholesky', 'lsqr', 'sparse_cg'}
         Solver to use in the computational
-        routines. 'dense_cholesky' will use the standard
+        routines. 'svd' will use a Sinvular value decomposition to obtain
+        the solution, 'dense_cholesky' will use the standard
         scipy.linalg.solve function, 'sparse_cg' will use the
         conjugate gradient solver as found in
         scipy.sparse.linalg.cg while 'auto' will chose the most
