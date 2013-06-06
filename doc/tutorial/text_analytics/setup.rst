@@ -1,17 +1,16 @@
 Tutorial setup
 ==============
 
-The following assumes you have extracted the source distribution
-of this tutorial somewhere on your local disk. Alternatively you
-can use git to clone this repo directly from github onto your
-local disk::
+To get started with this tutorial, you firstly must have the
+*scikit-learn* and all of its requiered dependencies installed.
+The source of this tutorial can be found within your
+scikit-learn folder::
 
-    % git clone https://github.com/scikit-learn/scikit-learn-tutorial.git
+    scikit-learn/doc/tutorial/text_analytics/
 
-In the following we will name this folder ``$TUTORIAL_HOME``. It
-should contain the following folders:
+The tutorial folder, should contain the following folders:
 
-  * ``tutorial`` - the source of the tutorial document written with sphinx
+  * ``*.rst files`` - the source of the tutorial document written with sphinx
 
   * ``data`` - folder to put the datasets used during the tutorial
 
@@ -20,11 +19,12 @@ should contain the following folders:
   * ``solutions`` - solutions of the exercices
 
 
-You can aleardy copy the skeletons into a new folder named ``workspace``
-where you will edit your own files for the exercices while keeping
+You can aleardy copy the skeletons into a new folder somewhere
+on your hard-drive named ``sklearn_tut_workspace`` where you
+will edit your own files for the exercices while keeping
 the original skeletons intact::
 
-    % cp -r skeletons workspace
+    % cp -r skeletons work_directory/sklear_tut_workspace
 
 
 Install scikit-learn build dependencies
