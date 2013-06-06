@@ -96,7 +96,8 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
 
     # Compute the number of nodes
     if n_components is None:
-        n_components, labels = connected_components(connectivity)
+        n_components, labels = connected_components(connectivity,
+                                                    directed=False)
 
     # Convert connectivity matrix to LIL with a copy if needed
     if sparse.isspmatrix_lil(connectivity) and copy:
