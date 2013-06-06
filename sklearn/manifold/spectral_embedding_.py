@@ -70,7 +70,7 @@ def _graph_is_connected(graph):
     """
     if sparse.isspmatrix(graph):
         # sparse graph, find all the connected components
-        n_connected_components, _ = connected_components(graph)
+        n_connected_components, _ = connected_components(graph, directed=False)
         return n_connected_components == 1
     else:
         # dense graph, find all connected components start from node 0
