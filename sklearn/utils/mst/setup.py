@@ -11,7 +11,11 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=[numpy.get_include()],
                          #libraries=libraries
                          )
-
+    config.add_extension('_traversal',
+                         sources=['_traversal.c'],
+                         include_dirs=[numpy.get_include()],
+                         #libraries=libraries
+                         )
     config.add_extension('_graph_tools',
                          sources=['_graph_tools.c'],
                          include_dirs=[numpy.get_include()],
