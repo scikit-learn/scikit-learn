@@ -71,7 +71,7 @@ def single_source_shortest_path_length(graph, source, cutoff=None):
 if hasattr(sparse, 'connected_components'):
     connected_components = sparse.connected_components
 else:
-    from .mst import connected_components
+    from .sparsetools import connected_components
 
 
 ###############################################################################
