@@ -13,7 +13,8 @@ from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, atleast2d_or_csr
 from ..utils.mst import minimum_spanning_tree
 #from ..utils._csgraph import cs_graph_components
-from scipy.sparse import connected_components
+from scipy.sparse.csgraph import connected_components
+
 
 class MSTCluster(BaseEstimator):
     """Perform clustering using the minimum spanning tree and a threshold cut.
@@ -62,20 +63,12 @@ class MSTCluster(BaseEstimator):
         """
         X = atleast2d_or_csr(X)
         assert X.shape[0] == X.shape[1]
-        print "X\n", X
-        print
         # Compute spanning tree from X
         self.span_tree = minimum_spanning_tree(X)
         # Remote any link with a distance more than self.threshold
-        print "span tree", self.span_tree
-        print "threshold", self.threshold
-        print "data", self.span_tree.data
         self.span_tree.data[self.span_tree.data < self.threshold] = 0
-        self.span_tree = self.span_tree.trunc()
-        print "trunc", self.span_tree.data
-        print self.span_tree
+        self.span_tree.eliminate_zeros()
         # Compute clusters by finding connected subgraphs in self.span_tree
         #n_components, self.labels_ = cs_graph_components(self.span_tree)
-        n_componanes, self.labelsS_ = connected_components(self.span_tree)
-        print "components", n_components, self.labels_
+        n_components, self.labels_ = connected_components(self.span_tree, directed=False)
         return self
