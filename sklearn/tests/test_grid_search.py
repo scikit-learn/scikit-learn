@@ -514,9 +514,9 @@ def test_randomized_search_cv_scores():
     # Check consistency of the structure of each cv_score item
     for cv_score in search.cv_scores_:
         assert_equal(len(cv_score.cv_validation_scores), n_cv_iter)
-
-        # Because of iid=False, the sample-wise mean CV score is the
-        # same as the fold-wise mean CV score
+        # Because we set iid to False, the mean_validation score is the
+        # mean of the fold mean scores instead of the aggregate sample-wise
+        # mean score
         assert_almost_equal(np.mean(cv_score.cv_validation_scores),
                             cv_score.mean_validation_score)
         assert_equal(list(sorted(cv_score.parameters.keys())),
