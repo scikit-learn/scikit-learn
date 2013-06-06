@@ -69,6 +69,10 @@ estimators = [
     ('Eigenfaces - RandomizedPCA',
      decomposition.RandomizedPCA(n_components=n_components, whiten=True),
      True),
+     
+     ('Eigenfaces - CCIPCA',
+     decomposition.CCIPCA(n_components=n_components),
+     True),
 
     ('Non-negative components - NMF',
      decomposition.NMF(n_components=n_components, init='nndsvda', beta=5.0,

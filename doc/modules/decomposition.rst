@@ -232,6 +232,59 @@ factorization, while larger values shrink many coefficients to zero.
      R. Jenatton, G. Obozinski, F. Bach, 2009
 
 
+.. _IPCA
+Incremental Principal Component Analysis (IncrementalPCA)
+-----------------------------------------------
+
+IPCA like PCA is used to decompose a multivariate dataset in a set of successive 
+orthogonal components. IPCA can recover these components online or when the data
+is streamed.
+
+If the `fit()` method of IPCA is called multiple times on the same instance then this
+instance will take the new input and adjust the components to account for the new data. 
+This data must be the same dimension as the prior data.
+
+Otherwise the IPCA object should behave similarily to the PCA object.
+
+.. topic:: References:
+  * `"Incremental Eigenalysis for Classification"
+    <http://www.bmva.org/bmvc/1998/pdf/p186.pdf>
+    P.Hall, D. Marshall and R. Martin 1998.
+    
+    
+.. _CCIPCA:
+
+Candid Covariance-Free Incremental Principal Component Analysis (CCIPCA)
+------------------------------------------------------------------------
+
+CCIPCA is a variantion of IncrementalPCA however that doesn't estimate the 
+covariance matrix thus "covariance-free" and converges quickly even on high dimensional data.
+
+The `amnesic=2.0` parameter controls how much the past data is weighted compared to the
+new data. `n_components` must be passed to CCIPCA because otherwise it is unable to
+estimate the dimension of the supspace.
+
+Like IncrementalPCA the `fit()` method can be called multiple times using the 
+same object and it will update the subspace according to the new input data.
+This data must be the same dimension as the prior data.
+
+Otherwise the CCIPCA object should behave similarily to the PCA object.
+
+.. figure:: ../auto_examples/decomposition/images/plot_pca_vs_ccipca_1.png
+    :target: ../auto_examples/decomposition/plot_pca_vs_ccipca.html
+    :align: center
+    :scale: 75%
+
+.. topic:: Examples:
+
+    * :ref:`example_decomposition_plot_pca_vs_ccipca.py`
+
+.. topic:: References:
+
+  * `"Candid Covariance-Free Incremental Principal Component Analysis"
+    <http://web.cs.msu.edu/~stockman/Book/2002/Chapters/projects.html/F09Docs/Readings/CCIPCApamiWeng.pdf>`_
+    J. Weng, Y. Zhang, W. Hwang, 2003
+
 .. _DictionaryLearning:
 
 Dictionary Learning
