@@ -230,9 +230,8 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
     score : float
         Score of this parameter setting on given training / test split.
 
-    estimator : estimator object
-        Estimator object of type base_clf that was fitted using clf_params
-        and provided train / test split.
+    clf_params : dict
+        The parameters that have been evaluated.
 
     n_samples_test : int
         Number of test samples in this split.
@@ -317,15 +316,23 @@ def _check_param_grid(param_grid):
                                  "list.")
 
 
-_CVScoreTuple = namedtuple('_CVScoreTuple',
-                           ('parameters', 'mean_validation_score',
-                            'cv_validation_scores'))
+class _CVScoreTuple (namedtuple('_CVScoreTuple',
+                                ('parameters',
+                                 'mean_validation_score',
+                                 'cv_validation_scores'))):
+    __slots__ = ()
+
+    def __repr__(self):
+        """Simple custom repr to summarize the main info"""
+        return "mean: {:.5f}, std: {:.5f}, params: {}".format(
+            self.mean_validation_score,
+            np.std(self.cv_validation_scores),
+            self.parameters)
 
 
 class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                       MetaEstimatorMixin)):
-    """Base class for hyper parameter search with cross-validation.
-    """
+    """Base class for hyper parameter search with cross-validation."""
 
     @abstractmethod
     def __init__(self, estimator, scoring=None, loss_func=None,
@@ -452,23 +459,23 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             pre_dispatch=pre_dispatch)(
                 delayed(fit_grid_point)(
                     X, y, base_clf, clf_params, train, test, scorer,
-                    self.verbose, **self.fit_params) for clf_params in
-                parameter_iterator for train, test in cv)
+                    self.verbose, **self.fit_params)
+                for clf_params in parameter_iterator
+                for train, test in cv)
 
         # Out is a list of triplet: score, estimator, n_test_samples
-        n_param_points = len(list(parameter_iterator))
         n_fits = len(out)
-        n_folds = n_fits // n_param_points
+        n_folds = len(cv)
 
         scores = list()
         cv_scores = list()
         for grid_start in range(0, n_fits, n_folds):
             n_test_samples = 0
             score = 0
-            these_points = list()
+            all_scores = []
             for this_score, clf_params, this_n_test_samples in \
                     out[grid_start:grid_start + n_folds]:
-                these_points.append(this_score)
+                all_scores.append(this_score)
                 if self.iid:
                     this_score *= this_n_test_samples
                     n_test_samples += this_n_test_samples
@@ -478,46 +485,32 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             else:
                 score /= float(n_folds)
             scores.append((score, clf_params))
-            cv_scores.append(these_points)
+            # TODO: shall we also store the test_fold_sizes?
+            cv_scores.append(_CVScoreTuple(
+                clf_params,
+                score,
+                np.array(all_scores)))
+        # Store the computed scores
+        self.cv_scores_ = cv_scores
 
-        cv_scores = np.asarray(cv_scores)
-
-        # Note: we do not use max(out) to make ties deterministic even if
-        # comparison on estimator instances is not deterministic
-        if scorer is not None:
-            greater_is_better = scorer.greater_is_better
+        # Find the best parameters by comparing on the mean validation score
+        if getattr(self.scorer_, 'greater_is_better', True):
+            best = sorted(cv_scores, key=lambda x: x.mean_validation_score,
+                          reverse=True)[0]
         else:
-            greater_is_better = True
-
-        if greater_is_better:
-            best_score = -np.inf
-        else:
-            best_score = np.inf
-
-        for score, params in scores:
-            if ((score > best_score and greater_is_better)
-                    or (score < best_score and not greater_is_better)):
-                best_score = score
-                best_params = params
-
-        self.best_params_ = best_params
-        self.best_score_ = best_score
+            best = sorted(cv_scores, key=lambda x: x.mean_validation_score)[0]
+        self.best_params_ = best.parameters
+        self.best_score_ = best.mean_validation_score
 
         if self.refit:
             # fit the best estimator using the entire dataset
             # clone first to work around broken estimators
-            best_estimator = clone(base_clf).set_params(**best_params)
+            best_estimator = clone(base_clf).set_params(**best.parameters)
             if y is not None:
                 best_estimator.fit(X, y, **self.fit_params)
             else:
                 best_estimator.fit(X, **self.fit_params)
             self.best_estimator_ = best_estimator
-
-        # Store the computed scores
-        self.cv_scores_ = [
-            _CVScoreTuple(clf_params, score, all_scores)
-            for clf_params, (score, _), all_scores
-            in zip(parameter_iterator, scores, cv_scores)]
         return self
 
 
