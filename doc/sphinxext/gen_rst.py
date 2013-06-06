@@ -477,33 +477,39 @@ def generate_example_rst(app):
           var clone = $(this).closest('.thumbnailContainer').find('.clonedItem');
           var clone_fig = clone.find('.figure');
           clone.css("left", position.left - (position.left/10)).css("position", "absolute").css("z-index", 1000).css("background-color", "white");
-          clone.find('p').show();
+
           var cloneImg = clone_fig.find('img');
 
           clone.show();
-          clone_fig.show();
           clone.animate({
                 height: "270px",
                 width: "320px"
-            }, 10
-          );
-          clone_fig.css({
-               'margin-top': '20px',
-          });
-          clone_fig.animate({
-               height: "240px",
-               width: "305px"
-            }, 10
+            }, 0
           );
           cloneImg.css({
                 'max-height': "200px",
                 'max-width': "280px"
-            });
+          });
           cloneImg.animate({
                 height: "200px",
                 width: "280px"
-            }, 10
+            }, 0
+           );
+          clone_fig.css({
+               'margin-top': '20px',
+          });
+          clone_fig.show();
+          clone.find('p').css("display", "compact");
+          clone_fig.css({
+               height: "240",
+               width: "305px"
+          });
+          cloneP_height = clone.find('p.caption').height();
+          clone_fig.animate({
+               height: (200 + cloneP_height)
+           }, 0
           );
+
           clone.bind("mouseleave", function(e){
               clone.animate({
                   height: "100px",
