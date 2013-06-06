@@ -19,7 +19,7 @@ from ..externals.joblib import Memory
 from ..externals import six
 from ..metrics import euclidean_distances
 from ..utils import array2d
-from ..utils.mst import connected_components
+from ..utils.sparsetools import connected_components
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
