@@ -413,7 +413,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                     "should have a 'score' method. The estimator %s "
                     "does not." % self.estimator)
 
-    def _fit(self, X, y, parameter_iterator, **params):
+    def _fit(self, X, y, parameter_iterable, **params):
         """Actual fitting,  performing the search over parameters."""
 
         if params:
@@ -462,7 +462,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 delayed(fit_grid_point)(
                     X, y, base_clf, clf_params, train, test, scorer,
                     self.verbose, **self.fit_params)
-                for clf_params in parameter_iterator
+                for clf_params in parameter_iterable
                 for train, test in cv)
 
         # Out is a list of triplet: score, estimator, n_test_samples
