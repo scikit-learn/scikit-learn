@@ -495,7 +495,8 @@ def test_param_sampler():
 
 
 def test_randomized_search_cv_scores():
-    # Make a dataset with a log of noise
+    # Make a dataset with a lot of noise to get various kind of prediction
+    # errors across CV folds and parameter settings
     X, y = make_classification(n_samples=200, n_features=100, n_informative=3,
                                random_state=0)
 

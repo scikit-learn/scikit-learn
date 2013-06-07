@@ -13,7 +13,7 @@ parameters.  The result in parameter settings is quite similar, while the run
 time for randomized search is drastically lower.
 
 The performance is slightly worse for the randomized search, though this
-is most likely a noise effect and would not carry over to a hold-out test set.
+is most likely a noise effect and would not carry over to a held-out test set.
 
 Note that in practice, one would not search over this many different parameters
 simultaneously using grid search, but pick only the ones deemed most important.
@@ -59,13 +59,14 @@ param_dist = {"max_depth": sp_randint(1, 11),
               "criterion": ["gini", "entropy"]}
 
 # run randomized search
+n_iter_search = 20
 random_search = RandomizedSearchCV(clf, param_distributions=param_dist,
-                                   n_iter=20)
+                                   n_iter=n_iter_search)
 
 start = time()
 random_search.fit(X, y)
-print("RandomizedSearchCV took %.2f seconds for 20 iterations."
-      % (time() - start))
+print("RandomizedSearchCV took %.2f seconds for %d candidate"
+      " parameter settings." % ((time() - start), n_iter_search))
 report(random_search.cv_scores_)
 
 # use a full grid over all parameters
