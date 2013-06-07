@@ -1,6 +1,6 @@
 import numpy as np
 import scipy.sparse as sp
-from scipy import optimize
+from scipy import optimize, linalg
 
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
@@ -186,10 +186,15 @@ def test__logistic_loss_and_grad():
                         )
     np.testing.assert_array_almost_equal(grad_interp, approx_grad, decimal=2)
 
+
 def test__logistic_loss_grad_hess():
-    X, y = datasets.make_classification(n_samples=20)
-    n_features = X.shape[1]
-    w = np.zeros(n_features)
+    n_samples, n_features = 100, 5
+    X = np.random.randn(n_samples, n_features)
+    y = np.sign(X.dot(5 * np.random.randn(n_features)))
+    X -= X.mean()
+    X /= X.std()
+
+    w = .1 * np.ones(n_features)
 
     # First check that _logistic_loss_grad_hess is consistent
     # with _logistic_loss_and_grad
@@ -197,19 +202,35 @@ def test__logistic_loss_grad_hess():
     loss_2, grad_2, hess = logistic._logistic_loss_grad_hess(w, X, y,
                                                 alpha=1.)
     np.testing.assert_array_almost_equal(grad, grad_2)
+    # XXX: we should check a few simple properties of our problem, such
+    # as the fact that if X=0, the problem is alpha * ||w||**2, so we
+    # know the hessian
 
     # Now check our hessian along the second direction of the grad
     vector = np.zeros_like(grad)
     vector[1] = 1
     hess_col = hess(vector)
-    approx_hess_col = optimize.approx_fprime(w,
-                        lambda w:
-                        logistic._logistic_loss_and_grad(w, X, y,
-                                                         alpha=1.)[1][1],
-                        1e-3
-                        )
 
-    np.testing.assert_array_almost_equal(hess_col, approx_hess_col, decimal=2)
+    # Computation of the Hessian is particularly fragile to numerical
+    # errors when doing simple finite differences. Here we compute the
+    # grad along a path in the direction of the vector and then use a
+    # least-square regression to estimate the slope
+    e = 1e-3
+    d_x = np.linspace(-e, e, 30)
+    d_grad = np.array([
+            logistic._logistic_loss_and_grad(w + t*vector,
+                                                        X, y, alpha=1.)[1]
+            for t in d_x
+            ])
+
+    d_grad -= d_grad.mean(axis=0)
+    approx_hess_col = np.array([
+                            linalg.lstsq(d_x[:, np.newaxis], d_grad[:, i])[0]
+                            for i in range(n_features)
+                            ]).squeeze()
+
+    np.testing.assert_array_almost_equal(approx_hess_col, hess_col,
+                                        decimal=4)
 
     # Second check that our intercept implementation is good
     w = np.zeros(n_features + 1)

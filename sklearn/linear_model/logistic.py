@@ -210,6 +210,7 @@ def _logistic_loss_grad_hess(w, X, y, alpha):
     z = _phi(yz, copy=False)
     z0 = (z - 1) * y
     grad = X.T.dot(z0) + alpha * w
+
     # The mat-vec product of the Hessian
     d = z * (1 - z)
     # Precompute as much as possible
@@ -290,6 +291,8 @@ def _logistic_loss_grad_hess_intercept(w_c, X, y, alpha):
         ret = np.empty_like(s)
         ret[:-1] = dX.T.dot(dX.dot(s[:-1]))
         ret[:-1] += alpha * s[:-1]
+        # XXX: I am not sure that this last line of the Hessian is right
+        # Without the intercept the Hessian is right, though
         ret[-1] = z0_sum * s[-1]
         return ret
 
@@ -330,6 +333,8 @@ def logistic_regression(X, y, C=1., fit_intercept=False, w0=None,
         else:
             func_grad_hess = _logistic_loss_grad_hess
             func = _logistic_loss
+        # XXX: newton_cg is not given any parameters (max_iter, xtol,
+        # pgtol...)
         out = newton_cg(func_grad_hess, func, w0, args=(X, y, 1./C),)
     return out
 
