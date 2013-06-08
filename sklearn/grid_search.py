@@ -20,7 +20,7 @@ from numpy.lib import recfunctions
 
 from .base import BaseEstimator, clone
 from .base import MetaEstimatorMixin
-from .cross_validation import CVEvaluator, fit_fold
+from .cross_validation import CVScorer, _fit_fold
 from .externals.six import string_types, iterkeys
 from .utils import check_random_state, deprecated
 from .utils.validation import _num_samples, check_arrays
@@ -187,8 +187,7 @@ class ParameterSampler(object):
         return self.n_iter
 
 
-@deprecated('fit_grid_point is deprecated and will be removed in 0.15. '
-            'Use cross_validation.fit_fold instead.')
+@deprecated('fit_grid_point is deprecated and will be removed in 0.15.')
 def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
                    verbose, loss_func=None, **fit_params):
     """Run fit on one set of parameters.
@@ -237,7 +236,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
     n_samples_test : int
         Number of test samples in this split.
     """
-    res = fit_fold(
+    res = _fit_fold(
         base_clf, X, y, train, test, scorer, verbose,
         loss_func=None, est_params=clf_params, fit_params=fit_params
     )
@@ -396,12 +395,12 @@ class BaseSearchCV(BaseEstimator, MetaEstimatorMixin):
                                  % (len(y), n_samples))
             y = np.asarray(y)
 
-        cv_eval = CVEvaluator(
-            self.estimator, X, y, scoring=self.scorer_, cv=self.cv,
-            iid=self.iid, fit_params=self.fit_params, n_jobs=self.n_jobs,
-            pre_dispatch=self.pre_dispatch, verbose=self.verbose
-        )
-        search_results, cv_results = cv_eval(parameter_iterator)
+        cv_eval = CVScorer(cv=self.cv, scoring=self.scorer_,
+                           iid=self.iid, fit_params=self.fit_params,
+                           n_jobs=self.n_jobs, pre_dispatch=self.pre_dispatch,
+                           verbose=self.verbose)
+        search_results, cv_results = cv_eval.search(parameter_iterator,
+                                                    self.estimator, X, y)
 
         # Append 'parameters' to search_results
         # Broken due to https://github.com/numpy/numpy/issues/2346:

@@ -28,7 +28,7 @@ from .externals.six import string_types, iterkeys
 from .metrics import SCORERS, Scorer
 
 __all__ = ['Bootstrap',
-           'CVEvaluator',
+           'CVScorer',
            'KFold',
            'LeaveOneLabelOut',
            'LeaveOneOut',
@@ -1041,8 +1041,8 @@ class StratifiedShuffleSplit(object):
 
 ##############################################################################
 
-def fit_fold(estimator, X, y, train, test, scorer,
-             verbose, est_params=None, fit_params=None):
+def _fit_fold(estimator, X, y, train, test, scoring,
+              verbose, est_params=None, fit_params=None):
     """Run fit on one set of parameters.
 
     Parameters
@@ -1062,9 +1062,9 @@ def fit_fold(estimator, X, y, train, test, scorer,
     test : ndarray, dtype int or bool
         Boolean mask or indices for test set.
 
-    scorer : callable or None.
+    scoring : callable or None.
         If provided must be a scoring object / function with signature
-        ``scorer(estimator, X, y)``.
+        ``scoring(estimator, X, y)``.
 
     verbose : int
         Verbosity level.
@@ -1093,7 +1093,7 @@ def fit_fold(estimator, X, y, train, test, scorer,
         else:
             msg = '%s' % (', '.join('%s=%s' % (k, v)
                           for k, v in est_params.items()))
-        print("[fit_fold]%s %s" % (msg, (64 - len(msg)) * '.'))
+        print("Fitting fold %s %s" % (msg, (64 - len(msg)) * '.'))
 
     n_samples = _num_samples(X)
 
@@ -1131,8 +1131,8 @@ def fit_fold(estimator, X, y, train, test, scorer,
         estimator = clone(estimator)
         estimator.set_params(**est_params)
 
-    if scorer is None:
-        scorer = lambda estimator, *args: estimator.score(*args)
+    if scoring is None:
+        scoring = lambda estimator, *args: estimator.score(*args)
 
     if y is not None:
         y_test = y[safe_mask(y, test)]
@@ -1145,7 +1145,7 @@ def fit_fold(estimator, X, y, train, test, scorer,
 
     # do actual fitting
     estimator.fit(*fit_args, **fit_params)
-    test_score = scorer(estimator, *score_args)
+    test_score = scoring(estimator, *score_args)
 
     if not isinstance(test_score, numbers.Number):
         raise ValueError("scoring must return a number, got %s (%s)"
@@ -1157,37 +1157,27 @@ def fit_fold(estimator, X, y, train, test, scorer,
         end_msg = "%s -%s" % (msg,
                               logger.short_format_time(time.time() -
                                                        start_time))
-        print("[fit_fold]%s %s" % ((64 - len(end_msg)) * '.', end_msg))
+        print("Fitting fold %s %s" % ((64 - len(end_msg)) * '.', end_msg))
     return {
         'test_score': test_score,
         'test_n_samples': _num_samples(X_test),
     }
 
 
-class CVEvaluator(object):
+class CVScorer(object):
     """Parallelized cross-validation for a given estimator and dataset
 
     Parameters
     ----------
-    estimator : estimator object implementing 'fit'
-        The object to use to fit the data.
-
-    X : array-like of shape at least 2D
-        The data to fit.
-
-    y : array-like, optional
-        The target variable to try to predict in the case of
-        supervised learning.
+    cv : integer or cross-validation generator, optional
+        A cross-validation generator or number of folds (default 3). Folds will
+        be stratified if the estimator is a classifier.
 
     scoring : string or callable, optional
         Either one of either a string ("zero_one", "f1", "roc_auc", ... for
         classification, "mse", "r2", ... for regression) or a callable.
         See 'Scoring objects' in the model evaluation section of the user guide
         for details.
-
-    cv : integer or cross-validation generator, optional
-        A cross-validation generator or number of folds (default 3). Folds will
-        be stratified if the estimator is a classifier.
 
     iid : boolean, optional
         If True (default), the data is assumed to be identically distributed
@@ -1221,42 +1211,29 @@ class CVEvaluator(object):
         Parameters to pass to the fit method of the estimator.
     """
 
-    def __init__(self, estimator, X, y=None, scoring=None, cv=None, iid=True,
+    def __init__(self, cv=None, scoring=None, iid=True,
                  n_jobs=1, pre_dispatch='2*n_jobs', verbose=0, fit_params=None,
                  score_func=None):
 
-        X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
-        self.cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
-        self.n_folds = len(self.cv)
+        self.cv = cv
         self.iid = iid
+        self.verbose = verbose
+        self.fit_params = fit_params
 
         if score_func is not None:
             warnings.warn("Passing function as ``score_func`` is "
                           "deprecated and will be removed in 0.15. "
                           "Either use strings or score objects.", stacklevel=2)
-            scorer = Scorer(score_func)
+            self.scoring = Scorer(score_func)
         elif isinstance(scoring, string_types):
-            scorer = SCORERS[scoring]
+            self.scoring = SCORERS[scoring]
         else:
-            scorer = scoring
-        if scorer is None and not hasattr(estimator, 'score'):
-            raise TypeError(
-                "If no scoring is specified, the estimator passed "
-                "should have a 'score' method. The estimator %s "
-                "does not." % estimator)
+            self.scoring = scoring
 
         self.parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
                                  pre_dispatch=pre_dispatch)
-        self.fit_fold_kwargs = {
-            'X': X,
-            'y': y,
-            'estimator': clone(estimator),
-            'scorer': scorer,
-            'verbose': verbose,
-            'fit_params': fit_params,
-        }
 
-    def calc_means(self, scores, n_samples):
+    def _calc_means(self, scores, n_samples):
         """
         Calculate means of the final dimension of `scores`, weighted by
         `n_samples` if `iid` is True.
@@ -1283,11 +1260,11 @@ class CVEvaluator(object):
             scores = scores.sum(axis=-1) / scores.shape[-1]
         return scores
 
-    def _format_results(self, out):
+    def _format_results(self, out, n_folds):
         # group by params
         out = [
-            [fold_results for fold_results in out[start:start + self.n_folds]]
-            for start in range(0, len(out), self.n_folds)
+            [fold_results for fold_results in out[start:start + n_folds]]
+            for start in range(0, len(out), n_folds)
         ]
 
         # dicts to structured arrays (assume keys are same throughout):
@@ -1299,22 +1276,26 @@ class CVEvaluator(object):
 
         # for now, only one mean:
         means = np.rec.fromarrays(
-            [self.calc_means(out['test_score'], out['test_n_samples'])],
+            [self._calc_means(out['test_score'], out['test_n_samples'])],
             names=['test_score']
         )
 
         return means, out
 
-    def __call__(self, parameters=None):
-        """
-        Cross-validate the estimator, optionally with the given parameters.
+    def __call__(self, estimator, X, y=None):
+        """Cross-validate the estimator on the given data.
 
         Parameters
         ----------
-        parameters : dict or iterable of dicts, optional
-            If provided, the estimator will be cloned and have these parameters
-            set. If an iterable of parameter settings is given,
-            cross-validation is performed for each set of parameters.
+        estimator : estimator object implementing 'fit'
+            The object to use to fit the data.
+
+        X : array-like of shape at least 2D
+            The data to fit.
+
+        y : array-like, optional
+            The target variable to try to predict in the case of
+            supervised learning.
 
         Returns
         -------
@@ -1330,69 +1311,59 @@ class CVEvaluator(object):
             The first axis indexes parameter settings where an iterable is
             provided.
         """
-        if parameters is None:
-            # unchanged parameters
-            param_iter = [None]
-            out_slice = 0
-        elif hasattr(parameters, 'items'):
-            # one set of parameters
-            param_iter = [parameters]
-            out_slice = 0
-        else:
-            # sequence of parameters
-            param_iter = parameters
-            out_slice = slice(None)
+        means, folds = self.search([{}], estimator, X, y)
+        return means[0], folds[0]
+
+    def search(self, candidates, estimator, X, y=None):
+        """Cross-validate the estimator for candidate parameter settings.
+
+        Parameters
+        ----------
+        candidates : iterable of dicts
+            The estimator will be cloned and have these parameters
+            set for each candidate.
+
+        estimator : estimator object implementing 'fit'
+            The object to use to fit the data.
+
+        X : array-like of shape at least 2D
+            The data to fit.
+
+        y : array-like, optional
+            The target variable to try to predict in the case of
+            supervised learning.
+
+        Returns
+        -------
+        means : structured array of shape (n_candidates,)
+            This provides fields:
+                * ``test_score``, the mean test score across folds
+        fold_results : structured array of shape (n_candidates, n_folds)
+            For each cross-validation fold, this provides fields:
+                * ``test_score``, the score for this fold
+                * ``test_n_samples``, the number of samples in testing
+        """
+        X, y = check_arrays(X, y, sparse_format='csr', allow_lists=True)
+        cv = check_cv(self.cv, X, y, classifier=is_classifier(estimator))
+        cv = list(cv)
+        n_folds = len(cv)
+        if self.scoring is None and not hasattr(estimator, 'score'):
+            raise TypeError(
+                "If no scoring is specified, the estimator passed "
+                "should have a 'score' method. The estimator %s "
+                "does not." % estimator)
 
         out = self.parallel(
-            delayed(fit_fold)(
+            delayed(_fit_fold)(
+                estimator, X, y,
                 est_params=est_params, train=train, test=test,
-                **self.fit_fold_kwargs
+                scoring=self.scoring, verbose=self.verbose,
+                fit_params=self.fit_params
             )
-            for est_params in param_iter for train, test in self.cv)
+            for est_params in candidates for train, test in cv)
 
-        means, out = self._format_results(out)
-
-        return means[out_slice], out[out_slice]
-
-    def score_folds(self, parameters=None):
-        """
-        Cross-validate the estimator, optionally with the given parameters,
-        and return the scores for each fold.
-
-        Parameters
-        ----------
-        parameters : dict or iterable of dicts, optional
-            If provided, the estimator will be cloned and have these parameters
-            set. If an iterable of parameter settings is given,
-            cross-validation is performed for each set of parameters.
-
-        Returns
-        -------
-        fold_scores : array of floats
-            The score for each fold evaluated. The first axis indexes parameter
-            settings where an iterable is provided.
-        """
-        return self(parameters)[1]['test_score']
-
-    def score_means(self, parameters=None):
-        """
-        Cross-validate the estimator, optionally with the given parameters, and
-        return the mean score across folds.
-
-        Parameters
-        ----------
-        parameters : dict or iterable of dicts, optional
-            If provided, the estimator will be cloned and have these parameters
-            set. If an iterable of parameter settings is given,
-            cross-validation is performed for each set of parameters.
-
-        Returns
-        -------
-        means : float, or array of floats
-            The mean score over folds evaluated, or an array of means given an
-            iterable of parameter settings.
-        """
-        return self(parameters)[0]['test_score']
+        means, folds = self._format_results(out, n_folds)
+        return means, folds
 
 
 def cross_val_score(estimator, X, y=None, scoring=None, cv=None, iid=True,
@@ -1451,11 +1422,16 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, iid=True,
 
     fit_params : dict, optional
         Parameters to pass to the fit method of the estimator.
+
+    Returns
+    -------
+    scores : array of float, shape=[len(cv)]
+        Array of scores of the estimator for each run of the cross validation.
     """
-    cv_eval = CVEvaluator(
-        estimator, X, y, scoring=scoring, cv=cv, n_jobs=n_jobs,
+    cv_score = CVScorer(
+        scoring=scoring, cv=cv, n_jobs=n_jobs,
         verbose=verbose, fit_params=fit_params, score_func=score_func)
-    return cv_eval.score_folds()
+    return cv_score(estimator, X, y)[1]['test_score']
 
 
 def _permutation_test_score(estimator, X, y, cv, scorer):
