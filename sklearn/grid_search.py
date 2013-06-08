@@ -192,7 +192,7 @@ class ParameterSampler(object):
         return self.n_iter
 
 
-def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
+def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
                    verbose, loss_func=None, **fit_params):
     """Run fit on one set of parameters.
 
@@ -204,10 +204,10 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
     y : array-like or None
         Targets for input data.
 
-    base_clf : estimator object
+    base_estimator : estimator object
         This estimator will be cloned and then fitted.
 
-    clf_params : dict
+    parameters : dict
         Parameters to be set on base_estimator clone for this grid point.
 
     train : ndarray, dtype int or bool
@@ -232,7 +232,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
     score : float
         Score of this parameter setting on given training / test split.
 
-    clf_params : dict
+    parameters : dict
         The parameters that have been evaluated.
 
     n_samples_test : int
@@ -241,26 +241,26 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
     if verbose > 1:
         start_time = time.time()
         msg = '%s' % (', '.join('%s=%s' % (k, v)
-                      for k, v in clf_params.items()))
+                      for k, v in parameters.items()))
         print("[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.'))
 
     # update parameters of the classifier after a copy of its base structure
-    clf = clone(base_clf)
-    clf.set_params(**clf_params)
+    clf = clone(base_estimator)
+    clf.set_params(**parameters)
 
-    if hasattr(base_clf, 'kernel') and callable(base_clf.kernel):
+    if hasattr(base_estimator, 'kernel') and callable(base_estimator.kernel):
         # cannot compute the kernel values with custom function
         raise ValueError("Cannot use a custom kernel function. "
                          "Precompute the kernel matrix instead.")
 
     if not hasattr(X, "shape"):
-        if getattr(base_clf, "_pairwise", False):
+        if getattr(base_estimator, "_pairwise", False):
             raise ValueError("Precomputed kernels or affinity matrices have "
                              "to be passed as arrays or sparse matrices.")
         X_train = [X[idx] for idx in train]
         X_test = [X[idx] for idx in test]
     else:
-        if getattr(base_clf, "_pairwise", False):
+        if getattr(base_estimator, "_pairwise", False):
             # X is a precomputed square kernel matrix
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square kernel matrix")
@@ -297,7 +297,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
                               logger.short_format_time(time.time() -
                                                        start_time))
         print("[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
-    return this_score, clf_params, _num_samples(X_test)
+    return this_score, parameters, _num_samples(X_test)
 
 
 def _check_param_grid(param_grid):
@@ -460,7 +460,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             y = np.asarray(y)
         cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
-        base_clf = clone(self.estimator)
+        base_estimator = clone(self.estimator)
 
         pre_dispatch = self.pre_dispatch
 
@@ -468,9 +468,9 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch)(
                 delayed(fit_grid_point)(
-                    X, y, base_clf, clf_params, train, test, scorer,
+                    X, y, base_estimator, parameters, train, test, scorer,
                     self.verbose, **self.fit_params)
-                for clf_params in parameter_iterable
+                for parameters in parameter_iterable
                 for train, test in cv)
 
         # Out is a list of triplet: score, estimator, n_test_samples
@@ -483,7 +483,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             n_test_samples = 0
             score = 0
             all_scores = []
-            for this_score, clf_params, this_n_test_samples in \
+            for this_score, parameters, this_n_test_samples in \
                     out[grid_start:grid_start + n_folds]:
                 all_scores.append(this_score)
                 if self.iid:
@@ -494,10 +494,10 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 score /= float(n_test_samples)
             else:
                 score /= float(n_folds)
-            scores.append((score, clf_params))
+            scores.append((score, parameters))
             # TODO: shall we also store the test_fold_sizes?
             cv_scores.append(_CVScoreTuple(
-                clf_params,
+                parameters,
                 score,
                 np.array(all_scores)))
         # Store the computed scores
@@ -514,7 +514,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         if self.refit:
             # fit the best estimator using the entire dataset
             # clone first to work around broken estimators
-            best_estimator = clone(base_clf).set_params(**best.parameters)
+            best_estimator = clone(base_estimator).set_params(
+                **best.parameters)
             if y is not None:
                 best_estimator.fit(X, y, **self.fit_params)
             else:
