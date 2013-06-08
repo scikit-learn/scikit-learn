@@ -64,6 +64,10 @@ def unique_labels(*lists_of_labels):
     return np.unique(np.hstack(_unique_labels(y) for y in lists_of_labels))
 
 
+def _is_integral_float(y):
+    return y.dtype.kind == 'f' and np.all(y.astype(int) == y)
+
+
 def is_label_indicator_matrix(y):
     """ Check if ``y`` is in the label indicator matrix format (multilabel).
 
@@ -95,10 +99,11 @@ def is_label_indicator_matrix(y):
     True
 
     """
-    return (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1 and
-            np.size(np.unique(y)) <= 2 and
-            issubclass(y.dtype.type, (np.int, np.bool_, np.float)) and
-            np.all(y == y.astype(int)))
+    if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
+        return False
+    labels = np.unique(y)
+    return len(labels) <= 2 and (y.dtype.kind in 'biu'  # bool, int, uint
+                                 or _is_integral_float(labels))
 
 
 def is_sequence_of_sequences(y):
@@ -247,7 +252,8 @@ def type_of_target(y):
         # column vector or 1d
         suffix = ''
 
-    if issubclass(y.dtype.type, np.float) and np.any(y != y.astype(int)):
+    # check float and contains non-integer float values:
+    if y.dtype.kind == 'f' and np.any(y != y.astype(int)):
         return 'continuous' + suffix
     if len(np.unique(y)) <= 2:
         assert not suffix, "2d binary array-like should be multilabel"
