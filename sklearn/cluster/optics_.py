@@ -3,13 +3,14 @@
 OPTICS: Ordering Points To Identify the Clustering Structure
 """
 
-# Author: Fredrik Appelros, Carl Ekerot
+# Author: Fredrik Appelros (fredrik.appelros@gmail.com), Carl Ekerot (kalle@implode.se)
 # License: BSD
 
 import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
-from ..metrics import pairwise_distances
+#from ..metrics import pairwise_distances
+from ..utils import atleast2d_or_csr
 from scipy.spatial.distance import cdist
 
 def hierarchical_extraction(ordering, reachability_distances, min_cluster_size,
@@ -61,15 +62,15 @@ def hierarchical_extraction(ordering, reachability_distances, min_cluster_size,
     # Find local maximas
     L = []
     for i in xrange(0, min_cluster_size):
-        if np.argmax(R[0:i + min_cluster_size + 1]) == i:
+        if np.argmax(R[0:i + min_cluster_size + 1]) == i and R[i] > 0:
             L.append(i)
-        if np.argmax(R[n - 2 * min_cluster_size + i:n]) == i:
+        if np.argmax(R[n - 2 * min_cluster_size + i:n]) == i and R[i] > 0:
             L.append(n - min_cluster_size + i)
     for i in xrange(min_cluster_size, n - min_cluster_size):
-        if np.argmax(R[i - min_cluster_size:i + min_cluster_size + 1]) == min_cluster_size:
+        if np.argmax(R[i - min_cluster_size:i + min_cluster_size + 1]) == min_cluster_size and R[i] > 0:
             L.append(i)
     # Sort local maximas in order of their reachability
-    L.sort(key=lambda x: R[x]) 
+    L.sort(key=lambda x: R[x])
     R_max = R[L[-1]]
     L = filter(lambda x: R[x] >= min_reach_ratio * R_max, L)
 
@@ -142,7 +143,7 @@ EXTRACTION_FUNCTIONS = {
     'hierarchical': hierarchical_extraction,
 }
 
-def optics(X, eps=float('inf'), min_samples=5, metric='euclidean',
+def optics(X, eps=float('inf'), min_samples=1, metric='euclidean',
            extraction='hierarchical', ext_kwargs=dict()):
     """
     Perform OPTICS clustering from vector array or distance matrix.
@@ -202,8 +203,10 @@ def optics(X, eps=float('inf'), min_samples=5, metric='euclidean',
     Record 28, no. 2 (1999): 49-60.
 
     """
-    X = np.asarray(X)
+    X = atleast2d_or_csr(X)
     n = X.shape[0]
+    if min_samples > n:
+        raise ValueError('min_samples must be lower than the total number of samples')
     ordering = []
     core_distances = np.ndarray(len(X))
     # Initiate reachability distances to infinity
@@ -216,8 +219,11 @@ def optics(X, eps=float('inf'), min_samples=5, metric='euclidean',
         seeds.remove(i)
         # Add current point to the ordering
         ordering.append(i)
-        # Calculate the pairwise distances
-        D = cdist([X[i]], X).reshape(len(X))
+        if metric == 'precomputed':
+            D = X[i]
+        else:
+            # Calculate the distances from the current point
+            D = cdist([X[i]], X, metric=metric).reshape(len(X))
         # Calculate core distance
         core_dist = np.sort(D)[min_samples]
         core_distances[i] = core_dist
@@ -312,7 +318,7 @@ class OPTICS(BaseEstimator, ClusterMixin):
     Record 28, no. 2 (1999): 49-60.
 
     """
-    def __init__(self, eps=float('inf'), min_samples=5, metric='euclidean',
+    def __init__(self, eps=float('inf'), min_samples=1, metric='euclidean',
                  extraction='hierarchical', ext_kwargs=dict()):
         self.eps = eps
         self.min_samples = min_samples
