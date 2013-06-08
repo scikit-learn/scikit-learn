@@ -197,6 +197,8 @@ def type_of_target(y):
         * 'multilabel-indicator': `y` is a label indicator matrix, an array
           of two dimensions with at least two columns, and at most 2 unique
           values.
+        * 'unknown': `y` is array-like but none of the above, such as a 3d
+          array, or an array of non-sequence objects.
 
     Examples
     --------
