@@ -17,7 +17,7 @@ from sklearn.utils.multiclass import type_of_target
 
 EXAMPLES = {
     'multilabel-indicator': [
-        np.random.randint(2, size=(10, 10)),
+        np.random.RandomState(42).randint(2, size=(10, 10)),
         np.array([[0, 1], [1, 0]]),
         np.array([[0, 0], [0, 0]]),
         np.array([[-1, 1], [1, -1]]),
