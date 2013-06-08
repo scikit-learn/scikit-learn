@@ -9,7 +9,7 @@ All parameters that influence the learning are searched simultaneously
 (except for the number of estimators, which poses a time / quality tradeoff).
 
 The randomized search and the grid search explore exactly the same space of
-parameters.  The result in parameter settings is quite similar, while the run
+parameters. The result in parameter settings is quite similar, while the run
 time for randomized search is drastically lower.
 
 The performance is slightly worse for the randomized search, though this

@@ -322,6 +322,14 @@ class _CVScoreTuple (namedtuple('_CVScoreTuple',
                                 ('parameters',
                                  'mean_validation_score',
                                  'cv_validation_scores'))):
+    # A raw namedtuple is very memory efficient as it packs the attributes
+    # in a struct to get rid of the __dict__ of attributes in particular it
+    # does not copy the string for the keys on each instance.
+    # By deriving a namedtuple class just to introduce the __repr__ method we
+    # would also reintroduce the __dict__ on the instance. By telling the
+    # Python interpreter that this subclass uses static __slots__ instead of
+    # dynamic attributes. Furthermore we don't need any additional slot in the
+    # subclass so we set __slots__ to the empty tuple.
     __slots__ = ()
 
     def __repr__(self):
@@ -495,12 +503,11 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         # Store the computed scores
         self.cv_scores_ = cv_scores
 
-        # Find the best parameters by comparing on the mean validation score
-        if getattr(self.scorer_, 'greater_is_better', True):
-            best = sorted(cv_scores, key=lambda x: x.mean_validation_score,
-                          reverse=True)[0]
-        else:
-            best = sorted(cv_scores, key=lambda x: x.mean_validation_score)[0]
+        # Find the best parameters by comparing on the mean validation score:
+        # note that `sorted` is deterministic in the way it breaks ties
+        greater_is_better = getattr(self.scorer_, 'greater_is_better', True)
+        best = sorted(cv_scores, key=lambda x: x.mean_validation_score,
+                      reverse=greater_is_better)[0]
         self.best_params_ = best.parameters
         self.best_score_ = best.mean_validation_score
 
