@@ -51,7 +51,7 @@ def report(cv_scores, n_top=3):
 
 
 # specify parameters and distributions to sample from
-param_dist = {"max_depth": sp_randint(1, 11),
+param_dist = {"max_depth": [3, None],
               "max_features": sp_randint(1, 11),
               "min_samples_split": sp_randint(1, 11),
               "min_samples_leaf": sp_randint(1, 11),
@@ -70,7 +70,7 @@ print("RandomizedSearchCV took %.2f seconds for %d candidate"
 report(random_search.cv_scores_)
 
 # use a full grid over all parameters
-param_grid = {"max_depth": [1, 3, 10],
+param_grid = {"max_depth": [3, None],
               "max_features": [1, 3, 10],
               "min_samples_split": [1, 3, 10],
               "min_samples_leaf": [1, 3, 10],
