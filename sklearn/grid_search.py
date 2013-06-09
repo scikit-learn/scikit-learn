@@ -135,6 +135,15 @@ class IterGrid(ParameterGrid):
 class ParameterSampler(object):
     """Generator on parameters sampled from given distributions.
 
+    Non-deterministic iterable over random candidate combinations for hyper-
+    parameter search.
+
+    Note that as of SciPy 0.12, the ``scipy.stats.distributions`` do not accept
+    a custom RNG instance and always use the singleton RNG from
+    ``numpy.random``. Hence setting ``random_state`` will not guarantee a
+    deterministic iteration whenever ``scipy.stats`` distributions are used to
+    define the parameter search space.
+
     Parameters
     ----------
     param_distributions : dict
@@ -148,7 +157,8 @@ class ParameterSampler(object):
         Number of parameter settings that are produced.
 
     random_state : int or RandomState
-            Pseudo number generator state used for random sampling.
+        Pseudo random number generator state used for random uniform sampling
+        from lists of possible values instead of scipy.stats distributions.
 
     Returns
     -------
