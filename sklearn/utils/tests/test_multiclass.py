@@ -100,19 +100,19 @@ EXAMPLES = {
         # not currently supported sequence of sequences
         np.array([np.array([]), np.array([1, 2, 3])], dtype=object),
         [np.array([]), np.array([1, 2, 3])],
-        [{1, 2, 3}, {1, 2}],
-        [frozenset({1, 2, 3}), frozenset({1, 2})],
+        [set([1, 2, 3]), set([1, 2])],
+        [frozenset([1, 2, 3]), frozenset([1, 2])],
         # and also confusable as sequences of sequences
         [{0: 'a', 1: 'b'}, {0: 'a'}],
     ]
 }
 
 NON_ARRAY_LIKE_EXAMPLES = [
-    {1, 2, 3},
+    set([1, 2, 3]),
     {0: 'a', 1: 'b'},
     {0: [5], 1: [5]},
     'abc',
-    frozenset({1, 2, 3}),
+    frozenset([1, 2, 3]),
     None,
 ]
 
