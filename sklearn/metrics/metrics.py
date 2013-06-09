@@ -187,10 +187,6 @@ def _check_clf_targets(y_true, y_pred):
     else:
         raise ValueError("Can't handle %s/%s targets" % (type_true, type_pred))
 
-    if len(y_true) != len(y_pred):
-        raise ValueError('True and predicted targets are different '
-                         'lengths: %d and %d' % (len(y_true), len(y_pred)))
-
     return type_true, y_true, y_pred
 
 
