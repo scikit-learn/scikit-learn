@@ -124,7 +124,7 @@ def is_sequence_of_sequences(y):
     False
     >>> is_sequence_of_sequences([[1], [0, 2], []])
     True
-    >>> is_sequence_of_sequences(np.array([[1], [0, 2], []]))
+    >>> is_sequence_of_sequences(np.array([[1], [0, 2], []], dtype=object))
     True
     >>> is_sequence_of_sequences([(1,), (0, 2), ()])
     True
