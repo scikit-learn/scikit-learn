@@ -22,7 +22,7 @@ class DelegatorData(object):
         self.skip_methods = skip_methods
 
 
-DELEGATING_METAESTIMATORS = {
+DELEGATING_METAESTIMATORS = [
     DelegatorData('Pipeline', lambda est: Pipeline([('est', est)])),
     DelegatorData('GridSearchCV',
                   lambda est: GridSearchCV(
@@ -30,11 +30,11 @@ DELEGATING_METAESTIMATORS = {
                   skip_methods=['score']),
     DelegatorData('RandomizedSearchCV',
                   lambda est: RandomizedSearchCV(
-                      est, param_grid={'param': [5]}, cv=2),
+                      est, param_distributions={'param': [5]}, cv=2),
                   skip_methods=['score']),
     DelegatorData('RFECV', RFECV,
                   skip_methods=['transform', 'inverse_transform']),
-}
+]
 
 
 def test_metaestimator_delegation():
@@ -53,6 +53,7 @@ def test_metaestimator_delegation():
             self.hidden_method = hidden_method
 
         def fit(self, X, y=None, *args, **kwargs):
+            self.coef_ = np.arange(X.shape[1])
             return True
 
         @hides
