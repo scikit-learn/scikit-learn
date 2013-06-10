@@ -241,7 +241,11 @@ def type_of_target(y):
     elif is_label_indicator_matrix(y):
         return 'multilabel-indicator'
 
-    y = np.asarray(y)
+    try:
+        y = np.asarray(y)
+    except ValueError:
+        # known to fail in numpy 1.3 for array of arrays
+        return 'unknown'
     if y.ndim > 2 or y.dtype == object:
         return 'unknown'
     if y.ndim == 2 and y.shape[1] == 0:
