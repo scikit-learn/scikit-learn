@@ -532,8 +532,8 @@ def test_randomized_search_cv_scores():
     tied_best_params = [s.parameters for s in sorted_cv_scores
                         if s.mean_validation_score == best_score]
     assert_true(search.best_params_ in tied_best_params,
-                "best_params_={} is not part of the"
-                " tied best models: {}".format(
+                "best_params_={0} is not part of the"
+                " tied best models: {1}".format(
                     search.best_params_, tied_best_params))
 
 

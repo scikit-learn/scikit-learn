@@ -344,7 +344,7 @@ class _CVScoreTuple (namedtuple('_CVScoreTuple',
 
     def __repr__(self):
         """Simple custom repr to summarize the main info"""
-        return "mean: {:.5f}, std: {:.5f}, params: {}".format(
+        return "mean: {0:.5f}, std: {1:.5f}, params: {2}".format(
             self.mean_validation_score,
             np.std(self.cv_validation_scores),
             self.parameters)
