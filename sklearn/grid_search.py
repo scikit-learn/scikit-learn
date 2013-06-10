@@ -325,19 +325,50 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
     @property
     def predict(self):
+        """Call predict on the best estimator"""
         return self.best_estimator_.predict
 
     @property
     def predict_proba(self):
+        """Call predict_proba on the best estimator"""
         return self.best_estimator_.predict_proba
 
     @property
+    def predict_log_proba(self):
+        """Call predict_log_proba on the best estimator"""
+        return self.best_estimator_.predict_log_proba
+
+    @property
     def decision_function(self):
+        """Call decision_function on the best estimator"""
         return self.best_estimator_.decision_function
 
     @property
     def transform(self):
+        """Call transform on the best estimator"""
         return self.best_estimator_.transform
+
+    @property
+    def inverse_transform(self):
+        """Call inverse_transform on the best estimator"""
+        return self.best_estimator_.inverse_transform
+
+    def _check_estimator(self):
+        """Check that estimator can be fitted and score can be computed."""
+        if (not hasattr(self.estimator, 'fit') or
+                not (hasattr(self.estimator, 'predict')
+                     or hasattr(self.estimator, 'score'))):
+            raise TypeError("estimator should a be an estimator implementing"
+                            " 'fit' and 'predict' or 'score' methods,"
+                            " %s (type %s) was passed" %
+                            (self.estimator, type(self.estimator)))
+        if (self.scoring is None and self.loss_func is None and self.score_func
+                is None):
+            if not hasattr(self.estimator, 'score'):
+                raise TypeError(
+                    "If no scoring is specified, the estimator passed "
+                    "should have a 'score' method. The estimator %s "
+                    "does not." % self.estimator)
 
     def _fit(self, X, y, parameter_iterable):
         """Actual fitting,  performing the search over parameters."""

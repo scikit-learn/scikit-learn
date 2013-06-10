@@ -10,7 +10,7 @@ from sklearn.datasets import make_classification
 from sklearn.utils.testing import assert_true, assert_false
 from sklearn.pipeline import Pipeline
 from sklearn.grid_search import GridSearchCV, RandomizedSearchCV
-from sklearn.feature_selection import RFECV
+from sklearn.feature_selection import RFE, RFECV
 
 
 class DelegatorData(object):
@@ -32,8 +32,10 @@ DELEGATING_METAESTIMATORS = [
                   lambda est: RandomizedSearchCV(
                       est, param_distributions={'param': [5]}, cv=2),
                   skip_methods=['score']),
+    DelegatorData('RFE', RFE,
+                  skip_methods=['transform', 'inverse_transform', 'score']),
     DelegatorData('RFECV', RFECV,
-                  skip_methods=['transform', 'inverse_transform']),
+                  skip_methods=['transform', 'inverse_transform', 'score']),
 ]
 
 
@@ -43,7 +45,7 @@ def test_metaestimator_delegation():
         @property
         def wrapper(obj):
             if obj.hidden_method == method.__name__:
-                raise AttributeError
+                raise AttributeError('%r is hidden' % obj.hidden_method)
             return functools.partial(method, obj)
         return wrapper
 
@@ -86,6 +88,7 @@ def test_metaestimator_delegation():
 
     methods = [k for k in iterkeys(SubEstimator.__dict__)
                if not k.startswith('_') and not k.startswith('fit')]
+    methods.sort()
 
     for delegator_data in DELEGATING_METAESTIMATORS:
         delegate = SubEstimator()
@@ -98,6 +101,8 @@ def test_metaestimator_delegation():
             assert_true(hasattr(delegator, method),
                         msg="%s does not have method %r when its delegate does"
                             % (delegator_data.name, method))
+            # smoke test delegation
+            getattr(delegator, method)(delegator_data.fit_args[0])
 
         for method in methods:
             if method in delegator_data.skip_methods:
