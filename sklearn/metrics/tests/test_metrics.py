@@ -1594,6 +1594,7 @@ def test__check_clf_targets():
             else:
                 merged_type, y1out, y2out = _check_clf_targets(y1, y2)
                 assert_equal(merged_type, expected)
-                assert_array_equal(y1out, np.squeeze(y1))
-                assert_array_equal(y2out, np.squeeze(y2))
+                if not merged_type.startswith('multilabel'):
+                    assert_array_equal(y1out, np.squeeze(y1))
+                    assert_array_equal(y2out, np.squeeze(y2))
                 assert_raises(ValueError, _check_clf_targets, y1[:-1], y2)
