@@ -343,6 +343,11 @@ class ClusterMixin(object):
         self.fit(X)
         return self.labels_
 
+###############################################################################
+class BiclusterMixin(object):
+    """Mixin class for all bicluster estimators in scikit-learn"""
+    pass
+
 
 ###############################################################################
 class TransformerMixin(object):
