@@ -98,6 +98,9 @@ Changelog
    - Refactored and vectorized implementation of :func:`metrics.roc_curve`
      and :func:`metrics.precision_recall_curve`. By `Joel Nothman`_.
 
+   - Added self-contained example of out-of-core learning on text data
+     :ref:`example_applications_plot_out_of_core_classification.py`.
+     By `Eustache Diemert`_.
 
 API changes summary
 -------------------
@@ -1933,3 +1936,6 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Martin Luessi: https://github.com/mluessi
 
 .. _Joel Nothman: http://joelnothman.com
+
+.. _Eustache Diemert: https://github.com/oddskool
+
