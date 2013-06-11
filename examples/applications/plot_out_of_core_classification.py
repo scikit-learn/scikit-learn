@@ -183,7 +183,8 @@ chunk = []
 chunk_sz = 100
 
 stats = {'n_train': 0, 'n_test': 0, 'n_train_pos': 0, 'n_test_pos': 0,
-         'accuracy': 0.0, 'accuracy_history': [(0, 0)], 't0': time.time()}
+         'accuracy': 0.0, 'accuracy_history': [(0, 0)], 't0': time.time(),
+         'runtime_history': [(0, 0)]}
 
 
 def progress(stats):
@@ -223,6 +224,8 @@ for i, doc in enumerate(data_streamer.iterdocs()):
         stats['n_test_pos'] += sum(topics)
         stats['accuracy'] = classifier.score(X, y)
         stats['accuracy_history'].append((stats['accuracy'], stats['n_train']))
+        stats['runtime_history'].append((stats['accuracy'],
+                                         time.time() - stats['t0']))
         continue
 
     # Learn from the current chunk.
@@ -232,13 +235,26 @@ for i, doc in enumerate(data_streamer.iterdocs()):
 
 print >>sys.stderr
 
-# Plot accuracy evolution with time
-pl.figure()
+# Plot accuracy evolution with #examples 
+pl.figure(1)
+pl.subplots_adjust(hspace=0.5)
+pl.subplot(211)
 pl.title('Classification accuracy as a function of #examples seen')
 pl.xlabel('# training examples')
 pl.ylabel('Accuracy')
 y, x = zip(*stats['accuracy_history'])
 x = np.array(x)
 y = np.array(y)
+pl.grid(True)
+pl.plot(x, y)
+# Plot accuracy evolution with runtime
+pl.subplot(212)
+pl.title('Classification accuracy as a function of runtime')
+pl.xlabel('Runtime (s)')
+pl.ylabel('Accuracy')
+y, x = zip(*stats['runtime_history'])
+x = np.array(x)
+y = np.array(y)
+pl.grid(True)
 pl.plot(x, y)
 pl.show()
