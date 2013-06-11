@@ -18,7 +18,8 @@ of mini-batches fed to the classifier.
 # Author: Eustache Diemert <eustache@diemert.fr>
 # License: BSD 3 clause
 
-import sys
+from __future__ import print_function
+
 import time
 import random
 import re
@@ -26,6 +27,7 @@ import os.path
 import fnmatch
 import sgmllib
 import urllib
+import tarfile
 
 import numpy as np
 import pylab as pl
@@ -129,26 +131,26 @@ class ReutersStreamReader():
             self.download_dataset()
 
     def download_dataset(self):
-        print "downloading dataset (once and for all) into %s" % self.data_path
+        print("downloading dataset (once and for all) into %s" %
+              self.data_path)
         os.mkdir(self.data_path)
 
         def progress(blocknum, bs, size):
             total_sz_mb = '%.2f MB' % (size / 1e6)
             current_sz_mb = '%.2f MB' % ((blocknum * bs) / 1e6)
-            print >>sys.stderr, '\rdownloaded %s / %s' % (current_sz_mb,
-                                                          total_sz_mb),
+            print('\rdownloaded %s / %s' % (current_sz_mb, total_sz_mb),
+                  end='')
         urllib.urlretrieve(self.DOWNLOAD_URL,
                            filename=os.path.join(self.data_path,
                                                  self.ARCHIVE_FILENAME),
                            reporthook=progress)
-        print >>sys.stderr, '\r'
-        import tarfile
-        print "untaring data ...",
+        print('\r', end='')
+        print("untaring data ...")
         tfile = tarfile.open(os.path.join(self.data_path,
                                           self.ARCHIVE_FILENAME),
                              'r:gz')
         tfile.extractall(self.data_path)
-        print "done !"
+        print("done !")
 
     def iterdocs(self):
         for root, _dirnames, filenames in os.walk(self.data_path):
@@ -200,7 +202,7 @@ for i, doc in enumerate(data_streamer.iterdocs()):
 
     if i and not i % 10:
         # Print progress information
-        print >>sys.stderr, "\r%s" % progress(stats),
+        print("\r%s" % progress(stats), end='')
 
     # Discard invalid documents
     if not len(doc['topics']):
@@ -233,9 +235,9 @@ for i, doc in enumerate(data_streamer.iterdocs()):
     stats['n_train_pos'] += sum(topics)
     classifier.partial_fit(X, y, classes=all_classes)
 
-print >>sys.stderr
+print()
 
-# Plot accuracy evolution with #examples 
+# Plot accuracy evolution with #examples
 pl.figure(1)
 pl.subplots_adjust(hspace=0.5)
 pl.subplot(211)
