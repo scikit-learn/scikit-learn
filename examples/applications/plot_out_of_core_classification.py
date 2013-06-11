@@ -4,8 +4,15 @@ Out-of-core classification of text documents
 ======================================================
 
 This is an example showing how scikit-learn can be used for classification
-using an out-of-core approach. This example uses a `HashingVectorizer`
-and a classifier supporting `partial_fit ` to limit memory consumption.
+using an out-of-core approach.
+
+Out-of-core learning means that we can learn from data that would not fit into
+the computer main memory. To achieve this goal we make use of an online
+classifier (i.e. that supports the `partial_fit` method) that will be fed with
+batches of examples. Moreover, to guarantee that the features space remains the
+same over time we leverage the `HashingVectorizer` class that will project each
+example into the same input space. This is especially useful in the case of
+text classification where new features (e.g. words) are discovered on the fly.
 
 The dataset used in this example is Reuters-21578 as provided by the UCI ML
 repository. It will be automatically downloaded and uncompressed in the current
