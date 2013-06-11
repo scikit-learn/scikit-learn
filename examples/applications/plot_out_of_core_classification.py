@@ -20,6 +20,16 @@ directory on first run.
 
 The plot represents the evolution of classification accuracy with the number
 of mini-batches fed to the classifier.
+
+`ReutersParser` and `ReutersStreamReader` classes are utility classes to parse
+and stream examples to the main learning loop.
+
+To limit the amount of consumed memory at any time we enqueue examples up to a
+fixed amount before calling the features transformation and learning routines.
+We then clear the examples queue and proceed with enqueuing again and so on.
+
+To study the performance of the method we sample uniformly ~10% of the dataset
+on the fly and estimate accuracy on this part.
 """
 
 # Author: Eustache Diemert <eustache@diemert.fr>
@@ -171,23 +181,23 @@ class ReutersStreamReader():
 ###############################################################################
 # Main
 ###############################################################################
-"""Create the hasher and limit the nber of features to a reasonable maximum."""
+# Create the hasher and limit the nber of features to a reasonable maximum
 hasher = HashingVectorizer(charset_error='ignore', n_features=2 ** 18)
 
-"""Create an online classifier i.e. supporting `partial_fit()`."""
+# Create an online classifier i.e. supporting `partial_fit()`
 classifier = SGDClassifier()
 
-"""Create the data_streamer that parses Reuters SGML files and iterates on
-documents as a stream."""
+# Create the data_streamer that parses Reuters SGML files and iterates on
+# documents as a stream
 data_streamer = ReutersStreamReader('./reuters/')
 
-"""Here we propose to learn a binary classification between the positive class
-and all other documents."""
+# Here we propose to learn a binary classification between the positive class
+# and all other documents."""
 all_classes = np.array([0, 1])
 positive_class = 'acq'
 
-"""We will feed the classifier with mini-batches of 100 documents; this means
-we have at most 100 docs in memory at any time."""
+# We will feed the classifier with mini-batches of 100 documents; this means
+# we have at most 100 docs in memory at any time.
 chunk = []
 chunk_sz = 100
 
@@ -244,6 +254,9 @@ for i, doc in enumerate(data_streamer.iterdocs()):
 
 print()
 
+###############################################################################
+# Plot results
+###############################################################################
 # Plot accuracy evolution with #examples
 pl.figure(1)
 pl.subplots_adjust(hspace=0.5)
