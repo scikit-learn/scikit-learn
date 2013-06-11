@@ -26,31 +26,16 @@ import os.path
 import fnmatch
 import sgmllib
 import urllib
-from collections import defaultdict
 
 import numpy as np
 import pylab as pl
 
-from sklearn.feature_extraction import FeatureHasher
+from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.linear_model.stochastic_gradient import SGDClassifier
 
 ###############################################################################
 # Reuters Dataset related routines
 ###############################################################################
-
-
-class ReutersTopics():
-    """Utility class to read official topic names from the relevant file."""
-
-    TOPICS_FILENAME = 'all-topics-strings.lc.txt'
-
-    def __init__(self, topics_path):
-        self.topics_ = open(topics_path).read().split('\n')
-        self.topics_ = dict([(self.topics_[i], i) for i in
-                             range(len(self.topics_))])
-
-    def topic_ids(self):
-        return self.topics_.values()
 
 
 class ReutersParser(sgmllib.SGMLParser):
@@ -142,9 +127,6 @@ class ReutersStreamReader():
         self.data_path = data_path
         if not os.path.exists(self.data_path):
             self.download_dataset()
-        self.topics = ReutersTopics(os.path.join(data_path,
-                                                ReutersTopics.TOPICS_FILENAME))
-        self.classes = self.topics.topic_ids()
 
     def download_dataset(self):
         print "downloading dataset (once and for all) into %s" % self.data_path
@@ -178,30 +160,10 @@ class ReutersStreamReader():
 
 
 ###############################################################################
-# Feature extraction routines
-###############################################################################
-def tokens(doc):
-    """Extract tokens from doc.
-
-    This uses a simple regex to break strings into tokens. For a more
-    principled approach, see CountVectorizer or TfidfVectorizer.
-    """
-    return (tok.lower() for tok in re.findall(r"\w+", doc))
-
-
-def token_freqs(doc, freq=None):
-    """Extract a dict mapping tokens from doc to their frequencies."""
-    if not freq:
-        freq = defaultdict(int)
-    for tok in tokens(doc):
-        freq[tok] += 1
-    return freq
-
-###############################################################################
 # Main
 ###############################################################################
 """Create the hasher and limit the nber of features to a reasonable maximum."""
-hasher = FeatureHasher(n_features=2 ** 18)
+hasher = HashingVectorizer(charset_error='ignore', n_features=2 ** 18)
 
 """Create an online classifier i.e. supporting `partial_fit()`."""
 classifier = SGDClassifier()
@@ -232,47 +194,45 @@ def progress(stats):
     s += "in %.2fs" % (time.time() - stats['t0'])
     return s
 
-"""Main loop : iterate over documents read by the streamer."""
+# Main loop : iterate over documents read by the streamer
 for i, doc in enumerate(data_streamer.iterdocs()):
 
     if i and not i % 10:
-        """Print progress information."""
+        # Print progress information
         print >>sys.stderr, "\r%s" % progress(stats),
 
-    """Discard invalid documents."""
+    # Discard invalid documents
     if not len(doc['topics']):
         continue
 
-    """Read documents until chunk full."""
+    # Read documents until chunk full
     if len(chunk) < chunk_sz:
-        freq = token_freqs(doc['title'])
-        freq = token_freqs(doc['body'], freq)
         classid = int(positive_class in doc['topics'])
-        chunk.append((freq, classid))
+        chunk.append((doc['title'] + '\n\n' + doc['body'], classid))
         continue
 
-    """When chunk is full, create data matrix using the HashingVectorizer"""
-    freqs, topics = zip(*chunk)
+    # When chunk is full, create data matrix using the HashingVectorizer
+    documents, topics = zip(*chunk)
     y = np.array(topics)
-    X = hasher.transform(freqs)
+    X = hasher.transform(documents)
     chunk = []
 
-    """Once every 10 chunks or so, test accuracy."""
+    # Once every 10 chunks or so, test accuracy.
     if random.random() < 0.1:
-        stats['n_test'] += len(freqs)
+        stats['n_test'] += len(documents)
         stats['n_test_pos'] += sum(topics)
         stats['accuracy'] = classifier.score(X, y)
         stats['accuracy_history'].append((stats['accuracy'], stats['n_train']))
         continue
 
-    """Learn from the current chunk."""
-    stats['n_train'] += len(freqs)
+    # Learn from the current chunk.
+    stats['n_train'] += len(documents)
     stats['n_train_pos'] += sum(topics)
     classifier.partial_fit(X, y, classes=all_classes)
 
 print >>sys.stderr
 
-"""Plot accuracy evolution with time."""
+# Plot accuracy evolution with time
 pl.figure()
 pl.title('Classification accuracy as a function of #examples seen')
 pl.xlabel('# training examples')
