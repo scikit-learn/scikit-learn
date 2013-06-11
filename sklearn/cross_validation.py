@@ -244,12 +244,15 @@ class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
             raise ValueError("n_folds must be an integer")
         self.n_folds = n_folds = int(n_folds)
 
-        if n_folds <= 0:
-            raise ValueError("Cannot have number of folds below 1.")
+        if n_folds <= 1:
+            raise ValueError(
+                "k-fold cross validation requires at least one"
+                " train / test split by setting n_folds=2 or more,"
+                " got n_folds=%d.".format(n_folds))
         if n_folds > self.n:
-            raise ValueError("Cannot have number of folds n_folds=%d greater "
-                             "than the number of samples: %d."
-                             % (self.n_folds, self.n))
+            raise ValueError(
+                ("Cannot have number of folds n_folds={0} greater"
+                 "than the number of samples: {1}.").format(n_folds, n))
 
 
 class KFold(_BaseKFold):
@@ -267,7 +270,7 @@ class KFold(_BaseKFold):
         Total number of elements.
 
     n_folds : int, default=3
-        Number of folds.
+        Number of folds. Must be at least 2.
 
     indices : boolean, optional (default True)
         Return train/test split as arrays of indices, rather than a boolean
@@ -355,7 +358,7 @@ class StratifiedKFold(_BaseKFold):
         Samples to split in K folds.
 
     n_folds : int, default=3
-        Number of folds.
+        Number of folds. Must be at least 2.
 
     indices : boolean, optional (default True)
         Return train/test split as arrays of indices, rather than a boolean
