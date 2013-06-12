@@ -15,9 +15,6 @@ from scipy.sparse.linalg import svds
 # TODO: within-cluster rankings
 # TODO: can we use Dhillon's preprocessing but Kluger's postprocessing?
 
-def make_diag_root(m):
-    return np.diag(1 / np.sqrt(m))
-
 def scaling_preprocess(X):
     raise NotImplementedError()
 
@@ -89,14 +86,14 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
         self.random_state=random_state
 
     def _dhillon(self, X):
-        diag1 = make_diag_root(np.sum(X, axis=1))
-        diag2 = make_diag_root(np.sum(X, axis=0))
-        an = diag1.dot(X).dot(diag2)
+        diag1 = 1.0 / np.sqrt(np.sum(X, axis=1))
+        diag2 = 1.0 / np.sqrt(np.sum(X, axis=0))
+        an = diag1[:, np.newaxis] * X * diag2
         n_singular_vals = 1 + int(np.ceil(np.log2(self.n_clusters)))
         u, s, vt = svds(an, k=n_singular_vals, maxiter=self.maxiter)
 
-        z = np.vstack((diag1.dot(u[:, 1:]),
-                       diag2.dot(vt.T[:, 1:])))
+        z = np.vstack((diag1[:, np.newaxis] * u[:, 1:],
+                       diag2[:, np.newaxis] * vt.T[:, 1:]))
         _, labels, _ = k_means(z, self.n_clusters,
                                random_state=self.random_state,
                                n_init=self.n_init)
