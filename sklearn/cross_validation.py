@@ -223,15 +223,28 @@ class LeavePOut(PartitionIterator):
                    / factorial(self.p))
 
 
-def _validate_kfold(k, n_samples):
-    if k <= 0:
-        raise ValueError("Cannot have number of folds k below 1.")
-    if k > n_samples:
-        raise ValueError("Cannot have number of folds k=%d greater than"
-                         " the number of samples: %d." % (k, n_samples))
+class BaseKFold(with_metaclass(ABCMeta, PartitionIterator)):
+    """Base class to validate KFold approaches"""
+    def __init__(self, n, n_folds, indices, k=None):
+        super(BaseKFold, self).__init__(n, indices)
+        if k is not None:  # pragma: no cover
+            warnings.warn("The parameter k was renamed to n_folds and will be"
+                          " removed in 0.15.", DeprecationWarning)
+            n_folds = k
+
+        if abs(n_folds - int(n_folds)) >= np.finfo('f').eps:
+            raise ValueError("n_folds must be an integer")
+        self.n_folds = n_folds = int(n_folds)
+
+        if n_folds <= 0:
+            raise ValueError("Cannot have number of folds below 1.")
+        if n_folds > self.n:
+            raise ValueError("Cannot have number of folds n_folds=%d greater "
+                             "than the number of samples: %d."
+                             % (self.n_folds, self.n))
 
 
-class KFold(PartitionIterator):
+class KFold(BaseKFold):
     """K-Folds cross validation iterator.
 
     Provides train/test indices to split data in train test sets. Split
@@ -290,17 +303,8 @@ class KFold(PartitionIterator):
 
     def __init__(self, n, n_folds=3, indices=True, shuffle=False,
                  random_state=None, k=None):
-        super(KFold, self).__init__(n, indices)
-        if k is not None:  # pragma: no cover
-            warnings.warn("The parameter k was renamed to n_folds and will be"
-                          " removed in 0.15.", DeprecationWarning)
-            n_folds = k
-        _validate_kfold(n_folds, n)
+        super(KFold, self).__init__(n, n_folds, indices, k)
         random_state = check_random_state(random_state)
-
-        if abs(n_folds - int(n_folds)) >= np.finfo('f').eps:
-            raise ValueError("n_folds must be an integer")
-        self.n_folds = int(n_folds)
         self.idxs = np.arange(n)
         if shuffle:
             random_state.shuffle(self.idxs)
@@ -328,7 +332,7 @@ class KFold(PartitionIterator):
         return self.n_folds
 
 
-class StratifiedKFold(PartitionIterator):
+class StratifiedKFold(BaseKFold):
     """Stratified K-Folds cross validation iterator
 
     Provides train/test indices to split data in train test sets.
@@ -374,24 +378,17 @@ class StratifiedKFold(PartitionIterator):
     """
 
     def __init__(self, y, n_folds=3, indices=True, k=None):
-        super(StratifiedKFold, self).__init__(len(y), indices)
-        if k is not None:  # pragma: no cover
-            warnings.warn("The parameter k was renamed to n_folds and will be"
-                          " removed in 0.15.", DeprecationWarning)
-            n_folds = k
+        super(StratifiedKFold, self).__init__(len(y), n_folds, indices, k)
         y = np.asarray(y)
-        n = y.shape[0]
-        _validate_kfold(n_folds, n)
         _, y_sorted = unique(y, return_inverse=True)
         min_labels = np.min(np.bincount(y_sorted))
-        if n_folds > min_labels:
+        if self.n_folds > min_labels:
             warnings.warn(("The least populated class in y has only %d"
                           " members, which is too few. The minimum"
                           " number of labels for any class cannot"
                           " be less than n_folds=%d."
-                          % (min_labels, n_folds)), Warning)
+                          % (min_labels, self.n_folds)), Warning)
         self.y = y
-        self.n_folds = n_folds
 
     def iter_test_indices(self):
         n_folds = self.n_folds
