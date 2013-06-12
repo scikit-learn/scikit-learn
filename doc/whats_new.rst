@@ -102,6 +102,11 @@ Changelog
    - Refactored and vectorized implementation of :func:`metrics.roc_curve`
      and :func:`metrics.precision_recall_curve`. By `Joel Nothman`_.
 
+   - The new estimator :class:`sklearn.decomposition.TruncatedSVD`
+     performs dimensionality reduction using SVD on sparse matrices,
+     and can be used for latent semantic analysis (LSA).
+     By `Lars Buitinck`_.
+
 
 API changes summary
 -------------------
@@ -120,6 +125,9 @@ API changes summary
 
    - ``gcv_mode="auto"`` no longer tries to perform SVD on a densified
      sparse matrix in :class:`sklearn.linear_model.RidgeCV`.
+
+   - Sparse matrix support in :class:`sklearn.decomposition.RandomizedPCA`
+     is now deprecated in favor of the new ``TruncatedSVD``.
 
 
 .. _changes_0_13_1:
