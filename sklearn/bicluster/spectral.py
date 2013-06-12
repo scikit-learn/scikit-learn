@@ -4,7 +4,6 @@ Authors : Kemal Eren
 License: BSD 3 clause
 
 """
-from .util import Biclusters
 from ..base import BaseEstimator, BiclusterMixin
 from ..cluster.k_means_ import k_means
 
@@ -56,10 +55,13 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
 
     Attributes
     ----------
-    `biclusters` : tuple, (rows, columns)
-        Results of the clustering. `rows` has shape (n_clusters,
-        n_rows), and similarly for `columns`. Available only after
-        calling ``fit``.
+    `rows` : array-like, shape (n_clusters, n_rows)
+        Results of the clustering. `rows[i, r]` is True if cluster `i`
+        contains row `r`. Available only after calling ``fit``.
+
+    `columns` : array-like, shape (n_clusters, n_columns)
+        Results of the clustering, like `rows`.
+
 
     References
     ----------
@@ -102,9 +104,8 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
         row_labels = labels[0:n_rows]
         col_labels = labels[n_rows:]
 
-        rows = np.vstack(row_labels == c for c in range(self.n_clusters))
-        cols = np.vstack(col_labels == c for c in range(self.n_clusters))
-        self.biclusters = Biclusters(rows, cols)
+        self.rows = np.vstack(row_labels == c for c in range(self.n_clusters))
+        self.columns = np.vstack(col_labels == c for c in range(self.n_clusters))
 
     def _kluger(self, X):
         raise NotImplementedError()

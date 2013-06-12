@@ -1,12 +1,10 @@
 import numpy as np
 from collections import namedtuple
 
-Biclusters = namedtuple('Biclusters', ('rows', 'columns'))
 SparseBicluster = namedtuple('SparseBicluster', ('rows', 'columns'))
 
-def to_sparse(biclusters):
+def to_sparse(rows, cols):
     """Transforms dense representation to sparse representation."""
-    rows, cols = biclusters
     if rows.shape[0] != cols.shape[0]:
         raise Exception('number of biclusters is inconsistent')
     n_clusters = rows.shape[0]
