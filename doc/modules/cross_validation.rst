@@ -277,8 +277,11 @@ not waste much data as only one sample is removed from the learning set::
 Leave-P-Out - LPO
 -----------------
 
-:class:`LeavePOut` is very similar to *Leave-One-Out*, as it creates all the
-possible training/test sets by removing :math:`P` samples from the complete set.
+:class:`LeavePOut` is very similar to :class:`LeaveOneOut` as it creates all
+the possible training/test sets by removing :math:`p` samples from the complete
+set. For :math:`n` samples, this produces :math:`{n \choose p}` train-test
+pairs. Unlike :class:`LeaveOneOut` and :class:`KFold`, the test sets will
+overlap for :math:`p > 1`.
 
 Example of Leave-2-Out::
 
