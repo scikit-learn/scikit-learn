@@ -47,7 +47,7 @@ dont_test = ['SparseCoder', 'EllipticEnvelope', 'EllipticEnvelop',
              'DictVectorizer', 'LabelBinarizer', 'LabelEncoder',
              'TfidfTransformer', 'IsotonicRegression', 'OneHotEncoder',
              'RandomTreesEmbedding', 'FeatureHasher', 'DummyClassifier',
-             'DummyRegressor']
+             'DummyRegressor', 'TruncatedSVD']
 
 
 def test_all_estimators():
