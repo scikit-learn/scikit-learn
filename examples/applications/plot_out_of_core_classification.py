@@ -28,8 +28,9 @@ To limit the amount of consumed memory at any time we enqueue examples up to a
 fixed amount before calling the features transformation and learning routines.
 We then clear the examples queue and proceed with enqueuing again and so on.
 
-To study the performance of the method we sample uniformly ~10% of the dataset
-on the fly and estimate accuracy on this part.
+To study the performance of the method we sample the first 1000 examples of the
+dataset and hold them out as separate testing data. We then use it to estimate
+accuracy after each mini-batch.
 """
 
 # Author: Eustache Diemert <eustache@diemert.fr>
@@ -38,7 +39,6 @@ on the fly and estimate accuracy on this part.
 from __future__ import print_function
 
 import time
-import random
 import re
 import os.path
 import fnmatch
@@ -190,18 +190,27 @@ classifier = SGDClassifier()
 # Create the data_streamer that parses Reuters SGML files and iterates on
 # documents as a stream
 data_streamer = ReutersStreamReader(os.path.join(os.path.dirname(__file__),
-                                                 'reuters'))
+                                                 'reuters')).iterdocs()
 
 # Here we propose to learn a binary classification between the positive class
 # and all other documents."""
 all_classes = np.array([0, 1])
 positive_class = 'acq'
 
-# We will feed the classifier with mini-batches of 100 documents; this means
-# we have at most 100 docs in memory at any time.
-chunk = []
-chunk_sz = 100
+# First we hold out a number of examples to estimate accuracy
+test_examples = []
+for _ in xrange(1000):
+    doc = next(data_streamer)
+    test_examples.append((doc['title'] + '\n\n' + doc['body'],
+                          int(positive_class in doc['topics'])))
+documents, topics = zip(*test_examples)
+y_test = np.array(topics)
+X_test = hasher.transform(documents)
+test_examples = []
+print("Test set is %d documents (%d positive)" % (len(y_test), sum(y_test)))
 
+
+# structure to track accuracy history
 stats = {'n_train': 0, 'n_test': 0, 'n_train_pos': 0, 'n_test_pos': 0,
          'accuracy': 0.0, 'accuracy_history': [(0, 0)], 't0': time.time(),
          'runtime_history': [(0, 0)]}
@@ -215,22 +224,29 @@ def progress(stats):
     s += "in %.2fs" % (time.time() - stats['t0'])
     return s
 
-# Main loop : iterate over documents read by the streamer
-for i, doc in enumerate(data_streamer.iterdocs()):
+# We will feed the classifier with mini-batches of 100 documents; this means
+# we have at most 100 docs in memory at any time.
+chunk = []
+chunk_sz = 100
 
-    if i and not i % 10:
-        # Print progress information
-        print("\r%s" % progress(stats), end='')
+# Main loop : iterate over documents read by the streamer
+doc = next(data_streamer, None)
+while doc:
+
+    print("\r%s" % progress(stats), end='')
 
     # Discard invalid documents
-    if not len(doc['topics']):
+    if doc and not len(doc['topics']):
+        doc = next(data_streamer, None)
         continue
 
     # Read documents until chunk full
     if len(chunk) < chunk_sz:
         classid = int(positive_class in doc['topics'])
         chunk.append((doc['title'] + '\n\n' + doc['body'], classid))
+        doc = next(data_streamer, None)
         continue
+    doc = next(data_streamer, None)
 
     # When chunk is full, create data matrix using the HashingVectorizer
     documents, topics = zip(*chunk)
@@ -238,20 +254,19 @@ for i, doc in enumerate(data_streamer.iterdocs()):
     X = hasher.transform(documents)
     chunk = []
 
-    # Once every 10 chunks or so, test accuracy.
-    if random.random() < 0.1:
-        stats['n_test'] += len(documents)
-        stats['n_test_pos'] += sum(topics)
-        stats['accuracy'] = classifier.score(X, y)
-        stats['accuracy_history'].append((stats['accuracy'], stats['n_train']))
-        stats['runtime_history'].append((stats['accuracy'],
-                                         time.time() - stats['t0']))
-        continue
-
     # Learn from the current chunk.
     stats['n_train'] += len(documents)
     stats['n_train_pos'] += sum(topics)
     classifier.partial_fit(X, y, classes=all_classes)
+
+    # test accuracy.
+    stats['n_test'] += len(y_test)
+    stats['n_test_pos'] += sum(y_test)
+    stats['accuracy'] = classifier.score(X_test, y_test)
+    stats['accuracy_history'].append((stats['accuracy'], stats['n_train']))
+    stats['runtime_history'].append((stats['accuracy'],
+                                     time.time() - stats['t0']))
+    print("\r%s" % progress(stats), end='')
 
 print()
 
