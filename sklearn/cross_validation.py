@@ -47,6 +47,8 @@ class LeaveOneOut(object):
     sample is used once as a test set (singleton) while the remaining
     samples form the training set.
 
+    This is equivalent to ``KFold(n, n_folds=n)``.
+
     Due to the high number of test sets (which is the same as the
     number of samples) this cross validation method can be very costly.
     For large datasets one should favor KFold, StratifiedKFold or
@@ -119,13 +121,16 @@ class LeaveOneOut(object):
 class LeavePOut(object):
     """Leave-P-Out cross validation iterator
 
-    Provides train/test indices to split data in train test sets. The
-    test set is built using p samples while the remaining samples form
-    the training set.
+    Provides train/test indices to split data in train test sets. This results
+    in testing on all distinct samples of size p, while the remaining n - p
+    samples form the training set in each iteration.
 
-    Due to the high number of iterations which grows with the number of
-    samples this cross validation method can be very costly. For large
-    datasets one should favor KFold, StratifiedKFold or ShuffleSplit.
+    Note: this is NOT equivalent to ``KFold(n, n_folds=n // p)`` which creates
+    non-overlapping test sets.
+
+    Due to the high number of iterations which grows combinatorically with the
+    number of samples this cross validation method can be very costly. For
+    large datasets one should favor KFold, StratifiedKFold or ShuffleSplit.
 
     Parameters
     ----------
