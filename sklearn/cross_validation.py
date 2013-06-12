@@ -47,7 +47,8 @@ class LeaveOneOut(object):
     sample is used once as a test set (singleton) while the remaining
     samples form the training set.
 
-    This is equivalent to ``KFold(n, n_folds=n)``.
+    Note: ``LeaveOneOut(n)`` is equivalent to ``KFold(n, n_folds=n)`` and
+    ``LeavePOut(n, p=1)``.
 
     Due to the high number of test sets (which is the same as the
     number of samples) this cross validation method can be very costly.
@@ -125,8 +126,8 @@ class LeavePOut(object):
     in testing on all distinct samples of size p, while the remaining n - p
     samples form the training set in each iteration.
 
-    Note: this is NOT equivalent to ``KFold(n, n_folds=n // p)`` which creates
-    non-overlapping test sets.
+    Note: ``LeavePOut(n, p)`` is NOT equivalent to ``KFold(n, n_folds=n // p)``
+    which creates non-overlapping test sets.
 
     Due to the high number of iterations which grows combinatorically with the
     number of samples this cross validation method can be very costly. For
