@@ -701,7 +701,43 @@ class Bootstrap(object):
         return self.n_iter
 
 
-class ShuffleSplit(object):
+class BaseShuffleSplit(with_metaclass(ABCMeta)):
+    """Base class for ShuffleSplit and StratifiedShuffleSplit"""
+
+    def __init__(self, n, n_iter=10, test_size=0.1, train_size=None,
+                 indices=True, random_state=None, n_iterations=None):
+        self.n = n
+        self.n_iter = n_iter
+        if n_iterations is not None:  # pragma: no cover
+            warnings.warn("n_iterations was renamed to n_iter for consistency "
+                          " and will be removed in 0.16.")
+            self.n_iter = n_iterations
+        self.test_size = test_size
+        self.train_size = train_size
+        self.random_state = random_state
+        self.indices = indices
+        self.n_train, self.n_test = _validate_shuffle_split(n,
+                                                            test_size,
+                                                            train_size)
+
+    def __iter__(self):
+        if self.indices:
+            for train, test in self.iter_indices():
+                yield train, test
+            return
+        for train, test in self.iter_indices():
+            train_m = np.zeros(self.n, dtype=bool)
+            test_m = np.zeros(self.n, dtype=bool)
+            train_m[train] = True
+            test_m[test] = True
+            yield train_m, test_m
+
+    @abstractmethod
+    def iter_indices(self):
+        """Generate (train, test) indices"""
+
+
+class ShuffleSplit(BaseShuffleSplit):
     """Random permutation cross-validation iterator.
 
     Yields indices to split data into training and test sets.
@@ -769,39 +805,14 @@ class ShuffleSplit(object):
     Bootstrap: cross-validation using re-sampling with replacement.
     """
 
-    def __init__(self, n, n_iter=10, test_size=0.1, train_size=None,
-                 indices=True, random_state=None, n_iterations=None):
-        self.n = n
-        self.n_iter = n_iter
-        if n_iterations is not None:  # pragma: no cover
-            warnings.warn("n_iterations was renamed to n_iter for consistency "
-                          " and will be removed in 0.16.")
-            self.n_iter = n_iterations
-        self.test_size = test_size
-        self.train_size = train_size
-        self.random_state = random_state
-        self.indices = indices
-
-        self.n_train, self.n_test = _validate_shuffle_split(n,
-                                                            test_size,
-                                                            train_size)
-
-    def __iter__(self):
+    def iter_indices(self):
         rng = check_random_state(self.random_state)
         for i in range(self.n_iter):
             # random partition
             permutation = rng.permutation(self.n)
             ind_test = permutation[:self.n_test]
             ind_train = permutation[self.n_test:self.n_test + self.n_train]
-
-            if self.indices:
-                yield ind_train, ind_test
-            else:
-                train_mask = np.zeros(self.n, dtype=np.bool)
-                train_mask[ind_train] = True
-                test_mask = np.zeros(self.n, dtype=np.bool)
-                test_mask[ind_test] = True
-                yield train_mask, test_mask
+            yield ind_train, ind_test
 
     def __repr__(self):
         return ('%s(%d, n_iter=%d, test_size=%s, indices=%s, '
@@ -881,31 +892,7 @@ def _validate_shuffle_split(n, test_size, train_size):
     return int(n_train), int(n_test)
 
 
-def _validate_stratified_shuffle_split(y, test_size, train_size):
-    classes, y = unique(y, return_inverse=True)
-    n_cls = classes.shape[0]
-
-    if np.min(np.bincount(y)) < 2:
-        raise ValueError("The least populated class in y has only 1"
-                         " member, which is too few. The minimum"
-                         " number of labels for any class cannot"
-                         " be less than 2.")
-
-    n_train, n_test = _validate_shuffle_split(len(y), test_size, train_size)
-
-    if n_train < n_cls:
-        raise ValueError('The train_size = %d should be greater or '
-                         'equal to the number of classes = %d' %
-                         (n_train, n_cls))
-    if n_test < n_cls:
-        raise ValueError('The test_size = %d should be greater or '
-                         'equal to the number of classes = %d' %
-                         (n_test, n_cls))
-
-    return n_train, n_test, classes, y
-
-
-class StratifiedShuffleSplit(object):
+class StratifiedShuffleSplit(BaseShuffleSplit):
     """Stratified ShuffleSplit cross validation iterator
 
     Provides train/test indices to split data in train test sets.
@@ -968,21 +955,29 @@ class StratifiedShuffleSplit(object):
     def __init__(self, y, n_iter=10, test_size=0.1, train_size=None,
                  indices=True, random_state=None, n_iterations=None):
 
+        super(StratifiedShuffleSplit, self).__init__(
+            len(y), n_iter, test_size, train_size, indices, random_state,
+            n_iterations)
         self.y = np.array(y)
-        self.n = len(self.y)
-        self.n_iter = n_iter
-        if n_iterations is not None:  # pragma: no cover
-            warnings.warn("n_iterations was renamed to n_iter for consistency"
-                          " and will be removed in 0.16.")
-            self.n_iter = n_iterations
-        self.test_size = test_size
-        self.train_size = train_size
-        self.random_state = random_state
-        self.indices = indices
-        self.n_train, self.n_test, self.classes, self.y_indices = \
-            _validate_stratified_shuffle_split(y, test_size, train_size)
+        self.classes, self.y_indices = unique(y, return_inverse=True)
+        n_cls = self.classes.shape[0]
 
-    def __iter__(self):
+        if np.min(np.bincount(self.y_indices)) < 2:
+            raise ValueError("The least populated class in y has only 1"
+                             " member, which is too few. The minimum"
+                             " number of labels for any class cannot"
+                             " be less than 2.")
+
+        if self.n_train < n_cls:
+            raise ValueError('The train_size = %d should be greater or '
+                             'equal to the number of classes = %d' %
+                             (self.n_train, n_cls))
+        if self.n_test < n_cls:
+            raise ValueError('The test_size = %d should be greater or '
+                             'equal to the number of classes = %d' %
+                             (self.n_test, n_cls))
+
+    def iter_indices(self):
         rng = check_random_state(self.random_state)
         cls_count = np.bincount(self.y_indices)
         p_i = cls_count / float(self.n)
@@ -1004,15 +999,7 @@ class StratifiedShuffleSplit(object):
             train = rng.permutation(train)
             test = rng.permutation(test)
 
-            if self.indices:
-                yield train, test
-            else:
-                train_m = np.zeros(self.n, dtype=bool)
-                test_m = np.zeros(self.n, dtype=bool)
-                train_m[train] = True
-                test_m[test] = True
-
-                yield train_m, test_m
+            yield train, test
 
     def __repr__(self):
         return ('%s(labels=%s, n_iter=%d, test_size=%s, indices=%s, '
