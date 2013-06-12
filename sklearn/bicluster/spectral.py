@@ -77,7 +77,7 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.135.1608
 
     """
-    def __init__(self, n_clusters, method='dhillon', maxiter=None,
+    def __init__(self, n_clusters=8, method='dhillon', maxiter=None,
                  n_init=10, random_state=None):
         if method not in ('dhillon', 'bistochastic', 'scaling', 'log'):
             raise Exception('unknown method: {}'.format(method))
