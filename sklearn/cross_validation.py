@@ -1160,10 +1160,11 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
     # We clone the estimator to make sure that all the folds are
     # independent, and that it is pickle-able.
     fit_params = fit_params if fit_params is not None else {}
-    scores = Parallel(n_jobs=n_jobs, verbose=verbose,
-        pre_dispatch=pre_dispatch)(
-        delayed(_cross_val_score)(
-            clone(estimator), X, y, scorer, train, test, verbose, fit_params)
+    parallel = Parallel(n_jobs=n_jobs, verbose=verbose,
+                        pre_dispatch=pre_dispatch)
+    scores = parallel(
+        delayed(_cross_val_score)(clone(estimator), X, y, scorer, train, test,
+                                  verbose, fit_params)
         for train, test in cv)
     return np.array(scores)
 
