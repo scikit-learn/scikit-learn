@@ -14,7 +14,7 @@ import warnings
 from itertools import combinations
 from math import ceil, floor, factorial
 import numbers
-from abc import ABCMeta
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
 import scipy.sparse as sp
@@ -225,6 +225,8 @@ class LeavePOut(PartitionIterator):
 
 class BaseKFold(with_metaclass(ABCMeta, PartitionIterator)):
     """Base class to validate KFold approaches"""
+
+    @abstractmethod
     def __init__(self, n, n_folds, indices, k=None):
         super(BaseKFold, self).__init__(n, indices)
         if k is not None:  # pragma: no cover
