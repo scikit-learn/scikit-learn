@@ -14,7 +14,7 @@ import warnings
 from itertools import combinations
 from math import ceil, floor, factorial
 import numbers
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 
 import numpy as np
 import scipy.sparse as sp
@@ -44,6 +44,8 @@ __all__ = ['Bootstrap',
 class PartitionIterator(with_metaclass(ABCMeta)):
     """Base class for CV iterators where train_mask = ~test_mask
 
+    Implementations must define `iter_test_masks` or `iter_test_indices`.
+
     Parameters
     ----------
     n : int
@@ -72,9 +74,21 @@ class PartitionIterator(with_metaclass(ABCMeta)):
                 test_index = ind[test_index]
             yield train_index, test_index
 
-    @abstractmethod
+    # Since subclasses must implement either iter_test_masks or
+    # iter_test_indices, neither can be abstract.
     def iter_test_masks(self):
-        """Generates boolean masks corresponding to test sets"""
+        """Generates boolean masks corresponding to test sets.
+
+        By default, delegates to iter_test_indices()
+        """
+        for test_index in self.iter_test_indices():
+            test_mask = self.empty_mask()
+            test_mask[test_index] = True
+            yield test_mask
+
+    def iter_test_indices(self):
+        """Generates integer indices corresponding to test sets."""
+        raise NotImplementedError
 
     def empty_mask(self):
         return np.zeros(self.n, dtype=np.bool)
@@ -128,11 +142,8 @@ class LeaveOneOut(PartitionIterator):
     domain-specific stratification of the dataset.
     """
 
-    def iter_test_masks(self):
-        for i in range(self.n):
-            test_index = self.empty_mask()
-            test_index[i] = True
-            yield test_index
+    def iter_test_indices(self):
+        return range(self.n)
 
     def __repr__(self):
         return '%s.%s(n=%i)' % (
@@ -195,12 +206,9 @@ class LeavePOut(PartitionIterator):
         super(LeavePOut, self).__init__(n, indices)
         self.p = p
 
-    def iter_test_masks(self):
-        p = self.p
-        for idx in combinations(range(self.n), p):
-            test_index = self.empty_mask()
-            test_index[np.array(idx)] = True
-            yield test_index
+    def iter_test_indices(self):
+        for comb in combinations(range(self.n), self.p):
+            yield np.array(comb)
 
     def __repr__(self):
         return '%s.%s(n=%i, p=%i)' % (
@@ -297,17 +305,15 @@ class KFold(PartitionIterator):
         if shuffle:
             random_state.shuffle(self.idxs)
 
-    def iter_test_masks(self):
+    def iter_test_indices(self):
         n = self.n
         n_folds = self.n_folds
         fold_sizes = (n // n_folds) * np.ones(n_folds, dtype=np.int)
         fold_sizes[:n % n_folds] += 1
         current = 0
         for fold_size in fold_sizes:
-            test_index = self.empty_mask()
             start, stop = current, current + fold_size
-            test_index[self.idxs[start:stop]] = True
-            yield test_index
+            yield self.idxs[start:stop]
             current = stop
 
     def __repr__(self):
@@ -387,13 +393,11 @@ class StratifiedKFold(PartitionIterator):
         self.y = y
         self.n_folds = n_folds
 
-    def iter_test_masks(self):
+    def iter_test_indices(self):
         n_folds = self.n_folds
         idx = np.argsort(self.y)
         for i in range(n_folds):
-            test_index = self.empty_mask()
-            test_index[idx[i::n_folds]] = True
-            yield test_index
+            yield idx[i::n_folds]
 
     def __repr__(self):
         return '%s.%s(labels=%s, n_folds=%i)' % (
@@ -464,9 +468,7 @@ class LeaveOneLabelOut(PartitionIterator):
 
     def iter_test_masks(self):
         for i in self.unique_labels:
-            test_index = self.empty_mask()
-            test_index[self.labels == i] = True
-            yield test_index
+            yield self.labels == i
 
     def __repr__(self):
         return '%s.%s(labels=%s)' % (
