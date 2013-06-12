@@ -14,6 +14,7 @@ import warnings
 from itertools import combinations
 from math import ceil, floor, factorial
 import numbers
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
 import scipy.sparse as sp
@@ -22,7 +23,7 @@ from .base import is_classifier, clone
 from .utils import check_arrays, check_random_state, safe_mask
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
-from .externals.six import string_types
+from .externals.six import string_types, with_metaclass
 from .metrics import SCORERS, Scorer
 
 __all__ = ['Bootstrap',
@@ -40,7 +41,46 @@ __all__ = ['Bootstrap',
            'train_test_split']
 
 
-class LeaveOneOut(object):
+class PartitionIterator(with_metaclass(ABCMeta)):
+    """Base class for CV iterators where train_mask = ~test_mask
+
+    Parameters
+    ----------
+    n : int
+        Total number of elements in dataset.
+
+    indices : boolean, optional (default True)
+        Return train/test split as arrays of indices, rather than a boolean
+        mask array. Integer indices are required when dealing with sparse
+        matrices, since those cannot be indexed by boolean masks.
+    """
+
+    def __init__(self, n, indices=True):
+        if abs(n - int(n)) >= np.finfo('f').eps:
+            raise ValueError("n must be an integer")
+        self.n = int(n)
+        self.indices = indices
+
+    def __iter__(self):
+        indices = self.indices
+        if indices:
+            ind = np.arange(self.n)
+        for test_index in self.iter_test_masks():
+            train_index = np.logical_not(test_index)
+            if indices:
+                train_index = ind[train_index]
+                test_index = ind[test_index]
+            yield train_index, test_index
+
+    @abstractmethod
+    def iter_test_masks(self):
+        """Generates boolean masks corresponding to test sets"""
+
+    def empty_mask(self):
+        return np.zeros(self.n, dtype=np.bool)
+
+
+class LeaveOneOut(PartitionIterator):
     """Leave-One-Out cross validation iterator.
 
     Provides train/test indices to split data in train test sets. Each
@@ -88,22 +128,11 @@ class LeaveOneOut(object):
     domain-specific stratification of the dataset.
     """
 
-    def __init__(self, n, indices=True):
-        self.n = n
-        self.indices = indices
-
-    def __iter__(self):
-        n = self.n
-        if self.indices:
-            ind = np.arange(n)
-        for i in range(n):
-            test_index = np.zeros(n, dtype=np.bool)
+    def iter_test_masks(self):
+        for i in range(self.n):
+            test_index = self.empty_mask()
             test_index[i] = True
-            train_index = np.logical_not(test_index)
-            if self.indices:
-                train_index = ind[train_index]
-                test_index = ind[test_index]
-            yield train_index, test_index
+            yield test_index
 
     def __repr__(self):
         return '%s.%s(n=%i)' % (
@@ -116,7 +145,7 @@ class LeaveOneOut(object):
         return self.n
 
 
-class LeavePOut(object):
+class LeavePOut(PartitionIterator):
     """Leave-P-Out cross validation iterator
 
     Provides train/test indices to split data in train test sets. The
@@ -163,24 +192,15 @@ class LeavePOut(object):
     """
 
     def __init__(self, n, p, indices=True):
-        self.n = n
+        super(LeavePOut, self).__init__(n, indices)
         self.p = p
-        self.indices = indices
 
-    def __iter__(self):
-        n = self.n
+    def iter_test_masks(self):
         p = self.p
-        comb = combinations(range(n), p)
-        if self.indices:
-            ind = np.arange(n)
-        for idx in comb:
-            test_index = np.zeros(n, dtype=np.bool)
+        for idx in combinations(range(self.n), p):
+            test_index = self.empty_mask()
             test_index[np.array(idx)] = True
-            train_index = np.logical_not(test_index)
-            if self.indices:
-                train_index = ind[train_index]
-                test_index = ind[test_index]
-            yield train_index, test_index
+            yield test_index
 
     def __repr__(self):
         return '%s.%s(n=%i, p=%i)' % (
@@ -203,7 +223,7 @@ def _validate_kfold(k, n_samples):
                          " the number of samples: %d." % (k, n_samples))
 
 
-class KFold(object):
+class KFold(PartitionIterator):
     """K-Folds cross validation iterator.
 
     Provides train/test indices to split data in train test sets. Split
@@ -262,6 +282,7 @@ class KFold(object):
 
     def __init__(self, n, n_folds=3, indices=True, shuffle=False,
                  random_state=None, k=None):
+        super(KFold, self).__init__(n, indices)
         if k is not None:  # pragma: no cover
             warnings.warn("The parameter k was renamed to n_folds and will be"
                           " removed in 0.15.", DeprecationWarning)
@@ -269,35 +290,25 @@ class KFold(object):
         _validate_kfold(n_folds, n)
         random_state = check_random_state(random_state)
 
-        if abs(n - int(n)) >= np.finfo('f').eps:
-            raise ValueError("n must be an integer")
-        self.n = int(n)
         if abs(n_folds - int(n_folds)) >= np.finfo('f').eps:
             raise ValueError("n_folds must be an integer")
         self.n_folds = int(n_folds)
-        self.indices = indices
         self.idxs = np.arange(n)
         if shuffle:
             random_state.shuffle(self.idxs)
 
-    def __iter__(self):
+    def iter_test_masks(self):
         n = self.n
         n_folds = self.n_folds
         fold_sizes = (n // n_folds) * np.ones(n_folds, dtype=np.int)
         fold_sizes[:n % n_folds] += 1
         current = 0
-        if self.indices:
-            ind = np.arange(n)
         for fold_size in fold_sizes:
-            test_index = np.zeros(n, dtype=np.bool)
+            test_index = self.empty_mask()
             start, stop = current, current + fold_size
             test_index[self.idxs[start:stop]] = True
-            train_index = np.logical_not(test_index)
-            if self.indices:
-                train_index = ind[train_index]
-                test_index = ind[test_index]
+            yield test_index
             current = stop
-            yield train_index, test_index
 
     def __repr__(self):
         return '%s.%s(n=%i, n_folds=%i)' % (
@@ -311,7 +322,7 @@ class KFold(object):
         return self.n_folds
 
 
-class StratifiedKFold(object):
+class StratifiedKFold(PartitionIterator):
     """Stratified K-Folds cross validation iterator
 
     Provides train/test indices to split data in train test sets.
@@ -357,6 +368,7 @@ class StratifiedKFold(object):
     """
 
     def __init__(self, y, n_folds=3, indices=True, k=None):
+        super(StratifiedKFold, self).__init__(len(y), indices)
         if k is not None:  # pragma: no cover
             warnings.warn("The parameter k was renamed to n_folds and will be"
                           " removed in 0.15.", DeprecationWarning)
@@ -374,22 +386,14 @@ class StratifiedKFold(object):
                           % (min_labels, n_folds)), Warning)
         self.y = y
         self.n_folds = n_folds
-        self.indices = indices
 
-    def __iter__(self):
+    def iter_test_masks(self):
         n_folds = self.n_folds
-        n = len(self.y)
         idx = np.argsort(self.y)
-        if self.indices:
-            ind = np.arange(n)
         for i in range(n_folds):
-            test_index = np.zeros(n, dtype=np.bool)
+            test_index = self.empty_mask()
             test_index[idx[i::n_folds]] = True
-            train_index = np.logical_not(test_index)
-            if self.indices:
-                train_index = ind[train_index]
-                test_index = ind[test_index]
-            yield train_index, test_index
+            yield test_index
 
     def __repr__(self):
         return '%s.%s(labels=%s, n_folds=%i)' % (
@@ -403,7 +407,7 @@ class StratifiedKFold(object):
         return self.n_folds
 
 
-class LeaveOneLabelOut(object):
+class LeaveOneLabelOut(PartitionIterator):
     """Leave-One-Label_Out cross-validation iterator
 
     Provides train/test indices to split data according to a third-party
@@ -452,23 +456,17 @@ class LeaveOneLabelOut(object):
     """
 
     def __init__(self, labels, indices=True):
+        super(LeaveOneLabelOut, self).__init__(len(labels), indices)
         # We make a copy of labels to avoid side-effects during iteration
         self.labels = np.array(labels, copy=True)
         self.unique_labels = unique(labels)
         self.n_unique_labels = len(self.unique_labels)
-        self.indices = indices
 
-    def __iter__(self):
-        if self.indices:
-            ind = np.arange(len(self.labels))
+    def iter_test_masks(self):
         for i in self.unique_labels:
-            test_index = np.zeros(len(self.labels), dtype=np.bool)
+            test_index = self.empty_mask()
             test_index[self.labels == i] = True
-            train_index = np.logical_not(test_index)
-            if self.indices:
-                train_index = ind[train_index]
-                test_index = ind[test_index]
-            yield train_index, test_index
+            yield test_index
 
     def __repr__(self):
         return '%s.%s(labels=%s)' % (
