@@ -479,7 +479,7 @@ class LeaveOneLabelOut(PartitionIterator):
         return self.n_unique_labels
 
 
-class LeavePLabelOut(object):
+class LeavePLabelOut(PartitionIterator):
     """Leave-P-Label_Out cross-validation iterator
 
     Provides train/test indices to split data according to a third-party
@@ -537,26 +537,20 @@ class LeavePLabelOut(object):
 
     def __init__(self, labels, p, indices=True):
         # We make a copy of labels to avoid side-effects during iteration
+        super(LeavePLabelOut, self).__init__(len(labels), indices)
         self.labels = np.array(labels, copy=True)
         self.unique_labels = unique(labels)
         self.n_unique_labels = len(self.unique_labels)
         self.p = p
-        self.indices = indices
 
-    def __iter__(self):
+    def iter_test_masks(self):
         comb = combinations(range(self.n_unique_labels), self.p)
-        if self.indices:
-            ind = np.arange(len(self.labels))
         for idx in comb:
-            test_index = np.zeros(len(self.labels), dtype=np.bool)
+            test_index = self.empty_mask()
             idx = np.array(idx)
             for l in self.unique_labels[idx]:
                 test_index[self.labels == l] = True
-            train_index = np.logical_not(test_index)
-            if self.indices:
-                train_index = ind[train_index]
-                test_index = ind[test_index]
-            yield train_index, test_index
+            yield test_index
 
     def __repr__(self):
         return '%s.%s(labels=%s, p=%s)' % (
