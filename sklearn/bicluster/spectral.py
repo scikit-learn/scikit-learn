@@ -55,11 +55,11 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
 
     Attributes
     ----------
-    `rows` : array-like, shape (n_clusters, n_rows)
+    `rows_` : array-like, shape (n_clusters, n_rows)
         Results of the clustering. `rows[i, r]` is True if cluster `i`
         contains row `r`. Available only after calling ``fit``.
 
-    `columns` : array-like, shape (n_clusters, n_columns)
+    `columns_` : array-like, shape (n_clusters, n_columns)
         Results of the clustering, like `rows`.
 
 
@@ -77,7 +77,7 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.135.1608
 
     """
-    def __init__(self, n_clusters=8, method='dhillon', maxiter=None,
+    def __init__(self, n_clusters=3, method='dhillon', maxiter=None,
                  n_init=10, random_state=None):
         if method not in ('dhillon', 'bistochastic', 'scaling', 'log'):
             raise Exception('unknown method: {}'.format(method))
@@ -104,8 +104,8 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
         row_labels = labels[0:n_rows]
         col_labels = labels[n_rows:]
 
-        self.rows = np.vstack(row_labels == c for c in range(self.n_clusters))
-        self.columns = np.vstack(col_labels == c for c in range(self.n_clusters))
+        self.rows_ = np.vstack(row_labels == c for c in range(self.n_clusters))
+        self.columns_ = np.vstack(col_labels == c for c in range(self.n_clusters))
 
     def _kluger(self, X):
         raise NotImplementedError()
