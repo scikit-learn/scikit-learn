@@ -41,10 +41,10 @@ __all__ = ['Bootstrap',
            'train_test_split']
 
 
-class PartitionIterator(with_metaclass(ABCMeta)):
+class _PartitionIterator(with_metaclass(ABCMeta)):
     """Base class for CV iterators where train_mask = ~test_mask
 
-    Implementations must define `iter_test_masks` or `iter_test_indices`.
+    Implementations must define `_iter_test_masks` or `_iter_test_indices`.
 
     Parameters
     ----------
@@ -67,26 +67,26 @@ class PartitionIterator(with_metaclass(ABCMeta)):
         indices = self.indices
         if indices:
             ind = np.arange(self.n)
-        for test_index in self.iter_test_masks():
+        for test_index in self._iter_test_masks():
             train_index = np.logical_not(test_index)
             if indices:
                 train_index = ind[train_index]
                 test_index = ind[test_index]
             yield train_index, test_index
 
-    # Since subclasses must implement either iter_test_masks or
-    # iter_test_indices, neither can be abstract.
-    def iter_test_masks(self):
+    # Since subclasses must implement either _iter_test_masks or
+    # _iter_test_indices, neither can be abstract.
+    def _iter_test_masks(self):
         """Generates boolean masks corresponding to test sets.
 
-        By default, delegates to iter_test_indices()
+        By default, delegates to _iter_test_indices()
         """
-        for test_index in self.iter_test_indices():
+        for test_index in self._iter_test_indices():
             test_mask = self.empty_mask()
             test_mask[test_index] = True
             yield test_mask
 
-    def iter_test_indices(self):
+    def _iter_test_indices(self):
         """Generates integer indices corresponding to test sets."""
         raise NotImplementedError
 
@@ -94,7 +94,7 @@ class PartitionIterator(with_metaclass(ABCMeta)):
         return np.zeros(self.n, dtype=np.bool)
 
 
-class LeaveOneOut(PartitionIterator):
+class LeaveOneOut(_PartitionIterator):
     """Leave-One-Out cross validation iterator.
 
     Provides train/test indices to split data in train test sets. Each
@@ -142,7 +142,7 @@ class LeaveOneOut(PartitionIterator):
     domain-specific stratification of the dataset.
     """
 
-    def iter_test_indices(self):
+    def _iter_test_indices(self):
         return range(self.n)
 
     def __repr__(self):
@@ -156,7 +156,7 @@ class LeaveOneOut(PartitionIterator):
         return self.n
 
 
-class LeavePOut(PartitionIterator):
+class LeavePOut(_PartitionIterator):
     """Leave-P-Out cross validation iterator
 
     Provides train/test indices to split data in train test sets. The
@@ -206,7 +206,7 @@ class LeavePOut(PartitionIterator):
         super(LeavePOut, self).__init__(n, indices)
         self.p = p
 
-    def iter_test_indices(self):
+    def _iter_test_indices(self):
         for comb in combinations(range(self.n), self.p):
             yield np.array(comb)
 
@@ -223,7 +223,7 @@ class LeavePOut(PartitionIterator):
                    / factorial(self.p))
 
 
-class BaseKFold(with_metaclass(ABCMeta, PartitionIterator)):
+class BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
     """Base class to validate KFold approaches"""
 
     @abstractmethod
@@ -311,7 +311,7 @@ class KFold(BaseKFold):
         if shuffle:
             random_state.shuffle(self.idxs)
 
-    def iter_test_indices(self):
+    def _iter_test_indices(self):
         n = self.n
         n_folds = self.n_folds
         fold_sizes = (n // n_folds) * np.ones(n_folds, dtype=np.int)
@@ -392,7 +392,7 @@ class StratifiedKFold(BaseKFold):
                           % (min_labels, self.n_folds)), Warning)
         self.y = y
 
-    def iter_test_indices(self):
+    def _iter_test_indices(self):
         n_folds = self.n_folds
         idx = np.argsort(self.y)
         for i in range(n_folds):
@@ -410,7 +410,7 @@ class StratifiedKFold(BaseKFold):
         return self.n_folds
 
 
-class LeaveOneLabelOut(PartitionIterator):
+class LeaveOneLabelOut(_PartitionIterator):
     """Leave-One-Label_Out cross-validation iterator
 
     Provides train/test indices to split data according to a third-party
@@ -465,7 +465,7 @@ class LeaveOneLabelOut(PartitionIterator):
         self.unique_labels = unique(labels)
         self.n_unique_labels = len(self.unique_labels)
 
-    def iter_test_masks(self):
+    def _iter_test_masks(self):
         for i in self.unique_labels:
             yield self.labels == i
 
@@ -480,7 +480,7 @@ class LeaveOneLabelOut(PartitionIterator):
         return self.n_unique_labels
 
 
-class LeavePLabelOut(PartitionIterator):
+class LeavePLabelOut(_PartitionIterator):
     """Leave-P-Label_Out cross-validation iterator
 
     Provides train/test indices to split data according to a third-party
@@ -544,7 +544,7 @@ class LeavePLabelOut(PartitionIterator):
         self.n_unique_labels = len(self.unique_labels)
         self.p = p
 
-    def iter_test_masks(self):
+    def _iter_test_masks(self):
         comb = combinations(range(self.n_unique_labels), self.p)
         for idx in comb:
             test_index = self.empty_mask()
