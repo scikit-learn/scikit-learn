@@ -989,7 +989,7 @@ def test_import_all_consistency():
     # in the namespace of the module or package.
     for importer, modname, ispkg in pkgutil.walk_packages(
         path=sklearn.__path__, prefix='sklearn.', onerror=lambda x: None):
-        if ".tests." in modname or not ispkg:
+        if ".tests." in modname:
             continue
         package = __import__(modname, fromlist="dummy")
         for name in getattr(package, '__all__', ()):
