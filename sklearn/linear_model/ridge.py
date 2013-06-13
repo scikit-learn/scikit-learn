@@ -229,6 +229,11 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         alpha = safe_asarray(alpha)
         alpha_dim = alpha.ndim
 
+        if y.ndim == 1:
+            y1 = y[:, np.newaxis]
+        else:
+            y1 = y
+
         if alpha_dim == 1 and len(alpha) != n_targets:
             # if number of alphas does not correspond to targets,
             # treat every target with all of the alphas
@@ -240,21 +245,25 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
 
         U, s, Vt = linalg.svd(X, full_matrices=False)
         idx = s > 1e-15  # same default value as scipy.linalg.pinv
-        UTy = U.T.dot(y)
+        UTy = U.T.dot(y1)
         # d = np.zeros_like(s)
         s[idx == False] = 0.
         d = (s[np.newaxis, :, np.newaxis] /
              (s[np.newaxis, :, np.newaxis] ** 2 + alpha[:, np.newaxis, :]))
 
-        d_UT_y = d * UTy.reshape(1, n_features, n_targets)
+        d_UT_y = d * UTy[np.newaxis, :, :]
         coef_ = np.empty([alpha.shape[0], n_targets, n_features])
         for dUTy, coef_slice in zip(d_UT_y, coef_):
-            coef_slice[:] = Vt.dot(dUTy).T
+            coef_slice[:] = Vt.T.dot(dUTy).T
 
         if alpha_dim == 0:
             coef_ = coef_.reshape(n_targets, n_features)
-        if y.ndim == 1:
-            coef_ = coef_.ravel()
+            if y.ndim == 1:
+                coef_ = coef_.ravel()
+        else:
+            if y.ndim == 1:
+                coef_ = coef_.squeeze()
+
         return coef_
 
 
