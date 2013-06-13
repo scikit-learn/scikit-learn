@@ -24,6 +24,7 @@ from ..utils import compute_class_weight
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 from ..externals import six
+from numbers import Number
 
 
 def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
@@ -82,6 +83,16 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
     """
 
     n_samples, n_features = X.shape
+    if y.ndim == 2:
+        n_samples_, n_targets = y.shape
+    elif y.ndim == 1:
+        n_samples_ = len(y)
+        n_targets = 1
+    else:
+        raise ValueError("Target y has the wrong shape %s" % str(y.shape))
+
+    assert n_samples == n_samples_
+
     has_sw = isinstance(sample_weight, np.ndarray) or sample_weight != 1.0
 
     if solver == 'auto':
@@ -96,6 +107,11 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         warnings.warn("""lsqr not available on this machine, falling back
                       to sparse_cg.""")
         solver = 'sparse_cg'
+
+    if not isinstance(alpha, Number):
+        # if we obtain a list of penalties, automatically switch to a solver
+        # able to deal with them
+        solver = 'svd'
 
     if has_sw:
         solver = 'dense_cholesky'
@@ -207,15 +223,38 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                 solver = 'svd'
 
     if solver == 'svd':
-        # slower than cholesky but does not break with
-        # singular matrices
+        # Can take multiple individual penalties per target
+
+        # avoid alpha being a number
+        alpha = safe_asarray(alpha)
+        alpha_dim = alpha.ndim
+
+        if alpha_dim == 1 and len(alpha) != n_targets:
+            # if number of alphas does not correspond to targets,
+            # treat every target with all of the alphas
+            alpha = alpha[:, np.newaxis]
+
+        # convert all other 0 and 1-dim alpha to 2 dim
+        alpha = np.atleast_2d(alpha)
+        assert alpha.ndim == 2
+
         U, s, Vt = linalg.svd(X, full_matrices=False)
         idx = s > 1e-15  # same default value as scipy.linalg.pinv
-        d = np.zeros_like(s)
-        s = s[idx]
-        d[idx] = (s / (s ** 2 + alpha))
-        Ud = np.dot(U.T, y).T * d
-        coef_ = np.dot(Ud, Vt)
+        UTy = U.T.dot(y)
+        # d = np.zeros_like(s)
+        s[idx == False] = 0.
+        d = (s[np.newaxis, :, np.newaxis] /
+             (s[np.newaxis, :, np.newaxis] ** 2 + alpha[:, np.newaxis, :]))
+
+        d_UT_y = d * UTy.reshape(1, n_features, n_targets)
+        coef_ = np.empty([alpha.shape[0], n_targets, n_features])
+        for dUTy, coef_slice in zip(d_UT_y, coef_):
+            coef_slice[:] = Vt.dot(dUTy).T
+
+        if alpha_dim == 0:
+            coef_ = coef_.reshape(n_targets, n_features)
+        if y.ndim == 1:
+            coef_ = coef_.ravel()
         return coef_
 
 
