@@ -223,12 +223,12 @@ class LeavePOut(_PartitionIterator):
                    / factorial(self.p))
 
 
-class BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
+class _BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
     """Base class to validate KFold approaches"""
 
     @abstractmethod
     def __init__(self, n, n_folds, indices, k=None):
-        super(BaseKFold, self).__init__(n, indices)
+        super(_BaseKFold, self).__init__(n, indices)
         if k is not None:  # pragma: no cover
             warnings.warn("The parameter k was renamed to n_folds and will be"
                           " removed in 0.15.", DeprecationWarning)
@@ -246,7 +246,7 @@ class BaseKFold(with_metaclass(ABCMeta, _PartitionIterator)):
                              % (self.n_folds, self.n))
 
 
-class KFold(BaseKFold):
+class KFold(_BaseKFold):
     """K-Folds cross validation iterator.
 
     Provides train/test indices to split data in train test sets. Split
@@ -334,7 +334,7 @@ class KFold(BaseKFold):
         return self.n_folds
 
 
-class StratifiedKFold(BaseKFold):
+class StratifiedKFold(_BaseKFold):
     """Stratified K-Folds cross validation iterator
 
     Provides train/test indices to split data in train test sets.
