@@ -185,6 +185,48 @@ def test_ridge_vs_lstsq():
     assert_almost_equal(ridge.coef_, ols.coef_)
 
 
+def test_ridge_multi_target_individual_penalties():
+    """Test multi-target, individual penalties ridge"""
+
+    rng = np.random.RandomState(42)
+    n_samples, n_features, n_targets, n_penalties = 20, 10, 5, 3
+    X = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_targets)
+
+    penalties = np.arange(n_targets * n_penalties).reshape(
+        n_targets, n_penalties).T
+
+    # calculate coefs using cholesky ridge:
+    coefs = np.empty([n_penalties, n_targets, n_features])
+    for t, (target, ps) in enumerate(zip(y.T, penalties.T)):
+        for i, p in enumerate(ps):
+            coefs[i, t] = ridge_regression(X, target, p,
+                                           solver='dense_cholesky')
+    assert_array_almost_equal(coefs,
+                        ridge_regression(X, y, penalties, solver='svd'))
+
+
+def test_ridge_path():
+    """Test multiple penalties on one target"""
+
+    rng = np.random.RandomState(42)
+    n_samples, n_features, n_penalties = 10, 20, 1000
+    pen_min, pen_max = .001, 1000
+
+    X = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples)
+
+    penalties = np.logspace(np.log10(pen_min), np.log10(pen_max),
+                            n_penalties)
+
+    cholesky_path = np.empty([len(penalties), n_features])
+    for c, p in zip(cholesky_path, penalties):
+        c[:] = ridge_regression(X, y, p, solver='dense_cholesky')
+
+    assert_array_almost_equal(cholesky_path,
+                ridge_regression(X, y, penalties, solver='svd'))
+
+
 def _test_ridge_loo(filter_):
     # test that can work with both dense or sparse matrices
     n_samples = X_diabetes.shape[0]
