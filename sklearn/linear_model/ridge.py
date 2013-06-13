@@ -288,6 +288,11 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
 
+        if not isinstance(self.alpha, Number):
+            raise NotImplementedError("alpha is not a number. "
+                "For multiple penalties, please "
+                "use sklearn.linear_model.ridge_regression directly")
+
         self.coef_ = ridge_regression(X, y,
                                       alpha=self.alpha,
                                       sample_weight=sample_weight,
