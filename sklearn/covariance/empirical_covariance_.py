@@ -23,8 +23,8 @@ from ..utils.extmath import fast_logdet, pinvh
 def log_likelihood(emp_cov, precision):
     """Computes the log_likelihood of the data
 
-    Params
-    ------
+    Parameters
+    ----------
     emp_cov: 2D ndarray (n_features, n_features)
       Maximum Likelihood Estimator of covariance
     precision: 2D ndarray (n_features, n_features)
@@ -101,8 +101,8 @@ class EmpiricalCovariance(BaseEstimator):
         Storage is done accordingly to `self.store_precision`.
         Precision stored only if invertible.
 
-        Params
-        ------
+        Parameters
+        ----------
         covariance: 2D ndarray, shape (n_features, n_features)
           Estimated covariance matrix to be stored, and from which precision
           is computed.

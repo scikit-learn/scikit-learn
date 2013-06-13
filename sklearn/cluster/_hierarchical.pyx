@@ -47,8 +47,8 @@ def _hc_get_descendent(int node, children, int n_leaves):
     n_leaves : int
         Number of leaves.
 
-    Return
-    ------
+    Returns
+    -------
     descendent : list of int
     """
     ind = [node]

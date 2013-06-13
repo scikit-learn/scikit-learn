@@ -41,8 +41,8 @@ def _is_1d(x):
     ----------
     x : numpy array.
 
-    Return
-    ------
+    Returns
+    -------
     is_1d : boolean,
         Return True if x can be considered as a 1d vector.
 
