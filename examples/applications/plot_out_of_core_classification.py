@@ -210,10 +210,8 @@ def extract_instance(doc):
 
 # First we hold out a number of examples to estimate accuracy
 n_test_documents = 1000
-test_examples = [doc for doc in itertools.islice(data_streamer,
-                                                 n_test_documents)]
-test_examples = map(extract_instance,
-                    test_examples)
+test_examples = [extract_instance(doc)
+                 for doc in itertools.islice(data_streamer, n_test_documents)]
 documents, topics = zip(*test_examples)
 y_test = np.array(topics)
 X_test = hasher.transform(documents)
