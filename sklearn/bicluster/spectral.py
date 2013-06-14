@@ -15,7 +15,10 @@ from scipy.sparse.linalg import svds
 # TODO: can we use Dhillon's preprocessing but Kluger's postprocessing?
 
 def scaling_preprocess(X):
-    raise NotImplementedError()
+    row_diag = 1.0 / np.sqrt(np.sum(X, axis=1))
+    col_diag = 1.0 / np.sqrt(np.sum(X, axis=0))
+    an = row_diag[:, np.newaxis] * X * col_diag
+    return an, row_diag, col_diag
 
 def bistochastic_preprocess(X):
     raise NotImplementedError()
@@ -88,14 +91,12 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
         self.random_state=random_state
 
     def _dhillon(self, X):
-        diag1 = 1.0 / np.sqrt(np.sum(X, axis=1))
-        diag2 = 1.0 / np.sqrt(np.sum(X, axis=0))
-        an = diag1[:, np.newaxis] * X * diag2
+        normalized_data, row_diag, col_diag = scaling_preprocess(X)
         n_singular_vals = 1 + int(np.ceil(np.log2(self.n_clusters)))
-        u, s, vt = svds(an, k=n_singular_vals, maxiter=self.maxiter)
-
-        z = np.vstack((diag1[:, np.newaxis] * u[:, 1:],
-                       diag2[:, np.newaxis] * vt.T[:, 1:]))
+        u, s, vt = svds(normalized_data, k=n_singular_vals,
+                        maxiter=self.maxiter)
+        z = np.vstack((row_diag[:, np.newaxis] * u[:, 1:],
+                       col_diag[:, np.newaxis] * vt.T[:, 1:]))
         _, labels, _ = k_means(z, self.n_clusters,
                                random_state=self.random_state,
                                n_init=self.n_init)
