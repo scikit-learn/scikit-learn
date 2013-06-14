@@ -96,7 +96,9 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
     else:
         raise ValueError("Target y has the wrong shape %s" % str(y.shape))
 
-    assert n_samples == n_samples_
+    if n_samples != n_samples_:
+        raise ValueError("Number of samples in X and y does not correspond:"
+                         " %d != %d" % (n_samples, n_samples_))
 
     has_sw = isinstance(sample_weight, np.ndarray) or sample_weight != 1.0
 
