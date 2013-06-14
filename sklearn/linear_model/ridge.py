@@ -40,6 +40,11 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
     y : array-like, shape = [n_samples] or [n_samples, n_targets]
         Target values
 
+    alpha : {float, array-like},
+        shape = [n_targets] if array-like
+        The l_2 penalty to be used. If an array is passed, penalties are
+        assumed to be specific to targets
+
     max_iter : int, optional
         Maximum number of iterations for conjugate gradient solver.
         The default value is determined by scipy.sparse.linalg.
