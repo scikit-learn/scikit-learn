@@ -51,6 +51,7 @@ import pylab as pl
 
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.linear_model.stochastic_gradient import SGDClassifier
+import itertools
 
 ###############################################################################
 # Reuters Dataset related routines
@@ -197,12 +198,19 @@ data_streamer = ReutersStreamReader(os.path.join(os.path.dirname(__file__),
 all_classes = np.array([0, 1])
 positive_class = 'acq'
 
+
+def extract_instance(doc):
+    """Extract relevant text and class form a document."""
+    return (doc['title'] + '\n\n' + doc['body'],
+            int(positive_class in doc['topics']))
+
+
 # First we hold out a number of examples to estimate accuracy
-test_examples = []
-for _ in xrange(1000):
-    doc = next(data_streamer)
-    test_examples.append((doc['title'] + '\n\n' + doc['body'],
-                          int(positive_class in doc['topics'])))
+n_test_documents = 1000
+test_examples = [doc for doc in itertools.islice(data_streamer,
+                                                 n_test_documents)]
+test_examples = map(extract_instance,
+                    test_examples)
 documents, topics = zip(*test_examples)
 y_test = np.array(topics)
 X_test = hasher.transform(documents)
@@ -227,7 +235,7 @@ def progress(stats):
 # We will feed the classifier with mini-batches of 100 documents; this means
 # we have at most 100 docs in memory at any time.
 chunk = []
-chunk_sz = 100
+chunk_size = 100
 
 # Main loop : iterate over documents read by the streamer
 doc = next(data_streamer, None)
@@ -241,9 +249,9 @@ while doc:
         continue
 
     # Read documents until chunk full
-    if len(chunk) < chunk_sz:
+    if len(chunk) < chunk_size:
         classid = int(positive_class in doc['topics'])
-        chunk.append((doc['title'] + '\n\n' + doc['body'], classid))
+        chunk.append(extract_instance(doc))
         doc = next(data_streamer, None)
         continue
     doc = next(data_streamer, None)
@@ -273,26 +281,28 @@ print()
 ###############################################################################
 # Plot results
 ###############################################################################
-# Plot accuracy evolution with #examples
+
+
+def plot_accuracy(x, y, plot_placement, x_legend):
+    """Plot accuracy as a function of x."""
+    x = np.array(x)
+    y = np.array(y)
+    pl.subplots_adjust(hspace=0.5)
+    pl.subplot(plot_placement)
+    pl.title('Classification accuracy as a function of %s' % x_legend)
+    pl.xlabel('%s' % x_legend)
+    pl.ylabel('Accuracy')
+    pl.grid(True)
+    pl.plot(x, y)
+
 pl.figure(1)
-pl.subplots_adjust(hspace=0.5)
-pl.subplot(211)
-pl.title('Classification accuracy as a function of #examples seen')
-pl.xlabel('# training examples')
-pl.ylabel('Accuracy')
-y, x = zip(*stats['accuracy_history'])
-x = np.array(x)
-y = np.array(y)
-pl.grid(True)
-pl.plot(x, y)
+
+# Plot accuracy evolution with #examples
+accuracy, n_examples = zip(*stats['accuracy_history'])
+plot_accuracy(n_examples, accuracy, 211, "training examples (#)")
+
 # Plot accuracy evolution with runtime
-pl.subplot(212)
-pl.title('Classification accuracy as a function of runtime')
-pl.xlabel('Runtime (s)')
-pl.ylabel('Accuracy')
-y, x = zip(*stats['runtime_history'])
-x = np.array(x)
-y = np.array(y)
-pl.grid(True)
-pl.plot(x, y)
+accuracy, runtime = zip(*stats['runtime_history'])
+plot_accuracy(runtime, accuracy, 212, 'runtime (s)')
+
 pl.show()
