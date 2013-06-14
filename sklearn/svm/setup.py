@@ -8,7 +8,10 @@ def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
     from numpy.distutils.system_info import get_info, BlasNotFoundError
 
-    config = Configuration('svm', parent_package, top_path)
+    config = Configuration('svm', parent_package, top_path,
+        packages=['sklearn/svm'],
+        package_dir={'sklearn/svm': 'sklearn/svm'},
+        package_data={'sklearn/svm': ['liblinear.pxd', 'libsvm.pxd']})
 
     config.add_subpackage('tests')
 

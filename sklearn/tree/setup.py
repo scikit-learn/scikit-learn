@@ -5,7 +5,7 @@ from numpy.distutils.misc_util import Configuration
 
 
 def configuration(parent_package="", top_path=None):
-    config = Configuration("tree", parent_package, top_path, \
+    config = Configuration("tree", parent_package, top_path,
         packages=['sklearn/tree'],
         package_dir={'sklearn/tree': 'sklearn/tree'},
         package_data={'sklearn/tree': ['_tree.pxd']})
