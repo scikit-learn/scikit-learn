@@ -196,6 +196,9 @@ data_streamer = ReutersStreamReader(os.path.join(os.path.dirname(__file__),
 # Here we propose to learn a binary classification between the positive class
 # and all other documents."""
 all_classes = np.array([0, 1])
+# NB: the 'acq' class was chosen as it is more or less evenly distributed in
+# the Reuters files. For other datasets, one should take care of creating a
+# test set with a realistic portion of positive instances.
 positive_class = 'acq'
 
 
