@@ -209,8 +209,8 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
 
 
 def _cv(estimator, loss_func, X, y, train, test, ranking_, verbose, k):
-    """Score a set of features with ranking less than k. Used inside the
-       cross validation loop in RFECV.
+    """Cross-validate a subset of all features with ranking less than k.
+       Used inside the cross validation loop in RFECV.
     """
     mask = np.where(ranking_ <= k + 1)[0]
     estimator = clone(estimator)
