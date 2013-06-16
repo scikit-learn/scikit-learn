@@ -268,7 +268,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         Controls verbosity of output.
 
     n_jobs : int, optional
-        Number of jobs to run in parallel (default 1).
+        Number of jobs to run in parallel (default 1). -1 means ‘all CPUs’.
 
     Attributes
     ----------
@@ -357,7 +357,7 @@ class RFECV(RFE, MetaEstimatorMixin):
             # Compute a full ranking of the features
             ranking_ = rfe.fit(X[train], y[train]).ranking_
             # Score each subset of features
-            scores += Parallel(n_jobs=self.n_jobs)(
+            scores += Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
                     delayed(_cv)(self.estimator, self.loss_func, X, y,
                         train, test, ranking_, self.verbose, k)
                     for k in range(0, max(ranking_)))
