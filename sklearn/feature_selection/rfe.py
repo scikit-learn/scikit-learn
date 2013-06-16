@@ -268,7 +268,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         Controls verbosity of output.
 
     n_jobs : int, optional
-        Number of jobs to run in parallel (default 1). -1 means ‘all CPUs’.
+        Number of jobs to run in parallel (default 1). -1 means 'all CPUs'.
 
     Attributes
     ----------
