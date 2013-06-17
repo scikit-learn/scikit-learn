@@ -52,6 +52,7 @@ import pylab as pl
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.linear_model.stochastic_gradient import SGDClassifier
 import itertools
+import sys
 
 ###############################################################################
 # Reuters Dataset related routines
@@ -202,21 +203,26 @@ all_classes = np.array([0, 1])
 positive_class = 'acq'
 
 
-def extract_instance(doc):
-    """Extract relevant text and class form a document."""
-    return (doc['title'] + '\n\n' + doc['body'],
-            int(positive_class in doc['topics']))
+def get_minibatch(doc_iter, size, transformer=hasher,
+                  pos_class=positive_class):
+    """Extracts a minibatch of examples.
+
+    Note: size is before excluding invalid docs with no topics assigned."""
+    data = [('{title}\n\n{body}'.format(**doc), pos_class in doc['topics'])
+            for doc in itertools.islice(doc_iter, size)
+            if doc['topics']]
+    if not len(data):
+        return np.asarray([], dtype=int), np.asarray([], dtype=int)
+    X, y = zip(*data)
+    return transformer.transform(X), np.asarray(y, dtype=int)
 
 
-# First we hold out a number of examples to estimate accuracy
-n_test_documents = 1000
-test_examples = [extract_instance(doc)
-                 for doc in itertools.islice(data_streamer, n_test_documents)]
-documents, topics = zip(*test_examples)
-y_test = np.array(topics)
-X_test = hasher.transform(documents)
-test_examples = []
-print("Test set is %d documents (%d positive)" % (len(y_test), sum(y_test)))
+def iter_minibatchs(doc_iter, minibatch_size):
+    """Generator of minibatchs."""
+    X, y = get_minibatch(doc_iter, minibatch_size)
+    while X.shape[0]:
+        yield X, y
+        X, y = get_minibatch(doc_iter, minibatch_size)
 
 
 # structure to track accuracy history
@@ -224,53 +230,34 @@ stats = {'n_train': 0, 'n_test': 0, 'n_train_pos': 0, 'n_test_pos': 0,
          'accuracy': 0.0, 'accuracy_history': [(0, 0)], 't0': time.time(),
          'runtime_history': [(0, 0)]}
 
+# First we hold out a number of examples to estimate accuracy
+n_test_documents = 1000
+X_test, y_test = get_minibatch(data_streamer, 1000)
+stats['n_test'] += len(y_test)
+stats['n_test_pos'] += sum(y_test)
+print("Test set is %d documents (%d positive)" % (len(y_test), sum(y_test)))
+
 
 def progress(stats):
     """Reports progress information."""
-    s = "%(n_train)d train docs (%(n_train_pos)d positive) " % stats
-    s += "%(n_test)d test docs (%(n_test_pos)d positive) " % stats
-    s += "accuracy: %(accuracy)f " % stats
-    s += "in %.2fs" % (time.time() - stats['t0'])
+    duration = time.time() - stats['t0']
+    s = "%(n_train)6d train docs (%(n_train_pos)6d positive) " % stats
+    s += "%(n_test)6d test docs (%(n_test_pos)6d positive) " % stats
+    s += "accuracy: %(accuracy).3f " % stats
+    s += "in %.2fs (%5d docs/s)" % (duration, stats['n_train'] / duration)
     return s
 
 # We will feed the classifier with mini-batches of 100 documents; this means
 # we have at most 100 docs in memory at any time.
-chunk = []
-chunk_size = 100
+minibatch_size = 100
 
-# Main loop : iterate over documents read by the streamer
-doc = next(data_streamer, None)
-while doc:
-
-    print("\r%s" % progress(stats), end='')
-
-    # Discard invalid documents
-    if doc and not len(doc['topics']):
-        doc = next(data_streamer, None)
-        continue
-
-    # Read documents until chunk full
-    if len(chunk) < chunk_size:
-        classid = int(positive_class in doc['topics'])
-        chunk.append(extract_instance(doc))
-        doc = next(data_streamer, None)
-        continue
-    doc = next(data_streamer, None)
-
-    # When chunk is full, create data matrix using the HashingVectorizer
-    documents, topics = zip(*chunk)
-    y = np.array(topics)
-    X = hasher.transform(documents)
-    chunk = []
-
-    # Learn from the current chunk.
-    stats['n_train'] += len(documents)
-    stats['n_train_pos'] += sum(topics)
-    classifier.partial_fit(X, y, classes=all_classes)
-
-    # test accuracy.
-    stats['n_test'] += len(y_test)
-    stats['n_test_pos'] += sum(y_test)
+# Main loop : iterate on mini-batchs of exmaples
+for X_train, y_train in iter_minibatchs(data_streamer, minibatch_size):
+    # update estimator with examples in the current mini-batch
+    classifier.partial_fit(X_train, y_train, classes=all_classes)
+    # accumulate test accuracy stats
+    stats['n_train'] += X_train.shape[0]
+    stats['n_train_pos'] += sum(y_train)
     stats['accuracy'] = classifier.score(X_test, y_test)
     stats['accuracy_history'].append((stats['accuracy'], stats['n_train']))
     stats['runtime_history'].append((stats['accuracy'],
