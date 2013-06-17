@@ -49,22 +49,19 @@ def fit_best_piecewise(vectors, n_clusters, random_state, n_init):
 
     """
     # TODO: try all thresholds, as in paper
-    best_vector = None
-    best_dist = None
-    for vector in vectors:
-        centroid, labels, _ = k_means(vector.reshape(-1, 1), n_clusters,
-                               random_state=random_state,
-                               n_init=n_init)
-        piecewise = centroid[labels]
-        dist = np.linalg.norm(piecewise - vector)
-        if best_dist is None or dist < best_dist:
-            best_dist = dist
-            best_vector = piecewise
-    return best_vector
+    def make_piecewise(v):
+        centroid, labels, _ = k_means(v.reshape(-1, 1), n_clusters,
+                                      random_state=random_state,
+                                      n_init=n_init)
+        return centroid[labels].reshape(-1)
+    piecewise_vectors = np.apply_along_axis(make_piecewise, 1,
+                                            vectors)
+    dists = np.apply_along_axis(np.linalg.norm, 1,
+                                vectors - piecewise_vectors)
+    return piecewise_vectors[np.argmin(dists)]
 
 
 class SpectralBiclustering(BaseEstimator, BiclusterMixin):
-
     """Spectral biclustering.
 
     For equivalence with the Spectral Co-Clustering algorithm
