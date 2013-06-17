@@ -82,7 +82,7 @@ class _PartitionIterator(with_metaclass(ABCMeta)):
         By default, delegates to _iter_test_indices()
         """
         for test_index in self._iter_test_indices():
-            test_mask = self.empty_mask()
+            test_mask = self._empty_mask()
             test_mask[test_index] = True
             yield test_mask
 
@@ -90,7 +90,7 @@ class _PartitionIterator(with_metaclass(ABCMeta)):
         """Generates integer indices corresponding to test sets."""
         raise NotImplementedError
 
-    def empty_mask(self):
+    def _empty_mask(self):
         return np.zeros(self.n, dtype=np.bool)
 
 
@@ -553,7 +553,7 @@ class LeavePLabelOut(_PartitionIterator):
     def _iter_test_masks(self):
         comb = combinations(range(self.n_unique_labels), self.p)
         for idx in comb:
-            test_index = self.empty_mask()
+            test_index = self._empty_mask()
             idx = np.array(idx)
             for l in self.unique_labels[idx]:
                 test_index[self.labels == l] = True
@@ -728,10 +728,10 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
 
     def __iter__(self):
         if self.indices:
-            for train, test in self.iter_indices():
+            for train, test in self._iter_indices():
                 yield train, test
             return
-        for train, test in self.iter_indices():
+        for train, test in self._iter_indices():
             train_m = np.zeros(self.n, dtype=bool)
             test_m = np.zeros(self.n, dtype=bool)
             train_m[train] = True
@@ -739,7 +739,7 @@ class BaseShuffleSplit(with_metaclass(ABCMeta)):
             yield train_m, test_m
 
     @abstractmethod
-    def iter_indices(self):
+    def _iter_indices(self):
         """Generate (train, test) indices"""
 
 
@@ -811,7 +811,7 @@ class ShuffleSplit(BaseShuffleSplit):
     Bootstrap: cross-validation using re-sampling with replacement.
     """
 
-    def iter_indices(self):
+    def _iter_indices(self):
         rng = check_random_state(self.random_state)
         for i in range(self.n_iter):
             # random partition
@@ -983,7 +983,7 @@ class StratifiedShuffleSplit(BaseShuffleSplit):
                              'equal to the number of classes = %d' %
                              (self.n_test, n_cls))
 
-    def iter_indices(self):
+    def _iter_indices(self):
         rng = check_random_state(self.random_state)
         cls_count = np.bincount(self.y_indices)
         p_i = cls_count / float(self.n)
