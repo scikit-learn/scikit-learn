@@ -6,9 +6,7 @@ from numpy.distutils.misc_util import Configuration
 
 def configuration(parent_package="", top_path=None):
     config = Configuration("tree", parent_package, top_path,
-        packages=['sklearn/tree'],
-        package_dir={'sklearn/tree': 'sklearn/tree'},
-        package_data={'sklearn/tree': ['_tree.pxd']})
+        data_files=[('sklearn/tree',['sklearn/tree/_tree.pxd'])])
     libraries = []
     if os.name == 'posix':
         libraries.append('m')

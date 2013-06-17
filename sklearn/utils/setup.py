@@ -9,12 +9,10 @@ def configuration(parent_package='', top_path=None):
     from numpy.distutils.misc_util import Configuration
 
     config = Configuration('utils', parent_package, top_path,
-        packages=['sklearn/utils'],
-        package_dir={'sklearn/utils': 'sklearn/utils'},
-        package_data={'sklearn/utils': ['lgamma.pxd', 
-            'murmurhash.pxd', 
-            'seq_dataset.pxd', 
-            'weight_vector.pxd']})
+        data_files=[('sklearn/utils', ['sklearn/utils/lgamma.pxd', 
+            'sklearn/utils/murmurhash.pxd', 
+            'sklearn/utils/seq_dataset.pxd', 
+            'sklearn/utils/weight_vector.pxd'])])
     config.add_subpackage('sparsetools')
     config.add_subpackage('mst')
 
