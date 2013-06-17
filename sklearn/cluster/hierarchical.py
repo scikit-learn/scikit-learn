@@ -32,9 +32,12 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
               n_clusters=None):
     """Ward clustering based on a Feature matrix.
 
+    Recursively merges the pair of clusters that minimally increases
+    within-cluster variance.
+
     The inertia matrix uses a Heapq-based representation.
 
-    This is the structured version, that takes into account a some topological
+    This is the structured version, that takes into account some topological
     structure between samples.
 
     Parameters
@@ -275,24 +278,27 @@ def _hc_cut(n_clusters, children, n_leaves):
 class Ward(BaseEstimator, ClusterMixin):
     """Ward hierarchical clustering: constructs a tree and cuts it.
 
+    Recursively merges the pair of clusters that minimally increases
+    within-cluster variance.
+
     Parameters
     ----------
-    n_clusters : int or ndarray
+    n_clusters : int, default=2
         The number of clusters to find.
 
-    connectivity : sparse matrix.
+    connectivity : sparse matrix (optional)
         Connectivity matrix. Defines for each sample the neigbhoring
         samples following a given structure of the data.
         Default is None, i.e, the hiearchical clustering algorithm is
         unstructured.
 
-    memory : Instance of joblib.Memory or string
+    memory : Instance of joblib.Memory or string (optional)
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    copy : bool
-        Copy the connectivity matrix or work inplace.
+    copy : bool, default=True
+        Copy the connectivity matrix or work in-place.
 
     n_components : int (optional)
         The number of connected components in the graph defined by the \
@@ -310,7 +316,9 @@ class Ward(BaseEstimator, ClusterMixin):
     Attributes
     ----------
     `children_` : array-like, shape = [n_nodes, 2]
-        List of the children of each nodes.  Leaves of the tree do not appear.
+        The children of each non-leaf node. Values less than `n_samples` refer
+        to leaves of the tree. A greater value `i` indicates a node with
+        children `children_[i - n_samples]`.
 
     `labels_` : array [n_samples]
         cluster labels for each point
@@ -318,7 +326,7 @@ class Ward(BaseEstimator, ClusterMixin):
     `n_leaves_` : int
         Number of leaves in the hiearchical tree.
 
-    `n_components_` : sparse matrix.
+    `n_components_` : int
         The estimated number of connected components in the graph.
 
     """
@@ -399,22 +407,22 @@ class WardAgglomeration(AgglomerationTransform, Ward):
 
     Parameters
     ----------
-    n_clusters : int or ndarray
+    n_clusters : int, default=2
         The number of clusters.
 
-    connectivity : sparse matrix
+    connectivity : sparse matrix (optional)
         connectivity matrix. Defines for each feature the neigbhoring
         features following a given structure of the data.
         Default is None, i.e, the hiearchical agglomeration algorithm is
         unstructured.
 
-    memory : Instance of joblib.Memory or string
+    memory : Instance of joblib.Memory or string (optional)
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    copy : bool
-        Copy the connectivity matrix or work inplace.
+    copy : bool, default=True
+        Copy the connectivity matrix or work in-place.
 
     n_components : int (optional)
         The number of connected components in the graph defined by the
@@ -432,15 +440,18 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     Attributes
     ----------
     `children_` : array-like, shape = [n_nodes, 2]
-        List of the children of each nodes.
-        Leaves of the tree do not appear.
+        The children of each non-leaf node. Values less than `n_samples` refer
+        to leaves of the tree. A greater value `i` indicates a node with
+        children `children_[i - n_samples]`.
 
-    `labels_` : array [n_samples]
-        cluster labels for each point
+    `labels_` : array [n_features]
+        cluster labels for each feature
 
     `n_leaves_` : int
         Number of leaves in the hiearchical tree.
 
+    `n_components_` : int
+        The estimated number of connected components in the graph.
     """
 
     def fit(self, X, y=None, **params):
