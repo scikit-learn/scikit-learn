@@ -310,7 +310,9 @@ class Ward(BaseEstimator, ClusterMixin):
     Attributes
     ----------
     `children_` : array-like, shape = [n_nodes, 2]
-        List of the children of each nodes.  Leaves of the tree do not appear.
+        The children of each non-leaf node. Values less than `n_samples` refer
+        to leaves of the tree. A greater value `i` indicates a node with
+        children `children_[i - n_samples]`.
 
     `labels_` : array [n_samples]
         cluster labels for each point
@@ -318,7 +320,7 @@ class Ward(BaseEstimator, ClusterMixin):
     `n_leaves_` : int
         Number of leaves in the hiearchical tree.
 
-    `n_components_` : sparse matrix.
+    `n_components_` : int
         The estimated number of connected components in the graph.
 
     """
@@ -432,8 +434,9 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     Attributes
     ----------
     `children_` : array-like, shape = [n_nodes, 2]
-        List of the children of each nodes.
-        Leaves of the tree do not appear.
+        The children of each non-leaf node. Values less than `n_samples` refer
+        to leaves of the tree. A greater value `i` indicates a node with
+        children `children_[i - n_samples]`.
 
     `labels_` : array [n_features]
         cluster labels for each feature
@@ -441,6 +444,8 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     `n_leaves_` : int
         Number of leaves in the hiearchical tree.
 
+    `n_components_` : int
+        The estimated number of connected components in the graph.
     """
 
     def fit(self, X, y=None, **params):
