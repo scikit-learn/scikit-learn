@@ -70,8 +70,9 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
     Returns
     -------
     children : 2D array, shape (n_nodes, 2)
-        list of the children of each nodes.
-        Leaves of the tree have empty list of children.
+        The children of each non-leaf node. Values less than `n_samples` refer
+        to leaves of the tree. A greater value `i` indicates a node with
+        children `children[i - n_samples]`.
 
     n_components : sparse matrix.
         The number of connected components in the graph.
@@ -238,8 +239,9 @@ def _hc_cut(n_clusters, children, n_leaves):
         The number of clusters to form.
 
     children : list of pairs. Length of n_nodes
-        List of the children of each nodes.
-        Leaves have empty list of children and are not stored.
+        The children of each non-leaf node. Values less than `n_samples` refer
+        to leaves of the tree. A greater value `i` indicates a node with
+        children `children[i - n_samples]`.
 
     n_leaves : int
         Number of leaves of the tree.
