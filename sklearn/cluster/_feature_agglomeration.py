@@ -60,14 +60,5 @@ class AgglomerationTransform(TransformerMixin):
             A vector of size nb_samples with the values of Xred assigned to
             each of the cluster of samples.
         """
-        if np.size((Xred.shape)) == 1:
-            X = np.zeros([self.labels_.shape[0]])
-        else:
-            X = np.zeros([Xred.shape[0], self.labels_.shape[0]])
-        unil = np.unique(self.labels_)
-        for i in range(len(unil)):
-            if np.size((Xred.shape)) == 1:
-                X[self.labels_ == unil[i]] = Xred[i]
-            else:
-                X[:, self.labels_ == unil[i]] = array2d(Xred[:, i]).T
-        return X
+        unil, inverse = np.unique(self.labels_, return_inverse=True)
+        return Xred[..., inverse]
