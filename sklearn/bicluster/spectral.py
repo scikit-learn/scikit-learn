@@ -12,29 +12,66 @@ from scipy.sparse.linalg import svds
 
 # TODO: re-use existing functionality in scikit-learn
 # TODO: within-cluster rankings
-# TODO: can we use Dhillon's preprocessing but Kluger's postprocessing?
 
-def scaling_preprocess(X):
+def scale_preprocess(X):
     row_diag = 1.0 / np.sqrt(np.sum(X, axis=1))
     col_diag = 1.0 / np.sqrt(np.sum(X, axis=0))
     an = row_diag[:, np.newaxis] * X * col_diag
     return an, row_diag, col_diag
 
+
 def bistochastic_preprocess(X):
     raise NotImplementedError()
 
+
 def log_preprocess(X):
-    raise NotImplementedError()
+    L = np.log(X)
+    row_avg = np.mean(L, axis=1)[:, np.newaxis]
+    col_avg = np.mean(L, axis=0)
+    avg = np.mean(L)
+    return L - row_avg - col_avg + avg
+
+
+def convert_to_piecewise(vector, labels):
+    result = np.zeros_like(vector)
+    for label in np.unique(labels):
+        selector = (labels == label)
+        result[selector] = np.mean(vector[selector])
+    return result
+
+
+def fit_best_piecewise(vectors, n_clusters, random_state, n_init):
+    """Find the vector that is best approximated by a piecewise
+    constant vector. Returns that piecewise constant vector.
+
+    The piecewise vectors are found by k-means; the best is chosen
+    according to Euclidean distance.
+
+    """
+    # TODO: try all thresholds, as in paper
+    best_vector = None
+    best_dist = None
+    for vector in vectors:
+        centroid, labels, _ = k_means(vector.reshape(-1, 1), n_clusters,
+                               random_state=random_state,
+                               n_init=n_init)
+        piecewise = centroid[labels]
+        dist = np.linalg.norm(piecewise - vector)
+        if best_dist is None or dist < best_dist:
+            best_dist = dist
+            best_vector = piecewise
+    return best_vector
 
 
 class SpectralBiclustering(BaseEstimator, BiclusterMixin):
+
     """Spectral biclustering.
 
     For equivalence with the Spectral Co-Clustering algorithm
     (Dhillon, 2001), use method='dhillon'.
 
     For the Spectral Biclustering algorithm (Kluger, 2003), use
-    one of 'scaling', 'bistochastic', or 'log'.
+    one of 'scale', 'bistochastic', or 'log'.
 
     Parameters
     -----------
@@ -44,7 +81,14 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
     method : string
         Method of preparing data matrix for SVD and converting
         singular vectors into biclusters. May be one of 'dhillon',
-        'scaling', 'bistochastic', or 'log'.
+        'scale', 'bistochastic', or 'log'.
+
+    n_singular_vectors : integer
+        Number of singular vectors to check. Not used if
+        `self.method` is 'dhillon'.
+
+    maxiter : integer
+        Maximum iterations for finding singular vectors.
 
     n_init : int, optional, default: 10
         Number of time the k-means algorithm will be run with different
@@ -80,18 +124,20 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
       http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.135.1608
 
     """
-    def __init__(self, n_clusters=3, method='dhillon', maxiter=None,
-                 n_init=10, random_state=None):
-        if method not in ('dhillon', 'bistochastic', 'scaling', 'log'):
+    def __init__(self, n_clusters=3, method='bistochastic',
+                 n_singular_vectors=6, maxiter=None, n_init=10,
+                 random_state=None):
+        if method not in ('dhillon', 'bistochastic', 'scale', 'log'):
             raise Exception('unknown method: {}'.format(method))
         self.n_clusters = n_clusters
         self.method = method
+        self.n_singular_vectors = n_singular_vectors
         self.maxiter = maxiter
         self.n_init = n_init
         self.random_state=random_state
 
     def _dhillon(self, X):
-        normalized_data, row_diag, col_diag = scaling_preprocess(X)
+        normalized_data, row_diag, col_diag = scale_preprocess(X)
         n_singular_vals = 1 + int(np.ceil(np.log2(self.n_clusters)))
         u, s, vt = svds(normalized_data, k=n_singular_vals,
                         maxiter=self.maxiter)
@@ -109,7 +155,40 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
         self.columns_ = np.vstack(col_labels == c for c in range(self.n_clusters))
 
     def _kluger(self, X):
-        raise NotImplementedError()
+        n_sv = self.n_singular_vectors
+        if self.method == 'bistochastic':
+            normalized_data = bistochastic_preprocess(X)
+            n_sv += 1
+        elif self.method == 'scale':
+            normalized_data, _, _ = scale_preprocess(X)
+            n_sv += 1
+        elif self.method == 'log':
+            normalized_data = log_preprocess(X)
+        u, s, vt = svds(normalized_data, k=n_sv,
+                        maxiter=self.maxiter)
+        ut = u.T
+        if self.method != 'log':
+            ut = ut[1:]
+            vt = vt[1:]
+
+        # TODO: also choose among best vectors by projecting data and using
+        # k-means or normalized cut, as in paper
+
+        row_vector = fit_best_piecewise(ut, self.n_clusters,
+                                        self.random_state,
+                                        self.n_init)
+        col_vector = fit_best_piecewise(vt, self.n_clusters,
+                                        self.random_state,
+                                        self.n_init)
+
+        # FIXME: how to ensure row and column labels are correctly matched?
+
+        _, row_labels = np.unique(row_vector, return_inverse=True)
+        _, col_labels = np.unique(col_vector, return_inverse=True)
+
+        self.rows_ = np.vstack(row_labels == c for c in range(self.n_clusters))
+        self.columns_ = np.vstack(col_labels == c for c in range(self.n_clusters))
+
 
     def fit(self, X):
         """Creates a biclustering for X.
@@ -121,7 +200,6 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
         """
         if X.ndim != 2:
             raise Exception('data array must be 2 dimensional')
-
         if self.method == 'dhillon':
             self._dhillon(X)
         else:
