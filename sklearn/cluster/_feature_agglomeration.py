@@ -30,11 +30,10 @@ class AgglomerationTransform(TransformerMixin):
             A M by N array of M observations in N dimensions or a length
             M array of M one-dimensional observations.
 
-        pooling_func : a function that takes an array of shape = [M, N], and
-                       the keyword argument axis=1, and return an array of
-                       value of size M. Defaut is np.mean
+        pooling_func : callable, default=np.mean
             This combines the values of agglomerated features into a single
-            value.
+            value, and should accept an array of shape [M, N] and the keyword
+            argument `axis=1`, and reduce it to an array of size [M].
 
         Returns
         -------
