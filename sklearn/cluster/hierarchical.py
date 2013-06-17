@@ -277,22 +277,22 @@ class Ward(BaseEstimator, ClusterMixin):
 
     Parameters
     ----------
-    n_clusters : int or ndarray
+    n_clusters : int, default=2
         The number of clusters to find.
 
-    connectivity : sparse matrix.
+    connectivity : sparse matrix (optional)
         Connectivity matrix. Defines for each sample the neigbhoring
         samples following a given structure of the data.
         Default is None, i.e, the hiearchical clustering algorithm is
         unstructured.
 
-    memory : Instance of joblib.Memory or string
+    memory : Instance of joblib.Memory or string (optional)
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    copy : bool
-        Copy the connectivity matrix or work inplace.
+    copy : bool, default=True
+        Copy the connectivity matrix or work in-place.
 
     n_components : int (optional)
         The number of connected components in the graph defined by the \
@@ -399,22 +399,22 @@ class WardAgglomeration(AgglomerationTransform, Ward):
 
     Parameters
     ----------
-    n_clusters : int or ndarray
+    n_clusters : int, default=2
         The number of clusters.
 
-    connectivity : sparse matrix
+    connectivity : sparse matrix (optional)
         connectivity matrix. Defines for each feature the neigbhoring
         features following a given structure of the data.
         Default is None, i.e, the hiearchical agglomeration algorithm is
         unstructured.
 
-    memory : Instance of joblib.Memory or string
+    memory : Instance of joblib.Memory or string (optional)
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    copy : bool
-        Copy the connectivity matrix or work inplace.
+    copy : bool, default=True
+        Copy the connectivity matrix or work in-place.
 
     n_components : int (optional)
         The number of connected components in the graph defined by the
@@ -435,8 +435,8 @@ class WardAgglomeration(AgglomerationTransform, Ward):
         List of the children of each nodes.
         Leaves of the tree do not appear.
 
-    `labels_` : array [n_samples]
-        cluster labels for each point
+    `labels_` : array [n_features]
+        cluster labels for each feature
 
     `n_leaves_` : int
         Number of leaves in the hiearchical tree.
