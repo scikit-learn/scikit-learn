@@ -9,6 +9,7 @@ import numpy as np
 
 from ..base import TransformerMixin
 from ..utils import array2d
+from ..utils.fixes import unique
 
 
 ###############################################################################
@@ -60,5 +61,5 @@ class AgglomerationTransform(TransformerMixin):
             A vector of size nb_samples with the values of Xred assigned to
             each of the cluster of samples.
         """
-        unil, inverse = np.unique(self.labels_, return_inverse=True)
+        unil, inverse = unique(self.labels_, return_inverse=True)
         return Xred[..., inverse]
