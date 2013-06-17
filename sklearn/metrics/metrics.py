@@ -41,8 +41,8 @@ def _is_1d(x):
     ----------
     x : numpy array.
 
-    Return
-    ------
+    Returns
+    -------
     is_1d : boolean,
         Return True if x can be considered as a 1d vector.
 
@@ -181,8 +181,8 @@ def _check_clf_targets(y_true, y_pred):
             # 'binary' can be removed
             type_true = type_pred = 'multiclass'
 
-        y_true = np.squeeze(y_true)
-        y_pred = np.squeeze(y_pred)
+        y_true = np.ravel(y_true)
+        y_pred = np.ravel(y_pred)
 
     else:
         raise ValueError("Can't handle %s/%s targets" % (type_true, type_pred))
@@ -744,6 +744,9 @@ def confusion_matrix(y_true, y_pred, labels=None):
            [1, 0, 2]])
 
     """
+    y_true, y_pred = check_arrays(y_true, y_pred)
+    y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=True)
+
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:

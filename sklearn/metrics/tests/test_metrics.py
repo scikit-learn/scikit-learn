@@ -92,7 +92,8 @@ ALL_METRICS = {
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
     "explained_variance_score": explained_variance_score,
-    "r2_score": r2_score
+    "r2_score": r2_score,
+    "confusion_matrix": partial(confusion_matrix, labels=range(3)),
 }
 
 METRICS_WITH_NORMALIZE_OPTION = {
@@ -185,6 +186,8 @@ NOT_SYMETRIC_METRICS = {
     "macro_f2_score": partial(fbeta_score, average="macro", beta=2),
     "macro_precision_score": partial(precision_score, average="macro"),
     "macro_recall_score": partial(recall_score, average="macro"),
+
+    "confusion_matrix": partial(confusion_matrix, labels=range(3)),
 }
 
 THRESHOLDED_METRICS = {
@@ -878,7 +881,7 @@ def test_symmetry():
 
     # Not symmetric metrics
     for name, metric in NOT_SYMETRIC_METRICS.items():
-        assert_true(metric(y_true, y_pred) != metric(y_pred, y_true),
+        assert_true(np.any(metric(y_true, y_pred) != metric(y_pred, y_true)),
                     msg="%s seems to be symetric" % name)
 
     # Deprecated metrics
@@ -976,6 +979,21 @@ def test_format_invariance_with_1d_vectors():
         assert_raises(ValueError, metric, y1_row, y2_column)
         # NB: We do not test for y1_row, y2_row as these may be
         # interpreted as multilabel or multioutput data.
+
+
+def test_clf_single_sample():
+    """Non-regression test: scores should work with a single sample.
+
+    This is important for leave-one-out cross validation.
+    Score functions tested are those that formerly called np.squeeze,
+    which turns an array of size 1 into a 0-d array (!).
+    """
+
+    f2_score = lambda t, p: fbeta_score(t, p, 2)
+    for metric in [accuracy_score, f1_score, f2_score, hamming_loss,
+                   jaccard_similarity_score, precision_recall_fscore_support]:
+        # assert that no exception is thrown
+        score = metric([True], [True])
 
 
 def test_hinge_loss_binary():
