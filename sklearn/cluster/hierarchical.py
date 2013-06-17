@@ -32,9 +32,12 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
               n_clusters=None):
     """Ward clustering based on a Feature matrix.
 
+    Recursively merges the pair of clusters that minimally increases
+    within-cluster variance.
+
     The inertia matrix uses a Heapq-based representation.
 
-    This is the structured version, that takes into account a some topological
+    This is the structured version, that takes into account some topological
     structure between samples.
 
     Parameters
@@ -274,6 +277,9 @@ def _hc_cut(n_clusters, children, n_leaves):
 
 class Ward(BaseEstimator, ClusterMixin):
     """Ward hierarchical clustering: constructs a tree and cuts it.
+
+    Recursively merges the pair of clusters that minimally increases
+    within-cluster variance.
 
     Parameters
     ----------
