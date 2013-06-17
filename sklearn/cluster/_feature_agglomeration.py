@@ -25,14 +25,21 @@ class AgglomerationTransform(TransformerMixin):
         Transform a new matrix using the built clustering
 
         Parameters
-        ---------
-        X : array-like, shape = [n_samples, n_features]
+        ----------
+        X : array-like, shape = [n_samples, n_features] or [n_features]
             A M by N array of M observations in N dimensions or a length
             M array of M one-dimensional observations.
 
-        pooling_func : a function that takes an array of shape = [M, N] and
-                       return an array of value of size M.
-                       Defaut is np.mean
+        pooling_func : a function that takes an array of shape = [M, N], and
+                       the keyword argument axis=1, and return an array of
+                       value of size M. Defaut is np.mean
+            This combines the values of agglomerated features into a single
+            value.
+
+        Returns
+        -------
+        Y : array, shape = [n_samples, n_clusters] or [n_clusters]
+            The pooled values for each feature cluster.
         """
         X = array2d(X)
         nX = []
@@ -52,13 +59,13 @@ class AgglomerationTransform(TransformerMixin):
 
         Parameters
         ----------
-        Xred : array of size k
+        Xred : array-like, shape=[n_samples, n_clusters] or [n_clusters,]
             The values to be assigned to each cluster of samples
 
         Returns
         -------
-        X : array of size nb_samples
-            A vector of size nb_samples with the values of Xred assigned to
+        X : array, shape=[n_samples, n_features] or [n_features]
+            A vector of size n_samples with the values of Xred assigned to
             each of the cluster of samples.
         """
         unil, inverse = unique(self.labels_, return_inverse=True)
