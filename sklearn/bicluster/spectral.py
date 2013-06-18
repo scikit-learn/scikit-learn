@@ -67,14 +67,6 @@ def log_preprocess(X):
     return L - row_avg - col_avg + avg
 
 
-def convert_to_piecewise(vector, labels):
-    result = np.zeros_like(vector)
-    for label in np.unique(labels):
-        selector = (labels == label)
-        result[selector] = np.mean(vector[selector])
-    return result
-
-
 def fit_best_piecewise(vectors, n_clusters, random_state, n_init):
     """Find the vector that is best approximated by a piecewise
     constant vector. Returns that piecewise constant vector.
