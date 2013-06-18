@@ -202,8 +202,9 @@ def test_ridge_multi_target_individual_penalties():
         for i, p in enumerate(ps):
             coefs[i, t] = ridge_regression(X, target, p,
                                            solver='dense_cholesky')
-    assert_array_almost_equal(coefs,
-                        ridge_regression(X, y, penalties, solver='svd'))
+    for solver in ['svd']:
+        assert_array_almost_equal(coefs,
+                        ridge_regression(X, y, penalties, solver=solver))
 
 
 def test_ridge_path():
@@ -242,10 +243,11 @@ def test_ridge_individual_penalties():
                     solver="dense_cholesky").fit(X, target).coef_
                      for alpha, target in zip(penalties, y.T)])
 
-    coef_svd_indiv_pen = Ridge(alpha=penalties,
-                               solver='svd').fit(X, y).coef_
-
-    assert_array_almost_equal(coef_cholesky, coef_svd_indiv_pen)
+    coefs_indiv_pen = [Ridge(alpha=penalties,
+                            solver=solver, tol=1e-6).fit(X, y).coef_
+                for solver in ['svd', 'sparse_cg', 'lsqr', 'dense_cholesky']]
+    for coef_indiv_pen in coefs_indiv_pen:
+        assert_array_almost_equal(coef_cholesky, coef_indiv_pen)
 
 
 def _test_ridge_loo(filter_):
