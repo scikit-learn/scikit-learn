@@ -10,7 +10,9 @@ from ..cluster.k_means_ import k_means
 import numpy as np
 from scipy.sparse.linalg import svds
 
-# TODO: re-use existing functionality in scikit-learn
+# TODO: re-use existing functionality in scikit-learn, especially SVD
+# so that it uses random_state
+
 # TODO: within-cluster rankings
 
 def make_nonnegative(X, min_value=0):
@@ -22,6 +24,12 @@ def make_nonnegative(X, min_value=0):
 
 
 def scale_preprocess(X):
+    """Normalize `X` by scaling rows and columns independently.
+
+    Returns the normalized matrix and the row and column scaling
+    factors.
+
+    """
     X = make_nonnegative(X)
     row_diag = 1.0 / np.sqrt(np.sum(X, axis=1))
     col_diag = 1.0 / np.sqrt(np.sum(X, axis=0))
@@ -30,6 +38,11 @@ def scale_preprocess(X):
 
 
 def bistochastic_preprocess(X, maxiter=1000, tol=1e-5):
+    """Normalize rows and columns of `X` simultaneously so that all
+    rows sum to one constant and all columns sum to a different
+    constant.
+
+    """
     # According to paper, this can also be done more efficiently with
     # deviation reduction and balancing algorithms.
     X = make_nonnegative(X)
@@ -45,6 +58,7 @@ def bistochastic_preprocess(X, maxiter=1000, tol=1e-5):
 
 
 def log_preprocess(X):
+    """Normalize `X` according to Kluger's log-interactions scheme."""
     X = make_nonnegative(X, min_value=1)
     L = np.log(X)
     row_avg = np.mean(L, axis=1)[:, np.newaxis]
@@ -97,9 +111,9 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
         The number of biclusters to find.
 
     method : string
-        Method of preparing data matrix for SVD and converting
-        singular vectors into biclusters. May be one of 'dhillon',
-        'scale', 'bistochastic', or 'log'.
+        Method of normalizing and converting singular vectors into
+        biclusters. May be one of 'dhillon', 'scale', 'bistochastic',
+        or 'log'.
 
     n_singular_vectors : integer
         Number of singular vectors to check. Not used if
@@ -114,9 +128,8 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
         n_init consecutive runs in terms of inertia.
 
     random_state : int seed, RandomState instance, or None (default)
-        A pseudo random number generator used for the initialization
-        of the lobpcg eigen vectors decomposition when eigen_solver == 'amg'
-        and by the K-Means initialization.
+        A pseudo random number generator used by the K-Means
+        initialization.
 
     Attributes
     ----------
