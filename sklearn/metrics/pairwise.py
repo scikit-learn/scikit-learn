@@ -49,7 +49,10 @@ from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.joblib.parallel import cpu_count
 
-from .pairwise_fast import _chi2_kernel_fast
+from .pairwise_fast import _chi2_kernel_fast, _euclidean_distances_fast, \
+                           _euclidean_distances_fast_sparse, \
+                           _euclidean_pdistances_fast, \
+                           _euclidean_pdistances_fast_sparse
 
 
 # Utility Functions
@@ -154,7 +157,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     if issparse(X):
         XX = X.multiply(X).sum(axis=1)
     else:
-        XX = np.sum(X * X, axis=1)[:, np.newaxis]
+        XX = np.sum(X * X, axis=1)
 
     if X is Y:  # shortcut in the common case euclidean_distances(X, X)
         YY = XX.T
@@ -166,25 +169,28 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
             YY.data **= 2
             YY = np.asarray(YY.sum(axis=1)).T
         else:
-            YY = np.sum(Y ** 2, axis=1)[np.newaxis, :]
+            YY = np.sum(Y ** 2, axis=1)
     else:
-        YY = atleast2d_or_csr(Y_norm_squared)
-        if YY.shape != (1, Y.shape[0]):
+        YY = np.squeeze(Y_norm_squared)
+        if YY.size != Y.shape[0]:
             raise ValueError(
                 "Incompatible dimensions for Y and Y_norm_squared")
 
-    # TODO: a faster Cython implementation would do the clipping of negative
-    # values in a single pass over the output matrix.
     distances = safe_sparse_dot(X, Y.T, dense_output=True)
-    distances *= -2
-    distances += XX
-    distances += YY
-    np.maximum(distances, 0, distances)
-
-    if X is Y:
-        # Ensure that distances between vectors and themselves are set to 0.0.
-        # This may not be the case due to floating point rounding errors.
-        distances.flat[::distances.shape[0] + 1] = 0.0
+    if issparse(X) or issparse(Y) or issparse(Y_norm_squared):
+        XX = atleast2d_or_csr(XX)
+        if X is Y:
+            _euclidean_pdistances_fast_sparse(XX, distances)
+        else:
+            YY = atleast2d_or_csr(YY)
+        _euclidean_distances_fast_sparse(XX, YY, distances)
+    else:
+        XX = np.ascontiguousarray(XX)
+        if X is Y:
+            _euclidean_pdistances_fast(XX, distances)
+        else:
+            YY = np.ascontiguousarray(YY)
+            _euclidean_distances_fast(XX, YY, distances)
 
     return distances if squared else np.sqrt(distances)
 
