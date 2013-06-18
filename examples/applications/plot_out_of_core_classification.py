@@ -251,7 +251,7 @@ def progress(stats):
 # we have at most 100 docs in memory at any time.
 minibatch_size = 100
 
-# Main loop : iterate on mini-batchs of exmaples
+# Main loop : iterate on mini-batchs of examples
 for X_train, y_train in iter_minibatchs(data_streamer, minibatch_size):
     # update estimator with examples in the current mini-batch
     classifier.partial_fit(X_train, y_train, classes=all_classes)
