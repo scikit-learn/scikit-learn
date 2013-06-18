@@ -49,7 +49,8 @@ from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.joblib.parallel import cpu_count
 
-from .pairwise_fast import _chi2_kernel_fast, _euclidean_distances_fast
+from .pairwise_fast import _chi2_kernel_fast, _euclidean_distances_fast, \
+                           _euclidean_distances_fast_sparse
 
 
 # Utility Functions
@@ -174,7 +175,10 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
                 "Incompatible dimensions for Y and Y_norm_squared")
 
     distances = safe_sparse_dot(X, Y.T, dense_output=True)
-    _euclidean_distances_fast(XX, YY, distances)
+    if issparse(X) or issparse(Y):
+        _euclidean_distances_fast_sparse(XX, YY, distances)
+    else:
+        _euclidean_distances_fast(XX[:, 0], YY[0, :], distances)
 
     if X is Y:
         # Ensure that distances between vectors and themselves are set to 0.0.
