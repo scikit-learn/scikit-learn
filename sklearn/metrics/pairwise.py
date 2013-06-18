@@ -49,7 +49,7 @@ from ..externals.joblib import Parallel
 from ..externals.joblib import delayed
 from ..externals.joblib.parallel import cpu_count
 
-from .pairwise_fast import _chi2_kernel_fast
+from .pairwise_fast import _chi2_kernel_fast, _euclidean_distances_fast
 
 
 # Utility Functions
@@ -176,10 +176,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     # TODO: a faster Cython implementation would do the clipping of negative
     # values in a single pass over the output matrix.
     distances = safe_sparse_dot(X, Y.T, dense_output=True)
-    distances *= -2
-    distances += XX
-    distances += YY
-    np.maximum(distances, 0, distances)
+    _euclidean_distances_fast(XX, YY, distances)
 
     if X is Y:
         # Ensure that distances between vectors and themselves are set to 0.0.

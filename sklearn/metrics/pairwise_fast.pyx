@@ -29,3 +29,23 @@ def _chi2_kernel_fast(cython.floating[:,:] X,
                 if nom != 0:
                     res  += denom * denom / nom
             result[i, j] = -res
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def _euclidean_distances_fast(cython.floating[:, :] XX,
+                              cython.floating[:, :] YY,
+                              cython.floating[:, :] distances):
+    cdef int i, j
+    cdef int n_samples_XX = XX.shape[0]
+    cdef int n_samples_YY = YY.shape[1]
+    cdef double res
+    for i in xrange(n_samples_XX):
+        for j in xrange(n_samples_YY):
+            res = XX[i, 0] + YY[0, j] - 2 * distances[i, j]
+            if res < 0:
+                distances[i, j] = 0
+            else:
+                distances[i, j] = res
+
