@@ -20,8 +20,18 @@ def scale_preprocess(X):
     return an, row_diag, col_diag
 
 
-def bistochastic_preprocess(X):
-    raise NotImplementedError()
+def bistochastic_preprocess(X, maxiter=1000, tol=1e-5):
+    # According to paper, this can also be done more efficiently with
+    # deviation reduction and balancing algorithms.
+    X_scaled = X
+    dist = None
+    for i in range(maxiter):
+        X_new, _, _ = scale_preprocess(X_scaled)
+        dist = np.linalg.norm(X_scaled - X_new)
+        if dist is not None and dist < tol:
+            break
+        X_scaled = X_new
+    return X_scaled
 
 
 def log_preprocess(X):
