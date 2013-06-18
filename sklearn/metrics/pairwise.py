@@ -155,7 +155,7 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     if issparse(X):
         XX = X.multiply(X).sum(axis=1)
     else:
-        XX = np.sum(X * X, axis=1)[:, np.newaxis]
+        XX = np.sum(X * X, axis=1)
 
     if X is Y:  # shortcut in the common case euclidean_distances(X, X)
         YY = XX.T
@@ -167,18 +167,22 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
             YY.data **= 2
             YY = np.asarray(YY.sum(axis=1)).T
         else:
-            YY = np.sum(Y ** 2, axis=1)[np.newaxis, :]
+            YY = np.sum(Y ** 2, axis=1)
     else:
-        YY = atleast2d_or_csr(Y_norm_squared)
-        if YY.shape != (1, Y.shape[0]):
+        YY = np.squeeze(Y_norm_squared)
+        if YY.size != Y.shape[0]:
             raise ValueError(
                 "Incompatible dimensions for Y and Y_norm_squared")
 
     distances = safe_sparse_dot(X, Y.T, dense_output=True)
-    if issparse(X) or issparse(Y):
+    if issparse(X) or issparse(Y) or issparse(Y_norm_squared):
+        XX = atleast2d_or_csr(XX)
+        YY = atleast2d_or_csr(YY)
         _euclidean_distances_fast_sparse(XX, YY, distances)
     else:
-        _euclidean_distances_fast(XX[:, 0], YY[0, :], distances)
+        XX = np.ascontiguousarray(XX)
+        YY = np.ascontiguousarray(YY)
+        _euclidean_distances_fast(XX, YY, distances)
 
     if X is Y:
         # Ensure that distances between vectors and themselves are set to 0.0.

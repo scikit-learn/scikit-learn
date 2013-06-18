@@ -55,7 +55,7 @@ def _euclidean_distances_fast(cython.floating[::1] XX,
 @cython.cdivision(True)
 def _euclidean_distances_fast_sparse(cython.floating[:, :] XX,
                                      cython.floating[:, :] YY,
-                                     cython.floating[:, ::1] distances):
+                                     cython.floating[:, :] distances):
     cdef int i, j
     cdef int n_samples_XX = XX.shape[0]
     cdef int n_samples_YY = YY.shape[1]
