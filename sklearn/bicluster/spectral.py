@@ -38,9 +38,9 @@ def bistochastic_preprocess(X, maxiter=1000, tol=1e-5):
     for i in range(maxiter):
         X_new, _, _ = scale_preprocess(X_scaled)
         dist = np.linalg.norm(X_scaled - X_new)
+        X_scaled = X_new
         if dist is not None and dist < tol:
             break
-        X_scaled = X_new
     return X_scaled
 
 
