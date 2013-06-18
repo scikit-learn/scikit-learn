@@ -45,9 +45,8 @@ def _euclidean_distances_fast(cython.floating[::1] XX,
         for j in xrange(n_samples_YY):
             res = XX[i] + YY[j] - 2 * distances[i, j]
             if res < 0:
-                distances[i, j] = 0
-            else:
-                distances[i, j] = res
+                res = 0
+            distances[i, j] = res
 
 
 @cython.boundscheck(False)
@@ -64,7 +63,40 @@ def _euclidean_distances_fast_sparse(cython.floating[:, :] XX,
         for j in xrange(n_samples_YY):
             res = XX[i, 0] + YY[0, j] - 2 * distances[i, j]
             if res < 0:
-                distances[i, j] = 0
-            else:
-                distances[i, j] = res
+                res = 0
+            distances[i, j] = res
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def _euclidean_pdistances_fast(cython.floating[::1] XX,
+                               cython.floating[:, ::1] distances):
+    cdef int i, j
+    cdef int n_samples_XX = XX.shape[0]
+    cdef double res
+    for i in xrange(n_samples_XX):
+        for j in xrange(i):
+            res = 2 * XX[i] - 2 * distances[i, j]
+            if res < 0:
+                res = 0
+            distances[i, j] = distances[j, i] = res
+        distances[i, i] = 0
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+@cython.cdivision(True)
+def _euclidean_pdistances_fast_sparse(cython.floating[:, :] XX,
+                                      cython.floating[:, :] distances):
+    cdef int i, j
+    cdef int n_samples_XX = XX.shape[0]
+    cdef double res
+    for i in xrange(n_samples_XX):
+        for j in xrange(i):
+            res = 2 * XX[i, 0] - 2 * distances[i, j]
+            if res < 0:
+                res = 0
+            distances[i, j] = distances[j, i] = res
+        distances[i, i] = 0
 
