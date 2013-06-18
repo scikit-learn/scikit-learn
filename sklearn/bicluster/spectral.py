@@ -13,7 +13,16 @@ from scipy.sparse.linalg import svds
 # TODO: re-use existing functionality in scikit-learn
 # TODO: within-cluster rankings
 
+def make_nonnegative(X, min_value=0):
+    """Ensure `X.min()` >= `min_value`."""
+    min_ = X.min()
+    if min_ < min_value:
+        X = X + (min_value - min_)
+    return X
+
+
 def scale_preprocess(X):
+    X = make_nonnegative(X)
     row_diag = 1.0 / np.sqrt(np.sum(X, axis=1))
     col_diag = 1.0 / np.sqrt(np.sum(X, axis=0))
     an = row_diag[:, np.newaxis] * X * col_diag
@@ -23,6 +32,7 @@ def scale_preprocess(X):
 def bistochastic_preprocess(X, maxiter=1000, tol=1e-5):
     # According to paper, this can also be done more efficiently with
     # deviation reduction and balancing algorithms.
+    X = make_nonnegative(X)
     X_scaled = X
     dist = None
     for i in range(maxiter):
@@ -35,6 +45,7 @@ def bistochastic_preprocess(X, maxiter=1000, tol=1e-5):
 
 
 def log_preprocess(X):
+    X = make_nonnegative(X, min_value=1)
     L = np.log(X)
     row_avg = np.mean(L, axis=1)[:, np.newaxis]
     col_avg = np.mean(L, axis=0)
