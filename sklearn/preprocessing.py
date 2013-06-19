@@ -840,6 +840,10 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         if not hasattr(self, "classes_"):
             raise ValueError("LabelNormalizer was not fitted yet.")
 
+    def _set_do_nothing(self):
+        self._do_nothing = np.all(self.classes_ ==
+                                  np.arange(len(self.classes_)))
+
     def fit(self, y):
         """Fit label encoder
 
@@ -853,6 +857,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self : returns an instance of self.
         """
         self.classes_ = np.unique(y)
+        self._set_do_nothing()
         return self
 
     def fit_transform(self, y):
@@ -868,6 +873,7 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : array-like of shape [n_samples]
         """
         self.classes_, y = unique(y, return_inverse=True)
+        self._set_do_nothing()
         return y
 
     def transform(self, y):
@@ -883,6 +889,10 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         y : array-like of shape [n_samples]
         """
         self._check_fitted()
+
+        if getattr(self, '_do_nothing', False):
+            # XXX: should we use asarray?
+            return y
 
         classes = np.unique(y)
         if len(np.intersect1d(classes, self.classes_)) < len(classes):
@@ -906,6 +916,8 @@ class LabelEncoder(BaseEstimator, TransformerMixin):
         self._check_fitted()
 
         y = np.asarray(y)
+        if getattr(self, '_do_nothing', False):
+            return y
         return self.classes_[y]
 
 

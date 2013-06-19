@@ -648,6 +648,15 @@ def test_label_encoder_string_labels():
     assert_raises(ValueError, le.transform, ["london"])
 
 
+def test_label_encoder_do_nothing():
+    """Test that if classes are a 0-based range, y is not copied"""
+    le = LabelEncoder()
+    le.fit([5, 4, 3, 2, 1, 1, 0])
+    y = np.asarray([5, 7, 3, 5, 7, 4, 2, 4, 6])
+    assert_true(y is le.transform(y))
+    assert_true(y is le.inverse_transform(y))
+
+
 def test_label_encoder_errors():
     """Check that invalid arguments yield ValueError"""
     le = LabelEncoder()
