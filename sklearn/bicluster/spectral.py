@@ -99,8 +99,9 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
 
     Parameters
     -----------
-    n_clusters : integer
-        The number of biclusters to find.
+    n_clusters : integer or tuple (rows, columns)
+        The number of biclusters to find. If method is not 'dhillon',
+        the number of row and column clusters may be different.
 
     method : string
         Method of normalizing and converting singular vectors into
@@ -125,11 +126,11 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
 
     Attributes
     ----------
-    `rows_` : array-like, shape (n_clusters, n_rows)
+    `rows_` : array-like, shape (n_row_clusters, n_rows)
         Results of the clustering. `rows[i, r]` is True if cluster `i`
         contains row `r`. Available only after calling ``fit``.
 
-    `columns_` : array-like, shape (n_clusters, n_columns)
+    `columns_` : array-like, shape (n_column_clusters, n_columns)
         Results of the clustering, like `rows`.
 
 
@@ -152,6 +153,12 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
                  random_state=None):
         if method not in ('dhillon', 'bistochastic', 'scale', 'log'):
             raise Exception('unknown method: {}'.format(method))
+        if isinstance(n_clusters, tuple):
+            if method == 'dhillon':
+                raise Exception("different number of clusters not"
+                                " supported when method=='dhillon'")
+            if len(n_clusters) != 2:
+                raise Exception("unsupported number of clusters")
         self.n_clusters = n_clusters
         self.method = method
         self.n_singular_vectors = n_singular_vectors
@@ -197,10 +204,15 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
         # TODO: also choose among best vectors by projecting data and using
         # k-means or normalized cut, as in paper
 
-        row_vector = fit_best_piecewise(ut, self.n_clusters,
+        if isinstance(self.n_clusters, tuple):
+            n_row_clusters, n_col_clusters = self.n_clusters
+        else:
+            n_row_clusters = n_col_clusters = self.n_clusters
+
+        row_vector = fit_best_piecewise(ut, n_row_clusters,
                                         self.random_state,
                                         self.n_init)
-        col_vector = fit_best_piecewise(vt, self.n_clusters,
+        col_vector = fit_best_piecewise(vt, n_col_clusters,
                                         self.random_state,
                                         self.n_init)
 
@@ -210,8 +222,8 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
         rows = []
         cols = []
 
-        for row_label in range(self.n_clusters):
-            for col_label in range(self.n_clusters):
+        for row_label in range(n_row_clusters):
+            for col_label in range(n_col_clusters):
                 rows.append(row_labels == row_label)
                 cols.append(col_labels == col_label)
 
