@@ -173,8 +173,6 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
             raise ValueError(
                 "Incompatible dimensions for Y and Y_norm_squared")
 
-    # TODO: a faster Cython implementation would do the clipping of negative
-    # values in a single pass over the output matrix.
     distances = safe_sparse_dot(X, Y.T, dense_output=True)
     distances *= -2
     distances += XX
