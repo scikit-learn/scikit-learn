@@ -204,13 +204,19 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
                                         self.random_state,
                                         self.n_init)
 
-        # FIXME: how to ensure row and column labels are correctly matched?
-
         _, row_labels = np.unique(row_vector, return_inverse=True)
         _, col_labels = np.unique(col_vector, return_inverse=True)
 
-        self.rows_ = np.vstack(row_labels == c for c in range(self.n_clusters))
-        self.columns_ = np.vstack(col_labels == c for c in range(self.n_clusters))
+        rows = []
+        cols = []
+
+        for row_label in range(self.n_clusters):
+            for col_label in range(self.n_clusters):
+                rows.append(row_labels == row_label)
+                cols.append(col_labels == col_label)
+
+        self.rows_ = np.vstack(rows)
+        self.columns_ = np.vstack(cols)
 
 
     def fit(self, X):
