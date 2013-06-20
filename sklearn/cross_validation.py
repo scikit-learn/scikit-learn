@@ -1369,7 +1369,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         scoring=scoring, cv=cv, n_jobs=n_jobs,
         verbose=verbose, fit_params=fit_params, score_func=score_func,
         pre_dispatch=pre_dispatch)
-    return cv_score(estimator, X, y)[1]['test_score']
+    return [fold['test_score'] for fold in cv_score(estimator, X, y)]
 
 
 def _permutation_test_score(estimator, X, y, cv, scorer):
