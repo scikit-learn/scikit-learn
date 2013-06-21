@@ -795,7 +795,7 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
     if precompute == 'auto':
         precompute = (n_samples > n_features)
 
-    if precompute or ((precompute == 'auto') and (n_samples > n_features)):
+    if precompute or ((precompute == 'auto')):
         if sparse.isspmatrix(X):
             warnings.warn("precompute is ignored for sparse data")
             precompute = False
