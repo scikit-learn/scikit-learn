@@ -53,7 +53,6 @@ import pylab as pl
 from sklearn.feature_extraction.text import HashingVectorizer
 from sklearn.linear_model.stochastic_gradient import SGDClassifier
 import itertools
-import sys
 
 ###############################################################################
 # Reuters Dataset related routines
@@ -131,14 +130,15 @@ class ReutersParser(sgmllib.SGMLParser):
 
 
 class ReutersStreamReader():
-    """Iterate over documents stored in a local directory holding the Reuters
-    dataset.
+
+    """Iterate over documents of the Reuters dataset.
 
     The Reuters archive will automatically be downloaded and uncompressed if
     the `data_path` directory does not exist.
 
     Documents are represented as dictionaries with 'body' (str),
     'title' (str), 'topics' (list(str)) keys.
+
     """
 
     DOWNLOAD_URL = ('http://archive.ics.uci.edu/ml/machine-learning-databases/'
@@ -151,6 +151,7 @@ class ReutersStreamReader():
             self.download_dataset()
 
     def download_dataset(self):
+        """Download the dataset."""
         print("downloading dataset (once and for all) into %s" %
               self.data_path)
         os.mkdir(self.data_path)
@@ -173,6 +174,7 @@ class ReutersStreamReader():
         print("done !")
 
     def iterdocs(self):
+        """Iterate doc by doc, yield a dict."""
         for root, _dirnames, filenames in os.walk(self.data_path):
             for filename in fnmatch.filter(filenames, '*.sgm'):
                 path = os.path.join(root, filename)
@@ -206,9 +208,11 @@ positive_class = 'acq'
 
 def get_minibatch(doc_iter, size, transformer=hasher,
                   pos_class=positive_class):
-    """Extracts a minibatch of examples.
+    """Extract a minibatch of examples, return a tuple X, y.
 
-    Note: size is before excluding invalid docs with no topics assigned."""
+    Note: size is before excluding invalid docs with no topics assigned.
+
+    """
     data = [('{title}\n\n{body}'.format(**doc), pos_class in doc['topics'])
             for doc in itertools.islice(doc_iter, size)
             if doc['topics']]
@@ -240,7 +244,7 @@ print("Test set is %d documents (%d positive)" % (len(y_test), sum(y_test)))
 
 
 def progress(stats):
-    """Reports progress information."""
+    """Report progress information, return a string."""
     duration = time.time() - stats['t0']
     s = "%(n_train)6d train docs (%(n_train_pos)6d positive) " % stats
     s += "%(n_test)6d test docs (%(n_test_pos)6d positive) " % stats
