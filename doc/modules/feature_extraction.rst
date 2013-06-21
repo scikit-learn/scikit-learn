@@ -653,6 +653,25 @@ The :class:`HashingVectorizer` also comes with the following limitations:
   model. A :class:`TfidfTransformer` can be appended to it in a pipeline if
   required.
 
+Performing out-of-core scaling with HashingVectorizer
+------------------------------------------------------
+
+An interesting development of using a :class:`HashingVectorizer` is the ability
+to perform `out-of-core`_ scaling. This means that we can learn from data that
+does not fit into the computer's main memory.
+
+.. _out-of-core: http://en.wikipedia.org/wiki/Out-of-core_algorithm. 
+
+A strategy to implement out-of-core scaling is to stream data to the estimator 
+in mini-batches. Each mini-batch is vectorized using :class:`HashingVectorizer`
+so as to guarantee that the input space of the estimator has always the same
+dimensionality. The amount of memory used at any time is thus bounded by the
+size of a mini-batch. Although there is no limit to the amount of data that can
+be ingested using such an approach, from a practical point of view the learning
+time is often limited by the CPU time one wants to spend on the task.
+
+For a full-fledged example of out-of-core scaling in a text classification 
+task see :ref:`example_applications_plot_out_of_core_classification.py`.
 
 Customizing the vectorizer classes
 ----------------------------------
