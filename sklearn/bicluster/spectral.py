@@ -10,6 +10,7 @@ from ..cluster.k_means_ import k_means
 import numpy as np
 from scipy.sparse.linalg import svds
 
+
 def make_nonnegative(X, min_value=0):
     """Ensure `X.min()` >= `min_value`."""
     min_ = X.min()
