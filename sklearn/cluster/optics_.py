@@ -11,7 +11,8 @@ import numpy as np
 from ..base import BaseEstimator, ClusterMixin
 #from ..metrics import pairwise_distances
 from ..utils import atleast2d_or_csr
-from scipy.spatial.distance import cdist
+#from scipy.spatial.distance import cdist
+from sklearn.neighbors import BallTree
 
 def hierarchical_extraction(ordering, reachability_distances, min_cluster_size,
         significant_ratio=0.75, similarity_ratio=0.4, min_reach_ratio=0.1):
@@ -62,12 +63,12 @@ def hierarchical_extraction(ordering, reachability_distances, min_cluster_size,
     # Find local maximas
     L = []
     for i in xrange(0, min_cluster_size):
-        if np.argmax(R[0:i + min_cluster_size + 1]) == i and R[i] > 0:
+        if np.argmax(R[0:i + min_cluster_size + 1]) == i:
             L.append(i)
-        if np.argmax(R[n - 2 * min_cluster_size + i:n]) == i and R[i] > 0:
+        if np.argmax(R[n - 2 * min_cluster_size + i:n]) == i:
             L.append(n - min_cluster_size + i)
     for i in xrange(min_cluster_size, n - min_cluster_size):
-        if np.argmax(R[i - min_cluster_size:i + min_cluster_size + 1]) == min_cluster_size and R[i] > 0:
+        if np.argmax(R[i - min_cluster_size:i + min_cluster_size + 1]) == min_cluster_size:
             L.append(i)
     # Sort local maximas in order of their reachability
     L.sort(key=lambda x: R[x])
@@ -211,40 +212,49 @@ def optics(X, eps=float('inf'), min_samples=1, metric='euclidean',
     core_distances = np.ndarray(len(X))
     # Initiate reachability distances to infinity
     reachability_distances = float('inf') * np.ones(n)
+    # Set reachability for first point
+    reachability_distances[0] = 0
+    # Construct spatial indexing structure
+    if metric != 'precomputed':
+        # TODO: Construct BallTree with the correct metric once the
+        # metrics branch has been merged into master
+        tree = BallTree(X)
 
-    seeds = range(n)
+    seeds = np.ones(n, dtype=bool)
     i = 0
-    while len(seeds) > 1:
+    while True:
         # Mark current point as processed
-        seeds.remove(i)
+        seeds[i] = False
         # Add current point to the ordering
         ordering.append(i)
+        if not any(seeds):
+            break
+        # Calculate core distance
         if metric == 'precomputed':
             D = X[i]
+            core_dist = np.sort(D)[min_samples]
         else:
-            # Calculate the distances from the current point
-            D = cdist([X[i]], X, metric=metric).reshape(len(X))
-        # Calculate core distance
-        core_dist = np.sort(D)[min_samples]
+            core_dist = tree.query(X[i], min_samples+1)[0][0][-1]
         core_distances[i] = core_dist
 
         if core_dist <= eps:
-            seeds_array = np.asarray(seeds)
             # Get the neighbors of the current point
-            neighbors = seeds_array[np.where(D[seeds] <= eps)[0]]
-            cd = core_dist * np.ones(neighbors.size)
-            d = D[neighbors]
+            if metric == 'precomputed':
+                neighbors = D[seeds] <= eps
+                ds = D[neighbors]
+            else:
+                ind, dist = tree.query_radius(X[i], eps, True)
+                si = seeds[ind[0]]
+                neighbors = ind[0][si]
+                ds = dist[0][si]
+            cds = core_dist * np.ones(len(ds))
             # Set the new reachability distances to
             # max(core_distance, distance)
-            new_reach_dists = np.maximum(cd, d)
+            new_reach_dists = np.maximum(cds, ds)
             reachability_distances[neighbors] = new_reach_dists
-            i = seeds[np.argmin(reachability_distances[seeds])]
+            i = np.nonzero(seeds)[0][np.argmin(reachability_distances[seeds])]
         else:
-            i = seeds[0]
-    # Add last point
-    ordering.append(seeds[0])
-    # Set reachability for first point
-    reachability_distances[0] = 0
+            i = np.where(seeds)[0][0]
 
     if type(extraction) is str:
         estr = extraction.lower()
