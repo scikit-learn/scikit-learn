@@ -126,7 +126,7 @@ class RANSAC(BaseEstimator):
                 continue
 
             # fit model for current random sample set
-            estimator.fit(rsample_X, rsample_y)
+            self.estimator_.fit(rsample_X, rsample_y)
 
             # check if estimated model is valid
             if self.is_model_valid is not None:
