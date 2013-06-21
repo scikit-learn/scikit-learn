@@ -9,6 +9,7 @@ import numpy as np
 
 from ..base import TransformerMixin
 from ..utils import array2d
+from ..utils.fixes import unique
 
 
 ###############################################################################
@@ -24,14 +25,20 @@ class AgglomerationTransform(TransformerMixin):
         Transform a new matrix using the built clustering
 
         Parameters
-        ---------
-        X : array-like, shape = [n_samples, n_features]
+        ----------
+        X : array-like, shape = [n_samples, n_features] or [n_features]
             A M by N array of M observations in N dimensions or a length
             M array of M one-dimensional observations.
 
-        pooling_func : a function that takes an array of shape = [M, N] and
-                       return an array of value of size M.
-                       Defaut is np.mean
+        pooling_func : callable, default=np.mean
+            This combines the values of agglomerated features into a single
+            value, and should accept an array of shape [M, N] and the keyword
+            argument `axis=1`, and reduce it to an array of size [M].
+
+        Returns
+        -------
+        Y : array, shape = [n_samples, n_clusters] or [n_clusters]
+            The pooled values for each feature cluster.
         """
         X = array2d(X)
         nX = []
@@ -51,23 +58,14 @@ class AgglomerationTransform(TransformerMixin):
 
         Parameters
         ----------
-        Xred : array of size k
+        Xred : array-like, shape=[n_samples, n_clusters] or [n_clusters,]
             The values to be assigned to each cluster of samples
 
         Returns
         -------
-        X : array of size nb_samples
-            A vector of size nb_samples with the values of Xred assigned to
+        X : array, shape=[n_samples, n_features] or [n_features]
+            A vector of size n_samples with the values of Xred assigned to
             each of the cluster of samples.
         """
-        if np.size((Xred.shape)) == 1:
-            X = np.zeros([self.labels_.shape[0]])
-        else:
-            X = np.zeros([Xred.shape[0], self.labels_.shape[0]])
-        unil = np.unique(self.labels_)
-        for i in range(len(unil)):
-            if np.size((Xred.shape)) == 1:
-                X[self.labels_ == unil[i]] = Xred[i]
-            else:
-                X[:, self.labels_ == unil[i]] = array2d(Xred[:, i]).T
-        return X
+        unil, inverse = unique(self.labels_, return_inverse=True)
+        return Xred[..., inverse]
