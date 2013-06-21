@@ -248,23 +248,15 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
                                          self.n_init)
 
 
-        _, row_labels = np.unique(row_vector, return_inverse=True)
-        _, col_labels = np.unique(col_vector, return_inverse=True)
+        _, self.row_labels_ = np.unique(row_vector, return_inverse=True)
+        _, self.column_labels_ = np.unique(col_vector, return_inverse=True)
 
-        rows = []
-        cols = []
-
-        for row_label in range(n_row_clusters):
-            for col_label in range(n_col_clusters):
-                rows.append(row_labels == row_label)
-                cols.append(col_labels == col_label)
-
-        self.rows_ = np.vstack(rows)
-        self.columns_ = np.vstack(cols)
-
-        self.row_labels_ = row_labels
-        self.column_labels_ = col_labels
-
+        self.rows_ = np.vstack(self.row_labels_ == label
+                               for label in range(n_row_clusters)
+                               for _ in range(n_col_clusters))
+        self.columns_ = np.vstack(self.column_labels_ == label
+                                  for _ in range(n_row_clusters)
+                                  for label in range(n_col_clusters))
 
     def fit(self, X):
         """Creates a biclustering for X.
