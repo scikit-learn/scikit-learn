@@ -30,6 +30,10 @@ X /= X.std(0)  # Standardize data (easier to set the l1_ratio parameter)
 eps = 5e-3  # the smaller it is the longer is the path
 
 print("Computing regularization path using the lasso...")
+# The return_models parameter sets that lasso_path will return
+# the alphas and the coefficients as output, instead of a list
+# of models as it does by default. Returning the list of models
+# is deprecated and will eventually be removed in 0.15
 alphas_lasso, coefs_lasso = lasso_path(X, y, eps, return_models=False)
 
 print("Computing regularization path using the positive lasso...")
@@ -43,7 +47,7 @@ alphas_enet, coefs_enet = enet_path(X, y, eps=eps, l1_ratio=0.8,
 
 print("Computing regularization path using the positve elastic net...")
 alphas_positive_enet, coefs_positive_enet = enet_path(X, y,
-                                                      eps=eps,l1_ratio=0.8,
+                                                      eps=eps, l1_ratio=0.8,
                                                       positive=True,
                                                       return_models=False)
 
