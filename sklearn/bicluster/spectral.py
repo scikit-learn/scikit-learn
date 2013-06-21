@@ -133,6 +133,15 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
     `columns_` : array-like, shape (n_column_clusters, n_columns)
         Results of the clustering, like `rows`.
 
+    `row_labels_` : array-like, shape (n_rows,)
+        If `method` is not 'dhillon', the resulting biclusters have a
+        checkerboard structure. The `row_labels_` and `column_labels_`
+        attributes encode this checkerboard structure in a more
+        compact form.
+
+    `column_labels_` : array-like, shape (n_cols,)
+        See `row_labels_`.
+
 
     References
     ----------
@@ -229,6 +238,9 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
 
         self.rows_ = np.vstack(rows)
         self.columns_ = np.vstack(cols)
+
+        self.row_labels_ = row_labels
+        self.column_labels_ = col_labels
 
 
     def fit(self, X):
