@@ -58,11 +58,11 @@ class RANSAC(BaseEstimator):
 
     Attributes
     ----------
-    estimator : object
+    estimator_ : object
         Base estimator object which is the same as passed in `__init__`.
-    n_trials : int
+    n_trials_ : int
         Number of random selection trials.
-    inlier_mask : bool array of shape [n_samples]
+    inlier_mask_ : bool array of shape [n_samples]
         Boolean mask of inliers classified as ``True``.
 
     Raises
