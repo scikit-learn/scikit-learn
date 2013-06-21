@@ -2,7 +2,6 @@ import numpy as np
 from numpy.testing import assert_equal, assert_raises
 
 from sklearn import linear_model
-from sklearn.utils import ransac
 
 
 np.random.seed(1)
@@ -23,14 +22,19 @@ y = data[:, 1]
 
 
 def test_ransac_inliers_outliers():
+
+    base_estimator = linear_model.LinearRegression()
+    ransac_estimator = linear_model.RANSAC(base_estimator, 2, 5)
+
     # Estimate parameters of corrupted data
-    _, inlier_mask = ransac(X, y, linear_model.LinearRegression(), 2, 5)
+    ransac_estimator.fit(X, y)
 
     # Ground truth / reference inlier mask
-    ref_inlier_mask = np.ones_like(inlier_mask, dtype=np.bool_)
+    ref_inlier_mask = np.ones_like(ransac_estimator.inlier_mask_,
+                                   dtype=np.bool_)
     ref_inlier_mask[outliers] = False
 
-    assert_equal(inlier_mask, ref_inlier_mask)
+    assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
 
 
 def test_ransac_is_data_valid():
@@ -39,33 +43,54 @@ def test_ransac_is_data_valid():
 
     X = np.random.rand(10, 2)
     y = np.random.rand(10, 1)
-    estimator = linear_model.LinearRegression()
-    assert_raises(ValueError, ransac, X, y, estimator, 2, 5,
-                  is_data_valid=is_data_valid)
+
+    base_estimator = linear_model.LinearRegression()
+    ransac_estimator = linear_model.RANSAC(base_estimator, 2, 5,
+                                           is_data_valid=is_data_valid)
+
+    assert_raises(ValueError, ransac_estimator.fit, X, y)
 
 
 def test_ransac_is_model_valid():
     def is_model_valid(estimator, X, y):
         return False
+
+    base_estimator = linear_model.LinearRegression()
+    ransac_estimator = linear_model.RANSAC(base_estimator, 2, 5,
+                                           is_model_valid=is_model_valid)
+
     estimator = linear_model.LinearRegression()
-    assert_raises(ValueError, ransac, X, y, estimator, 2, 5,
-                  is_model_valid=is_model_valid)
+    assert_raises(ValueError, ransac_estimator.fit, X, y)
 
 
 def test_ransac_max_trials():
-    estimator = linear_model.LinearRegression()
-    assert_raises(ValueError, ransac, X, y, estimator, 2, 5, max_trials=0)
-    assert ransac(X, y, estimator, 2, 5, max_trials=11)[0] == 11
+    base_estimator = linear_model.LinearRegression()
+
+    ransac_estimator = linear_model.RANSAC(base_estimator, 2, 5, max_trials=0)
+    assert_raises(ValueError, ransac_estimator.fit, X, y)
+
+    ransac_estimator = linear_model.RANSAC(base_estimator, 2, 5, max_trials=11)
+    assert ransac_estimator.n_trials_ is None
+    ransac_estimator.fit(X, y)
+    assert ransac_estimator.n_trials_ == 11
 
 
 def test_ransac_stop_n_inliers():
-    estimator = linear_model.LinearRegression()
-    assert ransac(X, y, estimator, 2, 5, stop_n_inliers=2)[0] == 1
+    base_estimator = linear_model.LinearRegression()
+    ransac_estimator = linear_model.RANSAC(base_estimator, 2, 5,
+                                           stop_n_inliers=2)
+    ransac_estimator.fit(X, y)
+
+    assert ransac_estimator.n_trials_ == 1
 
 
 def test_ransac_stop_n_score():
-    estimator = linear_model.LinearRegression()
-    assert ransac(X, y, estimator, 2, 5, stop_score=0)[0] == 1
+    base_estimator = linear_model.LinearRegression()
+    ransac_estimator = linear_model.RANSAC(base_estimator, 2, 5,
+                                           stop_score=0)
+    ransac_estimator.fit(X, y)
+
+    assert ransac_estimator.n_trials_ == 1
 
 
 if __name__ == "__main__":
