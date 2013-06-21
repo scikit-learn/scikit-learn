@@ -46,6 +46,7 @@ class ParameterGrid(object):
     param_grid : dict of string to sequence
         The parameter grid to explore, as a dictionary mapping estimator
         parameters to sequences of allowed values.
+        An empty dict signifies default parameters.
 
     Examples
     --------
@@ -81,16 +82,19 @@ class ParameterGrid(object):
         for p in self.param_grid:
             # Always sort the keys of a dictionary, for reproducibility
             items = sorted(p.items())
-            keys, values = zip(*items)
-            for v in product(*values):
-                params = dict(zip(keys, v))
-                yield params
+            if not items:
+                yield {}
+            else:
+                keys, values = zip(*items)
+                for v in product(*values):
+                    params = dict(zip(keys, v))
+                    yield params
 
     def __len__(self):
         """Number of points on the grid."""
         # Product function that can handle iterables (np.product can't).
         product = partial(reduce, operator.mul)
-        return sum(product(len(v) for v in p.values())
+        return sum(product(len(v) for v in p.values()) if p else 1
                    for p in self.param_grid)
 
 
