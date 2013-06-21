@@ -11,7 +11,6 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 from sklearn import linear_model
-from sklearn.utils import ransac
 
 
 # Set random seed for both equal data noise and equal random sample selection
@@ -41,9 +40,10 @@ model = linear_model.LinearRegression()
 model.fit(X, y)
 
 # Robustly fit linear model with RANSAC algorithm
-model_robust = linear_model.LinearRegression()
-n, inlier_mask = ransac(X, y, model_robust, min_n_samples=2,
-                        residual_threshold=2)
+model_robust = linear_model.RANSAC(linear_model.LinearRegression(),
+                                   min_n_samples=2, residual_threshold=2)
+model_robust.fit(X, y)
+inlier_mask = model_robust.inlier_mask_
 outlier_mask = ~inlier_mask
 
 # Generate coordinates of estimated models
