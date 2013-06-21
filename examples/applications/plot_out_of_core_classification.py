@@ -18,8 +18,9 @@ The dataset used in this example is Reuters-21578 as provided by the UCI ML
 repository. It will be automatically downloaded and uncompressed in the current
 directory on first run.
 
-The plot represents the evolution of classification accuracy with the number
-of mini-batches fed to the classifier.
+The plot represents is the learning curve of the classifier i.e. the evolution
+of classification accuracy with the number of mini-batches fed to the
+classifier.
 
 `ReutersParser` and `ReutersStreamReader` classes are utility classes to parse
 and stream examples to the main learning loop.
@@ -183,7 +184,7 @@ class ReutersStreamReader():
 ###############################################################################
 # Main
 ###############################################################################
-# Create the hasher and limit the nber of features to a reasonable maximum
+# Create the hasher and limit the number of features to a reasonable maximum
 hasher = HashingVectorizer(charset_error='ignore', n_features=2 ** 18)
 
 # Create an online classifier i.e. supporting `partial_fit()`
