@@ -493,6 +493,15 @@ def m_estimate(X, nu=1, initial_mean=None, initial_cov=None, eps=1e-6,
     cov : array-like of shape [n_features, n_features], optional
         Estimate of the covariance matrix of the training data.
 
+    References
+    ----------
+    .. [1] Zoubir A., Koivunen V., Chakhchoukh Y. and Muma M. (2012). Robust
+        estimation in signal processing: A tutorial-style treatment of
+        fundamental concepts. IEEE Signal Processing Magazine 29(4), 61-80.
+    .. [2] Ollila E. and Koivunen V. (2003). Robust antenna array processing
+        using m-estimators of pseudo-covariance. In: 14th IEEE Proceedings on
+        Personal, Indoor and Mobile Radio Communications. Vol. 3. 2659-2663.
+
     """
 
     X = np.atleast_2d(X)
