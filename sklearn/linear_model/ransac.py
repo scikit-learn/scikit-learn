@@ -185,6 +185,19 @@ class RANSAC(BaseEstimator):
         self.inlier_mask_ = best_inlier_mask
 
     def predict(self, X):
+        """Predict using the estimated model.
+
+        This is a wrapper for `estimator_.predict(X)`.
+
+        Parameters
+        ----------
+        X : numpy array of shape [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = [n_samples]
+            Returns predicted values.
+        """
         return self.estimator_.predict(X)
 
     def score(self, X, y):
