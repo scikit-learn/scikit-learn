@@ -107,6 +107,9 @@ Changelog
      and can be used for latent semantic analysis (LSA).
      By `Lars Buitinck`_.
 
+   - Added self-contained example of out-of-core learning on text data
+     :ref:`example_applications_plot_out_of_core_classification.py`.
+     By `Eustache Diemert`_.
 
 API changes summary
 -------------------
@@ -1950,3 +1953,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Joel Nothman: http://joelnothman.com
 
 .. _Norbert Crombach: https://github.com/norbert
+
+.. _Eustache Diemert: https://github.com/oddskool
