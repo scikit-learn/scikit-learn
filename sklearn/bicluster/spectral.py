@@ -64,8 +64,8 @@ def log_preprocess(X):
 
 
 def fit_best_piecewise(vectors, k, n_clusters, random_state, n_init):
-    """Find the `k` vectors that are best approximated by a piecewise
-    constant vector. Returns them.
+    """Find the `k` vectors that are best approximated by piecewise
+    constant vectors.
 
     The piecewise vectors are found by k-means; the best is chosen
     according to Euclidean distance.
@@ -86,7 +86,7 @@ def fit_best_piecewise(vectors, k, n_clusters, random_state, n_init):
 
 def project_and_cluster(data, vectors, n_clusters, random_state,
                         n_init):
-    """Projects `data` to `vectors` and cluster the result."""
+    """Project `data` to `vectors` and cluster the result."""
     projected = np.dot(data, vectors)
     _, labels, _ = k_means(projected, n_clusters,
                                   random_state=random_state,
