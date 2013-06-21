@@ -191,7 +191,7 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
     def _dhillon(self, X):
         normalized_data, row_diag, col_diag = scale_preprocess(X)
         n_singular_vals = 1 + int(np.ceil(np.log2(self.n_clusters)))
-        u, s, vt = svds(normalized_data, k=n_singular_vals,
+        u, _, vt = svds(normalized_data, k=n_singular_vals,
                         maxiter=self.maxiter)
         z = np.vstack((row_diag[:, np.newaxis] * u[:, 1:],
                        col_diag[:, np.newaxis] * vt.T[:, 1:]))
@@ -216,7 +216,7 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
             n_sv += 1
         elif self.method == 'log':
             normalized_data = log_preprocess(X)
-        u, s, vt = svds(normalized_data, k=n_sv,
+        u, _, vt = svds(normalized_data, k=n_sv,
                         maxiter=self.maxiter)
         ut = u.T
         if self.method != 'log':
