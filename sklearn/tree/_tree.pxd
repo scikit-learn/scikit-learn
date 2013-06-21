@@ -35,6 +35,9 @@ cdef class Criterion:
     cdef double weighted_n_left             # Weighted number of samples in the left node
     cdef double weighted_n_right            # Weighted number of samples in the right node
 
+    # The criterion object is maintained such left and right collected
+    # statistics correspond to samples[start:i] and samples[i+1:end].
+
     # Methods
     cdef void init(self, DOUBLE_t* y,
                          Py_ssize_t y_stride,
