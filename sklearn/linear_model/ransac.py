@@ -1,3 +1,7 @@
+# Author: Johannes Schönberger <jschoenberger@demuc.de>
+#
+# License: BSD 3 clause
+
 import numpy as np
 
 from ..base import BaseEstimator
