@@ -1,14 +1,15 @@
 # Author: Peter Prettenhofer, Brian Holt, Gilles Louppe
-# Licence: BSD 3 clause$
+# Licence: BSD 3 clause
 
 # See _tree.pyx for details.
 
+import numpy as np
 cimport numpy as np
+
 from cpython cimport bool
 
-ctypedef np.float32_t DTYPE_t
-ctypedef np.float64_t DOUBLE_t
-ctypedef np.int8_t BOOL_t
+ctypedef np.float32_t DTYPE_t               # Type of X
+ctypedef np.float64_t DOUBLE_t              # Type of y, sample_weight
 
 
 # =============================================================================
@@ -16,35 +17,59 @@ ctypedef np.int8_t BOOL_t
 # =============================================================================
 
 cdef class Criterion:
-    cdef int n_outputs
-    cdef int n_samples
-    cdef double weighted_n_samples
+    # Internal structures
+    cdef DOUBLE_t* y                        # Values of y
+    cdef Py_ssize_t y_stride                # Stride in y (since n_outputs >= 1)
+    cdef DOUBLE_t* sample_weight            # Sample weights
 
-    cdef int n_left
-    cdef int n_right
-    cdef double weighted_n_left
-    cdef double weighted_n_right
+    cdef Py_ssize_t* samples                # Sample indices in X, y
+    cdef Py_ssize_t start                   # samples[start:i] are the samples in the left node
+    cdef Py_ssize_t i                       # samples[i+1:end] are the samples in the right node
+    cdef Py_ssize_t end
+
+    cdef Py_ssize_t n_outputs               # Number of outputs
+    cdef Py_ssize_t n_node_samples          # Number of samples in the node (end-start+1)
+    cdef double weighted_n_node_samples     # Weighted number of samples
+    cdef Py_ssize_t n_left                  # Number of samples in the left node (i-start+1)
+    cdef Py_ssize_t n_right                 # Number of samples in the right node (end-(i+1)+1)
+    cdef double weighted_n_left             # Weighted number of samples in the left node
+    cdef double weighted_n_right            # Weighted number of samples in the right node
 
     # Methods
-    cdef void init(self, DOUBLE_t* y, Py_ssize_t y_stride,
+    cdef void init(self, DOUBLE_t* y,
+                         Py_ssize_t y_stride,
                          DOUBLE_t* sample_weight,
-                         BOOL_t* sample_mask,
-                         int n_samples,
-                         double weighted_n_samples,
-                         int n_total_samples)
-
-    cdef void reset(self)
-
-    cdef bool update(self, int a,
-                     int b,
-                     DOUBLE_t* y, Py_ssize_t y_stride,
-                     int* X_argsorted_i,
-                     DOUBLE_t* sample_weight,
-                     BOOL_t* sample_mask)
-
+                         Py_ssize_t* samples,
+                         Py_ssize_t start,
+                         Py_ssize_t i,
+                         Py_ssize_t end)
+    cdef doubled init_value(self)
     cdef double eval(self)
+    cdef bool update(self, Py_ssize_t j)
 
-    cdef void init_value(self, double* buffer_value)
+
+# =============================================================================
+# Splitter
+# =============================================================================
+
+cdef class Splitter:
+    # Internal structures
+    cdef Criterion criterion                # Impurity criterion
+    cdef Py_ssize_t* samples                # Sample indices in X, y
+    cdef Py_ssize_t n_samples               # Length of samples
+
+    # The samples vector `samples` is maintained by the Splitter object such
+    # that the samples contained in a node are contiguous. With this setting,
+    # find_split reorganizes the node samples `samples[start:end]` in two
+    # subsets `samples[start:i]` and `start[i+1:end]`.
+
+    # Methods
+    cdef void init(self, np.ndarray[DTYPE_t, ndim=2] X,
+                         np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
+                         np.ndarray[DOUBLE_t, ndim=1, mode="c"] sample_weight
+                         Criterion criterion)
+
+    cdef Py_ssize_t find_split(self, Py_ssize_t start, Py_ssize_t end)
 
 
 # =============================================================================
@@ -53,103 +78,45 @@ cdef class Criterion:
 
 cdef class Tree:
     # Input/Output layout
-    cdef public int n_features
-    cdef int* n_classes
-    cdef public int n_outputs
+    cdef public Py_ssize_t n_features       # Number of features in X
+    cdef Py_ssize_t* n_classes              # Number of classes in y[:, k]
+    cdef public Py_ssize_t n_outputs        # Number of outputs in y
 
-    cdef public int max_n_classes
-    cdef public Py_ssize_t value_stride
+    cdef public Py_ssize_t max_n_classes    # max(n_classes)
+    cdef public Py_ssize_t value_stride     # n_outputs * max_n_classes
 
     # Parameters
-    cdef public Criterion criterion
-    cdef public double max_depth
-    cdef public int min_samples_split
-    cdef public int min_samples_leaf
-    cdef public double min_density
-    cdef public int max_features
-    cdef public int find_split_algorithm
-    cdef public object random_state
+    cdef public Splitter splitter             # Splitting algorithm
+    cdef public Py_ssize_t max_depth          # Max depth of the tree
+    cdef public Py_ssize_t min_samples_split  # Minimum number of samples in an internal node
+    cdef public Py_ssize_t min_samples_leaf   # Minimum number of samples in a leaf
+    cdef public object random_state           # Random state
 
     # Inner structures
-    cdef public int node_count
-    cdef public int capacity
-    cdef int* children_left
-    cdef int* children_right
-    cdef int* feature
-    cdef double* threshold
-    cdef double* value
-    cdef double* best_error
-    cdef double* init_error
-    cdef int* n_samples
-
-    cdef np.ndarray features
+    cdef public Py_ssize_t node_count       # Counter for node IDs
+    cdef public Py_ssize_t capacity         # Capacity
+    cdef int* children_left                 # children_left[i] is the left child of node i
+    cdef int* children_right                # children_right[i] is the right child of node i
+    cdef Py_ssize_t* feature                # features[i] is the feature used for splitting node i
+    cdef double* threshold                  # threshold[i] is the threshold value at node i
+    cdef double* value                      # value[i] is the values contained at node i
+    cdef double* impurity                   # impurity[i] is the impurity of node i
+    cdef Py_ssize_t* n_node_samples         # n_node_samples[i] is the number of samples at node i
 
     # Methods
-    cdef void resize(self, int capacity=*)
+    cpdef build(self, np.ndarray X,
+                      np.ndarray y,
+                      np.ndarray sample_weight=*)
 
-    cpdef build(self, np.ndarray X, np.ndarray y,
-                np.ndarray sample_mask=*,
-                np.ndarray X_argsorted=*,
-                np.ndarray sample_weight=*)
-
-    cdef void recursive_partition(self,
-                                  np.ndarray[DTYPE_t, ndim=2, mode="fortran"] X,
-                                  np.ndarray[np.int32_t, ndim=2, mode="fortran"] X_argsorted,
-                                  np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                                  np.ndarray[DOUBLE_t, ndim=1, mode="c"] sample_weight,
-                                  np.ndarray sample_mask,
-                                  int n_node_samples,
-                                  double weighted_n_node_samples,
-                                  int depth,
-                                  int parent,
-                                  int is_left_child,
-                                  double* buffer_value) except *
-
-    cdef int add_split_node(self, int parent, int is_left_child, int feature,
+    cdef int add_split_node(self, int parent, bool is_left_child, Py_ssize_t feature,
                                   double threshold, double* value,
                                   double best_error, double init_error,
-                                  int n_samples)
+                                  Py_ssize_t n_node_samples)
 
     cdef int add_leaf(self, int parent, int is_left_child, double* value,
-                      double error, int n_samples)
+                            double error, Py_ssize_t n_node_samples)
 
-    cdef void find_split(self, DTYPE_t* X_ptr, Py_ssize_t X_stride,
-                         int* X_argsorted_ptr, Py_ssize_t X_argsorted_stride,
-                         DOUBLE_t* y_ptr, Py_ssize_t y_stride,
-                         DOUBLE_t* sample_weight_ptr,
-                         BOOL_t* sample_mask_ptr,
-                         int n_node_samples,
-                         double weighted_n_node_samples,
-                         int n_total_samples,
-                         int* _best_i,
-                         double* _best_t,
-                         double* _best_error,
-                         double* _initial_error)
-
-    cdef void find_best_split(self, DTYPE_t* X_ptr, Py_ssize_t X_stride,
-                              int* X_argsorted_ptr, Py_ssize_t X_argsorted_stride,
-                              DOUBLE_t* y_ptr, Py_ssize_t y_stride,
-                              DOUBLE_t* sample_weight_ptr,
-                              BOOL_t* sample_mask_ptr,
-                              int n_node_samples,
-                              double weighted_n_node_samples,
-                              int n_total_samples, int* _best_i,
-                              double* _best_t, double* _best_error,
-                              double* _initial_error)
-
-    cdef void find_random_split(self, DTYPE_t* X_ptr, Py_ssize_t X_stride,
-                                int* X_argsorted_ptr, Py_ssize_t X_argsorted_stride,
-                                DOUBLE_t* y_ptr, Py_ssize_t y_stride,
-                                DOUBLE_t* sample_weight_ptr,
-                                BOOL_t* sample_mask_ptr,
-                                int n_node_samples,
-                                double weighted_n_node_samples,
-                                int n_total_samples, int* _best_i,
-                                double* _best_t, double* _best_error,
-                                double* _initial_error)
-
+    cdef void resize(self, Py_ssize_t capacity=*)
     cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X)
-
     cpdef apply(self, np.ndarray[DTYPE_t, ndim=2] X)
-
     cpdef compute_feature_importances(self)
