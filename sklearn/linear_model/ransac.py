@@ -146,7 +146,7 @@ class RANSAC(BaseEstimator):
 
             # score of inlier data set
             rsample_score = self.estimator_.score(rsample_inlier_X,
-                                                 rsample_inlier_y)
+                                                  rsample_inlier_y)
 
             # same number of inliers but worse score -> skip current random
             # sample
