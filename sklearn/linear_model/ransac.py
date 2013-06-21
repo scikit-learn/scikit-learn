@@ -1,10 +1,12 @@
 import numpy as np
 
+from ..base import BaseEstimator
+from .base import LinearRegression
 
-def ransac(X, y, estimator, min_n_samples, residual_threshold,
-           is_data_valid=None, is_model_valid=None, max_trials=100,
-           stop_n_inliers=np.inf, stop_score=np.inf):
-    """Fit a model to data with the RANSAC (random sample consensus) algorithm.
+
+class RANSAC(BaseEstimator):
+
+    """RANSAC (RANdom SAmple Consensus) algorithm.
 
     RANSAC is an iterative algorithm for the robust estimation of parameters
     from a subset of inliers from the complete data set. Each iteration
@@ -29,11 +31,7 @@ def ransac(X, y, estimator, min_n_samples, residual_threshold,
 
     Parameters
     ----------
-    X : numpy array or sparse matrix of shape [n_samples, n_features]
-        Training data.
-    y : numpy array of shape [n_samples, n_targets]
-        Target values
-    estimator_cls : object
+    estimator : object
         Estimator object which implements the following methods:
         * `fit(X, y)`: Fit model to given  training data and target values.
         * `score(X)`: Returns the mean accuracy on the given test data.
@@ -52,8 +50,10 @@ def ransac(X, y, estimator, min_n_samples, residual_threshold,
     stop_score : float, optional
         Stop iteration if score is greater equal than this threshold.
 
-    Returns
-    -------
+    Attributes
+    ----------
+    estimator : object
+        Base estimator object which is the same as passed in `__init__`.
     n_trials : int
         Number of random selection trials.
     inlier_mask : bool array of shape [n_samples]
@@ -65,73 +65,118 @@ def ransac(X, y, estimator, min_n_samples, residual_threshold,
 
     """
 
-    best_n_inliers = 0
-    best_score = np.inf
-    best_inlier_mask = None
-    best_inlier_X = None
-    best_inlier_y = None
+    def __init__(self, estimator, min_n_samples, residual_threshold,
+                 is_data_valid=None, is_model_valid=None, max_trials=100,
+                 stop_n_inliers=np.inf, stop_score=np.inf):
 
-    # number of data samples
-    n_samples = X.shape[0]
+        # estimator parameters
+        self.min_n_samples = min_n_samples
+        self.residual_threshold = residual_threshold
+        self.is_data_valid = is_data_valid
+        self.is_model_valid = is_model_valid
+        self.max_trials = max_trials
+        self.stop_n_inliers = stop_n_inliers
+        self.stop_score = stop_score
 
-    for n_trials in range(max_trials):
+        # estimator attributes
+        self.estimator_ = estimator
+        self.n_trials_ = None
+        self.inlier_mask_ = None
 
-        # choose random sample set
-        random_idxs = np.random.randint(0, n_samples, min_n_samples)
-        rsample_X = X[random_idxs]
-        rsample_y = y[random_idxs]
+    def fit(self, X, y):
+        """Fit estimator using RANSAC algorithm.
 
-        # check if random sample set is valid
-        if is_data_valid is not None and not is_data_valid(X, y):
-            continue
+        Parameters
+        ----------
+        X : numpy array or sparse matrix of shape [n_samples, n_features]
+            Training data.
+        y : numpy array of shape [n_samples, n_targets]
+            Target values
 
-        # fit model for current random sample set
-        estimator.fit(rsample_X, rsample_y)
+        Raises
+        ------
+        ValueError: If no valid consensus set could be found.
 
-        # check if estimated model is valid
-        if is_model_valid is not None and not is_model_valid(estimator,
-                                                             rsample_X,
-                                                             rsample_y):
-            continue
+        """
 
-        # residuals of all data for current random sample model
-        rsample_residuals = np.abs(estimator.predict(X) - y)
+        best_n_inliers = 0
+        best_score = np.inf
+        best_inlier_mask = None
+        best_inlier_X = None
+        best_inlier_y = None
 
-        # classify data into inliers and outliers
-        rsample_inlier_mask = rsample_residuals < residual_threshold
-        rsample_n_inliers = np.sum(rsample_inlier_mask)
+        # number of data samples
+        n_samples = X.shape[0]
 
-        # less inliers -> skip current random sample
-        if rsample_n_inliers < best_n_inliers:
-            continue
+        for n_trials in range(self.max_trials):
 
-        # extract inlier data set
-        rsample_inlier_X = X[rsample_inlier_mask]
-        rsample_inlier_y = y[rsample_inlier_mask]
+            # choose random sample set
+            random_idxs = np.random.randint(0, n_samples, self.min_n_samples)
+            rsample_X = X[random_idxs]
+            rsample_y = y[random_idxs]
 
-        # score of inlier data set
-        rsample_score = estimator.score(rsample_inlier_X, rsample_inlier_y)
+            # check if random sample set is valid
+            if self.is_data_valid is not None and not self.is_data_valid(X, y):
+                continue
 
-        # same number of inliers but worse score -> skip current random sample
-        if rsample_n_inliers == best_n_inliers and rsample_score < best_score:
-            continue
+            # fit model for current random sample set
+            estimator.fit(rsample_X, rsample_y)
 
-        # save current random sample as best sample
-        best_n_inliers = rsample_n_inliers
-        best_score = rsample_score
-        best_inlier_mask = rsample_inlier_mask
-        best_inlier_X = rsample_inlier_X
-        best_inlier_y = rsample_inlier_y
+            # check if estimated model is valid
+            if self.is_model_valid is not None:
+                model_test = self.is_model_valid(self.estimator_, rsample_X,
+                                                 rsample_y)
+                if not model_test:
+                    continue
 
-        # break if sufficient number of inliers or score is reached
-        if best_n_inliers >= stop_n_inliers or best_score >= stop_score:
-            break
+            # residuals of all data for current random sample model
+            rsample_residuals = np.abs(self.estimator_.predict(X) - y)
 
-    # if none of the iterations met the required criteria
-    if best_inlier_mask is None:
-        raise ValueError("RANSAC could not find valid consensus set.")
+            # classify data into inliers and outliers
+            rsample_inlier_mask = rsample_residuals < self.residual_threshold
+            rsample_n_inliers = np.sum(rsample_inlier_mask)
 
-    # estimate final model using all inliers
-    estimator.fit(best_inlier_X, best_inlier_y)
+            # less inliers -> skip current random sample
+            if rsample_n_inliers < best_n_inliers:
+                continue
 
-    return n_trials + 1, best_inlier_mask
+            # extract inlier data set
+            rsample_inlier_X = X[rsample_inlier_mask]
+            rsample_inlier_y = y[rsample_inlier_mask]
+
+            # score of inlier data set
+            rsample_score = self.estimator_.score(rsample_inlier_X,
+                                                 rsample_inlier_y)
+
+            # same number of inliers but worse score -> skip current random
+            # sample
+            if (rsample_n_inliers == best_n_inliers
+                and rsample_score < best_score
+                ):
+                continue
+
+            # save current random sample as best sample
+            best_n_inliers = rsample_n_inliers
+            best_score = rsample_score
+            best_inlier_mask = rsample_inlier_mask
+            best_inlier_X = rsample_inlier_X
+            best_inlier_y = rsample_inlier_y
+
+            # break if sufficient number of inliers or score is reached
+            if (best_n_inliers >= self.stop_n_inliers
+                or best_score >= self.stop_score
+                ):
+                break
+
+        # if none of the iterations met the required criteria
+        if best_inlier_mask is None:
+            raise ValueError("RANSAC could not find valid consensus set.")
+
+        # estimate final model using all inliers
+        self.estimator_.fit(best_inlier_X, best_inlier_y)
+
+        self.n_trials_ = n_trials + 1
+        self.inlier_mask_ = best_inlier_mask
+
+    def predict(self, X):
+        return self.estimator_.predict(X)
