@@ -180,3 +180,6 @@ class RANSAC(BaseEstimator):
 
     def predict(self, X):
         return self.estimator_.predict(X)
+
+    def score(self, X, y):
+        return self.estimator_.score(X, y)
