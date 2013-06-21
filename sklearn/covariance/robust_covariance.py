@@ -458,6 +458,82 @@ def fast_mcd(X, support_fraction=None,
     return location, covariance, support, dist
 
 
+def m_estimate(X, nu=1, initial_mean=None, initial_cov=None, eps=1e-6,
+               max_iter=200, verbose=True):
+    X = np.atleast_2d(X)
+
+    n_samples = X.shape[0]
+    # dimensionality of the data
+    k = X.shape[1]
+
+    if initial_mean is None:
+        # use mean of all samples as initial guess
+        initial_mean = np.mean(X, axis=0)
+
+    mean = initial_mean
+
+    # centered samples and its hermitian (complex conjugate transpose)
+    X_centered = X - np.squeeze(mean)
+    X_centered_H = X_centered.conj().T
+
+    if initial_cov is None:
+        # use covariance matrix of all samples as initial guess
+        initial_cov = np.dot(X_centered_H, X_centered) / (n_samples - 1)
+
+    cov = initial_cov
+
+    new_cov = np.zeros_like(cov)
+    inv_cov = np.zeros_like(cov)
+
+    for i in range(max_iter):
+
+        # initialize covariance matrices
+        weight_sum = 0
+        new_mean = 0
+        new_cov[:] = 0
+        inv_cov[:] = np.linalg.inv(cov)
+
+        for n in range(n_samples):
+
+            # extract current sample
+            xc = X_centered[n][None, :]
+            xc_H = X_centered_H[:, n][:, None]
+
+            # determine weight for current sample
+            s = np.dot(xc, np.dot(inv_cov, xc_H))
+            weight = (2 * k + nu) / (nu + 2 * s)
+            weight_sum += weight
+
+            # add weighted covariance part of current sample
+            new_mean += weight * X[n]
+            new_cov += weight * np.dot(xc_H, xc)
+
+        # average covariance matrix of all samples
+        new_mean /= weight_sum
+        new_cov /= (n_samples - 1)
+
+        diff_mean = np.abs(new_mean - mean).sum()
+        diff_cov = np.abs(new_cov - cov).sum()
+
+        if verbose:
+            print("%4d: d(mean): %.10f, d(covariance): %.10f" \
+                  % (i, diff_mean, diff_cov))
+
+        # stop iteration if mean and covariance have not changed
+        if diff_mean < eps and diff_cov < eps:
+            break
+
+        # copy new mean and covariance for next iteration
+        mean[:] = new_mean
+        cov[:] = new_cov
+
+        # compute updated centered X data
+        X_centered = X - mean
+        X_centered_H = X_centered.conj().T
+
+    return mean, cov
+
+
 class MinCovDet(EmpiricalCovariance):
     """Minimum Covariance Determinant (MCD): robust estimator of covariance.
 
