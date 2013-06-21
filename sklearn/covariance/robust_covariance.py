@@ -460,6 +460,41 @@ def fast_mcd(X, support_fraction=None,
 
 def m_estimate(X, nu=1, initial_mean=None, initial_cov=None, eps=1e-6,
                max_iter=200, verbose=True):
+    """M-estimator for the robust covariance matrix estimation of real- or
+    complex-valued training data.
+
+    Parameters
+    ----------
+    X : array-like of shape [n_samples, n_features]
+        Training data.
+    nu : int, optional
+        Degrees of freedom of the t-distributed M-estimator. The multivariate
+        distribution with `nu = 1` is the heavy-tailed Cauchy distribution and
+        `n = inf` is the Gaussian normal distribution. For the robust
+        covariance matrix estimation this parameter is typically chosen in the
+        range `1 < nu < 5`.
+    initial_mean : array-like of shape [n_features], optional
+        Initial estimate of the mean of the training data.
+    initial_cov : array-like of shape [n_features, n_features], optional
+        Initial estimate of the covariance matrix of the training data.
+    eps : float, optional
+        Stop criteria for the iteration. The iteration is aborted if
+        `sum(abs(new_mean - mean))` and sum(abs(new_cov - cov))` are both
+        smaller than `eps`.
+    max_iter : int, optional
+        Maximum number of iterations.
+    verbose : bool, optional
+        Determine whether to print status messages for each iteration.
+
+    Returns
+    -------
+    mean : array-like of shape [n_features], optional
+        Estimate of the mean of the training data.
+    cov : array-like of shape [n_features, n_features], optional
+        Estimate of the covariance matrix of the training data.
+
+    """
+
     X = np.atleast_2d(X)
 
     n_samples = X.shape[0]
