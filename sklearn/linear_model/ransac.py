@@ -97,7 +97,7 @@ class RANSAC(BaseEstimator):
         X : numpy array or sparse matrix of shape [n_samples, n_features]
             Training data.
         y : numpy array of shape [n_samples, n_targets]
-            Target values
+            Target values.
 
         Raises
         ------
@@ -201,4 +201,20 @@ class RANSAC(BaseEstimator):
         return self.estimator_.predict(X)
 
     def score(self, X, y):
+        """Returns the score of the prediction.
+
+        This is a wrapper for `estimator_.score(X, y)`.
+
+        Parameters
+        ----------
+        X : numpy array or sparse matrix of shape [n_samples, n_features]
+            Training data.
+        y : numpy array of shape [n_samples, n_targets]
+            Target values.
+
+        Returns
+        -------
+        z : float
+            Score of the prediction.
+        """
         return self.estimator_.score(X, y)
