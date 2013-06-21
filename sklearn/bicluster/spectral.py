@@ -67,9 +67,9 @@ def log_preprocess(X):
     return L - row_avg - col_avg + avg
 
 
-def fit_best_piecewise(vectors, n_clusters, random_state, n_init):
-    """Find the vector that is best approximated by a piecewise
-    constant vector. Returns that piecewise constant vector.
+def fit_best_piecewise(vectors, k, n_clusters, random_state, n_init):
+    """Find the `k` vectors that are best approximated by a piecewise
+    constant vector. Returns them.
 
     The piecewise vectors are found by k-means; the best is chosen
     according to Euclidean distance.
@@ -85,7 +85,17 @@ def fit_best_piecewise(vectors, n_clusters, random_state, n_init):
                                             vectors)
     dists = np.apply_along_axis(np.linalg.norm, 1,
                                 vectors - piecewise_vectors)
-    return piecewise_vectors[np.argmin(dists)]
+    return vectors[np.argsort(dists)[:k]]
+
+
+def project_and_cluster(data, vectors, n_clusters, random_state,
+                        n_init):
+    """Projects `data` to `vectors` and cluster the result."""
+    projected = np.dot(data, vectors)
+    _, labels, _ = k_means(projected, n_clusters,
+                                  random_state=random_state,
+                                  n_init=n_init)
+    return labels
 
 
 class SpectralBiclustering(BaseEstimator, BiclusterMixin):
@@ -111,6 +121,10 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
     n_singular_vectors : integer
         Number of singular vectors to check. Not used if
         `self.method` is 'dhillon'.
+
+    n_best_vectors : integer
+        Number of best singular vectors to which to project the data
+        for clustering.
 
     maxiter : integer
         Maximum iterations for finding singular vectors.
@@ -158,8 +172,8 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
 
     """
     def __init__(self, n_clusters=3, method='bistochastic',
-                 n_singular_vectors=6, maxiter=None, n_init=10,
-                 random_state=None):
+                 n_singular_vectors=6, n_best_vectors=3, maxiter=None,
+                 n_init=10, random_state=None):
         if method not in ('dhillon', 'bistochastic', 'scale', 'log'):
             raise Exception('unknown method: {}'.format(method))
         if isinstance(n_clusters, tuple):
@@ -168,9 +182,12 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
                                 " supported when method=='dhillon'")
             if len(n_clusters) != 2:
                 raise Exception("unsupported number of clusters")
+        if n_best_vectors > n_singular_vectors:
+            raise Exception('n_best_vectors > n_singular_vectors')
         self.n_clusters = n_clusters
         self.method = method
         self.n_singular_vectors = n_singular_vectors
+        self.n_best_vectors = n_best_vectors
         self.maxiter = maxiter
         self.n_init = n_init
         self.random_state=random_state
@@ -210,20 +227,30 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
             ut = ut[1:]
             vt = vt[1:]
 
-        # TODO: also choose among best vectors by projecting data and using
-        # k-means or normalized cut, as in paper
-
         if isinstance(self.n_clusters, tuple):
             n_row_clusters, n_col_clusters = self.n_clusters
         else:
             n_row_clusters = n_col_clusters = self.n_clusters
 
-        row_vector = fit_best_piecewise(ut, n_row_clusters,
-                                        self.random_state,
-                                        self.n_init)
-        col_vector = fit_best_piecewise(vt, n_col_clusters,
-                                        self.random_state,
-                                        self.n_init)
+        best_ut = fit_best_piecewise(ut, self.n_best_vectors,
+                                     n_row_clusters,
+                                     self.random_state, self.n_init)
+
+        best_vt = fit_best_piecewise(vt, self.n_best_vectors,
+                                     n_col_clusters,
+                                     self.random_state, self.n_init)
+
+
+        row_vector = project_and_cluster(normalized_data, best_vt.T,
+                                         n_row_clusters,
+                                         self.random_state,
+                                         self.n_init)
+
+        col_vector = project_and_cluster(normalized_data.T, best_ut.T,
+                                         n_col_clusters,
+                                         self.random_state,
+                                         self.n_init)
+
 
         _, row_labels = np.unique(row_vector, return_inverse=True)
         _, col_labels = np.unique(col_vector, return_inverse=True)
