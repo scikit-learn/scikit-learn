@@ -10,11 +10,6 @@ from ..cluster.k_means_ import k_means
 import numpy as np
 from scipy.sparse.linalg import svds
 
-# TODO: re-use existing functionality in scikit-learn, especially SVD
-# so that it uses random_state
-
-# TODO: within-cluster rankings
-
 def make_nonnegative(X, min_value=0):
     """Ensure `X.min()` >= `min_value`."""
     min_ = X.min()
