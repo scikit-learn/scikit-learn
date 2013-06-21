@@ -501,6 +501,8 @@ def m_estimate(X, nu=1, initial_mean=None, initial_cov=None, eps=1e-6,
     .. [2] Ollila E. and Koivunen V. (2003). Robust antenna array processing
         using m-estimators of pseudo-covariance. In: 14th IEEE Proceedings on
         Personal, Indoor and Mobile Radio Communications. Vol. 3. 2659-2663.
+    .. [3] J. T. Kent and D. E. Tyler (1991). Redescending M-estimates of
+        location and scatter. Ann. Statist. 19(4), 2102-2119.
 
     """
 
