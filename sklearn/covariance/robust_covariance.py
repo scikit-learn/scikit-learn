@@ -490,15 +490,15 @@ class CovMEstimator(EmpiricalCovariance):
         covariance matrix estimation this parameter is typically chosen in the
         range `1 < nu < 5`.
 
-    initial_mean : array-like of shape [n_features], optional
-        Initial estimate of the mean of the training data.
+    initial_loc : array-like of shape [n_features], optional
+        Initial estimate of the mean / location of the training data.
 
     initial_cov : array-like of shape [n_features, n_features], optional
         Initial estimate of the covariance matrix of the training data.
 
     eps : float, optional
         Stop criteria for the iteration. The iteration is aborted if
-        `sum(abs(new_mean - mean))` and sum(abs(new_cov - cov))` are both
+        `sum(abs(new_loc - loc))` and sum(abs(new_cov - cov))` are both
         smaller than `eps`.
 
     max_iter : int, optional
@@ -528,10 +528,10 @@ class CovMEstimator(EmpiricalCovariance):
 
     """
 
-    def __init__(self, nu=1, initial_mean=None, initial_cov=None, eps=1e-6,
+    def __init__(self, nu=1, initial_loc=None, initial_cov=None, eps=1e-6,
                  max_iter=200, verbose=True):
         self.nu = nu
-        self.initial_mean = initial_mean
+        self.initial_loc = initial_loc
         self.initial_cov = initial_cov
         self.eps = eps
         self.max_iter = max_iter
@@ -555,14 +555,14 @@ class CovMEstimator(EmpiricalCovariance):
         # dimensionality of the data
         k = X.shape[1]
 
-        if initial_mean is None:
+        if initial_loc is None:
             # use mean of all samples as initial guess
-            initial_mean = np.mean(X, axis=0)
+            initial_loc = np.mean(X, axis=0)
 
-        mean = initial_mean
+        loc = initial_loc
 
         # centered samples and its hermitian (complex conjugate transpose)
-        X_centered = X - np.squeeze(mean)
+        X_centered = X - np.squeeze(loc)
         X_centered_H = X_centered.conj().T
 
         if initial_cov is None:
@@ -578,7 +578,7 @@ class CovMEstimator(EmpiricalCovariance):
 
             # initialize covariance matrices
             weight_sum = 0
-            new_mean = 0
+            new_loc = 0
             new_cov[:] = 0
             inv_cov[:] = np.linalg.inv(cov)
 
@@ -594,33 +594,33 @@ class CovMEstimator(EmpiricalCovariance):
                 weight_sum += weight
 
                 # add weighted covariance part of current sample
-                new_mean += weight * X[n]
+                new_loc += weight * X[n]
                 new_cov += weight * np.dot(xc_H, xc)
 
             # average covariance matrix of all samples
-            new_mean /= weight_sum
+            new_loc /= weight_sum
             new_cov /= (n_samples - 1)
 
-            diff_mean = np.abs(new_mean - mean).sum()
+            diff_loc = np.abs(new_loc - loc).sum()
             diff_cov = np.abs(new_cov - cov).sum()
 
             if verbose:
-                print("%4d: d(mean): %.10f, d(covariance): %.10f" \
-                      % (i, diff_mean, diff_cov))
+                print("%4d: d(loc): %.10f, d(cov): %.10f" \
+                      % (i, diff_loc, diff_cov))
 
-            # stop iteration if mean and covariance have not changed
-            if diff_mean < eps and diff_cov < eps:
+            # stop iteration if loc and covariance have not changed
+            if diff_loc < eps and diff_cov < eps:
                 break
 
-            # copy new mean and covariance for next iteration
-            mean[:] = new_mean
+            # copy new loc and covariance for next iteration
+            loc[:] = new_loc
             cov[:] = new_cov
 
             # compute updated centered X data
-            X_centered = X - mean
+            X_centered = X - loc
             X_centered_H = X_centered.conj().T
 
-        self.location_ = mean
+        self.location_ = loc
         self.covariance_ = cov
 
 
