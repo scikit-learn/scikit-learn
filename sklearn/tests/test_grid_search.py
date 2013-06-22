@@ -130,6 +130,15 @@ def test_parameter_grid():
                      set(("foo", x, "bar", y)
                          for x, y in product(params2["foo"], params2["bar"])))
 
+    # Special case: empty grid (useful to get default estimator settings)
+    empty = ParameterGrid({})
+    assert_equal(len(empty), 1)
+    assert_equal(list(empty), [{}])
+
+    has_empty = ParameterGrid([{'C': [1, 10]}, {}])
+    assert_equal(len(has_empty), 3)
+    assert_equal(list(has_empty), [{'C': 1}, {'C': 10}, {}])
+
 
 def test_grid_search():
     """Test that the best estimator contains the right value for foo_param"""
