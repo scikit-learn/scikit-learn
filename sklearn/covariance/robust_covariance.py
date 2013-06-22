@@ -458,8 +458,8 @@ def fast_mcd(X, support_fraction=None,
     return location, covariance, support, dist
 
 
-def m_estimate(X, nu=1, initial_mean=None, initial_cov=None, eps=1e-6,
-               max_iter=200, verbose=True):
+class CovMEstimator(EmpiricalCovariance):
+
     """M-estimator for the robust covariance matrix estimation of real- or
     complex-valued training data.
 
@@ -486,13 +486,6 @@ def m_estimate(X, nu=1, initial_mean=None, initial_cov=None, eps=1e-6,
     verbose : bool, optional
         Determine whether to print status messages for each iteration.
 
-    Returns
-    -------
-    mean : array-like of shape [n_features], optional
-        Estimate of the mean of the training data.
-    cov : array-like of shape [n_features, n_features], optional
-        Estimate of the covariance matrix of the training data.
-
     Notes
     -----
     The principle of this iterative algorithm is to weight each sample
@@ -514,78 +507,100 @@ def m_estimate(X, nu=1, initial_mean=None, initial_cov=None, eps=1e-6,
 
     """
 
-    X = np.atleast_2d(X)
+    def __init__(self, nu=1, initial_mean=None, initial_cov=None, eps=1e-6,
+                 max_iter=200, verbose=True):
+        self.nu = nu
+        self.initial_mean = initial_mean
+        self.initial_cov = initial_cov
+        self.eps = eps
+        self.max_iter = max_iter
+        self.verbose = verbose
 
-    n_samples = X.shape[0]
-    # dimensionality of the data
-    k = X.shape[1]
+    def fit(self, X, y=None):
+        """Fits a Minimum Covariance Determinant with the FastMCD algorithm.
 
-    if initial_mean is None:
-        # use mean of all samples as initial guess
-        initial_mean = np.mean(X, axis=0)
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+        y : not used, present for API consistence purpose.
 
-    mean = initial_mean
+        """
 
-    # centered samples and its hermitian (complex conjugate transpose)
-    X_centered = X - np.squeeze(mean)
-    X_centered_H = X_centered.conj().T
+        X = np.atleast_2d(X)
 
-    if initial_cov is None:
-        # use covariance matrix of all samples as initial guess
-        initial_cov = np.dot(X_centered_H, X_centered) / (n_samples - 1)
+        n_samples = X.shape[0]
+        # dimensionality of the data
+        k = X.shape[1]
 
-    cov = initial_cov
+        if initial_mean is None:
+            # use mean of all samples as initial guess
+            initial_mean = np.mean(X, axis=0)
 
-    new_cov = np.zeros_like(cov)
-    inv_cov = np.zeros_like(cov)
+        mean = initial_mean
 
-    for i in range(max_iter):
-
-        # initialize covariance matrices
-        weight_sum = 0
-        new_mean = 0
-        new_cov[:] = 0
-        inv_cov[:] = np.linalg.inv(cov)
-
-        for n in range(n_samples):
-
-            # extract current sample
-            xc = X_centered[n][None, :]
-            xc_H = X_centered_H[:, n][:, None]
-
-            # determine weight for current sample
-            s = np.dot(xc, np.dot(inv_cov, xc_H))
-            weight = (2 * k + nu) / (nu + 2 * s)
-            weight_sum += weight
-
-            # add weighted covariance part of current sample
-            new_mean += weight * X[n]
-            new_cov += weight * np.dot(xc_H, xc)
-
-        # average covariance matrix of all samples
-        new_mean /= weight_sum
-        new_cov /= (n_samples - 1)
-
-        diff_mean = np.abs(new_mean - mean).sum()
-        diff_cov = np.abs(new_cov - cov).sum()
-
-        if verbose:
-            print("%4d: d(mean): %.10f, d(covariance): %.10f" \
-                  % (i, diff_mean, diff_cov))
-
-        # stop iteration if mean and covariance have not changed
-        if diff_mean < eps and diff_cov < eps:
-            break
-
-        # copy new mean and covariance for next iteration
-        mean[:] = new_mean
-        cov[:] = new_cov
-
-        # compute updated centered X data
-        X_centered = X - mean
+        # centered samples and its hermitian (complex conjugate transpose)
+        X_centered = X - np.squeeze(mean)
         X_centered_H = X_centered.conj().T
 
-    return mean, cov
+        if initial_cov is None:
+            # use covariance matrix of all samples as initial guess
+            initial_cov = np.dot(X_centered_H, X_centered) / (n_samples - 1)
+
+        cov = initial_cov
+
+        new_cov = np.zeros_like(cov)
+        inv_cov = np.zeros_like(cov)
+
+        for i in range(max_iter):
+
+            # initialize covariance matrices
+            weight_sum = 0
+            new_mean = 0
+            new_cov[:] = 0
+            inv_cov[:] = np.linalg.inv(cov)
+
+            for n in range(n_samples):
+
+                # extract current sample
+                xc = X_centered[n][None, :]
+                xc_H = X_centered_H[:, n][:, None]
+
+                # determine weight for current sample
+                s = np.dot(xc, np.dot(inv_cov, xc_H))
+                weight = (2 * k + nu) / (nu + 2 * s)
+                weight_sum += weight
+
+                # add weighted covariance part of current sample
+                new_mean += weight * X[n]
+                new_cov += weight * np.dot(xc_H, xc)
+
+            # average covariance matrix of all samples
+            new_mean /= weight_sum
+            new_cov /= (n_samples - 1)
+
+            diff_mean = np.abs(new_mean - mean).sum()
+            diff_cov = np.abs(new_cov - cov).sum()
+
+            if verbose:
+                print("%4d: d(mean): %.10f, d(covariance): %.10f" \
+                      % (i, diff_mean, diff_cov))
+
+            # stop iteration if mean and covariance have not changed
+            if diff_mean < eps and diff_cov < eps:
+                break
+
+            # copy new mean and covariance for next iteration
+            mean[:] = new_mean
+            cov[:] = new_cov
+
+            # compute updated centered X data
+            X_centered = X - mean
+            X_centered_H = X_centered.conj().T
+
+        self.location_ = mean
+        self.covariance_ = cov
 
 
 class MinCovDet(EmpiricalCovariance):
