@@ -117,57 +117,6 @@ NON_ARRAY_LIKE_EXAMPLES = [
 ]
 
 
-EXAMPLES = {
-    'multilabel-indicator': [
-        np.random.randint(2, size=(10, 10)),
-        np.array([[0, 1], [1, 0]]),
-        np.array([[0, 0], [0, 0]]),
-        np.array([[-1, 1], [1, -1]]),
-        np.array([[-3, 3], [3, -3]]),
-
-        # XXX : not considered as multilabel-indicator at the moment
-        #       see is_label_indicator_matrix
-        # np.array([[0, 1]]),
-    ],
-    'multilabel-sequences': [
-        [[0, 1]],
-        [[0], [1]],
-        [[1, 2, 3]],
-        [[1, 2, 1]],  # duplicate values, why not?
-        [[1], [2], [0, 1]],
-        [[1], [2]],
-        [[]],
-        [()],
-        np.array([[], [1, 2]], dtype='object'),
-    ],
-    'multiclass': [
-        [1, 0, 2, 2, 1, 4, 2, 4, 4, 4],
-        np.array([1, 0, 2]),
-        np.array([[1], [0], [2]]),
-        [0, 1, 2],
-        ['a', 'b', 'c'],
-    ],
-    'multiclass-multioutput': [
-        np.array([[1, 0, 2, 2], [1, 4, 2, 4]]),
-        np.array([['a', 'b'], ['c', 'd']]),
-        np.array([[1, 0, 2]]),
-    ],
-    'binary': [
-        [0, 1],
-        [1, 1],
-        [],
-        [0],
-        np.array([0, 1, 1, 1, 0, 0, 0, 1, 1, 1]),
-        np.array([[0], [1]]),
-        [1, -1],
-        [3, 5],
-        ['a'],
-        ['a', 'b'],
-        ['abc', 'def'],
-    ],
-
-}
-
 
 def test_unique_labels():
     # Empty iterable
@@ -218,6 +167,14 @@ def test_unique_labels():
                              EXAMPLES["multilabel-sequences"],
                              EXAMPLES["multiclass"] +
                              EXAMPLES["binary"])
+
+    for example in NON_ARRAY_LIKE_EXAMPLES:
+        assert_raises(ValueError, unique_labels, example)
+
+    for y_type in ["unknown", "continuous", 'continuous-multioutput',
+                   'multiclass-multioutput']:
+        for example in EXAMPLES[y_type]:
+            assert_raises(ValueError, unique_labels, example)
 
     for y_multilabel, y_multiclass in mix_clf_format:
         assert_raises(ValueError, unique_labels, y_multiclass, y_multilabel)

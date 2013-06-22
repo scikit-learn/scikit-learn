@@ -14,13 +14,32 @@ import numpy as np
 from ..externals.six import string_types
 
 
+def _unique_multiclass(y):
+    return np.unique(y)
+
+
+def _unique_sequence_of_sequence(y):
+    return np.array(sorted(set(chain(*y))))
+
+
+def _unique_indicator(y):
+    return np.arange(y.shape[1])
+
+
+_FN_UNIQUE_LABELS = {
+    'binary': _unique_multiclass,
+    'multiclass': _unique_multiclass,
+    'multilabel-sequences': _unique_sequence_of_sequence,
+    'multilabel-indicator': _unique_indicator,
+}
+
+
 def unique_labels(*ys):
     """Extract an ordered array of unique labels
 
     Parameters
     ----------
     ys : array-likes,
-        Must be either in binary, multiclass or multilabel format.
 
     Returns
     -------
@@ -42,42 +61,31 @@ def unique_labels(*ys):
     array([1, 2, 3])
 
     """
-
-    def _unique_multiclass(y):
-        return np.unique(y)
-
-    def _unique_sequence_of_sequence(y):
-        return np.array(sorted(set(chain(*y))))
-
-    def _unique_indicator(y):
-        return np.arange(y.shape[1])
-
     if not ys:
-        raise ValueError('No list of labels has been passed.')
+        raise ValueError('No argument has been passed.')
 
-    ys_is_multilabels = [is_multilabel(y) for y in ys]
+    ys_types = [type_of_target(x) for x in ys]
 
-    if len(set(ys_is_multilabels)) != 1:
-        raise ValueError("Mix of binary / mutliclass and multilabel types")
+    if len(set(ys_types)) != 1:
+        if set(ys_types) == set(["binary", "multiclass"]):
+            label_type = "multiclass"
 
-    if all(ys_is_multilabels):
-        ys_is_indicator = [is_label_indicator_matrix(y) for y in ys]
-
-        # Only indicator multilabel format
-        if all(ys_is_indicator):
-            if len(set(y.shape[1] for y in ys)) > 1:
-                raise ValueError("Multi-label binary indicator inputs with "
-                                 "different number of labels")
-            else:
-                return _unique_indicator(ys[0])
-        elif all(not ys_is_indicator for ys_is_indicator in ys_is_indicator):
-            # Only indicator sequence of sequence multilabel format
-            _unique_labels = _unique_sequence_of_sequence
         else:
-            raise ValueError("Mix of multilabel input format")
-
+            raise ValueError("Mix type of y not allowed, got type %s"
+                             % ys_types)
     else:
-        _unique_labels = _unique_multiclass
+        label_type = ys_types[0]
+
+    # Check consistency for the indicator format
+    if (label_type == "multilabel-indicator" and
+            len(set(y.shape[1] for y in ys)) > 1):
+        raise ValueError("Multi-label binary indicator input with "
+                         "different numbers of labels")
+
+    # Get the proper unique function for the given format
+    _unique_labels = _FN_UNIQUE_LABELS.get(label_type, None)
+    if not _unique_labels:
+        raise ValueError("Unknown label type")
 
     # Combine every labels
     ys_labels = [_unique_labels(y) for y in ys]
