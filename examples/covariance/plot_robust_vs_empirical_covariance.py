@@ -5,8 +5,8 @@ Robust vs Empirical covariance estimate
 
 The usual covariance maximum likelihood estimate is very sensitive to
 the presence of outliers in the data set. In such a case, one would
-have better to use a robust estimator of covariance to garanty that
-the estimation is resistant to "errorneous" observations in the data
+have better to use a robust estimator of covariance to guaranty that
+the estimation is resistant to "erroneous" observations in the data
 set.
 
 The Minimum Covariance Determinant estimator is a robust,
@@ -17,7 +17,7 @@ covariance. The idea is to find :math:`\frac{n_samples+n_features+1}{2}`
 observations whose empirical covariance has the smallest determinant,
 yielding a "pure" subset of observations from which to compute
 standards estimates of location and covariance. After a correction
-step aiming at compensating the fact the the estimates were learnt
+step aiming at compensating the fact the the estimates were learned
 from only a portion of the initial data, we end up with robust
 estimates of the data set location and covariance.
 
@@ -26,7 +26,7 @@ by P.J.Rousseuw in [1].
 
 In this example, we compare the estimation errors that are made when
 using three types of location and covariance estimates on contaminated
-gaussian distributed data sets:
+Gaussian distributed data sets:
 
 - The mean and the empirical covariance of the full dataset, which break
   down as soon as there are outliers in the data set
@@ -84,11 +84,12 @@ for i, n_outliers in enumerate(range_n_outliers):
         # compare raw robust estimates with the true location and covariance
         err_loc_mcd[i, j] = np.sum(S.location_ ** 2)
         err_cov_mcd[i, j] = S.error_norm(np.eye(n_features))
-        # compare estimators learnt from the full data set with true parameters
+        # compare estimators learned from the full data set with true
+        # parameters
         err_loc_emp_full[i, j] = np.sum(X.mean(0) ** 2)
         err_cov_emp_full[i, j] = EmpiricalCovariance().fit(X).error_norm(
             np.eye(n_features))
-        # compare with an empirical covariance learnt from a pure data set
+        # compare with an empirical covariance learned from a pure data set
         # (i.e. "perfect" MCD)
         pure_X = X[inliers_mask]
         pure_location = pure_X.mean(0)
