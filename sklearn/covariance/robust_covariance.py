@@ -490,20 +490,6 @@ class CovMEstimator(EmpiricalCovariance):
         covariance matrix estimation this parameter is typically chosen in the
         range `1 < nu < 5`.
 
-    initial_loc : array-like of shape [n_features], optional
-        Initial estimate of the mean / location of the training data.
-
-    initial_cov : array-like of shape [n_features, n_features], optional
-        Initial estimate of the covariance matrix of the training data.
-
-    eps : float, optional
-        Stop criteria for the iteration. The iteration is aborted if
-        `sum(abs(new_loc - loc))` and sum(abs(new_cov - cov))` are both
-        smaller than `eps`.
-
-    max_iter : int, optional
-        Maximum number of iterations.
-
     verbose : bool, optional
         Determine whether to print status messages for each iteration.
 
@@ -528,16 +514,12 @@ class CovMEstimator(EmpiricalCovariance):
 
     """
 
-    def __init__(self, nu=1, initial_loc=None, initial_cov=None, eps=1e-6,
-                 max_iter=200, verbose=True):
+    def __init__(self, nu=1, verbose=True):
         self.nu = nu
-        self.initial_loc = initial_loc
-        self.initial_cov = initial_cov
-        self.eps = eps
-        self.max_iter = max_iter
         self.verbose = verbose
 
-    def fit(self, X, y=None):
+    def fit(self, X, y=None, initial_loc=None, initial_cov=None, eps=1e-6,
+            max_iter=200):
         """Determine location and covariance information.
 
         Parameters
@@ -545,7 +527,22 @@ class CovMEstimator(EmpiricalCovariance):
         X : array-like, shape = [n_samples, n_features]
             Training data, where n_samples is the number of samples
             and n_features is the number of features.
+
         y : not used, present for API consistence purpose.
+
+        initial_loc : array-like of shape [n_features], optional
+            Initial estimate of the mean / location of the training data.
+
+        initial_cov : array-like of shape [n_features, n_features], optional
+            Initial estimate of the covariance matrix of the training data.
+
+        eps : float, optional
+            Stop criteria for the iteration. The iteration is aborted if
+            `sum(abs(new_loc - loc))` and sum(abs(new_cov - cov))` are both
+            smaller than `eps`.
+
+        max_iter : int, optional
+            Maximum number of iterations.
 
         Returns
         -------
@@ -595,7 +592,7 @@ class CovMEstimator(EmpiricalCovariance):
 
                 # determine weight for current sample
                 s = np.dot(xc, np.dot(inv_cov, xc_H))
-                weight = (2 * k + nu) / (nu + 2 * s)
+                weight = (2 * k + self.nu) / (self.nu + 2 * s)
                 weight_sum += weight
 
                 # add weighted covariance part of current sample
@@ -609,7 +606,7 @@ class CovMEstimator(EmpiricalCovariance):
             diff_loc = np.abs(new_loc - loc).sum()
             diff_cov = np.abs(new_cov - cov).sum()
 
-            if verbose:
+            if self.verbose:
                 print("%4d: d(loc): %.10f, d(cov): %.10f" \
                       % (i, diff_loc, diff_cov))
 
