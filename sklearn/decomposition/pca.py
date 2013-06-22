@@ -375,14 +375,15 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_components : int
-        Maximum number of components to keep: default is 50.
+    n_components : int, optional
+        Maximum number of components to keep. When not given or None, this
+        is set to n_features (the second dimension of the training data).
 
     copy : bool
         If False, data passed to fit are overwritten
 
     iterated_power : int, optional
-        Number of iteration for the power method. 3 by default.
+        Number of iterations for the power method. 3 by default.
 
     whiten : bool, optional
         When True (False by default) the `components_` vectors are divided

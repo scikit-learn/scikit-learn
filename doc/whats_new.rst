@@ -111,6 +111,11 @@ Changelog
      :ref:`example_applications_plot_out_of_core_classification.py`.
      By `Eustache Diemert`_.
 
+   - The default number of components for
+     :class:`sklearn.decomposition.RandomizedPCA` is now correctly documented
+     to be ``n_features``. This was the default behavior, so programs using it
+     will continue to work as they did.
+
 API changes summary
 -------------------
 
