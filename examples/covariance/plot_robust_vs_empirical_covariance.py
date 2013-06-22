@@ -47,7 +47,7 @@ import numpy as np
 import pylab as pl
 import matplotlib.font_manager
 
-from sklearn.covariance import EmpiricalCovariance, MinCovDet, m_estimate
+from sklearn.covariance import EmpiricalCovariance, MinCovDet, CovMEstimator
 
 # example settings
 n_samples = 80
@@ -61,6 +61,8 @@ range_n_outliers = np.concatenate(
 # definition of arrays to store results
 err_loc_mcd = np.zeros((range_n_outliers.size, repeat))
 err_cov_mcd = np.zeros((range_n_outliers.size, repeat))
+err_loc_mest = np.zeros((range_n_outliers.size, repeat))
+err_cov_mest = np.zeros((range_n_outliers.size, repeat))
 err_loc_emp_full = np.zeros((range_n_outliers.size, repeat))
 err_cov_emp_full = np.zeros((range_n_outliers.size, repeat))
 err_loc_emp_pure = np.zeros((range_n_outliers.size, repeat))
@@ -84,11 +86,15 @@ for i, n_outliers in enumerate(range_n_outliers):
         # compare raw robust estimates with the true location and covariance
         err_loc_mcd[i, j] = np.sum(S.location_ ** 2)
         err_cov_mcd[i, j] = S.error_norm(np.eye(n_features))
+
+        # use M-estimator to robustly determine location and covariance info
+
         # compare estimators learned from the full data set with true
         # parameters
         err_loc_emp_full[i, j] = np.sum(X.mean(0) ** 2)
         err_cov_emp_full[i, j] = EmpiricalCovariance().fit(X).error_norm(
             np.eye(n_features))
+
         # compare with an empirical covariance learned from a pure data set
         # (i.e. "perfect" MCD)
         pure_X = X[inliers_mask]

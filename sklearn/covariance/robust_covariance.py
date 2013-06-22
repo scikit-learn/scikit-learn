@@ -538,7 +538,7 @@ class CovMEstimator(EmpiricalCovariance):
         self.verbose = verbose
 
     def fit(self, X, y=None):
-        """Fits a Minimum Covariance Determinant with the FastMCD algorithm.
+        """Determine location and covariance information.
 
         Parameters
         ----------
