@@ -2,6 +2,7 @@
 *.so
 *~
 .#*
+*.lprof
 *.swp
 *.swo
 .DS_Store
