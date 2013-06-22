@@ -43,18 +43,29 @@ class ParameterGrid(object):
 
     Parameters
     ----------
-    param_grid : dict of string to sequence
+    param_grid : dict of string to sequence, or sequence of such
         The parameter grid to explore, as a dictionary mapping estimator
         parameters to sequences of allowed values.
+
         An empty dict signifies default parameters.
+
+        A sequence of dicts signifies a sequence of grids to search, and is
+        useful to avoid exploring parameter combinations that make no sense
+        or have no effect. See the examples below.
 
     Examples
     --------
     >>> from sklearn.grid_search import ParameterGrid
-    >>> param_grid = {'a':[1, 2], 'b':[True, False]}
+    >>> param_grid = {'a': [1, 2], 'b': [True, False]}
     >>> list(ParameterGrid(param_grid)) #doctest: +NORMALIZE_WHITESPACE
     [{'a': 1, 'b': True}, {'a': 1, 'b': False},
      {'a': 2, 'b': True}, {'a': 2, 'b': False}]
+
+    >>> grid = [{'kernel': ['linear']}, {'kernel': ['rbf'], 'gamma': [1, 10]}]
+    >>> list(ParameterGrid(grid)) #doctest: +NORMALIZE_WHITESPACE
+    [{'kernel': 'linear'},
+     {'kernel': 'rbf', 'gamma': 1},
+     {'kernel': 'rbf', 'gamma': 10}]
 
     See also
     --------
