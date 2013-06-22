@@ -107,6 +107,8 @@ Changelog
      and can be used for latent semantic analysis (LSA).
      By `Lars Buitinck`_.
 
+   - Renamed the `manifold.spectral_embedding` module to `spectral_embedding_`
+     to avoid naming conflict with :func:`manifold.spectral_embedding`.
 
 API changes summary
 -------------------
