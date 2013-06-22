@@ -64,11 +64,9 @@ References
     location and scatter. Ann. Statist. 19(4), 2102-2119.
 
 """
-print(__doc__)
 
 import numpy as np
 import pylab as pl
-import matplotlib.font_manager
 
 from sklearn.covariance import EmpiricalCovariance, MinCovDet, CovMEstimator
 
