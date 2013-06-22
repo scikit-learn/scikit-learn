@@ -547,6 +547,11 @@ class CovMEstimator(EmpiricalCovariance):
             and n_features is the number of features.
         y : not used, present for API consistence purpose.
 
+        Returns
+        -------
+        self : object
+            Returns self.
+
         """
 
         X = np.atleast_2d(X)
@@ -622,6 +627,8 @@ class CovMEstimator(EmpiricalCovariance):
 
         self.location_ = loc
         self.covariance_ = cov
+
+        return self
 
 
 class MinCovDet(EmpiricalCovariance):
