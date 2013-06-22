@@ -132,10 +132,6 @@ class PassiveAggressiveClassifier(BaseSGDClassifier):
         intercept_init : array, shape = [n_classes]
             The initial intercept to warm-start the optimization.
 
-        sample_weight : array-like, shape = [n_samples], optional
-            Weights applied to individual samples.
-            If not provided, uniform weights are assumed.
-
         Returns
         -------
         self : returns an instance of self.

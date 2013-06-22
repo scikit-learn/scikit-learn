@@ -934,6 +934,9 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         X : sparse matrix, [n_samples, n_features]
             a matrix of term/token counts
 
+        copy: boolean, optional, default=True
+            Whether we should operate on and return a copy of X.  If False, changes are made to the original.
+        
         Returns
         -------
         vectors : sparse matrix, [n_samples, n_features]
@@ -1199,6 +1202,9 @@ class TfidfVectorizer(CountVectorizer):
         raw_documents : iterable
             an iterable which yields either str, unicode or file objects
 
+        copy: boolean, optional, default=True
+            Whether we should operate on and return a copy of X (which is a transform from raw_docuements).  If False, changes are made to the original.
+            
         Returns
         -------
         vectors : sparse matrix, [n_samples, n_features]

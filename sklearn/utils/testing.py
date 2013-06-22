@@ -203,8 +203,8 @@ def all_estimators(include_meta_estimators=False, include_other=False,
         BaseEnsemble, OneVsOneClassifier, OutputCodeClassifier,
         OneVsRestClassifier, RFE, RFECV.
 
-    include_others : boolean, default=False
-        Wether to include meta-estimators that are somehow special and can
+    include_other : boolean, default=False
+        Whether to include meta-estimators that are somehow special and can
         not be default-constructed sensibly. These are currently
         Pipeline, FeatureUnion and GridSearchCV
 

@@ -33,8 +33,8 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
         tested rank value
     n_samples: int,
         number of samples
-    dim: int,
-        embedding/empirical dimension
+    n_features: int,
+        embedding/empirical dimension (number of features)
 
     Returns
     -------

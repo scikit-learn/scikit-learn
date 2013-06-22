@@ -1247,6 +1247,9 @@ def permutation_test_score(estimator, X, y, scoring=None, cv=None,
         Specific crossvalidation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects.
 
+    n_permutations: integer, optional, default=100
+        The number of permutations
+        
     n_jobs : integer, optional
         The number of CPUs to use to do the computation. -1 means
         'all CPUs'.

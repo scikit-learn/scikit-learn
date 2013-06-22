@@ -1009,6 +1009,12 @@ class LassoCV(LinearModelCV, RegressorMixin):
         List of alphas where to compute the models.
         If ``None`` alphas are set automatically
 
+    fit_intercept : boolean, optional, default True
+        whether to calculate the intercept for this model. If set to false, no intercept will be used in calculations (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
+        
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
@@ -1022,6 +1028,9 @@ class LassoCV(LinearModelCV, RegressorMixin):
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than ``tol``.
+        
+    copy_X : boolean, optional, default True
+        If True, X will be copied; else, it may be overwritten.
 
     cv : integer or crossvalidation generator, optional
         If an integer is passed, it is the number of fold (default 3).
@@ -1108,6 +1117,12 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         List of alphas where to compute the models.
         If None alphas are set automatically
 
+    fit_intercept : boolean, optional, default True
+        whether to calculate the intercept for this model. If set to false, no intercept will be used in calculations (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
+
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
@@ -1127,6 +1142,9 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         Specific crossvalidation objects can be passed, see the
         :mod:`sklearn.cross_validation` module for the list of possible
         objects.
+
+    copy_X : boolean, optional, default True
+        If True, X will be copied; else, it may be overwritten.
 
     verbose : bool or integer
         amount of verbosity

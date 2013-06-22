@@ -158,6 +158,9 @@ def spectral_embedding(adjacency, n_components=8, eigen_solver=None,
     eigen_tol : float, optional, default=0.0
         Stopping criterion for eigendecomposition of the Laplacian matrix
         when using arpack eigen_solver.
+        
+    norm_laplacian : bool, optional, default=True
+        If True, then compute normalized Laplacian.
 
     drop_first : bool, optional, default=True
         Whether to drop the first eigenvector. For spectral embedding, this

@@ -173,8 +173,6 @@ class DBSCAN(BaseEstimator, ClusterMixin):
             Array of distances between samples, or a feature array.
             The array is treated as a feature array unless the metric is
             given as 'precomputed'.
-        params: dict
-            Overwrite keywords from __init__.
         """
         clust = dbscan(X, **self.get_params())
         self.core_sample_indices_, self.labels_ = clust

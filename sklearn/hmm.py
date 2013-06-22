@@ -582,7 +582,7 @@ class GaussianHMM(_BaseHMM):
     n_components : int
         Number of states.
 
-    ``_covariance_type`` : string
+    ``covariance_type`` : string
         String describing the type of covariance parameters to
         use.  Must be one of 'spherical', 'tied', 'diag', 'full'.
         Defaults to 'diag'.

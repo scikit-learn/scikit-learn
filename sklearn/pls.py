@@ -125,14 +125,6 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
 
     Parameters
     ----------
-    X : array-like of predictors, shape = [n_samples, p]
-        Training vectors, where n_samples in the number of samples and
-        p is the number of predictors.
-
-    Y : array-like of response, shape = [n_samples, q]
-        Training vectors, where n_samples in the number of samples and
-        q is the number of response variables.
-
     n_components : int, number of components to keep. (default 2).
 
     scale : boolean, scale data? (default True)
@@ -219,6 +211,18 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
         self.copy = copy
 
     def fit(self, X, Y):
+        """
+        Parameters
+        ----------
+        X : array-like of predictors, shape = [n_samples, p]
+            Training vector, where n_samples in the number of samples and
+            p is the number of predictors. X will be centered before any analysis.
+    
+        Y : array-like of response, shape = [n_samples, q]
+            Training vector, where n_samples in the number of samples and
+            q is the number of response variables. X will be centered before any
+            analysis.
+        """
         # copy since this will contains the residuals (deflated) matrices
         X, Y = check_arrays(X, Y, dtype=np.float, copy=self.copy,
                             sparse_format='dense')
@@ -438,14 +442,6 @@ class PLSRegression(_PLS):
 
     Parameters
     ----------
-    X : array-like of predictors, shape = [n_samples, p]
-        Training vectors, where n_samples in the number of samples and
-        p is the number of predictors.
-
-    Y : array-like of response, shape = [n_samples, q]
-        Training vectors, where n_samples in the number of samples and
-        q is the number of response variables.
-
     n_components : int, (default 2)
         Number of components to keep.
 
@@ -556,14 +552,6 @@ class PLSCanonical(_PLS):
 
     Parameters
     ----------
-    X : array-like of predictors, shape = [n_samples, p]
-        Training vectors, where n_samples in the number of samples and
-        p is the number of predictors.
-
-    Y : array-like of response, shape = [n_samples, q]
-        Training vectors, where n_samples in the number of samples and
-        q is the number of response variables.
-
     n_components : int, number of components to keep. (default 2).
 
     scale : boolean, scale data? (default True)
@@ -674,14 +662,6 @@ class CCA(_PLS):
 
     Parameters
     ----------
-    X : array-like of predictors, shape = [n_samples, p]
-        Training vectors, where n_samples in the number of samples and
-        p is the number of predictors.
-
-    Y : array-like of response, shape = [n_samples, q]
-        Training vectors, where n_samples in the number of samples and
-        q is the number of response variables.
-
     n_components : int, (default 2).
         number of components to keep.
 
@@ -781,21 +761,12 @@ class PLSSVD(BaseEstimator, TransformerMixin):
     The are no iterative deflation here.
 
     Parameters
-    ----------
-    X : array-like of predictors, shape = [n_samples, p]
-        Training vector, where n_samples in the number of samples and
-        p is the number of predictors. X will be centered before any analysis.
-
-    Y : array-like of response, shape = [n_samples, q]
-        Training vector, where n_samples in the number of samples and
-        q is the number of response variables. X will be centered before any
-        analysis.
-
+    ----------    
     n_components : int, (default 2).
         number of components to keep.
 
     scale : boolean, (default True)
-        scale X and Y
+        scale X and Y        
 
     Attributes
     ----------
@@ -823,6 +794,18 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         self.copy = copy
 
     def fit(self, X, Y):
+        """
+        Parameters
+        ----------
+        X : array-like of predictors, shape = [n_samples, p]
+            Training vector, where n_samples in the number of samples and
+            p is the number of predictors. X will be centered before any analysis.
+    
+        Y : array-like of response, shape = [n_samples, q]
+            Training vector, where n_samples in the number of samples and
+            q is the number of response variables. X will be centered before any
+            analysis.
+        """
         # copy since this will contains the centered data
         X, Y = check_arrays(X, Y, dtype=np.float, copy=self.copy,
                             sparse_format='dense')

@@ -65,7 +65,7 @@ def clear_data_home(data_home=None):
 
 def load_files(container_path, description=None, categories=None,
                load_content=True, shuffle=True, charset=None,
-               charse_error='strict', random_state=0):
+               charset_error='strict', random_state=0):
     """Load text files with categories as subfolder names.
 
     Individual samples are assumed to be files stored a two levels folder
@@ -180,7 +180,7 @@ def load_files(container_path, description=None, categories=None,
     if load_content:
         data = [open(filename, 'rb').read() for filename in filenames]
         if charset is not None:
-            data = [d.decode(charset, charse_error) for d in data]
+            data = [d.decode(charset, charset_error) for d in data]
         return Bunch(data=data,
                      filenames=filenames,
                      target_names=target_names,

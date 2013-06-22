@@ -39,6 +39,9 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
     y : array-like, shape = [n_samples] or [n_samples, n_targets]
         Target values
 
+    alpha : float
+        Small positive values of alpha improve the conditioning of the problem and reduce the variance of the estimates. Alpha corresponds to (2*C)^-1 in other linear models such as LogisticRegression or LinearSVC.
+
     max_iter : int, optional
         Maximum number of iterations for conjugate gradient solver.
         The default value is determined by scipy.sparse.linalg.

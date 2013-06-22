@@ -70,6 +70,12 @@ class ShrunkCovariance(EmpiricalCovariance):
     store_precision : bool
       Specify if the estimated precision is stored
 
+    assume_centered: Boolean, optional, default=False
+      If True, data are not centered before computation.
+      Useful to work with data whose mean is significantly equal to
+      zero but is not exactly zero.
+      If False, data are centered before computation.
+      
     shrinkage: float, 0 <= shrinkage <= 1
       coefficient in the convex combination used for the computation
       of the shrunk estimate.
@@ -113,13 +119,7 @@ class ShrunkCovariance(EmpiricalCovariance):
           Training data, where n_samples is the number of samples
           and n_features is the number of features.
         y: not used, present for API consistence purpose.
-
-        assume_centered: Boolean
-          If True, data are not centered before computation.
-          Useful to work with data whose mean is significantly equal to
-          zero but is not exactly zero.
-          If False, data are centered before computation.
-
+       
         Returns
         -------
         self: object
@@ -151,7 +151,7 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     X: array-like, shape (n_samples, n_features)
       Data from which to compute the Ledoit-Wolf shrunk covariance shrinkage
 
-    assume_centered: Boolean
+    assume_centered: Boolean, optional, default=False
       If True, data are not centered before computation.
       Useful to work with data whose mean is significantly equal to
       zero but is not exactly zero.

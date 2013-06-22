@@ -160,15 +160,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
 
     n_clusters : int
         The number of clusters to form as well as the number of
-        centroids to generate.
-
-    max_iter : int, optional, default 300
-        Maximum number of iterations of the k-means algorithm to run.
-
-    n_init : int, optional, default: 10
-        Number of time the k-means algorithm will be run with different
-        centroid seeds. The final results will be the best output of
-        n_init consecutive runs in terms of inertia.
+        centroids to generate.    
 
     init : {'k-means++', 'random', or ndarray, or a callable}, optional
         Method for initialization, default to 'k-means++':
@@ -185,12 +177,23 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
 
         If a callable is passed, it should take arguments X, k and
         and a random state and return an initialization.
+        
+    precompute_distances : boolean
+        Precompute distances (faster but takes more memory).
 
-    tol : float, optional
-        The relative increment in the results before declaring convergence.
+    n_init : int, optional, default: 10
+        Number of time the k-means algorithm will be run with different
+        centroid seeds. The final results will be the best output of
+        n_init consecutive runs in terms of inertia.
+        
+    max_iter : int, optional, default 300
+        Maximum number of iterations of the k-means algorithm to run.    
 
     verbose : boolean, optional
         Verbosity mode.
+        
+    tol : float, optional
+        The relative increment in the results before declaring convergence.
 
     random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
@@ -341,6 +344,9 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
+        
+    precompute_distances : boolean, optional, default=True
+        Precompute distances (faster but takes more memory).
 
     Returns
     -------
@@ -445,6 +451,9 @@ def _labels_inertia(X, x_squared_norms, centers,
     centers: float64 array, shape (k, n_features)
         The cluster centers.
 
+    precompute_distances : boolean, optional, default True
+        Precompute distances (faster but takes more memory).
+        
     distances: float64 array, shape (n_samples,)
         Distances for each sample to its closest center.
 
@@ -584,12 +593,15 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         If an ndarray is passed, it should be of shape (n_clusters, n_features)
         and gives the initial centers.
-
-    precompute_distances : boolean
-        Precompute distances (faster but takes more memory).
-
+    
     tol : float, optional default: 1e-4
         Relative tolerance w.r.t. inertia to declare convergence
+        
+    precompute_distances : boolean
+        Precompute distances (faster but takes more memory).
+        
+    verbose: boolean, optional
+        Verbosity mode
 
     n_jobs : int
         The number of jobs to use for the computation. This works by breaking
@@ -605,6 +617,9 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         The generator used to initialize the centers. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
+        
+    copy_x : boolean, optional, default True
+        If True, X will be copied; else, it may be overwritten.
 
     Attributes
     ----------
@@ -1013,6 +1028,9 @@ class MiniBatchKMeans(KMeans):
 
     batch_size : int, optional, default: 100
         Size of the mini batches.
+
+    verbose : boolean, optional
+        Verbosity mode.        
 
     init_size : int, optional, default: 3 * batch_size
         Number of samples to randomly sample for speeding up the

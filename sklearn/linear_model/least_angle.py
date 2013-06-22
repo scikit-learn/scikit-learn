@@ -1179,11 +1179,14 @@ class LassoLarsIC(LassoLars):
 
         parameters
         ----------
-        x : array-like, shape = [n_samples, n_features]
+        X : array-like, shape = [n_samples, n_features]
             training data.
 
         y : array-like, shape = [n_samples]
             target values.
+
+        copy_X : boolean, optional, default True
+            If True, X will be copied; else, it may be overwritten.
 
         returns
         -------

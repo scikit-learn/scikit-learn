@@ -76,6 +76,9 @@ def load_svmlight_file(f, n_features=None, dtype=np.float64,
         every feature, hence the inferred shape might vary from one
         slice to another.
 
+    dtype: NumPy datatype, optional, default=np.float64
+        The data type for each element in the matrix
+        
     multilabel: boolean, optional
         Samples may have several labels each (see
         http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)
@@ -167,6 +170,9 @@ def load_svmlight_files(files, n_features=None, dtype=np.float64,
         The number of features to use. If None, it will be inferred from the
         maximum column index occurring in any of the files.
 
+    dtype: NumPy datatype, optional, default=np.float64
+        The data type for each element in the matrix
+        
     multilabel: boolean, optional
         Samples may have several labels each (see
         http://www.csie.ntu.edu.tw/~cjlin/libsvmtools/datasets/multilabel.html)

@@ -310,6 +310,9 @@ class LinearRegression(LinearModel, RegressorMixin):
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
 
+    copy_X : boolean, optional, default True
+        If True, X will be copied; else, it may be overwritten.
+        
     Attributes
     ----------
     `coef_` : array, shape (n_features, ) or (n_targets, n_features)

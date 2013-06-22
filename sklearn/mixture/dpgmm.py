@@ -148,6 +148,10 @@ class DPGMM(GMM):
 
     thresh : float, optional
         Convergence threshold.
+        
+    verbose: boolean, optional, default=False
+        The verbosity level
+
     n_iter : int, optional
         Maximum number of iterations to perform before convergence.
     params : string, optional
@@ -607,7 +611,23 @@ class VBGMM(DPGMM):
         value of alpha the more likely the variational mixture of
         Gaussians model will use all components it can. Defaults
         to 1.
+        
+    thresh : float, optional
+        Convergence threshold.
+        
+    verbose: boolean, optional, default=False
+        The verbosity level
 
+    n_iter : int, optional
+        Maximum number of iterations to perform before convergence.
+    params : string, optional
+        Controls which parameters are updated in the training
+        process.  Can contain any combination of 'w' for weights,
+        'm' for means, and 'c' for covars.  Defaults to 'wmc'.
+    init_params : string, optional
+        Controls which parameters are updated in the initialization
+        process.  Can contain any combination of 'w' for weights,
+        'm' for means, and 'c' for covars.  Defaults to 'wmc'.
 
     Attributes
     ----------

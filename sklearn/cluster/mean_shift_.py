@@ -78,10 +78,14 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
         default value: False
         Ignored if seeds argument is not None.
 
-    min_bin_freq : int, optional
-       To speed up the algorithm, accept only those bins with at least
-       min_bin_freq points as seeds. If not defined, set to 1.
-
+    cluster_all : boolean, default True
+        If true, then all points are clustered, even those orphans that are
+        not within any kernel. Orphans are assigned to the nearest kernel.
+        If false, then orphans are given cluster label -1.
+        
+    max_iterations: boolean
+        The maximum number of iterations to run.  Will continue gradient climbing until either convergence or max_iterations is reached.
+        
     Returns
     -------
 
@@ -216,6 +220,15 @@ class MeanShift(BaseEstimator, ClusterMixin):
         with bandwidth as the grid size and default values for
         other parameters.
 
+    bin_seeding : boolean
+        If true, initial kernel locations are not locations of all
+        points, but rather the location of the discretized version of
+        points, where points are binned onto a grid whose coarseness
+        corresponds to the bandwidth. Setting this option to True will speed
+        up the algorithm because fewer seeds will be initialized.
+        default value: False
+        Ignored if seeds argument is not None.
+        
     cluster_all : boolean, default True
         If true, then all points are clustered, even those orphans that are
         not within any kernel. Orphans are assigned to the nearest kernel.

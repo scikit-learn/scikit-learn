@@ -52,6 +52,9 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     estimator_params : dict
         Parameters for the external estimator.
         Useful for doing grid searches.
+        
+    verbose : int, default=0
+        Controls verbosity of output.
 
     Attributes
     ----------

@@ -13,7 +13,7 @@ The built-in correlation models submodule for the gaussian_process module.
 import numpy as np
 
 
-def absolute_exponential(theta, d):
+def absolute_exponential(theta, dx):
     """
     Absolute exponential autocorrelation model.
     (Ornstein-Uhlenbeck stochastic process)::
@@ -40,7 +40,7 @@ def absolute_exponential(theta, d):
         autocorrelation model.
     """
     theta = np.asarray(theta, dtype=np.float)
-    d = np.abs(np.asarray(d, dtype=np.float))
+    d = np.abs(np.asarray(dx, dtype=np.float))
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -55,7 +55,7 @@ def absolute_exponential(theta, d):
         return np.exp(- np.sum(theta.reshape(1, n_features) * d, axis=1))
 
 
-def squared_exponential(theta, d):
+def squared_exponential(theta, dx):
     """
     Squared exponential correlation model (Radial Basis Function).
     (Infinitely differentiable stochastic process, very smooth)::
@@ -83,7 +83,7 @@ def squared_exponential(theta, d):
     """
 
     theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    d = np.asarray(dx, dtype=np.float)
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -98,7 +98,7 @@ def squared_exponential(theta, d):
         return np.exp(-np.sum(theta.reshape(1, n_features) * d ** 2, axis=1))
 
 
-def generalized_exponential(theta, d):
+def generalized_exponential(theta, dx):
     """
     Generalized exponential correlation model.
     (Useful when one does not know the smoothness of the function to be
@@ -127,7 +127,7 @@ def generalized_exponential(theta, d):
     """
 
     theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    d = np.asarray(dx, dtype=np.float)
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -148,7 +148,7 @@ def generalized_exponential(theta, d):
     return r
 
 
-def pure_nugget(theta, d):
+def pure_nugget(theta, dx):
     """
     Spatial independence correlation model (pure nugget).
     (Useful when one wants to solve an ordinary least squares problem!)::
@@ -176,7 +176,7 @@ def pure_nugget(theta, d):
     """
 
     theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    d = np.asarray(dx, dtype=np.float)
 
     n_eval = d.shape[0]
     r = np.zeros(n_eval)
@@ -185,7 +185,7 @@ def pure_nugget(theta, d):
     return r
 
 
-def cubic(theta, d):
+def cubic(theta, dx):
     """
     Cubic correlation model::
 
@@ -213,7 +213,7 @@ def cubic(theta, d):
     """
 
     theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    d = np.asarray(dx, dtype=np.float)
 
     if d.ndim > 1:
         n_features = d.shape[1]
@@ -235,7 +235,7 @@ def cubic(theta, d):
     return r
 
 
-def linear(theta, d):
+def linear(theta, dx):
     """
     Linear correlation model::
 
@@ -263,7 +263,7 @@ def linear(theta, d):
     """
 
     theta = np.asarray(theta, dtype=np.float)
-    d = np.asarray(d, dtype=np.float)
+    d = np.asarray(dx, dtype=np.float)
 
     if d.ndim > 1:
         n_features = d.shape[1]
