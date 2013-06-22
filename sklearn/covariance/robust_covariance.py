@@ -493,6 +493,14 @@ def m_estimate(X, nu=1, initial_mean=None, initial_cov=None, eps=1e-6,
     cov : array-like of shape [n_features, n_features], optional
         Estimate of the covariance matrix of the training data.
 
+    Notes
+    -----
+    The principle of this iterative algorithm is to weight each sample
+    depending on its likeliness belonging to the complete distribution of the
+    data set, whereat the t-distributed weight function is influenced by its
+    degrees of freedom `nu`. The iteration converges to a unique solution under
+    mild regularity.
+
     References
     ----------
     .. [1] Zoubir A., Koivunen V., Chakhchoukh Y. and Muma M. (2012). Robust
