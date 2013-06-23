@@ -573,34 +573,19 @@ class CovMEstimator(EmpiricalCovariance):
 
         cov = initial_cov
 
-        new_cov = np.zeros_like(cov)
-        inv_cov = np.zeros_like(cov)
-
         for i in range(max_iter):
 
-            # initialize covariance matrices
-            weight_sum = 0
-            new_loc = 0
-            new_cov[:] = 0
-            inv_cov[:] = np.linalg.inv(cov)
+            mahalanobis_dists = np.sum(np.dot(X_centered, pinvh(cov))
+                                       * X_centered_H.T, axis=1)
+            weights = (2 * k + self.nu) / (self.nu + 2 * mahalanobis_dists)
 
+            new_loc = np.sum(weights[:, None] * X, axis=0) / np.sum(weights)
+
+            new_cov = np.zeros_like(cov)
             for n in range(n_samples):
-
-                # extract current sample
                 xc = X_centered[n][None, :]
                 xc_H = X_centered_H[:, n][:, None]
-
-                # determine weight for current sample
-                s = np.dot(xc, np.dot(inv_cov, xc_H))
-                weight = (2 * k + self.nu) / (self.nu + 2 * s)
-                weight_sum += weight
-
-                # add weighted covariance part of current sample
-                new_loc += weight * X[n]
-                new_cov += weight * np.dot(xc_H, xc)
-
-            # average covariance matrix of all samples
-            new_loc /= weight_sum
+                new_cov += weights[n] * np.dot(xc_H, xc)
             new_cov /= (n_samples - 1)
 
             diff_loc = np.abs(new_loc - loc).sum()
@@ -615,8 +600,8 @@ class CovMEstimator(EmpiricalCovariance):
                 break
 
             # copy new loc and covariance for next iteration
-            loc[:] = new_loc
-            cov[:] = new_cov
+            loc = new_loc
+            cov = new_cov
 
             # compute updated centered X data
             X_centered = X - loc
