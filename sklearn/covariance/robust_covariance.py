@@ -555,7 +555,7 @@ class CovMEstimator(EmpiricalCovariance):
 
         n_samples = X.shape[0]
         # dimensionality of the data
-        k = X.shape[1]
+        n_features = X.shape[1]
 
         if initial_loc is None:
             # use mean of all samples as initial guess
@@ -577,7 +577,8 @@ class CovMEstimator(EmpiricalCovariance):
 
             mahalanobis_dists = np.sum(np.dot(X_centered, pinvh(cov))
                                        * X_centered_H.T, axis=1)
-            weights = (2 * k + self.nu) / (self.nu + 2 * mahalanobis_dists)
+            weights = (2 * n_features + self.nu) \
+                      / (self.nu + 2 * mahalanobis_dists)
 
             new_loc = np.sum(weights[:, None] * X, axis=0) / np.sum(weights)
 
