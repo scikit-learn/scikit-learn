@@ -150,7 +150,7 @@ pl.errorbar(range_n_outliers, err_loc_emp_pure.mean(1),
             label="Pure data set mean", color='black')
 pl.title("Influence of outliers on the location estimation", fontsize=11)
 pl.ylabel(r"Error ($||\mu - \hat{\mu}||_2^2$)", fontsize=10)
-pl.legend(loc="upper left", fontsize=10)
+pl.legend(loc="upper left", prop={'size': 10})
 pl.tick_params(axis='both', which='major', labelsize=8)
 
 pl.subplot(4, 1, 2)
@@ -164,7 +164,7 @@ pl.errorbar(range_n_outliers, err_loc_emp_pure.mean(1),
             yerr=err_loc_emp_pure.std(1) / np.sqrt(repeat),
             label="Pure data set mean", color='black')
 pl.ylabel(r"Error ($||\mu - \hat{\mu}||_2^2$)", fontsize=10)
-pl.legend(loc="upper left", fontsize=10)
+pl.legend(loc="upper left", prop={'size': 10})
 pl.tick_params(axis='both', which='major', labelsize=8)
 
 pl.subplot(4, 1, 3)
@@ -187,7 +187,7 @@ pl.errorbar(range_n_outliers, err_cov_emp_pure.mean(1),
             label="Pure data set empirical covariance", color='black')
 pl.title("Influence of outliers on the covariance estimation", fontsize=11)
 pl.ylabel("RMSE", fontsize=10)
-pl.legend(loc="upper center", fontsize=10)
+pl.legend(loc="upper center", prop={'size': 10})
 pl.tick_params(axis='both', which='major', labelsize=8)
 
 pl.subplot(4, 1, 4)
@@ -203,7 +203,7 @@ pl.errorbar(range_n_outliers, err_cov_emp_pure.mean(1),
             label="Pure data set empirical covariance", color='black')
 pl.xlabel("Amount of contamination (%)", fontsize=10)
 pl.ylabel("RMSE", fontsize=10)
-pl.legend(loc="upper center", fontsize=10)
+pl.legend(loc="upper center", prop={'size': 10})
 pl.tick_params(axis='both', which='major', labelsize=8)
 
 pl.show()
