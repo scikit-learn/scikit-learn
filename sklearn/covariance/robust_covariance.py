@@ -484,11 +484,9 @@ class CovMEstimator(EmpiricalCovariance):
     Parameters
     ----------
     nu : int, optional
-        Degrees of freedom of the t-distributed M-estimator. The multivariate
-        distribution with `nu = 1` is the heavy-tailed Cauchy distribution and
-        `n = inf` is the Gaussian normal distribution. For the robust
+        Degrees of freedom of the t-distributed M-estimator. For the robust
         covariance matrix estimation this parameter is typically chosen in the
-        range `1 < nu < 5`.
+        range `1 < nu < 5` (see [2]_ for further information).
 
     verbose : bool, optional
         Determine whether to print status messages for each iteration.
@@ -497,9 +495,10 @@ class CovMEstimator(EmpiricalCovariance):
     -----
     The principle of this iterative algorithm is to weight each sample
     depending on its likeliness belonging to the complete distribution of the
-    data set, whereat the t-distributed weight function is influenced by its
-    degrees of freedom `nu`. The iteration converges to a unique solution under
-    mild regularity.
+    data set (Mahalanobis distance), whereat the t-distributed weight function
+    is influenced by its degrees of freedom `nu`. The iteration converges to a
+    unique solution under mild regularity. See [3]_ for a short description of
+    the algorithm.
 
     References
     ----------
