@@ -519,7 +519,7 @@ class CovMEstimator(EmpiricalCovariance):
         self.verbose = verbose
 
     def fit(self, X, y=None, initial_loc=None, initial_cov=None, eps=1e-6,
-            max_iter=200):
+            max_iter=50):
         """Determine location and covariance information.
 
         Parameters
