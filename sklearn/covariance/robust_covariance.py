@@ -582,11 +582,8 @@ class CovMEstimator(EmpiricalCovariance):
 
             new_loc = np.sum(weights[:, None] * X, axis=0) / np.sum(weights)
 
-            new_cov = np.zeros_like(cov)
-            for n in range(n_samples):
-                xc = X_centered[n][None, :]
-                xc_H = X_centered_H[:, n][:, None]
-                new_cov += weights[n] * np.dot(xc_H, xc)
+            new_cov = np.einsum('ji,ik->jk', weights * X_centered_H,
+                                X_centered)
             new_cov /= (n_samples - 1)
 
             diff_loc = np.abs(new_loc - loc).sum()
