@@ -418,12 +418,26 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None, n_jobs=1):
         An estimator object implementing `fit` and one of `decision_function`
         or `predict_proba`.
 
+    X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+        Data.
+
+    y : array-like, shape = [n_samples]
+        or sequence of sequences, len = n_samples
+        Multi-class targets. A sequence of sequences turns on multilabel
+        classification.
+
     code_size: float, optional
         Percentage of the number of classes to be used to create the code book.
 
     random_state: numpy.RandomState, optional
         The generator used to initialize the codebook. Defaults to
         numpy.random.
+
+    n_jobs : int, optional, default: 1
+        The number of jobs to use for the computation. If -1 all CPUs are used.
+        If 1 is given, no parallel computing code is used at all, which is
+        useful for debugging. For n_jobs below -1, (n_cpus + 1 + n_jobs) are
+        used. Thus for n_jobs = -2, all CPUs but one are used.
 
 
     Returns

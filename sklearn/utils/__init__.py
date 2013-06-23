@@ -308,8 +308,9 @@ def safe_sqr(X, copy=True):
     X : array like, matrix, sparse matrix
 
     copy: boolean, optional, default=True
-        Whether we should operate on and return a copy of X.  If False, changes are made to the original.
-        
+        Whether we should operate on and return a copy of X.
+        If False, changes are made to the original.
+
     Returns
     -------
     X ** 2 : element wise square

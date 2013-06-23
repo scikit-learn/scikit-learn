@@ -157,7 +157,9 @@ class LossFunction(six.with_metaclass(ABCMeta, object)):
         y_pred : np.ndarray, shape=(n,):
             The predictions.
         learning_rate : float, optional (default=1.0)
-            learning rate shrinks the contribution of each tree by learning_rate. There is a trade-off between learning_rate and n_estimators.
+            learning rate shrinks the contribution of each tree by
+            learning_rate. There is a trade-off between learning_rate
+            and n_estimators.
         """
         # compute leaf for each sample in ``X``.
         terminal_regions = tree.apply(X)

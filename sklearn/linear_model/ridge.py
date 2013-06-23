@@ -40,7 +40,9 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         Target values
 
     alpha : float
-        Small positive values of alpha improve the conditioning of the problem and reduce the variance of the estimates. Alpha corresponds to (2*C)^-1 in other linear models such as LogisticRegression or LinearSVC.
+        Small positive values of alpha improve the conditioning of the problem
+        and reduce the variance of the estimates. Alpha corresponds to (2*C)^-1
+         in other linear models such as LogisticRegression or LinearSVC.
 
     max_iter : int, optional
         Maximum number of iterations for conjugate gradient solver.
@@ -55,10 +57,12 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         - 'auto' chooses the solver automatically based on the type of data.
 
         - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
-          coefficients. More stable for singular matrices than 'dense_cholesky'.
+          coefficients. More stable for singular matrices than
+          'dense_cholesky'.
 
         - 'dense_cholesky' uses the standard scipy.linalg.solve function to
-          obtain a closed-form solution via a Cholesky decomposition of dot(X.T, X)
+          obtain a closed-form solution via a Cholesky decomposition of
+          dot(X.T, X)
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
           scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
@@ -291,7 +295,8 @@ class Ridge(_BaseRidge, RegressorMixin):
         - 'auto' chooses the solver automatically based on the type of data.
 
         - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
-          coefficients. More stable for singular matrices than 'dense_cholesky'.
+          coefficients. More stable for singular matrices than
+          'dense_cholesky'.
 
         - 'dense_cholesky' uses the standard scipy.linalg.solve function to
           obtain a closed-form solution.

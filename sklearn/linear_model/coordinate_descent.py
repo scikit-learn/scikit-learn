@@ -1010,11 +1010,13 @@ class LassoCV(LinearModelCV, RegressorMixin):
         If ``None`` alphas are set automatically
 
     fit_intercept : boolean, optional, default True
-        whether to calculate the intercept for this model. If set to false, no intercept will be used in calculations (e.g. data is expected to be already centered).
+        Whether to calculate the intercept for this model. If set to false, no
+        intercept will be used in calculations (e.g. data is expected to
+        be already centered).
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
-        
+
     precompute : True | False | 'auto' | array-like
         Whether to use a precomputed Gram matrix to speed up
         calculations. If set to ``'auto'`` let us decide. The Gram
@@ -1028,7 +1030,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
         smaller than ``tol``, the optimization code checks the
         dual gap for optimality and continues until it is smaller
         than ``tol``.
-        
+
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
 
@@ -1118,7 +1120,9 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         If None alphas are set automatically
 
     fit_intercept : boolean, optional, default True
-        whether to calculate the intercept for this model. If set to false, no intercept will be used in calculations (e.g. data is expected to be already centered).
+        whether to calculate the intercept for this model. If set to false,
+        no intercept will be used in calculations (e.g. data is expected to
+        be already centered).
 
     normalize : boolean, optional, default False
         If True, the regressors X will be normalized before regression.
