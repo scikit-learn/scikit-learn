@@ -74,7 +74,7 @@ from sklearn.covariance import EmpiricalCovariance, MinCovDet, CovMEstimator
 # example settings
 n_samples = 80
 n_features = 5
-repeat = 5
+repeat = 10
 
 range_n_outliers = np.concatenate(
     (np.linspace(0, n_samples / 8, 5),
