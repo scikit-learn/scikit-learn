@@ -11,9 +11,10 @@ The built-in correlation models submodule for the gaussian_process module.
 
 
 import numpy as np
+import warnings
 
 
-def absolute_exponential(theta, dx):
+def absolute_exponential(theta, d=None, dx=None):
     """
     Absolute exponential autocorrelation model.
     (Ornstein-Uhlenbeck stochastic process)::
@@ -40,6 +41,16 @@ def absolute_exponential(theta, dx):
         autocorrelation model.
     """
     theta = np.asarray(theta, dtype=np.float)
+
+    if d is None and dx is None:
+        raise ValueError("Either dx (which is preferred), or d (equivalent, \
+        but deprecated) must be given a value")
+    if not d is None:
+        warnings.warn("'d' was renamed to 'dx' and will "
+                      "be removed in 0.16.",
+                      DeprecationWarning)
+        dx = d
+
     d = np.abs(np.asarray(dx, dtype=np.float))
 
     if d.ndim > 1:
@@ -55,7 +66,7 @@ def absolute_exponential(theta, dx):
         return np.exp(- np.sum(theta.reshape(1, n_features) * d, axis=1))
 
 
-def squared_exponential(theta, dx):
+def squared_exponential(theta, d=None, dx=None):
     """
     Squared exponential correlation model (Radial Basis Function).
     (Infinitely differentiable stochastic process, very smooth)::
