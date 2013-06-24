@@ -201,6 +201,12 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         The fraction of samples to be used in each randomized design.
         Should be between 0 and 1. If 1, all samples are used.
 
+    n_resampling : int
+        Number of randomized models.
+
+    selection_threshold: float
+        The score above which features should be selected.
+
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
@@ -374,6 +380,12 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     sample_fraction : float
         The fraction of samples to be used in each randomized design.
         Should be between 0 and 1. If 1, all samples are used.
+
+    n_resampling : int
+        Number of randomized models.
+
+    selection_threshold: float
+        The score above which features should be selected.
 
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
