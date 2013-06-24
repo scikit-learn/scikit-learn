@@ -24,7 +24,7 @@ class OutlierDetectionMixin(object):
 
     Parameters
     ----------
-    contamination: float, 0. < contamination < 0.5
+    contamination : float, 0. < contamination < 0.5
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set.
 
@@ -44,16 +44,16 @@ class OutlierDetectionMixin(object):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
 
-        raw_values: bool
+        raw_values : bool
             Whether or not to consider raw Mahalanobis distances as the
             decision function. Must be False (default) for compatibility
             with the others outlier detection tools.
 
         Returns
         -------
-        decision: array-like, shape (n_samples, )
+        decision : array-like, shape (n_samples, )
             The values of the decision function for each observations.
             It is equal to the Mahalanobis distances if `raw_values`
             is True. By default (``raw_values=True``), it is equal
@@ -79,14 +79,15 @@ class OutlierDetectionMixin(object):
 
         Parameters
         ----------
-        X: array-like, shape = (n_samples, n_features)
+        X : array-like, shape = (n_samples, n_features)
 
         Returns
         -------
-        is_outliers: array, shape = (n_samples, ), dtype = bool
+        is_outliers : array, shape = (n_samples, ), dtype = bool
             For each observations, tells whether or not it should be considered
             as an outlier according to the fitted model.
-        threshold: float,
+
+        threshold : float,
             The values of the less outlying point's decision function.
 
         """
@@ -107,29 +108,30 @@ class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
 
     Attributes
     ----------
-    `contamination`: float, 0. < contamination < 0.5
+    `contamination` : float, 0. < contamination < 0.5
       The amount of contamination of the data set, i.e. the proportion of \
       outliers in the data set.
 
-    `location_`: array-like, shape (n_features,)
+    `location_` : array-like, shape (n_features,)
         Estimated robust location
 
-    `covariance_`: array-like, shape (n_features, n_features)
+    `covariance_` : array-like, shape (n_features, n_features)
         Estimated robust covariance matrix
 
-    `precision_`: array-like, shape (n_features, n_features)
+    `precision_` : array-like, shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
-    `support_`: array-like, shape (n_samples,)
+    `support_` : array-like, shape (n_samples,)
         A mask of the observations that have been used to compute the
         robust estimates of location and shape.
 
     Parameters
     ----------
-    store_precision: bool
-        Specify if the estimated precision is stored
-    assume_centered: Boolean
+    store_precision : bool
+        Specify if the estimated precision is stored.
+
+    assume_centered : Boolean
         If True, the support of robust location and covariance estimates
         is computed, and a covariance estimate is recomputed from it,
         without centering the data.
@@ -137,12 +139,14 @@ class EllipticEnvelope(ClassifierMixin, OutlierDetectionMixin, MinCovDet):
         zero but is not exactly zero.
         If False, the robust location and covariance are directly computed
         with the FastMCD algorithm without additional treatment.
-    support_fraction: float, 0 < support_fraction < 1
+
+    support_fraction : float, 0 < support_fraction < 1
         The proportion of points to be included in the support of the raw
         MCD estimate. Default is ``None``, which implies that the minimum
         value of support_fraction will be used within the algorithm:
-        [n_sample + n_features + 1] / 2
-    contamination: float, 0. < contamination < 0.5
+        `[n_sample + n_features + 1] / 2`.
+
+    contamination : float, 0. < contamination < 0.5
         The amount of contamination of the data set, i.e. the proportion
         of outliers in the data set.
 

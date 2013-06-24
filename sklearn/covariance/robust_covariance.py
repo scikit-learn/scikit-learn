@@ -28,47 +28,53 @@ from ..utils import check_random_state
 def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
            verbose=False, cov_computation_method=empirical_covariance,
            random_state=None):
-    """C_step procedure described in [Rouseeuw1984] aiming at computing the MCD
+    """C_step procedure described in [Rouseeuw1984]_ aiming at computing MCD.
 
     Parameters
     ----------
-    X: array-like, shape (n_samples, n_features)
-      Data set in which we look for the n_support observations whose
-      scatter matrix has minimum determinant
-    n_support: int, > n_samples / 2
-      Number of observations to compute the robust estimates of location
-      and covariance from.
-    remaining_iterations: int
-      Number of iterations to perform.
-      According to [Rouseeuw1999], two iterations are sufficient to get close
-      to the minimum, and we never need more than 30 to reach convergence.
-    initial_estimates: 2-tuple
-      Initial estimates of location and shape from which to run the c_step
-      procedure:
-      - initial_estimates[0]: an initial location estimate
-      - initial_estimates[1]: an initial covariance estimate
-    verbose: boolean
-      Verbose mode
-    random_state: integer or numpy.RandomState, optional
+    X : array-like, shape (n_samples, n_features)
+        Data set in which we look for the n_support observations whose
+        scatter matrix has minimum determinant.
+
+    n_support : int, > n_samples / 2
+        Number of observations to compute the robust estimates of location
+        and covariance from.
+
+    remaining_iterations : int
+        Number of iterations to perform.
+        According to [Rouseeuw1999]_, two iterations are sufficient to get close
+        to the minimum, and we never need more than 30 to reach convergence.
+
+    initial_estimates : 2-tuple
+        Initial estimates of location and shape from which to run the c_step
+        procedure:
+        - initial_estimates[0]: an initial location estimate
+        - initial_estimates[1]: an initial covariance estimate
+
+    verbose : boolean
+        Verbose mode.
+
+    random_state : integer or numpy.RandomState, optional
         The random generator used. If an integer is given, it fixes the
         seed. Defaults to the global numpy random number generator.
 
     Returns
     -------
-    location: array-like, shape (n_features,)
-      Robust location estimates
-    covariance: array-like, shape (n_features, n_features)
-      Robust covariance estimates
-    support: array-like, shape (n_samples,)
-      A mask for the `n_support` observations whose scatter matrix has
-      minimum determinant
+    location : array-like, shape (n_features,)
+        Robust location estimates.
+
+    covariance : array-like, shape (n_features, n_features)
+        Robust covariance estimates.
+
+    support : array-like, shape (n_samples,)
+        A mask for the `n_support` observations whose scatter matrix has
+        minimum determinant.
 
     References
     ----------
-
     .. [Rouseeuw1999] A Fast Algorithm for the Minimum Covariance Determinant
-       Estimator, 1999, American Statistical Association and the American
-       Society for Quality, TECHNOMETRICS
+        Estimator, 1999, American Statistical Association and the American
+        Society for Quality, TECHNOMETRICS
 
     """
     random_state = check_random_state(random_state)
@@ -126,7 +132,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
             "Please check that the covariance matrix corresponding "
             "to the dataset is full rank and that MinCovDet is used with "
             "Gaussian-distributed data (or at least data drawn from a "
-            "unimodal, symetric distribution.")
+            "unimodal, symmetric distribution.")
     # Check convergence
     if np.allclose(det, previous_det):
         # c_step procedure converged
@@ -166,32 +172,38 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
 
     Starting from a random support, the pure data set is found by the
     c_step procedure introduced by Rousseeuw and Van Driessen in
-    [Rouseeuw1999].
+    [Rouseeuw1999]_.
 
     Parameters
     ----------
-    X: array-like, shape (n_samples, n_features)
-      Data (sub)set in which we look for the n_support purest observations
-    n_support: int, [(n + p + 1)/2] < n_support < n
-      The number of samples the pure data set must contain.
-    select: int, int > 0
-      Number of best candidates results to return.
-    n_trials: int, nb_trials > 0 or 2-tuple
-      Number of different initial sets of observations from which to
-      run the algorithm.
-      Instead of giving a number of trials to perform, one can provide a
-      list of initial estimates that will be used to iteratively run
-      c_step procedures. In this case:
-      - n_trials[0]: array-like, shape (n_trials, n_features)
-        is the list of `n_trials` initial location estimates
-      - n_trials[1]: array-like, shape (n_trials, n_features, n_features)
-        is the list of `n_trials` initial covariances estimates
-    n_iter: int, nb_iter > 0
-      Maximum number of iterations for the c_step procedure.
-      (2 is enough to be close to the final solution. "Never" exceeds 20)
-    random_state: integer or numpy.RandomState, optional
+    X : array-like, shape (n_samples, n_features)
+        Data (sub)set in which we look for the n_support purest observations.
+
+    n_support : int, [(n + p + 1)/2] < n_support < n
+        The number of samples the pure data set must contain.
+
+    select : int, int > 0
+        Number of best candidates results to return.
+
+    n_trials : int, nb_trials > 0 or 2-tuple
+        Number of different initial sets of observations from which to
+        run the algorithm.
+        Instead of giving a number of trials to perform, one can provide a
+        list of initial estimates that will be used to iteratively run
+        c_step procedures. In this case:
+        - n_trials[0]: array-like, shape (n_trials, n_features)
+          is the list of `n_trials` initial location estimates
+        - n_trials[1]: array-like, shape (n_trials, n_features, n_features)
+          is the list of `n_trials` initial covariances estimates
+
+    n_iter : int, nb_iter > 0
+        Maximum number of iterations for the c_step procedure.
+        (2 is enough to be close to the final solution. "Never" exceeds 20).
+
+    random_state : integer or numpy.RandomState, optional
         The random generator used. If an integer is given, it fixes the
         seed. Defaults to the global numpy random number generator.
+
 
     See Also
     ---------
@@ -199,20 +211,22 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
 
     Returns
     -------
-    best_locations: array-like, shape (select, n_features)
-      The `select` location estimates computed from the `select` best
-      supports found in the data set (`X`)
-    best_covariances: array-like, shape (select, n_features, n_features)
-      The `select` covariance estimates computed from the `select`
-      best supports found in the data set (`X`)
-    best_supports: array-like, shape (select, n_samples)
-      The `select` best supports found in the data set (`X`)
+    best_locations : array-like, shape (select, n_features)
+        The `select` location estimates computed from the `select` best
+        supports found in the data set (`X`).
+
+    best_covariances : array-like, shape (select, n_features, n_features)
+        The `select` covariance estimates computed from the `select`
+        best supports found in the data set (`X`).
+
+    best_supports : array-like, shape (select, n_samples)
+        The `select` best supports found in the data set (`X`).
 
     References
     ----------
     .. [Rouseeuw1999] A Fast Algorithm for the Minimum Covariance Determinant
-       Estimator, 1999, American Statistical Association and the American
-       Society for Quality, TECHNOMETRICS
+        Estimator, 1999, American Statistical Association and the American
+        Society for Quality, TECHNOMETRICS
 
     """
     random_state = check_random_state(random_state)
@@ -266,14 +280,16 @@ def fast_mcd(X, support_fraction=None,
 
     Parameters
     ----------
-    X: array-like, shape (n_samples, n_features)
+    X : array-like, shape (n_samples, n_features)
       The data matrix, with p features and n samples.
-    support_fraction: float, 0 < support_fraction < 1
+
+    support_fraction : float, 0 < support_fraction < 1
           The proportion of points to be included in the support of the raw
           MCD estimate. Default is None, which implies that the minimum
           value of support_fraction will be used within the algorithm:
-          [n_sample + n_features + 1] / 2
-    random_state: integer or numpy.RandomState, optional
+          `[n_sample + n_features + 1] / 2`.
+
+    random_state : integer or numpy.RandomState, optional
         The generator used to randomly subsample. If an integer is
         given, it fixes the seed. Defaults to the global numpy random
         number generator.
@@ -290,29 +306,31 @@ def fast_mcd(X, support_fraction=None,
     such computation levels.
 
     Note that only raw estimates are returned. If one is intersted in
-    the correction and reweighting steps described in [Rouseeuw1999],
+    the correction and reweighting steps described in [Rouseeuw1999]_,
     see the MinCovDet object.
 
     References
     ----------
 
     .. [Rouseeuw1999] A Fast Algorithm for the Minimum Covariance
-       Determinant Estimator, 1999, American Statistical Association
-       and the American Society for Quality, TECHNOMETRICS
+        Determinant Estimator, 1999, American Statistical Association
+        and the American Society for Quality, TECHNOMETRICS
 
     .. [Butler1993] R. W. Butler, P. L. Davies and M. Jhun,
-       Asymptotics For The Minimum Covariance Determinant Estimator,
-       The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400
+        Asymptotics For The Minimum Covariance Determinant Estimator,
+        The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400
 
     Returns
     -------
-    location: array-like, shape (n_features,)
-      Robust location of the data
-    covariance: array-like, shape (n_features, n_features)
-      Robust covariance of the features
-    support: array-like, type boolean, shape (n_samples,)
-      a mask of the observations that have been used to compute
-      the robust location and covariance estimates of the data set
+    location : array-like, shape (n_features,)
+        Robust location of the data.
+
+    covariance : array-like, shape (n_features, n_features)
+        Robust covariance of the features.
+
+    support : array-like, type boolean, shape (n_samples,)
+        A mask of the observations that have been used to compute
+        the robust location and covariance estimates of the data set.
 
     """
     random_state = check_random_state(random_state)
@@ -458,66 +476,203 @@ def fast_mcd(X, support_fraction=None,
     return location, covariance, support, dist
 
 
+class CovMEstimator(EmpiricalCovariance):
+
+    """M-estimator for the robust covariance matrix estimation of real- or
+    complex-valued training data.
+
+    Parameters
+    ----------
+    nu : int, optional
+        Degrees of freedom of the t-distributed M-estimator. For the robust
+        covariance matrix estimation this parameter is typically chosen in the
+        range `1 < nu < 5` (see [2]_ for further information).
+
+    verbose : bool, optional
+        Determine whether to print status messages for each iteration.
+
+    Notes
+    -----
+    The principle of this iterative algorithm is to weight each sample
+    depending on its likeliness belonging to the complete distribution of the
+    data set (Mahalanobis distance), whereat the t-distributed weight function
+    is influenced by its degrees of freedom `nu`. The iteration converges to a
+    unique solution under mild regularity. See [3]_ for a short description of
+    the algorithm.
+
+    References
+    ----------
+    .. [1] J. T. Kent and D. E. Tyler (1991). Redescending M-estimates of
+        multivariate location and scatter. Ann. Statist. 19(4), 2102-2119.
+    .. [2] Ollila E. and Koivunen V. (2003). Robust antenna array processing
+        using m-estimators of pseudo-covariance. In: 14th IEEE Proceedings on
+        Personal, Indoor and Mobile Radio Communications. Vol. 3. 2659-2663.
+    .. [3] Zoubir A., Koivunen V., Chakhchoukh Y. and Muma M. (2012). Robust
+        estimation in signal processing: A tutorial-style treatment of
+        fundamental concepts. IEEE Signal Processing Magazine 29(4), 61-80.
+
+    """
+
+    def __init__(self, nu=1, verbose=True):
+        self.nu = nu
+        self.verbose = verbose
+
+    def fit(self, X, y=None, initial_loc=None, initial_cov=None, eps=1e-6,
+            max_iter=50):
+        """Determine location and covariance information.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : not used, present for API consistence purpose.
+
+        initial_loc : array-like of shape [n_features], optional
+            Initial estimate of the mean / location of the training data.
+
+        initial_cov : array-like of shape [n_features, n_features], optional
+            Initial estimate of the covariance matrix of the training data.
+
+        eps : float, optional
+            Stop criteria for the iteration. The iteration is aborted if
+            `sum(abs(new_loc - loc))` and sum(abs(new_cov - cov))` are both
+            smaller than `eps`.
+
+        max_iter : int, optional
+            Maximum number of iterations.
+
+        Returns
+        -------
+        self : object
+            Returns self.
+
+        """
+
+        X = np.atleast_2d(X)
+
+        n_samples = X.shape[0]
+        # dimensionality of the data
+        n_features = X.shape[1]
+
+        if initial_loc is None:
+            # use mean of all samples as initial guess
+            initial_loc = np.mean(X, axis=0)
+
+        loc = initial_loc
+
+        # centered samples and its hermitian (complex conjugate transpose)
+        X_centered = X - np.squeeze(loc)
+        X_centered_H = X_centered.conj().T
+
+        if initial_cov is None:
+            # use covariance matrix of all samples as initial guess
+            initial_cov = np.dot(X_centered_H, X_centered) / (n_samples - 1)
+
+        cov = initial_cov
+
+        for i in range(max_iter):
+
+            mahalanobis_dists = np.sum(np.dot(X_centered, pinvh(cov))
+                                       * X_centered_H.T, axis=1)
+            weights = (2 * n_features + self.nu) \
+                      / (self.nu + 2 * mahalanobis_dists)
+
+            new_loc = np.sum(weights[:, None] * X, axis=0) / np.sum(weights)
+
+            new_cov = np.einsum('ji,ik->jk', weights * X_centered_H,
+                                X_centered)
+            new_cov /= (n_samples - 1)
+
+            diff_loc = np.abs(new_loc - loc).sum()
+            diff_cov = np.abs(new_cov - cov).sum()
+
+            if self.verbose:
+                print("%4d: d(loc): %.10f, d(cov): %.10f" \
+                      % (i, diff_loc, diff_cov))
+
+            # stop iteration if loc and covariance have not changed
+            if diff_loc < eps and diff_cov < eps:
+                break
+
+            # copy new loc and covariance for next iteration
+            loc = new_loc
+            cov = new_cov
+
+            # compute updated centered X data
+            X_centered = X - loc
+            X_centered_H = X_centered.conj().T
+
+        self.location_ = loc
+        self.covariance_ = cov
+
+        return self
+
+
 class MinCovDet(EmpiricalCovariance):
     """Minimum Covariance Determinant (MCD): robust estimator of covariance.
 
     The Minimum Covariance Determinant covariance estimator is to be applied
     on Gaussian-distributed data, but could still be relevant on data
-    drawn from a unimodal, symetric distribution. It is not meant to be used
-    with multimodal data (the algorithm used to fit a MinCovDet object is
+    drawn from a unimodal, symmetric distribution. It is not meant to be used
+    with multi-modal data (the algorithm used to fit a MinCovDet object is
     likely to fail in such a case).
-    One should consider projection pursuit methods to deal with multimodal
+    One should consider projection pursuit methods to deal with multi-modal
     datasets.
 
     Parameters
     ----------
-    store_precision: bool
-      Specify if the estimated precision is stored
-    assume_centered: Boolean
-      If True, the support of robust location and covariance estimates
-      is computed, and a covariance estimate is recomputed from it,
-      without centering the data.
-      Useful to work with data whose mean is significantly equal to
-      zero but is not exactly zero.
-      If False, the robust location and covariance are directly computed
-      with the FastMCD algorithm without additional treatment.
-    support_fraction: float, 0 < support_fraction < 1
-      The proportion of points to be included in the support of the raw
-      MCD estimate. Default is None, which implies that the minimum
-      value of support_fraction will be used within the algorithm:
-      [n_sample + n_features + 1] / 2
-    random_state: integer or numpy.RandomState, optional
+    store_precision : bool
+        Specify if the estimated precision is stored.
+
+    assume_centered : Boolean
+        If True, the support of robust location and covariance estimates
+        is computed, and a covariance estimate is recomputed from it,
+        without centering the data.
+        Useful to work with data whose mean is significantly equal to
+        zero but is not exactly zero.
+        If False, the robust location and covariance are directly computed
+        with the FastMCD algorithm without additional treatment.
+
+    support_fraction : float, 0 < support_fraction < 1
+        The proportion of points to be included in the support of the raw
+        MCD estimate. Default is None, which implies that the minimum
+        value of support_fraction will be used within the algorithm:
+        [n_sample + n_features + 1] / 2
+
+    random_state : integer or numpy.RandomState, optional
         The random generator used. If an integer is given, it fixes the
         seed. Defaults to the global numpy random number generator.
 
     Attributes
     ----------
-    `raw_location_`: array-like, shape (n_features,)
-        The raw robust estimated location before correction and reweighting
+    `raw_location_` : array-like, shape (n_features,)
+        The raw robust estimated location before correction and re-weighting.
 
-    `raw_covariance_`: array-like, shape (n_features, n_features)
-        The raw robust estimated covariance before correction and reweighting
+    `raw_covariance_` : array-like, shape (n_features, n_features)
+        The raw robust estimated covariance before correction and re-weighting.
 
-    `raw_support_`: array-like, shape (n_samples,)
+    `raw_support_` : array-like, shape (n_samples,)
         A mask of the observations that have been used to compute
         the raw robust estimates of location and shape, before correction
-        and reweighting.
+        and re-weighting.
 
-    `location_`: array-like, shape (n_features,)
+    `location_` : array-like, shape (n_features,)
         Estimated robust location
 
-    `covariance_`: array-like, shape (n_features, n_features)
+    `covariance_` : array-like, shape (n_features, n_features)
         Estimated robust covariance matrix
 
-    `precision_`: array-like, shape (n_features, n_features)
+    `precision_` : array-like, shape (n_features, n_features)
         Estimated pseudo inverse matrix.
         (stored only if store_precision is True)
 
-    `support_`: array-like, shape (n_samples,)
+    `support_` : array-like, shape (n_samples,)
         A mask of the observations that have been used to compute
         the robust estimates of location and shape.
 
-    `dist_`: array-like, shape (n_samples,)
+    `dist_` : array-like, shape (n_samples,)
         Mahalanobis distances of the training set (on which `fit` is called)
         observations.
 
@@ -525,13 +680,13 @@ class MinCovDet(EmpiricalCovariance):
     ----------
 
     .. [Rouseeuw1984] `P. J. Rousseeuw. Least median of squares regression.
-       J. Am Stat Ass, 79:871, 1984.`
+        J. Am Stat Ass, 79:871, 1984.`
     .. [Rouseeuw1999] `A Fast Algorithm for the Minimum Covariance Determinant
-       Estimator, 1999, American Statistical Association and the American
-       Society for Quality, TECHNOMETRICS`
+        Estimator, 1999, American Statistical Association and the American
+        Society for Quality, TECHNOMETRICS`
     .. [Butler1993] `R. W. Butler, P. L. Davies and M. Jhun,
-       Asymptotics For The Minimum Covariance Determinant Estimator,
-       The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400`
+        Asymptotics For The Minimum Covariance Determinant Estimator,
+        The Annals of Statistics, 1993, Vol. 21, No. 3, 1385-1400`
 
     """
     _nonrobust_covariance = staticmethod(empirical_covariance)
@@ -548,15 +703,16 @@ class MinCovDet(EmpiricalCovariance):
 
         Parameters
         ----------
-        X: array-like, shape = [n_samples, n_features]
-          Training data, where n_samples is the number of samples
-          and n_features is the number of features.
-        y: not used, present for API consistence purpose.
+        X : array-like, shape = [n_samples, n_features]
+            Training data, where n_samples is the number of samples
+            and n_features is the number of features.
+
+        y : not used, present for API consistence purpose.
 
         Returns
         -------
-        self: object
-          Returns self.
+        self : object
+            Returns self.
 
         """
         random_state = check_random_state(self.random_state)
@@ -585,7 +741,7 @@ class MinCovDet(EmpiricalCovariance):
         self.dist_ = raw_dist
         # obtain consistency at normal models
         self.correct_covariance(X)
-        # reweight estimator
+        # re-weight estimator
         self.reweight_covariance(X)
 
         return self
@@ -598,15 +754,15 @@ class MinCovDet(EmpiricalCovariance):
 
         Parameters
         ----------
-        data: array-like, shape (n_samples, n_features)
-          The data matrix, with p features and n samples.
-          The data set must be the one which was used to compute
-          the raw estimates.
+        data : array-like, shape (n_samples, n_features)
+            The data matrix, with p features and n samples.
+            The data set must be the one which was used to compute
+            the raw estimates.
 
         Returns
         -------
-        covariance_corrected: array-like, shape (n_features, n_features)
-          Corrected robust covariance estimate.
+        covariance_corrected : array-like, shape (n_features, n_features)
+            Corrected robust covariance estimate.
 
         """
         correction = np.median(self.dist_) / chi2(data.shape[1]).isf(0.5)
@@ -615,28 +771,30 @@ class MinCovDet(EmpiricalCovariance):
         return covariance_corrected
 
     def reweight_covariance(self, data):
-        """Reweight raw Minimum Covariance Determinant estimates.
+        """Re-weight raw Minimum Covariance Determinant estimates.
 
-        Reweight observations using Rousseeuw's method (equivalent to
+        Re-weight observations using Rousseeuw's method (equivalent to
         deleting outlying observations from the data set before
         computing location and covariance estimates). [Rouseeuw1984]_
 
         Parameters
         ----------
-        data: array-like, shape (n_samples, n_features)
-          The data matrix, with p features and n samples.
-          The data set must be the one which was used to compute
-          the raw estimates.
+        data : array-like, shape (n_samples, n_features)
+            The data matrix, with p features and n samples.
+            The data set must be the one which was used to compute
+            the raw estimates.
 
         Returns
         -------
-        location_reweighted: array-like, shape (n_features, )
-          Reweighted robust location estimate.
-        covariance_reweighted: array-like, shape (n_features, n_features)
-          Reweighted robust covariance estimate.
-        support_reweighted: array-like, type boolean, shape (n_samples,)
-          A mask of the observations that have been used to compute
-          the reweighted robust location and covariance estimates.
+        location_reweighted : array-like, shape (n_features, )
+            Re-weighted robust location estimate.
+
+        covariance_reweighted : array-like, shape (n_features, n_features)
+            Re-weighted robust covariance estimate.
+
+        support_reweighted : array-like, type boolean, shape (n_samples,)
+            A mask of the observations that have been used to compute
+            the re-weighted robust location and covariance estimates.
 
         """
         n_samples, n_features = data.shape
