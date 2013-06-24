@@ -14,7 +14,7 @@ import numpy as np
 import warnings
 
 
-def absolute_exponential(theta, d=None, dx=None):
+def absolute_exponential(theta, dx=None, d=None):
     """
     Absolute exponential autocorrelation model.
     (Ornstein-Uhlenbeck stochastic process)::
@@ -66,7 +66,7 @@ def absolute_exponential(theta, d=None, dx=None):
         return np.exp(- np.sum(theta.reshape(1, n_features) * d, axis=1))
 
 
-def squared_exponential(theta, d=None, dx=None):
+def squared_exponential(theta, dx=None, d=None):
     """
     Squared exponential correlation model (Radial Basis Function).
     (Infinitely differentiable stochastic process, very smooth)::
@@ -118,7 +118,7 @@ def squared_exponential(theta, d=None, dx=None):
         return np.exp(-np.sum(theta.reshape(1, n_features) * d ** 2, axis=1))
 
 
-def generalized_exponential(theta, dx):
+def generalized_exponential(theta, dx=None, d=None):
     """
     Generalized exponential correlation model.
     (Useful when one does not know the smoothness of the function to be
@@ -146,6 +146,15 @@ def generalized_exponential(theta, dx):
         model.
     """
 
+    if d is None and dx is None:
+        raise ValueError("Either dx (which is preferred), or d (equivalent, \
+        but deprecated) must be given a value")
+    if not d is None:
+        warnings.warn("'d' was renamed to 'dx' and will "
+                      "be removed in 0.16.",
+                      DeprecationWarning)
+        dx = d
+
     theta = np.asarray(theta, dtype=np.float)
     d = np.asarray(dx, dtype=np.float)
 
@@ -168,7 +177,7 @@ def generalized_exponential(theta, dx):
     return r
 
 
-def pure_nugget(theta, d=None, dx=None):
+def pure_nugget(theta, dx=None, d=None):
     """
     Spatial independence correlation model (pure nugget).
     (Useful when one wants to solve an ordinary least squares problem!)::
@@ -214,7 +223,7 @@ def pure_nugget(theta, d=None, dx=None):
     return r
 
 
-def cubic(theta, d=None, dx=None):
+def cubic(theta, dx=None, d=None):
     """
     Cubic correlation model::
 
@@ -273,7 +282,7 @@ def cubic(theta, d=None, dx=None):
     return r
 
 
-def linear(theta, d=None, dx=None):
+def linear(theta, dx=None, d=None):
     """
     Linear correlation model::
 
