@@ -180,10 +180,16 @@ def test_unique_labels():
         assert_raises(ValueError, unique_labels, y_multiclass, y_multilabel)
         assert_raises(ValueError, unique_labels, y_multilabel, y_multiclass)
 
-    # Mix input type
+    # Mix string and number input type
     assert_raises(ValueError, unique_labels, [[1, 2], [3]],
                   [["a", "d"]])
+    assert_raises(ValueError, unique_labels, ["1", 2])
+    assert_raises(ValueError, unique_labels, [["1", 2], [3]])
+    assert_raises(ValueError, unique_labels, [["1", "2"], [3]])
+
     assert_array_equal(unique_labels([(2,), (0, 2,)], [(), ()]), [0, 2])
+    assert_array_equal(unique_labels([("2",), ("0", "2",)], [(), ()]),
+                       ["0", "2"])
 
 
 def test_is_multilabel():

@@ -8,6 +8,7 @@ Multi-class / multi-label utility function
 """
 from collections import Sequence
 from itertools import chain
+from itertools import imap
 
 import numpy as np
 
@@ -73,8 +74,8 @@ def unique_labels(*ys):
     if not ys:
         raise ValueError('No argument has been passed.')
 
+    # Check that we don't mix label format
     ys_types = [type_of_target(x) for x in ys]
-
     if len(set(ys_types)) != 1:
         if set(ys_types) == set(["binary", "multiclass"]):
             label_type = "multiclass"
@@ -91,19 +92,22 @@ def unique_labels(*ys):
         raise ValueError("Multi-label binary indicator input with "
                          "different numbers of labels")
 
+    # Check that we don't mix string and number type
+    if ((label_type in ("binary", "multiclass") and
+            len(set([isinstance(x, basestring)
+                     for y in ys for x in y])) > 1) or
+        (label_type == "multilabel-sequences" and
+            len(set.union(*[set(imap(lambda x: isinstance(x, basestring),
+                                     chain(*y))) for y in ys])) > 1)):
+        raise ValueError("Mix of label input types (string and number)")
+
     # Get the proper unique function for the given format
     _unique_labels = _FN_UNIQUE_LABELS.get(label_type, None)
     if not _unique_labels:
         raise ValueError("Unknown label type")
 
     # Combine every labels
-    ys_labels = [_unique_labels(y) for y in ys]
-
-    if (len(set(y_labels.dtype.type is np.string_
-                for y_labels in ys_labels)) != 1):
-        raise ValueError("Mix of label input types (string and number)")
-
-    return np.unique(np.hstack(ys_labels))
+    return np.unique(np.hstack(_unique_labels(y) for y in ys))
 
 
 def _is_integral_float(y):
