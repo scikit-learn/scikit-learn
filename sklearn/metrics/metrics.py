@@ -181,8 +181,8 @@ def _check_clf_targets(y_true, y_pred):
             # 'binary' can be removed
             type_true = type_pred = 'multiclass'
 
-        y_true = np.squeeze(y_true)
-        y_pred = np.squeeze(y_pred)
+        y_true = np.ravel(y_true)
+        y_pred = np.ravel(y_pred)
 
     else:
         raise ValueError("Can't handle %s/%s targets" % (type_true, type_pred))
@@ -1108,7 +1108,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) target values.
 
-    y_true : array-like or list of labels or label indicator matrix
+    y_pred : array-like or list of labels or label indicator matrix
         Estimated targets as returned by a classifier.
 
     labels : array
@@ -1229,7 +1229,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) target values.
 
-    y_true : array-like or list of labels or label indicator matrix
+    y_pred : array-like or list of labels or label indicator matrix
         Estimated targets as returned by a classifier.
 
     beta: float
@@ -1496,7 +1496,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) target values.
 
-    y_true : array-like or list of labels or label indicator matrix
+    y_pred : array-like or list of labels or label indicator matrix
         Estimated targets as returned by a classifier.
 
     beta : float, 1.0 by default
@@ -1782,7 +1782,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) target values.
 
-    y_true : array-like or list of labels or label indicator matrix
+    y_pred : array-like or list of labels or label indicator matrix
         Estimated targets as returned by a classifier.
 
     labels : array
@@ -1904,7 +1904,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) target values.
 
-    y_true : array-like or list of labels or label indicator matrix
+    y_pred : array-like or list of labels or label indicator matrix
         Estimated targets as returned by a classifier.
 
     labels : array

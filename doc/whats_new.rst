@@ -107,6 +107,14 @@ Changelog
      and can be used for latent semantic analysis (LSA).
      By `Lars Buitinck`_.
 
+   - Added self-contained example of out-of-core learning on text data
+     :ref:`example_applications_plot_out_of_core_classification.py`.
+     By `Eustache Diemert`_.
+
+   - The default number of components for
+     :class:`sklearn.decomposition.RandomizedPCA` is now correctly documented
+     to be ``n_features``. This was the default behavior, so programs using it
+     will continue to work as they did.
 
 API changes summary
 -------------------
@@ -129,6 +137,9 @@ API changes summary
    - Sparse matrix support in :class:`sklearn.decomposition.RandomizedPCA`
      is now deprecated in favor of the new ``TruncatedSVD``.
 
+   - :class:`cross_valiation.KFold` and
+     :class:`cross_valiation.StratifiedKFold` now enforce `n_folds >= 2`
+     otherwise a ``ValueError`` is raised. By `Olivier Grisel`_.
 
 .. _changes_0_13_1:
 
@@ -1947,3 +1958,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Joel Nothman: http://joelnothman.com
 
 .. _Norbert Crombach: https://github.com/norbert
+
+.. _Eustache Diemert: https://github.com/oddskool

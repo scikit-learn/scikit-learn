@@ -120,8 +120,11 @@ def test_fastica_simple(add_noise=False):
     assert_true(ica.components_.shape == (2, 2))
     assert_true(ica.sources_.shape == (1000, 2))
 
-    ica = FastICA(fun=np.tanh, algorithm=algo, random_state=0)
-    assert_raises(ValueError, ica.fit, m.T)
+    for fn in [np.tanh, "exp(-.5(x^2))"]:
+        ica = FastICA(fun=fn, algorithm=algo, random_state=0)
+        assert_raises(ValueError, ica.fit, m.T)
+
+    assert_raises(TypeError, FastICA(fun=xrange(10)).fit, m.T)
 
 
 def test_fastica_nowhiten():

@@ -27,12 +27,6 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     Parameters
     ----------
-    X : array, shape = (n_samples, n_features)
-        Training vectors.
-
-    y : array, shape = (length)
-        Target values for training vectors
-
     n_iter : int, optional
         Maximum number of iterations.  Default is 300.
 
@@ -234,12 +228,6 @@ class ARDRegression(LinearModel, RegressorMixin):
 
     Parameters
     ----------
-    X : array, shape = (n_samples, n_features)
-        Training vectors.
-
-    y : array, shape = (n_samples)
-        Target values for training vectors
-
     n_iter : int, optional
         Maximum number of iterations. Default is 300
 

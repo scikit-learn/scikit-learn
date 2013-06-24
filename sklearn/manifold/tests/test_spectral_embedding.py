@@ -11,8 +11,8 @@ from numpy.testing import assert_array_almost_equal
 from nose.tools import assert_raises
 from nose.plugins.skip import SkipTest
 
-from sklearn.manifold.spectral_embedding import SpectralEmbedding
-from sklearn.manifold.spectral_embedding import _graph_is_connected
+from sklearn.manifold.spectral_embedding_ import SpectralEmbedding
+from sklearn.manifold.spectral_embedding_ import _graph_is_connected
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.metrics import normalized_mutual_info_score
 from sklearn.cluster import KMeans

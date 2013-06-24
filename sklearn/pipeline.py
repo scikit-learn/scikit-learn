@@ -242,8 +242,9 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    transformers: list of (name, transformer)
-        List of transformer objects to be applied to the data.
+    transformer_list: list of (string, transformer) tuples
+        List of transformer objects to be applied to the data. The first
+        half of each tuple is the name of the transformer.
 
     n_jobs: int, optional
         Number of jobs to run in parallel (default 1).

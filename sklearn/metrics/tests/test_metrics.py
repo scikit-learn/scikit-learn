@@ -981,6 +981,21 @@ def test_format_invariance_with_1d_vectors():
         # interpreted as multilabel or multioutput data.
 
 
+def test_clf_single_sample():
+    """Non-regression test: scores should work with a single sample.
+
+    This is important for leave-one-out cross validation.
+    Score functions tested are those that formerly called np.squeeze,
+    which turns an array of size 1 into a 0-d array (!).
+    """
+
+    f2_score = lambda t, p: fbeta_score(t, p, 2)
+    for metric in [accuracy_score, f1_score, f2_score, hamming_loss,
+                   jaccard_similarity_score, precision_recall_fscore_support]:
+        # assert that no exception is thrown
+        score = metric([True], [True])
+
+
 def test_hinge_loss_binary():
     y_true = np.array([-1, 1, 1, -1])
     pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])

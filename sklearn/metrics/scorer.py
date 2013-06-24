@@ -71,7 +71,7 @@ class Scorer(object):
     def __repr__(self):
         kwargs_string = "".join([", %s=%s" % (str(k), str(v))
                                  for k, v in self.kwargs.items()])
-        return ("Scorer(score_func=%s, greater_is_better=%s, needs_thresholds="
+        return ("Scorer(score_func=%s, greater_is_better=%s, needs_threshold="
                 "%s%s)" % (self.score_func.__name__, self.greater_is_better,
                            self.needs_threshold, kwargs_string))
 
