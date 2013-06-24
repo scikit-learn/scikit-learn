@@ -75,16 +75,14 @@ def unique_labels(*ys):
         raise ValueError('No argument has been passed.')
 
     # Check that we don't mix label format
-    ys_types = [type_of_target(x) for x in ys]
-    if len(set(ys_types)) != 1:
-        if set(ys_types) == set(["binary", "multiclass"]):
-            label_type = "multiclass"
+    ys_types = set(type_of_target(x) for x in ys)
+    if ys_types == set(["binary", "multiclass"]):
+        ys_types = set(["multiclass"])
 
-        else:
-            raise ValueError("Mix type of y not allowed, got types %s"
-                             % ys_types)
-    else:
-        label_type = ys_types[0]
+    if len(ys_types) > 1:
+        raise ValueError("Mix type of y not allowed, got types %s" % ys_types)
+
+    label_type = ys_types.pop()
 
     # Check consistency for the indicator format
     if (label_type == "multilabel-indicator" and
@@ -92,7 +90,7 @@ def unique_labels(*ys):
         raise ValueError("Multi-label binary indicator input with "
                          "different numbers of labels")
 
-    # Check that we don't mix string and number type
+    # Check that we don't mix string type with number type
     if ((label_type in ("binary", "multiclass") and
             len(set([isinstance(x, basestring)
                      for y in ys for x in y])) > 1) or
@@ -106,7 +104,7 @@ def unique_labels(*ys):
     if not _unique_labels:
         raise ValueError("Unknown label type")
 
-    # Combine every labels
+    # Combine labels
     return np.unique(np.hstack(_unique_labels(y) for y in ys))
 
 
