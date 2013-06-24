@@ -27,6 +27,8 @@ import scipy.sparse as sp
 from ..base import BaseEstimator, TransformerMixin
 from ..externals.six.moves import xrange
 from ..preprocessing import normalize
+from ..feature_selection import SelectByScore
+from ..utils import atleast2d_or_csc
 from .hashing import FeatureHasher
 from .stop_words import ENGLISH_STOP_WORDS
 from sklearn.externals import six
@@ -38,6 +40,14 @@ __all__ = ['CountVectorizer',
            'strip_accents_ascii',
            'strip_accents_unicode',
            'strip_tags']
+
+
+def document_frequency(X, y=None):
+    """Count non-zero feature values"""
+    X = atleast2d_or_csc(X)
+    if sp.issparse(X):
+        return np.diff(X.indptr)
+    return X.astype(bool).sum(axis=1)
 
 
 def strip_accents_unicode(s):
@@ -625,45 +635,6 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             vocabulary[term] = new_val
         return cscmatrix[:, map_index]
 
-    def _limit_features(self, cscmatrix, vocabulary, high=None, low=None,
-                        limit=None):
-        """Remove too rare or too common features.
-
-        Prune features that are non zero in more samples than high or less
-        documents than low, modifying the vocabulary, and restricting it to
-        at most the limit most frequent.
-
-        This does not prune samples with zero features.
-        """
-        if high is None and low is None and limit is None:
-            return cscmatrix, set()
-
-        # Calculate a mask based on document frequencies
-        dfs = np.diff(cscmatrix.indptr)
-        mask = np.ones(len(dfs), dtype=bool)
-        if high is not None:
-            mask &= dfs <= high
-        if low is not None:
-            mask &= dfs >= low
-        if limit is not None and mask.sum() > limit:
-            # backward compatibility requires us to keep lower indices in ties!
-            # (and hence to reverse the sort by negating dfs)
-            mask_inds = (-dfs[mask]).argsort()[:limit]
-            new_mask = np.zeros(len(dfs), dtype=bool)
-            new_mask[np.where(mask)[0][mask_inds]] = True
-            mask = new_mask
-
-        new_indices = np.cumsum(mask) - 1  # maps old indices to new
-        removed_terms = set()
-        for term, old_index in list(six.iteritems(vocabulary)):
-            if mask[old_index]:
-                vocabulary[term] = new_indices[old_index]
-            else:
-                del vocabulary[term]
-                removed_terms.add(term)
-        kept_indices = np.where(mask)[0]
-        return cscmatrix[:, kept_indices], removed_terms
-
     def _count_vocab(self, raw_documents, fixed_vocab):
         """Create sparse feature matrix, and vocabulary where fixed_vocab=False
         """
@@ -763,12 +734,15 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             if max_doc_count < min_doc_count:
                 raise ValueError(
                     "max_df corresponds to < documents than min_df")
-            X, self.stop_words_ = self._limit_features(X, vocabulary,
-                                                       max_doc_count,
-                                                       min_doc_count,
-                                                       max_features)
+            selector = SelectByScore(document_frequency,
+                                     minimum=min_doc_count,
+                                     maximum=max_doc_count,
+                                     limit=max_features)
+            X = selector.fit_transform(X, y)
 
             self.vocabulary_ = vocabulary
+            self.stop_words_ = self.restrict(selector.get_support(),
+                                             return_removed=True)
 
         return X
 
@@ -833,9 +807,39 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
     @property
     def max_df_stop_words_(self):
         warnings.warn(
-            "The 'stop_words_ attribute was renamed to 'max_df_stop_words'. "
+            "The 'max_df_stop_words_' attribute was renamed to 'stop_words_'. "
             "The old attribute will be removed in 0.15.", DeprecationWarning)
         return self.stop_words_
+
+    def restrict(self, support, indices=False, return_removed=False):
+        """Restrict the features to those in support.
+
+        Parameters
+        ----------
+        support : array-like
+            Boolean mask or list of indices (as returned by the get_support
+            member of feature selectors).
+        indices : boolean, optional
+            Whether support is a list of indices.
+        """
+        vocabulary = self.vocabulary_
+        if indices:
+            tmp = np.zeros(len(vocabulary), dtype=bool)
+            tmp[support] = True
+            support = tmp
+
+        new_indices = np.cumsum(support) - 1  # maps old indices to new
+        removed_terms = set()
+        for term, old_index in list(six.iteritems(vocabulary)):
+            if support[old_index]:
+                vocabulary[term] = new_indices[old_index]
+            else:
+                del vocabulary[term]
+                removed_terms.add(term)
+
+        if return_removed:
+            return removed_terms
+        return self
 
 
 def _make_int_array():
