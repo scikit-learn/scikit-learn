@@ -217,7 +217,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                 K *= np.outer(sw, sw)
             try:
                 # treat the single or multi-target case with one common penalty
-                if isinstance(alpha, Number):
+                if alpha.size == 1:
                     K.flat[::n_samples + 1] += alpha
                     dual_coef = linalg.solve(K, y,
                                          sym_pos=True, overwrite_a=True)
@@ -230,9 +230,8 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                     return safe_sparse_dot(X.T, dual_coef,
                                                dense_output=True).T
                 else:
-                    alpha = safe_asarray(alpha).ravel()
                     coef = np.empty([n_targets, n_features])
-                    dual_coefs = np.empty(n_targets, n_samples)
+                    dual_coefs = np.empty([n_targets, n_samples])
                     for dual_coef, target, current_alpha in zip(
                             dual_coefs, y.T, alpha):
                         K.flat[::n_samples + 1] += current_alpha
@@ -250,7 +249,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             # w = inv(X^t X + alpha*Id) * X.T y
             A = safe_sparse_dot(X.T, X, dense_output=True)
             Xy = safe_sparse_dot(X.T, y, dense_output=True)
-            if isinstance(alpha, Number):
+            if alpha.size == 1:
                 A.flat[::n_features + 1] += alpha
                 try:
                     return linalg.solve(A, Xy, sym_pos=True,
@@ -259,7 +258,6 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                     # use SVD solver if matrix is singular
                     solver = 'svd'
             else:
-                alpha = safe_asarray(alpha)
                 coefs = np.empty([n_targets, n_features])
                 for coef, target, current_alpha in zip(
                         coefs, Xy.T, alpha):
@@ -273,7 +271,6 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         # Can take multiple individual penalties per target
 
         # avoid alpha being a number
-        alpha = safe_asarray(alpha)
         alpha_dim = alpha.ndim
 
         if y.ndim == 1:
