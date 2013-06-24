@@ -37,6 +37,15 @@ _FN_UNIQUE_LABELS = {
 def unique_labels(*ys):
     """Extract an ordered array of unique labels
 
+    We don't allow:
+        - mix of multilabel and multiclass (single label) targets
+        - mix of label indicator matrix and anything else,
+          because there are no explicit labels)
+        - mix of label indicator matrices of different sizes
+        - mix of string and integer labels
+
+    At the moment, we also don't allow "mutliclass-multioutput" input type.
+
     Parameters
     ----------
     ys : array-likes,
@@ -71,7 +80,7 @@ def unique_labels(*ys):
             label_type = "multiclass"
 
         else:
-            raise ValueError("Mix type of y not allowed, got type %s"
+            raise ValueError("Mix type of y not allowed, got types %s"
                              % ys_types)
     else:
         label_type = ys_types[0]
@@ -89,11 +98,10 @@ def unique_labels(*ys):
 
     # Combine every labels
     ys_labels = [_unique_labels(y) for y in ys]
-    ys_is_string = [y_labels.dtype.type is np.string_
-                    for y_labels in ys_labels]
 
-    if len(set(ys_is_string)) != 1:
-        raise ValueError("Mix of label input type s(string and number)")
+    if (len(set(y_labels.dtype.type is np.string_
+                for y_labels in ys_labels)) != 1):
+        raise ValueError("Mix of label input types (string and number)")
 
     return np.unique(np.hstack(ys_labels))
 
