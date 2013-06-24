@@ -11,8 +11,8 @@ from ._isotonic import _isotonic_regression
 import warnings
 
 
-def isotonic_regression(y, weight=None, y_min=None, y_max=None,
-                        sample_weight=None):
+def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
+                        weight=None):
     """Solve the isotonic regression model::
 
         min sum w[i] (y[i] - y_[i]) ** 2
@@ -124,7 +124,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         if len(X.shape) != 1:
             raise ValueError("X should be a vector")
 
-    def fit(self, X, y, weight=None, sample_weight=None):
+    def fit(self, X, y, sample_weight=None, weight=None):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -186,7 +186,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
                                  bounds_error=True)
         return f(T)
 
-    def fit_transform(self, X, y, weight=None, sample_weight=None):
+    def fit_transform(self, X, y, sample_weight=None, weight=None):
         """Fit model and transform y by linear interpolation.
 
         Parameters
