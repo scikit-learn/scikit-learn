@@ -40,7 +40,6 @@ def absolute_exponential(theta, d=None, dx=None):
         An array with shape (n_eval, ) containing the values of the
         autocorrelation model.
     """
-    theta = np.asarray(theta, dtype=np.float)
 
     if d is None and dx is None:
         raise ValueError("Either dx (which is preferred), or d (equivalent, \
@@ -51,6 +50,7 @@ def absolute_exponential(theta, d=None, dx=None):
                       DeprecationWarning)
         dx = d
 
+    theta = np.asarray(theta, dtype=np.float)
     d = np.abs(np.asarray(dx, dtype=np.float))
 
     if d.ndim > 1:
@@ -92,6 +92,15 @@ def squared_exponential(theta, d=None, dx=None):
         An array with shape (n_eval, ) containing the values of the
         autocorrelation model.
     """
+
+    if d is None and dx is None:
+        raise ValueError("Either dx (which is preferred), or d (equivalent, \
+        but deprecated) must be given a value")
+    if not d is None:
+        warnings.warn("'d' was renamed to 'dx' and will "
+                      "be removed in 0.16.",
+                      DeprecationWarning)
+        dx = d
 
     theta = np.asarray(theta, dtype=np.float)
     d = np.asarray(dx, dtype=np.float)
@@ -159,7 +168,7 @@ def generalized_exponential(theta, dx):
     return r
 
 
-def pure_nugget(theta, dx):
+def pure_nugget(theta, d=None, dx=None):
     """
     Spatial independence correlation model (pure nugget).
     (Useful when one wants to solve an ordinary least squares problem!)::
@@ -186,6 +195,15 @@ def pure_nugget(theta, dx):
         model.
     """
 
+    if d is None and dx is None:
+        raise ValueError("Either dx (which is preferred), or d (equivalent, \
+        but deprecated) must be given a value")
+    if not d is None:
+        warnings.warn("'d' was renamed to 'dx' and will "
+                      "be removed in 0.16.",
+                      DeprecationWarning)
+        dx = d
+
     theta = np.asarray(theta, dtype=np.float)
     d = np.asarray(dx, dtype=np.float)
 
@@ -196,7 +214,7 @@ def pure_nugget(theta, dx):
     return r
 
 
-def cubic(theta, dx):
+def cubic(theta, d=None, dx=None):
     """
     Cubic correlation model::
 
@@ -223,6 +241,15 @@ def cubic(theta, dx):
         model.
     """
 
+    if d is None and dx is None:
+        raise ValueError("Either dx (which is preferred), or d (equivalent, \
+        but deprecated) must be given a value")
+    if not d is None:
+        warnings.warn("'d' was renamed to 'dx' and will "
+                      "be removed in 0.16.",
+                      DeprecationWarning)
+        dx = d
+
     theta = np.asarray(theta, dtype=np.float)
     d = np.asarray(dx, dtype=np.float)
 
@@ -246,7 +273,7 @@ def cubic(theta, dx):
     return r
 
 
-def linear(theta, dx):
+def linear(theta, d=None, dx=None):
     """
     Linear correlation model::
 
@@ -272,6 +299,15 @@ def linear(theta, dx):
         An array with shape (n_eval, ) with the values of the autocorrelation
         model.
     """
+
+    if d is None and dx is None:
+        raise ValueError("Either dx (which is preferred), or d (equivalent, \
+        but deprecated) must be given a value")
+    if not d is None:
+        warnings.warn("'d' was renamed to 'dx' and will "
+                      "be removed in 0.16.",
+                      DeprecationWarning)
+        dx = d
 
     theta = np.asarray(theta, dtype=np.float)
     d = np.asarray(dx, dtype=np.float)
