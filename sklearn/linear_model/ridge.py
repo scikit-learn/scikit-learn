@@ -115,13 +115,11 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                       to sparse_cg.""")
         solver = 'sparse_cg'
 
-    if not isinstance(alpha, Number):
-        # if we obtain a list of penalties, automatically switch to a solver
-        # able to deal with them
-        if solver not in ['svd', 'sparse_cg', 'lsqr', 'dense_cholesky']:
-            warnings.warn("Multiple penalties not implemented for solver %s. "
-                          "Falling back to SVD." % solver)
-            solver = 'svd'
+    # There should be either 1 or n_targets penalties
+    alpha = safe_asarray(alpha).ravel()
+    if alpha.size not in [1, n_targets]:
+        raise ValueError("Number of targets and number of penalties "
+                    "do not correspond: %d != %d" % (alpha.size, n_targets))
 
     if has_sw:
         solver = 'dense_cholesky'
@@ -149,11 +147,10 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                     return X1.rmatvec(X1.matvec(x)) + curr_alpha * x
                 return _mv
 
+        current_alpha = alpha[0]
         for i in range(y1.shape[1]):
             y_column = y1[:, i]
-            if isinstance(alpha, Number):
-                current_alpha = alpha
-            else:
+            if alpha.size > 1:
                 current_alpha = alpha[i]
 
             mv = create_mv(current_alpha)
@@ -188,16 +185,11 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         coefs = np.empty((y1.shape[1], n_features))
 
         # According to the lsqr documentation, alpha = damp^2.
-        if isinstance(alpha, Number):
-            sqrt_alpha = np.sqrt(alpha)
-        else:
-            sqrt_alpha = np.sqrt(safe_asarray(alpha))
-
+        sqrt_alpha = np.sqrt(alpha)
+        current_sqrt_alpha = sqrt_alpha[0]
         for i in range(y1.shape[1]):
             y_column = y1[:, i]
-            if isinstance(sqrt_alpha, Number):
-                current_sqrt_alpha = sqrt_alpha
-            else:
+            if alpha.size > 1:
                 current_sqrt_alpha = sqrt_alpha[i]
             coefs[i] = sp_linalg.lsqr(X, y_column, damp=current_sqrt_alpha,
                                       atol=tol, btol=tol, iter_lim=max_iter)[0]
