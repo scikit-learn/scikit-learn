@@ -25,7 +25,8 @@ from nose.tools import assert_almost_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_raises
-from sklearn.utils.testing import assert_in, assert_less, assert_greater
+from sklearn.utils.testing import (assert_in, assert_less, assert_greater,
+                                   ignore_warnings)
 
 from collections import defaultdict, Mapping
 from functools import partial
@@ -569,6 +570,7 @@ def test_vectorizer_max_features():
         assert_equal(vectorizer.stop_words_, expected_stop_words)
 
 
+@ignore_warnings
 def test_count_vectorizer_max_features():
     """Regression test: max_features didn't work correctly in 0.14."""
 

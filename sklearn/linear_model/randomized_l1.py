@@ -15,13 +15,15 @@ from scipy import sparse
 from scipy.interpolate import interp1d
 
 from .base import center_data
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator
 from ..externals import six
 from ..externals.joblib import Memory, Parallel, delayed
 from ..utils import (as_float_array, check_random_state, safe_asarray,
                      check_arrays, safe_mask)
 from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
+from ..feature_selection.base import SelectorMixin
+from ..feature_selection import mask_by_score
 
 
 ###############################################################################
@@ -56,7 +58,7 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
 
 
 class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
-                                                   TransformerMixin)):
+                                                   SelectorMixin)):
     """Base class to implement randomized linear models for feature selection
 
     This implements the strategy by Meinshausen and Buhlman:
@@ -121,28 +123,8 @@ class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
         """Return the parameters passed to the estimator"""
         raise NotImplementedError
 
-    def get_support(self, indices=False):
-        """Return a mask, or list, of the features/indices selected."""
-        mask = self.scores_ > self.selection_threshold
-        return mask if not indices else np.where(mask)[0]
-
-    # XXX: the two function below are copy/pasted from feature_selection,
-    # Should we add an intermediate base class?
-    def transform(self, X):
-        """Transform a new matrix using the selected features"""
-        mask = self.get_support()
-        if len(mask) != X.shape[1]:
-            raise ValueError("X has a different shape than during fitting.")
-        return safe_asarray(X)[:, safe_mask(X, mask)]
-
-    def inverse_transform(self, X):
-        """Transform a new matrix using the selected features"""
-        support = self.get_support()
-        if X.ndim == 1:
-            X = X[None, :]
-        Xt = np.zeros((X.shape[0], support.size))
-        Xt[:, support] = X
-        return Xt
+    def _get_support_mask(self):
+        return mask_by_score(self.scores_, self.selection_threshold)
 
 
 ###############################################################################

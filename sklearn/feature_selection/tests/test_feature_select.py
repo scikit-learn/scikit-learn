@@ -9,7 +9,7 @@ import warnings
 
 from nose.tools import assert_equal, assert_raises, assert_true
 from numpy.testing import assert_array_equal, assert_array_almost_equal
-from sklearn.utils.testing import assert_not_in
+from sklearn.utils.testing import assert_not_in, ignore_warnings
 
 from sklearn.utils import safe_mask
 from sklearn.datasets.samples_generator import (make_classification,
@@ -481,6 +481,7 @@ def test_tied_pvalues():
         assert_not_in(9998, Xt)
 
 
+@ignore_warnings
 def test_tied_scores():
     """Test for stable sorting in k-best with tied scores."""
     X_train = np.array([[0, 0, 0], [1, 1, 1]])

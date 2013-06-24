@@ -4,8 +4,8 @@
 import numpy as np
 
 from ..base import TransformerMixin
-from ..externals import six
 from ..utils import safe_mask, atleast2d_or_csc
+from .by_score import mask_by_score
 
 
 class _LearntSelectorMixin(TransformerMixin):
@@ -71,37 +71,7 @@ class _LearntSelectorMixin(TransformerMixin):
             else:
                 threshold = getattr(self, "threshold", "mean")
 
-        if isinstance(threshold, six.string_types):
-            if "*" in threshold:
-                scale, reference = threshold.split("*")
-                scale = float(scale.strip())
-                reference = reference.strip()
-
-                if reference == "median":
-                    reference = np.median(importances)
-                elif reference == "mean":
-                    reference = np.mean(importances)
-                else:
-                    raise ValueError("Unknown reference: " + reference)
-
-                threshold = scale * reference
-
-            elif threshold == "median":
-                threshold = np.median(importances)
-
-            elif threshold == "mean":
-                threshold = np.mean(importances)
-
-        else:
-            threshold = float(threshold)
-
-        # Selection
-        try:
-            mask = importances >= threshold
-        except TypeError:
-            # Fails in Python 3.x when threshold is str;
-            # result is array of True
-            raise ValueError("Invalid threshold: all features are discarded.")
+        mask = mask_by_score(importances, minimum=threshold)
 
         if np.any(mask):
             mask = safe_mask(X, mask)
