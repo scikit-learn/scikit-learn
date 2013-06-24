@@ -332,28 +332,6 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
             X, y, self.fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
 
-        if not isinstance(self.alpha, Number):
-            # in this case we assume a list/array of alphas
-            alpha = safe_asarray(self.alpha)
-            if alpha.ndim == 1 and len(alpha) == y.shape[1]:
-                # we have one penalty per target
-                pass
-            elif alpha.ndim == 2 and (len(alpha) == 1 and
-                                      alpha.size == y.shape[1]):
-                # also corresponds to one penalty per target
-                pass
-            else:
-                try:
-                    n_targets = y.shape[1]
-                except:
-                    n_targets = 1
-                raise NotImplementedError(("alpha is not a number. "
-                    "As an array it does not have the right shape of "
-                    "(%d,) or (1, %d). "
-                    "For multiple penalties per target, please "
-                    "use sklearn.linear_model.ridge_regression directly") %
-                    (n_targets, n_targets))
-
         self.coef_ = ridge_regression(X, y,
                                       alpha=self.alpha,
                                       sample_weight=sample_weight,
