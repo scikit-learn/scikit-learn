@@ -155,6 +155,12 @@ def test_unique_labels():
     assert_array_equal(unique_labels([["a", "b"], ["c"]], [["d"]]),
                        ["a", "b", "c", "d"])
 
+    # Smoke test for all supported format
+    for format in ["binary", "multiclass", "multilabel-sequences",
+                   "multilabel-indicator"]:
+        for y in EXAMPLES[format]:
+            unique_labels(y)
+
     #Mix of multilabel-indicator and multilabel-sequences
     mix_multilabel_format = product(EXAMPLES["multilabel-indicator"],
                                     EXAMPLES["multilabel-sequences"])
