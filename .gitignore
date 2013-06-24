@@ -41,7 +41,7 @@ nips2010_pdf/
 *.tgz
 
 examples/cluster/joblib
-examples/applications/reuters/
+reuters/
 benchmarks/bench_covertype_data/
 
 *.prefs

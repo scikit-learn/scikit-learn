@@ -194,8 +194,7 @@ classifier = SGDClassifier()
 
 # Create the data_streamer that parses Reuters SGML files and iterates on
 # documents as a stream
-data_streamer = ReutersStreamReader(os.path.join(os.path.dirname(__file__),
-                                                 'reuters')).iterdocs()
+data_streamer = ReutersStreamReader('reuters').iterdocs()
 
 # Here we propose to learn a binary classification between the positive class
 # and all other documents."""
