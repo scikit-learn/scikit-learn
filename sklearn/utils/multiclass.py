@@ -92,10 +92,10 @@ def unique_labels(*ys):
 
     # Check that we don't mix string type with number type
     if ((label_type in ("binary", "multiclass") and
-            len(set([isinstance(x, basestring)
+            len(set([isinstance(x, string_types)
                      for y in ys for x in y])) > 1) or
         (label_type == "multilabel-sequences" and
-            len(set.union(*[set(imap(lambda x: isinstance(x, basestring),
+            len(set.union(*[set(imap(lambda x: isinstance(x, string_types),
                                      chain(*y))) for y in ys])) > 1)):
         raise ValueError("Mix of label input types (string and number)")
 
