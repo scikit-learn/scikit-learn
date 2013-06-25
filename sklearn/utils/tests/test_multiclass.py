@@ -161,6 +161,15 @@ def test_unique_labels():
         for y in EXAMPLES[format]:
             unique_labels(y)
 
+    # We don't support those format at the moment
+    for example in NON_ARRAY_LIKE_EXAMPLES:
+        assert_raises(ValueError, unique_labels, example)
+
+    for y_type in ["unknown", "continuous", 'continuous-multioutput',
+                   'multiclass-multioutput']:
+        for example in EXAMPLES[y_type]:
+            assert_raises(ValueError, unique_labels, example)
+
     #Mix of multilabel-indicator and multilabel-sequences
     mix_multilabel_format = product(EXAMPLES["multilabel-indicator"],
                                     EXAMPLES["multilabel-sequences"])
@@ -173,14 +182,6 @@ def test_unique_labels():
                              EXAMPLES["multilabel-sequences"],
                              EXAMPLES["multiclass"] +
                              EXAMPLES["binary"])
-
-    for example in NON_ARRAY_LIKE_EXAMPLES:
-        assert_raises(ValueError, unique_labels, example)
-
-    for y_type in ["unknown", "continuous", 'continuous-multioutput',
-                   'multiclass-multioutput']:
-        for example in EXAMPLES[y_type]:
-            assert_raises(ValueError, unique_labels, example)
 
     for y_multilabel, y_multiclass in mix_clf_format:
         assert_raises(ValueError, unique_labels, y_multiclass, y_multilabel)
