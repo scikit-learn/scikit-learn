@@ -27,7 +27,7 @@ def _unique_sequence_of_sequence(y):
 
 
 def _unique_indicator(y):
-    return np.arange(y.shape[0])
+    return np.arange(y.shape[1])
 
 
 _FN_UNIQUE_LABELS = {
@@ -98,13 +98,13 @@ def unique_labels(*ys):
     if not _unique_labels:
         raise ValueError("Unknown label type")
 
-    y_labels = set(chain.from_iterable(imap(_unique_labels, ys)))
+    ys_labels = set(chain.from_iterable(imap(_unique_labels, ys)))
 
     # Check that we don't mix string type with number type
-    if (len(set(isinstance(label, string_types) for label in y_labels)) > 1):
+    if (len(set(isinstance(label, string_types) for label in ys_labels)) > 1):
         raise ValueError("Mix of label input types (string and number)")
 
-    return np.array(sorted(y_labels))
+    return np.array(sorted(ys_labels))
 
 
 def _is_integral_float(y):

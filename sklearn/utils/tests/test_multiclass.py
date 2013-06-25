@@ -117,7 +117,6 @@ NON_ARRAY_LIKE_EXAMPLES = [
 ]
 
 
-
 def test_unique_labels():
     # Empty iterable
     assert_raises(ValueError, unique_labels)
@@ -134,6 +133,10 @@ def test_unique_labels():
                        np.arange(3))
     assert_array_equal(unique_labels(np.array([[0, 0, 1],
                                                [1, 0, 1],
+                                               [0, 0, 0]])),
+                       np.arange(3))
+
+    assert_array_equal(unique_labels(np.array([[0, 0, 1],
                                                [0, 0, 0]])),
                        np.arange(3))
 
