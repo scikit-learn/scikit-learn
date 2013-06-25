@@ -8,7 +8,6 @@ Multi-class / multi-label utility function
 """
 from collections import Sequence
 from itertools import chain
-from itertools import imap
 
 import numpy as np
 
@@ -98,7 +97,7 @@ def unique_labels(*ys):
     if not _unique_labels:
         raise ValueError("Unknown label type")
 
-    ys_labels = set(chain.from_iterable(imap(_unique_labels, ys)))
+    ys_labels = set(chain.from_iterable(_unique_labels(y) for y in ys))
 
     # Check that we don't mix string type with number type
     if (len(set(isinstance(label, string_types) for label in ys_labels)) > 1):
