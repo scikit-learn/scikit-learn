@@ -16,15 +16,18 @@ from ..externals.six import string_types
 
 
 def _unique_multiclass(y):
-    return np.unique(y)
+    if isinstance(y, np.ndarray):
+        return np.unique(y)
+    else:
+        return set(y)
 
 
 def _unique_sequence_of_sequence(y):
-    return np.array(sorted(set(chain(*y))))
+    return set(chain.from_iterable(y))
 
 
 def _unique_indicator(y):
-    return np.arange(y.shape[1])
+    return np.arange(y.shape[0])
 
 
 _FN_UNIQUE_LABELS = {
@@ -90,22 +93,18 @@ def unique_labels(*ys):
         raise ValueError("Multi-label binary indicator input with "
                          "different numbers of labels")
 
-    # Check that we don't mix string type with number type
-    if ((label_type in ("binary", "multiclass") and
-            len(set([isinstance(x, string_types)
-                     for y in ys for x in y])) > 1) or
-        (label_type == "multilabel-sequences" and
-            len(set.union(*[set(imap(lambda x: isinstance(x, string_types),
-                                     chain(*y))) for y in ys])) > 1)):
-        raise ValueError("Mix of label input types (string and number)")
-
-    # Get the proper unique function for the given format
+    # Get the unique set of labels
     _unique_labels = _FN_UNIQUE_LABELS.get(label_type, None)
     if not _unique_labels:
         raise ValueError("Unknown label type")
 
-    # Combine labels
-    return np.unique(np.hstack(_unique_labels(y) for y in ys))
+    y_labels = set(chain.from_iterable(imap(_unique_labels, ys)))
+
+    # Check that we don't mix string type with number type
+    if (len(set(isinstance(label, string_types) for label in y_labels)) > 1):
+        raise ValueError("Mix of label input types (string and number)")
+
+    return np.array(sorted(y_labels))
 
 
 def _is_integral_float(y):
