@@ -71,7 +71,6 @@ def fit_best_piecewise(vectors, k, n_clusters, random_state, n_init):
     according to Euclidean distance.
 
     """
-    # TODO: try all thresholds, as in paper
     def make_piecewise(v):
         centroid, labels, _ = k_means(v.reshape(-1, 1), n_clusters,
                                       random_state=random_state,
