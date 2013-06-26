@@ -15,6 +15,7 @@ from sklearn.multiclass import OutputCodeClassifier
 
 from sklearn.metrics import precision_score
 from sklearn.metrics import recall_score
+from sklearn.metrics import hamming_loss
 
 from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import MultinomialNB
@@ -153,6 +154,28 @@ def test_ovr_multilabel_predict_proba():
         # sample has the label is greater than 0.5.
         pred = [tuple(l.nonzero()[0]) for l in (Y_proba > 0.5)]
         assert_equal(pred, Y_pred)
+
+
+def test_ovr_score():
+    base_clf = MultinomialNB(alpha=1)
+    for au in (False, True):
+        X, Y = datasets.make_multilabel_classification(n_samples=100,
+                                                       n_features=20,
+                                                       n_classes=5,
+                                                       n_labels=3,
+                                                       length=50,
+                                                       allow_unlabeled=au,
+                                                       random_state=0)
+
+        X_train, Y_train = X[:80], Y[:80]
+        X_test, Y_test = X[80:], Y[80:]
+        clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
+        Y_pred = clf.predict(X_test)
+
+        # clf.score defaults to Hamming loss
+        score = clf.score(X_test, Y_test)
+        score_hamming = hamming_loss(Y_pred, Y_test)
+        assert_almost_equal(score, score_hamming, decimal=2)
 
 
 def test_ovr_single_label_predict_proba():
