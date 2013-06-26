@@ -16,7 +16,7 @@ def sigmoid(x):
     -------
     x_new: array-like, shape (M, N)
     """
-    return 1. / (1. + np.exp(-x))
+    return 1. / (1. + np.exp(np.clip(-x,-30,30)))
     
 
 class SAE(BaseEstimator, TransformerMixin):
