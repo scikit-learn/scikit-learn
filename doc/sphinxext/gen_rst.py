@@ -499,7 +499,7 @@ def generate_example_rst(app):
                'margin-top': '20px',
           });
           clone_fig.show();
-          clone.find('p').css("display", "compact");
+          clone.find('p').css("display", "block");
           clone_fig.css({
                height: "240",
                width: "305px"
