@@ -679,7 +679,7 @@ def make_blobs(n_samples=100, n_features=2, centers=3, cluster_std=1.0,
 
 
 def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
-    """Generate the "Friedman #1" regression problem
+    """Generate the "Friedman \#1" regression problem
 
     This dataset is described in Friedman [1] and Breiman [2].
 
@@ -740,7 +740,7 @@ def make_friedman1(n_samples=100, n_features=10, noise=0.0, random_state=None):
 
 
 def make_friedman2(n_samples=100, noise=0.0, random_state=None):
-    """Generate the "Friedman #2" regression problem
+    """Generate the "Friedman \#2" regression problem
 
     This dataset is described in Friedman [1] and Breiman [2].
 
@@ -804,7 +804,7 @@ def make_friedman2(n_samples=100, noise=0.0, random_state=None):
 
 
 def make_friedman3(n_samples=100, noise=0.0, random_state=None):
-    """Generate the "Friedman #3" regression problem
+    """Generate the "Friedman \#3" regression problem
 
     This dataset is described in Friedman [1] and Breiman [2].
 

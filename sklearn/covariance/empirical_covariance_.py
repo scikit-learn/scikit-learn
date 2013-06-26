@@ -27,9 +27,9 @@ def log_likelihood(emp_cov, precision):
     ----------
     emp_cov: 2D ndarray (n_features, n_features)
       Maximum Likelihood Estimator of covariance
+
     precision: 2D ndarray (n_features, n_features)
       The precision matrix of the covariance model to be tested
-
     """
     return -np.sum(emp_cov * precision) + fast_logdet(precision)
 
