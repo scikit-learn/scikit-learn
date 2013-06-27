@@ -41,7 +41,6 @@ def test_spectral_biclustering_dhillon():
 
 
 def test_spectral_biclustering_kluger():
-
     row_vector = [1] * 10 + [3] * 10 + [5] * 10
     col_vector = [2] * 10 + [4] * 10 + [6] * 10
     S = np.outer(row_vector, col_vector)
@@ -61,5 +60,3 @@ def test_spectral_biclustering_kluger():
         model_copy = loads(dumps(model))
         assert_equal(model_copy.n_clusters, model.n_clusters)
         assert_equal(model_copy.method, model.method)
-
-test_spectral_biclustering_kluger()
