@@ -10,7 +10,9 @@ from scipy import sparse
 
 from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_greater
 
@@ -60,3 +62,37 @@ def test_spectral_biclustering_kluger():
         model_copy = loads(dumps(model))
         assert_equal(model_copy.n_clusters, model.n_clusters)
         assert_equal(model_copy.method, model.method)
+
+
+def _do_scale_test(scaled):
+    row_sum = scaled.sum(axis=1)
+    col_sum = scaled.sum(axis=0)
+    assert_array_almost_equal(row_sum, np.tile(row_sum.mean(), 100),
+                              decimal=1)
+    assert_array_almost_equal(col_sum, np.tile(col_sum.mean(), 100),
+                              decimal=1)
+
+
+def _do_bistochastic_test(scaled):
+    _do_scale_test(scaled)
+    assert_almost_equal(scaled.sum(axis=0).mean(),
+                        scaled.sum(axis=1).mean(),
+                        decimal=1)
+
+
+def test_scale_preprocess():
+    x = np.random.rand(100, 100)
+    scaled, _, _ = scale_preprocess(x)
+    _do_scale_test(scaled)
+
+
+def test_bistochastic_preprocess():
+    x = np.random.rand(100, 100)
+    scaled = bistochastic_preprocess(x)
+    _do_bistochastic_test(scaled)
+
+
+def test_log_preprocess():
+    x = np.random.rand(100, 100)
+    scaled = log_preprocess(x) + 1
+    _do_bistochastic_test(scaled)
