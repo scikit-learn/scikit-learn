@@ -125,7 +125,7 @@ def test_n_components_greater_n_features():
 def test_projgrad_nmf_sparseness():
     """Test sparseness
 
-    Test that sparsity contraints actually increase sparseness in the
+    Test that sparsity constraints actually increase sparseness in the
     part where they are applied.
     """
     A = np.abs(random_state.randn(10, 10))

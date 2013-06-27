@@ -46,7 +46,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
         feature matrix  representing n_samples samples to be clustered
 
     connectivity : sparse matrix.
-        connectivity matrix. Defines for each sample the neigbhoring samples
+        connectivity matrix. Defines for each sample the neighboring samples
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
         Default is None, i.e, the Ward algorithm is unstructured.
@@ -289,9 +289,9 @@ class Ward(BaseEstimator, ClusterMixin):
         The number of clusters to find.
 
     connectivity : sparse matrix (optional)
-        Connectivity matrix. Defines for each sample the neigbhoring
+        Connectivity matrix. Defines for each sample the neighboring
         samples following a given structure of the data.
-        Default is None, i.e, the hiearchical clustering algorithm is
+        Default is None, i.e, the hierarchical clustering algorithm is
         unstructured.
 
     memory : Instance of joblib.Memory or string (optional)
@@ -326,7 +326,7 @@ class Ward(BaseEstimator, ClusterMixin):
         cluster labels for each point
 
     `n_leaves_` : int
-        Number of leaves in the hiearchical tree.
+        Number of leaves in the hierarchical tree.
 
     `n_components_` : int
         The estimated number of connected components in the graph.
@@ -413,9 +413,9 @@ class WardAgglomeration(AgglomerationTransform, Ward):
         The number of clusters.
 
     connectivity : sparse matrix (optional)
-        connectivity matrix. Defines for each feature the neigbhoring
+        connectivity matrix. Defines for each feature the neighboring
         features following a given structure of the data.
-        Default is None, i.e, the hiearchical agglomeration algorithm is
+        Default is None, i.e, the hierarchical agglomeration algorithm is
         unstructured.
 
     memory : Instance of joblib.Memory or string (optional)
@@ -450,7 +450,7 @@ class WardAgglomeration(AgglomerationTransform, Ward):
         cluster labels for each feature
 
     `n_leaves_` : int
-        Number of leaves in the hiearchical tree.
+        Number of leaves in the hierarchical tree.
 
     `n_components_` : int
         The estimated number of connected components in the graph.

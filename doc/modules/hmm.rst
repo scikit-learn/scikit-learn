@@ -82,7 +82,7 @@ constructor. Then, you can generate samples from the HMM by calling `sample`.::
 
  * :ref:`example_plot_hmm_sampling.py`
 
-Training HMM parameters and infering the hidden states
+Training HMM parameters and inferring the hidden states
 ------------------------------------------------------
 
 You can train an HMM by calling the `fit` method. The input is "the list" of 

@@ -350,7 +350,7 @@ Changelog
 
 API changes summary
 -------------------
-   - Renamed all occurences of ``n_atoms`` to ``n_components`` for consistency.
+   - Renamed all occurrences of ``n_atoms`` to ``n_components`` for consistency.
      This applies to :class:`decomposition.DictionaryLearning`,
      :class:`decomposition.MiniBatchDictionaryLearning`,
      :func:`decomposition.dict_learning`, :func:`decomposition.dict_learning_online`.
@@ -450,7 +450,7 @@ API changes summary
 
    - :func:`datasets.make_circles` now has the same number of inner and outer points.
 
-   - In the Naive Bayes classifiers, the ``class_prior`` parmeter was moved
+   - In the Naive Bayes classifiers, the ``class_prior`` parameter was moved
      from ``fit`` to ``__init__``.
 
 People
@@ -843,7 +843,7 @@ Other changes
      Ridge regression, esp. for the ``n_samples > n_features`` case, in
      :class:`linear_model.RidgeCV`, by Reuben Fletcher-Costin.
 
-   - Refactoring and simplication of the :ref:`text_feature_extraction`
+   - Refactoring and simplification of the :ref:`text_feature_extraction`
      API and fixed a bug that caused possible negative IDF,
      by `Olivier Grisel`_.
 
@@ -1089,7 +1089,7 @@ Changelog
 API changes summary
 -------------------
 
-Here are the code migration instructions when updgrading from scikit-learn
+Here are the code migration instructions when upgrading from scikit-learn
 version 0.9:
 
   - Some estimators that may overwrite their inputs to save memory previously
@@ -1280,7 +1280,7 @@ Changelog
 
    - Added :class:`Orthogonal Matching Pursuit <linear_model.OrthogonalMatchingPursuit>` by `Vlad Niculae`_
 
-   - Added 2D-patch extractor utilites in the :ref:`feature_extraction` module by `Vlad Niculae`_
+   - Added 2D-patch extractor utilities in the :ref:`feature_extraction` module by `Vlad Niculae`_
 
    - Implementation of :class:`linear_model.LassoLarsCV`
      (cross-validated Lasso solver using the Lars algorithm) and
@@ -1303,7 +1303,7 @@ Changelog
 API changes summary
 -------------------
 
-Here are the code migration instructions when updgrading from scikit-learn
+Here are the code migration instructions when upgrading from scikit-learn
 version 0.8:
 
   - The ``scikits.learn`` package was renamed ``sklearn``. There is
@@ -1317,7 +1317,7 @@ version 0.8:
 
   - Estimators no longer accept model parameters as ``fit`` arguments:
     instead all parameters must be only be passed as constructor
-    arguments or using the now public ``set_params`` method inhereted
+    arguments or using the now public ``set_params`` method inherited
     from :class:`base.BaseEstimator`.
 
     Some estimators can still accept keyword arguments on the ``fit``
@@ -1372,7 +1372,7 @@ version 0.8:
     and by default returns the pairwise distance. For the component wise distance,
     set the parameter ``sum_over_features`` to ``False``.
 
-Backward compatibilty package aliases and other deprecated classes and
+Backward compatibility package aliases and other deprecated classes and
 functions will be removed in version 0.11.
 
 
@@ -1429,7 +1429,7 @@ scikit-learn 0.8 was released on May 2011, one month after the first
 <https://github.com/scikit-learn/scikit-learn/wiki/Upcoming-events>`_ and is
 marked by the inclusion of important modules: :ref:`hierarchical_clustering`,
 :ref:`pls`, :ref:`NMF`, initial support for Python 3 and by important
-enhacements and bug fixes.
+enhancements and bug fixes.
 
 
 Changelog
@@ -1466,7 +1466,7 @@ Some other modules benefited from significant improvements or cleanups.
 
   - bug and style fixing in :ref:`k_means` algorithm by Jan Schlüter.
 
-  - Add attribute coverged to Gaussian Mixture Models by Vincent Schut.
+  - Add attribute converged to Gaussian Mixture Models by Vincent Schut.
 
   - Implement `transform`, `predict_log_proba` in :class:`lda.LDA` by `Mathieu Blondel`_.
 
@@ -1488,7 +1488,7 @@ Some other modules benefited from significant improvements or cleanups.
 People
 -------
 
-People that made this release possible preceeded by number of commits:
+People that made this release possible precceeded by number of commits:
 
 
    - 159  `Olivier Grisel`_
@@ -1588,7 +1588,7 @@ Changelog
 People
 ------
 
-People that made this release possible preceeded by number of commits:
+People that made this release possible preceded by number of commits:
 
     - 85  `Fabian Pedregosa`_
     - 67  `Mathieu Blondel`_
@@ -1678,7 +1678,7 @@ Changelog
 People
 ------
 
-People that made this release possible preceeded by number of commits:
+People that made this release possible preceded by number of commits:
 
    * 207  `Olivier Grisel`_
 
@@ -1778,7 +1778,7 @@ Examples
       :ref:`example_mlcomp_sparse_document_classification.py`,
       :ref:`example_document_classification_20newsgroups.py`
 
-    - Many more examaples. `See here
+    - Many more examples. `See here
       <http://scikit-learn.org/stable/auto_examples/index.html>`_
       the full list of examples.
 
@@ -1786,7 +1786,7 @@ Examples
 External dependencies
 ---------------------
 
-    - Joblib is now a dependencie of this package, although it is
+    - Joblib is now a dependency of this package, although it is
       shipped with (sklearn.externals.joblib).
 
 Removed modules
@@ -1805,7 +1805,7 @@ Misc
 Authors
 -------
 
-The following is a list of authors for this release, preceeded by
+The following is a list of authors for this release, preceded by
 number of commits:
 
      * 262  Fabian Pedregosa

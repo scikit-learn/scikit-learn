@@ -121,7 +121,7 @@ alpha parameter, the fewer features selected.
 
    For a good choice of alpha, the :ref:`lasso` can fully recover the
    exact set of non-zero variables using only few observations, provided
-   certain specific conditions are met. In paraticular, the number of
+   certain specific conditions are met. In particular, the number of
    samples should be "sufficiently large", or L1 models will perform at
    random, where "sufficiently large" depends on the number of non-zero
    coefficients, the logarithm of the number of features, the amount of

@@ -355,7 +355,7 @@ class RadiusNeighborsMixin(object):
 
         Examples
         --------
-        In the following example, we construnct a NeighborsClassifier
+        In the following example, we construct a NeighborsClassifier
         class from an array representing our data set and ask who's
         the closest point to [1,1,1]
 

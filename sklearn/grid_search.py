@@ -722,7 +722,7 @@ class RandomizedSearchCV(BaseSearchCV):
     any classifier except that the parameters of the classifier
     used to predict is optimized by cross-validation.
 
-    In constrast to GridSearchCV, not all parameter values are tried out, but
+    In contrast to GridSearchCV, not all parameter values are tried out, but
     rather a fixed number of parameter settings is sampled from the specified
     distributions. The number of parameter settings that are tried is
     given by n_iter.
@@ -740,7 +740,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
     n_iter : int, default=10
         Number of parameter settings that are sampled. n_iter trades
-        off runtime vs qualitiy of the solution.
+        off runtime vs quality of the solution.
 
     scoring : string or callable, optional
         Either one of either a string ("zero_one", "f1", "roc_auc", ... for

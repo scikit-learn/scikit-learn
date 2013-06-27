@@ -510,11 +510,11 @@ structure of the error covariance :math:`\Psi`:
   :class:`ProbabilisticPCA`.
 
 * :math:`\Psi = diag(\psi_1, \psi_2, \dots, \psi_n)`: This model is called Factor
-  Analysis, a classical statistical model. The matrix W is sometimtes called
+  Analysis, a classical statistical model. The matrix W is sometimes called
   `factor loading matrix`.
 
 Both model essentially estimate a Gaussian with a low-rank covariance matrix.
-Because both models are probilistic they can be integrated in more complex
+Because both models are probabilistic they can be integrated in more complex
 models, e.g. Mixture of Factor Analysers. One gets very different models (e.g.
 :class:`FastICA`) if non-Gaussian priors on the latent variables are assumed.
 

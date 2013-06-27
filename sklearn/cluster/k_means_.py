@@ -210,7 +210,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
         parallel.
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debuging. For n_jobs below -1,
+        used at all, which is useful for debugging. For n_jobs below -1,
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
@@ -500,7 +500,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
 
     init_size : int, optional
         Number of samples to randomly sample for speeding up the
-        initialization (sometimes at the expense of accurracy): the
+        initialization (sometimes at the expense of accuracy): the
         only algorithm is initialized by running a batch KMeans on a
         random subset of the data. This needs to be larger than k.
 
@@ -597,7 +597,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         parallel.
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debuging. For n_jobs below -1,
+        used at all, which is useful for debugging. For n_jobs below -1,
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
@@ -1016,7 +1016,7 @@ class MiniBatchKMeans(KMeans):
 
     init_size : int, optional, default: 3 * batch_size
         Number of samples to randomly sample for speeding up the
-        initialization (sometimes at the expense of accurracy): the
+        initialization (sometimes at the expense of accuracy): the
         only algorithm is initialized by running a batch KMeans on a
         random subset of the data. This needs to be larger than k.
 
@@ -1036,7 +1036,7 @@ class MiniBatchKMeans(KMeans):
 
     n_init : int, default=3
         Number of random initializations that are tried.
-        In constrast to KMeans, the algorithm is only run once, using the
+        In contrast to KMeans, the algorithm is only run once, using the
         best of the ``n_init`` initializations as measured by inertia.
 
     compute_labels : boolean

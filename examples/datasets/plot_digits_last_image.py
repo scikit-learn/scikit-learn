@@ -7,8 +7,8 @@ The Digit Dataset
 =========================================================
 This dataset is made up of 1797 8x8 images. Each image,
 like the one shown below, is of a hand-written digit.
-In order to ultilise an 8x8 figure like this, we'd have to
-first transform it into a feature vector with lengh 64.
+In order to utilize an 8x8 figure like this, we'd have to
+first transform it into a feature vector with length 64.
 
 See `here
 <http://archive.ics.uci.edu/ml/datasets/Pen-Based+Recognition+of+Handwritten+Digits>`_

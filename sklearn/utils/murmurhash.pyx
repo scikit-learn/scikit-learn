@@ -58,7 +58,7 @@ cpdef np.int32_t murmurhash3_bytes_s32(bytes key, unsigned int seed):
 cpdef np.ndarray[np.uint32_t, ndim=1] murmurhash3_bytes_array_u32(
     np.ndarray[np.int32_t] key, unsigned int seed):
     """Compute 32bit murmurhash3 hashes of a key int array at seed."""
-    # TODO make it possible to pass preallocated ouput array
+    # TODO make it possible to pass preallocated output array
     cdef np.ndarray[np.uint32_t, ndim=1] out = np.zeros(key.size, np.uint32)
     cdef Py_ssize_t i
     for i in range(key.shape[0]):
@@ -70,7 +70,7 @@ cpdef np.ndarray[np.uint32_t, ndim=1] murmurhash3_bytes_array_u32(
 cpdef np.ndarray[np.int32_t, ndim=1] murmurhash3_bytes_array_s32(
     np.ndarray[np.int32_t] key, unsigned int seed):
     """Compute 32bit murmurhash3 hashes of a key int array at seed."""
-    # TODO make it possible to pass preallocated ouput array
+    # TODO make it possible to pass preallocated output array
     cdef np.ndarray[np.int32_t, ndim=1] out = np.zeros(key.size, np.int32)
     cdef Py_ssize_t i
     for i in range(key.shape[0]):

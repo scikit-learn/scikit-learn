@@ -75,7 +75,7 @@ def fit(
 
     svm_type : {0, 1, 2, 3, 4}
         Type of SVM: C_SVC, NuSVC, OneClassSVM, EpsilonSVR or NuSVR
-        respectevely.
+        respectively.
 
     kernel : {'linear', 'rbf', 'poly', 'sigmoid', 'precomputed'}
         Kernel to use in the model: linear, polynomial, RBF, sigmoid

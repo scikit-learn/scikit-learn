@@ -457,7 +457,7 @@ def additive_chi2_kernel(X, Y=None):
     See also
     --------
     chi2_kernel : The exponentiated version of the kernel, which is usually
-        preferrable.
+        preferable.
 
     sklearn.kernel_approximation.AdditiveChi2Sampler : A Fourier approximation
         to this kernel.
@@ -631,7 +631,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         parallel.
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debuging. For n_jobs below -1,
+        used at all, which is useful for debugging. For n_jobs below -1,
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
@@ -783,7 +783,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         parallel.
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debuging. For n_jobs below -1,
+        used at all, which is useful for debugging. For n_jobs below -1,
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
