@@ -97,7 +97,7 @@ The simplest way to use perform cross-validation in to call the
 :func:`cross_val_score` helper function on the estimator and the dataset.
 
 The following example demonstrates how to estimate the accuracy of a
-linear kernel support vector machine on the iris dataset by splitting
+linear kernel support vector machine on the iris dataset by split
 the data and fitting a model and computing the score 5 consecutive times
 (with different splits each time)::
 
@@ -369,7 +369,7 @@ Random permutations cross-validation a.k.a. Shuffle & Split
 
 The :class:`ShuffleSplit` iterator will generate a user defined number of
 independent train / test dataset splits. Samples are first shuffled and
-then splitted into a pair of train and test sets.
+then split into a pair of train and test sets.
 
 It is possible to control the randomness for reproducibility of the
 results by explicitly seeding the ``random_state`` pseudo random number
