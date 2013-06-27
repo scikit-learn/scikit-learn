@@ -22,7 +22,7 @@ from .utils.fixes import unique
 
 from .utils.multiclass import unique_labels
 from .utils.multiclass import is_multilabel
-from .utils.multiclass import is_label_indicator_matrix
+from .utils.multiclass import type_of_target
 
 from .utils.sparsefuncs import inplace_csr_row_normalize_l1
 from .utils.sparsefuncs import inplace_csr_row_normalize_l2
@@ -539,6 +539,7 @@ def binarize(X, threshold=0.0, copy=True):
 
     threshold : float, optional (0.0 by default)
         The lower bound that triggers feature values to be replaced by 1.0.
+        The threshold cannot be less than 0 for operations on sparse matrices.
 
     copy : boolean, optional, default is True
         set to False to perform inplace binarization and avoid a copy
@@ -558,6 +559,9 @@ def binarize(X, threshold=0.0, copy=True):
 
     X = check_arrays(X, sparse_format=sparse_format, copy=copy)[0]
     if sp.issparse(X):
+        if threshold < 0:
+            raise ValueError('Cannot binarize a sparse matrix with threshold '
+                             '< 0')
         cond = X.data > threshold
         not_cond = np.logical_not(cond)
         X.data[cond] = 1
@@ -589,6 +593,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
     ----------
     threshold : float, optional (0.0 by default)
         The lower bound that triggers feature values to be replaced by 1.0.
+        The threshold cannot be less than 0 for operations on sparse matrices.
 
     copy : boolean, optional, default is True
         set to False to perform inplace binarization and avoid a copy (if
@@ -1052,9 +1057,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         -------
         self : returns an instance of self.
         """
-        self.multilabel = is_multilabel(y)
+        y_type = type_of_target(y)
+        self.multilabel = y_type.startswith('multilabel')
         if self.multilabel:
-            self.indicator_matrix_ = is_label_indicator_matrix(y)
+            self.indicator_matrix_ = y_type == 'multilabel-indicator'
 
         self.classes_ = unique_labels(y)
 
@@ -1078,8 +1084,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         """
         self._check_fitted()
 
+        y_type = type_of_target(y)
+
         if self.multilabel or len(self.classes_) > 2:
-            if is_label_indicator_matrix(y):
+            if y_type == 'multilabel-indicator':
                 # nothing to do as y is already a label indicator matrix
                 return y
 
@@ -1089,14 +1097,14 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Y += self.neg_label
 
-        y_is_multilabel = is_multilabel(y)
+        y_is_multilabel = y_type.startswith('multilabel')
 
         if y_is_multilabel and not self.multilabel:
             raise ValueError("The object was not fitted with multilabel"
                              " input!")
 
         elif self.multilabel:
-            if not is_multilabel(y):
+            if not y_is_multilabel:
                 raise ValueError("y should be a list of label lists/tuples,"
                                  "got %r" % (y,))
 

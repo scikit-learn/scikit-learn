@@ -6,6 +6,8 @@ from __future__ import print_function
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>,
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
+#         Andreas Mueller <amueller@ais.uni-bonn.de>
+#         Olivier Grisel <olivier.grisel@ensta.org>
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
@@ -41,17 +43,29 @@ class ParameterGrid(object):
 
     Parameters
     ----------
-    param_grid : dict of string to sequence
+    param_grid : dict of string to sequence, or sequence of such
         The parameter grid to explore, as a dictionary mapping estimator
         parameters to sequences of allowed values.
+
+        An empty dict signifies default parameters.
+
+        A sequence of dicts signifies a sequence of grids to search, and is
+        useful to avoid exploring parameter combinations that make no sense
+        or have no effect. See the examples below.
 
     Examples
     --------
     >>> from sklearn.grid_search import ParameterGrid
-    >>> param_grid = {'a':[1, 2], 'b':[True, False]}
+    >>> param_grid = {'a': [1, 2], 'b': [True, False]}
     >>> list(ParameterGrid(param_grid)) #doctest: +NORMALIZE_WHITESPACE
     [{'a': 1, 'b': True}, {'a': 1, 'b': False},
      {'a': 2, 'b': True}, {'a': 2, 'b': False}]
+
+    >>> grid = [{'kernel': ['linear']}, {'kernel': ['rbf'], 'gamma': [1, 10]}]
+    >>> list(ParameterGrid(grid)) #doctest: +NORMALIZE_WHITESPACE
+    [{'kernel': 'linear'},
+     {'kernel': 'rbf', 'gamma': 1},
+     {'kernel': 'rbf', 'gamma': 10}]
 
     See also
     --------
@@ -79,16 +93,19 @@ class ParameterGrid(object):
         for p in self.param_grid:
             # Always sort the keys of a dictionary, for reproducibility
             items = sorted(p.items())
-            keys, values = zip(*items)
-            for v in product(*values):
-                params = dict(zip(keys, v))
-                yield params
+            if not items:
+                yield {}
+            else:
+                keys, values = zip(*items)
+                for v in product(*values):
+                    params = dict(zip(keys, v))
+                    yield params
 
     def __len__(self):
         """Number of points on the grid."""
         # Product function that can handle iterables (np.product can't).
         product = partial(reduce, operator.mul)
-        return sum(product(len(v) for v in p.values())
+        return sum(product(len(v) for v in p.values()) if p else 1
                    for p in self.param_grid)
 
 
@@ -133,6 +150,15 @@ class IterGrid(ParameterGrid):
 class ParameterSampler(object):
     """Generator on parameters sampled from given distributions.
 
+    Non-deterministic iterable over random candidate combinations for hyper-
+    parameter search.
+
+    Note that as of SciPy 0.12, the ``scipy.stats.distributions`` do not accept
+    a custom RNG instance and always use the singleton RNG from
+    ``numpy.random``. Hence setting ``random_state`` will not guarantee a
+    deterministic iteration whenever ``scipy.stats`` distributions are used to
+    define the parameter search space.
+
     Parameters
     ----------
     param_distributions : dict
@@ -146,7 +172,8 @@ class ParameterSampler(object):
         Number of parameter settings that are produced.
 
     random_state : int or RandomState
-            Pseudo number generator state used for random sampling.
+        Pseudo random number generator state used for random uniform sampling
+        from lists of possible values instead of scipy.stats distributions.
 
     Returns
     -------
@@ -190,7 +217,7 @@ class ParameterSampler(object):
         return self.n_iter
 
 
-def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
+def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
                    verbose, loss_func=None, **fit_params):
     """Run fit on one set of parameters.
 
@@ -202,10 +229,10 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
     y : array-like or None
         Targets for input data.
 
-    base_clf : estimator object
+    base_estimator : estimator object
         This estimator will be cloned and then fitted.
 
-    clf_params : dict
+    parameters : dict
         Parameters to be set on base_estimator clone for this grid point.
 
     train : ndarray, dtype int or bool
@@ -230,9 +257,8 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
     score : float
         Score of this parameter setting on given training / test split.
 
-    estimator : estimator object
-        Estimator object of type base_clf that was fitted using clf_params
-        and provided train / test split.
+    parameters : dict
+        The parameters that have been evaluated.
 
     n_samples_test : int
         Number of test samples in this split.
@@ -240,26 +266,26 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
     if verbose > 1:
         start_time = time.time()
         msg = '%s' % (', '.join('%s=%s' % (k, v)
-                      for k, v in clf_params.items()))
+                      for k, v in parameters.items()))
         print("[GridSearchCV] %s %s" % (msg, (64 - len(msg)) * '.'))
 
     # update parameters of the classifier after a copy of its base structure
-    clf = clone(base_clf)
-    clf.set_params(**clf_params)
+    clf = clone(base_estimator)
+    clf.set_params(**parameters)
 
-    if hasattr(base_clf, 'kernel') and callable(base_clf.kernel):
+    if hasattr(base_estimator, 'kernel') and callable(base_estimator.kernel):
         # cannot compute the kernel values with custom function
         raise ValueError("Cannot use a custom kernel function. "
                          "Precompute the kernel matrix instead.")
 
     if not hasattr(X, "shape"):
-        if getattr(base_clf, "_pairwise", False):
+        if getattr(base_estimator, "_pairwise", False):
             raise ValueError("Precomputed kernels or affinity matrices have "
                              "to be passed as arrays or sparse matrices.")
         X_train = [X[idx] for idx in train]
         X_test = [X[idx] for idx in test]
     else:
-        if getattr(base_clf, "_pairwise", False):
+        if getattr(base_estimator, "_pairwise", False):
             # X is a precomputed square kernel matrix
             if X.shape[0] != X.shape[1]:
                 raise ValueError("X should be a square kernel matrix")
@@ -296,7 +322,7 @@ def fit_grid_point(X, y, base_clf, clf_params, train, test, scorer,
                               logger.short_format_time(time.time() -
                                                        start_time))
         print("[GridSearchCV] %s %s" % ((64 - len(end_msg)) * '.', end_msg))
-    return this_score, clf_params, _num_samples(X_test)
+    return this_score, parameters, _num_samples(X_test)
 
 
 def _check_param_grid(param_grid):
@@ -317,15 +343,31 @@ def _check_param_grid(param_grid):
                                  "list.")
 
 
-_CVScoreTuple = namedtuple('_CVScoreTuple',
-                           ('parameters', 'mean_validation_score',
-                            'cv_validation_scores'))
+class _CVScoreTuple (namedtuple('_CVScoreTuple',
+                                ('parameters',
+                                 'mean_validation_score',
+                                 'cv_validation_scores'))):
+    # A raw namedtuple is very memory efficient as it packs the attributes
+    # in a struct to get rid of the __dict__ of attributes in particular it
+    # does not copy the string for the keys on each instance.
+    # By deriving a namedtuple class just to introduce the __repr__ method we
+    # would also reintroduce the __dict__ on the instance. By telling the
+    # Python interpreter that this subclass uses static __slots__ instead of
+    # dynamic attributes. Furthermore we don't need any additional slot in the
+    # subclass so we set __slots__ to the empty tuple.
+    __slots__ = ()
+
+    def __repr__(self):
+        """Simple custom repr to summarize the main info"""
+        return "mean: {0:.5f}, std: {1:.5f}, params: {2}".format(
+            self.mean_validation_score,
+            np.std(self.cv_validation_scores),
+            self.parameters)
 
 
 class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                       MetaEstimatorMixin)):
-    """Base class for hyper parameter search with cross-validation.
-    """
+    """Base class for hyper parameter search with cross-validation."""
 
     @abstractmethod
     def __init__(self, estimator, scoring=None, loss_func=None,
@@ -404,7 +446,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                     "should have a 'score' method. The estimator %s "
                     "does not." % self.estimator)
 
-    def _fit(self, X, y, parameter_iterator, **params):
+    def _fit(self, X, y, parameter_iterable, **params):
         """Actual fitting,  performing the search over parameters."""
 
         if params:
@@ -443,7 +485,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             y = np.asarray(y)
         cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
-        base_clf = clone(self.estimator)
+        base_estimator = clone(self.estimator)
 
         pre_dispatch = self.pre_dispatch
 
@@ -451,24 +493,24 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             n_jobs=self.n_jobs, verbose=self.verbose,
             pre_dispatch=pre_dispatch)(
                 delayed(fit_grid_point)(
-                    X, y, base_clf, clf_params, train, test, scorer,
-                    self.verbose, **self.fit_params) for clf_params in
-                parameter_iterator for train, test in cv)
+                    X, y, base_estimator, parameters, train, test, scorer,
+                    self.verbose, **self.fit_params)
+                for parameters in parameter_iterable
+                for train, test in cv)
 
         # Out is a list of triplet: score, estimator, n_test_samples
-        n_param_points = len(list(parameter_iterator))
         n_fits = len(out)
-        n_folds = n_fits // n_param_points
+        n_folds = len(cv)
 
         scores = list()
         cv_scores = list()
         for grid_start in range(0, n_fits, n_folds):
             n_test_samples = 0
             score = 0
-            these_points = list()
-            for this_score, clf_params, this_n_test_samples in \
+            all_scores = []
+            for this_score, parameters, this_n_test_samples in \
                     out[grid_start:grid_start + n_folds]:
-                these_points.append(this_score)
+                all_scores.append(this_score)
                 if self.iid:
                     this_score *= this_n_test_samples
                     n_test_samples += this_n_test_samples
@@ -477,47 +519,33 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 score /= float(n_test_samples)
             else:
                 score /= float(n_folds)
-            scores.append((score, clf_params))
-            cv_scores.append(these_points)
+            scores.append((score, parameters))
+            # TODO: shall we also store the test_fold_sizes?
+            cv_scores.append(_CVScoreTuple(
+                parameters,
+                score,
+                np.array(all_scores)))
+        # Store the computed scores
+        self.cv_scores_ = cv_scores
 
-        cv_scores = np.asarray(cv_scores)
-
-        # Note: we do not use max(out) to make ties deterministic even if
-        # comparison on estimator instances is not deterministic
-        if scorer is not None:
-            greater_is_better = scorer.greater_is_better
-        else:
-            greater_is_better = True
-
-        if greater_is_better:
-            best_score = -np.inf
-        else:
-            best_score = np.inf
-
-        for score, params in scores:
-            if ((score > best_score and greater_is_better)
-                    or (score < best_score and not greater_is_better)):
-                best_score = score
-                best_params = params
-
-        self.best_params_ = best_params
-        self.best_score_ = best_score
+        # Find the best parameters by comparing on the mean validation score:
+        # note that `sorted` is deterministic in the way it breaks ties
+        greater_is_better = getattr(self.scorer_, 'greater_is_better', True)
+        best = sorted(cv_scores, key=lambda x: x.mean_validation_score,
+                      reverse=greater_is_better)[0]
+        self.best_params_ = best.parameters
+        self.best_score_ = best.mean_validation_score
 
         if self.refit:
             # fit the best estimator using the entire dataset
             # clone first to work around broken estimators
-            best_estimator = clone(base_clf).set_params(**best_params)
+            best_estimator = clone(base_estimator).set_params(
+                **best.parameters)
             if y is not None:
                 best_estimator.fit(X, y, **self.fit_params)
             else:
                 best_estimator.fit(X, **self.fit_params)
             self.best_estimator_ = best_estimator
-
-        # Store the computed scores
-        self.cv_scores_ = [
-            _CVScoreTuple(clf_params, score, all_scores)
-            for clf_params, (score, _), all_scores
-            in zip(parameter_iterator, scores, cv_scores)]
         return self
 
 
@@ -814,10 +842,11 @@ class RandomizedSearchCV(BaseSearchCV):
     def __init__(self, estimator, param_distributions, n_iter=10, scoring=None,
                  loss_func=None, score_func=None, fit_params=None, n_jobs=1,
                  iid=True, refit=True, cv=None, verbose=0,
-                 pre_dispatch='2*n_jobs'):
+                 pre_dispatch='2*n_jobs', random_state=None):
 
         self.param_distributions = param_distributions
         self.n_iter = n_iter
+        self.random_state = random_state
         super(RandomizedSearchCV, self).__init__(
             estimator, scoring, loss_func, score_func, fit_params, n_jobs, iid,
             refit, cv, verbose, pre_dispatch)
@@ -838,5 +867,6 @@ class RandomizedSearchCV(BaseSearchCV):
 
         """
         sampled_params = ParameterSampler(self.param_distributions,
-                                          self.n_iter)
+                                          self.n_iter,
+                                          random_state=self.random_state)
         return self._fit(X, y, sampled_params, **params)

@@ -13,6 +13,7 @@ import sys
 import traceback
 import inspect
 import pickle
+import pkgutil
 
 import numpy as np
 from scipy import sparse
@@ -46,7 +47,7 @@ dont_test = ['SparseCoder', 'EllipticEnvelope', 'EllipticEnvelop',
              'DictVectorizer', 'LabelBinarizer', 'LabelEncoder',
              'TfidfTransformer', 'IsotonicRegression', 'OneHotEncoder',
              'RandomTreesEmbedding', 'FeatureHasher', 'DummyClassifier',
-             'DummyRegressor']
+             'DummyRegressor', 'TruncatedSVD']
 
 
 def test_all_estimators():
@@ -981,3 +982,18 @@ def test_cluster_overwrite_params():
                          "Estimator %s changes its parameter %s"
                          " from %s to %s during fit."
                          % (name, k, v, new_params[k]))
+
+
+def test_import_all_consistency():
+    # Smoke test to check that any name in a __all__ list is actually defined
+    # in the namespace of the module or package.
+    for importer, modname, ispkg in pkgutil.walk_packages(
+        path=sklearn.__path__, prefix='sklearn.', onerror=lambda x: None):
+        if ".tests." in modname:
+            continue
+        package = __import__(modname, fromlist="dummy")
+        for name in getattr(package, '__all__', ()):
+            if getattr(package, name, None) is None:
+                raise AttributeError(
+                    "Module '{}' has no attribute '{}'".format(
+                        modname, name))

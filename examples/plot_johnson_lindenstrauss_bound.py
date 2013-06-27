@@ -87,6 +87,8 @@ On the twenty newsgroups on the other hand the dimensionality can be decreased
 from 56436 down to 10000 while reasonably preserving pairwise distances.
 
 """
+print(__doc__)
+
 import sys
 from time import time
 import numpy as np

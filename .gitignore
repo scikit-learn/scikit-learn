@@ -2,6 +2,7 @@
 *.so
 *~
 .#*
+*.lprof
 *.swp
 *.swo
 .DS_Store
@@ -40,6 +41,7 @@ nips2010_pdf/
 *.tgz
 
 examples/cluster/joblib
+reuters/
 benchmarks/bench_covertype_data/
 
 *.prefs

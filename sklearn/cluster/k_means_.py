@@ -305,7 +305,7 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
     X: array-like of floats, shape (n_samples, n_features)
         The observations to cluster.
 
-    k: int
+    n_clusters: int
         The number of clusters to form as well as the number of
         centroids to generate.
 

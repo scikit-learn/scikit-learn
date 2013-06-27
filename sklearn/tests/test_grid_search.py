@@ -130,6 +130,15 @@ def test_parameter_grid():
                      set(("foo", x, "bar", y)
                          for x, y in product(params2["foo"], params2["bar"])))
 
+    # Special case: empty grid (useful to get default estimator settings)
+    empty = ParameterGrid({})
+    assert_equal(len(empty), 1)
+    assert_equal(list(empty), [{}])
+
+    has_empty = ParameterGrid([{'C': [1, 10]}, {}])
+    assert_equal(len(has_empty), 3)
+    assert_equal(list(has_empty), [{'C': 1}, {'C': 10}, {}])
+
 
 def test_grid_search():
     """Test that the best estimator contains the right value for foo_param"""
@@ -227,21 +236,25 @@ def test_grid_search_iid():
     # once with iid=True (default)
     grid_search = GridSearchCV(svm, param_grid={'C': [1, 10]}, cv=cv)
     grid_search.fit(X, y)
-    _, average_score, scores = grid_search.cv_scores_[0]
-    assert_array_almost_equal(scores, [1, 1. / 3.])
+    first = grid_search.cv_scores_[0]
+    assert_equal(first.parameters['C'], 1)
+    assert_array_almost_equal(first.cv_validation_scores, [1, 1. / 3.])
     # for first split, 1/4 of dataset is in test, for second 3/4.
     # take weighted average
-    assert_almost_equal(average_score, 1 * 1. / 4. + 1. / 3. * 3. / 4.)
+    assert_almost_equal(first.mean_validation_score,
+                        1 * 1. / 4. + 1. / 3. * 3. / 4.)
 
-    # once with iid=False (default)
+    # once with iid=False
     grid_search = GridSearchCV(svm, param_grid={'C': [1, 10]}, cv=cv,
                                iid=False)
     grid_search.fit(X, y)
-    _, average_score, scores = grid_search.cv_scores_[0]
+    first = grid_search.cv_scores_[0]
+    assert_equal(first.parameters['C'], 1)
     # scores are the same as above
-    assert_array_almost_equal(scores, [1, 1. / 3.])
+    assert_array_almost_equal(first.cv_validation_scores, [1, 1. / 3.])
     # averaged score is just mean of scores
-    assert_almost_equal(average_score, np.mean(scores))
+    assert_almost_equal(first.mean_validation_score,
+                        np.mean(first.cv_validation_scores))
 
 
 def test_grid_search_one_grid_point():
@@ -490,14 +503,47 @@ def test_param_sampler():
         assert_true(0 <= sample["C"] <= 1)
 
 
-def test_randomized_search():
-    # very basic smoke test
-    X, y = make_classification(n_samples=200, n_features=100, random_state=0)
+def test_randomized_search_cv_scores():
+    # Make a dataset with a lot of noise to get various kind of prediction
+    # errors across CV folds and parameter settings
+    X, y = make_classification(n_samples=200, n_features=100, n_informative=3,
+                               random_state=0)
 
-    params = dict(C=distributions.expon())
-    search = RandomizedSearchCV(LinearSVC(), param_distributions=params)
+    # XXX: as of today (scipy 0.12) it's not possible to set the random seed
+    # of scipy.stats distributions: the assertions in this test should thus
+    # not depend on the randomization
+    params = dict(C=distributions.expon(scale=10),
+                  gamma=distributions.expon(scale=0.1))
+    n_cv_iter = 3
+    n_search_iter = 30
+    search = RandomizedSearchCV(SVC(), n_iter=n_search_iter, cv=n_cv_iter,
+                                param_distributions=params, iid=False)
     search.fit(X, y)
-    assert_equal(len(search.cv_scores_), 10)
+    assert_equal(len(search.cv_scores_), n_search_iter)
+
+    # Check consistency of the structure of each cv_score item
+    for cv_score in search.cv_scores_:
+        assert_equal(len(cv_score.cv_validation_scores), n_cv_iter)
+        # Because we set iid to False, the mean_validation score is the
+        # mean of the fold mean scores instead of the aggregate sample-wise
+        # mean score
+        assert_almost_equal(np.mean(cv_score.cv_validation_scores),
+                            cv_score.mean_validation_score)
+        assert_equal(list(sorted(cv_score.parameters.keys())),
+                     list(sorted(params.keys())))
+
+    # Check the consistency with the best_score_ and best_params_ attributes
+    sorted_cv_scores = list(sorted(search.cv_scores_,
+                            key=lambda x: x.mean_validation_score))
+    best_score = sorted_cv_scores[-1].mean_validation_score
+    assert_equal(search.best_score_, best_score)
+
+    tied_best_params = [s.parameters for s in sorted_cv_scores
+                        if s.mean_validation_score == best_score]
+    assert_true(search.best_params_ in tied_best_params,
+                "best_params_={0} is not part of the"
+                " tied best models: {1}".format(
+                    search.best_params_, tied_best_params))
 
 
 def test_grid_search_score_consistency():

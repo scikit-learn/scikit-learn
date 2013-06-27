@@ -402,11 +402,11 @@ def completeness_score(labels_true, labels_pred):
 
 
 def v_measure_score(labels_true, labels_pred):
-    """V-Measure cluster labeling given a ground truth.
+    """V-measure cluster labeling given a ground truth.
 
     This score is identical to :func:`normalized_mutual_info_score`.
 
-    The V-Measure is the hormonic mean between homogeneity and completeness::
+    The V-measure is the harmonic mean between homogeneity and completeness::
 
         v = 2 * (homogeneity * completeness) / (homogeneity + completeness)
 
@@ -429,7 +429,7 @@ def v_measure_score(labels_true, labels_pred):
 
     Returns
     -------
-    completeness: float
+    v_measure: float
        score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
 
     References
@@ -467,7 +467,7 @@ def v_measure_score(labels_true, labels_pred):
 
     Labelings that have pure clusters with members coming from the same
     classes are homogeneous but un-necessary splits harms completeness
-    and thus penalize V-Measure as well::
+    and thus penalize V-measure as well::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 1, 2]))
       ...                                                  # doctest: +ELLIPSIS
