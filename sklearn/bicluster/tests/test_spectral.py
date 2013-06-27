@@ -1,20 +1,15 @@
 """Testing for Spectral Bilustering methods"""
 
 from sklearn.externals.six.moves import cPickle
-from sklearn.metrics.pairwise import kernel_metrics
 
 dumps, loads = cPickle.dumps, cPickle.loads
 
 import numpy as np
-from scipy import sparse
 
-from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import assert_greater
 
 from sklearn.bicluster.spectral import \
     SpectralBiclustering, \
@@ -23,6 +18,10 @@ from sklearn.bicluster.spectral import \
     project_and_cluster
 
 def test_spectral_biclustering_dhillon():
+    """Test Dhillon's Spectral CoClustering on a simple problem: a
+    block diagonal matrix.
+
+    """
     S = np.zeros((30, 30))
     S[0:10, 0:10] = 1
     S[10:20, 10:20] = 2
@@ -46,6 +45,10 @@ def test_spectral_biclustering_dhillon():
 
 
 def test_spectral_biclustering_kluger():
+    """Test all three Kluger methods on a simple checkerboard
+    dataset.
+
+    """
     # make a checkerboard array
     row_vector = [1] * 10 + [3] * 10 + [5] * 10
     col_vector = [2] * 10 + [4] * 10 + [6] * 10
@@ -87,18 +90,30 @@ def _do_bistochastic_test(scaled):
 
 
 def test_scale_preprocess():
+    """Ensure that independent scaling causes rows to sum to one
+    constant, and columns to another constant.
+
+    """
     x = np.random.rand(100, 100)
     scaled, _, _ = scale_preprocess(x)
     _do_scale_test(scaled)
 
 
 def test_bistochastic_preprocess():
+    """Ensure that bistochastic scaling causes rows and columns to sum
+    to the same constant.
+
+    """
     x = np.random.rand(100, 100)
     scaled = bistochastic_preprocess(x)
     _do_bistochastic_test(scaled)
 
 
 def test_log_preprocess():
+    """Ensure that log scaling plus a constant yields a bistochastic
+    matrix.
+
+    """
     x = np.random.rand(100, 100)
     scaled = log_preprocess(x) + 1
     _do_bistochastic_test(scaled)
