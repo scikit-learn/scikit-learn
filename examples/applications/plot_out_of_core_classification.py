@@ -59,6 +59,11 @@ import itertools
 ###############################################################################
 
 
+def _not_in_sphinx():
+    # Hack to detect whether we are running by the sphinx builder
+    return '__file__' in globals()
+
+
 class ReutersParser(sgmllib.SGMLParser):
     """Utility class to parse a SGML file and yield documents one at a time."""
     def __init__(self, verbose=0):
@@ -159,13 +164,15 @@ class ReutersStreamReader():
         def progress(blocknum, bs, size):
             total_sz_mb = '%.2f MB' % (size / 1e6)
             current_sz_mb = '%.2f MB' % ((blocknum * bs) / 1e6)
-            print('\rdownloaded %s / %s' % (current_sz_mb, total_sz_mb),
-                  end='')
+            if _not_in_sphinx():
+                print('\rdownloaded %s / %s' % (current_sz_mb, total_sz_mb),
+                      end='')
         urllib.urlretrieve(self.DOWNLOAD_URL,
                            filename=os.path.join(self.data_path,
                                                  self.ARCHIVE_FILENAME),
                            reporthook=progress)
-        print('\r', end='')
+        if _not_in_sphinx():
+            print('\r', end='')
         print("untaring data ...")
         tfile = tarfile.open(os.path.join(self.data_path,
                                           self.ARCHIVE_FILENAME),
@@ -256,7 +263,8 @@ def progress(stats):
 minibatch_size = 100
 
 # Main loop : iterate on mini-batchs of examples
-for X_train, y_train in iter_minibatchs(data_streamer, minibatch_size):
+minibatch_iterators = iter_minibatchs(data_streamer, minibatch_size)
+for i, (X_train, y_train) in enumerate(minibatch_iterators):
     # update estimator with examples in the current mini-batch
     classifier.partial_fit(X_train, y_train, classes=all_classes)
     # accumulate test accuracy stats
@@ -266,9 +274,8 @@ for X_train, y_train in iter_minibatchs(data_streamer, minibatch_size):
     stats['accuracy_history'].append((stats['accuracy'], stats['n_train']))
     stats['runtime_history'].append((stats['accuracy'],
                                      time.time() - stats['t0']))
-    print("\r%s" % progress(stats), end='')
-
-print()
+    if i % 10 == 0:
+        print(progress(stats))
 
 ###############################################################################
 # Plot results
