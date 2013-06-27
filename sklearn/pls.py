@@ -110,7 +110,7 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
       and unnormlized y weights such as defined by [Tenenhaus 1998] p. 132.
       With univariate response it implements PLS1.
 
-    - PLS canonical, i.e., PLS 2 blocks, mode A, with symetric deflation and
+    - PLS canonical, i.e., PLS 2 blocks, mode A, with symmetric deflation and
       normlized y weights such as defined by [Tenenhaus 1998] (p. 132) and
       [Wegelin et al. 2000]. This parametrization implements the original Wold
       algorithm.
@@ -621,7 +621,7 @@ class PLSCanonical(_PLS):
     current X score: x_score.
 
     The residual matrix of Y (Yk+1) block is obtained by deflation on the
-    current Y score. This performs a canonical symetric version of the PLS
+    current Y score. This performs a canonical symmetric version of the PLS
     regression. But slightly different than the CCA. This is mode mostly used
     for modeling.
 

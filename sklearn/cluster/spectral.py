@@ -175,7 +175,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
     -----------
     affinity: array-like or sparse matrix, shape: (n_samples, n_samples)
         The affinity matrix describing the relationship of the samples to
-        embed. **Must be symetric**.
+        embed. **Must be symmetric**.
 
         Possible examples:
           - adjacency matrix of a graph,

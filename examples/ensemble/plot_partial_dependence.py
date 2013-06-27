@@ -34,7 +34,7 @@ interactions among them. The two-way partial dependence plot shows the
 dependence of median house price on joint values of house age and avg.
 occupants per household. We can clearly see an interaction between the
 two features:
-For an avg. occupancy greather than two, the house price is nearly independent
+For an avg. occupancy greater than two, the house price is nearly independent
 of the house age, whereas for values less than two there is a strong dependence
 on age.
 

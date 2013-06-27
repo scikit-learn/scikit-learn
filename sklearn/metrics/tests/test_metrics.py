@@ -140,7 +140,7 @@ MULTILABELS_METRICS = {
     "macro_recall_score": partial(recall_score, average="macro"),
 }
 
-SYMETRIC_METRICS = {
+SYMMETRIC_METRICS = {
     "accuracy_score": accuracy_score,
     "unormalized_accuracy_score": partial(accuracy_score, normalize=False),
 
@@ -163,7 +163,7 @@ SYMETRIC_METRICS = {
     "mean_squared_error": mean_squared_error
 }
 
-NOT_SYMETRIC_METRICS = {
+NOT_SYMMETRIC_METRICS = {
     "explained_variance_score": explained_variance_score,
     "r2_score": r2_score,
 
@@ -866,23 +866,23 @@ def test_symmetry():
     y_true, y_pred, _ = make_prediction(binary=True)
 
     # We shouldn't forget any metrics
-    assert_equal(set(SYMETRIC_METRICS).union(NOT_SYMETRIC_METRICS,
+    assert_equal(set(SYMMETRIC_METRICS).union(NOT_SYMMETRIC_METRICS,
                                              THRESHOLDED_METRICS),
                  set(ALL_METRICS))
 
-    assert_equal(set(SYMETRIC_METRICS).intersection(set(NOT_SYMETRIC_METRICS)),
+    assert_equal(set(SYMMETRIC_METRICS).intersection(set(NOT_SYMMETRIC_METRICS)),
                  set([]))
 
     # Symmetric metric
-    for name, metric in SYMETRIC_METRICS.items():
+    for name, metric in SYMMETRIC_METRICS.items():
         assert_almost_equal(metric(y_true, y_pred),
                             metric(y_pred, y_true),
-                            err_msg="%s is not symetric" % name)
+                            err_msg="%s is not symmetric" % name)
 
     # Not symmetric metrics
-    for name, metric in NOT_SYMETRIC_METRICS.items():
+    for name, metric in NOT_SYMMETRIC_METRICS.items():
         assert_true(np.any(metric(y_true, y_pred) != metric(y_pred, y_true)),
-                    msg="%s seems to be symetric" % name)
+                    msg="%s seems to be symmetric" % name)
 
     # Deprecated metrics
     with warnings.catch_warnings(record=True):

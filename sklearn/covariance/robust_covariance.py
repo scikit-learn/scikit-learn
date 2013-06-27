@@ -126,7 +126,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
             "Please check that the covariance matrix corresponding "
             "to the dataset is full rank and that MinCovDet is used with "
             "Gaussian-distributed data (or at least data drawn from a "
-            "unimodal, symetric distribution.")
+            "unimodal, symmetric distribution.")
     # Check convergence
     if np.allclose(det, previous_det):
         # c_step procedure converged
@@ -463,7 +463,7 @@ class MinCovDet(EmpiricalCovariance):
 
     The Minimum Covariance Determinant covariance estimator is to be applied
     on Gaussian-distributed data, but could still be relevant on data
-    drawn from a unimodal, symetric distribution. It is not meant to be used
+    drawn from a unimodal, symmetric distribution. It is not meant to be used
     with multimodal data (the algorithm used to fit a MinCovDet object is
     likely to fail in such a case).
     One should consider projection pursuit methods to deal with multimodal

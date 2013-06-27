@@ -1074,7 +1074,7 @@ def make_spd_matrix(n_dim, random_state=None):
 def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
                            smallest_coef=.1, largest_coef=.9,
                            random_state=None):
-    """Generate a sparse symetric definite positive matrix.
+    """Generate a sparse symmetric definite positive matrix.
 
     Parameters
     ----------
@@ -1110,7 +1110,7 @@ def make_sparse_spd_matrix(dim=1, alpha=0.95, norm_diag=False,
                         * random_state.rand(np.sum(aux > alpha)))
     aux = np.tril(aux, k=-1)
 
-    # Permute the lines: we don't want to have assymetries in the final
+    # Permute the lines: we don't want to have asymmetries in the final
     # SPD matrix
     permutation = random_state.permutation(dim)
     aux = aux[permutation].T[permutation]
