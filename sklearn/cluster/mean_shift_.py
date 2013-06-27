@@ -240,7 +240,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
     and T the number of points. In higher dimensions the complexity will
     tend towards O(T*n^2).
 
-    Scalability can be boosted by using fewer seeds, for examply by using
+    Scalability can be boosted by using fewer seeds, for example by using
     a higher value of min_bin_freq in the get_bin_seeds function.
 
     Note that the estimate_bandwidth function is much less scalable than

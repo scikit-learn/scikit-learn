@@ -348,7 +348,7 @@ ignored in future calls to the transform method::
 
 Note that in the previous corpus, the first and the last documents have
 exactly the same words hence are encoded in equal vectors. In particular
-we lose the information that the last document is an interogative form. To
+we lose the information that the last document is an interrogative form. To
 preserve some of the local ordering information we can extract 2-grams
 of words in addition to the 1-grams (the word themselvs)::
 
@@ -370,7 +370,7 @@ can now resolve ambiguities encoded in local positioning patterns::
          [0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1]]...)
 
 
-In particular the interogative form "Is this" is only present in the
+In particular the interrogative form "Is this" is only present in the
 last document::
 
   >>> feature_index = bigram_vectorizer.vocabulary_.get(u'is this')
@@ -384,7 +384,7 @@ Tf–idf term weighting
 ---------------------
 
 In a large text corpus, some words will be very present (e.g. "the", "a",
-"is" in English) hence carrying very little meaningul information about
+"is" in English) hence carrying very little meaningful information about
 the actual contents of the document. If we were to feed the direct count
 data directly to a classifier those very frequent terms would shadow
 the frequencies of rarer yet more interesting terms.
@@ -507,7 +507,7 @@ unigrams (n=1), one might prefer a collection of bigrams (n=2), where
 occurrences of pairs of consecutive words are counted.
 
 One might alternatively consider a collection of character n-grams, a
-representation resiliant against misspellings and derivations.
+representation resilient against misspellings and derivations.
 
 For example, let's say we're dealing with a corpus of two documents:
 ``['words', 'wprds']``. The second document contains a misspelling
