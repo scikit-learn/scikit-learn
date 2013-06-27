@@ -163,10 +163,9 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
         Results of the clustering, like `rows`.
 
     `row_labels_` : array-like, shape (n_rows,)
-        If `method` is not 'dhillon', the resulting biclusters have a
-        checkerboard structure. The `row_labels_` and `column_labels_`
-        attributes encode this checkerboard structure in a more
-        compact form.
+        If `method` is `dhillon`, gives the bicluster label of each
+        row. Otherwise, the resulting biclusters have a checkerboard
+        structure.
 
     `column_labels_` : array-like, shape (n_cols,)
         See `row_labels_`.
@@ -218,11 +217,13 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
                                n_init=self.n_init)
 
         n_rows = X.shape[0]
-        row_labels = labels[0:n_rows]
-        col_labels = labels[n_rows:]
+        self.row_labels_ = labels[0:n_rows]
+        self.column_labels_ = labels[n_rows:]
 
-        self.rows_ = np.vstack(row_labels == c for c in range(self.n_clusters))
-        self.columns_ = np.vstack(col_labels == c for c in range(self.n_clusters))
+        self.rows_ = np.vstack(self.row_labels_ == c
+                               for c in range(self.n_clusters))
+        self.columns_ = np.vstack(self.column_labels_ == c
+                                  for c in range(self.n_clusters))
 
     def _kluger(self, X):
         n_sv = self.n_singular_vectors
