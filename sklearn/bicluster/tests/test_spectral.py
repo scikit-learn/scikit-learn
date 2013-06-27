@@ -31,11 +31,14 @@ def test_spectral_biclustering_dhillon():
     model = SpectralBiclustering(random_state=0, n_clusters=3,
                                  method='dhillon')
     model.fit(S)
+
+    # ensure every row and column is in exactly one bicluster, and
+    # that each bicluser has the expected number of elements.
     assert_equal(model.rows_.shape, (3, 30))
     assert_array_equal(model.rows_.sum(axis=0), np.ones(30))
-    assert_array_equal(model.rows_.sum(axis=1), [10] * 3)
+    assert_array_equal(model.rows_.sum(axis=1), np.repeat(10, 3))
     assert_array_equal(model.columns_.sum(axis=0), np.ones(30))
-    assert_array_equal(model.columns_.sum(axis=1), [10] * 3)
+    assert_array_equal(model.columns_.sum(axis=1), np.repeat(10, 3))
 
     model_copy = loads(dumps(model))
     assert_equal(model_copy.n_clusters, model.n_clusters)
@@ -43,6 +46,7 @@ def test_spectral_biclustering_dhillon():
 
 
 def test_spectral_biclustering_kluger():
+    # make a checkerboard array
     row_vector = [1] * 10 + [3] * 10 + [5] * 10
     col_vector = [2] * 10 + [4] * 10 + [6] * 10
     S = np.outer(row_vector, col_vector)
@@ -51,13 +55,15 @@ def test_spectral_biclustering_kluger():
         model = SpectralBiclustering(random_state=0, n_clusters=(3, 3),
                                      method=method)
         model.fit(S)
-        assert_equal(model.rows_.shape, (9, 30))
-        assert_array_equal(model.rows_.sum(axis=0), 3 * np.ones(30))
-        assert_array_equal(model.rows_.sum(axis=1), [10] * 9)
 
+        # ensure every row and column is in exactly three biclusters,
+        # and that each bicluser has the expected number of elements.
+        assert_equal(model.rows_.shape, (9, 30))
+        assert_array_equal(model.rows_.sum(axis=0), np.repeat(3, 30))
+        assert_array_equal(model.rows_.sum(axis=1), np.repeat(10, 9))
         assert_equal(model.columns_.shape, (9, 30))
-        assert_array_equal(model.columns_.sum(axis=0), 3 * np.ones(30))
-        assert_array_equal(model.columns_.sum(axis=1), [10] * 9)
+        assert_array_equal(model.columns_.sum(axis=0), np.repeat(3, 30))
+        assert_array_equal(model.columns_.sum(axis=1), np.repeat(10, 9))
 
         model_copy = loads(dumps(model))
         assert_equal(model_copy.n_clusters, model.n_clusters)
