@@ -1356,7 +1356,7 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=1,
     generator = check_random_state(random_state)
 
     if isinstance(n_clusters, int):
-        n_clusters = (n_clusters,  n_clusters)
+        n_clusters = (n_clusters, n_clusters)
 
     n_rows, n_cols = shape
     n_row_clusters, n_col_clusters = n_clusters
