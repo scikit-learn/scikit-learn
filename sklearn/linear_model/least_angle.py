@@ -472,7 +472,7 @@ class Lars(LinearModel, RegressorMixin):
         present if the ``fit_path`` parameter is ``False``.
 
     ``coef_`` : array, shape = [n_features] | [n_targets, n_features]
-        Parameter vector (w in the fomulation formula).
+        Parameter vector (w in the formulation formula).
 
     ``intercept_`` : float | array of shape [n_targets]
         Independent term in decision function.
@@ -677,7 +677,7 @@ class LassoLars(Lars):
         present if the ``fit_path`` parameter is ``False``.
 
     ``coef_`` : array, shape = n_features or n_targets, n_features
-        Parameter vector (w in the fomulation formula).
+        Parameter vector (w in the formulation formula).
 
     ``intercept_`` : float or array of shape [n_targets]
         Independent term in decision function.
@@ -862,7 +862,7 @@ class LarsCV(Lars):
     Attributes
     ----------
     ``coef_`` : array, shape = [n_features]
-        parameter vector (w in the fomulation formula)
+        parameter vector (w in the formulation formula)
 
     ``intercept_`` : float
         independent term in decision function
@@ -1034,7 +1034,7 @@ class LassoLarsCV(LarsCV):
     Attributes
     ----------
     ``coef_`` : array, shape = [n_features]
-        parameter vector (w in the fomulation formula)
+        parameter vector (w in the formulation formula)
 
     ``intercept_`` : float
         independent term in decision function.
@@ -1127,7 +1127,7 @@ class LassoLarsIC(LassoLars):
     Attributes
     ----------
     ``coef_`` : array, shape = [n_features]
-        parameter vector (w in the fomulation formula)
+        parameter vector (w in the formulation formula)
 
     ``intercept_`` : float
         independent term in decision function.

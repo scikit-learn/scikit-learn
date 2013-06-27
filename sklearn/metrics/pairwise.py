@@ -457,7 +457,7 @@ def additive_chi2_kernel(X, Y=None):
     See also
     --------
     chi2_kernel : The exponentiated version of the kernel, which is usually
-        preferrable.
+        preferable.
 
     sklearn.kernel_approximation.AdditiveChi2Sampler : A Fourier approximation
         to this kernel.
