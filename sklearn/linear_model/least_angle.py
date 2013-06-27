@@ -841,7 +841,7 @@ class LarsCV(Lars):
     max_iter: integer, optional
         Maximum number of iterations to perform.
 
-    cv : crossvalidation generator, optional
+    cv : cross-validation generator, optional
         see :mod:`sklearn.cross_validation`. If ``None`` is passed, default to
         a 5-fold strategy
 
@@ -1011,7 +1011,7 @@ class LassoLarsCV(LarsCV):
     max_iter: integer, optional
         Maximum number of iterations to perform.
 
-    cv : crossvalidation generator, optional
+    cv : cross-validation generator, optional
         see sklearn.cross_validation module. If None is passed, default to
         a 5-fold strategy
 

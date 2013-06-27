@@ -180,7 +180,7 @@ def spectral_clustering(affinity, n_clusters=8, n_components=None,
         Possible examples:
           - adjacency matrix of a graph,
           - heat kernel of the pairwise distance matrix of the samples,
-          - symmetic k-nearest neighbours connectivity matrix of the samples.
+          - symmetric k-nearest neighbours connectivity matrix of the samples.
 
     n_clusters: integer, optional
         Number of clusters to extract.

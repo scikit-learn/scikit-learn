@@ -33,7 +33,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
     n_features : int, optional (default=20)
         The total number of features. These comprise `n_informative`
         informative features, `n_redundant` redundant features, `n_repeated`
-        dupplicated features and `n_features-n_informative-n_redundant-
+        duplicated features and `n_features-n_informative-n_redundant-
         n_repeated` useless features drawn at random.
 
     n_informative : int, optional (default=2)
@@ -49,7 +49,7 @@ def make_classification(n_samples=100, n_features=20, n_informative=2,
         random linear combinations of the informative features.
 
     n_repeated : int, optional (default=2)
-        The number of dupplicated features, drawn randomly from the informative
+        The number of duplicated features, drawn randomly from the informative
         and the redundant features.
 
     n_classes : int, optional (default=2)

@@ -1242,9 +1242,9 @@ def permutation_test_score(estimator, X, y, scoring=None, cv=None,
         See 'Scoring objects' in the model evaluation section of the user guide
         for details.
 
-    cv : integer or crossvalidation generator, optional
+    cv : integer or cross-validation generator, optional
         If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see
+        Specific cross-validation objects can be passed, see
         sklearn.cross_validation module for the list of possible objects.
 
     n_jobs : integer, optional

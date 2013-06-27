@@ -1023,9 +1023,9 @@ class LassoCV(LinearModelCV, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    cv : integer or crossvalidation generator, optional
+    cv : integer or cross-validation generator, optional
         If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see the
+        Specific cross-validation objects can be passed, see the
         :mod:`sklearn.cross_validation` module for the list of possible
         objects.
 
@@ -1122,9 +1122,9 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    cv : integer or crossvalidation generator, optional
+    cv : integer or cross-validation generator, optional
         If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see the
+        Specific cross-validation objects can be passed, see the
         :mod:`sklearn.cross_validation` module for the list of possible
         objects.
 
