@@ -1302,9 +1302,94 @@ def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
 
     return X, y
 
+def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
+                    maxval=100, shuffle=True, random_state=None):
+    """Generate an array with constant block diagonal structure for
+    biclustering..
 
-def make_checkerboard(shape, n_clusters, noise=0.0, minval=1,
-                      maxval=1000, shuffle=True, random_state=None):
+    Parameters
+    ----------
+    shape : tuple (n_rows, n_cols)
+        The shape of the result.
+
+    n_clusters : integer
+        The number of biclusters.
+
+    noise : float, optional (default=0.0)
+        The standard deviation of the gaussian noise.
+
+    minval : int, optional (default=10)
+        Minimum value of the result.
+
+    maxval : int, optional (default=100)
+        Maximum value of the result.
+
+    shuffle : boolean, optional (default=True)
+        Shuffle the samples.
+
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
+    Returns
+    -------
+    X : array of shape `shape`
+        The generated array.
+
+    row_labels : array of shape (X.shape[0],)
+        The integer labels for membership of each row.
+
+    col_labels : array of shape (X.shape[1],)
+        The integer labels for membership of each column.
+
+    References
+    ----------
+
+    .. [1] Dhillon, I. S. (2001, August). Co-clustering documents and
+        words using bipartite spectral graph partitioning. In Proceedings
+        of the seventh ACM SIGKDD international conference on Knowledge
+        discovery and data mining (pp. 269-274). ACM.
+
+    """
+    generator = check_random_state(random_state)
+    n_rows, n_cols = shape
+    result = np.zeros(shape)
+    consts = generator.uniform(minval, maxval, n_clusters)
+
+    # row and column clusters of approximately equal sizes
+    row_sizes = np.random.multinomial(n_rows,
+                                      np.repeat(1.0 / n_clusters,
+                                                n_clusters))
+    col_sizes = np.random.multinomial(n_cols,
+                                      np.repeat(1.0 / n_clusters,
+                                                n_clusters))
+
+    row_labels = np.hstack(list(np.repeat(val, rep) for val, rep in
+                                zip(range(n_clusters), row_sizes)))
+    col_labels = np.hstack(list(np.repeat(val, rep) for val, rep in
+                                zip(range(n_clusters), col_sizes)))
+
+    for i in range(n_clusters):
+        selector = np.outer(row_labels == i, col_labels == i)
+        result[selector] += consts[i]
+
+    if noise > 0:
+        result += generator.normal(scale=noise, size=result.shape)
+
+    if shuffle:
+        row_idx = generator.permutation(n_rows)
+        col_idx = generator.permutation(n_cols)
+        result = result[row_idx][:, col_idx]
+        row_labels = row_labels[row_idx]
+        col_labels = col_labels[col_idx]
+
+    return result, row_labels, col_labels
+
+
+def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
+                      maxval=100, shuffle=True, random_state=None):
     """Generate an array with block checkerboard structure for
     biclustering.
 
@@ -1319,10 +1404,10 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=1,
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise.
 
-    minval : int, optional (default=1)
+    minval : int, optional (default=10)
         Minimum value of the result.
 
-    maxval : int, optional (default=1000)
+    maxval : int, optional (default=100)
         Maximum value of the result.
 
     shuffle : boolean, optional (default=True)
@@ -1385,7 +1470,7 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=1,
     if noise > 0:
         result += generator.normal(scale=noise, size=result.shape)
 
-    row_labels = np.hstack(list(np.repeat(val, rep)for val, rep in
+    row_labels = np.hstack(list(np.repeat(val, rep) for val, rep in
                                 zip(range(n_row_clusters), row_sizes)))
     col_labels = np.hstack(list(np.repeat(val, rep) for val, rep in
                                 zip(range(n_col_clusters), col_sizes)))
