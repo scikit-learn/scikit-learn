@@ -79,7 +79,7 @@ function does not actually depend on the data given to the ``fit`` function.
 Only the dimensionality of the data is used.
 Details on the method can be found in [RR2007]_.
 
-For a given value of ``n_components`` :class:`RBFSampler` is often less acurate
+For a given value of ``n_components`` :class:`RBFSampler` is often less accurate
 as :class:`Nystroem`. :class:`RBFSampler` is cheaper to compute, though, making
 use of larger feature spaces more efficient.
 

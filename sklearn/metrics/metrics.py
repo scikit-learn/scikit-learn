@@ -1483,7 +1483,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     value at 1 and worst score at 0.
 
     The F-beta score weights recall more than precision by a factor of
-    ``beta``. ``beta == 1.0`` means recall and precsion are equally important.
+    ``beta``. ``beta == 1.0`` means recall and precision are equally important.
 
     The support is the number of occurrences of each class in ``y_true``.
 

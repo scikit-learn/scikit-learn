@@ -252,7 +252,7 @@ Feature binarization
 --------------------
 
 **Feature binarization** is the process of **thresholding numerical
-features to get boolean values**. This can be useful for downsteam
+features to get boolean values**. This can be useful for downstream
 probabilistic estimators that make assumption that the input data
 is distributed according to a multi-variate `Bernoulli distribution
 <http://en.wikipedia.org/wiki/Bernoulli_distribution>`_. For instance,
@@ -260,7 +260,7 @@ this is the case for the most common class of `(Restricted) Boltzmann
 Machines <http://en.wikipedia.org/wiki/Boltzmann_machine>`_
 (not yet implemented in the scikit).
 
-It is also commmon among the text processing community to use binary
+It is also common among the text processing community to use binary
 feature values (probably to simplify the probabilistic reasoning) even
 if normalized counts (a.k.a. term frequencies) or TF-IDF valued features
 often perform slightly better in practice.
