@@ -27,7 +27,7 @@ The top right plot shows that the house age in a district does not have
 a strong influence on the (median) house price; so does the average rooms
 per household.
 The tick marks on the x-axis represent the deciles of the feature values
-in the trainig data.
+in the training data.
 
 Partial dependence plots with two target features enable us to visualize
 interactions among them. The two-way partial dependence plot shows the
