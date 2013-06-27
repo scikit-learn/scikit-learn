@@ -490,7 +490,7 @@ class PLSRegression(_PLS):
         Y block to latents rotations.
 
     coefs: array, [p, q]
-        The coeficients of the linear model: Y = X coefs + Err
+        The coefficients of the linear model: Y = X coefs + Err
 
     Notes
     -----
@@ -627,9 +627,9 @@ class PLSCanonical(_PLS):
 
     This implementation provides the same results that the "plspm" package
     provided in the R language (R-project), using the function plsca(X, Y).
-    Results are equal or colinear with the function
+    Results are equal or co-linear with the function
     ``pls(..., mode = "canonical")`` of the "mixOmics" package. The difference
-    relies in the fact that mixOmics implmentation does not exactly implement
+    relies in the fact that mixOmics implementation does not exactly implement
     the Wold algorithm since it does not normalize y_weights to one.
 
     Examples

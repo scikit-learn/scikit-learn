@@ -290,7 +290,7 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
-        """Fit all tranformers using X, transform the data and concatenate
+        """Fit all transformers using X, transform the data and concatenate
         results.
 
         Parameters

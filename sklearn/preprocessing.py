@@ -239,7 +239,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 class StandardScaler(BaseEstimator, TransformerMixin):
     """Standardize features by removing the mean and scaling to unit variance
 
-    Centering and scaling happen indepently on each feature by computing
+    Centering and scaling happen independently on each feature by computing
     the relevant statistics on the samples in the training set. Mean and
     standard deviation are then stored to be used on later data using the
     `transform` method.
