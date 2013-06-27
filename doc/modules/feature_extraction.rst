@@ -234,7 +234,7 @@ In order to address this, scikit-learn provides utilities for the most
 common ways to extract numerical features from text content, namely:
 
 - **tokenizing** strings and giving an integer id for each possible token,
-  for instance by using whitespaces and punctuation as token separators.
+  for instance by using white-spaces and punctuation as token separators.
 
 - **counting** the occurrences of tokens in each document.
 
@@ -253,7 +253,7 @@ A corpus of documents can thus be represented by a matrix with one row
 per document and one column per token (e.g. word) occurring in the corpus.
 
 We call **vectorization** the general process of turning a collection
-of text documents into numerical feature vectors. This specific stragegy
+of text documents into numerical feature vectors. This specific strategy
 (tokenization, counting and normalization) is called the **Bag of Words**
 or "Bag of n-grams" representation. Documents are described by word
 occurrences while completely ignoring the relative position information
@@ -548,7 +548,7 @@ span across words::
   [u'jumpy', u'mpy f', u'py fo', u'umpy ', u'y fox']
 
 The word boundaries-aware variant ``char_wb`` is especially interesting
-for languages that use whitespaces for word separation as it generates
+for languages that use white-spaces for word separation as it generates
 significantly less noisy features than the raw ``char`` variant in
 that case. For such languages it can increase both the predictive
 accuracy and convergence speed of classifiers trained using such

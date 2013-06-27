@@ -132,7 +132,7 @@ When the ``cv`` argument is an integer, :func:`cross_val_score` uses the
 :class:`KFold` or :class:`StratifiedKFold` strategies by default (depending on
 the absence or presence of the target array).
 
-It is also possible to use othe cross validation strategies by passing a cross
+It is also possible to use other cross validation strategies by passing a cross
 validation iterator instead, for instance::
 
   >>> n_samples = iris.data.shape[0]

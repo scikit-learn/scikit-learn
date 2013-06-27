@@ -141,7 +141,7 @@ def smacof(similarities, metric=True, n_components=2, init=None, n_init=8,
     a objective function, the *stress*, using a majorization technique. The
     Stress Majorization, also known as the Guttman Transform, guarantees a
     monotone convergence of Stress, and is more powerful than traditional
-    technics such as gradient descent.
+    techniques such as gradient descent.
 
     The SMACOF algorithm for metric MDS can summarized by the following steps:
 

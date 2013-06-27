@@ -1280,7 +1280,7 @@ Changelog
 
    - Added :class:`Orthogonal Matching Pursuit <linear_model.OrthogonalMatchingPursuit>` by `Vlad Niculae`_
 
-   - Added 2D-patch extractor utilites in the :ref:`feature_extraction` module by `Vlad Niculae`_
+   - Added 2D-patch extractor utilities in the :ref:`feature_extraction` module by `Vlad Niculae`_
 
    - Implementation of :class:`linear_model.LassoLarsCV`
      (cross-validated Lasso solver using the Lars algorithm) and

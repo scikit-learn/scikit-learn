@@ -345,7 +345,7 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
 
 
 class GraphLassoCV(GraphLasso):
-    """Sparse inverse covariance w/ cross-validated choice of the l1 penality
+    """Sparse inverse covariance w/ cross-validated choice of the l1 penalty
 
     Parameters
     ----------

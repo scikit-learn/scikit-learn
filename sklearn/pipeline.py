@@ -1,5 +1,5 @@
 """
-The :mod:`sklearn.pipeline` module implements utilites to build a composite
+The :mod:`sklearn.pipeline` module implements utilities to build a composite
 estimator, as a chain of transforms and estimators.
 """
 # Author: Edouard Duchesnay
