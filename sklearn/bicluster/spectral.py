@@ -63,6 +63,26 @@ def log_preprocess(X):
     return L - row_avg - col_avg + avg
 
 
+def svd(array, n_singular_vals, maxiter):
+    """Returns first `n_singular_vectors` left and right singular
+    vectors u and v.
+
+    Tries to use scipy.sparse.linalg.svds, then reverts to
+    numpy.linalg.svd if that fails.
+
+    """
+    u, s, vt = svds(array, k=n_singular_vals,
+                    maxiter=maxiter)
+    v = vt.T
+    nan = lambda x: np.any(np.isnan(x))
+    if nan(u) or nan(s) or nan(v):
+        print "warning: partial svd failed. trying full svd."
+        u, _, v = np.linalg.svd(array, full_matrices=False)
+        u = u[:, :n_singular_vals]
+        v = v[:, :n_singular_vals]
+    return u, v
+
+
 def fit_best_piecewise(vectors, k, n_clusters, random_state, n_init):
     """Find the `k` vectors that are best approximated by piecewise
     constant vectors.
@@ -119,7 +139,7 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
 
     n_best_vectors : integer
         Number of best singular vectors to which to project the data
-        for clustering.
+        for clustering. Not used if `self.method` is `dhillon`.
 
     maxiter : integer
         Maximum iterations for finding singular vectors.
@@ -190,10 +210,9 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
     def _dhillon(self, X):
         normalized_data, row_diag, col_diag = scale_preprocess(X)
         n_singular_vals = 1 + int(np.ceil(np.log2(self.n_clusters)))
-        u, _, vt = svds(normalized_data, k=n_singular_vals,
-                        maxiter=self.maxiter)
+        u, v = svd(normalized_data, n_singular_vals, self.maxiter)
         z = np.vstack((row_diag[:, np.newaxis] * u[:, 1:],
-                       col_diag[:, np.newaxis] * vt.T[:, 1:]))
+                       col_diag[:, np.newaxis] * v[:, 1:]))
         _, labels, _ = k_means(z, self.n_clusters,
                                random_state=self.random_state,
                                n_init=self.n_init)
@@ -215,9 +234,9 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
             n_sv += 1
         elif self.method == 'log':
             normalized_data = log_preprocess(X)
-        u, _, vt = svds(normalized_data, k=n_sv,
-                        maxiter=self.maxiter)
+        u, v = svd(normalized_data, n_sv, self.maxiter)
         ut = u.T
+        vt = v.T
         if self.method != 'log':
             ut = ut[1:]
             vt = vt[1:]
