@@ -21,6 +21,8 @@ from sklearn.datasets import make_sparse_uncorrelated
 from sklearn.datasets import make_spd_matrix
 from sklearn.datasets import make_swiss_roll
 from sklearn.datasets import make_s_curve
+from sklearn.datasets import make_biclusters
+from sklearn.datasets import make_checkerboard
 
 
 def test_make_classification():
@@ -191,3 +193,23 @@ def test_make_s_curve():
     assert_equal(t.shape, (5,), "t shape mismatch")
     assert_array_equal(X[:, 0], np.sin(t))
     assert_array_equal(X[:, 2], np.sign(t) * (np.cos(t) - 1))
+
+
+def test_make_biclusters():
+    X, row_labels, col_labels = make_biclusters(
+        shape=(100, 100), n_clusters = 4, shuffle=True, random_state=0)
+    assert_equal(X.shape, (100, 100), "X shape mismatch")
+    assert_equal(row_labels.shape, (100,), "row labels mismatch")
+    assert_equal(col_labels.shape, (100,), "column labels mismatch")
+    assert_array_equal(np.unique(row_labels), np.arange(4))
+    assert_array_equal(np.unique(col_labels), np.arange(4))
+
+
+def test_make_checkerboard():
+    X, row_labels, col_labels = make_checkerboard(
+        shape=(100, 100), n_clusters = (20, 5), shuffle=True, random_state=0)
+    assert_equal(X.shape, (100, 100), "X shape mismatch")
+    assert_equal(row_labels.shape, (100,), "row labels mismatch")
+    assert_equal(col_labels.shape, (100,), "column labels mismatch")
+    assert_array_equal(np.unique(row_labels), np.arange(20))
+    assert_array_equal(np.unique(col_labels), np.arange(5))

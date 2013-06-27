@@ -44,7 +44,7 @@ def test_spectral_biclustering_dhillon():
     assert_equal(model_copy.method, model.method)
 
 
-def test_spectral_biclustering_kluger():
+def _test_spectral_biclustering_kluger(noise):
     """Test all three Kluger methods on a simple checkerboard
     dataset.
 
@@ -52,7 +52,10 @@ def test_spectral_biclustering_kluger():
     # make a checkerboard array
     row_vector = [1] * 10 + [3] * 10 + [5] * 10
     col_vector = [2] * 10 + [4] * 10 + [6] * 10
-    S = np.outer(row_vector, col_vector)
+    S = np.outer(row_vector, col_vector).astype(np.float64)
+
+    if noise > 0:
+        S += np.random.normal(0, noise, S.shape).astype(np.float64)
 
     for method in ('scale', 'bistochastic', 'log'):
         model = SpectralBiclustering(random_state=0, n_clusters=(3, 3),
@@ -71,6 +74,14 @@ def test_spectral_biclustering_kluger():
         model_copy = loads(dumps(model))
         assert_equal(model_copy.n_clusters, model.n_clusters)
         assert_equal(model_copy.method, model.method)
+
+
+def test_spectral_biclustering_kluger_without_noise():
+    _test_spectral_biclustering_kluger(noise=0)
+
+
+def test_spectral_biclustering_kluger_with_noise():
+    _test_spectral_biclustering_kluger(noise=0.5)
 
 
 def _do_scale_test(scaled):
