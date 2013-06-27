@@ -44,7 +44,7 @@ def bistochastic_preprocess(X, maxiter=1000, tol=1e-5):
     X = make_nonnegative(X)
     X_scaled = X
     dist = None
-    for i in range(maxiter):
+    for _ in range(maxiter):
         X_new, _, _ = scale_preprocess(X_scaled)
         dist = np.linalg.norm(X_scaled - X_new)
         X_scaled = X_new
@@ -205,7 +205,7 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
         self.n_best_vectors = n_best_vectors
         self.maxiter = maxiter
         self.n_init = n_init
-        self.random_state=random_state
+        self.random_state = random_state
 
     def _dhillon(self, X):
         normalized_data, row_diag, col_diag = scale_preprocess(X)
