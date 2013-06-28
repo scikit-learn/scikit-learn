@@ -519,7 +519,8 @@ def test_confusion_matrix_binary():
         assert_array_almost_equal(mcc, 0.57, decimal=2)
 
     test(y_true, y_pred)
-    test(map(str, y_true), map(str, y_pred))
+    test(list(str(y) for y in y_true),
+         list(str(y) for y in y_pred))
 
 
 def test_matthews_corrcoef_nan():
