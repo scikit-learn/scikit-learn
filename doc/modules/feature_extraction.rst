@@ -470,6 +470,59 @@ feature extractor with a classifier:
  * :ref:`example_grid_search_text_feature_extraction.py`
 
 
+Decoding text files
+-------------------
+Text is made of characters, but files are made of bytes. In Unicode,
+there are many more possible characters than possible bytes. Every text
+file is *encoded* so that its characters can be represented as bytes.
+
+When you work with text in Python, it should be Unicode. Most of the
+text feature extractors in scikit-learn will only work with Unicode. So
+to correctly load text from a file (or from the network), you need to
+decode it with the correct encoding.
+
+An encoding can also be called a 'charset' or 'character set', though
+this terminology is less accurate. The :class:`CountVectorizer` takes
+a ``charset`` parameter to tell it what encoding to decode text from.
+
+For modern text files, the correct encoding is probably UTF-8. The
+:class:`CountVectorizer` has ``charset='utf-8'`` as the default. If the
+text you are loading is not actually encoded with UTF-8, however, you
+will get a ``UnicodeDecodeError``.
+
+If you are having trouble decoding text, here are some things to try:
+
+- Find out what the actual encoding of the text is. The file might come
+  with a header that tells you the encoding, or there might be some
+  standard encoding you can assume based on where the text comes from.
+
+- You may be able to find out what kind of encoding it is in general
+  using the UNIX command ``file``. The Python ``chardet`` module comes with
+  a script called ``chardetect.py`` that will guess the specific encoding,
+  though you cannot rely on its guess being correct.
+
+- You could try UTF-8 and disregard the errors. You can decode byte
+  strings with ``bytes.decode(errors='replace')`` to replace all
+  decoding errors with a meaningless character, or set
+  ``charset_error='replace'`` in the vectorizer. This may damage the
+  usefulness of your features.
+
+- Real text may come from a variety of sources that may have used different
+  encodings, or even be sloppily decoded in a different encoding than the
+  one it was encoded with. This is common in text retrieved from the Web.
+  The Python package `ftfy`_ can automatically sort out some classes of
+  decoding errors, so you could try decoding the unknown text as ``latin-1``
+  and then using ``ftfy`` to fix errors.
+
+- If the text is in a mish-mash of encodings that is simply too hard to sort
+  out (which is the case for the 20 Newsgroups dataset), you can fall back on
+  a simple single-byte encoding such as ``latin-1``. Some text may display
+  incorrectly, but at least the same sequence of bytes will always represent
+  the same feature.
+
+.. _`ftfy`: http://github.com/LuminosoInsight/python-ftfy
+
+
 Applications and examples
 -------------------------
 
@@ -565,58 +618,6 @@ the local structure of sentences and paragraphs should thus be taken
 into account. Many such models will thus be casted as "Structured output"
 problems which are currently outside of the scope of scikit-learn.
 
-
-Decoding text files
--------------------
-Text is made of characters, but files are made of bytes. In Unicode,
-there are many more possible characters than possible bytes. Every text
-file is *encoded* so that its characters can be represented as bytes.
-
-When you work with text in Python, it should be Unicode. Most of the
-text feature extractors in scikit-learn will only work with Unicode. So
-to correctly load text from a file (or from the network), you need to
-decode it with the correct encoding.
-
-An encoding can also be called a 'charset' or 'character set', though
-this terminology is less accurate. The :class:`CountVectorizer` takes
-a ``charset`` parameter to tell it what encoding to decode text from.
-
-For modern text files, the correct encoding is probably UTF-8. The
-:class:`CountVectorizer` has ``charset='utf-8'`` as the default. If the
-text you are loading is not actually encoded with UTF-8, however, you
-will get a ``UnicodeDecodeError``.
-
-If you are having trouble decoding text, here are some things to try:
-
-- Find out what the actual encoding of the text is. The file might come
-  with a header that tells you the encoding, or there might be some
-  standard encoding you can assume based on where the text comes from.
-
-- You may be able to find out what kind of encoding it is in general
-  using the UNIX command ``file``. The Python ``chardet`` module comes with
-  a script called ``chardetect.py`` that will guess the specific encoding,
-  though you cannot rely on its guess being correct.
-
-- You could try UTF-8 and disregard the errors. You can decode byte
-  strings with ``bytes.decode(errors='replace')`` to replace all
-  decoding errors with a meaningless character, or set
-  ``charset_error='replace'`` in the vectorizer. This may damage the
-  usefulness of your features.
-
-- Real text may come from a variety of sources that may have used different
-  encodings, or even be sloppily decoded in a different encoding than the
-  one it was encoded with. This is common in text retrieved from the Web.
-  The Python package `ftfy`_ can automatically sort out some classes of
-  decoding errors, so you could try decoding the unknown text as ``latin-1``
-  and then using ``ftfy`` to fix errors.
-
-- If the text is in a mish-mash of encodings that is simply too hard to sort
-  out (which is the case for the 20 Newsgroups dataset), you can fall back on
-  a simple single-byte encoding such as ``latin-1``. Some text may display
-  incorrectly, but at least the same sequence of bytes will always represent
-  the same feature.
-
-.. _`ftfy`: http://github.com/LuminosoInsight/python-ftfy
 
 .. _hashing_vectorizer:
 
