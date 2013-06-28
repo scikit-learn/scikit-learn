@@ -139,7 +139,7 @@ class Isomap(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, BallTree, cKDTree, NearestNeighbors}
+        X : {array-like, sparse matrix, BallTree, KDTree, NearestNeighbors}
             Sample data, shape = (n_samples, n_features), in the form of a
             numpy array, precomputed tree, or NearestNeighbors
             object.
@@ -156,7 +156,7 @@ class Isomap(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix, BallTree, cKDTree}
+        X: {array-like, sparse matrix, BallTree, KDTree}
             Training vector, where n_samples in the number of samples
             and n_features is the number of features.
 

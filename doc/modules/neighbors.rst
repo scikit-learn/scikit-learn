@@ -42,7 +42,7 @@ Unsupervised Nearest Neighbors
 
 :class:`NearestNeighbors` implements unsupervised nearest neighbors learning.
 It acts as a uniform interface to three different nearest neighbors
-algorithms: :class:`BallTree`, :class:`scipy.spatial.cKDTree`, and a
+algorithms: :class:`BallTree`, :class:`KDTree`, and a
 brute-force algorithm based on routines in :mod:`sklearn.metrics.pairwise`.
 The choice of neighbors search algorithm is controlled through the keyword
 ``'algorithm'``, which must be one of
@@ -210,7 +210,7 @@ neighbors searches, it becomes inefficient as :math:`D` grows very large:
 this is one manifestation of the so-called "curse of dimensionality".
 In scikit-learn, KD tree neighbors searches are specified using the
 keyword ``algorithm = 'kd_tree'``, and are computed using the class
-:class:`scipy.spatial.cKDTree`.
+:class:`KDTree`.
 
 
 .. topic:: References:
@@ -277,7 +277,7 @@ depends on a number of factors:
 
   For small data sets (:math:`N` less than 30 or so), :math:`\log(N)` is
   comparable to :math:`N`, and brute force algorithms can be more efficient
-  than a tree-based approach.  Both :class:`cKDTree` and :class:`BallTree`
+  than a tree-based approach.  Both :class:`KDTree` and :class:`BallTree`
   address this through providing a *leaf size* parameter: this controls the
   number of samples at which a query switches to brute-force.  This allows both
   algorithms to approach the efficiency of a brute-force computation for small

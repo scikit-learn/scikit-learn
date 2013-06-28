@@ -7,7 +7,6 @@ from numpy.testing import assert_array_almost_equal, assert_array_equal
 from numpy.testing import assert_raises
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                           dok_matrix, lil_matrix)
-from scipy.spatial import cKDTree
 
 from sklearn import neighbors, datasets
 
@@ -28,7 +27,7 @@ SPARSE_TYPES = (bsr_matrix, coo_matrix, csc_matrix, csr_matrix, dok_matrix,
                 lil_matrix)
 SPARSE_OR_DENSE = SPARSE_TYPES + (np.asarray,)
 
-ALGORITHMS = ('ball_tree', 'brute', 'kd_tree', 'ckd_tree', 'auto')
+ALGORITHMS = ('ball_tree', 'brute', 'kd_tree', 'auto')
 P = (1, 2, 3, 4, np.inf)
 
 
@@ -82,7 +81,7 @@ def test_unsupervised_inputs():
 
     nbrs = neighbors.NearestNeighbors(n_neighbors=1)
 
-    for input in (nbrs_fid, neighbors.BallTree(X), cKDTree(X)):
+    for input in (nbrs_fid, neighbors.BallTree(X), neighbors.KDTree(X)):
         nbrs.fit(input)
         dist2, ind2 = nbrs.kneighbors(X)
 

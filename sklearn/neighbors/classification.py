@@ -44,12 +44,11 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Uniform weights are used by default.
 
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'ckd_tree', 'brute'}, optional
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
 
         - 'ball_tree' will use :class:`BallTree`
         - 'kd_tree' will use :class:`KDTree`
-        - 'ckd_tree' will use :class:`scipy.spatial.cKDtree`
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
           based on the values passed to :meth:`fit` method.
@@ -58,7 +57,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         this parameter, using brute force.
 
     leaf_size : int, optional (default = 30)
-        Leaf size passed to BallTree or cKDTree.  This can affect the
+        Leaf size passed to BallTree or KDTree.  This can affect the
         speed of the construction and query, as well as the memory
         required to store the tree.  The optimal value depends on the
         nature of the problem.
@@ -207,12 +206,11 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         Uniform weights are used by default.
 
-    algorithm : {'auto', 'ball_tree', 'kd_tree', 'ckd_tree', 'brute'}, optional
+    algorithm : {'auto', 'ball_tree', 'kd_tree', 'brute'}, optional
         Algorithm used to compute the nearest neighbors:
 
         - 'ball_tree' will use :class:`BallTree`
         - 'kd_tree' will use :class:`KDtree`
-        - 'ckd_tree' will use :class:`scipy.spatial.cKDtree`
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
           based on the values passed to :meth:`fit` method.
@@ -221,7 +219,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         this parameter, using brute force.
 
     leaf_size : int, optional (default = 30)
-        Leaf size passed to BallTree or cKDTree.  This can affect the
+        Leaf size passed to BallTree or KDTree.  This can affect the
         speed of the construction and query, as well as the memory
         required to store the tree.  The optimal value depends on the
         nature of the problem.

@@ -10,7 +10,6 @@ import warnings
 import numpy as np
 from abc import ABCMeta, abstractmethod
 from scipy.sparse import csr_matrix, issparse
-from scipy.spatial.ckdtree import cKDTree
 
 from .ball_tree import BallTree
 from .kd_tree import KDTree
@@ -23,9 +22,6 @@ from ..utils.fixes import unique
 
 VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
                      kd_tree=KDTree.valid_metrics,
-                     ckd_tree=('manhattan', 'cityblock', 'l1',
-                               'euclidean', 'l2',
-                               'minkowski', 'chebyshev', 'infinity'),
                      # The following list comes from the
                      # sklearn.metrics.pairwise doc string
                      brute=(PAIRWISE_DISTANCE_FUNCTIONS.keys() +
@@ -34,12 +30,12 @@ VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
                              'jaccard', 'kulsinski', 'mahalanobis',
                              'matching', 'minkowski', 'rogerstanimoto',
                              'russellrao', 'seuclidean', 'sokalmichener',
-                             'sokalsneath', 'sqeuclidean', 'yule', 'wminkowski']))
+                             'sokalsneath', 'sqeuclidean',
+                             'yule', 'wminkowski']))
 
 
 VALID_METRICS_SPARSE = dict(ball_tree=[],
                             kd_tree=[],
-                            ckd_tree=[],
                             brute=PAIRWISE_DISTANCE_FUNCTIONS.keys())
 
 
@@ -117,9 +113,9 @@ class NeighborsBase(BaseEstimator):
         self.leaf_size = leaf_size
         self.metric = metric
         self.metric_kwds = kwargs
-        self.p = kwargs.get('p', 2)  # needed for ckdtree
+        self.p = kwargs.get('p', 2)
 
-        if algorithm not in ['auto', 'brute', 'ckd_tree',
+        if algorithm not in ['auto', 'brute',
                              'kd_tree', 'ball_tree']:
             raise ValueError("unrecognized algorithm: '%s'" % algorithm)
 
@@ -130,7 +126,7 @@ class NeighborsBase(BaseEstimator):
 
         if metric not in VALID_METRICS[alg_check]:
             # callable metric is valid for brute force, kd_tree, and ball_tree
-            if callable(metric) and algorithm != 'ckd_tree':
+            if callable(metric):
                 pass
             else:
                 raise ValueError("metric '%s' not valid for algorithm '%s'"
@@ -174,12 +170,6 @@ class NeighborsBase(BaseEstimator):
             self._fit_method = 'kd_tree'
             return self
 
-        elif isinstance(X, cKDTree):
-            self._fit_X = X.data
-            self._tree = X
-            self._fit_method = 'ckd_tree'
-            return self
-
         X = safe_asarray(X)
 
         if X.ndim != 2:
@@ -217,9 +207,7 @@ class NeighborsBase(BaseEstimator):
             else:
                 self._fit_method = 'brute'
 
-        if self._fit_method == 'ckd_tree':
-            self._tree = cKDTree(X, self.leaf_size)
-        elif self._fit_method == 'ball_tree':
+        if self._fit_method == 'ball_tree':
             self._tree = BallTree(X, self.leaf_size, metric=self.metric,
                                   **self.metric_kwds)
         elif self._fit_method == 'kd_tree':
@@ -318,16 +306,6 @@ class KNeighborsMixin(object):
             result = self._tree.query(X, n_neighbors,
                                       return_distance=return_distance)
             return result
-        elif self._fit_method == 'ckd_tree':
-            dist, ind = self._tree.query(X, n_neighbors, p=self.p)
-            # kd_tree returns a 1D array for n_neighbors = 1
-            if n_neighbors == 1:
-                dist = dist[:, None]
-                ind = ind[:, None]
-            if return_distance:
-                return dist, ind
-            else:
-                return ind
         else:
             raise ValueError("internal: _fit_method not recognized")
 
@@ -487,7 +465,7 @@ class RadiusNeighborsMixin(object):
                 dtype_F = object
 
             if return_distance:
-                if self.p == 2:
+                if self.metric == 'euclidean':
                     dist = np.array([np.sqrt(d[neigh_ind[i]])
                                      for i, d in enumerate(dist)],
                                     dtype=dtype_F)
@@ -499,39 +477,13 @@ class RadiusNeighborsMixin(object):
             else:
                 return neigh_ind
         elif self._fit_method in ['ball_tree', 'kd_tree']:
+            results = self._tree.query_radius(X, radius,
+                                              return_distance=return_distance)
             if return_distance:
-                ind, dist = self._tree.query_radius(X, radius,
-                                                    return_distance=True)
+                ind, dist = results
                 return dist, ind
             else:
-                ind = self._tree.query_radius(X, radius,
-                                              return_distance=False)
-                return ind
-        elif self._fit_method == 'ckd_tree':
-            Npts = self._fit_X.shape[0]
-            dist, ind = self._tree.query(X, Npts,
-                                         distance_upper_bound=radius,
-                                         p=self.p)
-
-            ind = [ind_i[:ind_i.searchsorted(Npts)] for ind_i in ind]
-
-            # if there are the same number of neighbors for each point,
-            # we can do a normal array.  Otherwise, we return an object
-            # array with elements that are numpy arrays
-            try:
-                ind = np.asarray(ind, dtype=int)
-                dtype_F = float
-            except ValueError:
-                ind = np.asarray(ind, dtype='object')
-                dtype_F = object
-
-            if return_distance:
-                dist = np.array([dist_i[:len(ind[i])]
-                                 for i, dist_i in enumerate(dist)],
-                                dtype=dtype_F)
-                return dist, ind
-            else:
-                return ind
+                return results
         else:
             raise ValueError("internal: _fit_method not recognized")
 
@@ -617,14 +569,14 @@ class SupervisedFloatMixin(object):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, BallTree, KDTree, cKDTree}
-            Training data. If array or matrix, then the shape
-            is [n_samples, n_features]
+        X : {array-like, sparse matrix, BallTree, KDTree}
+            Training data. If array or matrix, shape = [n_samples, n_features]
 
-        y : {array-like, sparse matrix}, shape = [n_samples]
-            Target values, array of float values.
+        y : {array-like, sparse matrix}
+            Target values, array of float values, shape = [n_samples]
         """
-        X, y = check_arrays(X, y, sparse_format="csr")
+        if not isinstance(X, (KDTree, BallTree)):
+            X, y = check_arrays(X, y, sparse_format="csr")
         self._y = y
         return self._fit(X)
 
@@ -635,14 +587,14 @@ class SupervisedIntegerMixin(object):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, BallTree, KDTree, cKDTree}
-            Training data. If array or matrix, then the shape
-            is [n_samples, n_features]
+        X : {array-like, sparse matrix, BallTree, KDTree}
+            Training data. If array or matrix, shape = [n_samples, n_features]
 
-        y : {array-like, sparse matrix}, shape = [n_samples]
-            Target values, array of integer values.
+        y : {array-like, sparse matrix}
+            Target values, array of integer values, shape = [n_samples]
         """
-        X, y = check_arrays(X, y, sparse_format="csr")
+        if not isinstance(X, (KDTree, BallTree)):
+            X, y = check_arrays(X, y, sparse_format="csr")
         self.classes_, self._y = unique(y, return_inverse=True)
         return self._fit(X)
 
@@ -653,7 +605,7 @@ class UnsupervisedMixin(object):
 
         Parameters
         ----------
-        X : {array-like, sparse matrix, BallTree, KDTree, cKDTree}
+        X : {array-like, sparse matrix, BallTree, KDTree}
             Training data. If array or matrix, shape = [n_samples, n_features]
         """
         return self._fit(X)
