@@ -14,6 +14,7 @@ from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
+from ..externals.six import moves
 from ..utils import array2d, as_float_array, check_random_state
 
 __all__ = ['fastica', 'FastICA']
@@ -63,7 +64,7 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
         w = w_init[j, :].copy()
         w /= np.sqrt((w ** 2).sum())
 
-        for _ in xrange(max_iter):
+        for _ in moves.xrange(max_iter):
             wtx = np.dot(w.T, X)
             gwtx, g_wtx = g(wtx, fun_args)
 
@@ -93,7 +94,7 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
 
     W = _sym_decorrelation(w_init)
 
-    for _ in xrange(max_iter):
+    for _ in moves.xrange(max_iter):
         wtx = np.dot(W, X)
         gwtx, g_wtx = g(wtx, fun_args)
 
