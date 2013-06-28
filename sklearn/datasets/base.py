@@ -10,6 +10,7 @@ Base IO code for all datasets
 import os
 import csv
 import shutil
+import warnings
 from os import environ
 from os.path import dirname
 from os.path import join
@@ -65,7 +66,8 @@ def clear_data_home(data_home=None):
 
 def load_files(container_path, description=None, categories=None,
                load_content=True, shuffle=True, charset=None,
-               charse_error='strict', random_state=0):
+               charset_error='strict', random_state=0,
+               charse_error=None):
     """Load text files with categories as subfolder names.
 
     Individual samples are assumed to be files stored a two levels folder
@@ -148,6 +150,14 @@ def load_files(container_path, description=None, categories=None,
         'target_names', the meaning of the labels, and 'DESCR', the full
         description of the dataset.
     """
+    # In 0.13, the parameter named 'charset_error' was typoed as
+    # 'charse_error'. Check that parameter for backward compatibility.
+    if charse_error is not None:
+        warnings.warn("The parameter 'charse_error' was renamed to"
+                      " 'charset_error' and will be removed in 0.16.",
+                      DeprecationWarning)
+        charset_error = charse_error
+
     target = []
     target_names = []
     filenames = []
@@ -180,7 +190,7 @@ def load_files(container_path, description=None, categories=None,
     if load_content:
         data = [open(filename, 'rb').read() for filename in filenames]
         if charset is not None:
-            data = [d.decode(charset, charse_error) for d in data]
+            data = [d.decode(charset, charset_error) for d in data]
         return Bunch(data=data,
                      filenames=filenames,
                      target_names=target_names,
