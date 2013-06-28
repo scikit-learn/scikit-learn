@@ -121,7 +121,7 @@ data_test_size_mb = size_mb(data_test.data)
 
 print("%d documents - %0.3fMB (training set)" % (
     len(data_train.data), data_train_size_mb))
-print("%d documents - %0.3fMB (training set)" % (
+print("%d documents - %0.3fMB (test set)" % (
     len(data_test.data), data_test_size_mb))
 print("%d categories" % len(categories))
 print()
@@ -288,7 +288,7 @@ clf_names, score, training_time, test_time = results
 training_time = np.array(training_time) / np.max(training_time)
 test_time = np.array(test_time) / np.max(test_time)
 
-pl.figure(figsize=(12,10))
+pl.figure(figsize=(12,8))
 pl.title("Score")
 pl.barh(indices, score, .2, label="score", color='r')
 pl.barh(indices + .3, training_time, .2, label="training time", color='g')
