@@ -142,7 +142,7 @@ the decision surface induced by the three classifiers.
    :align: center
    :scale: 75
 
-In the case of multi-class classification ``coef_`` is a two-dimensionaly
+In the case of multi-class classification ``coef_`` is a two-dimensionally
 array of ``shape=[n_classes, n_features]`` and ``intercept_`` is a one
 dimensional array of ``shape=[n_classes]``. The i-th row of ``coef_`` holds
 the weight vector of the OVA classifier for the i-th class; classes are

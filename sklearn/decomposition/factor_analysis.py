@@ -86,7 +86,7 @@ class FactorAnalysis(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    PCA: Principal component analysis, a simliar non-probabilistic
+    PCA: Principal component analysis, a similar non-probabilistic
         model model that can be computed in closed form.
     ProbabilisticPCA: probabilistic PCA.
     FastICA: Independent component analysis, a latent variable model with

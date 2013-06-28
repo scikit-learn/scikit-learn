@@ -193,7 +193,7 @@ def _check_clf_targets(y_true, y_pred):
 def auc(x, y, reorder=False):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
-    This is a general fuction, given points on a curve.  For computing the area
+    This is a general function, given points on a curve.  For computing the area
     under the ROC-curve, see :func:`auc_score`.
 
     Parameters
@@ -1483,7 +1483,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     value at 1 and worst score at 0.
 
     The F-beta score weights recall more than precision by a factor of
-    ``beta``. ``beta == 1.0`` means recall and precsion are equally important.
+    ``beta``. ``beta == 1.0`` means recall and precision are equally important.
 
     The support is the number of occurrences of each class in ``y_true``.
 

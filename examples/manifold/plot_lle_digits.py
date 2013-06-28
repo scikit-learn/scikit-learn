@@ -9,7 +9,7 @@ The RandomTreesEmbedding, from the :mod:`sklearn.ensemble` module, is not
 technically a manifold embedding method, as it learn a high-dimensional
 representation on which we apply a dimensionality reduction method.
 However, it is often useful to cast a dataset into a representation in
-which the classes are linearly-seperable.
+which the classes are linearly-separable.
 """
 
 # Authors: Fabian Pedregosa <fabian.pedregosa@inria.fr>

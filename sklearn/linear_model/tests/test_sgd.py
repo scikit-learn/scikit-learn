@@ -725,7 +725,7 @@ class DenseSGDRegressorTestCase(unittest.TestCase):
         assert_greater(score, 0.5)
 
     def test_elasticnet_convergence(self):
-        """Check that the SGD ouput is consistent with coordinate descent"""
+        """Check that the SGD output is consistent with coordinate descent"""
 
         n_samples, n_features = 1000, 5
         rng = np.random.RandomState(0)

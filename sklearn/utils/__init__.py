@@ -1,5 +1,5 @@
 """
-The :mod:`sklearn.utils` module includes various utilites.
+The :mod:`sklearn.utils` module includes various utilities.
 """
 
 from collections import Sequence

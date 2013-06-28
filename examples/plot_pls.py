@@ -13,7 +13,7 @@ Given 2 multivariate covarying two-dimensional datasets, X, and Y,
 PLS extracts the 'directions of covariance', i.e. the components of each
 datasets that explain the most shared variance between both datasets.
 This is apparent on the **scatterplot matrix** display: components 1 in
-dataset X and dataset Y are maximaly correlated (points lie around the
+dataset X and dataset Y are maximally correlated (points lie around the
 first diagonal). This is also true for components 2 in both dataset,
 however, the correlation across datasets for different components is
 weak: the point cloud is very spherical.
@@ -47,7 +47,7 @@ print("Corr(Y)")
 print(np.round(np.corrcoef(Y.T), 2))
 
 ###############################################################################
-# Canonical (symetric) PLS
+# Canonical (symmetric) PLS
 
 # Transform data
 # ~~~~~~~~~~~~~~
@@ -140,7 +140,7 @@ print("Estimated betas")
 print(np.round(pls1.coefs, 1))
 
 ###############################################################################
-# CCA (PLS mode B with symetric deflation)
+# CCA (PLS mode B with symmetric deflation)
 
 cca = CCA(n_components=2)
 cca.fit(X_train, Y_train)
