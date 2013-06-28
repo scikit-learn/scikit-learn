@@ -76,7 +76,10 @@ op.add_option("--use_hashing",
 op.add_option("--n_features",
               action="store", type=int, default=2 ** 16,
               help="n_features when using the hashing vectorizer.")
-
+op.add_option("--filtered",
+              action="store_true",
+              help="Remove newsgroup information that is easily overfit: "
+                   "headers, signatures, and quoting.")
 
 (opts, args) = op.parse_args()
 if len(args) > 0:
@@ -100,14 +103,21 @@ else:
         'sci.space',
     ]
 
+if opts.filtered:
+    remove = ('headers', 'footers', 'quotes')
+else:
+    remove = ()
+
 print("Loading 20 newsgroups dataset for categories:")
 print(categories if categories else "all")
 
 data_train = fetch_20newsgroups(subset='train', categories=categories,
-                                shuffle=True, random_state=42)
+                                shuffle=True, random_state=42,
+                                remove=remove)
 
 data_test = fetch_20newsgroups(subset='test', categories=categories,
-                               shuffle=True, random_state=42)
+                               shuffle=True, random_state=42,
+                               remove=remove)
 print('data loaded')
 
 categories = data_train.target_names    # for case categories == None
