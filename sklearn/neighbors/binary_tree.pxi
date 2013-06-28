@@ -86,6 +86,23 @@
 # used in the query architecture whenever possible. (For example, in the
 # case of the standard Euclidean distance, the reduced distance is the
 # squared-distance).
+#
+# Implementation Notes
+# --------------------
+# This implementation uses the common object-oriented approach of having an
+# abstract base class which is extended by the KDTree and BallTree
+# specializations.  Unfortunately, Cython does not currently support
+# polymorphism, so implementing dual tree queries would require rewriting
+# identical implementations of the base algorithm for each subclass.
+#
+# Because of this deficiency, we use a bit of a hack here: the BinaryTree
+# "base class" is defined here and then explicitly included in the BallTree
+# and KDTree pyx files.  These files include implementations of the
+# "abstract" methods.  The KDTree and BallTree classes are then explicit
+# copies of each separate BinaryTree class definition.
+#
+# Hackish?  Yes.  But it leads to fast execution without the need to duplicate
+# the code in two places.
 
 cimport cython
 cimport numpy as np
@@ -1280,7 +1297,13 @@ cdef class BinaryTree:
             nodeheap = NodeHeap(self.data.shape[0] // self.leaf_size)
         cdef DTYPE_t[::1] node_min_bounds
         cdef DTYPE_t[::1] node_max_bounds
-
+        # TODO: use both atol & rtol within dual tree approaches.
+        #       this is difficult because of the need to cache values
+        #       computed between node pairs.
+        # TODO: rather than the min/max bound, use an array of
+        #       bounds and deltas.  Because of the accumulation of
+        #       numerical errors, the current setup fails for very
+        #       small tolerances.
         if dualtree:
             # dualtree algorithms assume atol is the tolerance per point
             other = self.__class__(Xarr, metric=self.dm,
