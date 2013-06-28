@@ -519,7 +519,8 @@ def test_confusion_matrix_binary():
         assert_array_almost_equal(mcc, 0.57, decimal=2)
 
     test(y_true, y_pred)
-    test(map(str, y_true), map(str, y_pred))
+    test([str(y) for y in y_true],
+         [str(y) for y in y_pred])
 
 
 def test_matthews_corrcoef_nan():
@@ -639,7 +640,9 @@ def test_confusion_matrix_multiclass():
                                 [4, 24, 3]])
 
     test(y_true, y_pred)
-    test(map(str, y_true), map(str, y_pred), string_type=True)
+    test(list(str(y) for y in y_true),
+         list(str(y) for y in y_pred),
+         string_type=True)
 
 
 def test_confusion_matrix_multiclass_subset_labels():
@@ -820,7 +823,7 @@ def test_losses():
     assert_equal(accuracy_score(y_true, y_pred),
                  1 - zero_one_loss(y_true, y_pred))
 
-    with warnings.catch_warnings(True):
+    with warnings.catch_warnings(record=True):
     # Throw deprecated warning
         assert_equal(zero_one_score(y_true, y_pred),
                      1 - zero_one_loss(y_true, y_pred))
@@ -1001,7 +1004,7 @@ def test_hinge_loss_binary():
     pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
     assert_equal(hinge_loss(y_true, pred_decision), 1.2 / 4)
 
-    with warnings.catch_warnings(True):
+    with warnings.catch_warnings(record=True):
         # Test deprecated pos_label
         assert_equal(
             hinge_loss(-y_true, pred_decision),
@@ -1011,7 +1014,7 @@ def test_hinge_loss_binary():
     pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
 
     assert_equal(hinge_loss(y_true, pred_decision), 1.2 / 4)
-    with warnings.catch_warnings(True):
+    with warnings.catch_warnings(record=True):
         # Test deprecated pos_label
         assert_equal(hinge_loss(y_true, pred_decision, pos_label=2,
                                 neg_label=0), 1.2 / 4)
