@@ -1,9 +1,6 @@
 """Testing for Spectral Biclustering methods"""
 
 from sklearn.utils import check_random_state
-from sklearn.externals.six.moves import cPickle
-
-dumps, loads = cPickle.dumps, cPickle.loads
 
 import numpy as np
 
@@ -40,10 +37,6 @@ def test_spectral_biclustering_dhillon():
     assert_array_equal(model.columns_.sum(axis=0), np.ones(30))
     assert_array_equal(model.columns_.sum(axis=1), np.repeat(10, 3))
 
-    model_copy = loads(dumps(model))
-    assert_equal(model_copy.n_clusters, model.n_clusters)
-    assert_equal(model_copy.method, model.method)
-
 
 def _test_spectral_biclustering_kluger(noise):
     """Test all three Kluger methods on a simple checkerboard
@@ -72,10 +65,6 @@ def _test_spectral_biclustering_kluger(noise):
         assert_equal(model.columns_.shape, (9, 30))
         assert_array_equal(model.columns_.sum(axis=0), np.repeat(3, 30))
         assert_array_equal(model.columns_.sum(axis=1), np.repeat(10, 9))
-
-        model_copy = loads(dumps(model))
-        assert_equal(model_copy.n_clusters, model.n_clusters)
-        assert_equal(model_copy.method, model.method)
 
 
 def test_spectral_biclustering_kluger_without_noise():
