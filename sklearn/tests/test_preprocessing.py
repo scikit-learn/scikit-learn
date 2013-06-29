@@ -629,6 +629,7 @@ def test_transform_selected():
     Xexpected = [[1, 1, 1], [0, 1, 1]]
     _check_transform_selected(X, Xexpected, [0, 1, 2])
     _check_transform_selected(X, Xexpected, [True, True, True])
+    _check_transform_selected(X, Xexpected, "all")
 
     _check_transform_selected(X, X, [])
     _check_transform_selected(X, X, [False, False, False])
@@ -655,6 +656,7 @@ def _check_one_hot(X, X2, cat, n_features):
     # Check that mask and indices give the same results
     assert_array_equal(toarray(A), toarray(C))
     assert_array_equal(toarray(B), toarray(D))
+
 
 def test_one_hot_encoder_categorical_features():
     X = np.array([[3, 2, 1], [0, 1, 1]])

@@ -39,6 +39,7 @@ __all__ = ['Binarizer',
            'LabelEncoder',
            'MinMaxScaler',
            'Normalizer',
+           'OneHotEncoder',
            'StandardScaler',
            'binarize',
            'normalize',
@@ -635,7 +636,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         return binarize(X, threshold=self.threshold, copy=copy)
 
 
-def _transform_selected(X, transform, selected):
+def _transform_selected(X, transform, selected="all"):
     """Apply a transform function to portion of selected features
 
     Parameters
@@ -653,10 +654,10 @@ def _transform_selected(X, transform, selected):
     -------
     X : array or sparse matrix, shape=(n_samples, n_features_new)
     """
-    if len(selected) == 0:
-        return X
-    elif selected == "all":
+    if selected == "all":
         return transform(X)
+    elif len(selected) == 0:
+        return X
     else:
         X = atleast2d_or_csc(X)
         n_features = X.shape[1]
