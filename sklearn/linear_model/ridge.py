@@ -55,7 +55,7 @@ def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3):
             coef, info = sp_linalg.cg(C, y_column, tol=tol)
             coefs[i] = X1.rmatvec(coef)
         else:
-            # ridge
+            # linear ridge
             # w = inv(X^t X + alpha*Id) * X.T y
             y_column = X1.rmatvec(y_column)
             C = sp_linalg.LinearOperator(
@@ -108,8 +108,7 @@ def _solve_dense_cholesky(X, y, alpha):
 
 
 def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=None, copy=True):
-    # w = X.T * inv(X X^t + alpha*Id) y
-
+    # dual_coef = inv(X X^t + alpha*Id) y
     n_samples = K.shape[0]
     n_targets = y.shape[1]
 
@@ -120,14 +119,12 @@ def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=None, copy=True):
     has_sw = isinstance(sample_weight, np.ndarray) or sample_weight != 1.0
 
     if has_sw:
-        # We are doing a little danse with the sample weights to
-        # avoid copying the original X, which could be big
         sw = np.sqrt(sample_weight)
         y = y * sw[:, np.newaxis]
         K *= np.outer(sw, sw)
 
-    # treat the single or multi-target case with one common penalty
     if one_alpha:
+        # Only one penalty, we can solve multi-target problems in one time.
         K.flat[::n_samples + 1] += alpha[0]
         dual_coef = linalg.solve(K, y,
                              sym_pos=True, overwrite_a=True)
@@ -135,16 +132,19 @@ def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=None, copy=True):
             dual_coef *= sw[:, np.newaxis]
         return dual_coef
     else:
+        # One penalty per target. We need to solve each target separately.
         coef = np.empty([n_targets, n_features])
         dual_coefs = np.empty([n_targets, n_samples])
-        for dual_coef, target, current_alpha in zip(
-                dual_coefs, y.T, alpha):
+
+        for dual_coef, target, current_alpha in zip(dual_coefs, y.T, alpha):
             K.flat[::n_samples + 1] += current_alpha
             dual_coef[:] = linalg.solve(K, target, sym_pos=True,
                                      overwrite_a=False).ravel()
             K.flat[::n_samples + 1] -= current_alpha
+
         if has_sw:
             dual_coefs *= sw[np.newaxis, :]
+
         return dual_coefs.T
 
 
@@ -157,13 +157,13 @@ def _solve_svd(X, y, alpha):
     U, s, Vt = linalg.svd(X, full_matrices=False)
     idx = s > 1e-15  # same default value as scipy.linalg.pinv
     UTy = U.T.dot(y)
-    # d = np.zeros_like(s)
     s[idx == False] = 0.
     d = (s[np.newaxis, :, np.newaxis] /
          (s[np.newaxis, :, np.newaxis] ** 2 + alpha[:, np.newaxis, :]))
 
     d_UT_y = d * UTy[np.newaxis, :, :]
     coef = np.empty([alpha.shape[0], n_targets, n_features])
+
     for dUTy, coef_slice in zip(d_UT_y, coef):
         coef_slice[:] = Vt.T.dot(dUTy).T
 
