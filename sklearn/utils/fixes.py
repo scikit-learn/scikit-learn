@@ -213,24 +213,24 @@ else:
     safe_copy = np.copy
 
 try:
-    np.divide(1, 1, dtype=np.float)
+    np.true_divide(2, 4)
+    def divide_workaround(x1, x2, out=None, dtype=None):
+        """This is true_divide with a workaround:
 
-    def hack_divide(x1, x2, out=None, dtype=None):
-        """There is a numpy bug with divide in python3
-        when dtype is passed in.
+        np.true_divide(.54, 1.16, dtype=np.double)
+        0.0
+        np.true_divide(.54, 1.16)
+        0.46551724137931039
 
-        Will drop the dtype flag here for now until 
+        This is being tracked in numpy bug
+        https://github.com/numpy/numpy/issues/3484
+
+        As a workaround, we just swallow the dtype param.
+        We should remove this code when that is fixed.
         """
-        if out is None:
-            return np.divide(x1, x2)
-        else:
-            return np.divide(x1, x2, out=out)
+        return np.true_divide(x1, x2)
 
-# TODO(justinvf): This can come back when
-# https://github.com/numpy/numpy/issues/3484
-# is fixed. This should not be merged in to scikit.
-# divide = np.divide
-    divide = hack_divide
+    divide = divide_workaround
 
 except TypeError:
     # Compat for old versions of np.divide that do not provide support for
