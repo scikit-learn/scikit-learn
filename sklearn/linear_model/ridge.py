@@ -257,64 +257,32 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         ValueError('Solver %s not understood' % solver)
 
     if solver == 'sparse_cg':
-        coefs = _solve_sparse_cg(X, y, alpha, max_iter, tol)
+        coef = _solve_sparse_cg(X, y, alpha, max_iter, tol)
 
-        if ravel:
-            coefs = np.ravel(coefs)
+    elif solver == "lsqr":
+        coef = _solve_lsqr(X, y, alpha, max_iter, tol)
 
-        return coefs
-
-    if solver == "lsqr":
-        coefs = _solve_lsqr(X, y, alpha, max_iter, tol)
-
-        if ravel:
-            coefs = np.ravel(coefs)
-
-        return coefs
-
-    if solver == 'dense_cholesky':
+    elif solver == 'dense_cholesky':
         if n_features > n_samples or has_sw:
             K = safe_sparse_dot(X, X.T, dense_output=True)
             try:
                 dual_coef = _solve_dense_cholesky_kernel(K, y, alpha,
                                                          sample_weight,
                                                          copy=False)
-
-                coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
-
-                if ravel:
-                    coef = coef.ravel()
-
-                return coef
             except linalg.LinAlgError:
                 # use SVD solver if matrix is singular
                 solver = 'svd'
+
+            coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
         else:
             try:
                 coef =_solve_dense_cholesky(X, y, alpha)
-
-                if ravel:
-                    coef = coef.ravel()
-
-                return coef
             except linalg.LinAlgError:
                 # use SVD solver if matrix is singular
                 solver = 'svd'
 
     if solver == 'svd':
-        # Can take multiple individual penalties per target
-
-        # avoid alpha being a number
-        alpha_dim = alpha.ndim
-
-        if alpha_dim == 1 and len(alpha) != n_targets:
-            # if number of alphas does not correspond to targets,
-            # treat every target with all of the alphas
-            alpha = alpha[:, np.newaxis]
-
-        # convert all other 0 and 1-dim alpha to 2 dim
         alpha = np.atleast_2d(alpha)
-        assert alpha.ndim == 2
 
         U, s, Vt = linalg.svd(X, full_matrices=False)
         idx = s > 1e-15  # same default value as scipy.linalg.pinv
@@ -329,15 +297,12 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         for dUTy, coef_slice in zip(d_UT_y, coef_):
             coef_slice[:] = Vt.T.dot(dUTy).T
 
-        if (alpha_dim == 0) or (alpha_dim == 1 and alpha.size == n_targets):
-            coef_ = coef_.reshape(n_targets, n_features)
-            if ravel:
-                coef_ = coef_.ravel()
-        else:
-            if ravel:
-                coef_ = coef_.squeeze()
+        coef = coef_.reshape(n_targets, n_features)
 
-        return coef_
+    if ravel:
+        coef = coef.ravel()
+
+    return coef
 
 
 class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
