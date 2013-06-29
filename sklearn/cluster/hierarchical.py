@@ -74,7 +74,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
         to leaves of the tree. A greater value `i` indicates a node with
         children `children[i - n_samples]`.
 
-    n_components : sparse matrix.
+    n_components : int
         The number of connected components in the graph.
 
     n_leaves : int
