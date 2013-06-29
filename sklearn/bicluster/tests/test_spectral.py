@@ -13,9 +13,9 @@ from sklearn.utils.testing import assert_array_almost_equal
 
 from sklearn.bicluster.spectral import \
     SpectralBiclustering, \
-    scale_preprocess, bistochastic_preprocess, \
-    log_preprocess, fit_best_piecewise, \
-    project_and_cluster
+    _scale_preprocess, _bistochastic_preprocess, \
+    _log_preprocess, _fit_best_piecewise, \
+    _project_and_cluster
 
 def test_spectral_biclustering_dhillon():
     """Test Dhillon's Spectral CoClustering on a simple problem: a
@@ -106,7 +106,7 @@ def test_scale_preprocess():
 
     """
     x = np.random.rand(100, 100)
-    scaled, _, _ = scale_preprocess(x)
+    scaled, _, _ = _scale_preprocess(x)
     _do_scale_test(scaled)
 
 
@@ -116,7 +116,7 @@ def test_bistochastic_preprocess():
 
     """
     x = np.random.rand(100, 100)
-    scaled = bistochastic_preprocess(x)
+    scaled = _bistochastic_preprocess(x)
     _do_bistochastic_test(scaled)
 
 
@@ -126,7 +126,7 @@ def test_log_preprocess():
 
     """
     x = np.random.rand(100, 100)
-    scaled = log_preprocess(x) + 1
+    scaled = _log_preprocess(x) + 1
     _do_bistochastic_test(scaled)
 
 
@@ -134,8 +134,8 @@ def test_fit_best_piecewise():
     vectors = np.array([[0, 0, 0, 1, 1, 1],
                         [2, 2, 2, 3, 3, 3],
                         [0, 1, 2, 3, 4, 5],])
-    best = fit_best_piecewise(vectors, k=2, n_clusters=2,
-                              random_state=0, n_init=10)
+    best = _fit_best_piecewise(vectors, k=2, n_clusters=2,
+                               random_state=0, n_init=10)
     assert_array_equal(best, vectors[0:2])
 
 
@@ -147,6 +147,6 @@ def test_project_and_cluster():
     vectors = np.array([[1, 0,],
                         [0, 1,],
                         [0, 0,]])
-    labels = project_and_cluster(data, vectors, n_clusters=2,
-                                 random_state=0, n_init=10)
+    labels = _project_and_cluster(data, vectors, n_clusters=2,
+                                  random_state=0, n_init=10)
     assert_array_equal(labels, [0, 0, 1, 1])
