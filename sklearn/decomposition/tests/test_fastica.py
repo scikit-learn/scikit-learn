@@ -11,7 +11,7 @@ from nose.tools import assert_raises
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_true, assert_false
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_equal
 
@@ -218,12 +218,23 @@ def test_inverse_transform():
     """Test FastICA.inverse_transform"""
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
-    ica = FastICA(n_components=5, random_state=0)
+    ica = FastICA(n_components=5, random_state=0, fit_inverse_transform=True)
     Xt = ica.fit_transform(X)
     mixing_matrix = ica.get_mixing_matrix()
     assert_equal(mixing_matrix.shape, (10, 5))
     X2 = ica.inverse_transform(Xt)
     assert_equal(X.shape, X2.shape)
+
+
+def test_refit_without_inverse():
+    rng = np.random.RandomState(37)
+    X = rng.random_sample((10, 5))
+    ica = FastICA(fit_inverse_transform=True)
+    ica.fit(X)
+    assert_true(hasattr(ica, "mixing_"))
+    ica.set_params(fit_inverse_transform=False)
+    ica.fit(X)
+    assert_false(hasattr(ica, "mixing_"))
 
 
 if __name__ == '__main__':
