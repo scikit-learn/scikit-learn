@@ -83,6 +83,30 @@ def _solve_lsqr(X, y, alpha, max_iter=None, tol=1e-3):
     return coefs
 
 
+def _solve_dense_cholesky(X, y, alpha):
+    # w = inv(X^t X + alpha*Id) * X.T y
+    n_samples, n_features = X.shape
+    n_targets = y.shape[1]
+
+    A = safe_sparse_dot(X.T, X, dense_output=True)
+    Xy = safe_sparse_dot(X.T, y, dense_output=True)
+
+    one_alpha = np.array_equal(alpha, len(alpha) * [alpha[0]])
+
+    if one_alpha:
+        A.flat[::n_features + 1] += alpha[0]
+        return linalg.solve(A, Xy, sym_pos=True,
+                            overwrite_a=True).T
+    else:
+        coefs = np.empty([n_targets, n_features])
+        for coef, target, current_alpha in zip(coefs, Xy.T, alpha):
+            A.flat[::n_features + 1] += current_alpha
+            coef[:] = linalg.solve(A, target, sym_pos=True,
+                                   overwrite_a=False).ravel()
+            A.flat[::n_features + 1] -= current_alpha
+        return coefs
+
+
 def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                      max_iter=None, tol=1e-3):
     """Solve the ridge equation by the method of normal equations.
@@ -258,31 +282,16 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                 # use SVD solver if matrix is singular
                 solver = 'svd'
         else:
-            # ridge
-            # w = inv(X^t X + alpha*Id) * X.T y
-            A = safe_sparse_dot(X.T, X, dense_output=True)
-            Xy = safe_sparse_dot(X.T, y, dense_output=True)
-            if one_alpha:
-                A.flat[::n_features + 1] += alpha[0]
-                try:
-                    coef = linalg.solve(A, Xy, sym_pos=True,
-                                        overwrite_a=True).T
-                    if ravel:
-                        coef = coef.ravel()
+            try:
+                coef =_solve_dense_cholesky(X, y, alpha)
 
-                    return coef
-                except linalg.LinAlgError:
-                    # use SVD solver if matrix is singular
-                    solver = 'svd'
-            else:
-                coefs = np.empty([n_targets, n_features])
-                for coef, target, current_alpha in zip(
-                        coefs, Xy.T, alpha):
-                    A.flat[::n_features + 1] += current_alpha
-                    coef[:] = linalg.solve(A, target, sym_pos=True,
-                                           overwrite_a=False).ravel()
-                    A.flat[::n_features + 1] -= current_alpha
-                return coefs
+                if ravel:
+                    coef = coef.ravel()
+
+                return coef
+            except linalg.LinAlgError:
+                # use SVD solver if matrix is singular
+                solver = 'svd'
 
     if solver == 'svd':
         # Can take multiple individual penalties per target
