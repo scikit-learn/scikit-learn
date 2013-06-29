@@ -193,6 +193,7 @@ def test_non_square_fastica(add_noise=False):
 
 
 def test_inverse_transform():
+    """Test FastICA.inverse_transform"""
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
     ica = FastICA(n_components=5)
