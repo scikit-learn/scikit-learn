@@ -24,6 +24,7 @@ from ..utils import compute_class_weight
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 from ..externals import six
+from numbers import Number
 
 
 def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
@@ -38,6 +39,11 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
 
     y : array-like, shape = [n_samples] or [n_samples, n_targets]
         Target values
+
+    alpha : {float, array-like},
+        shape = [n_targets] if array-like
+        The l_2 penalty to be used. If an array is passed, penalties are
+        assumed to be specific to targets
 
     max_iter : int, optional
         Maximum number of iterations for conjugate gradient solver.
@@ -82,6 +88,18 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
     """
 
     n_samples, n_features = X.shape
+    if y.ndim == 2:
+        n_samples_, n_targets = y.shape
+    elif y.ndim == 1:
+        n_samples_ = len(y)
+        n_targets = 1
+    else:
+        raise ValueError("Target y has the wrong shape %s" % str(y.shape))
+
+    if n_samples != n_samples_:
+        raise ValueError("Number of samples in X and y does not correspond:"
+                         " %d != %d" % (n_samples, n_samples_))
+
     has_sw = isinstance(sample_weight, np.ndarray) or sample_weight != 1.0
 
     if solver == 'auto':
@@ -96,6 +114,12 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         warnings.warn("""lsqr not available on this machine, falling back
                       to sparse_cg.""")
         solver = 'sparse_cg'
+
+    # There should be either 1 or n_targets penalties
+    alpha = safe_asarray(alpha).ravel()
+    if alpha.size not in [1, n_targets]:
+        raise ValueError("Number of targets and number of penalties "
+                    "do not correspond: %d != %d" % (alpha.size, n_targets))
 
     if has_sw:
         solver = 'dense_cholesky'
@@ -113,14 +137,23 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         coefs = np.empty((y1.shape[1], n_features))
 
         if n_features > n_samples:
-            def mv(x):
-                return X1.matvec(X1.rmatvec(x)) + alpha * x
+            def create_mv(curr_alpha):
+                def _mv(x):
+                    return X1.matvec(X1.rmatvec(x)) + curr_alpha * x
+                return _mv
         else:
-            def mv(x):
-                return X1.rmatvec(X1.matvec(x)) + alpha * x
+            def create_mv(curr_alpha):
+                def _mv(x):
+                    return X1.rmatvec(X1.matvec(x)) + curr_alpha * x
+                return _mv
 
+        current_alpha = alpha[0]
         for i in range(y1.shape[1]):
             y_column = y1[:, i]
+            if alpha.size > 1:
+                current_alpha = alpha[i]
+
+            mv = create_mv(current_alpha)
             if n_features > n_samples:
                 # kernel ridge
                 # w = X.T * inv(X X^t + alpha*Id) y
@@ -153,10 +186,12 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
 
         # According to the lsqr documentation, alpha = damp^2.
         sqrt_alpha = np.sqrt(alpha)
-
+        current_sqrt_alpha = sqrt_alpha[0]
         for i in range(y1.shape[1]):
             y_column = y1[:, i]
-            coefs[i] = sp_linalg.lsqr(X, y_column, damp=sqrt_alpha,
+            if alpha.size > 1:
+                current_sqrt_alpha = sqrt_alpha[i]
+            coefs[i] = sp_linalg.lsqr(X, y_column, damp=current_sqrt_alpha,
                                       atol=tol, btol=tol, iter_lim=max_iter)[0]
 
         if y.ndim == 1:
@@ -180,17 +215,32 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                     # Deal with multiple-output problems
                     y = y * sw[:, np.newaxis]
                 K *= np.outer(sw, sw)
-            K.flat[::n_samples + 1] += alpha
             try:
-                dual_coef = linalg.solve(K, y,
+                # treat the single or multi-target case with one common penalty
+                if alpha.size == 1:
+                    K.flat[::n_samples + 1] += alpha
+                    dual_coef = linalg.solve(K, y,
                                          sym_pos=True, overwrite_a=True)
-                if has_sw:
-                    if dual_coef.ndim == 1:
-                        dual_coef *= sw
-                    else:
-                        # Deal with multiple-output problems
-                        dual_coef *= sw[:, np.newaxis]
-                return safe_sparse_dot(X.T, dual_coef, dense_output=True).T
+                    if has_sw:
+                        if dual_coef.ndim == 1:
+                            dual_coef *= sw
+                        else:
+                            # Deal with multiple-output problems
+                            dual_coef *= sw[:, np.newaxis]
+                    return safe_sparse_dot(X.T, dual_coef,
+                                               dense_output=True).T
+                else:
+                    coef = np.empty([n_targets, n_features])
+                    dual_coefs = np.empty([n_targets, n_samples])
+                    for dual_coef, target, current_alpha in zip(
+                            dual_coefs, y.T, alpha):
+                        K.flat[::n_samples + 1] += current_alpha
+                        dual_coef[:] = linalg.solve(K, target, sym_pos=True,
+                                                 overwrite_a=False).ravel()
+                        K.flat[::n_samples + 1] -= current_alpha
+                    if has_sw:
+                        dual_coefs *= sw[np.newaxis, :]
+                    return safe_sparse_dot(dual_coefs, X, dense_output=True).T
             except linalg.LinAlgError:
                 # use SVD solver if matrix is singular
                 solver = 'svd'
@@ -198,24 +248,66 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             # ridge
             # w = inv(X^t X + alpha*Id) * X.T y
             A = safe_sparse_dot(X.T, X, dense_output=True)
-            A.flat[::n_features + 1] += alpha
             Xy = safe_sparse_dot(X.T, y, dense_output=True)
-            try:
-                return linalg.solve(A, Xy, sym_pos=True, overwrite_a=True).T
-            except linalg.LinAlgError:
-                # use SVD solver if matrix is singular
-                solver = 'svd'
+            if alpha.size == 1:
+                A.flat[::n_features + 1] += alpha
+                try:
+                    return linalg.solve(A, Xy, sym_pos=True,
+                                        overwrite_a=True).T
+                except linalg.LinAlgError:
+                    # use SVD solver if matrix is singular
+                    solver = 'svd'
+            else:
+                coefs = np.empty([n_targets, n_features])
+                for coef, target, current_alpha in zip(
+                        coefs, Xy.T, alpha):
+                    A.flat[::n_features + 1] += current_alpha
+                    coef[:] = linalg.solve(A, target, sym_pos=True,
+                                           overwrite_a=False).ravel()
+                    A.flat[::n_features + 1] -= current_alpha
+            return coefs
 
     if solver == 'svd':
-        # slower than cholesky but does not break with
-        # singular matrices
+        # Can take multiple individual penalties per target
+
+        # avoid alpha being a number
+        alpha_dim = alpha.ndim
+
+        if y.ndim == 1:
+            y1 = y[:, np.newaxis]
+        else:
+            y1 = y
+
+        if alpha_dim == 1 and len(alpha) != n_targets:
+            # if number of alphas does not correspond to targets,
+            # treat every target with all of the alphas
+            alpha = alpha[:, np.newaxis]
+
+        # convert all other 0 and 1-dim alpha to 2 dim
+        alpha = np.atleast_2d(alpha)
+        assert alpha.ndim == 2
+
         U, s, Vt = linalg.svd(X, full_matrices=False)
         idx = s > 1e-15  # same default value as scipy.linalg.pinv
-        d = np.zeros_like(s)
-        s = s[idx]
-        d[idx] = (s / (s ** 2 + alpha))
-        Ud = np.dot(U.T, y).T * d
-        coef_ = np.dot(Ud, Vt)
+        UTy = U.T.dot(y1)
+        # d = np.zeros_like(s)
+        s[idx == False] = 0.
+        d = (s[np.newaxis, :, np.newaxis] /
+             (s[np.newaxis, :, np.newaxis] ** 2 + alpha[:, np.newaxis, :]))
+
+        d_UT_y = d * UTy[np.newaxis, :, :]
+        coef_ = np.empty([alpha.shape[0], n_targets, n_features])
+        for dUTy, coef_slice in zip(d_UT_y, coef_):
+            coef_slice[:] = Vt.T.dot(dUTy).T
+
+        if (alpha_dim == 0) or (alpha_dim == 1 and alpha.size == n_targets):
+            coef_ = coef_.reshape(n_targets, n_features)
+            if y.ndim == 1:
+                coef_ = coef_.ravel()
+        else:
+            if y.ndim == 1:
+                coef_ = coef_.squeeze()
+
         return coef_
 
 
@@ -261,11 +353,13 @@ class Ridge(_BaseRidge, RegressorMixin):
 
     Parameters
     ----------
-    alpha : float
+    alpha : {float, array-like}
+        shape = [n_targets]
         Small positive values of alpha improve the conditioning of the problem
         and reduce the variance of the estimates.  Alpha corresponds to
         ``(2*C)^-1`` in other linear models such as LogisticRegression or
-        LinearSVC.
+        LinearSVC. If an array is passed, penalties are assumed to be specific
+        to the targets. Hence they must correspond in number.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.

@@ -185,6 +185,28 @@ def test_ridge_vs_lstsq():
     assert_almost_equal(ridge.coef_, ols.coef_)
 
 
+def test_ridge_individual_penalties():
+    """Tests the ridge object using individual penalties"""
+
+    rng = np.random.RandomState(42)
+
+    n_samples, n_features, n_targets = 20, 10, 5
+    X = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_targets)
+
+    penalties = np.arange(n_targets)
+
+    coef_cholesky = np.array([Ridge(alpha=alpha,
+                    solver="dense_cholesky").fit(X, target).coef_
+                     for alpha, target in zip(penalties, y.T)])
+
+    coefs_indiv_pen = [Ridge(alpha=penalties,
+                            solver=solver, tol=1e-6).fit(X, y).coef_
+                for solver in ['svd', 'sparse_cg', 'lsqr', 'dense_cholesky']]
+    for coef_indiv_pen in coefs_indiv_pen:
+        assert_array_almost_equal(coef_cholesky, coef_indiv_pen)
+
+
 def _test_ridge_loo(filter_):
     # test that can work with both dense or sparse matrices
     n_samples = X_diabetes.shape[0]
