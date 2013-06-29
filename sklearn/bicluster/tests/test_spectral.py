@@ -15,6 +15,7 @@ from sklearn.bicluster.spectral import \
     _log_preprocess, _fit_best_piecewise, \
     _project_and_cluster
 
+
 def test_spectral_biclustering_dhillon():
     """Test Dhillon's Spectral CoClustering on a simple problem."""
     S = np.zeros((30, 30))

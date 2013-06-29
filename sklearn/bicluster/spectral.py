@@ -128,7 +128,7 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
     one of 'scale', 'bistochastic', or 'log'.
 
     Parameters
-    -----------
+    ----------
     n_clusters : integer or tuple (rows, columns)
         The number of biclusters to find. If method is not 'dhillon',
         the number of row and column clusters may be different.
@@ -195,7 +195,7 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
                  n_init=10, random_state=None):
         if method not in ('dhillon', 'bistochastic', 'scale', 'log'):
             raise Exception('unknown method: {}'.format(method))
-        if isinstance(n_clusters, tuple):
+        if hasattr(n_clusters, '__len__'):
             if method == 'dhillon':
                 raise Exception("different number of clusters not"
                                 " supported when method=='dhillon'")
@@ -247,7 +247,7 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
             ut = ut[1:]
             vt = vt[1:]
 
-        if isinstance(self.n_clusters, tuple):
+        if hasattr(self.n_clusters, '__len__'):
             n_row_clusters, n_col_clusters = self.n_clusters
         else:
             n_row_clusters = n_col_clusters = self.n_clusters
