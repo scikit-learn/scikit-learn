@@ -287,6 +287,7 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
         """
         if X.ndim != 2:
             raise Exception('data array must be 2 dimensional')
+        X = X.astype(np.float64)
         if self.method == 'dhillon':
             self._dhillon(X)
         else:
