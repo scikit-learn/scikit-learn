@@ -27,6 +27,62 @@ from ..externals import six
 from numbers import Number
 
 
+def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3):
+    n_samples, n_features = X.shape
+    X1 = sp_linalg.aslinearoperator(X)
+    coefs = np.empty((y.shape[1], n_features))
+
+    if n_features > n_samples:
+        def create_mv(curr_alpha):
+            def _mv(x):
+                return X1.matvec(X1.rmatvec(x)) + curr_alpha * x
+            return _mv
+    else:
+        def create_mv(curr_alpha):
+            def _mv(x):
+                return X1.rmatvec(X1.matvec(x)) + curr_alpha * x
+            return _mv
+
+    for i in range(y.shape[1]):
+        y_column = y[:, i]
+
+        mv = create_mv(alpha[i])
+        if n_features > n_samples:
+            # kernel ridge
+            # w = X.T * inv(X X^t + alpha*Id) y
+            C = sp_linalg.LinearOperator(
+                (n_samples, n_samples), matvec=mv, dtype=X.dtype)
+            coef, info = sp_linalg.cg(C, y_column, tol=tol)
+            coefs[i] = X1.rmatvec(coef)
+        else:
+            # ridge
+            # w = inv(X^t X + alpha*Id) * X.T y
+            y_column = X1.rmatvec(y_column)
+            C = sp_linalg.LinearOperator(
+                (n_features, n_features), matvec=mv, dtype=X.dtype)
+            coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
+                                          tol=tol)
+        if info != 0:
+            raise ValueError("Failed with error code %d" % info)
+
+    return coefs
+
+
+def _solve_lsqr(X, y, alpha, max_iter=None, tol=1e-3):
+    n_samples, n_features = X.shape
+    coefs = np.empty((y.shape[1], n_features))
+
+    # According to the lsqr documentation, alpha = damp^2.
+    sqrt_alpha = np.sqrt(alpha)
+
+    for i in range(y.shape[1]):
+        y_column = y[:, i]
+        coefs[i] = sp_linalg.lsqr(X, y_column, damp=sqrt_alpha[i],
+                                  atol=tol, btol=tol, iter_lim=max_iter)[0]
+
+    return coefs
+
+
 def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                      max_iter=None, tol=1e-3):
     """Solve the ridge equation by the method of normal equations.
@@ -136,42 +192,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         ValueError('Solver %s not understood' % solver)
 
     if solver == 'sparse_cg':
-        # gradient descent
-        X1 = sp_linalg.aslinearoperator(X)
-        coefs = np.empty((y.shape[1], n_features))
-
-        if n_features > n_samples:
-            def create_mv(curr_alpha):
-                def _mv(x):
-                    return X1.matvec(X1.rmatvec(x)) + curr_alpha * x
-                return _mv
-        else:
-            def create_mv(curr_alpha):
-                def _mv(x):
-                    return X1.rmatvec(X1.matvec(x)) + curr_alpha * x
-                return _mv
-
-        for i in range(y.shape[1]):
-            y_column = y[:, i]
-
-            mv = create_mv(alpha[i])
-            if n_features > n_samples:
-                # kernel ridge
-                # w = X.T * inv(X X^t + alpha*Id) y
-                C = sp_linalg.LinearOperator(
-                    (n_samples, n_samples), matvec=mv, dtype=X.dtype)
-                coef, info = sp_linalg.cg(C, y_column, tol=tol)
-                coefs[i] = X1.rmatvec(coef)
-            else:
-                # ridge
-                # w = inv(X^t X + alpha*Id) * X.T y
-                y_column = X1.rmatvec(y_column)
-                C = sp_linalg.LinearOperator(
-                    (n_features, n_features), matvec=mv, dtype=X.dtype)
-                coefs[i], info = sp_linalg.cg(C, y_column, maxiter=max_iter,
-                                              tol=tol)
-            if info != 0:
-                raise ValueError("Failed with error code %d" % info)
+        coefs = _solve_sparse_cg(X, y, alpha, max_iter, tol)
 
         if ravel:
             coefs = np.ravel(coefs)
@@ -179,15 +200,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         return coefs
 
     if solver == "lsqr":
-        coefs = np.empty((y.shape[1], n_features))
-
-        # According to the lsqr documentation, alpha = damp^2.
-        sqrt_alpha = np.sqrt(alpha)
-
-        for i in range(y.shape[1]):
-            y_column = y[:, i]
-            coefs[i] = sp_linalg.lsqr(X, y_column, damp=sqrt_alpha[i],
-                                      atol=tol, btol=tol, iter_lim=max_iter)[0]
+        coefs = _solve_lsqr(X, y, alpha, max_iter, tol)
 
         if ravel:
             coefs = np.ravel(coefs)
