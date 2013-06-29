@@ -343,6 +343,8 @@ class FastICA(BaseEstimator, TransformerMixin):
     ----------
     `components_` : 2D array, [n_components, n_features]
         The unmixing matrix
+    `mixing_` : array, shape = [n_features, n_components]
+        Mixing matrix. Only available when fit_inverse_transform is true.
     `sources_`: 2D array, [n_samples, n_components]
         The estimated latent sources of the data.
 
