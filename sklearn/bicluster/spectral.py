@@ -260,19 +260,15 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
                                      n_col_clusters,
                                      self.random_state, self.n_init)
 
-        row_vector = project_and_cluster(X, best_vt.T,
+        self.row_labels_ = project_and_cluster(X, best_vt.T,
                                          n_row_clusters,
                                          self.random_state,
                                          self.n_init)
 
-        col_vector = project_and_cluster(X.T, best_ut.T,
-                                         n_col_clusters,
-                                         self.random_state,
-                                         self.n_init)
-
-
-        _, self.row_labels_ = np.unique(row_vector, return_inverse=True)
-        _, self.column_labels_ = np.unique(col_vector, return_inverse=True)
+        self.column_labels_ = project_and_cluster(X.T, best_ut.T,
+                                                  n_col_clusters,
+                                                  self.random_state,
+                                                  self.n_init)
 
         self.rows_ = np.vstack(self.row_labels_ == label
                                for label in range(n_row_clusters)
