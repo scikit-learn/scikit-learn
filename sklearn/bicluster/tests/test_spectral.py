@@ -1,4 +1,4 @@
-"""Testing for Spectral Bilustering methods"""
+"""Testing for Spectral Biclustering methods"""
 
 from sklearn.externals.six.moves import cPickle
 
