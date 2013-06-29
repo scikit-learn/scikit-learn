@@ -260,12 +260,12 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
                                      n_col_clusters,
                                      self.random_state, self.n_init)
 
-        row_vector = project_and_cluster(normalized_data, best_vt.T,
+        row_vector = project_and_cluster(X, best_vt.T,
                                          n_row_clusters,
                                          self.random_state,
                                          self.n_init)
 
-        col_vector = project_and_cluster(normalized_data.T, best_ut.T,
+        col_vector = project_and_cluster(X.T, best_ut.T,
                                          n_col_clusters,
                                          self.random_state,
                                          self.n_init)
