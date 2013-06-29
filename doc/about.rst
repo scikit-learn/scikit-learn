@@ -60,3 +60,39 @@ The `PSF <http://www.python.org/psf/>`_ helped find and manage funding for our
 
 `tinyclues <http://www.tinyclues.com/>`_ funded the 2011 international Granada
 sprint.
+
+2013' Paris international sprint
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+|center-div|   |telecom|   |tinyclues|   |afpy|   |end-div|
+
+
+
+.. |center-div| raw:: html
+
+    <div style="text-align: center; margin: -7px 0 -10px 0;"> 
+
+
+.. |telecom| image:: http://f.hypotheses.org/wp-content/blogs.dir/331/files/2011/03/Logo-TPT.jpg
+   :width: 150px
+   :target: www.telecom-paristech.fr/
+
+
+.. |tinyclues| image:: http://www.tinyclues.com/item/50b77d01e4b0bff132989dfd?format=original
+   :width: 150px
+   :target: www.tinyclues.fr
+
+
+.. |afpy| image:: http://www.afpy.org/logo.png
+   :width: 150px
+   :target: www.afpy.org
+
+
+.. |SGR| image:: http://www.svi.cnrs-bellevue.fr/wikimedia/images/Logo_svi_inp.png
+   :width: 150px
+   :target: http://www.svi.cnrs-bellevue.fr
+
+
+.. |end-div| raw:: html
+
+  </div>
