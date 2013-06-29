@@ -159,21 +159,18 @@ def test_ball_tree_KDE(n_samples=100, n_features=3):
                    'exponential', 'linear', 'cosine']:
         for h in [0.01, 0.1, 1]:
             dens_true = compute_kernel_slow(Y, X, kernel, h)
-            def check_results(kernel, h, atol, rtol, dualtree, breadth_first):
+            def check_results(kernel, h, atol, rtol, breadth_first):
                 dens = bt.kernel_density(Y, h, atol=atol, rtol=rtol,
-                                         kernel=kernel, dualtree=dualtree,
+                                         kernel=kernel,
                                          breadth_first=breadth_first)
                 assert_allclose(dens, dens_true, atol=atol,
                                 rtol=max(1E-7, rtol))
 
             for rtol in [0, 1E-5]:
                 for atol in [1E-6, 1E-2]:
-                    for dualtree in (True, False):
-                        if dualtree and rtol > 0:
-                            continue
-                        for breadth_first in (True, False):
-                            yield (check_results, kernel, h, atol, rtol,
-                                   dualtree, breadth_first)
+                    for breadth_first in (True, False):
+                        yield (check_results, kernel, h, atol, rtol,
+                               breadth_first)
 
 
 def test_gaussian_kde(n_samples=1000):

@@ -106,7 +106,7 @@
 
 cimport cython
 cimport numpy as np
-from libc.math cimport fmax, fmin, fabs, sqrt, exp, cos, pow
+from libc.math cimport fmax, fmin, fabs, sqrt, exp, cos, pow, log, lgamma
 
 import numpy as np
 import warnings
@@ -120,8 +120,11 @@ from dist_metrics cimport (DistanceMetric, euclidean_dist, euclidean_rdist,
 
 # some handy constants
 cdef DTYPE_t INF = np.inf
+cdef DTYPE_t NEG_INF = -np.inf
 cdef DTYPE_t PI = np.pi
 cdef DTYPE_t ROOT_2PI = sqrt(2 * PI)
+cdef DTYPE_t LOG_PI = log(PI)
+cdef DTYPE_t LOG_2PI = log(2 * PI)
 
 ######################################################################
 # Define doc strings, substituting the appropriate class name using
@@ -230,14 +233,31 @@ Compute a two-point auto-correlation function
 
 
 ######################################################################
+# Utility functions
+cdef DTYPE_t logaddexp(DTYPE_t x1, DTYPE_t x2):
+    cdef DTYPE_t a = fmax(x1, x2)
+    if a == NEG_INF:
+        return NEG_INF
+    else:
+        return a + log(exp(x1 - a) + exp(x2 - a))
+
+cdef DTYPE_t logsubexp(DTYPE_t x1, DTYPE_t x2):
+    if x1 <= x2:
+        return NEG_INF
+    else:
+        return x1 + log(1 - exp(x2 - x1))
+
+
+######################################################################
 # Kernel functions
 #
 # Note: Kernels assume dist is non-negative and and h is positive
 #       All kernel functions are normalized such that K(0, h) = 1.
 #       The fully normalized kernel is:
-#         kernel_norm(h, d, kernel) * compute_kernel(dist, h, kernel)
+#         K = exp[kernel_norm(h, d, kernel) + compute_kernel(dist, h, kernel)]
 #       The code only works with non-negative kernels: i.e. K(d, h) >= 0
-#       for all valid d and h.
+#       for all valid d and h.  Note that for precision, the log of both
+#       the kernel and kernel norm is returned.
 cdef enum KernelType:
     GAUSSIAN_KERNEL = 1
     TOPHAT_KERNEL = 2
@@ -246,117 +266,112 @@ cdef enum KernelType:
     LINEAR_KERNEL = 5
     COSINE_KERNEL = 6
 
-cdef inline DTYPE_t gaussian_kernel(DTYPE_t dist, DTYPE_t h):
-    return exp(-0.5 * (dist * dist) / (h * h))
+cdef inline DTYPE_t log_gaussian_kernel(DTYPE_t dist, DTYPE_t h):
+    return -0.5 * (dist * dist) / (h * h)
 
-cdef inline DTYPE_t tophat_kernel(DTYPE_t dist, DTYPE_t h):
+cdef inline DTYPE_t log_tophat_kernel(DTYPE_t dist, DTYPE_t h):
     if dist < h:
-        return 1.0
-    else:
         return 0.0
+    else:
+        return NEG_INF
 
-cdef inline DTYPE_t epanechnikov_kernel(DTYPE_t dist, DTYPE_t h):
+cdef inline DTYPE_t log_epanechnikov_kernel(DTYPE_t dist, DTYPE_t h):
     if dist < h:
-        return 1.0 - (dist * dist) / (h * h)
+        return log(1.0 - (dist * dist) / (h * h))
     else:
-        return 0.0
+        return NEG_INF
 
-cdef inline DTYPE_t exponential_kernel(DTYPE_t dist, DTYPE_t h):
-    return exp(-dist / h)
+cdef inline DTYPE_t log_exponential_kernel(DTYPE_t dist, DTYPE_t h):
+    return -dist / h
 
-cdef inline DTYPE_t linear_kernel(DTYPE_t dist, DTYPE_t h):
+cdef inline DTYPE_t log_linear_kernel(DTYPE_t dist, DTYPE_t h):
     if dist < h:
-        return 1 - dist / h
+        return log(1 - dist / h)
     else:
-        return 0.0
+        return NEG_INF
 
-cdef inline DTYPE_t cosine_kernel(DTYPE_t dist, DTYPE_t h):
+cdef inline DTYPE_t log_cosine_kernel(DTYPE_t dist, DTYPE_t h):
     if dist < h:
-        return cos(0.5 * PI * dist / h)
+        return log(cos(0.5 * PI * dist / h))
     else:
-        return 0.0
+        return NEG_INF
 
 
-cdef inline DTYPE_t compute_kernel(DTYPE_t dist, DTYPE_t h, KernelType kernel):
+cdef inline DTYPE_t compute_log_kernel(DTYPE_t dist, DTYPE_t h,
+                                       KernelType kernel):
     if kernel == GAUSSIAN_KERNEL:
-        return gaussian_kernel(dist, h)
+        return log_gaussian_kernel(dist, h)
     elif kernel == TOPHAT_KERNEL:
-        return tophat_kernel(dist, h)
+        return log_tophat_kernel(dist, h)
     elif kernel == EPANECHNIKOV_KERNEL:
-        return epanechnikov_kernel(dist, h)
+        return log_epanechnikov_kernel(dist, h)
     elif kernel == EXPONENTIAL_KERNEL:
-        return exponential_kernel(dist, h)
+        return log_exponential_kernel(dist, h)
     elif kernel == LINEAR_KERNEL:
-        return linear_kernel(dist, h)
+        return log_linear_kernel(dist, h)
     elif kernel == COSINE_KERNEL:
-        return cosine_kernel(dist, h)
+        return log_cosine_kernel(dist, h)
 
 
 #------------------------------------------------------------
 # Kernel norms are defined via the volume element V_n
 # and surface element S_(n-1) of an n-sphere.
-cdef DTYPE_t V_n(ITYPE_t n):
+cdef DTYPE_t logVn(ITYPE_t n):
     """V_n = pi^(n/2) / gamma(n/2 - 1)"""
-    if n <= 0:
-        return 1.0
-    elif n == 1:
-        return 2.0
-    else:
-        return 2.0 * PI * V_n(n - 2) / n
+    return 0.5 * n * LOG_PI - lgamma(0.5 * n + 1)
 
 
-cdef DTYPE_t S_n(ITYPE_t n):
+cdef DTYPE_t logSn(ITYPE_t n):
     """V_(n+1) = int_0^1 S_n r^n dr"""
-    return 2.0 * PI * V_n(n - 1)
+    return LOG_2PI + logVn(n - 1)
 
 
-cdef DTYPE_t factorial(DTYPE_t n):
-    if n <= 1:
-        return 1
-    else:
-        return n * factorial(n - 1)
-
-
-cdef DTYPE_t _kernel_norm(DTYPE_t h, ITYPE_t d, KernelType kernel) except -1:
+cdef DTYPE_t _log_kernel_norm(DTYPE_t h, ITYPE_t d,
+                              KernelType kernel) except -1:
     cdef DTYPE_t tmp, factor = 0
     if kernel == GAUSSIAN_KERNEL:
-        factor = ROOT_2PI ** d
+        factor = 0.5 * d * LOG_2PI
     elif kernel == TOPHAT_KERNEL:
-        factor = V_n(d)
+        factor = logVn(d)
     elif kernel == EPANECHNIKOV_KERNEL:
-        factor = V_n(d) * 2. / (d + 2.)
+        factor = logVn(d) + log(2. / (d + 2.))
     elif kernel == EXPONENTIAL_KERNEL:
-        factor = S_n(d - 1) * factorial(d - 1)
+        factor = logSn(d - 1) + lgamma(d)
     elif kernel == LINEAR_KERNEL:
-        factor = V_n(d) / (d + 1.)
+        factor = logVn(d) - log(d + 1.)
     elif kernel == COSINE_KERNEL:
+        # this is derived from a chain rule integration
         factor = 0
         tmp = 2. / PI
         for k in range(1, d + 1, 2):
             factor += tmp
             tmp *= -(d - k) * (d - k - 1) * (2. / PI) ** 2
-        factor *= S_n(d - 1)
+        factor = log(factor) + logSn(d - 1)
     else:
         raise ValueError("Kernel code not recognized")
-    return 1 / factor / h ** d
+    return -factor - d * log(h)
 
 
-def kernel_norm(h, d, kernel):
+def kernel_norm(h, d, kernel, return_log=False):
     if kernel == 'gaussian':
-        return _kernel_norm(h, d, GAUSSIAN_KERNEL)
+        result = _log_kernel_norm(h, d, GAUSSIAN_KERNEL)
     elif kernel == 'tophat':
-        return _kernel_norm(h, d, TOPHAT_KERNEL)
+        result = _log_kernel_norm(h, d, TOPHAT_KERNEL)
     elif kernel == 'epanechnikov':
-        return _kernel_norm(h, d, EPANECHNIKOV_KERNEL)
+        result = _log_kernel_norm(h, d, EPANECHNIKOV_KERNEL)
     elif kernel == 'exponential':
-        return _kernel_norm(h, d, EXPONENTIAL_KERNEL)
+        result = _log_kernel_norm(h, d, EXPONENTIAL_KERNEL)
     elif kernel == 'linear':
-        return _kernel_norm(h, d, LINEAR_KERNEL)
+        result = _log_kernel_norm(h, d, LINEAR_KERNEL)
     elif kernel == 'cosine':
-        return _kernel_norm(h, d, COSINE_KERNEL)
+        result = _log_kernel_norm(h, d, COSINE_KERNEL)
     else:
         raise ValueError('kernel not recognized')
 
+    if return_log:
+        return result
+    else:
+        return np.exp(result)
 
 ######################################################################
 # Tree Utility Routines
@@ -1195,10 +1210,11 @@ cdef class BinaryTree:
             return indices.reshape(X.shape[:-1])
 
     def kernel_density(BinaryTree self, X, h, kernel='gaussian',
-                       atol=0, rtol=0, dualtree=False, breadth_first=False):
+                       atol=0, rtol=1E-8,
+                       breadth_first=True, return_log=False):
         """
-        kernel_density(self, X, h, kernel='gaussian', atol=0, rtol=0,
-                       dualtree=False)
+        kernel_density(self, X, h, kernel='gaussian', atol=0, rtol=1E-8,
+                       breadth_first=True, return_log=False)
 
         Compute the kernel density estimate at points X with the given kernel,
         using the distance metric specified at tree creation.
@@ -1224,19 +1240,18 @@ cdef class BinaryTree:
             If the true result is K_true, then the returned result K_ret
             satisfies ``abs(K_true - K_ret) < atol + rtol * K_ret``
             The default is zero (i.e. machine precision) for both.
-            Note that for dualtree=True, rtol must be set to zero.
-        dualtree : boolean  (default = False)
-            if True, use the dual tree formalism.  This can be faster for
-            large N, but can only be used for rtol = 0
         breadth_first : boolean (default = False)
             if True, use a breadth-first search.  If False (default) use a
             depth-first search.  Breadth-first is generally faster for
             compact kernels and/or high tolerances.
+        return_log : boolean (default = False)
+            return the logarithm of the result.  This can be more accurate
+            than returning the result itself for narrow kernels.
 
         Returns
         -------
         density : ndarray
-            The array of density evaluations.  This has shape X.shape[:-1]
+            The array of (log)-density evaluations, shape = X.shape[:-1]
 
         Examples
         --------
@@ -1250,17 +1265,14 @@ cdef class BinaryTree:
         array([ 6.94114649,  7.83281226,  7.2071716 ])
         """
         cdef DTYPE_t h_c = h
-        cdef DTYPE_t atol_c = atol
-        cdef DTYPE_t rtol_c = rtol
-        cdef DTYPE_t min_bound, max_bound, dist_LB = 0, dist_UB = 0
+        cdef DTYPE_t log_atol = log(atol)
+        cdef DTYPE_t log_rtol = log(rtol)
+        cdef DTYPE_t log_min_bound, log_max_bound, log_bound_spread
+        cdef DTYPE_t dist_LB = 0, dist_UB = 0
 
         cdef ITYPE_t n_samples = self.data.shape[0]
         cdef ITYPE_t n_features = self.data.shape[1]
         cdef KernelType kernel_c
-
-        # validate rtol
-        if dualtree and rtol > 0:
-            warnings.warn("rtol > 0 not compatible with dualtree")
 
         # validate kernel
         if kernel == 'gaussian':
@@ -1278,7 +1290,7 @@ cdef class BinaryTree:
         else:
             raise ValueError("kernel = '%s' not recognized" % kernel)
 
-        cdef DTYPE_t knorm = kernel_norm(h_c, n_features, kernel)
+        cdef DTYPE_t log_knorm = _log_kernel_norm(h_c, n_features, kernel_c)
 
         # validate X and prepare for query
         X = array2d(X, dtype=DTYPE, order='C')
@@ -1288,67 +1300,60 @@ cdef class BinaryTree:
                              "match training data dimension")
         cdef DTYPE_t[:, ::1] Xarr = X.reshape((-1, n_features))
         
-        cdef DTYPE_t[::1] density = np.zeros(Xarr.shape[0], dtype=DTYPE)
+        cdef DTYPE_t[::1] log_density = np.zeros(Xarr.shape[0], dtype=DTYPE)
 
         cdef DTYPE_t* pt = &Xarr[0, 0]
 
         cdef NodeHeap nodeheap
         if breadth_first:
             nodeheap = NodeHeap(self.data.shape[0] // self.leaf_size)
-        cdef DTYPE_t[::1] node_min_bounds
-        cdef DTYPE_t[::1] node_max_bounds
-        # TODO: use both atol & rtol within dual tree approaches.
+        cdef DTYPE_t[::1] node_log_min_bounds
+        cdef DTYPE_t[::1] node_bound_widths
+        # TODO: implement dual tree approach.
         #       this is difficult because of the need to cache values
         #       computed between node pairs.
-        # TODO: rather than the min/max bound, use an array of
-        #       bounds and deltas.  Because of the accumulation of
-        #       numerical errors, the current setup fails for very
-        #       small tolerances.
-        if dualtree:
-            # dualtree algorithms assume atol is the tolerance per point
-            other = self.__class__(Xarr, metric=self.dm,
-                                   leaf_size=self.leaf_size)
-            if breadth_first:
-                self._kde_dual_breadthfirst(other, kernel_c, h_c, knorm,
-                                            atol_c / self.data.shape[0],
-                                            &density[0], nodeheap)
-            else:
-                self._kde_dual_depthfirst(0, other, 0, kernel_c,
-                                          h_c, knorm,
-                                          atol_c / self.data.shape[0],
-                                          &density[0])
+        if breadth_first:
+            node_log_min_bounds = -np.inf + np.zeros(self.n_nodes)
+            node_bound_widths = np.zeros(self.n_nodes)
+            for i in range(Xarr.shape[0]):
+                log_density[i] = self._kde_single_breadthfirst(
+                                            pt, kernel_c, h_c,
+                                            log_knorm, log_atol, log_rtol,
+                                            nodeheap,
+                                            &node_log_min_bounds[0],
+                                            &node_bound_widths[0])
+                pt += n_features
         else:
-            if breadth_first:
-                node_min_bounds = np.zeros(self.n_nodes)
-                node_max_bounds = np.zeros(self.n_nodes)
-                for i in range(Xarr.shape[0]):
-                    density[i] = self._kde_single_breadthfirst(
-                                            pt, kernel_c,
-                                            h_c, knorm, atol_c,
-                                            rtol_c, nodeheap,
-                                            &node_min_bounds[0],
-                                            &node_max_bounds[0])
-                    pt += n_features
-            else:
-                for i in range(Xarr.shape[0]):
-                    min_max_dist(self, 0, pt, &dist_LB, &dist_UB)
-                    # compute max & min bounds on density within top node
-                    min_bound = n_samples * compute_kernel(dist_UB,
-                                                           h_c, kernel_c)
-                    max_bound = n_samples * compute_kernel(dist_LB,
-                                                           h_c, kernel_c)
-                    self._kde_single_depthfirst(0, pt, kernel_c, h_c, knorm,
-                                                atol_c, rtol_c,
-                                                min_bound, max_bound,
-                                                &min_bound, &max_bound)
-                    density[i] = 0.5 * (min_bound + max_bound)
-                    pt += n_features
+            for i in range(Xarr.shape[0]):
+                min_max_dist(self, 0, pt, &dist_LB, &dist_UB)
+                # compute max & min bounds on density within top node
+                log_min_bound = (log(n_samples) +
+                                 compute_log_kernel(dist_UB,
+                                                    h_c, kernel_c))
+                log_max_bound = (log(n_samples) +
+                                 compute_log_kernel(dist_LB,
+                                                    h_c, kernel_c))
+                log_bound_spread = logsubexp(log_max_bound, log_min_bound)
+                self._kde_single_depthfirst(0, pt, kernel_c, h_c,
+                                            log_knorm, log_atol, log_rtol,
+                                            log_min_bound,
+                                            log_bound_spread,
+                                            &log_min_bound,
+                                            &log_bound_spread)
+                log_density[i] = logaddexp(log_min_bound,
+                                           log_bound_spread - log(2))
+                pt += n_features
 
         # normalize the results
-        for i in range(density.shape[0]):
-            density[i] *= knorm
+        for i in range(log_density.shape[0]):
+            log_density[i] += log_knorm
 
-        return np.asarray(density).reshape(X.shape[:-1])
+        log_density = np.asarray(log_density).reshape(X.shape[:-1])
+
+        if return_log:
+            return log_density
+        else:
+            return np.exp(log_density)
 
     def two_point_correlation(self, X, r, dualtree=False):
         """Compute the two-point correlation function
@@ -1780,21 +1785,24 @@ cdef class BinaryTree:
 
         return count
 
+    # except -1 doesn't work any more!!!
     cdef DTYPE_t _kde_single_breadthfirst(self, DTYPE_t* pt,
                                           KernelType kernel, DTYPE_t h,
-                                          DTYPE_t knorm,
-                                          DTYPE_t atol, DTYPE_t rtol,
+                                          DTYPE_t log_knorm,
+                                          DTYPE_t log_atol, DTYPE_t log_rtol,
                                           NodeHeap nodeheap,
-                                          DTYPE_t* node_min_bounds,
-                                          DTYPE_t* node_max_bounds) except -1:
-        # For the given point, node_min_bounds and node_max_bounds will
-        # store the current min/max bounds on the density between the point
-        # and the associated node.  global_min_bound and global_max_bound
+                                          DTYPE_t* node_log_min_bounds,
+                                          DTYPE_t* node_log_bound_spreads) except -1:
+        # For the given point, node_log_min_bounds and node_log_bound_spreads
+        # will encode the current bounds on the density between the point
+        # and the associated node.
+        # The variables global_log_min_bound and global_log_bound_spread
         # keep track of the global bounds on density.  The procedure here is
         # to split nodes, updating these bounds, until the bounds are within
         # atol & rtol.
         cdef ITYPE_t i, i1, i2, N1, N2, i_node
-        cdef DTYPE_t global_min_bound, global_max_bound
+        cdef DTYPE_t global_log_min_bound, global_log_bound_spread
+        cdef DTYPE_t global_log_max_bound
 
         cdef DTYPE_t* data = &self.data[0, 0]
         cdef ITYPE_t* idx_array = &self.idx_array[0]
@@ -1803,7 +1811,7 @@ cdef class BinaryTree:
         cdef ITYPE_t n_features = self.data.shape[1]
 
         cdef NodeData_t node_info
-        cdef DTYPE_t dist_pt, dens_contribution
+        cdef DTYPE_t dist_pt, log_density
         cdef DTYPE_t dist_LB_1 = 0, dist_LB_2 = 0
         cdef DTYPE_t dist_UB_1 = 0, dist_UB_2 = 0
 
@@ -1815,43 +1823,51 @@ cdef class BinaryTree:
         nodeheap_item.i1 = 0
         nodeheap.push(nodeheap_item)
 
-        global_min_bound = N * compute_kernel(max_dist(self, 0, pt),
-                                              h, kernel)
-        global_max_bound = N * compute_kernel(nodeheap_item.val,
-                                              h, kernel)
+        global_log_min_bound = log(N) + compute_log_kernel(max_dist(self,
+                                                                    0, pt),
+                                                           h, kernel)
+        global_log_max_bound = log(N) + compute_log_kernel(nodeheap_item.val,
+                                                           h, kernel)
+        global_log_bound_spread = logsubexp(global_log_max_bound,
+                                            global_log_min_bound)
 
-        node_min_bounds[0] = global_min_bound
-        node_max_bounds[0] = global_max_bound
+        node_log_min_bounds[0] = global_log_min_bound
+        node_log_bound_spreads[0] = global_log_bound_spread
 
         while nodeheap.n > 0:
             nodeheap_item = nodeheap.pop()
             i_node = nodeheap_item.i1
+
             node_info = node_data[i_node]
             N1 = node_info.idx_end - node_info.idx_start
 
             #------------------------------------------------------------
             # Case 1: local bounds are equal to within per-point tolerance.
-            if (knorm * (node_max_bounds[i_node] - node_min_bounds[i_node])
-                <= (atol + rtol * knorm * node_min_bounds[i_node]) * N1 / N):
+            if (log_knorm + node_log_bound_spreads[i_node] - log(N1) + log(N)
+                <= logaddexp(log_atol, (log_rtol + log_knorm
+                                        + node_log_min_bounds[i_node]))):
                 pass
 
             #------------------------------------------------------------
             # Case 2: global bounds are within rtol & atol.
-            elif (knorm * (global_max_bound - global_min_bound)
-                  <= (atol + rtol * knorm * global_min_bound)):
+            elif (log_knorm + global_log_bound_spread
+                  <= logaddexp(log_atol,
+                               log_rtol + log_knorm + global_log_min_bound)):
                 break
 
             #------------------------------------------------------------
             # Case 3: node is a leaf. Count contributions from all points
             elif node_info.is_leaf:
-                global_min_bound -= node_min_bounds[i_node]
-                global_max_bound -= node_max_bounds[i_node]
+                global_log_min_bound = logsubexp(global_log_min_bound,
+                                                 node_log_min_bounds[i_node])
+                global_log_bound_spread = logsubexp(global_log_bound_spread,
+                                                    node_log_bound_spreads[i_node])
                 for i in range(node_info.idx_start, node_info.idx_end):
                     dist_pt = self.dist(pt, data + n_features * idx_array[i],
                                         n_features)
-                    dens_contribution = compute_kernel(dist_pt, h, kernel)
-                    global_min_bound += dens_contribution
-                    global_max_bound += dens_contribution
+                    log_density = compute_log_kernel(dist_pt, h, kernel)
+                    global_log_min_bound = logaddexp(global_log_min_bound,
+                                                     log_density)
 
             #------------------------------------------------------------
             # Case 4: split node and query subnodes
@@ -1865,17 +1881,35 @@ cdef class BinaryTree:
                 min_max_dist(self, i1, pt, &dist_LB_1, &dist_UB_1)
                 min_max_dist(self, i2, pt, &dist_LB_2, &dist_UB_2)
 
-                node_max_bounds[i1] = N1 * compute_kernel(dist_LB_1, h, kernel)
-                node_min_bounds[i1] = N1 * compute_kernel(dist_UB_1, h, kernel)
+                node_log_min_bounds[i1] = (log(N1) +
+                                           compute_log_kernel(dist_UB_1,
+                                                              h, kernel))
+                node_log_bound_spreads[i1] = (log(N1) +
+                                              compute_log_kernel(dist_LB_1,
+                                                                 h, kernel))
 
-                node_max_bounds[i2] = N2 * compute_kernel(dist_LB_2, h, kernel)
-                node_min_bounds[i2] = N2 * compute_kernel(dist_UB_2, h, kernel)
-            
-                global_min_bound += (node_min_bounds[i1] + node_min_bounds[i2]
-                                     - node_min_bounds[i_node])
-                global_max_bound += (node_max_bounds[i1] + node_max_bounds[i2]
-                                     - node_max_bounds[i_node])
+                node_log_min_bounds[i2] = (log(N2) +
+                                           compute_log_kernel(dist_UB_2,
+                                                              h, kernel))
+                node_log_bound_spreads[i2] = (log(N2) +
+                                              compute_log_kernel(dist_LB_2,
+                                                                 h, kernel))
+                
+                global_log_min_bound = logsubexp(global_log_min_bound,
+                                                 node_log_min_bounds[i_node])
+                global_log_min_bound = logaddexp(global_log_min_bound,
+                                                 node_log_min_bounds[i1])
+                global_log_min_bound = logaddexp(global_log_min_bound,
+                                                 node_log_min_bounds[i2])
 
+                global_log_bound_spread = logsubexp(global_log_bound_spread,
+                                                    node_log_bound_spreads[i_node])
+                global_log_bound_spread = logaddexp(global_log_bound_spread,
+                                                    node_log_bound_spreads[i1])
+                global_log_bound_spread = logaddexp(global_log_bound_spread,
+                                                    node_log_bound_spreads[i2])
+
+                # TODO: rank by the spread rather than the distance?
                 nodeheap_item.val = dist_LB_1
                 nodeheap_item.i1 = i1
                 nodeheap.push(nodeheap_item)
@@ -1885,16 +1919,17 @@ cdef class BinaryTree:
                 nodeheap.push(nodeheap_item)
 
         nodeheap.clear()
-        return 0.5 * (global_max_bound + global_min_bound)
+        return logaddexp(global_log_min_bound,
+                         global_log_bound_spread - log(2))
 
     cdef int _kde_single_depthfirst(self, ITYPE_t i_node, DTYPE_t* pt,
                                     KernelType kernel, DTYPE_t h,
-                                    DTYPE_t knorm,
-                                    DTYPE_t atol, DTYPE_t rtol,
-                                    DTYPE_t local_min_bound,
-                                    DTYPE_t local_max_bound,
-                                    DTYPE_t* global_min_bound,
-                                    DTYPE_t* global_max_bound) except -1:
+                                    DTYPE_t log_knorm,
+                                    DTYPE_t log_atol, DTYPE_t log_rtol,
+                                    DTYPE_t local_log_min_bound,
+                                    DTYPE_t local_log_bound_spread,
+                                    DTYPE_t* global_log_min_bound,
+                                    DTYPE_t* global_log_bound_spread) except -1:
         # For the given point, local_min_bound and local_max_bound give the
         # minimum and maximum density for the current node, while
         # global_min_bound and global_max_bound give the minimum and maximum
@@ -1907,38 +1942,42 @@ cdef class BinaryTree:
         cdef ITYPE_t n_features = self.data.shape[1]
 
         cdef NodeData_t node_info = self.node_data[i_node]
-        cdef DTYPE_t dist_pt, dens_contribution
+        cdef DTYPE_t dist_pt, log_dens_contribution
 
-        cdef DTYPE_t child1_min_bound, child2_min_bound, dist_UB = 0
-        cdef DTYPE_t child1_max_bound, child2_max_bound, dist_LB = 0
+        cdef DTYPE_t child1_log_min_bound, child2_log_min_bound
+        cdef DTYPE_t child1_log_bound_spread, child2_log_bound_spread
+        cdef DTYPE_t dist_UB = 0, dist_LB = 0
 
         N1 = node_info.idx_end - node_info.idx_start
         N2 = self.data.shape[0]
 
         #------------------------------------------------------------
         # Case 1: local bounds are equal to within errors.  Return
-        if ((knorm * local_min_bound) >=
-            (knorm * local_max_bound
-             - (atol + rtol * knorm * local_min_bound) * N1 / N2)):
+        if (log_knorm + local_log_bound_spread - log(N1) + log(N2)
+            <= logaddexp(log_atol, (log_rtol + log_knorm
+                                    + local_log_min_bound))):
             pass
 
         #------------------------------------------------------------
         # Case 2: global bounds are within rtol & atol. Return
-        elif (knorm * (global_max_bound[0] - global_min_bound[0])
-            <= (atol + rtol * knorm * global_min_bound[0])):
+        elif (log_knorm + global_log_bound_spread[0]
+            <= logaddexp(log_atol, (log_rtol + log_knorm
+                                    + global_log_min_bound[0]))):
             pass
 
         #------------------------------------------------------------
         # Case 3: node is a leaf. Count contributions from all points
         elif node_info.is_leaf:
-            global_min_bound[0] -= local_min_bound
-            global_max_bound[0] -= local_max_bound
+            global_log_min_bound[0] = logsubexp(global_log_min_bound[0],
+                                                local_log_min_bound)
+            global_log_bound_spread[0] = logsubexp(global_log_bound_spread[0],
+                                                   local_log_bound_spread)
             for i in range(node_info.idx_start, node_info.idx_end):
                 dist_pt = self.dist(pt, (data + n_features * idx_array[i]),
                                     n_features)
-                dens_contribution = compute_kernel(dist_pt, h, kernel)
-                global_min_bound[0] += dens_contribution
-                global_max_bound[0] += dens_contribution
+                log_dens_contribution = compute_log_kernel(dist_pt, h, kernel)
+                global_log_min_bound[0] = logaddexp(global_log_min_bound[0],
+                                                    log_dens_contribution)
 
         #------------------------------------------------------------
         # Case 4: split node and query subnodes
@@ -1950,180 +1989,47 @@ cdef class BinaryTree:
             N2 = self.node_data[i2].idx_end - self.node_data[i2].idx_start
 
             min_max_dist(self, i1, pt, &dist_LB, &dist_UB)
-            child1_min_bound = N1 * compute_kernel(dist_UB, h, kernel)
-            child1_max_bound = N1 * compute_kernel(dist_LB, h, kernel)
+            child1_log_min_bound = log(N1) + compute_log_kernel(dist_UB, h,
+                                                                kernel)
+            child1_log_bound_spread = logsubexp(log(N1) +
+                                                compute_log_kernel(dist_LB, h,
+                                                                   kernel),
+                                                child1_log_min_bound)
 
             min_max_dist(self, i2, pt, &dist_LB, &dist_UB)
-            child2_min_bound = N2 * compute_kernel(dist_UB, h, kernel)
-            child2_max_bound = N2 * compute_kernel(dist_LB, h, kernel)
+            child2_log_min_bound = log(N2) + compute_log_kernel(dist_UB, h,
+                                                                kernel)
+            child2_log_bound_spread = logsubexp(log(N2) +
+                                                compute_log_kernel(dist_LB, h,
+                                                                   kernel),
+                                                child2_log_min_bound)
             
-            global_min_bound[0] += (child1_min_bound + child2_min_bound
-                                    - local_min_bound)
-            global_max_bound[0] += (child1_max_bound + child2_max_bound
-                                    - local_max_bound)
+            global_log_min_bound[0] = logsubexp(global_log_min_bound[0],
+                                                local_log_min_bound)
+            global_log_min_bound[0] = logaddexp(global_log_min_bound[0],
+                                                child1_log_min_bound)
+            global_log_min_bound[0] = logaddexp(global_log_min_bound[0],
+                                                child2_log_min_bound)
 
-            self._kde_single_depthfirst(i1, pt, kernel, h, knorm,
-                                        atol, rtol,
-                                        child1_min_bound, child1_max_bound,
-                                        global_min_bound, global_max_bound)
-            self._kde_single_depthfirst(i2, pt, kernel, h, knorm,
-                                        atol, rtol,
-                                        child2_min_bound, child2_max_bound,
-                                        global_min_bound, global_max_bound)
-        return 0
+            global_log_bound_spread[0] = logsubexp(global_log_bound_spread[0],
+                                                   local_log_bound_spread)
+            global_log_bound_spread[0] = logaddexp(global_log_bound_spread[0],
+                                                   child1_log_bound_spread)
+            global_log_bound_spread[0] = logaddexp(global_log_bound_spread[0],
+                                                   child2_log_bound_spread)
 
-    cdef int _kde_dual_breadthfirst(BinaryTree self, BinaryTree other,
-                                    KernelType kernel,
-                                    DTYPE_t h, DTYPE_t knorm, DTYPE_t atol,
-                                    DTYPE_t* density,
-                                    NodeHeap nodeheap) except -1:
-        # note that atol here is absolute tolerance *per point*
-        cdef ITYPE_t i1, i2, i_node1, i_node2
-
-        cdef DTYPE_t* data1 = &self.data[0, 0]
-        cdef DTYPE_t* data2 = &other.data[0, 0]
-
-        cdef ITYPE_t* idx_array1 = &self.idx_array[0]
-        cdef ITYPE_t* idx_array2 = &other.idx_array[0]
-
-        cdef ITYPE_t n_features = self.data.shape[1]
-
-        cdef NodeData_t node_info1, node_info2
-
-        cdef NodeData_t* node_data1 = &self.node_data[0]
-        cdef NodeData_t* node_data2 = &other.node_data[0]
-
-        cdef NodeHeapData_t nodeheap_item
-
-        cdef DTYPE_t dist_LB, dist_UB, dens_LB, dens_UB
-        
-        nodeheap_item.val = min_dist_dual(self, 0, other, 0)
-        nodeheap_item.i1 = 0
-        nodeheap_item.i2 = 0
-        nodeheap.push(nodeheap_item)
-
-        while nodeheap.n > 0:
-            nodeheap_item = nodeheap.pop()
-            dist_LB = nodeheap_item.val
-            i_node1 = nodeheap_item.i1
-            i_node2 = nodeheap_item.i2
-            node_info1 = node_data1[i_node1]
-            node_info2 = node_data1[i_node2]
-
-            dist_UB = max_dist_dual(self, i_node1, other, i_node2)
-            dens_LB = compute_kernel(dist_UB, h, kernel)
-            dens_UB = compute_kernel(dist_LB, h, kernel)
-
-            #------------------------------------------------------------
-            # Case 1: nodes are within desired tolerance
-            if dens_LB * knorm + atol >= dens_UB * knorm:
-                dens_LB *= (node_info1.idx_end - node_info1.idx_start)
-                for i2 in range(node_info2.idx_start, node_info2.idx_end):
-                    density[idx_array2[i2]] += dens_LB
-
-            #------------------------------------------------------------
-            # Case 2: both nodes are leaves: go through all pairs
-            elif node_info1.is_leaf and node_info2.is_leaf:
-                for i2 in range(node_info2.idx_start, node_info2.idx_end):
-                    for i1 in range(node_info1.idx_start, node_info1.idx_end):
-                        dist_pt = self.dist(data1 + n_features * idx_array1[i1],
-                                            data2 + n_features * idx_array2[i2],
-                                            n_features)
-                        density[idx_array2[i2]] += compute_kernel(dist_pt, h,
-                                                                  kernel)
-
-            #------------------------------------------------------------
-            # Case 3a: only one node is a leaf: split the other
-            elif node_info1.is_leaf:
-                for i2 in range(2 * i_node2 + 1, 2 * i_node2 + 3):
-                    nodeheap_item.val = min_dist_dual(self, i_node1, other, i2)
-                    nodeheap_item.i1 = i_node1
-                    nodeheap_item.i2 = i2
-                    nodeheap.push(nodeheap_item)
-
-            elif node_info2.is_leaf:
-                for i1 in range(2 * i_node1 + 1, 2 * i_node1 + 3):
-                    nodeheap_item.val = min_dist_dual(self, i1, other, i_node2)
-                    nodeheap_item.i1 = i1
-                    nodeheap_item.i2 = i_node2
-                    nodeheap.push(nodeheap_item)
-
-            #------------------------------------------------------------
-            # Case 3b: both nodes need to be split
-            else:
-                for i1 in range(2 * i_node1 + 1, 2 * i_node1 + 3):
-                    for i2 in range(2 * i_node2 + 1, 2 * i_node2 + 3):
-                        nodeheap_item.val = min_dist_dual(self, i1, other, i2)
-                        nodeheap_item.i1 = i1
-                        nodeheap_item.i2 = i2
-                        nodeheap.push(nodeheap_item)
-        return 0
-
-    cdef int _kde_dual_depthfirst(BinaryTree self, ITYPE_t i_node1,
-                                  BinaryTree other, ITYPE_t i_node2,
-                                  KernelType kernel,
-                                  DTYPE_t h, DTYPE_t knorm, DTYPE_t atol,
-                                  DTYPE_t* density) except -1:
-        # note that atol here is absolute tolerance *per point*
-        cdef ITYPE_t i1, i2
-
-        cdef DTYPE_t* data1 = &self.data[0, 0]
-        cdef DTYPE_t* data2 = &other.data[0, 0]
-
-        cdef ITYPE_t* idx_array1 = &self.idx_array[0]
-        cdef ITYPE_t* idx_array2 = &other.idx_array[0]
-
-        cdef ITYPE_t n_features = self.data.shape[1]
-
-        cdef NodeData_t node_info1 = self.node_data[i_node1]
-        cdef NodeData_t node_info2 = other.node_data[i_node2]
-        cdef DTYPE_t dist_pt
-
-        # XXX: for efficiency, calculate dist_LB and dist_UB at the same time
-        cdef DTYPE_t dist_LB = min_dist_dual(self, i_node1, other, i_node2)
-        cdef DTYPE_t dist_UB = max_dist_dual(self, i_node1, other, i_node2)
-
-        cdef DTYPE_t dens_UB = compute_kernel(dist_LB, h, kernel)
-        cdef DTYPE_t dens_LB = compute_kernel(dist_UB, h, kernel)
-
-        #------------------------------------------------------------
-        # Case 1: points are all far enough that contribution is zero
-        #         to within the desired tolerance
-        if dens_LB * knorm + atol >= dens_UB * knorm:
-            dens_LB *= (node_info1.idx_end - node_info1.idx_start)
-            for i2 in range(node_info2.idx_start, node_info2.idx_end):
-                density[idx_array2[i2]] += dens_LB
-
-        #------------------------------------------------------------
-        # Case 2: both nodes are leaves: go through all pairs
-        elif node_info1.is_leaf and node_info2.is_leaf:
-            for i2 in range(node_info2.idx_start, node_info2.idx_end):
-                for i1 in range(node_info1.idx_start, node_info1.idx_end):
-                    dist_pt = self.dist(data1 + n_features * idx_array1[i1],
-                                        data2 + n_features * idx_array2[i2],
-                                        n_features)
-                    density[idx_array2[i2]] += compute_kernel(dist_pt, h,
-                                                              kernel)
-
-        #------------------------------------------------------------
-        # Case 3a: only one node is a leaf: split the other
-        elif node_info1.is_leaf:
-            for i2 in range(2 * i_node2 + 1, 2 * i_node2 + 3):
-                self._kde_dual_depthfirst(i_node1, other, i2, kernel,
-                                          h, knorm, atol, density)
-
-        elif node_info2.is_leaf:
-            for i1 in range(2 * i_node1 + 1, 2 * i_node1 + 3):
-                self._kde_dual_depthfirst(i1, other, i_node2, kernel,
-                                          h, knorm, atol, density)
-
-        #------------------------------------------------------------
-        # Case 3b: both nodes need to be split
-        else:
-            for i1 in range(2 * i_node1 + 1, 2 * i_node1 + 3):
-                for i2 in range(2 * i_node2 + 1, 2 * i_node2 + 3):
-                    self._kde_dual_depthfirst(i1, other, i2, kernel,
-                                              h, knorm, atol, density)
+            self._kde_single_depthfirst(i1, pt, kernel, h, log_knorm,
+                                        log_atol, log_rtol,
+                                        child1_log_min_bound,
+                                        child1_log_bound_spread,
+                                        global_log_min_bound,
+                                        global_log_bound_spread)
+            self._kde_single_depthfirst(i2, pt, kernel, h, log_knorm,
+                                        log_atol, log_rtol,
+                                        child2_log_min_bound,
+                                        child2_log_bound_spread,
+                                        global_log_min_bound,
+                                        global_log_bound_spread)
         return 0
 
     cdef int _two_point_single(self, ITYPE_t i_node, DTYPE_t* pt, DTYPE_t* r,
