@@ -107,6 +107,47 @@ def _solve_dense_cholesky(X, y, alpha):
         return coefs
 
 
+def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=None, copy=True):
+    # w = X.T * inv(X X^t + alpha*Id) y
+
+    n_samples = K.shape[0]
+    n_targets = y.shape[1]
+
+    if copy:
+        K = K.copy()
+
+    one_alpha = np.array_equal(alpha, len(alpha) * [alpha[0]])
+    has_sw = isinstance(sample_weight, np.ndarray) or sample_weight != 1.0
+
+    if has_sw:
+        # We are doing a little danse with the sample weights to
+        # avoid copying the original X, which could be big
+        sw = np.sqrt(sample_weight)
+        y = y * sw[:, np.newaxis]
+        K *= np.outer(sw, sw)
+
+    # treat the single or multi-target case with one common penalty
+    if one_alpha:
+        K.flat[::n_samples + 1] += alpha[0]
+        dual_coef = linalg.solve(K, y,
+                             sym_pos=True, overwrite_a=True)
+        if has_sw:
+            dual_coef *= sw[:, np.newaxis]
+        return dual_coef
+    else:
+        coef = np.empty([n_targets, n_features])
+        dual_coefs = np.empty([n_targets, n_samples])
+        for dual_coef, target, current_alpha in zip(
+                dual_coefs, y.T, alpha):
+            K.flat[::n_samples + 1] += current_alpha
+            dual_coef[:] = linalg.solve(K, target, sym_pos=True,
+                                     overwrite_a=False).ravel()
+            K.flat[::n_samples + 1] -= current_alpha
+        if has_sw:
+            dual_coefs *= sw[np.newaxis, :]
+        return dual_coefs.T
+
+
 def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                      max_iter=None, tol=1e-3):
     """Solve the ridge equation by the method of normal equations.
@@ -232,52 +273,19 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         return coefs
 
     if solver == 'dense_cholesky':
-        # normal equations (cholesky) method
         if n_features > n_samples or has_sw:
-            # kernel ridge
-            # w = X.T * inv(X X^t + alpha*Id) y
             K = safe_sparse_dot(X, X.T, dense_output=True)
-            if has_sw:
-                # We are doing a little danse with the sample weights to
-                # avoid copying the original X, which could be big
-                sw = np.sqrt(sample_weight)
-                y = y * sw[:, np.newaxis]
-                K *= np.outer(sw, sw)
             try:
-                # treat the single or multi-target case with one common penalty
-                if one_alpha:
-                    K.flat[::n_samples + 1] += alpha[0]
-                    dual_coef = linalg.solve(K, y,
-                                         sym_pos=True, overwrite_a=True)
-                    if has_sw:
-                        if dual_coef.ndim == 1:
-                            dual_coef *= sw
-                        else:
-                            # Deal with multiple-output problems
-                            dual_coef *= sw[:, np.newaxis]
-                    coef = safe_sparse_dot(X.T, dual_coef,
-                                               dense_output=True).T
-                    if ravel:
-                        coef = coef.ravel()
+                dual_coef = _solve_dense_cholesky_kernel(K, y, alpha,
+                                                         sample_weight,
+                                                         copy=False)
 
-                    return coef
-                else:
-                    coef = np.empty([n_targets, n_features])
-                    dual_coefs = np.empty([n_targets, n_samples])
-                    for dual_coef, target, current_alpha in zip(
-                            dual_coefs, y.T, alpha):
-                        K.flat[::n_samples + 1] += current_alpha
-                        dual_coef[:] = linalg.solve(K, target, sym_pos=True,
-                                                 overwrite_a=False).ravel()
-                        K.flat[::n_samples + 1] -= current_alpha
-                    if has_sw:
-                        dual_coefs *= sw[np.newaxis, :]
-                    coef = safe_sparse_dot(dual_coefs, X, dense_output=True).T
+                coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
 
-                    if ravel:
-                        coef = coef.ravel()
+                if ravel:
+                    coef = coef.ravel()
 
-                    return coef
+                return coef
             except linalg.LinAlgError:
                 # use SVD solver if matrix is singular
                 solver = 'svd'
