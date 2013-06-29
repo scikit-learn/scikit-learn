@@ -381,8 +381,9 @@ class FastICA(BaseEstimator, TransformerMixin):
         """
         fun_args = {} if self.fun_args is None else self.fun_args
         whitening_, unmixing_, sources_ = fastica(
-            X, self.n_components, self.algorithm, self.whiten, self.fun,
-            fun_args, self.max_iter, self.tol, self.w_init,
+            X=X, n_components=self.n_components, algorithm=self.algorithm,
+            whiten=self.whiten, fun=self.fun, fun_args=fun_args,
+            max_iter=self.max_iter, tol=self.tol, w_init=self.w_init,
             random_state=self.random_state)
         if self.whiten:
             self.components_ = np.dot(unmixing_, whitening_)
@@ -421,6 +422,8 @@ class FastICA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
         """
         X = array2d(X)
+        if self.whiten is True:
+            X -= X.mean(axis=0)[np.newaxis]
         return np.dot(X, self.components_.T)
 
     def get_mixing_matrix(self):

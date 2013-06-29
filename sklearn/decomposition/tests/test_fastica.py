@@ -126,7 +126,6 @@ def test_fastica_simple(add_noise=False):
     assert_array_almost_equal(sources, ica.sources_)
     assert_array_almost_equal(sources, ica.transform(m.T))
 
-
     assert_equal(ica.get_mixing_matrix().shape, (2, 2))
 
     for fn in [np.tanh, "exp(-.5(x^2))"]:
@@ -198,18 +197,20 @@ def test_fit_transform():
     """Test FastICA.fit_transform"""
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
-    ica = FastICA(n_components=5, whiten=True, random_state=0)
-    Xt = ica.fit_transform(X)
-    assert_equal(ica.components_.shape, (5, 10))
-    assert_equal(ica.sources_.shape, (100, 5))
+    for whiten, n_components in [[True, 5], [False, 10]]:
 
-    ica = FastICA(n_components=5, whiten=True, random_state=0)
-    ica.fit(X)
-    assert_equal(ica.components_.shape, (5, 10))
-    assert_equal(ica.sources_.shape, (100, 5))
-    Xt2 = ica.transform(X)
+        ica = FastICA(n_components=5, whiten=whiten, random_state=0)
+        Xt = ica.fit_transform(X)
+        assert_equal(ica.components_.shape, (n_components, 10))
+        assert_equal(ica.sources_.shape, (100, n_components))
 
-    assert_array_almost_equal(Xt, Xt2)
+        ica = FastICA(n_components=5, whiten=whiten, random_state=0)
+        ica.fit(X)
+        assert_equal(ica.components_.shape, (n_components, 10))
+        assert_equal(ica.sources_.shape, (100, n_components))
+        Xt2 = ica.transform(X)
+
+        assert_array_almost_equal(Xt, Xt2)
 
 
 def test_inverse_transform():
