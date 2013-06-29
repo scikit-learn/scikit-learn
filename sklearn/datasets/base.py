@@ -10,6 +10,7 @@ Base IO code for all datasets
 import os
 import csv
 import shutil
+import warnings
 from os import environ
 from os.path import dirname
 from os.path import join
@@ -65,7 +66,8 @@ def clear_data_home(data_home=None):
 
 def load_files(container_path, description=None, categories=None,
                load_content=True, shuffle=True, charset=None,
-               charse_error='strict', random_state=0):
+               charset_error='strict', random_state=0,
+               charse_error=None):
     """Load text files with categories as subfolder names.
 
     Individual samples are assumed to be files stored a two levels folder
@@ -82,19 +84,25 @@ def load_files(container_path, description=None, categories=None,
                 file_44.txt
                 ...
 
-    The folder names are used has supervised signal label names. The individual
-    file names are not important.
+    The folder names are used has supervised signal label names. The
+    individual file names are not important.
 
     This function does not try to extract features into a numpy array or
     scipy sparse matrix. In addition, if load_content is false it
     does not try to load the files in memory.
 
-    To use utf-8 text files in a scikit-learn classification or clustering
-    algorithm you will first need to use the `sklearn.features.text`
+    To use text files in a scikit-learn classification or clustering
+    algorithm, you will need to use the `sklearn.feature_extraction.text`
     module to build a feature extraction transformer that suits your
     problem.
 
-    Similar feature extractors should be build for other kind of unstructured
+    If you set load_content=True, you should also specify the encoding of
+    the text using the 'charset' parameter. For many modern text files,
+    'utf-8' will be the correct encoding. If you leave charset equal to None,
+    then the content will be made of bytes instead of Unicode, and you will
+    not be able to use most functions in `sklearn.feature_extraction.text`.
+
+    Similar feature extractors should be built for other kind of unstructured
     data input such as images, audio, video, ...
 
     Parameters
@@ -148,6 +156,14 @@ def load_files(container_path, description=None, categories=None,
         'target_names', the meaning of the labels, and 'DESCR', the full
         description of the dataset.
     """
+    # In 0.13, the parameter named 'charset_error' was typoed as
+    # 'charse_error'. Check that parameter for backward compatibility.
+    if charse_error is not None:
+        warnings.warn("The parameter 'charse_error' was renamed to"
+                      " 'charset_error' and will be removed in 0.16.",
+                      DeprecationWarning)
+        charset_error = charse_error
+
     target = []
     target_names = []
     filenames = []
@@ -180,7 +196,7 @@ def load_files(container_path, description=None, categories=None,
     if load_content:
         data = [open(filename, 'rb').read() for filename in filenames]
         if charset is not None:
-            data = [d.decode(charset, charse_error) for d in data]
+            data = [d.decode(charset, charset_error) for d in data]
         return Bunch(data=data,
                      filenames=filenames,
                      target_names=target_names,
