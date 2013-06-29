@@ -175,16 +175,32 @@ def test_ovr_single_label_predict_proba():
     pred = np.array([l.argmax() for l in Y_proba])
     assert_false((pred - Y_pred).any())
 
-def test_ovr_single_label_decision_function():
-    base_clf = MultinomialNB(alpha=1)
-    X, Y = iris.data, iris.target
+
+def test_ovr_multilabel_decision_function():
+    X, Y = datasets.make_multilabel_classification(n_samples=100,
+                                                   n_features=20,
+                                                   n_classes=5,
+                                                   n_labels=3,
+                                                   length=50,
+                                                   allow_unlabeled=True,
+                                                   random_state=0)
     X_train, Y_train = X[:80], Y[:80]
     X_test, Y_test = X[80:], Y[80:]
-    clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
-    Y_pred = clf.decision_function(X_test)
-    #Arbitrary .8 to test that the data mostly agrees with the known output
-    #There may be a better (probably is) test for this
-    assert_true(np.sum(Y_test == Y_pred)/float(X_test.shape[0]) > .8)
+    tst = OneVsRestClassifier(svm.SVC(probability=True)).fit(X_train, Y_train)
+    #This is pretty weak test, but at least verifies output shape
+    assert_true(tst.decision_function(X_test).shape == tst.predict_proba(X_test).shape)
+
+
+def test_ovr_single_label_decision_function():
+    X, Y = datasets.make_classification(n_samples=100,
+                                        n_features=20,
+                                        random_state=0)
+    X_train, Y_train = X[:80], Y[:80]
+    X_test, Y_test = X[80:], Y[80:]
+    tst = OneVsRestClassifier(svm.SVC(probability=True)).fit(X_train, Y_train)
+    #This is a pretty weak test, but at least verifies the output shape
+    assert_true(tst.decision_function(X_test).shape == tst.predict_proba(X_test).shape)
+
 
 def test_ovr_gridsearch():
     ovr = OneVsRestClassifier(LinearSVC(random_state=0))

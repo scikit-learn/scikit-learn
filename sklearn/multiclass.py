@@ -115,6 +115,13 @@ def predict_proba_ovr(estimators, X, is_multilabel):
         Y /= np.sum(Y, axis=1)[:, np.newaxis]
     return Y
 
+def decision_function_ovr(estimators, X, is_multilabel):
+    """Return decision function using the one-vs-the-rest strategy.
+
+    Estimators must have a decision_function method."""
+    #array [i,j] gives the decision function for sample i, class j.
+    return np.array([est.decision_function(X)[..., 0] for est in estimators]).T
+
 class _ConstantPredictor(BaseEstimator):
     def fit(self, X, y):
         self.y_ = y
@@ -246,7 +253,8 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                                  is_multilabel=self.multilabel_)
 
     def decision_function(self, X):
-        """Hard decision function which returns the label with the maximal probability for each input sample. Multilabel output is not supported by this function.
+        """Returns the distance of each sample from the decision boundary for each class.
+        This can only be used with estimators which implement the decision_function method
 
         Parameters
         ----------
@@ -254,12 +262,9 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Returns
         -------
-        T : array-like, shape = [n_samples]
-            Returns the class label with maximal probability for each sample
+        T : array-like, shape = [n_samples, n_classes]
         """
-        if self.multilabel_:
-            raise AttributeError("Multilabel classifiers are not supported for this method")
-        return np.argmax(predict_proba_ovr(self.estimators_, X, is_multilabel=self.multilabel_), axis=1)
+        return decision_function_ovr(self.estimators_, X, is_multilabel=self.multilabel_)
 
     @property
     def multilabel_(self):
