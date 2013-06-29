@@ -148,6 +148,28 @@ def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=None, copy=True):
         return dual_coefs.T
 
 
+def _solve_svd(X, y, alpha):
+    n_samples, n_features = X.shape
+    n_targets = y.shape[1]
+
+    alpha = np.atleast_2d(alpha)
+
+    U, s, Vt = linalg.svd(X, full_matrices=False)
+    idx = s > 1e-15  # same default value as scipy.linalg.pinv
+    UTy = U.T.dot(y)
+    # d = np.zeros_like(s)
+    s[idx == False] = 0.
+    d = (s[np.newaxis, :, np.newaxis] /
+         (s[np.newaxis, :, np.newaxis] ** 2 + alpha[:, np.newaxis, :]))
+
+    d_UT_y = d * UTy[np.newaxis, :, :]
+    coef = np.empty([alpha.shape[0], n_targets, n_features])
+    for dUTy, coef_slice in zip(d_UT_y, coef):
+        coef_slice[:] = Vt.T.dot(dUTy).T
+
+    return coef.reshape(n_targets, n_features)
+
+
 def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                      max_iter=None, tol=1e-3):
     """Solve the ridge equation by the method of normal equations.
@@ -281,25 +303,11 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                 # use SVD solver if matrix is singular
                 solver = 'svd'
 
-    if solver == 'svd':
-        alpha = np.atleast_2d(alpha)
-
-        U, s, Vt = linalg.svd(X, full_matrices=False)
-        idx = s > 1e-15  # same default value as scipy.linalg.pinv
-        UTy = U.T.dot(y)
-        # d = np.zeros_like(s)
-        s[idx == False] = 0.
-        d = (s[np.newaxis, :, np.newaxis] /
-             (s[np.newaxis, :, np.newaxis] ** 2 + alpha[:, np.newaxis, :]))
-
-        d_UT_y = d * UTy[np.newaxis, :, :]
-        coef_ = np.empty([alpha.shape[0], n_targets, n_features])
-        for dUTy, coef_slice in zip(d_UT_y, coef_):
-            coef_slice[:] = Vt.T.dot(dUTy).T
-
-        coef = coef_.reshape(n_targets, n_features)
+    elif solver == 'svd':
+        coef = _solve_svd(X, y, alpha)
 
     if ravel:
+        # When y was passed as a 1d-array, we flatten the coefficients.
         coef = coef.ravel()
 
     return coef
