@@ -194,11 +194,29 @@ def test_non_square_fastica(add_noise=False):
         assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=3)
 
 
+def test_fit_transform():
+    """Test FastICA.fit_transform"""
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((100, 10))
+    ica = FastICA(n_components=5, whiten=True, random_state=0)
+    Xt = ica.fit_transform(X)
+    assert_equal(ica.components_.shape, (5, 10))
+    assert_equal(ica.sources_.shape, (100, 5))
+
+    ica = FastICA(n_components=5, whiten=True, random_state=0)
+    ica.fit(X)
+    assert_equal(ica.components_.shape, (5, 10))
+    assert_equal(ica.sources_.shape, (100, 5))
+    Xt2 = ica.transform(X)
+
+    assert_array_almost_equal(Xt, Xt2)
+
+
 def test_inverse_transform():
     """Test FastICA.inverse_transform"""
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
-    ica = FastICA(n_components=5)
+    ica = FastICA(n_components=5, random_state=0)
     Xt = ica.fit_transform(X)
     mixing_matrix = ica.get_mixing_matrix()
     assert_equal(mixing_matrix.shape, (10, 5))
