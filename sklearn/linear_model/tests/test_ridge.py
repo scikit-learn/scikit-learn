@@ -207,6 +207,11 @@ def test_ridge_individual_penalties():
         assert_array_almost_equal(coef_cholesky, coef_indiv_pen)
 
 
+    # Test error is raised when number of targets and penalties do not match.
+    ridge = Ridge(alpha=penalties[:3])
+    assert_raises(ValueError, ridge.fit, X, target)
+
+
 def _test_ridge_loo(filter_):
     # test that can work with both dense or sparse matrices
     n_samples = X_diabetes.shape[0]
