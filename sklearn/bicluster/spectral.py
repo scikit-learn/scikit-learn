@@ -11,7 +11,7 @@ import numpy as np
 from scipy.sparse.linalg import svds
 
 
-def make_nonnegative(X, min_value=0):
+def _make_nonnegative(X, min_value=0):
     """Ensure `X.min()` >= `min_value`."""
     min_ = X.min()
     if min_ < min_value:
@@ -19,21 +19,21 @@ def make_nonnegative(X, min_value=0):
     return X
 
 
-def scale_preprocess(X):
+def _scale_preprocess(X):
     """Normalize `X` by scaling rows and columns independently.
 
     Returns the normalized matrix and the row and column scaling
     factors.
 
     """
-    X = make_nonnegative(X)
+    X = _make_nonnegative(X)
     row_diag = 1.0 / np.sqrt(np.sum(X, axis=1))
     col_diag = 1.0 / np.sqrt(np.sum(X, axis=0))
     an = row_diag[:, np.newaxis] * X * col_diag
     return an, row_diag, col_diag
 
 
-def bistochastic_preprocess(X, maxiter=1000, tol=1e-5):
+def _bistochastic_preprocess(X, maxiter=1000, tol=1e-5):
     """Normalize rows and columns of `X` simultaneously so that all
     rows sum to one constant and all columns sum to a different
     constant.
@@ -41,11 +41,11 @@ def bistochastic_preprocess(X, maxiter=1000, tol=1e-5):
     """
     # According to paper, this can also be done more efficiently with
     # deviation reduction and balancing algorithms.
-    X = make_nonnegative(X)
+    X = _make_nonnegative(X)
     X_scaled = X
     dist = None
     for _ in range(maxiter):
-        X_new, _, _ = scale_preprocess(X_scaled)
+        X_new, _, _ = _scale_preprocess(X_scaled)
         dist = np.linalg.norm(X_scaled - X_new)
         X_scaled = X_new
         if dist is not None and dist < tol:
@@ -53,9 +53,9 @@ def bistochastic_preprocess(X, maxiter=1000, tol=1e-5):
     return X_scaled
 
 
-def log_preprocess(X):
+def _log_preprocess(X):
     """Normalize `X` according to Kluger's log-interactions scheme."""
-    X = make_nonnegative(X, min_value=1)
+    X = _make_nonnegative(X, min_value=1)
     L = np.log(X)
     row_avg = np.mean(L, axis=1)[:, np.newaxis]
     col_avg = np.mean(L, axis=0)
@@ -63,7 +63,7 @@ def log_preprocess(X):
     return L - row_avg - col_avg + avg
 
 
-def svd(array, n_singular_vals, maxiter):
+def _svd(array, n_singular_vals, maxiter):
     """Returns first `n_singular_vectors` left and right singular
     vectors u and v.
 
@@ -83,7 +83,7 @@ def svd(array, n_singular_vals, maxiter):
     return u, v
 
 
-def fit_best_piecewise(vectors, k, n_clusters, random_state, n_init,
+def _fit_best_piecewise(vectors, k, n_clusters, random_state, n_init,
                        return_piecewise=False):
     """Find the `k` vectors that are best approximated by piecewise
     constant vectors.
@@ -108,7 +108,7 @@ def fit_best_piecewise(vectors, k, n_clusters, random_state, n_init,
     return result
 
 
-def project_and_cluster(data, vectors, n_clusters, random_state,
+def _project_and_cluster(data, vectors, n_clusters, random_state,
                         n_init):
     """Project `data` to `vectors` and cluster the result."""
     projected = np.dot(data, vectors)
@@ -212,9 +212,9 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
         self.random_state = random_state
 
     def _dhillon(self, X):
-        normalized_data, row_diag, col_diag = scale_preprocess(X)
+        normalized_data, row_diag, col_diag = _scale_preprocess(X)
         n_singular_vals = 1 + int(np.ceil(np.log2(self.n_clusters)))
-        u, v = svd(normalized_data, n_singular_vals, self.maxiter)
+        u, v = _svd(normalized_data, n_singular_vals, self.maxiter)
         z = np.vstack((row_diag[:, np.newaxis] * u[:, 1:],
                        col_diag[:, np.newaxis] * v[:, 1:]))
         _, labels, _ = k_means(z, self.n_clusters,
@@ -233,14 +233,14 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
     def _kluger(self, X):
         n_sv = self.n_singular_vectors
         if self.method == 'bistochastic':
-            normalized_data = bistochastic_preprocess(X)
+            normalized_data = _bistochastic_preprocess(X)
             n_sv += 1
         elif self.method == 'scale':
-            normalized_data, _, _ = scale_preprocess(X)
+            normalized_data, _, _ = _scale_preprocess(X)
             n_sv += 1
         elif self.method == 'log':
-            normalized_data = log_preprocess(X)
-        u, v = svd(normalized_data, n_sv, self.maxiter)
+            normalized_data = _log_preprocess(X)
+        u, v = _svd(normalized_data, n_sv, self.maxiter)
         ut = u.T
         vt = v.T
         if self.method != 'log':
@@ -252,23 +252,23 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
         else:
             n_row_clusters = n_col_clusters = self.n_clusters
 
-        best_ut = fit_best_piecewise(ut, self.n_best_vectors,
-                                     n_row_clusters,
-                                     self.random_state, self.n_init)
+        best_ut = _fit_best_piecewise(ut, self.n_best_vectors,
+                                      n_row_clusters,
+                                      self.random_state, self.n_init)
 
-        best_vt = fit_best_piecewise(vt, self.n_best_vectors,
-                                     n_col_clusters,
-                                     self.random_state, self.n_init)
+        best_vt = _fit_best_piecewise(vt, self.n_best_vectors,
+                                      n_col_clusters,
+                                      self.random_state, self.n_init)
 
-        self.row_labels_ = project_and_cluster(X, best_vt.T,
-                                               n_row_clusters,
-                                               self.random_state,
-                                               self.n_init)
+        self.row_labels_ = _project_and_cluster(X, best_vt.T,
+                                                n_row_clusters,
+                                                self.random_state,
+                                                self.n_init)
 
-        self.column_labels_ = project_and_cluster(X.T, best_ut.T,
-                                                  n_col_clusters,
-                                                  self.random_state,
-                                                  self.n_init)
+        self.column_labels_ = _project_and_cluster(X.T, best_ut.T,
+                                                   n_col_clusters,
+                                                   self.random_state,
+                                                   self.n_init)
 
         self.rows_ = np.vstack(self.row_labels_ == label
                                for label in range(n_row_clusters)
