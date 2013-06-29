@@ -107,13 +107,10 @@ def _solve_dense_cholesky(X, y, alpha):
         return coefs
 
 
-def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=None, copy=True):
+def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=None):
     # dual_coef = inv(X X^t + alpha*Id) y
     n_samples = K.shape[0]
     n_targets = y.shape[1]
-
-    if copy:
-        K = K.copy()
 
     one_alpha = np.array_equal(alpha, len(alpha) * [alpha[0]])
     has_sw = isinstance(sample_weight, np.ndarray) or sample_weight != 1.0
@@ -126,10 +123,17 @@ def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=None, copy=True):
     if one_alpha:
         # Only one penalty, we can solve multi-target problems in one time.
         K.flat[::n_samples + 1] += alpha[0]
+
         dual_coef = linalg.solve(K, y,
                              sym_pos=True, overwrite_a=True)
+
+        # K is expensive to compute and store in memory so change it back in
+        # case it was user-given.
+        K.flat[::n_samples + 1] -= alpha[0]
+
         if has_sw:
             dual_coef *= sw[:, np.newaxis]
+
         return dual_coef
     else:
         # One penalty per target. We need to solve each target separately.
@@ -138,8 +142,10 @@ def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=None, copy=True):
 
         for dual_coef, target, current_alpha in zip(dual_coefs, y.T, alpha):
             K.flat[::n_samples + 1] += current_alpha
+
             dual_coef[:] = linalg.solve(K, target, sym_pos=True,
-                                     overwrite_a=False).ravel()
+                                        overwrite_a=False).ravel()
+
             K.flat[::n_samples + 1] -= current_alpha
 
         if has_sw:
@@ -289,8 +295,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             K = safe_sparse_dot(X, X.T, dense_output=True)
             try:
                 dual_coef = _solve_dense_cholesky_kernel(K, y, alpha,
-                                                         sample_weight,
-                                                         copy=False)
+                                                         sample_weight)
             except linalg.LinAlgError:
                 # use SVD solver if matrix is singular
                 solver = 'svd'
