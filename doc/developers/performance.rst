@@ -16,9 +16,9 @@ code for the scikit-learn project.
   implementation optimization.
 
   Times and times, hours of efforts invested in optimizing complicated
-  implementation details have been rendered irrelevant by the late discovery
-  of simple **algorithmic tricks**, or by using another algorithm altogether
-  that is better suited to the problem.
+  implementation details have been rendered irrelevant by the subsequent
+  discovery of simple **algorithmic tricks**, or by using another algorithm
+  altogether that is better suited to the problem.
 
   The section :ref:`warm-restarts` gives an example of such a trick.
 

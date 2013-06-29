@@ -96,10 +96,10 @@ Computing cross-validated metrics
 The simplest way to use perform cross-validation in to call the
 :func:`cross_val_score` helper function on the estimator and the dataset.
 
-The following example demonstrates how to estimate the accuracy of a
-linear kernel support vector machine on the iris dataset by split
-the data and fitting a model and computing the score 5 consecutive times
-(with different splits each time)::
+The following example demonstrates how to estimate the accuracy of a linear
+kernel support vector machine on the iris dataset by splitting the data, fitting
+a model and computing the score 5 consecutive times (with different splits each
+time)::
 
   >>> clf = svm.SVC(kernel='linear', C=1)
   >>> scores = cross_validation.cross_val_score(

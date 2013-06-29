@@ -1488,7 +1488,7 @@ Some other modules benefited from significant improvements or cleanups.
 People
 -------
 
-People that made this release possible precceeded by number of commits:
+People that made this release possible preceeded by number of commits:
 
 
    - 159  `Olivier Grisel`_
