@@ -193,16 +193,23 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
     def __init__(self, n_clusters=3, method='bistochastic',
                  n_singular_vectors=6, n_best_vectors=3, maxiter=None,
                  n_init=10, random_state=None):
-        if method not in ('dhillon', 'bistochastic', 'scale', 'log'):
-            raise Exception('unknown method: {}'.format(method))
+        legal_methods = ('dhillon', 'bistochastic', 'scale', 'log')
+        if method not in legal_methods:
+            raise ValueError("Unknown method: '{}'. `method` must be"
+                             " one of {}.".format(method, legal_methods))
         if hasattr(n_clusters, '__len__'):
-            if method == 'dhillon':
-                raise Exception("different number of clusters not"
-                                " supported when method=='dhillon'")
             if len(n_clusters) != 2:
-                raise Exception("unsupported number of clusters")
+                raise ValueError("The parameter `n_clusters` has the"
+                                 " wrong length. It should either be an "
+                                 " integer or have two entries:"
+                                 " `(n_row_clusters, n_column_clusters)`")
+            if method == 'dhillon' and n_clusters[0] != n_clusters[1]:
+                raise ValueError("Different number of row and column"
+                                 " clusters not supported when"
+                                 " method=='dhillon'.")
         if n_best_vectors > n_singular_vectors:
-            raise Exception('n_best_vectors > n_singular_vectors')
+            raise ValueError("`n_best_vectors` cannot be larger than"
+                             " `n_singular_vectors`.")
         self.n_clusters = n_clusters
         self.method = method
         self.n_singular_vectors = n_singular_vectors
@@ -212,12 +219,16 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
         self.random_state = random_state
 
     def _dhillon(self, X):
+        if hasattr(self.n_clusters, '__len__'):
+            n_clusters = self.n_clusters[0]
+        else:
+            n_clusters = self.n_clusters
         normalized_data, row_diag, col_diag = _scale_preprocess(X)
-        n_singular_vals = 1 + int(np.ceil(np.log2(self.n_clusters)))
+        n_singular_vals = 1 + int(np.ceil(np.log2(n_clusters)))
         u, v = _svd(normalized_data, n_singular_vals, self.maxiter)
         z = np.vstack((row_diag[:, np.newaxis] * u[:, 1:],
                        col_diag[:, np.newaxis] * v[:, 1:]))
-        _, labels, _ = k_means(z, self.n_clusters,
+        _, labels, _ = k_means(z, n_clusters,
                                random_state=self.random_state,
                                n_init=self.n_init)
 
@@ -226,9 +237,9 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
         self.column_labels_ = labels[n_rows:]
 
         self.rows_ = np.vstack(self.row_labels_ == c
-                               for c in range(self.n_clusters))
+                               for c in range(n_clusters))
         self.columns_ = np.vstack(self.column_labels_ == c
-                                  for c in range(self.n_clusters))
+                                  for c in range(n_clusters))
 
     def _kluger(self, X):
         n_sv = self.n_singular_vectors
@@ -285,9 +296,10 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
         X : array-like, shape (n_samples, n_features)
 
         """
+        X = np.asarray(X, dtype=np.float64)
         if X.ndim != 2:
-            raise Exception('data array must be 2 dimensional')
-        X = X.astype(np.float64)
+            raise ValueError("Argument `X` has the wrong dimensionality."
+                             " It must have exactly two dimensions.")
         if self.method == 'dhillon':
             self._dhillon(X)
         else:
