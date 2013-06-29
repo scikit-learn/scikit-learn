@@ -213,24 +213,13 @@ else:
     safe_copy = np.copy
 
 try:
-    np.true_divide(2, 4)
-    def divide_workaround(x1, x2, out=None, dtype=None):
-        """This is true_divide with a workaround:
-
-        np.true_divide(.54, 1.16, dtype=np.double)
-        0.0
-        np.true_divide(.54, 1.16)
-        0.46551724137931039
-
-        This is being tracked in numpy bug
-        https://github.com/numpy/numpy/issues/3484
-
-        As a workaround, we just swallow the dtype param.
-        We should remove this code when that is fixed.
-        """
-        return np.true_divide(x1, x2)
-
-    divide = divide_workaround
+    if not np.isclose(
+        np.divide(.4, 1),
+        np.divide(.4, 1, dtype=np.float),
+        .4):
+        raise TypeError('Divide not working with dtype: '
+                        'https://github.com/numpy/numpy/issues/3484')
+    divide = np.divide
 
 except TypeError:
     # Compat for old versions of np.divide that do not provide support for
