@@ -124,6 +124,8 @@ def test_fastica_simple(add_noise=False):
 
     sources = FastICA(fun=nl, algorithm=algo, random_state=0).fit_transform(m.T)
     assert_array_almost_equal(sources, ica.sources_)
+    assert_array_almost_equal(sources, ica.transform(m.T))
+
 
     assert_equal(ica.get_mixing_matrix().shape, (2, 2))
 
