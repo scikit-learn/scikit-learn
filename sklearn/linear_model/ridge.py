@@ -210,7 +210,8 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
           coefficients. More stable for singular matrices than 'dense_cholesky'.
 
         - 'dense_cholesky' uses the standard scipy.linalg.solve function to
-          obtain a closed-form solution via a Cholesky decomposition of dot(X.T, X)
+          obtain a closed-form solution via a Cholesky decomposition of
+          dot(X.T, X)
 
         - 'sparse_cg' uses the conjugate gradient solver as found in
           scipy.sparse.linalg.cg. As an iterative algorithm, this solver is
