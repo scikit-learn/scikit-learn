@@ -214,7 +214,24 @@ else:
 
 try:
     np.divide(1, 1, dtype=np.float)
-    divide = np.divide
+
+    def hack_divide(x1, x2, out=None, dtype=None):
+        """There is a numpy bug with divide in python3
+        when dtype is passed in.
+
+        Will drop the dtype flag here for now until 
+        """
+        if out is None:
+            return np.divide(x1, x2)
+        else:
+            return np.divide(x1, x2, out=out)
+
+# TODO(justinvf): This can come back when
+# https://github.com/numpy/numpy/issues/3484
+# is fixed. This should not be merged in to scikit.
+# divide = np.divide
+    divide = hack_divide
+
 except TypeError:
     # Compat for old versions of np.divide that do not provide support for
     # the dtype args
