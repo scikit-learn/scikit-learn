@@ -99,13 +99,15 @@ def _do_bistochastic_test(scaled):
 
 
 def test_scale_preprocess():
-    x = np.random.rand(100, 100)
+    generator = check_random_state(0)
+    x = generator.rand(100, 100)
     scaled, _, _ = _scale_preprocess(x)
     _do_scale_test(scaled)
 
 
 def test_bistochastic_preprocess():
-    x = np.random.rand(100, 100)
+    generator = check_random_state(0)
+    x = generator.rand(100, 100)
     scaled = _bistochastic_preprocess(x)
     _do_bistochastic_test(scaled)
 
@@ -113,7 +115,8 @@ def test_bistochastic_preprocess():
 def test_log_preprocess():
     # adding any constant to a log-scaled matrix should make it
     # bistochastic
-    x = np.random.rand(100, 100)
+    generator = check_random_state(0)
+    x = generator.rand(100, 100)
     scaled = _log_preprocess(x) + 1
     _do_bistochastic_test(scaled)
 
