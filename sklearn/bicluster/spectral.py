@@ -128,7 +128,7 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
     one of 'scale', 'bistochastic', or 'log'.
 
     Parameters
-    -----------
+    ----------
     n_clusters : integer or tuple (rows, columns)
         The number of biclusters to find. If method is not 'dhillon',
         the number of row and column clusters may be different.
