@@ -197,6 +197,8 @@ def test_inverse_transform():
     X = rng.random_sample((100, 10))
     ica = FastICA(n_components=5)
     Xt = ica.fit_transform(X)
+    mixing_matrix = ica.get_mixing_matrix()
+    assert_equal(mixing_matrix.shape, (10, 5))
     X2 = ica.inverse_transform(Xt)
     assert_equal(X.shape, X2.shape)
 

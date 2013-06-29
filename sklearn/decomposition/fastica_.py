@@ -303,7 +303,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
 
 class FastICA(BaseEstimator, TransformerMixin):
-    """FastICA; a fast algorithm for Independent Component Analysis
+    """FastICA: a fast algorithm for Independent Component Analysis
 
     Parameters
     ----------
@@ -346,12 +346,10 @@ class FastICA(BaseEstimator, TransformerMixin):
 
     Notes
     -----
-
     Implementation based on
     `A. Hyvarinen and E. Oja, Independent Component Analysis:
     Algorithms and Applications, Neural Networks, 13(4-5), 2000,
     pp. 411-430`
-
     """
 
     def __init__(self, n_components=None, algorithm='parallel', whiten=True,
@@ -369,6 +367,18 @@ class FastICA(BaseEstimator, TransformerMixin):
         self.random_state = random_state
 
     def fit_transform(self, X, y=None):
+        """Fit the model and recover the sources from X.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        X_new : array-like, shape (n_samples, n_components)
+        """
         fun_args = {} if self.fun_args is None else self.fun_args
         whitening_, unmixing_, sources_ = fastica(
             X, self.n_components, self.algorithm, self.whiten, self.fun,
@@ -382,21 +392,58 @@ class FastICA(BaseEstimator, TransformerMixin):
         return sources_
 
     def fit(self, X, y=None):
+        """Fit the model to X.
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Training data, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        self
+        """
         self.fit_transform(X)
         return self
 
     def transform(self, X, y=None):
-        """Apply un-mixing matrix "W" to X to recover the sources
+        """Recover the sources from X (apply the unmixing matrix).
 
-        S = X * W.T
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_features)
+            Data to transform, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Returns
+        -------
+        X_new : array-like, shape (n_samples, n_components)
         """
         X = array2d(X)
         return np.dot(X, self.components_.T)
 
     def get_mixing_matrix(self):
-        """Compute the mixing matrix
+        """Compute the mixing matrix.
+
+        Returns
+        -------
+        mixing_matrix : array, shape (n_features, n_components)
         """
         return linalg.pinv(self.components_)
 
     def inverse_transform(self, X):
+        """Transform the sources back to the mixed data
+        (apply the mixing matrix).
+
+        Parameters
+        ----------
+        X : array-like, shape (n_samples, n_components)
+            Sources, where n_samples in the number of samples
+            and n_components is the number of components.
+
+        Returns
+        -------
+        X_new : array-like, shape (n_samples, n_features)
+        """
         return np.dot(X, self.get_mixing_matrix().T)
