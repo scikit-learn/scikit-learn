@@ -192,6 +192,15 @@ def test_non_square_fastica(add_noise=False):
         assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=3)
 
 
+def test_inverse_transform():
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((100, 10))
+    ica = FastICA(n_components=5)
+    Xt = ica.fit_transform(X)
+    X2 = ica.inverse_transform(Xt)
+    assert_equal(X.shape, X2.shape)
+
+
 if __name__ == '__main__':
     import nose
     nose.run(argv=['', __file__])
