@@ -1,5 +1,6 @@
 """Testing for Spectral Biclustering methods"""
 
+from sklearn.utils import check_random_state
 from sklearn.externals.six.moves import cPickle
 
 dumps, loads = cPickle.dumps, cPickle.loads
@@ -55,7 +56,8 @@ def _test_spectral_biclustering_kluger(noise):
     S = np.outer(row_vector, col_vector).astype(np.float64)
 
     if noise > 0:
-        S += np.random.normal(0, noise, S.shape).astype(np.float64)
+        generator = check_random_state(0)
+        S += generator.normal(0, noise, S.shape).astype(np.float64)
 
     for method in ('scale', 'bistochastic', 'log'):
         model = SpectralBiclustering(random_state=0, n_clusters=(3, 3),
