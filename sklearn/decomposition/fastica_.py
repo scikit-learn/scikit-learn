@@ -397,3 +397,6 @@ class FastICA(BaseEstimator, TransformerMixin):
         """Compute the mixing matrix
         """
         return linalg.pinv(self.components_)
+
+    def inverse_transform(self, X):
+        return np.dot(X, self.get_mixing_matrix().T)
