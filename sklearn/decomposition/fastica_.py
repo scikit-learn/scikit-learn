@@ -368,7 +368,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         self.w_init = w_init
         self.random_state = random_state
 
-    def fit(self, X, y=None):
+    def fit_transform(self, X, y=None):
         fun_args = {} if self.fun_args is None else self.fun_args
         whitening_, unmixing_, sources_ = fastica(
             X, self.n_components, self.algorithm, self.whiten, self.fun,
@@ -379,6 +379,10 @@ class FastICA(BaseEstimator, TransformerMixin):
         else:
             self.components_ = unmixing_
         self.sources_ = sources_
+        return sources_
+
+    def fit(self, X, y=None):
+        self.fit_transform(X)
         return self
 
     def transform(self, X, y=None):
