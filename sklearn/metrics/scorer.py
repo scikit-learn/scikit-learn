@@ -14,7 +14,7 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 """
 
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
-# Liscence: Simplified BSD
+# License: Simplified BSD
 
 import numpy as np
 
