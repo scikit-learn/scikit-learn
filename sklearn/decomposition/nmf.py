@@ -287,7 +287,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         more sparseness.
 
     eta : double, default: 0.1
-        Degree of correctness to mantain, if sparsity is not None. Smaller
+        Degree of correctness to maintain, if sparsity is not None. Smaller
         values mean larger error.
 
     tol : double, default: 1e-4

@@ -8,7 +8,7 @@ def test_pls():
     d = load_linnerud()
     X = d.data
     Y = d.target
-    # 1) Canonical (symetric) PLS (PLS 2 blocks canonical mode A)
+    # 1) Canonical (symmetric) PLS (PLS 2 blocks canonical mode A)
     # ===========================================================
     # Compare 2 algo.: nipals vs. svd
     # ------------------------------

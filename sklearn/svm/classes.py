@@ -254,7 +254,7 @@ class SVC(BaseSVC):
         Support Vector Machine for Regression implemented using libsvm.
 
     LinearSVC
-        Scalable Linear Support Vector Machine for classififcation
+        Scalable Linear Support Vector Machine for classification
         implemented using liblinear. Check the See also section of
         LinearSVC for more comparison element.
 

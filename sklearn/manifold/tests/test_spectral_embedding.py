@@ -139,8 +139,8 @@ def test_spectral_embedding_amg_solver(seed=36):
     assert_true(_check_with_col_sign_flipping(embed_amg, embed_arpack, 0.05))
 
 
-def test_pipline_spectral_clustering(seed=36):
-    """Test using pipline to do spectral clustering"""
+def test_pipeline_spectral_clustering(seed=36):
+    """Test using pipeline to do spectral clustering"""
     random_state = np.random.RandomState(seed)
     se_rbf = SpectralEmbedding(n_components=n_clusters,
                                affinity="rbf",

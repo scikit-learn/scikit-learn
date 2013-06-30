@@ -9,7 +9,7 @@ a better understanding of the data structure.
 
 We selected two sets of two variables from the boston housing data set
 as an illustration of what kind of analysis can be done with several
-outlier detection tools. For the purpose of vizualisation, we are working
+outlier detection tools. For the purpose of visualization, we are working
 with two-dimensional examples, but one should be aware that things are
 not so trivial in high-dimension, as it will be pointed out.
 

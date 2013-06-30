@@ -250,7 +250,7 @@ is given.
 
 Affinity Propagation can be interesting as it chooses the number of
 clusters based on the data provided. For this purpose, the two important
-parameters are the `preference`, which controls how many examplars are
+parameters are the `preference`, which controls how many exemplars are
 used, and the `damping` factor.
 
 The main drawback of Affinity Propagation is its complexity. The
@@ -384,7 +384,7 @@ Different label assignment strategies
 
 Different label assignment strategies can be used, corresponding to the
 `assign_labels` parameter of :class:`SpectralClustering`.
-The `kmeans` strategie can match finer details of the data, but it can be
+The `kmeans` strategy can match finer details of the data, but it can be
 more unstable. In particular, unless you control the `random_state`, it
 may not be reproducible from run-to-run, as it depends on a random
 initialization. On the other hand, the `discretize` strategy is 100%
@@ -933,14 +933,14 @@ Their harmonic mean called **V-measure** is computed by
 The V-measure is actually equivalent to the mutual information (NMI)
 discussed above normalized by the sum of the label entropies [B2011]_.
 
-Homogeneity, completensess and V-measure can be computed at once using
+Homogeneity, completeness and V-measure can be computed at once using
 :func:`homogeneity_completeness_v_measure` as follows::
 
   >>> metrics.homogeneity_completeness_v_measure(labels_true, labels_pred)
   ...                                                      # doctest: +ELLIPSIS
   (0.66..., 0.42..., 0.51...)
 
-The following clustering assignment is slighlty better, since it is
+The following clustering assignment is slightly better, since it is
 homogeneous but not complete::
 
   >>> labels_pred = [0, 0, 0, 1, 2, 2]
@@ -966,7 +966,7 @@ Advantages
 
 - Intuitive interpretation: clustering with bad V-measure can be
   **qualitatively analyzed in terms of homogeneity and completeness**
-  to better feel what 'kind' of mistakes is done by the assigmenent.
+  to better feel what 'kind' of mistakes is done by the assignment.
 
 - **No assumption is made on the cluster structure**: can be used
   to compare clustering algorithms such as k-means which assumes isotropic

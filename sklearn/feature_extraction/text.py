@@ -598,7 +598,8 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             if (not isinstance(max_features, numbers.Integral) or
                 max_features <= 0):
                 raise ValueError(
-                    "max_features is neither a positive integer nor None")
+                    "max_features=%r, neither a positive integer nor None"
+                    % max_features)
         self.ngram_range = ngram_range
         if vocabulary is not None:
             if not isinstance(vocabulary, Mapping):

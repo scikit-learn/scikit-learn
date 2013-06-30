@@ -11,9 +11,9 @@ into one. This is useful as there is often a fixed sequence
 of steps in processing the data, for example feature selection, normalization
 and classification. :class:`Pipeline` serves two purposes here:
 
-    **Convenience**: You only have to call ``fit`` and ``predict`` once on your 
+    **Convenience**: You only have to call ``fit`` and ``predict`` once on your
     data to fit a whole sequence of estimators.
-    
+
     **Joint parameter selection**: You can :ref:`grid search <grid_search>`
     over parameters of all estimators in the pipeline at once.
 
@@ -65,7 +65,7 @@ This is particularly important for doing grid searches::
     >>> params = dict(reduce_dim__n_components=[2, 5, 10],
     ...               svm__C=[0.1, 10, 100])
     >>> grid_search = GridSearchCV(clf, param_grid=params)
-    
+
 
 .. topic:: Examples:
 
@@ -81,7 +81,7 @@ Notes
 
 Calling ``fit`` on the pipeline is the same as calling ``fit`` on
 each estimator in turn, ``transform`` the input and pass it on to the next step.
-The pipeline has all the methods that the last estimator in the pipline has,
+The pipeline has all the methods that the last estimator in the pipeline has,
 i.e. if the last estimator is a classifier, the :class:`Pipeline` can be used
 as a classifier. If the last estimator is a transformer, again, so is the
 pipeline.

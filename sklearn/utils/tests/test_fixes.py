@@ -19,6 +19,7 @@ def test_in1d():
 def test_divide():
     assert_equal(divide(.6, 1), .600000000000)
 
+
 def test_copysign():
     a = np.array([-1, 1, -1])
     b = np.array([1, -1, 1])
