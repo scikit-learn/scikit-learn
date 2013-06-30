@@ -122,13 +122,15 @@ def test_parameter_grid():
     grid2 = ParameterGrid(params2)
     assert_equal(len(grid2), 6)
 
+#    import pdb; pdb.set_trace()
+
     # loop to assert we can iterate over the grid multiple times
     for i in xrange(2):
         # tuple + chain transforms {"a": 1, "b": 2} to ("a", 1, "b", 2)
-        points = set(tuple(chain(*p.items())) for p in grid2)
+        points = set(tuple(chain(*(sorted(p.items())))) for p in grid2)
         assert_equal(points,
-                     set(("foo", x, "bar", y)
-                         for x, y in product(params2["foo"], params2["bar"])))
+                     set(("bar", x, "foo", y)
+                         for x, y in product(params2["bar"], params2["foo"])))
 
     # Special case: empty grid (useful to get default estimator settings)
     empty = ParameterGrid({})
