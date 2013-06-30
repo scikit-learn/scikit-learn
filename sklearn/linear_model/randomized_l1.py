@@ -201,6 +201,12 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         The fraction of samples to be used in each randomized design.
         Should be between 0 and 1. If 1, all samples are used.
 
+    n_resampling : int
+        Number of randomized models.
+
+    selection_threshold: float
+        The score above which features should be selected.
+
     fit_intercept : boolean
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
@@ -364,18 +370,24 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 
     Parameters
     ----------
-    C : float
+    C : float, optional, default=1
         The regularization parameter C in the LogisticRegression.
 
-    scaling : float
+    scaling : float, optional, default=0.5
         The alpha parameter in the stability selection article used to
         randomly scale the features. Should be between 0 and 1.
 
-    sample_fraction : float
+    sample_fraction : float, optional, default=0.75
         The fraction of samples to be used in each randomized design.
         Should be between 0 and 1. If 1, all samples are used.
 
-    fit_intercept : boolean
+    n_resampling : int, optional, default=200
+        Number of randomized models.
+
+    selection_threshold: float, optional, default=0.25
+        The score above which features should be selected.
+
+    fit_intercept : boolean, optional, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
@@ -383,10 +395,10 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional, default False
+    normalize : boolean, optional, default=False
         If True, the regressors X will be normalized before regression.
 
-    tol : float, optional
+    tol : float, optional, default=1e-3
          tolerance for stopping criteria of LogisticRegression
 
     n_jobs : integer, optional
@@ -527,21 +539,21 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
     y : array-like, shape = [n_samples]
         target values.
 
-    scaling : float
+    scaling : float, optional, default=0.5
         The alpha parameter in the stability selection article used to
         randomly scale the features. Should be between 0 and 1.
 
     random_state : integer or numpy.RandomState, optional
         The generator used to randomize the design.
 
-    n_resampling : int
+    n_resampling : int, optional, default=200
         Number of randomized models.
 
-    n_grid : int
+    n_grid : int, optional, default=100
         Number of grid points. The path is linearly reinterpolated
         on a grid between 0 and 1 before computing the scores.
 
-    sample_fraction : float
+    sample_fraction : float, optional, default=0.75
         The fraction of samples to be used in each randomized design.
         Should be between 0 and 1. If 1, all samples are used.
 
