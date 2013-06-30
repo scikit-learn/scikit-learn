@@ -4,6 +4,9 @@ algorithms. It currently includes univariate filter selection methods and the
 recursive feature elimination algorithm.
 """
 
+from .by_score import mask_by_score
+from .by_score import SelectByScore
+
 from .univariate_selection import chi2
 from .univariate_selection import f_classif
 from .univariate_selection import f_oneway
@@ -21,6 +24,8 @@ from .rfe import RFECV
 __all__ = ['GenericUnivariateSelect',
            'RFE',
            'RFECV',
+           'mask_by_score',
+           'SelectByScore',
            'SelectFdr',
            'SelectFpr',
            'SelectFwe',

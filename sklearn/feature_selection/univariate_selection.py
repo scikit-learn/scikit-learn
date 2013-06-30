@@ -7,7 +7,6 @@
 
 
 from abc import ABCMeta, abstractmethod
-from warnings import warn
 from functools import reduce
 
 import numpy as np
@@ -16,24 +15,12 @@ from scipy.sparse import issparse
 
 from ..base import BaseEstimator
 from ..preprocessing import LabelBinarizer
-from ..utils import (array2d, as_float_array,
-                     atleast2d_or_csr, check_arrays, safe_asarray, safe_sqr,
-                     safe_mask)
+from ..utils import (array2d, atleast2d_or_csr, check_arrays, safe_asarray,
+                     safe_sqr, safe_mask)
 from ..utils.extmath import safe_sparse_dot
 from ..externals import six
+from .by_score import mask_by_score
 from .base import SelectorMixin
-
-
-def _clean_nans(scores):
-    """
-    Fixes Issue #1240: NaNs can't be properly compared, so change them to the
-    smallest value of scores's dtype. -inf seems to be unreliable.
-    """
-    # XXX where should this function be called? fit? scoring functions
-    # themselves?
-    scores = as_float_array(scores, copy=True)
-    scores[np.isnan(scores)] = np.finfo(scores.dtype).min
-    return scores
 
 
 ######################################################################
@@ -266,9 +253,9 @@ def f_regression(X, y, center=True):
 ######################################################################
 # Base classes
 
-class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator,
-                                     SelectorMixin)):
+class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator, SelectorMixin)):
 
+    @abstractmethod
     def __init__(self, score_func):
         """ Initialize the univariate feature selection.
 
@@ -284,49 +271,42 @@ class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator,
                 "was passed." % (score_func, type(score_func)))
         self.score_func = score_func
 
-    @abstractmethod
-    def fit(self, X, y):
-        """Run score function on (X, y) and get the appropriate features."""
-
-
-class _PvalueFilter(_BaseFilter):
     def fit(self, X, y):
         """Evaluate the score function on samples X with outputs y.
-
-        Records and selects features according to the p-values output by the
-        score function.
         """
+        if not issparse(X):
+            X = np.asarray(X)
+        print('fit of {}'.format(self))
         self.scores_, self.pvalues_ = self.score_func(X, y)
         self.scores_ = np.asarray(self.scores_)
+        if len(self.scores_) != X.shape[1]:
+            raise ValueError("Scores size differs from number of features")
         self.pvalues_ = np.asarray(self.pvalues_)
-        if len(np.unique(self.pvalues_)) < len(self.pvalues_):
-            warn("Duplicate p-values. Result may depend on feature ordering."
-                 "There are probably duplicate features, or you used a "
-                 "classification score for a regression task.")
         return self
 
 
-class _ScoreFilter(_BaseFilter):
-    def fit(self, X, y):
-        """Evaluate the score function on samples X with outputs y.
+class _PvalueCutoffFilter(_BaseFilter):
+    def __init__(self, score_func=f_classif, alpha=5e-2):
+        self.alpha = alpha
+        super(_PvalueCutoffFilter, self).__init__(score_func)
 
-        Records and selects features according to their scores.
-        """
-        self.scores_, self.pvalues_ = self.score_func(X, y)
-        self.scores_ = np.asarray(self.scores_)
-        self.pvalues_ = np.asarray(self.pvalues_)
-        if len(np.unique(self.scores_)) < len(self.scores_):
-            warn("Duplicate scores. Result may depend on feature ordering."
-                 "There are probably duplicate features, or you used a "
-                 "classification score for a regression task.")
-        return self
+    def _get_support_mask(self):
+        return mask_by_score(self.pvalues_, maximum=self._get_threshold())
+
+    def _get_threshold(self):
+        raise NotImplemented
+
+
+class _ScoreLimitFilter(_BaseFilter):
+    def _get_support_mask(self):
+        return mask_by_score(self.scores_, limit=self._get_limit())
 
 
 ######################################################################
 # Specific filters
 ######################################################################
 
-class SelectPercentile(_ScoreFilter):
+class SelectPercentile(_ScoreLimitFilter):
     """Select features according to a percentile of the highest scores.
 
     Parameters
@@ -360,29 +340,15 @@ class SelectPercentile(_ScoreFilter):
         self.percentile = percentile
         super(SelectPercentile, self).__init__(score_func)
 
-    def _get_support_mask(self):
+    def _get_limit(self):
         percentile = self.percentile
         if percentile > 100:
             raise ValueError("percentile should be between 0 and 100"
                              " (%f given)" % (percentile))
-        # Cater for NaNs
-        if percentile == 100:
-            return np.ones(len(self.scores_), dtype=np.bool)
-        elif percentile == 0:
-            return np.zeros(len(self.scores_), dtype=np.bool)
-        scores = _clean_nans(self.scores_)
-
-        alpha = stats.scoreatpercentile(scores, 100 - percentile)
-        mask = scores > alpha
-        ties = np.where(scores == alpha)[0]
-        if len(ties):
-            max_feats = len(scores) * percentile // 100
-            kept_ties = ties[:max_feats - mask.sum()]
-            mask[kept_ties] = True
-        return mask
+        return percentile / 100.
 
 
-class SelectKBest(_ScoreFilter):
+class SelectKBest(_ScoreLimitFilter):
     """Select features according to the k highest scores.
 
     Parameters
@@ -414,25 +380,18 @@ class SelectKBest(_ScoreFilter):
         self.k = k
         super(SelectKBest, self).__init__(score_func)
 
-    def _get_support_mask(self):
+    def _get_limit(self):
         k = self.k
         if k == 'all':
-            return np.ones(self.scores_.shape, dtype=bool)
+            return None
         if k > len(self.scores_):
             raise ValueError("Cannot select %d features among %d. "
                              "Use k='all' to return all features."
                              % (k, len(self.scores_)))
-
-        scores = _clean_nans(self.scores_)
-        # XXX This should be refactored; we're getting an array of indices
-        # from argsort, which we transform to a mask, which we probably
-        # transform back to indices later.
-        mask = np.zeros(scores.shape, dtype=bool)
-        mask[np.argsort(scores)[-k:]] = 1
-        return mask
+        return int(k)
 
 
-class SelectFpr(_PvalueFilter):
+class SelectFpr(_PvalueCutoffFilter):
     """Filter: Select the pvalues below alpha based on a FPR test.
 
     FPR test stands for False Positive Rate test. It controls the total
@@ -456,16 +415,11 @@ class SelectFpr(_PvalueFilter):
         p-values of feature scores.
     """
 
-    def __init__(self, score_func=f_classif, alpha=5e-2):
-        self.alpha = alpha
-        super(SelectFpr, self).__init__(score_func)
-
-    def _get_support_mask(self):
-        alpha = self.alpha
-        return self.pvalues_ < alpha
+    def _get_threshold(self):
+        return self.alpha
 
 
-class SelectFdr(_PvalueFilter):
+class SelectFdr(_PvalueCutoffFilter):
     """Filter: Select the p-values for an estimated false discovery rate
 
     This uses the Benjamini-Hochberg procedure. ``alpha`` is the target false
@@ -490,18 +444,12 @@ class SelectFdr(_PvalueFilter):
         p-values of feature scores.
     """
 
-    def __init__(self, score_func=f_classif, alpha=5e-2):
-        self.alpha = alpha
-        super(SelectFdr, self).__init__(score_func)
-
-    def _get_support_mask(self):
-        alpha = self.alpha
+    def _get_threshold(self):
         sv = np.sort(self.pvalues_)
-        threshold = sv[sv < alpha * np.arange(len(self.pvalues_))].max()
-        return self.pvalues_ <= threshold
+        return sv[sv < self.alpha * np.arange(len(sv))].max()
 
 
-class SelectFwe(_PvalueFilter):
+class SelectFwe(_PvalueCutoffFilter):
     """Filter: Select the p-values corresponding to Family-wise error rate
 
     Parameters
@@ -522,13 +470,8 @@ class SelectFwe(_PvalueFilter):
         p-values of feature scores.
     """
 
-    def __init__(self, score_func=f_classif, alpha=5e-2):
-        self.alpha = alpha
-        super(SelectFwe, self).__init__(score_func)
-
-    def _get_support_mask(self):
-        alpha = self.alpha
-        return (self.pvalues_ < alpha / len(self.pvalues_))
+    def _get_threshold(self):
+        return self.alpha / len(self.pvalues_)
 
 
 ######################################################################
@@ -537,7 +480,7 @@ class SelectFwe(_PvalueFilter):
 
 # TODO this class should fit on either p-values or scores,
 # depending on the mode.
-class GenericUnivariateSelect(_PvalueFilter):
+class GenericUnivariateSelect(_BaseFilter):
     """Univariate feature selector with configurable strategy.
 
     Parameters
