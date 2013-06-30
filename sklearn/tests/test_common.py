@@ -18,6 +18,7 @@ import pkgutil
 import numpy as np
 from scipy import sparse
 
+from sklearn.externals.six import PY3
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
@@ -830,7 +831,10 @@ def test_configure():
             # The configuration spits out warnings when not finding
             # Blas/Atlas development headers
             warnings.simplefilter('ignore', UserWarning)
-            execfile('setup.py', dict(__name__='__main__'))
+            if PY3:
+                exec(open('setup.py').read(), dict(__name__='__main__'))
+            else:
+                execfile('setup.py', dict(__name__='__main__'))
     finally:
         sys.argv = old_argv
         os.chdir(cwd)
