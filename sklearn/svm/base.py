@@ -653,10 +653,6 @@ class BaseLibLinear(BaseEstimator):
         y : array-like, shape = [n_samples]
             Target vector relative to X
 
-        class_weight : {dict, 'auto'}, optional
-            Weights associated with classes. If not given, all classes
-            are supposed to have weight one.
-
         Returns
         -------
         self : object

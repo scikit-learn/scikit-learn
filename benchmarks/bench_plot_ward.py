@@ -1,5 +1,5 @@
 """
-Bench the scikit's ward implement compared to scipy's
+Benchmark scikit-learn's Ward implement compared to SciPy's
 """
 
 import time
@@ -31,7 +31,7 @@ for i, n in enumerate(n_samples):
 
 ratio = scikits_time / scipy_time
 
-pl.clf()
+pl.figure("scikit-learn Ward's method benchmark results")
 pl.imshow(np.log(ratio), aspect='auto', origin="lower")
 pl.colorbar()
 pl.contour(ratio, levels=[1, ], colors='k')

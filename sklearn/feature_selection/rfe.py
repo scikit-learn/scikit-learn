@@ -234,7 +234,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         Specific cross-validation objects can also be passed, see
         `sklearn.cross_validation module` for details.
 
-    loss_function : function, optional (default=None)
+    loss_func : function, optional (default=None)
         The loss function to minimize by cross-validation. If None, then the
         score function of the estimator is maximized.
 
@@ -325,29 +325,28 @@ class RFECV(RFE, MetaEstimatorMixin):
         scores = np.zeros(X.shape[1])
 
         # Cross-validation
-        n = 0
+        for n, (train, test) in enumerate(cv):
+            X_train, X_test = X[train], X[test]
+            y_train, y_test = y[train], y[test]
 
-        for train, test in cv:
             # Compute a full ranking of the features
-            ranking_ = rfe.fit(X[train], y[train]).ranking_
+            ranking_ = rfe.fit(X_train, y_train).ranking_
             # Score each subset of features
             for k in range(0, max(ranking_)):
                 mask = np.where(ranking_ <= k + 1)[0]
                 estimator = clone(self.estimator)
-                estimator.fit(X[train][:, mask], y[train])
+                estimator.fit(X_train[:, mask], y_train)
 
                 if self.loss_func is None:
-                    loss_k = 1.0 - estimator.score(X[test][:, mask], y[test])
+                    loss_k = 1.0 - estimator.score(X_test[:, mask], y_test)
                 else:
                     loss_k = self.loss_func(
-                        y[test], estimator.predict(X[test][:, mask]))
+                        y_test, estimator.predict(X_test[:, mask]))
 
                 if self.verbose > 0:
                     print("Finished fold with %d / %d feature ranks, loss=%f"
                           % (k, max(ranking_), loss_k))
                 scores[k] += loss_k
-
-            n += 1
 
         # Pick the best number of features on average
         best_score = np.inf

@@ -43,17 +43,29 @@ class ParameterGrid(object):
 
     Parameters
     ----------
-    param_grid : dict of string to sequence
+    param_grid : dict of string to sequence, or sequence of such
         The parameter grid to explore, as a dictionary mapping estimator
         parameters to sequences of allowed values.
+
+        An empty dict signifies default parameters.
+
+        A sequence of dicts signifies a sequence of grids to search, and is
+        useful to avoid exploring parameter combinations that make no sense
+        or have no effect. See the examples below.
 
     Examples
     --------
     >>> from sklearn.grid_search import ParameterGrid
-    >>> param_grid = {'a':[1, 2], 'b':[True, False]}
+    >>> param_grid = {'a': [1, 2], 'b': [True, False]}
     >>> list(ParameterGrid(param_grid)) #doctest: +NORMALIZE_WHITESPACE
     [{'a': 1, 'b': True}, {'a': 1, 'b': False},
      {'a': 2, 'b': True}, {'a': 2, 'b': False}]
+
+    >>> grid = [{'kernel': ['linear']}, {'kernel': ['rbf'], 'gamma': [1, 10]}]
+    >>> list(ParameterGrid(grid)) #doctest: +NORMALIZE_WHITESPACE
+    [{'kernel': 'linear'},
+     {'kernel': 'rbf', 'gamma': 1},
+     {'kernel': 'rbf', 'gamma': 10}]
 
     See also
     --------
@@ -81,16 +93,19 @@ class ParameterGrid(object):
         for p in self.param_grid:
             # Always sort the keys of a dictionary, for reproducibility
             items = sorted(p.items())
-            keys, values = zip(*items)
-            for v in product(*values):
-                params = dict(zip(keys, v))
-                yield params
+            if not items:
+                yield {}
+            else:
+                keys, values = zip(*items)
+                for v in product(*values):
+                    params = dict(zip(keys, v))
+                    yield params
 
     def __len__(self):
         """Number of points on the grid."""
         # Product function that can handle iterables (np.product can't).
         product = partial(reduce, operator.mul)
-        return sum(product(len(v) for v in p.values())
+        return sum(product(len(v) for v in p.values()) if p else 1
                    for p in self.param_grid)
 
 
@@ -707,7 +722,7 @@ class RandomizedSearchCV(BaseSearchCV):
     any classifier except that the parameters of the classifier
     used to predict is optimized by cross-validation.
 
-    In constrast to GridSearchCV, not all parameter values are tried out, but
+    In contrast to GridSearchCV, not all parameter values are tried out, but
     rather a fixed number of parameter settings is sampled from the specified
     distributions. The number of parameter settings that are tried is
     given by n_iter.
@@ -725,7 +740,7 @@ class RandomizedSearchCV(BaseSearchCV):
 
     n_iter : int, default=10
         Number of parameter settings that are sampled. n_iter trades
-        off runtime vs qualitiy of the solution.
+        off runtime vs quality of the solution.
 
     scoring : string or callable, optional
         Either one of either a string ("zero_one", "f1", "roc_auc", ... for

@@ -873,15 +873,14 @@ def embed_code_links(app, exception):
                             str_repl[name_html] = link_pattern % (link, name_html)
                     # do the replacement in the html file
                     if len(str_repl) > 0:
-                        with open(full_fname, 'rt') as fid:
+                        with open(full_fname, 'rb') as fid:
                             lines_in = fid.readlines()
-                        fid.close()
-                        with open(full_fname, 'wt') as fid:
+                        with open(full_fname, 'wb') as fid:
                             for line in lines_in:
+                                line = line.decode('utf-8')
                                 for name, link in str_repl.iteritems():
                                     line = line.replace(name, link)
-                                fid.write(line)
-                        fid.close()
+                                fid.write(line.encode('utf-8'))
     except urllib2.HTTPError, e:
         print ("The following HTTP Error has occurred:\n")
         print e.code

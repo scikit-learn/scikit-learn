@@ -696,9 +696,9 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
 class RandomForestClassifier(ForestClassifier):
     """A random forest classifier.
 
-    A random forest is a meta estimator that fits a number of classifical
-    decision trees on various sub-samples of the dataset and use averaging
-    to improve the predictive accuracy and control over-fitting.
+    A random forest is a meta estimator that fits a number of decision tree
+    classifiers on various sub-samples of the dataset and use averaging to
+    improve the predictive accuracy and control over-fitting.
 
     Parameters
     ----------
@@ -842,7 +842,7 @@ class RandomForestClassifier(ForestClassifier):
 class RandomForestRegressor(ForestRegressor):
     """A random forest regressor.
 
-    A random forest is a meta estimator that fits a number of classifical
+    A random forest is a meta estimator that fits a number of classifying
     decision trees on various sub-samples of the dataset and use averaging
     to improve the predictive accuracy and control over-fitting.
 
@@ -922,7 +922,7 @@ class RandomForestRegressor(ForestRegressor):
         The collection of fitted sub-estimators.
 
     `feature_importances_` : array of shape = [n_features]
-        The feature mportances (the higher, the more important the feature).
+        The feature importances (the higher, the more important the feature).
 
     `oob_score_` : float
         Score of the training dataset obtained using an out-of-bag estimate.
@@ -1066,7 +1066,7 @@ class ExtraTreesClassifier(ForestClassifier):
         number of classes for each output (multi-output problem).
 
     `feature_importances_` : array of shape = [n_features]
-        The feature mportances (the higher, the more important the feature).
+        The feature importances (the higher, the more important the feature).
 
     `oob_score_` : float
         Score of the training dataset obtained using an out-of-bag estimate.
@@ -1209,7 +1209,7 @@ class ExtraTreesRegressor(ForestRegressor):
         The collection of fitted sub-estimators.
 
     `feature_importances_` : array of shape = [n_features]
-        The feature mportances (the higher, the more important the feature).
+        The feature importances (the higher, the more important the feature).
 
     `oob_score_` : float
         Score of the training dataset obtained using an out-of-bag estimate.

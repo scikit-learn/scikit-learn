@@ -270,7 +270,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
     An AdaBoost [1] classifier is a meta-estimator that begins by fitting a
     classifier on the original dataset and then fits additional copies of the
-    classifer on the same dataset but where the weights of incorrectly
+    classifier on the same dataset but where the weights of incorrectly
     classified instances are adjusted such that subsequent classifiers focus
     more on difficult cases.
 

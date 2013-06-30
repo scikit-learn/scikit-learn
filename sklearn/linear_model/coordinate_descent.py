@@ -162,7 +162,7 @@ class ElasticNet(LinearModel, RegressorMixin):
             Xy = np.dot(X.T, y) that can be precomputed. It is useful
             only when the Gram matrix is precomputed.
         coef_init: ndarray of shape n_features or (n_targets, n_features)
-            The initial coeffients to warm-start the optimization
+            The initial coefficients to warm-start the optimization
 
         Notes
         -----
@@ -586,7 +586,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Note that in certain cases, the Lars solver may be significantly
     faster to implement this functionality. In particular, linear
-    interpolation can be used to retrieve model coefficents between the
+    interpolation can be used to retrieve model coefficients between the
     values output by lars_path
 
     Examples
@@ -1023,9 +1023,9 @@ class LassoCV(LinearModelCV, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    cv : integer or crossvalidation generator, optional
+    cv : integer or cross-validation generator, optional
         If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see the
+        Specific cross-validation objects can be passed, see the
         :mod:`sklearn.cross_validation` module for the list of possible
         objects.
 
@@ -1122,9 +1122,9 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    cv : integer or crossvalidation generator, optional
+    cv : integer or cross-validation generator, optional
         If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see the
+        Specific cross-validation objects can be passed, see the
         :mod:`sklearn.cross_validation` module for the list of possible
         objects.
 
@@ -1332,7 +1332,7 @@ class MultiTaskElasticNet(Lasso):
         y: ndarray, shape = (n_samples, n_tasks)
             Target
         coef_init: ndarray of shape n_features
-            The initial coeffients to warm-start the optimization
+            The initial coefficients to warm-start the optimization
 
         Notes
         -----

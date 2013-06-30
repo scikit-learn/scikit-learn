@@ -97,7 +97,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
        Regarding the Nearest Neighbors algorithms, if it is found that two
        neighbors, neighbor `k+1` and `k`, have identical distances but
-       but different labels, the results will depend on the odering of the
+       but different labels, the results will depend on the ordering of the
        training data.
 
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm

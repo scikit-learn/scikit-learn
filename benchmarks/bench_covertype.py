@@ -109,7 +109,7 @@ def load_data(dtype=np.float32, order='F'):
     print("Loading dataset...")
     data = fetch_covtype(download_if_missing=True, shuffle=True,
                          random_state=opts.random_seed)
-    X, y = data.data, data.target
+    X, y = data['data'], data['target']
     if order.lower() == 'f':
         X = np.asfortranarray(X)
 

@@ -18,7 +18,7 @@ is most likely a noise effect and would not carry over to a held-out test set.
 Note that in practice, one would not search over this many different parameters
 simultaneously using grid search, but pick only the ones deemed most important.
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 

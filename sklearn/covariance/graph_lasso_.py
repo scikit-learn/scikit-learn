@@ -345,7 +345,7 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
 
 
 class GraphLassoCV(GraphLasso):
-    """Sparse inverse covariance w/ cross-validated choice of the l1 penality
+    """Sparse inverse covariance w/ cross-validated choice of the l1 penalty
 
     Parameters
     ----------
@@ -357,7 +357,7 @@ class GraphLassoCV(GraphLasso):
     n_refinements: strictly positive integer
         The number of time the grid is refined. Not used if explicit
         values of alphas are passed.
-    cv : crossvalidation generator, optional
+    cv : cross-validation generator, optional
         see sklearn.cross_validation module. If None is passed, default to
         a 3-fold strategy
     tol: positive float, optional

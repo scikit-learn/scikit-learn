@@ -14,6 +14,7 @@ Some of the features are boolean indicators,
 while others are discrete or continuous measurements.
 
 ``sklearn.datasets.fetch_covtype`` will load the covertype dataset;
-it returns a ``Bunch`` object with the feature matrix in the ``data`` member
+it returns a dictionary-like object
+with the feature matrix in the ``data`` member
 and the target values in ``target``.
 The dataset will be downloaded from the web if necessary.

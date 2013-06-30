@@ -148,7 +148,7 @@ are mostly similar, but the runtime is significantly less.
 For "one-vs-rest" :class:`LinearSVC` the attributes ``coef_`` and ``intercept_``
 have the shape ``[n_class, n_features]`` and ``[n_class]`` respectively.
 Each row of the coefficients corresponds to one of the ``n_class`` many
-"one-vs-rest" classifiers and simliar for the interecepts, in the
+"one-vs-rest" classifiers and similar for the intercepts, in the
 order of the "one" class.
 
 In the case of "one-vs-one" :class:`SVC`, the layout of the attributes

@@ -239,7 +239,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 class StandardScaler(BaseEstimator, TransformerMixin):
     """Standardize features by removing the mean and scaling to unit variance
 
-    Centering and scaling happen indepently on each feature by computing
+    Centering and scaling happen independently on each feature by computing
     the relevant statistics on the samples in the training set. Mean and
     standard deviation are then stored to be used on later data using the
     `transform` method.
@@ -535,6 +535,7 @@ def binarize(X, threshold=0.0, copy=True):
 
     threshold : float, optional (0.0 by default)
         The lower bound that triggers feature values to be replaced by 1.0.
+        The threshold cannot be less than 0 for operations on sparse matrices.
 
     copy : boolean, optional, default is True
         set to False to perform inplace binarization and avoid a copy
@@ -554,6 +555,9 @@ def binarize(X, threshold=0.0, copy=True):
 
     X = check_arrays(X, sparse_format=sparse_format, copy=copy)[0]
     if sp.issparse(X):
+        if threshold < 0:
+            raise ValueError('Cannot binarize a sparse matrix with threshold '
+                             '< 0')
         cond = X.data > threshold
         not_cond = np.logical_not(cond)
         X.data[cond] = 1
@@ -585,6 +589,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
     ----------
     threshold : float, optional (0.0 by default)
         The lower bound that triggers feature values to be replaced by 1.0.
+        The threshold cannot be less than 0 for operations on sparse matrices.
 
     copy : boolean, optional, default is True
         set to False to perform inplace binarization and avoid a copy (if

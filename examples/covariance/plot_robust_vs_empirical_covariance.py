@@ -5,8 +5,8 @@ Robust vs Empirical covariance estimate
 
 The usual covariance maximum likelihood estimate is very sensitive to
 the presence of outliers in the data set. In such a case, one would
-have better to use a robust estimator of covariance to garanty that
-the estimation is resistant to "errorneous" observations in the data
+have better to use a robust estimator of covariance to guarantee that
+the estimation is resistant to "erroneous" observations in the data
 set.
 
 The Minimum Covariance Determinant estimator is a robust,
