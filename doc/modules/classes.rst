@@ -1007,6 +1007,8 @@ See the :ref:`metrics` section of the user guide for further details.
    :template: class.rst
 
    neural_network.BernoulliRBM
+   neural_network.MultilayerPerceptronClassifier
+   neural_network.MultilayerPerceptronRegressor
 
 
 .. _calibration_ref:
