@@ -415,8 +415,7 @@ class MLPClassifier(BaseEstimator, ClassifierMixin):
 
     def backprop_naive(self, X, Y, n_samples):
         """
-        Applies the quasi-Newton optimization methods that uses a l_BFGS
-        to train the weights
+        Updates the weights using the computed gradients
 
         Parameters
         ----------
