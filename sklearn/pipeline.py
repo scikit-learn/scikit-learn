@@ -108,20 +108,12 @@ class Pipeline(BaseEstimator):
             return out
 
     # Estimator interface
-    
-    def _extract_params(self, **params):
-        params_steps = dict((step, {}) for step, _ in self.steps)
-        for pname, pval in six.iteritems(params):
-            step, param = pname.split('__', 1)
-            params_steps[step][param] = pval
-        return params_steps
-    
+
     def _pre_transform(self, X, y=None, **fit_params):
-#        fit_params_steps = dict((step, {}) for step, _ in self.steps)
-#        for pname, pval in six.iteritems(fit_params):
-#            step, param = pname.split('__', 1)
-#            fit_params_steps[step][param] = pval
-        fit_params_steps = self._extract_params(**fit_params)
+        fit_params_steps = dict((step, {}) for step, _ in self.steps)
+        for pname, pval in six.iteritems(fit_params):
+            step, param = pname.split('__', 1)
+            fit_params_steps[step][param] = pval
         Xt = X
         for name, transform in self.steps[:-1]:
             if hasattr(transform, "fit_transform"):
@@ -149,71 +141,64 @@ class Pipeline(BaseEstimator):
         else:
             return self.steps[-1][-1].fit(Xt, y, **fit_params).transform(Xt)
 
-    def predict(self, X, **params):
+    def predict(self, X):
         """Applies transforms to the data, and the predict method of the
         final estimator. Valid only if the final estimator implements
         predict."""
-        params = self._extract_params(**params)
         Xt = X
         for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt, **params[name])
-        return self.steps[-1][-1].predict(Xt, **params[self.steps[-1][0]])
+            Xt = transform.transform(Xt)
+        return self.steps[-1][-1].predict(Xt)
 
-    def predict_proba(self, X, **params):
+    def predict_proba(self, X):
         """Applies transforms to the data, and the predict_proba method of the
         final estimator. Valid only if the final estimator implements
         predict_proba."""
-        params = self._extract_params(**params)
         Xt = X
         for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt, **params[name])
-        return self.steps[-1][-1].predict_proba(Xt, **params[self.steps[-1][0]])
+            Xt = transform.transform(Xt)
+        return self.steps[-1][-1].predict_proba(Xt)
 
-    def decision_function(self, X, **params):
+    def decision_function(self, X):
         """Applies transforms to the data, and the decision_function method of
         the final estimator. Valid only if the final estimator implements
         decision_function."""
-        params = self._extract_params(**params)
         Xt = X
         for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt, **params[name])
-        return self.steps[-1][-1].decision_function(Xt, **params[self.steps[-1][0]])
+            Xt = transform.transform(Xt)
+        return self.steps[-1][-1].decision_function(Xt)
 
-    def predict_log_proba(self, X, **params):
-        params = self._extract_params(**params)
+    def predict_log_proba(self, X):
         Xt = X
         for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt, **params[name])
-        return self.steps[-1][-1].predict_log_proba(Xt, **params[self.steps[-1][0]])
+            Xt = transform.transform(Xt)
+        return self.steps[-1][-1].predict_log_proba(Xt)
 
-    def transform(self, X, **params):
+    def transform(self, X):
         """Applies transforms to the data, and the transform method of the
         final estimator. Valid only if the final estimator implements
         transform."""
-        params = self._extract_params(**params)
         Xt = X
         for name, transform in self.steps:
-            Xt = transform.transform(Xt, **params[name])
+            Xt = transform.transform(Xt)
         return Xt
 
-    def inverse_transform(self, X, **params):
-        params = self._extract_params(**params)
+    def inverse_transform(self, X):
         if X.ndim == 1:
             X = X[None, :]
         Xt = X
         for name, step in self.steps[::-1]:
-            Xt = step.inverse_transform(Xt, **params[name])
+            Xt = step.inverse_transform(Xt)
         return Xt
 
-    def score(self, X, y=None, **params):
+    def score(self, X, y=None):
         """Applies transforms to the data, and the score method of the
         final estimator. Valid only if the final estimator implements
         score."""
-        params = self._extract_params(**params)
         Xt = X
         for name, transform in self.steps[:-1]:
-            Xt = transform.transform(Xt, **params[name])
-        return self.steps[-1][-1].score(Xt, y, **params[self.steps[-1][0]])
+            Xt = transform.transform(Xt)
+        return self.steps[-1][-1].score(Xt, y)
 
     @property
     def _pairwise(self):
