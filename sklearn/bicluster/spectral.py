@@ -6,9 +6,10 @@ License: BSD 3 clause
 """
 from ..base import BaseEstimator, BiclusterMixin
 from ..cluster.k_means_ import k_means
+from sklearn.utils.arpack import svds
+from sklearn.utils.validation import assert_all_finite
 
 import numpy as np
-from scipy.sparse.linalg import svds
 
 
 def _make_nonnegative(X, min_value=0):
@@ -74,8 +75,11 @@ def _svd(array, n_singular_vals, maxiter):
     u, s, vt = svds(array, k=n_singular_vals,
                     maxiter=maxiter)
     v = vt.T
-    nan = lambda x: np.any(np.isnan(x))
-    if nan(u) or nan(s) or nan(v):
+    try:
+        assert_all_finite(u)
+        assert_all_finite(s)
+        assert_all_finite(vt)
+    except ValueError:
         print "warning: partial svd failed. trying full svd."
         u, _, v = np.linalg.svd(array, full_matrices=False)
         u = u[:, :n_singular_vals]
