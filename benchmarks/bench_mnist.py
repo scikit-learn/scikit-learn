@@ -48,6 +48,7 @@ from sklearn.svm import LinearSVC
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.utils import check_array
 from sklearn.linear_model import LogisticRegression
+from sklearn.neural_network import MultilayerPerceptronClassifier
 
 # Memoize the data extraction and memory map the resulting
 # train / test splits in readonly mode
@@ -89,6 +90,9 @@ ESTIMATORS = {
     'SampledRBF-SVM':
     make_pipeline(RBFSampler(gamma=0.015, n_components=1000), LinearSVC(C=100)),
     'LinearRegression-SAG': LogisticRegression(solver='sag', tol=1e-1, C=1e4)
+    'MultilayerPerceptron': MultilayerPerceptronClassifier(
+        hidden_layer_sizes=(200,), max_iter=400, alpha=0.5, algorithm='l-bfgs',
+        random_state=1)
 }
 
 
