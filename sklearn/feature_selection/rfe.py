@@ -14,6 +14,7 @@ from ..base import clone
 from ..base import is_classifier
 from ..cross_validation import check_cv
 from .base import SelectorMixin
+from ..externals.joblib import Parallel, delayed
 
 
 class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
@@ -207,6 +208,27 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         return self.estimator_.predict_proba(self.transform(X))
 
 
+def _cv(estimator, loss_func, X, y, train, test, ranking_, verbose, k):
+    """Cross-validate a subset of all features with ranking less than k.
+       Used inside the cross validation loop in RFECV.
+    """
+    mask = np.where(ranking_ <= k + 1)[0]
+    estimator = clone(estimator)
+    estimator.fit(X[train][:, mask], y[train])
+
+    if loss_func is None:
+        loss_k = 1.0 - estimator.score(X[test][:, mask], y[test])
+    else:
+        loss_k = loss_func(
+            y[test], estimator.predict(X[test][:, mask]))
+
+    if verbose > 0:
+        print("Finished fold with %d / %d feature ranks, loss=%f"
+              % (k, max(ranking_), loss_k))
+
+    return loss_k
+
+
 class RFECV(RFE, MetaEstimatorMixin):
     """Feature ranking with recursive feature elimination and cross-validated
        selection of the best number of features.
@@ -244,6 +266,9 @@ class RFECV(RFE, MetaEstimatorMixin):
 
     verbose : int, default=0
         Controls verbosity of output.
+
+    n_jobs : int, optional
+        Number of jobs to run in parallel (default 1). -1 means 'all CPUs'.
 
     Attributes
     ----------
@@ -293,13 +318,14 @@ class RFECV(RFE, MetaEstimatorMixin):
            Mach. Learn., 46(1-3), 389--422, 2002.
     """
     def __init__(self, estimator, step=1, cv=None, loss_func=None,
-                 estimator_params={}, verbose=0):
+                 estimator_params={}, verbose=0, n_jobs=1):
         self.estimator = estimator
         self.step = step
         self.cv = cv
         self.loss_func = loss_func
         self.estimator_params = estimator_params
         self.verbose = verbose
+        self.n_jobs = n_jobs
 
     def fit(self, X, y):
         """Fit the RFE model and automatically tune the number of selected
@@ -331,21 +357,10 @@ class RFECV(RFE, MetaEstimatorMixin):
             # Compute a full ranking of the features
             ranking_ = rfe.fit(X[train], y[train]).ranking_
             # Score each subset of features
-            for k in range(0, max(ranking_)):
-                mask = np.where(ranking_ <= k + 1)[0]
-                estimator = clone(self.estimator)
-                estimator.fit(X[train][:, mask], y[train])
-
-                if self.loss_func is None:
-                    loss_k = 1.0 - estimator.score(X[test][:, mask], y[test])
-                else:
-                    loss_k = self.loss_func(
-                        y[test], estimator.predict(X[test][:, mask]))
-
-                if self.verbose > 0:
-                    print("Finished fold with %d / %d feature ranks, loss=%f"
-                          % (k, max(ranking_), loss_k))
-                scores[k] += loss_k
+            scores += Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+                    delayed(_cv)(self.estimator, self.loss_func, X, y,
+                        train, test, ranking_, self.verbose, k)
+                    for k in range(0, max(ranking_)))
 
             n += 1
 
