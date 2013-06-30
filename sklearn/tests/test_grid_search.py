@@ -122,8 +122,6 @@ def test_parameter_grid():
     grid2 = ParameterGrid(params2)
     assert_equal(len(grid2), 6)
 
-#    import pdb; pdb.set_trace()
-
     # loop to assert we can iterate over the grid multiple times
     for i in xrange(2):
         # tuple + chain transforms {"a": 1, "b": 2} to ("a", 1, "b", 2)

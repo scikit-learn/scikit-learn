@@ -101,6 +101,12 @@ def test_all_estimators():
             else:
                 continue
             for arg, default in zip(args, defaults):
+                if (name, arg) in {('SpectralClustering', 'k'),
+                                   ('Perceptron', 'seed')}:
+                    # These are deprecated params with @property
+                    # annotations.
+                    continue
+
                 if arg not in params.keys():
                     # deprecated parameter, not in get_params
                     assert_true(default is None)
@@ -110,7 +116,6 @@ def test_all_estimators():
                     assert_array_equal(params[arg], default)
                 else:
                     assert_equal(params[arg], default)
-
 
 def test_estimators_sparse_data():
     # All estimators should either deal with sparse data, or raise an
@@ -962,6 +967,9 @@ def test_estimators_overwrite_params():
             estimator.fit(X, y)
             new_params = estimator.get_params()
             for k, v in params.items():
+                if (name, k) == ('ElasticNetCV', 'rho'):
+                    # Deprecated param with @property annotations.
+                    continue
                 assert_false(np.any(new_params[k] != v),
                              "Estimator %s changes its parameter %s"
                              " from %s to %s during fit."
