@@ -6,6 +6,7 @@ License: BSD 3 clause
 """
 from ..base import BaseEstimator, BiclusterMixin
 from ..cluster.k_means_ import k_means
+from sklearn.utils.extmath import randomized_svd
 from sklearn.utils.arpack import svds
 from sklearn.utils.validation import assert_all_finite, check_arrays
 
@@ -64,28 +65,25 @@ def _log_preprocess(X):
     return L - row_avg - col_avg + avg
 
 
-def _svd(array, n_singular_vals, maxiter):
-    """Returns first `n_singular_vectors` left and right singular
+def _svd(array, n_components, method, kwargs, random_state):
+    """Returns first `n_components` left and right singular
     vectors u and v.
 
     """
-    u, s, vt = svds(array, k=n_singular_vals,
-                    maxiter=maxiter)
-    v = vt.T
-    try:
-        assert_all_finite(u)
-        assert_all_finite(s)
-        assert_all_finite(vt)
-    except ValueError:
-        print "warning: partial svd failed. trying full svd."
-        u, _, v = np.linalg.svd(array, full_matrices=False)
-        u = u[:, :n_singular_vals]
-        v = v[:, :n_singular_vals]
-    return u, v
+    if method == 'randomized':
+        u, _, vt = randomized_svd(array, n_components,
+                                 random_state=random_state, **kwargs)
+
+    elif method == 'arpack':
+        u, _, vt = svds(array, k=n_components, **kwargs)
+
+    assert_all_finite(u)
+    assert_all_finite(vt)
+    return u, vt.T
 
 
-def _fit_best_piecewise(vectors, k, n_clusters, random_state, n_init,
-                       return_piecewise=False):
+def _fit_best_piecewise(vectors, k, n_clusters, random_state,
+                        kmeans_kwargs, return_piecewise=False):
     """Find the `k` vectors that are best approximated by piecewise
     constant vectors.
 
@@ -96,7 +94,7 @@ def _fit_best_piecewise(vectors, k, n_clusters, random_state, n_init,
     def make_piecewise(v):
         centroid, labels, _ = k_means(v.reshape(-1, 1), n_clusters,
                                       random_state=random_state,
-                                      n_init=n_init)
+                                      **kmeans_kwargs)
         return centroid[labels].reshape(-1)
     piecewise_vectors = np.apply_along_axis(make_piecewise, 1,
                                             vectors)
@@ -110,12 +108,12 @@ def _fit_best_piecewise(vectors, k, n_clusters, random_state, n_init,
 
 
 def _project_and_cluster(data, vectors, n_clusters, random_state,
-                        n_init):
+                         kmeans_kwargs):
     """Project `data` to `vectors` and cluster the result."""
     projected = np.dot(data, vectors)
     _, labels, _ = k_means(projected, n_clusters,
-                                  random_state=random_state,
-                                  n_init=n_init)
+                           random_state=random_state,
+                           **kmeans_kwargs)
     return labels
 
 
@@ -139,21 +137,26 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
         biclusters. May be one of 'dhillon', 'scale', 'bistochastic',
         or 'log'.
 
-    n_singular_vectors : integer
+    n_components : integer
         Number of singular vectors to check. Not used if
         `self.method` is 'dhillon'.
 
-    n_best_vectors : integer
+    n_best : integer
         Number of best singular vectors to which to project the data
         for clustering. Not used if `self.method` is `dhillon`.
 
-    maxiter : integer
-        Maximum iterations for finding singular vectors.
+    svd_method : string, optional, default: 'randomized'
+        Selects the algorithm for finding singular vectors. May be
+        'randomized' or 'arpack'. If 'randomized', uses
+        `sklearn.utils.extmath.randomized_svd`, which is faster. If
+        'arpack', uses `sklearn.utils.arpack.svds`, which is slower,
+        but more accurate.
 
-    n_init : int, optional, default: 10
-        Number of time the k-means algorithm will be run with different
-        centroid seeds. The final results will be the best output of
-        n_init consecutive runs in terms of inertia.
+    svd_kwargs : dictionary, optional, default: {}
+        Keyword arguments to pass to the svd function.
+
+    kmeans_kwargs : dictionary, optinal, default: {}
+        Keyword arguments to pass to sklearn.cluster.k_means_.
 
     random_state : int seed, RandomState instance, or None (default)
         A pseudo random number generator used by the K-Means
@@ -192,12 +195,19 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
 
     """
     def __init__(self, n_clusters=3, method='bistochastic',
-                 n_singular_vectors=6, n_best_vectors=3, maxiter=None,
-                 n_init=10, random_state=None):
+                 n_components=6, n_best=3,
+                 svd_method='randomized', svd_kwargs={}, kmeans_kwargs={},
+                 random_state=None):
         legal_methods = ('dhillon', 'bistochastic', 'scale', 'log')
         if method not in legal_methods:
             raise ValueError("Unknown method: '{}'. `method` must be"
                              " one of {}.".format(method, legal_methods))
+        legal_svd_methods = ('randomized', 'arpack')
+        if svd_method not in legal_svd_methods:
+            raise ValueError("Unknown SVD method: '{}'. `svd_method` must be"
+                             " one of {}.".format(svd_method,
+                                                  legal_svd_methods))
+
         if hasattr(n_clusters, '__len__'):
             if len(n_clusters) != 2:
                 raise ValueError("The parameter `n_clusters` has the"
@@ -208,15 +218,16 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
                 raise ValueError("Different number of row and column"
                                  " clusters not supported when"
                                  " method=='dhillon'.")
-        if n_best_vectors > n_singular_vectors:
-            raise ValueError("`n_best_vectors` cannot be larger than"
-                             " `n_singular_vectors`.")
+        if n_best > n_components:
+            raise ValueError("`n_best` cannot be larger than"
+                             " `n_components`.")
         self.n_clusters = n_clusters
         self.method = method
-        self.n_singular_vectors = n_singular_vectors
-        self.n_best_vectors = n_best_vectors
-        self.maxiter = maxiter
-        self.n_init = n_init
+        self.n_components = n_components
+        self.n_best = n_best
+        self.svd_method = svd_method
+        self.svd_kwargs = svd_kwargs
+        self.kmeans_kwargs = kmeans_kwargs
         self.random_state = random_state
 
     def _dhillon(self, X):
@@ -226,12 +237,13 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
             n_clusters = self.n_clusters
         normalized_data, row_diag, col_diag = _scale_preprocess(X)
         n_singular_vals = 1 + int(np.ceil(np.log2(n_clusters)))
-        u, v = _svd(normalized_data, n_singular_vals, self.maxiter)
+        u, v = _svd(normalized_data, n_singular_vals, self.svd_method,
+                    self.svd_kwargs, self.random_state)
         z = np.vstack((row_diag[:, np.newaxis] * u[:, 1:],
                        col_diag[:, np.newaxis] * v[:, 1:]))
         _, labels, _ = k_means(z, n_clusters,
                                random_state=self.random_state,
-                               n_init=self.n_init)
+                               **self.kmeans_kwargs)
 
         n_rows = X.shape[0]
         self.row_labels_ = labels[0:n_rows]
@@ -243,7 +255,7 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
                                   for c in range(n_clusters))
 
     def _kluger(self, X):
-        n_sv = self.n_singular_vectors
+        n_sv = self.n_components
         if self.method == 'bistochastic':
             normalized_data = _bistochastic_preprocess(X)
             n_sv += 1
@@ -252,7 +264,8 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
             n_sv += 1
         elif self.method == 'log':
             normalized_data = _log_preprocess(X)
-        u, v = _svd(normalized_data, n_sv, self.maxiter)
+        u, v = _svd(normalized_data, n_sv, self.svd_method,
+                    self.svd_kwargs, self.random_state)
         ut = u.T
         vt = v.T
         if self.method != 'log':
@@ -264,23 +277,25 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
         else:
             n_row_clusters = n_col_clusters = self.n_clusters
 
-        best_ut = _fit_best_piecewise(ut, self.n_best_vectors,
+        best_ut = _fit_best_piecewise(ut, self.n_best,
                                       n_row_clusters,
-                                      self.random_state, self.n_init)
+                                      self.random_state,
+                                      self.kmeans_kwargs)
 
-        best_vt = _fit_best_piecewise(vt, self.n_best_vectors,
+        best_vt = _fit_best_piecewise(vt, self.n_best,
                                       n_col_clusters,
-                                      self.random_state, self.n_init)
+                                      self.random_state,
+                                      self.kmeans_kwargs)
 
         self.row_labels_ = _project_and_cluster(X, best_vt.T,
                                                 n_row_clusters,
                                                 self.random_state,
-                                                self.n_init)
+                                                self.kmeans_kwargs)
 
         self.column_labels_ = _project_and_cluster(X.T, best_ut.T,
                                                    n_col_clusters,
                                                    self.random_state,
-                                                   self.n_init)
+                                                   self.kmeans_kwargs)
 
         self.rows_ = np.vstack(self.row_labels_ == label
                                for label in range(n_row_clusters)
