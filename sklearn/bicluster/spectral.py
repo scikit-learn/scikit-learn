@@ -69,9 +69,6 @@ def _svd(array, n_components, method, kwargs, random_state):
     """Returns first `n_components` left and right singular
     vectors u and v.
 
-    Tries to use scipy.sparse.linalg.svds, then reverts to
-    numpy.linalg.svd if that fails.
-
     """
     if method == 'randomized':
         u, _, vt = randomized_svd(array, n_components,
