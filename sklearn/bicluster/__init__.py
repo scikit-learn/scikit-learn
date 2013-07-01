@@ -1,3 +1,4 @@
-from .spectral import SpectralBiclustering
+from .spectral import SpectralCoclustering, SpectralBiclustering
 
-__all__ = ['SpectralBiclustering']
+__all__ = ['SpectralCoclustering',
+           'SpectralBiclustering',]
