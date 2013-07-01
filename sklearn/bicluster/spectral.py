@@ -11,12 +11,34 @@ from sklearn.utils.arpack import svds
 from sklearn.utils.validation import assert_all_finite, check_arrays
 
 import numpy as np
+from scipy.sparse import csr_matrix, lil_matrix, issparse
+
+
+def _sparse_min(X):
+    """Returns the minimum value of a dense or a CSR/CSC matrix.
+
+    Adapated from http://stackoverflow.com/q/13426580
+
+    """
+    if issparse(X):
+        if len(X.data) == 0:
+            return 0
+        m = X.data.min()
+        return m if X.getnnz() == X.size else min(m, 0)
+    else:
+        return X.min()
 
 
 def _make_nonnegative(X, min_value=0):
-    """Ensure `X.min()` >= `min_value`."""
-    min_ = X.min()
+    """Ensure `X.min()` >= `min_value`.
+
+    Converts X to a dense matrix if necessary.
+
+    """
+    min_ = _sparse_min(X)
     if min_ < min_value:
+        if issparse(X):
+            X = np.asarray(X.todense())
         X = X + (min_value - min_)
     return X
 
@@ -29,9 +51,19 @@ def _scale_preprocess(X):
 
     """
     X = _make_nonnegative(X)
-    row_diag = 1.0 / np.sqrt(np.sum(X, axis=1))
-    col_diag = 1.0 / np.sqrt(np.sum(X, axis=0))
-    an = row_diag[:, np.newaxis] * X * col_diag
+    row_diag = np.asarray(1.0 / np.sqrt(X.sum(axis=1))).squeeze()
+    col_diag = np.asarray(1.0 / np.sqrt(X.sum(axis=0))).squeeze()
+    row_diag = np.where(np.isnan(row_diag), 0, row_diag)
+    col_diag = np.where(np.isnan(col_diag), 0, col_diag)
+    if issparse(X):
+        n_rows, n_cols = X.shape
+        r = lil_matrix((n_rows, n_rows))
+        c = lil_matrix((n_cols, n_cols))
+        r.setdiag(row_diag)
+        c.setdiag(col_diag)
+        an = r * X * c
+    else:
+        an = row_diag[:, np.newaxis] * X * col_diag
     return an, row_diag, col_diag
 
 
@@ -48,7 +80,10 @@ def _bistochastic_preprocess(X, maxiter=1000, tol=1e-5):
     dist = None
     for _ in range(maxiter):
         X_new, _, _ = _scale_preprocess(X_scaled)
-        dist = np.linalg.norm(X_scaled - X_new)
+        if issparse(X):
+            dist = np.linalg.norm(X_scaled.data - X.data)
+        else:
+            dist = np.linalg.norm(X_scaled - X_new)
         X_scaled = X_new
         if dist is not None and dist < tol:
             break
@@ -56,12 +91,18 @@ def _bistochastic_preprocess(X, maxiter=1000, tol=1e-5):
 
 
 def _log_preprocess(X):
-    """Normalize `X` according to Kluger's log-interactions scheme."""
+    """Normalize `X` according to Kluger's log-interactions scheme.
+
+    Converts X to a dense matrix if necessary.
+
+    """
     X = _make_nonnegative(X, min_value=1)
+    if issparse(X):
+        X = np.asarray(X.todense())
     L = np.log(X)
-    row_avg = np.mean(L, axis=1)[:, np.newaxis]
-    col_avg = np.mean(L, axis=0)
-    avg = np.mean(L)
+    row_avg = L.mean(axis=1)[:, np.newaxis]
+    col_avg = L.mean(axis=0)
+    avg = L.mean()
     return L - row_avg - col_avg + avg
 
 
@@ -107,7 +148,10 @@ def _fit_best_piecewise(vectors, k, n_clusters, random_state,
 def _project_and_cluster(data, vectors, n_clusters, random_state,
                          kmeans_kwargs):
     """Project `data` to `vectors` and cluster the result."""
-    projected = np.dot(data, vectors)
+    if issparse(data):
+        projected = data * vectors
+    else:
+        projected = np.dot(data, vectors)
     _, labels, _ = k_means(projected, n_clusters,
                            random_state=random_state,
                            **kmeans_kwargs)
@@ -150,6 +194,9 @@ class SpectralCoclustering(BaseSpectral):
 
     The resulting bicluster structure is block-diagonal, since each
     row and each column belongs to exactly one bicluster.
+
+    Supports sparse matrices, as long as they are nonnegative. If
+    there are negative values, it will be converted to a dense array.
 
     Parameters
     ----------
@@ -245,8 +292,9 @@ class SpectralBiclustering(BaseSpectral):
 
     method : string
         Method of normalizing and converting singular vectors into
-        biclusters. May be one of 'scale', 'bistochastic',
-        or 'log'.
+        biclusters. May be one of 'scale', 'bistochastic', or 'log'.
+        CAUTION: if `method='log'`, the data must be converted to a
+        dense array.
 
     n_components : integer
         Number of singular vectors to check.
