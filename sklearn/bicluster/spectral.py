@@ -121,10 +121,16 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
     """Spectral biclustering.
 
     For equivalence with the Spectral Co-Clustering algorithm
-    (Dhillon, 2001), use method='dhillon'.
+    (Dhillon, 2001), use method='dhillon'. In this case, the resulting
+    bicluster structure is block-diagonal. Each row and each column
+    belongs to exactly one bicluster.
 
-    For the Spectral Biclustering algorithm (Kluger, 2003), use
-    one of 'scale', 'bistochastic', or 'log'.
+    For the Spectral Biclustering algorithm (Kluger, 2003), set
+    `method` to one of 'scale', 'bistochastic', or 'log'. In this
+    case, the biclusters have a checkerboard structure. For instance,
+    if there are two row partitions and three column partitions, each
+    row will belong to three biclusters, and each column will belong
+    to two biclusters.
 
     Parameters
     ----------
@@ -147,10 +153,11 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
 
     svd_method : string, optional, default: 'randomized'
         Selects the algorithm for finding singular vectors. May be
-        'randomized' or 'arpack'. If 'randomized', uses
-        `sklearn.utils.extmath.randomized_svd`, which is faster. If
-        'arpack', uses `sklearn.utils.arpack.svds`, which is slower,
-        but more accurate.
+        'randomized' or 'arpack'. If 'randomized', use
+        `sklearn.utils.extmath.randomized_svd`, which may be faster
+        for large matrices. If 'arpack', use
+        `sklearn.utils.arpack.svds`, which is more accurate, but
+        possibly slower in some cases.
 
     svd_kwargs : dictionary, optional, default: {}
         Keyword arguments to pass to the svd function.
