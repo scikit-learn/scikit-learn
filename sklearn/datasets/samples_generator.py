@@ -1305,7 +1305,7 @@ def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
 def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
                     maxval=100, shuffle=True, random_state=None):
     """Generate an array with constant block diagonal structure for
-    biclustering..
+    biclustering.
 
     Parameters
     ----------
@@ -1359,12 +1359,12 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
     consts = generator.uniform(minval, maxval, n_clusters)
 
     # row and column clusters of approximately equal sizes
-    row_sizes = np.random.multinomial(n_rows,
+    row_sizes = generator.multinomial(n_rows,
                                       np.repeat(1.0 / n_clusters,
-                                                n_clusters))
-    col_sizes = np.random.multinomial(n_cols,
+                                      n_clusters))
+    col_sizes = generator.multinomial(n_cols,
                                       np.repeat(1.0 / n_clusters,
-                                                n_clusters))
+                                      n_clusters))
 
     row_labels = np.hstack(list(np.repeat(val, rep) for val, rep in
                                 zip(range(n_clusters), row_sizes)))
@@ -1453,12 +1453,12 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
     col_consts = generator.uniform(minval, maxval, n_col_clusters)
 
     # row and column clusters of approximately equal sizes
-    row_sizes = np.random.multinomial(n_rows,
+    row_sizes = generator.multinomial(n_rows,
                                       np.repeat(1.0 / n_row_clusters,
-                                                n_row_clusters))
-    col_sizes = np.random.multinomial(n_cols,
+                                      n_row_clusters))
+    col_sizes = generator.multinomial(n_cols,
                                       np.repeat(1.0 / n_col_clusters,
-                                                n_col_clusters))
+                                      n_col_clusters))
 
     row_vector = np.hstack(list(np.repeat(val, rep) for val, rep in
                                 zip(row_consts, row_sizes)))
