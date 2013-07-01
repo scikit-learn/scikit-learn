@@ -7,7 +7,7 @@ License: BSD 3 clause
 from ..base import BaseEstimator, BiclusterMixin
 from ..cluster.k_means_ import k_means
 from sklearn.utils.arpack import svds
-from sklearn.utils.validation import assert_all_finite
+from sklearn.utils.validation import assert_all_finite, check_arrays
 
 import numpy as np
 
@@ -297,7 +297,7 @@ class SpectralBiclustering(BaseEstimator, BiclusterMixin):
         X : array-like, shape (n_samples, n_features)
 
         """
-        X = np.asarray(X, dtype=np.float64)
+        X = check_arrays(X, sparse_format='csr', dtype=np.float64)[0]
         if X.ndim != 2:
             raise ValueError("Argument `X` has the wrong dimensionality."
                              " It must have exactly two dimensions.")
