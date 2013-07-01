@@ -208,25 +208,31 @@ class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
         return self.estimator_.predict_proba(self.transform(X))
 
 
-def _cv(estimator, loss_func, X, y, train, test, ranking_, verbose, k):
+def _cv(estimator, loss_func, X, y, train, test, rfe, verbose):
     """Cross-validate a subset of all features with ranking less than k.
        Used inside the cross validation loop in RFECV.
     """
-    mask = np.where(ranking_ <= k + 1)[0]
-    estimator = clone(estimator)
-    estimator.fit(X[train][:, mask], y[train])
+    # Compute a full ranking of the features
+    ranking_ = rfe.fit(X[train], y[train]).ranking_
 
-    if loss_func is None:
-        loss_k = 1.0 - estimator.score(X[test][:, mask], y[test])
-    else:
-        loss_k = loss_func(
-            y[test], estimator.predict(X[test][:, mask]))
+    # Score each subset of features
+    loss = np.zeros(max(ranking_))
+    for k in range(0, max(ranking_)):
+        mask = np.where(ranking_ <= k + 1)[0]
+        estimator = clone(estimator)
+        estimator.fit(X[train][:, mask], y[train])
 
-    if verbose > 0:
-        print("Finished fold with %d / %d feature ranks, loss=%f"
-              % (k, max(ranking_), loss_k))
+        if loss_func is None:
+            loss[k] = 1.0 - estimator.score(X[test][:, mask], y[test])
+        else:
+            loss[k] = loss_func(
+                y[test], estimator.predict(X[test][:, mask]))
 
-    return loss_k
+        if verbose > 0:
+            print("Finished fold with %d / %d feature ranks, loss=%f"
+                  % (k, max(ranking_), loss_k))
+
+    return loss
 
 
 class RFECV(RFE, MetaEstimatorMixin):
@@ -348,21 +354,12 @@ class RFECV(RFE, MetaEstimatorMixin):
                   verbose=self.verbose - 1)
 
         cv = check_cv(self.cv, X, y, is_classifier(self.estimator))
-        scores = np.zeros(X.shape[1])
 
         # Cross-validation
-        n = 0
-
-        for train, test in cv:
-            # Compute a full ranking of the features
-            ranking_ = rfe.fit(X[train], y[train]).ranking_
-            # Score each subset of features
-            scores += Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
-                    delayed(_cv)(self.estimator, self.loss_func, X, y,
-                        train, test, ranking_, self.verbose, k)
-                    for k in range(0, max(ranking_)))
-
-            n += 1
+        scores = sum(Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+                delayed(_cv)(self.estimator, self.loss_func, X, y,
+                    train, test, rfe, self.verbose)
+                for train, test in cv))
 
         # Pick the best number of features on average
         best_score = np.inf
@@ -388,5 +385,5 @@ class RFECV(RFE, MetaEstimatorMixin):
         self.estimator_.set_params(**self.estimator_params)
         self.estimator_.fit(self.transform(X), y)
 
-        self.cv_scores_ = scores / n
+        self.cv_scores_ = scores / len(cv)
         return self
