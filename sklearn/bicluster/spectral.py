@@ -83,7 +83,7 @@ def _svd(array, n_components, method, kwargs, random_state):
 
 
 def _fit_best_piecewise(vectors, k, n_clusters, random_state,
-                        kmeans_kwargs, return_piecewise=False):
+                        kmeans_kwargs):
     """Find the `k` vectors that are best approximated by piecewise
     constant vectors.
 
@@ -100,10 +100,7 @@ def _fit_best_piecewise(vectors, k, n_clusters, random_state,
                                             vectors)
     dists = np.apply_along_axis(np.linalg.norm, 1,
                                 vectors - piecewise_vectors)
-    if return_piecewise:
-        result = piecewise_vectors[np.argsort(dists)[:k]]
-    else:
-        result = vectors[np.argsort(dists)[:k]]
+    result = vectors[np.argsort(dists)[:k]]
     return result
 
 
