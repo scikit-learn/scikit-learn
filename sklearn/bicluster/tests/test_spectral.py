@@ -7,7 +7,7 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 
 from sklearn.bicluster.spectral import \
-    SpectralBiclustering, \
+    SpectralCoclustering, SpectralBiclustering, \
     _scale_preprocess, _bistochastic_preprocess, \
     _log_preprocess, _fit_best_piecewise, \
     _project_and_cluster
@@ -32,8 +32,7 @@ def test_spectral_biclustering_dhillon():
         S, rows, cols = make_biclusters((30, 30), 3, noise=noise,
                                         random_state=random_state)
         for svd_method in ('randomized', 'arpack'):
-            model = SpectralBiclustering(n_clusters=3,
-                                         method='dhillon',
+            model = SpectralCoclustering(n_clusters=3,
                                          svd_method=svd_method,
                                          random_state=random_state)
             model.fit(S)
