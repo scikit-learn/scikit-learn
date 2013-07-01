@@ -1,7 +1,6 @@
 """Testing for Spectral Biclustering methods"""
 
 from sklearn.utils import check_random_state
-
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -29,18 +28,21 @@ def _check_label_permutations(a, b, n_labels):
 def test_spectral_biclustering_dhillon():
     """Test Dhillon's Spectral CoClustering on a simple problem."""
     random_state = 0
-    S, rows, cols = make_biclusters((30, 30), 3,
-                                    random_state=random_state)
-    model = SpectralBiclustering(n_clusters=3,
-                                 method='dhillon',
-                                 random_state=random_state)
-    model.fit(S)
+    for noise in (0, 0.5):
+        S, rows, cols = make_biclusters((30, 30), 3, noise=noise,
+                                        random_state=random_state)
+        for svd_method in ('randomized', 'arpack'):
+            model = SpectralBiclustering(n_clusters=3,
+                                         method='dhillon',
+                                         svd_method=svd_method,
+                                         random_state=random_state)
+            model.fit(S)
 
-    assert_equal(model.rows_.shape, (3, 30))
-    assert_array_equal(model.rows_.sum(axis=0), np.ones(30))
-    assert_array_equal(model.columns_.sum(axis=0), np.ones(30))
-    _check_label_permutations(model.rows_, rows, 3)
-    _check_label_permutations(model.columns_, cols, 3)
+            assert_equal(model.rows_.shape, (3, 30))
+            assert_array_equal(model.rows_.sum(axis=0), np.ones(30))
+            assert_array_equal(model.columns_.sum(axis=0), np.ones(30))
+            _check_label_permutations(model.rows_, rows, 3)
+            _check_label_permutations(model.columns_, cols, 3)
 
 
 def test_spectral_biclustering_kluger():
@@ -50,18 +52,19 @@ def test_spectral_biclustering_kluger():
         S, rows, cols = make_checkerboard((30, 30), 3, noise=noise,
                                           random_state=random_state)
         for method in ('scale', 'bistochastic', 'log'):
-            model = SpectralBiclustering(n_clusters=(3, 3),
-                                         method=method,
-                                         random_state=random_state)
-            model.fit(S)
+            for svd_method in ('randomized', 'arpack'):
+                model = SpectralBiclustering(n_clusters=(3, 3),
+                                             method=method,
+                                             svd_method=svd_method,
+                                             random_state=random_state)
+                model.fit(S)
 
-            assert_equal(model.rows_.shape, (9, 30))
-            assert_equal(model.columns_.shape, (9, 30))
-            assert_array_equal(model.rows_.sum(axis=0), np.repeat(3, 30))
-            assert_array_equal(model.columns_.sum(axis=0), np.repeat(3, 30))
-            _check_label_permutations(model.rows_, rows, 3)
-            _check_label_permutations(model.columns_, cols, 3)
-
+                assert_equal(model.rows_.shape, (9, 30))
+                assert_equal(model.columns_.shape, (9, 30))
+                assert_array_equal(model.rows_.sum(axis=0), np.repeat(3, 30))
+                assert_array_equal(model.columns_.sum(axis=0), np.repeat(3, 30))
+                _check_label_permutations(model.rows_, rows, 3)
+                _check_label_permutations(model.columns_, cols, 3)
 
 
 def _do_scale_test(scaled):
@@ -113,7 +116,7 @@ def test_fit_best_piecewise():
                         [2, 2, 2, 3, 3, 3],
                         [0, 1, 2, 3, 4, 5],])
     best = _fit_best_piecewise(vectors, k=2, n_clusters=2,
-                               random_state=0, n_init=10)
+                               random_state=0, kmeans_kwargs={})
     assert_array_equal(best, vectors[0:2])
 
 
@@ -126,5 +129,5 @@ def test_project_and_cluster():
                         [0, 1,],
                         [0, 0,]])
     labels = _project_and_cluster(data, vectors, n_clusters=2,
-                                  random_state=0, n_init=10)
+                                  random_state=0, kmeans_kwargs={})
     assert_array_equal(labels, [0, 0, 1, 1])
