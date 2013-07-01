@@ -28,7 +28,7 @@ from .externals.joblib import Parallel, delayed, logger
 from .externals import six
 from .utils import safe_mask, check_random_state
 from .utils.validation import _num_samples, check_arrays
-from .metrics import SCORERS, Scorer
+from .metrics import make_scorer, SCORERS
 
 
 __all__ = ['GridSearchCV', 'ParameterGrid', 'fit_grid_point',
@@ -465,13 +465,13 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                           "deprecated and will be removed in 0.15. "
                           "Either use strings or score objects."
                           "The relevant new parameter is called ''scoring''. ")
-            scorer = Scorer(self.loss_func, greater_is_better=False)
+            scorer = make_scorer(self.loss_func, greater_is_better=False)
         elif self.score_func is not None:
             warnings.warn("Passing function as ``score_func`` is "
                           "deprecated and will be removed in 0.15. "
                           "Either use strings or score objects."
                           "The relevant new parameter is called ''scoring''.")
-            scorer = Scorer(self.score_func)
+            scorer = make_scorer(self.score_func)
         elif isinstance(self.scoring, six.string_types):
             scorer = SCORERS[self.scoring]
         else:
@@ -539,9 +539,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         # Find the best parameters by comparing on the mean validation score:
         # note that `sorted` is deterministic in the way it breaks ties
-        greater_is_better = getattr(self.scorer_, 'greater_is_better', True)
         best = sorted(cv_scores, key=lambda x: x.mean_validation_score,
-                      reverse=greater_is_better)[0]
+                      reverse=True)[0]
         self.best_params_ = best.parameters
         self.best_score_ = best.mean_validation_score
 

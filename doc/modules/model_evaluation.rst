@@ -943,16 +943,16 @@ Creating scoring objects from score functions
 If you want to use a scoring function that takes additional parameters, such as
 :func:`fbeta_score`, you need to generate an appropriate scoring object.  The
 simplest way to generate a callable object for scoring is by using
-:class:`Scorer`.
-:class:`Scorer` converts score functions as above into callables that can be
+:func:`make_scorer`.
+That function converts score functions as above into callables that can be
 used for model evaluation.
 
 One typical use case is to wrap an existing scoring function from the library
 with non default value for its parameters such as the beta parameter for the
 :func:`fbeta_score` function::
 
-    >>> from sklearn.metrics import fbeta_score, Scorer
-    >>> ftwo_scorer = Scorer(fbeta_score, beta=2)
+    >>> from sklearn.metrics import fbeta_score, make_scorer
+    >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
     >>> from sklearn.grid_search import GridSearchCV
     >>> from sklearn.svm import LinearSVC
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=ftwo_scorer)
@@ -964,10 +964,10 @@ from a simple python function::
     ...     diff = np.abs(ground_truth - predictions).max()
     ...     return np.log(1 + diff)
     ...
-    >>> my_custom_scorer = Scorer(my_custom_loss_func, greater_is_better=False)
+    >>> my_custom_scorer = make_scorer(my_custom_loss_func, greater_is_better=False)
     >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=my_custom_scorer)
 
-:class:`Scorer` takes as parameters the function you want to use, whether it is
+:func:`make_scorer` takes as parameters the function you want to use, whether it is
 a score (``greater_is_better=True``) or a loss (``greater_is_better=False``),
 whether the function you provided takes predictions as input
 (``needs_threshold=False``) or needs confidence scores
@@ -978,22 +978,18 @@ the previous example.
 Implementing your own scoring object
 ------------------------------------
 You can generate even more flexible model scores by constructing your own
-scoring object from scratch, without using the :class:`Scorer` helper class.
-The requirements that a callable can be used for model selection are as
-follows:
+scoring object from scratch, without using the :func:`make_scorer` factory.
+For a callable to be a scorer, it needs to meet the protocol specified by
+the following two rules:
 
 - It can be called with parameters ``(estimator, X, y)``, where ``estimator``
   it the model that should be evaluated, ``X`` is validation data and ``y`` is
   the ground truth target for ``X`` (in the supervised case) or ``None`` in the
   unsupervised case.
 
-- The call returns a number indicating the quality of estimator.
-
-- The callable has a boolean attribute ``greater_is_better`` which indicates whether
-  high or low values correspond to a better estimator.
-
-Objects that meet those conditions as said to implement the sklearn Scorer
-protocol.
+- It returns a floating point number that quantifies the quality of
+  ``estimator``'s predictions on ``X`` which reference to ``y``.
+  Again, higher numbers are better.
 
 
 .. _dummy_estimators:
