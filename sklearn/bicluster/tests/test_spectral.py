@@ -5,12 +5,15 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_raises
 
-from sklearn.bicluster.spectral import \
-    SpectralCoclustering, SpectralBiclustering, \
-    _scale_preprocess, _bistochastic_preprocess, \
-    _log_preprocess, _fit_best_piecewise, \
-    _project_and_cluster
+from sklearn.bicluster.spectral import SpectralCoclustering
+from sklearn.bicluster.spectral import SpectralBiclustering
+from sklearn.bicluster.spectral import _scale_preprocess
+from sklearn.bicluster.spectral import _bistochastic_preprocess
+from sklearn.bicluster.spectral import _log_preprocess
+from sklearn.bicluster.spectral import _fit_best_piecewise
+from sklearn.bicluster.spectral import _project_and_cluster
 
 from sklearn.datasets import make_biclusters, make_checkerboard
 
@@ -130,3 +133,14 @@ def test_project_and_cluster():
     labels = _project_and_cluster(data, vectors, n_clusters=2,
                                   random_state=0, kmeans_kwargs={})
     assert_array_equal(labels, [0, 0, 1, 1])
+
+
+def test_errors():
+    assert_raises(ValueError, SpectralBiclustering, n_clusters=(3, 3, 3))
+    assert_raises(ValueError, SpectralBiclustering, method='unknown')
+    assert_raises(ValueError, SpectralBiclustering, svd_method='unknown')
+    assert_raises(ValueError, SpectralBiclustering, n_components=3, n_best=4)
+
+    model = SpectralBiclustering()
+    data = np.arange(27).reshape((3, 3, 3))
+    assert_raises(ValueError, model.fit, data)
