@@ -27,7 +27,9 @@ def test_classification_scores():
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
     clf = LinearSVC(random_state=0)
     clf.fit(X_train, y_train)
-    score1 = SCORERS['f1'](clf, X_test, y_test)
+
+    # F1 returns multiple values
+    score1 = SCORERS['f1'](clf, X_test, y_test)[0]
     score2 = f1_score(y_test, clf.predict(X_test))
     assert_almost_equal(score1, score2)
 

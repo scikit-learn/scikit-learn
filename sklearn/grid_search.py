@@ -11,7 +11,7 @@ from __future__ import print_function
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
-from collections import Mapping, namedtuple, Sized
+from collections import Mapping, namedtuple, Sequence, Sized
 from functools import partial, reduce
 from itertools import product
 import numbers
@@ -316,8 +316,10 @@ def fit_grid_point(X, y, base_estimator, parameters, train, test, scorer,
         else:
             this_score = clf.score(X_test)
 
-    if not isinstance(this_score, numbers.Number):
-        raise ValueError("scoring must return a number, got %s (%s)"
+    if not isinstance(this_score, numbers.Number) \
+      and not (isinstance(this_score, Sequence)
+               and isinstance(this_score[0], numbers.Number)):
+        raise ValueError("scoring must return a number or tuple, got %s (%s)"
                          " instead." % (str(this_score), type(this_score)))
 
     if verbose > 2:
@@ -364,10 +366,17 @@ class _CVScoreTuple (namedtuple('_CVScoreTuple',
 
     def __repr__(self):
         """Simple custom repr to summarize the main info"""
+        std = np.std([sc if isinstance(sc, numbers.Number) else sc[0]
+                      for sc in self.cv_validation_scores])
+
         return "mean: {0:.5f}, std: {1:.5f}, params: {2}".format(
-            self.mean_validation_score,
-            np.std(self.cv_validation_scores),
-            self.parameters)
+            self.mean_validation_score, std, self.parameters)
+
+    def __str__(self):
+        """More extensive reporting than from repr."""
+        per_fold = ("\n    fold {0}: {1}".format(i, sc)
+                    for i, sc in enumerate(self.cv_validation_scores))
+        return repr(self) + "".join(per_fold)
 
 
 class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
@@ -391,6 +400,33 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         self.verbose = verbose
         self.pre_dispatch = pre_dispatch
         self._check_estimator()
+
+    def report(self, file=None):
+        """Generate a report of the scores achieved.
+
+        Reports on the scores achieved across the folds for the various
+        parameter settings tried. This also prints the additional information
+        reported by some scorers, such as "f1", which tracks precision and
+        recall as well.
+
+        Parameters
+        ----------
+        file : file-like, optional
+            File to which the report is written. If None or not given, the
+            report is returned as a string.
+        """
+        if not hasattr(self, "cv_scores_"):
+            raise AttributeError("no cv_scores_ found; run fit first")
+
+        return_string = (file is None)
+        if return_string:
+            file = six.StringIO()
+
+        for cvs in self.cv_scores_:
+            print(cvs, file=file)
+
+        if return_string:
+            return file.getvalue()
 
     def score(self, X, y=None):
         """Returns the score on the given test data and labels, if the search
@@ -507,7 +543,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 for parameters in parameter_iterable
                 for train, test in cv)
 
-        # Out is a list of triplet: score, estimator, n_test_samples
+        # Out is a list of triples: score, estimator, n_test_samples
         n_fits = len(out)
         n_folds = len(cv)
 
@@ -519,7 +555,11 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             all_scores = []
             for this_score, parameters, this_n_test_samples in \
                     out[grid_start:grid_start + n_folds]:
-                all_scores.append(this_score)
+                full_info = this_score
+                if isinstance(this_score, Sequence):
+                    # Structured score.
+                    this_score = this_score[0]
+                all_scores.append(full_info)
                 if self.iid:
                     this_score *= this_n_test_samples
                     n_test_samples += this_n_test_samples
@@ -530,10 +570,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                 score /= float(n_folds)
             scores.append((score, parameters))
             # TODO: shall we also store the test_fold_sizes?
-            cv_scores.append(_CVScoreTuple(
-                parameters,
-                score,
-                np.array(all_scores)))
+            cv_scores.append(_CVScoreTuple(parameters, score, all_scores))
         # Store the computed scores
         self.cv_scores_ = cv_scores
 

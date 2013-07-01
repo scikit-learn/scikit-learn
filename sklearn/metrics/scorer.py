@@ -18,12 +18,13 @@ ground truth labeling (or ``None`` in the case of unsupervised models).
 # License: Simplified BSD
 
 from abc import ABCMeta, abstractmethod
+from collections import namedtuple
 
 import numpy as np
 
-from . import (r2_score, mean_squared_error, accuracy_score, f1_score,
+from . import (r2_score, mean_squared_error, accuracy_score,
                auc_score, average_precision_score, precision_score,
-               recall_score)
+               recall_score, precision_recall_fscore_support)
 
 from .cluster import adjusted_rand_score
 from ..externals import six
@@ -211,9 +212,52 @@ def make_scorer(score_func, greater_is_better=True, needs_proba=False,
 r2_scorer = make_scorer(r2_score)
 mse_scorer = make_scorer(mean_squared_error, greater_is_better=False)
 
-# Standard Classification Scores
+# Standard classification scores
 accuracy_scorer = make_scorer(accuracy_score)
-f1_scorer = make_scorer(f1_score)
+
+
+class _FPR(namedtuple("fpr", ["f_score", "precision", "recall"])):
+    __slots__ = ()
+
+    def __str__(self):
+        return ("F = {0:.4f}, precision = {1:.4f}, recall = {2:.4f}"
+                .format(self.f_score, self.precision, self.recall))
+
+
+def f_scorer(clf, X, y_true, beta=1.):
+    """Evaluate a classifier's predictions for X according to F1/F-beta score.
+
+    Parameters
+    ----------
+    clf : object
+        Trained classifier to evaluate.
+
+    X : array-like or sparse matrix
+        Test data that will be fed to clf.predict.
+
+    y_true : array-like
+        Gold standard target values for X.
+
+    beta : float, optional
+        The strength of recall versus precision in the F-score.
+
+    Returns
+    -------
+    (fscore, precision, recall) : tuple of floats
+        F-score and the scores it is based on for estimator's predictions on X
+        relative to y_true. When this scorer is used inside GridSearchCV or
+        similar, the first value is used for optimization.
+
+    See also
+    --------
+    sklearn.metrics.precision_recall_fscore_support
+    """
+    # TODO support the various weightings for precision_recall_fscore_support
+    # offers
+    p, r, f, _ = precision_recall_fscore_support(y_true, clf.predict(X),
+                                                 beta, average="weighted")
+    return _FPR(f, p, r)
+
 
 # Score functions that need decision values
 auc_scorer = make_scorer(auc_score, greater_is_better=True,
@@ -227,7 +271,7 @@ recall_scorer = make_scorer(recall_score)
 ari_scorer = make_scorer(adjusted_rand_score)
 
 SCORERS = dict(r2=r2_scorer, mse=mse_scorer, accuracy=accuracy_scorer,
-               f1=f1_scorer, roc_auc=auc_scorer,
+               f1=f_scorer, roc_auc=auc_scorer,
                average_precision=average_precision_scorer,
                precision=precision_scorer, recall=recall_scorer,
                ari=ari_scorer)

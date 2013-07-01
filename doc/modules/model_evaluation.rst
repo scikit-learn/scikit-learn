@@ -987,9 +987,9 @@ the following two rules:
   the ground truth target for ``X`` (in the supervised case) or ``None`` in the
   unsupervised case.
 
-- It returns a floating point number that quantifies the quality of
-  ``estimator``'s predictions on ``X`` which reference to ``y``.
-  Again, higher numbers are better.
+- It returns either a floating point number (the score), or a tuple, the
+  first element of which is a float. The additional values are used by the
+  ``report`` method on ``GridSearchCV`` and ``RandomizedSearchCV``.
 
 
 .. _dummy_estimators:
