@@ -75,7 +75,7 @@ of acceptable values::
     >>> model = svm.SVC()
     >>> cross_validation.cross_val_score(model, X, y, scoring='wrong_choice')
     Traceback (most recent call last):
-    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'mean_squared_error', 'precision', 'r2', 'recall', 'roc_auc']
+    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'adjusted_rand_score', 'average_precision', 'f1', 'log_likelihood', 'mean_squared_error', 'precision', 'r2', 'recall', 'roc_auc']
 
 .. note::
 
@@ -1077,6 +1077,7 @@ Scoring                 Function
 'accuracy'              :func:`sklearn.metrics.accuracy_score`
 'average_precision'     :func:`sklearn.metrics.average_precision_score`
 'f1'                    :func:`sklearn.metrics.f1_score`
+'log_likelihood'        :func:`sklearn.metric.log_loss`
 'precision'             :func:`sklearn.metrics.precision_score`
 'recall'                :func:`sklearn.metrics.recall_score`
 'roc_auc'               :func:`sklearn.metrics.auc_score`
