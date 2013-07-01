@@ -2,8 +2,6 @@
 
 from sklearn.utils import check_random_state
 
-import numpy as np
-
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -15,67 +13,55 @@ from sklearn.bicluster.spectral import \
     _log_preprocess, _fit_best_piecewise, \
     _project_and_cluster
 
+from sklearn.datasets import make_biclusters, make_checkerboard
+
+import numpy as np
+
+from itertools import permutations
+
+
+def _check_label_permutations(a, b, n_labels):
+    # TODO: replace with hungarian algorithm, when it is implemented
+    assert(np.any(np.array(p)[a] == b
+                  for p in permutations(range(n_labels))))
+
 
 def test_spectral_biclustering_dhillon():
     """Test Dhillon's Spectral CoClustering on a simple problem."""
-    S = np.zeros((30, 30))
-    S[0:10, 0:10] = 1
-    S[10:20, 10:20] = 2
-    S[20:30, 20:30] = 3
-
-    model = SpectralBiclustering(random_state=0, n_clusters=3,
-                                 method='dhillon')
+    random_state = 0
+    S, rows, cols = make_biclusters((30, 30), 3,
+                                    random_state=random_state)
+    model = SpectralBiclustering(n_clusters=3,
+                                 method='dhillon',
+                                 random_state=random_state)
     model.fit(S)
 
-    # ensure every row and column is in exactly one bicluster, and
-    # that each bicluser has the expected number of elements.
     assert_equal(model.rows_.shape, (3, 30))
     assert_array_equal(model.rows_.sum(axis=0), np.ones(30))
-    assert_array_equal(model.rows_.sum(axis=1), np.repeat(10, 3))
     assert_array_equal(model.columns_.sum(axis=0), np.ones(30))
-    assert_array_equal(model.columns_.sum(axis=1), np.repeat(10, 3))
+    _check_label_permutations(model.rows_, rows, 3)
+    _check_label_permutations(model.columns_, cols, 3)
 
 
-def _test_spectral_biclustering_kluger(noise=0.0):
-    """Test Kluger methods on a checkerboard dataset.
+def test_spectral_biclustering_kluger():
+    """Test Kluger methods on a checkerboard dataset."""
+    random_state = 0
+    for noise in (0, 0.5):
+        S, rows, cols = make_checkerboard((30, 30), 3, noise=noise,
+                                          random_state=random_state)
+        for method in ('scale', 'bistochastic', 'log'):
+            model = SpectralBiclustering(n_clusters=(3, 3),
+                                         method=method,
+                                         random_state=random_state)
+            model.fit(S)
 
-    Parameters
-    ----------
-    noise : integer, optional, default=0.0
-        Standard deviation of gaussian noise to be added to the
-        data.
+            assert_equal(model.rows_.shape, (9, 30))
+            assert_equal(model.columns_.shape, (9, 30))
+            assert_array_equal(model.rows_.sum(axis=0), np.repeat(3, 30))
+            assert_array_equal(model.columns_.sum(axis=0), np.repeat(3, 30))
+            _check_label_permutations(model.rows_, rows, 3)
+            _check_label_permutations(model.columns_, cols, 3)
 
-    """
-    # make a checkerboard array
-    row_vector = [1] * 10 + [3] * 10 + [5] * 10
-    col_vector = [2] * 10 + [4] * 10 + [6] * 10
-    S = np.outer(row_vector, col_vector).astype(np.float64)
-
-    if noise > 0:
-        generator = check_random_state(0)
-        S += generator.normal(0, noise, S.shape).astype(np.float64)
-
-    for method in ('scale', 'bistochastic', 'log'):
-        model = SpectralBiclustering(random_state=0, n_clusters=(3, 3),
-                                     method=method)
-        model.fit(S)
-
-        # ensure every row and column is in exactly three biclusters,
-        # and that each bicluser has the expected number of elements.
-        assert_equal(model.rows_.shape, (9, 30))
-        assert_array_equal(model.rows_.sum(axis=0), np.repeat(3, 30))
-        assert_array_equal(model.rows_.sum(axis=1), np.repeat(10, 9))
-        assert_equal(model.columns_.shape, (9, 30))
-        assert_array_equal(model.columns_.sum(axis=0), np.repeat(3, 30))
-        assert_array_equal(model.columns_.sum(axis=1), np.repeat(10, 9))
-
-
-def test_spectral_biclustering_kluger_without_noise():
-    _test_spectral_biclustering_kluger(noise=0)
-
-
-def test_spectral_biclustering_kluger_with_noise():
-    _test_spectral_biclustering_kluger(noise=0.5)
 
 
 def _do_scale_test(scaled):
