@@ -12,6 +12,8 @@ from sklearn.utils.validation import assert_all_finite, check_arrays
 
 import numpy as np
 from scipy.sparse import csr_matrix, lil_matrix, issparse
+from ..externals import six
+from abc import ABCMeta, abstractmethod
 
 
 def _sparse_min(X):
@@ -158,9 +160,11 @@ def _project_and_cluster(data, vectors, n_clusters, random_state,
     return labels
 
 
-class BaseSpectral(BaseEstimator, BiclusterMixin):
+class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
+                                      BiclusterMixin)):
     """Base class for spectral biclustering."""
 
+    @abstractmethod
     def __init__(self, n_clusters, svd_method, svd_kwargs,
                  kmeans_kwargs, random_state):
         self.n_clusters = n_clusters
