@@ -365,11 +365,17 @@ class SpectralBiclustering(BaseSpectral):
                              " one of {}.".format(svd_method,
                                                   legal_svd_methods))
 
-        if hasattr(n_clusters, '__len__'):
-            if len(n_clusters) != 2:
-                raise ValueError("The parameter `n_clusters` has the"
-                                 " wrong length. It should either be an "
-                                 " integer or have two entries:"
+        try:
+            int(n_clusters)
+        except TypeError:
+            try:
+                r, c = n_clusters
+                int(r)
+                int(c)
+            except (ValueError, TypeError):
+                raise ValueError("The parameter `n_clusters` is incorrect."
+                                 " It should either be a single integer"
+                                 " or an iterable with two integers:"
                                  " `(n_row_clusters, n_column_clusters)`")
         if n_best > n_components:
             raise ValueError("`n_best` cannot be larger than"
@@ -397,9 +403,9 @@ class SpectralBiclustering(BaseSpectral):
             ut = ut[1:]
             vt = vt[1:]
 
-        if hasattr(self.n_clusters, '__len__'):
+        try:
             n_row_clusters, n_col_clusters = self.n_clusters
-        else:
+        except ValueError:
             n_row_clusters = n_col_clusters = self.n_clusters
 
         best_ut = _fit_best_piecewise(ut, self.n_best,
