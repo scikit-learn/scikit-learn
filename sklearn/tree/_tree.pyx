@@ -8,6 +8,7 @@
 
 from libc.stdlib cimport calloc, free, malloc, realloc
 from libc.string cimport memcpy
+from libc.math cimport log
 
 import numpy as np
 cimport numpy as np
@@ -260,6 +261,7 @@ cdef class ClassificationCriterion(Criterion):
 
         self.pos = new_pos
 
+        # TODO
         # # Skip splits that result in nodes with net 0 or negative weight
         # if (weighted_n_left <= 0 or
         #     (self.weighted_n_samples - weighted_n_left) <= 0):
@@ -278,6 +280,85 @@ cdef class ClassificationCriterion(Criterion):
     cdef double children_impurity(self):
         pass
 
+
+cdef class Entropy(ClassificationCriterion):
+    """Cross Entropy impurity criteria.
+
+    Let the target be a classification outcome taking values in 0, 1, ..., K-1.
+    If node m represents a region Rm with Nm observations, then let
+
+        pmk = 1/ Nm \sum_{x_i in Rm} I(yi = k)
+
+    be the proportion of class k observations in node m.
+
+    The cross-entropy is then defined as
+
+        cross-entropy = - \sum_{k=0}^{K-1} pmk log(pmk)
+    """
+    cdef double node_impurity(self):
+        cdef double weighted_n_node_samples = self.weighted_n_node_samples
+
+        cdef SIZE_t n_outputs = self.n_outputs
+        cdef SIZE_t* n_classes = self.n_classes
+        cdef SIZE_t label_count_stride = self.label_count_stride
+        cdef double* label_count_total = self.label_count_total
+
+        cdef double entropy = 0.0
+        cdef double total = 0.0
+        cdef double tmp
+        cdef SIZE_t k
+        cdef SIZE_t c
+
+        for k from 0 <= k < n_outputs:
+            entropy = 0.0
+
+            for c from 0 <= c < n_classes[k]:
+                tmp = label_count_total[k * label_count_stride + c]
+                if tmp > 0:
+                    tmp /= weighted_n_node_samples
+                    entropy -= tmp * log(tmp)
+
+            total += entropy
+
+        return total / n_outputs
+
+    cdef double children_impurity(self):
+        cdef double weighted_n_node_samples = self.weighted_n_node_samples
+        cdef double weighted_n_left = self.weighted_n_left
+        cdef double weighted_n_right = self.weighted_n_right
+
+        cdef SIZE_t n_outputs = self.n_outputs
+        cdef SIZE_t* n_classes = self.n_classes
+        cdef SIZE_t label_count_stride = self.label_count_stride
+        cdef double* label_count_left = self.label_count_left
+        cdef double* label_count_right = self.label_count_right
+
+        cdef double entropy_left = 0.0
+        cdef double entropy_right = 0.0
+        cdef double total = 0.0
+        cdef double tmp
+        cdef SIZE_t k
+        cdef SIZE_t c
+
+        for k from 0 <= k < n_outputs:
+            entropy_left = 0.0
+            entropy_right = 0.0
+
+            for c from 0 <= c < n_classes[k]:
+                tmp = label_count_left[k * label_count_stride + c]
+                if tmp > 0:
+                    tmp /= weighted_n_left
+                    entropy_left -= tmp * log(tmp)
+
+                tmp = label_count_right[k * label_count_stride + c]
+                if tmp > 0:
+                    tmp += weighted_n_right
+                    entropy_right -= tmp * log(tmp)
+
+            total += (weighted_n_left / weighted_n_node_samples) * entropy_left
+            total += (weighted_n_right / weighted_n_node_samples) * entropy_right
+
+        return total / n_outputs
 
 cdef class Gini(ClassificationCriterion):
     """Gini Index impurity criteria.
@@ -305,6 +386,8 @@ cdef class Gini(ClassificationCriterion):
         cdef double gini = 0.0
         cdef double total = 0.0
         cdef double tmp
+        cdef SIZE_t k
+        cdef SIZE_t c
 
         for k from 0 <= k < n_outputs:
             gini = 1.0
@@ -333,9 +416,10 @@ cdef class Gini(ClassificationCriterion):
 
         cdef double gini_left = 0.0
         cdef double gini_right = 0.0
-        cdef double total_left = 0.0
-        cdef double total_right = 0.0
+        cdef double total = 0.0
         cdef double tmp
+        cdef SIZE_t k
+        cdef SIZE_t c
 
         for k from 0 <= k < n_outputs:
             gini_left = 1.0
@@ -353,10 +437,10 @@ cdef class Gini(ClassificationCriterion):
             if weighted_n_right == 0:
                 gini_right = 0.0
 
-            total_left += gini_left
-            total_right += gini_right
+            total += (weighted_n_left / weighted_n_node_samples) * gini_left
+            total += (weighted_n_right / weighted_n_node_samples) * gini_right
 
-        return (total_left + total_right) / n_outputs
+        return total / n_outputs
 
 
 # =============================================================================
