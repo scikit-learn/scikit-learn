@@ -83,6 +83,7 @@ from sklearn import cluster, covariance, manifold
 d1 = datetime.datetime(2003, 01, 01)
 d2 = datetime.datetime(2008, 01, 01)
 
+# because of a problem with yahoo server mappings commenting out Kraft ticker
 symbol_dict = {
     'TOT': 'Total',
     'XOM': 'Exxon',
@@ -111,7 +112,7 @@ symbol_dict = {
     'MMM': '3M',
     'MCD': 'Mc Donalds',
     'PEP': 'Pepsi',
-    'KFT': 'Kraft Foods',
+    #'KFT': 'Kraft Foods',
     'K': 'Kellogg',
     'UN': 'Unilever',
     'MAR': 'Marriott',
