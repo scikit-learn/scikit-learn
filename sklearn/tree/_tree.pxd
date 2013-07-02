@@ -24,20 +24,20 @@ cdef class Criterion:
     cdef DOUBLE_t* sample_weight         # Sample weights
 
     cdef SIZE_t* samples                 # Sample indices in X, y
-    cdef SIZE_t start                    # samples[start:i] are the samples in the left node
-    cdef SIZE_t i                        # samples[i:end] are the samples in the right node
+    cdef SIZE_t start                    # samples[start:pos] are the samples in the left node
+    cdef SIZE_t pos                      # samples[pos:end] are the samples in the right node
     cdef SIZE_t end
 
     cdef SIZE_t n_outputs                # Number of outputs
     cdef SIZE_t n_node_samples           # Number of samples in the node (end-start)
     cdef double weighted_n_node_samples  # Weighted number of samples
-    cdef SIZE_t n_left                   # Number of samples in the left node (i-start)
-    cdef SIZE_t n_right                  # Number of samples in the right node (end-i)
+    cdef SIZE_t n_left                   # Number of samples in the left node (pos-start)
+    cdef SIZE_t n_right                  # Number of samples in the right node (end-pos)
     cdef double weighted_n_left          # Weighted number of samples in the left node
     cdef double weighted_n_right         # Weighted number of samples in the right node
 
     # The criterion object is maintained such left and right collected
-    # statistics correspond to samples[start:i] and samples[i:end].
+    # statistics correspond to samples[start:pos] and samples[pos:end].
 
     # Methods
     cdef void init(self, DOUBLE_t* y,
@@ -45,11 +45,13 @@ cdef class Criterion:
                          DOUBLE_t* sample_weight,
                          SIZE_t* samples,
                          SIZE_t start,
-                         SIZE_t i,
+                         SIZE_t pos,
                          SIZE_t end)
+    cdef void reset(self)
+    cdef void update(self, SIZE_t new_pos)
     cdef double node_impurity(self)
     cdef double children_impurity(self)
-    cdef bool update(self, SIZE_t j)
+
 
 """
 # =============================================================================
@@ -65,7 +67,7 @@ cdef class Splitter:
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
     # find_split reorganizes the node samples `samples[start:end]` in two
-    # subsets `samples[start:i]` and `start[i:end]`.
+    # subsets `samples[start:pos]` and `start[pos:end]`.
 
     # Methods
     cdef void init(self, np.ndarray[DTYPE_t, ndim=2] X,
