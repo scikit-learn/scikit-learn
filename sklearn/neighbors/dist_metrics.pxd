@@ -54,6 +54,7 @@ cdef class DistanceMetric:
     cdef DTYPE_t* mat_ptr
     cdef ITYPE_t size
     cdef object func
+    cdef object kwargs
 
     cdef DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size) except -1
 

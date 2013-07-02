@@ -122,13 +122,13 @@ def test_haversine_metric():
 
 
 def test_pyfunc_metric():
-    def dist_func(x1, x2):
-        return np.sqrt(np.sum((x1 - x2) ** 2))
+    def dist_func(x1, x2, p):
+        return np.sum((x1 - x2) ** p) ** (1. / p)
 
     X = np.random.random((10, 3))
 
     euclidean = DistanceMetric.get_metric("euclidean")
-    pyfunc = DistanceMetric.get_metric("pyfunc", func=dist_func)
+    pyfunc = DistanceMetric.get_metric("pyfunc", func=dist_func, p=2)
 
     D1 = euclidean.pairwise(X)
     D2 = pyfunc.pairwise(X)

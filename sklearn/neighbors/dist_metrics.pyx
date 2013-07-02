@@ -238,7 +238,7 @@ cdef class DistanceMetric:
             return metric
 
         if callable(metric):
-            return PyFuncDistance(metric)
+            return PyFuncDistance(metric, **kwargs)
         
         # Map the metric string ID to the metric class
         if isinstance(metric, type) and issubclass(metric, DistanceMetric):
@@ -975,11 +975,11 @@ cdef class PyFuncDistance(DistanceMetric):
     func : function
         func should take two numpy arrays as input, and return a distance.
     """
-    def __init__(self, func):
+    def __init__(self, func, **kwargs):
         self.func = func
         x = np.random.random(10)
         try:
-            d = self.func(x, x)
+            d = self.func(x, x, **kwargs)
         except TypeError:
             raise ValueError("func must be a callable taking two arrays")
 
@@ -988,11 +988,13 @@ cdef class PyFuncDistance(DistanceMetric):
         except TypeError:
             raise ValueError("func must return a float")
 
+        self.kwargs = kwargs
+
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
         cdef np.ndarray x1arr = _buffer_to_ndarray(x1, size)
         cdef np.ndarray x2arr = _buffer_to_ndarray(x2, size)
-        return self.func(x1arr, x2arr)
+        return self.func(x1arr, x2arr, **self.kwargs)
 
 
 ######################################################################
