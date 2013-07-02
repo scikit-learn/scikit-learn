@@ -272,6 +272,92 @@ cdef class ClassificationCriterion(Criterion):
         #             label_count_right[k * label_count_stride + c] < 0):
         #             return False
 
+    cdef double node_impurity(self):
+        pass
+
+    cdef double children_impurity(self):
+        pass
+
+
+cdef class Gini(ClassificationCriterion):
+    """Gini Index impurity criteria.
+
+    Let the target be a classification outcome taking values in 0, 1, ..., K-1.
+    If node m represents a region Rm with Nm observations, then let
+
+        pmk = 1/ Nm \sum_{x_i in Rm} I(yi = k)
+
+    be the proportion of class k observations in node m.
+
+    The Gini Index is then defined as:
+
+        index = \sum_{k=0}^{K-1} pmk (1 - pmk)
+              = 1 - \sum_{k=0}^{K-1} pmk ** 2
+    """
+    cdef double node_impurity(self):
+        cdef double weighted_n_node_samples = self.weighted_n_node_samples
+
+        cdef SIZE_t n_outputs = self.n_outputs
+        cdef SIZE_t* n_classes = self.n_classes
+        cdef SIZE_t label_count_stride = self.label_count_stride
+        cdef double* label_count_total = self.label_count_total
+
+        cdef double gini = 0.0
+        cdef double total = 0.0
+        cdef double tmp
+
+        for k from 0 <= k < n_outputs:
+            gini = 1.0
+
+            for c from 0 <= c < n_classes[k]:
+                tmp = label_count_total[k * label_count_stride + c] / weighted_n_node_samples
+                gini -= tmp * tmp
+
+            if weighted_n_node_samples == 0:
+                gini = 0.0
+
+            total += gini
+
+        return total / n_outputs
+
+    cdef double children_impurity(self):
+        cdef double weighted_n_node_samples = self.weighted_n_node_samples
+        cdef double weighted_n_left = self.weighted_n_left
+        cdef double weighted_n_right = self.weighted_n_right
+
+        cdef SIZE_t n_outputs = self.n_outputs
+        cdef SIZE_t* n_classes = self.n_classes
+        cdef SIZE_t label_count_stride = self.label_count_stride
+        cdef double* label_count_left = self.label_count_left
+        cdef double* label_count_right = self.label_count_right
+
+        cdef double gini_left = 0.0
+        cdef double gini_right = 0.0
+        cdef double total_left = 0.0
+        cdef double total_right = 0.0
+        cdef double tmp
+
+        for k from 0 <= k < n_outputs:
+            gini_left = 1.0
+            gini_right = 1.0
+
+            for c from 0 <= c < n_classes[k]:
+                tmp = label_count_left[k * label_count_stride + c] / weighted_n_left
+                gini_left -= tmp * tmp
+                tmp = label_count_right[k * label_count_stride + c] / weighted_n_right
+                gini_right -= tmp * tmp
+
+            if weighted_n_left == 0:
+                gini_left = 0.0
+
+            if weighted_n_right == 0:
+                gini_right = 0.0
+
+            total_left += gini_left
+            total_right += gini_right
+
+        return (total_left + total_right) / n_outputs
+
 
 # =============================================================================
 # Utils
