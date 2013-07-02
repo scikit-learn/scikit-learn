@@ -213,8 +213,8 @@ else:
     safe_copy = np.copy
 
 try:
-    if (not np.isclose(np.divide(.4, 1), np.divide(.4, 1, dtype=np.float))
-        or not np.isclose(np.divide(.4, 1), .4)):
+    if (not np.allclose(np.divide(.4, 1), np.divide(.4, 1, dtype=np.float))
+        or not np.allclose(np.divide(.4, 1), .4)):
         raise TypeError('Divide not working with dtype: '
                         'https://github.com/numpy/numpy/issues/3484')
     divide = np.divide
