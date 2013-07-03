@@ -386,7 +386,7 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
             centers = _k_means._centers_dense(X, labels, n_clusters, distances)
 
         if verbose:
-            print('Iteration %i, inertia %s' % (i, inertia))
+            print('Iteration %2d, inertia %.3f' % (i, inertia))
 
         if best_inertia is None or inertia < best_inertia:
             best_labels = labels.copy()
@@ -395,7 +395,7 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
 
         if np.sum((centers_old - centers) ** 2) < tol:
             if verbose:
-                print('Converged to similar centers at iteration', i)
+                print("Converged at iteration %d" % i)
             break
     return best_labels, best_inertia, best_centers
 
