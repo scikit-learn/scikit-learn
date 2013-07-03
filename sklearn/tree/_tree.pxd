@@ -117,7 +117,7 @@ cdef class Tree:
                       np.ndarray sample_weight=*)
 
     cdef SIZE_t add_node(self, SIZE_t parent,
-                               bool is_left_child,
+                               bool is_left,
                                bool is_leaf,
                                SIZE_t feature,
                                double threshold,

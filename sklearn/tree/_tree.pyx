@@ -969,23 +969,26 @@ cdef class Tree:
         if stack == NULL:
             raise MemoryError()
 
-        stack[0] = 0            # start
-        stack[1] = X.shape[0]   # end
-        stack[2] = 0            # depth
-        stack[3] = -1           # parent
-        stack[4] = 0            # is_left
+        stack[0] = 0                    # start
+        stack[1] = X.shape[0]           # end
+        stack[2] = 0                    # depth
+        stack[3] = _TREE_UNDEFINED      # parent
+        stack[4] = 0                    # is_left
 
         cdef SIZE_t start
         cdef SIZE_t end
         cdef SIZE_t depth
         cdef SIZE_t parent
-        cdef bool is_leaf
+        cdef bool is_left
 
         cdef SIZE_t n_node_samples
         cdef SIZE_t pos
         cdef SIZE_t feature
         cdef double threshold
         cdef double impurity
+        cdef bool is_leaf
+
+        cdef SIZE_t node_id
 
         while stack_n_values > 0:
             stack_n_values -= 5
@@ -994,7 +997,7 @@ cdef class Tree:
             end = stack[stack_n_values + 1]
             depth = stack[stack_n_values + 2]
             parent = stack[stack_n_values + 3]
-            is_leaf = stack[stack_n_values + 4]
+            is_left = stack[stack_n_values + 4]
 
             splitter.split(start, end, &pos, &feature, &threshold, &impurity)
 
@@ -1004,23 +1007,75 @@ cdef class Tree:
                       (n_node_samples < self.min_samples_split) or \
                       (n_node_samples < 2 * self.min_samples_leaf)
 
-            #self.add_node(...)
+            node_id = self.add_node(parent,
+                                    is_left,
+                                    is_leaf,
+                                    feature,
+                                    threshold,
+                                    NULL, # TODO: compute value
+                                    impurity,
+                                    n_node_samples)
 
             if not is_leaf:
-                # Recurse on start:pos and pos:end
-                pass
+                if stack_n_values + 10 > stack_capacity:
+                    stack_capacity *= 2
+                    stack = <SIZE_t*> realloc(stack, stack_capacity * sizeof(SIZE_t))
+
+                # Stack left child
+                stack[stack_n_values] = start
+                stack[stack_n_values + 1] = pos
+                stack[stack_n_values + 2] = depth + 1
+                stack[stack_n_values + 3] = node_id
+                stack[stack_n_values + 4] = 1
+                stack_n_values += 5
+
+                # Stack right child
+                stack[stack_n_values] = pos
+                stack[stack_n_values + 1] = end
+                stack[stack_n_values + 2] = depth + 1
+                stack[stack_n_values + 3] = node_id
+                stack[stack_n_values + 4] = 0
+                stack_n_values += 5
 
         free(stack)
 
     cdef SIZE_t add_node(self, SIZE_t parent,
-                               bool is_left_child,
+                               bool is_left,
                                bool is_leaf,
                                SIZE_t feature,
                                double threshold,
                                double* value,
                                double impurity,
                                SIZE_t n_node_samples):
-        pass
+        """Add a node to the tree. The new node registers itself as
+           the child of its parent. """
+        cdef SIZE_t node_id = self.node_count
+
+        if node_id >= self.capacity:
+            self.resize()
+
+        if not is_leaf:
+            self.feature[node_id] = feature
+            self.threshold[node_id] = threshold
+
+        # TODO: copy value
+
+        self.impurity[node_id] = impurity
+        self.n_node_samples[node_id] = n_node_samples
+
+        if parent != _TREE_UNDEFINED:
+            if is_left:
+                self.children_left[parent] = node_id
+            else:
+                self.children_right[parent] = node_id
+
+        if is_leaf:
+            self.children_left[node_id] = _TREE_LEAF
+            self.children_right[node_id] = _TREE_LEAF
+
+        self.node_id += 1
+
+        return node_id
 
     cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X):
         pass
