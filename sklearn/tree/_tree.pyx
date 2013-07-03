@@ -13,7 +13,21 @@ from libc.math cimport log
 import numpy as np
 cimport numpy as np
 
-from cpython cimport bool
+from libcpp cimport bool
+
+
+# =============================================================================
+# Types and constants
+# =============================================================================
+
+DTYPE = np.NPY_FLOAT32
+DOUBLE = np.NPY_FLOAT64
+
+cdef double INFINITY = np.inf
+TREE_LEAF = -1
+TREE_UNDEFINED = -2
+cdef SIZE_t _TREE_LEAF = TREE_LEAF
+cdef SIZE_t _TREE_UNDEFINED = TREE_UNDEFINED
 
 
 # =============================================================================
@@ -724,6 +738,19 @@ cdef class MSE(RegressionCriterion):
 # Splitter
 # =============================================================================
 
+cdef class Splitter:
+    cdef void init(self, np.ndarray[DTYPE_t, ndim=2] X,
+                         np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
+                         DOUBLE_t* sample_weight):
+        pass
+
+    cdef void split(self, SIZE_t start,
+                          SIZE_t end,
+                          SIZE_t* pos,
+                          SIZE_t* feature,
+                          double* threshold,
+                          double* impurity):
+        pass
 
 
 # =============================================================================
@@ -731,32 +758,6 @@ cdef class MSE(RegressionCriterion):
 # =============================================================================
 
 cdef class Tree:
-    # # Input/Output layout
-    # cdef public SIZE_t n_features        # Number of features in X
-    # cdef SIZE_t* n_classes               # Number of classes in y[:, k]
-    # cdef public SIZE_t n_outputs         # Number of outputs in y
-
-    # cdef public SIZE_t max_n_classes     # max(n_classes)
-    # cdef public SIZE_t value_stride      # n_outputs * max_n_classes
-
-    # # Parameters
-    # cdef public Splitter splitter        # Splitting algorithm
-    # cdef public SIZE_t max_depth         # Max depth of the tree
-    # cdef public SIZE_t min_samples_split # Minimum number of samples in an internal node
-    # cdef public SIZE_t min_samples_leaf  # Minimum number of samples in a leaf
-    # cdef public object random_state      # Random state
-
-    # # Inner structures
-    # cdef public SIZE_t node_count        # Counter for node IDs
-    # cdef public SIZE_t capacity          # Capacity
-    # cdef SIZE_t* children_left              # children_left[i] is the left child of node i
-    # cdef SIZE_t* children_right             # children_right[i] is the right child of node i
-    # cdef SIZE_t* feature                 # features[i] is the feature used for splitting node i
-    # cdef double* threshold               # threshold[i] is the threshold value at node i
-    # cdef double* value                   # value[i] is the values contained at node i
-    # cdef double* impurity                # impurity[i] is the impurity of node i
-    # cdef SIZE_t* n_node_samples          # n_node_samples[i] is the number of samples at node i
-
     # Wrap for outside world
     property n_classes:
         def __get__(self):
@@ -884,6 +885,148 @@ cdef class Tree:
         memcpy(self.impurity, impurity, self.capacity * sizeof(double))
         memcpy(self.n_node_samples, n_node_samples, self.capacity * sizeof(SIZE_t))
 
+    cdef void resize(self, int capacity=-1):
+        """Resize all inner arrays to `capacity`, if < 0 double capacity."""
+        if capacity == self.capacity:
+            return
+
+        if capacity < 0:
+            if self.capacity <= 0:
+                capacity = 3 # default initial value
+            else:
+                capacity = 2 * self.capacity
+
+        self.capacity = capacity
+
+        cdef SIZE_t* tmp_children_left = <SIZE_t*> realloc(self.children_left, capacity * sizeof(SIZE_t))
+        if tmp_children_left != NULL: self.children_left = tmp_children_left
+
+        cdef SIZE_t* tmp_children_right = <SIZE_t*> realloc(self.children_right, capacity * sizeof(SIZE_t))
+        if tmp_children_right != NULL: self.children_right = tmp_children_right
+
+        cdef SIZE_t* tmp_feature = <SIZE_t*> realloc(self.feature, capacity * sizeof(SIZE_t))
+        if tmp_feature != NULL: self.feature = tmp_feature
+
+        cdef double* tmp_threshold = <double*> realloc(self.threshold, capacity * sizeof(double))
+        if tmp_threshold != NULL: self.threshold = tmp_threshold
+
+        cdef double* tmp_value = <double*> realloc(self.value, capacity * self.value_stride * sizeof(double))
+        if tmp_value != NULL: self.value = tmp_value
+
+        cdef double* tmp_impurity = <double*> realloc(self.impurity, capacity * sizeof(double))
+        if tmp_impurity != NULL: self.impurity = tmp_impurity
+
+        cdef SIZE_t* tmp_n_node_samples = <SIZE_t*> realloc(self.n_node_samples, capacity * sizeof(SIZE_t))
+        if tmp_n_node_samples != NULL: self.n_node_samples = tmp_n_node_samples
+
+        if tmp_children_left == NULL or \
+           tmp_children_right == NULL or \
+           tmp_feature == NULL or \
+           tmp_threshold == NULL or \
+           tmp_value == NULL or \
+           tmp_impurity == NULL or \
+           tmp_n_node_samples == NULL:
+            raise MemoryError()
+
+        # if capacity smaller than node_count, adjust the counter
+        if capacity < self.node_count:
+            self.node_count = capacity
+
+    cpdef build(self, np.ndarray X,
+                      np.ndarray y,
+                      np.ndarray sample_weight=None):
+        """Build a decision tree from the training set (X, y)."""
+        # Prepare data before recursive partitioning
+        if X.dtype != DTYPE:
+            X = np.asarray(X, dtype=DTYPE)
+
+        if y.dtype != DOUBLE or not y.flags.contiguous:
+            y = np.asarray(y, dtype=DOUBLE, order="C")
+
+        cdef DOUBLE_t* sample_weight_ptr = NULL
+        if sample_weight is not None:
+            if sample_weight.dtype != DOUBLE or not sample_weight.flags.contiguous:
+                sample_weight = np.asarray(sample_weight, dtype=DOUBLE, order="C")
+                sample_weight_ptr = <DOUBLE_t*> sample_weight.data
+
+        # Initial capacity
+        cdef int init_capacity
+
+        if self.max_depth <= 10:
+            init_capacity = (2 ** (self.max_depth + 1)) - 1
+        else:
+            init_capacity = 2047
+
+        self.resize(init_capacity)
+
+        # Recursive partition (without actual recursion)
+        cdef Splitter splitter = self.splitter
+        splitter.init(X, y, sample_weight_ptr)
+
+        cdef SIZE_t stack_n_values = 5
+        cdef SIZE_t stack_capacity = 50
+        cdef SIZE_t* stack = <SIZE_t*> malloc(stack_capacity * sizeof(SIZE_t))
+        if stack == NULL:
+            raise MemoryError()
+
+        stack[0] = 0            # start
+        stack[1] = X.shape[0]   # end
+        stack[2] = 0            # depth
+        stack[3] = -1           # parent
+        stack[4] = 0            # is_left
+
+        cdef SIZE_t start
+        cdef SIZE_t end
+        cdef SIZE_t depth
+        cdef SIZE_t parent
+        cdef bool is_leaf
+
+        cdef SIZE_t n_node_samples
+        cdef SIZE_t pos
+        cdef SIZE_t feature
+        cdef double threshold
+        cdef double impurity
+
+        while stack_n_values > 0:
+            stack_n_values -= 5
+
+            start = stack[stack_n_values]
+            end = stack[stack_n_values + 1]
+            depth = stack[stack_n_values + 2]
+            parent = stack[stack_n_values + 3]
+            is_leaf = stack[stack_n_values + 4]
+
+            splitter.split(start, end, &pos, &feature, &threshold, &impurity)
+
+            n_node_samples = end - start
+            is_leaf = (pos >= end) or \
+                      (depth >= self.max_depth) or \
+                      (n_node_samples < self.min_samples_split) or \
+                      (n_node_samples < 2 * self.min_samples_leaf)
+
+            #self.add_node(...)
+
+            if not is_leaf:
+                # Recurse on start:pos and pos:end
+                pass
+
+        free(stack)
+
+    cdef SIZE_t add_node(self, SIZE_t parent,
+                               bool is_left_child,
+                               bool is_leaf,
+                               SIZE_t feature,
+                               double threshold,
+                               double* value,
+                               double impurity,
+                               SIZE_t n_node_samples):
+        pass
+
+    cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X):
+        pass
+
+    cpdef apply(self, np.ndarray[DTYPE_t, ndim=2] X):
+        pass
 
 
 # =============================================================================

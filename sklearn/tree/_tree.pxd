@@ -6,7 +6,7 @@
 import numpy as np
 cimport numpy as np
 
-from cpython cimport bool
+from libcpp cimport bool
 
 ctypedef np.npy_float32 DTYPE_t          # Type of X
 ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
@@ -68,12 +68,16 @@ cdef class Splitter:
     # subsets `samples[start:pos]` and `start[pos:end]`.
 
     # Methods
-    cdef void init(self, np.ndarray[DTYPE_t, ndim=2] X,
-                         np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                         np.ndarray[DOUBLE_t, ndim=1, mode="c"] sample_weight,
-                         Criterion criterion)
+    cdef void init(self, np.ndarray X,
+                         np.ndarray y,
+                         DOUBLE_t* sample_weight)
 
-    cdef SIZE_t find_split(self, SIZE_t start, SIZE_t end)
+    cdef void split(self, SIZE_t start,
+                          SIZE_t end,
+                          SIZE_t* pos, # Set to >= end if the node is a leaf
+                          SIZE_t* feature,
+                          double* threshold,
+                          double* impurity)
 
 
 # =============================================================================
@@ -99,8 +103,8 @@ cdef class Tree:
     # Inner structures
     cdef public SIZE_t node_count        # Counter for node IDs
     cdef public SIZE_t capacity          # Capacity
-    cdef SIZE_t* children_left              # children_left[i] is the left child of node i
-    cdef SIZE_t* children_right             # children_right[i] is the right child of node i
+    cdef SIZE_t* children_left           # children_left[i] is the left child of node i
+    cdef SIZE_t* children_right          # children_right[i] is the right child of node i
     cdef SIZE_t* feature                 # features[i] is the feature used for splitting node i
     cdef double* threshold               # threshold[i] is the threshold value at node i
     cdef double* value                   # value[i] is the values contained at node i
@@ -112,13 +116,14 @@ cdef class Tree:
                       np.ndarray y,
                       np.ndarray sample_weight=*)
 
-    cdef int add_split_node(self, int parent, bool is_left_child, SIZE_t feature,
-                                  double threshold, double* value,
-                                  double best_error, double init_error,
-                                  SIZE_t n_node_samples)
-
-    cdef int add_leaf(self, int parent, int is_left_child, double* value,
-                            double error, SIZE_t n_node_samples)
+    cdef SIZE_t add_node(self, SIZE_t parent,
+                               bool is_left_child,
+                               bool is_leaf,
+                               SIZE_t feature,
+                               double threshold,
+                               double* value,
+                               double impurity,
+                               SIZE_t n_node_samples)
 
     cdef void resize(self, SIZE_t capacity=*)
     cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X)
