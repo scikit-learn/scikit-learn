@@ -65,8 +65,9 @@ def clear_data_home(data_home=None):
 
 
 def load_files(container_path, description=None, categories=None,
-               load_content=True, shuffle=True, encoding=None,
-               decode_error='strict', random_state=0):
+               load_content=True, shuffle=True, charset=None,
+               charset_error='strict', random_state=0,
+               charse_error=None):
     """Load text files with categories as subfolder names.
 
     Individual samples are assumed to be files stored a two levels folder
@@ -96,8 +97,8 @@ def load_files(container_path, description=None, categories=None,
     problem.
 
     If you set load_content=True, you should also specify the encoding of
-    the text using the 'encoding' parameter. For many modern text files,
-    'utf-8' will be the correct encoding. If you leave encoding equal to None,
+    the text using the 'charset' parameter. For many modern text files,
+    'utf-8' will be the correct encoding. If you leave charset equal to None,
     then the content will be made of bytes instead of Unicode, and you will
     not be able to use most functions in `sklearn.feature_extraction.text`.
 
@@ -123,16 +124,17 @@ def load_files(container_path, description=None, categories=None,
         in the data structure returned. If not, a filenames attribute
         gives the path to the files.
 
-    encoding : string or None (default is None)
+    charset : string or None (default is None)
         If None, do not try to decode the content of the files (e.g. for
         images or other non-text content).
-        If not None, encoding to use to decode text files to Unicode if
-        load_content is True.
+        If not None, charset to use to decode text files if load_content is
+        True.
 
-    decode_error: {'strict', 'ignore', 'replace'}, optional
+    charset_error: {'strict', 'ignore', 'replace'}
         Instruction on what to do if a byte sequence is given to analyze that
-        contains characters not of the given `encoding`. Passed as keyword
-        argument 'errors' to bytes.decode.
+        contains characters not of the given `charset`. By default, it is
+        'strict', meaning that a UnicodeDecodeError will be raised. Other
+        values are 'ignore' and 'replace'.
 
     shuffle : bool, optional (default=True)
         Whether or not to shuffle the data: might be important for models that
@@ -154,6 +156,14 @@ def load_files(container_path, description=None, categories=None,
         'target_names', the meaning of the labels, and 'DESCR', the full
         description of the dataset.
     """
+    # In 0.13, the parameter named 'charset_error' was typoed as
+    # 'charse_error'. Check that parameter for backward compatibility.
+    if charse_error is not None:
+        warnings.warn("The parameter 'charse_error' was renamed to"
+                      " 'charset_error' and will be removed in 0.16.",
+                      DeprecationWarning)
+        charset_error = charse_error
+
     target = []
     target_names = []
     filenames = []
@@ -185,8 +195,8 @@ def load_files(container_path, description=None, categories=None,
 
     if load_content:
         data = [open(filename, 'rb').read() for filename in filenames]
-        if encoding is not None:
-            data = [d.decode(encoding, decode_error) for d in data]
+        if charset is not None:
+            data = [d.decode(charset, charset_error) for d in data]
         return Bunch(data=data,
                      filenames=filenames,
                      target_names=target_names,
