@@ -67,6 +67,10 @@ cdef class Criterion:
            samples[start:pos] + the impurity of samples[pos:end]."""
         pass
 
+    cdef void node_value(self, double* dest):
+        """Compute the node value of samples[start:end] into dest."""
+        pass
+
 
 cdef class ClassificationCriterion(Criterion):
     """Abstract criterion for classification."""
@@ -282,6 +286,20 @@ cdef class ClassificationCriterion(Criterion):
 
     cdef double children_impurity(self):
         pass
+
+    cdef void node_value(self, double* dest):
+        """Compute the node value of samples[start:end] into dest."""
+        cdef SIZE_t n_outputs = self.n_outputs
+        cdef SIZE_t* n_classes = self.n_classes
+        cdef SIZE_t label_count_stride = self.label_count_stride
+        cdef double* label_count_total = self.label_count_total
+
+        cdef SIZE_t k
+        cdef SIZE_t c
+
+        for k from 0 <= k < n_outputs:
+            for c from 0 <= c < n_classes[k]:
+                dest[k * label_count_stride + c] = label_count_total[k * label_count_stride + c]
 
 
 cdef class Entropy(ClassificationCriterion):
@@ -698,6 +716,21 @@ cdef class RegressionCriterion(Criterion):
         #     (self.weighted_n_samples - weighted_n_left) <= 0):
         #     return False
 
+    cdef double node_impurity(self):
+        pass
+
+    cdef double children_impurity(self):
+        pass
+
+    cdef void node_value(self, double* dest):
+        """Compute the node value of samples[start:end] into dest."""
+        cdef SIZE_t n_outputs = self.n_outputs
+        cdef double* mean_total = self.mean_total
+        cdef SIZE_t k
+
+        for k from 0 <= k < n_outputs:
+            dest[k] = mean_total[k]
+
 cdef class MSE(RegressionCriterion):
     """Mean squared error impurity criterion.
 
@@ -966,8 +999,6 @@ cdef class Tree:
         cdef SIZE_t stack_n_values = 5
         cdef SIZE_t stack_capacity = 50
         cdef SIZE_t* stack = <SIZE_t*> malloc(stack_capacity * sizeof(SIZE_t))
-        if stack == NULL:
-            raise MemoryError()
 
         stack[0] = 0                    # start
         stack[1] = X.shape[0]           # end
@@ -1012,9 +1043,10 @@ cdef class Tree:
                                     is_leaf,
                                     feature,
                                     threshold,
-                                    NULL, # TODO: compute value
                                     impurity,
                                     n_node_samples)
+
+            splitter.criterion.node_value(self.value + node_id * self.value_stride)
 
             if not is_leaf:
                 if stack_n_values + 10 > stack_capacity:
@@ -1044,7 +1076,6 @@ cdef class Tree:
                                bool is_leaf,
                                SIZE_t feature,
                                double threshold,
-                               double* value,
                                double impurity,
                                SIZE_t n_node_samples):
         """Add a node to the tree. The new node registers itself as
@@ -1057,8 +1088,6 @@ cdef class Tree:
         if not is_leaf:
             self.feature[node_id] = feature
             self.threshold[node_id] = threshold
-
-        # TODO: copy value
 
         self.impurity[node_id] = impurity
         self.n_node_samples[node_id] = n_node_samples

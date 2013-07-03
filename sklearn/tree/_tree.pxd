@@ -49,7 +49,7 @@ cdef class Criterion:
     cdef void update(self, SIZE_t new_pos)
     cdef double node_impurity(self)
     cdef double children_impurity(self)
-
+    cdef void node_value(self, double* dest)
 
 
 # =============================================================================
@@ -64,7 +64,7 @@ cdef class Splitter:
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,
-    # find_split reorganizes the node samples `samples[start:end]` in two
+    # split reorganizes the node samples `samples[start:end]` in two
     # subsets `samples[start:pos]` and `start[pos:end]`.
 
     # Methods
@@ -121,7 +121,6 @@ cdef class Tree:
                                bool is_leaf,
                                SIZE_t feature,
                                double threshold,
-                               double* value,
                                double impurity,
                                SIZE_t n_node_samples)
 
