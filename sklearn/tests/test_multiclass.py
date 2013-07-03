@@ -186,8 +186,9 @@ def test_ovr_multilabel_decision_function():
                                                    random_state=0)
     X_train, Y_train = X[:80], Y[:80]
     X_test, Y_test = X[80:], Y[80:]
-    tst = OneVsRestClassifier(svm.SVC(probability=True)).fit(X_train, Y_train)
-    assert_true(list((tst.decision_function(X_test) > 0).nonzero()[1]) == [x for t in tst.predict(X_test) for x in t])
+    clf = OneVsRestClassifier(svm.SVC()).fit(X_train, Y_train)
+    assert_array_equal((clf.decision_function(X_test) > 0).nonzero()[1],
+                        np.hstack(clf.predict(X_test)))
 
 
 def test_ovr_single_label_decision_function():
@@ -196,8 +197,9 @@ def test_ovr_single_label_decision_function():
                                         random_state=0)
     X_train, Y_train = X[:80], Y[:80]
     X_test, Y_test = X[80:], Y[80:]
-    tst = OneVsRestClassifier(svm.SVC(probability=True)).fit(X_train, Y_train)
-    assert_true(np.all((tst.decision_function(X_test) > 0).ravel() == tst.predict(X_test)))
+    clf = OneVsRestClassifier(svm.SVC()).fit(X_train, Y_train)
+    assert_array_equal(clf.decision_function(X_test).ravel() > 0,
+                       clf.predict(X_test))
 
 
 def test_ovr_gridsearch():
