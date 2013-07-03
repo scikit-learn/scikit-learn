@@ -35,7 +35,7 @@ cdef class Criterion:
         pass
 
     cdef void reset(self):
-        """Reset the criterion at samples[start:start] and samples[start:end]."""
+        """Reset the criterion at pos=0."""
         pass
 
     cdef void update(self, SIZE_t new_pos):
@@ -76,8 +76,6 @@ cdef class ClassificationCriterion(Criterion):
         self.n_outputs = n_outputs
         self.n_node_samples = 0
         self.weighted_n_node_samples = 0.0
-        self.n_left = 0
-        self.n_right = 0
         self.weighted_n_left = 0.0
         self.weighted_n_right = 0.0
 
@@ -182,11 +180,9 @@ cdef class ClassificationCriterion(Criterion):
         self.update(pos)
 
     cdef void reset(self):
-        """Reset the criterion at samples[start:start] and samples[start:end]."""
+        """Reset the criterion at pos=0."""
         self.pos = 0
 
-        self.n_left = 0
-        self.n_right = self.n_node_samples
         self.weighted_n_left = 0.0
         self.weighted_n_right = self.weighted_n_node_samples
 
@@ -225,8 +221,6 @@ cdef class ClassificationCriterion(Criterion):
         cdef double* label_count_left = self.label_count_left
         cdef double* label_count_right = self.label_count_right
 
-        cdef SIZE_t n_left = self.n_left
-        cdef SIZE_t n_right = self.n_right
         cdef double weighted_n_left = self.weighted_n_left
         cdef double weighted_n_right = self.weighted_n_right
 
@@ -236,7 +230,7 @@ cdef class ClassificationCriterion(Criterion):
         cdef SIZE_t c
         cdef DOUBLE_t w = 1.0
 
-        # assume start <= pos <= new_pos <= end
+        # Note: We assume start <= pos < new_pos <= end
 
         for p from pos <= p < new_pos:
             i = samples[p]
@@ -249,13 +243,9 @@ cdef class ClassificationCriterion(Criterion):
                 label_count_left[k * label_count_stride + c] += w
                 label_count_right[k * label_count_stride + c] -= w
 
-            n_left += 1
-            n_right -= 1
             weighted_n_left += w
             weighted_n_right -= w
 
-        self.n_left = n_left
-        self.n_right = n_right
         self.weighted_n_left = weighted_n_left
         self.weighted_n_right = weighted_n_right
 
@@ -314,7 +304,7 @@ cdef class Entropy(ClassificationCriterion):
 
             for c from 0 <= c < n_classes[k]:
                 tmp = label_count_total[k * label_count_stride + c]
-                if tmp > 0:
+                if tmp > 0.0:
                     tmp /= weighted_n_node_samples
                     entropy -= tmp * log(tmp)
 
@@ -346,19 +336,20 @@ cdef class Entropy(ClassificationCriterion):
 
             for c from 0 <= c < n_classes[k]:
                 tmp = label_count_left[k * label_count_stride + c]
-                if tmp > 0:
+                if tmp > 0.0:
                     tmp /= weighted_n_left
                     entropy_left -= tmp * log(tmp)
 
                 tmp = label_count_right[k * label_count_stride + c]
-                if tmp > 0:
-                    tmp += weighted_n_right
+                if tmp > 0.0:
+                    tmp /= weighted_n_right
                     entropy_right -= tmp * log(tmp)
 
             total += (weighted_n_left / weighted_n_node_samples) * entropy_left
             total += (weighted_n_right / weighted_n_node_samples) * entropy_right
 
         return total / n_outputs
+
 
 cdef class Gini(ClassificationCriterion):
     """Gini Index impurity criteria.
@@ -390,14 +381,16 @@ cdef class Gini(ClassificationCriterion):
         cdef SIZE_t c
 
         for k from 0 <= k < n_outputs:
-            gini = 1.0
+            gini = 0.0
 
             for c from 0 <= c < n_classes[k]:
-                tmp = label_count_total[k * label_count_stride + c] / weighted_n_node_samples
-                gini -= tmp * tmp
+                tmp = label_count_total[k * label_count_stride + c]
+                gini += tmp * tmp
 
-            if weighted_n_node_samples == 0:
+            if weighted_n_node_samples <= 0.0:
                 gini = 0.0
+            else:
+                gini = 1.0 - gini / (weighted_n_node_samples * weighted_n_node_samples)
 
             total += gini
 
@@ -422,20 +415,24 @@ cdef class Gini(ClassificationCriterion):
         cdef SIZE_t c
 
         for k from 0 <= k < n_outputs:
-            gini_left = 1.0
-            gini_right = 1.0
+            gini_left = 0.0
+            gini_right = 0.0
 
             for c from 0 <= c < n_classes[k]:
-                tmp = label_count_left[k * label_count_stride + c] / weighted_n_left
-                gini_left -= tmp * tmp
-                tmp = label_count_right[k * label_count_stride + c] / weighted_n_right
-                gini_right -= tmp * tmp
+                tmp = label_count_left[k * label_count_stride + c]
+                gini_left += tmp * tmp
+                tmp = label_count_right[k * label_count_stride + c]
+                gini_right += tmp * tmp
 
-            if weighted_n_left == 0:
+            if weighted_n_left <= 0.0:
                 gini_left = 0.0
+            else:
+                gini_left = 1.0 - gini_left / (weighted_n_left * weighted_n_left)
 
-            if weighted_n_right == 0:
+            if weighted_n_right <= 0.0:
                 gini_right = 0.0
+            else:
+                gini_right = 1.0 - gini_right / (weighted_n_right * weighted_n_right)
 
             total += (weighted_n_left / weighted_n_node_samples) * gini_left
             total += (weighted_n_right / weighted_n_node_samples) * gini_right

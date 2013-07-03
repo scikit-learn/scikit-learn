@@ -31,8 +31,6 @@ cdef class Criterion:
     cdef SIZE_t n_outputs                # Number of outputs
     cdef SIZE_t n_node_samples           # Number of samples in the node (end-start)
     cdef double weighted_n_node_samples  # Weighted number of samples
-    cdef SIZE_t n_left                   # Number of samples in the left node (pos-start)
-    cdef SIZE_t n_right                  # Number of samples in the right node (end-pos)
     cdef double weighted_n_left          # Weighted number of samples in the left node
     cdef double weighted_n_right         # Weighted number of samples in the right node
 
