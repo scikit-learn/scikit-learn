@@ -721,6 +721,172 @@ cdef class MSE(RegressionCriterion):
 
 
 # =============================================================================
+# Splitter
+# =============================================================================
+
+
+
+# =============================================================================
+# Tree
+# =============================================================================
+
+cdef class Tree:
+    # # Input/Output layout
+    # cdef public SIZE_t n_features        # Number of features in X
+    # cdef SIZE_t* n_classes               # Number of classes in y[:, k]
+    # cdef public SIZE_t n_outputs         # Number of outputs in y
+
+    # cdef public SIZE_t max_n_classes     # max(n_classes)
+    # cdef public SIZE_t value_stride      # n_outputs * max_n_classes
+
+    # # Parameters
+    # cdef public Splitter splitter        # Splitting algorithm
+    # cdef public SIZE_t max_depth         # Max depth of the tree
+    # cdef public SIZE_t min_samples_split # Minimum number of samples in an internal node
+    # cdef public SIZE_t min_samples_leaf  # Minimum number of samples in a leaf
+    # cdef public object random_state      # Random state
+
+    # # Inner structures
+    # cdef public SIZE_t node_count        # Counter for node IDs
+    # cdef public SIZE_t capacity          # Capacity
+    # cdef SIZE_t* children_left              # children_left[i] is the left child of node i
+    # cdef SIZE_t* children_right             # children_right[i] is the right child of node i
+    # cdef SIZE_t* feature                 # features[i] is the feature used for splitting node i
+    # cdef double* threshold               # threshold[i] is the threshold value at node i
+    # cdef double* value                   # value[i] is the values contained at node i
+    # cdef double* impurity                # impurity[i] is the impurity of node i
+    # cdef SIZE_t* n_node_samples          # n_node_samples[i] is the number of samples at node i
+
+    # Wrap for outside world
+    property n_classes:
+        def __get__(self):
+            return sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)
+
+    property children_left:
+        def __get__(self):
+            return sizet_ptr_to_ndarray(self.children_left, self.node_count)
+
+    property children_right:
+        def __get__(self):
+            return sizet_ptr_to_ndarray(self.children_right, self.node_count)
+
+    property feature:
+        def __get__(self):
+            return sizet_ptr_to_ndarray(self.feature, self.node_count)
+
+    property threshold:
+        def __get__(self):
+            return double_ptr_to_ndarray(self.threshold, self.node_count)
+
+    property value:
+        def __get__(self):
+            cdef np.npy_intp shape[3]
+
+            shape[0] = <np.npy_intp> self.node_count
+            shape[1] = <np.npy_intp> self.n_outputs
+            shape[2] = <np.npy_intp> self.max_n_classes
+
+            return np.PyArray_SimpleNewFromData(
+                3, shape, np.NPY_DOUBLE, self.value)
+
+    property impurity:
+        def __get__(self):
+            return double_ptr_to_ndarray(self.impurity, self.node_count)
+
+    property n_node_samples:
+        def __get__(self):
+            return sizet_ptr_to_ndarray(self.n_node_samples, self.node_count)
+
+    def __cinit__(self, int n_features, object n_classes, int n_outputs,
+                        Splitter splitter, SIZE_t max_depth, SIZE_t min_samples_split,
+                        SIZE_t min_samples_leaf, object random_state):
+        """Constructor."""
+        # Input/Output layout
+        self.n_features = n_features
+        self.n_outputs = n_outputs
+        self.n_classes = <SIZE_t*> malloc(n_outputs * sizeof(SIZE_t))
+
+        if self.n_classes == NULL:
+            raise MemoryError()
+
+        self.max_n_classes = np.max(n_classes)
+        self.value_stride = self.n_outputs * self.max_n_classes
+
+        cdef SIZE_t k
+
+        for k from 0 <= k < n_outputs:
+            self.n_classes[k] = n_classes[k]
+
+        # Parameters
+        self.splitter = splitter
+        self.max_depth = max_depth
+        self.min_samples_split = min_samples_split
+        self.min_samples_leaf = min_samples_leaf
+        self.random_state = random_state
+
+        # Inner structures
+        self.node_count = 0
+        self.capacity = 0
+        self.children_left = NULL
+        self.children_right = NULL
+        self.feature = NULL
+        self.threshold = NULL
+        self.value = NULL
+        self.impurity = NULL
+        self.n_node_samples = NULL
+
+    def __dealloc__(self):
+        """Destructor."""
+        # Free all inner structures
+        free(self.n_classes)
+        free(self.children_left)
+        free(self.children_right)
+        free(self.feature)
+        free(self.threshold)
+        free(self.value)
+        free(self.impurity)
+        free(self.n_node_samples)
+
+    def __getstate__(self):
+        """Getstate re-implementation, for pickling."""
+        d = {}
+
+        d["node_count"] = self.node_count
+        d["capacity"] = self.capacity
+        d["children_left"] = sizet_ptr_to_ndarray(self.children_left, self.capacity)
+        d["children_right"] = sizet_ptr_to_ndarray(self.children_right, self.capacity)
+        d["feature"] = sizet_ptr_to_ndarray(self.feature, self.capacity)
+        d["threshold"] = double_ptr_to_ndarray(self.threshold, self.capacity)
+        d["value"] = double_ptr_to_ndarray(self.value, self.capacity * self.value_stride)
+        d["impurity"] = double_ptr_to_ndarray(self.impurity, self.capacity)
+        d["n_node_samples"] = sizet_ptr_to_ndarray(self.n_node_samples, self.capacity)
+
+        return d
+
+    def __setstate__(self, d):
+        """Setstate re-implementation, for unpickling."""
+        self.resize(d["capacity"])
+        self.node_count = d["node_count"]
+
+        cdef SIZE_t* children_left = <SIZE_t*> (<np.ndarray> d["children_left"]).data
+        cdef SIZE_t* children_right =  <SIZE_t*> (<np.ndarray> d["children_right"]).data
+        cdef SIZE_t* feature = <SIZE_t*> (<np.ndarray> d["feature"]).data
+        cdef double* threshold = <double*> (<np.ndarray> d["threshold"]).data
+        cdef double* value = <double*> (<np.ndarray> d["value"]).data
+        cdef double* impurity = <double*> (<np.ndarray> d["impurity"]).data
+        cdef SIZE_t* n_node_samples = <SIZE_t*> (<np.ndarray> d["n_node_samples"]).data
+
+        memcpy(self.children_left, children_left, self.capacity * sizeof(SIZE_t))
+        memcpy(self.children_right, children_right, self.capacity * sizeof(SIZE_t))
+        memcpy(self.feature, feature, self.capacity * sizeof(SIZE_t))
+        memcpy(self.threshold, threshold, self.capacity * sizeof(double))
+        memcpy(self.value, value, self.capacity * self.value_stride * sizeof(double))
+        memcpy(self.impurity, impurity, self.capacity * sizeof(double))
+        memcpy(self.n_node_samples, n_node_samples, self.capacity * sizeof(SIZE_t))
+
+
+
+# =============================================================================
 # Utils
 # =============================================================================
 

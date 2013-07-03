@@ -51,7 +51,7 @@ cdef class Criterion:
     cdef double children_impurity(self)
 
 
-"""
+
 # =============================================================================
 # Splitter
 # =============================================================================
@@ -99,8 +99,8 @@ cdef class Tree:
     # Inner structures
     cdef public SIZE_t node_count        # Counter for node IDs
     cdef public SIZE_t capacity          # Capacity
-    cdef int* children_left              # children_left[i] is the left child of node i
-    cdef int* children_right             # children_right[i] is the right child of node i
+    cdef SIZE_t* children_left              # children_left[i] is the left child of node i
+    cdef SIZE_t* children_right             # children_right[i] is the right child of node i
     cdef SIZE_t* feature                 # features[i] is the feature used for splitting node i
     cdef double* threshold               # threshold[i] is the threshold value at node i
     cdef double* value                   # value[i] is the values contained at node i
@@ -123,5 +123,3 @@ cdef class Tree:
     cdef void resize(self, SIZE_t capacity=*)
     cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X)
     cpdef apply(self, np.ndarray[DTYPE_t, ndim=2] X)
-    cpdef compute_feature_importances(self)
-"""
