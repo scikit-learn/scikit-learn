@@ -143,6 +143,9 @@ API changes summary
      :class:`cross_validation.StratifiedKFold` now enforce `n_folds >= 2`
      otherwise a ``ValueError`` is raised. By `Olivier Grisel`_.
 
+   - :func:`datasets.load_files`'s ``charset`` and ``charset_errors``
+     parameters were renamed ``encoding`` and ``decode_errors``.
+
 .. _changes_0_13_1:
 
 0.13.1
