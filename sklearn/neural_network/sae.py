@@ -148,8 +148,8 @@ class SAE(BaseEstimator, TransformerMixin):
 
     def __init__(
         self, n_hidden=25, activation_func='sigmoid', optimization_method='l-bfgs-b',
-         learning_rate=0.0001, alpha=0.0001, beta=3, sparsity_param=0.01,
-         batch_size=1000, max_iter=20, tol=1e-5, verbose=False, random_state=None):
+        learning_rate=0.3, alpha=0.0001, beta=3, sparsity_param=0.01,
+            batch_size=1000, max_iter=20, tol=1e-5, verbose=False, random_state=None):
         activation_functions = {
             'tanh': tanh,
             'sigmoid': sigmoid
@@ -223,7 +223,6 @@ class SAE(BaseEstimator, TransformerMixin):
         inds = np.arange(X.shape[0])
         rng.shuffle(inds)
         n_batches = int(np.ceil(len(inds) / float(self.batch_size)))
-        # Having input X transposed improves the performance substantially
         X = X.T
         # preallocate memory
         a2 = np.empty((self.n_hidden, n_samples))
@@ -392,31 +391,28 @@ class SAE(BaseEstimator, TransformerMixin):
         diff = X - a3
         delta3 = -diff * self.derivative(a3)
         delta2 = (
-            (np.dot(self.coef_output_.T, delta3) +\
-            sparsity_delta[:, np.newaxis])) *\
+            (np.dot(self.coef_output_.T, delta3) +
+             sparsity_delta[:, np.newaxis])) *\
             self.derivative(a2)
         # Get cost and gradient
-        cost = np.trace(np.dot(diff, diff.T)) / (2 * n_samples)
+        cost = np.sum(np.einsum('ij,ji->i', diff, diff.T)) / (2 * n_samples)
+
         W1grad = np.dot(delta2, X.T) / n_samples
         W2grad = np.dot(delta3, a2.T) / n_samples
         b1grad = np.mean(delta2, 1)
         b2grad = np.mean(delta3, 1)
         # Add regularization term to cost and gradient
         cost += (
-            self.alpha / 2) * (
-                norm(
-                    self.coef_hidden_,
-                    'fro') ** 2 + norm(
-                        self.coef_output_,
-                        'fro') ** 2)
+            0.5 * self.alpha) * (
+                np.sum(
+                    self.coef_hidden_ ** 2) + np.sum(
+                        self.coef_output_ ** 2))
         W1grad += self.alpha * self.coef_hidden_
         W2grad += self.alpha * self.coef_output_
         # Add sparsity term to the cost
         sparse_cost = np.sum(self.sparsity_param * np.log(self.sparsity_param / sparsity_param_hat) + (1 - self.sparsity_param) *
                              np.log((1 - self.sparsity_param) / (1 - sparsity_param_hat)))
         cost += self.beta * sparse_cost
-        # Convert grad to vector form (This is necessary for the fmin
-        # optimizer)
         return cost, W1grad, W2grad, b1grad, b2grad
 
     def backprop_naive(self, X, n_features, n_samples, delta2, delta3, a2):
