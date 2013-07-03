@@ -85,8 +85,8 @@ def download_20newsgroups(target_dir, cache_path):
     os.remove(archive_path)
 
     # Store a zipped pickle
-    cache = dict(train=load_files(train_path, charset='latin1'),
-                 test=load_files(test_path, charset='latin1'))
+    cache = dict(train=load_files(train_path, encoding='latin1'),
+                 test=load_files(test_path, encoding='latin1'))
     open(cache_path, 'wb').write(pickle.dumps(cache).encode('zip'))
     shutil.rmtree(target_dir)
     return cache
