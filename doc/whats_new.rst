@@ -7,6 +7,8 @@
 
 Changelog
 ---------
+   - Ability to pass one penalty (alpha value) per target in
+     :class:`linear_model.Ridge`, by @eickenberg and `Mathieu Blondel`_.
 
    - Fixed :mod:`sklearn.linear_model.stochastic_gradient.py` L2 regularization
      issue (minor practical significants).
