@@ -75,17 +75,17 @@ sprint.
 
 .. |telecom| image:: http://f.hypotheses.org/wp-content/blogs.dir/331/files/2011/03/Logo-TPT.jpg
    :width: 150px
-   :target: www.telecom-paristech.fr/
+   :target: http://www.telecom-paristech.fr/
 
 
 .. |tinyclues| image:: http://www.tinyclues.com/item/50b77d01e4b0bff132989dfd?format=original
    :width: 150px
-   :target: www.tinyclues.fr
+   :target: http://www.tinyclues.fr
 
 
 .. |afpy| image:: http://www.afpy.org/logo.png
    :width: 150px
-   :target: www.afpy.org
+   :target: http://www.afpy.org
 
 
 .. |SGR| image:: http://www.svi.cnrs-bellevue.fr/wikimedia/images/Logo_svi_inp.png

@@ -53,8 +53,7 @@ struct svm_node *dense_to_libsvm (double *x, npy_intp *dims)
 
 
 /*
- * Create a svm_parameter struct and return it. It is up to the user to
- * free the resulting object.
+ * Fill an svm_parameter struct.
  */
 void set_parameter(struct svm_parameter *param, int svm_type, int kernel_type, int degree,
 		double gamma, double coef0, double nu, double cache_size, double C,
@@ -80,8 +79,7 @@ void set_parameter(struct svm_parameter *param, int svm_type, int kernel_type, i
 }
 
 /*
- * Create and return a svm_problem struct. It is up to the user to free resulting
- * structure.
+ * Fill an svm_problem struct. problem->x will be malloc'd.
  */
 void set_problem(struct svm_problem *problem, char *X, char *Y, char *sample_weight, npy_intp *dims, int kernel_type)
 {
