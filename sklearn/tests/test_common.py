@@ -961,9 +961,6 @@ def test_estimators_overwrite_params():
             estimator.fit(X, y)
             new_params = estimator.get_params()
             for k, v in params.items():
-                if (name, k) == ('ElasticNetCV', 'rho'):
-                    # Deprecated param with @property annotations.
-                    continue
                 assert_false(np.any(new_params[k] != v),
                              "Estimator %s changes its parameter %s"
                              " from %s to %s during fit."
