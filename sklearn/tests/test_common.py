@@ -101,12 +101,6 @@ def test_all_estimators():
             else:
                 continue
             for arg, default in zip(args, defaults):
-                if (name, arg) in {('SpectralClustering', 'k'),
-                                   ('Perceptron', 'seed')}:
-                    # These are deprecated params with @property
-                    # annotations.
-                    continue
-
                 if arg not in params.keys():
                     # deprecated parameter, not in get_params
                     assert_true(default is None)

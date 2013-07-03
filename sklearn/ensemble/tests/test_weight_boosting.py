@@ -6,7 +6,7 @@ import numpy as np
 from numpy.testing import assert_array_equal, assert_array_less
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_equal
-from nose.tools import assert_raises, eq_
+from nose.tools import assert_raises
 
 from sklearn.dummy import DummyClassifier
 from sklearn.dummy import DummyRegressor
@@ -47,7 +47,7 @@ def test_classification_toy():
         assert_array_equal(clf.predict(T), y_t_class)
         # clf.classes_ is a array of dtype '<U3' even though
         # one of the classes is the integer 1.
-        eq_(set(str(c) for c in y_t_class), set(clf.classes_))
+        assert_array_equal(np.unique(np.asarray(y_t_class)), clf.classes_)
         assert_equal(clf.predict_proba(T).shape, (len(T), 2))
         assert_equal(clf.decision_function(T).shape, (len(T),))
 
