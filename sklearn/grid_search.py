@@ -869,4 +869,4 @@ class RandomizedSearchCV(BaseSearchCV):
         sampled_params = ParameterSampler(self.param_distributions,
                                           self.n_iter,
                                           random_state=self.random_state)
-        return self._fit(X, y, sampled_params, **params)
+        return self._fit(X, y, sampled_params)
