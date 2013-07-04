@@ -6,6 +6,10 @@
 # Author: Peter Prettenhofer, Brian Holt, Gilles Louppe
 # Licence: BSD 3 clause
 
+# TODO: http://docs.cython.org/src/tutorial/profiling_tutorial.html
+# TODO: use memory views instead of np.ndarrays
+
+
 from libc.stdlib cimport calloc, free, malloc, realloc
 from libc.string cimport memcpy
 from libc.math cimport log
@@ -898,11 +902,37 @@ cdef class BestSplitter(Splitter):
             current_feature = features[f_i]
 
             # Sort samples along that feature
-            # ...
+            self.sort(X, current_feature, samples + start, end - start)
 
             # Evaluate all splits
             criterion.reset()
-            # ...
+            p = start
+
+            while p < end:
+                while p + 1 < end and X[samples[p + 1], current_feature] == X[samples[p], current_feature]:
+                    p += 1
+
+                # p + 1 >= end or X[samples[p + 1], current_feature] > X[samples[p], current_feature]
+                p += 1
+                # p >= end or X[samples[p], current_feature] > X[samples[p - 1], current_feature]
+
+                if p < end:
+                    current_pos = p
+                    criterion.update(current_pos)
+                    current_impurity = criterion.children_impurity()
+
+                    current_threshold = (X[samples[p - 1], current_feature] + X[samples[p], current_feature]) / 2.0
+                    if current_threshold == X[samples[p], current_feature]:
+                        current_threshold = X[samples[p - 1], current_feature]
+
+                    if current_impurity < best_impurity:
+                        best_impurity = current_impurity
+                        best_pos = current_pos
+                        best_feature = current_feature
+                        best_threshold = current_threshold
+
+            if best_pos == end: # No valid split was ever found
+                continue
 
             # Count one more visited feature
             visited_features += 1
@@ -931,6 +961,52 @@ cdef class BestSplitter(Splitter):
         feature[0] = best_feature
         threshold[0] = best_threshold
         impurity[0] = node_impurity
+
+    cdef void sort(self, np.ndarray[DTYPE_t, ndim=2] X, SIZE_t current_feature,
+                         SIZE_t* samples, SIZE_t length):
+        """In-place sorting of samples[start:end] using
+          X[sample[i], current_feature] as key."""
+        # Adapted from http://alienryderflex.com/quicksort/
+        cdef SIZE_t pivot
+        cdef DTYPE_t pivot_value
+        cdef SIZE_t begin[64]
+        cdef SIZE_t end[64]
+        cdef SIZE_t i = 0
+        cdef SIZE_t L
+        cdef SIZE_t R
+
+        begin[0] = 0
+        end[0] = length
+
+        while i >= 0:
+            L = begin[i]
+            R = end[i] - 1
+
+            if L < R:
+                pivot = samples[L]
+                pivot_value = X[pivot, current_feature]
+
+                while L < R:
+                    while X[samples[R], current_feature] >= pivot_value and L < R:
+                        R -= 1
+                    if L < R:
+                        samples[L] = samples[R]
+                        L += 1
+
+                    while X[samples[L], current_feature] <= pivot_value and L < R:
+                        L += 1
+                    if L < R:
+                        samples[R] = samples[L]
+                        R -= 1
+
+                samples[L] = pivot
+                begin[i + 1] = L + 1
+                end[i + 1] = end[i]
+                end[i] = L
+                i += 1
+
+            else:
+                i -= 1
 
 
 cdef class RandomSplitter(Splitter):
@@ -1005,6 +1081,9 @@ cdef class RandomSplitter(Splitter):
                 elif current_feature > max_feature_value:
                     max_feature_value = current_feature_value
 
+            if min_feature_value == max_feature_value:
+                continue
+
             # Draw a random threshold
             current_threshold = min_feature_value + random_state.rand() * (max_feature_value - min_feature_value)
             if current_threshold == max_feature_value:
@@ -1024,6 +1103,8 @@ cdef class RandomSplitter(Splitter):
                     samples[p], samples[partition_end] = samples[partition_end], samples[p]
 
             current_pos = partition_end
+
+            assert current_pos < end
 
             # Reject if min_samples_leaf is not guaranteed
             if ((current_pos - start) < min_samples_leaf) or \
