@@ -155,19 +155,14 @@ def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=None):
 
 
 def _solve_svd(X, y, alpha):
-    n_samples, n_features = X.shape
-
     U, s, Vt = linalg.svd(X, full_matrices=False)
-    idx = s > 1e-15  # same default value as scipy.linalg.pinv
+    idx = s <= 1e-15  # same default value as scipy.linalg.pinv
     UTy = U.T.dot(y)
-    s[idx == False] = 0.
-    d = (s[:, np.newaxis] /
-         (s[:, np.newaxis] ** 2 + alpha[np.newaxis, :]))
+    s[idx] = 0.
+    d = s[:, np.newaxis] / (s[:, np.newaxis] ** 2 + alpha)
 
     d_UT_y = d * UTy
-    coef = Vt.T.dot(d_UT_y).T
-
-    return coef
+    return Vt.T.dot(d_UT_y).T
 
 
 def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
