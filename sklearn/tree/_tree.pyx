@@ -853,7 +853,84 @@ cdef class BestSplitter(Splitter):
                                double* threshold,
                                double* impurity):
         """Find the best split on node samples[start:end]."""
-        pass
+        # Break early if node is pure
+        cdef Criterion criterion = self.criterion
+        cdef SIZE_t* samples = self.samples
+
+        criterion.init(self.y, self.y_stride, self.sample_weight, samples, start, end)
+        cdef double node_impurity = criterion.node_impurity()
+
+        if end - start <= 1 or node_impurity == 0.0:
+            pos[0] = end
+            impurity[0] = node_impurity
+            return
+
+        # Find the best split
+        cdef SIZE_t* features = self.features
+        cdef SIZE_t n_features = self.n_features
+
+        cdef np.ndarray[DTYPE_t, ndim=2] X = self.X
+        cdef SIZE_t max_features = self.max_features
+        cdef SIZE_t min_samples_leaf = self.min_samples_leaf
+        cdef object random_state = self.random_state
+
+        cdef double best_impurity = INFINITY
+        cdef SIZE_t best_pos = end
+        cdef SIZE_t best_feature
+        cdef double best_threshold
+
+        cdef double current_impurity
+        cdef SIZE_t current_pos
+        cdef SIZE_t current_feature
+        cdef double current_threshold
+
+        cdef SIZE_t f_i, f_j, p
+        cdef SIZE_t visited_features = 0
+
+        cdef SIZE_t partition_start
+        cdef SIZE_t partition_end
+
+        for f_i from 0 <= f_i < n_features:
+            # Draw a feature at random
+            f_i = n_features - f_i - 1
+            f_j = random_state.randint(0, n_features - f_i)
+            features[f_i], features[f_j] = features[f_j], features[f_i]
+            current_feature = features[f_i]
+
+            # Sort samples along that feature
+            # ...
+
+            # Evaluate all splits
+            criterion.reset()
+            # ...
+
+            # Count one more visited feature
+            visited_features += 1
+
+            if visited_features >= max_features:
+                break
+
+        # Reorganize samples into samples[start:best_pos] + samples[best_pos:end]
+        if best_pos < end:
+            partition_start = start
+            partition_end = end
+            p = start
+
+            while p < partition_end:
+                if X[samples[p], best_feature] <= best_threshold:
+                    p += 1
+
+                else:
+                    partition_end -= 1
+                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
+
+            assert partition_end == best_pos
+
+        # Return values
+        pos[0] = best_pos
+        feature[0] = best_feature
+        threshold[0] = best_threshold
+        impurity[0] = node_impurity
 
 
 cdef class RandomSplitter(Splitter):
