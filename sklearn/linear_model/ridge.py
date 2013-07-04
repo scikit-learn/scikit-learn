@@ -268,7 +268,6 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         raise ValueError("Number of targets and number of penalties "
                     "do not correspond: %d != %d" % (alpha.size, n_targets))
 
-    one_alpha = alpha.size == 1
     if alpha.size == 1 and n_targets > 1:
         alpha = np.repeat(alpha, n_targets)
 
