@@ -713,7 +713,7 @@ class GridSearchCV(BaseSearchCV):
             warnings.warn("Additional parameters to GridSearchCV are ignored!"
                           " The params argument will be removed in 0.15.",
                           DeprecationWarning)
-        return self._fit(X, y, ParameterGrid(self.param_grid), **params)
+        return self._fit(X, y, ParameterGrid(self.param_grid))
 
 
 class RandomizedSearchCV(BaseSearchCV):
