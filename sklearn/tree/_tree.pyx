@@ -767,28 +767,6 @@ cdef class MSE(RegressionCriterion):
 # =============================================================================
 
 cdef class Splitter:
-    cdef void init(self, np.ndarray[DTYPE_t, ndim=2] X,
-                         np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                         DOUBLE_t* sample_weight):
-        pass
-
-    cdef void find_split(self, SIZE_t start,
-                               SIZE_t end,
-                               SIZE_t* pos,
-                               SIZE_t* feature,
-                               double* threshold,
-                               double* impurity):
-        pass
-
-    cdef void node_value(self, double* dest):
-        self.criterion.node_value(dest)
-
-cdef class RandomSplitter(Splitter):
-    """Splitter for finding the best random split."""
-    cdef SIZE_t max_features
-    cdef SIZE_t min_samples_leaf
-    cdef object random_state
-
     def __cinit__(self, Criterion criterion, SIZE_t max_features, SIZE_t min_samples_leaf, object random_state):
         self.criterion = criterion
 
@@ -810,11 +788,6 @@ cdef class RandomSplitter(Splitter):
         """Destructor."""
         free(self.samples)
         free(self.features)
-
-    def __reduce__(self):
-        return (RandomSplitter,
-                (self.criterion, self.max_features, self.random_state),
-                self.__getstate__())
 
     def __getstate__(self):
         return {}
@@ -852,6 +825,43 @@ cdef class RandomSplitter(Splitter):
         self.y = <DOUBLE_t*> y.data
         self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
         self.sample_weight = sample_weight
+
+    cdef void find_split(self, SIZE_t start,
+                               SIZE_t end,
+                               SIZE_t* pos,
+                               SIZE_t* feature,
+                               double* threshold,
+                               double* impurity):
+        """Find a split on node samples[start:end]."""
+        pass
+
+    cdef void node_value(self, double* dest):
+        self.criterion.node_value(dest)
+
+
+cdef class BestSplitter(Splitter):
+    """Splitter for finding the best split."""
+    def __reduce__(self):
+        return (BestSplitter,
+                (self.criterion, self.max_features, self.min_samples_leaf, self.random_state),
+                self.__getstate__())
+
+    cdef void find_split(self, SIZE_t start,
+                               SIZE_t end,
+                               SIZE_t* pos,
+                               SIZE_t* feature,
+                               double* threshold,
+                               double* impurity):
+        """Find the best split on node samples[start:end]."""
+        pass
+
+
+cdef class RandomSplitter(Splitter):
+    """Splitter for finding the best random split."""
+    def __reduce__(self):
+        return (RandomSplitter,
+                (self.criterion, self.max_features, self.min_samples_leaf, self.random_state),
+                self.__getstate__())
 
     cdef void find_split(self, SIZE_t start,
                                SIZE_t end,
@@ -960,20 +970,21 @@ cdef class RandomSplitter(Splitter):
             if visited_features >= max_features:
                 break
 
-        # Reorganize samples into samples[start:pos] + samples[pos:end]
-        partition_start = start
-        partition_end = end
-        p = start
+        # Reorganize samples into samples[start:best_pos] + samples[best_pos:end]
+        if best_pos < end:
+            partition_start = start
+            partition_end = end
+            p = start
 
-        while p < partition_end:
-            if X[samples[p], best_feature] <= best_threshold:
-                p += 1
+            while p < partition_end:
+                if X[samples[p], best_feature] <= best_threshold:
+                    p += 1
 
-            else:
-                partition_end -= 1
-                samples[p], samples[partition_end] = samples[partition_end], samples[p]
+                else:
+                    partition_end -= 1
+                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
 
-        assert partition_end == best_pos
+            assert partition_end == best_pos
 
         # Return values
         pos[0] = best_pos
