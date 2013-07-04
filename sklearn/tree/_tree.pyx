@@ -886,16 +886,16 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t current_feature
         cdef double current_threshold
 
-        cdef SIZE_t f_i, f_j, p
+        cdef SIZE_t f_idx, f_i, f_j, p
         cdef SIZE_t visited_features = 0
 
         cdef SIZE_t partition_start
         cdef SIZE_t partition_end
 
-        for f_i from 0 <= f_i < n_features:
+        for f_idx from 0 <= f_idx < n_features:
             # Draw a feature at random
-            f_i = n_features - f_i - 1
-            f_j = random_state.randint(0, n_features - f_i)
+            f_i = n_features - f_idx - 1
+            f_j = random_state.randint(0, n_features - f_idx)
             features[f_i], features[f_j] = features[f_j], features[f_i]
             current_feature = features[f_i]
 
@@ -967,8 +967,8 @@ cdef class BestSplitter(Splitter):
         # Adapted from http://alienryderflex.com/quicksort/
         cdef SIZE_t pivot
         cdef DTYPE_t pivot_value
-        cdef SIZE_t begin[64] # TODO ensure it nevers fails
-        cdef SIZE_t end[64]
+        cdef SIZE_t begin[101] # TODO ensure it nevers fails
+        cdef SIZE_t end[101]
         cdef SIZE_t i = 0
         cdef SIZE_t L
         cdef SIZE_t R
@@ -1052,7 +1052,7 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t current_feature
         cdef double current_threshold
 
-        cdef SIZE_t f_i, f_j, p
+        cdef SIZE_t f_idx, f_i, f_j, p
         cdef SIZE_t visited_features = 0
         cdef DTYPE_t min_feature_value
         cdef DTYPE_t max_feature_value
@@ -1061,10 +1061,10 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t partition_start
         cdef SIZE_t partition_end
 
-        for f_i from 0 <= f_i < n_features:
+        for f_idx from 0 <= f_idx < n_features:
             # Draw a feature at random
-            f_i = n_features - f_i - 1
-            f_j = random_state.randint(0, n_features - f_i)
+            f_i = n_features - f_idx - 1
+            f_j = random_state.randint(0, n_features - f_idx)
             features[f_i], features[f_j] = features[f_j], features[f_i]
             current_feature = features[f_i]
 
