@@ -72,12 +72,14 @@ cdef class Splitter:
                          np.ndarray y,
                          DOUBLE_t* sample_weight)
 
-    cdef void split(self, SIZE_t start,
-                          SIZE_t end,
-                          SIZE_t* pos, # Set to >= end if the node is a leaf
-                          SIZE_t* feature,
-                          double* threshold,
-                          double* impurity)
+    cdef void find_split(self, SIZE_t start,
+                               SIZE_t end,
+                               SIZE_t* pos, # Set to >= end if the node is a leaf
+                               SIZE_t* feature,
+                               double* threshold,
+                               double* impurity)
+
+    cdef void node_value(self, double* dest)
 
 
 # =============================================================================

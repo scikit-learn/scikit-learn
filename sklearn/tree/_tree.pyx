@@ -777,13 +777,16 @@ cdef class Splitter:
                          DOUBLE_t* sample_weight):
         pass
 
-    cdef void split(self, SIZE_t start,
-                          SIZE_t end,
-                          SIZE_t* pos,
-                          SIZE_t* feature,
-                          double* threshold,
-                          double* impurity):
+    cdef void find_split(self, SIZE_t start,
+                               SIZE_t end,
+                               SIZE_t* pos,
+                               SIZE_t* feature,
+                               double* threshold,
+                               double* impurity):
         pass
+
+    cdef void node_value(self, double* dest):
+        self.criterion.node_value(dest)
 
 
 # =============================================================================
@@ -1030,7 +1033,7 @@ cdef class Tree:
             parent = stack[stack_n_values + 3]
             is_left = stack[stack_n_values + 4]
 
-            splitter.split(start, end, &pos, &feature, &threshold, &impurity)
+            splitter.find_split(start, end, &pos, &feature, &threshold, &impurity)
 
             n_node_samples = end - start
             is_leaf = (pos >= end) or \
@@ -1046,7 +1049,9 @@ cdef class Tree:
                                     impurity,
                                     n_node_samples)
 
-            splitter.criterion.node_value(self.value + node_id * self.value_stride)
+            if is_leaf: # Don't store value for internal nodes
+                # TODO: compactify values?
+                splitter.node_value(self.value + node_id * self.value_stride)
 
             if not is_leaf:
                 if stack_n_values + 10 > stack_capacity:
