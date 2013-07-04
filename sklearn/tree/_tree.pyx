@@ -3,7 +3,7 @@
 # cython: boundscheck=False
 # cython: wraparound=False
 
-# Author: Peter Prettenhofer, Brian Holt, Gilles Louppe
+# Author: Gilles Louppe, Peter Prettenhofer, Brian Holt, Noel Dawe, Satrajit Gosh
 # Licence: BSD 3 clause
 
 # TODO: http://docs.cython.org/src/tutorial/profiling_tutorial.html
@@ -17,15 +17,13 @@ from libc.math cimport log
 import numpy as np
 cimport numpy as np
 
-from libcpp cimport bool
-
 
 # =============================================================================
 # Types and constants
 # =============================================================================
 
-DTYPE = np.NPY_FLOAT32
-DOUBLE = np.NPY_FLOAT64
+from numpy import float32 as DTYPE
+from numpy import float64 as DOUBLE
 
 cdef double INFINITY = np.inf
 TREE_LEAF = -1
@@ -1375,14 +1373,14 @@ cdef class Tree:
         cdef SIZE_t end
         cdef SIZE_t depth
         cdef SIZE_t parent
-        cdef bool is_left
+        cdef bint is_left
 
         cdef SIZE_t n_node_samples
         cdef SIZE_t pos
         cdef SIZE_t feature
         cdef double threshold
         cdef double impurity
-        cdef bool is_leaf
+        cdef bint is_leaf
 
         cdef SIZE_t node_id
 
@@ -1434,8 +1432,8 @@ cdef class Tree:
         free(stack)
 
     cdef SIZE_t add_node(self, SIZE_t parent,
-                               bool is_left,
-                               bool is_leaf,
+                               bint is_left,
+                               bint is_leaf,
                                SIZE_t feature,
                                double threshold,
                                double impurity,

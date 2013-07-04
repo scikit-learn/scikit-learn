@@ -1,12 +1,10 @@
-# Author: Peter Prettenhofer, Brian Holt, Gilles Louppe
+# Author: Gilles Louppe, Peter Prettenhofer, Brian Holt
 # Licence: BSD 3 clause
 
 # See _tree.pyx for details.
 
 import numpy as np
 cimport numpy as np
-
-from libcpp cimport bool
 
 ctypedef np.npy_float32 DTYPE_t          # Type of X
 ctypedef np.npy_float64 DOUBLE_t         # Type of y, sample_weight
@@ -128,8 +126,8 @@ cdef class Tree:
                       np.ndarray sample_weight=*)
 
     cdef SIZE_t add_node(self, SIZE_t parent,
-                               bool is_left,
-                               bool is_leaf,
+                               bint is_left,
+                               bint is_leaf,
                                SIZE_t feature,
                                double threshold,
                                double impurity,

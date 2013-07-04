@@ -3,16 +3,8 @@ This module gathers tree-based methods, including decision, regression and
 randomized trees. Single and multi-output problems are both handled.
 """
 
-# Code is originally adapted from MILK: Machine Learning Toolkit
-# Copyright (C) 2008-2011, Luis Pedro Coelho <luis@luispedro.org>
-# License: MIT. See COPYING.MIT file in the milk distribution
-
-# Authors: Brian Holt,
-#          Peter Prettenhofer,
-#          Satrajit Ghosh,
-#          Gilles Louppe,
-#          Noel Dawe
-# License: BSD 3 clause
+# Author: Gilles Louppe, Peter Prettenhofer, Brian Holt, Noel Dawe, Satrajit Gosh
+# Licence: BSD 3 clause
 
 from __future__ import division
 
@@ -36,18 +28,25 @@ __all__ = ["DecisionTreeClassifier",
            "ExtraTreeClassifier",
            "ExtraTreeRegressor"]
 
+
+# TODO: deprecate sample_mask, X_argsorted, min_density
+
+
+# =============================================================================
+# Types and constants
+# =============================================================================
+
 DTYPE = _tree.DTYPE
 DOUBLE = _tree.DOUBLE
 
-CLASSIFICATION = {
-    "gini": _tree.Gini,
-    "entropy": _tree.Entropy,
-}
+CRITERIA_CLF = {"gini": _tree.Gini, "entropy": _tree.Entropy}
+CRITERIA_REG = {"mse": _tree.MSE}
+SPLITTERS = {"best": _tree.BestSplitter, "random": _tree.RandomSplitter}
 
-REGRESSION = {
-    "mse": _tree.MSE,
-}
 
+# =============================================================================
+# Base decision tree
+# =============================================================================
 
 class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                           _LearntSelectorMixin)):
@@ -60,18 +59,18 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
     @abstractmethod
     def __init__(self,
                  criterion,
+                 splitter,
                  max_depth,
                  min_samples_split,
                  min_samples_leaf,
-                 min_density,
                  max_features,
                  compute_importances,
                  random_state):
         self.criterion = criterion
+        self.splitter = splitter
         self.max_depth = max_depth
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
-        self.min_density = min_density
         self.max_features = max_features
 
         if compute_importances:
@@ -87,13 +86,11 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.n_outputs_ = None
         self.classes_ = None
         self.n_classes_ = None
-        self.find_split_ = _tree.TREE_SPLIT_BEST
 
+        self.splitter_ = None
         self.tree_ = None
 
-    def fit(self, X, y,
-            sample_mask=None, X_argsorted=None,
-            check_input=True, sample_weight=None):
+    def fit(self, X, y, check_input=True, sample_weight=None):
         """Build a decision tree from the training set (X, y).
 
         Parameters
@@ -107,23 +104,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             classification, real numbers in regression).
             Use ``dtype=np.float64`` and ``order='C'`` for maximum
             efficiency.
-
-        sample_mask : array-like, shape = [n_samples], dtype = bool or None
-            A bit mask that encodes the rows of ``X`` that should be
-            used to build the decision tree. It can be used for bagging
-            without the need to create of copy of ``X``.
-            If None a mask will be created that includes all samples.
-
-        X_argsorted : array-like, shape = [n_samples, n_features] or None
-            Each column of ``X_argsorted`` holds the row indices of ``X``
-            sorted according to the value of the corresponding feature
-            in ascending order.
-            I.e. ``X[X_argsorted[i, k], k] <= X[X_argsorted[j, k], k]``
-            for each j > i.
-            If None, ``X_argsorted`` is computed internally.
-            The argument is supported to enable multiple decision trees
-            to share the data structure and to avoid re-computation in
-            tree ensembles. For maximum efficiency use dtype np.int32.
 
         sample_weight : array-like, shape = [n_samples] or None
             Sample weights. If None, then samples are equally weighted. Splits
@@ -146,10 +126,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         random_state = check_random_state(self.random_state)
 
         # Convert data
-        if (getattr(X, "dtype", None) != DTYPE or
-                X.ndim != 2 or
-                not X.flags.fortran):
-            X = array2d(X, dtype=DTYPE, order="F")
+        if (getattr(X, "dtype", None) != DTYPE or X.ndim != 2):
+            X = array2d(X, dtype=DTYPE)
 
         n_samples, self.n_features_ = X.shape
         is_classification = isinstance(self, ClassifierMixin)
@@ -180,12 +158,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
-
-        if is_classification:
-            criterion = CLASSIFICATION[self.criterion](self.n_outputs_,
-                                                       self.n_classes_)
-        else:
-            criterion = REGRESSION[self.criterion](self.n_outputs_)
 
         # Check parameters
         max_depth = np.inf if self.max_depth is None else self.max_depth
@@ -220,18 +192,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             raise ValueError("min_samples_leaf must be greater than zero.")
         if max_depth <= 0:
             raise ValueError("max_depth must be greater than zero. ")
-        if self.min_density < 0.0 or self.min_density > 1.0:
-            raise ValueError("min_density must be in [0, 1]")
         if not (0 < max_features <= self.n_features_):
             raise ValueError("max_features must be in (0, n_features]")
-
-        if sample_mask is not None:
-            sample_mask = np.asarray(sample_mask, dtype=np.bool)
-
-            if sample_mask.shape[0] != n_samples:
-                raise ValueError("Length of sample_mask=%d does not match "
-                                 "number of samples=%d"
-                                 % (sample_mask.shape[0], n_samples))
 
         if sample_weight is not None:
             if (getattr(sample_weight, "dtype", None) != DOUBLE or
@@ -247,28 +209,28 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                  "number of samples=%d" %
                                  (len(sample_weight), n_samples))
 
-        if X_argsorted is not None:
-            X_argsorted = np.asarray(X_argsorted, dtype=np.int32,
-                                     order='F')
-            if X_argsorted.shape != X.shape:
-                raise ValueError("Shape of X_argsorted does not match "
-                                 "the shape of X")
-
         # Set min_samples_split sensibly
         min_samples_split = max(self.min_samples_split,
                                 2 * self.min_samples_leaf)
 
         # Build tree
-        self.tree_ = _tree.Tree(self.n_features_, self.n_classes_,
-                                self.n_outputs_, criterion, max_depth,
-                                min_samples_split, self.min_samples_leaf,
-                                self.min_density, max_features,
-                                self.find_split_, random_state)
+        if is_classification:
+            criterion = CRITERIA_CLF[self.criterion](self.n_outputs_,
+                                                     self.n_classes_)
+        else:
+            criterion = CRITERIA_REG[self.criterion](self.n_outputs_)
 
-        self.tree_.build(X, y,
-                         sample_weight=sample_weight,
-                         sample_mask=sample_mask,
-                         X_argsorted=X_argsorted)
+        self.splitter_ = SPLITTERS[self.splitter](criterion,
+                                                  max_features,
+                                                  self.min_samples_leaf,
+                                                  random_state)
+
+        self.tree_ = _tree.Tree(self.n_features_, self.n_classes_,
+                                self.n_outputs_, self.splitter, max_depth,
+                                min_samples_split, self.min_samples_leaf,
+                                random_state)
+
+        self.tree_.build(X, y, sample_weight=sample_weight)
 
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
@@ -294,7 +256,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             The predicted classes, or the predict values.
         """
         if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
-            X = array2d(X, dtype=DTYPE, order="F")
+            X = array2d(X, dtype=DTYPE)
 
         n_samples, n_features = X.shape
 
@@ -352,6 +314,11 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         return self.tree_.compute_feature_importances()
 
 
+
+# =============================================================================
+# Public estimators
+# =============================================================================
+
 class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     """A decision tree classifier.
 
@@ -382,16 +349,6 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
     min_samples_leaf : integer, optional (default=1)
         The minimum number of samples required to be at a leaf node.
-
-    min_density : float, optional (default=0.1)
-        This parameter controls a trade-off in an optimization heuristic. It
-        controls the minimum density of the `sample_mask` (i.e. the
-        fraction of samples in the mask). If the density falls below this
-        threshold the mask is recomputed and the input data is packed
-        which results in data copying.  If `min_density` equals to one,
-        the partitions are always represented as copies of the original
-        data. Otherwise, partitions are represented as bit masks (aka
-        sample masks).
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
@@ -454,18 +411,18 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
     """
     def __init__(self,
                  criterion="gini",
+                 splitter="best",
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
-                 min_density=0.1,
                  max_features=None,
                  compute_importances=False,
                  random_state=None):
         super(DecisionTreeClassifier, self).__init__(criterion,
+                                                     splitter,
                                                      max_depth,
                                                      min_samples_split,
                                                      min_samples_leaf,
-                                                     min_density,
                                                      max_features,
                                                      compute_importances,
                                                      random_state)
@@ -486,7 +443,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
             by arithmetical order.
         """
         if getattr(X, "dtype", None) != DTYPE or X.ndim != 2:
-            X = array2d(X, dtype=DTYPE, order="F")
+            X = array2d(X, dtype=DTYPE)
 
         n_samples, n_features = X.shape
 
@@ -579,16 +536,6 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     min_samples_leaf : integer, optional (default=1)
         The minimum number of samples required to be at a leaf node.
 
-    min_density : float, optional (default=0.1)
-        This parameter controls a trade-off in an optimization heuristic. It
-        controls the minimum density of the `sample_mask` (i.e. the
-        fraction of samples in the mask). If the density falls below this
-        threshold the mask is recomputed and the input data is packed
-        which results in data copying.  If `min_density` equals to one,
-        the partitions are always represented as copies of the original
-        data. Otherwise, partitions are represented as bit masks (aka
-        sample masks).
-
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
         If RandomState instance, random_state is the random number generator;
@@ -644,18 +591,18 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
     """
     def __init__(self,
                  criterion="mse",
+                 splitter="best",
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
-                 min_density=0.1,
                  max_features=None,
                  compute_importances=False,
                  random_state=None):
         super(DecisionTreeRegressor, self).__init__(criterion,
+                                                    splitter,
                                                     max_depth,
                                                     min_samples_split,
                                                     min_samples_leaf,
-                                                    min_density,
                                                     max_features,
                                                     compute_importances,
                                                     random_state)
@@ -685,23 +632,21 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
     """
     def __init__(self,
                  criterion="gini",
+                 splitter="random",
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
-                 min_density=0.1,
                  max_features="auto",
                  compute_importances=False,
                  random_state=None):
         super(ExtraTreeClassifier, self).__init__(criterion,
+                                                  splitter,
                                                   max_depth,
                                                   min_samples_split,
                                                   min_samples_leaf,
-                                                  min_density,
                                                   max_features,
                                                   compute_importances,
                                                   random_state)
-
-        self.find_split_ = _tree.TREE_SPLIT_RANDOM
 
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
@@ -732,20 +677,18 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
     """
     def __init__(self,
                  criterion="mse",
+                 splitter="random",
                  max_depth=None,
                  min_samples_split=2,
                  min_samples_leaf=1,
-                 min_density=0.1,
                  max_features="auto",
                  compute_importances=False,
                  random_state=None):
         super(ExtraTreeRegressor, self).__init__(criterion,
+                                                 splitter,
                                                  max_depth,
                                                  min_samples_split,
                                                  min_samples_leaf,
-                                                 min_density,
                                                  max_features,
                                                  compute_importances,
                                                  random_state)
-
-        self.find_split_ = _tree.TREE_SPLIT_RANDOM
