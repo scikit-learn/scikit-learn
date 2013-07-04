@@ -933,6 +933,12 @@ cdef class BestSplitter(Splitter):
 
                 if p < end:
                     current_pos = p
+
+                    # Reject if min_samples_leaf is not guaranteed
+                    if ((current_pos - start) < min_samples_leaf) or \
+                       ((end - current_pos) < min_samples_leaf):
+                       continue
+
                     criterion.update(current_pos)
                     current_impurity = criterion.children_impurity()
 

@@ -402,11 +402,15 @@ def test_min_samples_leaf():
     y = iris.target
 
     for tree_class in [tree.DecisionTreeClassifier, tree.ExtraTreeClassifier]:
+        print tree_class
         clf = tree_class(min_samples_leaf=5).fit(X, y)
 
         out = clf.tree_.apply(X)
+        print out
         node_counts = np.bincount(out)
         leaf_count = node_counts[node_counts != 0]  # drop inner nodes
+
+        print leaf_count
 
         assert np.min(leaf_count) >= 5
 
