@@ -1,4 +1,4 @@
-"""Sparse Autoencoders
+"""Sparse Autoencoder
 """
 
 # Author: Issam Laradji <issam.laradji@gmail.com>
@@ -72,7 +72,7 @@ def d_tanh(X):
     return X
 
 
-class SAE(BaseEstimator, TransformerMixin):
+class Autoencoder(BaseEstimator, TransformerMixin):
 
     """
     Sparse Autoencoder (SAE)
