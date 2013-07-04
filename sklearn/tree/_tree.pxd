@@ -43,7 +43,6 @@ cdef class Criterion:
                          DOUBLE_t* sample_weight,
                          SIZE_t* samples,
                          SIZE_t start,
-                         SIZE_t pos,
                          SIZE_t end)
     cdef void reset(self)
     cdef void update(self, SIZE_t new_pos)
@@ -59,8 +58,16 @@ cdef class Criterion:
 cdef class Splitter:
     # Internal structures
     cdef Criterion criterion             # Impurity criterion
+
     cdef SIZE_t* samples                 # Sample indices in X, y
-    cdef SIZE_t n_samples                # Length of samples
+    cdef SIZE_t n_samples                # X.shape[0]
+    cdef SIZE_t* features                # Feature indices in X
+    cdef SIZE_t n_features               # X.shape[1]
+
+    cdef np.ndarray X
+    cdef DOUBLE_t* y
+    cdef SIZE_t y_stride
+    cdef DOUBLE_t* sample_weight
 
     # The samples vector `samples` is maintained by the Splitter object such
     # that the samples contained in a node are contiguous. With this setting,

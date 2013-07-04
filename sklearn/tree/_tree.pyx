@@ -42,14 +42,13 @@ cdef class Criterion:
                          DOUBLE_t* sample_weight,
                          SIZE_t* samples,
                          SIZE_t start,
-                         SIZE_t pos,
                          SIZE_t end):
         """Initialize the criterion at node samples[start:end] and
-           children samples[start:pos] and samples[pos:end]."""
+           children samples[start:start] and samples[start:end]."""
         pass
 
     cdef void reset(self):
-        """Reset the criterion at pos=0."""
+        """Reset the criterion at pos=start."""
         pass
 
     cdef void update(self, SIZE_t new_pos):
@@ -151,10 +150,9 @@ cdef class ClassificationCriterion(Criterion):
                          DOUBLE_t* sample_weight,
                          SIZE_t* samples,
                          SIZE_t start,
-                         SIZE_t pos,
                          SIZE_t end):
         """Initialize the criterion at node samples[start:end] and
-           children samples[start:pos] and samples[pos:end]."""
+           children samples[start:start] and samples[start:end]."""
         # Initialize fields
         self.y = y
         self.y_stride = y_stride
@@ -192,13 +190,12 @@ cdef class ClassificationCriterion(Criterion):
                 label_count_total[k * label_count_stride + c] += w
                 self.weighted_n_node_samples += w
 
-        # Move cursor to i-th sample
+        # Reset to pos=start
         self.reset()
-        self.update(pos)
 
     cdef void reset(self):
-        """Reset the criterion at pos=0."""
-        self.pos = 0
+        """Reset the criterion at pos=start."""
+        self.pos = self.start
 
         self.weighted_n_left = 0.0
         self.weighted_n_right = self.weighted_n_node_samples
@@ -568,10 +565,9 @@ cdef class RegressionCriterion(Criterion):
                          DOUBLE_t* sample_weight,
                          SIZE_t* samples,
                          SIZE_t start,
-                         SIZE_t pos,
                          SIZE_t end):
         """Initialize the criterion at node samples[start:end] and
-           children samples[start:pos] and samples[pos:end]."""
+           children samples[start:start] and samples[start:end]."""
         # Initialize fields
         self.y = y
         self.y_stride = y_stride
@@ -624,13 +620,12 @@ cdef class RegressionCriterion(Criterion):
         for k from 0 <= k < n_outputs:
             mean_total[k] /= self.weighted_n_node_samples
 
-        # Move cursor to i-th sample
+        # Reset to pos=start
         self.reset()
-        self.update(pos)
 
     cdef void reset(self):
-        """Reset the criterion at pos=0."""
-        self.pos = 0
+        """Reset the criterion at pos=start."""
+        self.pos = self.start
 
         self.weighted_n_left = 0.0
         self.weighted_n_right = self.weighted_n_node_samples
@@ -787,6 +782,204 @@ cdef class Splitter:
 
     cdef void node_value(self, double* dest):
         self.criterion.node_value(dest)
+
+cdef class RandomSplitter(Splitter):
+    """Splitter for finding the best random split."""
+    cdef SIZE_t max_features
+    cdef SIZE_t min_samples_leaf
+    cdef object random_state
+
+    def __cinit__(self, Criterion criterion, SIZE_t max_features, SIZE_t min_samples_leaf, object random_state):
+        self.criterion = criterion
+
+        self.samples = NULL
+        self.n_samples = 0
+        self.features = NULL
+        self.n_features = 0
+
+        self.X = None
+        self.y = NULL
+        self.y_stride = 0
+        self.sample_weight = NULL
+
+        self.max_features = max_features
+        self.min_samples_leaf = min_samples_leaf
+        self.random_state = random_state
+
+    def __dealloc__(self):
+        """Destructor."""
+        free(self.samples)
+        free(self.features)
+
+    def __reduce__(self):
+        return (RandomSplitter,
+                (self.criterion, self.max_features, self.random_state),
+                self.__getstate__())
+
+    def __getstate__(self):
+        return {}
+
+    def __setstate__(self, d):
+        pass
+
+    cdef void init(self, np.ndarray[DTYPE_t, ndim=2] X,
+                         np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
+                         DOUBLE_t* sample_weight):
+        """Initialize the splitter."""
+        # Initialize samples and features structures
+        cdef SIZE_t n_samples = X.shape[0]
+        cdef SIZE_t* samples = <SIZE_t*> malloc(n_samples * sizeof(SIZE_t))
+
+        cdef SIZE_t i
+
+        for i from 0 <= i < n_samples:
+            samples[i] = i
+
+        self.samples = samples
+        self.n_samples = n_samples
+
+        cdef SIZE_t n_features = X.shape[1]
+        cdef SIZE_t* features = <SIZE_t*> malloc(n_features * sizeof(SIZE_t))
+
+        for i from 0 <= i < n_features:
+            features[i] = i
+
+        self.features = features
+        self.n_features = n_features
+
+        # Initialize X, y, sample_weigth
+        self.X = X
+        self.y = <DOUBLE_t*> y.data
+        self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
+        self.sample_weight = sample_weight
+
+    cdef void find_split(self, SIZE_t start,
+                               SIZE_t end,
+                               SIZE_t* pos,
+                               SIZE_t* feature,
+                               double* threshold,
+                               double* impurity):
+        """Find the best random split on node samples[start:end]."""
+        # Break early if node is pure
+        cdef Criterion criterion = self.criterion
+        cdef SIZE_t* samples = self.samples
+
+        criterion.init(self.y, self.y_stride, self.sample_weight, samples, start, end)
+        cdef double node_impurity = criterion.node_impurity()
+
+        if end - start <= 1 or node_impurity == 0.0:
+            pos[0] = end
+            impurity[0] = node_impurity
+            return
+
+        # Draw random splits and pick the best
+        cdef SIZE_t* features = self.features
+        cdef SIZE_t n_features = self.n_features
+
+        cdef np.ndarray[DTYPE_t, ndim=2] X = self.X
+        cdef SIZE_t max_features = self.max_features
+        cdef SIZE_t min_samples_leaf = self.min_samples_leaf
+        cdef object random_state = self.random_state
+
+        cdef double best_impurity = INFINITY
+        cdef SIZE_t best_pos = end
+        cdef SIZE_t best_feature
+        cdef double best_threshold
+
+        cdef double current_impurity
+        cdef SIZE_t current_pos
+        cdef SIZE_t current_feature
+        cdef double current_threshold
+
+        cdef SIZE_t f_i, f_j, p
+        cdef SIZE_t visited_features = 0
+        cdef DTYPE_t min_feature_value
+        cdef DTYPE_t max_feature_value
+        cdef DTYPE_t current_feature_value
+
+        cdef SIZE_t partition_start
+        cdef SIZE_t partition_end
+
+        for f_i from 0 <= f_i < n_features:
+            # Draw a feature at random
+            f_i = n_features - f_i - 1
+            f_j = random_state.randint(0, n_features - f_i)
+            features[f_i], features[f_j] = features[f_j], features[f_i]
+            current_feature = features[f_i]
+
+            # Find min, max
+            min_feature_value = max_feature_value = X[samples[start], current_feature]
+
+            for p from start < p < end:
+                current_feature_value = X[samples[p], current_feature]
+
+                if current_feature < min_feature_value:
+                    min_feature_value = current_feature_value
+                elif current_feature > max_feature_value:
+                    max_feature_value = current_feature_value
+
+            # Draw a random threshold
+            current_threshold = min_feature_value + random_state.rand() * (max_feature_value - min_feature_value)
+            if current_threshold == max_feature_value:
+                current_threshold = min_feature_value
+
+            # Partition
+            partition_start = start
+            partition_end = end
+            p = start
+
+            while p < partition_end:
+                if X[samples[p], current_feature] <= current_threshold:
+                    p += 1
+
+                else:
+                    partition_end -= 1
+                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
+
+            current_pos = partition_end
+
+            # Reject if min_samples_leaf is not guaranteed
+            if ((current_pos - start) < min_samples_leaf) or \
+               ((end - current_pos) < min_samples_leaf):
+               continue
+
+            # Evaluate split
+            criterion.reset()
+            criterion.update(current_pos)
+            current_impurity = criterion.children_impurity()
+
+            if current_impurity < best_impurity:
+                best_impurity = current_impurity
+                best_pos = current_pos
+                best_feature = current_feature
+                best_threshold = current_threshold
+
+            # Count one more visited feature
+            visited_features += 1
+
+            if visited_features >= max_features:
+                break
+
+        # Reorganize samples into samples[start:pos] + samples[pos:end]
+        partition_start = start
+        partition_end = end
+        p = start
+
+        while p < partition_end:
+            if X[samples[p], best_feature] <= best_threshold:
+                p += 1
+
+            else:
+                partition_end -= 1
+                samples[p], samples[partition_end] = samples[partition_end], samples[p]
+
+        assert partition_end == best_pos
+
+        # Return values
+        pos[0] = best_pos
+        feature[0] = best_feature
+        threshold[0] = best_threshold
+        impurity[0] = node_impurity
 
 
 # =============================================================================
@@ -1041,19 +1234,14 @@ cdef class Tree:
                       (n_node_samples < self.min_samples_split) or \
                       (n_node_samples < 2 * self.min_samples_leaf)
 
-            node_id = self.add_node(parent,
-                                    is_left,
-                                    is_leaf,
-                                    feature,
-                                    threshold,
-                                    impurity,
-                                    n_node_samples)
+            node_id = self.add_node(parent, is_left, is_leaf, feature,
+                                    threshold, impurity, n_node_samples)
 
-            if is_leaf: # Don't store value for internal nodes
-                # TODO: compactify values?
+            if is_leaf:
+                # Don't store value for internal nodes
                 splitter.node_value(self.value + node_id * self.value_stride)
 
-            if not is_leaf:
+            else:
                 if stack_n_values + 10 > stack_capacity:
                     stack_capacity *= 2
                     stack = <SIZE_t*> realloc(stack, stack_capacity * sizeof(SIZE_t))
@@ -1168,7 +1356,6 @@ cdef class Tree:
             out[i] = node_id
 
         return out
-
 
 
 # =============================================================================
