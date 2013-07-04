@@ -6,7 +6,10 @@
 import numpy as np
 from scipy.optimize import minimize
 from scipy.linalg import norm
+from itertools import cycle, izip
 from ..utils import array2d, check_random_state
+from sklearn.utils import gen_even_slices
+from sklearn.utils import shuffle
 from sklearn.base import BaseEstimator, TransformerMixin
 
 
@@ -149,7 +152,7 @@ class Autoencoder(BaseEstimator, TransformerMixin):
     def __init__(
         self, n_hidden=25, activation_func='sigmoid', optimization_method='l-bfgs-b',
         learning_rate=0.3, alpha=0.0001, beta=3, sparsity_param=0.01,
-            batch_size=1000, max_iter=20, tol=1e-5, verbose=False, random_state=None):
+            batch_size=1000, shuffle_data = False, max_iter=20, tol=1e-5, verbose=False, random_state=None):
         activation_functions = {
             'tanh': tanh,
             'sigmoid': sigmoid
@@ -168,6 +171,7 @@ class Autoencoder(BaseEstimator, TransformerMixin):
         self.beta = beta
         self.sparsity_param = sparsity_param
         self.batch_size = batch_size
+        self.shuffle_data = shuffle_data
         self.max_iter = max_iter
         self.tol = tol
         self.verbose = verbose
@@ -185,7 +189,7 @@ class Autoencoder(BaseEstimator, TransformerMixin):
         -------
         h: array-like, shape (n_samples, n_components)
         """
-        return self.activation(np.dot(X, self.coef_hidden_.T) + self.intercept_hidden_)
+        return self.activation(np.dot(X, self.coef_hidden_) + self.intercept_hidden_)
 
     def fit_transform(self, X):
         """
@@ -216,33 +220,28 @@ class Autoencoder(BaseEstimator, TransformerMixin):
         """
         X = array2d(X)
         dtype = np.float32 if X.dtype.itemsize == 4 else np.float64
-        n_samples = X.shape[0]
-        n_features = X.shape[1]
+        n_samples, n_features = X.shape
         rng = check_random_state(self.random_state)
         initial_theta = self._init_fit(n_features, rng)
-        inds = np.arange(X.shape[0])
-        rng.shuffle(inds)
-        n_batches = int(np.ceil(len(inds) / float(self.batch_size)))
-        X = X.T
+        if self.shuffle_data:
+            X, y = shuffle(X, y, random_state=self.random_state)
+        # generate batch slices
+        self.batch_size=np.clip(self.batch_size,0,n_samples)
+        n_batches = n_samples / self.batch_size
+        batch_slices = list(gen_even_slices(n_batches * self.batch_size, n_batches))
         # preallocate memory
-        a2 = np.empty((self.n_hidden, n_samples))
-        delta2 = np.empty((self.n_hidden, n_samples))
-        delta3 = np.empty((n_features, n_samples))
+        a2 = np.empty((n_samples, self.n_hidden))
+        delta2 = np.empty((n_samples, self.n_hidden))
+        delta3 = np.empty((n_samples, n_features))
         if self.optimization_method is None:
-            prev_cost = 1000000
-            for i in xrange(self.max_iter):
-                for minibatch in xrange(n_batches):
+            for i, batch_slice in izip(xrange(self.max_iter), cycle(batch_slices)):
                     cost = self.backprop_naive(
-                        X[:, inds[minibatch::n_batches]],
-                        n_features, n_samples,
+                        X[batch_slice],
+                        n_features, self.batch_size,
                         delta2, delta3, a2)
-                    # Check tolerance
                     if self.verbose:
                         print("Iteration %d, cost = %.2f"
                               % (i, cost))
-                    if abs(cost - prev_cost) < self.tol:
-                        break
-                    prev_cost = cost
         else:
             self._backprop_optimizer(
                 X, n_features,
@@ -263,8 +262,8 @@ class Autoencoder(BaseEstimator, TransformerMixin):
         -------
         theta: array-like, shape (size(W1)*size(W2)*size(b1)*size(b2), 1)
         """
-        self.coef_hidden_ = rng.uniform(-1, 1, (self.n_hidden, n_features))
-        self.coef_output_ = rng.uniform(-1, 1, (n_features, self.n_hidden))
+        self.coef_hidden_ = rng.uniform(-1, 1, (n_features, self.n_hidden))
+        self.coef_output_ = rng.uniform(-1, 1, (self.n_hidden, n_features))
         self.intercept_hidden_ = rng.uniform(-1, 1, self.n_hidden)
         self.intercept_output_ = rng.uniform(-1, 1, n_features)
 
@@ -281,9 +280,9 @@ class Autoencoder(BaseEstimator, TransformerMixin):
         """
         N = self.n_hidden * n_features
         self.coef_hidden_ = np.reshape(theta[:N],
-                                      (self.n_hidden, n_features))
-        self.coef_output_ = np.reshape(theta[N:2 * N],
                                       (n_features, self.n_hidden))
+        self.coef_output_ = np.reshape(theta[N:2 * N],
+                                      (self.n_hidden, n_features))
         self.intercept_hidden_ = theta[2 * N:2 * N + self.n_hidden]
         self.intercept_output_ = theta[2 * N + self.n_hidden:]
 
@@ -378,29 +377,30 @@ class Autoencoder(BaseEstimator, TransformerMixin):
        [1] http://ufldl.stanford.edu/wiki/index.php/Autoencoders_and_Sparsity
         """
        # Forward propagate
-        a2 = self.activation(np.dot(self.coef_hidden_, X)
-                             + self.intercept_hidden_[:, np.newaxis])
-        a3 = self.activation(np.dot(self.coef_output_, a2)
-                             + self.intercept_output_[:, np.newaxis])
+
+        a2[:] = self.activation(np.dot(X, self.coef_hidden_)
+                             + self.intercept_hidden_)
+        a3 = self.activation(np.dot(a2, self.coef_output_)
+                             + self.intercept_output_)
         # Get average activation of hidden neurons
-        sparsity_param_hat = np.mean(a2, 1)
+        sparsity_param_hat = np.mean(a2, 0)
         sparsity_delta  = self.beta * \
             ((1 - self.sparsity_param) / (1 - sparsity_param_hat)
              - self.sparsity_param / sparsity_param_hat)
         # Backward propagate
         diff = X - a3
-        delta3 = -diff * self.derivative(a3)
-        delta2 = (
-            (np.dot(self.coef_output_.T, delta3) +
-             sparsity_delta[:, np.newaxis])) *\
+        delta3[:] = -diff * self.derivative(a3)
+        delta2[:] = (
+            (np.dot(delta3, self.coef_output_.T) +
+             sparsity_delta)) *\
             self.derivative(a2)
         # Get cost and gradient
         cost = np.sum(np.einsum('ij,ji->i', diff, diff.T)) / (2 * n_samples)
 
-        W1grad = np.dot(delta2, X.T) / n_samples
-        W2grad = np.dot(delta3, a2.T) / n_samples
-        b1grad = np.mean(delta2, 1)
-        b2grad = np.mean(delta3, 1)
+        W1grad = np.dot(X.T, delta2) / n_samples
+        W2grad = np.dot(a2.T, delta3) / n_samples
+        b1grad = np.mean(delta2, 0)
+        b2grad = np.mean(delta3, 0)
         # Add regularization term to cost and gradient
         cost += (
             0.5 * self.alpha) * (
