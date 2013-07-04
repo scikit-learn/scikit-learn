@@ -164,7 +164,7 @@ def test_sample_weight():
             [0, 0, 1],
             sample_weight=[1, 1, 4])
     assert_array_equal(clf.predict([1, 0]), [1])
-    positive_prior = np.exp(clf.intercept_)
+    positive_prior = np.exp(clf.intercept_[0])
     assert_array_almost_equal([1 - positive_prior, positive_prior],
                               [1 / 3., 2 / 3.])
 
