@@ -257,7 +257,9 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                       to sparse_cg.""")
         solver = 'sparse_cg'
 
-    if has_sw:
+    if has_sw and solver != "dense_cholesky":
+        warnings.warn("""sample_weight and class_weight not supported in %s,
+                      fall back to dense_cholesky.""" % solver)
         solver = 'dense_cholesky'
 
     # There should be either 1 or n_targets penalties
