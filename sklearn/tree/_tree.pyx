@@ -1107,15 +1107,68 @@ cdef class Tree:
             self.children_left[node_id] = _TREE_LEAF
             self.children_right[node_id] = _TREE_LEAF
 
-        self.node_id += 1
+        self.node_count += 1
 
         return node_id
 
     cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X):
-        pass
+        """Predict target for X."""
+        cdef SIZE_t n_samples = X.shape[0]
+        cdef SIZE_t node_id = 0
+        cdef SIZE_t offset_node
+        cdef SIZE_t offset_output
+
+        cdef SIZE_t i
+        cdef SIZE_t k
+        cdef SIZE_t c
+
+        cdef np.ndarray[np.float64_t, ndim=3] out
+        out = np.zeros((n_samples, self.n_outputs, self.max_n_classes), dtype=np.float64)
+
+        for i from 0 <= i < n_samples:
+            node_id = 0
+
+            # While node_id not a leaf
+            while self.children_left[node_id] != _TREE_LEAF: # and self.children_right[node_id] != _TREE_LEAF:
+                if X[i, self.feature[node_id]] <= self.threshold[node_id]:
+                    node_id = self.children_left[node_id]
+                else:
+                    node_id = self.children_right[node_id]
+
+            offset_node = node_id * self.value_stride
+
+            for k from 0 <= k < self.n_outputs:
+                offset_output = k * self.max_n_classes
+
+                for c from 0 <= c < self.n_classes[k]:
+                    out[i, k, c] = self.value[offset_node + offset_output + c]
+
+        return out
 
     cpdef apply(self, np.ndarray[DTYPE_t, ndim=2] X):
-        pass
+        """Finds the terminal region (=leaf node) for each sample in X."""
+        cdef SIZE_t n_samples = X.shape[0]
+        cdef SIZE_t node_id = 0
+
+        cdef SIZE_t i = 0
+
+        cdef np.ndarray[np.int32_t, ndim=1] out
+        out = np.zeros((n_samples, ), dtype=np.int32)
+
+        for i from 0 <= i < n_samples:
+            node_id = 0
+
+            # While node_id not a leaf
+            while self.children_left[node_id] != _TREE_LEAF: # and self.children_right[node_id] != _TREE_LEAF:
+                if X[i, self.feature[node_id]] <= self.threshold[node_id]:
+                    node_id = self.children_left[node_id]
+                else:
+                    node_id = self.children_right[node_id]
+
+            out[i] = node_id
+
+        return out
+
 
 
 # =============================================================================
