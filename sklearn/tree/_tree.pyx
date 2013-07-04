@@ -848,6 +848,23 @@ cdef class BestSplitter(Splitter):
                 (self.criterion, self.max_features, self.min_samples_leaf, self.random_state),
                 self.__getstate__())
 
+    cdef void init(self, np.ndarray[DTYPE_t, ndim=2] X,
+                         np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
+                         DOUBLE_t* sample_weight):
+        """Initialize the splitter."""
+        Splitter.init(self, X, y, sample_weight)
+
+        # Shuffle samples
+        cdef SIZE_t* samples = self.samples
+        cdef SIZE_t n_samples = self.n_samples
+        cdef object random_state = self.random_state
+        cdef SIZE_t n, i, j
+
+        for n from 0 <= n < n_samples:
+            i = n_samples - n - 1
+            j = random_state.randint(0, n_samples - n)
+            samples[i], samples[j] = samples[j], samples[i]
+
     cdef void find_split(self, SIZE_t start,
                                SIZE_t end,
                                SIZE_t* pos,
@@ -900,7 +917,7 @@ cdef class BestSplitter(Splitter):
             current_feature = features[f_i]
 
             # Sort samples along that feature
-            self.sort(X, current_feature, samples + start, end - start)
+            self.sort(X, current_feature, samples+start, end-start)
 
             # Evaluate all splits
             criterion.reset()
@@ -967,8 +984,8 @@ cdef class BestSplitter(Splitter):
         # Adapted from http://alienryderflex.com/quicksort/
         cdef SIZE_t pivot
         cdef DTYPE_t pivot_value
-        cdef SIZE_t begin[101] # TODO ensure it nevers fails
-        cdef SIZE_t end[101]
+        cdef SIZE_t begin[64]
+        cdef SIZE_t end[64]
         cdef SIZE_t i = 0
         cdef SIZE_t L
         cdef SIZE_t R
@@ -980,8 +997,10 @@ cdef class BestSplitter(Splitter):
             L = begin[i]
             R = end[i] - 1
 
+            # TODO: switch to Insertion Sort if R-L <= 7
+
             if L < R:
-                pivot = samples[L]
+                pivot = samples[L] # TODO: pick a better pivot
                 pivot_value = X[pivot, current_feature]
 
                 while L < R:
@@ -1002,6 +1021,10 @@ cdef class BestSplitter(Splitter):
                 end[i + 1] = end[i]
                 end[i] = L
                 i += 1
+
+                if (end[i] - begin[i]) > (end[i-1] - begin[i-1]):
+                    begin[i], begin[i-1] = begin[i-1], begin[i]
+                    end[i], end[i-1] = end[i-1], end[i]
 
             else:
                 i -= 1
@@ -1429,6 +1452,7 @@ cdef class Tree:
                 stack[stack_n_values + 4] = 0
                 stack_n_values += 5
 
+        self.resize(self.node_count)
         free(stack)
 
     cdef SIZE_t add_node(self, SIZE_t parent,
