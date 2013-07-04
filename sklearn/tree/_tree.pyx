@@ -190,7 +190,8 @@ cdef class ClassificationCriterion(Criterion):
             for k from 0 <= k < n_outputs:
                 c = <SIZE_t> y[i * y_stride + k]
                 label_count_total[k * label_count_stride + c] += w
-                self.weighted_n_node_samples += w
+
+            self.weighted_n_node_samples += w
 
         # Reset to pos=start
         self.reset()
@@ -617,7 +618,8 @@ cdef class RegressionCriterion(Criterion):
                 y_ik = y[i * y_stride + k]
                 sq_sum_total[k] += w * y_ik * y_ik
                 mean_total[k] += w * y_ik
-                self.weighted_n_node_samples += w
+
+            self.weighted_n_node_samples += w
 
         for k from 0 <= k < n_outputs:
             mean_total[k] /= self.weighted_n_node_samples
