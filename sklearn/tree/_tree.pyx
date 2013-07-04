@@ -1097,9 +1097,9 @@ cdef class RandomSplitter(Splitter):
             for p from start < p < end:
                 current_feature_value = X[samples[p], current_feature]
 
-                if current_feature < min_feature_value:
+                if current_feature_value < min_feature_value:
                     min_feature_value = current_feature_value
-                elif current_feature > max_feature_value:
+                elif current_feature_value > max_feature_value:
                     max_feature_value = current_feature_value
 
             if min_feature_value == max_feature_value:
