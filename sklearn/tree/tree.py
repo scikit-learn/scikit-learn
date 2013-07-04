@@ -160,7 +160,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Check parameters
-        max_depth = np.inf if self.max_depth is None else self.max_depth
+        max_depth = (2**31)-1 if self.max_depth is None else self.max_depth
 
         if isinstance(self.max_features, six.string_types):
             if self.max_features == "auto":
@@ -226,7 +226,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                                   random_state)
 
         self.tree_ = _tree.Tree(self.n_features_, self.n_classes_,
-                                self.n_outputs_, self.splitter, max_depth,
+                                self.n_outputs_, self.splitter_, max_depth,
                                 min_samples_split, self.min_samples_leaf,
                                 random_state)
 

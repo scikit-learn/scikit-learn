@@ -967,7 +967,7 @@ cdef class BestSplitter(Splitter):
         # Adapted from http://alienryderflex.com/quicksort/
         cdef SIZE_t pivot
         cdef DTYPE_t pivot_value
-        cdef SIZE_t begin[64]
+        cdef SIZE_t begin[64] # TODO ensure it nevers fails
         cdef SIZE_t end[64]
         cdef SIZE_t i = 0
         cdef SIZE_t L

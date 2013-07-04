@@ -350,10 +350,6 @@ def test_error():
                   X, y)
 
     assert_raises(ValueError,
-                  tree.DecisionTreeClassifier(min_density=2.0).fit,
-                  X, y)
-
-    assert_raises(ValueError,
                   tree.DecisionTreeClassifier(max_features=42).fit,
                   X, y)
 
@@ -395,16 +391,6 @@ def test_error():
     clf = tree.DecisionTreeClassifier()
     clf.fit(X, y)
     assert_raises(ValueError, clf.predict, Xt)
-
-    # wrong length of sample mask
-    clf = tree.DecisionTreeClassifier()
-    sample_mask = np.array([1])
-    assert_raises(ValueError, clf.fit, X, y, sample_mask=sample_mask)
-
-    # wrong length of X_argsorted
-    clf = tree.DecisionTreeClassifier()
-    X_argsorted = np.array([1])
-    assert_raises(ValueError, clf.fit, X, y, X_argsorted=X_argsorted)
 
 
 def test_min_samples_leaf():
@@ -503,30 +489,6 @@ def test_multioutput():
     y_hat = clf.fit(X, y).predict(T)
     assert_almost_equal(y_hat, y_true)
     assert_equal(y_hat.shape, (4, 2))
-
-
-def test_sample_mask():
-    """Test sample_mask argument. """
-    # test list sample_mask
-    clf = tree.DecisionTreeClassifier()
-    sample_mask = [1] * len(X)
-    clf.fit(X, y, sample_mask=sample_mask)
-    assert_array_equal(clf.predict(T), true_result)
-
-    # test different dtype
-    clf = tree.DecisionTreeClassifier()
-    sample_mask = np.ones((len(X),), dtype=np.int32)
-    clf.fit(X, y, sample_mask=sample_mask)
-    assert_array_equal(clf.predict(T), true_result)
-
-
-def test_X_argsorted():
-    """Test X_argsorted argument. """
-    # test X_argsorted with different layout and dtype
-    clf = tree.DecisionTreeClassifier()
-    X_argsorted = np.argsort(np.array(X).T, axis=1).T
-    clf.fit(X, y, X_argsorted=X_argsorted)
-    assert_array_equal(clf.predict(T), true_result)
 
 
 def test_classes_shape():
