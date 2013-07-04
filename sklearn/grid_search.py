@@ -446,12 +446,9 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                     "should have a 'score' method. The estimator %s "
                     "does not." % self.estimator)
 
-    def _fit(self, X, y, parameter_iterable, **params):
+    def _fit(self, X, y, parameter_iterable):
         """Actual fitting,  performing the search over parameters."""
 
-        if params:
-            warnings.warn("Passing additional parameters to GridSearchCV "
-                          "is ignored! The option will be removed in 0.15.")
         estimator = self.estimator
         cv = self.cv
 
@@ -712,6 +709,10 @@ class GridSearchCV(BaseSearchCV):
             None for unsupervised learning.
 
         """
+        if params:
+            warnings.warn("Additional parameters to GridSearchCV are ignored!"
+                          " The params argument will be removed in 0.15.",
+                          DeprecationWarning)
         return self._fit(X, y, ParameterGrid(self.param_grid), **params)
 
 
@@ -851,12 +852,11 @@ class RandomizedSearchCV(BaseSearchCV):
             estimator, scoring, loss_func, score_func, fit_params, n_jobs, iid,
             refit, cv, verbose, pre_dispatch)
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None):
         """Run fit on the estimator with randomly drawn parameters.
 
         Parameters
         ----------
-
         X: array-like, shape = [n_samples, n_features]
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
