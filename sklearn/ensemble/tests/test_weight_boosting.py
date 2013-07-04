@@ -45,7 +45,7 @@ def test_classification_toy():
         clf = AdaBoostClassifier(algorithm=alg)
         clf.fit(X, y_class)
         assert_array_equal(clf.predict(T), y_t_class)
-        assert_array_equal(np.unique(y_t_class), clf.classes_)
+        assert_array_equal(np.unique(np.asarray(y_t_class)), clf.classes_)
         assert_equal(clf.predict_proba(T).shape, (len(T), 2))
         assert_equal(clf.decision_function(T).shape, (len(T),))
 
