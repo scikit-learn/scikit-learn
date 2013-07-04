@@ -402,45 +402,40 @@ def test_min_samples_leaf():
     y = iris.target
 
     for tree_class in [tree.DecisionTreeClassifier, tree.ExtraTreeClassifier]:
-        print tree_class
         clf = tree_class(min_samples_leaf=5).fit(X, y)
-
         out = clf.tree_.apply(X)
-        print out
         node_counts = np.bincount(out)
         leaf_count = node_counts[node_counts != 0]  # drop inner nodes
-
-        print leaf_count
 
         assert np.min(leaf_count) >= 5
 
 
-# def test_pickle():
-#     import pickle
+def test_pickle():
+    import pickle
 
-#     # classification
-#     obj = tree.DecisionTreeClassifier()
-#     obj.fit(iris.data, iris.target)
-#     score = obj.score(iris.data, iris.target)
-#     s = pickle.dumps(obj)
+    # classification
+    obj = tree.DecisionTreeClassifier()
+    obj.fit(iris.data, iris.target)
+    score = obj.score(iris.data, iris.target)
+    s = pickle.dumps(obj)
 
-#     obj2 = pickle.loads(s)
-#     assert_equal(type(obj2), obj.__class__)
-#     score2 = obj2.score(iris.data, iris.target)
-#     assert score == score2, "Failed to generate same score " + \
-#         " after pickling (classification) "
+    obj2 = pickle.loads(s)
+    assert_equal(type(obj2), obj.__class__)
+    score2 = obj2.score(iris.data, iris.target)
+    assert score == score2, "Failed to generate same score " + \
+        " after pickling (classification) "
 
-#     # regression
-#     obj = tree.DecisionTreeRegressor()
-#     obj.fit(boston.data, boston.target)
-#     score = obj.score(boston.data, boston.target)
-#     s = pickle.dumps(obj)
+    # regression
+    obj = tree.DecisionTreeRegressor()
+    obj.fit(boston.data, boston.target)
+    score = obj.score(boston.data, boston.target)
+    s = pickle.dumps(obj)
 
-#     obj2 = pickle.loads(s)
-#     assert_equal(type(obj2), obj.__class__)
-#     score2 = obj2.score(boston.data, boston.target)
-#     assert score == score2, "Failed to generate same score " + \
-#         " after pickling (regression) "
+    obj2 = pickle.loads(s)
+    assert_equal(type(obj2), obj.__class__)
+    score2 = obj2.score(boston.data, boston.target)
+    assert score == score2, "Failed to generate same score " + \
+        " after pickling (regression) "
 
 
 def test_multioutput():
