@@ -133,7 +133,7 @@ class Autoencoder(BaseEstimator, TransformerMixin):
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> model = SAE(n_hidden=10)
     >>> model.fit(X)
-    SAE(activation_func='sigmoid', alpha=0.0001, batch_size=1000, beta=3,
+    Autoencoder(activation_func='sigmoid', alpha=0.0001, batch_size=1000, beta=3,
   learning_rate=0.0001, max_iter=20, n_hidden=10,
   optimization_method='l-bfgs-b', random_state=None, sparsity_param=0.01,
   tol=1e-05, verbose=False)
