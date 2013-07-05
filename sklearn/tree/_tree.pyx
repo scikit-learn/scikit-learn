@@ -1004,7 +1004,7 @@ cdef class BestSplitter(Splitter):
                          SIZE_t* samples, SIZE_t length):
         """In-place sorting of samples[start:end] using
           X[sample[i], current_feature] as key."""
-        # Adapted from http://alienryderflex.com/quicksort/
+        # Partly adapted from http://alienryderflex.com/quicksort/
         cdef SIZE_t pivot
         cdef DTYPE_t pivot_value
         cdef SIZE_t begin[64]
@@ -1497,20 +1497,20 @@ cdef class Tree:
                     stack_capacity *= 2
                     stack = <SIZE_t*> realloc(stack, stack_capacity * sizeof(SIZE_t))
 
-                # Stack left child
-                stack[stack_n_values] = start
-                stack[stack_n_values + 1] = pos
-                stack[stack_n_values + 2] = depth + 1
-                stack[stack_n_values + 3] = node_id
-                stack[stack_n_values + 4] = 1
-                stack_n_values += 5
-
                 # Stack right child
                 stack[stack_n_values] = pos
                 stack[stack_n_values + 1] = end
                 stack[stack_n_values + 2] = depth + 1
                 stack[stack_n_values + 3] = node_id
                 stack[stack_n_values + 4] = 0
+                stack_n_values += 5
+
+                # Stack left child
+                stack[stack_n_values] = start
+                stack[stack_n_values + 1] = pos
+                stack[stack_n_values + 2] = depth + 1
+                stack[stack_n_values + 3] = node_id
+                stack[stack_n_values + 4] = 1
                 stack_n_values += 5
 
         self.resize(self.node_count)

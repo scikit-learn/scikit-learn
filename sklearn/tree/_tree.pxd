@@ -54,7 +54,7 @@ cdef class Criterion:
 # =============================================================================
 cdef class Splitter:
     # Internal structures
-    cdef Criterion criterion             # Impurity criterion
+    cdef public Criterion criterion      # Impurity criterion
     cdef public SIZE_t max_features      # Number of features to test
     cdef public SIZE_t min_samples_leaf  # Min samples in a leaf
     cdef object random_state             # Random state

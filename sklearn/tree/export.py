@@ -2,12 +2,8 @@
 This module defines export functions for decision trees.
 """
 
-# Authors: Brian Holt,
-#          Peter Prettenhofer,
-#          Satrajit Ghosh,
-#          Gilles Louppe,
-#          Noel Dawe
-# License: BSD 3 clause
+# Author: Gilles Louppe, Peter Prettenhofer, Brian Holt, Noel Dawe, Satrajit Gosh
+# Licence: BSD 3 clause
 
 from ..externals import six
 from . import _tree
@@ -66,11 +62,11 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
         if tree.n_outputs == 1:
             value = value[0, :]
 
-        if isinstance(tree.criterion, _tree.Gini):
+        if isinstance(tree.splitter.criterion, _tree.Gini):
             criterion = "gini"
-        elif isinstance(tree.criterion, _tree.Entropy):
+        elif isinstance(tree.splitter.criterion, _tree.Entropy):
             criterion = "entropy"
-        elif isinstance(tree.criterion, _tree.MSE):
+        elif isinstance(tree.splitter.criterion, _tree.MSE):
             criterion = "mse"
         else:
             criterion = "impurity"
@@ -78,8 +74,8 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
         if tree.children_left[node_id] == _tree.TREE_LEAF:
             return "%s = %.4f\\nsamples = %s\\nvalue = %s" \
                    % (criterion,
-                      tree.init_error[node_id],
-                      tree.n_samples[node_id],
+                      tree.impurity[node_id],
+                      tree.n_node_samples[node_id],
                       value)
         else:
             if feature_names is not None:
@@ -87,13 +83,12 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
             else:
                 feature = "X[%s]" % tree.feature[node_id]
 
-            return "%s <= %.4f\\n%s = %s\\nsamples = %s\\nvalue = %s" \
+            return "%s <= %.4f\\n%s = %s\\nsamples = %s" \
                    % (feature,
                       tree.threshold[node_id],
                       criterion,
-                      tree.init_error[node_id],
-                      tree.n_samples[node_id],
-                      value)
+                      tree.impurity[node_id],
+                      tree.n_node_samples[node_id])
 
     def recurse(tree, node_id, parent=None, depth=0):
         if node_id == _tree.TREE_LEAF:
