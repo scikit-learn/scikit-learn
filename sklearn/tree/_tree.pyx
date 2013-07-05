@@ -9,7 +9,7 @@
 # TODO: http://docs.cython.org/src/tutorial/profiling_tutorial.html
 # TODO: use memory views instead of np.ndarrays
 # TODO: handle negative weights
-# TODO: feature importances
+# TODO: allow splitter objects
 
 
 from libc.stdlib cimport calloc, free, malloc, realloc
@@ -1621,9 +1621,9 @@ cdef class Tree:
                 n_right = self.n_node_samples[self.children_right[node]]
 
                 importances[self.feature[node]] += \
-                    n_node_samples * (self.impurity[node]
-                        - 1. * n_left / n_node_samples * self.impurity[self.children_left[node]]
-                        - 1. * n_right / n_node_samples * self.impurity[self.children_right[node]])
+                    n_node_samples * self.impurity[node] \
+                        - n_left * self.impurity[self.children_left[node]] \
+                        - n_right * self.impurity[self.children_right[node]]
 
         cdef double normalizer = np.sum(importances)
 
