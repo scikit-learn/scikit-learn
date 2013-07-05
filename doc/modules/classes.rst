@@ -865,6 +865,8 @@ Pairwise metrics
    neighbors.KNeighborsRegressor
    neighbors.RadiusNeighborsRegressor
    neighbors.BallTree
+   neighbors.KDTree
+   neighbors.DistanceMetric
    neighbors.NearestCentroid
 
 .. autosummary::

@@ -5,6 +5,7 @@ algorithm.
 
 from .ball_tree import BallTree
 from .kd_tree import KDTree
+from .dist_metrics import DistanceMetric
 from .graph import kneighbors_graph, radius_neighbors_graph
 from .unsupervised import NearestNeighbors
 from .classification import KNeighborsClassifier, RadiusNeighborsClassifier

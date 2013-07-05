@@ -58,7 +58,7 @@ class KernelDensity(BaseEstimator):
         metric.  For more information, see the documentation of
         :class:`BallTree` or :class:`KDTree`.
     """
-    def __init__(self, bandwidth, algorithm='auto',
+    def __init__(self, bandwidth=1.0, algorithm='auto',
                  kernel='gaussian', metric="euclidean", atol=0, rtol=0,
                  breadth_first=True, leaf_size=40, metric_params=None):
         self.algorithm = algorithm
@@ -163,7 +163,7 @@ class KernelDensity(BaseEstimator):
         logprob : array_like, shape (n_samples,)
             Log probabilities of each data point in X
         """
-        return np.sum(np.log(self.eval(X)))
+        return np.sum(self.eval(X))
         
     def sample(self, n_samples=1, random_state=None):
         """Generate random samples from the model.

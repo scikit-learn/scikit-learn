@@ -29,12 +29,14 @@ learning methods, since they simply "remember" all of its training data
 
 Despite its simplicity, nearest neighbors has been successful in a
 large number of classification and regression problems, including
-handwritten digits or satellite image scenes. It is often successful
-in classification situations where the decision boundary is very irregular.
+handwritten digits or satellite image scenes. Being a non-parametric method,
+It is often successful in classification situations where the decision
+boundary is very irregular.
 
 The classes in :mod:`sklearn.neighbors` can handle either Numpy arrays or
-`scipy.sparse` matrices as input.  Arbitrary Minkowski metrics are supported
-for searches.
+`scipy.sparse` matrices as input.  For dense matrices, a large number of
+possible distance metrics are supported.  For sparse matrices, arbitrary
+Minkowski metrics are supported for searches.
 
 
 Unsupervised Nearest Neighbors
@@ -57,6 +59,74 @@ of each option, see `Nearest Neighbor Algorithms`_.
         neighbors, neighbor `k+1` and `k`, have identical distances but
         but different labels, the results will depend on the ordering of the
         training data.
+
+Finding the Nearest Neighbors
+-----------------------------
+For the simple task of finding the nearest neighbors between two sets of
+data, the unsupervised algorithms within :mod:`sklearn.neighbors` can be
+used:
+
+    >>> from sklearn.neighbors import NearestNeighbors
+    >>> import numpy as np
+    >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
+    >>> nbrs = NearestNeighbors(n_neighbors=2, algorithm='ball_tree')
+    >>> nbrs.fit(X)
+    >>> distances, indices = nbrs.kneighbors(X)
+    >>> indices
+    array([[0, 1],
+           [1, 0],
+           [2, 1],
+           [3, 4],
+           [4, 3],
+           [5, 4]])
+    >>> distances
+    array([[ 0.        ,  1.        ],
+           [ 0.        ,  1.        ],
+	   [ 0.        ,  1.41421356],
+	   [ 0.        ,  1.        ],
+	   [ 0.        ,  1.        ],
+	   [ 0.        ,  1.41421356]])
+
+Because the query set matches the training set, the nearest neighbor of each
+point is the point itself, at a distance of zero.
+
+It is also possible to efficiently produce a sparse graph showing the
+connections between neighboring points:
+
+    >>> nbrs.kneighbors_graph(X).toarray()
+    array([[ 1.,  1.,  0.,  0.,  0.,  0.],
+           [ 1.,  1.,  0.,  0.,  0.,  0.],
+	   [ 0.,  1.,  1.,  0.,  0.,  0.],
+	   [ 0.,  0.,  0.,  1.,  1.,  0.],
+	   [ 0.,  0.,  0.,  1.,  1.,  0.],
+	   [ 0.,  0.,  0.,  0.,  1.,  1.]])
+
+Our dataset is structured such that points nearby in index order are nearby
+in parameter space, leading to an approximately block-diagonal matrix of
+$K$-nearest neighbors.
+
+Alternatively, one can use the :class:`KDTree` or :class:`BallTree` classes
+directly to find nearest neighbors.  This is the functionality wrapped by
+the :class:`NearestNeighbors` class used above.  The Ball Tree and KD Tree
+have the same interface; we'll show an example of using the KD Tree here:
+
+    >>> from sklearn.neighbors import KDTree
+    >>> import numpy as np
+    >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
+    >>> kdt = KDTree(X, leaf_size=30, metric='euclidean')
+    >>> kdt.query(X, k=2, return_distance=False)
+    array([[0, 1],
+           [1, 0],
+           [2, 1],
+           [3, 4],
+           [4, 3],
+           [5, 4]])
+
+Refer to the :class:`KDTree` and :class:`BallTree` class documentation
+for more information on the options available for neighbors searches,
+including specification of query modes, of various distance metrics, etc.
+For a list of available metrics, see the documentation of the
+:class:`DistanceMetric` class.
 
 .. _classification:
 
@@ -198,7 +268,7 @@ improvement over brute-force for large :math:`N`.
 An early approach to taking advantage of this aggregate information was
 the *KD tree* data structure (short for *K-dimensional tree*), which
 generalizes two-dimensional *Quad-trees* and 3-dimensional *Oct-trees*
-to an arbitrary number of dimensions.  The KD tree is a tree
+to an arbitrary number of dimensions.  The KD tree is a binary tree
 structure which recursively partitions the parameter space along the data
 axes, dividing it into nested orthotopic regions into which data points
 are filed.  The construction of a KD tree is very fast: because partitioning
@@ -230,8 +300,8 @@ data structure was developed.  Where KD trees partition data along
 Cartesian axes, ball trees partition data in a series of nesting
 hyper-spheres.  This makes tree construction more costly than that of the
 KD tree, but
-results in a data structure which allows for efficient neighbors searches
-even in very high dimensions.
+results in a data structure which can be very efficient on highly-structured
+data, even in very high dimensions.
 
 A ball tree recursively divides the data into
 nodes defined by a centroid :math:`C` and radius :math:`r`, such that each
@@ -244,8 +314,10 @@ is reduced through use of the *triangle inequality*:
 With this setup, a single distance calculation between a test point and
 the centroid is sufficient to determine a lower and upper bound on the
 distance to all points within the node.
-Because of the spherical geometry of the ball tree nodes, its performance
-does not degrade at high dimensions.  In scikit-learn, ball-tree-based
+Because of the spherical geometry of the ball tree nodes, it can out-perform
+a *KD-tree* in high dimensions, though the actual performance is highly
+dependent on the structure of the training data.
+In scikit-learn, ball-tree-based
 neighbors searches are specified using the keyword ``algorithm = 'ball_tree'``,
 and are computed using the class :class:`sklearn.neighbors.BallTree`.
 Alternatively, the user can work with the :class:`BallTree` class directly.
@@ -413,3 +485,80 @@ the model from 0.81 to 0.82.
   * :ref:`example_neighbors_plot_nearest_centroid.py`: an example of
     classification using nearest centroid with different shrink thresholds.
 
+
+Kernel Density Estimation
+=========================
+Nearest neighbors queries form the basis of a popular algorithm for estimating
+the density of points in a parameter space: Kernel Density Estimation.
+Given a positive kernel $K(x)$ and a bandwidth $h$, the kernel density
+estimate at a point $y$ within a group of points :math:`x_i; i=1\cdots N`
+is:
+
+.. math:: \rho_K(y) = \sum_{i=1}^N K((y - x) / h)
+
+The bandwidth here acts as a smoothing parameter, controlling the tradeoff
+between bias and variance in the result.  A large bandwidth leads to a very
+smooth (i.e. high-bias) density distribution.  A small bandwidth leads
+to an unsmooth (i.e. high-variance) density distribution.
+
+The scikit-learn kernel density estimator can be used as follows:
+
+   >>> from sklearn.neighbors.kde import KernelDensity
+   >>> import numpy as np
+   >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
+   >>> kde = KernelDensity(kernel='gaussian', bandwidth=0.2).fit(X)
+   >>> kde.eval(X)
+   array([-0.41075698, -0.41075698, -0.41076071, -0.41075698, -0.41075698,
+          -0.41076071])
+
+In practice, the kernel :math:`K` can be any symmetric positive function which
+decreases as its argument gets larger. The often-used Gaussian kernel is
+optimal from a maximum entropy standpoint, but other kernels are used as
+well.  The scikit-learn kernel density estimator implements the following
+kernels:
+
+* Gaussian kernel (``kernel = 'gaussian'``)
+  
+  ..math:: K(x; h) \propto \exp(- \frac{x^2}{2h^2} )
+
+* Tophat kernel (``kernel = 'tophat'``)
+
+  ..math:: K(x; h) \propto 1 \mathrm{if} x < h
+
+* Epanechnikov kernel (``kernel = 'epanechnikov'``)
+  
+  ..math:: K(x; h) \propto 1 - \frac{x^2}{h^2}
+
+* Exponential kernel (``kernel = 'exponential'``)
+
+  ..math:: K(x; h) \propto \exp(-x/h)
+
+* Linear kernel (``kernel = 'linear'``)
+
+  ..math:: K(x; h) \propto 1 - dist/h \mathrm{if} x < h
+
+* Cosine kernel (``kernel = 'cosine'``)
+
+  ..math:: K(x; h) \propto \cos(\frac{\pi x}{2h}) \mathrm{if} x < h
+
+
+One potential application of kernel density estimation is to learn a
+generative model of a dataset, and to efficiently draw new samples from
+this generative model.  Here is an example of using this process to
+create a new set of hand-written digits, using a Gaussian kernel learned
+on a PCA projection of the data:
+
+.. |kernel_density| image:: ../auto_examples/neighbors/images/plot_kde_1.png
+   :target: ../auto_examples/neighbors/plot_kde.html
+   :scale: 80
+
+.. centered:: |kernel_density|
+
+The "new" data consists of linear combinations of the input data, with weights
+probabilistically drawn given the KDE model.
+
+.. topic:: Examples:
+
+  * :ref:`example_neighbors_plot_kde.py`: an example of using Kernel Density
+    estimation to learn a generative model of the hand-written digits data,
+    and drawing new samples from this model.
