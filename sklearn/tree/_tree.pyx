@@ -16,6 +16,7 @@ from libc.math cimport log
 
 import numpy as np
 cimport numpy as np
+np.import_array()
 
 
 # =============================================================================
@@ -1274,6 +1275,17 @@ cdef class Tree:
         free(self.value)
         free(self.impurity)
         free(self.n_node_samples)
+
+    def __reduce__(self):
+        """Reduce re-implementation, for pickling."""
+        return (Tree, (self.n_features,
+                       sizet_ptr_to_ndarray(self.n_classes, self.n_outputs),
+                       self.n_outputs,
+                       self.splitter,
+                       self.max_depth,
+                       self.min_samples_split,
+                       self.min_samples_leaf,
+                       self.random_state), self.__getstate__())
 
     def __getstate__(self):
         """Getstate re-implementation, for pickling."""
