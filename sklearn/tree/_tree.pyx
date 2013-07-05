@@ -858,16 +858,16 @@ cdef class BestSplitter(Splitter):
         """Initialize the splitter."""
         Splitter.init(self, X, y, sample_weight)
 
-        # # Shuffle samples
-        # cdef SIZE_t* samples = self.samples
-        # cdef SIZE_t n_samples = self.n_samples
-        # cdef object random_state = self.random_state
-        # cdef SIZE_t n, i, j
+        # Shuffle samples
+        cdef SIZE_t* samples = self.samples
+        cdef SIZE_t n_samples = self.n_samples
+        cdef object random_state = self.random_state
+        cdef SIZE_t n, i, j
 
-        # for n from 0 <= n < n_samples:
-        #     i = n_samples - n - 1
-        #     j = random_state.randint(0, n_samples - n)
-        #     samples[i], samples[j] = samples[j], samples[i]
+        for n from 0 <= n < n_samples:
+            i = n_samples - n - 1
+            j = random_state.randint(0, n_samples - n)
+            samples[i], samples[j] = samples[j], samples[i]
 
     cdef void find_split(self, SIZE_t start,
                                SIZE_t end,
@@ -1001,21 +1001,47 @@ cdef class BestSplitter(Splitter):
         cdef DTYPE_t pivot_value
         cdef SIZE_t begin[64]
         cdef SIZE_t end[64]
-        cdef SIZE_t i = 0
-        cdef SIZE_t L
+        cdef SIZE_t top = 0
+
+        cdef SIZE_t i, j, insert    # For Insertion-sort
+        cdef DTYPE_t insert_value
+
+        cdef SIZE_t L               # For Quicksort
         cdef SIZE_t R
+        cdef SIZE_t M
 
         begin[0] = 0
         end[0] = length
 
-        while i >= 0:
-            L = begin[i]
-            R = end[i] - 1
+        while top >= 0:
+            L = begin[top]
+            R = end[top] - 1
 
-            # TODO: switch to Insertion Sort if R-L <= 7
+            if R - L < 7:                                     # Insertion-sort
+                for i from L < i <= R:
+                    insert = samples[i]
+                    insert_value = X[insert, current_feature]
 
-            if L < R:
-                pivot = samples[L] # TODO: pick a better pivot
+                    j = i - 1
+                    while j >= L and X[samples[j], current_feature] > insert_value:
+                        samples[j + 1] = samples[j]
+                        j -= 1
+
+                    samples[j + 1] = insert
+
+                top -= 1
+
+            elif L < R:                                       # Quicksort
+                # Choose a pivot the median of L, M and R
+                M = (L+R) >> 1
+                if X[samples[L], current_feature] > X[samples[R], current_feature]:
+                    samples[L], samples[R] = samples[R], samples[L]
+                if X[samples[M], current_feature] > X[samples[R], current_feature]:
+                    samples[M], samples[R] = samples[R], samples[M]
+                if X[samples[L], current_feature] < X[samples[M], current_feature]:
+                    samples[L], samples[M] = samples[M], samples[L]
+
+                pivot = samples[L]
                 pivot_value = X[pivot, current_feature]
 
                 while L < R:
@@ -1032,17 +1058,18 @@ cdef class BestSplitter(Splitter):
                         R -= 1
 
                 samples[L] = pivot
-                begin[i + 1] = L + 1
-                end[i + 1] = end[i]
-                end[i] = L
-                i += 1
+                begin[top + 1] = L + 1
+                end[top + 1] = end[top]
+                # Keep begin[top]
+                end[top] = L
+                top += 1
 
-                if (end[i] - begin[i]) > (end[i-1] - begin[i-1]):
-                    begin[i], begin[i-1] = begin[i-1], begin[i]
-                    end[i], end[i-1] = end[i-1], end[i]
+                if (end[top] - begin[top]) > (end[top-1] - begin[top-1]):
+                    begin[top], begin[top-1] = begin[top-1], begin[top]
+                    end[top], end[top-1] = end[top-1], end[top]
 
             else:
-                i -= 1
+                top -= 1
 
 
 cdef class RandomSplitter(Splitter):
@@ -1576,6 +1603,35 @@ cdef class Tree:
             out[i] = node_id
 
         return out
+
+    cpdef compute_feature_importances(self):
+        """Computes the importance of each feature (aka variable)."""
+        cdef SIZE_t n_node_samples
+        cdef SIZE_t n_left
+        cdef SIZE_t n_right
+        cdef SIZE_t node
+
+        cdef np.ndarray[np.float64_t, ndim=1] importances
+        importances = np.zeros((self.n_features,))
+
+        for node from 0 <= node < self.node_count:
+            if self.children_left[node] != _TREE_LEAF: # and self.children_right[node] != _TREE_LEAF:
+                n_node_samples = self.n_node_samples[node]
+                n_left = self.n_node_samples[self.children_left[node]]
+                n_right = self.n_node_samples[self.children_right[node]]
+
+                importances[self.feature[node]] += \
+                    n_node_samples * (self.impurity[node]
+                        - 1. * n_left / n_node_samples * self.impurity[self.children_left[node]]
+                        - 1. * n_right / n_node_samples * self.impurity[self.children_right[node]])
+
+        cdef double normalizer = np.sum(importances)
+
+        if normalizer > 0.0:
+            # Avoid dividing by zero (e.g., when root is pure)
+            importances /= normalizer
+
+        return importances
 
 
 # =============================================================================
