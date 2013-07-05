@@ -810,12 +810,20 @@ cdef class Splitter:
         cdef SIZE_t n_samples = X.shape[0]
         cdef SIZE_t* samples = <SIZE_t*> malloc(n_samples * sizeof(SIZE_t))
 
-        cdef SIZE_t i
+        # cdef SIZE_t i
+        # for i from 0 <= i < n_samples:
+        #     samples[i] = i
+
+        cdef SIZE_t i, j
+        j = 0
+
         for i from 0 <= i < n_samples:
-            samples[i] = i
+            if sample_weight == NULL or sample_weight[i] != 0.0: # Discard samples with weight 0
+                samples[j] = i
+                j += 1
 
         self.samples = samples
-        self.n_samples = n_samples
+        self.n_samples = j
 
         cdef SIZE_t n_features = X.shape[1]
         cdef SIZE_t* features = <SIZE_t*> malloc(n_features * sizeof(SIZE_t))
