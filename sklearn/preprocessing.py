@@ -637,7 +637,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
         return binarize(X, threshold=self.threshold, copy=copy)
 
 
-def _transform_selected(X, transform, selected="all"):
+def _transform_selected(X, transform, selected="all", copy=True):
     """Apply a transform function to portion of selected features
 
     Parameters
@@ -648,8 +648,12 @@ def _transform_selected(X, transform, selected="all"):
     transform : callable
         A callable transform(X) -> X_transformed
 
+    copy : boolean, optional
+        Copy X even if it could be avoided.
+
     selected: "all" or array of indices or mask
-        Specify what features to apply the transform to.
+        Specify which features to apply the transform to. May not be a mask
+        for sparse X.
 
     Returns
     -------
@@ -657,31 +661,33 @@ def _transform_selected(X, transform, selected="all"):
     """
     if selected == "all":
         return transform(X)
-    elif len(selected) == 0:
+
+    X = atleast2d_or_csc(X, copy=copy)
+
+    if len(selected) == 0:
         return X
+
+    n_features = X.shape[1]
+    ind = np.arange(n_features)
+    sel = np.zeros(n_features, dtype=bool)
+    sel[np.asarray(selected)] = True
+    not_sel = np.logical_not(sel)
+    n_selected = np.sum(sel)
+
+    if n_selected == 0:
+        # No features selected.
+        return X
+    elif n_selected == n_features:
+        # All features selected.
+        return transform(X)
     else:
-        X = atleast2d_or_csc(X)
-        n_features = X.shape[1]
-        ind = np.arange(n_features)
-        sel = np.zeros(n_features, dtype=bool)
-        sel[np.array(selected)] = True
-        not_sel = np.logical_not(sel)
-        n_selected = np.sum(sel)
+        X_sel = transform(X[:, ind[sel]])
+        X_not_sel = X[:, ind[not_sel]]
 
-        if n_selected == 0:
-            # No features selected.
-            return X
-        elif n_selected == n_features:
-            # All features selected.
-            return transform(X)
+        if sp.issparse(X_sel) or sp.issparse(X_not_sel):
+            return sp.hstack((X_sel, X_not_sel))
         else:
-            X_sel = transform(X[:, ind[sel]])
-            X_not_sel = X[:, ind[not_sel]]
-
-            if sp.issparse(X_sel) or sp.issparse(X_not_sel):
-                return sp.hstack((X_sel, X_not_sel))
-            else:
-                return np.hstack((X_sel, X_not_sel))
+            return np.hstack((X_sel, X_not_sel))
 
 
 class OneHotEncoder(BaseEstimator, TransformerMixin):
@@ -693,8 +699,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     feature. It is assumed that input features take on values in the range
     [0, n_values).
 
-    This encoding is needed for feeding categorical data to scikit-learn
-    estimators.
+    This encoding is needed for feeding categorical data to many scikit-learn
+    estimators, notably linear models and SVMs with the standard kernels.
 
     Parameters
     ----------
@@ -778,7 +784,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         return self
 
     def _fit_transform(self, X):
-        """Asssumes X contains only categorical features."""
+        """Assumes X contains only categorical features."""
         X = check_arrays(X, sparse_format='dense', dtype=np.int)[0]
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
@@ -826,7 +832,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         efficient. See fit for the parameters, transform for the return value.
         """
         return _transform_selected(X, self._fit_transform,
-                                   self.categorical_features)
+                                   self.categorical_features, copy=True)
 
     def _transform(self, X):
         """Asssumes X contains only categorical features."""
@@ -870,7 +876,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
             Transformed input.
         """
         return _transform_selected(X, self._transform,
-                                   self.categorical_features)
+                                   self.categorical_features, copy=True)
 
 
 class LabelEncoder(BaseEstimator, TransformerMixin):

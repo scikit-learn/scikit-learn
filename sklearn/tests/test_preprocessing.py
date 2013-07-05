@@ -613,23 +613,23 @@ def test_one_hot_encoder():
     assert_raises(ValueError, enc.transform, [[0], [-1]])
 
 
-def _check_transform_selected(X, Xexpected, sel):
+def _check_transform_selected(X, X_expected, sel):
     for M in (X, sp.csr_matrix(X)):
         Xtr = _transform_selected(M, Binarizer().transform, sel)
-        assert_array_equal(toarray(Xtr), Xexpected)
+        assert_array_equal(toarray(Xtr), X_expected)
 
 
 def test_transform_selected():
     X = [[3, 2, 1], [0, 1, 1]]
 
-    Xexpected = [[1, 2, 1], [0, 1, 1]]
-    _check_transform_selected(X, Xexpected, [0])
-    _check_transform_selected(X, Xexpected, [True, False, False])
+    X_expected = [[1, 2, 1], [0, 1, 1]]
+    _check_transform_selected(X, X_expected, [0])
+    _check_transform_selected(X, X_expected, [True, False, False])
 
-    Xexpected = [[1, 1, 1], [0, 1, 1]]
-    _check_transform_selected(X, Xexpected, [0, 1, 2])
-    _check_transform_selected(X, Xexpected, [True, True, True])
-    _check_transform_selected(X, Xexpected, "all")
+    X_expected = [[1, 1, 1], [0, 1, 1]]
+    _check_transform_selected(X, X_expected, [0, 1, 2])
+    _check_transform_selected(X, X_expected, [True, True, True])
+    _check_transform_selected(X, X_expected, "all")
 
     _check_transform_selected(X, X, [])
     _check_transform_selected(X, X, [False, False, False])
