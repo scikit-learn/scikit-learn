@@ -7,7 +7,6 @@
 # Licence: BSD 3 clause
 
 # TODO: http://docs.cython.org/src/tutorial/profiling_tutorial.html
-# TODO: use memory views instead of np.ndarrays
 # TODO: handle negative weights
 # TODO: allow splitter objects
 
@@ -1053,13 +1052,13 @@ cdef class BestSplitter(Splitter):
                 pivot_value = X[pivot, current_feature]
 
                 while L < R:
-                    while X[samples[R], current_feature] >= pivot_value and L < R:
+                    while L < R and X[samples[R], current_feature] >= pivot_value:
                         R -= 1
                     if L < R:
                         samples[L] = samples[R]
                         L += 1
 
-                    while X[samples[L], current_feature] <= pivot_value and L < R:
+                    while L < R and X[samples[L], current_feature] <= pivot_value:
                         L += 1
                     if L < R:
                         samples[R] = samples[L]
