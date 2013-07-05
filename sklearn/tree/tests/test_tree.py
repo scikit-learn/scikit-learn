@@ -144,10 +144,7 @@ def test_xor():
 
     clf = tree.ExtraTreeClassifier()
     clf.fit(X, y)
-    print clf.tree_
     assert_equal(clf.score(X, y), 1.0)
-
-
 
     clf = tree.ExtraTreeClassifier(max_features=1)
     clf.fit(X, y)
