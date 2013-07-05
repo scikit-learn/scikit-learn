@@ -8,6 +8,8 @@
 
 # TODO: http://docs.cython.org/src/tutorial/profiling_tutorial.html
 # TODO: use memory views instead of np.ndarrays
+# TODO: handle negative weights
+# TODO: feature importances
 
 
 from libc.stdlib cimport calloc, free, malloc, realloc
@@ -809,7 +811,6 @@ cdef class Splitter:
         cdef SIZE_t* samples = <SIZE_t*> malloc(n_samples * sizeof(SIZE_t))
 
         cdef SIZE_t i
-
         for i from 0 <= i < n_samples:
             samples[i] = i
 
@@ -825,7 +826,7 @@ cdef class Splitter:
         self.features = features
         self.n_features = n_features
 
-        # Initialize X, y, sample_weigth
+        # Initialize X, y, sample_weight
         self.X = X
         self.y = <DOUBLE_t*> y.data
         self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
@@ -857,16 +858,16 @@ cdef class BestSplitter(Splitter):
         """Initialize the splitter."""
         Splitter.init(self, X, y, sample_weight)
 
-        # Shuffle samples
-        cdef SIZE_t* samples = self.samples
-        cdef SIZE_t n_samples = self.n_samples
-        cdef object random_state = self.random_state
-        cdef SIZE_t n, i, j
+        # # Shuffle samples
+        # cdef SIZE_t* samples = self.samples
+        # cdef SIZE_t n_samples = self.n_samples
+        # cdef object random_state = self.random_state
+        # cdef SIZE_t n, i, j
 
-        for n from 0 <= n < n_samples:
-            i = n_samples - n - 1
-            j = random_state.randint(0, n_samples - n)
-            samples[i], samples[j] = samples[j], samples[i]
+        # for n from 0 <= n < n_samples:
+        #     i = n_samples - n - 1
+        #     j = random_state.randint(0, n_samples - n)
+        #     samples[i], samples[j] = samples[j], samples[i]
 
     cdef void find_split(self, SIZE_t start,
                                SIZE_t end,
@@ -886,6 +887,11 @@ cdef class BestSplitter(Splitter):
             pos[0] = end
             impurity[0] = node_impurity
             return
+
+        # # Break if negative number of samples
+        # if criterion.weighted_n_node_samples < 0.0:
+        #     raise ValueError("Attempting to find a split with a negative "
+        #                      "weighted number of samples.")
 
         # Find the best split
         cdef SIZE_t* features = self.features
@@ -1386,7 +1392,7 @@ cdef class Tree:
         if sample_weight is not None:
             if sample_weight.dtype != DOUBLE or not sample_weight.flags.contiguous:
                 sample_weight = np.asarray(sample_weight, dtype=DOUBLE, order="C")
-                sample_weight_ptr = <DOUBLE_t*> sample_weight.data
+            sample_weight_ptr = <DOUBLE_t*> sample_weight.data
 
         # Initial capacity
         cdef int init_capacity
@@ -1407,7 +1413,7 @@ cdef class Tree:
         cdef SIZE_t* stack = <SIZE_t*> malloc(stack_capacity * sizeof(SIZE_t))
 
         stack[0] = 0                    # start
-        stack[1] = X.shape[0]           # end
+        stack[1] = splitter.n_samples   # end
         stack[2] = 0                    # depth
         stack[3] = _TREE_UNDEFINED      # parent
         stack[4] = 0                    # is_left
@@ -1489,10 +1495,6 @@ cdef class Tree:
         if node_id >= self.capacity:
             self.resize()
 
-        if not is_leaf:
-            self.feature[node_id] = feature
-            self.threshold[node_id] = threshold
-
         self.impurity[node_id] = impurity
         self.n_node_samples[node_id] = n_node_samples
 
@@ -1502,9 +1504,16 @@ cdef class Tree:
             else:
                 self.children_right[parent] = node_id
 
-        if is_leaf:
+        if not is_leaf:
+            # children_left and children_right will be set later
+            self.feature[node_id] = feature
+            self.threshold[node_id] = threshold
+
+        else:
             self.children_left[node_id] = _TREE_LEAF
             self.children_right[node_id] = _TREE_LEAF
+            self.feature[node_id] = _TREE_UNDEFINED
+            self.threshold[node_id] = _TREE_UNDEFINED
 
         self.node_count += 1
 
