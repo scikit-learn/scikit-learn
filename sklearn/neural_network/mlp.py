@@ -281,7 +281,6 @@ class MLPClassifier(BaseEstimator, ClassifierMixin):
                 n_batches *
                 self.batch_size,
                 n_batches))
-        print n_samples
         # preallocate memory
         a_hidden = np.empty((self.batch_size, self.n_hidden))
         delta_h = np.empty((self.batch_size, self.n_hidden))
