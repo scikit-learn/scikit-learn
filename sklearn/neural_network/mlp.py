@@ -1,4 +1,4 @@
-"""Mulit-layer perceptron
+"""Multi-layer perceptron
 """
 
 # Author: Issam Laradji <issam.laradji@gmail.com>
@@ -6,31 +6,18 @@
 
 import numpy as np
 from scipy.linalg import norm
-from scipy.optimize import fmin_l_bfgs_b
 
+from sklearn.utils import gen_even_slices
+from sklearn.utils import shuffle
+from scipy.optimize import minimize
 from ..base import BaseEstimator, ClassifierMixin
 from ..preprocessing import LabelBinarizer
 from ..utils import atleast2d_or_csr, check_random_state
 from ..utils.extmath import logsumexp, safe_sparse_dot
+from itertools import cycle, izip
 
-
-def validate_grad(J, theta, n_slice):
-    """
-    (For debugging only, it will be removed later)
-    Validates the gradient  by comparing between
-    analytic and numerical gradient computation
-    """
-    numgrad = np.zeros(n_slice)
-    E = np.eye(np.size(theta))
-    epsilon = 1e-5
-    for i in range(20):
-        dtheta = E[:, i] * epsilon
-        numgrad[i] = (J(theta + dtheta) - J(theta - dtheta)) / epsilon / 2.0
-    return numgrad
 
 # TODO: Add more activiation functions
-
-
 def sigmoid(x):
     """
     Implements the sigmoid function.
@@ -142,7 +129,7 @@ class MLPClassifier(BaseEstimator, ClassifierMixin):
     activation: string, optional
         Activation function for the hidden layer; either "sigmoid" for
         1 / (1 + exp(x)), or "tanh" for the hyperbolic tangent.
-    _lambda : float, optional
+    alpha : float, optional
         L2 penalty (weight decay) parameter.
     batch_size : int, optional
         Size of minibatches in SGD optimizer.
@@ -167,11 +154,10 @@ class MLPClassifier(BaseEstimator, ClassifierMixin):
     """
 
     def __init__(
-        self, n_hidden, activation="sigmoid", l_bfgs=False,
-        _lambda=0, batch_size=100, learning_rate=.1,
-        max_iter=100, random_state=None,
+        self, n_hidden=100, activation="tanh", output_func='softmax', loss='cross_entropy', optimization_method=None,
+        alpha=0.0, batch_size=100, learning_rate=0.1,
+        max_iter=170, shuffle_data=False, random_state=None,
             shuffle=True, tol=1e-5, verbose=False):
-        # TODO: Move these function initializations somewhere else
         activation_functions = {
             'tanh': tanh,
             'sigmoid': sigmoid
@@ -180,19 +166,27 @@ class MLPClassifier(BaseEstimator, ClassifierMixin):
             'tanh': d_tanh,
             'sigmoid': d_sigmoid
         }
-        # TODO: Loss functions
+        output_functions = {
+            'softmax': softmax
+        }
         self.activation = activation_functions[activation]
         self.derivative = derivative_functions[activation]
-        self.l_bfgs = l_bfgs
-        self._lambda = _lambda
+        self.output_func = output_functions[output_func]
+        self.loss = loss
+        self.optimization_method = optimization_method
+        self.alpha = alpha
         self.batch_size = batch_size
         self.learning_rate = learning_rate
         self.max_iter = max_iter
         self.n_hidden = n_hidden
+        self.shuffle_data = shuffle_data
         self.random_state = check_random_state(random_state)
         self.shuffle = shuffle
         self.tol = tol
         self.verbose = verbose
+        # check compatibility
+        if optimization_method == 'l-bfgs-b' and loss != 'square':
+            raise ValueError("'loss must be 'square' for 'l-bfgs-h''.")
 
     def _pack(self, W1, W2, b1, b2):
         """
@@ -225,9 +219,9 @@ class MLPClassifier(BaseEstimator, ClassifierMixin):
         """
         N = self.n_hidden * n_features
         N2 = n_classes * self.n_hidden
-        self.coef_hidden_ = np.reshape(theta[:N], (self.n_hidden, n_features))
+        self.coef_hidden_ = np.reshape(theta[:N], (n_features, self.n_hidden))
         self.coef_output_ = np.reshape(
-            theta[N:N2 + N], (n_classes, self.n_hidden))
+            theta[N:N2 + N], (self.n_hidden, n_classes))
         self.intercept_hidden_ = theta[N2:N2 + self.n_hidden]
         self.intercept_output_ = theta[N2 + N + self.n_hidden:]
 
@@ -249,47 +243,10 @@ class MLPClassifier(BaseEstimator, ClassifierMixin):
         """
         n_hidden = self.n_hidden
         rng = self.random_state
-        self.coef_hidden_ = rng.uniform(-1, 1, (n_hidden, n_features))
-        self.coef_output_ = rng.uniform(-1, 1, (n_classes, n_hidden))
+        self.coef_hidden_ = rng.uniform(-1, 1, (n_features, n_hidden))
+        self.coef_output_ = rng.uniform(-1, 1, (n_hidden, n_classes))
         self.intercept_hidden_ = rng.uniform(-1, 1, n_hidden)
         self.intercept_output_ = rng.uniform(-1, 1, n_classes)
-
-    def benchmark(self, X, Y, n_features, n_classes, n_samples):
-        """
-        (For debugging only, it will be removed later)
-        Showcases the performance of l_bfgs vs. naive backpropagation
-        """
-        import time
-        initial_theta = self._pack(
-            self.coef_hidden_,
-            self.coef_output_,
-            self.intercept_hidden_,
-            self.intercept_output_)
-        # validate gradient
-        print 'Analytically computed gradient'
-        print validate_grad(lambda x: self._cost_grad(X, Y, x,
-                                                      n_features, n_classes, n_samples)[
-                            0],
-                            initial_theta, 20)
-        print 'Numerically computed gradient'
-        print self._cost_grad(X, Y, initial_theta,
-                              n_features, n_classes,
-                              n_samples)[1][:20]
-        begin = time.time()
-        self.backprop_l_bfgs(X, Y, n_features, n_classes, n_samples)
-        print 'l_bfgs time:', time.time() - begin
-        # evaluate iterations
-        begin = time.time()
-        self._init_fit(n_features, n_classes)
-        prev_cost = 1000000
-        for i in xrange(self.max_iter):
-            cost = self.backprop_naive(X, Y, n_samples)[0]
-            if abs(cost - prev_cost) < self.tol:
-                print 'convergence reached'
-                break
-            prev_cost = cost
-        print 'naive time: ', time.time() - begin
-        print 'naive cost:', cost
 
     def fit(self, X, y):
         """
@@ -312,36 +269,44 @@ class MLPClassifier(BaseEstimator, ClassifierMixin):
         rng = check_random_state(self.random_state)
         self._lbin = LabelBinarizer()
         Y = self._lbin.fit_transform(y)
-        n_features = X.shape[1]
+        n_samples, n_features = X.shape
         n_classes = Y.shape[1]
-        n_samples = X.shape[0]
         self._init_fit(n_features, n_classes)
-        inds = np.arange(n_samples)
-        rng.shuffle(inds)
-        n_batches = int(np.ceil(len(inds) / float(self.batch_size)))
-        # Transpose improves performance (from 0.5 seconds to 0.05)
-        X = X.T
-        Y = Y.T
-        if self.l_bfgs:
-            self.backprop_l_bfgs(X, Y, n_features, n_classes, n_samples)
+        if self.shuffle_data:
+            X, Y = shuffle(X, Y, random_state=self.random_state)
+        self.batch_size = np.clip(self.batch_size, 0, n_samples)
+        n_batches = n_samples / self.batch_size
+        batch_slices = list(
+            gen_even_slices(
+                n_batches *
+                self.batch_size,
+                n_batches))
+        print n_samples
+        # preallocate memory
+        a_hidden = np.empty((self.batch_size, self.n_hidden))
+        delta_h = np.empty((self.batch_size, self.n_hidden))
+        a_output = np.empty((self.batch_size, n_classes))
+        delta_o = np.empty((self.batch_size, n_classes))
+        if self.optimization_method is None:
+            for i, batch_slice in izip(xrange(self.max_iter), cycle(batch_slices)):
+                self.backprop_naive(
+                    X[batch_slice],
+                    Y[batch_slice],
+                    self.batch_size,
+                    a_hidden,
+                    delta_h,
+                    a_output,
+                    delta_o)
         else:
-            prev_cost = 1000000
-            for i in xrange(self.max_iter):
-                for minibatch in xrange(n_batches):
-                    cost = self.backprop_naive(
-                        X[:, inds[minibatch::n_batches]],
-                        Y[:, inds[minibatch::n_batches]],
-                        n_samples)
-                # Check tolerance
-                if self.verbose:
-                    print("Iteration %d, cost = %.2f"
-                          % (i, cost))
-                if abs(cost - prev_cost) < self.tol:
-                    break
-                prev_cost = cost
+            self._backprop_optimizer(
+                X, Y, n_features, n_classes, n_samples, a_hidden,
+                delta_h,
+                a_output,
+                delta_o)
         return self
 
-    def backprop_l_bfgs(self, X, Y, n_features, n_classes, n_samples):
+    def _backprop_optimizer(
+            self, X, Y, n_features, n_classes, n_samples, a_hidden, delta_h, a_output, delta_o):
         """
         Applies the quasi-Newton optimization methods that uses a l_BFGS
         to train the weights
@@ -370,16 +335,25 @@ class MLPClassifier(BaseEstimator, ClassifierMixin):
             self.coef_output_,
             self.intercept_hidden_,
             self.intercept_output_)
-        options = {'maxfun': self.max_iter, 'disp': False, 'pgtol': self.tol}
-        optTheta, cost, d = \
-            fmin_l_bfgs_b(
-                lambda t: self._cost_grad(
-                    X, Y, t, n_features,
-                    n_classes, n_samples),
-                initial_theta, **options)
-        self._unpack(optTheta, n_features, n_classes)
+        res = minimize(
+            fun=self._cost_grad,
+            x0=initial_theta,
+            method=self.optimization_method,
+            options={
+                'maxiter': self.max_iter,
+                'disp': self.verbose},
+            jac=True,
+            args=(
+                X,
+                Y,
+                n_features,
+                n_classes,
+                n_samples,
+                a_hidden, delta_h, a_output, delta_o))
+        self._unpack(res.x, n_features, n_classes)
 
-    def _cost_grad(self, X, Y, theta, n_features, n_classes, n_samples):
+    def _cost_grad(self, theta, X, Y, n_features, n_classes,
+                   n_samples, a_hidden, delta_h, a_output, delta_o):
         """
         Computes the MLP cost  function ``J(W,b)``
         and the corresponding derivatives of J(W,b) with respect to the
@@ -405,15 +379,14 @@ class MLPClassifier(BaseEstimator, ClassifierMixin):
         grad: array-like, shape (size(W1)*size(W2)*size(b1)*size(b2))
 
         """
-        # Unpack theta to extract W1, W2, b1, b2
         self._unpack(theta, n_features, n_classes)
-        cost, W1grad, W2grad, b1grad, b2grad = self.backprop(X, Y, n_samples)
-        # Convert grad to vector form
-        # This is necessary for the fmin optimizer)
+        cost, W1grad, W2grad, b1grad, b2grad = self.backprop(
+            X, Y, n_samples, a_hidden, delta_h, a_output, delta_o)
         grad = self._pack(W1grad, W2grad, b1grad, b2grad)
         return cost, grad
 
-    def backprop_naive(self, X, Y, n_samples):
+    def backprop_naive(
+            self, X, Y, n_samples, a_hidden, delta_h, a_output, delta_o):
         """
         Updates the weights using the computed gradients
 
@@ -436,7 +409,8 @@ class MLPClassifier(BaseEstimator, ClassifierMixin):
             Number of samples
 
         """
-        cost, W1grad, W2grad, b1grad, b2grad = self.backprop(X, Y, n_samples)
+        cost, W1grad, W2grad, b1grad, b2grad = self.backprop(
+            X, Y, n_samples, a_hidden, delta_h, a_output, delta_o)
         # Update weights
         self.coef_hidden_ -= (self.learning_rate * W1grad)
         self.coef_output_ -= (self.learning_rate * W2grad)
@@ -445,7 +419,7 @@ class MLPClassifier(BaseEstimator, ClassifierMixin):
         # TODO: dynamically update learning rate
         return cost
 
-    def backprop(self, X, Y, n_samples):
+    def backprop(self, X, Y, n_samples, a_hidden, delta_h, a_output, delta_o):
         """
         Computes the MLP cost  function ``J(W,b)``
         and the corresponding derivatives of J(W,b) with respect to the
@@ -472,26 +446,34 @@ class MLPClassifier(BaseEstimator, ClassifierMixin):
 
         """
         # Forward propagate
-        a2 = self.activation(safe_sparse_dot(self.coef_hidden_, X) +
-                             self.intercept_hidden_[:, np.newaxis])
-        a3 = self.activation(safe_sparse_dot(self.coef_output_, a2) +
-                             self.intercept_output_[:, np.newaxis])
+        a_hidden[:] = self.activation(safe_sparse_dot(X, self.coef_hidden_) +
+                                      self.intercept_hidden_)
+        a_output[:] = self.output_func(safe_sparse_dot(a_hidden, self.coef_output_) +
+                                       self.intercept_output_)
         # Backward propagate
-        diff = Y - a3
-        delta3 = -diff * self.derivative(a3)
-        delta2 = np.dot(self.coef_output_.T, delta3) * self.derivative(a2)
+        diff = Y - a_output
+        if self.loss == 'square':
+            delta_o[:] = -diff * self.derivative(a_output)
+            delta_h[:] = np.dot(
+                delta_o,
+                self.coef_output_.T) * self.derivative(a_hidden)
+        elif self.loss == 'cross_entropy':
+            delta_o[:] = -diff
+            delta_h[:] = np.dot(delta_o, self.coef_output_.T)
         # Get cost and gradient
-        cost = np.trace(safe_sparse_dot(diff, diff.T)) / (2 * n_samples)
-        W1grad = safe_sparse_dot(delta2, X.T) / n_samples
-        W2grad = safe_sparse_dot(delta3, a2.T) / n_samples
-        b1grad = np.mean(delta2, 1)
-        b2grad = np.mean(delta3, 1)
+        cost = np.sum(np.einsum('ij,ji->i', diff, diff.T)) / (2 * n_samples)
+        W1grad = safe_sparse_dot(X.T, delta_h) / n_samples
+        W2grad = safe_sparse_dot(a_hidden.T, delta_o) / n_samples
+        b1grad = np.mean(delta_h, 0)
+        b2grad = np.mean(delta_o, 0)
         # Add regularization term to cost and gradient
-        cost += (self._lambda / 2) * \
-                (norm(self.coef_hidden_, 'fro') ** 2 +
-                 norm(self.coef_output_, 'fro') ** 2)
-        W1grad += (self._lambda * self.coef_hidden_)
-        W2grad += (self._lambda * self.coef_output_)
+        cost += (
+            0.5 * self.alpha) * (
+                np.sum(
+                    self.coef_hidden_ ** 2) + np.sum(
+                        self.coef_output_ ** 2))
+        W1grad += (self.alpha * self.coef_hidden_)
+        W2grad += (self.alpha * self.coef_output_)
         return cost, W1grad, W2grad, b1grad, b2grad
 
     def partial_fit(self, X, y, classes):
@@ -545,10 +527,10 @@ class MLPClassifier(BaseEstimator, ClassifierMixin):
         array, shape = [n_samples]
            Predicted target values per element in X.
         """
-        a2 = self.activation(safe_sparse_dot(X, self.coef_hidden_.T) +
-                             self.intercept_hidden_)
-        output = self.activation(safe_sparse_dot(a2, self.coef_output_.T) +
-                                 self.intercept_output_)
+        a_hidden = self.activation(safe_sparse_dot(X, self.coef_hidden_) +
+                                   self.intercept_hidden_)
+        output = self.output_func(safe_sparse_dot(a_hidden, self.coef_output_) +
+                                  self.intercept_output_)
         if output.shape[1] == 1:
             output = output.ravel()
         return output
