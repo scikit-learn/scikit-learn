@@ -12,7 +12,11 @@ import scipy.sparse as sp
 
 from .base import BaseEstimator, TransformerMixin
 from .externals.six import string_types
-from .utils import check_arrays, array2d, atleast2d_or_csr, safe_asarray
+from .utils import check_arrays
+from .utils import array2d
+from .utils import atleast2d_or_csr
+from .utils import atleast2d_or_csc
+from .utils import safe_asarray
 from .utils import warn_if_not_float
 from .utils.fixes import unique
 
@@ -35,6 +39,7 @@ __all__ = ['Binarizer',
            'LabelEncoder',
            'MinMaxScaler',
            'Normalizer',
+           'OneHotEncoder',
            'StandardScaler',
            'binarize',
            'normalize',
@@ -632,6 +637,53 @@ class Binarizer(BaseEstimator, TransformerMixin):
         return binarize(X, threshold=self.threshold, copy=copy)
 
 
+def _transform_selected(X, transform, selected="all"):
+    """Apply a transform function to portion of selected features
+
+    Parameters
+    ----------
+    X : array-like or sparse matrix, shape=(n_samples, n_features)
+        Dense array or sparse matrix.
+
+    transform : callable
+        A callable transform(X) -> X_transformed
+
+    selected: "all" or array of indices or mask
+        Specify what features to apply the transform to.
+
+    Returns
+    -------
+    X : array or sparse matrix, shape=(n_samples, n_features_new)
+    """
+    if selected == "all":
+        return transform(X)
+    elif len(selected) == 0:
+        return X
+    else:
+        X = atleast2d_or_csc(X)
+        n_features = X.shape[1]
+        ind = np.arange(n_features)
+        sel = np.zeros(n_features, dtype=bool)
+        sel[np.array(selected)] = True
+        not_sel = np.logical_not(sel)
+        n_selected = np.sum(sel)
+
+        if n_selected == 0:
+            # No features selected.
+            return X
+        elif n_selected == n_features:
+            # All features selected.
+            return transform(X)
+        else:
+            X_sel = transform(X[:, ind[sel]])
+            X_not_sel = X[:, ind[not_sel]]
+
+            if sp.issparse(X_sel) or sp.issparse(X_not_sel):
+                return sp.hstack((X_sel, X_not_sel))
+            else:
+                return np.hstack((X_sel, X_not_sel))
+
+
 class OneHotEncoder(BaseEstimator, TransformerMixin):
     """Encode categorical integer features using a one-hot aka one-of-K scheme.
 
@@ -646,11 +698,21 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    n_values : 'auto', int or array of int
+    n_values : 'auto', int or array of ints
         Number of values per feature.
-        'auto' : determine value range from training data.
-        int : maximum value for all features.
-        array : maximum value per feature.
+
+        - 'auto' : determine value range from training data.
+        - int : maximum value for all features.
+        - array : maximum value per feature.
+
+    categorical_features: "all" or array of indices or mask
+        Specify what features are treated as categorical.
+
+        - 'all' (default): All features are treated as categorical.
+        - array of indices: Array of categorical feature indices.
+        - mask: Array of length n_features and with dtype=bool.
+
+        Non-categorical features are always stacked to the right of the matrix.
 
     dtype : number type, default=np.float
         Desired dtype of output.
@@ -680,7 +742,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     >>> enc = OneHotEncoder()
     >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
 [1, 0, 2]])  # doctest: +ELLIPSIS
-    OneHotEncoder(dtype=<... 'float'>, n_values='auto')
+    OneHotEncoder(categorical_features='all', dtype=<type 'float'>,
+           n_values='auto')
     >>> enc.n_values_
     array([2, 3, 4])
     >>> enc.feature_indices_
@@ -690,12 +753,13 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    LabelEncoder : performs a one-hot encoding on arbitrary class labels.
     sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
       dictionary items (also handles string-valued features).
     """
-    def __init__(self, n_values="auto", dtype=np.float):
+    def __init__(self, n_values="auto", categorical_features="all",
+                 dtype=np.float):
         self.n_values = n_values
+        self.categorical_features = categorical_features
         self.dtype = dtype
 
     def fit(self, X, y=None):
@@ -713,12 +777,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         self.fit_transform(X)
         return self
 
-    def fit_transform(self, X, y=None):
-        """Fit OneHotEncoder to X, then transform X.
-
-        Equivalent to self.fit(X).transform(X), but more convenient and more
-        efficient. See fit for the parameters, transform for the return value.
-        """
+    def _fit_transform(self, X):
+        """Asssumes X contains only categorical features."""
         X = check_arrays(X, sparse_format='dense', dtype=np.int)[0]
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
@@ -759,19 +819,17 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
         return out
 
-    def transform(self, X):
-        """Transform X using one-hot encoding.
+    def fit_transform(self, X, y=None):
+        """Fit OneHotEncoder to X, then transform X.
 
-        Parameters
-        ----------
-        X : array-like, shape=(n_samples, feature_indices_[-1])
-            Input array of type int.
-
-        Returns
-        -------
-        X_out : sparse matrix, dtype=int
-            Transformed input.
+        Equivalent to self.fit(X).transform(X), but more convenient and more
+        efficient. See fit for the parameters, transform for the return value.
         """
+        return _transform_selected(X, self._fit_transform,
+                                   self.categorical_features)
+
+    def _transform(self, X):
+        """Asssumes X contains only categorical features."""
         X = check_arrays(X, sparse_format='dense', dtype=np.int)[0]
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
@@ -797,6 +855,22 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         if self.n_values == 'auto':
             out = out[:, self.active_features_]
         return out
+
+    def transform(self, X):
+        """Transform X using one-hot encoding.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, n_features)
+            Input array of type int.
+
+        Returns
+        -------
+        X_out : sparse matrix, dtype=int
+            Transformed input.
+        """
+        return _transform_selected(X, self._transform,
+                                   self.categorical_features)
 
 
 class LabelEncoder(BaseEstimator, TransformerMixin):
