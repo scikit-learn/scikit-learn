@@ -61,6 +61,7 @@ from sklearn.linear_model import SGDClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier
+from sklearn.ensemble import GradientBoostingClassifier
 from sklearn import metrics
 from sklearn.externals.joblib import Memory
 
@@ -225,6 +226,14 @@ classifiers['ExtraTrees'] = ExtraTreesClassifier(n_estimators=20,
                                                  max_features=None,
                                                  max_depth=None,
                                                  n_jobs=opts.n_jobs,
+                                                 random_state=opts.random_seed)
+
+######################################################################
+## Train GBRT model
+classifiers['GBRT'] = GradientBoostingClassifier(n_estimators=250,
+                                                 min_samples_split=5,
+                                                 max_features=None,
+                                                 max_depth=3,
                                                  random_state=opts.random_seed)
 
 
