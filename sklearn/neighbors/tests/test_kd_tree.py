@@ -4,6 +4,7 @@ from sklearn.neighbors.kd_tree import (KDTree, NeighborsHeap,
                                        simultaneous_sort, kernel_norm,
                                        nodeheap_sort, DTYPE, ITYPE)
 from sklearn.neighbors.dist_metrics import DistanceMetric
+from sklearn.utils.testing import SkipTest
 
 V = np.random.random((3, 3))
 V = np.dot(V, V.T)
@@ -139,7 +140,11 @@ def test_gaussian_kde(n_samples=1000):
 
     for h in [0.01, 0.1, 1]:
         kdt = KDTree(x_in[:, None])
-        gkde = gaussian_kde(x_in, bw_method=h / np.std(x_in))
+        try:
+            gkde = gaussian_kde(x_in, bw_method=h / np.std(x_in))
+        except TypeError:
+            # older versions of scipy don't accept explicit bandwidth
+            raise SkipTest
 
         dens_kdt = kdt.kernel_density(x_out[:, None], h) / n_samples
         dens_gkde = gkde.evaluate(x_out)
