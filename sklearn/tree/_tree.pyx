@@ -809,10 +809,6 @@ cdef class Splitter:
         cdef SIZE_t n_samples = X.shape[0]
         cdef SIZE_t* samples = <SIZE_t*> malloc(n_samples * sizeof(SIZE_t))
 
-        # cdef SIZE_t i
-        # for i from 0 <= i < n_samples:
-        #     samples[i] = i
-
         cdef SIZE_t i, j
         j = 0
 
@@ -1003,80 +999,39 @@ cdef class BestSplitter(Splitter):
                          SIZE_t* samples, SIZE_t length):
         """In-place sorting of samples[start:end] using
           X[sample[i], current_feature] as key."""
-        # Partly adapted from http://alienryderflex.com/quicksort/
-        cdef SIZE_t pivot
-        cdef DTYPE_t pivot_value
-        cdef SIZE_t begin[64]
-        cdef SIZE_t end[64]
-        cdef SIZE_t top = 0
+        # Heapsort, adapted from Numerical Recipes in C
+        cdef SIZE_t tmp
+        cdef SIZE_t n = length
+        cdef SIZE_t parent = length / 2
+        cdef SIZE_t index, child
 
-        cdef SIZE_t i, j, insert    # For Insertion-sort
-        cdef DTYPE_t insert_value
-
-        cdef SIZE_t L               # For Quicksort
-        cdef SIZE_t R
-        cdef SIZE_t M
-
-        begin[0] = 0
-        end[0] = length
-
-        while top >= 0:
-            L = begin[top]
-            R = end[top] - 1
-
-            if R - L < 7:                                     # Insertion-sort
-                for i from L < i <= R:
-                    insert = samples[i]
-                    insert_value = X[insert, current_feature]
-
-                    j = i - 1
-                    while j >= L and X[samples[j], current_feature] > insert_value:
-                        samples[j + 1] = samples[j]
-                        j -= 1
-
-                    samples[j + 1] = insert
-
-                top -= 1
-
-            elif L < R:                                       # Quicksort
-                # Choose a pivot the median of L, M and R
-                M = (L+R) >> 1
-                if X[samples[L], current_feature] > X[samples[R], current_feature]:
-                    samples[L], samples[R] = samples[R], samples[L]
-                if X[samples[M], current_feature] > X[samples[R], current_feature]:
-                    samples[M], samples[R] = samples[R], samples[M]
-                if X[samples[L], current_feature] < X[samples[M], current_feature]:
-                    samples[L], samples[M] = samples[M], samples[L]
-
-                pivot = samples[L]
-                pivot_value = X[pivot, current_feature]
-
-                while L < R:
-                    while L < R and X[samples[R], current_feature] >= pivot_value:
-                        R -= 1
-                    if L < R:
-                        samples[L] = samples[R]
-                        L += 1
-
-                    while L < R and X[samples[L], current_feature] <= pivot_value:
-                        L += 1
-                    if L < R:
-                        samples[R] = samples[L]
-                        R -= 1
-
-                samples[L] = pivot
-                begin[top + 1] = L + 1
-                end[top + 1] = end[top]
-                # Keep begin[top]
-                end[top] = L
-                top += 1
-
-                if (end[top] - begin[top]) > (end[top-1] - begin[top-1]):
-                    begin[top], begin[top-1] = begin[top-1], begin[top]
-                    end[top], end[top-1] = end[top-1], end[top]
-
+        while True:
+            if parent > 0:
+                parent -= 1
+                tmp = samples[parent]
             else:
-                top -= 1
+                n -= 1
+                if n == 0:
+                    return
+                tmp = samples[n]
+                samples[n] = samples[0]
+
+            index = parent
+            child = index * 2 + 1
+
+            while child < n:
+                if (child + 1 < n) and (X[samples[child + 1], current_feature] > X[samples[child], current_feature]):
+                    child += 1
+
+                if X[samples[child], current_feature] > X[tmp, current_feature]:
+                    samples[index] = samples[child]
+                    index = child
+                    child = index * 2 + 1
+
+                else:
+                    break
+
+            samples[index] = tmp
 
 
 cdef class RandomSplitter(Splitter):
