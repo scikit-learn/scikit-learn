@@ -17,18 +17,32 @@ from sklearn.tree._tree cimport Tree
 
 ctypedef np.int32_t int32
 ctypedef np.float64_t float64
+ctypedef np.npy_intp intp
+ctypedef np.int8_t int8
+
+from numpy import bool as np_bool
+
+# no namespace lookup for numpy dtype and array creation
+from numpy import zeros as np_zeros
+from numpy import ones as np_ones
+from numpy import bool as np_bool
+from numpy import int8 as np_int8
+from numpy import float32 as np_float32
+from numpy import float64 as np_float64
 
 # Define a datatype for the data array
 DTYPE = np.float32
 ctypedef np.float32_t DTYPE_t
+ctypedef np.npy_intp SIZE_t
+
 
 # constant to mark tree leafs
 cdef int LEAF = -1
 
 cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
-                                                int *children_left,
-                                                int *children_right,
-                                                int *feature,
+                                                SIZE_t *children_left,
+                                                SIZE_t *children_right,
+                                                SIZE_t *feature,
                                                 double *threshold,
                                                 double *value,
                                                 double scale,
@@ -51,10 +65,10 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
     X : DTYPE_t pointer
         The pointer to the data array of the input ``X``.
         Assumes that the array is c-continuous.
-    children : np.int32_t pointer
+    children : np.npy_intp pointer
         The pointer to the data array of the ``children`` array attribute
         of the :class:``sklearn.tree.Tree``.
-    feature : np.int32_t pointer
+    feature : np.npy_intp pointer
         The pointer to the data array of the ``feature`` array attribute
         of the :class:``sklearn.tree.Tree``.
     threshold : np.float64_t pointer
@@ -84,7 +98,7 @@ cdef void _predict_regression_tree_inplace_fast(DTYPE_t *X,
     """
     cdef Py_ssize_t i
     cdef int32 node_id
-    cdef int32 feature_idx
+    cdef SIZE_t feature_idx
     for i in range(n_samples):
         node_id = 0
         # While node_id not a leaf
@@ -131,6 +145,7 @@ def predict_stages(np.ndarray[object, ndim=2] estimators,
                 tree.value,
                 scale, k, K, n_samples, n_features,
                 <float64*>((<np.ndarray>out).data))
+            ## out += scale * tree.predict(X).reshape((X.shape[0], 1))
 
 
 @cython.nonecheck(False)
@@ -162,6 +177,7 @@ def predict_stage(np.ndarray[object, ndim=2] estimators,
                 tree.value,
                 scale, k, K, n_samples, n_features,
                 <float64*>((<np.ndarray>out).data))
+        ## out += scale * tree.predict(X).reshape((X.shape[0], 1))
 
 
 cdef inline int array_index(int32 val, int32[::1] arr):
@@ -213,21 +229,22 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
     """
     cdef Py_ssize_t i = 0
     cdef Py_ssize_t n_features = X.shape[1]
-    cdef int *children_left = tree.children_left
-    cdef int *children_right = tree.children_right
-    cdef int *feature = tree.feature
+    cdef SIZE_t *children_left = tree.children_left
+    cdef SIZE_t *children_right = tree.children_right
+    cdef SIZE_t *feature = tree.feature
     cdef double *value = tree.value
     cdef double *threshold = tree.threshold
-    cdef int *n_samples = tree.n_samples
-    cdef int node_count = tree.node_count
+    cdef SIZE_t *n_node_samples = tree.n_node_samples
+    cdef SIZE_t node_count = tree.node_count
 
-    cdef int32 stack_capacity = node_count * 2
-    cdef int32[::1] node_stack = np.zeros((stack_capacity,), dtype=np.int32)
-    cdef double[::1] weight_stack = np.ones((stack_capacity,), dtype=np.float64)
-    cdef int32 stack_size = 1
+    cdef SIZE_t stack_capacity = node_count * 2
+    cdef SIZE_t[::1] node_stack = np_zeros((stack_capacity,), dtype=np.int32)
+    cdef double[::1] weight_stack = np_ones((stack_capacity,), dtype=np_float64)
+    cdef SIZE_t stack_size = 1
     cdef double left_sample_frac
     cdef double current_weight
     cdef double total_weight = 0.0
+    cdef SIZE_t current_node
 
     for i in range(X.shape[0]):
         # init stacks for new example
@@ -265,15 +282,15 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
                     # push left child
                     node_stack[stack_size] = children_left[current_node]
                     current_weight = weight_stack[stack_size]
-                    left_sample_frac = n_samples[children_left[current_node]] / \
-                                       <double>n_samples[current_node]
+                    left_sample_frac = n_node_samples[children_left[current_node]] / \
+                                       <double>n_node_samples[current_node]
                     if left_sample_frac <= 0.0 or left_sample_frac >= 1.0:
                         raise ValueError("left_sample_frac:%f, "
                                          "n_samples current: %d, "
                                          "n_samples left: %d"
                                          % (left_sample_frac,
-                                            n_samples[current_node],
-                                            n_samples[children_left[current_node]]))
+                                            n_node_samples[current_node],
+                                            n_node_samples[children_left[current_node]]))
                     weight_stack[stack_size] = current_weight * left_sample_frac
                     stack_size +=1
 
@@ -286,3 +303,39 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
         if not (0.999 < total_weight < 1.001):
             raise ValueError("Total weight should be 1.0 but was %.9f" %
                              total_weight)
+
+
+def _random_sample_mask(int n_total_samples, int n_total_in_bag, random_state):
+     """Create a random sample mask where ``n_total_in_bag`` elements are set.
+
+     Parameters
+     ----------
+     n_total_samples : int
+         The length of the resulting mask.
+
+     n_total_in_bag : int
+         The number of elements in the sample mask which are set to 1.
+
+     random_state : np.RandomState
+         A numpy ``RandomState`` object.
+
+     Returns
+     -------
+     sample_mask : np.ndarray, shape=[n_total_samples]
+         An ndarray where ``n_total_in_bag`` elements are set to ``True``
+         the others are ``False``.
+     """
+     cdef np.ndarray[float64, ndim=1, mode="c"] rand = \
+          random_state.rand(n_total_samples)
+     cdef np.ndarray[int8, ndim=1, mode="c"] sample_mask = \
+          np_zeros((n_total_samples,), dtype=np_int8)
+
+     cdef int n_bagged = 0
+     cdef int i = 0
+
+     for i from 0 <= i < n_total_samples:
+         if rand[i] * (n_total_samples - i) < (n_total_in_bag - n_bagged):
+             sample_mask[i] = 1
+             n_bagged += 1
+
+     return sample_mask.astype(np_bool)

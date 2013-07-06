@@ -39,11 +39,11 @@ from ..utils.extmath import logsumexp
 from ..externals import six
 
 from ..tree.tree import DecisionTreeRegressor
-from ..tree._tree import _random_sample_mask
 from ..tree._tree import DTYPE, TREE_LEAF
 
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
+from ._gradient_boosting import _random_sample_mask
 
 
 class QuantileEstimator(BaseEstimator):
@@ -452,7 +452,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.verbose = verbose
         self.estimators_ = np.empty((0, 0), dtype=np.object)
 
-    def _fit_stage(self, i, X, X_argsorted, y, y_pred, sample_mask,
+    def _fit_stage(self, i, X, y, y_pred, sample_mask,
                    random_state):
         """Fit another stage of ``n_classes_`` trees to the boosting model. """
         loss = self.loss_
@@ -470,11 +470,13 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 max_depth=self.max_depth,
                 min_samples_split=self.min_samples_split,
                 min_samples_leaf=self.min_samples_leaf,
-                min_density=self.min_density,
                 max_features=self.max_features,
                 random_state=random_state)
 
-            tree.fit(X, residual, sample_mask, X_argsorted, check_input=False)
+            sample_weight = None
+            if self.subsample < 1.0:
+                sample_weight = sample_mask.astype(np.float64)
+            tree.fit(X, residual, sample_weight=sample_weight, check_input=False)
 
             # update tree leaves
             loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
@@ -552,13 +554,6 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         random_state = check_random_state(self.random_state)
 
-        # use default min_density (0.1) only for deep trees
-        self.min_density = 0.0 if self.max_depth < 6 else 0.1
-
-        # create argsorted X for fast tree induction
-        X_argsorted = np.asfortranarray(
-            np.argsort(X.T, axis=1).astype(np.int32).T)
-
         # fit initial model
         self.init_.fit(X, y)
 
@@ -582,7 +577,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 sample_mask = _random_sample_mask(n_samples, n_inbag,
                                                   random_state)
             # fit next stage of trees
-            y_pred = self._fit_stage(i, X, X_argsorted, y, y_pred, sample_mask,
+            y_pred = self._fit_stage(i, X, y, y_pred, sample_mask,
                                      random_state)
 
             # track deviance (= loss)
