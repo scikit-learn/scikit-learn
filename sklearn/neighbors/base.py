@@ -132,26 +132,36 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                 raise ValueError("metric '%s' not valid for algorithm '%s'"
                                  % (metric, algorithm))
 
-        # For minkowski distance, use more efficient methods where available
         if self.metric == 'minkowski':
-            p = self.metric_kwds.pop('p', 2)
+            p = self.metric_kwds.get('p', 2)
             if p < 1:
-                raise ValueError("p must be greater than zero "
+                raise ValueError("p must be greater than one "
                                  "for minkowski metric")
-            elif p == 1:
-                self.metric = 'manhattan'
-            elif p == 2:
-                self.metric = 'euclidean'
-            elif p == np.inf:
-                self.metric = 'chebyshev'
-            else:
-                self.metric_kwds['p'] = p
 
         self._fit_X = None
         self._tree = None
         self._fit_method = None
 
     def _fit(self, X):
+        self.effective_metric_ = self.metric
+        self.effective_metric_kwds_ = self.metric_kwds
+
+        # For minkowski distance, use more efficient methods where available
+        if self.metric == 'minkowski':
+            self.effective_metric_kwds_ = self.metric_kwds.copy()
+            p = self.effective_metric_kwds_.pop('p', 2)
+            if p < 1:
+                raise ValueError("p must be greater than one "
+                                 "for minkowski metric")
+            elif p == 1:
+                self.effective_metric_ = 'manhattan'
+            elif p == 2:
+                self.effective_metric_ = 'euclidean'
+            elif p == np.inf:
+                self.effective_metric_ = 'chebyshev'
+            else:
+                self.effective_metric_kwds_['p'] = p
+
         if isinstance(X, NeighborsBase):
             self._fit_X = X._fit_X
             self._tree = X._tree
@@ -183,9 +193,9 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             if self.algorithm not in ('auto', 'brute'):
                 warnings.warn("cannot use tree with sparse input: "
                               "using brute force")
-            if self.metric not in VALID_METRICS_SPARSE['brute']:
+            if self.effective_metric_ not in VALID_METRICS_SPARSE['brute']:
                 raise ValueError("metric '%s' not valid for sparse input"
-                                 % self.metric)
+                                 % self.effective_metric_)
             self._fit_X = X.tocsr()
             self._tree = None
             self._fit_method = 'brute'
@@ -199,8 +209,8 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             # and KDTree is generally faster when available
             if (self.n_neighbors is None
                    or self.n_neighbors < self._fit_X.shape[0] // 2):
-                if (callable(self.metric)
-                       or self.metric in VALID_METRICS['kd_tree']):
+                if (callable(self.effective_metric_)
+                       or self.effective_metric_ in VALID_METRICS['kd_tree']):
                     self._fit_method = 'kd_tree'
                 else:
                     self._fit_method = 'ball_tree'
@@ -208,11 +218,13 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                 self._fit_method = 'brute'
 
         if self._fit_method == 'ball_tree':
-            self._tree = BallTree(X, self.leaf_size, metric=self.metric,
-                                  **self.metric_kwds)
+            self._tree = BallTree(X, self.leaf_size,
+                                  metric=self.effective_metric_,
+                                  **self.effective_metric_kwds_)
         elif self._fit_method == 'kd_tree':
-            self._tree = KDTree(X, self.leaf_size, metric=self.metric,
-                                **self.metric_kwds)
+            self._tree = KDTree(X, self.leaf_size,
+                                metric=self.effective_metric_,
+                                **self.effective_metric_kwds_)
         elif self._fit_method == 'brute':
             self._tree = None
         else:
@@ -284,19 +296,20 @@ class KNeighborsMixin(object):
 
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
-            if self.metric == 'euclidean':
+            if self.effective_metric_ == 'euclidean':
                 dist = pairwise_distances(X, self._fit_X, 'euclidean',
                                           squared=True)
             else:
-                dist = pairwise_distances(X, self._fit_X, self.metric,
-                                          **self.metric_kwds)
+                dist = pairwise_distances(X, self._fit_X,
+                                          self.effective_metric_,
+                                          **self.effective_metric_kwds_)
 
             # XXX: should be implemented with a partial sort
             neigh_ind = dist.argsort(axis=1)
             neigh_ind = neigh_ind[:, :n_neighbors]
             if return_distance:
                 j = np.arange(neigh_ind.shape[0])[:, None]
-                if self.metric == 'euclidean':
+                if self.effective_metric_ == 'euclidean':
                     return np.sqrt(dist[j, neigh_ind]), neigh_ind
                 else:
                     return dist[j, neigh_ind], neigh_ind
@@ -445,13 +458,14 @@ class RadiusNeighborsMixin(object):
 
         if self._fit_method == 'brute':
             # for efficiency, use squared euclidean distances
-            if self.metric == 'euclidean':
+            if self.effective_metric_ == 'euclidean':
                 dist = pairwise_distances(X, self._fit_X, 'euclidean',
                                           squared=True)
                 radius *= radius
             else:
-                dist = pairwise_distances(X, self._fit_X, self.metric,
-                                          **self.metric_kwds)
+                dist = pairwise_distances(X, self._fit_X,
+                                          self.effective_metric_,
+                                          **self.effective_metric_kwds_)
             neigh_ind = [np.where(d < radius)[0] for d in dist]
 
             # if there are the same number of neighbors for each point,
@@ -465,7 +479,7 @@ class RadiusNeighborsMixin(object):
                 dtype_F = object
 
             if return_distance:
-                if self.metric == 'euclidean':
+                if self.effective_metric_ == 'euclidean':
                     dist = np.array([np.sqrt(d[neigh_ind[i]])
                                      for i, d in enumerate(dist)],
                                     dtype=dtype_F)
