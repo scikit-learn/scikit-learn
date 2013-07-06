@@ -17,7 +17,6 @@ from sklearn.tree._tree cimport Tree
 
 ctypedef np.int32_t int32
 ctypedef np.float64_t float64
-ctypedef np.npy_intp intp
 ctypedef np.int8_t int8
 
 from numpy import bool as np_bool
@@ -27,6 +26,7 @@ from numpy import zeros as np_zeros
 from numpy import ones as np_ones
 from numpy import bool as np_bool
 from numpy import int8 as np_int8
+from numpy import intp as np_intp
 from numpy import float32 as np_float32
 from numpy import float64 as np_float64
 
@@ -238,7 +238,7 @@ cpdef _partial_dependence_tree(Tree tree, DTYPE_t[:, ::1] X,
     cdef SIZE_t node_count = tree.node_count
 
     cdef SIZE_t stack_capacity = node_count * 2
-    cdef SIZE_t[::1] node_stack = np_zeros((stack_capacity,), dtype=np.int32)
+    cdef SIZE_t[::1] node_stack = np_zeros((stack_capacity,), dtype=np_intp)
     cdef double[::1] weight_stack = np_ones((stack_capacity,), dtype=np_float64)
     cdef SIZE_t stack_size = 1
     cdef double left_sample_frac
