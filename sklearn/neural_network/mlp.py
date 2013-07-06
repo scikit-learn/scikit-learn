@@ -458,27 +458,18 @@ class BaseMLP(BaseEstimator):
                 delta_o,
                 self.coef_output_.T) * self.derivative(a_hidden)
             cost = np.sum(
-                np.einsum(
-                    'ij,ji->i',
-                    diff,
-                    diff.T)) / (
-                        2 * n_samples)
+                np.einsum('ij,ji->i', diff, diff.T)) / (2 * n_samples)
         elif self.loss == 'log':
             delta_o[:] = -diff
-            delta_h[:] = np.dot(
-                delta_o,
-                self.coef_output_.T) * self.derivative(a_hidden)
+            delta_h[:] = np.dot(delta_o, self.coef_output_.T) *\
+                    self.derivative(a_hidden)
             cost = np.sum(
                 np.sum(-Y * np.log(a_output) - (1 - Y) * np.log(1 - a_output)))
         # Get regularized gradient
-        W1grad = safe_sparse_dot(
-            X.T,
-            delta_h) + (
-                self.alpha * self.coef_hidden_)
-        W2grad = safe_sparse_dot(
-            a_hidden.T,
-            delta_o) + (
-                self.alpha * self.coef_output_)
+        W1grad = safe_sparse_dot(X.T, delta_h) + \
+                (self.alpha * self.coef_hidden_)
+        W2grad = safe_sparse_dot(a_hidden.T, delta_o) + \
+                (self.alpha * self.coef_output_)
         b1grad = np.mean(delta_h, 0)
         b2grad = np.mean(delta_o, 0)
         # Add regularization term to cost
