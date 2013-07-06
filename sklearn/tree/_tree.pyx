@@ -1001,6 +1001,7 @@ cdef class BestSplitter(Splitter):
           X[sample[i], current_feature] as key."""
         # Heapsort, adapted from Numerical Recipes in C
         cdef SIZE_t tmp
+        cdef DOUBLE_t tmp_value
         cdef SIZE_t n = length
         cdef SIZE_t parent = length / 2
         cdef SIZE_t index, child
@@ -1016,6 +1017,7 @@ cdef class BestSplitter(Splitter):
                 tmp = samples[n]
                 samples[n] = samples[0]
 
+            tmp_value = X[tmp, current_feature]
             index = parent
             child = index * 2 + 1
 
@@ -1023,7 +1025,7 @@ cdef class BestSplitter(Splitter):
                 if (child + 1 < n) and (X[samples[child + 1], current_feature] > X[samples[child], current_feature]):
                     child += 1
 
-                if X[samples[child], current_feature] > X[tmp, current_feature]:
+                if X[samples[child], current_feature] > tmp_value:
                     samples[index] = samples[child]
                     index = child
                     child = index * 2 + 1
