@@ -36,7 +36,7 @@ print "best bandwidth: {0}".format(grid.best_estimator_.bandwidth)
 kde = grid.best_estimator_
 
 # sample 44 new points from the data
-new_data = kde.sample(44)
+new_data = kde.sample(44, random_state=0)
 new_data = pca.inverse_transform(new_data)
 
 # turn data into a 4x11 grid
