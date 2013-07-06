@@ -872,6 +872,7 @@ Pairwise metrics
    neighbors.KDTree
    neighbors.DistanceMetric
    neighbors.NearestCentroid
+   neighbors.KernelDensity
 
 .. autosummary::
    :toctree: generated/
