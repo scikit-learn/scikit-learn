@@ -440,6 +440,14 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
                              non_negative=self.non_negative)
 
 
+def _document_frequency(X):
+    """Count the number of non-zero values for each feature in X.
+
+    If X is sparse, its data must not contain explicit zero values.
+    """
+    return np.diff(X.indptr)
+
+
 class CountVectorizer(BaseEstimator, VectorizerMixin):
     """Convert a collection of text documents to a matrix of token counts
 
@@ -639,7 +647,7 @@ class CountVectorizer(BaseEstimator, VectorizerMixin):
             return cscmatrix, set()
 
         # Calculate a mask based on document frequencies
-        dfs = np.diff(cscmatrix.indptr)
+        dfs = _document_frequency(cscmatrix)
         mask = np.ones(len(dfs), dtype=bool)
         if high is not None:
             mask &= dfs <= high
@@ -905,15 +913,11 @@ class TfidfTransformer(BaseEstimator, TransformerMixin):
         X : sparse matrix, [n_samples, n_features]
             a matrix of term/token counts
         """
+        if not sp.isspmatrix_csc(X):
+            X = sp.csc_matrix(X)
         if self.use_idf:
-            if not hasattr(X, 'nonzero'):
-                X = sp.csr_matrix(X)
-
             n_samples, n_features = X.shape
-            df = np.bincount(X.nonzero()[1])
-            if df.shape[0] < n_features:
-                # bincount might return fewer bins than there are features
-                df = np.concatenate([df, np.zeros(n_features - df.shape[0])])
+            df = _document_frequency(X)
 
             # perform idf smoothing if required
             df += int(self.smooth_idf)
