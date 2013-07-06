@@ -454,15 +454,14 @@ class BaseMLP(BaseEstimator):
         diff = Y - a_output
         if self.loss == 'squared_loss':
             delta_o[:] = -diff * self.derivative(a_output)
-            delta_h[:] = np.dot(
-                delta_o,
-                self.coef_output_.T) * self.derivative(a_hidden)
+            delta_h[:] = np.dot(delta_o,
+                    self.coef_output_.T) * self.derivative(a_hidden)
             cost = np.sum(
                 np.einsum('ij,ji->i', diff, diff.T)) / (2 * n_samples)
         elif self.loss == 'log':
             delta_o[:] = -diff
-            delta_h[:] = np.dot(delta_o, self.coef_output_.T) *\
-                    self.derivative(a_hidden)
+            delta_h[:] = np.dot(delta_o, 
+                    self.coef_output_.T) * self.derivative(a_hidden)
             cost = np.sum(
                 np.sum(-Y * np.log(a_output) - (1 - Y) * np.log(1 - a_output)))
         # Get regularized gradient
