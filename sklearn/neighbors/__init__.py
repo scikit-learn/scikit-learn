@@ -11,6 +11,7 @@ from .unsupervised import NearestNeighbors
 from .classification import KNeighborsClassifier, RadiusNeighborsClassifier
 from .regression import KNeighborsRegressor, RadiusNeighborsRegressor
 from .nearest_centroid import NearestCentroid
+from .kde import KernelDensity
 
 __all__ = ['BallTree',
            'KDTree',
@@ -21,4 +22,5 @@ __all__ = ['BallTree',
            'RadiusNeighborsClassifier',
            'RadiusNeighborsRegressor',
            'kneighbors_graph',
-           'radius_neighbors_graph']
+           'radius_neighbors_graph',
+           'KernelDensity']
