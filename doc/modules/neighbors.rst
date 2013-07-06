@@ -103,7 +103,7 @@ connections between neighboring points:
 
 Our dataset is structured such that points nearby in index order are nearby
 in parameter space, leading to an approximately block-diagonal matrix of
-$K$-nearest neighbors.
+K-nearest neighbors.
 
 Alternatively, one can use the :class:`KDTree` or :class:`BallTree` classes
 directly to find nearest neighbors.  This is the functionality wrapped by
@@ -490,11 +490,12 @@ Kernel Density Estimation
 =========================
 Nearest neighbors queries form the basis of a popular algorithm for estimating
 the density of points in a parameter space: Kernel Density Estimation.
-Given a positive kernel $K(x)$ and a bandwidth $h$, the kernel density
-estimate at a point $y$ within a group of points :math:`x_i; i=1\cdots N`
-is:
+Given a positive kernel :math:`K(x)` and a bandwidth :math:`h`,
+the kernel density estimate at a point :math:`y` within a group of points
+:math:`x_i; i=1\cdots N` is:
 
-.. math:: \rho_K(y) = \sum_{i=1}^N K((y - x) / h)
+.. math::
+    \rho_K(y) = \sum_{i=1}^{N} K((y - x_i) / h)
 
 The bandwidth here acts as a smoothing parameter, controlling the tradeoff
 between bias and variance in the result.  A large bandwidth leads to a very
@@ -519,27 +520,27 @@ kernels:
 
 * Gaussian kernel (``kernel = 'gaussian'``)
   
-  ..math:: K(x; h) \propto \exp(- \frac{x^2}{2h^2} )
+  :math:`K(x; h) \propto \exp(- \frac{x^2}{2h^2} )`
 
 * Tophat kernel (``kernel = 'tophat'``)
 
-  ..math:: K(x; h) \propto 1 \mathrm{if} x < h
+  :math:`K(x; h) \propto 1` if :math:`x < h`
 
 * Epanechnikov kernel (``kernel = 'epanechnikov'``)
   
-  ..math:: K(x; h) \propto 1 - \frac{x^2}{h^2}
+  :math:`K(x; h) \propto 1 - \frac{x^2}{h^2}`
 
 * Exponential kernel (``kernel = 'exponential'``)
 
-  ..math:: K(x; h) \propto \exp(-x/h)
+  :math:`K(x; h) \propto \exp(-x/h)`
 
 * Linear kernel (``kernel = 'linear'``)
 
-  ..math:: K(x; h) \propto 1 - dist/h \mathrm{if} x < h
+  :math:`K(x; h) \propto 1 - dist/h` if :math:`x < h`
 
 * Cosine kernel (``kernel = 'cosine'``)
 
-  ..math:: K(x; h) \propto \cos(\frac{\pi x}{2h}) \mathrm{if} x < h
+  :math:`K(x; h) \propto \cos(\frac{\pi x}{2h})` if :math:`x < h`
 
 
 One potential application of kernel density estimation is to learn a
