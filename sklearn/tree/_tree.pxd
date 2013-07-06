@@ -1,5 +1,5 @@
 # Author: Peter Prettenhofer, Brian Holt, Gilles Louppe
-# License: BSD Style.
+# Licence: BSD 3 clause$
 
 # See _tree.pyx for details.
 
@@ -26,7 +26,7 @@ cdef class Criterion:
     cdef double weighted_n_right
 
     # Methods
-    cdef void init(self, DOUBLE_t* y, int y_stride,
+    cdef void init(self, DOUBLE_t* y, Py_ssize_t y_stride,
                          DOUBLE_t* sample_weight,
                          BOOL_t* sample_mask,
                          int n_samples,
@@ -37,7 +37,7 @@ cdef class Criterion:
 
     cdef bool update(self, int a,
                      int b,
-                     DOUBLE_t* y, int y_stride,
+                     DOUBLE_t* y, Py_ssize_t y_stride,
                      int* X_argsorted_i,
                      DOUBLE_t* sample_weight,
                      BOOL_t* sample_mask)
@@ -58,7 +58,7 @@ cdef class Tree:
     cdef public int n_outputs
 
     cdef public int max_n_classes
-    cdef public int value_stride
+    cdef public Py_ssize_t value_stride
 
     # Parameters
     cdef public Criterion criterion
@@ -113,9 +113,9 @@ cdef class Tree:
     cdef int add_leaf(self, int parent, int is_left_child, double* value,
                       double error, int n_samples)
 
-    cdef void find_split(self, DTYPE_t* X_ptr, int X_stride,
-                         int* X_argsorted_ptr, int X_argsorted_stride,
-                         DOUBLE_t* y_ptr, int y_stride,
+    cdef void find_split(self, DTYPE_t* X_ptr, Py_ssize_t X_stride,
+                         int* X_argsorted_ptr, Py_ssize_t X_argsorted_stride,
+                         DOUBLE_t* y_ptr, Py_ssize_t y_stride,
                          DOUBLE_t* sample_weight_ptr,
                          BOOL_t* sample_mask_ptr,
                          int n_node_samples,
@@ -126,9 +126,9 @@ cdef class Tree:
                          double* _best_error,
                          double* _initial_error)
 
-    cdef void find_best_split(self, DTYPE_t* X_ptr, int X_stride,
-                              int* X_argsorted_ptr, int X_argsorted_stride,
-                              DOUBLE_t* y_ptr, int y_stride,
+    cdef void find_best_split(self, DTYPE_t* X_ptr, Py_ssize_t X_stride,
+                              int* X_argsorted_ptr, Py_ssize_t X_argsorted_stride,
+                              DOUBLE_t* y_ptr, Py_ssize_t y_stride,
                               DOUBLE_t* sample_weight_ptr,
                               BOOL_t* sample_mask_ptr,
                               int n_node_samples,
@@ -137,9 +137,9 @@ cdef class Tree:
                               double* _best_t, double* _best_error,
                               double* _initial_error)
 
-    cdef void find_random_split(self, DTYPE_t* X_ptr, int X_stride,
-                                int* X_argsorted_ptr, int X_argsorted_stride,
-                                DOUBLE_t* y_ptr, int y_stride,
+    cdef void find_random_split(self, DTYPE_t* X_ptr, Py_ssize_t X_stride,
+                                int* X_argsorted_ptr, Py_ssize_t X_argsorted_stride,
+                                DOUBLE_t* y_ptr, Py_ssize_t y_stride,
                                 DOUBLE_t* sample_weight_ptr,
                                 BOOL_t* sample_mask_ptr,
                                 int n_node_samples,

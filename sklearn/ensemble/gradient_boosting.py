@@ -18,7 +18,7 @@ The module structure is the following:
 
 # Authors: Peter Prettenhofer, Scott White, Gilles Louppe, Emanuele Olivetti,
 #          Arnaud Joly
-# License: BSD Style.
+# License: BSD 3 clause
 
 from __future__ import print_function
 from __future__ import division
@@ -36,6 +36,7 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..utils import check_random_state, array2d, check_arrays
 from ..utils.extmath import logsumexp
+from ..externals import six
 
 from ..tree.tree import DecisionTreeRegressor
 from ..tree._tree import _random_sample_mask
@@ -101,7 +102,7 @@ class PriorProbabilityEstimator(BaseEstimator):
         return y
 
 
-class LossFunction(object):
+class LossFunction(six.with_metaclass(ABCMeta, object)):
     """Abstract base class for various loss functions.
 
     Attributes
@@ -111,7 +112,6 @@ class LossFunction(object):
         1 for regression and binary classification;
         ``n_classes`` for multi-class classification.
     """
-    __metaclass__ = ABCMeta
 
     is_multi_class = False
 
@@ -180,9 +180,8 @@ class LossFunction(object):
         """Template method for updating terminal regions (=leaves). """
 
 
-class RegressionLossFunction(LossFunction):
+class RegressionLossFunction(six.with_metaclass(ABCMeta, LossFunction)):
     """Base class for regression loss functions. """
-    __metaclass__ = ABCMeta
 
     def __init__(self, n_classes):
         if n_classes != 1:
@@ -431,9 +430,8 @@ LOSS_FUNCTIONS = {'ls': LeastSquaresError,
                   'deviance': None}  # for both, multinomial and binomial
 
 
-class BaseGradientBoosting(BaseEnsemble):
+class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
     """Abstract base class for Gradient Boosting. """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self, loss, learning_rate, n_estimators, min_samples_split,
@@ -538,25 +536,8 @@ class BaseGradientBoosting(BaseEnsemble):
         else:
             self.loss_ = loss_class(self.n_classes_)
 
-        if self.min_samples_split <= 0:
-            raise ValueError("min_samples_split must be larger than 0")
-
-        if self.min_samples_leaf <= 0:
-            raise ValueError("min_samples_leaf must be larger than 0")
-
         if self.subsample <= 0.0 or self.subsample > 1:
             raise ValueError("subsample must be in (0,1]")
-
-        if self.max_features is None:
-            max_features = n_features
-        else:
-            max_features = self.max_features
-
-        if not (0 < max_features <= n_features):
-            raise ValueError("max_features must be in (0, n_features]")
-
-        if self.max_depth <= 0:
-            raise ValueError("max_depth must be larger than 0")
 
         if self.init is not None:
             if (not hasattr(self.init, 'fit')
@@ -757,11 +738,18 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         Choosing `subsample < 1.0` leads to a reduction of variance
         and an increase in bias.
 
-    max_features : int, None, optional (default=None)
-        The number of features to consider when looking for the best split.
-        Features are choosen randomly at each split point.
-        If None, then `max_features=n_features`. Choosing
-        `max_features < n_features` leads to a reduction of variance
+    max_features : int, float, string or None, optional (default="auto")
+        The number of features to consider when looking for the best split:
+          - If int, then consider `max_features` features at each split.
+          - If float, then `max_features` is a percentage and
+            `int(max_features * n_features)` features are considered at each
+            split.
+          - If "auto", then `max_features=sqrt(n_features)`.
+          - If "sqrt", then `max_features=sqrt(n_features)`.
+          - If "log2", then `max_features=log2(n_features)`.
+          - If None, then `max_features=n_features`.
+
+        Choosing `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
 
     init : BaseEstimator, None, optional (default=None)
@@ -955,7 +943,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     loss : {'ls', 'lad', 'huber', 'quantile'}, optional (default='ls')
         loss function to be optimized. 'ls' refers to least squares
         regression. 'lad' (least absolute deviation) is a highly robust
-        loss function soley based on order information of the input
+        loss function solely based on order information of the input
         variables. 'huber' is a combination of the two. 'quantile'
         allows quantile regression (use `alpha` to specify the quantile).
 
@@ -987,11 +975,18 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         Choosing `subsample < 1.0` leads to a reduction of variance
         and an increase in bias.
 
-    max_features : int, None, optional (default=None)
-        The number of features to consider when looking for the best split.
-        Features are choosen randomly at each split point.
-        If None, then `max_features=n_features`. Choosing
-        `max_features < n_features` leads to a reduction of variance
+    max_features : int, float, string or None, optional (default=None)
+        The number of features to consider when looking for the best split:
+          - If int, then consider `max_features` features at each split.
+          - If float, then `max_features` is a percentage and
+            `int(max_features * n_features)` features are considered at each
+            split.
+          - If "auto", then `max_features=n_features`.
+          - If "sqrt", then `max_features=sqrt(n_features)`.
+          - If "log2", then `max_features=log2(n_features)`.
+          - If None, then `max_features=n_features`.
+
+        Choosing `max_features < n_features` leads to a reduction of variance
         and an increase in bias.
 
     alpha : float (default=0.9)

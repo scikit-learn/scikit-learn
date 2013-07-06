@@ -234,7 +234,7 @@ In order to address this, scikit-learn provides utilities for the most
 common ways to extract numerical features from text content, namely:
 
 - **tokenizing** strings and giving an integer id for each possible token,
-  for instance by using whitespaces and punctuation as token separators.
+  for instance by using white-spaces and punctuation as token separators.
 
 - **counting** the occurrences of tokens in each document.
 
@@ -253,7 +253,7 @@ A corpus of documents can thus be represented by a matrix with one row
 per document and one column per token (e.g. word) occurring in the corpus.
 
 We call **vectorization** the general process of turning a collection
-of text documents into numerical feature vectors. This specific stragegy
+of text documents into numerical feature vectors. This specific strategy
 (tokenization, counting and normalization) is called the **Bag of Words**
 or "Bag of n-grams" representation. Documents are described by word
 occurrences while completely ignoring the relative position information
@@ -292,11 +292,11 @@ reasonable (please see  the :ref:`reference documentation
   >>> vectorizer = CountVectorizer(min_df=1)
   >>> vectorizer                            # doctest: +NORMALIZE_WHITESPACE
   CountVectorizer(analyzer=u'word', binary=False, charset=u'utf-8',
-          charset_error=u'strict', dtype=<type 'long'>, input=u'content',
-          lowercase=True, max_df=1.0, max_features=None, min_df=1,
-          ngram_range=(1, 1), preprocessor=None, stop_words=None,
-          strip_accents=None, token_pattern=u'(?u)\\b\\w\\w+\\b',
-          tokenizer=None, vocabulary=None)
+          charset_error=u'strict', dtype=<type 'numpy.int64'>,
+          input=u'content', lowercase=True, max_df=1.0, max_features=None,
+          min_df=1, ngram_range=(1, 1), preprocessor=None, 
+          stop_words=None, strip_accents=None,
+          token_pattern=u'(?u)\\b\\w\\w+\\b', tokenizer=None, vocabulary=None)
 
 Let's use it to tokenize and count the word occurrences of a minimalistic
 corpus of text documents::
@@ -310,7 +310,7 @@ corpus of text documents::
   >>> X = vectorizer.fit_transform(corpus)
   >>> X                                       # doctest: +NORMALIZE_WHITESPACE
   <4x9 sparse matrix of type '<type 'numpy.int64'>'
-      with 19 stored elements in COOrdinate format>
+      with 19 stored elements in Compressed Sparse Column format>
 
 The default configuration tokenizes the string by extracting words of
 at least 2 letters. The specific function that does this step can be
@@ -348,7 +348,7 @@ ignored in future calls to the transform method::
 
 Note that in the previous corpus, the first and the last documents have
 exactly the same words hence are encoded in equal vectors. In particular
-we lose the information that the last document is an interogative form. To
+we lose the information that the last document is an interrogative form. To
 preserve some of the local ordering information we can extract 2-grams
 of words in addition to the 1-grams (the word themselvs)::
 
@@ -370,7 +370,7 @@ can now resolve ambiguities encoded in local positioning patterns::
          [0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 1, 0, 1]]...)
 
 
-In particular the interogative form "Is this" is only present in the
+In particular the interrogative form "Is this" is only present in the
 last document::
 
   >>> feature_index = bigram_vectorizer.vocabulary_.get(u'is this')
@@ -384,7 +384,7 @@ Tf–idf term weighting
 ---------------------
 
 In a large text corpus, some words will be very present (e.g. "the", "a",
-"is" in English) hence carrying very little meaningul information about
+"is" in English) hence carrying very little meaningful information about
 the actual contents of the document. If we were to feed the direct count
 data directly to a classifier those very frequent terms would shadow
 the frequencies of rarer yet more interesting terms.
@@ -394,7 +394,7 @@ suitable for usage by a classifier it is very common to use the tf–idf
 transform.
 
 Tf means **term-frequency** while tf–idf means term-frequency times
-**inverse document-frequency**. This is a orginally a term weighting
+**inverse document-frequency**. This is a originally a term weighting
 scheme developed for information retrieval (as a ranking function
 for search engines results), that has also found good use in document
 classification and clustering.
@@ -470,6 +470,59 @@ feature extractor with a classifier:
  * :ref:`example_grid_search_text_feature_extraction.py`
 
 
+Decoding text files
+-------------------
+Text is made of characters, but files are made of bytes. In Unicode,
+there are many more possible characters than possible bytes. Every text
+file is *encoded* so that its characters can be represented as bytes.
+
+When you work with text in Python, it should be Unicode. Most of the
+text feature extractors in scikit-learn will only work with Unicode. So
+to correctly load text from a file (or from the network), you need to
+decode it with the correct encoding.
+
+An encoding can also be called a 'charset' or 'character set', though
+this terminology is less accurate. The :class:`CountVectorizer` takes
+a ``charset`` parameter to tell it what encoding to decode text from.
+
+For modern text files, the correct encoding is probably UTF-8. The
+:class:`CountVectorizer` has ``charset='utf-8'`` as the default. If the
+text you are loading is not actually encoded with UTF-8, however, you
+will get a ``UnicodeDecodeError``.
+
+If you are having trouble decoding text, here are some things to try:
+
+- Find out what the actual encoding of the text is. The file might come
+  with a header that tells you the encoding, or there might be some
+  standard encoding you can assume based on where the text comes from.
+
+- You may be able to find out what kind of encoding it is in general
+  using the UNIX command ``file``. The Python ``chardet`` module comes with
+  a script called ``chardetect.py`` that will guess the specific encoding,
+  though you cannot rely on its guess being correct.
+
+- You could try UTF-8 and disregard the errors. You can decode byte
+  strings with ``bytes.decode(errors='replace')`` to replace all
+  decoding errors with a meaningless character, or set
+  ``charset_error='replace'`` in the vectorizer. This may damage the
+  usefulness of your features.
+
+- Real text may come from a variety of sources that may have used different
+  encodings, or even be sloppily decoded in a different encoding than the
+  one it was encoded with. This is common in text retrieved from the Web.
+  The Python package `ftfy`_ can automatically sort out some classes of
+  decoding errors, so you could try decoding the unknown text as ``latin-1``
+  and then using ``ftfy`` to fix errors.
+
+- If the text is in a mish-mash of encodings that is simply too hard to sort
+  out (which is the case for the 20 Newsgroups dataset), you can fall back on
+  a simple single-byte encoding such as ``latin-1``. Some text may display
+  incorrectly, but at least the same sequence of bytes will always represent
+  the same feature.
+
+.. _`ftfy`: http://github.com/LuminosoInsight/python-ftfy
+
+
 Applications and examples
 -------------------------
 
@@ -488,7 +541,7 @@ together by applying clustering algorithms such as :ref:`k_means`:
   * :ref:`example_document_clustering.py`
 
 Finally it is possible to discover the main topics of a corpus by
-relaxing the hard assignement constraint of clustering, for instance by
+relaxing the hard assignment constraint of clustering, for instance by
 using :ref:`NMF`:
 
   * :ref:`example_applications_topics_extraction_with_nmf.py`
@@ -504,10 +557,10 @@ misspellings or word derivations.
 
 N-grams to the rescue! Instead of building a simple collection of
 unigrams (n=1), one might prefer a collection of bigrams (n=2), where
-occurences of pairs of consecutive words are counted.
+occurrences of pairs of consecutive words are counted.
 
 One might alternatively consider a collection of character n-grams, a
-representation resiliant against misspellings and derivations.
+representation resilient against misspellings and derivations.
 
 For example, let's say we're dealing with a corpus of two documents:
 ``['words', 'wprds']``. The second document contains a misspelling
@@ -535,7 +588,7 @@ span across words::
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   ...                                         # doctest: +NORMALIZE_WHITESPACE
   <1x4 sparse matrix of type '<type 'numpy.int64'>'
-     with 4 stored elements in COOrdinate format>
+     with 4 stored elements in Compressed Sparse Column format>
   >>> ngram_vectorizer.get_feature_names()
   [u' fox ', u' jump', u'jumpy', u'umpy ']
 
@@ -543,12 +596,12 @@ span across words::
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   ...                                         # doctest: +NORMALIZE_WHITESPACE
   <1x5 sparse matrix of type '<type 'numpy.int64'>'
-      with 5 stored elements in COOrdinate format>
+      with 5 stored elements in Compressed Sparse Column format>
   >>> ngram_vectorizer.get_feature_names()
   [u'jumpy', u'mpy f', u'py fo', u'umpy ', u'y fox']
 
 The word boundaries-aware variant ``char_wb`` is especially interesting
-for languages that use whitespaces for word separation as it generates
+for languages that use white-spaces for word separation as it generates
 significantly less noisy features than the raw ``char`` variant in
 that case. For such languages it can increase both the predictive
 accuracy and convergence speed of classifiers trained using such
@@ -653,6 +706,25 @@ The :class:`HashingVectorizer` also comes with the following limitations:
   model. A :class:`TfidfTransformer` can be appended to it in a pipeline if
   required.
 
+Performing out-of-core scaling with HashingVectorizer
+------------------------------------------------------
+
+An interesting development of using a :class:`HashingVectorizer` is the ability
+to perform `out-of-core`_ scaling. This means that we can learn from data that
+does not fit into the computer's main memory.
+
+.. _out-of-core: http://en.wikipedia.org/wiki/Out-of-core_algorithm. 
+
+A strategy to implement out-of-core scaling is to stream data to the estimator 
+in mini-batches. Each mini-batch is vectorized using :class:`HashingVectorizer`
+so as to guarantee that the input space of the estimator has always the same
+dimensionality. The amount of memory used at any time is thus bounded by the
+size of a mini-batch. Although there is no limit to the amount of data that can
+be ingested using such an approach, from a practical point of view the learning
+time is often limited by the CPU time one wants to spend on the task.
+
+For a full-fledged example of out-of-core scaling in a text classification 
+task see :ref:`example_applications_plot_out_of_core_classification.py`.
 
 Customizing the vectorizer classes
 ----------------------------------

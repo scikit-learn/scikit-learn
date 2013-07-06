@@ -6,7 +6,7 @@ real-valued features.
 
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
-# License: 3-clause BSD.
+# License: BSD 3 clause
 
 import errno
 from gzip import GzipFile
@@ -14,7 +14,10 @@ from io import BytesIO
 import logging
 import os
 from os.path import exists, join
-from urllib2 import urlopen
+try:
+    from urllib2 import urlopen
+except ImportError:
+    from urllib.request import urlopen
 
 import numpy as np
 

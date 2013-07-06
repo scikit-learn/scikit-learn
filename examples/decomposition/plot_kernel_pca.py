@@ -10,7 +10,7 @@ print(__doc__)
 
 # Authors: Mathieu Blondel
 #          Andreas Mueller
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 import pylab as pl

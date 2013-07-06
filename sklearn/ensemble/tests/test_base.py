@@ -3,7 +3,7 @@ Testing for the base module (sklearn.ensemble.base).
 """
 
 # Authors: Gilles Louppe
-# License: BSD 3
+# License: BSD 3 clause
 
 from numpy.testing import assert_equal
 from nose.tools import assert_raises, assert_true

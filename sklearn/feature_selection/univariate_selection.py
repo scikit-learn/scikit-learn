@@ -8,17 +8,20 @@
 
 from abc import ABCMeta, abstractmethod
 from warnings import warn
+from functools import reduce
 
 import numpy as np
-from scipy import stats
+from scipy import special, stats
 from scipy.sparse import issparse
 
-from ..base import BaseEstimator, TransformerMixin
+from ..base import BaseEstimator
 from ..preprocessing import LabelBinarizer
-from ..utils import (array2d, as_float_array, atleast2d_or_csr, check_arrays,
-                     safe_asarray, safe_sqr, safe_mask)
+from ..utils import (array2d, as_float_array,
+                     atleast2d_or_csr, check_arrays, safe_asarray, safe_sqr,
+                     safe_mask)
 from ..utils.extmath import safe_sparse_dot
-from functools import reduce
+from ..externals import six
+from .base import SelectorMixin
 
 
 def _clean_nans(scores):
@@ -138,6 +141,24 @@ def f_classif(X, y):
     return f_oneway(*args)
 
 
+def _chisquare(f_obs, f_exp):
+    """Fast replacement for scipy.stats.chisquare.
+
+    Version from https://github.com/scipy/scipy/pull/2525 with additional
+    optimizations.
+    """
+    f_obs = np.asarray(f_obs, dtype=np.float64)
+
+    k = len(f_obs)
+    # Reuse f_obs for χ² statistics
+    chisq = f_obs
+    chisq -= f_exp
+    chisq **= 2
+    chisq /= f_exp
+    chisq = chisq.sum(axis=0)
+    return chisq, special.chdtrc(k - 1, chisq)
+
+
 def chi2(X, y):
     """Compute χ² (chi-squared) statistic for each class/feature combination.
 
@@ -187,7 +208,7 @@ def chi2(X, y):
     class_prob = array2d(Y.mean(axis=0))
     expected = np.dot(class_prob.T, feature_count)
 
-    return stats.chisquare(observed, expected)
+    return _chisquare(observed, expected)
 
 
 def f_regression(X, y, center=True):
@@ -245,8 +266,8 @@ def f_regression(X, y, center=True):
 ######################################################################
 # Base classes
 
-class _BaseFilter(BaseEstimator, TransformerMixin):
-    __metaclass__ = ABCMeta
+class _BaseFilter(six.with_metaclass(ABCMeta, BaseEstimator,
+                                     SelectorMixin)):
 
     def __init__(self, score_func):
         """ Initialize the univariate feature selection.
@@ -267,40 +288,6 @@ class _BaseFilter(BaseEstimator, TransformerMixin):
     def fit(self, X, y):
         """Run score function on (X, y) and get the appropriate features."""
 
-    def get_support(self, indices=False):
-        """
-        Return a mask, or list, of the features/indices selected.
-        """
-        mask = self._get_support_mask()
-        return mask if not indices else np.where(mask)[0]
-
-    @abstractmethod
-    def _get_support_mask(self):
-        """
-        Must return a boolean mask indicating which features are selected.
-        """
-
-    def transform(self, X):
-        """
-        Transform a new matrix using the selected features
-        """
-        X = atleast2d_or_csr(X)
-        mask = self._get_support_mask()
-        if len(mask) != X.shape[1]:
-            raise ValueError("X has a different shape than during fitting.")
-        return atleast2d_or_csr(X)[:, safe_mask(X, mask)]
-
-    def inverse_transform(self, X):
-        """
-        Transform a new matrix using the selected features
-        """
-        support_ = self.get_support()
-        if X.ndim == 1:
-            X = X[None, :]
-        Xt = np.zeros((X.shape[0], support_.size))
-        Xt[:, support_] = X
-        return Xt
-
 
 class _PvalueFilter(_BaseFilter):
     def fit(self, X, y):
@@ -310,6 +297,8 @@ class _PvalueFilter(_BaseFilter):
         score function.
         """
         self.scores_, self.pvalues_ = self.score_func(X, y)
+        self.scores_ = np.asarray(self.scores_)
+        self.pvalues_ = np.asarray(self.pvalues_)
         if len(np.unique(self.pvalues_)) < len(self.pvalues_):
             warn("Duplicate p-values. Result may depend on feature ordering."
                  "There are probably duplicate features, or you used a "
@@ -324,6 +313,8 @@ class _ScoreFilter(_BaseFilter):
         Records and selects features according to their scores.
         """
         self.scores_, self.pvalues_ = self.score_func(X, y)
+        self.scores_ = np.asarray(self.scores_)
+        self.pvalues_ = np.asarray(self.pvalues_)
         if len(np.unique(self.scores_)) < len(self.scores_):
             warn("Duplicate scores. Result may depend on feature ordering."
                  "There are probably duplicate features, or you used a "
@@ -382,13 +373,12 @@ class SelectPercentile(_ScoreFilter):
         scores = _clean_nans(self.scores_)
 
         alpha = stats.scoreatpercentile(scores, 100 - percentile)
-        # XXX refactor the indices -> mask -> indices -> mask thing
-        inds = np.where(scores >= alpha)[0]
-        # if we selected too many features because of equal scores,
-        # we throw them away now
-        inds = inds[:len(scores) * percentile // 100]
-        mask = np.zeros(scores.shape, dtype=np.bool)
-        mask[inds] = True
+        mask = scores > alpha
+        ties = np.where(scores == alpha)[0]
+        if len(ties):
+            max_feats = len(scores) * percentile // 100
+            kept_ties = ties[:max_feats - mask.sum()]
+            mask[kept_ties] = True
         return mask
 
 
@@ -401,8 +391,9 @@ class SelectKBest(_ScoreFilter):
         Function taking two arrays X and y, and returning a pair of arrays
         (scores, pvalues).
 
-    k : int, optional, default=10
+    k : int or "all", optional, default=10
         Number of top features to select.
+        The "all" option bypasses selection, for use in a parameter search.
 
     Attributes
     ----------
@@ -425,8 +416,11 @@ class SelectKBest(_ScoreFilter):
 
     def _get_support_mask(self):
         k = self.k
+        if k == 'all':
+            return np.ones(self.scores_.shape, dtype=bool)
         if k > len(self.scores_):
-            raise ValueError("cannot select %d features among %d"
+            raise ValueError("Cannot select %d features among %d. "
+                             "Use k='all' to return all features."
                              % (k, len(self.scores_)))
 
         scores = _clean_nans(self.scores_)

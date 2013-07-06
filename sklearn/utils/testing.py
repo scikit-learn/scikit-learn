@@ -6,13 +6,20 @@
 #          Mathieu Blondel
 #          Olivier Grisel
 #          Arnaud Joly
-# License: BSD
+# License: BSD 3 clause
 import inspect
 import pkgutil
 
-import urllib2
 import scipy as sp
 from functools import wraps
+try:
+    # Python 2
+    from urllib2 import urlopen
+    from urllib2 import HTTPError
+except ImportError:
+    # Python 3+
+    from urllib.request import urlopen
+    from urllib.error import HTTPError
 
 import sklearn
 from sklearn.base import BaseEstimator
@@ -90,8 +97,8 @@ def assert_raise_message(exception, message, function, *args, **kwargs):
         assert_in(message, error_message)
 
 
-def fake_mldata_cache(columns_dict, dataname, matfile, ordering=None):
-    """Create a fake mldata data set in the cache_path.
+def fake_mldata(columns_dict, dataname, matfile, ordering=None):
+    """Create a fake mldata data set.
 
     Parameters
     ----------
@@ -122,27 +129,24 @@ def fake_mldata_cache(columns_dict, dataname, matfile, ordering=None):
     savemat(matfile, datasets, oned_as='column')
 
 
-class mock_urllib2(object):
+class mock_mldata_urlopen(object):
 
     def __init__(self, mock_datasets):
-        """Object that mocks the urllib2 module to fake requests to mldata.
+        """Object that mocks the urlopen function to fake requests to mldata.
 
         `mock_datasets` is a dictionary of {dataset_name: data_dict}, or
         {dataset_name: (data_dict, ordering).
         `data_dict` itself is a dictionary of {column_name: data_array},
         and `ordering` is a list of column_names to determine the ordering
-        in the data set (see `fake_mldata_cache` for details).
+        in the data set (see `fake_mldata` for details).
 
         When requesting a dataset with a name that is in mock_datasets,
         this object creates a fake dataset in a StringIO object and
-        returns it. Otherwise, it raises an URLError.
+        returns it. Otherwise, it raises an HTTPError.
         """
         self.mock_datasets = mock_datasets
 
-    class HTTPError(urllib2.URLError):
-        code = 404
-
-    def urlopen(self, urlname):
+    def __call__(self, urlname):
         dataset_name = urlname.split('/')[-1]
         if dataset_name in self.mock_datasets:
             resource_name = '_' + dataset_name
@@ -153,22 +157,33 @@ class mock_urllib2(object):
             ordering = None
             if isinstance(dataset, tuple):
                 dataset, ordering = dataset
-            fake_mldata_cache(dataset, resource_name, matfile, ordering)
+            fake_mldata(dataset, resource_name, matfile, ordering)
 
             matfile.seek(0)
             return matfile
         else:
-            raise mock_urllib2.HTTPError('%s not found.' % urlname)
+            raise HTTPError(urlname, 404, dataset_name + " is not available",
+                            [], None)
 
-    def quote(self, string, safe='/'):
-        return urllib2.quote(string, safe)
+
+def install_mldata_mock(mock_datasets):
+    # Lazy import to avoid mutually recursive imports
+    from sklearn import datasets
+    datasets.mldata.urlopen = mock_mldata_urlopen(mock_datasets)
+
+
+def uninstall_mldata_mock():
+    # Lazy import to avoid mutually recursive imports
+    from sklearn import datasets
+    datasets.mldata.urlopen = urlopen
+
 
 # Meta estimators need another estimator to be instantiated.
 meta_estimators = ["OneVsOneClassifier",
                    "OutputCodeClassifier", "OneVsRestClassifier", "RFE",
                    "RFECV", "BaseEnsemble"]
 # estimators that there is no way to default-construct sensibly
-other = ["Pipeline", "FeatureUnion", "GridSearchCV"]
+other = ["Pipeline", "FeatureUnion", "GridSearchCV", "RandomizedSearchCV"]
 
 
 def all_estimators(include_meta_estimators=False, include_other=False,

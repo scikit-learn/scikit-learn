@@ -6,12 +6,15 @@ import os
 import shutil
 import tempfile
 
+from sklearn.externals.six import b
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import assert_in
+
+from sklearn.externals.six import b
 
 import sklearn
 from sklearn.datasets import (load_svmlight_file, load_svmlight_files,
@@ -137,13 +140,13 @@ def test_load_invalid_order_file():
 
 @raises(ValueError)
 def test_load_zero_based():
-    f = BytesIO("-1 4:1.\n1 0:1\n")
+    f = BytesIO(b("-1 4:1.\n1 0:1\n"))
     load_svmlight_file(f, zero_based=False)
 
 
 def test_load_zero_based_auto():
-    data1 = "-1 1:1 2:2 3:3\n"
-    data2 = "-1 0:0 1:1\n"
+    data1 = b("-1 1:1 2:2 3:3\n")
+    data2 = b("-1 0:0 1:1\n")
 
     f1 = BytesIO(data1)
     X, y = load_svmlight_file(f1, zero_based="auto")
@@ -158,10 +161,10 @@ def test_load_zero_based_auto():
 
 def test_load_with_qid():
     # load svmfile with qid attribute
-    data = """
+    data = b("""
     3 qid:1 1:0.53 2:0.12
     2 qid:1 1:0.13 2:0.1
-    7 qid:2 1:0.87 2:0.12"""
+    7 qid:2 1:0.87 2:0.12""")
     X, y = load_svmlight_file(BytesIO(data), query_id=False)
     assert_array_equal(y, [3, 2, 7])
     assert_array_equal(X.todense(), [[.53, .12], [.13, .1], [.87, .12]])
@@ -200,7 +203,7 @@ def test_dump():
 
     for X in (Xs, Xd, Xsliced):
         for zero_based in (True, False):
-            for dtype in [np.float32, np.float64]:
+            for dtype in [np.float32, np.float64, np.int32]:
                 f = BytesIO()
                 # we need to pass a comment to get the version info in;
                 # LibSVM doesn't grok comments so they're not put in by
@@ -210,8 +213,19 @@ def test_dump():
                 f.seek(0)
 
                 comment = f.readline()
+                try:
+                    comment = str(comment, "utf-8")
+                except TypeError:  # fails in Python 2.x
+                    pass
+
                 assert_in("scikit-learn %s" % sklearn.__version__, comment)
+
                 comment = f.readline()
+                try:
+                    comment = str(comment, "utf-8")
+                except TypeError:  # fails in Python 2.x
+                    pass
+
                 assert_in(["one", "zero"][zero_based] + "-based", comment)
 
                 X2, y2 = load_svmlight_file(f, dtype=dtype,
@@ -229,6 +243,35 @@ def test_dump():
                 assert_array_equal(y, y2)
 
 
+def test_dump_concise():
+    one = 1
+    two = 2.1
+    three = 3.01
+    exact = 1.000000000000001
+    # loses the last decimal place
+    almost = 1.0000000000000001
+    X = [[one, two, three, exact, almost],
+         [1e9, 2e18, 3e27, 0, 0],
+         [0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0],
+         [0, 0, 0, 0, 0]]
+    y = [one, two, three, exact, almost]
+    f = BytesIO()
+    dump_svmlight_file(X, y, f)
+    f.seek(0)
+    # make sure it's using the most concise format possible
+    assert_equal(f.readline(), b("1 0:1 1:2.1 2:3.01 3:1.000000000000001 4:1\n"))
+    assert_equal(f.readline(), b("2.1 0:1000000000 1:2e+18 2:3e+27\n"))
+    assert_equal(f.readline(), b("3.01 \n"))
+    assert_equal(f.readline(), b("1.000000000000001 \n"))
+    assert_equal(f.readline(), b("1 \n"))
+    f.seek(0)
+    # make sure it's correct too :)
+    X2, y2 = load_svmlight_file(f)
+    assert_array_almost_equal(X, X2.toarray())
+    assert_array_equal(y, y2)
+
+
 def test_dump_comment():
     X, y = load_svmlight_file(datafile)
     X = X.toarray()
@@ -243,7 +286,7 @@ def test_dump_comment():
     assert_array_equal(y, y2)
 
     # XXX we have to update this to support Python 3.x
-    utf8_comment = "It is true that\n\xc2\xbd\xc2\xb2 = \xc2\xbc"
+    utf8_comment = b("It is true that\n\xc2\xbd\xc2\xb2 = \xc2\xbc")
     f = BytesIO()
     assert_raises(UnicodeDecodeError,
                   dump_svmlight_file, X, y, f, comment=utf8_comment)

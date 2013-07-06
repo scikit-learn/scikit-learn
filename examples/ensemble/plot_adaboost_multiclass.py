@@ -27,9 +27,9 @@ print(__doc__)
 
 # Author: Noel Dawe <noel.dawe@gmail.com>
 #
-# License: BSD
+# License: BSD 3 clause
 
-from itertools import izip
+from sklearn.externals.six.moves import zip
 
 import pylab as pl
 
@@ -65,7 +65,7 @@ bdt_discrete.fit(X_train, y_train)
 real_test_errors = []
 discrete_test_errors = []
 
-for real_test_predict, discrete_train_predict in izip(
+for real_test_predict, discrete_train_predict in zip(
         bdt_real.staged_predict(X_test), bdt_discrete.staged_predict(X_test)):
     real_test_errors.append(
         1. - accuracy_score(real_test_predict, y_test))

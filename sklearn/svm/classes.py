@@ -1,10 +1,10 @@
 from .base import BaseLibLinear, BaseSVC, BaseLibSVM
 from ..base import RegressorMixin
 from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin
-from ..feature_selection.selector_mixin import SelectorMixin
+from ..feature_selection.from_model import _LearntSelectorMixin
 
 
-class LinearSVC(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
+class LinearSVC(BaseLibLinear, LinearClassifierMixin, _LearntSelectorMixin,
                 SparseCoefMixin):
     """Linear Support Vector Classification.
 
@@ -45,7 +45,7 @@ class LinearSVC(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
         While `crammer_singer` is interesting from an theoretical perspective
         as it is consistent it is seldom used in practice and rarely leads to
         better accuracy and is more expensive to compute.
-        If `crammer_singer` is choosen, the options loss, penalty and dual will
+        If `crammer_singer` is chosen, the options loss, penalty and dual will
         be ignored.
 
     fit_intercept : boolean, optional (default=True)
@@ -168,10 +168,10 @@ class SVC(BaseSVC):
 
     degree : int, optional (default=3)
         Degree of kernel function.
-        It is significant only in 'poly' and 'sigmoid'.
+        It is significant only in 'poly'.
 
     gamma : float, optional (default=0.0)
-        Kernel coefficient for 'rbf' and 'poly'.
+        Kernel coefficient for 'rbf', 'poly' and 'sigm'.
         If gamma is 0.0 then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
@@ -254,7 +254,7 @@ class SVC(BaseSVC):
         Support Vector Machine for Regression implemented using libsvm.
 
     LinearSVC
-        Scalable Linear Support Vector Machine for classififcation
+        Scalable Linear Support Vector Machine for classification
         implemented using liblinear. Check the See also section of
         LinearSVC for more comparison element.
 
@@ -267,7 +267,7 @@ class SVC(BaseSVC):
 
         super(SVC, self).__init__(
             'c_svc', kernel, degree, gamma, coef0, tol, C, 0., 0., shrinking,
-            probability, cache_size, "auto", class_weight, verbose, max_iter)
+            probability, cache_size, class_weight, verbose, max_iter)
 
 
 class NuSVC(BaseSVC):
@@ -383,7 +383,7 @@ class NuSVC(BaseSVC):
 
         super(NuSVC, self).__init__(
             'nu_svc', kernel, degree, gamma, coef0, tol, 0., nu, 0., shrinking,
-            probability, cache_size, "auto", None, verbose, max_iter)
+            probability, cache_size, None, verbose, max_iter)
 
 
 class SVR(BaseLibSVM, RegressorMixin):
@@ -492,7 +492,7 @@ class SVR(BaseLibSVM, RegressorMixin):
 
         super(SVR, self).__init__(
             'epsilon_svr', kernel, degree, gamma, coef0, tol, C, 0., epsilon,
-            shrinking, probability, cache_size, "auto", None, verbose,
+            shrinking, probability, cache_size, None, verbose,
             max_iter)
 
 
@@ -607,7 +607,7 @@ class NuSVR(BaseLibSVM, RegressorMixin):
 
         super(NuSVR, self).__init__(
             'nu_svr', kernel, degree, gamma, coef0, tol, C, nu, 0., shrinking,
-            probability, cache_size, "auto", None, verbose, max_iter)
+            probability, cache_size, None, verbose, max_iter)
 
 
 class OneClassSVM(BaseLibSVM):
@@ -688,7 +688,7 @@ class OneClassSVM(BaseLibSVM):
 
         super(OneClassSVM, self).__init__(
             'one_class', kernel, degree, gamma, coef0, tol, 0., nu, 0.,
-            shrinking, False, cache_size, "auto", None, verbose, max_iter)
+            shrinking, False, cache_size, None, verbose, max_iter)
 
     def fit(self, X, sample_weight=None, **params):
         """

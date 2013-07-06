@@ -4,11 +4,11 @@
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Sparseness support by Lars Buitinck <L.J.Buitinck@uva.nl>
 #
-# License: BSD, (C) INRIA, University of Amsterdam
+# License: BSD 3 clause (C) INRIA, University of Amsterdam
 import warnings
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
-from abc import ABCMeta, abstractmethod
 from scipy.sparse import csr_matrix, issparse
 
 from .ball_tree import BallTree
@@ -18,6 +18,7 @@ from ..metrics import pairwise_distances
 from ..metrics.pairwise import PAIRWISE_DISTANCE_FUNCTIONS
 from ..utils import safe_asarray, atleast2d_or_csr, check_arrays
 from ..utils.fixes import unique
+from ..externals import six
 
 
 VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
@@ -96,9 +97,8 @@ def _get_weights(dist, weights):
                          "'distance', or a callable function")
 
 
-class NeighborsBase(BaseEstimator):
+class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for nearest neighbors estimators."""
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self):
@@ -410,7 +410,7 @@ class RadiusNeighborsMixin(object):
 
         Examples
         --------
-        In the following example, we construnct a NeighborsClassifier
+        In the following example, we construct a NeighborsClassifier
         class from an array representing our data set and ask who's
         the closest point to [1,1,1]
 

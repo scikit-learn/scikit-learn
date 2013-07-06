@@ -7,8 +7,8 @@ Dataset transformations
 
 .. toctree::
 
-    modules/preprocessing
     modules/feature_extraction
+    modules/preprocessing
     modules/kernel_approximation
     modules/random_projection
     modules/metrics

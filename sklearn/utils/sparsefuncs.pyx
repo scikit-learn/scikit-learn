@@ -1,7 +1,8 @@
-# Author: Mathieu Blondel
-#         Olivier Grisel
+# Authors: Mathieu Blondel
+#          Olivier Grisel
+#          Lars Buitinck
 #
-# License: BSD Style.
+# Licence: BSD 3 clause
 
 from libc.math cimport fabs, sqrt
 cimport numpy as np
@@ -275,3 +276,41 @@ def mean_variance_axis0(X):
     else:
         raise TypeError(
                 "Unsupported type; expected a CSR or CSC sparse matrix.")
+
+
+@cython.boundscheck(False)
+@cython.wraparound(False)
+def assign_rows_csr(X,
+                    np.ndarray[np.npy_intp, ndim=1] X_rows,
+                    np.ndarray[np.npy_intp, ndim=1] out_rows,
+                    np.ndarray[DOUBLE, ndim=2, mode="c"] out):
+    """Densify selected rows of a CSR matrix into a preallocated array.
+
+    Like out[out_rows] = X[X_rows].toarray() but without copying. Only supported for
+    dtype=np.float64.
+
+    Parameters
+    ----------
+    X : scipy.sparse.csr_matrix, shape=(n_samples, n_features)
+    X_rows : array, dtype=np.intp, shape=n_rows
+    out_rows : array, dtype=np.intp, shape=n_rows
+    out : array, shape=(arbitrary, n_features)
+    """
+    cdef:
+        # npy_intp (np.intc in Python) is what np.where returns,
+        # but int is what scipy.sparse uses.
+        int i, ind, j
+        np.npy_intp rX
+        np.ndarray[DOUBLE, ndim=1] data = X.data
+        np.ndarray[int, ndim=1] indices = X.indices, indptr = X.indptr
+
+    if X_rows.shape[0] != out_rows.shape[0]:
+        raise ValueError("cannot assign %d rows to %d"
+                         % (X_rows.shape[0], out_rows.shape[0]))
+
+    out[:] = 0.
+    for i in range(X_rows.shape[0]):
+        rX = X_rows[i]
+        for ind in range(indptr[rX], indptr[rX + 1]):
+            j = indices[ind]
+            out[out_rows[i], j] = data[ind]

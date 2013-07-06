@@ -79,7 +79,7 @@ function does not actually depend on the data given to the ``fit`` function.
 Only the dimensionality of the data is used.
 Details on the method can be found in [RR2007]_.
 
-For a given value of ``n_components`` :class:`RBFSampler` is often less acurate
+For a given value of ``n_components`` :class:`RBFSampler` is often less accurate
 as :class:`Nystroem`. :class:`RBFSampler` is cheaper to compute, though, making
 use of larger feature spaces more efficient.
 
@@ -118,7 +118,7 @@ The class :class:`AdditiveChi2Sampler` implements this component wise
 deterministic sampling. Each component is sampled `n` times, yielding
 `2n+1` dimensions per input dimension (the multiple of two stems
 from the real and complex part of the Fourier transform).
-In the literature, `n` is usually choosen to be `1` or `2`, transforming
+In the literature, `n` is usually chosen to be `1` or `2`, transforming
 the dataset to size `n_samples x 5 * n_features` (in the case of `n=2`).
 
 The approximate feature map provided by :class:`AdditiveChi2Sampler` can be combined

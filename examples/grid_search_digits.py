@@ -50,8 +50,8 @@ for score in scores:
     print("# Tuning hyper-parameters for %s" % score)
     print()
 
-    clf = GridSearchCV(SVC(C=1), tuned_parameters, scoring=score)
-    clf.fit(X_train, y_train, cv=5)
+    clf = GridSearchCV(SVC(C=1), tuned_parameters, cv=5, scoring=score)
+    clf.fit(X_train, y_train)
 
     print("Best parameters set found on development set:")
     print()
@@ -59,7 +59,7 @@ for score in scores:
     print()
     print("Grid scores on development set:")
     print()
-    for params, mean_score, scores in clf.grid_scores_:
+    for params, mean_score, scores in clf.cv_scores_:
         print("%0.3f (+/-%0.03f) for %r"
               % (mean_score, scores.std() / 2, params))
     print()

@@ -1,8 +1,8 @@
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
-# License: BSD-style.
+# License: BSD 3 clause
 
 from array import array
-from collections import Mapping, Sequence
+from collections import Mapping
 from operator import itemgetter
 
 import numpy as np
@@ -10,17 +10,16 @@ import scipy.sparse as sp
 
 from ..base import BaseEstimator, TransformerMixin
 from ..externals import six
-from ..utils import atleast2d_or_csr
+from ..externals.six.moves import xrange
+from ..utils import atleast2d_or_csr, tosequence
 
 
 def _tosequence(X):
     """Turn X into a sequence or ndarray, avoiding a copy if possible."""
-    if isinstance(X, Mapping):
+    if isinstance(X, Mapping):  # single sample
         return [X]
-    elif isinstance(X, (Sequence, np.ndarray)):
-        return X
     else:
-        return list(X)
+        return tosequence(X)
 
 
 class DictVectorizer(BaseEstimator, TransformerMixin):
@@ -50,6 +49,15 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     sparse: boolean, optional.
         Whether transform should produce scipy.sparse matrices.
         True by default.
+
+    Attributes
+    ----------
+    `feature_names_` : list
+        A list of length n_features containing the feature names (e.g., "f=ham"
+        and "f=spam").
+
+    `vocabulary_` : dict
+        A dictionary mapping feature names to feature indices.
 
     Examples
     --------
@@ -148,22 +156,21 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
             Feature mappings for the samples in X.
         """
         X = atleast2d_or_csr(X)     # COO matrix is not subscriptable
+        n_samples = X.shape[0]
 
-        sample_ids = np.arange(X.shape[0])
         names = self.feature_names_
-        Xd = [dict_type() for _ in sample_ids]
+        dicts = [dict_type() for _ in xrange(n_samples)]
 
         if sp.issparse(X):
             for i, j in zip(*X.nonzero()):
-                Xd[i][names[j]] = X[i, j]
+                dicts[i][names[j]] = X[i, j]
         else:
-            for i in sample_ids:
-                d = Xd[i]
+            for i, d in enumerate(dicts):
                 for j, v in enumerate(X[i, :]):
                     if v != 0:
                         d[names[j]] = X[i, j]
 
-        return Xd
+        return dicts
 
     def transform(self, X, y=None):
         """Transform feature->value dicts to array or sparse matrix.
@@ -217,8 +224,14 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
 
                 indptr.append(len(indices))
 
-            indices = np.frombuffer(indices, dtype=np.int32)
-            indptr = np.frombuffer(indptr, dtype=np.int32)
+            if len(indptr) == 0:
+                raise ValueError("Sample sequence X is empty.")
+
+            if len(indices) > 0:
+                # workaround for bug in older NumPy:
+                # http://projects.scipy.org/numpy/ticket/1943
+                indices = np.frombuffer(indices, dtype=np.intc)
+            indptr = np.frombuffer(indptr, dtype=np.intc)
             shape = (len(indptr) - 1, len(vocab))
             return sp.csr_matrix((values, indices, indptr),
                                  shape=shape, dtype=dtype)

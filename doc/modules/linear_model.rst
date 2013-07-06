@@ -224,7 +224,7 @@ cross-validation: :class:`LassoCV` and :class:`LassoLarsCV`.
 explained below.
 
 For high-dimensional datasets with many collinear regressors,
-:class:`LassoCV` is most often preferrable. How, :class:`LassoLarsCV` has
+:class:`LassoCV` is most often preferable. How, :class:`LassoLarsCV` has
 the advantage of exploring more relevant values of `alpha` parameter, and
 if the number of samples is very small compared to the number of
 observations, it is often faster than :class:`LassoCV`.
@@ -432,7 +432,7 @@ the residual.
 
 Instead of giving a vector result, the LARS solution consists of a
 curve denoting the solution for each value of the L1 norm of the
-parameter vector. The full coeffients path is stored in the array
+parameter vector. The full coefficients path is stored in the array
 ``coef_path_``, which has size (n_features, max_features+1). The first
 column is always zero.
 
@@ -540,7 +540,7 @@ The prior for the parameter :math:`w` is given by a spherical Gaussian:
 .. math:: p(w|\lambda) =
     \mathcal{N}(w|0,\lambda^{-1}\bold{I_{p}})
 
-The priors over :math:`\alpha` and :math:`\lambda` are choosen to be `gamma
+The priors over :math:`\alpha` and :math:`\lambda` are chosen to be `gamma
 distributions <http://en.wikipedia.org/wiki/Gamma_distribution>`__, the
 conjugate prior for the precision of the Gaussian.
 
@@ -548,7 +548,7 @@ The resulting model is called *Bayesian Ridge Regression*, and is similar to the
 classical :class:`Ridge`.  The parameters :math:`w`, :math:`\alpha` and
 :math:`\lambda` are estimated jointly during the fit of the model.  The
 remaining hyperparameters are the parameters of the gamma priors over
-:math:`\alpha` and :math:`\lambda`.  These are usually choosen to be
+:math:`\alpha` and :math:`\lambda`.  These are usually chosen to be
 *non-informative*.  The parameters are estimated by maximizing the *marginal
 log likelihood*.
 
@@ -617,7 +617,7 @@ centered on zero and with a precision :math:`\lambda_{i}`:
 
 with :math:`diag \; (A) = \lambda = \{\lambda_{1},...,\lambda_{p}\}`.
 
-In constrast to `Bayesian Ridge Regression`_, each coordinate of :math:`w_{i}`
+In contrast to `Bayesian Ridge Regression`_, each coordinate of :math:`w_{i}`
 has its own standard deviation :math:`\lambda_i`. The prior over all
 :math:`\lambda_i` is chosen to be the same gamma distribution given by
 hyperparameters :math:`\lambda_1` and :math:`\lambda_2`.
@@ -673,7 +673,7 @@ Stochastic Gradient Descent - SGD
 =================================
 
 Stochastic gradient descent is a simple yet very efficient approach
-to fit linear models. It is particulary useful when the number of samples
+to fit linear models. It is particularly useful when the number of samples
 (and the number of features) is very large.
 
 

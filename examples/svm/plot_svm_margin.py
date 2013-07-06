@@ -6,10 +6,10 @@
 SVM Margins Example
 =========================================================
 The plots below illustrate the effect the parameter `C` has
-on the seperation line. A large value of `C` basically tells
+on the separation line. A large value of `C` basically tells
 our model that we do not have that much faith in our data's
-distrubution, and will only consider points close to line
-of seperation.
+distribution, and will only consider points close to line
+of separation.
 
 A small value of `C` includes more/all the observations, allowing
 the margins to be calculated using all the data in the area.
@@ -20,7 +20,7 @@ print(__doc__)
 
 # Code source: Gael Varoqueux
 # Modified for Documentation merge by Jaques Grobler
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 import pylab as pl
@@ -35,9 +35,9 @@ Y = [0] * 20 + [1] * 20
 fignum = 1
 
 # fit the model
-for name, penality in (('unreg', 1), ('reg', 0.05)):
+for name, penalty in (('unreg', 1), ('reg', 0.05)):
 
-    clf = svm.SVC(kernel='linear', C=penality)
+    clf = svm.SVC(kernel='linear', C=penalty)
     clf.fit(X, Y)
 
     # get the separating hyperplane

@@ -4,11 +4,12 @@ from scipy.sparse import csr_matrix
 from sklearn.utils.testing import assert_array_equal, assert_equal
 from sklearn.utils.testing import assert_array_almost_equal, assert_raises
 
+from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.kernel_approximation import SkewedChi2Sampler
 from sklearn.kernel_approximation import Nystroem
-from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
 
 # generate data
 rng = np.random.RandomState(0)
@@ -116,7 +117,7 @@ def test_input_validation():
     RBFSampler().fit(X).transform(X)
 
 
-def test_nystrom_approximation():
+def test_nystroem_approximation():
     # some basic tests
     rnd = np.random.RandomState(0)
     X = rnd.uniform(size=(10, 4))
@@ -136,9 +137,39 @@ def test_nystrom_approximation():
     X_transformed = trans.fit(X).transform(X)
     assert_equal(X_transformed.shape, (X.shape[0], 2))
 
+    # test that available kernels fit and transform
+    kernels_available = kernel_metrics()
+    for kern in kernels_available:
+        trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
+        X_transformed = trans.fit(X).transform(X)
+        assert_equal(X_transformed.shape, (X.shape[0], 2))
 
-if __name__ == "__main__":
-    test_additive_chi2_sampler()
-    test_input_validation()
-    test_skewed_chi2_sampler()
-    test_rbf_sampler()
+
+def test_nystroem_poly_kernel_params():
+    """Non-regression: Nystroem should pass other parameters beside gamma."""
+    rnd = np.random.RandomState(37)
+    X = rnd.uniform(size=(10, 4))
+
+    K = polynomial_kernel(X, degree=3.1, coef0=.1)
+    nystroem = Nystroem(kernel="polynomial", n_components=X.shape[0],
+                        degree=3.1, coef0=.1)
+    X_transformed = nystroem.fit_transform(X)
+    assert_array_almost_equal(np.dot(X_transformed, X_transformed.T), K)
+
+
+def test_nystroem_callable():
+    """Test Nystroem on a callable."""
+    rnd = np.random.RandomState(42)
+    n_samples = 10
+    X = rnd.uniform(size=(n_samples, 4))
+
+    def logging_histogram_kernel(x, y, log):
+        """Histogram kernel that writes to a log."""
+        log.append(1)
+        return np.minimum(x, y).sum()
+
+    kernel_log = []
+    Nystroem(kernel=logging_histogram_kernel,
+             n_components=(n_samples - 1),
+             kernel_params={'log': kernel_log}).fit(X)
+    assert_equal(len(kernel_log), n_samples * (n_samples - 1) / 2)

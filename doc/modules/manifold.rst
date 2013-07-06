@@ -202,7 +202,7 @@ of neighbors is greater than the number of input dimensions, the matrix
 defining each local neighborhood is rank-deficient.  To address this, standard
 LLE applies an arbitrary regularization parameter :math:`r`, which is chosen
 relative to the trace of the local weight matrix.  Though it can be shown
-formally that as :math:`r \to 0`, the solution coverges to the desired
+formally that as :math:`r \to 0`, the solution converges to the desired
 embedding, there is no guarantee that the optimal solution will be found
 for :math:`r > 0`.  This problem manifests itself in embeddings which distort
 the underlying geometry of the manifold.
@@ -407,7 +407,7 @@ countries.
 
 There exists two types of MDS algorithm: metric and non metric. In the
 scikit-learn, the class :class:`MDS` implements both. In Metric MDS, the input
-simiarity matrix arises from a metric (and thus respects the triangular
+similarity matrix arises from a metric (and thus respects the triangular
 inequality), the distances between output two points are then set to be as
 close as possible to the similarity or dissimilarity data. In the non metric
 vision, the algorithms will try to preserve the order of the distances, and

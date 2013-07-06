@@ -16,6 +16,7 @@ from sklearn.datasets.samples_generator import make_classification
 from sklearn.metrics import f1_score
 from sklearn.utils import check_random_state
 from sklearn.utils import ConvergenceWarning
+from sklearn.utils.fixes import unique
 from sklearn.utils.testing import assert_greater, assert_less
 
 # toy sample
@@ -173,6 +174,10 @@ def test_svr():
                 svm.SVR(kernel='linear', C=10.)):
         clf.fit(diabetes.data, diabetes.target)
         assert_greater(clf.score(diabetes.data, diabetes.target), 0.02)
+
+    # non-regression test; previously, BaseLibSVM would check that
+    # len(np.unique(y)) < 2, which must only be done for SVC
+    svm.SVR().fit(diabetes.data, np.ones(len(diabetes.data)))
 
 
 def test_svr_errors():
@@ -339,15 +344,17 @@ def test_sample_weights():
 def test_auto_weight():
     """Test class weights for imbalanced data"""
     from sklearn.linear_model import LogisticRegression
-    # we take as dataset a the two-dimensional projection of iris so
+    # We take as dataset the two-dimensional projection of iris so
     # that it is not separable and remove half of predictors from
-    # class 1
+    # class 1.
+    # We add one to the targets as a non-regression test: class_weight="auto"
+    # used to work only when the labels where a range [0..K).
     from sklearn.utils import compute_class_weight
-    X, y = iris.data[:, :2], iris.target
-    unbalanced = np.delete(np.arange(y.size), np.where(y > 1)[0][::2])
+    X, y = iris.data[:, :2], iris.target + 1
+    unbalanced = np.delete(np.arange(y.size), np.where(y > 2)[0][::2])
 
-    classes = np.unique(y[unbalanced])
-    class_weights = compute_class_weight('auto', classes, y[unbalanced])
+    classes, y_ind = unique(y[unbalanced], return_inverse=True)
+    class_weights = compute_class_weight('auto', classes, y_ind)
     assert_true(np.argmax(class_weights) == 2)
 
     for clf in (svm.SVC(kernel='linear'), svm.LinearSVC(random_state=0),
@@ -597,13 +604,27 @@ def test_linearsvc_verbose():
 
 
 def test_svc_clone_with_callable_kernel():
-    a = svm.SVC(kernel=lambda x, y: np.dot(x, y.T), probability=True)
-    b = base.clone(a)
+    # create SVM with callable linear kernel, check that results are the same
+    # as with built-in linear kernel
+    svm_callable = svm.SVC(kernel=lambda x, y: np.dot(x, y.T),
+                           probability=True)
+    # clone for checking clonability with lambda functions..
+    svm_cloned = base.clone(svm_callable)
+    svm_cloned.fit(X, Y)
 
-    b.fit(X, Y)
-    b.predict(X)
-    b.predict_proba(X)
-    b.decision_function(X)
+    svm_builtin = svm.SVC(kernel='linear', probability=True)
+    svm_builtin.fit(X, Y)
+
+    assert_array_almost_equal(svm_cloned.dual_coef_,
+                              svm_builtin.dual_coef_)
+    assert_array_almost_equal(svm_cloned.intercept_,
+                              svm_builtin.intercept_)
+    assert_array_equal(svm_cloned.predict(X), svm_builtin.predict(X))
+
+    assert_array_almost_equal(svm_cloned.predict_proba(X),
+                              svm_builtin.predict_proba(X))
+    assert_array_almost_equal(svm_cloned.decision_function(X),
+                              svm_builtin.decision_function(X))
 
 
 def test_svc_bad_kernel():

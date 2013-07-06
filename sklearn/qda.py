@@ -4,7 +4,7 @@ Quadratic Discriminant Analysis
 
 # Author: Matthieu Perrot <matthieu.perrot@gmail.com>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 import warnings
 

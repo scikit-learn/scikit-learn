@@ -54,6 +54,12 @@ def configuration(parent_package='', top_path=None):
         include_dirs=[numpy.get_include()],
         libraries=libraries,
     )
+    config.add_extension(
+        '_isotonic',
+        sources=['_isotonic.c'],
+        include_dirs=[numpy.get_include()],
+        libraries=libraries,
+    )
 
     # some libs needs cblas, fortran-compiled BLAS will not be sufficient
     blas_info = get_info('blas_opt', 0)

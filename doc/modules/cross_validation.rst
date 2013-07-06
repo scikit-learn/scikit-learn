@@ -1,7 +1,7 @@
 .. _cross_validation:
 
 ===================================================
-Cross-Validation: evaluating estimator performance
+Cross-validation: evaluating estimator performance
 ===================================================
 
 .. currentmodule:: sklearn.cross_validation
@@ -10,15 +10,18 @@ Learning the parameters of a prediction function and testing it on the
 same data is a methodological mistake: a model that would just repeat
 the labels of the samples that it has just seen would have a perfect
 score but would fail to predict anything useful on yet-unseen data.
+This situation is called **overfitting**.
+To avoid it, it is common practice when performing
+a (supervised) machine learning experiment
+to hold out part of the available data as a **test set** ``X_test, y_test``.
+Note that the word "experiment" is not intended
+to denote academic use only,
+because even in commercial settings
+machine learning usually starts out experimentally.
 
-To **avoid over-fitting**, we have to define two different sets :
-a **training set** ``X_train, y_train`` which is used for learning
-the parameters of a predictive model, and a **testing set** ``X_test,
-y_test`` which is used for evaluating the fitted predictive model.
-
-In scikit-learn such a random split can be quickly computed with the
-:func:`train_test_split` helper function. Let load the iris data set to
-fit a linear Support Vector Machine model on it::
+In scikit-learn a random split into training and test sets
+can be quickly computed with the :func:`train_test_split` helper function.
+Let's load the iris data set to fit a linear support vector machine on it::
 
   >>> import numpy as np
   >>> from sklearn import cross_validation
@@ -44,17 +47,47 @@ data for testing (evaluating) our classifier::
   >>> clf.score(X_test, y_test)                           # doctest: +ELLIPSIS
   0.96...
 
-However, by defining these two sets, we drastically reduce the number
-of samples which can be used for learning the model, and the results can
-depend on a particular random choice for the pair of (train, test) sets.
+When evaluating different settings ("hyperparameters") for estimators,
+such as the ``C`` setting that must be manually set for an SVM,
+there is still a risk of overfitting *on the test set*
+because the parameters can be tweaked until the estimator performs optimally.
+This way, knowledge about the test set can "leak" into the model
+and evaluation metrics no longer report on generalization performance.
+To solve this problem, yet another part of the dataset can be held out
+as a so-called "validation set": training proceeds on the training set,
+after which evaluation is done on the validation set,
+and when the experiment seems to be successful,
+final evaluation can be done on the test set.
 
-A solution is to **split the whole data several consecutive times in
-different train set and test set**, and to return the averaged value of
-the prediction scores obtained with the different sets. Such a procedure
-is called **cross-validation**. This approach can be **computationally
-expensive, but does not waste too much data** (as it is the case when
-fixing an arbitrary test set), which is a major advantage in problem
-such as inverse inference where the number of samples is very small.
+However, by partitioning the available data into three sets,
+we drastically reduce the number of samples
+which can be used for learning the model,
+and the results can depend on a particular random choice for the pair of
+(train, validation) sets.
+
+A solution to this problem is a procedure called
+`cross-validation <http://en.wikipedia.org/wiki/Cross-validation_(statistics)>`_
+(CV for short).
+A test set should still be held out for final evaluation,
+but the validation set is no longer needed when doing CV.
+In the basic approach, called *k*-fold CV,
+the training set is split into *k* smaller sets
+(other approaches are described below,
+but generally follow the same principles).
+The following is procedure is followed for each of the *k* "folds":
+
+ * A model is trained using :math:`k-1` of the folds as training data;
+ * the resulting model is validated on the remaining part of the data
+   (i.e., it is used as a test set to compute a performance measure
+   such as accuracy).
+
+The performance measure reported by *k*-fold cross-validation
+is then the average of the values computed in the loop.
+This approach can be computationally expensive,
+but does not waste too much data
+(as it is the case when fixing an arbitrary test set),
+which is a major advantage in problem such as inverse inference
+where the number of samples is very small.
 
 
 Computing cross-validated metrics
@@ -63,10 +96,10 @@ Computing cross-validated metrics
 The simplest way to use perform cross-validation in to call the
 :func:`cross_val_score` helper function on the estimator and the dataset.
 
-The following example demonstrates how to estimate the accuracy of a
-linear kernel Support Vector Machine on the iris dataset by splitting
-the data and fitting a model and computing the score 5 consecutive times
-(with different splits each time)::
+The following example demonstrates how to estimate the accuracy of a linear
+kernel support vector machine on the iris dataset by splitting the data, fitting
+a model and computing the score 5 consecutive times (with different splits each
+time)::
 
   >>> clf = svm.SVC(kernel='linear', C=1)
   >>> scores = cross_validation.cross_val_score(
@@ -99,7 +132,7 @@ When the ``cv`` argument is an integer, :func:`cross_val_score` uses the
 :class:`KFold` or :class:`StratifiedKFold` strategies by default (depending on
 the absence or presence of the target array).
 
-It is also possible to use othe cross validation strategies by passing a cross
+It is also possible to use other cross validation strategies by passing a cross
 validation iterator instead, for instance::
 
   >>> n_samples = iris.data.shape[0]
@@ -145,10 +178,10 @@ validation strategies.
 K-fold
 ------
 
-:class:`KFold` divides all the samples in math:`K` groups of samples,
-called folds (if :math:`K = n`, this is equivalent to the *Leave One
+:class:`KFold` divides all the samples in math:`k` groups of samples,
+called folds (if :math:`k = n`, this is equivalent to the *Leave One
 Out* strategy), of equal sizes (if possible). The prediction function is
-learned using :math:`K - 1` folds, and the fold left out is used for test.
+learned using :math:`k - 1` folds, and the fold left out is used for test.
 
 Example of 2-fold::
 
@@ -186,12 +219,13 @@ when creating the cross-validation procedure::
   [0 1] [2 3]
 
 
-Stratified K-Fold
+Stratified k-fold
 -----------------
 
-:class:`StratifiedKFold` is a variation of *K-fold*, which returns
-stratified folds, *i.e* which creates folds by preserving the same
-percentage for each target class as in the complete set.
+:class:`StratifiedKFold` is a variation of *k-fold* which returns
+*stratified* folds:
+each set contains the same percentage of samples
+of each target class as the complete set.
 
 Example of stratified 2-fold::
 
@@ -243,8 +277,11 @@ not waste much data as only one sample is removed from the learning set::
 Leave-P-Out - LPO
 -----------------
 
-:class:`LeavePOut` is very similar to *Leave-One-Out*, as it creates all the
-possible training/test sets by removing :math:`P` samples from the complete set.
+:class:`LeavePOut` is very similar to :class:`LeaveOneOut` as it creates all
+the possible training/test sets by removing :math:`p` samples from the complete
+set. For :math:`n` samples, this produces :math:`{n \choose p}` train-test
+pairs. Unlike :class:`LeaveOneOut` and :class:`KFold`, the test sets will
+overlap for :math:`p > 1`.
 
 Example of Leave-2-Out::
 
@@ -288,7 +325,7 @@ a training set using the samples of all the experiments except one::
 
   >>> lolo = LeaveOneLabelOut(labels)
   >>> print(lolo)
-  sklearn.cross_validation.LeaveOneLabelOut(labels=[1, 1, 2, 2])
+  sklearn.cross_validation.LeaveOneLabelOut(labels=[1 1 2 2])
 
   >>> for train, test in lolo:
   ...     print("%s %s" % (train, test))
@@ -315,7 +352,7 @@ Example of Leave-2-Label Out::
 
   >>> lplo = LeavePLabelOut(labels, 2)
   >>> print(lplo)
-  sklearn.cross_validation.LeavePLabelOut(labels=[1, 1, 2, 2, 3, 3], p=2)
+  sklearn.cross_validation.LeavePLabelOut(labels=[1 1 2 2 3 3], p=2)
 
   >>> for train, test in lplo:
   ...     print("%s %s" % (train, test))
@@ -332,7 +369,7 @@ Random permutations cross-validation a.k.a. Shuffle & Split
 
 The :class:`ShuffleSplit` iterator will generate a user defined number of
 independent train / test dataset splits. Samples are first shuffled and
-then splitted into a pair of train and test sets.
+then split into a pair of train and test sets.
 
 It is possible to control the randomness for reproducibility of the
 results by explicitly seeding the ``random_state`` pseudo random number

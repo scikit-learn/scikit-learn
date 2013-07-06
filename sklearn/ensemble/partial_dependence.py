@@ -1,9 +1,11 @@
 """Partial dependence plots for tree ensembles. """
 
 # Authors: Peter Prettenhofer
-# License: BSD Style.
+# License: BSD 3 clause
 
-from itertools import count, izip
+from itertools import count
+
+from sklearn.externals.six.moves import zip
 
 import numbers
 
@@ -87,7 +89,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
         computed (size should be smaller than 3 for visual renderings).
     grid : array-like, shape=(n_points, len(target_variables))
         The grid of ``target_variables`` values for which the
-        partial dependecy should be evaluted (either ``grid`` or ``X``
+        partial dependecy should be evaluated (either ``grid`` or ``X``
         must be specified).
     X : array-like, shape=(n_samples, n_features)
         The data on which ``gbrt`` was trained. It is used to generate
@@ -171,7 +173,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
                             contour_kw=None, **fig_kw):
     """Partial dependence plots for ``features``.
 
-    The ``len(features)`` plots are aranged in a grid with ``n_cols``
+    The ``len(features)`` plots are arranged in a grid with ``n_cols``
     columns. Two-way partial dependence plots are plotted as contour
     plots.
 
@@ -332,8 +334,8 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     n_cols = min(n_cols, len(features))
     n_rows = int(np.ceil(len(features) / float(n_cols)))
     axs = []
-    for i, fx, name, (pdp, axes) in izip(count(), features, names,
-                                         pd_result):
+    for i, fx, name, (pdp, axes) in zip(count(), features, names,
+                                        pd_result):
         ax = fig.add_subplot(n_rows, n_cols, i + 1)
 
         if len(axes) == 1:

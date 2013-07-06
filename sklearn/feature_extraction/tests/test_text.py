@@ -114,38 +114,38 @@ def test_to_ascii():
 def test_word_analyzer_unigrams():
     for Vectorizer in (CountVectorizer, HashingVectorizer):
         wa = Vectorizer(strip_accents='ascii').build_analyzer()
-        text = (u"J'ai mang\xe9 du kangourou  ce midi, "
-                u"c'\xe9tait pas tr\xeas bon.")
-        expected = [u'ai', u'mange', u'du', u'kangourou', u'ce', u'midi',
-                    u'etait', u'pas', u'tres', u'bon']
+        text = ("J'ai mang\xe9 du kangourou  ce midi, "
+                "c'\xe9tait pas tr\xeas bon.")
+        expected = ['ai', 'mange', 'du', 'kangourou', 'ce', 'midi',
+                    'etait', 'pas', 'tres', 'bon']
         assert_equal(wa(text), expected)
 
         text = "This is a test, really.\n\n I met Harry yesterday."
-        expected = [u'this', u'is', u'test', u'really', u'met', u'harry',
-                    u'yesterday']
+        expected = ['this', 'is', 'test', 'really', 'met', 'harry',
+                    'yesterday']
         assert_equal(wa(text), expected)
 
         wa = Vectorizer(input='file').build_analyzer()
         text = StringIO("This is a test with a file-like object!")
-        expected = [u'this', u'is', u'test', u'with', u'file', u'like',
-                    u'object']
+        expected = ['this', 'is', 'test', 'with', 'file', 'like',
+                    'object']
         assert_equal(wa(text), expected)
 
         # with custom preprocessor
         wa = Vectorizer(preprocessor=uppercase).build_analyzer()
-        text = (u"J'ai mang\xe9 du kangourou  ce midi, "
-                u" c'\xe9tait pas tr\xeas bon.")
-        expected = [u'AI', u'MANGE', u'DU', u'KANGOUROU', u'CE', u'MIDI',
-                    u'ETAIT', u'PAS', u'TRES', u'BON']
+        text = ("J'ai mang\xe9 du kangourou  ce midi, "
+                " c'\xe9tait pas tr\xeas bon.")
+        expected = ['AI', 'MANGE', 'DU', 'KANGOUROU', 'CE', 'MIDI',
+                    'ETAIT', 'PAS', 'TRES', 'BON']
         assert_equal(wa(text), expected)
 
         # with custom tokenizer
         wa = Vectorizer(tokenizer=split_tokenize,
                         strip_accents='ascii').build_analyzer()
-        text = (u"J'ai mang\xe9 du kangourou  ce midi, "
-                u"c'\xe9tait pas tr\xeas bon.")
-        expected = [u"j'ai", u'mange', u'du', u'kangourou', u'ce', u'midi,',
-                    u"c'etait", u'pas', u'tres', u'bon.']
+        text = ("J'ai mang\xe9 du kangourou  ce midi, "
+                "c'\xe9tait pas tr\xeas bon.")
+        expected = ["j'ai", 'mange', 'du', 'kangourou', 'ce', 'midi,',
+                    "c'etait", 'pas', 'tres', 'bon.']
         assert_equal(wa(text), expected)
 
 
@@ -153,11 +153,11 @@ def test_word_analyzer_unigrams_and_bigrams():
     wa = CountVectorizer(analyzer="word", strip_accents='unicode',
                          ngram_range=(1, 2)).build_analyzer()
 
-    text = u"J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
-    expected = [u'ai', u'mange', u'du', u'kangourou', u'ce', u'midi',
-                u'etait', u'pas', u'tres', u'bon', u'ai mange', u'mange du',
-                u'du kangourou', u'kangourou ce', u'ce midi', u'midi etait',
-                u'etait pas', u'pas tres', u'tres bon']
+    text = "J'ai mang\xe9 du kangourou  ce midi, c'\xe9tait pas tr\xeas bon."
+    expected = ['ai', 'mange', 'du', 'kangourou', 'ce', 'midi',
+                'etait', 'pas', 'tres', 'bon', 'ai mange', 'mange du',
+                'du kangourou', 'kangourou ce', 'ce midi', 'midi etait',
+                'etait pas', 'pas tres', 'tres bon']
     assert_equal(wa(text), expected)
 
 
@@ -206,16 +206,16 @@ def test_char_wb_ngram_analyzer():
                            ngram_range=(3, 6)).build_analyzer()
 
     text = "This \n\tis a test, really.\n\n I met Harry yesterday"
-    expected = [u' th', u'thi', u'his', u'is ', u' thi']
+    expected = [' th', 'thi', 'his', 'is ', ' thi']
     assert_equal(cnga(text)[:5], expected)
 
-    expected = [u'yester', u'esterd', u'sterda', u'terday', u'erday ']
+    expected = ['yester', 'esterd', 'sterda', 'terday', 'erday ']
     assert_equal(cnga(text)[-5:], expected)
 
     cnga = CountVectorizer(input='file', analyzer='char_wb',
                            ngram_range=(3, 6)).build_analyzer()
     text = StringIO("A test with a file-like object!")
-    expected = [u' a ', u' te', u'tes', u'est', u'st ', u' tes']
+    expected = [' a ', ' te', 'tes', 'est', 'st ', ' tes']
     assert_equal(cnga(text)[:6], expected)
 
 
@@ -253,7 +253,7 @@ def test_countvectorizer_stop_words():
     assert_equal(cv.get_stop_words(), ENGLISH_STOP_WORDS)
     cv.set_params(stop_words='_bad_str_stop_')
     assert_raises(ValueError, cv.get_stop_words)
-    cv.set_params(stop_words=u'_bad_unicode_stop_')
+    cv.set_params(stop_words='_bad_unicode_stop_')
     assert_raises(ValueError, cv.get_stop_words)
     stoplist = ['some', 'other', 'words']
     cv.set_params(stop_words=stoplist)
@@ -268,7 +268,7 @@ def test_countvectorizer_empty_vocabulary():
         assert_in("empty vocabulary", str(e).lower())
 
     try:
-        v = CountVectorizer(min_df=1, max_df=1.0, stop_words="english")
+        v = CountVectorizer(max_df=1.0, stop_words="english")
         # fit on stopwords only
         v.fit(["to be or not to be", "and me too", "and so do you"])
         assert False, "we shouldn't get here"
@@ -356,7 +356,7 @@ def test_vectorizer():
     n_train = len(ALL_FOOD_DOCS) - 1
 
     # test without vocabulary
-    v1 = CountVectorizer(max_df=0.5, min_df=1)
+    v1 = CountVectorizer(max_df=0.5)
     counts_train = v1.fit_transform(train_data)
     if hasattr(counts_train, 'tocsr'):
         counts_train = counts_train.tocsr()
@@ -424,7 +424,7 @@ def test_vectorizer():
     # test the direct tfidf vectorizer
     # (equivalent to term count vectorizer + tfidf transformer)
     train_data = iter(ALL_FOOD_DOCS[:-1])
-    tv = TfidfVectorizer(norm='l1', min_df=1)
+    tv = TfidfVectorizer(norm='l1')
     assert_false(tv.fixed_vocabulary)
 
     tv.max_df = v1.max_df
@@ -504,7 +504,7 @@ def test_hashing_vectorizer():
 
 
 def test_feature_names():
-    cv = CountVectorizer(max_df=0.5, min_df=1)
+    cv = CountVectorizer(max_df=0.5)
 
     # test for Value error on unfitted/empty vocabulary
     assert_raises(ValueError, cv.get_feature_names)
@@ -530,55 +530,68 @@ def test_vectorizer_max_features():
     )
 
     expected_vocabulary = set(['burger', 'beer', 'salad', 'pizza'])
+    expected_stop_words = set([u'celeri', u'tomato', u'copyright', u'coke',
+                               u'sparkling', u'water', u'the'])
 
     for vec_factory in vec_factories:
         # test bounded number of extracted features
         vectorizer = vec_factory(max_df=0.6, max_features=4)
         vectorizer.fit(ALL_FOOD_DOCS)
         assert_equal(set(vectorizer.vocabulary_), expected_vocabulary)
+        assert_equal(vectorizer.stop_words_, expected_stop_words)
 
 
 def test_vectorizer_max_df():
     test_data = ['abc', 'dea']  # the letter a occurs in both strings
-    vect = CountVectorizer(analyzer='char', max_df=1.0, min_df=1)
+    vect = CountVectorizer(analyzer='char', max_df=1.0)
     vect.fit(test_data)
-    assert_true(u'a' in vect.vocabulary_.keys())
+    assert_true('a' in vect.vocabulary_.keys())
     assert_equal(len(vect.vocabulary_.keys()), 5)
+    assert_equal(len(vect.stop_words_), 0)
 
     vect.max_df = 0.5
     vect.fit(test_data)
-    assert_true(u'a' not in vect.vocabulary_.keys())  # 'a' is ignored
+    assert_true('a' not in vect.vocabulary_.keys())  # 'a' is ignored
     assert_equal(len(vect.vocabulary_.keys()), 4)  # the others remain
+    assert_true('a' in vect.stop_words_)
+    assert_equal(len(vect.stop_words_), 1)
 
     # absolute count: if in more than one
     vect.max_df = 1
     vect.fit(test_data)
-    assert_true(u'a' not in vect.vocabulary_.keys())  # 'a' is ignored
+    assert_true('a' not in vect.vocabulary_.keys())  # 'a' is ignored
     assert_equal(len(vect.vocabulary_.keys()), 4)  # the others remain
+    assert_true('a' in vect.stop_words_)
+    assert_equal(len(vect.stop_words_), 1)
 
 
 def test_vectorizer_min_df():
-    test_data = [u'abc', u'dea', u'eat']  # the letter a occurs in both strings
+    test_data = ['abc', 'dea', 'eat']  # the letter a occurs in both strings
     vect = CountVectorizer(analyzer='char', max_df=1.0, min_df=1)
     vect.fit(test_data)
-    assert_true(u'a' in vect.vocabulary_.keys())
+    assert_true('a' in vect.vocabulary_.keys())
     assert_equal(len(vect.vocabulary_.keys()), 6)
+    assert_equal(len(vect.stop_words_), 0)
 
     vect.min_df = 2
     vect.fit(test_data)
-    assert_true(u'c' not in vect.vocabulary_.keys())  # 'c' is ignored
+    assert_true('c' not in vect.vocabulary_.keys())  # 'c' is ignored
     assert_equal(len(vect.vocabulary_.keys()), 2)  # only e, a remain
+    assert_true('c' in vect.stop_words_)
+    assert_equal(len(vect.stop_words_), 4)
 
     vect.min_df = .5
     vect.fit(test_data)
-    assert_true(u'c' not in vect.vocabulary_.keys())  # 'c' is ignored
+    assert_true('c' not in vect.vocabulary_.keys())  # 'c' is ignored
     assert_equal(len(vect.vocabulary_.keys()), 2)  # only e, a remain
+    assert_true('c' in vect.stop_words_)
+    assert_equal(len(vect.stop_words_), 4)
 
 
 def test_count_binary_occurrences():
     # by default multiple occurrences are counted as longs
     test_data = ['aaabc', 'abbde']
-    vect = CountVectorizer(analyzer='char', max_df=1.0, min_df=1)
+    vect = CountVectorizer(analyzer='char', max_df=1.0)
     X = vect.fit_transform(test_data).toarray()
     assert_array_equal(['a', 'b', 'c', 'd', 'e'], vect.get_feature_names())
     assert_array_equal([[3, 1, 1, 0, 0],
@@ -586,8 +599,7 @@ def test_count_binary_occurrences():
 
     # using boolean features, we can fetch the binary occurrence info
     # instead.
-    vect = CountVectorizer(analyzer='char', max_df=1.0,
-                           binary=True, min_df=1)
+    vect = CountVectorizer(analyzer='char', max_df=1.0, binary=True)
     X = vect.fit_transform(test_data).toarray()
     assert_array_equal([[1, 1, 1, 0, 0],
                         [1, 1, 0, 1, 1]], X)
@@ -601,7 +613,7 @@ def test_count_binary_occurrences():
 
 def test_hashed_binary_occurrences():
     # by default multiple occurrences are counted as longs
-    test_data = [u'aaabc', u'abbde']
+    test_data = ['aaabc', 'abbde']
     vect = HashingVectorizer(analyzer='char', non_negative=True,
                              norm=None)
     X = vect.transform(test_data)
@@ -627,7 +639,7 @@ def test_hashed_binary_occurrences():
 def test_vectorizer_inverse_transform():
     # raw documents
     data = ALL_FOOD_DOCS
-    for vectorizer in (TfidfVectorizer(min_df=1), CountVectorizer(min_df=1)):
+    for vectorizer in (TfidfVectorizer(), CountVectorizer()):
         transformed_data = vectorizer.fit_transform(data)
         inversed_data = vectorizer.inverse_transform(transformed_data)
         analyze = vectorizer.build_analyzer()
@@ -656,7 +668,7 @@ def test_count_vectorizer_pipeline_grid_selection():
     y_train = y[1:-1]
     y_test = np.array([y[0], y[-1]])
 
-    pipeline = Pipeline([('vect', CountVectorizer(min_df=1)),
+    pipeline = Pipeline([('vect', CountVectorizer()),
                          ('svc', LinearSVC())])
 
     parameters = {
@@ -694,7 +706,7 @@ def test_vectorizer_pipeline_grid_selection():
     y_train = y[1:-1]
     y_test = np.array([y[0], y[-1]])
 
-    pipeline = Pipeline([('vect', TfidfVectorizer(min_df=1)),
+    pipeline = Pipeline([('vect', TfidfVectorizer()),
                          ('svc', LinearSVC())])
 
     parameters = {
@@ -725,23 +737,23 @@ def test_vectorizer_pipeline_grid_selection():
 def test_vectorizer_unicode():
     # tests that the count vectorizer works with cyrillic.
     document = (
-        u"\xd0\x9c\xd0\xb0\xd1\x88\xd0\xb8\xd0\xbd\xd0\xbd\xd0\xbe\xd0"
-        u"\xb5 \xd0\xbe\xd0\xb1\xd1\x83\xd1\x87\xd0\xb5\xd0\xbd\xd0\xb8\xd0"
-        u"\xb5 \xe2\x80\x94 \xd0\xbe\xd0\xb1\xd1\x88\xd0\xb8\xd1\x80\xd0\xbd"
-        u"\xd1\x8b\xd0\xb9 \xd0\xbf\xd0\xbe\xd0\xb4\xd1\x80\xd0\xb0\xd0\xb7"
-        u"\xd0\xb4\xd0\xb5\xd0\xbb \xd0\xb8\xd1\x81\xd0\xba\xd1\x83\xd1\x81"
-        u"\xd1\x81\xd1\x82\xd0\xb2\xd0\xb5\xd0\xbd\xd0\xbd\xd0\xbe\xd0\xb3"
-        u"\xd0\xbe \xd0\xb8\xd0\xbd\xd1\x82\xd0\xb5\xd0\xbb\xd0\xbb\xd0"
-        u"\xb5\xd0\xba\xd1\x82\xd0\xb0, \xd0\xb8\xd0\xb7\xd1\x83\xd1\x87"
-        u"\xd0\xb0\xd1\x8e\xd1\x89\xd0\xb8\xd0\xb9 \xd0\xbc\xd0\xb5\xd1\x82"
-        u"\xd0\xbe\xd0\xb4\xd1\x8b \xd0\xbf\xd0\xbe\xd1\x81\xd1\x82\xd1\x80"
-        u"\xd0\xbe\xd0\xb5\xd0\xbd\xd0\xb8\xd1\x8f \xd0\xb0\xd0\xbb\xd0\xb3"
-        u"\xd0\xbe\xd1\x80\xd0\xb8\xd1\x82\xd0\xbc\xd0\xbe\xd0\xb2, \xd1\x81"
-        u"\xd0\xbf\xd0\xbe\xd1\x81\xd0\xbe\xd0\xb1\xd0\xbd\xd1\x8b\xd1\x85 "
-        u"\xd0\xbe\xd0\xb1\xd1\x83\xd1\x87\xd0\xb0\xd1\x82\xd1\x8c\xd1\x81\xd1"
-        u"\x8f.")
+        "\xd0\x9c\xd0\xb0\xd1\x88\xd0\xb8\xd0\xbd\xd0\xbd\xd0\xbe\xd0"
+        "\xb5 \xd0\xbe\xd0\xb1\xd1\x83\xd1\x87\xd0\xb5\xd0\xbd\xd0\xb8\xd0"
+        "\xb5 \xe2\x80\x94 \xd0\xbe\xd0\xb1\xd1\x88\xd0\xb8\xd1\x80\xd0\xbd"
+        "\xd1\x8b\xd0\xb9 \xd0\xbf\xd0\xbe\xd0\xb4\xd1\x80\xd0\xb0\xd0\xb7"
+        "\xd0\xb4\xd0\xb5\xd0\xbb \xd0\xb8\xd1\x81\xd0\xba\xd1\x83\xd1\x81"
+        "\xd1\x81\xd1\x82\xd0\xb2\xd0\xb5\xd0\xbd\xd0\xbd\xd0\xbe\xd0\xb3"
+        "\xd0\xbe \xd0\xb8\xd0\xbd\xd1\x82\xd0\xb5\xd0\xbb\xd0\xbb\xd0"
+        "\xb5\xd0\xba\xd1\x82\xd0\xb0, \xd0\xb8\xd0\xb7\xd1\x83\xd1\x87"
+        "\xd0\xb0\xd1\x8e\xd1\x89\xd0\xb8\xd0\xb9 \xd0\xbc\xd0\xb5\xd1\x82"
+        "\xd0\xbe\xd0\xb4\xd1\x8b \xd0\xbf\xd0\xbe\xd1\x81\xd1\x82\xd1\x80"
+        "\xd0\xbe\xd0\xb5\xd0\xbd\xd0\xb8\xd1\x8f \xd0\xb0\xd0\xbb\xd0\xb3"
+        "\xd0\xbe\xd1\x80\xd0\xb8\xd1\x82\xd0\xbc\xd0\xbe\xd0\xb2, \xd1\x81"
+        "\xd0\xbf\xd0\xbe\xd1\x81\xd0\xbe\xd0\xb1\xd0\xbd\xd1\x8b\xd1\x85 "
+        "\xd0\xbe\xd0\xb1\xd1\x83\xd1\x87\xd0\xb0\xd1\x82\xd1\x8c\xd1\x81\xd1"
+        "\x8f.")
 
-    vect = CountVectorizer(min_df=1)
+    vect = CountVectorizer()
     X_counted = vect.fit_transform([document])
     assert_equal(X_counted.shape, (1, 15))
 

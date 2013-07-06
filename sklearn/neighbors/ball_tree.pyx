@@ -3,9 +3,8 @@
 #cython: wraparound=False
 #cython: cdivision=True
 
-# By Jake Vanderplas (2013) <jakevdp@cs.washington.edu>
-# written for the scikit-learn project
-# License: BSD
+# Author: Jake Vanderplas <vanderplas@astro.washington.edu>
+# Licence: BSD 3 clause
 
 __all__ = ['BallTree']
 

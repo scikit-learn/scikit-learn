@@ -5,7 +5,7 @@
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #
-# License: BSD Style.
+# Licence: BSD 3 clause
 
 from libc.math cimport sqrt
 import numpy as np
@@ -33,7 +33,7 @@ cpdef DOUBLE _assign_labels_array(np.ndarray[DOUBLE, ndim=2] X,
                                   np.ndarray[DOUBLE, ndim=2] centers,
                                   np.ndarray[INT, ndim=1] labels,
                                   np.ndarray[DOUBLE, ndim=1] distances):
-    """Compute label assignement and inertia for a dense array
+    """Compute label assignment and inertia for a dense array
 
     Return the inertia (sum of squared distances to the centers).
     """
@@ -86,7 +86,7 @@ cpdef DOUBLE _assign_labels_csr(X, np.ndarray[DOUBLE, ndim=1] x_squared_norms,
                                 np.ndarray[DOUBLE, ndim=2] centers,
                                 np.ndarray[INT, ndim=1] labels,
                                 np.ndarray[DOUBLE, ndim=1] distances):
-    """Compute label assignement and inertia for a CSR input
+    """Compute label assignment and inertia for a CSR input
 
     Return the inertia (sum of squared distances to the centers).
     """

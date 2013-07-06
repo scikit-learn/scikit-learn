@@ -217,6 +217,7 @@ Samples generator
    decomposition.KernelPCA
    decomposition.FactorAnalysis
    decomposition.FastICA
+   decomposition.TruncatedSVD
    decomposition.NMF
    decomposition.SparsePCA
    decomposition.MiniBatchSparsePCA
@@ -455,7 +456,9 @@ From text
    :template: class.rst
 
    grid_search.GridSearchCV
-   grid_search.IterGrid
+   grid_search.ParameterGrid
+   grid_search.ParameterSampler
+   grid_search.RandomizedSearchCV
 
 
 .. _hmm_ref:
@@ -689,6 +692,7 @@ Classification metrics
    metrics.fbeta_score
    metrics.hamming_loss
    metrics.hinge_loss
+   metrics.jaccard_similarity_score
    metrics.matthews_corrcoef
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
@@ -950,7 +954,6 @@ Pairwise metrics
    :template: function.rst
 
    preprocessing.add_dummy_feature
-   preprocessing.balance_weights
    preprocessing.binarize
    preprocessing.normalize
    preprocessing.scale

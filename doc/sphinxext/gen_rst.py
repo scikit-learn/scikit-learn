@@ -30,6 +30,8 @@ matplotlib.use('Agg')
 
 import token
 import tokenize
+import numpy as np
+
 
 ###############################################################################
 # A tee object to redict streams to multiple outputs
@@ -414,9 +416,25 @@ def generate_example_rst(app):
     .figure {
         float: left;
         margin: 10px;
-        width: auto;
-        height: 200px;
-        width: 180px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        -webkit-border-radius: 10px; /* Saf3-4, iOS 1-3.2, Android <1.6 */
+        -moz-border-radius: 10px; /* FF1-3.6 */
+        border-radius: 10px; /* Opera 10.5, IE9, Saf5, Chrome, FF4, iOS 4, Android 2.1+ */
+        border: 2px solid #fff;
+        -webkit-transition: all 0.15s ease-out;  /* Saf3.2+, Chrome */
+        -moz-transition: all 0.15s ease-out;  /* FF4+ */
+        -ms-transition: all 0.15s ease-out;  /* IE10? */
+        -o-transition: all 0.15s ease-out;  /* Opera 10.5+ */
+        transition: all 0.15s ease-out;
+        background-repeat: no-repeat;
+        /* --> Thumbnail image size */
+        width: 150px;
+        height: 100px;
+        -webkit-background-size: 150px 100px; /* Saf3-4 */
+        -moz-background-size: 150px 100px; /* FF3.6 */
+        background-size: 150px 100px; /* Opera, IE9, Saf5, Chrome, FF4 */
     }
 
     .figure img {
@@ -442,6 +460,38 @@ Examples
             generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery)
     fhindex.flush()
 
+def extract_line_count(filename, target_dir):
+    # Extract the line count of a file
+    example_file = os.path.join(target_dir, filename)
+    lines = file(example_file).readlines()
+    start_row = 0
+    if lines[0].startswith('#!'):
+        lines.pop(0)
+        start_row = 1
+    tokens = tokenize.generate_tokens(lines.__iter__().next)
+    check_docstring = True
+    erow_docstring = 0
+    for tok_type, _, _, (erow, _), _ in tokens:
+        tok_type = token.tok_name[tok_type]
+        if tok_type in ('NEWLINE', 'COMMENT', 'NL', 'INDENT', 'DEDENT'):
+            continue
+        elif ((tok_type == 'STRING') and (check_docstring == True)):
+            erow_docstring = erow
+            check_docstring = False
+    return erow_docstring+1+start_row, erow+1+start_row
+
+def line_count_sort(file_list, target_dir):
+    # Sort the list of examples by line-count
+    new_list = filter(lambda x: x.endswith('.py'), file_list)
+    unsorted = np.zeros(shape=(len(new_list), 2))
+    unsorted = unsorted.astype(np.object)
+    for count, exmpl in enumerate(new_list):
+        docstr_lines, total_lines = extract_line_count(exmpl, target_dir)
+        unsorted[count][1] = total_lines - docstr_lines
+        unsorted[count][0] = exmpl
+    index = np.lexsort((unsorted[:,0].astype(np.str),
+                        unsorted[:,1].astype(np.float)))
+    return np.array(unsorted[index][:,0]).tolist()
 
 def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
     """ Generate the rst file for an example directory.
@@ -468,17 +518,22 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
 """ % file(os.path.join(src_dir, 'README.txt')).read())
     if not os.path.exists(target_dir):
         os.makedirs(target_dir)
-
-    def sort_key(a):
-        # put last elements without a plot
-        if not a.startswith('plot') and a.endswith('.py'):
-            return 'zz' + a
-        return a
-    for fname in sorted(os.listdir(src_dir), key=sort_key):
+    sorted_listdir = line_count_sort(os.listdir(src_dir),
+                                     src_dir)
+    for fname in sorted_listdir:
         if fname.endswith('py'):
             generate_file_rst(fname, target_dir, src_dir, plot_gallery)
             thumb = os.path.join(dir, 'images', 'thumb', fname[:-3] + '.png')
             link_name = os.path.join(dir, fname).replace(os.path.sep, '_')
+            fhindex.write("""
+
+.. raw:: html
+
+    <div class="thumbnailContainer">
+
+
+""")
+
             fhindex.write('.. figure:: %s\n' % thumb)
             if link_name.startswith('._'):
                 link_name = link_name[2:]
@@ -488,6 +543,12 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
             else:
                 fhindex.write('   :target: ./%s.html\n\n' % link_name[:-3])
             fhindex.write("""   :ref:`example_%s`
+
+
+.. raw:: html
+
+    </div>
+
 
 .. toctree::
    :hidden:
@@ -728,11 +789,11 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
         # generate thumb file
         this_template = plot_rst_template
         if os.path.exists(first_image_file):
-            make_thumbnail(first_image_file, thumb_file, 180, 120)
+            make_thumbnail(first_image_file, thumb_file, 200, 140)
 
     if not os.path.exists(thumb_file):
         # create something to replace the thumbnail
-        make_thumbnail('images/no_image.png', thumb_file, 180, 120)
+        make_thumbnail('images/no_image.png', thumb_file, 200, 140)
 
     docstring, short_desc, end_row = extract_docstring(example_file)
 
@@ -812,15 +873,14 @@ def embed_code_links(app, exception):
                             str_repl[name_html] = link_pattern % (link, name_html)
                     # do the replacement in the html file
                     if len(str_repl) > 0:
-                        with open(full_fname, 'rt') as fid:
+                        with open(full_fname, 'rb') as fid:
                             lines_in = fid.readlines()
-                        fid.close()
-                        with open(full_fname, 'wt') as fid:
+                        with open(full_fname, 'wb') as fid:
                             for line in lines_in:
+                                line = line.decode('utf-8')
                                 for name, link in str_repl.iteritems():
                                     line = line.replace(name, link)
-                                fid.write(line)
-                        fid.close()
+                                fid.write(line.encode('utf-8'))
     except urllib2.HTTPError, e:
         print ("The following HTTP Error has occurred:\n")
         print e.code

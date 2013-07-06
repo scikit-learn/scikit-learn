@@ -45,22 +45,24 @@ Others also work in the multiclass case:
 .. autosummary::
    :template: function.rst
 
-  classification_report
-  confusion_matrix
-  f1_score
-  fbeta_score
-  precision_recall_fscore_support
-  precision_score
-  recall_score
+   confusion_matrix
+
 
 And some also work in the multilabel case:
 
 .. autosummary::
    :template: function.rst
 
-  accuracy_score
-  hamming_loss
-  zero_one_loss
+   accuracy_score
+   classification_report
+   f1_score
+   fbeta_score
+   hamming_loss
+   jaccard_similarity_score
+   precision_recall_fscore_support
+   precision_score
+   recall_score
+   zero_one_loss
 
 
 Some metrics might require probability estimates of the positive class,
@@ -72,11 +74,11 @@ Accuracy score
 ---------------
 The :func:`accuracy_score` function computes the
 `accuracy <http://en.wikipedia.org/wiki/Accuracy_and_precision>`_, the fraction
-of correct predictions. In multilabel classification,
-the function returns the subset accuracy:
-the entire set of labels for a sample must be entirely correct
-or the sample has an accuracy of zero.
-(See the Hamming loss for a more forgiving evaluation metric.)
+(default) or the number of correct predictions.
+
+In multilabel classification, the function returns the subset accuracy: if
+the entire set of predicted labels for a sample strictly match with the true
+set of labels, then the subset accuracy is 1.0, otherwise it is 0.0.
 
 If :math:`\hat{y}_i` is the predicted value of
 the :math:`i`-th sample and :math:`y_i` is the corresponding true value,
@@ -96,16 +98,18 @@ where :math:`1(x)` is the `indicator function
   >>> y_true = [0, 1, 2, 3]
   >>> accuracy_score(y_true, y_pred)
   0.5
+  >>> accuracy_score(y_true, y_pred, normalize=False)
+  2
 
-  In the multilabel case with binary indicator format:
+In the multilabel case with binary indicator format:
 
-  >>> accuracy_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
-  0.0
-
-  and with a list of labels format:
-
-  >>> accuracy_score([(1, 2), (3,)], [(1, 2), tuple()])
+  >>> accuracy_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
   0.5
+
+and with a list of labels format:
+
+  >>> accuracy_score([(1,), (3,)], [(1, 2), tuple()])
+  0.0
 
 .. topic:: Example:
 
@@ -200,7 +204,7 @@ Classification report
 ---------------------
 The :func:`classification_report` function builds a text report showing the
 main classification metrics. Here a small example with custom ``target_names``
-and infered labels:
+and inferred labels:
 
    >>> from sklearn.metrics import classification_report
    >>> y_true = [0, 1, 2, 2, 0]
@@ -281,6 +285,48 @@ and with a list of labels format:
     over samples, the Hamming loss is always between zero and one.
 
 
+Jaccard similarity coefficient score
+------------------------------------
+
+The :func:`jaccard_similarity_score` function computes the average (default)
+or sum of `Jaccard similarity coefficients
+<http://en.wikipedia.org/wiki/Jaccard_index>`_, also called Jaccard index,
+between pairs of label sets.
+
+The Jaccard similarity coefficient of the :math:`i`-th samples
+with a ground truth label set :math:`y_i` and a predicted label set
+:math:`\hat{y}_i`  is defined as
+
+.. math::
+
+    J(y_i, \hat{y}_i) = \frac{|y_i \cap \hat{y}_i|}{|y_i \cup \hat{y}_i|}.
+
+In binary and multiclass classification, the Jaccard similarity coefficient
+score is equal to the classification accuracy.
+
+::
+
+  >>> import numpy as np
+  >>> from sklearn.metrics import jaccard_similarity_score
+  >>> y_pred = [0, 2, 1, 3]
+  >>> y_true = [0, 1, 2, 3]
+  >>> jaccard_similarity_score(y_true, y_pred)
+  0.5
+  >>> jaccard_similarity_score(y_true, y_pred, normalize=False)
+  2
+
+In the multilabel case with binary indicator format:
+
+  >>> jaccard_similarity_score(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
+  0.75
+
+and with a list of labels format:
+
+  >>> jaccard_similarity_score([(1,), (3,)], [(1, 2), tuple()])
+  0.25
+
+
+
 .. _precision_recall_f_measure_metrics:
 
 Precision, recall and F-measures
@@ -298,7 +344,7 @@ The  `F-measure <http://en.wikipedia.org/wiki/F1_score>`_
 harmonic mean of the precision and recall. A
 :math:`F_\beta` measure reaches its best value at 1 and worst score at 0.
 With :math:`\beta = 1`, the :math:`F_\beta` measure leads to the
-:math:`F_1` measure, wheres the recall and the precsion are equally important.
+:math:`F_1` measure, wheres the recall and the precision are equally important.
 
 Several functions allow you to analyze the precision, recall and F-measures
 score:
@@ -408,83 +454,60 @@ Multiclass and multilabel classification
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 In multiclass and multilabel classification task, the notions of precision,
 recall and F-measures can be applied to each label independently.
+There are a few ways to combine results across labels,
+specified by the ``average`` argument to the :func:`f1_score`,
+:func:`fbeta_score`, :func:`precision_recall_fscore_support`,
+:func:`precision_score`  and :func:`recall_score` functions:
 
-Moreover, these notions can be further extended. The functions
-:func:`f1_score`, :func:`fbeta_score`, :func:`precision_recall_fscore_support`,
-:func:`precision_score`  and :func:`recall_score` support an argument called
-``average`` which defines the type of averaging:
+* ``"micro"``: calculate metrics globally by counting the total true
+  positives, false negatives and false positives. Except in the multi-label
+  case this implies that precision, recall and :math:`F` are equal.
+* ``"samples"``: calculate metrics for each sample, comparing sets of
+  labels assigned to each, and find the mean across all samples.
+  This is only meaningful and available in the multilabel case.
+* ``"macro"``: calculate metrics for each label, and find their mean.
+  This does not take label imbalance into account.
+* ``"weighted"``: calculate metrics for each label, and find their average
+  weighted by the number of occurrences of the label in the true data.
+  This alters ``"macro"`` to account for label imbalance; it may produce an
+  F-score that is not between precision and recall.
+* ``None``: calculate metrics for each label and do not average them.
 
- * ``"macro"``: average over classes (does not take imbalance into account).
- * ``"micro"``: average over instances (takes imbalance into account).
- * ``"weighted"``: average weighted by support (takes imbalance into account).
-   It can result in F1 score that is not between precision and recall.
- * ``None``: no averaging is performed.
+To make this more explicit, consider the following notation:
 
-.. warning::
+* :math:`y` the set of *predicted* :math:`(sample, label)` pairs
+* :math:`\hat{y}` the set of *true* :math:`(sample, label)` pairs
+* :math:`L` the set of labels
+* :math:`S` the set of samples
+* :math:`y_s` the subset of :math:`y` with sample :math:`s`,
+  i.e. :math:`y_s := \left\{(s', l) \in y | s' = s\right\}`
+* :math:`y_l` the subset of :math:`y` with label :math:`l`
+* similarly, :math:`\hat{y}_s` and :math:`\hat{y}_l` are subsets of
+  :math:`\hat{y}`
+* :math:`P(A, B) := \frac{\left| A \cap B \right|}{\left|A\right|}`
+* :math:`R(A, B) := \frac{\left| A \cap B \right|}{\left|B\right|}`
+  (Conventions vary on handling :math:`B = \emptyset`; this implementation uses
+  :math:`R(A, B):=0`, and similar for `P`.)
+* :math:`F_\beta(A, B) := \left(1 + \beta^2\right) \frac{P(A, B) \times R(A, B)}{\beta^2 P(A, B) + R(A, B)}`
 
-  Currently those functions support only the multiclass case. However the
-  following definitions are general and remain valid in the multilabel
-  case.
+Then the metrics are defined as:
 
-Let's define some notations:
-
-   * :math:`n_\text{labels}` and :math:`n_\text{samples}` denotes respectively
-     the number of labels and the number of samples.
-   * :math:`\texttt{precision}_j`, :math:`\texttt{recall}_j` and
-     :math:`{F_\beta}_j` are respectively the precision, the recall and
-     :math:`F_\beta` measure for the :math:`j`-th label;
-   * :math:`tp_j`, :math:`fp_j` and :math:`fn_j` respectively the number of
-     true positives, false positives and false negatives for the :math:`j`-th
-     label;
-   * :math:`y_i` is the set of true label and
-     :math:`\hat{y}_i` is the set of predicted for the
-     :math:`i`-th sample;
-
-The macro precision, recall and :math:`F_\beta` are averaged over all labels
-
-.. math::
-
-  \texttt{macro\_{}precision} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} \texttt{precision}_j,
-
-.. math::
-
-  \texttt{macro\_{}recall} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} \texttt{recall}_j,
-
-.. math::
-
-  \texttt{macro\_{}F\_{}beta} = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} {F_\beta}_j.
-
-The micro precision, recall and :math:`F_\beta` are averaged over all instances
-
-.. math::
-
-  \texttt{micro\_{}precision} = \frac{\sum_{j=0}^{n_\text{labels} - 1} tp_j}{\sum_{j=0}^{n_\text{labels} - 1} tp_j + \sum_{j=0}^{n_\text{labels} - 1} fp_j},
-
-.. math::
-
-  \texttt{micro\_{}recall} = \frac{\sum_{j=0}^{n_\text{labels} - 1} tp_j}{\sum_{j=0}^{n_\text{labels} - 1} tp_j + \sum_{j=0}^{n_\text{labels} - 1} fn_j},
-
-.. math::
-
-  \texttt{micro\_{}F\_{}beta} = (1 + \beta^2) \frac{\texttt{micro\_{}precision} \times  \texttt{micro\_{}recall}}{\beta^2 \texttt{micro\_{}precision} +  \texttt{micro\_{}recall}}.
++---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
+|``average``    | Precision                                                                                                        | Recall                                                                                                           | F\_beta                                                                                                              |
++===============+==================================================================================================================+==================================================================================================================+======================================================================================================================+
+|``"micro"``    | :math:`P(y, \hat{y})`                                                                                            | :math:`R(y, \hat{y})`                                                                                            | :math:`F_\beta(y, \hat{y})`                                                                                          |
++---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
+|``"samples"``  | :math:`\frac{1}{\left|S\right|} \sum_{s \in S} P(y_s, \hat{y}_s)`                                                | :math:`\frac{1}{\left|S\right|} \sum_{s \in S} R(y_s, \hat{y}_s)`                                                | :math:`\frac{1}{\left|S\right|} \sum_{s \in S} F_\beta(y_s, \hat{y}_s)`                                              |
++---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
+|``"macro"``    | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} P(y_l, \hat{y}_l)`                                                | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} R(y_l, \hat{y}_l)`                                                | :math:`\frac{1}{\left|L\right|} \sum_{l \in L} F_\beta(y_l, \hat{y}_l)`                                              |
++---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
+|``"weighted"`` | :math:`\frac{1}{\sum_{l \in L} \left|\hat{y}_l\right|} \sum_{l \in L} \left|\hat{y}_l\right| P(y_l, \hat{y}_l)`  | :math:`\frac{1}{\sum_{l \in L} \left|\hat{y}_l\right|} \sum_{l \in L} \left|\hat{y}_l\right| R(y_l, \hat{y}_l)`  | :math:`\frac{1}{\sum_{l \in L} \left|\hat{y}_l\right|} \sum_{l \in L} \left|\hat{y}_l\right| F_\beta(y_l, \hat{y}_l)`|
++---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
+|``None``       | :math:`\langle P(y_l, \hat{y}_l) | l \in L \rangle`                                                              | :math:`\langle R(y_l, \hat{y}_l) | l \in L \rangle`                                                              | :math:`\langle F_\beta(y_l, \hat{y}_l) | l \in L \rangle`                                                            |
++---------------+------------------------------------------------------------------------------------------------------------------+------------------------------------------------------------------------------------------------------------------+----------------------------------------------------------------------------------------------------------------------+
 
 
-The weighted precision, recall and :math:`F_\beta` are averaged weighted by
-their support
-
-.. math::
-
-  \texttt{weighted\_{}precision}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} \frac{|y_i \cap \hat{y}_i|}{|y_i|},
-
-.. math::
-
-  \texttt{weighted\_{}recall}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} \frac{|y_i \cap \hat{y}_i|}{|\hat{y}_i|},
-
-.. math::
-
-  \texttt{weighted\_{}F\_{}beta}(y,\hat{y}) &= \frac{1}{n_\text{samples}} \sum_{i=0}^{n_\text{samples} - 1} (1 + \beta^2)\frac{|y_i \cap \hat{y}_i|}{\beta^2 |\hat{y}_i| + |y_i|}.
-
-Here an example where ``average`` is set to ``average`` to ``macro``::
+Here is an example where ``average`` is set to ``macro``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
@@ -500,54 +523,65 @@ Here an example where ``average`` is set to ``average`` to ``macro``::
   >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
   (0.22..., 0.33..., 0.26..., None)
 
-Here an example where ``average`` is set to to ``micro``::
+Here is an example where ``average`` is set to ``micro``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
   >>> y_pred = [0, 2, 1, 0, 0, 1]
-  >>> metrics.precision_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+  >>> metrics.precision_score(y_true, y_pred, average='micro')
+  ... # doctest: +ELLIPSIS
   0.33...
-  >>> metrics.recall_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+  >>> metrics.recall_score(y_true, y_pred, average='micro')
+  ... # doctest: +ELLIPSIS
   0.33...
-  >>> metrics.f1_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+  >>> metrics.f1_score(y_true, y_pred, average='micro')
+  ... # doctest: +ELLIPSIS
   0.33...
-  >>> metrics.fbeta_score(y_true, y_pred, average='micro', beta=0.5)  # doctest: +ELLIPSIS
+  >>> metrics.fbeta_score(y_true, y_pred, average='micro', beta=0.5)
+  ... # doctest: +ELLIPSIS
   0.33...
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='micro')
+  ... # doctest: +ELLIPSIS
   (0.33..., 0.33..., 0.33..., None)
 
-Here an example where ``average`` is set to to ``weighted``::
+Here is an example where ``average`` is set to ``weighted``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
   >>> y_pred = [0, 2, 1, 0, 0, 1]
-  >>> metrics.precision_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+  >>> metrics.precision_score(y_true, y_pred, average='weighted')
+  ... # doctest: +ELLIPSIS
   0.22...
-  >>> metrics.recall_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+  >>> metrics.recall_score(y_true, y_pred, average='weighted')
+  ... # doctest: +ELLIPSIS
   0.33...
-  >>> metrics.fbeta_score(y_true, y_pred, average='weighted', beta=0.5)  # doctest: +ELLIPSIS
+  >>> metrics.fbeta_score(y_true, y_pred, average='weighted', beta=0.5)
+  ... # doctest: +ELLIPSIS
   0.23...
   >>> metrics.f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
   0.26...
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred,
+  ... average='weighted')  # doctest: +ELLIPSIS
   (0.22..., 0.33..., 0.26..., None)
 
-Here an example where ``average`` is set to ``None``::
+Here is an example where ``average`` is set to ``None``::
 
   >>> from sklearn import metrics
   >>> y_true = [0, 1, 2, 0, 1, 2]
   >>> y_pred = [0, 2, 1, 0, 0, 1]
-  >>> metrics.precision_score(y_true, y_pred, average=None)  # doctest: +ELLIPSIS
+  >>> metrics.precision_score(y_true, y_pred, average=None)
+  ... # doctest: +ELLIPSIS
   array([ 0.66...,  0.        ,  0.        ])
   >>> metrics.recall_score(y_true, y_pred, average=None)
   array([ 1.,  0.,  0.])
   >>> metrics.f1_score(y_true, y_pred, average=None)  # doctest: +ELLIPSIS
   array([ 0.8,  0. ,  0. ])
-  >>> metrics.fbeta_score(y_true, y_pred, average=None, beta=0.5)  # doctest: +ELLIPSIS
+  >>> metrics.fbeta_score(y_true, y_pred, average=None, beta=0.5)
+  ... # doctest: +ELLIPSIS
   array([ 0.71...,  0.        ,  0.        ])
-  >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)  # doctest: +ELLIPSIS
+  >>> metrics.precision_recall_fscore_support(y_true, y_pred, beta=0.5)
+  ... # doctest: +ELLIPSIS
   (array([ 0.66...,  0.        ,  0.        ]), array([ 1.,  0.,  0.]), array([ 0.71...,  0.        ,  0.        ]), array([2, 2, 2]...))
-
 
 Hinge loss
 ----------
@@ -665,6 +699,8 @@ The following figure shows an example of such ROC curve.
     for an example of receiver operating characteristic (ROC) metric to
     model species distribution.
 
+.. _zero_one_loss:
+
 Zero one loss
 --------------
 The :func:`zero_one_loss` function computes the sum or the average of the 0-1
@@ -686,6 +722,7 @@ then the 0-1 loss :math:`L_{0-1}` is defined as:
 where :math:`1(x)` is the `indicator function
 <http://en.wikipedia.org/wiki/Indicator_function>`_.
 
+
   >>> from sklearn.metrics import zero_one_loss
   >>> y_pred = [1, 2, 3, 4]
   >>> y_true = [2, 2, 3, 4]
@@ -694,15 +731,16 @@ where :math:`1(x)` is the `indicator function
   >>> zero_one_loss(y_true, y_pred, normalize=False)
   1
 
-  In the multilabel case with binary indicator format:
+In the multilabel case with binary indicator format:
 
-  >>> zero_one_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
+  >>> zero_one_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.ones((2, 2)))
+  0.5
+
+and with a list of labels format:
+
+  >>> zero_one_loss([(1,), (3,)], [(1, 2), tuple()])
   1.0
 
-  and with a list of labels format:
-
-  >>> zero_one_loss([(1, 2), (3,)], [(1, 2), tuple()])
-  0.5
 
 .. topic:: Example:
 
@@ -934,7 +972,7 @@ a score (``greater_is_better=True``) or a loss (``greater_is_better=False``),
 whether the function you provided takes predictions as input
 (``needs_threshold=False``) or needs confidence scores
 (``needs_threshold=True``) and any additional parameters, such as ``beta`` in
-the example above.
+the previous example.
 
 
 Implementing your own scoring object

@@ -5,7 +5,7 @@ clustering.
 # Author: Alexandre Gramfort alexandre.gramfort@inria.fr
 #        Gael Varoquaux gael.varoquaux@normalesup.org
 
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 import warnings
@@ -62,7 +62,7 @@ def affinity_propagation(S, preference=None, convergence_iter=15, max_iter=200,
 
     Notes
     -----
-    See examples/plot_affinity_propagation.py for an example.
+    See examples/cluster/plot_affinity_propagation.py for an example.
 
     References
     ----------
@@ -220,7 +220,7 @@ class AffinityPropagation(BaseEstimator, ClusterMixin):
 
     Notes
     -----
-    See examples/plot_affinity_propagation.py for an example.
+    See examples/cluster/plot_affinity_propagation.py for an example.
 
     The algorithmic complexity of affinity propagation is quadratic
     in the number of points.

@@ -10,7 +10,7 @@ Computes path on IRIS dataset.
 print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD Style.
+# License: BSD 3 clause
 
 from datetime import datetime
 import numpy as np

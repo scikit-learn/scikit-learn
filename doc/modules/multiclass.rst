@@ -170,7 +170,7 @@ Example::
 
 .. topic:: References:
 
-    .. [1] "Solving multiclass learning problems via error-correcting ouput codes",
+    .. [1] "Solving multiclass learning problems via error-correcting output codes",
         Dietterich T., Bakiri G.,
         Journal of Artificial Intelligence Research 2,
         1995.

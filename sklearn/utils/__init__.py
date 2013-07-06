@@ -1,6 +1,8 @@
 """
-The :mod:`sklearn.utils` module includes various utilites.
+The :mod:`sklearn.utils` module includes various utilities.
 """
+
+from collections import Sequence
 
 import numpy as np
 from scipy.sparse import issparse
@@ -12,11 +14,13 @@ from .validation import (as_float_array, check_arrays, safe_asarray,
                          atleast2d_or_csr, warn_if_not_float,
                          check_random_state)
 from .class_weight import compute_class_weight
+from sklearn.utils.mst import minimum_spanning_tree
+
 
 __all__ = ["murmurhash3_32", "as_float_array", "check_arrays", "safe_asarray",
            "assert_all_finite", "array2d", "atleast2d_or_csc",
            "atleast2d_or_csr", "warn_if_not_float", "check_random_state",
-           "compute_class_weight"]
+           "compute_class_weight",  "minimum_spanning_tree"]
 
 # Make sure that DeprecationWarning get printed
 warnings.simplefilter("always", DeprecationWarning)
@@ -344,6 +348,16 @@ def gen_even_slices(n, n_packs):
             end = start + this_n
             yield slice(start, end, None)
             start = end
+
+
+def tosequence(x):
+    """Cast iterable x to a Sequence, avoiding a copy if possible."""
+    if isinstance(x, np.ndarray):
+        return np.asarray(x)
+    elif isinstance(x, Sequence):
+        return x
+    else:
+        return list(x)
 
 
 class ConvergenceWarning(Warning):

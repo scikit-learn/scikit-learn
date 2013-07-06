@@ -95,7 +95,7 @@ def test_pipeline_init():
     pipe2 = clone(pipe)
     assert_false(pipe.named_steps['svc'] is pipe2.named_steps['svc'])
 
-    # Check that appart from estimators, the parameters are the same
+    # Check that apart from estimators, the parameters are the same
     params = pipe.get_params()
     params2 = pipe2.get_params()
     # Remove estimators that where copied
@@ -163,7 +163,7 @@ def test_pipeline_methods_preprocessing_svm():
     clf = SVC(probability=True)
 
     for preprocessing in [scaler, pca]:
-        pipe = Pipeline([('scaler', scaler), ('svc', clf)])
+        pipe = Pipeline([('preprocess', preprocessing), ('svc', clf)])
         pipe.fit(X, y)
 
         # check shapes of various prediction functions
@@ -219,7 +219,7 @@ def test_feature_union():
 
 def test_pipeline_transform():
     # Test whether pipeline works with a transformer at the end.
-    # Also test pipline.transform and pipeline.inverse_transform
+    # Also test pipeline.transform and pipeline.inverse_transform
     iris = load_iris()
     X = iris.data
     pca = PCA(n_components=2)

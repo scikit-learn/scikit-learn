@@ -26,8 +26,9 @@ from sklearn.metrics import explained_variance_score
 from sklearn.metrics import fbeta_score
 from sklearn.metrics import Scorer
 
-from sklearn.svm import SVC
+from sklearn.externals import six
 from sklearn.linear_model import Ridge
+from sklearn.svm import SVC
 
 
 class MockListClassifier(BaseEstimator):
@@ -106,14 +107,18 @@ def test_kfold_valueerrors():
         # a characteristic of the code and not a behavior
         assert_true("The least populated class" in str(w[0]))
 
-    # Error when number of folds is <= 0
+    # Error when number of folds is <= 1
     assert_raises(ValueError, cval.KFold, 2, 0)
+    assert_raises(ValueError, cval.KFold, 2, 1)
+    assert_raises(ValueError, cval.StratifiedKFold, y, 0)
+    assert_raises(ValueError, cval.StratifiedKFold, y, 1)
 
     # When n is not integer:
-    assert_raises(ValueError, cval.KFold, 2.5, 1)
+    assert_raises(ValueError, cval.KFold, 2.5, 2)
 
     # When n_folds is not integer:
     assert_raises(ValueError, cval.KFold, 5, 1.5)
+    assert_raises(ValueError, cval.StratifiedKFold, y, 1.5)
 
 
 def test_kfold_indices():
@@ -170,7 +175,8 @@ def test_shuffle_split():
     ss1 = cval.ShuffleSplit(10, test_size=0.2, random_state=0)
     ss2 = cval.ShuffleSplit(10, test_size=2, random_state=0)
     ss3 = cval.ShuffleSplit(10, test_size=np.int32(2), random_state=0)
-    ss4 = cval.ShuffleSplit(10, test_size=long(2), random_state=0)
+    for typ in six.integer_types:
+        ss4 = cval.ShuffleSplit(10, test_size=typ(2), random_state=0)
     for t1, t2, t3, t4 in zip(ss1, ss2, ss3, ss4):
         assert_array_equal(t1[0], t2[0])
         assert_array_equal(t2[0], t3[0])
@@ -229,12 +235,28 @@ def test_stratified_shuffle_split_iter_no_indices():
     y = np.asarray([0, 1, 2] * 10)
 
     sss1 = cval.StratifiedShuffleSplit(y, indices=False, random_state=0)
-    train_mask, test_mask = iter(sss1).next()
+    train_mask, test_mask = next(iter(sss1))
 
     sss2 = cval.StratifiedShuffleSplit(y, indices=True, random_state=0)
-    train_indices, test_indices = iter(sss2).next()
+    train_indices, test_indices = next(iter(sss2))
 
     assert_array_equal(sorted(test_indices), np.where(test_mask)[0])
+
+
+def test_leave_label_out_changing_labels():
+    """Check that LeaveOneLabelOut and LeavePLabelOut work normally if
+    the labels variable is changed before calling __iter__"""
+    labels = np.array([0, 1, 2, 1, 1, 2, 0, 0])
+    labels_changing = np.array(labels, copy=True)
+    lolo = cval.LeaveOneLabelOut(labels)
+    lolo_changing = cval.LeaveOneLabelOut(labels_changing)
+    lplo = cval.LeavePLabelOut(labels, p=2)
+    lplo_changing = cval.LeavePLabelOut(labels_changing, p=2)
+    labels_changing[:] = 0
+    for llo, llo_changing in [(lolo, lolo_changing), (lplo, lplo_changing)]:
+        for (train, test), (train_chan, test_chan) in zip(llo, llo_changing):
+            assert_array_equal(train, train_chan)
+            assert_array_equal(test, test_chan)
 
 
 def test_cross_val_score():
@@ -291,7 +313,7 @@ def test_cross_val_score_score_func():
         _score_func_args.append((y_test, y_predict))
         return 1.0
 
-    with warnings.catch_warnings(True):
+    with warnings.catch_warnings(record=True):
         score = cval.cross_val_score(clf, X, y, score_func=score_func)
     assert_array_equal(score, [1.0, 1.0, 1.0])
     assert len(_score_func_args) == 3
@@ -381,7 +403,7 @@ def test_cross_val_score_with_score_func_regression():
     assert_array_almost_equal(mse_scores, expected_mse, 2)
 
     # Explained variance
-    with warnings.catch_warnings(True):
+    with warnings.catch_warnings(record=True):
         ev_scores = cval.cross_val_score(reg, X, y, cv=5,
                                          score_func=explained_variance_score)
     assert_array_almost_equal(ev_scores, [0.94, 0.97, 0.97, 0.99, 0.92], 2)
@@ -473,6 +495,34 @@ def test_cross_val_generator_with_indices():
         for train, test in cv:
             X_train, X_test = X[train], X[test]
             y_train, y_test = y[train], y[test]
+
+
+def test_cross_val_generator_mask_indices_same():
+    # Test that the cross validation generators return the same results when
+    # indices=True and when indices=False
+    y = np.array([0, 0, 0, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 2])
+    labels = np.array([1, 1, 2, 3, 3, 3, 4])
+
+    loo_mask = cval.LeaveOneOut(5, indices=False)
+    loo_ind = cval.LeaveOneOut(5, indices=True)
+    lpo_mask = cval.LeavePOut(10, 2, indices=False)
+    lpo_ind = cval.LeavePOut(10, 2, indices=True)
+    kf_mask = cval.KFold(10, 5, indices=False, shuffle=True, random_state=1)
+    kf_ind = cval.KFold(10, 5, indices=True, shuffle=True, random_state=1)
+    skf_mask = cval.StratifiedKFold(y, 3, indices=False)
+    skf_ind = cval.StratifiedKFold(y, 3, indices=True)
+    lolo_mask = cval.LeaveOneLabelOut(labels, indices=False)
+    lolo_ind = cval.LeaveOneLabelOut(labels, indices=True)
+    lopo_mask = cval.LeavePLabelOut(labels, 2, indices=False)
+    lopo_ind = cval.LeavePLabelOut(labels, 2, indices=True)
+
+    for cv_mask, cv_ind in [(loo_mask, loo_ind), (lpo_mask, lpo_ind),
+                            (kf_mask, kf_ind), (skf_mask, skf_ind),
+                            (lolo_mask, lolo_ind), (lopo_mask, lopo_ind)]:
+        for (train_mask, test_mask), (train_ind, test_ind) in \
+                zip(cv_mask, cv_ind):
+            assert_array_equal(np.where(train_mask)[0], train_ind)
+            assert_array_equal(np.where(test_mask)[0], test_ind)
 
 
 def test_bootstrap_errors():

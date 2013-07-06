@@ -24,7 +24,7 @@ The module structure is the following:
 
 - The ``ExtraTreesClassifier`` and ``ExtraTreesRegressor`` derived
   classes provide the user with concrete implementations of the
-  forest ensemble method using the extremly randomized trees
+  forest ensemble method using the extremely randomized trees
   ``ExtraTreeClassifier`` and ``ExtraTreeRegressor`` as
   sub-estimator implementations.
 
@@ -33,7 +33,7 @@ Single and multi-output problems are both handled.
 """
 
 # Authors: Gilles Louppe, Brian Holt
-# License: BSD 3
+# License: BSD 3 clause
 
 from __future__ import division
 
@@ -44,8 +44,9 @@ from abc import ABCMeta, abstractmethod
 
 from ..base import ClassifierMixin, RegressorMixin
 from ..externals.joblib import Parallel, delayed, cpu_count
+from ..externals import six
 from ..externals.six.moves import xrange
-from ..feature_selection.selector_mixin import SelectorMixin
+from ..feature_selection.from_model import _LearntSelectorMixin
 from ..metrics import r2_score
 from ..preprocessing import OneHotEncoder
 from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
@@ -53,6 +54,7 @@ from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import array2d, check_random_state, check_arrays, safe_asarray
 from ..utils.fixes import bincount
+
 
 from .base import BaseEnsemble
 
@@ -205,13 +207,13 @@ def _partition_features(forest, n_total_features):
     return n_jobs, n_features, starts
 
 
-class BaseForest(BaseEnsemble, SelectorMixin):
+class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
+                                    _LearntSelectorMixin)):
     """Base class for forests of trees.
 
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self,
@@ -481,13 +483,13 @@ class BaseForest(BaseEnsemble, SelectorMixin):
                    for tree in self.estimators_) / self.n_estimators
 
 
-class ForestClassifier(BaseForest, ClassifierMixin):
+class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
+                                          ClassifierMixin)):
     """Base class for forest of trees-based classifiers.
 
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self,
@@ -627,13 +629,12 @@ class ForestClassifier(BaseForest, ClassifierMixin):
             return proba
 
 
-class ForestRegressor(BaseForest, RegressorMixin):
+class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
     """Base class for forest of trees-based regressors.
 
     Warning: This class should not be used directly. Use derived classes
     instead.
     """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self,
@@ -695,9 +696,9 @@ class ForestRegressor(BaseForest, RegressorMixin):
 class RandomForestClassifier(ForestClassifier):
     """A random forest classifier.
 
-    A random forest is a meta estimator that fits a number of classifical
-    decision trees on various sub-samples of the dataset and use averaging
-    to improve the predictive accuracy and control over-fitting.
+    A random forest is a meta estimator that fits a number of decision tree
+    classifiers on various sub-samples of the dataset and use averaging to
+    improve the predictive accuracy and control over-fitting.
 
     Parameters
     ----------
@@ -709,11 +710,13 @@ class RandomForestClassifier(ForestClassifier):
         "gini" for the Gini impurity and "entropy" for the information gain.
         Note: this parameter is tree-specific.
 
-    max_features : int, string or None, optional (default="auto")
+    max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
-          - If "auto", then `max_features=sqrt(n_features)` on
-            classification tasks and `max_features=n_features` on regression
-            problems.
+          - If int, then consider `max_features` features at each split.
+          - If float, then `max_features` is a percentage and
+            `int(max_features * n_features)` features are considered at each
+            split.
+          - If "auto", then `max_features=sqrt(n_features)`.
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
@@ -839,7 +842,7 @@ class RandomForestClassifier(ForestClassifier):
 class RandomForestRegressor(ForestRegressor):
     """A random forest regressor.
 
-    A random forest is a meta estimator that fits a number of classifical
+    A random forest is a meta estimator that fits a number of classifying
     decision trees on various sub-samples of the dataset and use averaging
     to improve the predictive accuracy and control over-fitting.
 
@@ -853,11 +856,13 @@ class RandomForestRegressor(ForestRegressor):
         criterion is "mse" for the mean squared error.
         Note: this parameter is tree-specific.
 
-    max_features : int, string or None, optional (default="auto")
+    max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
-          - If "auto", then `max_features=sqrt(n_features)` on
-            classification tasks and `max_features=n_features`
-            on regression problems.
+          - If int, then consider `max_features` features at each split.
+          - If float, then `max_features` is a percentage and
+            `int(max_features * n_features)` features are considered at each
+            split.
+          - If "auto", then `max_features=n_features`.
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
@@ -917,7 +922,7 @@ class RandomForestRegressor(ForestRegressor):
         The collection of fitted sub-estimators.
 
     `feature_importances_` : array of shape = [n_features]
-        The feature mportances (the higher, the more important the feature).
+        The feature importances (the higher, the more important the feature).
 
     `oob_score_` : float
         Score of the training dataset obtained using an out-of-bag estimate.
@@ -987,11 +992,13 @@ class ExtraTreesClassifier(ForestClassifier):
         "gini" for the Gini impurity and "entropy" for the information gain.
         Note: this parameter is tree-specific.
 
-    max_features : int, string or None, optional (default="auto")
-        The number of features to consider when looking for the best split.
-          - If "auto", then `max_features=sqrt(n_features)` on
-            classification tasks and `max_features=n_features`
-            on regression problems.
+    max_features : int, float, string or None, optional (default="auto")
+        The number of features to consider when looking for the best split:
+          - If int, then consider `max_features` features at each split.
+          - If float, then `max_features` is a percentage and
+            `int(max_features * n_features)` features are considered at each
+            split.
+          - If "auto", then `max_features=sqrt(n_features)`.
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
@@ -1059,7 +1066,7 @@ class ExtraTreesClassifier(ForestClassifier):
         number of classes for each output (multi-output problem).
 
     `feature_importances_` : array of shape = [n_features]
-        The feature mportances (the higher, the more important the feature).
+        The feature importances (the higher, the more important the feature).
 
     `oob_score_` : float
         Score of the training dataset obtained using an out-of-bag estimate.
@@ -1135,11 +1142,13 @@ class ExtraTreesRegressor(ForestRegressor):
         criterion is "mse" for the mean squared error.
         Note: this parameter is tree-specific.
 
-    max_features : int, string or None, optional (default="auto")
+    max_features : int, float, string or None, optional (default="auto")
         The number of features to consider when looking for the best split:
-          - If "auto", then `max_features=sqrt(n_features)` on
-            classification tasks and `max_features=n_features`
-            on regression problems.
+          - If int, then consider `max_features` features at each split.
+          - If float, then `max_features` is a percentage and
+            `int(max_features * n_features)` features are considered at each
+            split.
+          - If "auto", then `max_features=n_features`.
           - If "sqrt", then `max_features=sqrt(n_features)`.
           - If "log2", then `max_features=log2(n_features)`.
           - If None, then `max_features=n_features`.
@@ -1200,7 +1209,7 @@ class ExtraTreesRegressor(ForestRegressor):
         The collection of fitted sub-estimators.
 
     `feature_importances_` : array of shape = [n_features]
-        The feature mportances (the higher, the more important the feature).
+        The feature importances (the higher, the more important the feature).
 
     `oob_score_` : float
         Score of the training dataset obtained using an out-of-bag estimate.

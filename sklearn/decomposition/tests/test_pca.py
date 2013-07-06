@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from scipy.sparse import csr_matrix
 
@@ -176,7 +178,12 @@ def test_sparse_randomized_pca_check_projection():
     Xt = 0.1 * rng.randn(1, p) + np.array([3, 4, 5])
     Xt = csr_matrix(Xt)
 
-    Yt = RandomizedPCA(n_components=2, random_state=0).fit(X).transform(Xt)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always', DeprecationWarning)
+        Yt = RandomizedPCA(n_components=2, random_state=0).fit(X).transform(Xt)
+        assert_equal(len(w), 1)
+        assert_equal(w[0].category, DeprecationWarning)
+
     Yt /= np.sqrt((Yt ** 2).sum())
 
     np.testing.assert_almost_equal(np.abs(Yt[0][0]), 1., 1)
@@ -194,14 +201,25 @@ def test_sparse_randomized_pca_inverse():
 
     # same check that we can find the original data from the transformed signal
     # (since the data is almost of rank n_components)
-    pca = RandomizedPCA(n_components=2, random_state=0).fit(X)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always', DeprecationWarning)
+        pca = RandomizedPCA(n_components=2, random_state=0).fit(X)
+        assert_equal(len(w), 1)
+        assert_equal(w[0].category, DeprecationWarning)
+
     Y = pca.transform(X)
+
     Y_inverse = pca.inverse_transform(Y)
     assert_almost_equal(X.todense(), Y_inverse, decimal=2)
 
     # same as above with whitening (approximate reconstruction)
-    pca = RandomizedPCA(n_components=2, whiten=True,
-                        random_state=0).fit(X)
+    with warnings.catch_warnings(record=True) as w:
+        warnings.simplefilter('always', DeprecationWarning)
+        pca = RandomizedPCA(n_components=2, whiten=True,
+                            random_state=0).fit(X)
+        assert_equal(len(w), 1)
+        assert_equal(w[0].category, DeprecationWarning)
+
     Y = pca.transform(X)
     Y_inverse = pca.inverse_transform(Y)
     relative_max_delta = (np.abs(X.todense() - Y_inverse)

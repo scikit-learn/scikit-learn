@@ -15,13 +15,18 @@ Statistics and Probability Letters, 33 (1997) 291-297.
 
 """
 # Authors: Peter Prettenhofer
-# License: Simplified BSD
+# License: BSD 3 clause
 
 from io import BytesIO
 from os.path import join, exists
 from os import makedirs
 from zipfile import ZipFile
-import urllib2
+try:
+    # Python 2
+    from urllib2 import urlopen
+except ImportError:
+    # Python 3+
+    from urllib.request import urlopen
 
 import numpy as np
 
@@ -61,7 +66,7 @@ def fetch_california_housing(data_home=None, download_if_missing=True):
         makedirs(data_home)
     if not exists(join(data_home, TARGET_FILENAME)):
         print('downloading Cal. housing from %s to %s' % (DATA_URL, data_home))
-        fhandle = urllib2.urlopen(DATA_URL)
+        fhandle = urlopen(DATA_URL)
         buf = BytesIO(fhandle.read())
         zip_file = ZipFile(buf)
         try:

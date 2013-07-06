@@ -2,20 +2,21 @@
 #          Vincent Michel <vincent.michel@inria.fr>
 #          Gilles Louppe <g.louppe@gmail.com>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 """Recursive feature elimination for feature ranking"""
 
 import numpy as np
-from ..utils import check_arrays, safe_sqr, safe_mask
+from ..utils import check_arrays, safe_sqr
 from ..base import BaseEstimator
 from ..base import MetaEstimatorMixin
 from ..base import clone
 from ..base import is_classifier
 from ..cross_validation import check_cv
+from .base import SelectorMixin
 
 
-class RFE(BaseEstimator, MetaEstimatorMixin):
+class RFE(BaseEstimator, MetaEstimatorMixin, SelectorMixin):
     """Feature ranking with recursive feature elimination.
 
     Given an external estimator that assigns weights to features (e.g., the
@@ -113,7 +114,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
         y : array-like, shape = [n_samples]
             The target values.
         """
-        X, y = check_arrays(X, y, sparse_format="csr")
+        X, y = check_arrays(X, y, sparse_format="csc")
         # Initialization
         n_features = X.shape[1]
         if self.n_features_to_select is None:
@@ -180,7 +181,7 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
         y : array of shape [n_samples]
             The predicted target values.
         """
-        return self.estimator_.predict(X[:, safe_mask(X, self.support_)])
+        return self.estimator_.predict(self.transform(X))
 
     def score(self, X, y):
         """Reduce X to the selected features and then return the score of the
@@ -194,23 +195,10 @@ class RFE(BaseEstimator, MetaEstimatorMixin):
         y : array of shape [n_samples]
             The target values.
         """
-        return self.estimator_.score(X[:, safe_mask(X, self.support_)], y)
+        return self.estimator_.score(self.transform(X), y)
 
-    def transform(self, X):
-        """Reduce X to the selected features during the elimination.
-
-        Parameters
-        ----------
-        X : array of shape [n_samples, n_features]
-            The input samples.
-
-        Returns
-        -------
-        X_r : array of shape [n_samples, n_selected_features]
-            The input samples with only the features selected during the \
-            elimination.
-        """
-        return X[:, safe_mask(X, self.support_)]
+    def _get_support_mask(self):
+        return self.support_
 
     def decision_function(self, X):
         return self.estimator_.decision_function(self.transform(X))
@@ -246,7 +234,7 @@ class RFECV(RFE, MetaEstimatorMixin):
         Specific cross-validation objects can also be passed, see
         `sklearn.cross_validation module` for details.
 
-    loss_function : function, optional (default=None)
+    loss_func : function, optional (default=None)
         The loss function to minimize by cross-validation. If None, then the
         score function of the estimator is maximized.
 
@@ -337,29 +325,28 @@ class RFECV(RFE, MetaEstimatorMixin):
         scores = np.zeros(X.shape[1])
 
         # Cross-validation
-        n = 0
+        for n, (train, test) in enumerate(cv):
+            X_train, X_test = X[train], X[test]
+            y_train, y_test = y[train], y[test]
 
-        for train, test in cv:
             # Compute a full ranking of the features
-            ranking_ = rfe.fit(X[train], y[train]).ranking_
+            ranking_ = rfe.fit(X_train, y_train).ranking_
             # Score each subset of features
             for k in range(0, max(ranking_)):
                 mask = np.where(ranking_ <= k + 1)[0]
                 estimator = clone(self.estimator)
-                estimator.fit(X[train][:, mask], y[train])
+                estimator.fit(X_train[:, mask], y_train)
 
                 if self.loss_func is None:
-                    loss_k = 1.0 - estimator.score(X[test][:, mask], y[test])
+                    loss_k = 1.0 - estimator.score(X_test[:, mask], y_test)
                 else:
                     loss_k = self.loss_func(
-                        y[test], estimator.predict(X[test][:, mask]))
+                        y_test, estimator.predict(X_test[:, mask]))
 
                 if self.verbose > 0:
                     print("Finished fold with %d / %d feature ranks, loss=%f"
                           % (k, max(ranking_), loss_k))
                 scores[k] += loss_k
-
-            n += 1
 
         # Pick the best number of features on average
         best_score = np.inf
@@ -378,12 +365,12 @@ class RFECV(RFE, MetaEstimatorMixin):
         rfe.fit(X, y)
 
         # Set final attributes
+        self.support_ = rfe.support_
+        self.n_features_ = rfe.n_features_
+        self.ranking_ = rfe.ranking_
         self.estimator_ = clone(self.estimator)
         self.estimator_.set_params(**self.estimator_params)
-        self.estimator_.fit(X[:, safe_mask(X, rfe.support_)], y)
-        self.n_features_ = rfe.n_features_
-        self.support_ = rfe.support_
-        self.ranking_ = rfe.ranking_
+        self.estimator_.fit(self.transform(X), y)
 
         self.cv_scores_ = scores / n
         return self

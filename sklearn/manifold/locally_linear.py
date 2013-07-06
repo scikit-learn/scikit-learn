@@ -2,7 +2,7 @@
 
 # Author: Fabian Pedregosa -- <fabian.pedregosa@inria.fr>
 #         Jake Vanderplas  -- <vanderplas@astro.washington.edu>
-# License: BSD, (C) INRIA 2011
+# License: BSD 3 clause (C) INRIA 2011
 
 import numpy as np
 from scipy.linalg import eigh, svd, qr, solve
@@ -533,11 +533,11 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
         maximum number of iterations for the arpack solver.
         Not used if eigen_solver=='dense'.
 
-    method : string ['standard' | 'hessian' | 'modified' |'ltsa']
-        standard : use the standard locally linear embedding algorithm.
-                   see reference [1]
-        hessian  : use the Hessian eigenmap method.  This method requires
-                   n_neighbors > n_components * (1 + (n_components + 1) / 2.
+    method : string ('standard', 'hessian', 'modified' or 'ltsa')
+        standard : use the standard locally linear embedding algorithm.  see
+                   reference [1]
+        hessian  : use the Hessian eigenmap method. This method requires
+                   ``n_neighbors > n_components * (1 + (n_components + 1) / 2``
                    see reference [2]
         modified : use the modified locally linear embedding algorithm.
                    see reference [3]
@@ -546,11 +546,11 @@ class LocallyLinearEmbedding(BaseEstimator, TransformerMixin):
 
     hessian_tol : float, optional
         Tolerance for Hessian eigenmapping method.
-        Only used if method == 'hessian'
+        Only used if ``method == 'hessian'``
 
     modified_tol : float, optional
         Tolerance for modified LLE method.
-        Only used if method == 'modified'
+        Only used if ``method == 'modified'``
 
     neighbors_algorithm : string ['auto'|'brute'|'kd_tree'|'ball_tree']
         algorithm to use for nearest neighbors search,

@@ -32,7 +32,7 @@ of grid points is smaller than the number of kinks in the path. Such a
 strategy can be interesting if the number of features is really large
 and there are enough samples to select a large amount. In terms of
 numerical errors, for heavily correlated variables, Lars will accumulate
-more erros, while the coordinate descent algorithm will only sample the
+more errors, while the coordinate descent algorithm will only sample the
 path on a grid.
 
 Note how the optimal value of alpha varies for each fold. This
@@ -44,7 +44,7 @@ data.
 print(__doc__)
 
 # Author: Olivier Grisel, Gael Varoquaux, Alexandre Gramfort
-# License: BSD Style.
+# License: BSD 3 clause
 
 import time
 

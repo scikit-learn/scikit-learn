@@ -61,7 +61,8 @@ How to contribute
 -----------------
 
 The preferred way to contribute to scikit-learn is to fork the `main
-repository <http://github.com/scikit-learn/scikit-learn/>`__ on GitHub:
+repository <http://github.com/scikit-learn/scikit-learn/>`__ on GitHub,
+then submit a "pull request" (PR):
 
  1. `Create an account <https://github.com/signup/free>`_ on
     GitHub if you do not already have one.
@@ -134,14 +135,8 @@ rules before submitting a pull request:
 
     * At least one paragraph of narrative documentation with links to
       references in the literature (with PDF links when possible) and
-      the example.
-
-      The documentation should also include expected time and space
-      complexity of the algorithm and scalability, e.g. "this algorithm can
-      scale to a large number of samples > 100000, but does not scale in
-      dimensionality: n_features is expected to be lower than 100".
-
-      To build the documentation, see the `documentation`_ section below.
+      the example. For more details on writing and building the
+      documentation, see the :ref:`contribute_documentation` section.
 
 You can also check for common programming errors with the following tools:
 
@@ -222,12 +217,33 @@ For building the documentation, you will need `sphinx
 <http://sphinx.pocoo.org/>`_ and `matplotlib
 <http://matplotlib.sourceforge.net/>`_.
 
-When you are writing documentation, it is important to keep a good
+**When you are writing documentation**, it is important to keep a good
 compromise between mathematical and algorithmic details, and give
-intuition to the reader on what the algorithm does. It is best to always
+intuition to the reader on what the algorithm does.
+
+Basically, to elaborate on the above, it is best to always
 start with a small paragraph with a hand-waiving explanation of what the
-method does to the data and a figure (coming from an example) illustrating
-it.
+method does to the data. Then, it is very helpful
+to point out why the feature is useful and when it should be used -
+the latter also including "big O"
+(:math:`O\left(g\left(n\right)\right)`)
+complexities of the algorithm, as opposed to just *rules of thumb*,
+as the latter can be very machine-dependent.
+If those complexities are not available, then rules of thumb
+may be provided instead.
+
+Secondly, a generated figure from an example (as mentioned in the previous
+paragraph) should then be included to further provide some
+intuition.
+
+Next, one or two small code examples to show its use can be added.
+
+Finally, any math and equations, followed by references,
+can be added to further the documentation. Not starting the
+documentation with the maths makes it more friendly towards
+users that are just interested in what the feature will do, as
+opposed to how it works `under the hood`.
+
 
 .. warning:: **Sphinx version**
 
@@ -438,7 +454,7 @@ in an attribute ``random_state``.
 ``fit`` can call ``check_random_state`` on that attribute
 to get an actual random number generator.
 If, for some reason, randomness is needed after ``fit``,
-the RNG should be stored in an attibute ``random_state_``.
+the RNG should be stored in an attribute ``random_state_``.
 The following example should make this clear::
 
     class GaussianNoise(BaseEstimator, TransformerMixin):
@@ -467,7 +483,7 @@ hence the validation in ``fit``, not ``__init__``.
 Deprecation
 -----------
 
-If any publically accessible method, function, attribute or parameter
+If any publicly accessible method, function, attribute or parameter
 is renamed, we still support the old one for two releases and issue
 a deprecation warning when it is called/passed/accessed.
 E.g., if the function ``zero_one`` is renamed to ``zero_one_loss``,
@@ -509,6 +525,26 @@ In following example, k is deprecated and renamed to n_clusters::
             n_clusters = k
 
 
+.. currentmodule:: sklearn
+
+Python 3.x support
+------------------
+
+All scikit-learn code should work unchanged in both Python 2.[67]
+and 3.2 or newer. Since Python 3.x is not backwards compatible,
+that may require changes to code and it certainly requires testing
+on both 2.6 or 2.7, and 3.2 or newer.
+
+For most numerical algorithms, Python 3.x support is easy:
+just remember that ``print`` is a function and
+integer division is written ``//``.
+String handling has been overhauled, though, as have parts of
+the Python standard library.
+The `six <http://pythonhosted.org/six/>`_ package helps with
+cross-compatibility and is included in scikit-learn as
+``sklearn.externals.six``.
+
+
 APIs of scikit-learn objects
 ============================
 
@@ -525,7 +561,11 @@ multiple interfaces):
 
 :Estimator:
 
-    The base object, implements::
+    The base object, implements a ``fit`` method to learn from data, either::
+
+      estimator = obj.fit(data, targets)
+
+    or::
 
       estimator = obj.fit(data)
 
@@ -534,6 +574,11 @@ multiple interfaces):
     For supervised learning, or some unsupervised problems, implements::
 
       prediction = obj.predict(data)
+
+    Classification algorithms usually also offer a way to quantify certainty
+    of a prediction, either using ``decision_function`` or ``predict_proba``::
+        
+      probability = obj.predict_proba(data)
 
 :Transformer:
 
@@ -550,8 +595,7 @@ multiple interfaces):
 :Model:
 
     A model that can give a `goodness of fit <https://en.wikipedia.org/wiki/Goodness_of_fit>`_
-    measure or a likelihood of unseen
-    data, implements (higher is better)::
+    measure or a likelihood of unseen data, implements (higher is better)::
 
       score = obj.score(data)
 
@@ -567,10 +611,10 @@ classifier or a regressor. All estimators implement the fit method::
 
 All built-in estimators also have a ``set_params`` method, which sets
 data-independent parameters (overriding previous parameter values passed
-to ``__init__``). This method is not required for an object to be an
-estimator.
+to ``__init__``).
 
-All estimators should inherit from ``sklearn.base.BaseEstimator``.
+All estimators in the main scikit-learn codebase should inherit from
+``sklearn.base.BaseEstimator``.
 
 Instantiation
 ^^^^^^^^^^^^^
@@ -688,14 +732,89 @@ Optional Arguments
 In iterative algorithms, the number of iterations should be specified by
 an integer called ``n_iter``.
 
-Unresolved API issues
+
+Rolling your own estimator
+==========================
+If you want to implement a new estimator that is scikit-learn-compatible,
+whether it is just for you or for contributing it to sklearn, there are several
+internals of scikit-learn that you should be aware of in addition to the
+sklearn API outlined above.
+
+The main motivation to make a class compatible to the scikit-learn estimator
+interface might be that you want to use it together with model assessment and
+selection tools such as :class:`grid_search.GridSearchCV`.
+
+For this to work, you need to implement the following interface.
+
+get_params and set_params
+-------------------------
+All sklearn estimator have ``get_params`` and ``set_params`` functions.
+The ``get_params`` function takes no arguments and returns a dict of the
+``__init__`` parameters of the estimator, together with their values.
+It must take one keyword argument, ``deep``,
+which receives a boolean value that determines
+whether the method should return the parameters of sub-estimators
+(for most estimators, this can be ignored).
+The default value for ``deep`` should be true.
+
+The ``set_params`` on the other hand takes as input a dict of the form
+``'parameter': value`` and sets the parameter of the estimator using this dict.
+
+While the ``get_params`` mechanism is not essential (see :ref:`cloning` below),
+the ``set_params`` function is necessary as it is used to set parameters during
+grid searches.
+
+The easiest way to implement these functions, and to get a sensible
+``__repr__`` method, is to inherit from ``sklearn.base.BaseEstimator``. If you
+do not want to make your code dependent on scikit-learn, the easiest way to
+implement the interface is::
+
+    def get_params(self, deep=True):
+        # suppose this estimator has parameters "alpha" and "recursive"
+        return {"alpha": self.alpha, "recursive": self.recursive}
+
+    def set_params(self, **parameters):
+        for parameter, value in parameters.items():
+            self.setattr(parameter, value)
+
+
+Parameters and init
+-------------------
+As :class:`grid_search.GridSearchCV` uses ``set_params``
+to apply parameter setting to estimators,
+it is essential that calling ``set_params`` has the same effect
+as setting parameters using the ``__init__`` method.
+The easiest and recommended way to accomplish this is to
+**not do any parameter validation in ``__init__``**.
+All logic behind estimator parameters,
+like translating string arguments into functions, should be done in ``fit``.
+
+.. _cloning:
+
+Cloning
+-------
+For using :class:`grid_search.GridSearch` or any functionality of the
+:mod:`cross_validation` module, an estimator must support the ``base.clone``
+function to replicate an estimator.
+This can be done by providing a ``get_params`` method.
+If ``get_params`` is present, then ``clone(estimator)`` will be an instance of
+``type(estimator)`` on which ``set_params`` has been called with clones of
+the result of ``estimator.get_params()``.
+
+Objects that do not provide this method will be deep-copied
+(using the Python standard function ``copy.deepcopy``)
+if ``safe=False`` is passed to ``clone``.
+
+Pipeline compatibility
 ----------------------
+For an estimator to be usable together with ``pipeline.Pipeline`` in any but the
+last step, it needs to provide a ``fit`` or ``fit_transform`` function.
+To be able to evaluate the pipeline on any data but the training set,
+it also needs to provide a ``transform`` function.
+There are no special requirements for the last step in a pipeline, except that
+it has a ``fit`` function.  All ``fit`` and ``fit_transform`` functions must
+take arguments ``X, y``, even if y is not used.
 
-Some things are must still be decided:
-
-    * what should happen when predict is called before ``fit()`` ?
-    * which exception should be raised when the shape of arrays do not match
-      in ``fit()`` ?
 
 Working notes
 -------------

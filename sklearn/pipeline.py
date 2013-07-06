@@ -1,5 +1,5 @@
 """
-The :mod:`sklearn.pipeline` module implements utilites to build a composite
+The :mod:`sklearn.pipeline` module implements utilities to build a composite
 estimator, as a chain of transforms and estimators.
 """
 # Author: Edouard Duchesnay
@@ -14,6 +14,8 @@ from scipy import sparse
 from .base import BaseEstimator, TransformerMixin
 from .externals.joblib import Parallel, delayed
 from .externals import six
+from .utils import tosequence
+from .externals.six import iteritems
 
 __all__ = ['Pipeline', 'FeatureUnion']
 
@@ -78,7 +80,8 @@ class Pipeline(BaseEstimator):
         if len(self.named_steps) != len(steps):
             raise ValueError("Names provided are not unique: %s" % names)
 
-        self.steps = zip(names, estimators)     # shallow copy of steps
+        # shallow copy of steps
+        self.steps = tosequence(zip(names, estimators))
         transforms = estimators[:-1]
         estimator = estimators[-1]
 
@@ -239,8 +242,9 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    transformers: list of (name, transformer)
-        List of transformer objects to be applied to the data.
+    transformer_list: list of (string, transformer) tuples
+        List of transformer objects to be applied to the data. The first
+        half of each tuple is the name of the transformer.
 
     n_jobs: int, optional
         Number of jobs to run in parallel (default 1).
@@ -286,7 +290,7 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
-        """Fit all tranformers using X, transform the data and concatenate
+        """Fit all transformers using X, transform the data and concatenate
         results.
 
         Parameters
@@ -339,6 +343,6 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
         else:
             out = dict(self.transformer_list)
             for name, trans in self.transformer_list:
-                for key, value in trans.get_params(deep=True).iteritems():
+                for key, value in iteritems(trans.get_params(deep=True)):
                     out['%s__%s' % (name, key)] = value
             return out

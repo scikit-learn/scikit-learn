@@ -7,6 +7,7 @@ from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import raises
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_less
 
 
 random_state = np.random.mtrand.RandomState(0)
@@ -22,7 +23,7 @@ def test_initialize_nn_output():
     """Test that NNDSVD does not return negative values"""
     data = np.abs(random_state.randn(10, 10))
     for var in (None, 'a', 'ar'):
-        W, H = nmf._initialize_nmf(data, 10)
+        W, H = nmf._initialize_nmf(data, 10, random_state=0)
         assert_false((W < 0).any() or (H < 0).any())
 
 
@@ -48,7 +49,7 @@ def test_initialize_variants():
     data = np.abs(random_state.randn(10, 10))
     W0, H0 = nmf._initialize_nmf(data, 10, variant=None)
     Wa, Ha = nmf._initialize_nmf(data, 10, variant='a')
-    War, Har = nmf._initialize_nmf(data, 10, variant='ar')
+    War, Har = nmf._initialize_nmf(data, 10, variant='ar', random_state=0)
 
     for ref, evl in ((W0, Wa), (W0, War), (H0, Ha), (H0, Har)):
         assert_true(np.allclose(evl[ref != 0], ref[ref != 0]))
@@ -58,7 +59,7 @@ def test_initialize_variants():
 def test_projgrad_nmf_fit_nn_input():
     """Test model fit behaviour on negative input"""
     A = -np.ones((2, 2))
-    m = nmf.ProjectedGradientNMF(n_components=2, init=None)
+    m = nmf.ProjectedGradientNMF(n_components=2, init=None, random_state=0)
     m.fit(A)
 
 
@@ -67,7 +68,8 @@ def test_projgrad_nmf_fit_nn_output():
     A = np.c_[5 * np.ones(5) - np.arange(1, 6),
               5 * np.ones(5) + np.arange(1, 6)]
     for init in (None, 'nndsvd', 'nndsvda', 'nndsvdar'):
-        model = nmf.ProjectedGradientNMF(n_components=2, init=init)
+        model = nmf.ProjectedGradientNMF(n_components=2, init=init,
+                                         random_state=0)
         transf = model.fit_transform(A)
         assert_false((model.components_ < 0).any() or
                      (transf < 0).any())
@@ -75,8 +77,9 @@ def test_projgrad_nmf_fit_nn_output():
 
 def test_projgrad_nmf_fit_close():
     """Test that the fit is not too far away"""
-    assert_true(nmf.ProjectedGradientNMF(5, init='nndsvda').fit(np.abs(
-        random_state.randn(6, 5))).reconstruction_err_ < 0.05)
+    pnmf = nmf.ProjectedGradientNMF(5, init='nndsvda', random_state=0)
+    X = np.abs(random_state.randn(6, 5))
+    assert_less(pnmf.fit(X).reconstruction_err_, 0.05)
 
 
 @raises(ValueError)
@@ -107,7 +110,7 @@ def test_projgrad_nmf_transform():
     (transform uses scipy.optimize.nnls for now)
     """
     A = np.abs(random_state.randn(6, 5))
-    m = nmf.ProjectedGradientNMF(n_components=5, init='nndsvd')
+    m = nmf.ProjectedGradientNMF(n_components=5, init='nndsvd', random_state=0)
     transf = m.fit_transform(A)
     assert_true(np.allclose(transf, m.transform(A), atol=1e-2, rtol=0))
 
@@ -115,21 +118,22 @@ def test_projgrad_nmf_transform():
 def test_n_components_greater_n_features():
     """Smoke test for the case of more components than features."""
     A = np.abs(random_state.randn(30, 10))
-    nmf.ProjectedGradientNMF(n_components=15, sparseness='data').fit(A)
+    nmf.ProjectedGradientNMF(n_components=15, sparseness='data',
+                             random_state=0).fit(A)
 
 
 def test_projgrad_nmf_sparseness():
     """Test sparseness
 
-    Test that sparsity contraints actually increase sparseness in the
+    Test that sparsity constraints actually increase sparseness in the
     part where they are applied.
     """
     A = np.abs(random_state.randn(10, 10))
-    m = nmf.ProjectedGradientNMF(n_components=5).fit(A)
-    data_sp = nmf.ProjectedGradientNMF(
-        n_components=5, sparseness='data').fit(A).data_sparseness_
-    comp_sp = nmf.ProjectedGradientNMF(
-        n_components=5, sparseness='components').fit(A).comp_sparseness_
+    m = nmf.ProjectedGradientNMF(n_components=5, random_state=0).fit(A)
+    data_sp = nmf.ProjectedGradientNMF(n_components=5, sparseness='data',
+                                       random_state=0).fit(A).data_sparseness_
+    comp_sp = nmf.ProjectedGradientNMF(n_components=5, sparseness='components',
+                                       random_state=0).fit(A).comp_sparseness_
     assert_greater(data_sp, m.data_sparseness_)
     assert_greater(comp_sp, m.comp_sparseness_)
 

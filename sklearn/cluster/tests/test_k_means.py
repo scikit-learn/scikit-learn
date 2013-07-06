@@ -1,5 +1,4 @@
 """Testing for K-means"""
-from cStringIO import StringIO
 import sys
 import warnings
 
@@ -24,6 +23,7 @@ from sklearn.cluster.k_means_ import _labels_inertia
 from sklearn.cluster.k_means_ import _mini_batch_step
 from sklearn.cluster._k_means import csr_row_norm_l2
 from sklearn.datasets.samples_generator import make_blobs
+from sklearn.externals.six.moves import cStringIO as StringIO
 
 
 # non centered, sparse centers to check the
@@ -56,7 +56,7 @@ def test_kmeans_dtype():
         assert_equal(len(w), 1)
 
 
-def test_labels_assignement_and_inertia():
+def test_labels_assignment_and_inertia():
     # pure numpy implementation as easily auditable reference gold
     # implementation
     rng = np.random.RandomState(42)
@@ -72,14 +72,14 @@ def test_labels_assignement_and_inertia():
     assert_true((mindist >= 0.0).all())
     assert_true((labels_gold != -1).all())
 
-    # perform label assignement using the dense array input
+    # perform label assignment using the dense array input
     x_squared_norms = (X ** 2).sum(axis=1)
     labels_array, inertia_array = _labels_inertia(
         X, x_squared_norms, noisy_centers)
     assert_array_almost_equal(inertia_array, inertia_gold)
     assert_array_equal(labels_array, labels_gold)
 
-    # perform label assignement using the sparse CSR input
+    # perform label assignment using the sparse CSR input
     x_squared_norms_from_csr = csr_row_norm_l2(X_csr)
     labels_csr, inertia_csr = _labels_inertia(
         X_csr, x_squared_norms_from_csr, noisy_centers)
@@ -113,7 +113,7 @@ def test_minibatch_update_consistency():
     # step 1: compute the dense minibatch update
     old_inertia, incremental_diff = _mini_batch_step(
         X_mb, x_mb_squared_norms, new_centers, counts,
-        buffer, 1)
+        buffer, 1, None, random_reassign=False)
     assert_greater(old_inertia, 0.0)
 
     # compute the new inertia on the same batch to check that it decreased
@@ -130,7 +130,7 @@ def test_minibatch_update_consistency():
     # step 2: compute the sparse minibatch update
     old_inertia_csr, incremental_diff_csr = _mini_batch_step(
         X_mb_csr, x_mb_squared_norms_csr, new_centers_csr, counts_csr,
-        buffer_csr, 1)
+        buffer_csr, 1, None, random_reassign=False)
     assert_greater(old_inertia_csr, 0.0)
 
     # compute the new inertia on the same batch to check that it decreased
@@ -161,7 +161,7 @@ def _check_fitted_model(km):
     labels = km.labels_
     assert_equal(np.unique(labels).shape[0], n_clusters)
 
-    # check that the labels assignements are perfect (up to a permutation)
+    # check that the labels assignment are perfect (up to a permutation)
     assert_equal(v_measure_score(true_labels, labels), 1.0)
     assert_greater(km.inertia_, 0.0)
 
@@ -204,16 +204,23 @@ def test_k_means_new_centers():
         np.testing.assert_array_equal(this_labels, labels)
 
 
-def _get_mac_os_version():
+def _is_mac_os_version_ge(version):
+    """Returns True iff Mac OS X and newer than specified version."""
     import platform
     mac_version, _, _ = platform.mac_ver()
     if mac_version:
-        # turn something like '10.7.3' into '10.7'
-        return '.'.join(mac_version.split('.')[:2])
+        my_major, my_minor = version.split('.')
+        # keep only major and minor system version
+        sys_major, sys_minor = mac_version.split('.')[:2]
+        if int(sys_major) > int(my_major):
+            return True
+        else:
+            return int(sys_minor) >= int(my_minor)
+    return False
 
 
 def test_k_means_plus_plus_init_2_jobs():
-    if _get_mac_os_version() >= '10.7':
+    if _is_mac_os_version_ge('10.7'):
         raise SkipTest('Multi-process bug in Mac OS X Lion (see issue #636)')
     km = KMeans(init="k-means++", n_clusters=n_clusters, n_jobs=2,
                      random_state=42).fit(X)
@@ -335,7 +342,8 @@ def test_minibatch_reassign():
                              mb_k_means.cluster_centers_,
                              mb_k_means.counts_,
                              np.zeros(X.shape[1], np.double),
-                             False, random_reassign=True, random_state=42,
+                             False, distances=np.zeros(n_clusters),
+                             random_reassign=True, random_state=42,
                              reassignment_ratio=1, verbose=True)
         finally:
             sys.stdout = old_stdout
@@ -357,7 +365,8 @@ def test_minibatch_reassign():
                          mb_k_means.cluster_centers_,
                          mb_k_means.counts_,
                          np.zeros(X.shape[1], np.double),
-                         False, random_reassign=True, random_state=42,
+                         False, distances=np.zeros(n_clusters),
+                         random_reassign=True, random_state=42,
                          reassignment_ratio=1e-15)
 
 
@@ -602,7 +611,7 @@ def test_k_means_function():
     labels = labels
     assert_equal(np.unique(labels).shape[0], n_clusters)
 
-    # check that the labels assignements are perfect (up to a permutation)
+    # check that the labels assignment are perfect (up to a permutation)
     assert_equal(v_measure_score(true_labels, labels), 1.0)
     assert_greater(inertia, 0.0)
 

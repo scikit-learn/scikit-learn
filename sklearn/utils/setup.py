@@ -10,6 +10,7 @@ def configuration(parent_package='', top_path=None):
 
     config = Configuration('utils', parent_package, top_path)
     config.add_subpackage('sparsetools')
+    config.add_subpackage('mst')
 
     cblas_libs, blas_info = get_blas_info()
 

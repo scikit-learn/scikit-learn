@@ -1,6 +1,6 @@
 """Base class for all estimators."""
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-# License: BSD Style
+# License: BSD 3 clause
 
 import copy
 import inspect
@@ -193,6 +193,11 @@ class BaseEstimator(object):
         deep: boolean, optional
             If True, will return the parameters for this estimator and
             contained subobjects that are estimators.
+
+        Returns
+        -------
+        params : mapping of string to any
+            Parameter names mapped to their values.
         """
         out = dict()
         for key in self._get_param_names():

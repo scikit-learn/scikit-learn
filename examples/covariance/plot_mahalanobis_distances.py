@@ -3,7 +3,7 @@
 Robust covariance estimation and Mahalanobis distances relevance
 ================================================================
 
-For Gaussian ditributed data, the distance of an observation
+For Gaussian distributed data, the distance of an observation
 :math:`x_i` to the mode of the distribution can be computed using its
 Mahalanobis distance: :math:`d_{(\mu,\Sigma)}(x_i)^2 = (x_i -
 \mu)'\Sigma^{-1}(x_i - \mu)` where :math:`\mu` and :math:`\Sigma` are
@@ -14,8 +14,8 @@ In practice, :math:`\mu` and :math:`\Sigma` are replaced by some
 estimates.  The usual covariance maximum likelihood estimate is very
 sensitive to the presence of outliers in the data set and therefor,
 the corresponding Mahalanobis distances are. One would better have to
-use a robust estimator of covariance to garanty that the estimation is
-resistant to "errorneous" observations in the data set and that the
+use a robust estimator of covariance to guarantee that the estimation is
+resistant to "erroneous" observations in the data set and that the
 associated Mahalanobis distances accurately reflect the true
 organisation of the observations.
 
@@ -33,12 +33,12 @@ by P.J.Rousseuw in [1].
 
 This example illustrates how the Mahalanobis distances are affected by
 outlying data: observations drawn from a contaminating distribution
-are not distinguishable from the observations comming from the real,
+are not distinguishable from the observations coming from the real,
 Gaussian distribution that one may want to work with. Using MCD-based
 Mahalanobis distances, the two populations become
 distinguishable. Associated applications are outliers detection,
 observations ranking, clustering, ...
-For vizualisation purpose, the cubique root of the Mahalanobis distances
+For visualization purpose, the cubic root of the Mahalanobis distances
 are represented in the boxplot, as Wilson and Hilferty suggest [2]
 
 [1] P. J. Rousseeuw. Least median of squares regression. J. Am

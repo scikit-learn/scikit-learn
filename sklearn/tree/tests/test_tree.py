@@ -11,8 +11,7 @@ from nose.tools import assert_raises
 
 from sklearn import tree
 from sklearn import datasets
-from sklearn.externals.six import StringIO
-from sklearn.preprocessing import balance_weights
+from sklearn.utils import safe_asarray
 
 # toy sample
 X = [[-2, -1], [-1, -1], [-1, -2], [1, 1], [1, 2], [2, 1]]
@@ -34,6 +33,41 @@ boston = datasets.load_boston()
 perm = rng.permutation(boston.target.size)
 boston.data = boston.data[perm]
 boston.target = boston.target[perm]
+
+
+def balance_weights(y):
+    """Compute sample weights such that the class distribution of y becomes
+       balanced.
+
+    Parameters
+    ----------
+    y : array-like
+        Labels for the samples.
+
+    Returns
+    -------
+    weights : array-like
+        The sample weights.
+    """
+    y = safe_asarray(y)
+    y = np.searchsorted(np.unique(y), y)
+    bins = np.bincount(y)
+
+    weights = 1. / bins.take(y)
+    weights *= bins.min()
+
+    return weights
+
+
+def test_balance_weights():
+    weights = balance_weights([0, 0, 1, 1])
+    assert_array_equal(weights, [1., 1., 1., 1.])
+
+    weights = balance_weights([0, 1, 1, 1, 1])
+    assert_array_equal(weights, [1., 0.25, 0.25, 0.25, 0.25])
+
+    weights = balance_weights([0, 0])
+    assert_array_equal(weights, [1., 1.])
 
 
 def test_classification_toy():
@@ -115,60 +149,6 @@ def test_xor():
     clf = tree.ExtraTreeClassifier(max_features=1)
     clf.fit(X, y)
     assert_equal(clf.score(X, y), 1.0)
-
-
-def test_graphviz_toy():
-    """Check correctness of graphviz output on a toy dataset."""
-    clf = tree.DecisionTreeClassifier(max_depth=3, min_samples_split=1)
-    clf.fit(X, y)
-
-    # test export code
-    out = StringIO()
-    tree.export_graphviz(clf, out_file=out)
-    contents1 = out.getvalue()
-
-    tree_toy = StringIO(
-        "digraph Tree {\n"
-        "0 [label=\"X[0] <= 0.0000\\nerror = 0.5"
-        "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
-        "1 [label=\"error = 0.0000\\nsamples = 3\\n"
-        "value = [ 3.  0.]\", shape=\"box\"] ;\n"
-        "0 -> 1 ;\n"
-        "2 [label=\"error = 0.0000\\nsamples = 3\\n"
-        "value = [ 0.  3.]\", shape=\"box\"] ;\n"
-        "0 -> 2 ;\n"
-        "}")
-    contents2 = tree_toy.getvalue()
-
-    assert contents1 == contents2, \
-        "graphviz output test failed\n: %s != %s" % (contents1, contents2)
-
-    # test with feature_names
-    out = StringIO()
-    out = tree.export_graphviz(clf, out_file=out,
-                               feature_names=["feature1", ""])
-    contents1 = out.getvalue()
-
-    tree_toy = StringIO(
-        "digraph Tree {\n"
-        "0 [label=\"feature1 <= 0.0000\\nerror = 0.5"
-        "\\nsamples = 6\\nvalue = [ 3.  3.]\", shape=\"box\"] ;\n"
-        "1 [label=\"error = 0.0000\\nsamples = 3\\n"
-        "value = [ 3.  0.]\", shape=\"box\"] ;\n"
-        "0 -> 1 ;\n"
-        "2 [label=\"error = 0.0000\\nsamples = 3\\n"
-        "value = [ 0.  3.]\", shape=\"box\"] ;\n"
-        "0 -> 2 ;\n"
-        "}")
-    contents2 = tree_toy.getvalue()
-
-    assert contents1 == contents2, \
-        "graphviz output test failed\n: %s != %s" % (contents1, contents2)
-
-    # test improperly formed feature_names
-    out = StringIO()
-    assert_raises(IndexError, tree.export_graphviz,
-                  clf, out, feature_names=[])
 
 
 def test_iris():
@@ -299,6 +279,61 @@ def test_importances():
     assert 0 < X_new.shape[1] < X.shape[1]
 
 
+def test_max_features():
+    """Check max_features."""
+    clf = tree.DecisionTreeClassifier(max_features="auto")
+    clf.fit(iris.data, iris.target)
+    assert_equal(clf.tree_.max_features, 2)
+
+    clf = tree.DecisionTreeRegressor(max_features="auto")
+    clf.fit(boston.data, boston.target)
+    assert_equal(clf.tree_.max_features, boston.data.shape[1])
+
+    clf = tree.DecisionTreeRegressor(max_features="sqrt")
+    clf.fit(boston.data, boston.target)
+    assert_equal(clf.tree_.max_features, int(np.sqrt(boston.data.shape[1])))
+
+    clf = tree.DecisionTreeRegressor(max_features="log2")
+    clf.fit(boston.data, boston.target)
+    assert_equal(clf.tree_.max_features, int(np.log2(boston.data.shape[1])))
+
+    clf = tree.DecisionTreeRegressor(max_features=1)
+    clf.fit(boston.data, boston.target)
+    assert_equal(clf.tree_.max_features, 1)
+
+    clf = tree.DecisionTreeRegressor(max_features=7)
+    clf.fit(boston.data, boston.target)
+    assert_equal(clf.tree_.max_features, 7)
+
+    clf = tree.DecisionTreeRegressor(max_features=0.5)
+    clf.fit(boston.data, boston.target)
+    assert_equal(clf.tree_.max_features, int(0.5 * boston.data.shape[1]))
+
+    clf = tree.DecisionTreeRegressor(max_features=1.0)
+    clf.fit(boston.data, boston.target)
+    assert_equal(clf.tree_.max_features, boston.data.shape[1])
+
+    clf = tree.DecisionTreeRegressor(max_features=None)
+    clf.fit(boston.data, boston.target)
+    assert_equal(clf.tree_.max_features, boston.data.shape[1])
+
+    # use values of max_features that are invalid
+    clf = tree.DecisionTreeClassifier(max_features=10)
+    assert_raises(ValueError, clf.fit, X, y)
+
+    clf = tree.DecisionTreeClassifier(max_features=-1)
+    assert_raises(ValueError, clf.fit, X, y)
+
+    clf = tree.DecisionTreeClassifier(max_features=0.0)
+    assert_raises(ValueError, clf.fit, X, y)
+
+    clf = tree.DecisionTreeClassifier(max_features=1.5)
+    assert_raises(ValueError, clf.fit, X, y)
+
+    clf = tree.DecisionTreeClassifier(max_features="foobar")
+    assert_raises(ValueError, clf.fit, X, y)
+
+
 def test_error():
     """Test that it gives proper exception on deficient input."""
     # Invalid values for parameters
@@ -341,21 +376,6 @@ def test_error():
     clf.fit(X, y)
     t = np.asarray(T)
     assert_raises(ValueError, clf.predict, t[:, 1:])
-
-   # use values of max_features that are invalid
-    clf = tree.DecisionTreeClassifier(max_features=10)
-    assert_raises(ValueError, clf.fit, X, y)
-
-    clf = tree.DecisionTreeClassifier(max_features=-1)
-    assert_raises(ValueError, clf.fit, X, y)
-
-    clf = tree.DecisionTreeClassifier(max_features="foobar")
-    assert_raises(ValueError, clf.fit, X, y)
-
-    tree.DecisionTreeClassifier(max_features="auto").fit(X, y)
-    tree.DecisionTreeClassifier(max_features="sqrt").fit(X, y)
-    tree.DecisionTreeClassifier(max_features="log2").fit(X, y)
-    tree.DecisionTreeClassifier(max_features=None).fit(X, y)
 
     # predict before fit
     clf = tree.DecisionTreeClassifier()

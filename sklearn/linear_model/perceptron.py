@@ -1,11 +1,11 @@
 # Author: Mathieu Blondel
-# License: BSD Style.
+# License: BSD 3 clause
 
 from .stochastic_gradient import BaseSGDClassifier
-from ..feature_selection.selector_mixin import SelectorMixin
+from ..feature_selection.from_model import _LearntSelectorMixin
 
 
-class Perceptron(BaseSGDClassifier, SelectorMixin):
+class Perceptron(BaseSGDClassifier, _LearntSelectorMixin):
     """Perceptron
 
     Parameters

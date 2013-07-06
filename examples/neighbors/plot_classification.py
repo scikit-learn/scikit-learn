@@ -32,7 +32,7 @@ for weights in ['uniform', 'distance']:
     clf = neighbors.KNeighborsClassifier(n_neighbors, weights=weights)
     clf.fit(X, y)
 
-    # Plot the decision boundary. For that, we will asign a color to each
+    # Plot the decision boundary. For that, we will assign a color to each
     # point in the mesh [x_min, m_max]x[y_min, y_max].
     x_min, x_max = X[:, 0].min() - 1, X[:, 0].max() + 1
     y_min, y_max = X[:, 1].min() - 1, X[:, 1].max() + 1
@@ -47,8 +47,9 @@ for weights in ['uniform', 'distance']:
 
     # Plot also the training points
     pl.scatter(X[:, 0], X[:, 1], c=y, cmap=cmap_bold)
+    pl.xlim(xx.min(), xx.max())
+    pl.ylim(yy.min(), yy.max())
     pl.title("3-Class classification (k = %i, weights = '%s')"
              % (n_neighbors, weights))
-    pl.axis('tight')
 
 pl.show()

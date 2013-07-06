@@ -1,7 +1,7 @@
 """
-=========================================================================
-Support Vector Classification (SVC): scaling the regularization parameter
-=========================================================================
+==============================================
+Scaling the regularization parameter for SVCs
+==============================================
 
 The following example illustrates the effect of scaling the
 regularization parameter when using :ref:`svm` for
@@ -29,9 +29,9 @@ increase.
 When using, for example, :ref:`cross validation <cross_validation>`, to
 set the amount of regularization with `C`, there will be a
 different amount of samples between the main problem and the smaller problems
-withing the folds of the cross validation.
+within the folds of the cross validation.
 
-Since our loss function is dependant on the amount of samples, the latter
+Since our loss function is dependent on the amount of samples, the latter
 will influence the selected value of `C`.
 The question that arises is `How do we optimally adjust C to
 account for the different amount of training samples?`
@@ -72,7 +72,7 @@ is not scaled.
 
 .. topic:: Note:
 
-    Two seperate datasets are used for the two different plots. The reason
+    Two separate datasets are used for the two different plots. The reason
     behind this is the `L1` case works better on sparse data, while `L2`
     is better suited to the non-sparse case.
 """
@@ -81,7 +81,7 @@ print(__doc__)
 
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
 #         Jaques Grobler <jaques.grobler@inria.fr>
-# License: BSD
+# License: BSD 3 clause
 
 
 import numpy as np
@@ -131,7 +131,7 @@ for fignum, (clf, cs, X, y) in enumerate(clf_sets):
                             cv=ShuffleSplit(n=n_samples, train_size=train_size,
                                             n_iter=250, random_state=1))
         grid.fit(X, y)
-        scores = [x[1] for x in grid.grid_scores_]
+        scores = [x[1] for x in grid.cv_scores_]
 
         scales = [(1, 'No scaling'),
                   ((n_samples * train_size), '1/n_samples'),

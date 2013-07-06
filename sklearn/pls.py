@@ -3,7 +3,7 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 """
 
 # Author: Edouard Duchesnay <edouard.duchesnay@cea.fr>
-# License: BSD Style.
+# License: BSD 3 clause
 
 from .base import BaseEstimator, RegressorMixin, TransformerMixin
 from .utils import check_arrays
@@ -110,7 +110,7 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
       and unnormlized y weights such as defined by [Tenenhaus 1998] p. 132.
       With univariate response it implements PLS1.
 
-    - PLS canonical, i.e., PLS 2 blocks, mode A, with symetric deflation and
+    - PLS canonical, i.e., PLS 2 blocks, mode A, with symmetric deflation and
       normlized y weights such as defined by [Tenenhaus 1998] (p. 132) and
       [Wegelin et al. 2000]. This parametrization implements the original Wold
       algorithm.
@@ -286,20 +286,20 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
             # ----------------------
             # Possible memory footprint reduction may done here: in order to
             # avoid the allocation of a data chunk for the rank-one
-            # approximations matrix which is then substracted to Xk, we suggest
+            # approximations matrix which is then subtracted to Xk, we suggest
             # to perform a column-wise deflation.
             #
             # - regress Xk's on x_score
             x_loadings = np.dot(Xk.T, x_scores) / np.dot(x_scores.T, x_scores)
-            # - substract rank-one approximations to obtain remainder matrix
+            # - subtract rank-one approximations to obtain remainder matrix
             Xk -= np.dot(x_scores, x_loadings.T)
             if self.deflation_mode == "canonical":
-                # - regress Yk's on y_score, then substract rank-one approx.
+                # - regress Yk's on y_score, then subtract rank-one approx.
                 y_loadings = (np.dot(Yk.T, y_scores)
                               / np.dot(y_scores.T, y_scores))
                 Yk -= np.dot(y_scores, y_loadings.T)
             if self.deflation_mode == "regression":
-                # - regress Yk's on x_score, then substract rank-one approx.
+                # - regress Yk's on x_score, then subtract rank-one approx.
                 y_loadings = (np.dot(Yk.T, x_scores)
                               / np.dot(x_scores.T, x_scores))
                 Yk -= np.dot(x_scores, y_loadings.T)
@@ -490,7 +490,7 @@ class PLSRegression(_PLS):
         Y block to latents rotations.
 
     coefs: array, [p, q]
-        The coeficients of the linear model: Y = X coefs + Err
+        The coefficients of the linear model: Y = X coefs + Err
 
     Notes
     -----
@@ -548,7 +548,7 @@ class PLSRegression(_PLS):
 
 class PLSCanonical(_PLS):
     """ PLSCanonical implements the 2 blocks canonical PLS of the original Wold
-    algorithm [Tenenhaus 1998] p.204, refered as PLS-C2A in [Wegelin 2000].
+    algorithm [Tenenhaus 1998] p.204, referred as PLS-C2A in [Wegelin 2000].
 
     This class inherits from PLS with mode="A" and deflation_mode="canonical",
     norm_y_weights=True and algorithm="nipals", but svd should provide similar
@@ -621,15 +621,15 @@ class PLSCanonical(_PLS):
     current X score: x_score.
 
     The residual matrix of Y (Yk+1) block is obtained by deflation on the
-    current Y score. This performs a canonical symetric version of the PLS
+    current Y score. This performs a canonical symmetric version of the PLS
     regression. But slightly different than the CCA. This is mode mostly used
     for modeling.
 
     This implementation provides the same results that the "plspm" package
     provided in the R language (R-project), using the function plsca(X, Y).
-    Results are equal or colinear with the function
+    Results are equal or collinear with the function
     ``pls(..., mode = "canonical")`` of the "mixOmics" package. The difference
-    relies in the fact that mixOmics implmentation does not exactly implement
+    relies in the fact that mixOmics implementation does not exactly implement
     the Wold algorithm since it does not normalize y_weights to one.
 
     Examples

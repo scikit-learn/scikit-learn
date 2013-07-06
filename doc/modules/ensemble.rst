@@ -235,7 +235,7 @@ the transformation performs an implicit, non-parametric density estimation.
  * :ref:`example_ensemble_plot_random_forest_embedding.py`
 
  * :ref:`example_manifold_plot_lle_digits.py` compares non-linear
-   dimensionality reduction technics on handwritten digits.
+   dimensionality reduction techniques on handwritten digits.
 
 .. seealso::
 
@@ -249,9 +249,8 @@ the transformation performs an implicit, non-parametric density estimation.
 AdaBoost
 ========
 
-The module :mod:`sklearn.ensemble.weight_boosting` implements the popular
-boosting algorithm known as AdaBoost introduced in 1995 by Freud and
-Schapire [FS1995]_.
+The module :mod:`sklearn.ensemble` includes the popular boosting algorithm
+AdaBoost, introduced in 1995 by Freud and Schapire [FS1995]_.
 
 The core principle of AdaBoost is to fit a sequence of weak learners (i.e.,
 models that are only slightly better than random guessing, such as small
@@ -431,7 +430,7 @@ with least squares loss and 500 base learners to the Boston house price dataset
 The plot on the left shows the train and test error at each iteration.
 The train error at each iteration is stored in the
 :attr:`~GradientBoostingRegressor.train_score_` attribute
-of the gradient boosting model. The test error at each iterations can be optained
+of the gradient boosting model. The test error at each iterations can be obtained
 via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
 generator that yields the predictions at each stage. Plots like these can be used
 to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
@@ -601,7 +600,7 @@ used for model selection (e.g. to determine the optimal number of iterations).
 
 Another strategy to reduce the variance is by subsampling the features
 analogous to the random splits in Random Forests. The size of the subsample
-can be controled via the ``max_features`` parameter.
+can be controlled via the ``max_features`` parameter.
 
 .. topic:: Examples:
 
@@ -685,7 +684,7 @@ interactions among the two features. For example, the two-variable PDP in the
 above Figure shows the dependence of median house price on joint
 values of house age and avg. occupants per household. We can clearly
 see an interaction between the two features:
-For an avg. occupancy greather than two, the house price is nearly independent
+For an avg. occupancy greater than two, the house price is nearly independent
 of the house age, whereas for values less than two there is a strong dependence
 on age.
 

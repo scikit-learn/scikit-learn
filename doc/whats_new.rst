@@ -7,6 +7,18 @@
 
 Changelog
 ---------
+   - Ability to pass one penalty (alpha value) per target in
+     :class:`linear_model.Ridge`, by @eickenberg and `Mathieu Blondel`_.
+
+   - Fixed :mod:`sklearn.linear_model.stochastic_gradient.py` L2 regularization
+     issue (minor practical significants).
+     By `Norbert Crombach`_ and `Mathieu Blondel`_ .
+
+   - Added an interactive version of `Andreas Müller`_'s
+     `Machine Learning Cheat Sheet (for scikit-learn)
+     <http://peekaboo-vision.blogspot.de/2013/01/machine-learning-cheat-sheet-for-scikit.html>`_
+     to the documentation. See :ref:`Choosing the right estimator <ml_map>`.
+     By `Jaques Grobler`_.
 
    - :class:`grid_search.GridSearchCV` and
      :func:`cross_validation.cross_val_score` now support the use of advanced
@@ -20,14 +32,28 @@ Changelog
      `Gilles Louppe`_. See the :ref:`AdaBoost <adaboost>` section of the user
      guide for details and examples.
 
-   - :func:`metrics.accuracy_score`, :func:`metrics.zero_one_loss` support
-     multi-label classification and a new metric :func:`metrics.hamming_loss`
-     is added with multi-label support by `Arnaud Joly`_.
+   - Multi-label classification output is now supported by
+     :func:`metrics.accuracy_score`, :func:`metrics.zero_one_loss`,
+     :func:`metrics.f1_score`, :func:`metrics.fbeta_score`,
+     :func:`metrics.classification_report`,
+     :func:`metrics.precision_score` and :func:`metrics.recall_score`
+     by `Arnaud Joly`_.
 
-   - Much reduced memory usage in
+  -  Two new metrics :func:`metrics.hamming_loss` and
+     :func:`metrics.jaccard_similarity_score`
+     are added with multi-label support by `Arnaud Joly`_.
+
+   - Speed and memory usage improvements in
      :class:`feature_extraction.text.CountVectorizer` and
      :class:`feature_extraction.text.TfidfVectorizer`,
-     by Jochen Wersdörfer.
+     by Jochen Wersdörfer and Roman Sinayev.
+
+   - The ``min_df`` parameter in
+     :class:`feature_extraction.text.CountVectorizer` and
+     :class:`feature_extraction.text.TfidfVectorizer`, which used to be 2,
+     has been reset to 1 to avoid unpleasant surprises (empty vocabularies)
+     for novice users who try it out on tiny document collections.
+     A value of at least 2 is still recommended for practical use.
 
    - Feature importances in :class:`tree.DecisionTreeClassifier`,
      :class:`tree.DecisionTreeRegressor` and all derived ensemble estimators
@@ -35,21 +61,74 @@ Changelog
      attribute. Setting ``compute_importances=True`` is no longer required.
      By `Gilles Louppe`_.
 
-   - :class:`LinearSVC`, :class:`SGDClassifier` and :class:`SGDRegressor`
-     now have a ``sparsify`` method that converts their ``coef_`` into a
-     sparse matrix, meaning stored models trained using these estimators
-     can be made much more compact.
+   - Added :class:`grid_search.RandomizedSearchCV` and
+     :class:`grid_search.ParameterSampler` for randomized hyperparameter
+     optimization. By `Andreas Müller`_.
+
+   - :class:`svm.LinearSVC`, :class:`linear_model.SGDClassifier` and
+     :class:`linear_model.SGDRegressor` now have a ``sparsify`` method that
+     converts their ``coef_`` into a sparse matrix, meaning stored models
+     trained using these estimators can be made much more compact.
+
+   - :class:`linear_model.SGDClassifier` now produces multiclass probability
+     estimates when trained under log loss or modified Huber loss.
 
    - Hyperlinks to documentation in example code on the website by
      `Martin Luessi`_.
 
-   - Fixed bug in :class:`MinMaxScaler` causing incorrect scaling of the
-     features for non-default ``feature_range`` settings. By `Andreas Müller`_.
+   - Fixed bug in :class:`preprocessing.MinMaxScaler` causing incorrect scaling
+     of the features for non-default ``feature_range`` settings. By `Andreas
+     Müller`_.
+
+   - ``max_features`` in :class:`tree.DecisionTreeClassifier`,
+     :class:`tree.DecisionTreeRegressor` and all derived ensemble estimators
+     now supports percentage values. By `Gilles Louppe`_.
+
+   - Performance improvements in :class:`isotonic.IsotonicRegression` by
+     Nelle Varoquaux.
+
+   - :func:`metrics.accuracy_score` has an option normalize to return
+     the fraction or the number of correctly classified sample
+     by `Arnaud Joly`_.
+
+   - A bug that caused :class:`ensemble.AdaBoostClassifier`'s to output
+     incorrect probabilities has been fixed.
+
+   - Feature selectors now share a mixin providing consistent `transform`,
+     `inverse_transform` and `get_support` methods. By `Joel Nothman`_.
+
+   - A fitted :class:`grid_search.GridSearchCV` or
+     :class:`grid_search.RandomizedSearchCV` can now generally be pickled.
+     By `Joel Nothman`_.
+
+   - Refactored and vectorized implementation of :func:`metrics.roc_curve`
+     and :func:`metrics.precision_recall_curve`. By `Joel Nothman`_.
+
+   - The new estimator :class:`sklearn.decomposition.TruncatedSVD`
+     performs dimensionality reduction using SVD on sparse matrices,
+     and can be used for latent semantic analysis (LSA).
+     By `Lars Buitinck`_.
+
+   - Added self-contained example of out-of-core learning on text data
+     :ref:`example_applications_plot_out_of_core_classification.py`.
+     By `Eustache Diemert`_.
+
+   - The default number of components for
+     :class:`sklearn.decomposition.RandomizedPCA` is now correctly documented
+     to be ``n_features``. This was the default behavior, so programs using it
+     will continue to work as they did.
+
+API changes summary
+-------------------
+
+   - :class:`grid_search.IterGrid` was renamed to
+     :class:`grid_search.ParameterGrid`.
 
    - Fixed bug in :class:`KFold` causing imperfect class balance in some
      cases. By `Alexandre Gramfort`_ and Tadej Janež.
 
-   - :class:`BallTree` has been refactored, and a :class:`KDTree` has been
+   - :class:`sklearn.neighbors.BallTree` has been refactored, and a
+     :class:`sklearn.neighbors.KDTree` has been
      added which shares the same interface.  The Ball Tree now works with
      a wide variety of distance metrics.  Both classes have many new
      methods, including single-tree and dual-tree queries, breadth-first
@@ -60,6 +139,28 @@ Changelog
    - Support for scipy.spatial.cKDTree within neighbors queries has been
      removed, and the functionality replaced with the new :class:`KDTree`
      class.
+
+   - :class:`sklearn.neighbors.KernelDensity` has been added, which performs
+     efficient kernel density estimation with a variety of kernels.
+
+   - :class:`sklearn.decomposition.KernelPCA` now always returns output with
+     ``n_components`` components, unless the new parameter ``remove_zero_eig``
+     is set to ``True``. This new behavior is consistent with the way
+     kernel PCA was always documented; previously, the removal of components
+     with zero eigenvalues was tacitly performed on all data.
+
+   - ``gcv_mode="auto"`` no longer tries to perform SVD on a densified
+     sparse matrix in :class:`sklearn.linear_model.RidgeCV`.
+
+   - Sparse matrix support in :class:`sklearn.decomposition.RandomizedPCA`
+     is now deprecated in favor of the new ``TruncatedSVD``.
+
+   - :class:`cross_validation.KFold` and
+     :class:`cross_validation.StratifiedKFold` now enforce `n_folds >= 2`
+     otherwise a ``ValueError`` is raised. By `Olivier Grisel`_.
+
+   - :func:`datasets.load_files`'s ``charset`` and ``charset_errors``
+     parameters were renamed ``encoding`` and ``decode_errors``.
 
 .. _changes_0_13_1:
 
@@ -159,11 +260,13 @@ New Estimator Classes
      sparse representations using ensembles of totally random trees by  `Andreas Müller`_.
      See :ref:`random_trees_embedding` in the user guide.
 
-
    - :class:`manifold.SpectralEmbedding` and function
      :func:`manifold.spectral_embedding`, implementing the "laplacian
      eigenmaps" transformation for nonlinear dimensionality reduction by Wei
      Li. See :ref:`spectral_embedding` in the user guide.
+
+   - :class:`isotonic.IsotonicRegression` by `Fabian Pedregosa`_, `Alexandre Gramfort`_
+     and Nelle Varoquaux.
 
 
 Changelog
@@ -268,7 +371,7 @@ Changelog
 
 API changes summary
 -------------------
-   - Renamed all occurences of ``n_atoms`` to ``n_components`` for consistency.
+   - Renamed all occurrences of ``n_atoms`` to ``n_components`` for consistency.
      This applies to :class:`decomposition.DictionaryLearning`,
      :class:`decomposition.MiniBatchDictionaryLearning`,
      :func:`decomposition.dict_learning`, :func:`decomposition.dict_learning_online`.
@@ -368,7 +471,7 @@ API changes summary
 
    - :func:`datasets.make_circles` now has the same number of inner and outer points.
 
-   - In the Naive Bayes classifiers, the ``class_prior`` parmeter was moved
+   - In the Naive Bayes classifiers, the ``class_prior`` parameter was moved
      from ``fit`` to ``__init__``.
 
 People
@@ -761,7 +864,7 @@ Other changes
      Ridge regression, esp. for the ``n_samples > n_features`` case, in
      :class:`linear_model.RidgeCV`, by Reuben Fletcher-Costin.
 
-   - Refactoring and simplication of the :ref:`text_feature_extraction`
+   - Refactoring and simplification of the :ref:`text_feature_extraction`
      API and fixed a bug that caused possible negative IDF,
      by `Olivier Grisel`_.
 
@@ -1007,7 +1110,7 @@ Changelog
 API changes summary
 -------------------
 
-Here are the code migration instructions when updgrading from scikit-learn
+Here are the code migration instructions when upgrading from scikit-learn
 version 0.9:
 
   - Some estimators that may overwrite their inputs to save memory previously
@@ -1198,7 +1301,7 @@ Changelog
 
    - Added :class:`Orthogonal Matching Pursuit <linear_model.OrthogonalMatchingPursuit>` by `Vlad Niculae`_
 
-   - Added 2D-patch extractor utilites in the :ref:`feature_extraction` module by `Vlad Niculae`_
+   - Added 2D-patch extractor utilities in the :ref:`feature_extraction` module by `Vlad Niculae`_
 
    - Implementation of :class:`linear_model.LassoLarsCV`
      (cross-validated Lasso solver using the Lars algorithm) and
@@ -1221,7 +1324,7 @@ Changelog
 API changes summary
 -------------------
 
-Here are the code migration instructions when updgrading from scikit-learn
+Here are the code migration instructions when upgrading from scikit-learn
 version 0.8:
 
   - The ``scikits.learn`` package was renamed ``sklearn``. There is
@@ -1235,7 +1338,7 @@ version 0.8:
 
   - Estimators no longer accept model parameters as ``fit`` arguments:
     instead all parameters must be only be passed as constructor
-    arguments or using the now public ``set_params`` method inhereted
+    arguments or using the now public ``set_params`` method inherited
     from :class:`base.BaseEstimator`.
 
     Some estimators can still accept keyword arguments on the ``fit``
@@ -1290,7 +1393,7 @@ version 0.8:
     and by default returns the pairwise distance. For the component wise distance,
     set the parameter ``sum_over_features`` to ``False``.
 
-Backward compatibilty package aliases and other deprecated classes and
+Backward compatibility package aliases and other deprecated classes and
 functions will be removed in version 0.11.
 
 
@@ -1347,7 +1450,7 @@ scikit-learn 0.8 was released on May 2011, one month after the first
 <https://github.com/scikit-learn/scikit-learn/wiki/Upcoming-events>`_ and is
 marked by the inclusion of important modules: :ref:`hierarchical_clustering`,
 :ref:`pls`, :ref:`NMF`, initial support for Python 3 and by important
-enhacements and bug fixes.
+enhancements and bug fixes.
 
 
 Changelog
@@ -1384,7 +1487,7 @@ Some other modules benefited from significant improvements or cleanups.
 
   - bug and style fixing in :ref:`k_means` algorithm by Jan Schlüter.
 
-  - Add attribute coverged to Gaussian Mixture Models by Vincent Schut.
+  - Add attribute converged to Gaussian Mixture Models by Vincent Schut.
 
   - Implement `transform`, `predict_log_proba` in :class:`lda.LDA` by `Mathieu Blondel`_.
 
@@ -1506,7 +1609,7 @@ Changelog
 People
 ------
 
-People that made this release possible preceeded by number of commits:
+People that made this release possible preceded by number of commits:
 
     - 85  `Fabian Pedregosa`_
     - 67  `Mathieu Blondel`_
@@ -1596,7 +1699,7 @@ Changelog
 People
 ------
 
-People that made this release possible preceeded by number of commits:
+People that made this release possible preceded by number of commits:
 
    * 207  `Olivier Grisel`_
 
@@ -1696,7 +1799,7 @@ Examples
       :ref:`example_mlcomp_sparse_document_classification.py`,
       :ref:`example_document_classification_20newsgroups.py`
 
-    - Many more examaples. `See here
+    - Many more examples. `See here
       <http://scikit-learn.org/stable/auto_examples/index.html>`_
       the full list of examples.
 
@@ -1704,7 +1807,7 @@ Examples
 External dependencies
 ---------------------
 
-    - Joblib is now a dependencie of this package, although it is
+    - Joblib is now a dependency of this package, although it is
       shipped with (sklearn.externals.joblib).
 
 Removed modules
@@ -1723,7 +1826,7 @@ Misc
 Authors
 -------
 
-The following is a list of authors for this release, preceeded by
+The following is a list of authors for this release, preceded by
 number of commits:
 
      * 262  Fabian Pedregosa
@@ -1872,3 +1975,9 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Rob Zinkov: http://zinkov.com
 
 .. _Martin Luessi: https://github.com/mluessi
+
+.. _Joel Nothman: http://joelnothman.com
+
+.. _Norbert Crombach: https://github.com/norbert
+
+.. _Eustache Diemert: https://github.com/oddskool

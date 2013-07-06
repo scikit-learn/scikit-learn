@@ -5,7 +5,7 @@
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Sparseness support by Lars Buitinck <L.J.Buitinck@uva.nl>
 #
-# License: BSD, (C) INRIA, University of Amsterdam
+# License: BSD 3 clause (C) INRIA, University of Amsterdam
 
 import warnings
 
@@ -97,7 +97,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
 
        Regarding the Nearest Neighbors algorithms, if it is found that two
        neighbors, neighbor `k+1` and `k`, have identical distances but
-       but different labels, the results will depend on the odering of the
+       but different labels, the results will depend on the ordering of the
        training data.
 
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm

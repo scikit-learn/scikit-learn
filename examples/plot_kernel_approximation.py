@@ -6,7 +6,7 @@ Explicit feature map approximation for RBF kernels
 .. currentmodule:: sklearn.kernel_approximation
 
 An example shows how to use :class:`RBFSampler` and :class:`Nystrom` to
-appoximate the feature map of an RBF kernel for classification with an SVM on
+approximate the feature map of an RBF kernel for classification with an SVM on
 the digits dataset. Results using a linear SVM in the original space, a linear
 SVM using the approximate mappings and using a kernelized SVM are compared.
 Timings and accuracy for varying amounts of Monte Carlo samplings (in the case
@@ -42,7 +42,7 @@ print(__doc__)
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 #         Andreas Mueller <amueller@ais.uni-bonn.de>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 # Standard scientific Python imports
 import pylab as pl
@@ -189,7 +189,7 @@ pl.figure(figsize=(12, 5))
 # predict and plot
 for i, clf in enumerate((kernel_svm, nystroem_approx_svm,
                          fourier_approx_svm)):
-    # Plot the decision boundary. For that, we will asign a color to each
+    # Plot the decision boundary. For that, we will assign a color to each
     # point in the mesh [x_min, m_max]x[y_min, y_max].
     pl.subplot(1, 3, i + 1)
     Z = clf.predict(flat_grid)

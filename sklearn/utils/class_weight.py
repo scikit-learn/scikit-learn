@@ -1,10 +1,12 @@
 # Authors: Andreas Mueller
-# License: Simplified BSD
+# License: BSD 3 clause
 
 import numpy as np
 
+from .fixes import bincount
 
-def compute_class_weight(class_weight, classes, y):
+
+def compute_class_weight(class_weight, classes, y_ind):
     """Estimate class weights for unbalanced datasets.
 
     Parameters
@@ -16,13 +18,13 @@ def compute_class_weight(class_weight, classes, y):
         are corresponding class weights.
         If None is given, the class weights will be uniform.
 
-    classes : list
-        List of the classes occuring in the data, as given by
+    classes : ndarray
+        Array of the classes occurring in the data, as given by
         ``np.unique(y_org)`` with ``y_org`` the original class labels.
 
-    y : array-like, shape=(n_samples,), dtype=int
+    y_ind : array-like, shape=(n_samples,), dtype=int
         Array of class indices per sample;
-        0 <= y[i] < n_classes for i in range(n_samples).
+        0 <= y_ind[i] < n_classes for i in range(n_samples).
 
     Returns
     -------
@@ -34,9 +36,10 @@ def compute_class_weight(class_weight, classes, y):
         # uniform class weights
         weight = np.ones(classes.shape[0], dtype=np.float64, order='C')
     elif class_weight == 'auto':
-        # anti-proportional to the number of samples in the class
-        weight = np.array([1.0 / np.sum(y == i) for i in classes],
-                          dtype=np.float64, order='C')
+        # inversely proportional to the number of samples in the class
+        counts = bincount(y_ind, minlength=len(classes))
+        counts = np.maximum(counts, 1)
+        weight = 1. / counts
         weight *= classes.shape[0] / np.sum(weight)
     else:
         # user-defined dictionary

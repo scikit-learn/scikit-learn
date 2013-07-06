@@ -19,7 +19,7 @@ Learning a graph structure
 We use sparse inverse covariance estimation to find which quotes are
 correlated conditionally on the others. Specifically, sparse inverse
 covariance gives us a graph, that is a list of connection. For each
-symbol, the symbols that it is connected too are those useful to expain
+symbol, the symbols that it is connected too are those useful to explain
 its fluctuations.
 
 Clustering
@@ -64,7 +64,7 @@ axis.
 print(__doc__)
 
 # Author: Gael Varoquaux gael.varoquaux@normalesup.org
-# License: BSD
+# License: BSD 3 clause
 
 import datetime
 

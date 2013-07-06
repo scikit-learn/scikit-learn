@@ -54,7 +54,7 @@ for each class `k`. Predictions can be obtained by using Bayes' rule:
 .. math::
     P(y | X) = P(X | y) \cdot P(y) / P(X) = P(X | y) \cdot P(Y) / ( \sum_{y'} P(X | y') \cdot p(y'))
 
-In linear and quadratic discriminant analysis, `P(X|y)` is modeled as a Gaussian distribution.
+In linear and quadratic discriminant analysis, `P(X|y)` is modelled as a Gaussian distribution.
 In the case of LDA, the Gaussians for each class are assumed to share the same covariance matrix.
 This leads to a linear decision surface, as can be seen by comparing the the log-probability rations
 :math:`log[P(y=k | X) / P(y=l | X)]`.

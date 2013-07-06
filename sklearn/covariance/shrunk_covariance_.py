@@ -10,7 +10,7 @@ shrunk_cov = (1-shrinkage)*cov + shrinkage*structured_estimate.
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Virgile Fritsch <virgile.fritsch@inria.fr>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 # avoid division truncation
 from __future__ import division
@@ -244,7 +244,7 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
 
     assume_centered: Boolean
       If True, data are not centered before computation.
-      Usefull to work with data whose mean is significantly equal to
+      Useful to work with data whose mean is significantly equal to
       zero but is not exactly zero.
       If False, data are centered before computation.
 
@@ -349,7 +349,7 @@ class LedoitWolf(EmpiricalCovariance):
                 + shrinkage*mu*np.identity(n_features)
 
     where mu = trace(cov) / n_features
-    and shinkage is given by the Ledoit and Wolf formula (see References)
+    and shrinkage is given by the Ledoit and Wolf formula (see References)
 
     References
     ----------
@@ -510,7 +510,7 @@ class OAS(EmpiricalCovariance):
                 + shrinkage*mu*np.identity(n_features)
 
     where mu = trace(cov) / n_features
-    and shinkage is given by the OAS formula (see References)
+    and shrinkage is given by the OAS formula (see References)
 
     References
     ----------

@@ -32,11 +32,11 @@ numpy array X and an array of length n_samples containing the targets y.
 
 The toy datasets as well as the 'real world' datasets and the datasets
 fetched from mldata.org have more sophisticated structure.
-These functions return a ``bunch`` (which is a dictionary that is
-accessible with the 'dict.key' syntax).
-All datasets have at least two keys, ``data``, containg an array of shape
-``n_samples x n_features`` (except for 20newsgroups) and ``target``, a numpy
-array of length ``n_features``, containing the targets.
+These functions return a dictionary-like object holding at least two items:
+an array of shape ``n_samples`` * `` n_features`` with key ``data``
+(except for 20newsgroups)
+and a NumPy array of length ``n_features``, containing the target values,
+with key ``target``.
 
 The datasets also contain a description in ``DESCR`` and some contain
 ``feature_names`` and ``target_names``.
@@ -106,7 +106,7 @@ Sample generators
 =================
 
 In addition, scikit-learn includes various random sample generators that
-can be used to build artifical datasets of controled size and complexity.
+can be used to build artificial datasets of controlled size and complexity.
 
 .. image:: ../auto_examples/datasets/images/plot_random_dataset_1.png
    :target: ../auto_examples/datasets/plot_random_dataset.html

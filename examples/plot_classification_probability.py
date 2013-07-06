@@ -13,7 +13,7 @@ a result it can identify only the first class.
 print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD Style.
+# License: BSD 3 clause
 
 import pylab as pl
 import numpy as np

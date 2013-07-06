@@ -142,19 +142,19 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
             self.covariance_ = cov
 
         self.means_ = np.asarray(means)
-        Xc = np.concatenate(Xc, 0)
+        Xc = np.concatenate(Xc, axis=0)
 
         # ----------------------------
         # 1) within (univariate) scaling by with classes std-dev
         std = Xc.std(axis=0)
         # avoid division by zero in normalization
         std[std == 0] = 1.
-        fac = float(1) / (n_samples - n_classes)
+        fac = 1. / (n_samples - n_classes)
         # ----------------------------
         # 2) Within variance scaling
         X = np.sqrt(fac) * (Xc / std)
         # SVD of centered (within)scaled data
-        U, S, V = linalg.svd(X, full_matrices=0)
+        U, S, V = linalg.svd(X, full_matrices=False)
 
         rank = np.sum(S > tol)
         if rank < n_features:

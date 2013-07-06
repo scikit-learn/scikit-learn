@@ -1,6 +1,6 @@
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 from sklearn.externals.six import b, u

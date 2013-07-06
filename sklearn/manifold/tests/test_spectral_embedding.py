@@ -11,8 +11,8 @@ from numpy.testing import assert_array_almost_equal
 from nose.tools import assert_raises
 from nose.plugins.skip import SkipTest
 
-from sklearn.manifold.spectral_embedding import SpectralEmbedding
-from sklearn.manifold.spectral_embedding import _graph_is_connected
+from sklearn.manifold.spectral_embedding_ import SpectralEmbedding
+from sklearn.manifold.spectral_embedding_ import _graph_is_connected
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.metrics import normalized_mutual_info_score
 from sklearn.cluster import KMeans
@@ -139,8 +139,8 @@ def test_spectral_embedding_amg_solver(seed=36):
     assert_true(_check_with_col_sign_flipping(embed_amg, embed_arpack, 0.05))
 
 
-def test_pipline_spectral_clustering(seed=36):
-    """Test using pipline to do spectral clustering"""
+def test_pipeline_spectral_clustering(seed=36):
+    """Test using pipeline to do spectral clustering"""
     random_state = np.random.RandomState(seed)
     se_rbf = SpectralEmbedding(n_components=n_clusters,
                                affinity="rbf",

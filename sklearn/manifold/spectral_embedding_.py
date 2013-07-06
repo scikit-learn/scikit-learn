@@ -2,7 +2,7 @@
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Wei LI <kuantkid@gmail.com>
-# License: BSD Style.
+# License: BSD 3 clause
 
 import warnings
 import numpy as np
@@ -104,7 +104,7 @@ def _set_diag(laplacian, value):
         diag_idx = (laplacian.row == laplacian.col)
         laplacian.data[diag_idx] = value
         # If the matrix has a small number of diagonals (as in the
-        # case of structured matrices comming from images), the
+        # case of structured matrices coming from images), the
         # dia format might be best suited for matvec products:
         n_diags = np.unique(laplacian.row - laplacian.col).size
         if n_diags <= 7:

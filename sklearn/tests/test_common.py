@@ -4,7 +4,7 @@ General tests for all estimators in sklearn.
 
 # Authors: Andreas Mueller <amueller@ais.uni-bonn.de>
 #          Gael Varoquaux gael.varoquaux@normalesup.org
-# License: BSD Style.
+# License: BSD 3 clause
 from __future__ import print_function
 
 import os
@@ -13,10 +13,12 @@ import sys
 import traceback
 import inspect
 import pickle
+import pkgutil
 
 import numpy as np
 from scipy import sparse
 
+from sklearn.externals.six import PY3
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
@@ -46,7 +48,7 @@ dont_test = ['SparseCoder', 'EllipticEnvelope', 'EllipticEnvelop',
              'DictVectorizer', 'LabelBinarizer', 'LabelEncoder',
              'TfidfTransformer', 'IsotonicRegression', 'OneHotEncoder',
              'RandomTreesEmbedding', 'FeatureHasher', 'DummyClassifier',
-             'DummyRegressor']
+             'DummyRegressor', 'TruncatedSVD']
 
 
 def test_all_estimators():
@@ -109,7 +111,6 @@ def test_all_estimators():
                 else:
                     assert_equal(params[arg], default)
 
-
 def test_estimators_sparse_data():
     # All estimators should either deal with sparse data, or raise an
     # intelligible error message
@@ -130,13 +131,13 @@ def test_estimators_sparse_data():
         # fit
         try:
             classifier.fit(X, y)
-        except TypeError, e:
+        except TypeError as e:
             if not 'sparse' in repr(e):
                 print("Estimator %s doesn't seem to fail gracefully on "
                       "sparse data" % name)
                 traceback.print_exc(file=sys.stdout)
                 raise e
-        except Exception, exc:
+        except Exception as exc:
             print("Estimator %s doesn't seem to fail gracefully on "
                   "sparse data" % name)
             traceback.print_exc(file=sys.stdout)
@@ -179,6 +180,11 @@ def test_transformers():
             # than the number of features.
             # So we impose a smaller number (avoid "auto" mode)
             transformer.n_components = 1
+        elif name == "MiniBatchDictionaryLearning":
+            transformer.set_params(n_iter=5)    # default = 1000
+
+        elif name == "KernelPCA":
+            transformer.remove_zero_eig = False
 
         # fit
 
@@ -261,13 +267,13 @@ def test_transformers_sparse_data():
         # fit
         try:
             transformer.fit(X, y)
-        except TypeError, e:
+        except TypeError as e:
             if not 'sparse' in repr(e):
                 print("Estimator %s doesn't seem to fail gracefully on "
                       "sparse data" % name)
                 traceback.print_exc(file=sys.stdout)
                 raise e
-        except Exception, exc:
+        except Exception as exc:
             print("Estimator %s doesn't seem to fail gracefully on "
                   "sparse data" % name)
             traceback.print_exc(file=sys.stdout)
@@ -322,12 +328,12 @@ def test_estimators_nan_inf():
                         estimator.fit(X_train)
                     else:
                         estimator.fit(X_train, y)
-                except ValueError, e:
+                except ValueError as e:
                     if not 'inf' in repr(e) and not 'NaN' in repr(e):
                         print(error_string_fit, Estimator, e)
                         traceback.print_exc(file=sys.stdout)
                         raise e
-                except Exception, exc:
+                except Exception as exc:
                         print(error_string_fit, Estimator, exc)
                         traceback.print_exc(file=sys.stdout)
                         raise exc
@@ -345,12 +351,12 @@ def test_estimators_nan_inf():
                 if hasattr(estimator, "predict"):
                     try:
                         estimator.predict(X_train)
-                    except ValueError, e:
+                    except ValueError as e:
                         if not 'inf' in repr(e) and not 'NaN' in repr(e):
                             print(error_string_predict, Estimator, e)
                             traceback.print_exc(file=sys.stdout)
                             raise e
-                    except Exception, exc:
+                    except Exception as exc:
                         print(error_string_predict, Estimator, exc)
                         traceback.print_exc(file=sys.stdout)
                     else:
@@ -360,12 +366,12 @@ def test_estimators_nan_inf():
                 if hasattr(estimator, "transform"):
                     try:
                         estimator.transform(X_train)
-                    except ValueError, e:
+                    except ValueError as e:
                         if not 'inf' in repr(e) and not 'NaN' in repr(e):
                             print(error_string_transform, Estimator, e)
                             traceback.print_exc(file=sys.stdout)
                             raise e
-                    except Exception, exc:
+                    except Exception as exc:
                         print(error_string_transform, Estimator, exc)
                         traceback.print_exc(file=sys.stdout)
                     else:
@@ -423,7 +429,7 @@ def test_transformers_pickle():
 
         try:
             assert_array_almost_equal(pickled_X_pred, X_pred)
-        except Exception, exc:
+        except Exception as exc:
             succeeded = False
             print ("Transformer %s doesn't predict the same value "
                    "after pickling" % name)
@@ -452,21 +458,21 @@ def test_classifiers_one_label():
             # try to fit
             try:
                 classifier.fit(X_train, y)
-            except ValueError, e:
+            except ValueError as e:
                 if not 'class' in repr(e):
                     print(error_string_fit, Classifier, e)
                     traceback.print_exc(file=sys.stdout)
                     raise e
                 else:
                     continue
-            except Exception, exc:
+            except Exception as exc:
                     print(error_string_fit, Classifier, exc)
                     traceback.print_exc(file=sys.stdout)
                     raise exc
             # predict
             try:
                 assert_array_equal(classifier.predict(X_test), y)
-            except Exception, exc:
+            except Exception as exc:
                 print(error_string_predict, Classifier, exc)
                 traceback.print_exc(file=sys.stdout)
 
@@ -669,7 +675,7 @@ def test_classifiers_pickle():
 
             try:
                 assert_array_almost_equal(pickled_y_pred, y_pred)
-            except Exception, exc:
+            except Exception as exc:
                 succeeded = False
                 print ("Estimator %s doesn't predict the same value "
                        "after pickling" % name)
@@ -677,14 +683,27 @@ def test_classifiers_pickle():
     assert_true(succeeded)
 
 
+BOSTON = None
+
+
+def _boston_subset():
+    global BOSTON
+    if BOSTON is None:
+        boston = load_boston()
+        X, y = boston.data, boston.target
+        X, y = shuffle(X, y, random_state=0)
+        X, y = X[:200], y[:200]
+        X = StandardScaler().fit_transform(X)
+        BOSTON = X, y
+    return BOSTON
+
+
 def test_regressors_int():
     # test if regressors can cope with integer labels (by converting them to
     # float)
     regressors = all_estimators(type_filter='regressor')
-    boston = load_boston()
-    X, y = boston.data, boston.target
-    X, y = shuffle(X, y, random_state=0)
-    X = StandardScaler().fit_transform(X)
+    X, _ = _boston_subset()
+    X = X[:50]
     rnd = np.random.RandomState(0)
     y = rnd.randint(2, size=X.shape[0])
     for name, Regressor in regressors:
@@ -714,13 +733,10 @@ def test_regressors_int():
 
 def test_regressors_train():
     regressors = all_estimators(type_filter='regressor')
-    boston = load_boston()
-    X, y = boston.data, boston.target
-    X, y = shuffle(X, y, random_state=0)
     # TODO: test with intercept
     # TODO: test with multiple responses
-    X = StandardScaler().fit_transform(X)
-    y = StandardScaler().fit_transform(y)
+    X, y = _boston_subset()
+    y = StandardScaler().fit_transform(y)   # X is already scaled
     rnd = np.random.RandomState(0)
     succeeded = True
     for name, Regressor in regressors:
@@ -760,13 +776,10 @@ def test_regressor_pickle():
     # Test that estimators can be pickled, and once pickled
     # give the same answer as before.
     regressors = all_estimators(type_filter='regressor')
-    boston = load_boston()
-    X, y = boston.data, boston.target
-    X, y = shuffle(X, y, random_state=0)
+    X, y = _boston_subset()
     # TODO: test with intercept
     # TODO: test with multiple responses
-    X = StandardScaler().fit_transform(X)
-    y = StandardScaler().fit_transform(y)
+    y = StandardScaler().fit_transform(y)   # X is already scaled
     rnd = np.random.RandomState(0)
     succeeded = True
     for name, Regressor in regressors:
@@ -793,7 +806,7 @@ def test_regressor_pickle():
 
         try:
             assert_array_almost_equal(pickled_y_pred, y_pred)
-        except Exception, exc:
+        except Exception as exc:
             succeeded = False
             print ("Estimator %s doesn't predict the same value "
                    "after pickling" % name)
@@ -817,7 +830,10 @@ def test_configure():
             # The configuration spits out warnings when not finding
             # Blas/Atlas development headers
             warnings.simplefilter('ignore', UserWarning)
-            execfile('setup.py', dict(__name__='__main__'))
+            if PY3:
+                exec(open('setup.py').read(), dict(__name__='__main__'))
+            else:
+                execfile('setup.py', dict(__name__='__main__'))
     finally:
         sys.argv = old_argv
         os.chdir(cwd)
@@ -969,3 +985,18 @@ def test_cluster_overwrite_params():
                          "Estimator %s changes its parameter %s"
                          " from %s to %s during fit."
                          % (name, k, v, new_params[k]))
+
+
+def test_import_all_consistency():
+    # Smoke test to check that any name in a __all__ list is actually defined
+    # in the namespace of the module or package.
+    for importer, modname, ispkg in pkgutil.walk_packages(
+        path=sklearn.__path__, prefix='sklearn.', onerror=lambda x: None):
+        if ".tests." in modname:
+            continue
+        package = __import__(modname, fromlist="dummy")
+        for name in getattr(package, '__all__', ()):
+            if getattr(package, name, None) is None:
+                raise AttributeError(
+                    "Module '{}' has no attribute '{}'".format(
+                        modname, name))

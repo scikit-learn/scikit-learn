@@ -1,12 +1,12 @@
 import numpy as np
 
 from .base import LinearClassifierMixin, SparseCoefMixin
-from ..feature_selection.selector_mixin import SelectorMixin
+from ..feature_selection.from_model import _LearntSelectorMixin
 from ..svm.base import BaseLibLinear
 
 
-class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
-                         SparseCoefMixin):
+class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
+                         _LearntSelectorMixin, SparseCoefMixin):
     """Logistic Regression (aka logit, MaxEnt) classifier.
 
     In the multiclass case, the training algorithm uses a one-vs.-all (OvA)
@@ -28,8 +28,9 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
         n_samples > n_features.
 
     C : float, optional (default=1.0)
-        Specifies the strength of the regularization. The smaller it is
-        the bigger is the regularization.
+        Inverse of regularization strength; must be a positive float.
+        Like in support vector machines, smaller values specify stronger
+        regularization.
 
     fit_intercept : bool, default: True
         Specifies if a constant (a.k.a. bias or intercept) should be
@@ -101,7 +102,7 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
         super(LogisticRegression, self).__init__(
             penalty=penalty, dual=dual, loss='lr', tol=tol, C=C,
             fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
-            class_weight=class_weight, random_state=None)
+            class_weight=class_weight, random_state=random_state)
 
     def predict_proba(self, X):
         """Probability estimates.
@@ -119,18 +120,7 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in ``self.classes_``.
         """
-        # 1. / (1. + np.exp(-scores)), computed in-place
-        prob = self.decision_function(X)
-        prob *= -1
-        np.exp(prob, prob)
-        prob += 1
-        np.reciprocal(prob, prob)
-        if len(prob.shape) == 1:
-            return np.vstack([1 - prob, prob]).T
-        else:
-            # OvR, not softmax, like Liblinear's predict_probability
-            prob /= prob.sum(axis=1).reshape((prob.shape[0], -1))
-            return prob
+        return self._predict_proba_lr(X)
 
     def predict_log_proba(self, X):
         """Log of probability estimates.

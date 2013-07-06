@@ -62,6 +62,7 @@ from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import rbf_kernel
 from ..utils.graph import graph_laplacian
 from ..utils.extmath import safe_sparse_dot
+from ..externals import six
 from ..neighbors.unsupervised import NearestNeighbors
 
 
@@ -72,7 +73,8 @@ def _not_converged(y_truth, y_prediction, tol=1e-3):
     return np.abs(y_truth - y_prediction).sum() > tol
 
 
-class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
+class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
+                                              ClassifierMixin)):
     """Base class for label propagation module.
 
     Parameters
@@ -94,7 +96,6 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         Convergence tolerance: threshold to consider the system at steady
         state
     """
-    __metaclass__ = ABCMeta
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
                  alpha=1, max_iter=30, tol=1e-3):
@@ -301,7 +302,7 @@ class LabelPropagation(BaseLabelPropagation):
 
     See Also
     --------
-    LabelSpreading : Alternate label proagation strategy more robust to noise
+    LabelSpreading : Alternate label propagation strategy more robust to noise
     """
     def _build_graph(self):
         """Matrix representing a fully connected graph between each sample

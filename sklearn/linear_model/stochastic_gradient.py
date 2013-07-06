@@ -1,7 +1,7 @@
 # Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com> (main author)
 #          Mathieu Blondel (partial_fit support)
 #
-# License: BSD Style.
+# License: BSD 3 clause
 """Classification and regression using Stochastic Gradient Descent (SGD)."""
 
 import numpy as np
@@ -14,9 +14,10 @@ from ..externals.joblib import Parallel, delayed
 
 from .base import LinearClassifierMixin, SparseCoefMixin
 from ..base import BaseEstimator, RegressorMixin
-from ..feature_selection.selector_mixin import SelectorMixin
+from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import array2d, atleast2d_or_csr, check_arrays, deprecated
 from ..utils.extmath import safe_sparse_dot
+from ..externals import six
 
 from .sgd_fast import plain_sgd as plain_sgd
 from ..utils.seq_dataset import ArrayDataset, CSRDataset
@@ -44,10 +45,8 @@ DEFAULT_EPSILON = 0.1
 """Default value of ``epsilon`` parameter. """
 
 
-class BaseSGD(BaseEstimator, SparseCoefMixin):
+class BaseSGD(six.with_metaclass(ABCMeta, BaseEstimator, SparseCoefMixin)):
     """Base class for SGD classification and regression."""
-
-    __metaclass__ = ABCMeta
 
     def __init__(self, loss, penalty='l2', alpha=0.0001, C=1.0,
                  l1_ratio=0.15, fit_intercept=True, n_iter=5, shuffle=False,
@@ -114,8 +113,8 @@ class BaseSGD(BaseEstimator, SparseCoefMixin):
     def _init_t(self, loss_function):
         """Initialize iteration counter attr ``t_``.
 
-        If ``self.loss=='optimal'`` initialize ``t_`` such that ``eta`` at
-        first sample equals ``self.eta0``.
+        If ``self.learning_rate=='optimal'`` initialize ``t_`` such that
+        ``eta`` at first sample equals ``self.eta0``.
         """
         self.t_ = 1.0
         if self.learning_rate == "optimal":
@@ -326,7 +325,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
         self.n_jobs = int(n_jobs)
 
     @property
-    @deprecated("Parameter 'seed' war renamed to 'random_state' for"
+    @deprecated("Parameter 'seed' was renamed to 'random_state' for"
                 " consistency and will be removed in 0.15")
     def seed(self):
         return self.random_state
@@ -356,11 +355,13 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
         n_classes = self.classes_.shape[0]
 
         # Allocate datastructures from input arguments
+        y_ind = np.searchsorted(self.classes_, y)   # XXX use a LabelBinarizer?
         self._expanded_class_weight = compute_class_weight(self.class_weight,
-                                                           self.classes_, y)
+                                                           self.classes_,
+                                                           y_ind)
         sample_weight = self._validate_sample_weight(sample_weight, n_samples)
 
-        if self.coef_ is None:
+        if self.coef_ is None or coef_init is not None:
             self._allocate_parameter_mem(n_classes, n_features,
                                          coef_init, intercept_init)
 
@@ -388,6 +389,9 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
     def _fit(self, X, y, alpha, C, loss, learning_rate,
              coef_init=None, intercept_init=None, class_weight=None,
              sample_weight=None):
+        if hasattr(self, "classes_"):
+            self.classes_ = None
+
         if class_weight is not None:
             warnings.warn("Using 'class_weight' as a parameter to the 'fit'"
                           "method is deprecated and will be removed in 0.13. "
@@ -500,7 +504,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
             Target values
 
         coef_init : array, shape = [n_classes,n_features]
-            The initial coeffients to warm-start the optimization.
+            The initial coefficients to warm-start the optimization.
 
         intercept_init : array, shape = [n_classes]
             The initial intercept to warm-start the optimization.
@@ -520,7 +524,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
                          sample_weight=sample_weight)
 
 
-class SGDClassifier(BaseSGDClassifier, SelectorMixin):
+class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     """Linear model fitted by minimizing a regularized empirical loss with SGD.
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is
@@ -539,12 +543,18 @@ class SGDClassifier(BaseSGDClassifier, SelectorMixin):
 
     Parameters
     ----------
-    loss : str, 'hinge' or 'log' or 'modified_huber'
+    loss : str, 'hinge', 'log', 'modified_huber', 'squared_hinge',
+                'perceptron', or a regression loss: 'squared_loss', 'huber',
+                'epsilon_insensitive', or 'squared_epsilon_insensitive'
         The loss function to be used. Defaults to 'hinge'. The hinge loss is
         a margin loss used by standard linear SVM models. The 'log' loss is
         the loss of logistic regression models and can be used for
         probability estimation in binary classifiers. 'modified_huber'
         is another smooth loss that brings tolerance to outliers.
+        'squared_hinge' is like hinge but is quadratically penalized.
+        'perceptron' is the linear loss used by the perceptron algorithm.
+        The other losses are designed for regression but can be useful in
+        classification as well; see SGDRegressor for a description.
 
     penalty : str, 'l2' or 'l1' or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
@@ -580,10 +590,12 @@ class SGDClassifier(BaseSGDClassifier, SelectorMixin):
         The verbosity level
 
     epsilon: float
-        Epsilon in the epsilon-insensitive loss functions;
-        only if `loss=='huber'` or `loss='epsilon_insensitive'`.
-        If the difference between the current prediction and the correct label
-        is below this threshold, the model is not updated.
+        Epsilon in the epsilon-insensitive loss functions; only if `loss` is
+        'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
+        For 'huber', determines the threshold at which it becomes less
+        important to get the prediction exactly right.
+        For epsilon-insensitive, any differences between the current prediction
+        and the correct label are ignored if they are less than this threshold.
 
     n_jobs: integer, optional
         The number of CPUs to use to do the OVA (One Versus All, for
@@ -650,7 +662,12 @@ class SGDClassifier(BaseSGDClassifier, SelectorMixin):
     def predict_proba(self, X):
         """Probability estimates.
 
-        Probability estimates are only supported for binary classification.
+        Multiclass probability estimates are derived from binary (one-vs.-rest)
+        estimates by simple normalization, as recommended by Zadrozny and
+        Elkan.
+
+        Binary probability estimates for loss="modified_huber" are given by
+        (clip(decision_function(X), -1, 1) + 1) / 2.
 
         Parameters
         ----------
@@ -664,34 +681,59 @@ class SGDClassifier(BaseSGDClassifier, SelectorMixin):
 
         References
         ----------
+        Zadrozny and Elkan, "Transforming classifier scores into multiclass
+        probability estimates", SIGKDD'02,
+        http://www.research.ibm.com/people/z/zadrozny/kdd2002-Transf.pdf
 
         The justification for the formula in the loss="modified_huber"
         case is in the appendix B in:
         http://jmlr.csail.mit.edu/papers/volume2/zhang02c/zhang02c.pdf
         """
-        if len(self.classes_) != 2:
-            raise NotImplementedError("predict_(log_)proba only supported"
-                                      " for binary classification")
-
-        scores = self.decision_function(X)
-        proba = np.ones((scores.shape[0], 2), dtype=np.float64)
         if self.loss == "log":
-            proba[:, 1] = 1. / (1. + np.exp(-scores))
+            return self._predict_proba_lr(X)
 
         elif self.loss == "modified_huber":
-            proba[:, 1] = (np.clip(scores, -1, 1) + 1) / 2.
+            binary = (len(self.classes_) == 2)
+            scores = self.decision_function(X)
+
+            if binary:
+                prob2 = np.ones((scores.shape[0], 2))
+                prob = prob2[:, 1]
+            else:
+                prob = scores
+
+            np.clip(scores, -1, 1, prob)
+            prob += 1.
+            prob /= 2.
+
+            if binary:
+                prob2[:, 0] -= prob
+                prob = prob2
+            else:
+                # the above might assign zero to all classes, which doesn't
+                # normalize neatly; work around this to produce uniform
+                # probabilities
+                prob_sum = prob.sum(axis=1)
+                all_zero = (prob_sum == 0)
+                if np.any(all_zero):
+                    prob[all_zero, :] = 1
+                    prob_sum[all_zero] = len(self.classes_)
+
+                # normalize
+                prob /= prob_sum.reshape((prob.shape[0], -1))
+
+            return prob
 
         else:
             raise NotImplementedError("predict_(log_)proba only supported when"
                                       " loss='log' or loss='modified_huber' "
-                                      "(%s given)" % self.loss)
-        proba[:, 0] -= proba[:, 1]
-        return proba
+                                      "(%r given)" % self.loss)
 
     def predict_log_proba(self, X):
         """Log of probability estimates.
 
-        Log probability estimates are only supported for binary classification.
+        When loss="modified_huber", probability estimates may be hard zeros
+        and ones, so taking the logarithm is not possible.
 
         Parameters
         ----------
@@ -816,7 +858,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             Target values
 
         coef_init : array, shape = [n_features]
-            The initial coeffients to warm-start the optimization.
+            The initial coefficients to warm-start the optimization.
 
         intercept_init : array, shape = [1]
             The initial intercept to warm-start the optimization.
@@ -895,7 +937,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         self.intercept_ = np.atleast_1d(intercept)
 
 
-class SGDRegressor(BaseSGDRegressor, SelectorMixin):
+class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     """Linear model fitted by minimizing a regularized empirical loss with SGD
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is
@@ -914,10 +956,15 @@ class SGDRegressor(BaseSGDRegressor, SelectorMixin):
 
     Parameters
     ----------
-    loss : str, 'squared_loss' or 'huber'
+    loss : str, 'squared_loss', 'huber', 'epsilon_insensitive',
+                or 'squared_epsilon_insensitive'
         The loss function to be used. Defaults to 'squared_loss' which refers
-        to the ordinary least squares fit. 'huber' is an epsilon insensitive
-        loss function for robust regression.
+        to the ordinary least squares fit. 'huber' modifies 'squared_loss' to
+        focus less on getting outliers correct by switching from squared to
+        linear loss past a distance of epsilon. 'epsilon_insensitive' ignores
+        errors less than epsilon and is linear past that; this is the loss
+        function used in SVR. 'squared_epsilon_insensitive' is the same but
+        becomes squared loss past a tolerance of epsilon.
 
     penalty : str, 'l2' or 'l1' or 'elasticnet'
         The penalty (aka regularization term) to be used. Defaults to 'l2'
@@ -953,10 +1000,12 @@ class SGDRegressor(BaseSGDRegressor, SelectorMixin):
         The verbosity level.
 
     epsilon: float
-        Epsilon in the epsilon-insensitive loss functions;
-        only if `loss=='huber'` or `loss='epsilon_insensitive'`.
-        If the difference between the current prediction and the correct label
-        is below this threshold, the model is not updated.
+        Epsilon in the epsilon-insensitive loss functions; only if `loss` is
+        'huber', 'epsilon_insensitive', or 'squared_epsilon_insensitive'.
+        For 'huber', determines the threshold at which it becomes less
+        important to get the prediction exactly right.
+        For epsilon-insensitive, any differences between the current prediction
+        and the correct label are ignored if they are less than this threshold.
 
     learning_rate : string, optional
         The learning rate:
