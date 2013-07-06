@@ -187,7 +187,7 @@ def test_gaussian_kde(n_samples=1000):
             gkde = gaussian_kde(x_in, bw_method=h / np.std(x_in))
         except TypeError:
             # older versions of scipy don't accept explicit bandwidth
-            raise SkipTe
+            raise SkipTest
 
         dens_bt = bt.kernel_density(x_out[:, None], h) / n_samples
         dens_gkde = gkde.evaluate(x_out)
