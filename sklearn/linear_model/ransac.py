@@ -42,20 +42,27 @@ class RANSAC(BaseEstimator):
         Estimator object which implements the following methods:
         * `fit(X, y)`: Fit model to given  training data and target values.
         * `score(X)`: Returns the mean accuracy on the given test data.
+
     min_n_samples : int
         Minimum number of samples chosen randomly from original data.
+
     residual_threshold : float
         Maximum residual for a data sample to be classified as an inlier.
+
     is_data_valid : function, optional
         This function is called with the randomly selected data before the
         model is fitted to it: `is_data_valid(X, y)`.
+
     is_model_valid : function, optional
         This function is called with the estimated model and the randomly
         selected data: `is_model_valid(model, X, y)`, .
+
     max_trials : int, optional
         Maximum number of iterations for random sample selection.
+
     stop_n_inliers : int, optional
         Stop iteration if at least this number of inliers are found.
+
     stop_score : float, optional
         Stop iteration if score is greater equal than this threshold.
 
@@ -63,8 +70,10 @@ class RANSAC(BaseEstimator):
     ----------
     estimator_ : object
         Best fitted model (copy of the `base_estimator` object).
+
     n_trials_ : int
         Number of random selection trials.
+
     inlier_mask_ : bool array of shape [n_samples]
         Boolean mask of inliers classified as ``True``.
 
@@ -96,6 +105,7 @@ class RANSAC(BaseEstimator):
         ----------
         X : numpy array or sparse matrix of shape [n_samples, n_features]
             Training data.
+
         y : numpy array of shape [n_samples, n_targets]
             Target values.
 
@@ -207,7 +217,9 @@ class RANSAC(BaseEstimator):
         -------
         C : array, shape = [n_samples]
             Returns predicted values.
+
         """
+
         return self.estimator_.predict(X)
 
     def score(self, X, y):
@@ -219,6 +231,7 @@ class RANSAC(BaseEstimator):
         ----------
         X : numpy array or sparse matrix of shape [n_samples, n_features]
             Training data.
+
         y : numpy array of shape [n_samples, n_targets]
             Target values.
 
@@ -226,5 +239,7 @@ class RANSAC(BaseEstimator):
         -------
         z : float
             Score of the prediction.
+
         """
+
         return self.estimator_.score(X, y)
