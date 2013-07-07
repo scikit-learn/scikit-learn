@@ -96,6 +96,12 @@ class RANSAC(BaseEstimator):
     ------
     ValueError: If no valid consensus set could be found.
 
+    References
+    ----------
+    .. [1] http://en.wikipedia.org/wiki/RANSAC
+    .. [2] http://www.cs.columbia.edu/~belhumeur/courses/compPhoto/ransac.pdf
+    .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
+
     """
 
     def __init__(self, base_estimator=None, min_n_samples=0.5,
