@@ -43,8 +43,11 @@ class RANSAC(BaseEstimator):
         * `fit(X, y)`: Fit model to given  training data and target values.
         * `score(X)`: Returns the mean accuracy on the given test data.
 
-    min_n_samples : int
-        Minimum number of samples chosen randomly from original data.
+    min_n_samples : int (>= 1) or float ([0, 1])
+        Minimum number of samples chosen randomly from original data. Treated
+        as an absolute number of samples for `min_n_samples >= 1`, treated as a
+        relative number `ceil(min_n_samples * X.shape[0]`) for
+        `min_n_samples < 1`.
 
     residual_threshold : float
         Maximum residual for a data sample to be classified as an inlier.
@@ -88,7 +91,6 @@ class RANSAC(BaseEstimator):
                  is_model_valid=None, max_trials=100,
                  stop_n_inliers=np.inf, stop_score=np.inf):
 
-        # parameters
         self.base_estimator = base_estimator
         self.min_n_samples = min_n_samples
         self.residual_threshold = residual_threshold
@@ -122,7 +124,7 @@ class RANSAC(BaseEstimator):
         elif y.dtype.kind == 'i':
             base_estimator = Perceptron()
         else:
-            raise ValueError('`base_estimator` not specified.')
+            raise ValueError("`base_estimator` not specified.")
 
         best_n_inliers = 0
         best_score = np.inf
@@ -130,13 +132,20 @@ class RANSAC(BaseEstimator):
         best_inlier_X = None
         best_inlier_y = None
 
+        if 0 < self.min_n_samples < 1:
+            min_n_samples = np.ceil(self.min_n_samples * X.shape[0])
+        elif self.min_n_samples >= 1:
+            min_n_samples = self.min_n_samples
+        else:
+            raise ValueError("Invalid value for `min_n_samples`.")
+
         # number of data samples
         n_samples = X.shape[0]
 
         for n_trials in range(self.max_trials):
 
             # choose random sample set
-            random_idxs = np.random.randint(0, n_samples, self.min_n_samples)
+            random_idxs = np.random.randint(0, n_samples, min_n_samples)
             rsample_X = X[random_idxs]
             rsample_y = y[random_idxs]
 
