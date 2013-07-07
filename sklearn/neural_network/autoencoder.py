@@ -4,13 +4,21 @@
 # Author: Issam Laradji <issam.laradji@gmail.com>
 
 import numpy as np
-from scipy.optimize import minimize
+from scipy.optimize import fmin_l_bfgs_b
 from scipy.linalg import norm
 from itertools import cycle, izip
 from ..utils import array2d, check_random_state
 from sklearn.utils import gen_even_slices
 from sklearn.utils import shuffle
 from sklearn.base import BaseEstimator, TransformerMixin
+
+
+def binary_KL_divergence(p, p_hat):
+    """
+    Computes the a real, KL divergence of two binomial distributions with
+    probabilities p  and p_hat respectively.
+    """
+    return (p * np.log(p / p_hat)) + ((1 - p) * np.log((1 - p) / (1 - p_hat)))
 
 
 def sigmoid(x):
@@ -88,7 +96,7 @@ class Autoencoder(BaseEstimator, TransformerMixin):
     activation: string, optional
         Activation function for the hidden layer; either "sigmoid" for
         1 / (1 + exp(x)), or "tanh" for the hyperbolic tangent.
-    optimization_method : string, optional
+    algorithm : string, optional
         Optimization function for training the weights; could be "l-bfgs-b", "cg",
         "newton-cg", or "bfgs"
     learning_rate : float, optional
@@ -138,7 +146,7 @@ class Autoencoder(BaseEstimator, TransformerMixin):
     >>> model.fit(X)
     Autoencoder(activation_func='sigmoid', alpha=0.0001, batch_size=1000, beta=3,
   learning_rate=0.0001, max_iter=20, n_hidden=10,
-  optimization_method='l-bfgs-b', random_state=None, sparsity_param=0.01,
+  algorithm='l-bfgs', random_state=None, sparsity_param=0.01,
   tol=1e-05, verbose=False)
 
     References
@@ -150,9 +158,9 @@ class Autoencoder(BaseEstimator, TransformerMixin):
     """
 
     def __init__(
-        self, n_hidden=25, activation_func='sigmoid', optimization_method='l-bfgs-b',
-        learning_rate=0.3, alpha=0.0001, beta=3, sparsity_param=0.01,
-            batch_size=1000, shuffle_data = False, max_iter=20, tol=1e-5, verbose=False, random_state=None):
+        self, n_hidden=25, activation_func='sigmoid', algorithm='l-bfgs',
+        learning_rate=0.3, alpha=3e-3, beta=3, sparsity_param=0.1,
+            batch_size=1000, shuffle_data=False, max_iter=20, tol=1e-5, verbose=False, random_state=None):
         activation_functions = {
             'tanh': tanh,
             'sigmoid': sigmoid
@@ -164,7 +172,7 @@ class Autoencoder(BaseEstimator, TransformerMixin):
         self.activation_func = activation_func
         self.activation = activation_functions[activation_func]
         self.derivative = derivative_functions[activation_func]
-        self.optimization_method = optimization_method
+        self.algorithm = algorithm
         self.n_hidden = n_hidden
         self.alpha = alpha
         self.learning_rate = learning_rate
@@ -226,27 +234,32 @@ class Autoencoder(BaseEstimator, TransformerMixin):
         if self.shuffle_data:
             X, y = shuffle(X, y, random_state=self.random_state)
         # generate batch slices
-        self.batch_size=np.clip(self.batch_size,0,n_samples)
+        self.batch_size = np.clip(self.batch_size, 0, n_samples)
         n_batches = n_samples / self.batch_size
-        batch_slices = list(gen_even_slices(n_batches * self.batch_size, n_batches))
+        batch_slices = list(
+            gen_even_slices(
+                n_batches *
+                self.batch_size,
+                n_batches))
         # preallocate memory
-        a2 = np.empty((n_samples, self.n_hidden))
-        delta2 = np.empty((n_samples, self.n_hidden))
-        delta3 = np.empty((n_samples, n_features))
-        if self.optimization_method is None:
+        a_hidden = np.empty((n_samples, self.n_hidden))
+        a_output = np.empty((n_samples, n_features))
+        delta_h = np.empty((n_samples, self.n_hidden))
+        delta_o = np.empty((n_samples, n_features))
+        if self.algorithm == 'SGD':
             for i, batch_slice in izip(xrange(self.max_iter), cycle(batch_slices)):
                     cost = self.backprop_naive(
                         X[batch_slice],
                         n_features, self.batch_size,
-                        delta2, delta3, a2)
+                        delta_h, delta_o, a_hidden)
                     if self.verbose:
                         print("Iteration %d, cost = %.2f"
                               % (i, cost))
-        else:
+        elif self.algorithm == 'l-bfgs':
             self._backprop_optimizer(
                 X, n_features,
-                a2, delta2,
-                delta3, n_samples)
+                a_hidden, a_output, delta_h,
+                delta_o, n_samples)
         return self
 
     def _init_fit(self, n_features, rng):
@@ -303,7 +316,7 @@ class Autoencoder(BaseEstimator, TransformerMixin):
                           b1.ravel(), b2.ravel()))
 
     def _backprop_optimizer(
-            self, X, n_features, a2, delta2, delta3, n_samples):
+            self, X, n_features, a_hidden, a_output, delta_h, delta_o, n_samples):
         """
         Applies the one of the optimization methods (l-bfgs-b, bfgs, newton-cg, cg)
         to train the weights
@@ -332,24 +345,23 @@ class Autoencoder(BaseEstimator, TransformerMixin):
             self.coef_output_,
             self.intercept_hidden_,
             self.intercept_output_)
-        res = minimize(
-            fun=self._cost_grad,
+        optTheta, _, _ = fmin_l_bfgs_b(
+            func=self._cost_grad,
             x0=initial_theta,
-            method=self.optimization_method,
-            options={
-                'maxiter': self.max_iter,
-                'disp': self.verbose},
-            jac=True,
+            maxfun=self.max_iter,
+            disp=self.verbose,
             args=(
                 X,
                 n_features,
                 n_samples,
-                delta2,
-                delta3,
-                a2))
-        self._unpack(res.x, n_features)
+                delta_h,
+                delta_o,
+                a_hidden,
+                a_output))
+        self._unpack(optTheta, n_features)
 
-    def backprop(self, X, n_features, n_samples, delta2, delta3, a2):
+    def backprop(self, X, n_features, n_samples,
+                 delta_h, delta_o, a_hidden, a_output):
         """
         Computes the sparse autoencoder cost  function ``Jsparse(W,b)``
         and the corresponding derivatives of Jsparse with respect to the
@@ -377,45 +389,43 @@ class Autoencoder(BaseEstimator, TransformerMixin):
        [1] http://ufldl.stanford.edu/wiki/index.php/Autoencoders_and_Sparsity
         """
        # Forward propagate
-
-        a2[:] = self.activation(np.dot(X, self.coef_hidden_)
-                             + self.intercept_hidden_)
-        a3 = self.activation(np.dot(a2, self.coef_output_)
-                             + self.intercept_output_)
+        a_hidden[:] = self.activation(np.dot(X, self.coef_hidden_)
+                                      + self.intercept_hidden_)
+        a_output[:] = self.activation(np.dot(a_hidden, self.coef_output_)
+                                      + self.intercept_output_)
         # Get average activation of hidden neurons
-        sparsity_param_hat = np.mean(a2, 0)
+        sparsity_param_hat = np.sum(a_hidden, 0) / n_samples
         sparsity_delta  = self.beta * \
             ((1 - self.sparsity_param) / (1 - sparsity_param_hat)
              - self.sparsity_param / sparsity_param_hat)
         # Backward propagate
-        diff = X - a3
-        delta3[:] = -diff * self.derivative(a3)
-        delta2[:] = (
-            (np.dot(delta3, self.coef_output_.T) +
+        diff = X - a_output
+        delta_o[:] = -diff * self.derivative(a_output)
+        delta_h[:] = (
+            (np.dot(delta_o, self.coef_output_.T) +
              sparsity_delta)) *\
-            self.derivative(a2)
+            self.derivative(a_hidden)
         # Get cost and gradient
-        cost = np.sum(np.einsum('ij,ji->i', diff, diff.T)) / (2 * n_samples)
-
-        W1grad = np.dot(X.T, delta2) / n_samples
-        W2grad = np.dot(a2.T, delta3) / n_samples
-        b1grad = np.mean(delta2, 0)
-        b2grad = np.mean(delta3, 0)
+        cost = np.sum(diff ** 2) / (2 * n_samples)
+        W1grad = np.dot(X.T, delta_h) / n_samples
+        W2grad = np.dot(a_hidden.T, delta_o) / n_samples
+        b1grad = np.sum(delta_h, 0) / n_samples
+        b2grad = np.sum(delta_o, 0) / n_samples
         # Add regularization term to cost and gradient
-        cost += (
-            0.5 * self.alpha) * (
-                np.sum(
-                    self.coef_hidden_ ** 2) + np.sum(
-                        self.coef_output_ ** 2))
+        cost += (0.5 * self.alpha) * (
+            np.sum(self.coef_hidden_ ** 2) + np.sum(
+                self.coef_output_ ** 2))
         W1grad += self.alpha * self.coef_hidden_
         W2grad += self.alpha * self.coef_output_
         # Add sparsity term to the cost
-        sparse_cost = np.sum(self.sparsity_param * np.log(self.sparsity_param / sparsity_param_hat) + (1 - self.sparsity_param) *
-                             np.log((1 - self.sparsity_param) / (1 - sparsity_param_hat)))
-        cost += self.beta * sparse_cost
+        cost += self.beta * np.sum(
+            binary_KL_divergence(
+                self.sparsity_param,
+                sparsity_param_hat))
         return cost, W1grad, W2grad, b1grad, b2grad
 
-    def backprop_naive(self, X, n_features, n_samples, delta2, delta3, a2):
+    def backprop_naive(
+            self, X, n_features, n_samples, delta_h, delta_o, a_hidden, a_output):
         """
         Updates the weights using the computed gradients
 
@@ -439,7 +449,7 @@ class Autoencoder(BaseEstimator, TransformerMixin):
 
         """
         cost, W1grad, W2grad, b1grad, b2grad = self.backprop(
-            X, n_features, n_samples, delta2, delta3, a2)
+            X, n_features, n_samples, delta_h, delta_o, a_hidden, a_output)
         # Update weights
         self.coef_hidden_ -= (self.learning_rate * W1grad)
         self.coef_output_ -= (self.learning_rate * W2grad)
@@ -448,7 +458,8 @@ class Autoencoder(BaseEstimator, TransformerMixin):
         # TODO: dynamically update learning rate
         return cost
 
-    def _cost_grad(self, theta, X, n_features, n_samples, delta2, delta3, a2):
+    def _cost_grad(self, theta, X, n_features,
+                   n_samples, delta_h, delta_o, a_hidden, a_output):
         """
         Computes the MLP cost  function ``J(W,b)``
         and the corresponding derivatives of J(W,b) with respect to the
@@ -477,5 +488,5 @@ class Autoencoder(BaseEstimator, TransformerMixin):
         # Unpack theta to extract W1, W2, b1, b2
         self._unpack(theta, n_features)
         cost, W1grad, W2grad, b1grad, b2grad = self.backprop(
-            X, n_features, n_samples, delta2, delta3, a2)
+            X, n_features, n_samples, delta_h, delta_o, a_hidden, a_output)
         return cost, self._pack(W1grad, W2grad, b1grad, b2grad)

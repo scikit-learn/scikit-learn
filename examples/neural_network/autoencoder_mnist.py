@@ -4,6 +4,7 @@ import numpy as np
 from sklearn.linear_model import SGDClassifier
 from sklearn.neural_network import Autoencoder
 
+
 mnist = fetch_mldata('MNIST original')
 X, y = mnist.data, mnist.target
 random.seed(100)
@@ -12,16 +13,15 @@ X, y = X[indices].astype('float64'), y[indices]
 # For SAE, feature values in the range [0, 1] is necessary
 X = X / 255
 ae = Autoencoder(
-    optimization_method='l-bfgs-b',
+    algorithm='l-bfgs',
     verbose=True,
-    max_iter=400,
+    max_iter=200,
     n_hidden=191,
     random_state=3)
+
 ae_features = ae.fit_transform(X)
 clf = SGDClassifier(random_state=3)
 clf.fit(X, y)
-#Should get a score of 0.943
-print 'SGD on raw pixels score: ', clf.score(X, y)
+print '(Should be 0.943) SGD on raw pixels score: ', clf.score(X, y)
 clf.fit(ae_features, y)
-#Should get a score of 0.982
-print 'SGD on extracted features score: ', clf.score(ae_features, y)
+print '(Should be 0.986) SGD on extracted features score: ', clf.score(ae_features, y)
