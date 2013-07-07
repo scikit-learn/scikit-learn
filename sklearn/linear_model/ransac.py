@@ -39,7 +39,7 @@ class RANSAC(BaseEstimator):
 
     Parameters
     ----------
-    base_estimator : object
+    base_estimator : object, optional
         Base estimator object which implements the following methods:
 
          * `fit(X, y)`: Fit model to given  training data and target values.
@@ -50,13 +50,13 @@ class RANSAC(BaseEstimator):
         ``sklearn.linear_model.Perceptron`` for integer data types of
         `X` and `y`.
 
-    min_n_samples : int (>= 1) or float ([0, 1])
+    min_n_samples : int (>= 1) or float ([0, 1]), optional
         Minimum number of samples chosen randomly from original data. Treated
         as an absolute number of samples for `min_n_samples >= 1`, treated as a
         relative number `ceil(min_n_samples * X.shape[0]`) for
         `min_n_samples < 1`.
 
-    residual_threshold : float
+    residual_threshold : float, optional
         Maximum residual for a data sample to be classified as an inlier.
 
     is_data_valid : function, optional
