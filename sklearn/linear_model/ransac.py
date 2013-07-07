@@ -86,8 +86,8 @@ class RANSAC(BaseEstimator):
 
     """
 
-    def __init__(self, base_estimator=None, min_n_samples=None,
-                 residual_threshold=None, is_data_valid=None,
+    def __init__(self, base_estimator=None, min_n_samples=0.5,
+                 residual_threshold=np.inf, is_data_valid=None,
                  is_model_valid=None, max_trials=100,
                  stop_n_inliers=np.inf, stop_score=np.inf):
 
