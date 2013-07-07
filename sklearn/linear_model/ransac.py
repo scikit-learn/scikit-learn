@@ -40,9 +40,15 @@ class RANSAC(BaseEstimator):
     Parameters
     ----------
     base_estimator : object
-        Estimator object which implements the following methods:
-        * `fit(X, y)`: Fit model to given  training data and target values.
-        * `score(X)`: Returns the mean accuracy on the given test data.
+        Base estimator object which implements the following methods:
+
+         * `fit(X, y)`: Fit model to given  training data and target values.
+         * `score(X)`: Returns the mean accuracy on the given test data.
+
+        If no base estimator is specified, by default
+        ``sklearn.linear_model.LinearRegression`` is used for float and
+        ``sklearn.linear_model.Perceptron`` for integer data types of
+        `X` and `y`.
 
     min_n_samples : int (>= 1) or float ([0, 1])
         Minimum number of samples chosen randomly from original data. Treated
