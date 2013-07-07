@@ -6,8 +6,9 @@
 
 import numpy as np
 
-from ..base import BaseEstimator
+from ..base import BaseEstimator, clone
 from .base import LinearRegression
+from .perceptron import Perceptron
 
 
 class RANSAC(BaseEstimator):
@@ -20,12 +21,12 @@ class RANSAC(BaseEstimator):
 
     1. Select `min_n_samples` random samples from the original data and check
        whether the set of data is valid (see `is_data_valid`).
-    2. Fit a model to the random subset (`estimator.fit`) and check whether
-       the estimated model is valid (see `is_model_valid`).
+    2. Fit a model to the random subset (`base_estimator.fit`) and check
+       whether the estimated model is valid (see `is_model_valid`).
     3. Classify all data as inliers or outliers by calculating the residuals
-       to the estimated model (`estimator.predict(X) - y`) - all data samples
-       with absolute residuals smaller than the `residual_threshold` are
-       considered as inliers.
+       to the estimated model (`base_estimator.predict(X) - y`) - all data
+       samples with absolute residuals smaller than the `residual_threshold`
+       are considered as inliers.
     4. Save fitted model as best model if number of inlier samples is
        maximal. In case the current estimated model has the same number of
        inliers, it is only considered as the best model if it has better score.
@@ -37,7 +38,7 @@ class RANSAC(BaseEstimator):
 
     Parameters
     ----------
-    estimator : object
+    base_estimator : object
         Estimator object which implements the following methods:
         * `fit(X, y)`: Fit model to given  training data and target values.
         * `score(X)`: Returns the mean accuracy on the given test data.
@@ -61,7 +62,7 @@ class RANSAC(BaseEstimator):
     Attributes
     ----------
     estimator_ : object
-        Base estimator object which is the same as passed in `__init__`.
+        Best fitted model (copy of the `base_estimator` object).
     n_trials_ : int
         Number of random selection trials.
     inlier_mask_ : bool array of shape [n_samples]
@@ -73,12 +74,13 @@ class RANSAC(BaseEstimator):
 
     """
 
-    def __init__(self, estimator=None, min_n_samples=None,
+    def __init__(self, base_estimator=None, min_n_samples=None,
                  residual_threshold=None, is_data_valid=None,
                  is_model_valid=None, max_trials=100,
                  stop_n_inliers=np.inf, stop_score=np.inf):
 
-        # estimator parameters
+        # parameters
+        self.base_estimator = base_estimator
         self.min_n_samples = min_n_samples
         self.residual_threshold = residual_threshold
         self.is_data_valid = is_data_valid
@@ -86,11 +88,6 @@ class RANSAC(BaseEstimator):
         self.max_trials = max_trials
         self.stop_n_inliers = stop_n_inliers
         self.stop_score = stop_score
-
-        # estimator attributes
-        self.estimator_ = estimator
-        self.n_trials_ = None
-        self.inlier_mask_ = None
 
     def fit(self, X, y):
         """Fit estimator using RANSAC algorithm.
@@ -107,6 +104,15 @@ class RANSAC(BaseEstimator):
         ValueError: If no valid consensus set could be found.
 
         """
+
+        if self.base_estimator is not None:
+            base_estimator = clone(self.base_estimator)
+        elif y.dtype.kind == 'f':
+            base_estimator = LinearRegression()
+        elif y.dtype.kind == 'i':
+            base_estimator = Perceptron()
+        else:
+            raise ValueError('`base_estimator` not specified.')
 
         best_n_inliers = 0
         best_score = np.inf
@@ -129,17 +135,17 @@ class RANSAC(BaseEstimator):
                 continue
 
             # fit model for current random sample set
-            self.estimator_.fit(rsample_X, rsample_y)
+            base_estimator.fit(rsample_X, rsample_y)
 
             # check if estimated model is valid
             if self.is_model_valid is not None:
-                model_test = self.is_model_valid(self.estimator_, rsample_X,
+                model_test = self.is_model_valid(base_estimator, rsample_X,
                                                  rsample_y)
                 if not model_test:
                     continue
 
             # residuals of all data for current random sample model
-            rsample_residuals = np.abs(self.estimator_.predict(X) - y)
+            rsample_residuals = np.abs(base_estimator.predict(X) - y)
 
             # classify data into inliers and outliers
             rsample_inlier_mask = rsample_residuals < self.residual_threshold
@@ -154,8 +160,8 @@ class RANSAC(BaseEstimator):
             rsample_inlier_y = y[rsample_inlier_mask]
 
             # score of inlier data set
-            rsample_score = self.estimator_.score(rsample_inlier_X,
-                                                  rsample_inlier_y)
+            rsample_score = base_estimator.score(rsample_inlier_X,
+                                                 rsample_inlier_y)
 
             # same number of inliers but worse score -> skip current random
             # sample
@@ -182,8 +188,9 @@ class RANSAC(BaseEstimator):
             raise ValueError("RANSAC could not find valid consensus set.")
 
         # estimate final model using all inliers
-        self.estimator_.fit(best_inlier_X, best_inlier_y)
+        base_estimator.fit(best_inlier_X, best_inlier_y)
 
+        self.estimator_ = base_estimator
         self.n_trials_ = n_trials + 1
         self.inlier_mask_ = best_inlier_mask
 

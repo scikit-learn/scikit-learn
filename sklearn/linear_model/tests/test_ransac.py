@@ -70,7 +70,7 @@ def test_ransac_max_trials():
     assert_raises(ValueError, ransac_estimator.fit, X, y)
 
     ransac_estimator = linear_model.RANSAC(base_estimator, 2, 5, max_trials=11)
-    assert ransac_estimator.n_trials_ is None
+    assert getattr(ransac_estimator, 'n_trials_', None) is None
     ransac_estimator.fit(X, y)
     assert ransac_estimator.n_trials_ == 11
 
