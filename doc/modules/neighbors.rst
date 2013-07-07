@@ -562,3 +562,6 @@ probabilistically drawn given the KDE model.
   * :ref:`example_neighbors_plot_kde.py`: an example of using Kernel Density
     estimation to learn a generative model of the hand-written digits data,
     and drawing new samples from this model.
+
+  * :ref:`example_neighbors_plot_species_kde.py`: an example of Kernel Density
+    estimation using the Haversine distance metric to visualize geospatial data
