@@ -7,6 +7,7 @@
 import numpy as np
 
 from ..base import BaseEstimator, clone
+from ..utils import check_random_state
 from .base import LinearRegression
 from .perceptron import Perceptron
 
@@ -69,6 +70,11 @@ class RANSAC(BaseEstimator):
     stop_score : float, optional
         Stop iteration if score is greater equal than this threshold.
 
+    random_state : integer or numpy.RandomState, optional
+        The generator used to initialize the centers. If an integer is
+        given, it fixes the seed. Defaults to the global numpy random
+        number generator.
+
     Attributes
     ----------
     estimator_ : object
@@ -89,7 +95,8 @@ class RANSAC(BaseEstimator):
     def __init__(self, base_estimator=None, min_n_samples=0.5,
                  residual_threshold=np.inf, is_data_valid=None,
                  is_model_valid=None, max_trials=100,
-                 stop_n_inliers=np.inf, stop_score=np.inf):
+                 stop_n_inliers=np.inf, stop_score=np.inf,
+                 random_state=None):
 
         self.base_estimator = base_estimator
         self.min_n_samples = min_n_samples
@@ -99,6 +106,7 @@ class RANSAC(BaseEstimator):
         self.max_trials = max_trials
         self.stop_n_inliers = stop_n_inliers
         self.stop_score = stop_score
+        self.random_state = check_random_state(random_state)
 
     def fit(self, X, y):
         """Fit estimator using RANSAC algorithm.
@@ -145,7 +153,8 @@ class RANSAC(BaseEstimator):
         for n_trials in range(self.max_trials):
 
             # choose random sample set
-            random_idxs = np.random.randint(0, n_samples, min_n_samples)
+            random_idxs = self.random_state.randint(0, n_samples,
+                                                    min_n_samples)
             rsample_X = X[random_idxs]
             rsample_y = y[random_idxs]
 
