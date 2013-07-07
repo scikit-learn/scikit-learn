@@ -97,6 +97,7 @@ class KernelDensity(BaseEstimator):
                 raise ValueError("invalid metric for {0}: "
                                  "'{1}'".format(TREE_DICT[algorithm],
                                                 metric))
+            return algorithm
         else:
             raise ValueError("invalid algorithm: '{0}'".format(algorithm))
                 
