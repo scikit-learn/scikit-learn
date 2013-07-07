@@ -987,8 +987,6 @@ cdef class BestSplitter(Splitter):
                     partition_end -= 1
                     samples[p], samples[partition_end] = samples[partition_end], samples[p]
 
-            assert partition_end == best_pos
-
         # Return values
         pos[0] = best_pos
         feature[0] = best_feature
@@ -1131,8 +1129,6 @@ cdef class RandomSplitter(Splitter):
 
             current_pos = partition_end
 
-            assert current_pos < end
-
             # Reject if min_samples_leaf is not guaranteed
             if ((current_pos - start) < min_samples_leaf) or \
                ((end - current_pos) < min_samples_leaf):
@@ -1168,8 +1164,6 @@ cdef class RandomSplitter(Splitter):
                 else:
                     partition_end -= 1
                     samples[p], samples[partition_end] = samples[partition_end], samples[p]
-
-            assert partition_end == best_pos
 
         # Return values
         pos[0] = best_pos
