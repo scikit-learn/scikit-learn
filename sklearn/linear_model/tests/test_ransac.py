@@ -87,7 +87,7 @@ def test_ransac_stop_n_inliers():
     assert ransac_estimator.n_trials_ == 1
 
 
-def test_ransac_stop_n_score():
+def test_ransac_stop_score():
     base_estimator = linear_model.LinearRegression()
     ransac_estimator = linear_model.RANSAC(base_estimator, 2, 5,
                                            stop_score=0, random_state=0)
