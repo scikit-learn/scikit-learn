@@ -11,7 +11,7 @@
 # TODO: allow splitter objects
 
 
-from libc.stdlib cimport calloc, free, malloc, realloc
+from libc.stdlib cimport calloc, free, malloc, realloc, rand, srand, RAND_MAX
 from libc.string cimport memcpy
 from libc.math cimport log
 
@@ -835,6 +835,9 @@ cdef class Splitter:
         self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
         self.sample_weight = sample_weight
 
+        # Reset random number generator
+        srand(self.random_state.randint(0, RAND_MAX))
+
     cdef void find_split(self, SIZE_t start,
                                SIZE_t end,
                                SIZE_t* pos,
@@ -869,7 +872,7 @@ cdef class BestSplitter(Splitter):
 
         for n from 0 <= n < n_samples:
             i = n_samples - n - 1
-            j = random_state.randint(0, n_samples - n)
+            j = rand_int(n_samples - n)
             samples[i], samples[j] = samples[j], samples[i]
 
     cdef void find_split(self, SIZE_t start,
@@ -924,7 +927,7 @@ cdef class BestSplitter(Splitter):
         for f_idx from 0 <= f_idx < n_features:
             # Draw a feature at random
             f_i = n_features - f_idx - 1
-            f_j = random_state.randint(0, n_features - f_idx)
+            f_j = rand_int(n_features - f_idx)
             features[f_i], features[f_j] = features[f_j], features[f_i]
             current_feature = features[f_i]
 
@@ -1091,7 +1094,7 @@ cdef class RandomSplitter(Splitter):
         for f_idx from 0 <= f_idx < n_features:
             # Draw a feature at random
             f_i = n_features - f_idx - 1
-            f_j = random_state.randint(0, n_features - f_idx)
+            f_j = rand_int(n_features - f_idx)
             features[f_i], features[f_j] = features[f_j], features[f_i]
             current_feature = features[f_i]
 
@@ -1110,7 +1113,7 @@ cdef class RandomSplitter(Splitter):
                 continue
 
             # Draw a random threshold
-            current_threshold = min_feature_value + random_state.rand() * (max_feature_value - min_feature_value)
+            current_threshold = min_feature_value + rand_double() * (max_feature_value - min_feature_value)
             if current_threshold == max_feature_value:
                 current_threshold = min_feature_value
 
@@ -1613,3 +1616,12 @@ cdef inline np.ndarray double_ptr_to_ndarray(double* data, SIZE_t size):
     cdef np.npy_intp shape[1]
     shape[0] = <np.npy_intp> size
     return np.PyArray_SimpleNewFromData(1, shape, np.NPY_DOUBLE, data)
+
+cdef inline SIZE_t rand_int(SIZE_t end):
+    """Generate a random integer in [0; end)."""
+    return rand() % end
+
+cdef inline double rand_double():
+    """Generate a random double in [0; 1)."""
+    return <double> rand() / <double> RAND_MAX
+
