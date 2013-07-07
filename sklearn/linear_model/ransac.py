@@ -41,6 +41,8 @@ class RANSAC(BaseEstimator):
         Estimator object which implements the following methods:
         * `fit(X, y)`: Fit model to given  training data and target values.
         * `score(X)`: Returns the mean accuracy on the given test data.
+    min_n_samples : int
+        Minimum number of samples chosen randomly from original data.
     residual_threshold : float
         Maximum residual for a data sample to be classified as an inlier.
     is_data_valid : function, optional
