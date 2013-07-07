@@ -156,6 +156,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             self.classes_ = [None] * self.n_outputs_
             self.n_classes_ = [1] * self.n_outputs_
 
+        self.n_classes_ = np.array(self.n_classes_, dtype=np.intp)
+
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 

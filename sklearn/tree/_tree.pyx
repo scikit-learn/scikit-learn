@@ -83,7 +83,7 @@ cdef class ClassificationCriterion(Criterion):
     cdef double* label_count_right
     cdef double* label_count_total
 
-    def __cinit__(self, SIZE_t n_outputs, object n_classes):
+    def __cinit__(self, SIZE_t n_outputs, np.ndarray[SIZE_t, ndim=1] n_classes):
         # Default values
         self.y = NULL
         self.y_stride = 0
@@ -1220,7 +1220,7 @@ cdef class Tree:
         def __get__(self):
             return sizet_ptr_to_ndarray(self.n_node_samples, self.node_count)
 
-    def __cinit__(self, int n_features, object n_classes, int n_outputs,
+    def __cinit__(self, int n_features, np.ndarray[SIZE_t, ndim=1] n_classes, int n_outputs,
                         Splitter splitter, SIZE_t max_depth, SIZE_t min_samples_split,
                         SIZE_t min_samples_leaf, object random_state):
         """Constructor."""
