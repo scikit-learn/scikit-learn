@@ -96,5 +96,20 @@ def test_ransac_stop_score():
     assert ransac_estimator.n_trials_ == 1
 
 
+def test_ransac_score():
+    X = np.arange(100)[:, None]
+    y = np.zeros((100, ))
+    y[0] = 1
+    y[1] = 100
+
+    base_estimator = linear_model.LinearRegression()
+    ransac_estimator = linear_model.RANSAC(base_estimator, 2, 5,
+                                           stop_score=0, random_state=0)
+    ransac_estimator.fit(X, y)
+
+    assert ransac_estimator.score(X[2:], y[2:]) == 0
+    assert ransac_estimator.score(X[:2], y[:2]) > 0
+
+
 if __name__ == "__main__":
     np.testing.run_module_suite()
