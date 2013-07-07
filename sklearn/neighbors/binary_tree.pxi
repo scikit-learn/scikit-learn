@@ -192,7 +192,7 @@ pickle operation: the tree needs not be rebuilt upon unpickling.
     >>> s = pickle.dumps(tree)                     # doctest: +SKIP
     >>> tree_copy = pickle.loads(s)                # doctest: +SKIP
     >>> dist, ind = tree_copy.query(X[0], k=3)     # doctest: +SKIP
-    >>> print ind  # indices of 3 closest neighbors   
+    >>> print ind  # indices of 3 closest neighbors
     [0 3 1]
     >>> print dist  # distances to 3 closest neighbors
     [ 0.          0.19662693  0.29473397]
@@ -390,7 +390,7 @@ cdef inline void dual_swap(DTYPE_t* darr, ITYPE_t* iarr,
     cdef ITYPE_t itmp = iarr[i1]
     iarr[i1] = iarr[i2]
     iarr[i2] = itmp
-    
+
 
 #------------------------------------------------------------
 # NeighborsHeap
@@ -531,7 +531,7 @@ cdef int _simultaneous_sort(DTYPE_t* dist, ITYPE_t* idx,
 
 #------------------------------------------------------------
 # find_node_split_dim:
-#  this computes the equivalent of the 
+#  this computes the equivalent of
 #  j_max = np.argmax(np.max(data, 0) - np.min(data, 0))
 cdef ITYPE_t find_node_split_dim(DTYPE_t* data,
                                  ITYPE_t* node_indices,
@@ -628,6 +628,7 @@ cdef class NodeHeap:
     """
     cdef NodeHeapData_t[::1] data
     cdef ITYPE_t n
+
     def __cinit__(self):
         self.data = np.zeros(0, dtype=NodeHeapData)
 
@@ -648,7 +649,7 @@ cdef class NodeHeap:
             new_data_arr = &new_data[0]
             for i in range(min(size, new_size)):
                 new_data_arr[i] = data_arr[i]
-            
+
         if new_size < size:
             self.n = new_size
 
@@ -667,7 +668,7 @@ cdef class NodeHeap:
         data_arr = &self.data[0]
         i = self.n - 1
         data_arr[i] = data
-        
+
         while i > 0:
             i_parent = (i - 1) // 2
             if data_arr[i_parent].val <= data_arr[i].val:
@@ -715,7 +716,7 @@ cdef class NodeHeap:
                 i = i_swap
             else:
                 break
-        
+
         return popped_element
 
     cdef void clear(self):
@@ -812,7 +813,7 @@ cdef class BinaryTree:
 
         if leaf_size < 1:
             raise ValueError("leaf_size must be greater than or equal to 1")
-        
+
         n_samples = self.data.shape[0]
         n_features = self.data.shape[1]
 
@@ -827,7 +828,7 @@ cdef class BinaryTree:
         self.node_data = np.zeros(self.n_nodes, dtype=NodeData)
 
         # Allocate tree-specific data
-        allocate_data(self, self.n_nodes, n_features)        
+        allocate_data(self, self.n_nodes, n_features)
         self._recursive_build(0, 0, n_samples)
 
     def __reduce__(self):
@@ -882,7 +883,7 @@ cdef class BinaryTree:
 
     def get_arrays(self):
         return map(np.asarray, (self.data, self.idx_array,
-                                self.node_data, self.node_bounds))        
+                                self.node_data, self.node_bounds))
 
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
@@ -1195,7 +1196,7 @@ cdef class BinaryTree:
                 if sort_results:
                     _simultaneous_sort(&dist_arr_i[0], &idx_arr_i[0],
                                        count_arr[i])
- 
+
                 indices[i] = np_idx_arr[:count_arr[i]].copy()
                 if return_distance:
                     distances[i] = np_dist_arr[:count_arr[i]].copy()
@@ -1299,7 +1300,7 @@ cdef class BinaryTree:
             raise ValueError("query data dimension must "
                              "match training data dimension")
         cdef DTYPE_t[:, ::1] Xarr = X.reshape((-1, n_features))
-        
+
         cdef DTYPE_t[::1] log_density = np.zeros(Xarr.shape[0], dtype=DTYPE)
 
         cdef DTYPE_t* pt = &Xarr[0, 0]
@@ -1423,7 +1424,7 @@ cdef class BinaryTree:
                 self._two_point_single(0, pt, &rarr[0], &carr[0],
                                        0, rarr.shape[0])
                 pt += n_features
-    
+
         return count
 
     cdef int _query_single_depthfirst(BinaryTree self, ITYPE_t i_node,
@@ -1434,7 +1435,7 @@ cdef class BinaryTree:
 
         cdef DTYPE_t dist_pt, reduced_dist_LB_1, reduced_dist_LB_2
         cdef ITYPE_t i, i1, i2
-        
+
         cdef DTYPE_t* data = &self.data[0, 0]
 
         #------------------------------------------------------------
@@ -1558,7 +1559,7 @@ cdef class BinaryTree:
 
             for i2 in range(node_info2.idx_start, node_info2.idx_end):
                 i_pt = other.idx_array[i2]
-                
+
                 if heap.largest(i_pt) <= reduced_dist_LB:
                     continue
 
@@ -1569,7 +1570,7 @@ cdef class BinaryTree:
                         n_features)
                     if dist_pt < heap.largest(i_pt):
                         heap.push(i_pt, dist_pt, self.idx_array[i1])
-                
+
                 # keep track of node bound
                 bounds[i_node2] = fmax(bounds[i_node2],
                                        heap.largest(i_pt))
@@ -1584,7 +1585,7 @@ cdef class BinaryTree:
                     i_node2 = i_parent
                 else:
                     break
-            
+
         #------------------------------------------------------------
         # Case 3a: node 1 is a leaf or is smaller: split node 2 and
         #          recursively query, starting with the nearest subnode
@@ -1605,7 +1606,7 @@ cdef class BinaryTree:
                                             bounds, heap, reduced_dist_LB2)
                 self._query_dual_depthfirst(i_node1, other, 2 * i_node2 + 1,
                                             bounds, heap, reduced_dist_LB1)
-            
+
         #------------------------------------------------------------
         # Case 3b: node 2 is a leaf or is smaller: split node 1 and
         #          recursively query, starting with the nearest subnode
@@ -1652,7 +1653,7 @@ cdef class BinaryTree:
             reduced_dist_LB = nodeheap_item.val
             i_node1 = nodeheap_item.i1
             i_node2 = nodeheap_item.i2
-            
+
             node_info1 = node_data1[i_node1]
             node_info2 = node_data2[i_node2]
 
@@ -1670,7 +1671,7 @@ cdef class BinaryTree:
 
                 for i2 in range(node_info2.idx_start, node_info2.idx_end):
                     i_pt = other.idx_array[i2]
-                
+
                     if heap.largest(i_pt) <= reduced_dist_LB:
                         continue
 
@@ -1681,11 +1682,11 @@ cdef class BinaryTree:
                             n_features)
                         if dist_pt < heap.largest(i_pt):
                             heap.push(i_pt, dist_pt, self.idx_array[i1])
-                
+
                     # keep track of node bound
                     bounds[i_node2] = fmax(bounds[i_node2],
                                            heap.largest(i_pt))
-            
+
             #------------------------------------------------------------
             # Case 3a: node 1 is a leaf or is smaller: split node 2 and
             #          recursively query, starting with the nearest subnode
@@ -1695,9 +1696,10 @@ cdef class BinaryTree:
                 nodeheap_item.i1 = i_node1
                 for i2 in range(2 * i_node2 + 1, 2 * i_node2 + 3):
                     nodeheap_item.i2 = i2
-                    nodeheap_item.val = min_rdist_dual(self, i_node1, other, i2)
+                    nodeheap_item.val = min_rdist_dual(self, i_node1,
+                                                       other, i2)
                     nodeheap.push(nodeheap_item)
-            
+
             #------------------------------------------------------------
             # Case 3b: node 2 is a leaf or is smaller: split node 1 and
             #          recursively query, starting with the nearest subnode
@@ -1705,7 +1707,8 @@ cdef class BinaryTree:
                 nodeheap_item.i2 = i_node2
                 for i1 in range(2 * i_node1 + 1, 2 * i_node1 + 3):
                     nodeheap_item.i1 = i1
-                    nodeheap_item.val = min_rdist_dual(self, i1, other, i_node2)
+                    nodeheap_item.val = min_rdist_dual(self, i1,
+                                                       other, i_node2)
                     nodeheap.push(nodeheap_item)
         return 0
 
@@ -1785,14 +1788,13 @@ cdef class BinaryTree:
 
         return count
 
-    # except -1 doesn't work any more!!!
     cdef DTYPE_t _kde_single_breadthfirst(self, DTYPE_t* pt,
                                           KernelType kernel, DTYPE_t h,
                                           DTYPE_t log_knorm,
                                           DTYPE_t log_atol, DTYPE_t log_rtol,
                                           NodeHeap nodeheap,
                                           DTYPE_t* node_log_min_bounds,
-                                          DTYPE_t* node_log_bound_spreads) except -1:
+                                          DTYPE_t* node_log_bound_spreads):
         # For the given point, node_log_min_bounds and node_log_bound_spreads
         # will encode the current bounds on the density between the point
         # and the associated node.
@@ -1858,10 +1860,12 @@ cdef class BinaryTree:
             #------------------------------------------------------------
             # Case 3: node is a leaf. Count contributions from all points
             elif node_info.is_leaf:
-                global_log_min_bound = logsubexp(global_log_min_bound,
-                                                 node_log_min_bounds[i_node])
-                global_log_bound_spread = logsubexp(global_log_bound_spread,
-                                                    node_log_bound_spreads[i_node])
+                global_log_min_bound =\
+                    logsubexp(global_log_min_bound,
+                              node_log_min_bounds[i_node])
+                global_log_bound_spread =\
+                    logsubexp(global_log_bound_spread,
+                              node_log_bound_spreads[i_node])
                 for i in range(node_info.idx_start, node_info.idx_end):
                     dist_pt = self.dist(pt, data + n_features * idx_array[i],
                                         n_features)
@@ -1894,7 +1898,7 @@ cdef class BinaryTree:
                 node_log_bound_spreads[i2] = (log(N2) +
                                               compute_log_kernel(dist_LB_2,
                                                                  h, kernel))
-                
+
                 global_log_min_bound = logsubexp(global_log_min_bound,
                                                  node_log_min_bounds[i_node])
                 global_log_min_bound = logaddexp(global_log_min_bound,
@@ -1902,8 +1906,9 @@ cdef class BinaryTree:
                 global_log_min_bound = logaddexp(global_log_min_bound,
                                                  node_log_min_bounds[i2])
 
-                global_log_bound_spread = logsubexp(global_log_bound_spread,
-                                                    node_log_bound_spreads[i_node])
+                global_log_bound_spread =\
+                    logsubexp(global_log_bound_spread,
+                              node_log_bound_spreads[i_node])
                 global_log_bound_spread = logaddexp(global_log_bound_spread,
                                                     node_log_bound_spreads[i1])
                 global_log_bound_spread = logaddexp(global_log_bound_spread,
@@ -1922,14 +1927,15 @@ cdef class BinaryTree:
         return logaddexp(global_log_min_bound,
                          global_log_bound_spread - log(2))
 
-    cdef int _kde_single_depthfirst(self, ITYPE_t i_node, DTYPE_t* pt,
-                                    KernelType kernel, DTYPE_t h,
-                                    DTYPE_t log_knorm,
-                                    DTYPE_t log_atol, DTYPE_t log_rtol,
-                                    DTYPE_t local_log_min_bound,
-                                    DTYPE_t local_log_bound_spread,
-                                    DTYPE_t* global_log_min_bound,
-                                    DTYPE_t* global_log_bound_spread) except -1:
+    cdef int _kde_single_depthfirst(
+                   self, ITYPE_t i_node, DTYPE_t* pt,
+                   KernelType kernel, DTYPE_t h,
+                   DTYPE_t log_knorm,
+                   DTYPE_t log_atol, DTYPE_t log_rtol,
+                   DTYPE_t local_log_min_bound,
+                   DTYPE_t local_log_bound_spread,
+                   DTYPE_t* global_log_min_bound,
+                   DTYPE_t* global_log_bound_spread) except -1:
         # For the given point, local_min_bound and local_max_bound give the
         # minimum and maximum density for the current node, while
         # global_min_bound and global_max_bound give the minimum and maximum
@@ -2003,7 +2009,7 @@ cdef class BinaryTree:
                                                 compute_log_kernel(dist_LB, h,
                                                                    kernel),
                                                 child2_log_min_bound)
-            
+
             global_log_min_bound[0] = logsubexp(global_log_min_bound[0],
                                                 local_log_min_bound)
             global_log_min_bound[0] = logaddexp(global_log_min_bound[0],
@@ -2168,7 +2174,7 @@ def load_heap(DTYPE_t[:, ::1] X, ITYPE_t k):
 
 def simultaneous_sort(DTYPE_t[:, ::1] distances, ITYPE_t[:, ::1] indices):
     """In-place simultaneous sort the given row of the arrays
-    
+
     This python wrapper exists primarily to enable unit testing
     of the _simultaneous_sort C routine.
     """
@@ -2179,6 +2185,7 @@ def simultaneous_sort(DTYPE_t[:, ::1] distances, ITYPE_t[:, ::1] indices):
         _simultaneous_sort(&distances[row, 0],
                            &indices[row, 0],
                            distances.shape[1])
+
 
 def nodeheap_sort(DTYPE_t[::1] vals):
     """In-place reverse sort of vals using NodeHeap"""

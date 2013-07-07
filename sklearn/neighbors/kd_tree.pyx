@@ -9,7 +9,7 @@
 
 __all__ = ['KDTree']
 
-DOC_DICT = {'BinaryTree':'KDTree', 'binary_tree':'kd_tree'}
+DOC_DICT = {'BinaryTree': 'KDTree', 'binary_tree': 'kd_tree'}
 
 VALID_METRICS = ['EuclideanDistance', 'ManhattanDistance',
                  'ChebyshevDistance', 'MinkowskiDistance']

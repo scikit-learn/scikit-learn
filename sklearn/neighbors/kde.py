@@ -13,8 +13,8 @@ from .kd_tree import KDTree
 
 VALID_KERNELS = ['gaussian', 'tophat', 'epanechnikov',
                  'exponential', 'linear', 'cosine']
-TREE_DICT = {'ball_tree':BallTree,
-             'kd_tree':KDTree}
+TREE_DICT = {'ball_tree': BallTree,
+             'kd_tree': KDTree}
 
 
 # TODO: implement a brute force version for testing purposes
@@ -100,7 +100,7 @@ class KernelDensity(BaseEstimator):
             return algorithm
         else:
             raise ValueError("invalid algorithm: '{0}'".format(algorithm))
-                
+
     def fit(self, X):
         """Fit the Kernel Density model on the data
 
@@ -112,13 +112,13 @@ class KernelDensity(BaseEstimator):
         """
         algorithm = self._choose_algorithm(self.algorithm, self.metric)
         X = array2d(X, order='C', dtype=DTYPE)
-        
+
         kwargs = self.metric_params
         if kwargs is None:
             kwargs = {}
-        self.tree_ =  TREE_DICT[algorithm](X, metric=self.metric,
-                                           leaf_size=self.leaf_size,
-                                           **kwargs)
+        self.tree_ = TREE_DICT[algorithm](X, metric=self.metric,
+                                          leaf_size=self.leaf_size,
+                                          **kwargs)
         return self
 
     def eval(self, X):
@@ -165,7 +165,7 @@ class KernelDensity(BaseEstimator):
             Log probabilities of each data point in X
         """
         return np.sum(self.eval(X))
-        
+
     def sample(self, n_samples=1, random_state=None):
         """Generate random samples from the model.
 
@@ -189,7 +189,7 @@ class KernelDensity(BaseEstimator):
             raise NotImplementedError()
 
         data = np.asarray(self.tree_.data)
-        
+
         rng = check_random_state(random_state)
         i = rng.randint(data.shape[0], size=n_samples)
 

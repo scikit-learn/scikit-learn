@@ -8,7 +8,7 @@
 
 __all__ = ['BallTree']
 
-DOC_DICT = {'BinaryTree':'BallTree', 'binary_tree':'ball_tree'}
+DOC_DICT = {'BinaryTree': 'BallTree', 'binary_tree': 'ball_tree'}
 
 VALID_METRICS = ['EuclideanDistance', 'SEuclideanDistance',
                  'ManhattanDistance', 'ChebyshevDistance',

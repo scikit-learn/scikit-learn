@@ -9,7 +9,7 @@
 
 import numpy as np
 cimport numpy as np
-np.import_array() # required in order to use C-API
+np.import_array()  # required in order to use C-API
 
 # First, define a function to get an ndarray from a memory bufffer
 cdef extern from "arrayobject.h":
@@ -43,32 +43,32 @@ def newObj(obj):
 ######################################################################
 # metric mappings
 #  These map from metric id strings to class names
-METRIC_MAPPING = {'euclidean':EuclideanDistance,
-                  'l2':EuclideanDistance,
-                  'minkowski':MinkowskiDistance,
-                  'p':MinkowskiDistance,
-                  'manhattan':ManhattanDistance,
-                  'cityblock':ManhattanDistance,
-                  'l1':ManhattanDistance,
-                  'chebyshev':ChebyshevDistance,
-                  'infinity':ChebyshevDistance,
-                  'seuclidean':SEuclideanDistance,
-                  'mahalanobis':MahalanobisDistance,
-                  'wminkowski':WMinkowskiDistance,
-                  'hamming':HammingDistance,
-                  'canberra':CanberraDistance,
-                  'braycurtis':BrayCurtisDistance,
-                  'matching':MatchingDistance,
-                  'hamming':HammingDistance,
-                  'jaccard':JaccardDistance,
-                  'dice':DiceDistance,
-                  'kulsinski':KulsinskiDistance,
-                  'rogerstanimoto':RogersTanimotoDistance,
-                  'russellrao':RussellRaoDistance,
-                  'sokalmichener':SokalMichenerDistance,
-                  'sokalsneath':SokalSneathDistance,
-                  'haversine':HaversineDistance,
-                  'pyfunc':PyFuncDistance}
+METRIC_MAPPING = {'euclidean': EuclideanDistance,
+                  'l2': EuclideanDistance,
+                  'minkowski': MinkowskiDistance,
+                  'p': MinkowskiDistance,
+                  'manhattan': ManhattanDistance,
+                  'cityblock': ManhattanDistance,
+                  'l1': ManhattanDistance,
+                  'chebyshev': ChebyshevDistance,
+                  'infinity': ChebyshevDistance,
+                  'seuclidean': SEuclideanDistance,
+                  'mahalanobis': MahalanobisDistance,
+                  'wminkowski': WMinkowskiDistance,
+                  'hamming': HammingDistance,
+                  'canberra': CanberraDistance,
+                  'braycurtis': BrayCurtisDistance,
+                  'matching': MatchingDistance,
+                  'hamming': HammingDistance,
+                  'jaccard': JaccardDistance,
+                  'dice': DiceDistance,
+                  'kulsinski': KulsinskiDistance,
+                  'rogerstanimoto': RogersTanimotoDistance,
+                  'russellrao': RussellRaoDistance,
+                  'sokalmichener': SokalMichenerDistance,
+                  'sokalsneath': SokalSneathDistance,
+                  'haversine': HaversineDistance,
+                  'pyfunc': PyFuncDistance}
 
 
 def get_valid_metric_ids(L):
@@ -127,7 +127,7 @@ cdef class DistanceMetric:
     "haversine"  HaversineDistance  2 arcsin(sqrt(sin^2(0.5*dx)
                                              + cos(x1)cos(x2)sin^2(0.5*dy)))
     ===========  =================  ========================================
-    
+
 
     *Metrics intended for integer-valued vector spaces:*  Though intended
     for integer-valued vectors, these are also valid metrics in the case of
@@ -167,7 +167,7 @@ cdef class DistanceMetric:
     ================  ======================  =================================
 
     *User-defined distance:*
-    
+
     ==========    ==============    =======
     identifier    class name        args
     ----------    --------------    -------
@@ -239,7 +239,7 @@ cdef class DistanceMetric:
 
         if callable(metric):
             return PyFuncDistance(metric, **kwargs)
-        
+
         # Map the metric string ID to the metric class
         if isinstance(metric, type) and issubclass(metric, DistanceMetric):
             pass
@@ -487,8 +487,8 @@ cdef class WMinkowskiDistance(DistanceMetric):
     .. math::
        D(x, y) = [\sum_i w_i (x_i - y_i)^p] ^ (1/p)
 
-    Weighted Minkowski Distance requires p >= 1 and finite. 
-    
+    Weighted Minkowski Distance requires p >= 1 and finite.
+
     Parameters
     ----------
     p : int
@@ -511,7 +511,8 @@ cdef class WMinkowskiDistance(DistanceMetric):
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) except -1:
         if size != self.size:
-            raise ValueError('WMinkowskiDistance dist: size of w does not match')
+            raise ValueError('WMinkowskiDistance dist: '
+                             'size of w does not match')
         cdef DTYPE_t d=0
         for j in range(size):
             d += pow(self.vec_ptr[j] * fabs(x1[j] - x2[j]), self.p)
@@ -571,11 +572,11 @@ cdef class MahalanobisDistance(DistanceMetric):
             raise ValueError('Mahalanobis dist: size of V does not match')
 
         cdef DTYPE_t tmp, d = 0
-        
+
         # compute (x1 - x2).T * VI * (x1 - x2)
         for i in range(size):
             self.vec_ptr[i] = x1[i] - x2[i]
-        
+
         for i in range(size):
             tmp = 0
             for j in range(size):
