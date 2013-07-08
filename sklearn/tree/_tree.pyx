@@ -2,6 +2,7 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
+### cython: profile=True
 
 # Author: Gilles Louppe, Peter Prettenhofer, Brian Holt, Noel Dawe, Satrajit Gosh
 # Licence: BSD 3 clause
@@ -842,6 +843,7 @@ cdef class Splitter:
 
     cdef void find_split(self, SIZE_t start,
                                SIZE_t end,
+                               bint is_leaf,
                                SIZE_t* pos,
                                SIZE_t* feature,
                                double* threshold,
@@ -862,6 +864,7 @@ cdef class BestSplitter(Splitter):
 
     cdef void find_split(self, SIZE_t start,
                                SIZE_t end,
+                               bint is_leaf,
                                SIZE_t* pos,
                                SIZE_t* feature,
                                double* threshold,
@@ -874,7 +877,7 @@ cdef class BestSplitter(Splitter):
         criterion.init(self.y, self.y_stride, self.sample_weight, samples, start, end)
         cdef double node_impurity = criterion.node_impurity()
 
-        if end - start < 2 * self.min_samples_leaf or node_impurity == 0.0:
+        if is_leaf or node_impurity == 0.0:
             pos[0] = end
             impurity[0] = node_impurity
             return
@@ -924,7 +927,7 @@ cdef class BestSplitter(Splitter):
             p = start
 
             while p < end:
-                while p + 1 < end and X[samples[p + 1], current_feature] == X[samples[p], current_feature]:
+                while p + 1 < end and X[samples[p + 1], current_feature] <= X[samples[p], current_feature] + 1.e-7:
                     p += 1
 
                 # p + 1 >= end or X[samples[p + 1], current_feature] > X[samples[p], current_feature]
@@ -1031,6 +1034,7 @@ cdef class RandomSplitter(Splitter):
 
     cdef void find_split(self, SIZE_t start,
                                SIZE_t end,
+                               bint is_leaf,
                                SIZE_t* pos,
                                SIZE_t* feature,
                                double* threshold,
@@ -1043,7 +1047,7 @@ cdef class RandomSplitter(Splitter):
         criterion.init(self.y, self.y_stride, self.sample_weight, samples, start, end)
         cdef double node_impurity = criterion.node_impurity()
 
-        if end - start < 2 * self.min_samples_leaf or node_impurity == 0.0:
+        if is_leaf or node_impurity == 0.0:
             pos[0] = end
             impurity[0] = node_impurity
             return
@@ -1415,14 +1419,14 @@ cdef class Tree:
             parent = stack[stack_n_values + 3]
             is_left = stack[stack_n_values + 4]
 
-            splitter.find_split(start, end, &pos, &feature, &threshold, &impurity)
-
             n_node_samples = end - start
-            is_leaf = (pos >= end) or \
-                      (depth >= self.max_depth) or \
+            is_leaf = (depth >= self.max_depth) or \
                       (n_node_samples < self.min_samples_split) or \
                       (n_node_samples < 2 * self.min_samples_leaf)
 
+            splitter.find_split(start, end, is_leaf, &pos, &feature, &threshold, &impurity)
+
+            is_leaf = is_leaf or (pos >= end)
             node_id = self.add_node(parent, is_left, is_leaf, feature,
                                     threshold, impurity, n_node_samples)
 

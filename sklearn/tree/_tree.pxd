@@ -81,6 +81,7 @@ cdef class Splitter:
 
     cdef void find_split(self, SIZE_t start,
                                SIZE_t end,
+                               bint is_leaf,
                                SIZE_t* pos, # Set to >= end if the node is a leaf
                                SIZE_t* feature,
                                double* threshold,
