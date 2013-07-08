@@ -858,23 +858,6 @@ cdef class BestSplitter(Splitter):
                 (self.criterion, self.max_features, self.min_samples_leaf, self.random_state),
                 self.__getstate__())
 
-    cdef void init(self, np.ndarray[DTYPE_t, ndim=2] X,
-                         np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
-                         DOUBLE_t* sample_weight):
-        """Initialize the splitter."""
-        Splitter.init(self, X, y, sample_weight)
-
-        # Shuffle samples
-        cdef SIZE_t* samples = self.samples
-        cdef SIZE_t n_samples = self.n_samples
-        cdef object random_state = self.random_state
-        cdef SIZE_t n, i, j
-
-        for n from 0 <= n < n_samples:
-            i = n_samples - n - 1
-            j = rand_int(n_samples - n)
-            samples[i], samples[j] = samples[j], samples[i]
-
     cdef void find_split(self, SIZE_t start,
                                SIZE_t end,
                                SIZE_t* pos,
@@ -882,14 +865,14 @@ cdef class BestSplitter(Splitter):
                                double* threshold,
                                double* impurity):
         """Find the best split on node samples[start:end]."""
-        # Break early if node is pure
+        # Break early if node is a leaf
         cdef Criterion criterion = self.criterion
         cdef SIZE_t* samples = self.samples
 
         criterion.init(self.y, self.y_stride, self.sample_weight, samples, start, end)
         cdef double node_impurity = criterion.node_impurity()
 
-        if end - start <= 1 or node_impurity == 0.0:
+        if end - start < 2 * self.min_samples_leaf or node_impurity == 0.0:
             pos[0] = end
             impurity[0] = node_impurity
             return
@@ -1051,14 +1034,14 @@ cdef class RandomSplitter(Splitter):
                                double* threshold,
                                double* impurity):
         """Find the best random split on node samples[start:end]."""
-        # Break early if node is pure
+        # Break early if node is a leaf
         cdef Criterion criterion = self.criterion
         cdef SIZE_t* samples = self.samples
 
         criterion.init(self.y, self.y_stride, self.sample_weight, samples, start, end)
         cdef double node_impurity = criterion.node_impurity()
 
-        if end - start <= 1 or node_impurity == 0.0:
+        if end - start < 2 * self.min_samples_leaf or node_impurity == 0.0:
             pos[0] = end
             impurity[0] = node_impurity
             return
