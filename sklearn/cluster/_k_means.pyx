@@ -365,7 +365,7 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
 
     cdef np.ndarray[DOUBLE, ndim=2, mode="c"] centers = \
         np.zeros((n_clusters, n_features))
-    cdef np.ndarray[np.npy_intp, ndim=1, mode="c"] far_from_centers
+    cdef np.ndarray[np.npy_intp, ndim=1] far_from_centers
     cdef np.ndarray[np.npy_intp, ndim=1, mode="c"] n_samples_in_cluster = \
         bincount(labels, minlength=n_clusters)
     cdef np.ndarray[np.npy_intp, ndim=1, mode="c"] empty_clusters = \
