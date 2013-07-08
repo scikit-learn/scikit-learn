@@ -201,7 +201,7 @@ features::
   >>> clf = ExtraTreesClassifier(random_state=0)
   >>> X_new = clf.fit(X, y).transform(X)
   >>> clf.feature_importances_  # doctest: +ELLIPSIS
-  array([ 0.06...,  0.03...,  0.44...,  0.45...])
+  array([ 0.06...,  0.03...,  0.44...,  0.4...])
   >>> X_new.shape
   (150, 2)
 
