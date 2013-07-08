@@ -927,7 +927,7 @@ cdef class BestSplitter(Splitter):
             p = start
 
             while p < end:
-                while p + 1 < end and X[samples[p + 1], current_feature] <= X[samples[p], current_feature] + 1.e-7:
+                while p + 1 < end and X[samples[p + 1], current_feature] <= X[samples[p], current_feature] + 1.e-6:
                     p += 1
 
                 # p + 1 >= end or X[samples[p + 1], current_feature] > X[samples[p], current_feature]
@@ -945,17 +945,19 @@ cdef class BestSplitter(Splitter):
                     criterion.update(current_pos)
                     current_impurity = criterion.children_impurity()
 
-                    current_threshold = (X[samples[p - 1], current_feature] + X[samples[p], current_feature]) / 2.0
-                    if current_threshold == X[samples[p], current_feature]:
-                        current_threshold = X[samples[p - 1], current_feature]
-
                     if current_impurity < best_impurity:
                         best_impurity = current_impurity
                         best_pos = current_pos
                         best_feature = current_feature
+
+                        current_threshold = (X[samples[p - 1], current_feature] + X[samples[p], current_feature]) / 2.0
+                        if current_threshold == X[samples[p], current_feature]:
+                            current_threshold = X[samples[p - 1], current_feature]
+
                         best_threshold = current_threshold
 
             if best_pos == end: # No valid split was ever found
+                print "no valid split!"
                 continue
 
             # Count one more visited feature
