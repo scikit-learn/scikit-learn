@@ -65,7 +65,7 @@ def log_softmax(X):
 
 def softmax(X):
     """
-    Computes the logistic K-way softmax, (exp(X).T / exp(X).sum(axis=1)).T,
+    Computes the K-way softmax, (exp(X).T / exp(X).sum(axis=1)).T,
     in the log domain
 
     Parameters
@@ -262,7 +262,6 @@ class BaseMLP(BaseEstimator):
         self._lbin = LabelBinarizer()
         Y = self._lbin.fit_transform(y)
         if Y.shape[1] == 1:
-            print 'yes'
             self.output = self.activation
         n_samples, n_features = X.shape
         n_classes = Y.shape[1]
@@ -281,7 +280,7 @@ class BaseMLP(BaseEstimator):
         delta_h = np.empty((self.batch_size, self.n_hidden))
         a_output = np.empty((self.batch_size, n_classes))
         delta_o = np.empty((self.batch_size, n_classes))
-        if self.algorithm is 'SGD':
+        if self.algorithm is 'sgd':
             eta = self.eta0
             t = 1
             for i, batch_slice in izip(xrange(self.max_iter), cycle(batch_slices)):
@@ -454,14 +453,14 @@ class BaseMLP(BaseEstimator):
         diff = Y - a_output
         if self.loss == 'squared_loss':
             delta_o[:] = -diff * self.derivative(a_output)
-            delta_h[:] = np.dot(delta_o,
-                    self.coef_output_.T) * self.derivative(a_hidden)
-            cost = np.sum(
-                np.einsum('ij,ji->i', diff, diff.T)) / (2 * n_samples)
+            delta_h[:] = np.dot(
+                delta_o,
+                self.coef_output_.T) * self.derivative(a_hidden)
+            cost = np.sum(diff**2)/ (2 * n_samples)
         elif self.loss == 'log':
             delta_o[:] = -diff
-            delta_h[:] = np.dot(delta_o, 
-                    self.coef_output_.T) * self.derivative(a_hidden)
+            delta_h[:] = np.dot(delta_o, self.coef_output_.T) *\
+                    self.derivative(a_hidden)
             cost = np.sum(
                 np.sum(-Y * np.log(a_output) - (1 - Y) * np.log(1 - a_output)))
         # Get regularized gradient
@@ -608,7 +607,7 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
 
     def __init__(
         self, n_hidden=100, activation="tanh", output_func='softmax',
-        loss='log', algorithm='SGD', alpha=0.0, batch_size=100,
+        loss='log', algorithm='sgd', alpha=0.0, batch_size=100,
         learning_rate="invscaling", eta0=1, power_t=0.5, max_iter=100,
         shuffle_data=False, random_state=None, tol=1e-5, verbose=False):
         super(
@@ -621,7 +620,7 @@ class MLPRegressor(BaseMLP, RegressorMixin):
 
     def __init__(
         self, n_hidden=100, activation="tanh", output_func='tanh',
-         loss='squared_loss', algorithm='SGD', alpha=0.0, 
+         loss='squared_loss', algorithm='sgd', alpha=0.0, 
          batch_size=100, learning_rate="invscaling", eta0=0.1, 
          power_t=0.5, max_iter=100, shuffle_data=False, 
          random_state=None, tol=1e-5, verbose=False):
