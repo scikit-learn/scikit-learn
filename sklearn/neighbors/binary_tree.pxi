@@ -173,7 +173,7 @@ Query for k-nearest neighbors
     >>> import numpy as np
 
     >>> np.random.seed(0)
-    >>> X = np.random.random((10,3))  # 10 points in 3 dimensions
+    >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)              # doctest: +SKIP
     >>> dist, ind = tree.query(X[0], k=3)                # doctest: +SKIP
     >>> print ind  # indices of 3 closest neighbors
@@ -187,7 +187,7 @@ pickle operation: the tree needs not be rebuilt upon unpickling.
     >>> import numpy as np
     >>> import pickle
     >>> np.random.seed(0)
-    >>> X = np.random.random((10,3))  # 10 points in 3 dimensions
+    >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
     >>> tree = {BinaryTree}(X, leaf_size=2)        # doctest: +SKIP
     >>> s = pickle.dumps(tree)                     # doctest: +SKIP
     >>> tree_copy = pickle.loads(s)                # doctest: +SKIP
@@ -201,7 +201,7 @@ Query for neighbors within a given radius
 
     >>> import numpy as np
     >>> np.random.seed(0)
-    >>> X = np.random.random((10,3))  # 10 points in 3 dimensions
+    >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
     >>> tree = BinaryTree(X, leaf_size=2)     # doctest: +SKIP
     >>> print tree.query_radius(X[0], r=0.3, count_only=True)
     3
@@ -993,7 +993,7 @@ cdef class BinaryTree:
 
             >>> import numpy as np
             >>> np.random.seed(0)
-            >>> X = np.random.random((10,3))  # 10 points in 3 dimensions
+            >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
             >>> tree = BinaryTree(X, leaf_size=2)    # doctest: +SKIP
             >>> dist, ind = tree.query(X[0], k=3)    # doctest: +SKIP
             >>> print ind  # indices of 3 closest neighbors
@@ -1125,7 +1125,7 @@ cdef class BinaryTree:
 
         >>> import numpy as np
         >>> np.random.seed(0)
-        >>> X = np.random.random((10,3))  # 10 points in 3 dimensions
+        >>> X = np.random.random((10, 3))  # 10 points in 3 dimensions
         >>> tree = BinaryTree(X, leaf_size=2)     # doctest: +SKIP
         >>> print tree.query_radius(X[0], r=0.3, count_only=True)
         3
