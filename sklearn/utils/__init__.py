@@ -14,13 +14,15 @@ from .validation import (as_float_array, check_arrays, safe_asarray,
                          atleast2d_or_csr, warn_if_not_float,
                          check_random_state)
 from .class_weight import compute_class_weight
-from sklearn.utils.mst import minimum_spanning_tree
+from .sparsetools import minimum_spanning_tree
+from .sparsetools import connected_components
 
 
 __all__ = ["murmurhash3_32", "as_float_array", "check_arrays", "safe_asarray",
            "assert_all_finite", "array2d", "atleast2d_or_csc",
            "atleast2d_or_csr", "warn_if_not_float", "check_random_state",
-           "compute_class_weight",  "minimum_spanning_tree"]
+           "compute_class_weight",  "minimum_spanning_tree",
+           "connected_components"]
 
 # Make sure that DeprecationWarning get printed
 warnings.simplefilter("always", DeprecationWarning)
