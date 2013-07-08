@@ -116,10 +116,10 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
     >>> samples = [[0, 0, 2], [1, 0, 0]]
     >>> labels = [0, 1]
     >>> from sklearn.ensemble import GradientBoostingClassifier
-    >>> gb = GradientBoostingClassifier().fit(samples, labels)
+    >>> gb = GradientBoostingClassifier(random_state=0).fit(samples, labels)
     >>> kwargs = dict(X=samples, percentiles=(0, 1), grid_resolution=2)
     >>> partial_dependence(gb, [0], **kwargs)
-    (array([[-10.72892297,  10.72892297]]), [array([ 0.,  1.])])
+    (array([[-5.67647953,  5.67647953]]), [array([ 0.,  1.])])
     """
     if not isinstance(gbrt, BaseGradientBoosting):
         raise ValueError('gbrt has to be an instance of BaseGradientBoosting')
