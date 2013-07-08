@@ -7,9 +7,6 @@
 # Author: Gilles Louppe, Peter Prettenhofer, Brian Holt, Noel Dawe, Satrajit Gosh
 # Licence: BSD 3 clause
 
-# TODO: handle negative weights
-# TODO: allow splitter objects
-
 
 from libc.stdlib cimport calloc, free, malloc, realloc, rand, srand, RAND_MAX
 from libc.string cimport memcpy
