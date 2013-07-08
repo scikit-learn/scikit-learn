@@ -118,6 +118,10 @@ Changelog
      to be ``n_features``. This was the default behavior, so programs using it
      will continue to work as they did.
 
+   - :class:`sklearn.cluster.KMeans` now fits several orders of magnitude
+     faster on sparse data (the speedup depends on the sparsity). By
+     `Lars Buitinck`_.
+
 API changes summary
 -------------------
 
