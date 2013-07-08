@@ -7,7 +7,6 @@
 # Author: Gilles Louppe, Peter Prettenhofer, Brian Holt, Noel Dawe, Satrajit Gosh
 # Licence: BSD 3 clause
 
-# TODO: http://docs.cython.org/src/tutorial/profiling_tutorial.html
 # TODO: handle negative weights
 # TODO: allow splitter objects
 

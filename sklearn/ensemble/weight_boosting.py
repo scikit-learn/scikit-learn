@@ -52,7 +52,8 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                  base_estimator,
                  n_estimators=50,
                  estimator_params=tuple(),
-                 learning_rate=1.):
+                 learning_rate=1.,
+                 random_state=None):
 
         super(BaseWeightBoosting, self).__init__(
             base_estimator=base_estimator,
@@ -60,6 +61,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             estimator_params=estimator_params)
 
         self.learning_rate = learning_rate
+        self.random_state = random_state
 
     def fit(self, X, y, sample_weight=None):
         """Build a boosted classifier/regressor from the training set (X, y).
@@ -283,6 +285,12 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
         The SAMME.R algorithm typically converges faster than SAMME,
         achieving a lower test error with fewer boosting iterations.
 
+    random_state : int, RandomState instance or None, optional (default=None)
+        If int, random_state is the seed used by the random number generator;
+        If RandomState instance, random_state is the random number generator;
+        If None, the random number generator is the RandomState instance used
+        by `np.random`.
+
     Attributes
     ----------
     `estimators_` : list of classifiers
@@ -320,12 +328,14 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
                  base_estimator=DecisionTreeClassifier(max_depth=1),
                  n_estimators=50,
                  learning_rate=1.,
-                 algorithm='SAMME.R'):
+                 algorithm='SAMME.R',
+                 random_state=None):
 
         super(AdaBoostClassifier, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
-            learning_rate=learning_rate)
+            learning_rate=learning_rate,
+            random_state=random_state)
 
         self.algorithm = algorithm
 
@@ -415,6 +425,12 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     def _boost_real(self, iboost, X, y, sample_weight):
         """Implement a single boost using the SAMME.R real algorithm."""
         estimator = self._make_estimator()
+
+        try:
+            estimator.set_params(random_state=self.random_state)
+        except:
+            pass
+
         estimator.fit(X, y, sample_weight=sample_weight)
 
         y_predict_proba = estimator.predict_proba(X)
@@ -471,6 +487,12 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
     def _boost_discrete(self, iboost, X, y, sample_weight):
         """Implement a single boost using the SAMME discrete algorithm."""
         estimator = self._make_estimator()
+
+        try:
+            estimator.set_params(random_state=self.random_state)
+        except:
+            pass
+
         estimator.fit(X, y, sample_weight=sample_weight)
 
         y_predict = estimator.predict(X)
@@ -838,7 +860,8 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
         super(AdaBoostRegressor, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators,
-            learning_rate=learning_rate)
+            learning_rate=learning_rate,
+            random_state=random_state)
 
         self.loss = loss
         self.random_state = random_state
@@ -911,6 +934,11 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
             If None then boosting has terminated early.
         """
         estimator = self._make_estimator()
+
+        try:
+            estimator.set_params(random_state=self.random_state)
+        except:
+            pass
 
         generator = check_random_state(self.random_state)
 
