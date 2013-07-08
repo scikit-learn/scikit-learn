@@ -21,7 +21,7 @@ def test_graphviz_toy():
     clf = DecisionTreeClassifier(max_depth=3,
                                  min_samples_split=1,
                                  criterion="gini",
-                                 random_state=0)
+                                 random_state=1)
     clf.fit(X, y)
 
     # Test export code
@@ -29,7 +29,7 @@ def test_graphviz_toy():
     export_graphviz(clf, out_file=out)
     contents1 = out.getvalue()
     contents2 = "digraph Tree {\n" \
-                "0 [label=\"X[1] <= 0.0000\\ngini = 0.5\\n" \
+                "0 [label=\"X[0] <= 0.0000\\ngini = 0.5\\n" \
                 "samples = 6\", shape=\"box\"] ;\n" \
                 "1 [label=\"gini = 0.0000\\nsamples = 3\\n" \
                 "value = [ 3.  0.]\", shape=\"box\"] ;\n" \
@@ -46,7 +46,7 @@ def test_graphviz_toy():
     out = export_graphviz(clf, out_file=out, feature_names=["feature0", "feature1"])
     contents1 = out.getvalue()
     contents2 = "digraph Tree {\n" \
-                "0 [label=\"feature1 <= 0.0000\\ngini = 0.5\\n" \
+                "0 [label=\"feature0 <= 0.0000\\ngini = 0.5\\n" \
                 "samples = 6\", shape=\"box\"] ;\n" \
                 "1 [label=\"gini = 0.0000\\nsamples = 3\\n" \
                 "value = [ 3.  0.]\", shape=\"box\"] ;\n" \
@@ -63,7 +63,7 @@ def test_graphviz_toy():
     export_graphviz(clf, out_file=out, max_depth=0)
     contents1 = out.getvalue()
     contents2 = "digraph Tree {\n" \
-                "0 [label=\"X[1] <= 0.0000\\ngini = 0.5\\n" \
+                "0 [label=\"X[0] <= 0.0000\\ngini = 0.5\\n" \
                 "samples = 6\", shape=\"box\"] ;\n" \
                 "1 [label=\"(...)\", shape=\"box\"] ;\n" \
                 "0 -> 1 ;\n" \
