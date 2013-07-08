@@ -868,10 +868,10 @@ Pairwise metrics
    neighbors.RadiusNeighborsClassifier
    neighbors.KNeighborsRegressor
    neighbors.RadiusNeighborsRegressor
+   neighbors.NearestCentroid
    neighbors.BallTree
    neighbors.KDTree
    neighbors.DistanceMetric
-   neighbors.NearestCentroid
    neighbors.KernelDensity
 
 .. autosummary::

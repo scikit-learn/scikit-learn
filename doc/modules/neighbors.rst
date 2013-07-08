@@ -541,18 +541,34 @@ kernels:
 
   :math:`K(x; h) \propto \cos(\frac{\pi x}{2h})` if :math:`x < h`
 
+The kernel density estimator can be used with any of the valid distance
+metrics (see :class:`DistanceMetric` for a list of available metrics), though
+the results are properly normalized only for the Euclidean metric.  One
+particularly useful metric is the
+`Haversine distance <http://en.wikipedia.org/wiki/Haversine_formula>`_
+which measures the angular distance between points on a sphere.  Here
+is an example of using a kernel density estimate for a visualization
+of geospatial data, in this case the distribution of observations of two
+different species on the South American continent:
 
-One potential application of kernel density estimation is to learn a
-generative model of a dataset, and to efficiently draw new samples from
-this generative model.  Here is an example of using this process to
+.. |species_kde| image:: ../auto_examples/neighbors/images/plot_species_kde_1.png
+   :target: ../auto_examples/neighbors/plot_species_kde.html
+   :scale: 80
+
+.. centered:: |species_kde|
+
+One other useful application of kernel density estimation is to learn a
+non-parametric generative model of a dataset in order to efficiently
+draw new samples from this generative model.
+Here is an example of using this process to
 create a new set of hand-written digits, using a Gaussian kernel learned
 on a PCA projection of the data:
 
-.. |kernel_density| image:: ../auto_examples/neighbors/images/plot_kde_1.png
-   :target: ../auto_examples/neighbors/plot_kde.html
+.. |digits_kde| image:: ../auto_examples/neighbors/images/plot_digits_kde_sampling_1.png
+   :target: ../auto_examples/neighbors/plot_digits_kde_sampling.html
    :scale: 80
 
-.. centered:: |kernel_density|
+.. centered:: |digits_kde|
 
 The "new" data consists of linear combinations of the input data, with weights
 probabilistically drawn given the KDE model.
