@@ -1467,7 +1467,6 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         if warning_msg:
             warnings.warn(warning_msg)
 
-
         try:
             # oddly, we may get an "invalid" rather than a "divide" error
             # here
@@ -1484,8 +1483,6 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         precision[size_pred == 0] = 0.0
         recall[size_true == 0] = 0.0
         f_score[(beta2 * size_true + size_pred) == 0] = 0.0
-
-
 
         precision = np.mean(precision)
         recall = np.mean(recall)
@@ -1561,12 +1558,14 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         average_options = (None, 'micro', 'macro', 'weighted', 'samples')
         if average == 'micro':
             try:
-                # oddly, we may get an "invalid" rather than a "divide" error here
+                # oddly, we may get an "invalid" rather than a "divide" error
+                # here
                 old_err_settings = np.seterr(divide='ignore', invalid='ignore')
                 tp_sum = true_pos.sum()
                 fp_sum = false_pos.sum()
                 fn_sum = false_neg.sum()
-                avg_precision = divide(tp_sum, tp_sum + fp_sum, dtype=np.double)
+                avg_precision = divide(tp_sum, tp_sum + fp_sum,
+                                       dtype=np.double)
                 avg_recall = divide(tp_sum, tp_sum + fn_sum, dtype=np.double)
                 avg_fscore = divide((1 + beta2) * (avg_precision * avg_recall),
                                     beta2 * avg_precision + avg_recall,
