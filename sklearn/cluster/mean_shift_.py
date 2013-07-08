@@ -23,7 +23,7 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
 
     quantile : float, default 0.3
         should be between [0, 1]
-        0.5 means that the median is all pairwise distances is used.
+        0.5 means that the median of all pairwise distances is used.
 
     n_samples : int
         The number of samples to use. If None, all samples are used.
@@ -183,7 +183,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     Returns
     -------
     bin_seeds : array-like, shape=[n_samples, n_features]
-        Points used as initial kernel posistions in clustering.mean_shift.
+        Points used as initial kernel positions in clustering.mean_shift.
     """
 
     # Bin points
