@@ -14,16 +14,44 @@ import numpy as np
 from ..externals.six import string_types
 
 
-def unique_labels(*lists_of_labels):
+def _unique_multiclass(y):
+    if isinstance(y, np.ndarray):
+        return np.unique(y)
+    else:
+        return set(y)
+
+
+def _unique_sequence_of_sequence(y):
+    return set(chain.from_iterable(y))
+
+
+def _unique_indicator(y):
+    return np.arange(y.shape[1])
+
+
+_FN_UNIQUE_LABELS = {
+    'binary': _unique_multiclass,
+    'multiclass': _unique_multiclass,
+    'multilabel-sequences': _unique_sequence_of_sequence,
+    'multilabel-indicator': _unique_indicator,
+}
+
+
+def unique_labels(*ys):
     """Extract an ordered array of unique labels
+
+    We don't allow:
+        - mix of multilabel and multiclass (single label) targets
+        - mix of label indicator matrix and anything else,
+          because there are no explicit labels)
+        - mix of label indicator matrices of different sizes
+        - mix of string and integer labels
+
+    At the moment, we also don't allow "mutliclass-multioutput" input type.
 
     Parameters
     ----------
-    lists_of_labels : list of labels,
-        The supported "list of labels" are:
-            - a list / tuple / numpy array of int
-            - a list of lists / tuples of int;
-            - a binary indicator matrix (2D numpy array)
+    ys : array-likes,
 
     Returns
     -------
@@ -45,23 +73,37 @@ def unique_labels(*lists_of_labels):
     array([1, 2, 3])
 
     """
-    def _unique_labels(y):
-        classes = None
-        if is_multilabel(y):
-            if is_label_indicator_matrix(y):
-                classes = np.arange(y.shape[1])
-            else:
-                classes = np.array(sorted(set(chain(*y))))
+    if not ys:
+        raise ValueError('No argument has been passed.')
 
-        else:
-            classes = np.unique(y)
+    # Check that we don't mix label format
+    ys_types = set(type_of_target(x) for x in ys)
+    if ys_types == set(["binary", "multiclass"]):
+        ys_types = set(["multiclass"])
 
-        return classes
+    if len(ys_types) > 1:
+        raise ValueError("Mix type of y not allowed, got types %s" % ys_types)
 
-    if not lists_of_labels:
-        raise ValueError('No list of labels has been passed.')
+    label_type = ys_types.pop()
 
-    return np.unique(np.hstack(_unique_labels(y) for y in lists_of_labels))
+    # Check consistency for the indicator format
+    if (label_type == "multilabel-indicator" and
+            len(set(y.shape[1] for y in ys)) > 1):
+        raise ValueError("Multi-label binary indicator input with "
+                         "different numbers of labels")
+
+    # Get the unique set of labels
+    _unique_labels = _FN_UNIQUE_LABELS.get(label_type, None)
+    if not _unique_labels:
+        raise ValueError("Unknown label type")
+
+    ys_labels = set(chain.from_iterable(_unique_labels(y) for y in ys))
+
+    # Check that we don't mix string type with number type
+    if (len(set(isinstance(label, string_types) for label in ys_labels)) > 1):
+        raise ValueError("Mix of label input types (string and number)")
+
+    return np.array(sorted(ys_labels))
 
 
 def _is_integral_float(y):
