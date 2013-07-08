@@ -196,6 +196,4 @@ class KernelDensity(BaseEstimator):
         if self.kernel == 'gaussian':
             return rng.normal(data[i], self.bandwidth)
         elif self.kernel == 'tophat':
-            return data[i] - 1 + 2 * rng.random_sample(i.shape)
-        else:
-            raise NotImplementedError()
+            return data[i] - 1 + 2 * rng.random_sample(i.shape)[:, None]

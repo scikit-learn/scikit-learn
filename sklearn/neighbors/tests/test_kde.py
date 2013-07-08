@@ -1,6 +1,6 @@
 import numpy as np
-from numpy.testing import assert_allclose
-from sklearn.neighbors.kde import KernelDensity
+from numpy.testing import assert_allclose, assert_raises, assert_equal
+from sklearn.neighbors import KernelDensity, BallTree, KDTree, NearestNeighbors
 from sklearn.neighbors.ball_tree import kernel_norm
 
 
@@ -39,12 +39,85 @@ def test_KernelDensity(n_samples=100, n_features=3):
                 log_dens = kde.fit(X).eval(Y)
                 assert_allclose(np.exp(log_dens), dens_true, atol=atol,
                                 rtol=max(1E-7, rtol))
+                assert_allclose(np.exp(kde.score(Y)),
+                                np.prod(dens_true),
+                                atol=atol, rtol=max(1E-7, rtol))
 
             for rtol in [0, 1E-5]:
                 for atol in [1E-6, 1E-2]:
                     for breadth_first in (True, False):
                         yield (check_results, kernel, bandwidth, atol, rtol)
 
+
+def test_KernelDensity_sampling(n_samples=100, n_features=3):
+    np.random.seed(0)
+    X = np.random.random((n_samples, n_features))
+
+    bandwidth = 0.2
+
+    for kernel in ['gaussian', 'tophat']:
+        # draw a tophat sample
+        kde = KernelDensity(bandwidth, kernel=kernel).fit(X)
+        samp = kde.sample(100)
+        assert_equal(X.shape, samp.shape)
+
+        # check that samples are in the right range
+        nbrs = NearestNeighbors(n_neighbors=1).fit(X)
+        dist, ind = nbrs.kneighbors(X, return_distance=True)
+        
+        if kernel == 'tophat':
+            assert np.all(dist < bandwidth)
+        elif kernel == 'gaussian':
+            # 5 standard deviations is safe for 100 samples, but there's a
+            # very small chance this test could fail.
+            assert np.all(dist < 5 * bandwidth)
+
+    # check unsupported kernels
+    for kernel in ['epanechnikov', 'exponential', 'linear', 'cosine']:
+        kde = KernelDensity(bandwidth, kernel=kernel).fit(X)
+        assert_raises(NotImplementedError, kde.sample, 100)
+    
+    
+
+
+def test_kde_algorithm_metric_choice():
+    """Smoke test for various metrics and algorithms"""
+    np.random.seed(0)
+    X = np.random.random((10, 2))  # 2 features required for haversine dist.
+    Y = np.random.random((10, 2))
+
+    for algorithm in ['auto', 'ball_tree', 'kd_tree']:
+        for metric in ['euclidean', 'minkowski', 'manhattan',
+                       'chebyshev', 'haversine']:
+            if algorithm == 'kd_tree' and metric not in KDTree.valid_metrics:
+                assert_raises(ValueError, KernelDensity,
+                              algorithm=algorithm, metric=metric)
+            else:
+                kde = KernelDensity(algorithm=algorithm, metric=metric)
+                kde.fit(X)
+                y_dens = kde.eval(Y)
+                assert_equal(y_dens.shape, Y.shape[:1])
+
+def test_kde_score(n_samples=100, n_features=3):
+    np.random.seed(0)
+    X = np.random.random((n_samples, n_features))
+    Y = np.random.random((n_samples, n_features))
+
+def test_kde_badargs():
+    np.random.seed(0)
+    X = np.random.random((10, 2))
+    Y = np.random.random((10, 2))
+
+    assert_raises(ValueError, KernelDensity,
+                  algorithm='blah')
+    assert_raises(ValueError, KernelDensity,
+                  bandwidth=0)
+    assert_raises(ValueError, KernelDensity,
+                  kernel='blah')
+    assert_raises(ValueError, KernelDensity,
+                  metric='blah')
+    assert_raises(ValueError, KernelDensity,
+                  algorithm='kd_tree', metric='blah')
 
 if __name__ == '__main__':
     import nose

@@ -62,11 +62,20 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    p: integer, optional (default = 2)
-        Parameter for the Minkowski metric from
-        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
+    metric : string or DistanceMetric object (default='minkowski')
+        the distance metric to use for the tree.  The default metric is
+        minkowski, and with p=2 is equivalent to the standard Euclidean
+        metric. See the documentation of the DistanceMetric class for a
+        list of available metrics.
+
+    p : integer, optional (default = 2)
+        Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+
+    **kwargs :
+        additional keyword arguments are passed to the distance function as
+        additional arguments.
 
     Examples
     --------
@@ -104,17 +113,18 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
     """
 
     def __init__(self, n_neighbors=5,
-                 weights='uniform',
-                 algorithm='auto', leaf_size=30, p=2, **kwargs):
+                 weights='uniform', algorithm='auto', leaf_size=30,
+                 p=2, metric='minkowski', **kwargs):
         if kwargs:
             if 'warn_on_equidistant' in kwargs:
+                kwargs.pop('warn_on_equidistant')
                 warnings.warn("The warn_on_equidistant parameter is "
                               "deprecated and will be removed in the future.",
                               DeprecationWarning,
                               stacklevel=2)
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
-                          leaf_size=leaf_size, p=p)
+                          leaf_size=leaf_size, metric=metric, p=p, **kwargs)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
@@ -224,9 +234,14 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    p: integer, optional (default = 2)
-        Parameter for the Minkowski metric from
-        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
+    metric : string or DistanceMetric object (default='minkowski')
+        the distance metric to use for the tree.  The default metric is
+        minkowski, and with p=2 is equivalent to the standard Euclidean
+        metric. See the documentation of the DistanceMetric class for a
+        list of available metrics.
+
+    p : integer, optional (default = 2)
+        Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
@@ -234,6 +249,10 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         Label, which is given for outlier samples (samples with no
         neighbors on given radius).
         If set to None, ValueError is raised, when outlier is detected.
+
+    **kwargs :
+        additional keyword arguments are passed to the distance function as
+        additional arguments.
 
     Examples
     --------
@@ -262,11 +281,12 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
     """
 
     def __init__(self, radius=1.0, weights='uniform',
-                 algorithm='auto', leaf_size=30, p=2, outlier_label=None):
+                 algorithm='auto', leaf_size=30, p=2, metric='minkowski',
+                 outlier_label=None, **kwargs):
         self._init_params(radius=radius,
                           algorithm=algorithm,
                           leaf_size=leaf_size,
-                          p=p)
+                          metric=metric, p=p, **kwargs)
         self.weights = _check_weights(weights)
         self.outlier_label = outlier_label
 

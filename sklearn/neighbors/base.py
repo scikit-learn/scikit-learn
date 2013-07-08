@@ -39,18 +39,6 @@ VALID_METRICS_SPARSE = dict(ball_tree=[],
                             kd_tree=[],
                             brute=PAIRWISE_DISTANCE_FUNCTIONS.keys())
 
-
-def _get_p_from_metric(metric):
-    if metric in ['l1', 'manhattan', 'cityblock']:
-        return 1.0
-    elif metric in ['euclidean', 'l2']:
-        return 2.0
-    elif metric in ['chebyshev', 'infinity']:
-        return np.inf
-    else:
-        raise ValueError("unrecognized metric: '%s'" % metric)
-
-
 class NeighborsWarning(UserWarning):
     pass
 
@@ -106,14 +94,14 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     def _init_params(self, n_neighbors=None, radius=None,
                      algorithm='auto', leaf_size=30, metric='minkowski',
-                     **kwargs):
+                     p=2, **kwargs):
         self.n_neighbors = n_neighbors
         self.radius = radius
         self.algorithm = algorithm
         self.leaf_size = leaf_size
         self.metric = metric
         self.metric_kwds = kwargs
-        self.p = kwargs.get('p', 2)
+        self.p = p
 
         if algorithm not in ['auto', 'brute',
                              'kd_tree', 'ball_tree']:
@@ -132,8 +120,8 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
                 raise ValueError("metric '%s' not valid for algorithm '%s'"
                                  % (metric, algorithm))
 
-        if self.metric == 'minkowski':
-            p = self.metric_kwds.get('p', 2)
+        if self.metric in ['wminkowski', 'minkowski']:
+            self.metric_kwds['p'] = p
             if p < 1:
                 raise ValueError("p must be greater than one "
                                  "for minkowski metric")
