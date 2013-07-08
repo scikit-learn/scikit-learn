@@ -214,21 +214,25 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                                 2 * self.min_samples_leaf)
 
         # Build tree
-        if not isinstance(self.criterion, Criterion):
+        criterion = self.criterion
+        if not isinstance(criterion, Criterion):
             if is_classification:
                 criterion = CRITERIA_CLF[self.criterion](self.n_outputs_,
                                                          self.n_classes_)
             else:
                 criterion = CRITERIA_REG[self.criterion](self.n_outputs_)
 
+        splitter = self.splitter
         if not isinstance(self.splitter, Splitter):
-            self.splitter_ = SPLITTERS[self.splitter](criterion,
-                                                      max_features,
-                                                      self.min_samples_leaf,
-                                                      random_state)
+            splitter = SPLITTERS[self.splitter](criterion,
+                                                max_features,
+                                                self.min_samples_leaf,
+                                                random_state)
 
+        self.criterion_ = criterion
+        self.splitter_ = splitter
         self.tree_ = Tree(self.n_features_, self.n_classes_,
-                          self.n_outputs_, self.splitter_, max_depth,
+                          self.n_outputs_, splitter, max_depth,
                           min_samples_split, self.min_samples_leaf,
                           random_state)
 
