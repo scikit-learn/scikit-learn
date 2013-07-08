@@ -927,7 +927,7 @@ cdef class BestSplitter(Splitter):
             p = start
 
             while p < end:
-                while p + 1 < end and X[samples[p + 1], current_feature] <= X[samples[p], current_feature] + 1.e-6:
+                while p + 1 < end and X[samples[p + 1], current_feature] <= X[samples[p], current_feature] + 1.e-7:
                     p += 1
 
                 # p + 1 >= end or X[samples[p + 1], current_feature] > X[samples[p], current_feature]
@@ -957,7 +957,6 @@ cdef class BestSplitter(Splitter):
                         best_threshold = current_threshold
 
             if best_pos == end: # No valid split was ever found
-                print "no valid split!"
                 continue
 
             # Count one more visited feature
