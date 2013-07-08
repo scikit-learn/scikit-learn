@@ -1224,6 +1224,8 @@ def test_multilabel_representation_invariance():
 
     for name, metric in MULTILABELS_METRICS.items():
         with warnings.catch_warnings(True):
+            warnings.simplefilter("always")
+
             measure = metric(y1, y2)
 
             # Check representation invariance
@@ -1682,34 +1684,35 @@ def test_precision_recall_f1_no_labels():
     # |y_hat_i inter y_i | = [0, 0, 0]
     # |y_i| = [0, 0, 0]
     # |y_hat_i| = [1, 1, 2]
-    warnings.simplefilter("always")
+    with warnings.catch_warnings(record=True):
+        warnings.simplefilter("always")
 
-    for beta in [1]:
-        p, r, f, s = assert_warns(UserWarning,
-                                  precision_recall_fscore_support,
-                                  y_true, y_pred, average=None, beta=beta)
-        assert_array_almost_equal(p, [0, 0, 0], 2)
-        assert_array_almost_equal(r, [0, 0, 0], 2)
-        assert_array_almost_equal(f, [0, 0, 0], 2)
-        assert_array_almost_equal(s, [0, 0, 0], 2)
-
-        fbeta = assert_warns(UserWarning, fbeta_score, y_true, y_pred,
-                             beta=beta, average=None)
-        assert_array_almost_equal(fbeta, [0, 0, 0], 2)
-
-        for average in ["macro", "micro", "weighted", "samples"]:
+        for beta in [1]:
             p, r, f, s = assert_warns(UserWarning,
                                       precision_recall_fscore_support,
-                                      y_true, y_pred, average=average,
-                                      beta=beta)
-            assert_almost_equal(p, 0)
-            assert_almost_equal(r, 0)
-            assert_almost_equal(f, 0)
-            assert_equal(s, None)
+                                      y_true, y_pred, average=None, beta=beta)
+            assert_array_almost_equal(p, [0, 0, 0], 2)
+            assert_array_almost_equal(r, [0, 0, 0], 2)
+            assert_array_almost_equal(f, [0, 0, 0], 2)
+            assert_array_almost_equal(s, [0, 0, 0], 2)
 
             fbeta = assert_warns(UserWarning, fbeta_score, y_true, y_pred,
-                                 beta=beta, average=average)
-            assert_almost_equal(fbeta, 0)
+                                 beta=beta, average=None)
+            assert_array_almost_equal(fbeta, [0, 0, 0], 2)
+
+            for average in ["macro", "micro", "weighted", "samples"]:
+                p, r, f, s = assert_warns(UserWarning,
+                                          precision_recall_fscore_support,
+                                          y_true, y_pred, average=average,
+                                          beta=beta)
+                assert_almost_equal(p, 0)
+                assert_almost_equal(r, 0)
+                assert_almost_equal(f, 0)
+                assert_equal(s, None)
+
+                fbeta = assert_warns(UserWarning, fbeta_score, y_true, y_pred,
+                                     beta=beta, average=average)
+                assert_almost_equal(fbeta, 0)
 
 
 def test__check_clf_targets():
