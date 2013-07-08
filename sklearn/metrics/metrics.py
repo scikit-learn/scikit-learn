@@ -88,11 +88,13 @@ def _check_clf_targets(y_true, y_pred):
 
         if (not (y_true.ndim == 1 or
                 (y_true.ndim == 2 and y_true.shape[1] == 1))):
-            raise ValueError("y_true has a bad input shape %s" % y_true.shape)
+            raise ValueError("y_true has a bad input shape "
+                             "{0}".format(y_true.shape))
 
         if (not (y_pred.ndim == 1 or
                 (y_pred.ndim == 2 and y_pred.shape[1] == 1))):
-            raise ValueError("y_pred has a bad input shape %s" % y_pred.shape)
+            raise ValueError("y_pred has a bad input shape "
+                             "{0}".format(y_pred.shape))
 
         y_true = np.atleast_1d(np.squeeze(y_true))
         y_pred = np.atleast_1d(np.squeeze(y_pred))
@@ -2236,10 +2238,12 @@ def explained_variance_score(y_true, y_pred):
     y_true, y_pred = check_arrays(y_true, y_pred)
 
     if not (y_true.ndim == 1 or (y_true.ndim == 2 and y_true.shape[1] == 1)):
-        raise ValueError("y_true has a bad input shape %s" % y_true.shape)
+        raise ValueError("y_true has a bad input shape "
+                         "{0}".format(y_true.shape))
 
     if not (y_pred.ndim == 1 or (y_pred.ndim == 2 and y_pred.shape[1] == 1)):
-        raise ValueError("y_pred has a bad input shape %s" % y_pred.shape)
+        raise ValueError("y_pred has a bad input shape "
+                         "{0}".format(y_pred.shape))
 
     y_true = np.atleast_1d(np.squeeze(y_true))
     y_pred = np.atleast_1d(np.squeeze(y_pred))
