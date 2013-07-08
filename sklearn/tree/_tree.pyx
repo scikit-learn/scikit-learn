@@ -681,7 +681,7 @@ cdef class RegressionCriterion(Criterion):
         cdef SIZE_t p
         cdef SIZE_t k
         cdef DOUBLE_t w = 1.0
-        cdef DOUBLE_t y_ik = 0.0
+        cdef DOUBLE_t y_ik, w_y_ik
 
         # Note: We assume start <= pos < new_pos <= end
 
@@ -693,11 +693,13 @@ cdef class RegressionCriterion(Criterion):
 
             for k from 0 <= k < n_outputs:
                 y_ik = y[i * y_stride + k]
-                sq_sum_left[k] += w * (y_ik * y_ik)
-                sq_sum_right[k] -= w * (y_ik * y_ik)
+                w_y_ik = w * y_ik
 
-                mean_left[k] = ((weighted_n_left * mean_left[k] + w * y_ik) / (weighted_n_left + w))
-                mean_right[k] = ((weighted_n_right * mean_right[k] - w * y_ik) / (weighted_n_right - w))
+                sq_sum_left[k] += w_y_ik * y_ik
+                sq_sum_right[k] -= w_y_ik * y_ik
+
+                mean_left[k] = ((weighted_n_left * mean_left[k] + w_y_ik) / (weighted_n_left + w))
+                mean_right[k] = ((weighted_n_right * mean_right[k] - w_y_ik) / (weighted_n_right - w))
 
             weighted_n_left += w
             weighted_n_right -= w
