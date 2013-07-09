@@ -65,7 +65,7 @@ class QDA(BaseEstimator, ClassifierMixin):
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = QDA()
     >>> clf.fit(X, y)
-    QDA(priors=None,reg_param=0)
+    QDA(priors=None, reg_param=0)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
