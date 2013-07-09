@@ -74,7 +74,7 @@ class QDA(BaseEstimator, ClassifierMixin):
     sklearn.lda.LDA: Linear discriminant analysis
     """
 
-    def __init__(self, priors=None, reg_param=0):
+    def __init__(self, priors=None, reg_param=0.):
         self.priors = np.asarray(priors) if priors is not None else None
         self.reg_param = 0
 
