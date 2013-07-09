@@ -11,6 +11,29 @@ uses.
    :local:
 
 
+.. _bicluster_ref:
+
+:mod:`sklearn.bicluster`: Biclustering
+======================================
+
+.. automodule:: sklearn.bicluster
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`biclustering` section for further details.
+
+Classes
+-------
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   bicluster.SpectralBiclustering
+   bicluster.SpectralCoclustering
+
+
 .. _cluster_ref:
 
 :mod:`sklearn.cluster`: Clustering
@@ -194,6 +217,8 @@ Samples generator
    datasets.make_sparse_uncorrelated
    datasets.make_spd_matrix
    datasets.make_swiss_roll
+   datasets.make_biclusters
+   datasets.make_checkerboard
 
 
 .. _decomposition_ref:
