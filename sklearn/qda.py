@@ -76,6 +76,7 @@ class QDA(BaseEstimator, ClassifierMixin):
 
     def __init__(self, priors=None, reg_param=0):
         self.priors = np.asarray(priors) if priors is not None else None
+        self.reg_param = 0
 
     def fit(self, X, y, store_covariances=False, tol=1.0e-4):
         """
@@ -125,7 +126,7 @@ class QDA(BaseEstimator, ClassifierMixin):
             if rank < n_features:
                 warnings.warn("Variables are collinear")
             S2 = (S ** 2) / (len(Xg) - 1)
-            S2 = (1-reg_param)*S2 + reg_param
+            S2 = (1-self.reg_param)*S2 + self.reg_param
             if store_covariances:
                 # cov = V * (S^2 / (n-1)) * V.T
                 cov.append(np.dot(S2 * Vt.T, Vt))
