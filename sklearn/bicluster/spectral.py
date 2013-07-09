@@ -242,10 +242,10 @@ class SpectralCoclustering(BaseSpectral):
     References
     ----------
 
-    - Co-clustering documents and words using
-      bipartite spectral graph partitioning, 2001
-      Dhillon, Inderjit S.
-      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.140.3011
+    * Dhillon, Inderjit S, 2001. `Co-clustering documents and words using
+      bipartite spectral graph partitioning
+      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.140.3011>`__.
+
 
     """
     def __init__(self, n_clusters=3, svd_method='randomized',
@@ -343,10 +343,9 @@ class SpectralBiclustering(BaseSpectral):
     References
     ----------
 
-    - Spectral biclustering of microarray data:
-      coclustering genes and conditions, 2003
-      Kluger, Yuval, et al.
-      http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.135.1608
+    * Kluger, Yuval, et al, 2003. `Spectral biclustering of microarray
+      data: coclustering genes and conditions
+      <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.135.1608>`__.
 
     """
     def __init__(self, n_clusters=3, method='bistochastic',
