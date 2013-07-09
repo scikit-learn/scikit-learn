@@ -65,7 +65,7 @@ class QDA(BaseEstimator, ClassifierMixin):
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = QDA()
     >>> clf.fit(X, y)
-    QDA(priors=None)
+    QDA(priors=None,reg_param=0)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -91,9 +91,6 @@ class QDA(BaseEstimator, ClassifierMixin):
         y : array, shape = [n_samples]
             Target values (integers)
 
-        reg_param : float
-            Strength of covariance regularization towards identity.
-            
         store_covariances : boolean
             If True the covariance matrices are computed and stored in the
             `self.covariances_` attribute.
