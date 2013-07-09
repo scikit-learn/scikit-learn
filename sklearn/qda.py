@@ -76,7 +76,7 @@ class QDA(BaseEstimator, ClassifierMixin):
 
     def __init__(self, priors=None, reg_param=0.):
         self.priors = np.asarray(priors) if priors is not None else None
-        self.reg_param = 0
+        self.reg_param = reg_param
 
     def fit(self, X, y, store_covariances=False, tol=1.0e-4):
         """
