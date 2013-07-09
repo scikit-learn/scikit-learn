@@ -1209,9 +1209,10 @@ cdef class Tree:
         def __get__(self):
             return sizet_ptr_to_ndarray(self.n_node_samples, self.node_count)
 
-    def __cinit__(self, int n_features, np.ndarray[SIZE_t, ndim=1] n_classes, int n_outputs,
-                        Splitter splitter, SIZE_t max_depth, SIZE_t min_samples_split,
-                        SIZE_t min_samples_leaf, object random_state):
+    def __cinit__(self, int n_features, np.ndarray[SIZE_t, ndim=1] n_classes,
+                        int n_outputs, Splitter splitter, SIZE_t max_depth,
+                        SIZE_t min_samples_split, SIZE_t min_samples_leaf,
+                        object random_state):
         """Constructor."""
         # Input/Output layout
         self.n_features = n_features
