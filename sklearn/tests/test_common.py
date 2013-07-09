@@ -307,7 +307,7 @@ def test_estimators_nan_inf():
             if name in dont_test:
                 continue
             if name in ('PLSCanonical', 'PLSRegression', 'CCA',
-                        'PLSSVD'):
+                        'PLSSVD', 'Imputer'):
                 continue
 
             # catch deprecation warnings
