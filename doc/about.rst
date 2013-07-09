@@ -64,13 +64,15 @@ sprint.
 2013' Paris international sprint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-|center-div|   |telecom|   |tinyclues|   |afpy|   |end-div|
+|center-div|   |telecom|   |tinyclues|   |afpy| |FNRS|
+
+ |end-div|
 
 
 
 .. |center-div| raw:: html
 
-    <div style="text-align: center; margin: -7px 0 -10px 0;"> 
+    <div style="text-align: center; margin: -7px 0 -10px 0;">
 
 
 .. |telecom| image:: http://f.hypotheses.org/wp-content/blogs.dir/331/files/2011/03/Logo-TPT.jpg
@@ -92,6 +94,15 @@ sprint.
    :width: 150px
    :target: http://www.svi.cnrs-bellevue.fr
 
+.. |FNRS| image:: http://www.fnrs.be/uploaddocs/images/COMMUNIQUER/FRS-FNRS_rose_transp.png
+   :width: 150px
+   :target: http://www.frs-fnrs.be/
+
+.. figure:: http://sites.uclouvain.be/dysco/pmwiki/uploads/Main/dysco.gif
+   :width: 150px
+   :target: http://sites.uclouvain.be/dysco/
+
+   IAP VII/19 - DYSCO
 
 .. |end-div| raw:: html
 
