@@ -32,6 +32,10 @@ class QDA(BaseEstimator, ClassifierMixin):
     ----------
     priors : array, optional, shape = [n_classes]
         Priors on classes
+        
+    reg_param : float, optional
+        Regularizes the covariance estimate as 
+        (1-reg_param)*Sigma + reg_param*np.eye(n_features)
 
     Attributes
     ----------
@@ -61,7 +65,7 @@ class QDA(BaseEstimator, ClassifierMixin):
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = QDA()
     >>> clf.fit(X, y)
-    QDA(priors=None)
+    QDA(priors=None, reg_param=0.0)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -70,8 +74,9 @@ class QDA(BaseEstimator, ClassifierMixin):
     sklearn.lda.LDA: Linear discriminant analysis
     """
 
-    def __init__(self, priors=None):
+    def __init__(self, priors=None, reg_param=0.):
         self.priors = np.asarray(priors) if priors is not None else None
+        self.reg_param = reg_param
 
     def fit(self, X, y, store_covariances=False, tol=1.0e-4):
         """
@@ -118,6 +123,7 @@ class QDA(BaseEstimator, ClassifierMixin):
             if rank < n_features:
                 warnings.warn("Variables are collinear")
             S2 = (S ** 2) / (len(Xg) - 1)
+            S2 = ((1 - self.reg_param) * S2) + self.reg_param
             if store_covariances:
                 # cov = V * (S^2 / (n-1)) * V.T
                 cov.append(np.dot(S2 * Vt.T, Vt))
@@ -211,7 +217,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         values = self._decision_function(X)
         # compute the likelihood of the underlying gaussian models
         # up to a multiplicative constant.
-        likelihood = np.exp(values - values.min(axis=1)[:, np.newaxis])
+        likelihood = np.exp(values - values.max(axis=1)[:, np.newaxis])
         # compute posterior probabilities
         return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
 
