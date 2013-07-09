@@ -35,7 +35,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         
     reg_param : float, optional
         Regularizes the covariance estimate as 
-        (1-reg_param)*Sigma + reg_param*np.eye(d)
+        (1-reg_param)*Sigma + reg_param*np.eye(n_features)
 
     Attributes
     ----------
@@ -123,7 +123,7 @@ class QDA(BaseEstimator, ClassifierMixin):
             if rank < n_features:
                 warnings.warn("Variables are collinear")
             S2 = (S ** 2) / (len(Xg) - 1)
-            S2 = (1-self.reg_param)*S2 + self.reg_param
+            S2 = ((1 - self.reg_param) * S2) + self.reg_param
             if store_covariances:
                 # cov = V * (S^2 / (n-1)) * V.T
                 cov.append(np.dot(S2 * Vt.T, Vt))
