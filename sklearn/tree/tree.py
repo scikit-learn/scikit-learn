@@ -3,7 +3,11 @@ This module gathers tree-based methods, including decision, regression and
 randomized trees. Single and multi-output problems are both handled.
 """
 
-# Author: Gilles Louppe, Peter Prettenhofer, Brian Holt, Noel Dawe, Satrajit Gosh
+# Authors: Gilles Louppe <g.louppe@gmail.com>
+#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#          Brian Holt <bdholt1@gmail.com>
+#          Noel Dawe <noel@dawe.me>
+#          Satrajit Gosh <satrajit.ghosh@gmail.com>
 # Licence: BSD 3 clause
 
 from __future__ import division
@@ -160,7 +164,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             y = np.ascontiguousarray(y, dtype=DOUBLE)
 
         # Check parameters
-        max_depth = (2**31)-1 if self.max_depth is None else self.max_depth
+        max_depth = (2 ** 31) - 1 if self.max_depth is None else self.max_depth
 
         if isinstance(self.max_features, six.string_types):
             if self.max_features == "auto":
@@ -318,7 +322,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                              "call `fit` before `feature_importances_`.")
 
         return self.tree_.compute_feature_importances()
-
 
 
 # =============================================================================

@@ -32,7 +32,8 @@ Single and multi-output problems are both handled.
 
 """
 
-# Authors: Gilles Louppe, Brian Holt
+# Authors: Gilles Louppe <g.louppe@gmail.com>
+#          Brian Holt <bdholt1@gmail.com>
 # License: BSD 3 clause
 
 from __future__ import division
@@ -66,7 +67,8 @@ __all__ = ["RandomForestClassifier",
 MAX_INT = np.iinfo(np.int32).max
 
 
-def _parallel_build_trees(n_trees, forest, X, y, sample_weight, seeds, verbose):
+def _parallel_build_trees(n_trees, forest, X, y,
+                          sample_weight, seeds, verbose):
     """Private function used to build a batch of trees within a job."""
     trees = []
 
@@ -784,7 +786,8 @@ class RandomForestClassifier(ForestClassifier):
             base_estimator=DecisionTreeClassifier(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
-                              "min_samples_leaf", "max_features", "random_state"),
+                              "min_samples_leaf", "max_features",
+                              "random_state"),
             bootstrap=bootstrap,
             compute_importances=compute_importances,
             oob_score=oob_score,
@@ -905,7 +908,8 @@ class RandomForestRegressor(ForestRegressor):
             base_estimator=DecisionTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
-                              "min_samples_leaf", "max_features", "random_state"),
+                              "min_samples_leaf", "max_features",
+                              "random_state"),
             bootstrap=bootstrap,
             compute_importances=compute_importances,
             oob_score=oob_score,
@@ -1041,7 +1045,8 @@ class ExtraTreesClassifier(ForestClassifier):
             base_estimator=ExtraTreeClassifier(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
-                              "min_samples_leaf", "max_features", "random_state"),
+                              "min_samples_leaf", "max_features",
+                              "random_state"),
             bootstrap=bootstrap,
             compute_importances=compute_importances,
             oob_score=oob_score,
@@ -1166,7 +1171,8 @@ class ExtraTreesRegressor(ForestRegressor):
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
-                              "min_samples_leaf", "max_features", "random_state"),
+                              "min_samples_leaf", "max_features",
+                              "random_state"),
             bootstrap=bootstrap,
             compute_importances=compute_importances,
             oob_score=oob_score,
@@ -1250,7 +1256,8 @@ class RandomTreesEmbedding(BaseForest):
             base_estimator=ExtraTreeRegressor(),
             n_estimators=n_estimators,
             estimator_params=("criterion", "max_depth", "min_samples_split",
-                              "min_samples_leaf", "max_features", "random_state"),
+                              "min_samples_leaf", "max_features",
+                              "random_state"),
             bootstrap=False,
             compute_importances=False,
             oob_score=False,

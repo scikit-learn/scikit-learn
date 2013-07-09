@@ -16,8 +16,9 @@ The module structure is the following:
   regression problems.
 """
 
-# Authors: Noel Dawe, Gilles Louppe
-# License: BSD 3 clause
+# Authors: Noel Dawe <noel@dawe.me>
+#          Gilles Louppe <g.louppe@gmail.com>
+# Licence: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
 

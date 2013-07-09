@@ -1,4 +1,6 @@
-# Author: Gilles Louppe, Peter Prettenhofer, Brian Holt
+# Authors: Gilles Louppe <g.louppe@gmail.com>
+#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#          Brian Holt <bdholt1@gmail.com>
 # Licence: BSD 3 clause
 
 # See _tree.pyx for details.

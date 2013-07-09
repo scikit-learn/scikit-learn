@@ -2,9 +2,12 @@
 # cython: cdivision=True
 # cython: boundscheck=False
 # cython: wraparound=False
-### cython: profile=True
 
-# Author: Gilles Louppe, Peter Prettenhofer, Brian Holt, Noel Dawe, Satrajit Gosh
+# Authors: Gilles Louppe <g.louppe@gmail.com>
+#          Peter Prettenhofer <peter.prettenhofer@gmail.com>
+#          Brian Holt <bdholt1@gmail.com>
+#          Noel Dawe <noel@dawe.me>
+#          Satrajit Gosh <satrajit.ghosh@gmail.com>
 # Licence: BSD 3 clause
 
 
