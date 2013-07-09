@@ -165,14 +165,14 @@ def _check_clf_targets(y_true, y_pred):
 
     if type_true.startswith('multilabel'):
         if not type_pred.startswith('multilabel'):
-            raise ValueError("Can't handle mix of multilabel and multiclass "
-                             "targets")
+            raise ValueError("Can't handle mix of multilabel and {0} "
+                             "targets".format(type_pred))
         if type_true != type_pred:
             raise ValueError("Can't handle mix of multilabel formats (label "
                              "indicator matrix and sequence of sequences)")
     elif type_pred.startswith('multilabel'):
-        raise ValueError("Can't handle mix of multilabel and multiclass "
-                         "targets")
+        raise ValueError("Can't handle mix of multilabel and {0} "
+                         "targets".format(type_true))
 
     elif (type_pred in ('multiclass', 'binary')
           and type_true in ('multiclass', 'binary')):
