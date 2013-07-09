@@ -121,31 +121,24 @@ def _check_clf_targets(y_true, y_pred):
     type_true = type_of_target(y_true)
     type_pred = type_of_target(y_pred)
 
-    if type_true.startswith('multilabel'):
-        if not type_pred.startswith('multilabel'):
-            raise ValueError("Can't handle mix of multilabel and multiclass "
-                             "targets")
-        if type_true != type_pred:
-            raise ValueError("Can't handle mix of multilabel formats (label "
-                             "indicator matrix and sequence of sequences)")
-    elif type_pred.startswith('multilabel'):
-        raise ValueError("Can't handle mix of multilabel and multiclass "
-                         "targets")
+    y_type = set([type_true, type_pred])
+    if y_type == set(["binary", "multiclass"]):
+        y_type = set(["multiclass"])
 
-    elif (type_pred in ('multiclass', 'binary')
-          and type_true in ('multiclass', 'binary')):
+    if len(y_type) > 1:
+        raise ValueError("Can't handle mix of {0}/{1}"
+                         "".format(type_true, type_pred))
 
-        if 'multiclass' in (type_true, type_pred):
-            # 'binary' can be removed
-            type_true = type_pred = 'multiclass'
+    y_type = y_type.pop()
+    if (y_type not in set(["binary", "multiclass",
+                           "multilabel-indicator", "multilabel-sequences"])):
+        raise ValueError("{0} is not supported".format(y_type))
 
+    if y_type in set(["binary", "multiclass"]):
         y_true = _column_or_1d(y_true)
         y_pred = _column_or_1d(y_pred)
 
-    else:
-        raise ValueError("Can't handle %s/%s targets" % (type_true, type_pred))
-
-    return type_true, y_true, y_pred
+    return y_type, y_true, y_pred
 
 
 def auc(x, y, reorder=False):

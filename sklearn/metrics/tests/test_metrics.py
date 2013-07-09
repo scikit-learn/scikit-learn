@@ -1,6 +1,7 @@
 from __future__ import division, print_function
 
 from functools import partial
+from itertools import product
 import warnings
 from itertools import product
 import numpy as np
@@ -1629,21 +1630,34 @@ def test__check_clf_targets():
         (BIN, MCN): None,
     }
 
-    for type1, y1 in EXAMPLES:
-        for type2, y2 in EXAMPLES:
-            try:
-                expected = EXPECTED[type1, type2]
-            except KeyError:
-                expected = EXPECTED[type2, type1]
-            if expected is None:
-                assert_raises(ValueError, _check_clf_targets, y1, y2)
+    for (type1, y1), (type2, y2) in product(EXAMPLES, EXAMPLES):
+        try:
+            expected = EXPECTED[type1, type2]
+        except KeyError:
+            expected = EXPECTED[type2, type1]
+        if expected is None:
+            assert_raises(ValueError, _check_clf_targets, y1, y2)
+
+            if type1 != type2:
+                assert_raise_message(
+                    ValueError,
+                    "Can't handle mix of {0}/{1}".format(type1, type2),
+                    _check_clf_targets, y1, y2)
+
             else:
-                merged_type, y1out, y2out = _check_clf_targets(y1, y2)
-                assert_equal(merged_type, expected)
-                if not merged_type.startswith('multilabel'):
-                    assert_array_equal(y1out, np.squeeze(y1))
-                    assert_array_equal(y2out, np.squeeze(y2))
-                assert_raises(ValueError, _check_clf_targets, y1[:-1], y2)
+                if type1 not in (BIN, MC, SEQ, IND):
+                    assert_raise_message(
+                        ValueError,
+                        "{0} is not supported".format(type1),
+                        _check_clf_targets, y1, y2)
+
+        else:
+            merged_type, y1out, y2out = _check_clf_targets(y1, y2)
+            assert_equal(merged_type, expected)
+            if not merged_type.startswith('multilabel'):
+                assert_array_equal(y1out, np.squeeze(y1))
+                assert_array_equal(y2out, np.squeeze(y2))
+            assert_raises(ValueError, _check_clf_targets, y1[:-1], y2)
 
 
 def test__check_reg_targets():
