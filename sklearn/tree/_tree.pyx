@@ -807,6 +807,12 @@ cdef class Splitter:
                          np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                          DOUBLE_t* sample_weight):
         """Initialize the splitter."""
+        # Free old structures if any
+        if self.samples != NULL:
+            free(self.samples)
+        if self.features != NULL:
+            free(self.features)
+
         # Initialize samples and features structures
         cdef SIZE_t n_samples = X.shape[0]
         cdef SIZE_t* samples = <SIZE_t*> malloc(n_samples * sizeof(SIZE_t))
