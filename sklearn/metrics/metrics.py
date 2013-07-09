@@ -427,10 +427,14 @@ def _binary_clf_curve(y_true, y_score, pos_label=None):
     y_true, y_score = check_arrays(y_true, y_score)
 
     if (not (y_true.ndim == 1 or
-            (y_true.ndim == 2 and y_true.shape[1] == 1)) or
-            not (y_score.ndim == 1 or
-                (y_score.ndim == 2 and y_score.shape[1] == 1))):
-        raise ValueError("Bad input shape")
+            (y_true.ndim == 2 and y_true.shape[1] == 1))):
+        raise ValueError("y_true has a bad input shape "
+                         "{0}".format(y_true.shape))
+
+    if (not (y_score.ndim == 1 or
+            (y_score.ndim == 2 and y_score.shape[1] == 1))):
+        raise ValueError("y_score has a bad input shape "
+                         "{0}".format(y_score.shape))
 
     y_true = np.squeeze(y_true)
     y_score = np.squeeze(y_score)
