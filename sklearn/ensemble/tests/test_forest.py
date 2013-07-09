@@ -364,7 +364,7 @@ def test_multioutput():
     assert_equal(log_proba[1].shape, (4, 4))
 
     # toy regression problem
-    clf = ExtraTreesRegressor(random_state=5)
+    clf = ExtraTreesRegressor(random_state=0)
     y_hat = clf.fit(X, y).predict(T)
     assert_almost_equal(y_hat, y_true)
     assert_equal(y_hat.shape, (4, 2))

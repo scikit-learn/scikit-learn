@@ -1144,7 +1144,7 @@ cdef class RandomSplitter(Splitter):
                 break
 
         # Reorganize samples into samples[start:best_pos] + samples[best_pos:end]
-        if best_pos < end and best_pos != current_pos:
+        if best_pos < end and current_feature != best_feature:
             partition_start = start
             partition_end = end
             p = start
