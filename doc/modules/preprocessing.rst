@@ -415,3 +415,54 @@ hashable and comparable) to numerical labels::
   ================
 
   Please @mblondel or someone else write me!
+
+
+Imputation of missing values
+============================
+
+For various reasons, many real world datasets contain missing values, often
+encoded as blanks, `NaN`s or other placeholders. Such datasets however are
+incompatible with scikit-learn estimators which assume that all values in an
+array are numerical, and that all have and hold meaning. A basic strategy to use
+incomplete datasets is to discard entire rows and/or columns containing missing
+values. However, this comes at the price of losing data  which may be valuable
+(even though incomplete). A better strategy is to impute the missing values,
+i.e., to infer them from the known part of the data.
+
+The :class:`Imputer` class provides basic strategies for imputing missing
+values, either using the mean, the median or the most frequent value of
+the row or column in which the missing values are located. This class
+also allows for different missing values encoding.
+
+As an example, the following snippet demonstrates how to replace missing values,
+encoded as `np.nan`, using the mean value of the columns in which the missing
+values are.
+
+    >>> import numpy as np
+    >>> from sklearn.preprocessing import Imputer
+    >>> imp = Imputer(missing_values="NaN", strategy="mean", axis=0)
+    >>> imp.fit([[1, 2], [np.nan, 3], [7, 6]])
+    Imputer(axis=0, copy=True, missing_values="NaN", strategy="mean", verbose=0)
+    >>> X = [[np.nan, 2], [6, np.nan], [7, 6]]
+    >>> print(imp.transform(X))
+    [[ 4.          2.        ]
+     [ 6.          3.66666667]
+     [ 7.          6.        ]]
+
+The :class:`Imputer` class also supports sparse matrices:
+
+    >>> import scipy.sparse as sp
+    >>> X = sp.csc_matrix([[1, 2], [0, 3], [7, 6]])
+    >>> imp = Imputer(missing_values=0, strategy='mean', axis=0)
+    >>> imp.fit(X)
+    Imputer(axis=0, copy=True, missing_values=0, strategy='mean', verbose=0)
+    >>> X = sp.csc_matrix([[0, 2], [6, 0], [7, 6]])
+    >>> print(imp.transform(X))
+    [[ 4.          2.        ]
+     [ 6.          3.66666667]
+     [ 7.          6.        ]]
+
+Note that, here, missing values are encoded by 0 and are thus implicitly stored
+in the matrix. This format is thus suitable when there are many more missing
+values than observed values.
+

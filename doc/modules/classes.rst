@@ -961,6 +961,7 @@ Pairwise metrics
    :template: class.rst
 
    preprocessing.Binarizer
+   preprocessing.Imputer
    preprocessing.KernelCenterer
    preprocessing.LabelBinarizer
    preprocessing.LabelEncoder
