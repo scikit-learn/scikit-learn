@@ -1,0 +1,66 @@
+.. _biclustering:
+
+==========
+Bilustering
+==========
+
+`Biclustering <http://en.wikipedia.org/wiki/Biclustering>`__ of
+unlabeled data can be performed with the module
+:mod:`sklearn.bicluster`.
+
+After fitting a model, row and column cluster membership can be found
+in the `rows_` and `columns_`attributes. `rows_[i]` is a binary vector
+with nonzero entries corresponding to rows that belong to bicluster
+`i`.
+
+.. currentmodule:: sklearn.bicluster
+
+
+.. _spectral_coclustering:
+
+Spectral Co-Clustering
+======================
+
+The :class:`SpectralCoclustering` algorithm treats the input data
+matrix as a bipartite graph: the rows and columns of the matrix
+correspond to the two sets of vertices, and each entry corresponds to
+an edge between a row and a column. The algorithm approximates the
+normalized cut of this graph to find heavy subgraphs.
+
+The input matrix :math:`A` is normalized is performed as follows:
+
+.. math::
+    A_n = R^{−1/2} A C^{−1/2}
+
+Where :math:`R` is the diagonal matrix with entry :math:`i` equal to
+:math:`\sum_{j} A_{ij}` and :math:`C` is the diagonal matrix with
+entry :math:`j` equal to :math:`\sum_{i} A_{ij}`.
+
+The singular value decomposition, :math:`A_n = U \Sigma V^\top`,
+provides the partitions of the rows and columns of :math:`A`. A subset
+of the left singular vectors gives the word partitions, and a subset
+of the right singular vectors gives the song partitions.
+
+The :math:`\ell = \lceil \log_2 k \rceil` singular vectors, starting
+from the second, provide the desired partitioning information. They
+are used to form the the matrix :math:`Z`:
+
+.. math::
+    Z = \begin{bmatrix} R^{-1/2} U \\\\
+                        C^{-1/2} V
+          \end{bmatrix}
+
+where the the columns of :math:`U` are :math:`u_2, \dots, u_{\ell +
+1}`, and similarly for :math:`V`.
+
+Then the rows of :math:`Z` are clustered using k-means. The first
+n_rows labels provide the row partitioning, and the remaining n_column
+labels provide the column partitioning.
+
+
+.. _spectral_biclustering:
+
+Spectral Biclustering
+=====================
+
+TODO
