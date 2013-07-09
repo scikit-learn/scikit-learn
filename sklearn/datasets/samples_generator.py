@@ -1309,7 +1309,7 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
 
     Parameters
     ----------
-    shape : tuple (n_rows, n_cols)
+    shape : iterable (n_rows, n_cols)
         The shape of the result.
 
     n_clusters : integer
@@ -1355,7 +1355,7 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
     """
     generator = check_random_state(random_state)
     n_rows, n_cols = shape
-    result = np.zeros(shape)
+    result = np.zeros(shape, dtype=np.float64)
     consts = generator.uniform(minval, maxval, n_clusters)
 
     # row and column clusters of approximately equal sizes
@@ -1395,20 +1395,20 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
 
     Parameters
     ----------
-    shape : tuple (n_rows, n_cols)
+    shape : iterable (n_rows, n_cols)
         The shape of the result.
 
-    n_clusters : integer or tuple (rows, columns)
-        The number of blocks.
+    n_clusters : integer or iterable (n_row_clusters, n_column_clusters)
+        The number of row and column clusters.
 
     noise : float, optional (default=0.0)
         The standard deviation of the gaussian noise.
 
     minval : int, optional (default=10)
-        Minimum value of the result.
+        Minimum value for generating a panel.
 
     maxval : int, optional (default=100)
-        Maximum value of the result.
+        Maximum value for generating a panel.
 
     shuffle : boolean, optional (default=True)
         Shuffle the samples.
@@ -1440,19 +1440,13 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
     """
     generator = check_random_state(random_state)
 
-    if isinstance(n_clusters, int):
-        n_clusters = (n_clusters, n_clusters)
-
-    n_rows, n_cols = shape
-    n_row_clusters, n_col_clusters = n_clusters
-
-    minval = np.sqrt(minval)
-    maxval = np.sqrt(maxval)
-
-    row_consts = generator.uniform(minval, maxval, n_row_clusters)
-    col_consts = generator.uniform(minval, maxval, n_col_clusters)
+    if hasattr(n_clusters, "__len__"):
+        n_row_clusters, n_col_clusters = n_clusters
+    else:
+        n_row_clusters = n_col_clusters = n_clusters
 
     # row and column clusters of approximately equal sizes
+    n_rows, n_cols = shape
     row_sizes = generator.multinomial(n_rows,
                                       np.repeat(1.0 / n_row_clusters,
                                       n_row_clusters))
@@ -1460,20 +1454,19 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
                                       np.repeat(1.0 / n_col_clusters,
                                       n_col_clusters))
 
-    row_vector = np.hstack(list(np.repeat(val, rep) for val, rep in
-                                zip(row_consts, row_sizes)))
-    col_vector = np.hstack(list(np.repeat(val, rep) for val, rep in
-                                zip(col_consts, col_sizes)))
-
-    result = np.outer(row_vector, col_vector)
-
-    if noise > 0:
-        result += generator.normal(scale=noise, size=result.shape)
-
     row_labels = np.hstack(list(np.repeat(val, rep) for val, rep in
                                 zip(range(n_row_clusters), row_sizes)))
     col_labels = np.hstack(list(np.repeat(val, rep) for val, rep in
                                 zip(range(n_col_clusters), col_sizes)))
+
+    result = np.empty(shape, dtype=np.float64)
+    for i in range(n_row_clusters):
+        for j in range(n_col_clusters):
+            selector = np.outer(row_labels == i, col_labels == j)
+            result[selector] += generator.uniform(minval, maxval)
+
+    if noise > 0:
+        result += generator.normal(scale=noise, size=result.shape)
 
     if shuffle:
         row_idx = generator.permutation(n_rows)
