@@ -1,15 +1,15 @@
 .. _biclustering:
 
-==========
-Bilustering
-==========
+============
+Biclustering
+============
 
 `Biclustering <http://en.wikipedia.org/wiki/Biclustering>`__ of
 unlabeled data can be performed with the module
 :mod:`sklearn.bicluster`.
 
 After fitting a model, row and column cluster membership can be found
-in the `rows_` and `columns_`attributes. `rows_[i]` is a binary vector
+in the `rows_` and `columns_` attributes. `rows_[i]` is a binary vector
 with nonzero entries corresponding to rows that belong to bicluster
 `i`.
 
