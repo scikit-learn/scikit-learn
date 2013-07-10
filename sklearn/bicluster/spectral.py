@@ -120,6 +120,13 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator)):
         self.kmeans_kwargs = kmeans_kwargs
         self.random_state = random_state
 
+    def _check_parameters(self):
+        legal_svd_methods = ('randomized', 'arpack')
+        if self.svd_method not in legal_svd_methods:
+            raise ValueError("Unknown SVD method: '{}'. `svd_method` must be"
+                             " one of {}.".format(self.svd_method,
+                                                  legal_svd_methods))
+
     def fit(self, X):
         """Creates a biclustering for X.
 
@@ -132,6 +139,7 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator)):
         if X.ndim != 2:
             raise ValueError("Argument `X` has the wrong dimensionality."
                              " It must have exactly two dimensions.")
+        self._check_parameters()
         self._fit(X)
 
     def _svd(self, array, n_components):
@@ -321,21 +329,22 @@ class SpectralBiclustering(BaseSpectral):
                                                    svd_kwargs,
                                                    kmeans_kwargs,
                                                    random_state)
-        legal_methods = ('bistochastic', 'scale', 'log')
-        if method not in legal_methods:
-            raise ValueError("Unknown method: '{}'. `method` must be"
-                             " one of {}.".format(method, legal_methods))
-        legal_svd_methods = ('randomized', 'arpack')
-        if svd_method not in legal_svd_methods:
-            raise ValueError("Unknown SVD method: '{}'. `svd_method` must be"
-                             " one of {}.".format(svd_method,
-                                                  legal_svd_methods))
+        self.method = method
+        self.n_components = n_components
+        self.n_best = n_best
 
+
+    def _check_parameters(self):
+        super(SpectralBiclustering, self)._check_parameters()
+        legal_methods = ('bistochastic', 'scale', 'log')
+        if self.method not in legal_methods:
+            raise ValueError("Unknown method: '{}'. `method` must be"
+                             " one of {}.".format(self.method, legal_methods))
         try:
-            int(n_clusters)
+            int(self.n_clusters)
         except TypeError:
             try:
-                r, c = n_clusters
+                r, c = self.n_clusters
                 int(r)
                 int(c)
             except (ValueError, TypeError):
@@ -343,13 +352,9 @@ class SpectralBiclustering(BaseSpectral):
                                  " It should either be a single integer"
                                  " or an iterable with two integers:"
                                  " `(n_row_clusters, n_column_clusters)`")
-        if n_best > n_components:
+        if self.n_best > self.n_components:
             raise ValueError("`n_best` cannot be larger than"
                              " `n_components`.")
-
-        self.method = method
-        self.n_components = n_components
-        self.n_best = n_best
 
     def _fit(self, X):
         n_sv = self.n_components
