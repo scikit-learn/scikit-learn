@@ -7,6 +7,8 @@
 
 Changelog
 ---------
+   - Ability to pass one penalty (alpha value) per target in
+     :class:`linear_model.Ridge`, by @eickenberg and `Mathieu Blondel`_.
 
    - Fixed :mod:`sklearn.linear_model.stochastic_gradient.py` L2 regularization
      issue (minor practical significants).
@@ -116,6 +118,10 @@ Changelog
      to be ``n_features``. This was the default behavior, so programs using it
      will continue to work as they did.
 
+   - :class:`sklearn.cluster.KMeans` now fits several orders of magnitude
+     faster on sparse data (the speedup depends on the sparsity). By
+     `Lars Buitinck`_.
+
 API changes summary
 -------------------
 
@@ -137,9 +143,12 @@ API changes summary
    - Sparse matrix support in :class:`sklearn.decomposition.RandomizedPCA`
      is now deprecated in favor of the new ``TruncatedSVD``.
 
-   - :class:`cross_valiation.KFold` and
-     :class:`cross_valiation.StratifiedKFold` now enforce `n_folds >= 2`
+   - :class:`cross_validation.KFold` and
+     :class:`cross_validation.StratifiedKFold` now enforce `n_folds >= 2`
      otherwise a ``ValueError`` is raised. By `Olivier Grisel`_.
+
+   - :func:`datasets.load_files`'s ``charset`` and ``charset_errors``
+     parameters were renamed ``encoding`` and ``decode_errors``.
 
 .. _changes_0_13_1:
 

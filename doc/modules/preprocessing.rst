@@ -333,15 +333,16 @@ Continuing the example above::
 
   >>> enc = preprocessing.OneHotEncoder()
   >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])
-  OneHotEncoder(dtype=<class 'float'>, n_values='auto')
+  OneHotEncoder(categorical_features='all', dtype=<class 'float'>,
+         n_values='auto')
   >>> enc.transform([[0, 1, 3]]).toarray()
   array([[ 1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
 
 By default, how many values each feature can take is inferred automatically from the dataset.
-It is possible to specify this explicitly using the parameter ``n_values``. 
+It is possible to specify this explicitly using the parameter ``n_values``.
 There are two genders, three possible continents and four web browsers in our
 dataset.
-Then we fit the estimator, and transform a data point. 
+Then we fit the estimator, and transform a data point.
 In the result, the first two numbers encode the gender, the next set of three
 numbers the continent and the last four the web browser.
 

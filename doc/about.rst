@@ -61,16 +61,44 @@ The `PSF <http://www.python.org/psf/>`_ helped find and manage funding for our
 `tinyclues <http://www.tinyclues.com/>`_ funded the 2011 international Granada
 sprint.
 
-2013' Paris international sprint
+Donating to the project
+~~~~~~~~~~~~~~~~~~~~~~~
+
+If you are interested in donating to the project or to one of our code-sprints, you can use
+the *Paypal* button below or the `NumFOCUS Donations Page <http://numfocus.org/donatejoin/>`_
+
+
+
+.. raw :: html
+
+    </br></br>
+    <form action="https://www.paypal.com/cgi-bin/webscr" method="post"
+    target="_top">
+    <input type="hidden" name="cmd" value="_s-xclick">
+    <input type="hidden" name="hosted_button_id" value="74EYUMF3FTSW8">
+    <input type="image"
+    src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"
+    border="0" name="submit" alt="PayPal - The safer, easier way to pay
+    online!" style="position: relative;
+    left: 40%;">
+    <img alt="" border="0"
+    src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1"
+    height="1">
+    </form>
+    </br>
+
+The 2013' Paris international sprint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-|center-div|   |telecom|   |tinyclues|   |afpy|   |end-div|
+|center-div|   |telecom|   |tinyclues|   |afpy| |FNRS|
+
+ |end-div|
 
 
 
 .. |center-div| raw:: html
 
-    <div style="text-align: center; margin: -7px 0 -10px 0;"> 
+    <div style="text-align: center; margin: -7px 0 -10px 0;">
 
 
 .. |telecom| image:: http://f.hypotheses.org/wp-content/blogs.dir/331/files/2011/03/Logo-TPT.jpg
@@ -92,7 +120,18 @@ sprint.
    :width: 150px
    :target: http://www.svi.cnrs-bellevue.fr
 
+.. |FNRS| image:: http://www.fnrs.be/uploaddocs/images/COMMUNIQUER/FRS-FNRS_rose_transp.png
+   :width: 150px
+   :target: http://www.frs-fnrs.be/
+
+.. figure:: http://sites.uclouvain.be/dysco/pmwiki/uploads/Main/dysco.gif
+   :width: 150px
+   :target: http://sites.uclouvain.be/dysco/
+
+   IAP VII/19 - DYSCO
 
 .. |end-div| raw:: html
 
   </div>
+
+*For more information on this sprint, see* `here <https://github.com/scikit-learn/administrative/blob/master/sprint_paris_2013/proposal.rst>`_
