@@ -87,7 +87,7 @@ suitable for feeding into a classifier (maybe after being piped into a
   >>> vec = DictVectorizer()
   >>> pos_vectorized = vec.fit_transform(pos_window)
   >>> pos_vectorized                     # doctest: +NORMALIZE_WHITESPACE
-  <1x6 sparse matrix of type '<type 'numpy.float64'>'
+  <1x6 sparse matrix of type '<class 'numpy.float64'>'
       with 6 stored elements in Compressed Sparse Row format>
   >>> pos_vectorized.toarray()
   array([[ 1.,  1.,  1.,  1.,  1.,  1.]])
@@ -291,12 +291,12 @@ reasonable (please see  the :ref:`reference documentation
 
   >>> vectorizer = CountVectorizer(min_df=1)
   >>> vectorizer                            # doctest: +NORMALIZE_WHITESPACE
-  CountVectorizer(analyzer=u'word', binary=False, charset=u'utf-8',
-          charset_error=u'strict', dtype=<type 'numpy.int64'>,
-          input=u'content', lowercase=True, max_df=1.0, max_features=None,
+  CountVectorizer(analyzer='word', binary=False, charset='utf-8',
+          charset_error='strict', dtype=<class 'numpy.int64'>,
+          input='content', lowercase=True, max_df=1.0, max_features=None,
           min_df=1, ngram_range=(1, 1), preprocessor=None, 
           stop_words=None, strip_accents=None,
-          token_pattern=u'(?u)\\b\\w\\w+\\b', tokenizer=None, vocabulary=None)
+          token_pattern='(?u)\\b\\w\\w+\\b', tokenizer=None, vocabulary=None)
 
 Let's use it to tokenize and count the word occurrences of a minimalistic
 corpus of text documents::
@@ -309,7 +309,7 @@ corpus of text documents::
   ... ]
   >>> X = vectorizer.fit_transform(corpus)
   >>> X                                       # doctest: +NORMALIZE_WHITESPACE
-  <4x9 sparse matrix of type '<type 'numpy.int64'>'
+  <4x9 sparse matrix of type '<class 'numpy.int64'>'
       with 19 stored elements in Compressed Sparse Column format>
 
 The default configuration tokenizes the string by extracting words of
@@ -318,14 +318,14 @@ requested explicitly::
 
   >>> analyze = vectorizer.build_analyzer()
   >>> analyze("This is a text document to analyze.")
-  [u'this', u'is', u'text', u'document', u'to', u'analyze']
+  ['this', 'is', 'text', 'document', 'to', 'analyze']
 
 Each term found by the analyzer during the fit is assigned a unique
 integer index corresponding to a column in the resulting matrix. This
 interpretation of the columns can be retrieved as follows::
 
   >>> vectorizer.get_feature_names()
-  [u'and', u'document', u'first', u'is', u'one', u'second', u'the', u'third', u'this']
+  ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
 
   >>> X.toarray()           # doctest: +ELLIPSIS
   array([[0, 1, 1, 1, 0, 0, 1, 0, 1],
@@ -353,10 +353,10 @@ preserve some of the local ordering information we can extract 2-grams
 of words in addition to the 1-grams (the word themselvs)::
 
   >>> bigram_vectorizer = CountVectorizer(ngram_range=(1, 2),
-  ...                                     token_pattern=ur'\b\w+\b', min_df=1)
+  ...                                     token_pattern=r'\b\w+\b', min_df=1)
   >>> analyze = bigram_vectorizer.build_analyzer()
   >>> analyze('Bi-grams are cool!')
-  [u'bi', u'grams', u'are', u'cool', u'bi grams', u'grams are', u'are cool']
+  ['bi', 'grams', 'are', 'cool', 'bi grams', 'grams are', 'are cool']
 
 The vocabulary extracted by this vectorizer is hence much bigger and
 can now resolve ambiguities encoded in local positioning patterns::
@@ -373,7 +373,7 @@ can now resolve ambiguities encoded in local positioning patterns::
 In particular the interrogative form "Is this" is only present in the
 last document::
 
-  >>> feature_index = bigram_vectorizer.vocabulary_.get(u'is this')
+  >>> feature_index = bigram_vectorizer.vocabulary_.get('is this')
   >>> X_2[:, feature_index]     # doctest: +ELLIPSIS
   array([0, 0, 0, 1]...)
 
@@ -405,7 +405,7 @@ class::
   >>> from sklearn.feature_extraction.text import TfidfTransformer
   >>> transformer = TfidfTransformer()
   >>> transformer   # doctest: +NORMALIZE_WHITESPACE
-  TfidfTransformer(norm=u'l2', smooth_idf=True, sublinear_tf=False,
+  TfidfTransformer(norm='l2', smooth_idf=True, sublinear_tf=False,
                    use_idf=True)
 
 Again please see the :ref:`reference documentation
@@ -425,7 +425,7 @@ content of the documents::
   ...
   >>> tfidf = transformer.fit_transform(counts)
   >>> tfidf                                  # doctest: +NORMALIZE_WHITESPACE
-  <6x3 sparse matrix of type '<type 'numpy.float64'>'
+  <6x3 sparse matrix of type '<class 'numpy.float64'>'
       with 9 stored elements in Compressed Sparse Row format>
 
   >>> tfidf.toarray()                        # doctest: +ELLIPSIS
@@ -452,7 +452,7 @@ class called :class:`TfidfVectorizer` that combines all the option of
   >>> vectorizer = TfidfVectorizer(min_df=1)
   >>> vectorizer.fit_transform(corpus)
   ...                                       # doctest: +NORMALIZE_WHITESPACE
-  <4x9 sparse matrix of type '<type 'numpy.float64'>'
+  <4x9 sparse matrix of type '<class 'numpy.float64'>'
       with 19 stored elements in Compressed Sparse Row format>
 
 While the tf–idf normalization is often very useful, there might
@@ -574,7 +574,7 @@ decide better::
   >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(2, 2), min_df=1)
   >>> counts = ngram_vectorizer.fit_transform(['words', 'wprds'])
   >>> ngram_vectorizer.get_feature_names()
-  [u' w', u'ds', u'or', u'pr', u'rd', u's ', u'wo', u'wp']
+  [' w', 'ds', 'or', 'pr', 'rd', 's ', 'wo', 'wp']
   >>> counts.toarray().astype(int)
   array([[1, 1, 1, 0, 1, 1, 1, 0],
          [1, 1, 0, 1, 1, 1, 0, 1]])
@@ -587,18 +587,18 @@ span across words::
   >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(5, 5), min_df=1)
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   ...                                         # doctest: +NORMALIZE_WHITESPACE
-  <1x4 sparse matrix of type '<type 'numpy.int64'>'
+  <1x4 sparse matrix of type '<class 'numpy.int64'>'
      with 4 stored elements in Compressed Sparse Column format>
   >>> ngram_vectorizer.get_feature_names()
-  [u' fox ', u' jump', u'jumpy', u'umpy ']
+  [' fox ', ' jump', 'jumpy', 'umpy ']
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char', ngram_range=(5, 5), min_df=1)
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   ...                                         # doctest: +NORMALIZE_WHITESPACE
-  <1x5 sparse matrix of type '<type 'numpy.int64'>'
+  <1x5 sparse matrix of type '<class 'numpy.int64'>'
       with 5 stored elements in Compressed Sparse Column format>
   >>> ngram_vectorizer.get_feature_names()
-  [u'jumpy', u'mpy f', u'py fo', u'umpy ', u'y fox']
+  ['jumpy', 'mpy f', 'py fo', 'umpy ', 'y fox']
 
 The word boundaries-aware variant ``char_wb`` is especially interesting
 for languages that use white-spaces for word separation as it generates
@@ -663,7 +663,7 @@ meaning that you don't have to call ``fit`` on it::
   >>> hv = HashingVectorizer(n_features=10)
   >>> hv.transform(corpus)
   ...                                       # doctest: +NORMALIZE_WHITESPACE
-  <4x10 sparse matrix of type '<type 'numpy.float64'>'
+  <4x10 sparse matrix of type '<class 'numpy.float64'>'
       with 16 stored elements in Compressed Sparse Row format>
 
 You can see that 16 non-zero feature tokens where extracted in the vector
@@ -688,7 +688,7 @@ Let's try again with the default setting::
   >>> hv = HashingVectorizer()
   >>> hv.transform(corpus)
   ...                                       # doctest: +NORMALIZE_WHITESPACE
-  <4x1048576 sparse matrix of type '<type 'numpy.float64'>'
+  <4x1048576 sparse matrix of type '<class 'numpy.float64'>'
       with 19 stored elements in Compressed Sparse Row format>
 
 We no longer get the collisions, but this comes at the expense of a much larger
@@ -737,7 +737,7 @@ to the vectorizer constructor::
   ...
   >>> vectorizer = CountVectorizer(tokenizer=my_tokenizer)
   >>> vectorizer.build_analyzer()(u"Some... punctuation!")
-  [u'some...', u'punctuation!']
+  ['some...', 'punctuation!']
 
 In particular we name:
 

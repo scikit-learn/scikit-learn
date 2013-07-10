@@ -252,9 +252,10 @@ We can choose `alpha` to minimize left out error, this time using the
 diabetes dataset rather than our synthetic data::
 
     >>> alphas = np.logspace(-4, -1, 6)
-    >>> print [regr.set_params(alpha=alpha
+    >>> from __future__ import print_function  
+    >>> print([regr.set_params(alpha=alpha
     ...             ).fit(diabetes_X_train, diabetes_y_train,
-    ...             ).score(diabetes_X_test, diabetes_y_test) for alpha in alphas] # doctest: +ELLIPSIS
+    ...             ).score(diabetes_X_test, diabetes_y_test) for alpha in alphas]) # doctest: +ELLIPSIS
     [0.5851110683883..., 0.5852073015444..., 0.5854677540698..., 0.5855512036503..., 0.5830717085554..., 0.57058999437...]
 
 
