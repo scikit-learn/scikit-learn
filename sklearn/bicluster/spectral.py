@@ -404,9 +404,9 @@ class SpectralBiclustering(BaseSpectral):
             centroid, labels, _ = k_means(v.reshape(-1, 1), n_clusters,
                                           random_state=self.random_state,
                                           **self.kmeans_kwargs)
-            return centroid[labels].reshape(-1)
-        piecewise_vectors = np.apply_along_axis(make_piecewise, 1,
-                                                vectors)
+            return centroid[labels].ravel()
+        piecewise_vectors = np.apply_along_axis(make_piecewise,
+                                                axis=1, arr=vectors)
         dists = np.apply_along_axis(np.linalg.norm, 1,
                                     vectors - piecewise_vectors)
         result = vectors[np.argsort(dists)[:n_best]]
