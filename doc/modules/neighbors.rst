@@ -38,6 +38,10 @@ The classes in :mod:`sklearn.neighbors` can handle either Numpy arrays or
 possible distance metrics are supported.  For sparse matrices, arbitrary
 Minkowski metrics are supported for searches.
 
+There are many learning routines which rely on nearest neighbors at their
+core.  One example is :ref:`kernel density estimation <kernel_density>`,
+discussed in the :ref:`density estimation <density_estimation>` section.
+
 
 .. _unsupervised_neighbors:
 
@@ -491,101 +495,3 @@ the model from 0.81 to 0.82.
 
   * :ref:`example_neighbors_plot_nearest_centroid.py`: an example of
     classification using nearest centroid with different shrink thresholds.
-
-
-Kernel Density Estimation
-=========================
-Nearest neighbors queries form the basis of a popular algorithm for estimating
-the density of points in a parameter space: Kernel Density Estimation.
-Given a positive kernel :math:`K(x)` and a bandwidth :math:`h`,
-the kernel density estimate at a point :math:`y` within a group of points
-:math:`x_i; i=1\cdots N` is:
-
-.. math::
-    \rho_K(y) = \sum_{i=1}^{N} K((y - x_i) / h)
-
-The bandwidth here acts as a smoothing parameter, controlling the tradeoff
-between bias and variance in the result.  A large bandwidth leads to a very
-smooth (i.e. high-bias) density distribution.  A small bandwidth leads
-to an unsmooth (i.e. high-variance) density distribution.
-
-The scikit-learn kernel density estimator can be used as follows:
-
-   >>> from sklearn.neighbors.kde import KernelDensity
-   >>> import numpy as np
-   >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
-   >>> kde = KernelDensity(kernel='gaussian', bandwidth=0.2).fit(X)
-   >>> kde.eval(X)
-   array([-0.41075698, -0.41075698, -0.41076071, -0.41075698, -0.41075698,
-          -0.41076071])
-
-In practice, the kernel :math:`K` can be any symmetric positive function which
-decreases as its argument gets larger. The often-used Gaussian kernel is
-optimal from a maximum entropy standpoint, but other kernels are used as
-well.  The scikit-learn kernel density estimator implements the following
-kernels:
-
-* Gaussian kernel (``kernel = 'gaussian'``)
-  
-  :math:`K(x; h) \propto \exp(- \frac{x^2}{2h^2} )`
-
-* Tophat kernel (``kernel = 'tophat'``)
-
-  :math:`K(x; h) \propto 1` if :math:`x < h`
-
-* Epanechnikov kernel (``kernel = 'epanechnikov'``)
-  
-  :math:`K(x; h) \propto 1 - \frac{x^2}{h^2}`
-
-* Exponential kernel (``kernel = 'exponential'``)
-
-  :math:`K(x; h) \propto \exp(-x/h)`
-
-* Linear kernel (``kernel = 'linear'``)
-
-  :math:`K(x; h) \propto 1 - dist/h` if :math:`x < h`
-
-* Cosine kernel (``kernel = 'cosine'``)
-
-  :math:`K(x; h) \propto \cos(\frac{\pi x}{2h})` if :math:`x < h`
-
-The kernel density estimator can be used with any of the valid distance
-metrics (see :class:`DistanceMetric` for a list of available metrics), though
-the results are properly normalized only for the Euclidean metric.  One
-particularly useful metric is the
-`Haversine distance <http://en.wikipedia.org/wiki/Haversine_formula>`_
-which measures the angular distance between points on a sphere.  Here
-is an example of using a kernel density estimate for a visualization
-of geospatial data, in this case the distribution of observations of two
-different species on the South American continent:
-
-.. |species_kde| image:: ../auto_examples/neighbors/images/plot_species_kde_1.png
-   :target: ../auto_examples/neighbors/plot_species_kde.html
-   :scale: 80
-
-.. centered:: |species_kde|
-
-One other useful application of kernel density estimation is to learn a
-non-parametric generative model of a dataset in order to efficiently
-draw new samples from this generative model.
-Here is an example of using this process to
-create a new set of hand-written digits, using a Gaussian kernel learned
-on a PCA projection of the data:
-
-.. |digits_kde| image:: ../auto_examples/neighbors/images/plot_digits_kde_sampling_1.png
-   :target: ../auto_examples/neighbors/plot_digits_kde_sampling.html
-   :scale: 80
-
-.. centered:: |digits_kde|
-
-The "new" data consists of linear combinations of the input data, with weights
-probabilistically drawn given the KDE model.
-
-.. topic:: Examples:
-
-  * :ref:`example_neighbors_plot_digits_kde_sampling.py`: an example of using
-    Kernel Density estimation to learn a generative model of the hand-written
-    digits data, and drawing new samples from this model.
-
-  * :ref:`example_neighbors_plot_species_kde.py`: an example of Kernel Density
-    estimation using the Haversine distance metric to visualize geospatial data
