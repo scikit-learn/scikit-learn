@@ -48,6 +48,7 @@ from sklearn.metrics import (accuracy_score,
                              zero_one_score,
                              zero_one_loss)
 from sklearn.metrics.metrics import _check_clf_targets
+from sklearn.metrics.metrics import _check_reg_targets
 
 from sklearn.externals.six.moves import xrange
 
@@ -1004,6 +1005,7 @@ def test_format_invariance_with_1d_vectors():
                 name not in MULTILABELS_METRICS):
             assert_raises(ValueError, metric, y1_row, y2_row)
 
+
 def test_clf_single_sample():
     """Non-regression test: scores should work with a single sample.
 
@@ -1640,3 +1642,29 @@ def test__check_clf_targets():
                     assert_array_equal(y1out, np.squeeze(y1))
                     assert_array_equal(y2out, np.squeeze(y2))
                 assert_raises(ValueError, _check_clf_targets, y1[:-1], y2)
+
+
+def test__check_reg_targets():
+    # All of length 3
+    EXAMPLES = [
+        ("continuous", [1, 2, 3], 1),
+        ("continuous", [[1], [2], [3]], 1),
+        ("continuous-multioutput", [[1, 1], [2, 2], [3, 1]], 2),
+        ("continuous-multioutput", [[5, 1], [4, 2], [3, 1]], 2),
+        ("continuous-multioutput", [[1, 3, 4], [2, 2, 2], [3, 1, 1]], 3),
+    ]
+
+    for (type1, y1, n_out1), (type2, y2, n_out2) in product(EXAMPLES,
+                                                            EXAMPLES):
+
+        if type1 == type2 and n_out1 == n_out2:
+            y_type, y_check1, y_check2 = _check_reg_targets(y1, y2)
+            assert_equal(type1, y_type)
+            if type1 == 'continuous':
+                assert_array_equal(y_check1, np.reshape(y1, (-1, 1)))
+                assert_array_equal(y_check2, np.reshape(y2, (-1, 1)))
+            else:
+                assert_array_equal(y_check1, y1)
+                assert_array_equal(y_check2, y2)
+        else:
+            assert_raises(ValueError, _check_reg_targets, y1, y2)

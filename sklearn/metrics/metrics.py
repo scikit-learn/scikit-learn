@@ -34,6 +34,43 @@ from ..utils.multiclass import type_of_target
 ###############################################################################
 # General utilities
 ###############################################################################
+def _check_reg_targets(y_true, y_pred):
+    """Check that y_true and y_pred belong to the same regression task
+
+    Parameters
+    ----------
+    y_true : array-like,
+
+    y_pred : array-like
+
+    Returns
+    -------
+    type_true : one of {'continuous', continuous-multioutput'}
+        The type of the true target data, as output by
+        ``utils.multiclass.type_of_target``
+
+    y_true : array-like of shape = [n_samples, n_outputs]
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape = [n_samples, n_outputs]
+        Estimated target values.
+    """
+    y_true, y_pred = check_arrays(y_true, y_pred)
+
+    if y_true.ndim == 1:
+        y_true = y_true.reshape((-1, 1))
+
+    if y_pred.ndim == 1:
+        y_pred = y_pred.reshape((-1, 1))
+
+    if y_true.shape[1] != y_pred.shape[1]:
+        raise ValueError("y_true and y_pred have different number of output "
+                         "({0}!={1})".format(y_true.shape[1], y_true.shape[1]))
+
+    y_type = 'continuous' if y_true.shape[1] == 1 else 'continuous-multioutput'
+
+    return y_type, y_true, y_pred
+
 
 def _check_clf_targets(y_true, y_pred):
     """Check that y_true and y_pred belong to the same classification task
@@ -85,19 +122,17 @@ def _check_clf_targets(y_true, y_pred):
             type_true = type_pred = 'multiclass'
 
         y_true, y_pred = check_arrays(y_true, y_pred)
-
         if (not (y_true.ndim == 1 or
                 (y_true.ndim == 2 and y_true.shape[1] == 1))):
-            raise ValueError("y_true has a bad input shape "
-                             "{0}".format(y_true.shape))
+            raise ValueError("y_true has a bad input shape {0} "
+                             "".format(y_true.shape))
 
         if (not (y_pred.ndim == 1 or
                 (y_pred.ndim == 2 and y_pred.shape[1] == 1))):
-            raise ValueError("y_pred has a bad input shape "
-                             "{0}".format(y_pred.shape))
-
-        y_true = np.ravel(y_true)
-        y_pred = np.ravel(y_pred)
+            raise ValueError("y_pred has a bad input shape {0}"
+                             "".format(y_pred.shape))
+        y_true = y_true.ravel()
+        y_pred = y_pred.ravel()
 
     else:
         raise ValueError("Can't handle %s/%s targets" % (type_true, type_pred))
@@ -425,19 +460,17 @@ def _binary_clf_curve(y_true, y_score, pos_label=None):
         Decreasing score values.
     """
     y_true, y_score = check_arrays(y_true, y_score)
-
     if (not (y_true.ndim == 1 or
             (y_true.ndim == 2 and y_true.shape[1] == 1))):
-        raise ValueError("y_true has a bad input shape "
-                         "{0}".format(y_true.shape))
+        raise ValueError("y_true has a bad input shape {0} "
+                         "".format(y_true.shape))
 
     if (not (y_score.ndim == 1 or
             (y_score.ndim == 2 and y_score.shape[1] == 1))):
-        raise ValueError("y_score has a bad input shape "
-                         "{0}".format(y_score.shape))
-
-    y_true = np.squeeze(y_true)
-    y_score = np.squeeze(y_score)
+        raise ValueError("y_score has a bad input shape {0}"
+                         "".format(y_score.shape))
+    y_true = np.ravel(y_true)
+    y_score = np.ravel(y_score)
 
     # ensure binary classification if pos_label is not specified
     classes = np.unique(y_true)
@@ -2120,10 +2153,10 @@ def hamming_loss(y_true, y_pred, classes=None):
     if y_type == 'multilabel-indicator':
         return np.mean(y_true != y_pred)
     elif y_type == 'multilabel-sequences':
-            loss = np.array([len(set(pred) ^ set(true))
-                             for pred, true in zip(y_pred, y_true)])
+        loss = np.array([len(set(pred) ^ set(true))
+                         for pred, true in zip(y_pred, y_true)])
 
-            return np.mean(loss) / np.size(classes)
+        return np.mean(loss) / np.size(classes)
 
     else:
         return sp_hamming(y_true, y_pred)
@@ -2161,11 +2194,7 @@ def mean_absolute_error(y_true, y_pred):
     0.75
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred)
-
-    y_true = np.squeeze(y_true)
-    y_pred = np.squeeze(y_pred)
-
+    y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
     return np.mean(np.abs(y_pred - y_true))
 
 
@@ -2198,10 +2227,7 @@ def mean_squared_error(y_true, y_pred):
     0.708...
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred)
-    y_true = np.squeeze(y_true)
-    y_pred = np.squeeze(y_pred)
-
+    y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
     return np.mean((y_pred - y_true) ** 2)
 
 
@@ -2239,18 +2265,10 @@ def explained_variance_score(y_true, y_pred):
     0.957...
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred)
+    y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
 
-    if not (y_true.ndim == 1 or (y_true.ndim == 2 and y_true.shape[1] == 1)):
-        raise ValueError("y_true has a bad input shape "
-                         "{0}".format(y_true.shape))
-
-    if not (y_pred.ndim == 1 or (y_pred.ndim == 2 and y_pred.shape[1] == 1)):
-        raise ValueError("y_pred has a bad input shape "
-                         "{0}".format(y_pred.shape))
-
-    y_true = np.ravel(y_true)
-    y_pred = np.ravel(y_pred))
+    if y_type != "continuous":
+        raise ValueError("{0} is not supported".format(y_type))
 
     numerator = np.var(y_true - y_pred)
     denominator = np.var(y_true)
@@ -2307,12 +2325,9 @@ def r2_score(y_true, y_pred):
     0.938...
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred)
+    y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
 
-    y_true = np.squeeze(y_true)
-    y_pred = np.squeeze(y_pred)
-
-    if y_true.size == 1:
+    if len(y_true) == 1:
         raise ValueError("r2_score can only be computed given more than one"
                          " sample.")
     numerator = ((y_true - y_pred) ** 2).sum(dtype=np.float64)
