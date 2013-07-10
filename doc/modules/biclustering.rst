@@ -43,7 +43,7 @@ of the right singular vectors gives the song partitions.
 
 The :math:`\ell = \lceil \log_2 k \rceil` singular vectors, starting
 from the second, provide the desired partitioning information. They
-are used to form the the matrix :math:`Z`:
+are used to form the matrix :math:`Z`:
 
 .. math::
     Z = \begin{bmatrix} R^{-1/2} U \\\\
