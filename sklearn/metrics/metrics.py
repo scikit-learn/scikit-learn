@@ -96,8 +96,8 @@ def _check_clf_targets(y_true, y_pred):
             raise ValueError("y_pred has a bad input shape "
                              "{0}".format(y_pred.shape))
 
-        y_true = np.atleast_1d(np.squeeze(y_true))
-        y_pred = np.atleast_1d(np.squeeze(y_pred))
+        y_true = np.ravel(y_true)
+        y_pred = np.ravel(y_pred)
 
     else:
         raise ValueError("Can't handle %s/%s targets" % (type_true, type_pred))
@@ -2249,8 +2249,8 @@ def explained_variance_score(y_true, y_pred):
         raise ValueError("y_pred has a bad input shape "
                          "{0}".format(y_pred.shape))
 
-    y_true = np.atleast_1d(np.squeeze(y_true))
-    y_pred = np.atleast_1d(np.squeeze(y_pred))
+    y_true = np.ravel(y_true)
+    y_pred = np.ravel(y_pred))
 
     numerator = np.var(y_true - y_pred)
     denominator = np.var(y_true)
