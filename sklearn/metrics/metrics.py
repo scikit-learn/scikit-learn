@@ -126,10 +126,12 @@ def _check_clf_targets(y_true, y_pred):
         y_type = set(["multiclass"])
 
     if len(y_type) > 1:
-        raise ValueError("Can't handle mix of {0}/{1}"
+        raise ValueError("Can't handle mix of {0} and {1}"
                          "".format(type_true, type_pred))
 
     y_type = y_type.pop()
+
+    # No metrics support "multiclass-multioutput" format
     if (y_type not in set(["binary", "multiclass",
                            "multilabel-indicator", "multilabel-sequences"])):
         raise ValueError("{0} is not supported".format(y_type))

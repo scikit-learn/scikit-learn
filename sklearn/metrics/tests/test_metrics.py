@@ -1641,7 +1641,7 @@ def test__check_clf_targets():
             if type1 != type2:
                 assert_raise_message(
                     ValueError,
-                    "Can't handle mix of {0}/{1}".format(type1, type2),
+                    "Can't handle mix of {0} and {1}".format(type1, type2),
                     _check_clf_targets, y1, y2)
 
             else:
