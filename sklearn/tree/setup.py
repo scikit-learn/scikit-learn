@@ -12,7 +12,8 @@ def configuration(parent_package="", top_path=None):
     config.add_extension("_tree",
                          sources=["_tree.c"],
                          include_dirs=[numpy.get_include()],
-                         libraries=libraries)
+                         libraries=libraries,
+                         extra_compile_args=["-O3"])
 
     config.add_subpackage("tests")
 
