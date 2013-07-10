@@ -44,4 +44,9 @@ pl.title("Shuffled dataset")
 pl.matshow(fit_data, cmap=pl.cm.Blues)
 pl.title("Rearranged to show biclusters")
 
+pl.matshow(np.outer(np.sort(model.row_labels_) + 1,
+                    np.sort(model.column_labels_) + 1),
+           cmap=pl.cm.Blues)
+pl.title("Rearranged outer product of row and column labels")
+
 pl.show()
