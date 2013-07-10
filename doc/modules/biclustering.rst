@@ -27,7 +27,7 @@ correspond to the two sets of vertices, and each entry corresponds to
 an edge between a row and a column. The algorithm approximates the
 normalized cut of this graph to find heavy subgraphs.
 
-The input matrix :math:`A` is normalized is performed as follows:
+The input matrix :math:`A` is preprocessed as follows:
 
 .. math::
     A_n = R^{−1/2} A C^{−1/2}
@@ -63,4 +63,40 @@ labels provide the column partitioning.
 Spectral Biclustering
 =====================
 
-TODO
+The :class:`SpectralBiclustering` algorithm assumes that the input
+data matrix has a hidden checkerboard structure. It tries to partition
+the rows and columns to uncover this structure.
+
+The input matrix :math:`A` is first preprocessed to make the
+checkerboard pattern more obvious. There are three possible
+preprocessing methods:
+
+1. Independent row and column rescaling, as in Spectral Co-Clustering:
+
+    .. math::
+        A_n = R^{−1/2} A C^{−1/2}
+
+    This method makes the rows sum to a constant and the columns sum
+    to a different constant.
+
+2. Bistochastization
+
+    Repeated row and column rescaling until convergence. This method
+    makes both rows and columns sum to the same constant.
+
+3. Log scaling
+
+    The log of the data matrix is computed: :math:`L = \log A`. Then
+    the column mean :math:`\overline{L_{i *}}`, row mean
+    :math:`\overline{L_{* j}}`, and overall mean
+    :math:`\overline{L_{* *}}` of :math:`L` are computed. The
+    final matrix is computed according to the formula
+
+    .. math::
+        L_{ij} = L_{ij} - \overline{L_{i *}} - \overline{L_{* j}} + \overline{L_{* *}}
+
+The best of the first few right singular vectors of the resulting
+matrix are used to project the rows to a lower dimensional space,
+where k-means finds the row partitions. Similarly, the best of the
+first few left singular vectors are used to project and cluster the
+columns.
