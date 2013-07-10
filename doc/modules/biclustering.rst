@@ -57,6 +57,19 @@ Then the rows of :math:`Z` are clustered using k-means. The first
 n_rows labels provide the row partitioning, and the remaining n_column
 labels provide the column partitioning.
 
+.. topic:: Examples:
+
+ * :ref:`example_bicluster_spectral_coclustering.py`: A simple example
+   showing how to generate a data matrix with biclusters and apply
+   this method to it.
+
+
+.. topic:: References:
+
+ * Dhillon, Inderjit S, 2001. `Co-clustering documents and words using
+   bipartite spectral graph partitioning
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.140.3011>`__.
+
 
 .. _spectral_biclustering:
 
@@ -100,3 +113,14 @@ matrix are used to project the rows to a lower dimensional space,
 where k-means finds the row partitions. Similarly, the best of the
 first few left singular vectors are used to project and cluster the
 columns.
+
+.. topic:: Examples:
+
+ * :ref:`example_bicluster_spectral_biclustering.py`: a simple example
+   showing how to generate a checkerboard matrix and bicluster it.
+
+.. topic:: References:
+
+ * Kluger, Yuval, et al, 2003. `Spectral biclustering of microarray
+   data: coclustering genes and conditions
+   <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.135.1608>`__.
