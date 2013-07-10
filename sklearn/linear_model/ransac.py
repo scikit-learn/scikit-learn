@@ -159,7 +159,8 @@ class RANSAC(BaseEstimator):
         elif self.min_n_samples >= 1:
             min_n_samples = self.min_n_samples
         else:
-            raise ValueError("Invalid value for `min_n_samples`.")
+            raise ValueError("Value for `min_n_samples` must be scalar and "
+                             "positive.")
 
         # number of data samples
         n_samples = X.shape[0]
