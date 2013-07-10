@@ -1539,7 +1539,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                             % labels[idx_ill_defined_fbeta_score])
 
         if warning_msg:
-            warnings.warn(warning_msg)
+            warnings.warn(warning_msg, stacklevel=2)
 
     if not average:
         return precision, recall, fscore, support
@@ -1593,7 +1593,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                                 "to zero. Micro-fbeta_score is ill defined.")
 
             if warning_msg:
-                warnings.warn(warning_msg)
+                warnings.warn(warning_msg, stacklevel=2)
 
         elif average == 'macro':
             avg_precision = np.mean(precision)
@@ -1607,7 +1607,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 avg_fscore = 0.
                 warnings.warn("There isn't any labels in y_true. "
                               "Weighted-precision, weighted-recall and "
-                              "weighted-fbeta_score are ill defined.")
+                              "weighted-fbeta_score are ill defined.",
+                              stacklevel=2)
 
             else:
                 avg_precision = np.average(precision, weights=support)
