@@ -87,12 +87,12 @@ def array2d(X, dtype=None, order=None, copy=False):
 
 def _atleast2d_or_sparse(X, dtype, order, copy, sparse_class, convmethod):
     if sparse.issparse(X):
-        # Note: order is ignored because CSR matrices hold data in 1-d arrays
         if dtype is None or X.dtype == dtype:
             X = getattr(X, convmethod)()
         else:
             X = sparse_class(X, dtype=dtype)
         _assert_all_finite(X.data)
+        X.data = np.array(X.data, copy=False, order=order)
     else:
         X = array2d(X, dtype=dtype, order=order, copy=copy)
         _assert_all_finite(X)
