@@ -748,7 +748,7 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     >>> enc = OneHotEncoder()
     >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
 [1, 0, 2]])  # doctest: +ELLIPSIS
-    OneHotEncoder(categorical_features='all', dtype=<type 'float'>,
+    OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
            n_values='auto')
     >>> enc.n_values_
     array([2, 3, 4])

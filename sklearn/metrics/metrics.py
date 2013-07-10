@@ -1199,7 +1199,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     >>> f1_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
     0.66...
     >>> f1_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
-    0.80...
+    0.8...
     >>> f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
     0.66...
     >>> f1_score(y_true, y_pred, average='samples')  # doctest: +ELLIPSIS
@@ -1619,7 +1619,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     (0.66..., 0.66..., 0.66..., None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='micro')
     ... # doctest: +ELLIPSIS
-    (1.0, 0.66..., 0.80..., None)
+    (1.0, 0.66..., 0.8..., None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
     ... # doctest: +ELLIPSIS
     (0.66..., 0.66..., 0.66..., None)
