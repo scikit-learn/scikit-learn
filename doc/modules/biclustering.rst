@@ -13,6 +13,10 @@ in the `rows_` and `columns_` attributes. `rows_[i]` is a binary vector
 with nonzero entries corresponding to rows that belong to bicluster
 `i`.
 
+Some models also have `row_labels_` and `column_labels_` attributes.
+These models partition the rows and columns, such as in the block
+diagonal and checkerboard bicluster structures.
+
 .. currentmodule:: sklearn.bicluster
 
 
