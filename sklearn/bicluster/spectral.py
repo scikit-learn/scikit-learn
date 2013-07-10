@@ -128,7 +128,7 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator)):
         X : array-like, shape (n_samples, n_features)
 
         """
-        X = check_arrays(X, sparse_format='csr', dtype=np.float64)[0]
+        X, = check_arrays(X, sparse_format='csr', dtype=np.float64)
         if X.ndim != 2:
             raise ValueError("Argument `X` has the wrong dimensionality."
                              " It must have exactly two dimensions.")
