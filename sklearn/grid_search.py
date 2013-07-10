@@ -62,10 +62,10 @@ class ParameterGrid(object):
      {'a': 2, 'b': True}, {'a': 2, 'b': False}]
 
     >>> grid = [{'kernel': ['linear']}, {'kernel': ['rbf'], 'gamma': [1, 10]}]
-    >>> list(ParameterGrid(grid)) #doctest: +NORMALIZE_WHITESPACE
-    [{'kernel': 'linear'},
-     {'kernel': 'rbf', 'gamma': 1},
-     {'kernel': 'rbf', 'gamma': 10}]
+    >>> list(ParameterGrid(grid)) == [{'kernel': 'linear'},
+    ...                               {'kernel': 'rbf', 'gamma': 1},
+    ...                               {'kernel': 'rbf', 'gamma': 10}]
+    True
 
     See also
     --------
