@@ -118,7 +118,7 @@ class RANSAC(BaseEstimator):
         self.max_trials = max_trials
         self.stop_n_inliers = stop_n_inliers
         self.stop_score = stop_score
-        self.random_state = check_random_state(random_state)
+        self.random_state = random_state
 
     def fit(self, X, y):
         """Fit estimator using RANSAC algorithm.
@@ -146,6 +146,8 @@ class RANSAC(BaseEstimator):
         else:
             raise ValueError("`base_estimator` not specified.")
 
+        random_state = check_random_state(self.random_state)
+
         best_n_inliers = 0
         best_score = np.inf
         best_inlier_mask = None
@@ -165,8 +167,7 @@ class RANSAC(BaseEstimator):
         for n_trials in range(self.max_trials):
 
             # choose random sample set
-            random_idxs = self.random_state.randint(0, n_samples,
-                                                    min_n_samples)
+            random_idxs = random_state.randint(0, n_samples, min_n_samples)
             rsample_X = X[random_idxs]
             rsample_y = y[random_idxs]
 
