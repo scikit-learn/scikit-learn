@@ -137,7 +137,7 @@ def test_fit_best_piecewise():
                         [0, 1, 2, 3, 4, 5],])
     best = _fit_best_piecewise(vectors, k=2, n_clusters=2,
                                random_state=0, kmeans_kwargs={})
-    assert_array_equal(best, vectors[0:2])
+    assert_array_equal(best, vectors[:2])
 
 
 def test_project_and_cluster():
