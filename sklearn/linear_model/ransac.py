@@ -9,7 +9,6 @@ import numpy as np
 from ..base import BaseEstimator, clone
 from ..utils import check_random_state
 from .base import LinearRegression
-from .perceptron import Perceptron
 
 
 class RANSAC(BaseEstimator):
@@ -47,8 +46,9 @@ class RANSAC(BaseEstimator):
 
         If no base estimator is specified, by default
         ``sklearn.linear_model.LinearRegression`` is used for float and
-        ``sklearn.linear_model.Perceptron`` for integer data types of
-        `X` and `y`.
+
+        Note that the current implementation only supports regression
+        estimators.
 
     min_n_samples : int (>= 1) or float ([0, 1]), optional
         Minimum number of samples chosen randomly from original data. Treated
@@ -143,8 +143,6 @@ class RANSAC(BaseEstimator):
             base_estimator = clone(self.base_estimator)
         elif y.dtype.kind == 'f':
             base_estimator = LinearRegression()
-        elif y.dtype.kind == 'i':
-            base_estimator = Perceptron()
         else:
             raise ValueError("`base_estimator` not specified.")
 
