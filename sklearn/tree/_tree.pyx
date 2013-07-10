@@ -1170,6 +1170,220 @@ cdef class RandomSplitter(Splitter):
         impurity[0] = node_impurity
 
 
+cdef class BreimanSplitter(Splitter):
+    """Splitter for finding the best split."""
+    cdef DTYPE_t* X_ptr
+    cdef np.ndarray X_argsorted
+    cdef np.ndarray X_argsorted_copy
+    cdef SIZE_t* moves
+    cdef SIZE_t* tmp_column
+
+    def __reduce__(self):
+        return (BreimanSplitter,
+                (self.criterion, self.max_features, self.min_samples_leaf, self.random_state),
+                self.__getstate__())
+
+    def __dealloc__(self):
+        """Destructor."""
+        # free(self.samples)        # will be free'd by parent
+        # free(self.features)
+        free(self.moves)
+        free(self.tmp_column)
+
+    cdef void init(self, np.ndarray[DTYPE_t, ndim=2] X,
+                         np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
+                         DOUBLE_t* sample_weight):
+        # Initialize samples and features structures
+        cdef SIZE_t n_samples = X.shape[0]
+        cdef SIZE_t* samples = <SIZE_t*> malloc(n_samples * sizeof(SIZE_t))
+
+        cdef SIZE_t i
+
+        for i from 0 <= i < n_samples:
+            samples[i] = i
+
+        self.samples = samples
+        self.n_samples = n_samples
+
+        cdef SIZE_t n_features = X.shape[1]
+        cdef SIZE_t* features = <SIZE_t*> malloc(n_features * sizeof(SIZE_t))
+
+        for i from 0 <= i < n_features:
+            features[i] = i
+
+        self.features = features
+        self.n_features = n_features
+
+        # Initialize X, y, sample_weight
+        self.X = X
+        self.y = <DOUBLE_t*> y.data
+        self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
+        self.sample_weight = sample_weight
+
+        # Reset random number generator
+        srand(self.random_state.randint(0, RAND_MAX))
+
+        # Pre-sort X
+        if self.X_ptr != <DTYPE_t*> X.data:
+            self.X_ptr = <DTYPE_t*> X.data
+            self.X_argsorted = np.argsort(X, axis=0).astype(np.int32)
+
+        self.X_argsorted_copy = self.X_argsorted.copy()
+
+        # Allocate moves and column
+        self.moves = <SIZE_t*> malloc(self.n_samples * sizeof(SIZE_t))
+        self.tmp_column = <SIZE_t*> malloc(self.n_samples * sizeof(SIZE_t))
+
+    cdef void find_split(self, SIZE_t start,
+                               SIZE_t end,
+                               bint is_leaf,
+                               SIZE_t* pos,
+                               SIZE_t* feature,
+                               double* threshold,
+                               double* impurity):
+        """Find the best split on node samples[start:end]."""
+        # Break early if node is a leaf
+        cdef Criterion criterion = self.criterion
+        cdef SIZE_t* samples = self.samples
+
+        criterion.init(self.y, self.y_stride, self.sample_weight, samples, start, end)
+        cdef double node_impurity = criterion.node_impurity()
+
+        if is_leaf or node_impurity == 0.0:
+            pos[0] = end
+            impurity[0] = node_impurity
+            return
+
+        # # Break if negative number of samples
+        # if criterion.weighted_n_node_samples < 0.0:
+        #     raise ValueError("Attempting to find a split with a negative "
+        #                      "weighted number of samples.")
+
+        # Find the best split
+        cdef SIZE_t* features = self.features
+        cdef SIZE_t n_features = self.n_features
+
+        cdef np.ndarray[DTYPE_t, ndim=2] X = self.X
+        cdef np.ndarray[np.int32_t, ndim=2] X_argsorted = self.X_argsorted_copy
+        cdef SIZE_t max_features = self.max_features
+        cdef SIZE_t min_samples_leaf = self.min_samples_leaf
+        cdef object random_state = self.random_state
+
+        cdef double best_impurity = INFINITY
+        cdef SIZE_t best_pos = end
+        cdef SIZE_t best_feature
+        cdef double best_threshold
+
+        cdef double current_impurity
+        cdef SIZE_t current_pos
+        cdef SIZE_t current_feature
+        cdef double current_threshold
+
+        cdef SIZE_t f_idx, f_i, f_j, p
+        cdef SIZE_t visited_features = 0
+
+        cdef SIZE_t partition_start
+        cdef SIZE_t partition_end
+        cdef SIZE_t i, j
+
+        for f_idx from 0 <= f_idx < n_features:
+            # Draw a feature at random
+            f_i = n_features - f_idx - 1
+            f_j = rand_int(n_features - f_idx)
+            features[f_i], features[f_j] = features[f_j], features[f_i]
+            current_feature = features[f_i]
+
+            # Retrieve sorted samples
+            for i from start <= i < end:
+                samples[i] = X_argsorted[i, current_feature]
+
+            # Evaluate all splits
+            criterion.reset()
+            p = start
+
+            while p < end:
+                while p + 1 < end and X[samples[p + 1], current_feature] <= X[samples[p], current_feature] + 1.e-7:
+                    p += 1
+
+                # p + 1 >= end or X[samples[p + 1], current_feature] > X[samples[p], current_feature]
+                p += 1
+                # p >= end or X[samples[p], current_feature] > X[samples[p - 1], current_feature]
+
+                if p < end:
+                    current_pos = p
+
+                    # Reject if min_samples_leaf is not guaranteed
+                    if ((current_pos - start) < min_samples_leaf) or \
+                       ((end - current_pos) < min_samples_leaf):
+                       continue
+
+                    criterion.update(current_pos)
+                    current_impurity = criterion.children_impurity()
+
+                    if current_impurity < best_impurity:
+                        best_impurity = current_impurity
+                        best_pos = current_pos
+                        best_feature = current_feature
+
+                        current_threshold = (X[samples[p - 1], current_feature] + X[samples[p], current_feature]) / 2.0
+                        if current_threshold == X[samples[p], current_feature]:
+                            current_threshold = X[samples[p - 1], current_feature]
+
+                        best_threshold = current_threshold
+
+            if best_pos == end: # No valid split was ever found
+                continue
+
+            # Count one more visited feature
+            visited_features += 1
+
+            if visited_features >= max_features:
+                break
+
+        # Movedata
+        cdef SIZE_t* moves = self.moves
+        cdef SIZE_t* tmp_column = self.tmp_column
+        cdef SIZE_t tmp_index
+
+        if best_pos < end:
+            # Reorganize samples into samples[start:best_pos] + samples[best_pos:end]
+            for i from start <= i < end:
+                samples[i] = X_argsorted[i, best_feature]
+
+                if i < best_pos:
+                    moves[samples[i]] = 1
+                else:
+                    moves[samples[i]] = 0
+
+            # Rearrange X_argsorted
+            for current_feature from 0 <= current_feature < n_features:
+                if current_feature == best_feature:
+                    continue
+
+                j = start
+
+                for i from start <= i < end:
+                    tmp_index = X_argsorted[i, current_feature]
+                    if moves[tmp_index] == 1:
+                        tmp_column[j] = tmp_index
+                        j += 1
+
+                for i from start <= i < end:
+                    tmp_index = X_argsorted[i, current_feature]
+                    if moves[tmp_index] == 0:
+                        tmp_column[j] = tmp_index
+                        j += 1
+
+                for i from start <= i < end:
+                    X_argsorted[i, current_feature] = tmp_column[i]
+
+        # Return values
+        pos[0] = best_pos
+        feature[0] = best_feature
+        threshold[0] = best_threshold
+        impurity[0] = node_impurity
+
+
 # =============================================================================
 # Tree
 # =============================================================================
