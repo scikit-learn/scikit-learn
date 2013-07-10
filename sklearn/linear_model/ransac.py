@@ -12,7 +12,6 @@ from .base import LinearRegression
 
 
 class RANSAC(BaseEstimator):
-
     """RANSAC (RANdom SAmple Consensus) algorithm.
 
     RANSAC is an iterative algorithm for the robust estimation of parameters
@@ -103,7 +102,6 @@ class RANSAC(BaseEstimator):
     .. [1] http://en.wikipedia.org/wiki/RANSAC
     .. [2] http://www.cs.columbia.edu/~belhumeur/courses/compPhoto/ransac.pdf
     .. [3] http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
-
     """
 
     def __init__(self, base_estimator=None, min_n_samples=0.5,
@@ -136,9 +134,7 @@ class RANSAC(BaseEstimator):
         Raises
         ------
         ValueError: If no valid consensus set could be found.
-
         """
-
         if self.base_estimator is not None:
             base_estimator = clone(self.base_estimator)
         elif y.dtype.kind == 'f':
@@ -250,9 +246,7 @@ class RANSAC(BaseEstimator):
         -------
         C : array, shape = [n_samples]
             Returns predicted values.
-
         """
-
         return self.estimator_.predict(X)
 
     def score(self, X, y):
@@ -272,7 +266,5 @@ class RANSAC(BaseEstimator):
         -------
         z : float
             Score of the prediction.
-
         """
-
         return self.estimator_.score(X, y)
