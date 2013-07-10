@@ -467,14 +467,14 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             # induce regression tree on residuals
             tree = DecisionTreeRegressor(
                 criterion="mse",
-                splitter="best",
+                splitter="breiman",
                 max_depth=self.max_depth,
                 min_samples_split=self.min_samples_split,
                 min_samples_leaf=self.min_samples_leaf,
                 max_features=self.max_features,
                 random_state=random_state)
 
-            if i > 0:
+            if self.splitter_ is not None:
                 tree.set_params(splitter=self.splitter_)
 
             sample_weight = None
@@ -482,7 +482,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                 sample_weight = sample_mask.astype(np.float64)
             tree.fit(X, residual, sample_weight=sample_weight, check_input=False)
 
-            if i == 0:
+            if self.splitter_ is None:
                 self.splitter_ = tree.splitter_
 
             # update tree leaves
@@ -569,12 +569,15 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         self.estimators_ = np.empty((self.n_estimators, self.loss_.K),
                                     dtype=np.object)
+        self.splitter_ = None
 
         self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
         self.oob_score_ = np.zeros((self.n_estimators), dtype=np.float64)
 
         sample_mask = np.ones((n_samples,), dtype=np.bool)
         n_inbag = max(1, int(self.subsample * n_samples))
+
+
         # perform boosting iterations
         for i in range(self.n_estimators):
 

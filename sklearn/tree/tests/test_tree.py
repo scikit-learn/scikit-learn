@@ -569,8 +569,8 @@ def test_sample_weight():
     clf2.fit(X, y, sample_weight=sample_weight)
 
     internal = clf.tree_.children_left != tree._tree.TREE_LEAF
-    assert_array_equal(clf.tree_.threshold[internal],
-                       clf2.tree_.threshold[internal])
+    assert_array_almost_equal(clf.tree_.threshold[internal],
+                              clf2.tree_.threshold[internal])
 
     # # Test negative weights
     # X = iris.data

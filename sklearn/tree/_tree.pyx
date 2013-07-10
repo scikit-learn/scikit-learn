@@ -1349,11 +1349,7 @@ cdef class BreimanSplitter(Splitter):
             # Reorganize samples into samples[start:best_pos] + samples[best_pos:end]
             for i from start <= i < end:
                 samples[i] = X_argsorted[i, best_feature]
-
-                if i < best_pos:
-                    moves[samples[i]] = 1
-                else:
-                    moves[samples[i]] = 0
+                moves[samples[i]] = i < best_pos
 
             # Rearrange X_argsorted
             for current_feature from 0 <= current_feature < n_features:
