@@ -1197,36 +1197,6 @@ cdef class BreimanSplitter(Splitter):
     cdef void init(self, np.ndarray[DTYPE_t, ndim=2] X,
                          np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                          DOUBLE_t* sample_weight):
-        # # Initialize samples and features structures
-        # cdef SIZE_t n_samples = X.shape[0]
-        # cdef SIZE_t* samples = <SIZE_t*> malloc(n_samples * sizeof(SIZE_t))
-
-        # cdef SIZE_t i
-
-        # for i from 0 <= i < n_samples:
-        #     samples[i] = i
-
-        # self.samples = samples
-        # self.n_samples = n_samples
-
-        # cdef SIZE_t n_features = X.shape[1]
-        # cdef SIZE_t* features = <SIZE_t*> malloc(n_features * sizeof(SIZE_t))
-
-        # for i from 0 <= i < n_features:
-        #     features[i] = i
-
-        # self.features = features
-        # self.n_features = n_features
-
-        # # Initialize X, y, sample_weight
-        # self.X = X
-        # self.y = <DOUBLE_t*> y.data
-        # self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
-        # self.sample_weight = sample_weight
-
-        # # Reset random number generator
-        # srand(self.random_state.randint(0, RAND_MAX))
-
         # Call parent initializer
         Splitter.init(self, X, y, sample_weight)
 
