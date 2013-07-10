@@ -24,6 +24,8 @@ from sklearn.datasets import make_s_curve
 from sklearn.datasets import make_biclusters
 from sklearn.datasets import make_checkerboard
 
+from sklearn.utils.validation import assert_all_finite
+
 
 def test_make_classification():
     X, y = make_classification(n_samples=100, n_features=20, n_informative=5,
@@ -203,9 +205,9 @@ def test_make_biclusters():
     assert_equal(col_labels.shape, (100,), "column labels mismatch")
     assert_array_equal(np.unique(row_labels), np.arange(4))
     assert_array_equal(np.unique(col_labels), np.arange(4))
-    assert_true(not np.any(np.isnan(X)))
-    assert_true(not np.any(np.isnan(row_labels)))
-    assert_true(not np.any(np.isnan(col_labels)))
+    assert_all_finite(X)
+    assert_all_finite(row_labels)
+    assert_all_finite(col_labels)
 
     X2, _, _ = make_biclusters(shape=(100, 100), n_clusters=4,
                                shuffle=True, random_state=0)
@@ -224,9 +226,9 @@ def test_make_checkerboard():
 
     X, row_labels, col_labels = make_checkerboard(
         shape=(100, 100), n_clusters=2, shuffle=True, random_state=0)
-    assert_true(not np.any(np.isnan(X)))
-    assert_true(not np.any(np.isnan(row_labels)))
-    assert_true(not np.any(np.isnan(col_labels)))
+    assert_all_finite(X)
+    assert_all_finite(row_labels)
+    assert_all_finite(col_labels)
 
     X1, _, _ = make_checkerboard(shape=(100, 100), n_clusters=2,
                                  shuffle=True, random_state=0)
