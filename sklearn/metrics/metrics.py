@@ -34,6 +34,24 @@ from ..utils.multiclass import type_of_target
 ###############################################################################
 # General utilities
 ###############################################################################
+def _column_or_1d(y):
+    """ Ravel column or 1d numpy array, else raises an error
+
+    Parameters
+    ----------
+    y : array-like
+
+    Returns
+    -------
+    y : array
+
+    """
+    shape = np.shape(y)
+    if len(shape) == 1 or (len(shape) == 2 and shape[1] == 1):
+        return np.ravel(y)
+    raise ValueError("bad input shape {0}".format(shape))
+
+
 def _check_reg_targets(y_true, y_pred):
     """Check that y_true and y_pred belong to the same regression task
 
@@ -41,7 +59,7 @@ def _check_reg_targets(y_true, y_pred):
     ----------
     y_true : array-like,
 
-    y_pred : array-like
+    y_pred : array-like,
 
     Returns
     -------
@@ -121,18 +139,8 @@ def _check_clf_targets(y_true, y_pred):
             # 'binary' can be removed
             type_true = type_pred = 'multiclass'
 
-        y_true, y_pred = check_arrays(y_true, y_pred)
-        if (not (y_true.ndim == 1 or
-                (y_true.ndim == 2 and y_true.shape[1] == 1))):
-            raise ValueError("y_true has a bad input shape {0} "
-                             "".format(y_true.shape))
-
-        if (not (y_pred.ndim == 1 or
-                (y_pred.ndim == 2 and y_pred.shape[1] == 1))):
-            raise ValueError("y_pred has a bad input shape {0}"
-                             "".format(y_pred.shape))
-        y_true = y_true.ravel()
-        y_pred = y_pred.ravel()
+        y_true = _column_or_1d(y_true)
+        y_pred = _column_or_1d(y_pred)
 
     else:
         raise ValueError("Can't handle %s/%s targets" % (type_true, type_pred))
@@ -460,17 +468,8 @@ def _binary_clf_curve(y_true, y_score, pos_label=None):
         Decreasing score values.
     """
     y_true, y_score = check_arrays(y_true, y_score)
-    if (not (y_true.ndim == 1 or
-            (y_true.ndim == 2 and y_true.shape[1] == 1))):
-        raise ValueError("y_true has a bad input shape {0} "
-                         "".format(y_true.shape))
-
-    if (not (y_score.ndim == 1 or
-            (y_score.ndim == 2 and y_score.shape[1] == 1))):
-        raise ValueError("y_score has a bad input shape {0}"
-                         "".format(y_score.shape))
-    y_true = np.ravel(y_true)
-    y_score = np.ravel(y_score)
+    y_true = _column_or_1d(y_true)
+    y_score = _column_or_1d(y_score)
 
     # ensure binary classification if pos_label is not specified
     classes = np.unique(y_true)
