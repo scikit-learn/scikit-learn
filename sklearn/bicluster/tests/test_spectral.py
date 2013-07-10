@@ -153,12 +153,25 @@ def test_project_and_cluster():
 
 
 def test_errors():
-    assert_raises(ValueError, SpectralBiclustering, n_clusters=(3, 3, 3))
-    assert_raises(ValueError, SpectralBiclustering, n_clusters='abc')
-    assert_raises(ValueError, SpectralBiclustering, n_clusters=(3, 'abc'))
-    assert_raises(ValueError, SpectralBiclustering, method='unknown')
-    assert_raises(ValueError, SpectralBiclustering, svd_method='unknown')
-    assert_raises(ValueError, SpectralBiclustering, n_components=3, n_best=4)
+    data = np.arange(25).reshape((5, 5))
+
+    model = SpectralBiclustering(n_clusters=(3, 3, 3))
+    assert_raises(ValueError, model.fit, data)
+
+    model = SpectralBiclustering(n_clusters='abc')
+    assert_raises(ValueError, model.fit, data)
+
+    model = SpectralBiclustering(n_clusters=(3, 'abc'))
+    assert_raises(ValueError, model.fit, data)
+
+    model = SpectralBiclustering(method='unknown')
+    assert_raises(ValueError, model.fit, data)
+
+    model = SpectralBiclustering(svd_method='unknown')
+    assert_raises(ValueError, model.fit, data)
+
+    model = SpectralBiclustering(n_components=3, n_best=4)
+    assert_raises(ValueError, model.fit, data)
 
     model = SpectralBiclustering()
     data = np.arange(27).reshape((3, 3, 3))
