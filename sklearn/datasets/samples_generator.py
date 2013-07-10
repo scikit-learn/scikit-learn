@@ -1355,7 +1355,6 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
     """
     generator = check_random_state(random_state)
     n_rows, n_cols = shape
-    result = np.zeros(shape, dtype=np.float64)
     consts = generator.uniform(minval, maxval, n_clusters)
 
     # row and column clusters of approximately equal sizes
@@ -1371,6 +1370,7 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
     col_labels = np.hstack(list(np.repeat(val, rep) for val, rep in
                                 zip(range(n_clusters), col_sizes)))
 
+    result = np.zeros(shape, dtype=np.float64)
     for i in range(n_clusters):
         selector = np.outer(row_labels == i, col_labels == i)
         result[selector] += consts[i]
@@ -1459,7 +1459,7 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
     col_labels = np.hstack(list(np.repeat(val, rep) for val, rep in
                                 zip(range(n_col_clusters), col_sizes)))
 
-    result = np.empty(shape, dtype=np.float64)
+    result = np.zeros(shape, dtype=np.float64)
     for i in range(n_row_clusters):
         for j in range(n_col_clusters):
             selector = np.outer(row_labels == i, col_labels == j)
