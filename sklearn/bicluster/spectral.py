@@ -108,58 +108,6 @@ def _log_preprocess(X):
     return L - row_avg - col_avg + avg
 
 
-def _svd(array, n_components, method, kwargs, random_state):
-    """Returns first `n_components` left and right singular
-    vectors u and v.
-
-    """
-    if method == 'randomized':
-        u, _, vt = randomized_svd(array, n_components,
-                                 random_state=random_state, **kwargs)
-
-    elif method == 'arpack':
-        u, _, vt = svds(array, k=n_components, **kwargs)
-
-    assert_all_finite(u)
-    assert_all_finite(vt)
-    return u, vt.T
-
-
-def _fit_best_piecewise(vectors, k, n_clusters, random_state,
-                        kmeans_kwargs):
-    """Find the `k` vectors that are best approximated by piecewise
-    constant vectors.
-
-    The piecewise vectors are found by k-means; the best is chosen
-    according to Euclidean distance.
-
-    """
-    def make_piecewise(v):
-        centroid, labels, _ = k_means(v.reshape(-1, 1), n_clusters,
-                                      random_state=random_state,
-                                      **kmeans_kwargs)
-        return centroid[labels].reshape(-1)
-    piecewise_vectors = np.apply_along_axis(make_piecewise, 1,
-                                            vectors)
-    dists = np.apply_along_axis(np.linalg.norm, 1,
-                                vectors - piecewise_vectors)
-    result = vectors[np.argsort(dists)[:k]]
-    return result
-
-
-def _project_and_cluster(data, vectors, n_clusters, random_state,
-                         kmeans_kwargs):
-    """Project `data` to `vectors` and cluster the result."""
-    if issparse(data):
-        projected = data * vectors
-    else:
-        projected = np.dot(data, vectors)
-    _, labels, _ = k_means(projected, n_clusters,
-                           random_state=random_state,
-                           **kmeans_kwargs)
-    return labels
-
-
 class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for spectral biclustering."""
 
@@ -185,6 +133,23 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator)):
             raise ValueError("Argument `X` has the wrong dimensionality."
                              " It must have exactly two dimensions.")
         self._fit(X)
+
+    def _svd(self, array, n_components):
+        """Returns first `n_components` left and right singular
+        vectors u and v.
+
+        """
+        if self.svd_method == 'randomized':
+            u, _, vt = randomized_svd(array, n_components,
+                                      random_state=self.random_state,
+                                      **self.svd_kwargs)
+
+        elif self.svd_method == 'arpack':
+            u, _, vt = svds(array, k=n_components, **self.svd_kwargs)
+
+        assert_all_finite(u)
+        assert_all_finite(vt)
+        return u, vt.T
 
 
 class SpectralCoclustering(BaseSpectral):
@@ -258,9 +223,8 @@ class SpectralCoclustering(BaseSpectral):
 
     def _fit(self, X):
         normalized_data, row_diag, col_diag = _scale_preprocess(X)
-        n_singular_vals = 1 + int(np.ceil(np.log2(self.n_clusters)))
-        u, v = _svd(normalized_data, n_singular_vals, self.svd_method,
-                    self.svd_kwargs, self.random_state)
+        n_sv = 1 + int(np.ceil(np.log2(self.n_clusters)))
+        u, v = self._svd(normalized_data, n_sv)
         z = np.vstack((row_diag[:, np.newaxis] * u[:, 1:],
                        col_diag[:, np.newaxis] * v[:, 1:]))
         _, labels, _ = k_means(z, self.n_clusters,
@@ -397,8 +361,7 @@ class SpectralBiclustering(BaseSpectral):
             n_sv += 1
         elif self.method == 'log':
             normalized_data = _log_preprocess(X)
-        u, v = _svd(normalized_data, n_sv, self.svd_method,
-                    self.svd_kwargs, self.random_state)
+        u, v = self._svd(normalized_data, n_sv)
         ut = u.T
         vt = v.T
         if self.method != 'log':
@@ -410,25 +373,17 @@ class SpectralBiclustering(BaseSpectral):
         except TypeError:
             n_row_clusters = n_col_clusters = self.n_clusters
 
-        best_ut = _fit_best_piecewise(ut, self.n_best,
-                                      n_row_clusters,
-                                      self.random_state,
-                                      self.kmeans_kwargs)
+        best_ut = self._fit_best_piecewise(ut, self.n_best,
+                                           n_row_clusters)
 
-        best_vt = _fit_best_piecewise(vt, self.n_best,
-                                      n_col_clusters,
-                                      self.random_state,
-                                      self.kmeans_kwargs)
+        best_vt = self._fit_best_piecewise(vt, self.n_best,
+                                           n_col_clusters)
 
-        self.row_labels_ = _project_and_cluster(X, best_vt.T,
-                                                n_row_clusters,
-                                                self.random_state,
-                                                self.kmeans_kwargs)
+        self.row_labels_ = self._project_and_cluster(X, best_vt.T,
+                                                     n_row_clusters)
 
-        self.column_labels_ = _project_and_cluster(X.T, best_ut.T,
-                                                   n_col_clusters,
-                                                   self.random_state,
-                                                   self.kmeans_kwargs)
+        self.column_labels_ = self._project_and_cluster(X.T, best_ut.T,
+                                                        n_col_clusters)
 
         self.rows_ = np.vstack(self.row_labels_ == label
                                for label in range(n_row_clusters)
@@ -436,3 +391,34 @@ class SpectralBiclustering(BaseSpectral):
         self.columns_ = np.vstack(self.column_labels_ == label
                                   for _ in range(n_row_clusters)
                                   for label in range(n_col_clusters))
+
+    def _fit_best_piecewise(self, vectors, n_best, n_clusters):
+        """Find the `n_best` vectors that are best approximated by piecewise
+        constant vectors.
+
+        The piecewise vectors are found by k-means; the best is chosen
+        according to Euclidean distance.
+
+        """
+        def make_piecewise(v):
+            centroid, labels, _ = k_means(v.reshape(-1, 1), n_clusters,
+                                          random_state=self.random_state,
+                                          **self.kmeans_kwargs)
+            return centroid[labels].reshape(-1)
+        piecewise_vectors = np.apply_along_axis(make_piecewise, 1,
+                                                vectors)
+        dists = np.apply_along_axis(np.linalg.norm, 1,
+                                    vectors - piecewise_vectors)
+        result = vectors[np.argsort(dists)[:n_best]]
+        return result
+
+    def _project_and_cluster(self, data, vectors, n_clusters):
+        """Project `data` to `vectors` and cluster the result."""
+        if issparse(data):
+            projected = data * vectors
+        else:
+            projected = np.dot(data, vectors)
+        _, labels, _ = k_means(projected, n_clusters,
+                               random_state=self.random_state,
+                               **self.kmeans_kwargs)
+        return labels
