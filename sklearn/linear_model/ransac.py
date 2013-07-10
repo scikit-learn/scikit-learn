@@ -61,11 +61,13 @@ class RANSAC(BaseEstimator):
 
     is_data_valid : callable, optional
         This function is called with the randomly selected data before the
-        model is fitted to it: `is_data_valid(X, y)`.
+        model is fitted to it: `is_data_valid(X, y)`. If its return value is
+        False the current randomly chosen sub-sample is skipped.
 
     is_model_valid : callable, optional
         This function is called with the estimated model and the randomly
-        selected data: `is_model_valid(model, X, y)`, .
+        selected data: `is_model_valid(model, X, y)`. If its return value is
+        False the current randomly chosen sub-sample is skipped.
 
     max_trials : int, optional
         Maximum number of iterations for random sample selection.
