@@ -223,8 +223,7 @@ class RANSAC(BaseEstimator):
 
             # break if sufficient number of inliers or score is reached
             if (best_n_inliers >= self.stop_n_inliers
-                or best_score >= self.stop_score
-                ):
+                or best_score >= self.stop_score):
                 break
 
         # if none of the iterations met the required criteria
