@@ -910,11 +910,9 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True):
     # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
     if y_type == 'multilabel-indicator':
-        try:
+        with np.errstate(divide='ignore', invalid='ignore'):
             # oddly, we may get an "invalid" rather than a "divide"
             # error here
-            old_err_settings = np.seterr(divide='ignore',
-                                         invalid='ignore')
             y_pred_pos_label = y_pred == 1
             y_true_pos_label = y_true == 1
             pred_inter_true = np.sum(np.logical_and(y_pred_pos_label,
@@ -929,8 +927,6 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True):
             # the jaccard to 1: lim_{x->0} x/x = 1
             # Note with py2.6 and np 1.3: we can't check safely for nan.
             score[pred_union_true == 0.0] = 1.0
-        finally:
-            np.seterr(**old_err_settings)
 
     elif y_type == 'multilabel-sequences':
         score = np.empty(len(y_true), dtype=np.float)
@@ -1467,18 +1463,14 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         if warning_msg:
             warnings.warn(warning_msg)
 
-        try:
+        with np.errstate(divide="ignore", invalid="ignore"):
             # oddly, we may get an "invalid" rather than a "divide" error
             # here
-            old_err_settings = np.seterr(divide='ignore', invalid='ignore')
-
             precision = divide(size_inter, size_pred, dtype=np.double)
             recall = divide(size_inter, size_true, dtype=np.double)
             f_score = divide((1 + beta2) * size_inter,
                              (beta2 * size_true + size_pred),
                              dtype=np.double)
-        finally:
-            np.seterr(**old_err_settings)
 
         precision[size_pred == 0] = 0.0
         recall[size_true == 0] = 0.0
@@ -1493,9 +1485,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     true_pos, _, false_pos, false_neg = _tp_tn_fp_fn(y_true, y_pred, labels)
     support = true_pos + false_neg
 
-    try:
+    with np.errstate(divide='ignore', invalid='ignore'):
         # oddly, we may get an "invalid" rather than a "divide" error here
-        old_err_settings = np.seterr(divide='ignore', invalid='ignore')
 
         # precision and recall
         precision = divide(true_pos.astype(np.float), true_pos + false_pos)
@@ -1515,8 +1506,6 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
         # handle division by 0 in fscore
         idx_ill_defined_fbeta_score = (beta2 * precision + recall) == 0
         fscore[idx_ill_defined_fbeta_score] = 0.0
-    finally:
-        np.seterr(**old_err_settings)
 
     if average in (None, "macro", "weighted"):
         warning_msg = ""
@@ -1557,10 +1546,10 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     else:
         average_options = (None, 'micro', 'macro', 'weighted', 'samples')
         if average == 'micro':
-            try:
+            with np.errstate(divide='ignore', invalid='ignore'):
                 # oddly, we may get an "invalid" rather than a "divide" error
                 # here
-                old_err_settings = np.seterr(divide='ignore', invalid='ignore')
+
                 tp_sum = true_pos.sum()
                 fp_sum = false_pos.sum()
                 fn_sum = false_neg.sum()
@@ -1570,11 +1559,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
                 avg_fscore = divide((1 + beta2) * (avg_precision * avg_recall),
                                     beta2 * avg_precision + avg_recall,
                                     dtype=np.double)
-            finally:
-                np.seterr(**old_err_settings)
 
             warning_msg = ""
-
             if tp_sum + fp_sum == 0:
                 avg_precision = 0.
                 warning_msg += ("The sum of true positives and false "
