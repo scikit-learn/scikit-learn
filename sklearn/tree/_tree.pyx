@@ -1178,6 +1178,12 @@ cdef class BreimanSplitter(Splitter):
     cdef SIZE_t* moves
     cdef SIZE_t* tmp_column
 
+    def __cinit__(self, Criterion criterion, SIZE_t max_features, SIZE_t min_samples_leaf, object random_state):
+        # Initialize pointers
+        self.X_ptr = NULL
+        self.moves = NULL
+        self.tmp_column = NULL
+
     def __reduce__(self):
         return (BreimanSplitter,
                 (self.criterion, self.max_features, self.min_samples_leaf, self.random_state),
@@ -1185,54 +1191,81 @@ cdef class BreimanSplitter(Splitter):
 
     def __dealloc__(self):
         """Destructor."""
-        # free(self.samples)        # will be free'd by parent
-        # free(self.features)
         free(self.moves)
         free(self.tmp_column)
 
     cdef void init(self, np.ndarray[DTYPE_t, ndim=2] X,
                          np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                          DOUBLE_t* sample_weight):
-        # Initialize samples and features structures
-        cdef SIZE_t n_samples = X.shape[0]
-        cdef SIZE_t* samples = <SIZE_t*> malloc(n_samples * sizeof(SIZE_t))
+        # # Initialize samples and features structures
+        # cdef SIZE_t n_samples = X.shape[0]
+        # cdef SIZE_t* samples = <SIZE_t*> malloc(n_samples * sizeof(SIZE_t))
 
-        cdef SIZE_t i
+        # cdef SIZE_t i
 
-        for i from 0 <= i < n_samples:
-            samples[i] = i
+        # for i from 0 <= i < n_samples:
+        #     samples[i] = i
 
-        self.samples = samples
-        self.n_samples = n_samples
+        # self.samples = samples
+        # self.n_samples = n_samples
 
-        cdef SIZE_t n_features = X.shape[1]
-        cdef SIZE_t* features = <SIZE_t*> malloc(n_features * sizeof(SIZE_t))
+        # cdef SIZE_t n_features = X.shape[1]
+        # cdef SIZE_t* features = <SIZE_t*> malloc(n_features * sizeof(SIZE_t))
 
-        for i from 0 <= i < n_features:
-            features[i] = i
+        # for i from 0 <= i < n_features:
+        #     features[i] = i
 
-        self.features = features
-        self.n_features = n_features
+        # self.features = features
+        # self.n_features = n_features
 
-        # Initialize X, y, sample_weight
-        self.X = X
-        self.y = <DOUBLE_t*> y.data
-        self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
-        self.sample_weight = sample_weight
+        # # Initialize X, y, sample_weight
+        # self.X = X
+        # self.y = <DOUBLE_t*> y.data
+        # self.y_stride = <SIZE_t> y.strides[0] / <SIZE_t> y.itemsize
+        # self.sample_weight = sample_weight
 
-        # Reset random number generator
-        srand(self.random_state.randint(0, RAND_MAX))
+        # # Reset random number generator
+        # srand(self.random_state.randint(0, RAND_MAX))
+
+        # Call parent initializer
+        Splitter.init(self, X, y, sample_weight)
 
         # Pre-sort X
         if self.X_ptr != <DTYPE_t*> X.data:
             self.X_ptr = <DTYPE_t*> X.data
             self.X_argsorted = np.argsort(X, axis=0).astype(np.int32)
 
-        self.X_argsorted_copy = self.X_argsorted.copy()
+        cdef np.ndarray[np.int32_t, ndim=2] X_argsorted = self.X_argsorted
+        cdef np.ndarray[np.int32_t, ndim=2] X_argsorted_copy
+        cdef SIZE_t i, j, current_feature, tmp_index
+        cdef SIZE_t n_samples_in_X = X_argsorted.shape[0]
+
+        if sample_weight != NULL:
+            X_argsorted_copy = np.empty((self.n_samples, self.n_features), dtype=np.int32)
+
+            for current_feature from 0 <= current_feature < self.n_features:
+                j = 0
+
+                for i from 0 <= i < n_samples_in_X:
+                    tmp_index = X_argsorted[i, current_feature]
+
+                    if sample_weight[tmp_index] != 0.0:
+                        X_argsorted_copy[j, current_feature] = tmp_index
+                        j += 1
+
+        else:
+            X_argsorted_copy = X_argsorted.copy()
+
+        self.X_argsorted_copy = X_argsorted_copy
 
         # Allocate moves and column
-        self.moves = <SIZE_t*> malloc(self.n_samples * sizeof(SIZE_t))
-        self.tmp_column = <SIZE_t*> malloc(self.n_samples * sizeof(SIZE_t))
+        if self.moves != NULL:
+            free(self.moves)
+        if self.tmp_column != NULL:
+            free(self.tmp_column)
+
+        self.moves = <SIZE_t*> malloc(n_samples_in_X * sizeof(SIZE_t))
+        self.tmp_column = <SIZE_t*> malloc(n_samples_in_X * sizeof(SIZE_t))
 
     cdef void find_split(self, SIZE_t start,
                                SIZE_t end,
