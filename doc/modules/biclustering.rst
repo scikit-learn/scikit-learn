@@ -81,8 +81,12 @@ Spectral Biclustering
 =====================
 
 The :class:`SpectralBiclustering` algorithm assumes that the input
-data matrix has a hidden checkerboard structure. It tries to partition
-the rows and columns to uncover this structure.
+data matrix has a hidden checkerboard structure. For instance, if
+there are two row partitions and three column partitions, each row
+will belong to three biclusters, and each column will belong to two
+biclusters. The outer product of the corresponding row and column
+label vectors gives this checkerboard structure. The algorithm tries
+to partition the rows and columns to uncover this structure.
 
 The input matrix :math:`A` is first preprocessed to make the
 checkerboard pattern more obvious. There are three possible
