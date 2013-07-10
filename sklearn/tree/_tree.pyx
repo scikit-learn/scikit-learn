@@ -971,6 +971,8 @@ cdef class BestSplitter(Splitter):
                 break
 
         # Reorganize samples into samples[start:best_pos] + samples[best_pos:end]
+        cdef SIZE_t tmp
+
         if best_pos < end:
             partition_start = start
             partition_end = end
@@ -982,7 +984,10 @@ cdef class BestSplitter(Splitter):
 
                 else:
                     partition_end -= 1
-                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
+
+                    tmp = samples[partition_end]
+                    samples[partition_end] = samples[p]
+                    samples[p] = tmp
 
         # Return values
         pos[0] = best_pos
@@ -1085,6 +1090,7 @@ cdef class RandomSplitter(Splitter):
 
         cdef SIZE_t partition_start
         cdef SIZE_t partition_end
+        cdef SIZE_t tmp
 
         for f_idx from 0 <= f_idx < n_features:
             # Draw a feature at random
@@ -1123,7 +1129,10 @@ cdef class RandomSplitter(Splitter):
 
                 else:
                     partition_end -= 1
-                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
+
+                    tmp = samples[partition_end]
+                    samples[partition_end] = samples[p]
+                    samples[p] = tmp
 
             current_pos = partition_end
 
@@ -1161,7 +1170,10 @@ cdef class RandomSplitter(Splitter):
 
                 else:
                     partition_end -= 1
-                    samples[p], samples[partition_end] = samples[partition_end], samples[p]
+
+                    tmp = samples[partition_end]
+                    samples[partition_end] = samples[p]
+                    samples[p] = tmp
 
         # Return values
         pos[0] = best_pos
