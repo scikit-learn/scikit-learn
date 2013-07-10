@@ -482,6 +482,16 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             y = np.asarray(y)
         cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
+        if self.verbose > 0:
+            try:
+                n_candidates = len(parameter_iterable)
+            except TypeError:
+                pass
+            else:
+                print("Fitting {0} folds for each of {1} candidates, totalling"
+                      " {2} fits".format(len(cv), n_candidates,
+                                         n_candidates * len(cv)))
+
         base_estimator = clone(self.estimator)
 
         pre_dispatch = self.pre_dispatch
