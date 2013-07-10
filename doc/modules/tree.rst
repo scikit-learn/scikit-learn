@@ -138,7 +138,7 @@ supported file type): ``dot -Tpdf iris.dot -o iris.pdf``.
 Alternatively, if we have Python module ``pydot`` installed, we can generate
 a PDF file (or any other supported file type) directly in Python::
 
-    >>> from sklearn.externals.six import StringIO
+    >>> from sklearn.externals.six import StringIO  # doctest: +SKIP
     >>> import pydot # doctest: +SKIP
     >>> dot_data = StringIO.StringIO() # doctest: +SKIP
     >>> tree.export_graphviz(clf, out_file=dot_data) # doctest: +SKIP

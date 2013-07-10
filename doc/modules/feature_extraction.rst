@@ -86,8 +86,8 @@ suitable for feeding into a classifier (maybe after being piped into a
 
   >>> vec = DictVectorizer()
   >>> pos_vectorized = vec.fit_transform(pos_window)
-  >>> pos_vectorized                     # doctest: +NORMALIZE_WHITESPACE
-  <1x6 sparse matrix of type '<class 'numpy.float64'>'
+  >>> pos_vectorized                # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
+  <1x6 sparse matrix of type '<... 'numpy.float64'>'
       with 6 stored elements in Compressed Sparse Row format>
   >>> pos_vectorized.toarray()
   array([[ 1.,  1.,  1.,  1.,  1.,  1.]])
@@ -290,9 +290,9 @@ reasonable (please see  the :ref:`reference documentation
 <text_feature_extraction_ref>` for the details)::
 
   >>> vectorizer = CountVectorizer(min_df=1)
-  >>> vectorizer                            # doctest: +NORMALIZE_WHITESPACE
+  >>> vectorizer                     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   CountVectorizer(analyzer='word', binary=False, charset='utf-8',
-          charset_error='strict', dtype=<class 'numpy.int64'>,
+          charset_error='strict', dtype=<... 'numpy.int64'>,
           input='content', lowercase=True, max_df=1.0, max_features=None,
           min_df=1, ngram_range=(1, 1), preprocessor=None, 
           stop_words=None, strip_accents=None,
@@ -308,8 +308,8 @@ corpus of text documents::
   ...     'Is this the first document?',
   ... ]
   >>> X = vectorizer.fit_transform(corpus)
-  >>> X                                       # doctest: +NORMALIZE_WHITESPACE
-  <4x9 sparse matrix of type '<class 'numpy.int64'>'
+  >>> X                              # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  <4x9 sparse matrix of type '<... 'numpy.int64'>'
       with 19 stored elements in Compressed Sparse Column format>
 
 The default configuration tokenizes the string by extracting words of
@@ -424,8 +424,8 @@ content of the documents::
   ...           [3, 0, 2]]
   ...
   >>> tfidf = transformer.fit_transform(counts)
-  >>> tfidf                                  # doctest: +NORMALIZE_WHITESPACE
-  <6x3 sparse matrix of type '<class 'numpy.float64'>'
+  >>> tfidf                         # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
+  <6x3 sparse matrix of type '<... 'numpy.float64'>'
       with 9 stored elements in Compressed Sparse Row format>
 
   >>> tfidf.toarray()                        # doctest: +ELLIPSIS
@@ -451,8 +451,8 @@ class called :class:`TfidfVectorizer` that combines all the option of
   >>> from sklearn.feature_extraction.text import TfidfVectorizer
   >>> vectorizer = TfidfVectorizer(min_df=1)
   >>> vectorizer.fit_transform(corpus)
-  ...                                       # doctest: +NORMALIZE_WHITESPACE
-  <4x9 sparse matrix of type '<class 'numpy.float64'>'
+  ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  <4x9 sparse matrix of type '<... 'numpy.float64'>'
       with 19 stored elements in Compressed Sparse Row format>
 
 While the tf–idf normalization is often very useful, there might
@@ -586,16 +586,16 @@ span across words::
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(5, 5), min_df=1)
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
-  ...                                         # doctest: +NORMALIZE_WHITESPACE
-  <1x4 sparse matrix of type '<class 'numpy.int64'>'
+  ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  <1x4 sparse matrix of type '<... 'numpy.int64'>'
      with 4 stored elements in Compressed Sparse Column format>
   >>> ngram_vectorizer.get_feature_names()
   [' fox ', ' jump', 'jumpy', 'umpy ']
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char', ngram_range=(5, 5), min_df=1)
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
-  ...                                         # doctest: +NORMALIZE_WHITESPACE
-  <1x5 sparse matrix of type '<class 'numpy.int64'>'
+  ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  <1x5 sparse matrix of type '<... 'numpy.int64'>'
       with 5 stored elements in Compressed Sparse Column format>
   >>> ngram_vectorizer.get_feature_names()
   ['jumpy', 'mpy f', 'py fo', 'umpy ', 'y fox']
@@ -662,8 +662,8 @@ meaning that you don't have to call ``fit`` on it::
   >>> from sklearn.feature_extraction.text import HashingVectorizer
   >>> hv = HashingVectorizer(n_features=10)
   >>> hv.transform(corpus)
-  ...                                       # doctest: +NORMALIZE_WHITESPACE
-  <4x10 sparse matrix of type '<class 'numpy.float64'>'
+  ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  <4x10 sparse matrix of type '<... 'numpy.float64'>'
       with 16 stored elements in Compressed Sparse Row format>
 
 You can see that 16 non-zero feature tokens where extracted in the vector
@@ -687,8 +687,8 @@ Let's try again with the default setting::
 
   >>> hv = HashingVectorizer()
   >>> hv.transform(corpus)
-  ...                                       # doctest: +NORMALIZE_WHITESPACE
-  <4x1048576 sparse matrix of type '<class 'numpy.float64'>'
+  ...                               # doctest: +NORMALIZE_WHITESPACE  +ELLIPSIS
+  <4x1048576 sparse matrix of type '<... 'numpy.float64'>'
       with 19 stored elements in Compressed Sparse Row format>
 
 We no longer get the collisions, but this comes at the expense of a much larger
