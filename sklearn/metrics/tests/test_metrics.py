@@ -49,6 +49,8 @@ from sklearn.metrics import (accuracy_score,
                              zero_one_loss)
 from sklearn.metrics.metrics import _check_clf_targets
 from sklearn.metrics.metrics import _check_reg_targets
+from sklearn.metrics.metrics import _column_or_1d
+
 
 from sklearn.externals.six.moves import xrange
 
@@ -1668,3 +1670,26 @@ def test__check_reg_targets():
                 assert_array_equal(y_check2, y2)
         else:
             assert_raises(ValueError, _check_reg_targets, y1, y2)
+
+
+def test__column_or_1d():
+    EXAMPLES = [
+        ("binary", ["spam", "egg", "spam"]),
+        ("binary", [0, 1, 0, 1]),
+        ("continuous", np.arange(10) / 20.),
+        ("multiclass", [1, 2, 3]),
+        ("multiclass", [0, 1, 2, 2, 0]),
+        ("multiclass", [[1], [2], [3]]),
+        ("multilabel-indicator", [[0, 1, 0], [0, 0, 1]]),
+        ("multiclass-multioutput", [[1, 2, 3]]),
+        ("multiclass-multioutput", [[1, 1], [2, 2], [3, 1]]),
+        ("multiclass-multioutput", [[5, 1], [4, 2], [3, 1]]),
+        ("multiclass-multioutput", [[1, 2, 3]]),
+        ("continuous-multioutput", np.arange(30).reshape((-1, 3))),
+    ]
+
+    for y_type, y in EXAMPLES:
+        if y_type in ["binary", 'multiclass', "continuous"]:
+            _column_or_1d(y)
+        else:
+            assert_raises(ValueError, _column_or_1d, y)
