@@ -210,7 +210,7 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Data.
 
         Returns
@@ -375,7 +375,7 @@ class OneVsOneClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Data.
 
         y : numpy array of shape [n_samples]
@@ -418,10 +418,10 @@ def fit_ecoc(estimator, X, y, code_size=1.5, random_state=None, n_jobs=1):
         An estimator object implementing `fit` and one of `decision_function`
         or `predict_proba`.
 
-    code_size: float, optional
+    code_size : float, optional
         Percentage of the number of classes to be used to create the code book.
 
-    random_state: numpy.RandomState, optional
+    random_state : numpy.RandomState, optional
         The generator used to initialize the codebook. Defaults to
         numpy.random.
 
@@ -551,7 +551,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Data.
 
         y : numpy array of shape [n_samples]
@@ -571,7 +571,7 @@ class OutputCodeClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape = [n_samples, n_features]
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
             Data.
 
         Returns
