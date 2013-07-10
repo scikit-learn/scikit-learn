@@ -409,7 +409,7 @@ class SpectralBiclustering(BaseSpectral):
 
         try:
             n_row_clusters, n_col_clusters = self.n_clusters
-        except ValueError:
+        except TypeError:
             n_row_clusters = n_col_clusters = self.n_clusters
 
         best_ut = _fit_best_piecewise(ut, self.n_best,
