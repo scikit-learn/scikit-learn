@@ -1,4 +1,5 @@
 """
+=========================
 Kernel Density Estimation
 =========================
 
@@ -26,7 +27,7 @@ pca = PCA(n_components=15, whiten=False)
 data = pca.fit_transform(digits.data)
 
 # use grid search cross-validation to optimize the bandwidth
-params = {'bandwidth':np.logspace(-1, 1, 20)}
+params = {'bandwidth': np.logspace(-1, 1, 20)}
 grid = GridSearchCV(KernelDensity(), params)
 grid.fit(data)
 

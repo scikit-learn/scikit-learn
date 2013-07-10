@@ -30,7 +30,7 @@ learning methods, since they simply "remember" all of its training data
 Despite its simplicity, nearest neighbors has been successful in a
 large number of classification and regression problems, including
 handwritten digits or satellite image scenes. Being a non-parametric method,
-It is often successful in classification situations where the decision
+it is often successful in classification situations where the decision
 boundary is very irregular.
 
 The classes in :mod:`sklearn.neighbors` can handle either Numpy arrays or
@@ -38,6 +38,8 @@ The classes in :mod:`sklearn.neighbors` can handle either Numpy arrays or
 possible distance metrics are supported.  For sparse matrices, arbitrary
 Minkowski metrics are supported for searches.
 
+
+.. _unsupervised_neighbors:
 
 Unsupervised Nearest Neighbors
 ==============================
@@ -102,8 +104,14 @@ connections between neighboring points:
 
 Our dataset is structured such that points nearby in index order are nearby
 in parameter space, leading to an approximately block-diagonal matrix of
-K-nearest neighbors.
+K-nearest neighbors.  Such a sparse graph is useful in a variety of
+circumstances which make use of spatial relationships between points for
+unsupervised learning: in particular, see :class:`sklearn.manifold.IsoMap`,
+:class:`sklearn.manifold.LocallyLinearEmbedding`, and
+:class:`sklearn.cluster.SpectralClustering`.
 
+KDTree and BallTree Classes
+---------------------------
 Alternatively, one can use the :class:`KDTree` or :class:`BallTree` classes
 directly to find nearest neighbors.  This is the functionality wrapped by
 the :class:`NearestNeighbors` class used above.  The Ball Tree and KD Tree
@@ -123,7 +131,7 @@ have the same interface; we'll show an example of using the KD Tree here:
 
 Refer to the :class:`KDTree` and :class:`BallTree` class documentation
 for more information on the options available for neighbors searches,
-including specification of query modes, of various distance metrics, etc.
+including specification of query strategies, of various distance metrics, etc.
 For a list of available metrics, see the documentation of the
 :class:`DistanceMetric` class.
 
@@ -575,9 +583,9 @@ probabilistically drawn given the KDE model.
 
 .. topic:: Examples:
 
-  * :ref:`example_neighbors_plot_kde.py`: an example of using Kernel Density
-    estimation to learn a generative model of the hand-written digits data,
-    and drawing new samples from this model.
+  * :ref:`example_neighbors_plot_digits_kde_sampling.py`: an example of using
+    Kernel Density estimation to learn a generative model of the hand-written
+    digits data, and drawing new samples from this model.
 
   * :ref:`example_neighbors_plot_species_kde.py`: an example of Kernel Density
     estimation using the Haversine distance metric to visualize geospatial data
