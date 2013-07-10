@@ -1687,7 +1687,7 @@ def test_precision_recall_f1_no_labels():
     # support = [0, 0, 0]
     # |y_hat_i inter y_i | = [0, 0, 0]
     # |y_i| = [0, 0, 0]
-    # |y_hat_i| = [1, 1, 2]
+    # |y_hat_i| = [0, 0, 0]
     with warnings.catch_warnings(record=True):
         warnings.simplefilter("always")
 
