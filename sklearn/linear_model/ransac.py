@@ -208,8 +208,7 @@ class RANSAC(BaseEstimator):
             # same number of inliers but worse score -> skip current random
             # sample
             if (rsample_n_inliers == best_n_inliers
-                and rsample_score < best_score
-                ):
+                and rsample_score < best_score):
                 continue
 
             # save current random sample as best sample
