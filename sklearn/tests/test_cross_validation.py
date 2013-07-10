@@ -68,10 +68,10 @@ class MockClassifier(BaseEstimator):
                         ' is {0}, should be {1}'.format(sample_weight.shape[0],
                                                         X.shape[0]))
         if class_prior is not None:
-            assert_true(class_prior.shape[0] == len(np.unique(y)),
+            assert_true(class_prior.shape[0] == len(np.unique(Y)),
                         'MockClassifier extra fit_param class_prior.shape[0]'
                         ' is {0}, should be {1}'.format(class_prior.shape[0],
-                                                        len(np.unique(y))))
+                                                        len(np.unique(Y))))
         return self
 
     def predict(self, T):

@@ -200,6 +200,7 @@ class BaseEstimator(object):
             Parameter names mapped to their values.
         """
         out = dict()
+        # We need deprecation warnings to always be on for this to work.
         warnings.simplefilter("always", DeprecationWarning)
         for key in self._get_param_names():
             # catch deprecation warnings
