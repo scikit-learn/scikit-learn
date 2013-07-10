@@ -7,7 +7,7 @@
 import numpy as np
 
 from ..base import BaseEstimator, clone
-from ..utils import check_random_state
+from ..utils import check_random_state, atleast2d_or_csr
 from .base import LinearRegression
 
 
@@ -146,14 +146,6 @@ class RANSAC(BaseEstimator):
         else:
             raise ValueError("`base_estimator` not specified.")
 
-        random_state = check_random_state(self.random_state)
-
-        best_n_inliers = 0
-        best_score = np.inf
-        best_inlier_mask = None
-        best_inlier_X = None
-        best_inlier_y = None
-
         if 0 < self.min_n_samples < 1:
             min_n_samples = np.ceil(self.min_n_samples * X.shape[0])
         elif self.min_n_samples >= 1:
@@ -162,8 +154,20 @@ class RANSAC(BaseEstimator):
             raise ValueError("Value for `min_n_samples` must be scalar and "
                              "positive.")
 
+        random_state = check_random_state(self.random_state)
+
+        best_n_inliers = 0
+        best_score = np.inf
+        best_inlier_mask = None
+        best_inlier_X = None
+        best_inlier_y = None
+
         # number of data samples
         n_samples = X.shape[0]
+        sample_idxs = np.arange(n_samples)
+
+        X = atleast2d_or_csr(X)
+        y = np.asarray(y)
 
         for n_trials in range(self.max_trials):
 
@@ -196,8 +200,9 @@ class RANSAC(BaseEstimator):
                 continue
 
             # extract inlier data set
-            rsample_inlier_X = X[rsample_inlier_mask]
-            rsample_inlier_y = y[rsample_inlier_mask]
+            rsample_inlier_idxs = sample_idxs[rsample_inlier_mask]
+            rsample_inlier_X = X[rsample_inlier_idxs]
+            rsample_inlier_y = y[rsample_inlier_idxs]
 
             # score of inlier data set
             rsample_score = base_estimator.score(rsample_inlier_X,
