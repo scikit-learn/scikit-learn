@@ -317,15 +317,18 @@ at least 2 letters. The specific function that does this step can be
 requested explicitly::
 
   >>> analyze = vectorizer.build_analyzer()
-  >>> analyze("This is a text document to analyze.")
-  ['this', 'is', 'text', 'document', 'to', 'analyze']
+  >>> analyze("This is a text document to analyze.") == (
+  ...     ['this', 'is', 'text', 'document', 'to', 'analyze'])
+  True
 
 Each term found by the analyzer during the fit is assigned a unique
 integer index corresponding to a column in the resulting matrix. This
 interpretation of the columns can be retrieved as follows::
 
-  >>> vectorizer.get_feature_names()
-  ['and', 'document', 'first', 'is', 'one', 'second', 'the', 'third', 'this']
+  >>> vectorizer.get_feature_names() == (
+  ...     ['and', 'document', 'first', 'is', 'one',
+  ...      'second', 'the', 'third', 'this'])
+  True
 
   >>> X.toarray()           # doctest: +ELLIPSIS
   array([[0, 1, 1, 1, 0, 0, 1, 0, 1],
@@ -355,8 +358,9 @@ of words in addition to the 1-grams (the word themselvs)::
   >>> bigram_vectorizer = CountVectorizer(ngram_range=(1, 2),
   ...                                     token_pattern=r'\b\w+\b', min_df=1)
   >>> analyze = bigram_vectorizer.build_analyzer()
-  >>> analyze('Bi-grams are cool!')
-  ['bi', 'grams', 'are', 'cool', 'bi grams', 'grams are', 'are cool']
+  >>> analyze('Bi-grams are cool!') == (
+  ...     ['bi', 'grams', 'are', 'cool', 'bi grams', 'grams are', 'are cool'])
+  True
 
 The vocabulary extracted by this vectorizer is hence much bigger and
 can now resolve ambiguities encoded in local positioning patterns::
@@ -573,8 +577,9 @@ decide better::
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char_wb', ngram_range=(2, 2), min_df=1)
   >>> counts = ngram_vectorizer.fit_transform(['words', 'wprds'])
-  >>> ngram_vectorizer.get_feature_names()
-  [' w', 'ds', 'or', 'pr', 'rd', 's ', 'wo', 'wp']
+  >>> ngram_vectorizer.get_feature_names() == (
+  ...     [' w', 'ds', 'or', 'pr', 'rd', 's ', 'wo', 'wp'])
+  True
   >>> counts.toarray().astype(int)
   array([[1, 1, 1, 0, 1, 1, 1, 0],
          [1, 1, 0, 1, 1, 1, 0, 1]])
@@ -589,16 +594,18 @@ span across words::
   ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <1x4 sparse matrix of type '<... 'numpy.int64'>'
      with 4 stored elements in Compressed Sparse Column format>
-  >>> ngram_vectorizer.get_feature_names()
-  [' fox ', ' jump', 'jumpy', 'umpy ']
+  >>> ngram_vectorizer.get_feature_names() == (
+  ...     [' fox ', ' jump', 'jumpy', 'umpy '])
+  True
 
   >>> ngram_vectorizer = CountVectorizer(analyzer='char', ngram_range=(5, 5), min_df=1)
   >>> ngram_vectorizer.fit_transform(['jumpy fox'])
   ...                                # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
   <1x5 sparse matrix of type '<... 'numpy.int64'>'
       with 5 stored elements in Compressed Sparse Column format>
-  >>> ngram_vectorizer.get_feature_names()
-  ['jumpy', 'mpy f', 'py fo', 'umpy ', 'y fox']
+  >>> ngram_vectorizer.get_feature_names() == (
+  ...     ['jumpy', 'mpy f', 'py fo', 'umpy ', 'y fox'])
+  True
 
 The word boundaries-aware variant ``char_wb`` is especially interesting
 for languages that use white-spaces for word separation as it generates
@@ -736,8 +743,9 @@ to the vectorizer constructor::
   ...     return s.split()
   ...
   >>> vectorizer = CountVectorizer(tokenizer=my_tokenizer)
-  >>> vectorizer.build_analyzer()(u"Some... punctuation!")
-  ['some...', 'punctuation!']
+  >>> vectorizer.build_analyzer()(u"Some... punctuation!") == (
+  ...     ['some...', 'punctuation!'])
+  True
 
 In particular we name:
 
