@@ -60,7 +60,6 @@ def test_ransac_is_model_valid():
                                            is_model_valid=is_model_valid,
                                            random_state=0)
 
-    estimator = linear_model.LinearRegression()
     assert_raises(ValueError, ransac_estimator.fit, X, y)
 
 
