@@ -59,11 +59,11 @@ class RANSAC(BaseEstimator):
     residual_threshold : float, optional
         Maximum residual for a data sample to be classified as an inlier.
 
-    is_data_valid : function, optional
+    is_data_valid : callable, optional
         This function is called with the randomly selected data before the
         model is fitted to it: `is_data_valid(X, y)`.
 
-    is_model_valid : function, optional
+    is_model_valid : callable, optional
         This function is called with the estimated model and the randomly
         selected data: `is_model_valid(model, X, y)`, .
 
