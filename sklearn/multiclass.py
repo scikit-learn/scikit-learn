@@ -115,14 +115,6 @@ def predict_proba_ovr(estimators, X, is_multilabel):
         Y /= np.sum(Y, axis=1)[:, np.newaxis]
     return Y
 
-def decision_function_ovr(estimators, X):
-    """Return decision function using the one-vs-the-rest strategy.
-
-    Estimators must have a decision_function method."""
-    #array [i,j] gives the decision function for sample i, class j.
-    return np.array([est.decision_function(X).ravel()
-                     for est in estimators]).T
-
 class _ConstantPredictor(BaseEstimator):
     def fit(self, X, y):
         self.y_ = y
@@ -254,8 +246,9 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
                                  is_multilabel=self.multilabel_)
 
     def decision_function(self, X):
-        """Returns the distance of each sample from the decision boundary for each class.
-        This can only be used with estimators which implement the decision_function method
+        """Returns the distance of each sample from the decision boundary for
+        each class. This can only be used with estimators which implement the
+        decision_function method.
 
         Parameters
         ----------
@@ -265,7 +258,11 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         -------
         T : array-like, shape = [n_samples, n_classes]
         """
-        return decision_function_ovr(self.estimators_, X)
+        if not hasattr(self.estimators_[0], "decision_function"):
+            raise AttributeError(
+                "Base estimator doesn't have a decision_function attribute.")
+        return np.array([est.decision_function(X).ravel()
+                         for est in self.estimators_]).T
 
     @property
     def multilabel_(self):
