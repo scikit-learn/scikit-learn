@@ -291,9 +291,9 @@ reasonable (please see  the :ref:`reference documentation
 
   >>> vectorizer = CountVectorizer(min_df=1)
   >>> vectorizer                     # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-  CountVectorizer(analyzer='word', binary=False, charset='utf-8',
-          charset_error='strict', dtype=<... 'numpy.int64'>,
-          input='content', lowercase=True, max_df=1.0, max_features=None,
+  CountVectorizer(analyzer=...'word', binary=False, charset=...'utf-8',
+          charset_error=...'strict', dtype=<... 'numpy.int64'>,
+          input=...'content', lowercase=True, max_df=1.0, max_features=None,
           min_df=1, ngram_range=(1, 1), preprocessor=None, 
           stop_words=None, strip_accents=None,
           token_pattern=...'(?u)\\b\\w\\w+\\b', tokenizer=None, vocabulary=None)
