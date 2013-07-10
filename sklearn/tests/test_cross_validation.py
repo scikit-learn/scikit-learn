@@ -68,10 +68,10 @@ class MockClassifier(BaseEstimator):
                         ' is {0}, should be {1}'.format(sample_weight.shape[0],
                                                         X.shape[0]))
         if class_prior is not None:
-            assert_true(class_prior.shape[0] == len(np.unique(Y)),
+            assert_true(class_prior.shape[0] == len(np.unique(y)),
                         'MockClassifier extra fit_param class_prior.shape[0]'
                         ' is {0}, should be {1}'.format(class_prior.shape[0],
-                                                        len(np.unique(Y))))
+                                                        len(np.unique(y))))
         return self
 
     def predict(self, T):
@@ -83,7 +83,7 @@ class MockClassifier(BaseEstimator):
 
 X = np.ones((10, 2))
 X_sparse = coo_matrix(X)
-y = np.arange(10) / 2
+y = np.arange(10) // 2
 
 ##############################################################################
 # Tests
