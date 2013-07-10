@@ -13,8 +13,6 @@ from sklearn.bicluster.spectral import _sparse_min
 from sklearn.bicluster.spectral import _scale_preprocess
 from sklearn.bicluster.spectral import _bistochastic_preprocess
 from sklearn.bicluster.spectral import _log_preprocess
-from sklearn.bicluster.spectral import _fit_best_piecewise
-from sklearn.bicluster.spectral import _project_and_cluster
 
 from sklearn.datasets import make_biclusters, make_checkerboard
 
@@ -132,15 +130,16 @@ def test_log_preprocess():
 
 
 def test_fit_best_piecewise():
+    model = SpectralBiclustering(random_state=0)
     vectors = np.array([[0, 0, 0, 1, 1, 1],
                         [2, 2, 2, 3, 3, 3],
                         [0, 1, 2, 3, 4, 5],])
-    best = _fit_best_piecewise(vectors, k=2, n_clusters=2,
-                               random_state=0, kmeans_kwargs={})
+    best = model._fit_best_piecewise(vectors, n_best=2, n_clusters=2)
     assert_array_equal(best, vectors[:2])
 
 
 def test_project_and_cluster():
+    model = SpectralBiclustering(random_state=0)
     data = np.array([[1, 1, 1,],
                      [1, 1, 1,],
                      [3, 6, 3,],
@@ -149,8 +148,8 @@ def test_project_and_cluster():
                         [0, 1,],
                         [0, 0,]])
     for mat in (data, csr_matrix(data)):
-        labels = _project_and_cluster(data, vectors, n_clusters=2,
-                                      random_state=0, kmeans_kwargs={})
+        labels = model._project_and_cluster(data, vectors,
+                                            n_clusters=2)
         assert_array_equal(labels, [0, 0, 1, 1])
 
 
