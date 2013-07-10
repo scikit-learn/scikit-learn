@@ -182,11 +182,9 @@ class RANSAC(BaseEstimator):
             base_estimator.fit(rsample_X, rsample_y)
 
             # check if estimated model is valid
-            if self.is_model_valid is not None:
-                model_test = self.is_model_valid(base_estimator, rsample_X,
-                                                 rsample_y)
-                if not model_test:
-                    continue
+            if self.is_model_valid is not None and not \
+                    self.is_model_valid(base_estimator, rsample_X, rsample_y):
+                continue
 
             # residuals of all data for current random sample model
             rsample_residuals = np.abs(base_estimator.predict(X) - y)
