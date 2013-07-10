@@ -5,6 +5,7 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import SkipTest
 
 from sklearn.bicluster.spectral import SpectralCoclustering
 from sklearn.bicluster.spectral import SpectralBiclustering
@@ -48,6 +49,8 @@ def test_spectral_coclustering():
 
 def test_spectral_biclustering():
     """Test Kluger methods on a checkerboard dataset."""
+    raise SkipTest('Permutations are slow. Skipping until'
+                   ' faster matching algorithm is available.')
     random_state = 0
     for noise in (0.5, 0):
         S, rows, cols = make_checkerboard((30, 30), 3, noise=noise,
