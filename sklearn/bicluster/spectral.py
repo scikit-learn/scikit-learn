@@ -147,13 +147,14 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator)):
         vectors u and v.
 
         """
+        kwargs = self.svd_kwargs if self.svd_kwargs else {}
         if self.svd_method == 'randomized':
             u, _, vt = randomized_svd(array, n_components,
                                       random_state=self.random_state,
-                                      **self.svd_kwargs)
+                                      **kwargs)
 
         elif self.svd_method == 'arpack':
-            u, _, vt = svds(array, k=n_components, **self.svd_kwargs)
+            u, _, vt = svds(array, k=n_components, **kwargs)
 
         assert_all_finite(u)
         assert_all_finite(vt)
@@ -187,10 +188,10 @@ class SpectralCoclustering(BaseSpectral):
         `sklearn.utils.arpack.svds`, which is more accurate, but
         possibly slower in some cases.
 
-    svd_kwargs : dictionary, optional, default: {}
+    svd_kwargs : dictionary, optional, default: None
         Keyword arguments to pass to the svd function.
 
-    kmeans_kwargs : dictionary, optinal, default: {}
+    kmeans_kwargs : dictionary, optional, default: None
         Keyword arguments to pass to sklearn.cluster.k_means_.
 
     random_state : int seed, RandomState instance, or None (default)
@@ -222,7 +223,7 @@ class SpectralCoclustering(BaseSpectral):
 
     """
     def __init__(self, n_clusters=3, svd_method='randomized',
-                 svd_kwargs={}, kmeans_kwargs={}, random_state=None):
+                 svd_kwargs=None, kmeans_kwargs=None, random_state=None):
         super(SpectralCoclustering, self).__init__(n_clusters,
                                                    svd_method,
                                                    svd_kwargs,
@@ -235,9 +236,11 @@ class SpectralCoclustering(BaseSpectral):
         u, v = self._svd(normalized_data, n_sv)
         z = np.vstack((row_diag[:, np.newaxis] * u[:, 1:],
                        col_diag[:, np.newaxis] * v[:, 1:]))
+
+        kwargs = self.kmeans_kwargs if self.kmeans_kwargs else {}
         _, labels, _ = k_means(z, self.n_clusters,
                                random_state=self.random_state,
-                               **self.kmeans_kwargs)
+                               **kwargs)
 
         n_rows = X.shape[0]
         self.row_labels_ = labels[:n_rows]
@@ -286,10 +289,10 @@ class SpectralBiclustering(BaseSpectral):
         `sklearn.utils.arpack.svds`, which is more accurate, but
         possibly slower in some cases.
 
-    svd_kwargs : dictionary, optional, default: {}
+    svd_kwargs : dictionary, optional, default: None
         Keyword arguments to pass to the svd function.
 
-    kmeans_kwargs : dictionary, optinal, default: {}
+    kmeans_kwargs : dictionary, optional, default: None
         Keyword arguments to pass to sklearn.cluster.k_means_.
 
     random_state : int seed, RandomState instance, or None (default)
@@ -322,7 +325,7 @@ class SpectralBiclustering(BaseSpectral):
     """
     def __init__(self, n_clusters=3, method='bistochastic',
                  n_components=6, n_best=3,
-                 svd_method='randomized', svd_kwargs={}, kmeans_kwargs={},
+                 svd_method='randomized', svd_kwargs=None, kmeans_kwargs=None,
                  random_state=None):
         super(SpectralBiclustering, self).__init__(n_clusters,
                                                    svd_method,
@@ -405,10 +408,11 @@ class SpectralBiclustering(BaseSpectral):
         according to Euclidean distance.
 
         """
+        kwargs = self.kmeans_kwargs if self.kmeans_kwargs else {}
         def make_piecewise(v):
             centroid, labels, _ = k_means(v.reshape(-1, 1), n_clusters,
                                           random_state=self.random_state,
-                                          **self.kmeans_kwargs)
+                                          **kwargs)
             return centroid[labels].ravel()
         piecewise_vectors = np.apply_along_axis(make_piecewise,
                                                 axis=1, arr=vectors)
@@ -420,7 +424,8 @@ class SpectralBiclustering(BaseSpectral):
     def _project_and_cluster(self, data, vectors, n_clusters):
         """Project `data` to `vectors` and cluster the result."""
         projected = safe_sparse_dot(data, vectors)
+        kwargs = self.kmeans_kwargs if self.kmeans_kwargs else {}
         _, labels, _ = k_means(projected, n_clusters,
                                random_state=self.random_state,
-                               **self.kmeans_kwargs)
+                               **kwargs)
         return labels
