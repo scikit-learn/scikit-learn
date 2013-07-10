@@ -177,11 +177,13 @@ cdef class ClassificationCriterion(Criterion):
         cdef SIZE_t p = 0
         cdef SIZE_t k = 0
         cdef SIZE_t c = 0
+        cdef SIZE_t offset = 0
         cdef DOUBLE_t w = 1.0
 
         for k from 0 <= k < n_outputs:
+            offset = k * label_count_stride
             for c from 0 <= c < n_classes[k]:
-                label_count_total[k * label_count_stride + c] = 0
+                label_count_total[offset + c] = 0
 
         for p from start <= p < end:
             i = samples[p]
@@ -214,14 +216,15 @@ cdef class ClassificationCriterion(Criterion):
 
         cdef SIZE_t k = 0
         cdef SIZE_t c = 0
+        cdef SIZE_t offset = 0
 
         for k from 0 <= k < n_outputs:
+            offset = k * label_count_stride
             for c from 0 <= c < n_classes[k]:
                 # Reset left label counts to 0
-                label_count_left[k * label_count_stride + c] = 0
-
+                label_count_left[offset + c] = 0
                 # Reset right label counts to the initial counts
-                label_count_right[k * label_count_stride + c] = label_count_total[k * label_count_stride + c]
+                label_count_right[offset + c] = label_count_total[offset + c]
 
     cdef void update(self, SIZE_t new_pos):
         """Update the collected statistics by moving samples[pos:new_pos] from the
@@ -246,7 +249,7 @@ cdef class ClassificationCriterion(Criterion):
         cdef SIZE_t i
         cdef SIZE_t p
         cdef SIZE_t k
-        cdef SIZE_t c
+        cdef SIZE_t label_index
         cdef DOUBLE_t w = 1.0
 
         # Note: We assume start <= pos < new_pos <= end
@@ -258,9 +261,9 @@ cdef class ClassificationCriterion(Criterion):
                 w  = sample_weight[i]
 
             for k from 0 <= k < n_outputs:
-                c = <SIZE_t> y[i * y_stride + k]
-                label_count_left[k * label_count_stride + c] += w
-                label_count_right[k * label_count_stride + c] -= w
+                label_index = k * label_count_stride + <SIZE_t> y[i * y_stride + k]
+                label_count_left[label_index] += w
+                label_count_right[label_index] -= w
 
             weighted_n_left += w
             weighted_n_right -= w
@@ -298,10 +301,12 @@ cdef class ClassificationCriterion(Criterion):
 
         cdef SIZE_t k
         cdef SIZE_t c
+        cdef SIZE_t offset
 
         for k from 0 <= k < n_outputs:
+            offset = k * label_count_stride
             for c from 0 <= c < n_classes[k]:
-                dest[k * label_count_stride + c] = label_count_total[k * label_count_stride + c]
+                dest[offset + c] = label_count_total[offset + c]
 
 
 cdef class Entropy(ClassificationCriterion):
@@ -333,12 +338,14 @@ cdef class Entropy(ClassificationCriterion):
         cdef double tmp
         cdef SIZE_t k
         cdef SIZE_t c
+        cdef SIZE_t offset
 
         for k from 0 <= k < n_outputs:
+            offset = k * label_count_stride
             entropy = 0.0
 
             for c from 0 <= c < n_classes[k]:
-                tmp = label_count_total[k * label_count_stride + c]
+                tmp = label_count_total[offset + c]
                 if tmp > 0.0:
                     tmp /= weighted_n_node_samples
                     entropy -= tmp * log(tmp)
@@ -366,18 +373,20 @@ cdef class Entropy(ClassificationCriterion):
         cdef double tmp
         cdef SIZE_t k
         cdef SIZE_t c
+        cdef SIZE_t offset
 
         for k from 0 <= k < n_outputs:
+            offset = k * label_count_stride
             entropy_left = 0.0
             entropy_right = 0.0
 
             for c from 0 <= c < n_classes[k]:
-                tmp = label_count_left[k * label_count_stride + c]
+                tmp = label_count_left[offset + c]
                 if tmp > 0.0:
                     tmp /= weighted_n_left
                     entropy_left -= tmp * log(tmp)
 
-                tmp = label_count_right[k * label_count_stride + c]
+                tmp = label_count_right[offset + c]
                 if tmp > 0.0:
                     tmp /= weighted_n_right
                     entropy_right -= tmp * log(tmp)
@@ -418,12 +427,14 @@ cdef class Gini(ClassificationCriterion):
         cdef double tmp
         cdef SIZE_t k
         cdef SIZE_t c
+        cdef SIZE_t offset
 
         for k from 0 <= k < n_outputs:
+            offset = k * label_count_stride
             gini = 0.0
 
             for c from 0 <= c < n_classes[k]:
-                tmp = label_count_total[k * label_count_stride + c]
+                tmp = label_count_total[offset + c]
                 gini += tmp * tmp
 
             if weighted_n_node_samples <= 0.0:
@@ -454,15 +465,17 @@ cdef class Gini(ClassificationCriterion):
         cdef double tmp
         cdef SIZE_t k
         cdef SIZE_t c
+        cdef SIZE_t offset
 
         for k from 0 <= k < n_outputs:
+            offset = k * label_count_stride
             gini_left = 0.0
             gini_right = 0.0
 
             for c from 0 <= c < n_classes[k]:
-                tmp = label_count_left[k * label_count_stride + c]
+                tmp = label_count_left[offset + c]
                 gini_left += tmp * tmp
-                tmp = label_count_right[k * label_count_stride + c]
+                tmp = label_count_right[offset + c]
                 gini_right += tmp * tmp
 
             if weighted_n_left <= 0.0:
