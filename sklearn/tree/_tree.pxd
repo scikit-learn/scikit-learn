@@ -139,4 +139,4 @@ cdef class Tree:
     cdef void resize(self, SIZE_t capacity=*)
     cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X)
     cpdef apply(self, np.ndarray[DTYPE_t, ndim=2] X)
-    cpdef compute_feature_importances(self)
+    cpdef compute_feature_importances(self, normalize=*)

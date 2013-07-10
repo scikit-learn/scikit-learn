@@ -13,7 +13,7 @@
 
 from libc.stdlib cimport calloc, free, malloc, realloc, rand, srand, RAND_MAX
 from libc.string cimport memcpy
-from libc.math cimport log
+from libc.math cimport log2 as log
 
 import numpy as np
 cimport numpy as np
@@ -1799,7 +1799,7 @@ cdef class Tree:
 
         return out
 
-    cpdef compute_feature_importances(self):
+    cpdef compute_feature_importances(self, normalize=True):
         """Computes the importance of each feature (aka variable)."""
         cdef SIZE_t n_node_samples
         cdef SIZE_t n_left
@@ -1820,11 +1820,15 @@ cdef class Tree:
                         - n_left * self.impurity[self.children_left[node]] \
                         - n_right * self.impurity[self.children_right[node]]
 
-        cdef double normalizer = np.sum(importances)
+        importances = importances / self.n_node_samples[0]
+        cdef double normalizer
 
-        if normalizer > 0.0:
-            # Avoid dividing by zero (e.g., when root is pure)
-            importances /= normalizer
+        if normalize:
+            normalizer = np.sum(importances)
+
+            if normalizer > 0.0:
+                # Avoid dividing by zero (e.g., when root is pure)
+                importances /= normalizer
 
         return importances
 
