@@ -197,19 +197,39 @@ def test_make_s_curve():
 
 def test_make_biclusters():
     X, row_labels, col_labels = make_biclusters(
-        shape=(100, 100), n_clusters = 4, shuffle=True, random_state=0)
+        shape=(100, 100), n_clusters=4, shuffle=True, random_state=0)
     assert_equal(X.shape, (100, 100), "X shape mismatch")
     assert_equal(row_labels.shape, (100,), "row labels mismatch")
     assert_equal(col_labels.shape, (100,), "column labels mismatch")
     assert_array_equal(np.unique(row_labels), np.arange(4))
     assert_array_equal(np.unique(col_labels), np.arange(4))
+    assert_true(not np.any(np.isnan(X)))
+    assert_true(not np.any(np.isnan(row_labels)))
+    assert_true(not np.any(np.isnan(col_labels)))
+
+    X2, _, _ = make_biclusters(shape=(100, 100), n_clusters=4,
+                               shuffle=True, random_state=0)
+    assert_array_equal(X, X2)
 
 
 def test_make_checkerboard():
     X, row_labels, col_labels = make_checkerboard(
-        shape=(100, 100), n_clusters = (20, 5), shuffle=True, random_state=0)
+        shape=(100, 100), n_clusters=(20, 5),
+        shuffle=True, random_state=0)
     assert_equal(X.shape, (100, 100), "X shape mismatch")
     assert_equal(row_labels.shape, (100,), "row labels mismatch")
     assert_equal(col_labels.shape, (100,), "column labels mismatch")
     assert_array_equal(np.unique(row_labels), np.arange(20))
     assert_array_equal(np.unique(col_labels), np.arange(5))
+
+    X, row_labels, col_labels = make_checkerboard(
+        shape=(100, 100), n_clusters=2, shuffle=True, random_state=0)
+    assert_true(not np.any(np.isnan(X)))
+    assert_true(not np.any(np.isnan(row_labels)))
+    assert_true(not np.any(np.isnan(col_labels)))
+
+    X1, _, _ = make_checkerboard(shape=(100, 100), n_clusters=2,
+                                 shuffle=True, random_state=0)
+    X2, _, _ = make_checkerboard(shape=(100, 100), n_clusters=2,
+                                 shuffle=True, random_state=0)
+    assert_array_equal(X1, X2)
