@@ -6,7 +6,7 @@ License: BSD 3 clause
 """
 from ..base import BaseEstimator
 from ..cluster.k_means_ import k_means
-from sklearn.utils.extmath import randomized_svd
+from sklearn.utils.extmath import randomized_svd, safe_sparse_dot
 from sklearn.utils.arpack import svds
 from sklearn.utils.validation import assert_all_finite, check_arrays
 
@@ -414,10 +414,7 @@ class SpectralBiclustering(BaseSpectral):
 
     def _project_and_cluster(self, data, vectors, n_clusters):
         """Project `data` to `vectors` and cluster the result."""
-        if issparse(data):
-            projected = data * vectors
-        else:
-            projected = np.dot(data, vectors)
+        projected = safe_sparse_dot(data, vectors)
         _, labels, _ = k_means(projected, n_clusters,
                                random_state=self.random_state,
                                **self.kmeans_kwargs)
