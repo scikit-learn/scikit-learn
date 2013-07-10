@@ -1,6 +1,5 @@
 """Testing for Spectral Biclustering methods"""
 
-from sklearn.utils import check_random_state
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -99,7 +98,7 @@ def _do_bistochastic_test(scaled):
 
 
 def test_scale_preprocess():
-    generator = check_random_state(0)
+    generator = np.random.RandomState(0)
     X = generator.rand(100, 100)
     for mat in (X, csr_matrix(X)):
         scaled, _, _ = _scale_preprocess(mat)
@@ -109,7 +108,7 @@ def test_scale_preprocess():
 
 
 def test_bistochastic_preprocess():
-    generator = check_random_state(0)
+    generator = np.random.RandomState(0)
     X = generator.rand(100, 100)
     for mat in (X, csr_matrix(X)):
         scaled = _bistochastic_preprocess(mat)
@@ -121,7 +120,7 @@ def test_bistochastic_preprocess():
 def test_log_preprocess():
     # adding any constant to a log-scaled matrix should make it
     # bistochastic
-    generator = check_random_state(0)
+    generator = np.random.RandomState(0)
     X = generator.rand(100, 100)
     for mat in (X, csr_matrix(X)):
         scaled = _log_preprocess(mat) + 1
