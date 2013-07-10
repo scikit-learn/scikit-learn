@@ -4,7 +4,7 @@ Authors : Kemal Eren
 License: BSD 3 clause
 
 """
-from ..base import BaseEstimator, BiclusterMixin
+from ..base import BaseEstimator
 from ..cluster.k_means_ import k_means
 from sklearn.utils.extmath import randomized_svd
 from sklearn.utils.arpack import svds
@@ -160,8 +160,7 @@ def _project_and_cluster(data, vectors, n_clusters, random_state,
     return labels
 
 
-class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
-                                      BiclusterMixin)):
+class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for spectral biclustering."""
 
     @abstractmethod
