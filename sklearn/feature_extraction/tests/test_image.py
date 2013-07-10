@@ -186,13 +186,16 @@ def test_patch_extractor_max_patches():
 
     max_patches = 100
     expected_n_patches = len(lenas) * max_patches
-    extr = PatchExtractor(patch_size=(p_h, p_w), max_patches=max_patches, random_state=0)
+    extr = PatchExtractor(patch_size=(p_h, p_w), max_patches=max_patches,
+                          random_state=0)
     patches = extr.transform(lenas)
     assert_true(patches.shape == (expected_n_patches, p_h, p_w))
 
     max_patches = 0.5
-    expected_n_patches = len(lenas) * int((i_h - p_h + 1) * (i_w - p_w + 1) * max_patches)
-    extr = PatchExtractor(patch_size=(p_h, p_w), max_patches=max_patches, random_state=0)
+    expected_n_patches = len(lenas) * int((i_h - p_h + 1) * (i_w - p_w + 1)
+                                          * max_patches)
+    extr = PatchExtractor(patch_size=(p_h, p_w), max_patches=max_patches,
+                          random_state=0)
     patches = extr.transform(lenas)
     assert_true(patches.shape == (expected_n_patches, p_h, p_w))
 

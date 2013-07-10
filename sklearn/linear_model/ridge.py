@@ -124,8 +124,7 @@ def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=None):
         # Only one penalty, we can solve multi-target problems in one time.
         K.flat[::n_samples + 1] += alpha[0]
 
-        dual_coef = linalg.solve(K, y,
-                             sym_pos=True, overwrite_a=True)
+        dual_coef = linalg.solve(K, y, sym_pos=True, overwrite_a=True)
 
         # K is expensive to compute and store in memory so change it back in
         # case it was user-given.
@@ -196,7 +195,8 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
         - 'auto' chooses the solver automatically based on the type of data.
 
         - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
-          coefficients. More stable for singular matrices than 'dense_cholesky'.
+          coefficients. More stable for singular matrices than
+          'dense_cholesky'.
 
         - 'dense_cholesky' uses the standard scipy.linalg.solve function to
           obtain a closed-form solution via a Cholesky decomposition of
@@ -266,7 +266,8 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
     alpha = safe_asarray(alpha).ravel()
     if alpha.size not in [1, n_targets]:
         raise ValueError("Number of targets and number of penalties "
-                    "do not correspond: %d != %d" % (alpha.size, n_targets))
+                         "do not correspond: %d != %d"
+                         % (alpha.size, n_targets))
 
     if alpha.size == 1 and n_targets > 1:
         alpha = np.repeat(alpha, n_targets)
@@ -293,7 +294,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
             coef = safe_sparse_dot(X.T, dual_coef, dense_output=True).T
         else:
             try:
-                coef =_solve_dense_cholesky(X, y, alpha)
+                coef = _solve_dense_cholesky(X, y, alpha)
             except linalg.LinAlgError:
                 # use SVD solver if matrix is singular
                 solver = 'svd'
@@ -379,7 +380,8 @@ class Ridge(_BaseRidge, RegressorMixin):
         - 'auto' chooses the solver automatically based on the type of data.
 
         - 'svd' uses a Singular Value Decomposition of X to compute the Ridge
-          coefficients. More stable for singular matrices than 'dense_cholesky'.
+          coefficients. More stable for singular matrices than
+          'dense_cholesky'.
 
         - 'dense_cholesky' uses the standard scipy.linalg.solve function to
           obtain a closed-form solution.
