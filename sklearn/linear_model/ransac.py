@@ -207,7 +207,7 @@ class RANSAC(BaseEstimator):
             # same number of inliers but worse score -> skip current random
             # sample
             if (rsample_n_inliers == best_n_inliers
-                and rsample_score < best_score):
+                    and rsample_score < best_score):
                 continue
 
             # save current random sample as best sample
@@ -219,7 +219,7 @@ class RANSAC(BaseEstimator):
 
             # break if sufficient number of inliers or score is reached
             if (best_n_inliers >= self.stop_n_inliers
-                or best_score >= self.stop_score):
+                    or best_score >= self.stop_score):
                 break
 
         # if none of the iterations met the required criteria
