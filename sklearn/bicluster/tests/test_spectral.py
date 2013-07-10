@@ -52,7 +52,7 @@ def test_spectral_coclustering():
 def test_spectral_biclustering():
     """Test Kluger methods on a checkerboard dataset."""
     random_state = 0
-    for noise in (0.5,): # TODO: add 0 to the list; right now it fails
+    for noise in (0, 0.5):
         S, rows, cols = make_checkerboard((30, 30), 3, noise=noise,
                                           random_state=random_state)
         for n_clusters in ((3, 3), 3):
