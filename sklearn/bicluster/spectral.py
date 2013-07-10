@@ -268,7 +268,7 @@ class SpectralCoclustering(BaseSpectral):
                                **self.kmeans_kwargs)
 
         n_rows = X.shape[0]
-        self.row_labels_ = labels[0:n_rows]
+        self.row_labels_ = labels[:n_rows]
         self.column_labels_ = labels[n_rows:]
 
         self.rows_ = np.vstack(self.row_labels_ == c
