@@ -10,10 +10,10 @@ from scipy.linalg import norm
 from sklearn.utils import gen_even_slices
 from sklearn.utils import shuffle
 from scipy.optimize import fmin_l_bfgs_b
-from ..base import BaseEstimator, ClassifierMixin, RegressorMixin
-from ..preprocessing import LabelBinarizer
-from ..utils import atleast2d_or_csr, check_random_state
-from ..utils.extmath import logsumexp, safe_sparse_dot
+from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
+from sklearn.preprocessing import LabelBinarizer
+from sklearn.utils import atleast2d_or_csr, check_random_state
+from sklearn.utils.extmath import logsumexp, safe_sparse_dot
 from itertools import cycle, izip
 
 
@@ -262,7 +262,7 @@ class BaseMLP(BaseEstimator):
         self._lbin = LabelBinarizer()
         Y = self._lbin.fit_transform(y)
         if Y.shape[1] == 1:
-            self.output = self.activation
+            self.output_func = self.activation
         n_samples, n_features = X.shape
         n_classes = Y.shape[1]
         self._init_fit(n_features, n_classes)
@@ -277,35 +277,37 @@ class BaseMLP(BaseEstimator):
                 n_batches))
         # preallocate memory
         a_hidden = np.empty((self.batch_size, self.n_hidden))
-        delta_h = np.empty((self.batch_size, self.n_hidden))
         a_output = np.empty((self.batch_size, n_classes))
         delta_o = np.empty((self.batch_size, n_classes))
         if self.algorithm is 'sgd':
             eta = self.eta0
             t = 1
-            for i, batch_slice in izip(xrange(self.max_iter), cycle(batch_slices)):
-                cost, eta = self.backprop_naive(
-                    X[batch_slice],
-                    Y[batch_slice],
-                    self.batch_size,
-                    a_hidden,
-                    delta_h,
-                    a_output,
-                    delta_o,
-                    t,
-                    eta)
+            for i in  xrange(self.max_iter):
+                for batch_slice in batch_slices:
+                    cost, eta = self.backprop_naive(
+                        X[batch_slice],
+                        Y[batch_slice],
+                        self.batch_size,
+                        a_hidden,
+                        a_output,
+                        delta_o,
+                        t,
+                        eta)
+                if self.verbose:
+                        print("Iteration %d, cost = %.2f"
+                              % (i, cost))
                 t += 1
         elif 'l-bfgs':
-            self._backprop_optimizer(
-                X, Y, n_features, n_classes, n_samples, a_hidden,
-                delta_h,
-                a_output,
-                delta_o)
+            for batch_slice in batch_slices:
+                self._backprop_optimizer(
+                    X[batch_slice], Y[batch_slice], n_features, n_classes, self.batch_size, a_hidden,
+                     a_output,
+                    delta_o)
         return self
 
     def _backprop_optimizer(
             self, X, Y, n_features, n_classes, n_samples,
-             a_hidden, delta_h, a_output, delta_o):
+             a_hidden, a_output, delta_o):
         """
         Applies the quasi-Newton optimization methods that uses a l_BFGS
         to train the weights
@@ -345,11 +347,11 @@ class BaseMLP(BaseEstimator):
                 n_features,
                 n_classes,
                 n_samples,
-                a_hidden, delta_h, a_output, delta_o))
+                a_hidden, a_output, delta_o))
         self._unpack(optTheta, n_features, n_classes)
 
     def _cost_grad(self, theta, X, Y, n_features, n_classes,
-                   n_samples, a_hidden, delta_h, a_output, delta_o):
+                   n_samples, a_hidden, a_output, delta_o):
         """
         Computes the MLP cost  function ``J(W,b)``
         and the corresponding derivatives of J(W,b) with respect to the
@@ -377,12 +379,12 @@ class BaseMLP(BaseEstimator):
         """
         self._unpack(theta, n_features, n_classes)
         cost, W1grad, W2grad, b1grad, b2grad = self.backprop(
-            X, Y, n_samples, a_hidden, delta_h, a_output, delta_o)
+            X, Y, n_samples, a_hidden, a_output, delta_o)
         grad = self._pack(W1grad, W2grad, b1grad, b2grad)
         return cost, grad
 
     def backprop_naive(
-            self, X, Y, n_samples, a_hidden, delta_h, a_output, delta_o, t, eta):
+            self, X, Y, n_samples, a_hidden, a_output, delta_o, t, eta):
         """
         Updates the weights using the computed gradients
 
@@ -406,7 +408,7 @@ class BaseMLP(BaseEstimator):
 
         """
         cost, W1grad, W2grad, b1grad, b2grad = self.backprop(
-            X, Y, n_samples, a_hidden, delta_h, a_output, delta_o)
+            X, Y, n_samples, a_hidden, a_output, delta_o)
         # Update weights
         self.coef_hidden_ -= (eta * W1grad)
         self.coef_output_ -= (eta * W2grad)
@@ -418,7 +420,7 @@ class BaseMLP(BaseEstimator):
             eta = self.eta0 / pow(t, self.power_t)
         return cost, eta
 
-    def backprop(self, X, Y, n_samples, a_hidden, delta_h, a_output, delta_o):
+    def backprop(self, X, Y, n_samples, a_hidden, a_output, delta_o):
         """
         Computes the MLP cost  function ``J(W,b)``
         and the corresponding derivatives of J(W,b) with respect to the
@@ -453,13 +455,13 @@ class BaseMLP(BaseEstimator):
         diff = Y - a_output
         if self.loss == 'squared_loss':
             delta_o[:] = -diff * self.derivative(a_output)
-            delta_h[:] = np.dot(
+            delta_h = np.dot(
                 delta_o,
                 self.coef_output_.T) * self.derivative(a_hidden)
             cost = np.sum(diff**2)/ (2 * n_samples)
         elif self.loss == 'log':
             delta_o[:] = -diff
-            delta_h[:] = np.dot(delta_o, self.coef_output_.T) *\
+            delta_h = np.dot(delta_o, self.coef_output_.T) *\
                     self.derivative(a_hidden)
             cost = np.sum(
                 np.sum(-Y * np.log(a_output) - (1 - Y) * np.log(1 - a_output)))
@@ -592,9 +594,13 @@ class BaseMLP(BaseEstimator):
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in `self.classes_`.
         """
-        scores = self.decision_function(X)
-        if len(scores.shape) == 1:
-            return self.activation(scores)
+        prob = self.decision_function(X)
+        prob *= -1
+        np.exp(prob, prob)
+        prob += 1
+        np.reciprocal(prob, prob)
+        if len(prob.shape) == 1:
+            return np.vstack([1 - prob, prob]).T 
         else:
             return softmax(scores)
 
@@ -607,8 +613,8 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
 
     def __init__(
         self, n_hidden=100, activation="tanh", output_func='softmax',
-        loss='log', algorithm='sgd', alpha=0.0, batch_size=100,
-        learning_rate="invscaling", eta0=1, power_t=0.5, max_iter=100,
+        loss='log', algorithm='sgd', alpha=0.00001, batch_size=2000,
+        learning_rate="constant", eta0=1, power_t=0.5, max_iter=100,
         shuffle_data=False, random_state=None, tol=1e-5, verbose=False):
         super(
             MLPClassifier, self).__init__(n_hidden, activation, output_func, loss,
@@ -620,8 +626,8 @@ class MLPRegressor(BaseMLP, RegressorMixin):
 
     def __init__(
         self, n_hidden=100, activation="tanh", output_func='tanh',
-         loss='squared_loss', algorithm='sgd', alpha=0.0, 
-         batch_size=100, learning_rate="invscaling", eta0=0.1, 
+         loss='squared_loss', algorithm='sgd', alpha=0.00001, 
+         batch_size=2000, learning_rate="constant", eta0=0.1, 
          power_t=0.5, max_iter=100, shuffle_data=False, 
          random_state=None, tol=1e-5, verbose=False):
         super(
