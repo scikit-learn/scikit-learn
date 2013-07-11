@@ -4,6 +4,7 @@ Authors : Kemal Eren
 License: BSD 3 clause
 
 """
+
 from ..base import BaseEstimator
 from ..cluster.k_means_ import k_means
 from sklearn.utils.extmath import randomized_svd, safe_sparse_dot
@@ -169,8 +170,7 @@ class SpectralCoclustering(BaseSpectral):
     The resulting bicluster structure is block-diagonal, since each
     row and each column belongs to exactly one bicluster.
 
-    Supports sparse matrices, as long as they are nonnegative. If
-    there are negative values, it will be converted to a dense array.
+    Supports sparse matrices, as long as they are nonnegative.
 
     Parameters
     ----------
@@ -268,8 +268,7 @@ class SpectralBiclustering(BaseSpectral):
     method : string
         Method of normalizing and converting singular vectors into
         biclusters. May be one of 'scale', 'bistochastic', or 'log'.
-        CAUTION: if `method='log'`, the data must be converted to a
-        dense array.
+        CAUTION: if `method='log'`, the data must not be sparse.
 
     n_components : integer
         Number of singular vectors to check.
