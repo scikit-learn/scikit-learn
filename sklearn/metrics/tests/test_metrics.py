@@ -1646,10 +1646,9 @@ def test__check_clf_targets():
 
             else:
                 if type1 not in (BIN, MC, SEQ, IND):
-                    assert_raise_message(
-                        ValueError,
-                        "{0} is not supported".format(type1),
-                        _check_clf_targets, y1, y2)
+                    assert_raise_message(ValueError,
+                                         "{0} is not supported".format(type1),
+                                         _check_clf_targets, y1, y2)
 
         else:
             merged_type, y1out, y2out = _check_clf_targets(y1, y2)
