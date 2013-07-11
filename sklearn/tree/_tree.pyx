@@ -938,7 +938,7 @@ cdef class BestSplitter(Splitter):
             current_feature = features[f_i]
 
             # Sort samples along that feature
-            self.sort(X, current_feature, samples+start, end-start)
+            sort(X, current_feature, samples+start, end-start)
 
             # Evaluate all splits
             criterion.reset()
@@ -1008,45 +1008,45 @@ cdef class BestSplitter(Splitter):
         threshold[0] = best_threshold
         impurity[0] = node_impurity
 
-    cdef void sort(self, np.ndarray[DTYPE_t, ndim=2] X, SIZE_t current_feature,
-                         SIZE_t* samples, SIZE_t length):
-        """In-place sorting of samples[start:end] using
-          X[sample[i], current_feature] as key."""
-        # Heapsort, adapted from Numerical Recipes in C
-        cdef SIZE_t tmp
-        cdef DOUBLE_t tmp_value
-        cdef SIZE_t n = length
-        cdef SIZE_t parent = length / 2
-        cdef SIZE_t index, child
+cdef void sort(np.ndarray[DTYPE_t, ndim=2] X, SIZE_t current_feature,
+               SIZE_t* samples, SIZE_t length):
+    """In-place sorting of samples[start:end] using
+      X[sample[i], current_feature] as key."""
+    # Heapsort, adapted from Numerical Recipes in C
+    cdef SIZE_t tmp
+    cdef DOUBLE_t tmp_value
+    cdef SIZE_t n = length
+    cdef SIZE_t parent = length / 2
+    cdef SIZE_t index, child
 
-        while True:
-            if parent > 0:
-                parent -= 1
-                tmp = samples[parent]
+    while True:
+        if parent > 0:
+            parent -= 1
+            tmp = samples[parent]
+        else:
+            n -= 1
+            if n == 0:
+                return
+            tmp = samples[n]
+            samples[n] = samples[0]
+
+        tmp_value = X[tmp, current_feature]
+        index = parent
+        child = index * 2 + 1
+
+        while child < n:
+            if (child + 1 < n) and (X[samples[child + 1], current_feature] > X[samples[child], current_feature]):
+                child += 1
+
+            if X[samples[child], current_feature] > tmp_value:
+                samples[index] = samples[child]
+                index = child
+                child = index * 2 + 1
+
             else:
-                n -= 1
-                if n == 0:
-                    return
-                tmp = samples[n]
-                samples[n] = samples[0]
+                break
 
-            tmp_value = X[tmp, current_feature]
-            index = parent
-            child = index * 2 + 1
-
-            while child < n:
-                if (child + 1 < n) and (X[samples[child + 1], current_feature] > X[samples[child], current_feature]):
-                    child += 1
-
-                if X[samples[child], current_feature] > tmp_value:
-                    samples[index] = samples[child]
-                    index = child
-                    child = index * 2 + 1
-
-                else:
-                    break
-
-            samples[index] = tmp
+        samples[index] = tmp
 
 
 cdef class RandomSplitter(Splitter):
