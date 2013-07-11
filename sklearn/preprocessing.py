@@ -652,8 +652,7 @@ def _transform_selected(X, transform, selected="all", copy=True):
         Copy X even if it could be avoided.
 
     selected: "all" or array of indices or mask
-        Specify which features to apply the transform to. May not be a mask
-        for sparse X.
+        Specify which features to apply the transform to.
 
     Returns
     -------
