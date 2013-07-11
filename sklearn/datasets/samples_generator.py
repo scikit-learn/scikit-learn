@@ -1302,6 +1302,7 @@ def make_gaussian_quantiles(mean=None, cov=1., n_samples=100,
 
     return X, y
 
+
 def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
                     maxval=100, shuffle=True, random_state=None):
     """Generate an array with constant block diagonal structure for
