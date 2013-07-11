@@ -7,9 +7,9 @@ This example demonstrates how to generate a checkerboard dataset for
 the Spectral Biclustering algorithm and fit it.
 
 The row and column labels assigned to biclusters may not match the
-original row and column labels, which is why the fitted checkerboard
-may not look exactly like the original. The appropriate row and column
-exchanges would make them look more similar.
+original row and column labels, which is why the visualization of the
+fitted checkerboard may look different the original. The appropriate
+rearrangement of rows and columns would make them match.
 
 """
 print(__doc__)
