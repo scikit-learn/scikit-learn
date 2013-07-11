@@ -299,7 +299,7 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                 # use SVD solver if matrix is singular
                 solver = 'svd'
 
-    elif solver == 'svd':
+    if solver == 'svd':
         coef = _solve_svd(X, y, alpha)
 
     if ravel:
