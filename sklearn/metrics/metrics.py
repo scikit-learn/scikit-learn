@@ -132,11 +132,11 @@ def _check_clf_targets(y_true, y_pred):
     y_type = y_type.pop()
 
     # No metrics support "multiclass-multioutput" format
-    if (y_type not in set(["binary", "multiclass",
-                           "multilabel-indicator", "multilabel-sequences"])):
+    if (y_type not in ["binary", "multiclass", "multilabel-indicator",
+                       "multilabel-sequences"]):
         raise ValueError("{0} is not supported".format(y_type))
 
-    if y_type in set(["binary", "multiclass"]):
+    if y_type in ["binary", "multiclass"]:
         y_true = _column_or_1d(y_true)
         y_pred = _column_or_1d(y_pred)
 
