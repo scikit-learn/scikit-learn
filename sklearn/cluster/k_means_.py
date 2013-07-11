@@ -650,7 +650,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         if hasattr(init, '__array__'):
             n_clusters = init.shape[0]
-            init = np.asanyarray(init, dtype=np.float64)
+            init = np.asarray(init, dtype=np.float64)
 
         self.n_clusters = n_clusters
         self.init = init

@@ -317,7 +317,7 @@ def fast_mcd(X, support_fraction=None,
     """
     random_state = check_random_state(random_state)
 
-    X = np.asanyarray(X)
+    X = np.asarray(X)
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
         warnings.warn("Only one sample available. "
