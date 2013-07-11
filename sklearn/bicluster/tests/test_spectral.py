@@ -9,7 +9,6 @@ from sklearn.utils.testing import SkipTest
 
 from sklearn.bicluster.spectral import SpectralCoclustering
 from sklearn.bicluster.spectral import SpectralBiclustering
-from sklearn.bicluster.spectral import _sparse_min
 from sklearn.bicluster.spectral import _scale_preprocess
 from sklearn.bicluster.spectral import _bistochastic_preprocess
 from sklearn.bicluster.spectral import _log_preprocess
@@ -61,7 +60,7 @@ def test_spectral_biclustering():
                     for svd_method in ('randomized', 'arpack'):
                         if svd_method == 'arpack':
                             # fails with default value
-                            svd_kwargs = {'ncv' : 20}
+                            svd_kwargs = {'ncv': 20}
                         else:
                             svd_kwargs = {}
                         model = SpectralBiclustering(n_clusters=n_clusters,
@@ -73,8 +72,10 @@ def test_spectral_biclustering():
 
                         assert_equal(model.rows_.shape, (9, 30))
                         assert_equal(model.columns_.shape, (9, 30))
-                        assert_array_equal(model.rows_.sum(axis=0), np.repeat(3, 30))
-                        assert_array_equal(model.columns_.sum(axis=0), np.repeat(3, 30))
+                        assert_array_equal(model.rows_.sum(axis=0),
+                                           np.repeat(3, 30))
+                        assert_array_equal(model.columns_.sum(axis=0),
+                                           np.repeat(3, 30))
                         _check_label_permutations(model.rows_, rows, 3)
                         _check_label_permutations(model.columns_, cols, 3)
 
@@ -135,20 +136,20 @@ def test_fit_best_piecewise():
     model = SpectralBiclustering(random_state=0)
     vectors = np.array([[0, 0, 0, 1, 1, 1],
                         [2, 2, 2, 3, 3, 3],
-                        [0, 1, 2, 3, 4, 5],])
+                        [0, 1, 2, 3, 4, 5]])
     best = model._fit_best_piecewise(vectors, n_best=2, n_clusters=2)
     assert_array_equal(best, vectors[:2])
 
 
 def test_project_and_cluster():
     model = SpectralBiclustering(random_state=0)
-    data = np.array([[1, 1, 1,],
-                     [1, 1, 1,],
-                     [3, 6, 3,],
-                     [3, 6, 3,]])
-    vectors = np.array([[1, 0,],
-                        [0, 1,],
-                        [0, 0,]])
+    data = np.array([[1, 1, 1],
+                     [1, 1, 1],
+                     [3, 6, 3],
+                     [3, 6, 3]])
+    vectors = np.array([[1, 0],
+                        [0, 1],
+                        [0, 0]])
     for mat in (data, csr_matrix(data)):
         labels = model._project_and_cluster(data, vectors,
                                             n_clusters=2)
