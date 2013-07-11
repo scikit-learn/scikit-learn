@@ -92,8 +92,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         Parameters
         ----------
         X : array-like, shape = [n_samples, n_features]
-            The training input samples. Use ``dtype=np.float32``
-            and ``order='F'`` for maximum efficiency.
+            The training input samples. Use ``dtype=np.float32`` for maximum
+            efficiency.
 
         y : array-like, shape = [n_samples] or [n_samples, n_outputs]
             The target values (integers that correspond to classes in
@@ -573,7 +573,7 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
         The feature importances.
         The higher, the more important the feature.
         The importance of a feature is computed as the
-        (normalized)total reduction of the criterion brought
+        (normalized) total reduction of the criterion brought
         by that feature. It is also known as the Gini importance [4]_.
 
     See also
@@ -703,11 +703,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
     See also
     --------
-    ExtraTreeClassifier : A classifier base on extremely randomized trees
-    sklearn.ensemble.ExtraTreesClassifier : An ensemble of extra-trees for
-        classification
-    sklearn.ensemble.ExtraTreesRegressor : An ensemble of extra-trees for
-        regression
+    ExtraTreeClassifier, ExtraTreesClassifier, ExtraTreesRegressor
 
     References
     ----------
