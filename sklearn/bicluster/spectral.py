@@ -32,15 +32,14 @@ def _sparse_min(X):
 
 
 def _make_nonnegative(X, min_value=0):
-    """Ensure `X.min()` >= `min_value`.
-
-    Converts X to a dense matrix if necessary.
-
-    """
+    """Ensure `X.min()` >= `min_value`."""
     min_ = _sparse_min(X)
     if min_ < min_value:
         if issparse(X):
-            X = np.asarray(X.todense())
+            raise ValueError("Cannot make the data matrix"
+                             " nonnegative because it is sparse."
+                             " Adding a value to every entry would"
+                             " make it no longer sparse.")
         X = X + (min_value - min_)
     return X
 
@@ -93,14 +92,12 @@ def _bistochastic_preprocess(X, maxiter=1000, tol=1e-5):
 
 
 def _log_preprocess(X):
-    """Normalize `X` according to Kluger's log-interactions scheme.
-
-    Converts X to a dense matrix if necessary.
-
-    """
+    """Normalize `X` according to Kluger's log-interactions scheme."""
     X = _make_nonnegative(X, min_value=1)
     if issparse(X):
-        X = np.asarray(X.todense())
+        raise ValueError("Cannot compute log of a sparse matrix,"
+                         " because log(x) diverges to -infinity as x"
+                         " goes to 0.")
     L = np.log(X)
     row_avg = L.mean(axis=1)[:, np.newaxis]
     col_avg = L.mean(axis=0)
