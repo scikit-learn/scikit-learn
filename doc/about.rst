@@ -65,13 +65,15 @@ Donating to the project
 ~~~~~~~~~~~~~~~~~~~~~~~
 
 If you are interested in donating to the project or to one of our code-sprints, you can use
-the *Paypal* button below or the `NumFOCUS Donations Page <http://numfocus.org/donatejoin/>`_
+the *Paypal* button below or the `NumFOCUS Donations Page <http://numfocus.org/donatejoin/>`_ (if you use the latter, please indicate that you are donating for the scikit-learn project).
 
-All donations will be handled by `NumFOCUS <http://numfocus.org/donatejoin/>`_,
-a non-profit-organization which is managed by the `board of Scipy <http://numfocus.org/sample-page-2/>`_
-community members. They aim to ensure that money is available when needed to keep projects within the
-scientific Python area funded and available, thus creating a fiscal home for
-scikit-learn.
+All donations will be handled by `NumFOCUS
+<http://numfocus.org/donatejoin/>`_, a non-profit-organization which is
+managed by a board of `Scipy community members
+<http://numfocus.org/sample-page-2/>`_. NumFOCUS's mission is to foster
+scientific computing software, in particular in Python. As a fiscal home
+of scikit-learn, it ensures that money is available when needed to keep
+the project funded and available while in compliance with tax regulations.
 
 The received donations for the scikit-learn project mostly will go towards covering travel-expenses
 for code sprints, as well as towards the organization budget of the project [#f1]_.
