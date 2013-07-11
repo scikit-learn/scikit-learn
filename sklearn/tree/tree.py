@@ -68,7 +68,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
                  min_samples_split,
                  min_samples_leaf,
                  max_features,
-                 compute_importances,
                  random_state):
         self.criterion = criterion
         self.splitter = splitter
@@ -76,14 +75,6 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.min_samples_split = min_samples_split
         self.min_samples_leaf = min_samples_leaf
         self.max_features = max_features
-
-        if compute_importances:
-            warn("Setting compute_importances=True is no longer "
-                 "required. Variable importances are now computed on the fly "
-                 "when accessing the feature_importances_ attribute. This "
-                 "parameter will be removed in 0.15.", DeprecationWarning)
-
-        self.compute_importances = compute_importances
         self.random_state = random_state
 
         self.n_features_ = None
@@ -94,7 +85,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.splitter_ = None
         self.tree_ = None
 
-    def fit(self, X, y, check_input=True, sample_weight=None):
+    def fit(self, X, y, sample_mask=None, X_argsorted=None,
+                  check_input=True, sample_weight=None):
         """Build a decision tree from the training set (X, y).
 
         Parameters
@@ -125,11 +117,20 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self : object
             Returns self.
         """
+        # Deprecations
+        if sample_mask is not None:
+            warn("The sample_mask parameter is deprecated and will be removed "
+                 "in 0.15.", DeprecationWarning)
+
+        if X_argsorted is not None:
+            warn("The X_argsorted parameter is deprecated and will be removed "
+                 "in 0.15.", DeprecationWarning)
+
+        # Convert data
         if check_input:
             X, y = check_arrays(X, y)
         random_state = check_random_state(self.random_state)
 
-        # Convert data
         if (getattr(X, "dtype", None) != DTYPE or X.ndim != 2):
             X = array2d(X, dtype=DTYPE)
 
@@ -427,16 +428,26 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                  min_samples_split=2,
                  min_samples_leaf=1,
                  max_features=None,
-                 compute_importances=False,
-                 random_state=None):
+                 random_state=None,
+                 min_density=None,
+                 compute_importances=None):
         super(DecisionTreeClassifier, self).__init__(criterion,
                                                      splitter,
                                                      max_depth,
                                                      min_samples_split,
                                                      min_samples_leaf,
                                                      max_features,
-                                                     compute_importances,
                                                      random_state)
+        if min_density is not None:
+            warn("The min_density parameter is deprecated and will be removed "
+                 "in 0.15.", DeprecationWarning)
+
+        if compute_importances is not None:
+            warn("Setting compute_importances is no longer "
+                 "required. Variable importances are now computed on the fly "
+                 "when accessing the feature_importances_ attribute. This "
+                 "parameter will be removed in 0.15.", DeprecationWarning)
+
 
     def predict_proba(self, X):
         """Predict class probabilities of the input samples X.
@@ -607,16 +618,25 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                  min_samples_split=2,
                  min_samples_leaf=1,
                  max_features=None,
-                 compute_importances=False,
-                 random_state=None):
+                 random_state=None,
+                 min_density=None,
+                 compute_importances=None):
         super(DecisionTreeRegressor, self).__init__(criterion,
                                                     splitter,
                                                     max_depth,
                                                     min_samples_split,
                                                     min_samples_leaf,
                                                     max_features,
-                                                    compute_importances,
                                                     random_state)
+        if min_density is not None:
+            warn("The min_density parameter is deprecated and will be removed "
+                 "in 0.15.", DeprecationWarning)
+
+        if compute_importances is not None:
+            warn("Setting compute_importances is no longer "
+                 "required. Variable importances are now computed on the fly "
+                 "when accessing the feature_importances_ attribute. This "
+                 "parameter will be removed in 0.15.", DeprecationWarning)
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
@@ -648,16 +668,25 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                  min_samples_split=2,
                  min_samples_leaf=1,
                  max_features="auto",
-                 compute_importances=False,
-                 random_state=None):
+                 random_state=None,
+                 min_density=None,
+                 compute_importances=None):
         super(ExtraTreeClassifier, self).__init__(criterion,
                                                   splitter,
                                                   max_depth,
                                                   min_samples_split,
                                                   min_samples_leaf,
                                                   max_features,
-                                                  compute_importances,
                                                   random_state)
+        if min_density is not None:
+            warn("The min_density parameter is deprecated and will be removed "
+                 "in 0.15.", DeprecationWarning)
+
+        if compute_importances is not None:
+            warn("Setting compute_importances is no longer "
+                 "required. Variable importances are now computed on the fly "
+                 "when accessing the feature_importances_ attribute. This "
+                 "parameter will be removed in 0.15.", DeprecationWarning)
 
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
@@ -693,13 +722,23 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                  min_samples_split=2,
                  min_samples_leaf=1,
                  max_features="auto",
-                 compute_importances=False,
-                 random_state=None):
+                 random_state=None,
+                 min_density=None,
+                 compute_importances=None):
         super(ExtraTreeRegressor, self).__init__(criterion,
                                                  splitter,
                                                  max_depth,
                                                  min_samples_split,
                                                  min_samples_leaf,
                                                  max_features,
-                                                 compute_importances,
                                                  random_state)
+        if min_density is not None:
+            warn("The min_density parameter is deprecated and will be removed "
+                 "in 0.15.", DeprecationWarning)
+
+        if compute_importances is not None:
+            warn("Setting compute_importances is no longer "
+                 "required. Variable importances are now computed on the fly "
+                 "when accessing the feature_importances_ attribute. This "
+                 "parameter will be removed in 0.15.", DeprecationWarning)
+
