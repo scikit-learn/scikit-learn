@@ -32,6 +32,7 @@ def test_spectral_coclustering():
     for noise in (0, 0.5):
         S, rows, cols = make_biclusters((30, 30), 3, noise=noise,
                                         random_state=random_state)
+        S -= S.min()  # needs to be nonnegative before making it sparse
         for mat in (S, csr_matrix(S)):
             for svd_method in ('randomized', 'arpack'):
                 model = SpectralCoclustering(n_clusters=3,
@@ -68,7 +69,13 @@ def test_spectral_biclustering():
                                                      svd_method=svd_method,
                                                      svd_kwargs=svd_kwargs,
                                                      random_state=random_state)
-                        model.fit(mat)
+
+                        if issparse(mat) and method == 'log':
+                            # cannot take log of sparse matrix
+                            assert_raises(ValueError, model.fit, mat)
+                            continue
+                        else:
+                            model.fit(mat)
 
                         assert_equal(model.rows_.shape, (9, 30))
                         assert_equal(model.columns_.shape, (9, 30))
@@ -125,11 +132,9 @@ def test_log_preprocess():
     # adding any constant to a log-scaled matrix should make it
     # bistochastic
     generator = np.random.RandomState(0)
-    X = generator.rand(100, 100)
-    for mat in (X, csr_matrix(X)):
-        scaled = _log_preprocess(mat) + 1
-        _do_bistochastic_test(scaled)
-        assert not issparse(scaled)
+    mat = generator.rand(100, 100)
+    scaled = _log_preprocess(mat) + 1
+    _do_bistochastic_test(scaled)
 
 
 def test_fit_best_piecewise():
