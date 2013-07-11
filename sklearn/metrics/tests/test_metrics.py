@@ -1690,6 +1690,6 @@ def test__column_or_1d():
 
     for y_type, y in EXAMPLES:
         if y_type in ["binary", 'multiclass', "continuous"]:
-            _column_or_1d(y)
+            assert_array_equal(_column_or_1d(y), np.ravel(y))
         else:
             assert_raises(ValueError, _column_or_1d, y)
