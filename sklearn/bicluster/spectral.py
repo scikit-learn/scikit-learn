@@ -11,7 +11,7 @@ from sklearn.utils.arpack import svds
 from sklearn.utils.validation import assert_all_finite, check_arrays
 
 import numpy as np
-from scipy.sparse import csr_matrix, lil_matrix, issparse
+from scipy.sparse import lil_matrix, issparse
 from ..externals import six
 from abc import ABCMeta, abstractmethod
 
@@ -336,7 +336,6 @@ class SpectralBiclustering(BaseSpectral):
         self.n_components = n_components
         self.n_best = n_best
 
-
     def _check_parameters(self):
         super(SpectralBiclustering, self)._check_parameters()
         legal_methods = ('bistochastic', 'scale', 'log')
@@ -409,6 +408,7 @@ class SpectralBiclustering(BaseSpectral):
 
         """
         kwargs = self.kmeans_kwargs if self.kmeans_kwargs else {}
+
         def make_piecewise(v):
             centroid, labels, _ = k_means(v.reshape(-1, 1), n_clusters,
                                           random_state=self.random_state,
