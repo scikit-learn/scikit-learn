@@ -152,6 +152,7 @@ def test_ransac_none_estimator():
     ransac_none_estimator.fit(X, y)
 
     assert_equal(ransac_estimator.predict(X), ransac_none_estimator.predict(X))
+    assert_raises(ValueError, ransac_none_estimator.fit, X, y.astype(int))
 
 
 def test_ransac_min_n_samples():
