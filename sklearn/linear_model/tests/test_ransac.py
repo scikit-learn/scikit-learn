@@ -140,5 +140,19 @@ def test_ransac_sparse():
     assert_equal(ransac_estimator.inlier_mask_, ref_inlier_mask)
 
 
+def test_ransac_none_estimator():
+
+    base_estimator = linear_model.LinearRegression()
+
+    ransac_estimator = linear_model.RANSAC(base_estimator, 2, 5,
+                                           random_state=0)
+    ransac_none_estimator = linear_model.RANSAC(None, 2, 5, random_state=0)
+
+    ransac_estimator.fit(X, y)
+    ransac_none_estimator.fit(X, y)
+
+    assert_equal(ransac_estimator.predict(X), ransac_none_estimator.predict(X))
+
+
 if __name__ == "__main__":
     np.testing.run_module_suite()
