@@ -268,12 +268,26 @@ cdef class DistanceMetric:
             raise NotImplementedError("DistanceMetric is an abstract class")
 
     cdef DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size) except -1:
+        """Compute the distance between vectors x1 and x2
+        
+        This should be overridden in a base class.
+        """
         return -999
 
     cdef DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2, ITYPE_t size) except -1:
+        """Compute the reduced distance between vectors x1 and x2.
+
+        This can optionally be overridden in a base class.
+
+        The reduced distance is any measure that yields the same rank as the
+        distance, but is more efficient to compute.  For example, for the
+        Euclidean metric, the reduced distance is the squared-euclidean
+        distance.
+        """
         return self.dist(x1, x2, size)
 
     cdef int pdist(self, DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] D) except -1:
+        """compute the pairwise distances between points in X"""
         cdef ITYPE_t i1, i2
         for i1 in range(X.shape[0]):
             for i2 in range(i1, X.shape[0]):
@@ -283,6 +297,7 @@ cdef class DistanceMetric:
 
     cdef int cdist(self, DTYPE_t[:, ::1] X, DTYPE_t[:, ::1] Y,
                    DTYPE_t[:, ::1] D) except -1:
+        """compute the cross-pairwise distances between arrays X and Y"""
         cdef ITYPE_t i1, i2
         if X.shape[1] != Y.shape[1]:
             raise ValueError('X and Y must have the same second dimension')
@@ -292,18 +307,53 @@ cdef class DistanceMetric:
         return 0
 
     cdef DTYPE_t _rdist_to_dist(self, DTYPE_t rdist) except -1:
+        """Convert the reduced distance to the distance"""
         return rdist
 
     cdef DTYPE_t _dist_to_rdist(self, DTYPE_t dist) except -1:
+        """Convert the distance to the reduced distance"""
         return dist
 
     def rdist_to_dist(self, rdist):
+        """Convert the Reduced distance to the true distance.
+
+        The reduced distance, defined for some metrics, is a computationally
+        more efficent measure which preserves the rank of the true distance.
+        For example, in the Euclidean distance metric, the reduced distance
+        is the squared-euclidean distance.
+        """
         return rdist
 
     def dist_to_rdist(self, dist):
+        """Convert the true distance to the reduced distance.
+
+        The reduced distance, defined for some metrics, is a computationally
+        more efficent measure which preserves the rank of the true distance.
+        For example, in the Euclidean distance metric, the reduced distance
+        is the squared-euclidean distance.
+        """
         return dist
 
     def pairwise(self, X, Y=None):
+        """Compute the pairwise distances between X and Y
+
+        This is a convenience routine for the sake of testing.  For many
+        metrics, the utilities in scipy.spatial.distance.cdist and
+        scipy.spatial.distance.pdist will be faster.
+
+        Parameters
+        ----------
+        X : array_like
+            Array of shape (Nx, D), representing Nx points in D dimensions.
+        Y : array_like (optional)
+            Array of shape (Ny, D), representing Ny points in D dimensions.
+            If not specified, then Y=X.
+        Returns
+        -------
+        dist : ndarray
+            The shape (Nx, Ny) array of pairwise distances between points in
+            X and Y.
+        """
         X = np.asarray(X, dtype=DTYPE)
         if Y is None:
             D = np.zeros((X.shape[0], X.shape[0]),

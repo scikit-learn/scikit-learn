@@ -235,6 +235,7 @@ Compute a two-point auto-correlation function
 ######################################################################
 # Utility functions
 cdef DTYPE_t logaddexp(DTYPE_t x1, DTYPE_t x2):
+    """logaddexp(x1, x2) -> log(exp(x1) + exp(x2))"""
     cdef DTYPE_t a = fmax(x1, x2)
     if a == NEG_INF:
         return NEG_INF
@@ -242,6 +243,7 @@ cdef DTYPE_t logaddexp(DTYPE_t x1, DTYPE_t x2):
         return a + log(exp(x1 - a) + exp(x2 - a))
 
 cdef DTYPE_t logsubexp(DTYPE_t x1, DTYPE_t x2):
+    """logsubexp(x1, x2) -> log(exp(x1) - exp(x2))"""
     if x1 <= x2:
         return NEG_INF
     else:
@@ -266,31 +268,43 @@ cdef enum KernelType:
     LINEAR_KERNEL = 5
     COSINE_KERNEL = 6
 
+
 cdef inline DTYPE_t log_gaussian_kernel(DTYPE_t dist, DTYPE_t h):
+    """log of the gaussian kernel for bandwidth h (unnormalized)"""
     return -0.5 * (dist * dist) / (h * h)
 
+
 cdef inline DTYPE_t log_tophat_kernel(DTYPE_t dist, DTYPE_t h):
+    """log of the tophat kernel for bandwidth h (unnormalized)"""
     if dist < h:
         return 0.0
     else:
         return NEG_INF
 
+
 cdef inline DTYPE_t log_epanechnikov_kernel(DTYPE_t dist, DTYPE_t h):
+    """log of the epanechnikov kernel for bandwidth h (unnormalized)"""
     if dist < h:
         return log(1.0 - (dist * dist) / (h * h))
     else:
         return NEG_INF
 
+
 cdef inline DTYPE_t log_exponential_kernel(DTYPE_t dist, DTYPE_t h):
+    """log of the exponential kernel for bandwidth h (unnormalized)"""
     return -dist / h
 
+
 cdef inline DTYPE_t log_linear_kernel(DTYPE_t dist, DTYPE_t h):
+    """log of the linear kernel for bandwidth h (unnormalized)"""
     if dist < h:
         return log(1 - dist / h)
     else:
         return NEG_INF
 
+
 cdef inline DTYPE_t log_cosine_kernel(DTYPE_t dist, DTYPE_t h):
+    """log of the cosine kernel for bandwidth h (unnormalized)"""
     if dist < h:
         return log(cos(0.5 * PI * dist / h))
     else:
@@ -299,6 +313,7 @@ cdef inline DTYPE_t log_cosine_kernel(DTYPE_t dist, DTYPE_t h):
 
 cdef inline DTYPE_t compute_log_kernel(DTYPE_t dist, DTYPE_t h,
                                        KernelType kernel):
+    """Given a KernelType enumeration, compute the appropriate log-kernel"""
     if kernel == GAUSSIAN_KERNEL:
         return log_gaussian_kernel(dist, h)
     elif kernel == TOPHAT_KERNEL:
@@ -328,6 +343,10 @@ cdef DTYPE_t logSn(ITYPE_t n):
 
 cdef DTYPE_t _log_kernel_norm(DTYPE_t h, ITYPE_t d,
                               KernelType kernel) except -1:
+    """Given a KernelType enumeration, compute the kernel normalization.
+
+    h is the bandwidth, d is the dimension.
+    """
     cdef DTYPE_t tmp, factor = 0
     if kernel == GAUSSIAN_KERNEL:
         factor = 0.5 * d * LOG_2PI
@@ -353,6 +372,26 @@ cdef DTYPE_t _log_kernel_norm(DTYPE_t h, ITYPE_t d,
 
 
 def kernel_norm(h, d, kernel, return_log=False):
+    """Given a string specification of a kernel, compute the normalization.
+
+    Parameters
+    ----------
+    h : float
+        the bandwidth of the kernel
+    d : int
+        the dimension of the space in which the kernel norm is computed
+    kernel : string
+        The kernel identifier.  Must be one of
+        ['gaussian'|'tophat'|'epanechnikov'|
+         'exponential'|'linear'|'cosine']
+    return_log : boolean
+        if True, return the log of the kernel norm.  Otherwise, return the
+        kernel norm.
+    Returns
+    -------
+    knorm or log_knorm : float
+        the kernel norm or logarithm of the kernel norm.
+    """
     if kernel == 'gaussian':
         result = _log_kernel_norm(h, d, GAUSSIAN_KERNEL)
     elif kernel == 'tophat':
@@ -376,6 +415,7 @@ def kernel_norm(h, d, kernel, return_log=False):
 ######################################################################
 # Tree Utility Routines
 cdef inline void swap(DITYPE_t* arr, ITYPE_t i1, ITYPE_t i2):
+    """swap the values at index i1 and i2 of arr"""
     cdef DITYPE_t tmp = arr[i1]
     arr[i1] = arr[i2]
     arr[i2] = tmp
@@ -383,6 +423,7 @@ cdef inline void swap(DITYPE_t* arr, ITYPE_t i1, ITYPE_t i2):
 
 cdef inline void dual_swap(DTYPE_t* darr, ITYPE_t* iarr,
                            ITYPE_t i1, ITYPE_t i2):
+    """swap the values at inex i1 and i2 of both darr and iarr"""
     cdef DTYPE_t dtmp = darr[i1]
     darr[i1] = darr[i2]
     darr[i2] = dtmp
@@ -392,10 +433,21 @@ cdef inline void dual_swap(DTYPE_t* darr, ITYPE_t* iarr,
     iarr[i2] = itmp
 
 
-#------------------------------------------------------------
-# NeighborsHeap
-#  max-heap structure to keep track of distances and indices of neighbors
 cdef class NeighborsHeap:
+    """A max-heap structure to keep track of distances/indices of neighbors
+
+    This implements an efficient pre-allocated set of fixed-size heaps
+    for chasing neighbors, holding both an index and a distance.
+    When any row of the heap is full, adding an additional point will push
+    the furthest point off the heap.
+
+    Parameters
+    ----------
+    n_pts : int
+        the number of heaps to use
+    n_nbrs : int
+        the size of each heap.
+    """
     cdef DTYPE_t[:, ::1] distances
     cdef ITYPE_t[:, ::1] indices
 
@@ -408,14 +460,21 @@ cdef class NeighborsHeap:
         self.indices = np.zeros((n_pts, n_nbrs), dtype=ITYPE)
 
     def get_arrays(self, sort=True):
+        """Get the arrays of distances and indices within the heap.
+
+        If sort=True, then simultaneously sort the indices and distances,
+        so the closer points are listed first.
+        """
         if sort:
             self._sort()
         return map(np.asarray, (self.distances, self.indices))
 
     cdef inline DTYPE_t largest(self, ITYPE_t row) except -1:
+        """Return the largest distance in the given row"""
         return self.distances[row, 0]
 
     cpdef int push(self, ITYPE_t row, DTYPE_t val, ITYPE_t i_val) except -1:
+        """push (val, i_val) into the given row"""
         cdef ITYPE_t i, ic1, ic2, i_swap
         cdef ITYPE_t size = self.distances.shape[1]
         cdef DTYPE_t* dist_arr = &self.distances[row, 0]
@@ -464,6 +523,7 @@ cdef class NeighborsHeap:
         return 0
 
     cdef int _sort(self) except -1:
+        """simultaneously sort the distances and indices"""
         cdef DTYPE_t[:, ::1] distances = self.distances
         cdef ITYPE_t[:, ::1] indices = self.indices
         cdef ITYPE_t row
@@ -473,12 +533,18 @@ cdef class NeighborsHeap:
                                distances.shape[1])
         return 0
 
-#------------------------------------------------------------
-# simultaneous_sort :
-#  this is a simple recursive quicksort implementation which sorts
-#  `distances` and simultaneously performs the same swaps on `indices`.
+
 cdef int _simultaneous_sort(DTYPE_t* dist, ITYPE_t* idx,
                             ITYPE_t size) except -1:
+    """
+    Perform a recursive quicksort on the dist array, simultaneously
+    performing the same swaps on the idx array.  The equivalent in
+    numpy (though quite a bit slower) is
+
+    def simultaneous_sort(dist, idx):
+        i = np.argsort(dist)
+        return dist[i], idx[i]
+    """
     cdef ITYPE_t pivot_idx, i, store_idx
     cdef DTYPE_t pivot_val
 
@@ -537,6 +603,32 @@ cdef ITYPE_t find_node_split_dim(DTYPE_t* data,
                                  ITYPE_t* node_indices,
                                  ITYPE_t n_features,
                                  ITYPE_t n_points) except -1:
+    """Find the dimension with the largest spread.
+
+    Parameters
+    ----------
+    data : double pointer
+        Pointer to a 2D array of the training data, of shape [N, n_features].
+        N must be greater than any of the values in node_indices.
+    node_indices : int pointer
+        Pointer to a 1D array of length n_points.  This lists the indices of
+        each of the points within the current node.
+
+    Returns
+    -------
+    i_max : int
+        The index of the feature (dimension) within the node that has the
+        largest spread.
+
+    Notes
+    -----
+    In numpy, this operation is equivalent to
+
+    def find_node_split_dim(data, node_indices):
+        return np.argmax(data[node_indices].max(0) - data[node_indices].min(0))
+
+    The cython version is much more efficient in both computation and memory.
+    """
     cdef DTYPE_t min_val, max_val, val, spread, max_spread
     cdef ITYPE_t i, j, j_max
 
@@ -557,21 +649,49 @@ cdef ITYPE_t find_node_split_dim(DTYPE_t* data,
     return j_max
 
 
-#------------------------------------------------------------
-# partition_node_indices will modify the array node_indices between
-# indices 0 and n_points.  Upon return (assuming numpy-style slicing)
-#   data[node_indices[0:split_index], split_dim]
-#     <= data[node_indices[split_index], split_dim]
-# and
-#   data[node_indices[split_index], split_dim]
-#     <= data[node_indices[split_index:n_points], split_dim]
-# will hold.  The algorithm amounts to a partial quicksort
 cdef int partition_node_indices(DTYPE_t* data,
                                 ITYPE_t* node_indices,
                                 ITYPE_t split_dim,
                                 ITYPE_t split_index,
                                 ITYPE_t n_features,
                                 ITYPE_t n_points) except -1:
+    """Partition points in the node into two equal-sized groups.
+
+    Upon return, the values in node_indices will be rearranged such that
+    (assuming numpy-style indexing):
+
+        data[node_indices[0:split_index], split_dim]
+          <= data[node_indices[split_index], split_dim]
+
+    and
+
+        data[node_indices[split_index], split_dim]
+          <= data[node_indices[split_index:n_points], split_dim]
+
+    The algorithm is essentially a partial in-place quicksort around a
+    set pivot.
+
+    Parameters
+    ----------
+    data : double pointer
+        Pointer to a 2D array of the training data, of shape [N, n_features].
+        N must be greater than any of the values in node_indices.
+    node_indices : int pointer
+        Pointer to a 1D array of length n_points.  This lists the indices of
+        each of the points within the current node.  This will be modified
+        in-place.
+    split_dim : int
+        the dimension on which to split.  This will usually be computed via
+        the routine ``find_node_split_dim``
+    split_index : int
+        the index within node_indices around which to split the points.
+
+    Returns
+    -------
+    status : int
+        integer exit status.  On return, the contents of node_indices are
+        modified as noted above.
+    """
     cdef ITYPE_t left, right, midindex, i
     cdef DTYPE_t d1, d2
     left = 0
@@ -621,10 +741,14 @@ cdef class NodeHeap:
     """NodeHeap
 
     This is a min-heap implementation for keeping track of nodes
-    during a breadth-first search.
+    during a breadth-first search.  Unlike the NeighborsHeap above,
+    the NodeHeap does not have a fixed size and must be able to grow
+    as elements are added.
 
-    The heap is an array which is maintained so that the min heap condition
-    is met:  heap[i].val < min(heap[2 * i + 1].val, heap[2 * i + 2].val)
+    Internally, the data is stored in a simple binary heap which meets
+    the min heap condition:
+    
+        heap[i].val < min(heap[2 * i + 1].val, heap[2 * i + 2].val)
     """
     cdef NodeHeapData_t[::1] data
     cdef ITYPE_t n
@@ -638,6 +762,7 @@ cdef class NodeHeap:
         self.clear()
 
     cdef int resize(self, ITYPE_t new_size) except -1:
+        """Resize the heap to be either larger or smaller"""
         cdef NodeHeapData_t *data_arr, *new_data_arr
         cdef ITYPE_t i
         cdef ITYPE_t size = self.data.shape[0]
@@ -657,6 +782,7 @@ cdef class NodeHeap:
         return 0
 
     cdef int push(self, NodeHeapData_t data) except -1:
+        """Push a new item onto the heap"""
         cdef ITYPE_t i, i_parent
         cdef NodeHeapData_t* data_arr
         self.n += 1
@@ -679,9 +805,11 @@ cdef class NodeHeap:
         return 0
 
     cdef NodeHeapData_t peek(self):
+        """Peek at the root of the heap, without removing it"""
         return self.data[0]
 
     cdef NodeHeapData_t pop(self):
+        """Remove the root of the heap, and update the remaining nodes"""
         if self.n == 0:
             raise ValueError('cannot pop on empty heap')
 
@@ -720,7 +848,7 @@ cdef class NodeHeap:
         return popped_element
 
     cdef void clear(self):
-        """Clear the stack"""
+        """Clear the heap"""
         self.n = 0
 
 
@@ -887,6 +1015,7 @@ cdef class BinaryTree:
 
     cdef inline DTYPE_t dist(self, DTYPE_t* x1, DTYPE_t* x2,
                              ITYPE_t size) except -1:
+        """Compute the distance between arrays x1 and x2"""
         self.n_calls += 1
         if self.euclidean:
             return euclidean_dist(x1, x2, size)
@@ -895,6 +1024,13 @@ cdef class BinaryTree:
 
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) except -1:
+        """Compute the reduced distance between arrays x1 and x2.
+
+        The reduced distance, defined for some metrics, is a quantity which
+        is more efficient to compute than the distance, but preserves the
+        relative rankings of the true distance.  For example, the reduced
+        distance for the Euclidean metric is the squared-euclidean distance.
+        """
         self.n_calls += 1
         if self.euclidean:
             return euclidean_rdist(x1, x2, size)
@@ -903,6 +1039,16 @@ cdef class BinaryTree:
 
     cdef int _recursive_build(self, ITYPE_t i_node, ITYPE_t idx_start,
                               ITYPE_t idx_end) except -1:
+        """Recursively build the tree.
+
+        Parameters
+        ----------
+        i_node : int
+            the node for the current step
+        idx_start, idx_end : int
+            the bounding indices in the idx_array which define the points that
+            belong to this node.
+        """
         cdef ITYPE_t imax
         cdef ITYPE_t n_features = self.data.shape[1]
         cdef ITYPE_t n_points = idx_end - idx_start
@@ -1431,6 +1577,7 @@ cdef class BinaryTree:
                                       DTYPE_t* pt, ITYPE_t i_pt,
                                       NeighborsHeap heap,
                                       DTYPE_t reduced_dist_LB) except -1:
+        """Recursive Single-tree k-neighbors query, depth-first approach"""
         cdef NodeData_t node_info = self.node_data[i_node]
 
         cdef DTYPE_t dist_pt, reduced_dist_LB_1, reduced_dist_LB_2
@@ -1482,6 +1629,7 @@ cdef class BinaryTree:
                                         ITYPE_t i_pt,
                                         NeighborsHeap heap,
                                         NodeHeap nodeheap) except -1:
+        """Non-recursive single-tree k-neighbors query, breadth-first search"""
         cdef ITYPE_t i, i_node
         cdef DTYPE_t dist_pt, reduced_dist_LB
         cdef NodeData_t* node_data = &self.node_data[0]
@@ -1532,6 +1680,7 @@ cdef class BinaryTree:
                                     DTYPE_t[::1] bounds,
                                     NeighborsHeap heap,
                                     DTYPE_t reduced_dist_LB) except -1:
+        """Recursive dual-tree k-neighbors query, depth-first"""
         # note that the array `bounds` is maintained such that
         # bounds[i] is the largest distance among any of the
         # current neighbors in node i of the other tree.
@@ -1631,6 +1780,7 @@ cdef class BinaryTree:
     cdef int _query_dual_breadthfirst(BinaryTree self, BinaryTree other,
                                       NeighborsHeap heap,
                                       NodeHeap nodeheap) except -1:
+        """Non-recursive dual-tree k-neighbors query, breadth-first"""
         cdef ITYPE_t i, i1, i2, i_node1, i_node2, i_pt
         cdef DTYPE_t dist_pt, reduced_dist_LB
         cdef DTYPE_t[::1] bounds = np.inf + np.zeros(other.node_data.shape[0])
@@ -1720,6 +1870,7 @@ cdef class BinaryTree:
                                       ITYPE_t count,
                                       int count_only,
                                       int return_distance) except -1:
+        """recursive single-tree radius query, depth-first"""
         cdef DTYPE_t* data = &self.data[0, 0]
         cdef ITYPE_t* idx_array = &self.idx_array[0]
         cdef ITYPE_t n_features = self.data.shape[1]
@@ -1795,6 +1946,7 @@ cdef class BinaryTree:
                                           NodeHeap nodeheap,
                                           DTYPE_t* node_log_min_bounds,
                                           DTYPE_t* node_log_bound_spreads):
+        """non-recursive single-tree kernel density estimation"""
         # For the given point, node_log_min_bounds and node_log_bound_spreads
         # will encode the current bounds on the density between the point
         # and the associated node.
@@ -1936,6 +2088,7 @@ cdef class BinaryTree:
                    DTYPE_t local_log_bound_spread,
                    DTYPE_t* global_log_min_bound,
                    DTYPE_t* global_log_bound_spread) except -1:
+        """recursive single-tree kernel density estimate, depth-first"""
         # For the given point, local_min_bound and local_max_bound give the
         # minimum and maximum density for the current node, while
         # global_min_bound and global_max_bound give the minimum and maximum
@@ -2041,6 +2194,7 @@ cdef class BinaryTree:
     cdef int _two_point_single(self, ITYPE_t i_node, DTYPE_t* pt, DTYPE_t* r,
                                ITYPE_t* count, ITYPE_t i_min,
                                ITYPE_t i_max) except -1:
+        """recursive single-tree two-point correlation function query"""
         cdef DTYPE_t* data = &self.data[0, 0]
         cdef ITYPE_t* idx_array = &self.idx_array[0]
         cdef ITYPE_t n_features = self.data.shape[1]
@@ -2090,6 +2244,7 @@ cdef class BinaryTree:
                              BinaryTree other, ITYPE_t i_node2,
                              DTYPE_t* r, ITYPE_t* count,
                              ITYPE_t i_min, ITYPE_t i_max) except -1:
+        """recursive dual-tree two-point correlation function query"""
         cdef DTYPE_t* data1 = &self.data[0, 0]
         cdef DTYPE_t* data2 = &other.data[0, 0]
         cdef ITYPE_t* idx_array1 = &self.idx_array[0]
@@ -2159,7 +2314,7 @@ cdef class BinaryTree:
 
 
 ######################################################################
-# Python functions for benchmarking and testing
+# Python functions for benchmarking and testing C implementations
 
 def load_heap(DTYPE_t[:, ::1] X, ITYPE_t k):
     """test fully loading the heap"""
