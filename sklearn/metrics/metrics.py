@@ -193,8 +193,8 @@ def _check_clf_targets(y_true, y_pred):
 def auc(x, y, reorder=False):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
-    This is a general function, given points on a curve.  For computing the area
-    under the ROC-curve, see :func:`auc_score`.
+    This is a general function, given points on a curve.  For computing the
+    area under the ROC-curve, see :func:`auc_score`.
 
     Parameters
     ----------

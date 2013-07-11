@@ -111,6 +111,7 @@ def test_all_estimators():
                 else:
                     assert_equal(params[arg], default)
 
+
 def test_estimators_sparse_data():
     # All estimators should either deal with sparse data, or raise an
     # intelligible error message
@@ -990,8 +991,9 @@ def test_cluster_overwrite_params():
 def test_import_all_consistency():
     # Smoke test to check that any name in a __all__ list is actually defined
     # in the namespace of the module or package.
-    for importer, modname, ispkg in pkgutil.walk_packages(
-        path=sklearn.__path__, prefix='sklearn.', onerror=lambda x: None):
+    pkgs = pkgutil.walk_packages(path=sklearn.__path__, prefix='sklearn.',
+                                 onerror=lambda _: None)
+    for importer, modname, ispkg in pkgs:
         if ".tests." in modname:
             continue
         package = __import__(modname, fromlist="dummy")

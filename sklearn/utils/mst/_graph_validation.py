@@ -7,6 +7,7 @@ from ._graph_tools import csgraph_to_dense, csgraph_from_dense,\
 
 DTYPE = np.float64
 
+
 def validate_graph(csgraph, directed, dtype=DTYPE,
                    csr_output=True, dense_output=True,
                    copy_if_dense=False, copy_if_sparse=False,

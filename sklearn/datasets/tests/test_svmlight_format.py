@@ -260,7 +260,8 @@ def test_dump_concise():
     dump_svmlight_file(X, y, f)
     f.seek(0)
     # make sure it's using the most concise format possible
-    assert_equal(f.readline(), b("1 0:1 1:2.1 2:3.01 3:1.000000000000001 4:1\n"))
+    assert_equal(f.readline(),
+                 b("1 0:1 1:2.1 2:3.01 3:1.000000000000001 4:1\n"))
     assert_equal(f.readline(), b("2.1 0:1000000000 1:2e+18 2:3e+27\n"))
     assert_equal(f.readline(), b("3.01 \n"))
     assert_equal(f.readline(), b("1.000000000000001 \n"))

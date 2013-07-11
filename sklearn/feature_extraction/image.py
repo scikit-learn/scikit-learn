@@ -215,6 +215,7 @@ def _compute_n_patches(i_h, i_w, p_h, p_w, max_patches=None):
     else:
         return all_patches
 
+
 def extract_patches(arr, patch_shape=8, extraction_step=1):
     """Extracts patches of any n-dimensional array in place using strides.
 

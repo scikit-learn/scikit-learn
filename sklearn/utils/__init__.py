@@ -123,7 +123,7 @@ def safe_mask(X, mask):
     -------
         mask
     """
-    mask = np.asanyarray(mask)
+    mask = np.asarray(mask)
     if np.issubdtype(mask.dtype, np.int):
         return mask
 
