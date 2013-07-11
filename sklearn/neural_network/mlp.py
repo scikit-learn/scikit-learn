@@ -148,23 +148,21 @@ class BaseMLP(BaseEstimator):
         Whether to print progress messages to stdout.
 
     """
-
-    def __init__(
-        self, n_hidden, activation, output_func, loss, algorithm,
-            alpha, batch_size, learning_rate, eta0, power_t,
-            max_iter, shuffle_data, random_state, tol, verbose):
-        activation_functions = {
+    activation_functions = {
             'tanh': tanh,
             'logistic': logistic,
             'softmax': softmax
         }
-        derivative_functions = {
+    derivative_functions = {
             'tanh': d_tanh,
             'logistic': d_logistic
         }
-        self.activation = activation_functions[activation]
-        self.derivative = derivative_functions[activation]
-        self.output_func = activation_functions[output_func]
+    def __init__(
+        self, n_hidden, activation, output_func, loss, algorithm,
+            alpha, batch_size, learning_rate, eta0, power_t,
+            max_iter, shuffle_data, random_state, tol, verbose):
+        self.activation = activation
+        self.output_func = output_func
         self.loss = loss
         self.algorithm = algorithm
         self.alpha = alpha
@@ -175,10 +173,9 @@ class BaseMLP(BaseEstimator):
         self.max_iter = max_iter
         self.n_hidden = n_hidden
         self.shuffle_data = shuffle_data
-        self.random_state = check_random_state(random_state)
+        self.random_state = random_state
         self.tol = tol
         self.verbose = verbose
-        # check compatibility
 
     def _pack(self, W1, W2, b1, b2):
         """
@@ -229,17 +226,23 @@ class BaseMLP(BaseEstimator):
         n_classes: int
             Number of target classes
 
-        Returns
-        -------
-        theta: array-like, shape (size(W1)*size(W2)*size(b1)*size(b2), 1)
         """
         n_hidden = self.n_hidden
-        rng = self.random_state
+        rng = check_random_state(self.random_state)
         self.coef_hidden_ = rng.uniform(-1, 1, (n_features, n_hidden))
         self.coef_output_ = rng.uniform(-1, 1, (n_hidden, n_classes))
         self.intercept_hidden_ = rng.uniform(-1, 1, n_hidden)
         self.intercept_output_ = rng.uniform(-1, 1, n_classes)
 
+    def _init_param(self):
+        """
+        Sets the activation, derivative and the output functions
+        
+        """
+        self.activation_func = self.activation_functions[self.activation]
+        self.derivative_func = self.derivative_functions[self.activation]
+        self.output_func =  self.activation_functions[self.output_func]
+        
     def fit(self, X, y):
         """
         Fit the model to the data X and target y.
@@ -258,7 +261,6 @@ class BaseMLP(BaseEstimator):
         self
         """
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
-        rng = check_random_state(self.random_state)
         self._lbin = LabelBinarizer()
         Y = self._lbin.fit_transform(y)
         if Y.shape[1] == 1:
@@ -266,6 +268,7 @@ class BaseMLP(BaseEstimator):
         n_samples, n_features = X.shape
         n_classes = Y.shape[1]
         self._init_fit(n_features, n_classes)
+        self._init_param()
         if self.shuffle_data:
             X, Y = shuffle(X, Y, random_state=self.random_state)
         self.batch_size = np.clip(self.batch_size, 0, n_samples)
@@ -447,22 +450,22 @@ class BaseMLP(BaseEstimator):
 
         """
         # Forward propagate
-        a_hidden[:] = self.activation(safe_sparse_dot(X, self.coef_hidden_) +
+        a_hidden[:] = self.activation_func(safe_sparse_dot(X, self.coef_hidden_) +
                                       self.intercept_hidden_)
         a_output[:] = self.output_func(safe_sparse_dot(a_hidden, self.coef_output_) +
                                        self.intercept_output_)
         # Backward propagate
         diff = Y - a_output
         if self.loss == 'squared_loss':
-            delta_o[:] = -diff * self.derivative(a_output)
+            delta_o[:] = -diff * self.derivative_func(a_output)
             delta_h = np.dot(
                 delta_o,
-                self.coef_output_.T) * self.derivative(a_hidden)
+                self.coef_output_.T) * self.derivative_func(a_hidden)
             cost = np.sum(diff**2)/ (2 * n_samples)
         elif self.loss == 'log':
             delta_o[:] = -diff
             delta_h = np.dot(delta_o, self.coef_output_.T) *\
-                    self.derivative(a_hidden)
+                    self.derivative_func(a_hidden)
             cost = np.sum(
                 np.sum(-Y * np.log(a_output) - (1 - Y) * np.log(1 - a_output)))
         # Get regularized gradient
@@ -503,7 +506,7 @@ class BaseMLP(BaseEstimator):
         """
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         _, n_features = X.shape
-
+        self._init_param()
         if self.classes_ is None and classes is None:
             raise ValueError("classes must be passed on the first call "
                              "to partial_fit.")
@@ -533,7 +536,7 @@ class BaseMLP(BaseEstimator):
         array, shape = [n_samples]
            Predicted target values per element in X.
         """
-        a_hidden = self.activation(safe_sparse_dot(X, self.coef_hidden_) +
+        a_hidden = self.activation_func(safe_sparse_dot(X, self.coef_hidden_) +
                                    self.intercept_hidden_)
         output = self.output_func(safe_sparse_dot(a_hidden, self.coef_output_) +
                                   self.intercept_output_)
@@ -577,7 +580,7 @@ class BaseMLP(BaseEstimator):
         """
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
-            return np.log(self.activation(scores))
+            return np.log(self.activation_func(scores))
         else:
             return log_softmax(scores)
 
