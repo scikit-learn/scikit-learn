@@ -44,7 +44,8 @@ class RANSAC(BaseEstimator):
          * `score(X)`: Returns the mean accuracy on the given test data.
 
         If no base estimator is specified, by default
-        ``sklearn.linear_model.LinearRegression`` is used for float and
+        ``sklearn.linear_model.LinearRegression`` is used for target values of
+        dtype float.
 
         Note that the current implementation only supports regression
         estimators.
