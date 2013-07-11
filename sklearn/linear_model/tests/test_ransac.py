@@ -154,5 +154,21 @@ def test_ransac_none_estimator():
     assert_equal(ransac_estimator.predict(X), ransac_none_estimator.predict(X))
 
 
+def test_ransac_min_n_samples():
+    base_estimator = linear_model.LinearRegression()
+    ransac_estimator1 = linear_model.RANSAC(base_estimator, 2, 5,
+                                            random_state=0)
+    ransac_estimator2 = linear_model.RANSAC(base_estimator, 2. / X.shape[0],
+                                            5, random_state=0)
+    ransac_estimator3 = linear_model.RANSAC(base_estimator, -1,
+                                            5, random_state=0)
+
+    ransac_estimator1.fit(X, y)
+    ransac_estimator2.fit(X, y)
+
+    assert_equal(ransac_estimator1.predict(X), ransac_estimator2.predict(X))
+    assert_raises(ValueError, ransac_estimator3.fit, X, y)
+
+
 if __name__ == "__main__":
     np.testing.run_module_suite()
