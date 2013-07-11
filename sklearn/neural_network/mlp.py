@@ -217,6 +217,7 @@ class BaseMLP(BaseEstimator):
 
     """
 <<<<<<< HEAD
+<<<<<<< HEAD
     __metaclass__ = ABCMeta
     
     activation_functions = {
@@ -242,18 +243,30 @@ class BaseMLP(BaseEstimator):
             alpha, batch_size, learning_rate, eta0, power_t,
             max_iter, shuffle_data, random_state, tol, verbose):
         activation_functions = {
+=======
+    activation_functions = {
+>>>>>>> Fixed initialization disagreements
             'tanh': tanh,
             'logistic': logistic,
             'softmax': softmax
         }
-        derivative_functions = {
+    derivative_functions = {
             'tanh': d_tanh,
             'logistic': d_logistic
         }
+<<<<<<< HEAD
         self.activation = activation_functions[activation]
         self.derivative = derivative_functions[activation]
         self.output_func = activation_functions[output_func]
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+    def __init__(
+        self, n_hidden, activation, output_func, loss, algorithm,
+            alpha, batch_size, learning_rate, eta0, power_t,
+            max_iter, shuffle_data, random_state, tol, verbose):
+        self.activation = activation
+        self.output_func = output_func
+>>>>>>> Fixed initialization disagreements
         self.loss = loss
         self.algorithm = algorithm
         self.alpha = alpha
@@ -265,6 +278,7 @@ class BaseMLP(BaseEstimator):
         self.n_hidden = n_hidden
         self.shuffle_data = shuffle_data
 <<<<<<< HEAD
+<<<<<<< HEAD
         self.random_state = random_state
         self.tol = tol
         self.verbose = verbose
@@ -274,6 +288,11 @@ class BaseMLP(BaseEstimator):
         self.verbose = verbose
         # check compatibility
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+        self.random_state = random_state
+        self.tol = tol
+        self.verbose = verbose
+>>>>>>> Fixed initialization disagreements
 
     def _pack(self, W1, W2, b1, b2):
         """
@@ -325,6 +344,7 @@ class BaseMLP(BaseEstimator):
             Number of target classes
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         """
         n_hidden = self.n_hidden
         rng = check_random_state(self.random_state)
@@ -336,12 +356,20 @@ class BaseMLP(BaseEstimator):
         n_hidden = self.n_hidden
         rng = self.random_state
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+        """
+        n_hidden = self.n_hidden
+        rng = check_random_state(self.random_state)
+>>>>>>> Fixed initialization disagreements
         self.coef_hidden_ = rng.uniform(-1, 1, (n_features, n_hidden))
         self.coef_output_ = rng.uniform(-1, 1, (n_hidden, n_classes))
         self.intercept_hidden_ = rng.uniform(-1, 1, n_hidden)
         self.intercept_output_ = rng.uniform(-1, 1, n_classes)
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Fixed initialization disagreements
     def _init_param(self):
         """
         Sets the activation, derivative and the output functions
@@ -349,6 +377,7 @@ class BaseMLP(BaseEstimator):
         """
         self.activation_func = self.activation_functions[self.activation]
         self.derivative_func = self.derivative_functions[self.activation]
+<<<<<<< HEAD
         if len(self.classes_)  > 2:
             self.output_func =  _softmax
         else:
@@ -356,6 +385,10 @@ class BaseMLP(BaseEstimator):
         
     def fit(self, X, Y):
 =======
+=======
+        self.output_func =  self.activation_functions[self.output_func]
+        
+>>>>>>> Fixed initialization disagreements
     def fit(self, X, y):
 >>>>>>> replaced 'einsum' to a more readable and faster operation
         """
@@ -380,12 +413,15 @@ class BaseMLP(BaseEstimator):
         """
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
 <<<<<<< HEAD
+<<<<<<< HEAD
         n_classes = Y.shape[1]
         n_samples, n_features = X.shape
         self._init_fit(n_features, n_classes)
         self._init_param()
 =======
         rng = check_random_state(self.random_state)
+=======
+>>>>>>> Fixed initialization disagreements
         self._lbin = LabelBinarizer()
         Y = self._lbin.fit_transform(y)
         if Y.shape[1] == 1:
@@ -393,7 +429,11 @@ class BaseMLP(BaseEstimator):
         n_samples, n_features = X.shape
         n_classes = Y.shape[1]
         self._init_fit(n_features, n_classes)
+<<<<<<< HEAD
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+        self._init_param()
+>>>>>>> Fixed initialization disagreements
         if self.shuffle_data:
             X, Y = shuffle(X, Y, random_state=self.random_state)
         self.batch_size = np.clip(self.batch_size, 0, n_samples)
@@ -734,22 +774,22 @@ class BaseMLP(BaseEstimator):
         return cost, grad
 =======
         # Forward propagate
-        a_hidden[:] = self.activation(safe_sparse_dot(X, self.coef_hidden_) +
+        a_hidden[:] = self.activation_func(safe_sparse_dot(X, self.coef_hidden_) +
                                       self.intercept_hidden_)
         a_output[:] = self.output_func(safe_sparse_dot(a_hidden, self.coef_output_) +
                                        self.intercept_output_)
         # Backward propagate
         diff = Y - a_output
         if self.loss == 'squared_loss':
-            delta_o[:] = -diff * self.derivative(a_output)
+            delta_o[:] = -diff * self.derivative_func(a_output)
             delta_h = np.dot(
                 delta_o,
-                self.coef_output_.T) * self.derivative(a_hidden)
+                self.coef_output_.T) * self.derivative_func(a_hidden)
             cost = np.sum(diff**2)/ (2 * n_samples)
         elif self.loss == 'log':
             delta_o[:] = -diff
             delta_h = np.dot(delta_o, self.coef_output_.T) *\
-                    self.derivative(a_hidden)
+                    self.derivative_func(a_hidden)
             cost = np.sum(
                 np.sum(-Y * np.log(a_output) - (1 - Y) * np.log(1 - a_output)))
         # Get regularized gradient
@@ -792,10 +832,14 @@ class BaseMLP(BaseEstimator):
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         _, n_features = X.shape
 <<<<<<< HEAD
+<<<<<<< HEAD
         self._init_param()
 =======
 
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+        self._init_param()
+>>>>>>> Fixed initialization disagreements
         if self.classes_ is None and classes is None:
             raise ValueError("classes must be passed on the first call "
                              "to partial_fit.")
@@ -829,10 +873,14 @@ class BaseMLP(BaseEstimator):
            Predicted target values per element in X.
         """
 <<<<<<< HEAD
+<<<<<<< HEAD
         a_hidden = self.activation_func(safe_sparse_dot(X, self.coef_hidden_) +
 =======
         a_hidden = self.activation(safe_sparse_dot(X, self.coef_hidden_) +
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+        a_hidden = self.activation_func(safe_sparse_dot(X, self.coef_hidden_) +
+>>>>>>> Fixed initialization disagreements
                                    self.intercept_hidden_)
         output = self.output_func(safe_sparse_dot(a_hidden, self.coef_output_) +
                                   self.intercept_output_)
@@ -943,7 +991,7 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
 =======
         scores = self.decision_function(X)
         if len(scores.shape) == 1:
-            return np.log(self.activation(scores))
+            return np.log(self.activation_func(scores))
         else:
             return log_softmax(scores)
 >>>>>>> replaced 'einsum' to a more readable and faster operation
