@@ -40,7 +40,7 @@ np.random.seed(1)
 N = 20
 X = np.concatenate((np.random.normal(0, 1, 0.3 * N),
                     np.random.normal(5, 1, 0.7 * N)))[:, np.newaxis]
-Xplot = np.linspace(-5, 10, 1000)[:, np.newaxis]
+X_plot = np.linspace(-5, 10, 1000)[:, np.newaxis]
 bins = np.linspace(-5, 10, 10)
 
 fig, ax = plt.subplots(2, 2, sharex=True, sharey=True)
@@ -55,13 +55,13 @@ ax[0, 1].hist(X[:, 0], bins=bins + 0.75, fc='#AAAAFF', normed=True)
 ax[0, 1].text(-3.5, 0.31, "Histogram, bins shifted")
 
 # tophat KDE
-log_dens = KernelDensity(kernel='tophat', bandwidth=0.75).fit(X).eval(Xplot)
-ax[1, 0].fill(Xplot[:, 0], np.exp(log_dens), fc='#AAAAFF')
+log_dens = KernelDensity(kernel='tophat', bandwidth=0.75).fit(X).eval(X_plot)
+ax[1, 0].fill(X_plot[:, 0], np.exp(log_dens), fc='#AAAAFF')
 ax[1, 0].text(-3.5, 0.31, "Tophat Kernel Density")
 
 # gaussian KDE
-log_dens = KernelDensity(kernel='gaussian', bandwidth=0.75).fit(X).eval(Xplot)
-ax[1, 1].fill(Xplot[:, 0], np.exp(log_dens), fc='#AAAAFF')
+log_dens = KernelDensity(kernel='gaussian', bandwidth=0.75).fit(X).eval(X_plot)
+ax[1, 1].fill(X_plot[:, 0], np.exp(log_dens), fc='#AAAAFF')
 ax[1, 1].text(-3.5, 0.31, "Gaussian Kernel Density")
 
 for axi in ax.ravel():
