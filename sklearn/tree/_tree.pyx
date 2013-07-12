@@ -165,7 +165,7 @@ cdef class ClassificationCriterion(Criterion):
         self.start = start
         self.end = end
         self.n_node_samples = end - start
-        self.weighted_n_node_samples = 0.
+        cdef double weighted_n_node_samples = 0.0
 
         # Initialize label_count_total and weighted_n_node_samples
         cdef SIZE_t n_outputs = self.n_outputs
@@ -195,7 +195,9 @@ cdef class ClassificationCriterion(Criterion):
                 c = <SIZE_t> y[i * y_stride + k]
                 label_count_total[k * label_count_stride + c] += w
 
-            self.weighted_n_node_samples += w
+            weighted_n_node_samples += w
+
+        self.weighted_n_node_samples = weighted_n_node_samples
 
         # Reset to pos=start
         self.reset()
@@ -571,7 +573,7 @@ cdef class RegressionCriterion(Criterion):
         self.start = start
         self.end = end
         self.n_node_samples = end - start
-        self.weighted_n_node_samples = 0.
+        cdef double weighted_n_node_samples = 0.
 
         # Initialize accumulators
         cdef SIZE_t n_outputs = self.n_outputs
@@ -611,10 +613,12 @@ cdef class RegressionCriterion(Criterion):
                 sq_sum_total[k] += w * y_ik * y_ik
                 mean_total[k] += w * y_ik
 
-            self.weighted_n_node_samples += w
+            weighted_n_node_samples += w
+
+        self.weighted_n_node_samples = weighted_n_node_samples
 
         for k from 0 <= k < n_outputs:
-            mean_total[k] /= self.weighted_n_node_samples
+            mean_total[k] /= weighted_n_node_samples
 
         # Reset to pos=start
         self.reset()
@@ -635,6 +639,7 @@ cdef class RegressionCriterion(Criterion):
         cdef double* sq_sum_total = self.sq_sum_total
         cdef double* var_left = self.var_left
         cdef double* var_right = self.var_right
+        cdef double weighted_n_node_samples = self.weighted_n_node_samples
 
         cdef SIZE_t k = 0
 
@@ -644,7 +649,7 @@ cdef class RegressionCriterion(Criterion):
             sq_sum_right[k] = sq_sum_total[k]
             sq_sum_left[k] = 0.0
             var_left[k] = 0.0
-            var_right[k] = (sq_sum_right[k] - self.weighted_n_node_samples * (mean_right[k] * mean_right[k]))
+            var_right[k] = (sq_sum_right[k] - weighted_n_node_samples * (mean_right[k] * mean_right[k]))
 
     cdef void update(self, SIZE_t new_pos):
         """Update the collected statistics by moving samples[pos:new_pos] from
