@@ -17,7 +17,7 @@ from sklearn.utils.extmath import logsumexp, safe_sparse_dot
 from itertools import cycle, izip
 
 
-def logistic(x):
+def _logistic(x):
     """
     Implements the logistic function.
 
@@ -32,7 +32,7 @@ def logistic(x):
     return 1. / (1. + np.exp(np.clip(-x, -30, 30)))
 
 
-def d_logistic(x):
+def _d_logistic(x):
     """
     Implements the derivative of the logistic function.
 
@@ -47,9 +47,9 @@ def d_logistic(x):
     return x * (1 - x)
 
 
-def log_softmax(X):
+def _log_softmax(X):
     """
-    Computes the logistic K-way softmax, (exp(X).T / exp(X).sum(axis=1)).T,
+    Implements the logistic K-way softmax, (exp(X).T / exp(X).sum(axis=1)).T,
     in the log domain
 
     Parameters
@@ -63,9 +63,9 @@ def log_softmax(X):
     return (X.T - logsumexp(X, axis=1)).T
 
 
-def softmax(X):
+def _softmax(X):
     """
-    Computes the K-way softmax, (exp(X).T / exp(X).sum(axis=1)).T,
+    Implements the K-way softmax, (exp(X).T / exp(X).sum(axis=1)).T,
     in the log domain
 
     Parameters
@@ -80,9 +80,9 @@ def softmax(X):
     return (exp_X.T / exp_X.sum(axis=1)).T
 
 
-def tanh(X):
+def _tanh(X):
     """
-    Computes the hyperbolic tan function
+    Implements the hyperbolic tan function
 
     Parameters
     ----------
@@ -95,9 +95,9 @@ def tanh(X):
     return np.tanh(X, X)
 
 
-def d_tanh(X):
+def _d_tanh(X):
     """
-    Computes the derivative of the hyperbolic tan function
+    Implements the derivative of the hyperbolic tan function
 
     Parameters
     ----------
@@ -149,20 +149,20 @@ class BaseMLP(BaseEstimator):
 
     """
     activation_functions = {
-            'tanh': tanh,
-            'logistic': logistic,
-            'softmax': softmax
+            'tanh': _tanh,
+            'logistic': _logistic,
+            'softmax': _softmax
         }
     derivative_functions = {
-            'tanh': d_tanh,
-            'logistic': d_logistic
+            'tanh': _d_tanh,
+            'logistic': _d_logistic
         }
     def __init__(
-        self, n_hidden, activation, output_func, loss, algorithm,
+        self, n_hidden, activation, output, loss, algorithm,
             alpha, batch_size, learning_rate, eta0, power_t,
             max_iter, shuffle_data, random_state, tol, verbose):
         self.activation = activation
-        self.output_func = output_func
+        self.output = output
         self.loss = loss
         self.algorithm = algorithm
         self.alpha = alpha
@@ -241,7 +241,7 @@ class BaseMLP(BaseEstimator):
         """
         self.activation_func = self.activation_functions[self.activation]
         self.derivative_func = self.derivative_functions[self.activation]
-        self.output_func =  self.activation_functions[self.output_func]
+        self.output_func =  self.activation_functions[self.output]
         
     def fit(self, X, y):
         """
@@ -263,12 +263,12 @@ class BaseMLP(BaseEstimator):
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         self._lbin = LabelBinarizer()
         Y = self._lbin.fit_transform(y)
-        if Y.shape[1] == 1:
-            self.output_func = self.activation
         n_samples, n_features = X.shape
         n_classes = Y.shape[1]
         self._init_fit(n_features, n_classes)
         self._init_param()
+        if Y.shape[1] == 1:
+            self.output_func = self.activation_functions[self.activation]
         if self.shuffle_data:
             X, Y = shuffle(X, Y, random_state=self.random_state)
         self.batch_size = np.clip(self.batch_size, 0, n_samples)
@@ -308,6 +308,105 @@ class BaseMLP(BaseEstimator):
                     delta_o)
         return self
 
+    def backprop(self, X, Y, n_samples, a_hidden, a_output, delta_o):
+        """
+        Computes the MLP cost  function ``J(W,b)``
+        and the corresponding derivatives of J(W,b) with respect to the
+        different parameters given in the initialization
+
+        Parameters
+        ----------
+        theta: array-like, shape (size(W1)*size(W2)*size(b1)*size(b2))
+            Contains concatenated flattened weights  that represent the parameters "W1, W2, b1, b2"
+        X: {array-like, sparse matrix}, shape (n_samples, n_features)
+            Training data, where n_samples in the number of samples
+            and n_features is the number of features.
+        n_features: int
+            Number of features
+        n_classes: int
+            Number of target classes
+        n_samples: int
+            Number of samples
+
+        Returns
+        -------
+        cost: float
+        grad: array-like, shape (size(W1)*size(W2)*size(b1)*size(b2))
+
+        """
+        # Forward propagate
+        a_hidden[:] = self.activation_func(safe_sparse_dot(X, self.coef_hidden_) +
+                                      self.intercept_hidden_)
+        a_output[:] = self.output_func(safe_sparse_dot(a_hidden, self.coef_output_) +
+                                       self.intercept_output_)
+        # Backward propagate
+        diff = Y - a_output
+        if self.loss == 'squared_loss':
+            delta_o[:] = -diff * self.derivative_func(a_output)
+            delta_h = np.dot(
+                delta_o,
+                self.coef_output_.T) * self.derivative_func(a_hidden)
+            cost = np.sum(diff**2)/ (2 * n_samples)
+        elif self.loss == 'log':
+            delta_o[:] = -diff
+            delta_h = np.dot(delta_o, self.coef_output_.T) *\
+                    self.derivative_func(a_hidden)
+            cost = np.sum(
+                np.sum(-Y * np.log(a_output) - (1 - Y) * np.log(1 - a_output)))
+        # Get regularized gradient
+        W1grad = safe_sparse_dot(X.T, delta_h) + \
+                (self.alpha * self.coef_hidden_)
+        W2grad = safe_sparse_dot(a_hidden.T, delta_o) + \
+                (self.alpha * self.coef_output_)
+        b1grad = np.mean(delta_h, 0)
+        b2grad = np.mean(delta_o, 0)
+        # Add regularization term to cost
+        cost += (
+            0.5 * self.alpha) * (
+                np.sum(
+                    self.coef_hidden_ ** 2) + np.sum(
+                        self.coef_output_ ** 2))
+        W1grad /= n_samples
+        W2grad /= n_samples
+        return cost, W1grad, W2grad, b1grad, b2grad
+    
+    def backprop_sgd(
+            self, X, Y, n_samples, a_hidden, a_output, delta_o, t, eta):
+        """
+        Updates the weights using the computed gradients
+
+        Parameters
+        ----------
+        X: {array-like, sparse matrix}, shape (n_samples, n_features)
+            Training data, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Y : numpy array of shape [n_samples]
+            Subset of the target values.
+
+        n_features: int
+            Number of features
+
+        n_classes: int
+            Number of target classes
+
+        n_samples: int
+            Number of samples
+
+        """
+        cost, W1grad, W2grad, b1grad, b2grad = self.backprop(
+            X, Y, n_samples, a_hidden, a_output, delta_o)
+        # Update weights
+        self.coef_hidden_ -= (eta * W1grad)
+        self.coef_output_ -= (eta * W2grad)
+        self.intercept_hidden_ -= (eta * b1grad)
+        self.intercept_output_ -= (eta * b2grad)
+        if self.learning_rate == 'optimal':
+            eta = 1.0 / (self.alpha * t)
+        elif self.learning_rate == 'invscaling':
+            eta = self.eta0 / pow(t, self.power_t)
+        return cost, eta
+        
     def _backprop_lbfgs(
             self, X, Y, n_features, n_classes, n_samples,
              a_hidden, a_output, delta_o):
@@ -385,105 +484,6 @@ class BaseMLP(BaseEstimator):
             X, Y, n_samples, a_hidden, a_output, delta_o)
         grad = self._pack(W1grad, W2grad, b1grad, b2grad)
         return cost, grad
-
-    def backprop_sgd(
-            self, X, Y, n_samples, a_hidden, a_output, delta_o, t, eta):
-        """
-        Updates the weights using the computed gradients
-
-        Parameters
-        ----------
-        X: {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data, where n_samples in the number of samples
-            and n_features is the number of features.
-
-        Y : numpy array of shape [n_samples]
-            Subset of the target values.
-
-        n_features: int
-            Number of features
-
-        n_classes: int
-            Number of target classes
-
-        n_samples: int
-            Number of samples
-
-        """
-        cost, W1grad, W2grad, b1grad, b2grad = self.backprop(
-            X, Y, n_samples, a_hidden, a_output, delta_o)
-        # Update weights
-        self.coef_hidden_ -= (eta * W1grad)
-        self.coef_output_ -= (eta * W2grad)
-        self.intercept_hidden_ -= (eta * b1grad)
-        self.intercept_output_ -= (eta * b2grad)
-        if self.learning_rate == 'optimal':
-            eta = 1.0 / (self.alpha * t)
-        elif self.learning_rate == 'invscaling':
-            eta = self.eta0 / pow(t, self.power_t)
-        return cost, eta
-
-    def backprop(self, X, Y, n_samples, a_hidden, a_output, delta_o):
-        """
-        Computes the MLP cost  function ``J(W,b)``
-        and the corresponding derivatives of J(W,b) with respect to the
-        different parameters given in the initialization
-
-        Parameters
-        ----------
-        theta: array-like, shape (size(W1)*size(W2)*size(b1)*size(b2))
-            Contains concatenated flattened weights  that represent the parameters "W1, W2, b1, b2"
-        X: {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data, where n_samples in the number of samples
-            and n_features is the number of features.
-        n_features: int
-            Number of features
-        n_classes: int
-            Number of target classes
-        n_samples: int
-            Number of samples
-
-        Returns
-        -------
-        cost: float
-        grad: array-like, shape (size(W1)*size(W2)*size(b1)*size(b2))
-
-        """
-        # Forward propagate
-        a_hidden[:] = self.activation_func(safe_sparse_dot(X, self.coef_hidden_) +
-                                      self.intercept_hidden_)
-        a_output[:] = self.output_func(safe_sparse_dot(a_hidden, self.coef_output_) +
-                                       self.intercept_output_)
-        # Backward propagate
-        diff = Y - a_output
-        if self.loss == 'squared_loss':
-            delta_o[:] = -diff * self.derivative_func(a_output)
-            delta_h = np.dot(
-                delta_o,
-                self.coef_output_.T) * self.derivative_func(a_hidden)
-            cost = np.sum(diff**2)/ (2 * n_samples)
-        elif self.loss == 'log':
-            delta_o[:] = -diff
-            delta_h = np.dot(delta_o, self.coef_output_.T) *\
-                    self.derivative_func(a_hidden)
-            cost = np.sum(
-                np.sum(-Y * np.log(a_output) - (1 - Y) * np.log(1 - a_output)))
-        # Get regularized gradient
-        W1grad = safe_sparse_dot(X.T, delta_h) + \
-                (self.alpha * self.coef_hidden_)
-        W2grad = safe_sparse_dot(a_hidden.T, delta_o) + \
-                (self.alpha * self.coef_output_)
-        b1grad = np.mean(delta_h, 0)
-        b2grad = np.mean(delta_o, 0)
-        # Add regularization term to cost
-        cost += (
-            0.5 * self.alpha) * (
-                np.sum(
-                    self.coef_hidden_ ** 2) + np.sum(
-                        self.coef_output_ ** 2))
-        W1grad /= n_samples
-        W2grad /= n_samples
-        return cost, W1grad, W2grad, b1grad, b2grad
 
     def partial_fit(self, X, y, classes):
         """Fit the model to the data X and target y.
