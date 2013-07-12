@@ -189,39 +189,58 @@ to partition the rows and columns to uncover this structure.
 Mathematical formulation
 ------------------------
 
-The input matrix :math:`A` is first preprocessed to make the
-checkerboard pattern more obvious. There are three possible
-preprocessing methods:
+The input matrix :math:`A` is first normalized to make the
+checkerboard pattern more obvious. There are three possible methods:
 
-1. Independent row and column rescaling, as in Spectral Co-Clustering:
+1. *Independent row and column normalization*, as in Spectral Co-Clustering
+   (see the `last post <./spectral-biclustering.rst>`__). This method
+   makes the rows sum to a constant and the columns sum to a different
+   constant.
 
-    .. math::
-        A_n = R^{−1/2} A C^{−1/2}
+.. math::
+    A_n = R^{−1/2} A C^{−1/2}
 
-    This method makes the rows sum to a constant and the columns sum
-    to a different constant.
+2. *Bistochastization*: repeated row and column normalization until
+   convergence. This method makes both rows and columns sum to the
+   same constant.
 
-2. Bistochastization
+3. *Log normalization*: the log of the data matrix is computed: :math:`L =
+   \log A`. Then the column mean :math:`\overline{L_{i \cdot}}`, row mean
+   :math:`\overline{L_{\cdot j}}`, and overall mean :math:`\overline{L_{\cdot
+   \cdot}}` of :math:`L` are computed. The final matrix is computed
+   according to the formula
 
-    Repeated row and column rescaling until convergence. This method
-    makes both rows and columns sum to the same constant.
+.. math::
+    L_{ij} = L_{ij} - \overline{L_{i \cdot}} - \overline{L_{\cdot
+    j}} + \overline{L_{\cdot \cdot}}
 
-3. Log scaling
+After normalizing, the first few singular vectors of :math:`A_n` are
+computed, just as in the Spectral Co-Clustering algorithm.
 
-    The log of the data matrix is computed: :math:`L = \log A`. Then
-    the column mean :math:`\overline{L_{i *}}`, row mean
-    :math:`\overline{L_{* j}}`, and overall mean
-    :math:`\overline{L_{* *}}` of :math:`L` are computed. The
-    final matrix is computed according to the formula
+If log normalization was used, all the singular vectors are
+meaningful. However, if independent normalization or bistochastization
+were used, the first singular vectors, :math:`u_1` and :math:`v_1`.
+are discarded. From now on, the "first" singular vectors refers to
+:math:`u_2 \dots u_{p+1}` and :math:`v_2 \dots v_{p+1}` except in the
+case of log normalization.
 
-    .. math::
-        L_{ij} = L_{ij} - \overline{L_{i *}} - \overline{L_{* j}} + \overline{L_{* *}}
+Given these singular vectors, they are ranked according to which can
+be best approximated by a piecewise-constant vector. The
+approximations for each vector are found using one-dimensional k-means
+and scored using the Euclidean distance. Some subset of the best left
+and right singular vector are selected. Next, the data is projected to
+this best subset of singular vectors and clustered.
 
-The best of the first few right singular vectors of the resulting
-matrix are used to project the rows to a lower dimensional space,
-where k-means finds the row partitions. Similarly, the best of the
-first few left singular vectors are used to project and cluster the
-columns.
+For instance, if :math:`p` singular vectors were calculated, the
+:math:`q` best are found as described, where :math:`q<p`. Let
+:math:`U_b` be the matrix with columns the :math:`q` best left
+singular vectors, and similarly :math:`V_b` for the right. To
+partition the rows, the rows of :math:`A` are projected to a :math:`q`
+dimensional space: :math:`A * V_{b}`. Treating the :math:`m` rows of
+this :math:`m \times q` matrix as samples and clustering using k-means
+yields the row labels. Similarly, projecting the columns to
+:math:`A^{\top} * U_{b}` and clustering this :math:`n \times q` matrix
+yields the column labels.
 
 .. topic:: Examples:
 
