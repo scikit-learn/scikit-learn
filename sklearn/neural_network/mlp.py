@@ -469,8 +469,12 @@ class BaseMLP(BaseEstimator):
 =======
             for i in  xrange(self.max_iter):
                 for batch_slice in batch_slices:
+<<<<<<< HEAD
                     cost, eta = self.backprop_naive(
 >>>>>>> Added an example to illustrate MLP performance on the digits dataset, verbose for SGD and minibatch processing for l-bfgs
+=======
+                    cost, eta = self.backprop_sgd(
+>>>>>>> Renamed methods for readability
                         X[batch_slice],
                         Y[batch_slice],
                         self.batch_size,
@@ -509,13 +513,13 @@ class BaseMLP(BaseEstimator):
                 t += 1
         elif 'l-bfgs':
             for batch_slice in batch_slices:
-                self._backprop_optimizer(
+                self._backprop_lbfgs(
                     X[batch_slice], Y[batch_slice], n_features, n_classes, self.batch_size, a_hidden,
                      a_output,
                     delta_o)
         return self
 
-    def _backprop_optimizer(
+    def _backprop_lbfgs(
             self, X, Y, n_features, n_classes, n_samples,
              a_hidden, a_output, delta_o):
         """
@@ -635,11 +639,15 @@ class BaseMLP(BaseEstimator):
         grad = self._pack(W1grad, W2grad, b1grad, b2grad)
         return cost, grad
 
+<<<<<<< HEAD
     def backprop_naive(
 <<<<<<< HEAD
             self, X, Y, n_samples, a_hidden, delta_h, a_output, delta_o, t, eta):
 >>>>>>> replaced 'einsum' to a more readable and faster operation
 =======
+=======
+    def backprop_sgd(
+>>>>>>> Renamed methods for readability
             self, X, Y, n_samples, a_hidden, a_output, delta_o, t, eta):
 >>>>>>> Added an example to illustrate MLP performance on the digits dataset, verbose for SGD and minibatch processing for l-bfgs
         """
