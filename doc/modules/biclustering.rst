@@ -19,7 +19,7 @@ with three rows and two columns induces a submatrix of shape `(3, 2)`::
     >>> columns = np.array([1, 2])
     >>> data[rows][:, columns]
     array([[ 1,  2],
-           [21, 21],
+           [21, 22],
            [31, 32]])
 
 For visualization purposes, given a bicluster, the rows and columns of
