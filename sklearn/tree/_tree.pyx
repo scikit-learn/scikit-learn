@@ -888,7 +888,7 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t current_feature
         cdef double current_threshold
 
-        cdef SIZE_t f_idx, f_i, f_j, p
+        cdef SIZE_t f_idx, f_i, f_j, p, tmp
         cdef SIZE_t visited_features = 0
 
         cdef SIZE_t partition_start
@@ -898,7 +898,11 @@ cdef class BestSplitter(Splitter):
             # Draw a feature at random
             f_i = n_features - f_idx - 1
             f_j = rand_int(n_features - f_idx)
-            features[f_i], features[f_j] = features[f_j], features[f_i]
+
+            tmp = features[f_i]
+            features[f_i] = features[f_j]
+            features[f_j] = tmp
+
             current_feature = features[f_i]
 
             # Sort samples along that feature
@@ -948,8 +952,6 @@ cdef class BestSplitter(Splitter):
                 break
 
         # Reorganize samples into samples[start:best_pos] + samples[best_pos:end]
-        cdef SIZE_t tmp
-
         if best_pos < end:
             partition_start = start
             partition_end = end
@@ -1045,7 +1047,7 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t current_feature
         cdef double current_threshold
 
-        cdef SIZE_t f_idx, f_i, f_j, p
+        cdef SIZE_t f_idx, f_i, f_j, p, tmp
         cdef SIZE_t visited_features = 0
         cdef DTYPE_t min_feature_value
         cdef DTYPE_t max_feature_value
@@ -1053,13 +1055,16 @@ cdef class RandomSplitter(Splitter):
 
         cdef SIZE_t partition_start
         cdef SIZE_t partition_end
-        cdef SIZE_t tmp
 
         for f_idx from 0 <= f_idx < n_features:
             # Draw a feature at random
             f_i = n_features - f_idx - 1
             f_j = rand_int(n_features - f_idx)
-            features[f_i], features[f_j] = features[f_j], features[f_i]
+
+            tmp = features[f_i]
+            features[f_i] = features[f_j]
+            features[f_j] = tmp
+
             current_feature = features[f_i]
 
             # Find min, max
@@ -1238,7 +1243,7 @@ cdef class BreimanSplitter(Splitter):
         cdef SIZE_t current_feature
         cdef double current_threshold
 
-        cdef SIZE_t f_idx, f_i, f_j, p
+        cdef SIZE_t f_idx, f_i, f_j, p, tmp
         cdef SIZE_t visited_features = 0
 
         cdef SIZE_t partition_start
@@ -1249,7 +1254,11 @@ cdef class BreimanSplitter(Splitter):
             # Draw a feature at random
             f_i = n_features - f_idx - 1
             f_j = rand_int(n_features - f_idx)
-            features[f_i], features[f_j] = features[f_j], features[f_i]
+
+            tmp = features[f_i]
+            features[f_i] = features[f_j]
+            features[f_j] = tmp
+
             current_feature = features[f_i]
 
             # Retrieve sorted samples
