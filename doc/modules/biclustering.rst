@@ -192,10 +192,9 @@ Mathematical formulation
 The input matrix :math:`A` is first normalized to make the
 checkerboard pattern more obvious. There are three possible methods:
 
-1. *Independent row and column normalization*, as in Spectral Co-Clustering
-   (see the `last post <./spectral-biclustering.rst>`__). This method
-   makes the rows sum to a constant and the columns sum to a different
-   constant.
+1. *Independent row and column normalization*, as in Spectral
+   Co-Clustering. This method makes the rows sum to a constant and the
+   columns sum to a different constant.
 
 .. math::
     A_n = R^{−1/2} A C^{−1/2}
