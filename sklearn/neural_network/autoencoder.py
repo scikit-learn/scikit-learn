@@ -350,7 +350,7 @@ class Autoencoder(BaseEstimator, TransformerMixin):
        -------
        [1] http://ufldl.stanford.edu/wiki/index.php/Autoencoders_and_Sparsity
         """
-       # Forward propagate
+        # Forward propagate
         a_hidden[:] = self.activation(np.dot(X, self.coef_hidden_)
                                       + self.intercept_hidden_)
         a_output[:] = self.activation(np.dot(a_hidden, self.coef_output_)
@@ -452,7 +452,6 @@ class Autoencoder(BaseEstimator, TransformerMixin):
             self.coef_output_,
             self.intercept_hidden_,
             self.intercept_output_)
-        print initial_theta.shape
         optTheta, _, _ = fmin_l_bfgs_b(
             func=self._cost_grad,
             x0=initial_theta,
