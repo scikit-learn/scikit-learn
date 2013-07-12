@@ -78,6 +78,18 @@ def test_ridge():
             ridge.fit(X, y, sample_weight=np.ones(n_samples))
             assert_greater(ridge.score(X, y), 0.9)
 
+def test_ridge_singular():
+    # test on a singular matrix
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 6, 6
+    y = rng.randn(n_samples / 2)
+    y = np.concatenate((y, y))
+    X = rng.randn(n_samples / 2, n_features)
+    X = np.concatenate((X, X), axis=0)
+
+    ridge = Ridge(alpha=0)
+    ridge.fit(X, y)
+    assert_greater(ridge.score(X, y), 0.9)
 
 def test_ridge_sample_weights():
     rng = np.random.RandomState(0)
