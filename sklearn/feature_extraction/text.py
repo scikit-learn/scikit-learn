@@ -441,10 +441,7 @@ class HashingVectorizer(BaseEstimator, VectorizerMixin):
 
 
 def _document_frequency(X):
-    """Count the number of non-zero values for each feature in X.
-
-    If X is sparse, its data must not contain explicit zero values.
-    """
+    """Count the number of non-zero values for each feature in csc_matrix X."""
     return np.diff(X.indptr)
 
 
