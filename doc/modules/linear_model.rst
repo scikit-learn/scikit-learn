@@ -743,6 +743,11 @@ which may be subject to noise, and outliers, which are e.g. caused by erroneous
 measurements or invalid hypotheses about the data. The resulting model is then
 estimated only from the determined inliers.
 
+.. figure:: ../auto_examples/linear_model/images/plot_ransac_1.png
+   :target: ../auto_examples/linear_model/plot_ransac.html
+   :align: center
+   :scale: 50%
+
 Each iteration performs the following steps:
 
 1. Select `min_n_samples` random samples from the original data and check
@@ -761,3 +766,14 @@ These steps are performed either a maximum number of times (`max_trials`)
 or until one of the special stop criteria are met (see `stop_n_inliers` and
 `stop_score`). The final model is estimated using all inlier samples of the
 previously determined best model.
+
+
+.. topic:: Examples:
+
+  * :ref:`example_linear_model_plot_ransac.py`
+
+.. topic:: References:
+
+ * http://en.wikipedia.org/wiki/RANSAC
+ * http://www.cs.columbia.edu/~belhumeur/courses/compPhoto/ransac.pdf
+ * http://www.bmva.org/bmvc/2009/Papers/Paper355/Paper355.pdf
