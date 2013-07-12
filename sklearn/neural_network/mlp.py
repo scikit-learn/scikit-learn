@@ -31,8 +31,12 @@ from sklearn.utils.extmath import logsumexp, safe_sparse_dot
 from itertools import cycle, izip
 
 
+<<<<<<< HEAD
 def logistic(x):
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+def _logistic(x):
+>>>>>>> Cleaned the code and set internal functions private
     """
     Implements the logistic function.
 
@@ -48,10 +52,14 @@ def logistic(x):
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 def _d_logistic(x):
 =======
 def d_logistic(x):
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+def _d_logistic(x):
+>>>>>>> Cleaned the code and set internal functions private
     """
     Implements the derivative of the logistic function.
 
@@ -67,6 +75,7 @@ def d_logistic(x):
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 def _log_softmax(X):
     """
     Implements the logistic K-way softmax, (exp(X).T / exp(X).sum(axis=1)).T,
@@ -75,6 +84,11 @@ def log_softmax(X):
     """
     Computes the logistic K-way softmax, (exp(X).T / exp(X).sum(axis=1)).T,
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+def _log_softmax(X):
+    """
+    Implements the logistic K-way softmax, (exp(X).T / exp(X).sum(axis=1)).T,
+>>>>>>> Cleaned the code and set internal functions private
     in the log domain
 
     Parameters
@@ -89,13 +103,17 @@ def log_softmax(X):
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 def _softmax(X):
     """
     Implements the K-way softmax, (exp(X).T / exp(X).sum(axis=1)).T
 =======
 def softmax(X):
+=======
+def _softmax(X):
+>>>>>>> Cleaned the code and set internal functions private
     """
-    Computes the K-way softmax, (exp(X).T / exp(X).sum(axis=1)).T,
+    Implements the K-way softmax, (exp(X).T / exp(X).sum(axis=1)).T,
     in the log domain
 >>>>>>> replaced 'einsum' to a more readable and faster operation
 
@@ -112,6 +130,7 @@ def softmax(X):
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 def _tanh(X):
     """
     Implements the hyperbolic tan function
@@ -120,6 +139,11 @@ def tanh(X):
     """
     Computes the hyperbolic tan function
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+def _tanh(X):
+    """
+    Implements the hyperbolic tan function
+>>>>>>> Cleaned the code and set internal functions private
 
     Parameters
     ----------
@@ -133,6 +157,7 @@ def tanh(X):
 
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 def _d_tanh(X):
     """
     Implements the derivative of the hyperbolic tan function
@@ -141,6 +166,11 @@ def d_tanh(X):
     """
     Computes the derivative of the hyperbolic tan function
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+def _d_tanh(X):
+    """
+    Implements the derivative of the hyperbolic tan function
+>>>>>>> Cleaned the code and set internal functions private
 
     Parameters
     ----------
@@ -245,14 +275,20 @@ class BaseMLP(BaseEstimator):
         activation_functions = {
 =======
     activation_functions = {
+<<<<<<< HEAD
 >>>>>>> Fixed initialization disagreements
             'tanh': tanh,
             'logistic': logistic,
             'softmax': softmax
+=======
+            'tanh': _tanh,
+            'logistic': _logistic,
+            'softmax': _softmax
+>>>>>>> Cleaned the code and set internal functions private
         }
     derivative_functions = {
-            'tanh': d_tanh,
-            'logistic': d_logistic
+            'tanh': _d_tanh,
+            'logistic': _d_logistic
         }
 <<<<<<< HEAD
         self.activation = activation_functions[activation]
@@ -261,12 +297,16 @@ class BaseMLP(BaseEstimator):
 >>>>>>> replaced 'einsum' to a more readable and faster operation
 =======
     def __init__(
-        self, n_hidden, activation, output_func, loss, algorithm,
+        self, n_hidden, activation, output, loss, algorithm,
             alpha, batch_size, learning_rate, eta0, power_t,
             max_iter, shuffle_data, random_state, tol, verbose):
         self.activation = activation
+<<<<<<< HEAD
         self.output_func = output_func
 >>>>>>> Fixed initialization disagreements
+=======
+        self.output = output
+>>>>>>> Cleaned the code and set internal functions private
         self.loss = loss
         self.algorithm = algorithm
         self.alpha = alpha
@@ -378,6 +418,7 @@ class BaseMLP(BaseEstimator):
         self.activation_func = self.activation_functions[self.activation]
         self.derivative_func = self.derivative_functions[self.activation]
 <<<<<<< HEAD
+<<<<<<< HEAD
         if len(self.classes_)  > 2:
             self.output_func =  _softmax
         else:
@@ -387,6 +428,9 @@ class BaseMLP(BaseEstimator):
 =======
 =======
         self.output_func =  self.activation_functions[self.output_func]
+=======
+        self.output_func =  self.activation_functions[self.output]
+>>>>>>> Cleaned the code and set internal functions private
         
 >>>>>>> Fixed initialization disagreements
     def fit(self, X, y):
@@ -424,8 +468,6 @@ class BaseMLP(BaseEstimator):
 >>>>>>> Fixed initialization disagreements
         self._lbin = LabelBinarizer()
         Y = self._lbin.fit_transform(y)
-        if Y.shape[1] == 1:
-            self.output_func = self.activation
         n_samples, n_features = X.shape
         n_classes = Y.shape[1]
         self._init_fit(n_features, n_classes)
@@ -433,7 +475,12 @@ class BaseMLP(BaseEstimator):
 >>>>>>> replaced 'einsum' to a more readable and faster operation
 =======
         self._init_param()
+<<<<<<< HEAD
 >>>>>>> Fixed initialization disagreements
+=======
+        if Y.shape[1] == 1:
+            self.output_func = self.activation_functions[self.activation]
+>>>>>>> Cleaned the code and set internal functions private
         if self.shuffle_data:
             X, Y = shuffle(X, Y, random_state=self.random_state)
         self.batch_size = np.clip(self.batch_size, 0, n_samples)
@@ -519,6 +566,7 @@ class BaseMLP(BaseEstimator):
                     delta_o)
         return self
 
+<<<<<<< HEAD
     def _backprop_lbfgs(
             self, X, Y, n_features, n_classes, n_samples,
              a_hidden, a_output, delta_o):
@@ -571,6 +619,9 @@ class BaseMLP(BaseEstimator):
 =======
                    n_samples, a_hidden, a_output, delta_o):
 >>>>>>> Added an example to illustrate MLP performance on the digits dataset, verbose for SGD and minibatch processing for l-bfgs
+=======
+    def backprop(self, X, Y, n_samples, a_hidden, a_output, delta_o):
+>>>>>>> Cleaned the code and set internal functions private
         """
         Computes the MLP cost  function ``J(W,b)``
         and the corresponding derivatives of J(W,b) with respect to the
@@ -597,6 +648,9 @@ class BaseMLP(BaseEstimator):
 
         """
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Cleaned the code and set internal functions private
         # Forward propagate
         a_hidden[:] = self.activation_func(safe_sparse_dot(X, self.coef_hidden_) +
                                       self.intercept_hidden_)
@@ -604,6 +658,7 @@ class BaseMLP(BaseEstimator):
                                        self.intercept_output_)
         # Backward propagate
         diff = Y - a_output
+<<<<<<< HEAD
         delta_o[:] = -diff
         delta_h = np.dot(delta_o, self.coef_output_.T) *\
                     self.derivative_func(a_hidden)
@@ -613,6 +668,20 @@ class BaseMLP(BaseEstimator):
             # To avoid math error, tanh values are re-scaled
             if self.activation == 'tanh': a_output = 0.5*(a_output + 1) 
             cost = -np.sum(Y * np.log(a_output))
+=======
+        if self.loss == 'squared_loss':
+            delta_o[:] = -diff * self.derivative_func(a_output)
+            delta_h = np.dot(
+                delta_o,
+                self.coef_output_.T) * self.derivative_func(a_hidden)
+            cost = np.sum(diff**2)/ (2 * n_samples)
+        elif self.loss == 'log':
+            delta_o[:] = -diff
+            delta_h = np.dot(delta_o, self.coef_output_.T) *\
+                    self.derivative_func(a_hidden)
+            cost = np.sum(
+                np.sum(-Y * np.log(a_output) - (1 - Y) * np.log(1 - a_output)))
+>>>>>>> Cleaned the code and set internal functions private
         # Get regularized gradient
         W1grad = safe_sparse_dot(X.T, delta_h) + \
                 (self.alpha * self.coef_hidden_)
@@ -630,6 +699,7 @@ class BaseMLP(BaseEstimator):
         W2grad /= n_samples
         return cost, W1grad, W2grad, b1grad, b2grad
     
+<<<<<<< HEAD
     def backprop_sgd(
             self, X, Y, n_samples, a_hidden, a_output, delta_o, t, eta):
 =======
@@ -646,6 +716,8 @@ class BaseMLP(BaseEstimator):
 >>>>>>> replaced 'einsum' to a more readable and faster operation
 =======
 =======
+=======
+>>>>>>> Cleaned the code and set internal functions private
     def backprop_sgd(
 >>>>>>> Renamed methods for readability
             self, X, Y, n_samples, a_hidden, a_output, delta_o, t, eta):
@@ -693,6 +765,9 @@ class BaseMLP(BaseEstimator):
             eta = self.eta0 / pow(t, self.power_t)
         return cost, eta
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Cleaned the code and set internal functions private
         
     def _backprop_lbfgs(
             self, X, Y, n_features, n_classes, n_samples,
@@ -718,6 +793,7 @@ class BaseMLP(BaseEstimator):
 
         n_samples: int
             Number of samples
+<<<<<<< HEAD
 
         """
         initial_theta = self._pack(
@@ -749,6 +825,31 @@ class BaseMLP(BaseEstimator):
 =======
     def backprop(self, X, Y, n_samples, a_hidden, a_output, delta_o):
 >>>>>>> Added an example to illustrate MLP performance on the digits dataset, verbose for SGD and minibatch processing for l-bfgs
+=======
+
+        """
+        initial_theta = self._pack(
+            self.coef_hidden_,
+            self.coef_output_,
+            self.intercept_hidden_,
+            self.intercept_output_)
+        optTheta, _, _ = fmin_l_bfgs_b(
+            func=self._cost_grad,
+            x0=initial_theta,
+            maxfun=self.max_iter,
+            disp=self.verbose,
+            args=(
+                X,
+                Y,
+                n_features,
+                n_classes,
+                n_samples,
+                a_hidden, a_output, delta_o))
+        self._unpack(optTheta, n_features, n_classes)
+
+    def _cost_grad(self, theta, X, Y, n_features, n_classes,
+                   n_samples, a_hidden, a_output, delta_o):
+>>>>>>> Cleaned the code and set internal functions private
         """
         Computes the MLP cost  function ``J(W,b)``
         and the corresponding derivatives of J(W,b) with respect to the
@@ -775,11 +876,15 @@ class BaseMLP(BaseEstimator):
 
         """
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Cleaned the code and set internal functions private
         self._unpack(theta, n_features, n_classes)
         cost, W1grad, W2grad, b1grad, b2grad = self.backprop(
             X, Y, n_samples, a_hidden, a_output, delta_o)
         grad = self._pack(W1grad, W2grad, b1grad, b2grad)
         return cost, grad
+<<<<<<< HEAD
 =======
         # Forward propagate
         a_hidden[:] = self.activation_func(safe_sparse_dot(X, self.coef_hidden_) +
@@ -817,6 +922,8 @@ class BaseMLP(BaseEstimator):
         W2grad /= n_samples
         return cost, W1grad, W2grad, b1grad, b2grad
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+>>>>>>> Cleaned the code and set internal functions private
 
     def partial_fit(self, X, y, classes):
         """Fit the model to the data X and target y.
