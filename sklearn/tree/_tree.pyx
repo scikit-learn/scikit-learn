@@ -862,16 +862,15 @@ cdef class Splitter:
     cdef void node_reset(self, SIZE_t start, SIZE_t end, double* impurity):
         """Reset splitter on node samples[start:end]."""
         cdef Criterion criterion = self.criterion
+
         cdef SIZE_t* samples = self.samples
+        self.start = start
+        self.end = end
 
         criterion.init(self.y, self.y_stride, self.sample_weight, samples, start, end)
         impurity[0] =  criterion.node_impurity()
 
-    cdef void node_split(self, SIZE_t start,
-                               SIZE_t end,
-                               SIZE_t* pos,
-                               SIZE_t* feature,
-                               double* threshold):
+    cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold):
         """Find a split on node samples[start:end]."""
         pass
 
@@ -887,15 +886,14 @@ cdef class BestSplitter(Splitter):
                 (self.criterion, self.max_features, self.min_samples_leaf, self.random_state),
                 self.__getstate__())
 
-    cdef void node_split(self, SIZE_t start,
-                               SIZE_t end,
-                               SIZE_t* pos,
-                               SIZE_t* feature,
-                               double* threshold):
+    cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold):
         """Find the best split on node samples[start:end]."""
         # Find the best split
         cdef Criterion criterion = self.criterion
         cdef SIZE_t* samples = self.samples
+        cdef SIZE_t start = self.start
+        cdef SIZE_t end = self.end
+
         cdef SIZE_t* features = self.features
         cdef SIZE_t n_features = self.n_features
 
@@ -1045,15 +1043,14 @@ cdef class RandomSplitter(Splitter):
                 (self.criterion, self.max_features, self.min_samples_leaf, self.random_state),
                 self.__getstate__())
 
-    cdef void node_split(self, SIZE_t start,
-                               SIZE_t end,
-                               SIZE_t* pos,
-                               SIZE_t* feature,
-                               double* threshold):
+    cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold):
         """Find the best random split on node samples[start:end]."""
         # Draw random splits and pick the best
         cdef Criterion criterion = self.criterion
         cdef SIZE_t* samples = self.samples
+        cdef SIZE_t start = self.start
+        cdef SIZE_t end = self.end
+
         cdef SIZE_t* features = self.features
         cdef SIZE_t n_features = self.n_features
 
@@ -1238,15 +1235,14 @@ cdef class BreimanSplitter(Splitter):
         self.moves = <SIZE_t*> malloc(n_samples_in_X * sizeof(SIZE_t))
         self.tmp_column = <SIZE_t*> malloc(n_samples_in_X * sizeof(SIZE_t))
 
-    cdef void node_split(self, SIZE_t start,
-                               SIZE_t end,
-                               SIZE_t* pos,
-                               SIZE_t* feature,
-                               double* threshold):
+    cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold):
         """Find the best split on node samples[start:end]."""
         # Find the best split
         cdef Criterion criterion = self.criterion
         cdef SIZE_t* samples = self.samples
+        cdef SIZE_t start = self.start
+        cdef SIZE_t end = self.end
+
         cdef SIZE_t* features = self.features
         cdef SIZE_t n_features = self.n_features
 
@@ -1631,7 +1627,7 @@ cdef class Tree:
             is_leaf = is_leaf or (impurity == 0.0)
 
             if not is_leaf:
-                splitter.node_split(start, end, &pos, &feature, &threshold)
+                splitter.node_split(&pos, &feature, &threshold)
                 is_leaf = is_leaf or (pos >= end)
 
             node_id = self.add_node(parent, is_left, is_leaf, feature,

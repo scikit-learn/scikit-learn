@@ -65,6 +65,8 @@ cdef class Splitter:
     cdef SIZE_t n_samples                # X.shape[0]
     cdef SIZE_t* features                # Feature indices in X
     cdef SIZE_t n_features               # X.shape[1]
+    cdef SIZE_t start
+    cdef SIZE_t end
 
     cdef np.ndarray X
     cdef DOUBLE_t* y
@@ -83,9 +85,7 @@ cdef class Splitter:
 
     cdef void node_reset(self, SIZE_t start, SIZE_t end, double* impurity)
 
-    cdef void node_split(self, SIZE_t start,
-                               SIZE_t end,
-                               SIZE_t* pos, # Set to >= end if the node is a leaf
+    cdef void node_split(self, SIZE_t* pos, # Set to >= end if the node is a leaf
                                SIZE_t* feature,
                                double* threshold)
 
