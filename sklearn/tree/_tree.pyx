@@ -273,19 +273,6 @@ cdef class ClassificationCriterion(Criterion):
 
         self.pos = new_pos
 
-        # TODO
-        # # Skip splits that result in nodes with net 0 or negative weight
-        # if (weighted_n_left <= 0 or
-        #     (self.weighted_n_samples - weighted_n_left) <= 0):
-        #     return False
-
-        # # Prevent any single class from having a net negative weight
-        # for k from 0 <= k < n_outputs:
-        #     for c from 0 <= c < n_classes[k]:
-        #         if (label_count_left[k * label_count_stride + c] < 0 or
-        #             label_count_right[k * label_count_stride + c] < 0):
-        #             return False
-
     cdef double node_impurity(self):
         pass
 
@@ -715,12 +702,6 @@ cdef class RegressionCriterion(Criterion):
         self.weighted_n_right = weighted_n_right
 
         self.pos = new_pos
-
-        # TODO
-        # # Skip splits that result in nodes with net 0 or negative weight
-        # if (weighted_n_left <= 0 or
-        #     (self.weighted_n_samples - weighted_n_left) <= 0):
-        #     return False
 
     cdef double node_impurity(self):
         pass
