@@ -182,9 +182,15 @@ The :class:`SpectralBiclustering` algorithm assumes that the input
 data matrix has a hidden checkerboard structure. For instance, if
 there are two row partitions and three column partitions, each row
 will belong to three biclusters, and each column will belong to two
-biclusters. The outer product of the corresponding row and column
-label vectors gives this checkerboard structure. The algorithm tries
-to partition the rows and columns to uncover this structure.
+biclusters. This partitioning reveals the checkerboard structure:
+
+.. figure:: ./images/checkerboard_example.png
+   :align: center
+   :scale: 30%
+
+The algorithm tries to partition the rows and columns to uncover this
+structure.
+
 
 Mathematical formulation
 ------------------------
@@ -192,29 +198,29 @@ Mathematical formulation
 The input matrix :math:`A` is first normalized to make the
 checkerboard pattern more obvious. There are three possible methods:
 
-1. *Independent row and column normalization*, as in Spectral
+1. **Independent row and column normalization**, as in Spectral
    Co-Clustering. This method makes the rows sum to a constant and the
    columns sum to a different constant.
 
 .. math::
     A_n = R^{−1/2} A C^{−1/2}
 
-2. *Bistochastization*: repeated row and column normalization until
+2. **Bistochastization**: repeated row and column normalization until
    convergence. This method makes both rows and columns sum to the
    same constant.
 
-3. *Log normalization*: the log of the data matrix is computed: :math:`L =
+3. **Log normalization**: the log of the data matrix is computed: :math:`L =
    \log A`. Then the column mean :math:`\overline{L_{i \cdot}}`, row mean
    :math:`\overline{L_{\cdot j}}`, and overall mean :math:`\overline{L_{\cdot
    \cdot}}` of :math:`L` are computed. The final matrix is computed
    according to the formula
 
 .. math::
-    L_{ij} = L_{ij} - \overline{L_{i \cdot}} - \overline{L_{\cdot
+    K_{ij} = L_{ij} - \overline{L_{i \cdot}} - \overline{L_{\cdot
     j}} + \overline{L_{\cdot \cdot}}
 
-After normalizing, the first few singular vectors of :math:`A_n` are
-computed, just as in the Spectral Co-Clustering algorithm.
+After normalizing, the first few singular vectors are computed, just
+as in the Spectral Co-Clustering algorithm.
 
 If log normalization was used, all the singular vectors are
 meaningful. However, if independent normalization or bistochastization
