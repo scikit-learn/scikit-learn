@@ -8,12 +8,12 @@ Unsupervised learning
 .. toctree::
 
     modules/mixture
-    modules/density
     modules/manifold
     modules/clustering
     modules/decomposition
     modules/covariance
     modules/outlier_detection
     modules/hmm
+    modules/density
 
 

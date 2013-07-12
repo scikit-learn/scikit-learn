@@ -77,8 +77,8 @@ for axi in ax[1, :]:
 
 #----------------------------------------------------------------------
 # Plot all available kernels
-Xplot = np.linspace(-6, 6, 1000)[:, None]
-Xsrc = np.zeros((1, 1))
+X_plot = np.linspace(-6, 6, 1000)[:, None]
+X_src = np.zeros((1, 1))
 
 fig, ax = plt.subplots(2, 3, sharex=True, sharey=True)
 fig.subplots_adjust(left=0.05, right=0.95, hspace=0.05, wspace=0.05)
@@ -97,8 +97,8 @@ def format_func(x, loc):
 for i, kernel in enumerate(['gaussian', 'tophat', 'epanechnikov',
                             'exponential', 'linear', 'cosine']):
     axi = ax.ravel()[i]
-    log_dens = KernelDensity(kernel=kernel).fit(Xsrc).eval(Xplot)
-    axi.fill(Xplot[:, 0], np.exp(log_dens), '-k', fc='#AAAAFF')
+    log_dens = KernelDensity(kernel=kernel).fit(X_src).eval(X_plot)
+    axi.fill(X_plot[:, 0], np.exp(log_dens), '-k', fc='#AAAAFF')
     axi.text(-2.6, 0.95, kernel)
 
     axi.xaxis.set_major_formatter(plt.FuncFormatter(format_func))
@@ -117,18 +117,18 @@ np.random.seed(1)
 X = np.concatenate((np.random.normal(0, 1, 0.3 * N),
                     np.random.normal(5, 1, 0.7 * N)))[:, np.newaxis]
 
-Xplot = np.linspace(-5, 10, 1000)[:, np.newaxis]
+X_plot = np.linspace(-5, 10, 1000)[:, np.newaxis]
 
-true_dens = (0.3 * norm(0, 1).pdf(Xplot[:, 0])
-             + 0.7 * norm(5, 1).pdf(Xplot[:, 0]))
+true_dens = (0.3 * norm(0, 1).pdf(X_plot[:, 0])
+             + 0.7 * norm(5, 1).pdf(X_plot[:, 0]))
 
 fig, ax = plt.subplots()
-ax.fill(Xplot[:, 0], true_dens, fc='black', alpha=0.2,
+ax.fill(X_plot[:, 0], true_dens, fc='black', alpha=0.2,
         label='input distribution')
 
 for kernel in ['gaussian', 'tophat', 'epanechnikov']:
-    log_dens = KernelDensity(kernel=kernel, bandwidth=0.5).fit(X).eval(Xplot)
-    ax.plot(Xplot[:, 0], np.exp(log_dens), '-',
+    log_dens = KernelDensity(kernel=kernel, bandwidth=0.5).fit(X).eval(X_plot)
+    ax.plot(X_plot[:, 0], np.exp(log_dens), '-',
             label="kernel = '{0}'".format(kernel))
 
 ax.text(6, 0.38, "N={0} points".format(N))
