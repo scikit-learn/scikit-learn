@@ -1490,6 +1490,7 @@ cdef class Tree:
         """Predict target for X."""
         cdef SIZE_t n_samples = X.shape[0]
         cdef SIZE_t node_id = 0
+        cdef SIZE_t max_n_classes = self.max_n_classes
         cdef SIZE_t offset_node
         cdef SIZE_t offset_output
 
@@ -1511,12 +1512,12 @@ cdef class Tree:
                     node_id = self.children_right[node_id]
 
             offset_node = node_id * self.value_stride
+            offset_output = 0
 
             for k from 0 <= k < self.n_outputs:
-                offset_output = k * self.max_n_classes
-
                 for c from 0 <= c < self.n_classes[k]:
                     out[i, k, c] = self.value[offset_node + offset_output + c]
+                offset_output += max_n_classes
 
         return out
 
