@@ -11,7 +11,7 @@ from __future__ import print_function
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
-from collections import Mapping, namedtuple
+from collections import Mapping, namedtuple, Sized
 from functools import partial, reduce
 from itertools import product
 import numbers
@@ -483,11 +483,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
         cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
 
         if self.verbose > 0:
-            try:
+            if isinstance(parameter_iterable, Sized):
                 n_candidates = len(parameter_iterable)
-            except TypeError:
-                pass
-            else:
                 print("Fitting {0} folds for each of {1} candidates, totalling"
                       " {2} fits".format(len(cv), n_candidates,
                                          n_candidates * len(cv)))
