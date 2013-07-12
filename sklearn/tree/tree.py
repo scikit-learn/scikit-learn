@@ -43,9 +43,7 @@ DOUBLE = _tree.DOUBLE
 
 CRITERIA_CLF = {"gini": _tree.Gini, "entropy": _tree.Entropy}
 CRITERIA_REG = {"mse": _tree.MSE}
-SPLITTERS = {"best": _tree.BestSplitter,
-             "breiman": _tree.BreimanSplitter,
-             "random": _tree.RandomSplitter}
+SPLITTERS = {"best": _tree.BestSplitter, "random": _tree.RandomSplitter}
 
 
 # =============================================================================
