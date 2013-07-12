@@ -5,6 +5,7 @@ Kernel Density Estimation
 # Author: Jake Vanderplas <jakevdp@cs.washington.edu>
 
 import numpy as np
+from scipy.special import gammainc
 from ..base import BaseEstimator
 from ..utils import array2d, check_random_state
 from .ball_tree import BallTree, DTYPE
@@ -195,5 +196,14 @@ class KernelDensity(BaseEstimator):
 
         if self.kernel == 'gaussian':
             return rng.normal(data[i], self.bandwidth)
+
         elif self.kernel == 'tophat':
-            return data[i] - 1 + 2 * rng.random_sample(i.shape)[:, None]
+            # we first draw points from a d-dimensional normal distribution,
+            # then use an incomplete gamma function to map them to a uniform
+            # d-dimensional tophat distribution.
+            dim = data.shape[1]
+            X = rng.normal(size=(n_samples, dim))
+            s_sq = (X ** 2).sum(1)
+            correction = (gammainc(0.5 * dim, 0.5 * s_sq) ** (1. / dim)
+                          * self.bandwidth / np.sqrt(s_sq))
+            return data[i] + X * correction[:, np.newaxis]
