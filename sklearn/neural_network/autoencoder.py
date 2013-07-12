@@ -7,7 +7,7 @@ import numpy as np
 from scipy.optimize import fmin_l_bfgs_b
 from scipy.linalg import norm
 from itertools import cycle, izip
-from sklearn.utils import array2d, check_random_state
+from sklearn.utils import atleast2d_or_csr, check_random_state
 from sklearn.utils import gen_even_slices
 from sklearn.utils import shuffle
 from sklearn.base import BaseEstimator, TransformerMixin
@@ -21,9 +21,9 @@ def binary_KL_divergence(p, p_hat):
     return (p * np.log(p / p_hat)) + ((1 - p) * np.log((1 - p) / (1 - p_hat)))
 
 
-def sigmoid(x):
+def logistic(x):
     """
-    Implements the sigmoid function.
+    Implements the logistic function.
 
     Parameters
     ----------
@@ -36,9 +36,9 @@ def sigmoid(x):
     return 1. / (1. + np.exp(np.clip(-x, -30, 30)))
 
 
-def d_sigmoid(x):
+def d_logistic(x):
     """
-    Implements the derivative of the sigmoid function.
+    Implements the derivative of the logistic function.
 
     Parameters
     ----------
@@ -94,7 +94,7 @@ class Autoencoder(BaseEstimator, TransformerMixin):
     n_hidden : int
         Number of hidden neurons
     activation: string, optional
-        Activation function for the hidden layer; either "sigmoid" for
+        Activation function for the hidden layer; either "logistic" for
         1 / (1 + exp(x)), or "tanh" for the hyperbolic tangent.
     algorithm : string, optional
         Optimization function for training the weights; could be "l-bfgs-b", "cg",
@@ -144,7 +144,7 @@ class Autoencoder(BaseEstimator, TransformerMixin):
     >>> X = np.array([[0, 0, 0], [0, 1, 1], [1, 0, 1], [1, 1, 1]])
     >>> model = SAE(n_hidden=10)
     >>> model.fit(X)
-    Autoencoder(activation_func='sigmoid', alpha=0.0001, batch_size=1000, beta=3,
+    Autoencoder(activation_func='logistic', alpha=0.0001, batch_size=1000, beta=3,
   learning_rate=0.0001, max_iter=20, n_hidden=10,
   algorithm='l-bfgs', random_state=None, sparsity_param=0.01,
   tol=1e-05, verbose=False)
@@ -156,22 +156,19 @@ class Autoencoder(BaseEstimator, TransformerMixin):
         Proceedings of the 28th International Conference on Machine Learning (ICML-11). 2011.
         http://ai.stanford.edu/~quocle/LeNgiCoaLahProNg11.pdf
     """
-
+    activation_functions = {
+            'tanh': tanh,
+            'logistic': logistic
+        }
+    derivative_functions = {
+            'tanh': d_tanh,
+            'logistic': d_logistic
+        }
     def __init__(
-        self, n_hidden=25, activation_func='sigmoid', algorithm='l-bfgs',
+        self, n_hidden=25, activation_func='logistic', algorithm='l-bfgs',
         learning_rate=0.3, alpha=3e-3, beta=3, sparsity_param=0.1,
             batch_size=100, shuffle_data=False, max_iter=20, tol=1e-5, verbose=False, random_state=None):
-        activation_functions = {
-            'tanh': tanh,
-            'sigmoid': sigmoid
-        }
-        derivative_functions = {
-            'tanh': d_tanh,
-            'sigmoid': d_sigmoid
-        }
         self.activation_func = activation_func
-        self.activation = activation_functions[activation_func]
-        self.derivative = derivative_functions[activation_func]
         self.algorithm = algorithm
         self.n_hidden = n_hidden
         self.alpha = alpha
@@ -184,6 +181,67 @@ class Autoencoder(BaseEstimator, TransformerMixin):
         self.tol = tol
         self.verbose = verbose
         self.random_state = random_state
+
+    def _init_fit(self, n_features):
+        """
+        Initialize weight and bias parameters
+
+        Parameters
+        ----------
+        n_features: int
+            Number of features (visible nodes).
+
+        Returns
+        -------
+        theta: array-like, shape (size(W1)*size(W2)*size(b1)*size(b2), 1)
+        """
+        rng = check_random_state(self.random_state)
+        self.coef_hidden_ = rng.uniform(-1, 1, (n_features, self.n_hidden))
+        self.coef_output_ = rng.uniform(-1, 1, (self.n_hidden, n_features))
+        self.intercept_hidden_ = rng.uniform(-1, 1, self.n_hidden)
+        self.intercept_output_ = rng.uniform(-1, 1, n_features)
+
+    def _init_param(self):
+        """
+        Sets the activation, derivative and the output functions
+        """
+        self.activation = self.activation_functions[self.activation_func]
+        self.derivative = self.derivative_functions[self.activation_func]
+        
+    def _unpack(self, theta, n_features):
+        """
+        Extract the coefficients and intercepts (W1,W2,b1,b2) from theta
+
+        Parameters
+        ----------
+        theta: array-like, shape (size(W1)*size(W2)*size(b1)*size(b2), 1)
+          Contains concatenated flattened weights  that represent the parameters "W1, W2, b1, b2"
+        n_features: int
+          Number of features (visible nodes).
+        """
+        N = self.n_hidden * n_features
+        self.coef_hidden_ = np.reshape(theta[:N],
+                                      (n_features, self.n_hidden))
+        self.coef_output_ = np.reshape(theta[N:2 * N],
+                                      (self.n_hidden, n_features))
+        self.intercept_hidden_ = theta[2 * N:2 * N + self.n_hidden]
+        self.intercept_output_ = theta[2 * N + self.n_hidden:]
+
+    def _pack(self, W1, W2, b1, b2):
+        """
+        Pack the coefficients and intercepts (W1,W2,b1,b2) from theta
+
+        Parameters
+        ----------
+        theta: array-like, shape (size(W1)*size(W2)*size(b1)*size(b2), 1)
+            Contains concatenated flattened weights  that represent the parameters "W1, W2, b1, b2"
+        n_features: int
+            Number of features
+        n_classes: int
+            Number of target classes
+        """
+        return np.hstack((W1.ravel(), W2.ravel(),
+                          b1.ravel(), b2.ravel()))
 
     def transform(self, X):
         """
@@ -226,11 +284,10 @@ class Autoencoder(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        X = array2d(X)
-        dtype = np.float32 if X.dtype.itemsize == 4 else np.float64
+        X = atleast2d_or_csr(X, dtype=np.float64, order="C")
         n_samples, n_features = X.shape
-        rng = check_random_state(self.random_state)
-        initial_theta = self._init_fit(n_features, rng)
+        self._init_fit(n_features)
+        self._init_param()
         if self.shuffle_data:
             X, y = shuffle(X, y, random_state=self.random_state)
         # generate batch slices
@@ -251,7 +308,7 @@ class Autoencoder(BaseEstimator, TransformerMixin):
         if self.algorithm == 'sgd':
             for i in xrange(self.max_iter):
                     for batch_slice in batch_slices:
-                        cost = self.backprop_naive(
+                        cost = self.backprop_sgd(
                             X[batch_slice],
                             n_features, self.batch_size,
                             delta_o, a_hidden, a_output)
@@ -259,109 +316,11 @@ class Autoencoder(BaseEstimator, TransformerMixin):
                         print("Iteration %d, cost = %.2f"
                               % (i, cost))
         elif self.algorithm == 'l-bfgs':
-            self._backprop_optimizer(
+            self._backprop_lbfgs(
                 X, n_features,
                 a_hidden, a_output, 
                 delta_o, n_samples)
         return self
-
-    def _init_fit(self, n_features, rng):
-        """
-        Initialize weight and bias parameters
-
-        Parameters
-        ----------
-        n_features: int
-            Number of features (visible nodes).
-
-        Returns
-        -------
-        theta: array-like, shape (size(W1)*size(W2)*size(b1)*size(b2), 1)
-        """
-        self.coef_hidden_ = rng.uniform(-1, 1, (n_features, self.n_hidden))
-        self.coef_output_ = rng.uniform(-1, 1, (self.n_hidden, n_features))
-        self.intercept_hidden_ = rng.uniform(-1, 1, self.n_hidden)
-        self.intercept_output_ = rng.uniform(-1, 1, n_features)
-
-    def _unpack(self, theta, n_features):
-        """
-        Extract the coefficients and intercepts (W1,W2,b1,b2) from theta
-
-        Parameters
-        ----------
-        theta: array-like, shape (size(W1)*size(W2)*size(b1)*size(b2), 1)
-          Contains concatenated flattened weights  that represent the parameters "W1, W2, b1, b2"
-        n_features: int
-          Number of features (visible nodes).
-        """
-        N = self.n_hidden * n_features
-        self.coef_hidden_ = np.reshape(theta[:N],
-                                      (n_features, self.n_hidden))
-        self.coef_output_ = np.reshape(theta[N:2 * N],
-                                      (self.n_hidden, n_features))
-        self.intercept_hidden_ = theta[2 * N:2 * N + self.n_hidden]
-        self.intercept_output_ = theta[2 * N + self.n_hidden:]
-
-    def _pack(self, W1, W2, b1, b2):
-        """
-        Pack the coefficients and intercepts (W1,W2,b1,b2) from theta
-
-        Parameters
-        ----------
-        theta: array-like, shape (size(W1)*size(W2)*size(b1)*size(b2), 1)
-            Contains concatenated flattened weights  that represent the parameters "W1, W2, b1, b2"
-        n_features: int
-            Number of features
-        n_classes: int
-            Number of target classes
-        """
-        return np.hstack((W1.ravel(), W2.ravel(),
-                          b1.ravel(), b2.ravel()))
-
-    def _backprop_optimizer(
-            self, X, n_features, a_hidden, a_output, delta_o, n_samples):
-        """
-        Applies the one of the optimization methods (l-bfgs-b, bfgs, newton-cg, cg)
-        to train the weights
-
-        Parameters
-        ----------
-        X: {array-like, sparse matrix}, shape (n_samples, n_features)
-            Training data, where n_samples in the number of samples
-            and n_features is the number of features.
-
-        Y : numpy array of shape [n_samples]
-            Subset of the target values.
-
-        n_features: int
-            Number of features
-
-        n_classes: int
-            Number of target classes
-
-        n_samples: int
-            Number of samples
-
-        """
-        initial_theta = self._pack(
-            self.coef_hidden_,
-            self.coef_output_,
-            self.intercept_hidden_,
-            self.intercept_output_)
-        print initial_theta.shape
-        optTheta, _, _ = fmin_l_bfgs_b(
-            func=self._cost_grad,
-            x0=initial_theta,
-            maxfun=self.max_iter,
-            disp=self.verbose,
-            args=(
-                X,
-                n_features,
-                n_samples,
-                delta_o,
-                a_hidden,
-                a_output))
-        self._unpack(optTheta, n_features)
 
     def backprop(self, X, n_features, n_samples,
                   delta_o, a_hidden, a_output):
@@ -408,26 +367,28 @@ class Autoencoder(BaseEstimator, TransformerMixin):
             (np.dot(delta_o, self.coef_output_.T) +
              sparsity_delta)) *\
             self.derivative(a_hidden)
-        # Get cost and gradient
+        # Get cost 
         cost = np.sum(diff ** 2) / (2 * n_samples)
-        W1grad = np.dot(X.T, delta_h) / n_samples
-        W2grad = np.dot(a_hidden.T, delta_o) / n_samples
-        b1grad = np.sum(delta_h, 0) / n_samples
-        b2grad = np.sum(delta_o, 0) / n_samples
-        # Add regularization term to cost and gradient
+        # Add regularization term to cost 
         cost += (0.5 * self.alpha) * (
             np.sum(self.coef_hidden_ ** 2) + np.sum(
                 self.coef_output_ ** 2))
-        W1grad += self.alpha * self.coef_hidden_
-        W2grad += self.alpha * self.coef_output_
         # Add sparsity term to the cost
         cost += self.beta * np.sum(
             binary_KL_divergence(
                 self.sparsity_param,
                 sparsity_param_hat))
+        #Get gradients
+        W1grad = np.dot(X.T, delta_h) / n_samples 
+        W2grad = np.dot(a_hidden.T, delta_o) / n_samples
+        b1grad = np.sum(delta_h, 0) / n_samples
+        b2grad = np.sum(delta_o, 0) / n_samples
+        # Add regularization term to gradients 
+        W1grad += self.alpha * self.coef_hidden_
+        W2grad += self.alpha * self.coef_output_
         return cost, W1grad, W2grad, b1grad, b2grad
 
-    def backprop_naive(
+    def backprop_sgd(
             self, X, n_features, n_samples, delta_o, a_hidden, a_output):
         """
         Updates the weights using the computed gradients
@@ -460,6 +421,51 @@ class Autoencoder(BaseEstimator, TransformerMixin):
         self.intercept_output_ -= (self.learning_rate * b2grad)
         # TODO: dynamically update learning rate
         return cost
+        
+    def _backprop_lbfgs(
+            self, X, n_features, a_hidden, a_output, delta_o, n_samples):
+        """
+        Applies the one of the optimization methods (l-bfgs-b, bfgs, newton-cg, cg)
+        to train the weights
+
+        Parameters
+        ----------
+        X: {array-like, sparse matrix}, shape (n_samples, n_features)
+            Training data, where n_samples in the number of samples
+            and n_features is the number of features.
+
+        Y : numpy array of shape [n_samples]
+            Subset of the target values.
+
+        n_features: int
+            Number of features
+
+        n_classes: int
+            Number of target classes
+
+        n_samples: int
+            Number of samples
+
+        """
+        initial_theta = self._pack(
+            self.coef_hidden_,
+            self.coef_output_,
+            self.intercept_hidden_,
+            self.intercept_output_)
+        print initial_theta.shape
+        optTheta, _, _ = fmin_l_bfgs_b(
+            func=self._cost_grad,
+            x0=initial_theta,
+            maxfun=self.max_iter,
+            disp=self.verbose,
+            args=(
+                X,
+                n_features,
+                n_samples,
+                delta_o,
+                a_hidden,
+                a_output))
+        self._unpack(optTheta, n_features)
 
     def _cost_grad(self, theta, X, n_features,
                    n_samples, delta_o, a_hidden, a_output):
@@ -488,7 +494,6 @@ class Autoencoder(BaseEstimator, TransformerMixin):
         grad: array-like, shape (size(W1)*size(W2)*size(b1)*size(b2))
 
         """
-        # Unpack theta to extract W1, W2, b1, b2
         self._unpack(theta, n_features)
         cost, W1grad, W2grad, b1grad, b2grad = self.backprop(
             X, n_features, n_samples, delta_o, a_hidden, a_output)
