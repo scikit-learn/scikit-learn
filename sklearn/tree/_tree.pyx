@@ -56,8 +56,8 @@ cdef class Criterion:
         pass
 
     cdef void update(self, SIZE_t new_pos):
-        """Update the collected statistics by moving samples[pos:new_pos] from the
-           right child to the left child."""
+        """Update the collected statistics by moving samples[pos:new_pos] from
+           the right child to the left child."""
         pass
 
     cdef double node_impurity(self):
@@ -177,13 +177,13 @@ cdef class ClassificationCriterion(Criterion):
         cdef SIZE_t p = 0
         cdef SIZE_t k = 0
         cdef SIZE_t c = 0
-        cdef SIZE_t offset = 0
         cdef DOUBLE_t w = 1.0
+        cdef SIZE_t offset = 0
 
         for k from 0 <= k < n_outputs:
-            offset = k * label_count_stride
             for c from 0 <= c < n_classes[k]:
                 label_count_total[offset + c] = 0
+            offset += label_count_stride
 
         for p from start <= p < end:
             i = samples[p]
@@ -219,16 +219,16 @@ cdef class ClassificationCriterion(Criterion):
         cdef SIZE_t offset = 0
 
         for k from 0 <= k < n_outputs:
-            offset = k * label_count_stride
             for c from 0 <= c < n_classes[k]:
                 # Reset left label counts to 0
                 label_count_left[offset + c] = 0
                 # Reset right label counts to the initial counts
                 label_count_right[offset + c] = label_count_total[offset + c]
+            offset += label_count_stride
 
     cdef void update(self, SIZE_t new_pos):
-        """Update the collected statistics by moving samples[pos:new_pos] from the
-           right child to the left child."""
+        """Update the collected statistics by moving samples[pos:new_pos] from
+            the right child to the left child."""
         cdef DOUBLE_t* y = self.y
         cdef SIZE_t y_stride = self.y_stride
         cdef DOUBLE_t* sample_weight = self.sample_weight
@@ -301,12 +301,12 @@ cdef class ClassificationCriterion(Criterion):
 
         cdef SIZE_t k
         cdef SIZE_t c
-        cdef SIZE_t offset
+        cdef SIZE_t offset = 0
 
         for k from 0 <= k < n_outputs:
-            offset = k * label_count_stride
             for c from 0 <= c < n_classes[k]:
                 dest[offset + c] = label_count_total[offset + c]
+            offset += label_count_stride
 
 
 cdef class Entropy(ClassificationCriterion):
@@ -338,10 +338,9 @@ cdef class Entropy(ClassificationCriterion):
         cdef double tmp
         cdef SIZE_t k
         cdef SIZE_t c
-        cdef SIZE_t offset
+        cdef SIZE_t offset = 0
 
         for k from 0 <= k < n_outputs:
-            offset = k * label_count_stride
             entropy = 0.0
 
             for c from 0 <= c < n_classes[k]:
@@ -351,6 +350,7 @@ cdef class Entropy(ClassificationCriterion):
                     entropy -= tmp * log(tmp)
 
             total += entropy
+            offset += label_count_stride
 
         return total / n_outputs
 
@@ -373,10 +373,9 @@ cdef class Entropy(ClassificationCriterion):
         cdef double tmp
         cdef SIZE_t k
         cdef SIZE_t c
-        cdef SIZE_t offset
+        cdef SIZE_t offset = 0
 
         for k from 0 <= k < n_outputs:
-            offset = k * label_count_stride
             entropy_left = 0.0
             entropy_right = 0.0
 
@@ -393,6 +392,7 @@ cdef class Entropy(ClassificationCriterion):
 
             total += weighted_n_left * entropy_left
             total += weighted_n_right * entropy_right
+            offset += label_count_stride
 
         return total / (weighted_n_node_samples * n_outputs)
 
@@ -427,22 +427,19 @@ cdef class Gini(ClassificationCriterion):
         cdef double tmp
         cdef SIZE_t k
         cdef SIZE_t c
-        cdef SIZE_t offset
+        cdef SIZE_t offset = 0
 
         for k from 0 <= k < n_outputs:
-            offset = k * label_count_stride
             gini = 0.0
 
             for c from 0 <= c < n_classes[k]:
                 tmp = label_count_total[offset + c]
                 gini += tmp * tmp
 
-            if weighted_n_node_samples <= 0.0:
-                gini = 0.0
-            else:
-                gini = 1.0 - gini / (weighted_n_node_samples * weighted_n_node_samples)
+            gini = 1.0 - gini / (weighted_n_node_samples * weighted_n_node_samples)
 
             total += gini
+            offset += label_count_stride
 
         return total / n_outputs
 
@@ -465,10 +462,9 @@ cdef class Gini(ClassificationCriterion):
         cdef double tmp
         cdef SIZE_t k
         cdef SIZE_t c
-        cdef SIZE_t offset
+        cdef SIZE_t offset = 0
 
         for k from 0 <= k < n_outputs:
-            offset = k * label_count_stride
             gini_left = 0.0
             gini_right = 0.0
 
@@ -478,18 +474,12 @@ cdef class Gini(ClassificationCriterion):
                 tmp = label_count_right[offset + c]
                 gini_right += tmp * tmp
 
-            if weighted_n_left <= 0.0:
-                gini_left = 0.0
-            else:
-                gini_left = 1.0 - gini_left / (weighted_n_left * weighted_n_left)
-
-            if weighted_n_right <= 0.0:
-                gini_right = 0.0
-            else:
-                gini_right = 1.0 - gini_right / (weighted_n_right * weighted_n_right)
+            gini_left = 1.0 - gini_left / (weighted_n_left * weighted_n_left)
+            gini_right = 1.0 - gini_right / (weighted_n_right * weighted_n_right)
 
             total += weighted_n_left * gini_left
             total += weighted_n_right * gini_right
+            offset += label_count_stride
 
         return total / (weighted_n_node_samples * n_outputs)
 
@@ -670,8 +660,8 @@ cdef class RegressionCriterion(Criterion):
             var_right[k] = (sq_sum_right[k] - self.weighted_n_node_samples * (mean_right[k] * mean_right[k]))
 
     cdef void update(self, SIZE_t new_pos):
-        """Update the collected statistics by moving samples[pos:new_pos] from the
-           right child to the left child."""
+        """Update the collected statistics by moving samples[pos:new_pos] from
+           the right child to the left child."""
         cdef DOUBLE_t* y = self.y
         cdef SIZE_t y_stride = self.y_stride
         cdef DOUBLE_t* sample_weight = self.sample_weight
