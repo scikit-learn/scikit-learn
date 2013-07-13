@@ -11,7 +11,7 @@ from abc import ABCMeta, abstractmethod
 from sklearn.utils import gen_even_slices
 from sklearn.utils import shuffle
 from scipy.optimize import fmin_l_bfgs_b
-from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
+from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import atleast2d_or_csr, check_random_state
 from sklearn.utils.extmath import logsumexp, safe_sparse_dot
@@ -167,11 +167,10 @@ class BaseMLP(BaseEstimator):
     
     @abstractmethod
     def __init__(
-        self, n_hidden, activation, output, loss, algorithm,
+        self, n_hidden, activation, loss, algorithm,
             alpha, batch_size, learning_rate, eta0, power_t,
             max_iter, shuffle_data, random_state, tol, verbose):
         self.activation = activation
-        self.output = output
         self.loss = loss
         self.algorithm = algorithm
         self.alpha = alpha
@@ -250,9 +249,12 @@ class BaseMLP(BaseEstimator):
         """
         self.activation_func = self.activation_functions[self.activation]
         self.derivative_func = self.derivative_functions[self.activation]
-        self.output_func =  self.activation_functions[self.output]
+        if len(self.classes_)  > 2:
+            self.output_func =  _softmax
+        else:
+            self.output_func =  self.activation_functions[self.activation]
         
-    def fit(self, X, y):
+    def fit(self, X, Y):
         """
         Fit the model to the data X and target y.
 
@@ -262,7 +264,7 @@ class BaseMLP(BaseEstimator):
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
-        y : numpy array of shape [n_samples]
+        Y : numpy array of shape [n_samples]
             Subset of the target values.
 
         Returns
@@ -270,14 +272,10 @@ class BaseMLP(BaseEstimator):
         self
         """
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
-        self._lbin = LabelBinarizer()
-        Y = self._lbin.fit_transform(y)
-        n_samples, n_features = X.shape
         n_classes = Y.shape[1]
+        n_samples, n_features = X.shape
         self._init_fit(n_features, n_classes)
         self._init_param()
-        if Y.shape[1] == 1:
-            self.output_func = self.activation_functions[self.activation]
         if self.shuffle_data:
             X, Y = shuffle(X, Y, random_state=self.random_state)
         self.batch_size = np.clip(self.batch_size, 0, n_samples)
@@ -287,6 +285,8 @@ class BaseMLP(BaseEstimator):
                 n_batches *
                 self.batch_size,
                 n_batches))
+        #l-bfgs does not work well with batches
+        if self.algorithm == 'l-bfgs': self.batch_size = n_samples 
         # preallocate memory
         a_hidden = np.empty((self.batch_size, self.n_hidden))
         a_output = np.empty((self.batch_size, n_classes))
@@ -310,9 +310,8 @@ class BaseMLP(BaseEstimator):
                               % (i, cost))
                 t += 1
         elif 'l-bfgs':
-            for batch_slice in batch_slices:
                 self._backprop_lbfgs(
-                    X[batch_slice], Y[batch_slice], n_features, n_classes, self.batch_size, a_hidden,
+                    X, Y, n_features, n_classes, n_samples, a_hidden,
                      a_output,
                     delta_o)
         return self
@@ -350,16 +349,12 @@ class BaseMLP(BaseEstimator):
                                        self.intercept_output_)
         # Backward propagate
         diff = Y - a_output
+        delta_o[:] = -diff
+        delta_h = np.dot(delta_o, self.coef_output_.T) *\
+                    self.derivative_func(a_hidden)
         if self.loss == 'squared_loss':
-            delta_o[:] = -diff * self.derivative_func(a_output)
-            delta_h = np.dot(
-                delta_o,
-                self.coef_output_.T) * self.derivative_func(a_hidden)
             cost = np.sum(diff**2)/ (2 * n_samples)
         elif self.loss == 'log':
-            delta_o[:] = -diff
-            delta_h = np.dot(delta_o, self.coef_output_.T) *\
-                    self.derivative_func(a_hidden)
             cost = np.sum(
                 np.sum(-Y * np.log(a_output) - (1 - Y) * np.log(1 - a_output)))
         # Get regularized gradient
@@ -566,12 +561,37 @@ class BaseMLP(BaseEstimator):
            Predicted target values per element in X.
         """
         X = atleast2d_or_csr(X)
-        scores = self.decision_function(X)
+        return self.decision_function(X)
+
+class MLPClassifier(BaseMLP, ClassifierMixin):
+
+    def __init__(
+        self, n_hidden=100, activation="tanh",
+        loss='log', algorithm='sgd', alpha=0.00001, batch_size=200,
+        learning_rate="constant", eta0=0.8, power_t=0.5, max_iter=200,
+        shuffle_data=False, random_state=None, tol=1e-5, verbose=False):
+        super(
+            MLPClassifier, self).__init__(n_hidden, activation, loss,
+                                          algorithm, alpha, batch_size, learning_rate, eta0, 
+                                          power_t, max_iter, shuffle_data, random_state, tol, verbose)
+        self.classes_ = None
+        
+    def fit(self, X, y):
+        self.classes_ = np.unique(y)
+        self._lbin = LabelBinarizer()
+        Y = self._lbin.fit_transform(y)
+        if len(self.classes_) == 2: Y[np.where(Y==0)]=-1
+        super(MLPClassifier, self).fit(
+                X, Y)
+        return self
+    
+    def predict(self, X):
+        scores = super(MLPClassifier, self).predict(X)
         if len(scores.shape) == 1:
             indices = (scores > 0).astype(np.int)
         else:
             indices = scores.argmax(axis=1)
-        return self.classes_[indices]
+        return self._lbin.classes_[indices]
 
     def predict_log_proba(self, X):
         """Log of probability estimates.
@@ -587,7 +607,7 @@ class BaseMLP(BaseEstimator):
             model, where classes are ordered as they are in
             `self.classes_`.
         """
-        scores = self.decision_function(X)
+        scores = super(MLPClassifier, self).predict(X)
         if len(scores.shape) == 1:
             return np.log(self.activation_func(scores))
         else:
@@ -606,43 +626,27 @@ class BaseMLP(BaseEstimator):
             Returns the probability of the sample for each class in the model,
             where classes are ordered as they are in `self.classes_`.
         """
-        prob = self.decision_function(X)
-        if len(prob.shape) == 1:
-            prob *= -1
-            np.exp(prob, prob)
-            prob += 1
-            np.reciprocal(prob, prob)
-            return np.vstack([1 - prob, prob]).T 
+        scores = super(MLPClassifier, self).predict(X)
+        if len(scores.shape) == 1:
+            scores *= -1
+            np.exp(scores, scores)
+            scores += 1
+            np.reciprocal(scores, scores)
+            return np.vstack([1 - scores, scores]).T 
         else:
-            return _softmax(prob)
+            return _softmax(scores)
 
-    @property
-    def classes_(self):
-        return self._lbin.classes_
-
-
-class MLPClassifier(BaseMLP, ClassifierMixin):
-
-    def __init__(
-        self, n_hidden=100, activation="tanh", output='softmax',
-        loss='log', algorithm='sgd', alpha=0.00001, batch_size=2000,
-        learning_rate="constant", eta0=1, power_t=0.5, max_iter=100,
-        shuffle_data=False, random_state=None, tol=1e-5, verbose=False):
-        super(
-            MLPClassifier, self).__init__(n_hidden, activation, output, loss,
-                                          algorithm, alpha, batch_size, learning_rate, eta0, 
-                                          power_t, max_iter, shuffle_data, random_state, tol, verbose)
-
-
+"""
 class MLPRegressor(BaseMLP, RegressorMixin):
 
     def __init__(
-        self, n_hidden=100, activation="tanh", output='tanh',
+        self, n_hidden=100, activation="logistic", output='logistic',
          loss='squared_loss', algorithm='sgd', alpha=0.00001, 
-         batch_size=2000, learning_rate="constant", eta0=0.1, 
-         power_t=0.5, max_iter=100, shuffle_data=False, 
+         batch_size=5000, learning_rate="constant", eta0=1, 
+         power_t=0.5, max_iter=200, shuffle_data=False, 
          random_state=None, tol=1e-5, verbose=False):
         super(
             MLPRegressor, self).__init__(n_hidden, activation, output, loss,
                                           algorithm, alpha, batch_size, learning_rate, eta0, 
                                           power_t, max_iter, shuffle_data, random_state, tol, verbose)
+"""
