@@ -211,9 +211,6 @@ classifiers['CART'] = DecisionTreeClassifier(min_samples_split=5,
 ## Train RandomForest model
 rf_parameters = {
     "n_estimators": 20,
-    "min_samples_split": 5,
-    "max_features": None,
-    "max_depth": None,
     "n_jobs": opts.n_jobs,
     "random_state": opts.random_seed,
 }
@@ -222,18 +219,12 @@ classifiers['RandomForest'] = RandomForestClassifier(**rf_parameters)
 ######################################################################
 ## Train Extra-Trees model
 classifiers['ExtraTrees'] = ExtraTreesClassifier(n_estimators=20,
-                                                 min_samples_split=5,
-                                                 max_features=None,
-                                                 max_depth=None,
                                                  n_jobs=opts.n_jobs,
                                                  random_state=opts.random_seed)
 
 ######################################################################
 ## Train GBRT model
 classifiers['GBRT'] = GradientBoostingClassifier(n_estimators=250,
-                                                 min_samples_split=5,
-                                                 max_features=None,
-                                                 max_depth=3,
                                                  random_state=opts.random_seed)
 
 
