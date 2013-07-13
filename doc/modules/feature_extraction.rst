@@ -408,8 +408,8 @@ class::
 
   >>> from sklearn.feature_extraction.text import TfidfTransformer
   >>> transformer = TfidfTransformer()
-  >>> transformer   # doctest: +NORMALIZE_WHITESPACE
-  TfidfTransformer(norm='l2', smooth_idf=True, sublinear_tf=False,
+  >>> transformer   # doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
+  TfidfTransformer(norm=...'l2', smooth_idf=True, sublinear_tf=False,
                    use_idf=True)
 
 Again please see the :ref:`reference documentation
