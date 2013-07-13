@@ -7,6 +7,7 @@
 import numpy as np
 from scipy.linalg import norm
 
+from abc import ABCMeta, abstractmethod
 from sklearn.utils import gen_even_slices
 from sklearn.utils import shuffle
 from scipy.optimize import fmin_l_bfgs_b
@@ -113,7 +114,11 @@ def _d_tanh(X):
 
 
 class BaseMLP(BaseEstimator):
+    """Base class for  MLP.
 
+    Warning: This class should not be used directly.
+    Use derived classes instead.
+    """
     """Multi-layer perceptron (feedforward neural network) classifier.
 
     Trained with gradient descent under square loss function
@@ -148,6 +153,8 @@ class BaseMLP(BaseEstimator):
         Whether to print progress messages to stdout.
 
     """
+    __metaclass__ = ABCMeta
+    
     activation_functions = {
             'tanh': _tanh,
             'logistic': _logistic,
@@ -157,6 +164,8 @@ class BaseMLP(BaseEstimator):
             'tanh': _d_tanh,
             'logistic': _d_logistic
         }
+    
+    @abstractmethod
     def __init__(
         self, n_hidden, activation, output, loss, algorithm,
             alpha, batch_size, learning_rate, eta0, power_t,
@@ -582,7 +591,7 @@ class BaseMLP(BaseEstimator):
         if len(scores.shape) == 1:
             return np.log(self.activation_func(scores))
         else:
-            return log_softmax(scores)
+            return _log_softmax(scores)
 
     def predict_proba(self, X):
         """Probability estimates.
@@ -598,14 +607,14 @@ class BaseMLP(BaseEstimator):
             where classes are ordered as they are in `self.classes_`.
         """
         prob = self.decision_function(X)
-        prob *= -1
-        np.exp(prob, prob)
-        prob += 1
-        np.reciprocal(prob, prob)
         if len(prob.shape) == 1:
+            prob *= -1
+            np.exp(prob, prob)
+            prob += 1
+            np.reciprocal(prob, prob)
             return np.vstack([1 - prob, prob]).T 
         else:
-            return softmax(scores)
+            return _softmax(prob)
 
     @property
     def classes_(self):
@@ -615,12 +624,12 @@ class BaseMLP(BaseEstimator):
 class MLPClassifier(BaseMLP, ClassifierMixin):
 
     def __init__(
-        self, n_hidden=100, activation="tanh", output_func='softmax',
+        self, n_hidden=100, activation="tanh", output='softmax',
         loss='log', algorithm='sgd', alpha=0.00001, batch_size=2000,
         learning_rate="constant", eta0=1, power_t=0.5, max_iter=100,
         shuffle_data=False, random_state=None, tol=1e-5, verbose=False):
         super(
-            MLPClassifier, self).__init__(n_hidden, activation, output_func, loss,
+            MLPClassifier, self).__init__(n_hidden, activation, output, loss,
                                           algorithm, alpha, batch_size, learning_rate, eta0, 
                                           power_t, max_iter, shuffle_data, random_state, tol, verbose)
 
@@ -628,12 +637,12 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
 class MLPRegressor(BaseMLP, RegressorMixin):
 
     def __init__(
-        self, n_hidden=100, activation="tanh", output_func='tanh',
+        self, n_hidden=100, activation="tanh", output='tanh',
          loss='squared_loss', algorithm='sgd', alpha=0.00001, 
          batch_size=2000, learning_rate="constant", eta0=0.1, 
          power_t=0.5, max_iter=100, shuffle_data=False, 
          random_state=None, tol=1e-5, verbose=False):
         super(
-            MLPClassifier, self).__init__(n_hidden, activation, output_func, loss,
+            MLPRegressor, self).__init__(n_hidden, activation, output, loss,
                                           algorithm, alpha, batch_size, learning_rate, eta0, 
                                           power_t, max_iter, shuffle_data, random_state, tol, verbose)
