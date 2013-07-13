@@ -34,7 +34,7 @@ cdef class Criterion:
     cdef double weighted_n_left          # Weighted number of samples in the left node
     cdef double weighted_n_right         # Weighted number of samples in the right node
 
-    # The criterion object is maintained such left and right collected
+    # The criterion object is maintained such that left and right collected
     # statistics correspond to samples[start:pos] and samples[pos:end].
 
     # Methods
@@ -65,8 +65,8 @@ cdef class Splitter:
     cdef SIZE_t n_samples                # X.shape[0]
     cdef SIZE_t* features                # Feature indices in X
     cdef SIZE_t n_features               # X.shape[1]
-    cdef SIZE_t start
-    cdef SIZE_t end
+    cdef SIZE_t start                    # Start position for the current node
+    cdef SIZE_t end                      # End position for the current ndoe
 
     cdef np.ndarray X
     cdef DOUBLE_t* y
@@ -114,13 +114,13 @@ cdef class Tree:
 
     # Inner structures
     cdef public SIZE_t node_count        # Counter for node IDs
-    cdef public SIZE_t capacity          # Capacity
+    cdef public SIZE_t capacity          # Capacity of tree, in terms of nodes
     cdef SIZE_t* children_left           # children_left[i] is the left child of node i
     cdef SIZE_t* children_right          # children_right[i] is the right child of node i
     cdef SIZE_t* feature                 # features[i] is the feature used for splitting node i
     cdef double* threshold               # threshold[i] is the threshold value at node i
     cdef double* value                   # value[i] is the values contained at node i
-    cdef double* impurity                # impurity[i] is the impurity of node i
+    cdef double* impurity                # impurity[i] is the impurity of node i (i.e., the value of the criterion)
     cdef SIZE_t* n_node_samples          # n_node_samples[i] is the number of samples at node i
 
     # Methods
