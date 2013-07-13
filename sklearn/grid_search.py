@@ -57,15 +57,16 @@ class ParameterGrid(object):
     --------
     >>> from sklearn.grid_search import ParameterGrid
     >>> param_grid = {'a': [1, 2], 'b': [True, False]}
-    >>> list(ParameterGrid(param_grid)) #doctest: +NORMALIZE_WHITESPACE
-    [{'a': 1, 'b': True}, {'a': 1, 'b': False},
-     {'a': 2, 'b': True}, {'a': 2, 'b': False}]
+    >>> list(ParameterGrid(param_grid)) == (
+    ...    [{'a': 1, 'b': True}, {'a': 1, 'b': False},
+    ...     {'a': 2, 'b': True}, {'a': 2, 'b': False}])
+    True
 
     >>> grid = [{'kernel': ['linear']}, {'kernel': ['rbf'], 'gamma': [1, 10]}]
-    >>> list(ParameterGrid(grid)) #doctest: +NORMALIZE_WHITESPACE
-    [{'kernel': 'linear'},
-     {'kernel': 'rbf', 'gamma': 1},
-     {'kernel': 'rbf', 'gamma': 10}]
+    >>> list(ParameterGrid(grid)) == [{'kernel': 'linear'},
+    ...                               {'kernel': 'rbf', 'gamma': 1},
+    ...                               {'kernel': 'rbf', 'gamma': 10}]
+    True
 
     See also
     --------
@@ -131,9 +132,10 @@ class IterGrid(ParameterGrid):
     --------
     >>> from sklearn.grid_search import IterGrid
     >>> param_grid = {'a':[1, 2], 'b':[True, False]}
-    >>> list(IterGrid(param_grid)) #doctest: +NORMALIZE_WHITESPACE
-    [{'a': 1, 'b': True}, {'a': 1, 'b': False},
-     {'a': 2, 'b': True}, {'a': 2, 'b': False}]
+    >>> list(IterGrid(param_grid)) == (
+    ...    [{'a': 1, 'b': True}, {'a': 1, 'b': False},
+    ...     {'a': 2, 'b': True}, {'a': 2, 'b': False}])
+    True
 
     See also
     --------

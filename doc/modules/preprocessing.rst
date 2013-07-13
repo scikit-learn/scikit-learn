@@ -332,8 +332,8 @@ only one active.
 Continuing the example above::
 
   >>> enc = preprocessing.OneHotEncoder()
-  >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])
-  OneHotEncoder(categorical_features='all', dtype=<type 'float'>,
+  >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])  # doctest: +ELLIPSIS
+  OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
          n_values='auto')
   >>> enc.transform([[0, 1, 3]]).toarray()
   array([[ 1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
