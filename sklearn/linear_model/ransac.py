@@ -15,25 +15,8 @@ class RANSAC(BaseEstimator):
     """RANSAC (RANdom SAmple Consensus) algorithm.
 
     RANSAC is an iterative algorithm for the robust estimation of parameters
-    from a subset of inliers from the complete data set. Each iteration
-    performs the following steps:
-
-    1. Select `min_n_samples` random samples from the original data and check
-       whether the set of data is valid (see `is_data_valid`).
-    2. Fit a model to the random subset (`base_estimator.fit`) and check
-       whether the estimated model is valid (see `is_model_valid`).
-    3. Classify all data as inliers or outliers by calculating the residuals
-       to the estimated model (`base_estimator.predict(X) - y`) - all data
-       samples with absolute residuals smaller than the `residual_threshold`
-       are considered as inliers.
-    4. Save fitted model as best model if number of inlier samples is
-       maximal. In case the current estimated model has the same number of
-       inliers, it is only considered as the best model if it has better score.
-
-    These steps are performed either a maximum number of times (`max_trials`)
-    or until one of the special stop criteria are met (see `stop_n_inliers` and
-    `stop_score`). The final model is estimated using all inlier samples of the
-    previously determined best model.
+    from a subset of inliers from the complete data set. More information can
+    be found in the general documentation of linear models.
 
     Parameters
     ----------
