@@ -226,7 +226,7 @@ def test_ridge_individual_penalties():
 
     # Test error is raised when number of targets and penalties do not match.
     ridge = Ridge(alpha=penalties[:3])
-    assert_raises(ValueError, ridge.fit, X, target)
+    assert_raises(ValueError, ridge.fit, X, y)
 
 
 def _test_ridge_loo(filter_):

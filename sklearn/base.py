@@ -201,12 +201,19 @@ class BaseEstimator(object):
         """
         out = dict()
         for key in self._get_param_names():
-            # catch deprecation warnings
-            with warnings.catch_warnings(record=True) as w:
-                value = getattr(self, key, None)
-            if len(w) and w[0].category == DeprecationWarning:
+            # We need deprecation warnings to always be on in order to
+            # catch deprecated param values.
+            # This is set in utils/__init__.py but it gets overwritten
+            # when running under python3 somehow.
+            warnings.simplefilter("always", DeprecationWarning)
+            try:
+                with warnings.catch_warnings(record=True) as w:
+                    value = getattr(self, key, None)
+                if len(w) and w[0].category == DeprecationWarning:
                 # if the parameter is deprecated, don't show it
-                continue
+                    continue
+            finally:
+                warnings.filters.pop(0)
 
             # XXX: should we rather test if instance of estimator?
             if deep and hasattr(value, 'get_params'):

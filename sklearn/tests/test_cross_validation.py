@@ -83,7 +83,7 @@ class MockClassifier(BaseEstimator):
 
 X = np.ones((10, 2))
 X_sparse = coo_matrix(X)
-y = np.arange(10) / 2
+y = np.arange(10) // 2
 
 ##############################################################################
 # Tests
