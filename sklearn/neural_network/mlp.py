@@ -8,6 +8,7 @@ import numpy as np
 from scipy.linalg import norm
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 from abc import ABCMeta, abstractmethod
 from sklearn.utils import gen_even_slices
 from sklearn.utils import shuffle
@@ -21,6 +22,9 @@ from itertools import cycle, izip
 
 def _logistic(x):
 =======
+=======
+from abc import ABCMeta, abstractmethod
+>>>>>>> Fixed some travis errors
 from sklearn.utils import gen_even_slices
 from sklearn.utils import shuffle
 from scipy.optimize import fmin_l_bfgs_b
@@ -187,14 +191,20 @@ def _d_tanh(X):
 
 class BaseMLP(BaseEstimator):
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> Fixed some travis errors
     """Base class for  MLP.
 
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
+<<<<<<< HEAD
 =======
 
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+>>>>>>> Fixed some travis errors
     """Multi-layer perceptron (feedforward neural network) classifier.
 
     Trained with gradient descent under square loss function
@@ -248,6 +258,7 @@ class BaseMLP(BaseEstimator):
     """
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
     __metaclass__ = ABCMeta
     
     activation_functions = {
@@ -274,6 +285,10 @@ class BaseMLP(BaseEstimator):
             max_iter, shuffle_data, random_state, tol, verbose):
         activation_functions = {
 =======
+=======
+    __metaclass__ = ABCMeta
+    
+>>>>>>> Fixed some travis errors
     activation_functions = {
 <<<<<<< HEAD
 >>>>>>> Fixed initialization disagreements
@@ -291,11 +306,16 @@ class BaseMLP(BaseEstimator):
             'logistic': _d_logistic
         }
 <<<<<<< HEAD
+<<<<<<< HEAD
         self.activation = activation_functions[activation]
         self.derivative = derivative_functions[activation]
         self.output_func = activation_functions[output_func]
 >>>>>>> replaced 'einsum' to a more readable and faster operation
 =======
+=======
+    
+    @abstractmethod
+>>>>>>> Fixed some travis errors
     def __init__(
         self, n_hidden, activation, output, loss, algorithm,
             alpha, batch_size, learning_rate, eta0, power_t,
@@ -1108,8 +1128,12 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
         if len(scores.shape) == 1:
             return np.log(self.activation_func(scores))
         else:
+<<<<<<< HEAD
             return log_softmax(scores)
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+            return _log_softmax(scores)
+>>>>>>> Fixed some travis errors
 
     def predict_proba(self, X):
         """Probability estimates.
@@ -1156,15 +1180,15 @@ class MLPRegressor(BaseMLP, RegressorMixin):
             return self.activation(scores)
 =======
         prob = self.decision_function(X)
-        prob *= -1
-        np.exp(prob, prob)
-        prob += 1
-        np.reciprocal(prob, prob)
         if len(prob.shape) == 1:
+            prob *= -1
+            np.exp(prob, prob)
+            prob += 1
+            np.reciprocal(prob, prob)
             return np.vstack([1 - prob, prob]).T 
 >>>>>>> Added an example to illustrate MLP performance on the digits dataset, verbose for SGD and minibatch processing for l-bfgs
         else:
-            return softmax(scores)
+            return _softmax(prob)
 
     @property
     def classes_(self):
@@ -1174,12 +1198,12 @@ class MLPRegressor(BaseMLP, RegressorMixin):
 class MLPClassifier(BaseMLP, ClassifierMixin):
 
     def __init__(
-        self, n_hidden=100, activation="tanh", output_func='softmax',
+        self, n_hidden=100, activation="tanh", output='softmax',
         loss='log', algorithm='sgd', alpha=0.00001, batch_size=2000,
         learning_rate="constant", eta0=1, power_t=0.5, max_iter=100,
         shuffle_data=False, random_state=None, tol=1e-5, verbose=False):
         super(
-            MLPClassifier, self).__init__(n_hidden, activation, output_func, loss,
+            MLPClassifier, self).__init__(n_hidden, activation, output, loss,
                                           algorithm, alpha, batch_size, learning_rate, eta0, 
                                           power_t, max_iter, shuffle_data, random_state, tol, verbose)
 
@@ -1187,13 +1211,13 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
 class MLPRegressor(BaseMLP, RegressorMixin):
 
     def __init__(
-        self, n_hidden=100, activation="tanh", output_func='tanh',
+        self, n_hidden=100, activation="tanh", output='tanh',
          loss='squared_loss', algorithm='sgd', alpha=0.00001, 
          batch_size=2000, learning_rate="constant", eta0=0.1, 
          power_t=0.5, max_iter=100, shuffle_data=False, 
          random_state=None, tol=1e-5, verbose=False):
         super(
-            MLPClassifier, self).__init__(n_hidden, activation, output_func, loss,
+            MLPRegressor, self).__init__(n_hidden, activation, output, loss,
                                           algorithm, alpha, batch_size, learning_rate, eta0, 
                                           power_t, max_iter, shuffle_data, random_state, tol, verbose)
 >>>>>>> replaced 'einsum' to a more readable and faster operation
