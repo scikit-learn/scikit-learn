@@ -810,7 +810,8 @@ cdef class Splitter:
         j = 0
 
         for i from 0 <= i < n_samples:
-            if sample_weight == NULL or sample_weight[i] != 0.0: # Discard samples with weight 0
+            # Only work with positively weighted samples
+            if sample_weight == NULL or sample_weight[i] != 0.0:
                 samples[j] = i
                 j += 1
 
@@ -1488,44 +1489,57 @@ cdef class Tree:
 
     cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X):
         """Predict target for X."""
+        cdef SIZE_t* children_left = self.children_left
+        cdef SIZE_t* children_right = self.children_right
+        cdef SIZE_t* feature = self.feature
+        cdef double* threshold = self.threshold
+        cdef double* value = self.value
+
         cdef SIZE_t n_samples = X.shape[0]
-        cdef SIZE_t node_id = 0
+        cdef SIZE_t* n_classes = self.n_classes
+        cdef SIZE_t n_outputs = self.n_outputs
         cdef SIZE_t max_n_classes = self.max_n_classes
+        cdef SIZE_t value_stride = self.value_stride
+
+        cdef SIZE_t node_id = 0
         cdef SIZE_t offset_node
         cdef SIZE_t offset_output
-
         cdef SIZE_t i
         cdef SIZE_t k
         cdef SIZE_t c
 
         cdef np.ndarray[np.float64_t, ndim=3] out
-        out = np.zeros((n_samples, self.n_outputs, self.max_n_classes), dtype=np.float64)
+        out = np.zeros((n_samples, n_outputs, max_n_classes), dtype=np.float64)
 
         for i from 0 <= i < n_samples:
             node_id = 0
 
             # While node_id not a leaf
-            while self.children_left[node_id] != _TREE_LEAF: # and self.children_right[node_id] != _TREE_LEAF:
-                if X[i, self.feature[node_id]] <= self.threshold[node_id]:
-                    node_id = self.children_left[node_id]
+            while children_left[node_id] != _TREE_LEAF: # and children_right[node_id] != _TREE_LEAF:
+                if X[i, feature[node_id]] <= threshold[node_id]:
+                    node_id = children_left[node_id]
                 else:
-                    node_id = self.children_right[node_id]
+                    node_id = children_right[node_id]
 
-            offset_node = node_id * self.value_stride
+            offset_node = node_id * value_stride
             offset_output = 0
 
-            for k from 0 <= k < self.n_outputs:
-                for c from 0 <= c < self.n_classes[k]:
-                    out[i, k, c] = self.value[offset_node + offset_output + c]
+            for k from 0 <= k < n_outputs:
+                for c from 0 <= c < n_classes[k]:
+                    out[i, k, c] = value[offset_node + offset_output + c]
                 offset_output += max_n_classes
 
         return out
 
     cpdef apply(self, np.ndarray[DTYPE_t, ndim=2] X):
         """Finds the terminal region (=leaf node) for each sample in X."""
+        cdef SIZE_t* children_left = self.children_left
+        cdef SIZE_t* children_right = self.children_right
+        cdef SIZE_t* feature = self.feature
+        cdef double* threshold = self.threshold
+
         cdef SIZE_t n_samples = X.shape[0]
         cdef SIZE_t node_id = 0
-
         cdef SIZE_t i = 0
 
         cdef np.ndarray[np.int32_t, ndim=1] out
@@ -1535,11 +1549,11 @@ cdef class Tree:
             node_id = 0
 
             # While node_id not a leaf
-            while self.children_left[node_id] != _TREE_LEAF: # and self.children_right[node_id] != _TREE_LEAF:
-                if X[i, self.feature[node_id]] <= self.threshold[node_id]:
-                    node_id = self.children_left[node_id]
+            while children_left[node_id] != _TREE_LEAF: # and children_right[node_id] != _TREE_LEAF:
+                if X[i, feature[node_id]] <= threshold[node_id]:
+                    node_id = children_left[node_id]
                 else:
-                    node_id = self.children_right[node_id]
+                    node_id = children_right[node_id]
 
             out[i] = node_id
 
@@ -1547,7 +1561,15 @@ cdef class Tree:
 
     cpdef compute_feature_importances(self, normalize=True):
         """Computes the importance of each feature (aka variable)."""
-        cdef SIZE_t n_node_samples
+        cdef SIZE_t* children_left = self.children_left
+        cdef SIZE_t* children_right = self.children_right
+        cdef SIZE_t* feature = self.feature
+        cdef double* impurity = self.impurity
+        cdef SIZE_t* n_node_samples = self.n_node_samples
+
+        cdef SIZE_t n_features = self.n_features
+        cdef SIZE_t node_count = self.node_count
+
         cdef SIZE_t n_left
         cdef SIZE_t n_right
         cdef SIZE_t node
@@ -1555,16 +1577,15 @@ cdef class Tree:
         cdef np.ndarray[np.float64_t, ndim=1] importances
         importances = np.zeros((self.n_features,))
 
-        for node from 0 <= node < self.node_count:
-            if self.children_left[node] != _TREE_LEAF: # and self.children_right[node] != _TREE_LEAF:
-                n_node_samples = self.n_node_samples[node]
-                n_left = self.n_node_samples[self.children_left[node]]
-                n_right = self.n_node_samples[self.children_right[node]]
+        for node from 0 <= node < node_count:
+            if children_left[node] != _TREE_LEAF: # and children_right[node] != _TREE_LEAF:
+                n_left = n_node_samples[children_left[node]]
+                n_right = n_node_samples[children_right[node]]
 
-                importances[self.feature[node]] += \
-                    n_node_samples * self.impurity[node] \
-                        - n_left * self.impurity[self.children_left[node]] \
-                        - n_right * self.impurity[self.children_right[node]]
+                importances[feature[node]] += \
+                    n_node_samples[node] * impurity[node] \
+                        - n_left * impurity[children_left[node]] \
+                        - n_right * impurity[children_right[node]]
 
         importances = importances / self.n_node_samples[0]
         cdef double normalizer

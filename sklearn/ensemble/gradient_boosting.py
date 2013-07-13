@@ -476,7 +476,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             sample_weight = None
             if self.subsample < 1.0:
                 sample_weight = sample_mask.astype(np.float64)
-            tree.fit(X, residual, sample_weight=sample_weight, check_input=False)
+
+            tree.fit(X, residual,
+                     sample_weight=sample_weight, check_input=False)
 
             # update tree leaves
             loss.update_terminal_regions(tree.tree_, X, y, residual, y_pred,
