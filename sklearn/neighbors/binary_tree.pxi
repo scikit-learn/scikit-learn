@@ -103,6 +103,50 @@
 #
 # Hackish?  Yes.  But it leads to fast execution without the need to duplicate
 # the code in two places.
+#
+# Necessary Helper Functions
+# --------------------------
+# These are the names and descriptions of the "abstract" functions which are
+# defined in kd_tree.pyx and ball_tree.pyx:
+
+# cdef int allocate_data(BinaryTree tree, ITYPE_t n_nodes, ITYPE_t n_features):
+#     """Allocate arrays needed for the KD Tree"""
+
+# cdef int init_node(BinaryTree tree, ITYPE_t i_node,
+#                    ITYPE_t idx_start, ITYPE_t idx_end):
+#    """Initialize the node for the dataset stored in tree.data"""
+
+# cdef DTYPE_t min_rdist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt):
+#     """Compute the minimum reduced-distance between a point and a node"""
+
+# cdef DTYPE_t min_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt):
+#     """Compute the minimum distance between a point and a node"""
+
+# cdef DTYPE_t max_rdist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt):
+#     """Compute the maximum reduced-distance between a point and a node"""
+
+# cdef DTYPE_t max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt):
+#     """Compute the maximum distance between a point and a node"""
+
+# cdef inline int min_max_dist(BinaryTree tree, ITYPE_t i_node, DTYPE_t* pt,
+#                              DTYPE_t* min_dist, DTYPE_t* max_dist):
+#     """Compute the minimum and maximum distance between a point and a node"""
+
+# cdef inline DTYPE_t min_rdist_dual(BinaryTree tree1, ITYPE_t i_node1,
+#                                    BinaryTree tree2, ITYPE_t i_node2):
+#     """Compute the minimum reduced distance between two nodes"""
+
+# cdef inline DTYPE_t min_dist_dual(BinaryTree tree1, ITYPE_t i_node1,
+#                                   BinaryTree tree2, ITYPE_t i_node2):
+#     """Compute the minimum distance between two nodes"""
+
+# cdef inline DTYPE_t max_rdist_dual(BinaryTree tree1, ITYPE_t i_node1,
+#                                    BinaryTree tree2, ITYPE_t i_node2):
+#     """Compute the maximum reduced distance between two nodes"""
+
+# cdef inline DTYPE_t max_dist_dual(BinaryTree tree1, ITYPE_t i_node1,
+#                                   BinaryTree tree2, ITYPE_t i_node2):
+#     """Compute the maximum distance between two nodes"""
 
 cimport cython
 cimport numpy as np
