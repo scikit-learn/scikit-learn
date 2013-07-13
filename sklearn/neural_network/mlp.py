@@ -14,6 +14,7 @@ from sklearn.utils import gen_even_slices
 from sklearn.utils import shuffle
 from scipy.optimize import fmin_l_bfgs_b
 from sklearn.base import BaseEstimator, ClassifierMixin
+<<<<<<< HEAD
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import atleast2d_or_csr, check_random_state
 from sklearn.utils.extmath import logsumexp, safe_sparse_dot
@@ -29,6 +30,8 @@ from sklearn.utils import gen_even_slices
 from sklearn.utils import shuffle
 from scipy.optimize import fmin_l_bfgs_b
 from sklearn.base import BaseEstimator, ClassifierMixin, RegressorMixin
+=======
+>>>>>>> More Travis error fixes
 from sklearn.preprocessing import LabelBinarizer
 from sklearn.utils import atleast2d_or_csr, check_random_state
 from sklearn.utils.extmath import logsumexp, safe_sparse_dot
@@ -274,6 +277,7 @@ class BaseMLP(BaseEstimator):
     @abstractmethod
     def __init__(
         self, n_hidden, activation, loss, algorithm,
+<<<<<<< HEAD
             alpha, batch_size, learning_rate, eta0, power_t,
             max_iter, shuffle_data, random_state, tol, verbose):
         self.activation = activation
@@ -327,6 +331,11 @@ class BaseMLP(BaseEstimator):
 =======
         self.output = output
 >>>>>>> Cleaned the code and set internal functions private
+=======
+            alpha, batch_size, learning_rate, eta0, power_t,
+            max_iter, shuffle_data, random_state, tol, verbose):
+        self.activation = activation
+>>>>>>> More Travis error fixes
         self.loss = loss
         self.algorithm = algorithm
         self.alpha = alpha
@@ -439,10 +448,14 @@ class BaseMLP(BaseEstimator):
         self.derivative_func = self.derivative_functions[self.activation]
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> More Travis error fixes
         if len(self.classes_)  > 2:
             self.output_func =  _softmax
         else:
             self.output_func =  self.activation_functions[self.activation]
+<<<<<<< HEAD
         
     def fit(self, X, Y):
 =======
@@ -455,6 +468,10 @@ class BaseMLP(BaseEstimator):
 >>>>>>> Fixed initialization disagreements
     def fit(self, X, y):
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+        
+    def fit(self, X, Y):
+>>>>>>> More Travis error fixes
         """
         Fit the model to the data X and target y.
 
@@ -465,10 +482,14 @@ class BaseMLP(BaseEstimator):
             and n_features is the number of features.
 
 <<<<<<< HEAD
+<<<<<<< HEAD
         Y : numpy array of shape [n_samples]
 =======
         y : numpy array of shape [n_samples]
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+        Y : numpy array of shape [n_samples]
+>>>>>>> More Travis error fixes
             Subset of the target values.
 
         Returns
@@ -476,6 +497,7 @@ class BaseMLP(BaseEstimator):
         self
         """
         X = atleast2d_or_csr(X, dtype=np.float64, order="C")
+<<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
         n_classes = Y.shape[1]
@@ -489,18 +511,24 @@ class BaseMLP(BaseEstimator):
         self._lbin = LabelBinarizer()
         Y = self._lbin.fit_transform(y)
         n_samples, n_features = X.shape
+=======
+>>>>>>> More Travis error fixes
         n_classes = Y.shape[1]
+        n_samples, n_features = X.shape
         self._init_fit(n_features, n_classes)
 <<<<<<< HEAD
 >>>>>>> replaced 'einsum' to a more readable and faster operation
 =======
         self._init_param()
 <<<<<<< HEAD
+<<<<<<< HEAD
 >>>>>>> Fixed initialization disagreements
 =======
         if Y.shape[1] == 1:
             self.output_func = self.activation_functions[self.activation]
 >>>>>>> Cleaned the code and set internal functions private
+=======
+>>>>>>> More Travis error fixes
         if self.shuffle_data:
             X, Y = shuffle(X, Y, random_state=self.random_state)
         self.batch_size = np.clip(self.batch_size, 0, n_samples)
@@ -511,6 +539,9 @@ class BaseMLP(BaseEstimator):
                 self.batch_size,
                 n_batches))
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> More Travis error fixes
         #l-bfgs does not work well with batches
         if self.algorithm == 'l-bfgs': self.batch_size = n_samples 
         # preallocate memory
@@ -579,9 +610,8 @@ class BaseMLP(BaseEstimator):
 >>>>>>> Added an example to illustrate MLP performance on the digits dataset, verbose for SGD and minibatch processing for l-bfgs
                 t += 1
         elif 'l-bfgs':
-            for batch_slice in batch_slices:
                 self._backprop_lbfgs(
-                    X[batch_slice], Y[batch_slice], n_features, n_classes, self.batch_size, a_hidden,
+                    X, Y, n_features, n_classes, n_samples, a_hidden,
                      a_output,
                     delta_o)
         return self
@@ -679,6 +709,7 @@ class BaseMLP(BaseEstimator):
         # Backward propagate
         diff = Y - a_output
 <<<<<<< HEAD
+<<<<<<< HEAD
         delta_o[:] = -diff
         delta_h = np.dot(delta_o, self.coef_output_.T) *\
                     self.derivative_func(a_hidden)
@@ -689,16 +720,14 @@ class BaseMLP(BaseEstimator):
             if self.activation == 'tanh': a_output = 0.5*(a_output + 1) 
             cost = -np.sum(Y * np.log(a_output))
 =======
+=======
+        delta_o[:] = -diff
+        delta_h = np.dot(delta_o, self.coef_output_.T) *\
+                    self.derivative_func(a_hidden)
+>>>>>>> More Travis error fixes
         if self.loss == 'squared_loss':
-            delta_o[:] = -diff * self.derivative_func(a_output)
-            delta_h = np.dot(
-                delta_o,
-                self.coef_output_.T) * self.derivative_func(a_hidden)
             cost = np.sum(diff**2)/ (2 * n_samples)
         elif self.loss == 'log':
-            delta_o[:] = -diff
-            delta_h = np.dot(delta_o, self.coef_output_.T) *\
-                    self.derivative_func(a_hidden)
             cost = np.sum(
                 np.sum(-Y * np.log(a_output) - (1 - Y) * np.log(1 - a_output)))
 >>>>>>> Cleaned the code and set internal functions private
@@ -1037,13 +1066,21 @@ class BaseMLP(BaseEstimator):
         """
         X = atleast2d_or_csr(X)
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> More Travis error fixes
         return self.decision_function(X)
 
 class MLPClassifier(BaseMLP, ClassifierMixin):
 
     def __init__(
+<<<<<<< HEAD
         self, n_hidden=100, activation="logistic",
         loss='log', algorithm='l-bfgs', alpha=0.00001, batch_size=200,
+=======
+        self, n_hidden=100, activation="tanh",
+        loss='log', algorithm='sgd', alpha=0.00001, batch_size=200,
+>>>>>>> More Travis error fixes
         learning_rate="constant", eta0=0.8, power_t=0.5, max_iter=200,
         shuffle_data=False, random_state=None, tol=1e-5, verbose=False):
         super(
@@ -1053,6 +1090,7 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
         self.classes_ = None
         
     def fit(self, X, y):
+<<<<<<< HEAD
         """
         Fit the model to the data X and target y.
 
@@ -1069,6 +1107,8 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
         -------
         self
         """
+=======
+>>>>>>> More Travis error fixes
         self.classes_ = np.unique(y)
         self._lbin = LabelBinarizer()
         Y = self._lbin.fit_transform(y)
@@ -1078,6 +1118,7 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
         return self
     
     def predict(self, X):
+<<<<<<< HEAD
         """Predict using the multi-layer perceptron model
 
         Parameters
@@ -1093,15 +1134,22 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
 =======
         scores = self.decision_function(X)
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+        scores = super(MLPClassifier, self).predict(X)
+>>>>>>> More Travis error fixes
         if len(scores.shape) == 1:
             indices = (scores > 0).astype(np.int)
         else:
             indices = scores.argmax(axis=1)
 <<<<<<< HEAD
+<<<<<<< HEAD
         return self._lbin.classes_[indices]
 =======
         return self.classes_[indices]
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+        return self._lbin.classes_[indices]
+>>>>>>> More Travis error fixes
 
     def predict_log_proba(self, X):
         """Log of probability estimates.
@@ -1118,6 +1166,7 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
             `self.classes_`.
         """
 <<<<<<< HEAD
+<<<<<<< HEAD
         scores = super(MLPClassifier, self).predict(X)
         if len(scores.shape) == 1:
             return np.log(self.activation_func(scores))
@@ -1125,6 +1174,9 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
             return _log_softmax(scores)
 =======
         scores = self.decision_function(X)
+=======
+        scores = super(MLPClassifier, self).predict(X)
+>>>>>>> More Travis error fixes
         if len(scores.shape) == 1:
             return np.log(self.activation_func(scores))
         else:
@@ -1150,6 +1202,9 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
         """
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> More Travis error fixes
         scores = super(MLPClassifier, self).predict(X)
         if len(scores.shape) == 1:
             scores *= -1
@@ -1157,6 +1212,7 @@ class MLPClassifier(BaseMLP, ClassifierMixin):
             scores += 1
             np.reciprocal(scores, scores)
             return np.vstack([1 - scores, scores]).T 
+<<<<<<< HEAD
         else:
             return _softmax(scores)
 
@@ -1187,37 +1243,26 @@ class MLPRegressor(BaseMLP, RegressorMixin):
             np.reciprocal(prob, prob)
             return np.vstack([1 - prob, prob]).T 
 >>>>>>> Added an example to illustrate MLP performance on the digits dataset, verbose for SGD and minibatch processing for l-bfgs
+=======
+>>>>>>> More Travis error fixes
         else:
-            return _softmax(prob)
+            return _softmax(scores)
 
-    @property
-    def classes_(self):
-        return self._lbin.classes_
-
-
-class MLPClassifier(BaseMLP, ClassifierMixin):
-
-    def __init__(
-        self, n_hidden=100, activation="tanh", output='softmax',
-        loss='log', algorithm='sgd', alpha=0.00001, batch_size=2000,
-        learning_rate="constant", eta0=1, power_t=0.5, max_iter=100,
-        shuffle_data=False, random_state=None, tol=1e-5, verbose=False):
-        super(
-            MLPClassifier, self).__init__(n_hidden, activation, output, loss,
-                                          algorithm, alpha, batch_size, learning_rate, eta0, 
-                                          power_t, max_iter, shuffle_data, random_state, tol, verbose)
-
-
+"""
 class MLPRegressor(BaseMLP, RegressorMixin):
 
     def __init__(
-        self, n_hidden=100, activation="tanh", output='tanh',
+        self, n_hidden=100, activation="logistic", output='logistic',
          loss='squared_loss', algorithm='sgd', alpha=0.00001, 
-         batch_size=2000, learning_rate="constant", eta0=0.1, 
-         power_t=0.5, max_iter=100, shuffle_data=False, 
+         batch_size=5000, learning_rate="constant", eta0=1, 
+         power_t=0.5, max_iter=200, shuffle_data=False, 
          random_state=None, tol=1e-5, verbose=False):
         super(
             MLPRegressor, self).__init__(n_hidden, activation, output, loss,
                                           algorithm, alpha, batch_size, learning_rate, eta0, 
                                           power_t, max_iter, shuffle_data, random_state, tol, verbose)
+<<<<<<< HEAD
 >>>>>>> replaced 'einsum' to a more readable and faster operation
+=======
+"""
+>>>>>>> More Travis error fixes
