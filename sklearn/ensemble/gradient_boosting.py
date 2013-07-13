@@ -784,15 +784,6 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     `estimators_`: list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
 
-    Examples
-    --------
-    >>> samples = [[0, 0, 2], [1, 0, 0]]
-    >>> labels = [0, 1]
-    >>> from sklearn.ensemble import GradientBoostingClassifier
-    >>> gb = GradientBoostingClassifier(random_state=0).fit(samples, labels)
-    >>> print(gb.predict([[0.5, 0, 0]]))
-    [0]
-
     See also
     --------
     sklearn.tree.DecisionTreeClassifier, RandomForestClassifier
@@ -1024,16 +1015,6 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
 
     `estimators_`: list of DecisionTreeRegressor
         The collection of fitted sub-estimators.
-
-    Examples
-    --------
-    >>> samples = [[0, 0, 2], [1, 0, 0]]
-    >>> labels = [0, 1]
-    >>> from sklearn.ensemble import GradientBoostingRegressor
-    >>> gb = GradientBoostingRegressor(random_state=0).fit(samples, labels)
-    >>> print(gb.predict([[0, 0, 0]]))
-    ... # doctest: +ELLIPSIS +NORMALIZE_WHITESPACE
-    [  0.37706...
 
     See also
     --------
