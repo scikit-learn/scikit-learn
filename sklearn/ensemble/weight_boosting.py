@@ -429,7 +429,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         try:
             estimator.set_params(random_state=self.random_state)
-        except:
+        except ValueError:
             pass
 
         estimator.fit(X, y, sample_weight=sample_weight)
@@ -491,7 +491,7 @@ class AdaBoostClassifier(BaseWeightBoosting, ClassifierMixin):
 
         try:
             estimator.set_params(random_state=self.random_state)
-        except:
+        except ValueError:
             pass
 
         estimator.fit(X, y, sample_weight=sample_weight)
