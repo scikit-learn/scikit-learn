@@ -938,7 +938,7 @@ class AdaBoostRegressor(BaseWeightBoosting, RegressorMixin):
 
         try:
             estimator.set_params(random_state=self.random_state)
-        except:
+        except ValueError:
             pass
 
         generator = check_random_state(self.random_state)
