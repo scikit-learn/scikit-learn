@@ -725,8 +725,8 @@ For classification, :class:`PassiveAggressiveClassifier` can be used with
    <http://jmlr.csail.mit.edu/papers/volume7/crammer06a/crammer06a.pdf>`_
    K. Crammer, O. Dekel, J. Keshat, S. Shalev-Shwartz, Y. Singer - JMLR 7 (2006)
 
-RANSAC
-======
+Robustness to outliers: RANSAC
+==============================
 
 The RANSAC (RANdom SAmple Consensus) is an iterative algorithm for the robust
 estimation of parameters from a subset of inliers from the complete data set.
