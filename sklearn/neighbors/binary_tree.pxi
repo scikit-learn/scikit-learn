@@ -747,7 +747,7 @@ cdef class NodeHeap:
 
     Internally, the data is stored in a simple binary heap which meets
     the min heap condition:
-    
+
         heap[i].val < min(heap[2 * i + 1].val, heap[2 * i + 2].val)
     """
     cdef NodeHeapData_t[::1] data
@@ -892,7 +892,7 @@ cdef class BinaryTree:
     cdef ITYPE_t n_levels
     cdef ITYPE_t n_nodes
 
-    cdef DistanceMetric dm
+    cdef DistanceMetric dist_metric
     cdef int euclidean
 
     # variables to keep track of building & querying stats
@@ -926,10 +926,11 @@ cdef class BinaryTree:
                  leaf_size=40, metric='minkowski', **kwargs):
         self.data = np.asarray(data, dtype=DTYPE, order='C')
         self.leaf_size = leaf_size
-        self.dm = DistanceMetric.get_metric(metric, **kwargs)
-        self.euclidean = (self.dm.__class__.__name__ == 'EuclideanDistance')
+        self.dist_metric = DistanceMetric.get_metric(metric, **kwargs)
+        self.euclidean = (self.dist_metric.__class__.__name__
+                          == 'EuclideanDistance')
 
-        metric = self.dm.__class__.__name__
+        metric = self.dist_metric.__class__.__name__
         if metric not in VALID_METRICS:
             raise ValueError('metric {metric} is not valid for '
                              '{BinaryTree}'.format(metric=metric,
@@ -980,7 +981,7 @@ cdef class BinaryTree:
                 int(self.n_leaves),
                 int(self.n_splits),
                 int(self.n_calls),
-                self.dm)
+                self.dist_metric)
 
     def __setstate__(self, state):
         """
@@ -997,8 +998,9 @@ cdef class BinaryTree:
         self.n_leaves = state[8]
         self.n_splits = state[9]
         self.n_calls = state[10]
-        self.dm = state[11]
-        self.euclidean = (self.dm.__class__.__name__ == 'EuclideanDistance')
+        self.dist_metric = state[11]
+        self.euclidean = (self.dist_metric.__class__.__name__
+                          == 'EuclideanDistance')
 
     def get_tree_stats(self):
         return (self.n_trims, self.n_leaves, self.n_splits)
@@ -1020,7 +1022,7 @@ cdef class BinaryTree:
         if self.euclidean:
             return euclidean_dist(x1, x2, size)
         else:
-            return self.dm.dist(x1, x2, size)
+            return self.dist_metric.dist(x1, x2, size)
 
     cdef inline DTYPE_t rdist(self, DTYPE_t* x1, DTYPE_t* x2,
                               ITYPE_t size) except -1:
@@ -1035,7 +1037,7 @@ cdef class BinaryTree:
         if self.euclidean:
             return euclidean_rdist(x1, x2, size)
         else:
-            return self.dm.rdist(x1, x2, size)
+            return self.dist_metric.rdist(x1, x2, size)
 
     cdef int _recursive_build(self, ITYPE_t i_node, ITYPE_t idx_start,
                               ITYPE_t idx_end) except -1:
@@ -1180,7 +1182,7 @@ cdef class BinaryTree:
         self.n_splits = 0
 
         if dualtree:
-            other = self.__class__(Xarr, metric=self.dm,
+            other = self.__class__(Xarr, metric=self.dist_metric,
                                    leaf_size=self.leaf_size)
             if breadth_first:
                 self._query_dual_breadthfirst(other, heap, nodeheap)
@@ -1204,7 +1206,7 @@ cdef class BinaryTree:
                     pt += Xarr.shape[1]
 
         distances, indices = heap.get_arrays(sort=sort_results)
-        distances = self.dm.rdist_to_dist(distances)
+        distances = self.dist_metric.rdist_to_dist(distances)
 
         # deflatten results
         if return_distance:
@@ -1561,7 +1563,7 @@ cdef class BinaryTree:
         cdef DTYPE_t* pt = &Xarr[0, 0]
 
         if dualtree:
-            other = self.__class__(Xarr, metric=self.dm,
+            other = self.__class__(Xarr, metric=self.dist_metric,
                                    leaf_size=self.leaf_size)
             self._two_point_dual(0, other, 0, &rarr[0], &carr[0],
                                  0, rarr.shape[0])
@@ -1910,7 +1912,7 @@ cdef class BinaryTree:
         # Case 3: this is a leaf node.  Go through all points to
         #         determine if they fall within radius
         elif node_info.is_leaf:
-            reduced_r = self.dm._dist_to_rdist(r)
+            reduced_r = self.dist_metric._dist_to_rdist(r)
 
             for i in range(node_info.idx_start, node_info.idx_end):
                 dist_pt = self.rdist(pt, (data + n_features * idx_array[i]),
@@ -1924,7 +1926,8 @@ cdef class BinaryTree:
                     else:
                         indices[count] = idx_array[i]
                         if return_distance:
-                            distances[count] = self.dm._rdist_to_dist(dist_pt)
+                            distances[count] =\
+                                self.dist_metric._rdist_to_dist(dist_pt)
                     count += 1
 
         #------------------------------------------------------------
