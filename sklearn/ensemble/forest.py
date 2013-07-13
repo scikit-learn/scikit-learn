@@ -789,14 +789,15 @@ class RandomForestClassifier(ForestClassifier):
         self.max_features = max_features
 
         if min_density is not None:
-            warn("The min_density parameter is deprecated and will be removed "
-                 "in 0.15.", DeprecationWarning)
+            warn("The min_density parameter is deprecated as of version 0.14 "
+                 "and will be removed in 0.16.", DeprecationWarning)
 
         if compute_importances is not None:
-            warn("Setting compute_importances is no longer "
-                 "required. Variable importances are now computed on the fly "
-                 "when accessing the feature_importances_ attribute. This "
-                 "parameter will be removed in 0.15.", DeprecationWarning)
+            warn("Setting compute_importances is no longer required as "
+                  "version 0.14. Variable importances are now computed on the "
+                  "fly when accessing the feature_importances_ attribute. "
+                  "This parameter will be removed in 0.16.",
+                  DeprecationWarning)
 
 
 class RandomForestRegressor(ForestRegressor):
@@ -921,14 +922,15 @@ class RandomForestRegressor(ForestRegressor):
         self.max_features = max_features
 
         if min_density is not None:
-            warn("The min_density parameter is deprecated and will be removed "
-                 "in 0.15.", DeprecationWarning)
+            warn("The min_density parameter is deprecated as of version 0.14 "
+                 "and will be removed in 0.16.", DeprecationWarning)
 
         if compute_importances is not None:
-            warn("Setting compute_importances is no longer "
-                 "required. Variable importances are now computed on the fly "
-                 "when accessing the feature_importances_ attribute. This "
-                 "parameter will be removed in 0.15.", DeprecationWarning)
+            warn("Setting compute_importances is no longer required as "
+                  "version 0.14. Variable importances are now computed on the "
+                  "fly when accessing the feature_importances_ attribute. "
+                  "This parameter will be removed in 0.16.",
+                  DeprecationWarning)
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -1068,14 +1070,15 @@ class ExtraTreesClassifier(ForestClassifier):
         self.max_features = max_features
 
         if min_density is not None:
-            warn("The min_density parameter is deprecated and will be removed "
-                 "in 0.15.", DeprecationWarning)
+            warn("The min_density parameter is deprecated as of version 0.14 "
+                 "and will be removed in 0.16.", DeprecationWarning)
 
         if compute_importances is not None:
-            warn("Setting compute_importances is no longer "
-                 "required. Variable importances are now computed on the fly "
-                 "when accessing the feature_importances_ attribute. This "
-                 "parameter will be removed in 0.15.", DeprecationWarning)
+            warn("Setting compute_importances is no longer required as "
+                  "version 0.14. Variable importances are now computed on the "
+                  "fly when accessing the feature_importances_ attribute. "
+                  "This parameter will be removed in 0.16.",
+                  DeprecationWarning)
 
 
 class ExtraTreesRegressor(ForestRegressor):
@@ -1204,14 +1207,15 @@ class ExtraTreesRegressor(ForestRegressor):
         self.max_features = max_features
 
         if min_density is not None:
-            warn("The min_density parameter is deprecated and will be removed "
-                 "in 0.15.", DeprecationWarning)
+            warn("The min_density parameter is deprecated as of version 0.14 "
+                 "and will be removed in 0.16.", DeprecationWarning)
 
         if compute_importances is not None:
-            warn("Setting compute_importances is no longer "
-                 "required. Variable importances are now computed on the fly "
-                 "when accessing the feature_importances_ attribute. This "
-                 "parameter will be removed in 0.15.", DeprecationWarning)
+            warn("Setting compute_importances is no longer required as "
+                  "version 0.14. Variable importances are now computed on the "
+                  "fly when accessing the feature_importances_ attribute. "
+                  "This parameter will be removed in 0.16.",
+                  DeprecationWarning)
 
 
 class RandomTreesEmbedding(BaseForest):
@@ -1299,8 +1303,8 @@ class RandomTreesEmbedding(BaseForest):
         self.max_features = 1
 
         if min_density is not None:
-            warn("The min_density parameter is deprecated and will be removed "
-                 "in 0.15.", DeprecationWarning)
+            warn("The min_density parameter is deprecated as of version 0.14 "
+                 "and will be removed in 0.16.", DeprecationWarning)
 
     def fit(self, X, y=None):
         """Fit estimator.

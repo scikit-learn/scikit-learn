@@ -117,12 +117,12 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         """
         # Deprecations
         if sample_mask is not None:
-            warn("The sample_mask parameter is deprecated and will be removed "
-                 "in 0.15.", DeprecationWarning)
+            warn("The sample_mask parameter is deprecated as of version 0.14 "
+                 "and will be removed in 0.16.", DeprecationWarning)
 
         if X_argsorted is not None:
-            warn("The X_argsorted parameter is deprecated and will be removed "
-                 "in 0.15.", DeprecationWarning)
+            warn("The X_argsorted parameter is deprecated as of version 0.14 "
+                 "and will be removed in 0.16.", DeprecationWarning)
 
         # Convert data
         if check_input:
@@ -437,14 +437,15 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
                                                      max_features,
                                                      random_state)
         if min_density is not None:
-            warn("The min_density parameter is deprecated and will be removed "
-                 "in 0.15.", DeprecationWarning)
+            warn("The min_density parameter is deprecated as of version 0.14 "
+                 "and will be removed in 0.16.", DeprecationWarning)
 
         if compute_importances is not None:
-            warn("Setting compute_importances is no longer "
-                 "required. Variable importances are now computed on the fly "
-                 "when accessing the feature_importances_ attribute. This "
-                 "parameter will be removed in 0.15.", DeprecationWarning)
+            warn("Setting compute_importances is no longer required as "
+                  "version 0.14. Variable importances are now computed on the "
+                  "fly when accessing the feature_importances_ attribute. "
+                  "This parameter will be removed in 0.16.",
+                  DeprecationWarning)
 
 
     def predict_proba(self, X):
@@ -627,14 +628,15 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
                                                     max_features,
                                                     random_state)
         if min_density is not None:
-            warn("The min_density parameter is deprecated and will be removed "
-                 "in 0.15.", DeprecationWarning)
+            warn("The min_density parameter is deprecated as of version 0.14 "
+                 "and will be removed in 0.16.", DeprecationWarning)
 
         if compute_importances is not None:
-            warn("Setting compute_importances is no longer "
-                 "required. Variable importances are now computed on the fly "
-                 "when accessing the feature_importances_ attribute. This "
-                 "parameter will be removed in 0.15.", DeprecationWarning)
+            warn("Setting compute_importances is no longer required as "
+                  "version 0.14. Variable importances are now computed on the "
+                  "fly when accessing the feature_importances_ attribute. "
+                  "This parameter will be removed in 0.16.",
+                  DeprecationWarning)
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
@@ -677,14 +679,15 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
                                                   max_features,
                                                   random_state)
         if min_density is not None:
-            warn("The min_density parameter is deprecated and will be removed "
-                 "in 0.15.", DeprecationWarning)
+            warn("The min_density parameter is deprecated as of version 0.14 "
+                 "and will be removed in 0.16.", DeprecationWarning)
 
         if compute_importances is not None:
-            warn("Setting compute_importances is no longer "
-                 "required. Variable importances are now computed on the fly "
-                 "when accessing the feature_importances_ attribute. This "
-                 "parameter will be removed in 0.15.", DeprecationWarning)
+            warn("Setting compute_importances is no longer required as "
+                  "version 0.14. Variable importances are now computed on the "
+                  "fly when accessing the feature_importances_ attribute. "
+                  "This parameter will be removed in 0.16.",
+                  DeprecationWarning)
 
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
@@ -727,12 +730,13 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
                                                  max_features,
                                                  random_state)
         if min_density is not None:
-            warn("The min_density parameter is deprecated and will be removed "
-                 "in 0.15.", DeprecationWarning)
+            warn("The min_density parameter is deprecated as of version 0.14 "
+                 "and will be removed in 0.16.", DeprecationWarning)
 
         if compute_importances is not None:
-            warn("Setting compute_importances is no longer "
-                 "required. Variable importances are now computed on the fly "
-                 "when accessing the feature_importances_ attribute. This "
-                 "parameter will be removed in 0.15.", DeprecationWarning)
+            warn("Setting compute_importances is no longer required as "
+                  "version 0.14. Variable importances are now computed on the "
+                  "fly when accessing the feature_importances_ attribute. "
+                  "This parameter will be removed in 0.16.",
+                  DeprecationWarning)
 
