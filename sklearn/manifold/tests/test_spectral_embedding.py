@@ -69,6 +69,9 @@ def test_spectral_embedding_two_components(seed=36):
     se_precomp = SpectralEmbedding(n_components=1, affinity="precomputed",
                                    random_state=np.random.RandomState(seed))
     embedded_coordinate = se_precomp.fit_transform(affinity)
+    # Some numpy versions are touchy with types
+    embedded_coordinate = \
+        se_precomp.fit_transform(affinity.astype(np.float32))
     # thresholding on the first components using 0.
     label_ = np.array(embedded_coordinate.ravel() < 0, dtype="float")
     assert_equal(normalized_mutual_info_score(true_label, label_), 1.0)

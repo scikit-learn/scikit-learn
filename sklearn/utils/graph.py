@@ -173,9 +173,9 @@ def _laplacian_dense(graph, normed=False, return_diag=False):
         w[w_zeros] = 1
         lap /= w
         lap /= w[:, np.newaxis]
-        lap.flat[::n_nodes + 1] = 1 - w_zeros
+        lap.flat[::n_nodes + 1] = (1 - w_zeros).astype(lap.dtype)
     else:
-        lap.flat[::n_nodes + 1] = w
+        lap.flat[::n_nodes + 1] = w.astype(lap.dtype)
 
     if return_diag:
         return lap, w
