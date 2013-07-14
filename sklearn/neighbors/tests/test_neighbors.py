@@ -7,7 +7,6 @@ from numpy.testing import assert_array_almost_equal, assert_array_equal
 from numpy.testing import assert_raises
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                           dok_matrix, lil_matrix)
-from scipy.spatial import cKDTree
 
 from sklearn import neighbors, datasets
 
@@ -45,8 +44,7 @@ def _weight_func(dist):
 
 
 def test_unsupervised_kneighbors(n_samples=20, n_features=5,
-                                 n_query_pts=2, n_neighbors=5,
-                                 random_state=0):
+                                 n_query_pts=2, n_neighbors=5):
     """Test unsupervised neighbors methods"""
     X = rng.rand(n_samples, n_features)
 
@@ -83,7 +81,7 @@ def test_unsupervised_inputs():
 
     nbrs = neighbors.NearestNeighbors(n_neighbors=1)
 
-    for input in (nbrs_fid, neighbors.BallTree(X), cKDTree(X)):
+    for input in (nbrs_fid, neighbors.BallTree(X), neighbors.KDTree(X)):
         nbrs.fit(input)
         dist2, ind2 = nbrs.kneighbors(X)
 
@@ -542,6 +540,8 @@ def test_neighbors_badargs():
                   algorithm='blah')
 
     X = rng.random_sample((10, 2))
+    Xsparse = csr_matrix(X)
+    y = np.ones(10)
 
     for cls in (neighbors.KNeighborsClassifier,
                 neighbors.RadiusNeighborsClassifier,
@@ -550,10 +550,25 @@ def test_neighbors_badargs():
         assert_raises(ValueError,
                       cls,
                       weights='blah')
-        nbrs = cls()
+        assert_raises(ValueError,
+                      cls, p=-1)
+        assert_raises(ValueError,
+                      cls, algorithm='blah')
+        nbrs = cls(algorithm='ball_tree', metric='haversine')
         assert_raises(ValueError,
                       nbrs.predict,
                       X)
+        assert_raises(ValueError,
+                      nbrs.fit,
+                      Xsparse, y)
+        nbrs = cls()
+        assert_raises(ValueError,
+                      nbrs.fit,
+                      np.ones((0, 2)), np.ones(0))
+        assert_raises(ValueError,
+                      nbrs.fit,
+                      X[:, :, None], y)
+        nbrs.fit(X, y)
         assert_raises(ValueError,
                       nbrs.predict,
                       [])
@@ -577,6 +592,51 @@ def test_neighbors_deprecation_arg():
             warnings.simplefilter("always")
             cls(warn_on_equidistant=True)
             assert_equal(len(w), 1)
+
+
+def test_neighbors_metrics(n_samples=20, n_features=3,
+                           n_query_pts=2, n_neighbors=5):
+    """Test computing the neighbors for various metrics"""
+    # create a symmetric matrix
+    V = rng.rand(n_features, n_features)
+    VI = np.dot(V, V.T)
+
+    metrics = [('euclidean',{}),
+               ('manhattan',{}),
+               ('minkowski',dict(p=1)),
+               ('minkowski',dict(p=2)),
+               ('minkowski',dict(p=3)),
+               ('minkowski',dict(p=np.inf)),
+               ('chebyshev',{}),
+               ('seuclidean',dict(V=rng.rand(n_features))),
+               ('wminkowski',dict(p=3, w=rng.rand(n_features))),
+               ('mahalanobis',dict(VI=VI))]
+    algorithms = ['brute', 'ball_tree', 'kd_tree']
+    X = rng.rand(n_samples, n_features)
+
+    test = rng.rand(n_query_pts, n_features)
+
+    for metric, kwds in metrics:
+        results = []
+
+        for algorithm in algorithms:
+            # KD tree doesn't support all metrics
+            if (algorithm == 'kd_tree' and
+                metric not in neighbors.KDTree.valid_metrics):
+                assert_raises(ValueError,
+                              neighbors.NearestNeighbors,
+                              algorithm=algorithm,
+                              metric=metric, **kwds)
+                continue
+
+            neigh = neighbors.NearestNeighbors(n_neighbors=n_neighbors,
+                                               algorithm=algorithm,
+                                               metric=metric, **kwds)
+            neigh.fit(X)
+            results.append(neigh.kneighbors(test, return_distance=True))    
+
+        assert_array_almost_equal(results[0][0], results[1][0])
+        assert_array_almost_equal(results[0][1], results[1][1])
 
 
 if __name__ == '__main__':
