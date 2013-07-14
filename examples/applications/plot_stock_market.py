@@ -80,6 +80,7 @@ from sklearn import cluster, covariance, manifold
 
 # Choose a time period reasonnably calm (not too long ago so that we get
 # high-tech firms, and before the 2008 crash)
+# Kraft is commented out (KFT) due to yahoo price issue
 d1 = datetime.datetime(2003, 01, 01)
 d2 = datetime.datetime(2008, 01, 01)
 
@@ -111,7 +112,7 @@ symbol_dict = {
     'MMM': '3M',
     'MCD': 'Mc Donalds',
     'PEP': 'Pepsi',
-    'KFT': 'Kraft Foods',
+    #'KFT': 'Kraft Foods',
     'K': 'Kellogg',
     'UN': 'Unilever',
     'MAR': 'Marriott',
