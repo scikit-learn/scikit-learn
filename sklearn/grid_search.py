@@ -190,11 +190,14 @@ class ParameterSampler(object):
     >>> import numpy as np
     >>> np.random.seed(0)
     >>> param_grid = {'a':[1, 2], 'b': expon()}
-    >>> list(ParameterSampler(param_grid, n_iter=4))
-    ...  #doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    [{'a': 1, 'b': 0.89...}, {'a': 1, 'b': 0.92...},
-     {'a': 2, 'b': 1.87...}, {'a': 2, 'b': 1.03...}]
-
+    >>> param_list = list(ParameterSampler(param_grid, n_iter=4))
+    >>> rounded_list = [{k: round(v, 6) for (k, v) in d.items()}
+    ...                 for d in param_list]
+    >>> rounded_list == [{'b': 0.89856, 'a': 1},
+    ...                  {'b': 0.923223, 'a': 1},
+    ...                  {'b': 1.878964, 'a': 2},
+    ...                  {'b': 1.038159, 'a': 2}]
+    True
     """
     def __init__(self, param_distributions, n_iter, random_state=None):
         self.param_distributions = param_distributions
