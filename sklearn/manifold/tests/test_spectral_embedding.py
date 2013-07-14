@@ -78,10 +78,12 @@ def test_spectral_embedding_two_components(seed=36):
 
     # test that we can still import spectral embedding
     from sklearn.cluster import spectral_embedding as se_deprecated
+    warnings.simplefilter("always", DeprecationWarning)
     with warnings.catch_warnings(record=True) as warning_list:
         embedded_depr = se_deprecated(affinity, n_components=1,
                                       random_state=np.random.RandomState(seed))
     assert_equal(len(warning_list), 1)
+    warnings.filters.pop(0)
     assert_true(_check_with_col_sign_flipping(embedded_coordinate,
                                               embedded_depr, 0.05))
 
