@@ -7,6 +7,7 @@ Extended math utilities.
 import warnings
 import numpy as np
 from scipy import linalg
+from scipy.sparse import issparse
 
 from . import check_random_state
 from .fixes import qr_economic
@@ -511,3 +512,31 @@ def logistic_sigmoid(X, log=False, out=None):
     if is_1d:
         return np.squeeze(out)
     return out
+
+
+def safe_min(X):
+    """Returns the minimum value of a dense or a CSR/CSC matrix.
+
+    Adapated from http://stackoverflow.com/q/13426580
+
+    """
+    if issparse(X):
+        if len(X.data) == 0:
+            return 0
+        m = X.data.min()
+        return m if X.getnnz() == X.size else min(m, 0)
+    else:
+        return X.min()
+
+
+def make_nonnegative(X, min_value=0):
+    """Ensure `X.min()` >= `min_value`."""
+    min_ = safe_min(X)
+    if min_ < min_value:
+        if issparse(X):
+            raise ValueError("Cannot make the data matrix"
+                             " nonnegative because it is sparse."
+                             " Adding a value to every entry would"
+                             " make it no longer sparse.")
+        X = X + (min_value - min_)
+    return X
