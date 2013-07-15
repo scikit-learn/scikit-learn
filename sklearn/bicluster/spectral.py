@@ -410,7 +410,7 @@ class SpectralBiclustering(BaseSpectral):
             return centroid[labels].ravel()
         piecewise_vectors = np.apply_along_axis(make_piecewise,
                                                 axis=1, arr=vectors)
-        dists = np.apply_along_axis(np.linalg.norm, 1,
+        dists = np.apply_along_axis(norm, 1,
                                     vectors - piecewise_vectors)
         result = vectors[np.argsort(dists)[:n_best]]
         return result
