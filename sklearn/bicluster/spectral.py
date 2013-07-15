@@ -18,6 +18,7 @@ from sklearn.cluster import MiniBatchKMeans
 from sklearn.utils.extmath import randomized_svd
 from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.extmath import make_nonnegative
+from sklearn.utils.extmath import norm
 
 from sklearn.utils.validation import assert_all_finite
 from sklearn.utils.validation import check_arrays
@@ -59,9 +60,9 @@ def _bistochastic_normalize(X, maxiter=1000, tol=1e-5):
     for _ in range(maxiter):
         X_new, _, _ = _scale_normalize(X_scaled)
         if issparse(X):
-            dist = np.linalg.norm(X_scaled.data - X.data)
+            dist = norm(X_scaled.data - X.data)
         else:
-            dist = np.linalg.norm(X_scaled - X_new)
+            dist = norm(X_scaled - X_new)
         X_scaled = X_new
         if dist is not None and dist < tol:
             break
