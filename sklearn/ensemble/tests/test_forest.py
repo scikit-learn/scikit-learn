@@ -397,12 +397,12 @@ def test_random_hasher():
     # make sure that it is linearly separable.
     # even after projected to two pca dimensions
     # Note: Not all random_states produce perfect results.
-    hasher = RandomTreesEmbedding(n_estimators=30, random_state=0)
+    hasher = RandomTreesEmbedding(n_estimators=30, random_state=1)
     X, y = datasets.make_circles(factor=0.5)
     X_transformed = hasher.fit_transform(X)
 
     # test fit and transform:
-    hasher = RandomTreesEmbedding(n_estimators=30, random_state=0)
+    hasher = RandomTreesEmbedding(n_estimators=30, random_state=1)
     assert_array_equal(hasher.fit(X).transform(X).toarray(),
                        X_transformed.toarray())
 

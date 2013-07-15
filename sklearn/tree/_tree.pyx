@@ -11,16 +11,13 @@
 # Licence: BSD 3 clause
 
 
-from libc.stdlib cimport calloc, free, malloc, realloc, rand, RAND_MAX
+from libc.stdlib cimport calloc, free, malloc, realloc, rand, srand, RAND_MAX
 from libc.string cimport memcpy
 from libc.math cimport log2 as log
 
 import numpy as np
 cimport numpy as np
 np.import_array()
-
-cdef extern from "stdlib.h":
-    int rand_r(unsigned int *seedp) nogil
 
 
 # =============================================================================
@@ -821,8 +818,8 @@ cdef class Splitter:
         if self.features != NULL:
             free(self.features)
 
-        # Reset random state
-        self.libc_random_state = self.random_state.randint(0, RAND_MAX)
+        # Reset random number generator
+        srand(self.random_state.randint(0, RAND_MAX))
 
         # Initialize samples and features structures
         cdef SIZE_t n_samples = X.shape[0]
@@ -903,7 +900,6 @@ cdef class BestSplitter(Splitter):
         cdef np.ndarray[DTYPE_t, ndim=2] X = self.X
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
-        cdef unsigned int* random_state = &self.libc_random_state
 
         cdef double best_impurity = INFINITY
         cdef SIZE_t best_pos = end
@@ -924,7 +920,7 @@ cdef class BestSplitter(Splitter):
         for f_idx from 0 <= f_idx < n_features:
             # Draw a feature at random
             f_i = n_features - f_idx - 1
-            f_j = rand_int(n_features - f_idx, random_state)
+            f_j = rand_int(n_features - f_idx)
 
             tmp = features[f_i]
             features[f_i] = features[f_j]
@@ -1065,7 +1061,6 @@ cdef class RandomSplitter(Splitter):
         cdef np.ndarray[DTYPE_t, ndim=2] X = self.X
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
-        cdef unsigned int* random_state = &self.libc_random_state
 
         cdef double best_impurity = INFINITY
         cdef SIZE_t best_pos = end
@@ -1089,7 +1084,7 @@ cdef class RandomSplitter(Splitter):
         for f_idx from 0 <= f_idx < n_features:
             # Draw a feature at random
             f_i = n_features - f_idx - 1
-            f_j = rand_int(n_features - f_idx, random_state)
+            f_j = rand_int(n_features - f_idx)
 
             tmp = features[f_i]
             features[f_i] = features[f_j]
@@ -1113,7 +1108,7 @@ cdef class RandomSplitter(Splitter):
 
             # Draw a random threshold
             current_threshold = (min_feature_value +
-                                 rand_double(random_state) * (max_feature_value - min_feature_value))
+                                 rand_double() * (max_feature_value - min_feature_value))
 
             if current_threshold == max_feature_value:
                 current_threshold = min_feature_value
@@ -1663,11 +1658,11 @@ cdef inline np.ndarray double_ptr_to_ndarray(double* data, SIZE_t size):
     shape[0] = <np.npy_intp> size
     return np.PyArray_SimpleNewFromData(1, shape, np.NPY_DOUBLE, data)
 
-cdef inline SIZE_t rand_int(SIZE_t end, unsigned int* random_state):
+cdef inline SIZE_t rand_int(SIZE_t end):
     """Generate a random integer in [0; end)."""
-    return rand_r(random_state) % end
+    return rand() % end
 
-cdef inline double rand_double(unsigned int* random_state):
+cdef inline double rand_double():
     """Generate a random double in [0; 1)."""
-    return <double> rand_r(random_state) / <double> RAND_MAX
+    return <double> rand() / <double> RAND_MAX
 
