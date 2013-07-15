@@ -4,10 +4,12 @@ Authors : Kemal Eren
 License: BSD 3 clause
 
 """
-from abc import ABCMeta, abstractmethod
+from abc import ABCMeta
 
 import numpy as np
-from scipy.sparse import dia_matrix, issparse
+
+from scipy.sparse import dia_matrix
+from scipy.sparse import issparse
 
 from sklearn.base import BaseEstimator
 from sklearn.externals import six
@@ -86,7 +88,6 @@ def _log_normalize(X):
 class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for spectral biclustering."""
 
-    @abstractmethod
     def __init__(self, n_clusters, svd_method, svd_kwargs, mini_batch,
                  kmeans_kwargs, random_state):
         self.n_clusters = n_clusters
