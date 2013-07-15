@@ -115,7 +115,8 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator)):
         X, = check_arrays(X, sparse_format='csr', dtype=np.float64)
         if X.ndim != 2:
             raise ValueError("Argument `X` has the wrong dimensionality."
-                             " It must have exactly two dimensions.")
+                             " It must have exactly two dimensions, but"
+                             " {} != 2".format(X.ndim))
         self._check_parameters()
         self._fit(X)
 
@@ -346,13 +347,14 @@ class SpectralBiclustering(BaseSpectral):
                 int(r)
                 int(c)
             except (ValueError, TypeError):
-                raise ValueError("The parameter `n_clusters` is incorrect."
-                                 " It should either be a single integer"
+                raise ValueError("Incorrect parameter `n_clusters` has value:"
+                                 " {}. It should either be a single integer"
                                  " or an iterable with two integers:"
                                  " `(n_row_clusters, n_column_clusters)`")
         if self.n_best > self.n_components:
             raise ValueError("`n_best` cannot be larger than"
-                             " `n_components`.")
+                             " `n_components`, but {} >  {}"
+                             "".format(self.n_best, self.n_components))
 
     def _fit(self, X):
         n_sv = self.n_components
