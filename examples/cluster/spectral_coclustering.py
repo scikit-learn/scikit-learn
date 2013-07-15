@@ -16,7 +16,7 @@ import numpy as np
 import pylab as pl
 
 from sklearn.datasets import make_biclusters
-from sklearn.bicluster import SpectralCoclustering
+from sklearn.cluster.bicluster import SpectralCoclustering
 
 data, row_labels, column_labels = make_biclusters(
     shape=(300, 300), n_clusters=5, noise=10,

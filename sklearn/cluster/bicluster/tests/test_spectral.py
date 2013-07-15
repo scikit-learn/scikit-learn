@@ -1,87 +1,96 @@
 """Testing for Spectral Biclustering methods"""
 
+from itertools import permutations
+
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
-
-from sklearn.grid_search import ParameterGrid
 
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import SkipTest
 
-from sklearn.cluster.bicluster import SpectralCoclustering
-from sklearn.cluster.bicluster import SpectralBiclustering
+from sklearn.cluster import SpectralCoclustering
+from sklearn.cluster import SpectralBiclustering
 from sklearn.cluster.bicluster.spectral import _scale_normalize
 from sklearn.cluster.bicluster.spectral import _bistochastic_normalize
 from sklearn.cluster.bicluster.spectral import _log_normalize
 
-from sklearn.metrics.cluster.bicluster import consensus_score
-
 from sklearn.datasets import make_biclusters, make_checkerboard
+
+
+def _check_label_permutations(a, b, n_labels):
+    # TODO: replace with hungarian algorithm, when it is implemented
+    assert(np.any(np.array(p)[a] == b
+                  for p in permutations(range(n_labels))))
 
 
 def test_spectral_coclustering():
     """Test Dhillon's Spectral CoClustering on a simple problem."""
-    param_grid = {'svd_method': ['randomized', 'arpack'],
-                  'n_svd_vecs': [None, 20],
-                  'mini_batch': [False, True],
-                  'init': ['k-means++'],
-                  'n_init': [10],
-                  'n_jobs': [1]}
     random_state = 0
-    S, rows, cols = make_biclusters((30, 30), 3, noise=0.5,
-                                    random_state=random_state)
-    S -= S.min()  # needs to be nonnegative before making it sparse
-    S = np.where(S < 1, 0, S)  # threshold some values
-    for mat in (S, csr_matrix(S)):
-        for kwargs in ParameterGrid(param_grid):
-            model = SpectralCoclustering(n_clusters=3,
-                                         random_state=random_state,
-                                         **kwargs)
-            model.fit(mat)
+    for noise in (0, 0.5):
+        S, rows, cols = make_biclusters((30, 30), 3, noise=noise,
+                                        random_state=random_state)
+        S -= S.min()  # needs to be nonnegative before making it sparse
+        S = np.where(S < 1, 0, S)  # threshold some values
+        for mat in (S, csr_matrix(S)):
+            for svd_method in ('randomized', 'arpack'):
+                for mini_batch in (False, True):
+                    model = SpectralCoclustering(n_clusters=3,
+                                                 svd_method=svd_method,
+                                                 mini_batch=mini_batch,
+                                                 random_state=random_state)
+                    model.fit(mat)
 
-            assert_equal(model.rows_.shape, (3, 30))
-            assert_array_equal(model.rows_.sum(axis=0), np.ones(30))
-            assert_array_equal(model.columns_.sum(axis=0), np.ones(30))
-            assert_equal(consensus_score(model.biclusters_,
-                                         (rows, cols)), 1)
+                    assert_equal(model.rows_.shape, (3, 30))
+                    assert_array_equal(model.rows_.sum(axis=0), np.ones(30))
+                    assert_array_equal(model.columns_.sum(axis=0), np.ones(30))
+                    _check_label_permutations(model.rows_, rows, 3)
+                    _check_label_permutations(model.columns_, cols, 3)
 
 
 def test_spectral_biclustering():
     """Test Kluger methods on a checkerboard dataset."""
-    param_grid = {'method': ['scale', 'bistochastic', 'log'],
-                  'svd_method': ['randomized', 'arpack'],
-                  'n_svd_vecs': [None, 20],
-                  'mini_batch': [False, True],
-                  'init': ['k-means++'],
-                  'n_init': [10],
-                  'n_jobs': [1]}
+    raise SkipTest('Permutations are slow. Skipping until'
+                   ' faster matching algorithm is available.')
     random_state = 0
-    S, rows, cols = make_checkerboard((30, 30), 3, noise=0.5,
-                                      random_state=random_state)
-    for mat in (S, csr_matrix(S)):
-        for kwargs in ParameterGrid(param_grid):
-            model = SpectralBiclustering(n_clusters=3,
-                                         random_state=random_state,
-                                         **kwargs)
+    for noise in (0.5, 0):
+        S, rows, cols = make_checkerboard((30, 30), 3, noise=noise,
+                                          random_state=random_state)
+        for n_clusters in ((3, 3), 3):
+            for mat in (S, csr_matrix(S)):
+                for method in ('scale', 'bistochastic', 'log'):
+                    for svd_method in ('randomized', 'arpack'):
+                        if svd_method == 'arpack':
+                            # fails with default value
+                            svd_kwargs = {'ncv': 20}
+                        else:
+                            svd_kwargs = {}
+                        for mini_batch in (False, True):
+                            model = SpectralBiclustering(n_clusters=n_clusters,
+                                                         method=method,
+                                                         svd_method=svd_method,
+                                                         svd_kwargs=svd_kwargs,
+                                                         mini_batch=mini_batch,
+                                                         random_state=random_state)
 
-            if issparse(mat) and kwargs['method'] == 'log':
-                # cannot take log of sparse matrix
-                assert_raises(ValueError, model.fit, mat)
-                continue
-            else:
-                model.fit(mat)
+                            if issparse(mat) and method == 'log':
+                                # cannot take log of sparse matrix
+                                assert_raises(ValueError, model.fit, mat)
+                                continue
+                            else:
+                                model.fit(mat)
 
-            assert_equal(model.rows_.shape, (9, 30))
-            assert_equal(model.columns_.shape, (9, 30))
-            assert_array_equal(model.rows_.sum(axis=0),
-                               np.repeat(3, 30))
-            assert_array_equal(model.columns_.sum(axis=0),
-                               np.repeat(3, 30))
-            assert_equal(consensus_score(model.biclusters_,
-                                         (rows, cols)), 1)
+                            assert_equal(model.rows_.shape, (9, 30))
+                            assert_equal(model.columns_.shape, (9, 30))
+                            assert_array_equal(model.rows_.sum(axis=0),
+                                               np.repeat(3, 30))
+                            assert_array_equal(model.columns_.sum(axis=0),
+                                               np.repeat(3, 30))
+                            _check_label_permutations(model.rows_, rows, 3)
+                            _check_label_permutations(model.columns_, cols, 3)
 
 
 def _do_scale_test(scaled):
@@ -158,28 +167,6 @@ def test_project_and_cluster():
         assert_array_equal(labels, [0, 0, 1, 1])
 
 
-def test_perfect_checkerboard():
-    model = SpectralBiclustering(3, svd_method="arpack", random_state=0)
-
-    S, rows, cols = make_checkerboard((30, 30), 3, noise=0,
-                                      random_state=0)
-    model.fit(S)
-    assert_equal(consensus_score(model.biclusters_,
-                                 (rows, cols)), 1)
-
-    S, rows, cols = make_checkerboard((40, 30), 3, noise=0,
-                                      random_state=0)
-    model.fit(S)
-    assert_equal(consensus_score(model.biclusters_,
-                                 (rows, cols)), 1)
-
-    S, rows, cols = make_checkerboard((30, 40), 3, noise=0,
-                                      random_state=0)
-    model.fit(S)
-    assert_equal(consensus_score(model.biclusters_,
-                                 (rows, cols)), 1)
-
-
 def test_errors():
     data = np.arange(25).reshape((5, 5))
 
@@ -196,12 +183,6 @@ def test_errors():
     assert_raises(ValueError, model.fit, data)
 
     model = SpectralBiclustering(svd_method='unknown')
-    assert_raises(ValueError, model.fit, data)
-
-    model = SpectralBiclustering(n_components=0)
-    assert_raises(ValueError, model.fit, data)
-
-    model = SpectralBiclustering(n_best=0)
     assert_raises(ValueError, model.fit, data)
 
     model = SpectralBiclustering(n_components=3, n_best=4)
