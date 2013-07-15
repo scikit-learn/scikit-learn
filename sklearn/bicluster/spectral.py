@@ -189,7 +189,7 @@ class SpectralCoclustering(BaseSpectral):
         Keyword arguments to pass to the svd function.
 
     kmeans_kwargs : dictionary, optional, default: None
-        Keyword arguments to pass to sklearn.cluster.k_means_.
+        Keyword arguments to pass to sklearn.cluster.k_means.
 
     random_state : int seed, RandomState instance, or None (default)
         A pseudo random number generator used by the K-Means
@@ -289,7 +289,7 @@ class SpectralBiclustering(BaseSpectral):
         Keyword arguments to pass to the svd function.
 
     kmeans_kwargs : dictionary, optional, default: None
-        Keyword arguments to pass to sklearn.cluster.k_means_.
+        Keyword arguments to pass to sklearn.cluster.k_means.
 
     random_state : int seed, RandomState instance, or None (default)
         A pseudo random number generator used by the K-Means
