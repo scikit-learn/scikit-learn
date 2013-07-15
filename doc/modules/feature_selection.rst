@@ -198,9 +198,9 @@ features::
   >>> X, y = iris.data, iris.target
   >>> X.shape
   (150, 4)
-  >>> clf = ExtraTreesClassifier(random_state=0)
+  >>> clf = ExtraTreesClassifier()
   >>> X_new = clf.fit(X, y).transform(X)
-  >>> clf.feature_importances_  # doctest: +ELLIPSIS
+  >>> clf.feature_importances_  # doctest: +SKIP
   array([ 0.04...,  0.05...,  0.4...,  0.4...])
   >>> X_new.shape
   (150, 2)
