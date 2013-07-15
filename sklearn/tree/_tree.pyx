@@ -122,9 +122,9 @@ cdef class ClassificationCriterion(Criterion):
         self.label_count_total = <double*> calloc(n_outputs * label_count_stride, sizeof(double))
 
         # Check for allocation errors
-        if self.label_count_left == NULL or \
-           self.label_count_right == NULL or \
-           self.label_count_total == NULL:
+        if ((self.label_count_left == NULL) or
+            (self.label_count_right == NULL) or
+            (self.label_count_total == NULL)):
             free(self.n_classes)
             free(self.label_count_left)
             free(self.label_count_right)
@@ -519,14 +519,14 @@ cdef class RegressionCriterion(Criterion):
         self.var_right = <double*> calloc(n_outputs, sizeof(double))
 
         # Check for allocation errors
-        if self.mean_left == NULL or \
-           self.mean_right == NULL or \
-           self.mean_total == NULL or \
-           self.sq_sum_left == NULL or \
-           self.sq_sum_right == NULL or \
-           self.sq_sum_total == NULL or \
-           self.var_left == NULL or \
-           self.var_right == NULL:
+        if ((self.mean_left == NULL) or
+            (self.mean_right == NULL) or
+            (self.mean_total == NULL) or
+            (self.sq_sum_left == NULL) or
+            (self.sq_sum_right == NULL) or
+            (self.sq_sum_total == NULL) or
+            (self.var_left == NULL) or
+            (self.var_right == NULL)):
             free(self.mean_left)
             free(self.mean_right)
             free(self.mean_total)
@@ -925,8 +925,8 @@ cdef class BestSplitter(Splitter):
                     current_pos = p
 
                     # Reject if min_samples_leaf is not guaranteed
-                    if ((current_pos - start) < min_samples_leaf) or \
-                       ((end - current_pos) < min_samples_leaf):
+                    if (((current_pos - start) < min_samples_leaf) or
+                        ((end - current_pos) < min_samples_leaf)):
                        continue
 
                     criterion.update(current_pos)
@@ -1106,8 +1106,8 @@ cdef class RandomSplitter(Splitter):
             current_pos = partition_end
 
             # Reject if min_samples_leaf is not guaranteed
-            if ((current_pos - start) < min_samples_leaf) or \
-               ((end - current_pos) < min_samples_leaf):
+            if (((current_pos - start) < min_samples_leaf) or
+                ((end - current_pos) < min_samples_leaf)):
                continue
 
             # Evaluate split
@@ -1328,13 +1328,13 @@ cdef class Tree:
         cdef SIZE_t* tmp_n_node_samples = <SIZE_t*> realloc(self.n_node_samples, capacity * sizeof(SIZE_t))
         if tmp_n_node_samples != NULL: self.n_node_samples = tmp_n_node_samples
 
-        if tmp_children_left == NULL or \
-           tmp_children_right == NULL or \
-           tmp_feature == NULL or \
-           tmp_threshold == NULL or \
-           tmp_value == NULL or \
-           tmp_impurity == NULL or \
-           tmp_n_node_samples == NULL:
+        if ((tmp_children_left == NULL) or
+            (tmp_children_right == NULL) or
+            (tmp_feature == NULL) or
+            (tmp_threshold == NULL) or
+            (tmp_value == NULL) or
+            (tmp_impurity == NULL) or
+            (tmp_n_node_samples == NULL)):
             raise MemoryError()
 
         # if capacity smaller than node_count, adjust the counter
@@ -1407,9 +1407,9 @@ cdef class Tree:
             is_left = stack[stack_n_values + 4]
 
             n_node_samples = end - start
-            is_leaf = (depth >= self.max_depth) or \
-                      (n_node_samples < self.min_samples_split) or \
-                      (n_node_samples < 2 * self.min_samples_leaf)
+            is_leaf = ((depth >= self.max_depth) or
+                       (n_node_samples < self.min_samples_split) or
+                       (n_node_samples < 2 * self.min_samples_leaf))
 
             splitter.node_reset(start, end, &impurity)
             is_leaf = is_leaf or (impurity == 0.0)
@@ -1543,7 +1543,7 @@ cdef class Tree:
         cdef SIZE_t i = 0
 
         cdef np.ndarray[np.int32_t, ndim=1] out
-        out = np.zeros((n_samples, ), dtype=np.int32)
+        out = np.zeros((n_samples,), dtype=np.int32)
 
         for i from 0 <= i < n_samples:
             node_id = 0
