@@ -12,7 +12,8 @@ from scipy.sparse import lil_matrix, issparse
 from sklearn.base import BaseEstimator
 from sklearn.externals import six
 from sklearn.utils.arpack import svds
-from sklearn.cluster.k_means_ import k_means
+from sklearn.cluster import KMeans
+from sklearn.cluster import MiniBatchKMeans
 
 from sklearn.utils.extmath import randomized_svd
 from sklearn.utils.extmath import safe_sparse_dot
@@ -87,11 +88,12 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for spectral biclustering."""
 
     @abstractmethod
-    def __init__(self, n_clusters, svd_method, svd_kwargs,
+    def __init__(self, n_clusters, svd_method, svd_kwargs, mini_batch,
                  kmeans_kwargs, random_state):
         self.n_clusters = n_clusters
         self.svd_method = svd_method
         self.svd_kwargs = svd_kwargs
+        self.mini_batch = mini_batch
         self.kmeans_kwargs = kmeans_kwargs
         self.random_state = random_state
 
@@ -135,6 +137,20 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator)):
         assert_all_finite(vt)
         return u, vt.T
 
+    def _k_means(self, data, n_clusters):
+        kwargs = self.kmeans_kwargs if self.kmeans_kwargs else {}
+        if self.mini_batch:
+            model = MiniBatchKMeans(n_clusters,
+                                    random_state=self.random_state,
+                                    **kwargs)
+        else:
+            model = KMeans(n_clusters, random_state=self.random_state,
+                           **kwargs)
+        model.fit(data)
+        centroid = model.cluster_centers_
+        labels = model.labels_
+        return centroid, labels
+
 
 class SpectralCoclustering(BaseSpectral):
     """Spectral Co-Clustering algorithm (Dhillon, 2001).
@@ -165,8 +181,12 @@ class SpectralCoclustering(BaseSpectral):
     svd_kwargs : dictionary, optional, default: None
         Keyword arguments to pass to the svd function.
 
+    mini_batch : bool, optional, default: False
+        Whether to use mini-batch k-means, which is faster but may get
+        different results.
+
     kmeans_kwargs : dictionary, optional, default: None
-        Keyword arguments to pass to sklearn.cluster.k_means.
+        Keyword arguments to pass to KMeans or MiniBatchKMeans.
 
     random_state : int seed, RandomState instance, or None (default)
         A pseudo random number generator used by the K-Means
@@ -194,13 +214,14 @@ class SpectralCoclustering(BaseSpectral):
       bipartite spectral graph partitioning
       <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.140.3011>`__.
 
-
     """
     def __init__(self, n_clusters=3, svd_method='randomized',
-                 svd_kwargs=None, kmeans_kwargs=None, random_state=None):
+                 svd_kwargs=None, mini_batch=False,
+                 kmeans_kwargs=None, random_state=None):
         super(SpectralCoclustering, self).__init__(n_clusters,
                                                    svd_method,
                                                    svd_kwargs,
+                                                   mini_batch,
                                                    kmeans_kwargs,
                                                    random_state)
 
@@ -211,10 +232,7 @@ class SpectralCoclustering(BaseSpectral):
         z = np.vstack((row_diag[:, np.newaxis] * u[:, 1:],
                        col_diag[:, np.newaxis] * v[:, 1:]))
 
-        kwargs = self.kmeans_kwargs if self.kmeans_kwargs else {}
-        _, labels, _ = k_means(z, self.n_clusters,
-                               random_state=self.random_state,
-                               **kwargs)
+        _, labels = self._k_means(z, self.n_clusters)
 
         n_rows = X.shape[0]
         self.row_labels_ = labels[:n_rows]
@@ -265,8 +283,12 @@ class SpectralBiclustering(BaseSpectral):
     svd_kwargs : dictionary, optional, default: None
         Keyword arguments to pass to the svd function.
 
+    mini_batch : bool, optional, default: False
+        Whether to use mini-batch k-means, which is faster but may get
+        different results.
+
     kmeans_kwargs : dictionary, optional, default: None
-        Keyword arguments to pass to sklearn.cluster.k_means.
+        Keyword arguments to pass to KMeans or MiniBatchKMeans.
 
     random_state : int seed, RandomState instance, or None (default)
         A pseudo random number generator used by the K-Means
@@ -297,12 +319,13 @@ class SpectralBiclustering(BaseSpectral):
 
     """
     def __init__(self, n_clusters=3, method='bistochastic',
-                 n_components=6, n_best=3,
-                 svd_method='randomized', svd_kwargs=None, kmeans_kwargs=None,
-                 random_state=None):
+                 n_components=6, n_best=3, svd_method='randomized',
+                 svd_kwargs=None, mini_batch=False,
+                 kmeans_kwargs=None, random_state=None):
         super(SpectralBiclustering, self).__init__(n_clusters,
                                                    svd_method,
                                                    svd_kwargs,
+                                                   mini_batch,
                                                    kmeans_kwargs,
                                                    random_state)
         self.method = method
@@ -380,12 +403,8 @@ class SpectralBiclustering(BaseSpectral):
         according to Euclidean distance.
 
         """
-        kwargs = self.kmeans_kwargs if self.kmeans_kwargs else {}
-
         def make_piecewise(v):
-            centroid, labels, _ = k_means(v.reshape(-1, 1), n_clusters,
-                                          random_state=self.random_state,
-                                          **kwargs)
+            centroid, labels = self._k_means(v.reshape(-1, 1), n_clusters)
             return centroid[labels].ravel()
         piecewise_vectors = np.apply_along_axis(make_piecewise,
                                                 axis=1, arr=vectors)
@@ -397,8 +416,5 @@ class SpectralBiclustering(BaseSpectral):
     def _project_and_cluster(self, data, vectors, n_clusters):
         """Project `data` to `vectors` and cluster the result."""
         projected = safe_sparse_dot(data, vectors)
-        kwargs = self.kmeans_kwargs if self.kmeans_kwargs else {}
-        _, labels, _ = k_means(projected, n_clusters,
-                               random_state=self.random_state,
-                               **kwargs)
+        _, labels = self._k_means(projected, n_clusters)
         return labels
