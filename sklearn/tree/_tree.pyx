@@ -1275,7 +1275,7 @@ cdef class Tree:
 
     def __setstate__(self, d):
         """Setstate re-implementation, for unpickling."""
-        self.resize(d["capacity"])
+        self._resize(d["capacity"])
         self.node_count = d["node_count"]
 
         cdef SIZE_t* children_left = <SIZE_t*> (<np.ndarray> d["children_left"]).data
@@ -1294,8 +1294,9 @@ cdef class Tree:
         memcpy(self.impurity, impurity, self.capacity * sizeof(double))
         memcpy(self.n_node_samples, n_node_samples, self.capacity * sizeof(SIZE_t))
 
-    cdef void resize(self, int capacity=-1):
-        """Resize all inner arrays to `capacity`, if < 0 double capacity."""
+    cdef void _resize(self, int capacity=-1):
+        """Resize all inner arrays to `capacity`, if `capacity` < 0, then
+           double the size of the inner arrays."""
         if capacity == self.capacity:
             return
 
@@ -1341,6 +1342,44 @@ cdef class Tree:
         if capacity < self.node_count:
             self.node_count = capacity
 
+    cdef SIZE_t _add_node(self, SIZE_t parent,
+                                bint is_left,
+                                bint is_leaf,
+                                SIZE_t feature,
+                                double threshold,
+                                double impurity,
+                                SIZE_t n_node_samples):
+        """Add a node to the tree. The new node registers itself as
+           the child of its parent. """
+        cdef SIZE_t node_id = self.node_count
+
+        if node_id >= self.capacity:
+            self._resize()
+
+        self.impurity[node_id] = impurity
+        self.n_node_samples[node_id] = n_node_samples
+
+        if parent != _TREE_UNDEFINED:
+            if is_left:
+                self.children_left[parent] = node_id
+            else:
+                self.children_right[parent] = node_id
+
+        if not is_leaf:
+            # children_left and children_right will be set later
+            self.feature[node_id] = feature
+            self.threshold[node_id] = threshold
+
+        else:
+            self.children_left[node_id] = _TREE_LEAF
+            self.children_right[node_id] = _TREE_LEAF
+            self.feature[node_id] = _TREE_UNDEFINED
+            self.threshold[node_id] = _TREE_UNDEFINED
+
+        self.node_count += 1
+
+        return node_id
+
     cpdef build(self, np.ndarray X,
                       np.ndarray y,
                       np.ndarray sample_weight=None):
@@ -1366,7 +1405,7 @@ cdef class Tree:
         else:
             init_capacity = 2047
 
-        self.resize(init_capacity)
+        self._resize(init_capacity)
 
         # Recursive partition (without actual recursion)
         cdef Splitter splitter = self.splitter
@@ -1418,8 +1457,8 @@ cdef class Tree:
                 splitter.node_split(&pos, &feature, &threshold)
                 is_leaf = is_leaf or (pos >= end)
 
-            node_id = self.add_node(parent, is_left, is_leaf, feature,
-                                    threshold, impurity, n_node_samples)
+            node_id = self._add_node(parent, is_left, is_leaf, feature,
+                                     threshold, impurity, n_node_samples)
 
             if is_leaf:
                 # Don't store value for internal nodes
@@ -1446,46 +1485,8 @@ cdef class Tree:
                 stack[stack_n_values + 4] = 1
                 stack_n_values += 5
 
-        self.resize(self.node_count)
+        self._resize(self.node_count)
         free(stack)
-
-    cdef SIZE_t add_node(self, SIZE_t parent,
-                               bint is_left,
-                               bint is_leaf,
-                               SIZE_t feature,
-                               double threshold,
-                               double impurity,
-                               SIZE_t n_node_samples):
-        """Add a node to the tree. The new node registers itself as
-           the child of its parent. """
-        cdef SIZE_t node_id = self.node_count
-
-        if node_id >= self.capacity:
-            self.resize()
-
-        self.impurity[node_id] = impurity
-        self.n_node_samples[node_id] = n_node_samples
-
-        if parent != _TREE_UNDEFINED:
-            if is_left:
-                self.children_left[parent] = node_id
-            else:
-                self.children_right[parent] = node_id
-
-        if not is_leaf:
-            # children_left and children_right will be set later
-            self.feature[node_id] = feature
-            self.threshold[node_id] = threshold
-
-        else:
-            self.children_left[node_id] = _TREE_LEAF
-            self.children_right[node_id] = _TREE_LEAF
-            self.feature[node_id] = _TREE_UNDEFINED
-            self.threshold[node_id] = _TREE_UNDEFINED
-
-        self.node_count += 1
-
-        return node_id
 
     cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X):
         """Predict target for X."""

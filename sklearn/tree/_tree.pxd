@@ -124,19 +124,19 @@ cdef class Tree:
     cdef SIZE_t* n_node_samples          # n_node_samples[i] is the number of samples at node i
 
     # Methods
+    cdef SIZE_t _add_node(self, SIZE_t parent,
+                                bint is_left,
+                                bint is_leaf,
+                                SIZE_t feature,
+                                double threshold,
+                                double impurity,
+                                SIZE_t n_node_samples)
+    cdef void _resize(self, SIZE_t capacity=*)
+
     cpdef build(self, np.ndarray X,
                       np.ndarray y,
                       np.ndarray sample_weight=*)
 
-    cdef SIZE_t add_node(self, SIZE_t parent,
-                               bint is_left,
-                               bint is_leaf,
-                               SIZE_t feature,
-                               double threshold,
-                               double impurity,
-                               SIZE_t n_node_samples)
-
-    cdef void resize(self, SIZE_t capacity=*)
     cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X)
     cpdef apply(self, np.ndarray[DTYPE_t, ndim=2] X)
     cpdef compute_feature_importances(self, normalize=*)
