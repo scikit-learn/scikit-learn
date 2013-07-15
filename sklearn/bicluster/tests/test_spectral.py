@@ -14,9 +14,9 @@ from sklearn.utils.testing import SkipTest
 
 from sklearn.bicluster.spectral import SpectralCoclustering
 from sklearn.bicluster.spectral import SpectralBiclustering
-from sklearn.bicluster.spectral import _scale_preprocess
-from sklearn.bicluster.spectral import _bistochastic_preprocess
-from sklearn.bicluster.spectral import _log_preprocess
+from sklearn.bicluster.spectral import _scale_normalize
+from sklearn.bicluster.spectral import _bistochastic_normalize
+from sklearn.bicluster.spectral import _log_normalize
 
 from sklearn.datasets import make_biclusters, make_checkerboard
 
@@ -113,32 +113,32 @@ def _do_bistochastic_test(scaled):
                         decimal=1)
 
 
-def test_scale_preprocess():
+def test_scale_normalize():
     generator = np.random.RandomState(0)
     X = generator.rand(100, 100)
     for mat in (X, csr_matrix(X)):
-        scaled, _, _ = _scale_preprocess(mat)
+        scaled, _, _ = _scale_normalize(mat)
         _do_scale_test(scaled)
         if issparse(mat):
             assert issparse(scaled)
 
 
-def test_bistochastic_preprocess():
+def test_bistochastic_normalize():
     generator = np.random.RandomState(0)
     X = generator.rand(100, 100)
     for mat in (X, csr_matrix(X)):
-        scaled = _bistochastic_preprocess(mat)
+        scaled = _bistochastic_normalize(mat)
         _do_bistochastic_test(scaled)
         if issparse(mat):
             assert issparse(scaled)
 
 
-def test_log_preprocess():
+def test_log_normalize():
     # adding any constant to a log-scaled matrix should make it
     # bistochastic
     generator = np.random.RandomState(0)
     mat = generator.rand(100, 100)
-    scaled = _log_preprocess(mat) + 1
+    scaled = _log_normalize(mat) + 1
     _do_bistochastic_test(scaled)
 
 

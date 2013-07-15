@@ -23,7 +23,7 @@ from sklearn.utils.validation import assert_all_finite
 from sklearn.utils.validation import check_arrays
 
 
-def _scale_preprocess(X):
+def _scale_normalize(X):
     """Normalize `X` by scaling rows and columns independently.
 
     Returns the normalized matrix and the row and column scaling
@@ -45,7 +45,7 @@ def _scale_preprocess(X):
     return an, row_diag, col_diag
 
 
-def _bistochastic_preprocess(X, maxiter=1000, tol=1e-5):
+def _bistochastic_normalize(X, maxiter=1000, tol=1e-5):
     """Normalize rows and columns of `X` simultaneously so that all
     rows sum to one constant and all columns sum to a different
     constant.
@@ -57,7 +57,7 @@ def _bistochastic_preprocess(X, maxiter=1000, tol=1e-5):
     X_scaled = X
     dist = None
     for _ in range(maxiter):
-        X_new, _, _ = _scale_preprocess(X_scaled)
+        X_new, _, _ = _scale_normalize(X_scaled)
         if issparse(X):
             dist = np.linalg.norm(X_scaled.data - X.data)
         else:
@@ -68,7 +68,7 @@ def _bistochastic_preprocess(X, maxiter=1000, tol=1e-5):
     return X_scaled
 
 
-def _log_preprocess(X):
+def _log_normalize(X):
     """Normalize `X` according to Kluger's log-interactions scheme."""
     X = make_nonnegative(X, min_value=1)
     if issparse(X):
@@ -224,7 +224,7 @@ class SpectralCoclustering(BaseSpectral):
                                                    random_state)
 
     def _fit(self, X):
-        normalized_data, row_diag, col_diag = _scale_preprocess(X)
+        normalized_data, row_diag, col_diag = _scale_normalize(X)
         n_sv = 1 + int(np.ceil(np.log2(self.n_clusters)))
         u, v = self._svd(normalized_data, n_sv)
         z = np.vstack((row_diag[:, np.newaxis] * u[:, 1:],
@@ -355,13 +355,13 @@ class SpectralBiclustering(BaseSpectral):
     def _fit(self, X):
         n_sv = self.n_components
         if self.method == 'bistochastic':
-            normalized_data = _bistochastic_preprocess(X)
+            normalized_data = _bistochastic_normalize(X)
             n_sv += 1
         elif self.method == 'scale':
-            normalized_data, _, _ = _scale_preprocess(X)
+            normalized_data, _, _ = _scale_normalize(X)
             n_sv += 1
         elif self.method == 'log':
-            normalized_data = _log_preprocess(X)
+            normalized_data = _log_normalize(X)
         u, v = self._svd(normalized_data, n_sv)
         ut = u.T
         vt = v.T
