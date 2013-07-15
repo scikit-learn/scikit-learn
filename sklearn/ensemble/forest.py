@@ -173,29 +173,6 @@ def _partition_trees(forest):
     return n_jobs, n_trees, starts
 
 
-def _partition_features(forest, n_total_features):
-    """Private function used to partition features between jobs."""
-    # Compute the number of jobs
-    if forest.n_jobs == -1:
-        n_jobs = min(cpu_count(), n_total_features)
-
-    else:
-        n_jobs = min(forest.n_jobs, n_total_features)
-
-    # Partition features between jobs
-    n_features = [n_total_features // n_jobs] * n_jobs
-
-    for i in xrange(n_total_features % n_jobs):
-        n_features[i] += 1
-
-    starts = [0] * (n_jobs + 1)
-
-    for i in xrange(1, n_jobs + 1):
-        starts[i] = starts[i - 1] + n_features[i - 1]
-
-    return n_jobs, n_features, starts
-
-
 class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
                                     _LearntSelectorMixin)):
     """Base class for forests of trees.
@@ -284,8 +261,6 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         if not self.bootstrap and self.oob_score:
             raise ValueError("Out of bag estimation only available"
                              " if bootstrap=True")
-
-        n_jobs, _, starts = _partition_features(self, self.n_features_)
 
         y = np.atleast_1d(y)
         if y.ndim == 1:
