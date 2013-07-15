@@ -11,40 +11,15 @@ from scipy.sparse import lil_matrix, issparse
 
 from sklearn.base import BaseEstimator
 from sklearn.externals import six
-from sklearn.utils.extmath import randomized_svd
-from sklearn.utils.extmath import safe_sparse_dot
 from sklearn.utils.arpack import svds
-from sklearn.utils.validation import assert_all_finite
-from sklearn.utils.validation import check_arrays
 from sklearn.cluster.k_means_ import k_means
 
+from sklearn.utils.extmath import randomized_svd
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.extmath import make_nonnegative
 
-def _sparse_min(X):
-    """Returns the minimum value of a dense or a CSR/CSC matrix.
-
-    Adapated from http://stackoverflow.com/q/13426580
-
-    """
-    if issparse(X):
-        if len(X.data) == 0:
-            return 0
-        m = X.data.min()
-        return m if X.getnnz() == X.size else min(m, 0)
-    else:
-        return X.min()
-
-
-def _make_nonnegative(X, min_value=0):
-    """Ensure `X.min()` >= `min_value`."""
-    min_ = _sparse_min(X)
-    if min_ < min_value:
-        if issparse(X):
-            raise ValueError("Cannot make the data matrix"
-                             " nonnegative because it is sparse."
-                             " Adding a value to every entry would"
-                             " make it no longer sparse.")
-        X = X + (min_value - min_)
-    return X
+from sklearn.utils.validation import assert_all_finite
+from sklearn.utils.validation import check_arrays
 
 
 def _scale_preprocess(X):
@@ -54,7 +29,7 @@ def _scale_preprocess(X):
     factors.
 
     """
-    X = _make_nonnegative(X)
+    X = make_nonnegative(X)
     row_diag = np.asarray(1.0 / np.sqrt(X.sum(axis=1))).squeeze()
     col_diag = np.asarray(1.0 / np.sqrt(X.sum(axis=0))).squeeze()
     row_diag = np.where(np.isnan(row_diag), 0, row_diag)
@@ -79,7 +54,7 @@ def _bistochastic_preprocess(X, maxiter=1000, tol=1e-5):
     """
     # According to paper, this can also be done more efficiently with
     # deviation reduction and balancing algorithms.
-    X = _make_nonnegative(X)
+    X = make_nonnegative(X)
     X_scaled = X
     dist = None
     for _ in range(maxiter):
@@ -96,7 +71,7 @@ def _bistochastic_preprocess(X, maxiter=1000, tol=1e-5):
 
 def _log_preprocess(X):
     """Normalize `X` according to Kluger's log-interactions scheme."""
-    X = _make_nonnegative(X, min_value=1)
+    X = make_nonnegative(X, min_value=1)
     if issparse(X):
         raise ValueError("Cannot compute log of a sparse matrix,"
                          " because log(x) diverges to -infinity as x"
