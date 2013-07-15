@@ -11,6 +11,8 @@ from .hierarchical import ward_tree, Ward, WardAgglomeration
 from .k_means_ import k_means, KMeans, MiniBatchKMeans
 from .dbscan_ import dbscan, DBSCAN
 from ..utils import deprecated
+from .bicluster import SpectralBiclustering
+from .bicluster import SpectralCoclustering
 
 
 # backward compatibility
@@ -38,4 +40,6 @@ __all__ = ['AffinityPropagation',
            'mean_shift',
            'spectral_clustering',
            'spectral_embedding',
-           'ward_tree']
+           'ward_tree',
+           'SpectralCoclustering',
+           'SpectralBiclustering']
