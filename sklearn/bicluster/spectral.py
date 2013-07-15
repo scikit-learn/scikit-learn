@@ -4,17 +4,19 @@ Authors : Kemal Eren
 License: BSD 3 clause
 
 """
-
-from ..base import BaseEstimator
-from ..cluster.k_means_ import k_means
-from sklearn.utils.extmath import randomized_svd, safe_sparse_dot
-from sklearn.utils.arpack import svds
-from sklearn.utils.validation import assert_all_finite, check_arrays
+from abc import ABCMeta, abstractmethod
 
 import numpy as np
 from scipy.sparse import lil_matrix, issparse
-from ..externals import six
-from abc import ABCMeta, abstractmethod
+
+from sklearn.base import BaseEstimator
+from sklearn.externals import six
+from sklearn.utils.extmath import randomized_svd
+from sklearn.utils.extmath import safe_sparse_dot
+from sklearn.utils.arpack import svds
+from sklearn.utils.validation import assert_all_finite
+from sklearn.utils.validation import check_arrays
+from sklearn.cluster.k_means_ import k_means
 
 
 def _sparse_min(X):
