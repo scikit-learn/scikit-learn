@@ -34,6 +34,7 @@ def test_spectral_coclustering():
         S, rows, cols = make_biclusters((30, 30), 3, noise=noise,
                                         random_state=random_state)
         S -= S.min()  # needs to be nonnegative before making it sparse
+        S = np.where(S < 1, 0, S)  # threshold some values
         for mat in (S, csr_matrix(S)):
             for svd_method in ('randomized', 'arpack'):
                 for mini_batch in (False, True):
