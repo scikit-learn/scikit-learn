@@ -7,7 +7,7 @@ License: BSD 3 clause
 from abc import ABCMeta, abstractmethod
 
 import numpy as np
-from scipy.sparse import lil_matrix, issparse
+from scipy.sparse import dia_matrix, issparse
 
 from sklearn.base import BaseEstimator
 from sklearn.externals import six
@@ -37,10 +37,8 @@ def _scale_preprocess(X):
     col_diag = np.where(np.isnan(col_diag), 0, col_diag)
     if issparse(X):
         n_rows, n_cols = X.shape
-        r = lil_matrix((n_rows, n_rows))
-        c = lil_matrix((n_cols, n_cols))
-        r.setdiag(row_diag)
-        c.setdiag(col_diag)
+        r = dia_matrix((row_diag, [0]), shape=(n_rows, n_rows))
+        c = dia_matrix((col_diag, [0]), shape=(n_cols, n_cols))
         an = r * X * c
     else:
         an = row_diag[:, np.newaxis] * X * col_diag
