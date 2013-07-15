@@ -1,5 +1,10 @@
 """Testing for Spectral Biclustering methods"""
 
+from itertools import permutations
+
+import numpy as np
+from scipy.sparse import csr_matrix, issparse
+
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -14,10 +19,6 @@ from sklearn.bicluster.spectral import _bistochastic_preprocess
 from sklearn.bicluster.spectral import _log_preprocess
 
 from sklearn.datasets import make_biclusters, make_checkerboard
-
-import numpy as np
-from scipy.sparse import csr_matrix, issparse
-from itertools import permutations
 
 
 def _check_label_permutations(a, b, n_labels):
