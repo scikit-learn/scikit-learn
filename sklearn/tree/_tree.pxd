@@ -59,7 +59,9 @@ cdef class Splitter:
     cdef public Criterion criterion      # Impurity criterion
     cdef public SIZE_t max_features      # Number of features to test
     cdef public SIZE_t min_samples_leaf  # Min samples in a leaf
+
     cdef object random_state             # Random state
+    cdef unsigned int libc_random_state  # libc random number state
 
     cdef SIZE_t* samples                 # Sample indices in X, y
     cdef SIZE_t n_samples                # X.shape[0]
@@ -67,6 +69,7 @@ cdef class Splitter:
     cdef SIZE_t n_features               # X.shape[1]
     cdef SIZE_t start                    # Start position for the current node
     cdef SIZE_t end                      # End position for the current ndoe
+
 
     cdef np.ndarray X
     cdef DOUBLE_t* y
@@ -101,7 +104,6 @@ cdef class Tree:
     cdef public SIZE_t n_features        # Number of features in X
     cdef SIZE_t* n_classes               # Number of classes in y[:, k]
     cdef public SIZE_t n_outputs         # Number of outputs in y
-
     cdef public SIZE_t max_n_classes     # max(n_classes)
     cdef public SIZE_t value_stride      # n_outputs * max_n_classes
 
