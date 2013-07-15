@@ -63,6 +63,9 @@ def configuration(parent_package='', top_path=None):
                          include_dirs=[numpy.get_include()],
                          libraries=libraries)
 
+    config.add_extension("rand_r",
+                         sources=["rand_r.c"])
+
     return config
 
 

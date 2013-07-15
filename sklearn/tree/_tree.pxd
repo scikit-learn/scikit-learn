@@ -59,7 +59,9 @@ cdef class Splitter:
     cdef public Criterion criterion      # Impurity criterion
     cdef public SIZE_t max_features      # Number of features to test
     cdef public SIZE_t min_samples_leaf  # Min samples in a leaf
+
     cdef object random_state             # Random state
+    cdef unsigned int rand_r_state       # sklearn_rand_r random number state
 
     cdef SIZE_t* samples                 # Sample indices in X, y
     cdef SIZE_t n_samples                # X.shape[0]
