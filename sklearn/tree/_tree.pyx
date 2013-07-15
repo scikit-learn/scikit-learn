@@ -1340,25 +1340,32 @@ cdef class Tree:
         self.capacity = capacity
 
         cdef SIZE_t* tmp_children_left = <SIZE_t*> realloc(self.children_left, capacity * sizeof(SIZE_t))
-        if tmp_children_left != NULL: self.children_left = tmp_children_left
+        if tmp_children_left != NULL:
+            self.children_left = tmp_children_left
 
         cdef SIZE_t* tmp_children_right = <SIZE_t*> realloc(self.children_right, capacity * sizeof(SIZE_t))
-        if tmp_children_right != NULL: self.children_right = tmp_children_right
+        if tmp_children_right != NULL:
+            self.children_right = tmp_children_right
 
         cdef SIZE_t* tmp_feature = <SIZE_t*> realloc(self.feature, capacity * sizeof(SIZE_t))
-        if tmp_feature != NULL: self.feature = tmp_feature
+        if tmp_feature != NULL:
+            self.feature = tmp_feature
 
         cdef double* tmp_threshold = <double*> realloc(self.threshold, capacity * sizeof(double))
-        if tmp_threshold != NULL: self.threshold = tmp_threshold
+        if tmp_threshold != NULL:
+            self.threshold = tmp_threshold
 
         cdef double* tmp_value = <double*> realloc(self.value, capacity * self.value_stride * sizeof(double))
-        if tmp_value != NULL: self.value = tmp_value
+        if tmp_value != NULL:
+            self.value = tmp_value
 
         cdef double* tmp_impurity = <double*> realloc(self.impurity, capacity * sizeof(double))
-        if tmp_impurity != NULL: self.impurity = tmp_impurity
+        if tmp_impurity != NULL:
+            self.impurity = tmp_impurity
 
         cdef SIZE_t* tmp_n_node_samples = <SIZE_t*> realloc(self.n_node_samples, capacity * sizeof(SIZE_t))
-        if tmp_n_node_samples != NULL: self.n_node_samples = tmp_n_node_samples
+        if tmp_n_node_samples != NULL:
+            self.n_node_samples = tmp_n_node_samples
 
         if ((tmp_children_left == NULL) or
             (tmp_children_right == NULL) or
