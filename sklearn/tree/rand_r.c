@@ -1,6 +1,6 @@
 /*
  * 4.4BSD libc implementation of rand_r.
- * Translated to Cython for scikit-learn by Lars Buitinck.
+ * Modified for scikit-learn by Lars Buitinck.
  *
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
