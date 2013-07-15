@@ -11,7 +11,7 @@
 # Licence: BSD 3 clause
 
 
-from libc.stdlib cimport calloc, free, malloc, realloc, rand, srand, RAND_MAX
+from libc.stdlib cimport calloc, free, malloc, realloc, rand, RAND_MAX
 from libc.string cimport memcpy
 from libc.math cimport log2 as log
 
@@ -143,7 +143,8 @@ cdef class ClassificationCriterion(Criterion):
 
     def __reduce__(self):
         return (ClassificationCriterion,
-                (self.n_outputs, sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)),
+                (self.n_outputs,
+                 sizet_ptr_to_ndarray(self.n_classes, self.n_outputs)),
                 self.__getstate__())
 
     def __getstate__(self):
@@ -266,7 +267,8 @@ cdef class ClassificationCriterion(Criterion):
                 w  = sample_weight[i]
 
             for k from 0 <= k < n_outputs:
-                label_index = k * label_count_stride + <SIZE_t> y[i * y_stride + k]
+                label_index = (k * label_count_stride +
+                               <SIZE_t> y[i * y_stride + k])
                 label_count_left[label_index] += w
                 label_count_right[label_index] -= w
 
@@ -428,7 +430,8 @@ cdef class Gini(ClassificationCriterion):
                 tmp = label_count_total[offset + c]
                 gini += tmp * tmp
 
-            gini = 1.0 - gini / (weighted_n_node_samples * weighted_n_node_samples)
+            gini = 1.0 - gini / (weighted_n_node_samples *
+                                 weighted_n_node_samples)
 
             total += gini
             offset += label_count_stride
@@ -466,8 +469,10 @@ cdef class Gini(ClassificationCriterion):
                 tmp = label_count_right[offset + c]
                 gini_right += tmp * tmp
 
-            gini_left = 1.0 - gini_left / (weighted_n_left * weighted_n_left)
-            gini_right = 1.0 - gini_right / (weighted_n_right * weighted_n_right)
+            gini_left = 1.0 - gini_left / (weighted_n_left *
+                                           weighted_n_left)
+            gini_right = 1.0 - gini_right / (weighted_n_right *
+                                             weighted_n_right)
 
             total += weighted_n_left * gini_left
             total += weighted_n_right * gini_right
@@ -652,7 +657,9 @@ cdef class RegressionCriterion(Criterion):
             sq_sum_right[k] = sq_sum_total[k]
             sq_sum_left[k] = 0.0
             var_left[k] = 0.0
-            var_right[k] = (sq_sum_right[k] - weighted_n_node_samples * (mean_right[k] * mean_right[k]))
+            var_right[k] = (sq_sum_right[k] -
+                            weighted_n_node_samples * (mean_right[k] *
+                                                       mean_right[k]))
 
     cdef void update(self, SIZE_t new_pos):
         """Update the collected statistics by moving samples[pos:new_pos] from
@@ -696,15 +703,19 @@ cdef class RegressionCriterion(Criterion):
                 sq_sum_left[k] += w_y_ik * y_ik
                 sq_sum_right[k] -= w_y_ik * y_ik
 
-                mean_left[k] = ((weighted_n_left * mean_left[k] + w_y_ik) / (weighted_n_left + w))
-                mean_right[k] = ((weighted_n_right * mean_right[k] - w_y_ik) / (weighted_n_right - w))
+                mean_left[k] = ((weighted_n_left * mean_left[k] + w_y_ik) /
+                                (weighted_n_left + w))
+                mean_right[k] = ((weighted_n_right * mean_right[k] - w_y_ik) /
+                                 (weighted_n_right - w))
 
             weighted_n_left += w
             weighted_n_right -= w
 
         for k from 0 <= k < n_outputs:
-            var_left[k] = sq_sum_left[k] - weighted_n_left * (mean_left[k] * mean_left[k])
-            var_right[k] = sq_sum_right[k] - weighted_n_right * (mean_right[k] * mean_right[k])
+            var_left[k] = (sq_sum_left[k] -
+                           weighted_n_left * (mean_left[k] * mean_left[k]))
+            var_right[k] = (sq_sum_right[k] -
+                            weighted_n_right * (mean_right[k] * mean_right[k]))
 
         self.weighted_n_left = weighted_n_left
         self.weighted_n_right = weighted_n_right
@@ -742,7 +753,9 @@ cdef class MSE(RegressionCriterion):
         cdef SIZE_t k
 
         for k from 0 <= k < n_outputs:
-            total += sq_sum_total[k] - weighted_n_node_samples * (mean_total[k] * mean_total[k])
+            total += (sq_sum_total[k] -
+                      weighted_n_node_samples * (mean_total[k] *
+                                                 mean_total[k]))
 
         return total / n_outputs
 
@@ -767,7 +780,10 @@ cdef class MSE(RegressionCriterion):
 # =============================================================================
 
 cdef class Splitter:
-    def __cinit__(self, Criterion criterion, SIZE_t max_features, SIZE_t min_samples_leaf, object random_state):
+    def __cinit__(self, Criterion criterion,
+                        SIZE_t max_features,
+                        SIZE_t min_samples_leaf,
+                        object random_state):
         self.criterion = criterion
 
         self.samples = NULL
@@ -847,7 +863,13 @@ cdef class Splitter:
         self.start = start
         self.end = end
 
-        criterion.init(self.y, self.y_stride, self.sample_weight, samples, start, end)
+        criterion.init(self.y,
+                       self.y_stride,
+                       self.sample_weight,
+                       samples,
+                       start,
+                       end)
+
         impurity[0] =  criterion.node_impurity()
 
     cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold):
@@ -862,9 +884,10 @@ cdef class Splitter:
 cdef class BestSplitter(Splitter):
     """Splitter for finding the best split."""
     def __reduce__(self):
-        return (BestSplitter,
-                (self.criterion, self.max_features, self.min_samples_leaf, self.random_state),
-                self.__getstate__())
+        return (BestSplitter, (self.criterion,
+                               self.max_features,
+                               self.min_samples_leaf,
+                               self.random_state), self.__getstate__())
 
     cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold):
         """Find the best split on node samples[start:end]."""
@@ -917,7 +940,8 @@ cdef class BestSplitter(Splitter):
             p = start
 
             while p < end:
-                while p + 1 < end and X[samples[p + 1], current_feature] <= X[samples[p], current_feature] + 1.e-7:
+                while ((p + 1 < end) and
+                       (X[samples[p + 1], current_feature] <= X[samples[p], current_feature] + 1.e-7)):
                     p += 1
 
                 # p + 1 >= end or X[samples[p + 1], current_feature] > X[samples[p], current_feature]
@@ -1004,7 +1028,8 @@ cdef void sort(np.ndarray[DTYPE_t, ndim=2] X, SIZE_t current_feature,
         child = index * 2 + 1
 
         while child < n:
-            if (child + 1 < n) and (X[samples[child + 1], current_feature] > X[samples[child], current_feature]):
+            if ((child + 1 < n) and
+                (X[samples[child + 1], current_feature] > X[samples[child], current_feature])):
                 child += 1
 
             if X[samples[child], current_feature] > tmp_value:
@@ -1021,9 +1046,10 @@ cdef void sort(np.ndarray[DTYPE_t, ndim=2] X, SIZE_t current_feature,
 cdef class RandomSplitter(Splitter):
     """Splitter for finding the best random split."""
     def __reduce__(self):
-        return (RandomSplitter,
-                (self.criterion, self.max_features, self.min_samples_leaf, self.random_state),
-                self.__getstate__())
+        return (RandomSplitter, (self.criterion,
+                                 self.max_features,
+                                 self.min_samples_leaf,
+                                 self.random_state), self.__getstate__())
 
     cdef void node_split(self, SIZE_t* pos, SIZE_t* feature, double* threshold):
         """Find the best random split on node samples[start:end]."""
@@ -1086,7 +1112,9 @@ cdef class RandomSplitter(Splitter):
                 continue
 
             # Draw a random threshold
-            current_threshold = min_feature_value + rand_double(random_state) * (max_feature_value - min_feature_value)
+            current_threshold = (min_feature_value +
+                                 rand_double(random_state) * (max_feature_value - min_feature_value))
+
             if current_threshold == max_feature_value:
                 current_threshold = min_feature_value
 
@@ -1396,8 +1424,10 @@ cdef class Tree:
 
         cdef DOUBLE_t* sample_weight_ptr = NULL
         if sample_weight is not None:
-            if sample_weight.dtype != DOUBLE or not sample_weight.flags.contiguous:
-                sample_weight = np.asarray(sample_weight, dtype=DOUBLE, order="C")
+            if ((sample_weight.dtype != DOUBLE) or
+                (not sample_weight.flags.contiguous)):
+                sample_weight = np.asarray(sample_weight,
+                                           dtype=DOUBLE, order="C")
             sample_weight_ptr = <DOUBLE_t*> sample_weight.data
 
         # Initial capacity
