@@ -434,6 +434,63 @@ def test_radius_neighbors_regressor(n_samples=40,
             assert_true(np.all(abs(y_pred - y_target) < radius / 2))
 
 
+def test_RadiusNeighborsRegressor_multioutput_with_uniform_weight():
+    """Test radius neighbors in multi-output regression (uniform weight)"""
+
+    rng = check_random_state(0)
+    n_features = 5
+    n_samples = 40
+    n_output = 4
+
+    X = rng.rand(n_samples, n_features)
+    y = rng.rand(n_samples, n_output)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+
+    for algorithm, weights in product(ALGORITHMS, [None, 'uniform']):
+
+        rnn = neighbors. RadiusNeighborsRegressor(weights=weights,
+                                                  algorithm=algorithm)
+        rnn.fit(X_train, y_train)
+
+        neigh_idx = rnn.radius_neighbors(X_test, return_distance=False)
+        y_pred_idx = np.array([np.mean(y_train[idx], axis=0)
+                               for idx in neigh_idx])
+
+        y_pred_idx = np.array(y_pred_idx)
+        y_pred = rnn.predict(X_test)
+
+        assert_equal(y_pred_idx.shape, y_test.shape)
+        assert_equal(y_pred.shape, y_test.shape)
+        assert_array_almost_equal(y_pred, y_pred_idx)
+
+
+def test_RadiusNeighborsRegressor_multioutput(n_samples=40,
+                                              n_features=5,
+                                              n_test_pts=10,
+                                              n_neighbors=3,
+                                              random_state=0):
+    """Test k-neighbors in multi-output regression with various weight"""
+    rng = np.random.RandomState(random_state)
+    X = 2 * rng.rand(n_samples, n_features) - 1
+    y = np.sqrt((X ** 2).sum(1))
+    y /= y.max()
+    y = np.vstack([y, y]).T
+
+    y_target = y[:n_test_pts]
+    weights = ['uniform', 'distance', _weight_func]
+
+    for algorithm, weights in product(ALGORITHMS, weights):
+        rnn = neighbors.RadiusNeighborsRegressor(n_neighbors=n_neighbors,
+                                                 weights=weights,
+                                                 algorithm=algorithm)
+        rnn.fit(X, y)
+        epsilon = 1E-5 * (2 * rng.rand(1, n_features) - 1)
+        y_pred = rnn.predict(X[:n_test_pts] + epsilon)
+
+        assert_equal(y_pred.shape, y_target.shape)
+        assert_true(np.all(np.abs(y_pred - y_target) < 0.3))
+
+
 def test_kneighbors_regressor_sparse(n_samples=40,
                                      n_features=5,
                                      n_test_pts=10,

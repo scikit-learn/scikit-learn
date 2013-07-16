@@ -4,6 +4,7 @@
 #          Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Sparseness support by Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Multioutput support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
@@ -267,13 +268,12 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
         Parameters
         ----------
-        X : array
-            A 2-D array representing the test data.
+        X : array or matrix, shape = [n_samples, n_features]
 
         Returns
         -------
-        y: array
-            List of target values (one for each data sample).
+        y : array of int, shape = [n_samples] or [n_samples, n_outputs]
+            Target values
         """
         X = atleast2d_or_csr(X)
 
@@ -281,10 +281,19 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
 
         weights = _get_weights(neigh_dist, self.weights)
 
+        _y = self._y
+        if _y.ndim == 1:
+            _y = _y.reshape((-1, 1))
+
         if weights is None:
-            return np.array([np.mean(self._y[ind])
-                             for ind in neigh_ind])
+            y_pred = np.array([np.mean(_y[ind, :], axis=0)
+                               for ind in neigh_ind])
         else:
-            return np.array([(np.sum(self._y[ind] * weights[i])
-                              / np.sum(weights[i]))
-                             for (i, ind) in enumerate(neigh_ind)])
+            y_pred = np.array([(np.average(_y[ind, :], axis=0,
+                                           weights=weights[i]))
+                               for (i, ind) in enumerate(neigh_ind)])
+
+        if self._y.ndim == 1:
+            y_pred = y_pred.ravel()
+
+        return y_pred
