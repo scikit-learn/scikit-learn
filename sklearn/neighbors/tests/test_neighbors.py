@@ -1,13 +1,17 @@
 import warnings
-
-from nose.tools import assert_equal, assert_true
+from itertools import product
 
 import numpy as np
-from numpy.testing import assert_array_almost_equal, assert_array_equal
-from numpy.testing import assert_raises
 from scipy.sparse import (bsr_matrix, coo_matrix, csc_matrix, csr_matrix,
                           dok_matrix, lil_matrix)
 
+from sklearn.cross_validation import train_test_split
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_true
+from sklearn.utils.validation import check_random_state
 from sklearn import neighbors, datasets
 
 rng = np.random.RandomState(0)
@@ -348,6 +352,60 @@ def test_kneighbors_regressor(n_samples=40,
             epsilon = 1E-5 * (2 * rng.rand(1, n_features) - 1)
             y_pred = knn.predict(X[:n_test_pts] + epsilon)
             assert_true(np.all(abs(y_pred - y_target) < 0.3))
+
+
+def test_KNeighborsRegressor_multioutput_uniform_weight():
+    """Test k-neighbors in multi-output regression with uniform weight"""
+    rng = check_random_state(0)
+    n_features = 5
+    n_samples = 40
+    n_output = 4
+
+    X = rng.rand(n_samples, n_features)
+    y = rng.rand(n_samples, n_output)
+
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
+    for algorithm, weights in product(ALGORITHMS, [None, 'uniform']):
+        knn = neighbors.KNeighborsRegressor(weights=weights,
+                                            algorithm=algorithm)
+        knn.fit(X_train, y_train)
+
+        neigh_idx = knn.kneighbors(X_test, return_distance=False)
+        y_pred_idx = np.array([np.mean(y_train[idx], axis=0)
+                               for idx in neigh_idx])
+
+        y_pred = knn.predict(X_test)
+
+        assert_equal(y_pred.shape, y_test.shape)
+        assert_equal(y_pred_idx.shape, y_test.shape)
+        assert_array_almost_equal(y_pred, y_pred_idx)
+
+
+def test_kneighbors_regressor_multioutput(n_samples=40,
+                                          n_features=5,
+                                          n_test_pts=10,
+                                          n_neighbors=3,
+                                          random_state=0):
+    """Test k-neighbors in multi-output regression"""
+    rng = np.random.RandomState(random_state)
+    X = 2 * rng.rand(n_samples, n_features) - 1
+    y = np.sqrt((X ** 2).sum(1))
+    y /= y.max()
+    y = np.vstack([y, y]).T
+
+    y_target = y[:n_test_pts]
+
+    weights = ['uniform', 'distance', _weight_func]
+    for algorithm, weights in product(ALGORITHMS, weights):
+        knn = neighbors.KNeighborsRegressor(n_neighbors=n_neighbors,
+                                            weights=weights,
+                                            algorithm=algorithm)
+        knn.fit(X, y)
+        epsilon = 1E-5 * (2 * rng.rand(1, n_features) - 1)
+        y_pred = knn.predict(X[:n_test_pts] + epsilon)
+        assert_equal(y_pred.shape, y_target.shape)
+
+        assert_true(np.all(np.abs(y_pred - y_target) < 0.3))
 
 
 def test_radius_neighbors_regressor(n_samples=40,
