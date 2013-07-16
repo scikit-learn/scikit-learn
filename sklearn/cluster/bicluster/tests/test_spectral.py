@@ -5,6 +5,8 @@ from itertools import permutations
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
 
+from sklearn.grid_search import ParameterGrid
+
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
@@ -29,6 +31,9 @@ def _check_label_permutations(a, b, n_labels):
 
 def test_spectral_coclustering():
     """Test Dhillon's Spectral CoClustering on a simple problem."""
+    param_grid = {'svd_method': ['randomized', 'arpack'],
+                  'n_svd_vecs': [None, 20],
+                  'mini_batch': [False, True]}
     random_state = 0
     for noise in (0, 0.5):
         S, rows, cols = make_biclusters((30, 30), 3, noise=noise,
@@ -36,59 +41,53 @@ def test_spectral_coclustering():
         S -= S.min()  # needs to be nonnegative before making it sparse
         S = np.where(S < 1, 0, S)  # threshold some values
         for mat in (S, csr_matrix(S)):
-            for svd_method in ('randomized', 'arpack'):
-                for n_svd_vecs in (None, 20):
-                    for mini_batch in (False, True):
-                        model = SpectralCoclustering(n_clusters=3,
-                                                     svd_method=svd_method,
-                                                     n_svd_vecs=n_svd_vecs,
-                                                     mini_batch=mini_batch,
-                                                     random_state=random_state)
-                        model.fit(mat)
+            for kwargs in ParameterGrid(param_grid):
+                model = SpectralCoclustering(n_clusters=3,
+                                             random_state=random_state,
+                                             **kwargs)
+                model.fit(mat)
 
-                        assert_equal(model.rows_.shape, (3, 30))
-                        assert_array_equal(model.rows_.sum(axis=0), np.ones(30))
-                        assert_array_equal(model.columns_.sum(axis=0), np.ones(30))
-                        _check_label_permutations(model.rows_, rows, 3)
-                        _check_label_permutations(model.columns_, cols, 3)
+                assert_equal(model.rows_.shape, (3, 30))
+                assert_array_equal(model.rows_.sum(axis=0), np.ones(30))
+                assert_array_equal(model.columns_.sum(axis=0), np.ones(30))
+                _check_label_permutations(model.rows_, rows, 3)
+                _check_label_permutations(model.columns_, cols, 3)
 
 
 def test_spectral_biclustering():
     """Test Kluger methods on a checkerboard dataset."""
     raise SkipTest('Permutations are slow. Skipping until'
                    ' faster matching algorithm is available.')
+    param_grid = {'method': ['scale', 'bistochastic', 'log'],
+                  'svd_method': ['randomized', 'arpack'],
+                  'n_svd_vecs': [None, 20],
+                  'mini_batch': [False, True]}
     random_state = 0
     for noise in (0.5, 0):
         S, rows, cols = make_checkerboard((30, 30), 3, noise=noise,
                                           random_state=random_state)
         for n_clusters in ((3, 3), 3):
             for mat in (S, csr_matrix(S)):
-                for method in ('scale', 'bistochastic', 'log'):
-                    for svd_method in ('randomized', 'arpack'):
-                        for n_svd_vecs in (None, 20):
-                            for mini_batch in (False, True):
-                                model = SpectralBiclustering(n_clusters=n_clusters,
-                                                             method=method,
-                                                             svd_method=svd_method,
-                                                             n_svd_vecs=n_svd_vecs,
-                                                             mini_batch=mini_batch,
-                                                             random_state=random_state)
+                for kwargs in ParameterGrid(param_grid):
+                    model = SpectralBiclustering(n_clusters=n_clusters,
+                                                 random_state=random_state,
+                                                 **kwargs)
 
-                                if issparse(mat) and method == 'log':
-                                    # cannot take log of sparse matrix
-                                    assert_raises(ValueError, model.fit, mat)
-                                    continue
-                                else:
-                                    model.fit(mat)
+                    if issparse(mat) and kwargs['method'] == 'log':
+                        # cannot take log of sparse matrix
+                        assert_raises(ValueError, model.fit, mat)
+                        continue
+                    else:
+                        model.fit(mat)
 
-                                assert_equal(model.rows_.shape, (9, 30))
-                                assert_equal(model.columns_.shape, (9, 30))
-                                assert_array_equal(model.rows_.sum(axis=0),
-                                                   np.repeat(3, 30))
-                                assert_array_equal(model.columns_.sum(axis=0),
-                                                   np.repeat(3, 30))
-                                _check_label_permutations(model.rows_, rows, 3)
-                                _check_label_permutations(model.columns_, cols, 3)
+                    assert_equal(model.rows_.shape, (9, 30))
+                    assert_equal(model.columns_.shape, (9, 30))
+                    assert_array_equal(model.rows_.sum(axis=0),
+                                       np.repeat(3, 30))
+                    assert_array_equal(model.columns_.sum(axis=0),
+                                       np.repeat(3, 30))
+                    _check_label_permutations(model.rows_, rows, 3)
+                    _check_label_permutations(model.columns_, cols, 3)
 
 
 def _do_scale_test(scaled):
