@@ -37,18 +37,20 @@ def test_spectral_coclustering():
         S = np.where(S < 1, 0, S)  # threshold some values
         for mat in (S, csr_matrix(S)):
             for svd_method in ('randomized', 'arpack'):
-                for mini_batch in (False, True):
-                    model = SpectralCoclustering(n_clusters=3,
-                                                 svd_method=svd_method,
-                                                 mini_batch=mini_batch,
-                                                 random_state=random_state)
-                    model.fit(mat)
+                for n_svd_vecs in (None, 20):
+                    for mini_batch in (False, True):
+                        model = SpectralCoclustering(n_clusters=3,
+                                                     svd_method=svd_method,
+                                                     n_svd_vecs=n_svd_vecs,
+                                                     mini_batch=mini_batch,
+                                                     random_state=random_state)
+                        model.fit(mat)
 
-                    assert_equal(model.rows_.shape, (3, 30))
-                    assert_array_equal(model.rows_.sum(axis=0), np.ones(30))
-                    assert_array_equal(model.columns_.sum(axis=0), np.ones(30))
-                    _check_label_permutations(model.rows_, rows, 3)
-                    _check_label_permutations(model.columns_, cols, 3)
+                        assert_equal(model.rows_.shape, (3, 30))
+                        assert_array_equal(model.rows_.sum(axis=0), np.ones(30))
+                        assert_array_equal(model.columns_.sum(axis=0), np.ones(30))
+                        _check_label_permutations(model.rows_, rows, 3)
+                        _check_label_permutations(model.columns_, cols, 3)
 
 
 def test_spectral_biclustering():
@@ -63,28 +65,30 @@ def test_spectral_biclustering():
             for mat in (S, csr_matrix(S)):
                 for method in ('scale', 'bistochastic', 'log'):
                     for svd_method in ('randomized', 'arpack'):
-                        for mini_batch in (False, True):
-                            model = SpectralBiclustering(n_clusters=n_clusters,
-                                                         method=method,
-                                                         svd_method=svd_method,
-                                                         mini_batch=mini_batch,
-                                                         random_state=random_state)
+                        for n_svd_vecs in (None, 20):
+                            for mini_batch in (False, True):
+                                model = SpectralBiclustering(n_clusters=n_clusters,
+                                                             method=method,
+                                                             svd_method=svd_method,
+                                                             n_svd_vecs=n_svd_vecs,
+                                                             mini_batch=mini_batch,
+                                                             random_state=random_state)
 
-                            if issparse(mat) and method == 'log':
-                                # cannot take log of sparse matrix
-                                assert_raises(ValueError, model.fit, mat)
-                                continue
-                            else:
-                                model.fit(mat)
+                                if issparse(mat) and method == 'log':
+                                    # cannot take log of sparse matrix
+                                    assert_raises(ValueError, model.fit, mat)
+                                    continue
+                                else:
+                                    model.fit(mat)
 
-                            assert_equal(model.rows_.shape, (9, 30))
-                            assert_equal(model.columns_.shape, (9, 30))
-                            assert_array_equal(model.rows_.sum(axis=0),
-                                               np.repeat(3, 30))
-                            assert_array_equal(model.columns_.sum(axis=0),
-                                               np.repeat(3, 30))
-                            _check_label_permutations(model.rows_, rows, 3)
-                            _check_label_permutations(model.columns_, cols, 3)
+                                assert_equal(model.rows_.shape, (9, 30))
+                                assert_equal(model.columns_.shape, (9, 30))
+                                assert_array_equal(model.rows_.sum(axis=0),
+                                                   np.repeat(3, 30))
+                                assert_array_equal(model.columns_.sum(axis=0),
+                                                   np.repeat(3, 30))
+                                _check_label_permutations(model.rows_, rows, 3)
+                                _check_label_permutations(model.columns_, cols, 3)
 
 
 def _do_scale_test(scaled):

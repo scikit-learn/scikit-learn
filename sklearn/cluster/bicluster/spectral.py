@@ -88,10 +88,11 @@ def _log_normalize(X):
 class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for spectral biclustering."""
 
-    def __init__(self, n_clusters, svd_method, mini_batch,
+    def __init__(self, n_clusters, svd_method, n_svd_vecs, mini_batch,
                  kmeans_kwargs, random_state):
         self.n_clusters = n_clusters
         self.svd_method = svd_method
+        self.n_svd_vecs = n_svd_vecs
         self.mini_batch = mini_batch
         self.kmeans_kwargs = kmeans_kwargs
         self.random_state = random_state
@@ -125,11 +126,15 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator)):
 
         """
         if self.svd_method == 'randomized':
+            kwargs = {}
+            if self.n_svd_vecs is not None:
+                kwargs['n_oversamples'] = self.n_svd_vecs
             u, _, vt = randomized_svd(array, n_components,
-                                      random_state=self.random_state)
+                                      random_state=self.random_state,
+                                      **kwargs)
 
         elif self.svd_method == 'arpack':
-            u, _, vt = svds(array, k=n_components)
+            u, _, vt = svds(array, k=n_components, ncv=self.n_svd_vecs)
 
         assert_all_finite(u)
         assert_all_finite(vt)
@@ -176,6 +181,11 @@ class SpectralCoclustering(BaseSpectral):
         `sklearn.utils.arpack.svds`, which is more accurate, but
         possibly slower in some cases.
 
+    n_svd_vecs : int, optional, default: None
+        Number of vectors to use in calculating the SVD. Corresponds
+        to `ncv` when `svd_method=arpack` and `n_oversamples` when
+        `svd_method` is 'randomized`.
+
     mini_batch : bool, optional, default: False
         Whether to use mini-batch k-means, which is faster but may get
         different results.
@@ -211,10 +221,11 @@ class SpectralCoclustering(BaseSpectral):
 
     """
     def __init__(self, n_clusters=3, svd_method='randomized',
-                 mini_batch=False, kmeans_kwargs=None,
-                 random_state=None):
+                 n_svd_vecs=None, mini_batch=False,
+                 kmeans_kwargs=None, random_state=None):
         super(SpectralCoclustering, self).__init__(n_clusters,
                                                    svd_method,
+                                                   n_svd_vecs,
                                                    mini_batch,
                                                    kmeans_kwargs,
                                                    random_state)
@@ -274,6 +285,11 @@ class SpectralBiclustering(BaseSpectral):
         `sklearn.utils.arpack.svds`, which is more accurate, but
         possibly slower in some cases.
 
+    n_svd_vecs : int, optional, default: None
+        Number of vectors to use in calculating the SVD. Corresponds
+        to `ncv` when `svd_method=arpack` and `n_oversamples` when
+        `svd_method` is 'randomized`.
+
     mini_batch : bool, optional, default: False
         Whether to use mini-batch k-means, which is faster but may get
         different results.
@@ -311,10 +327,11 @@ class SpectralBiclustering(BaseSpectral):
     """
     def __init__(self, n_clusters=3, method='bistochastic',
                  n_components=6, n_best=3, svd_method='randomized',
-                 mini_batch=False, kmeans_kwargs=None,
-                 random_state=None):
+                 n_svd_vecs=None, mini_batch=False,
+                 kmeans_kwargs=None, random_state=None):
         super(SpectralBiclustering, self).__init__(n_clusters,
                                                    svd_method,
+                                                   n_svd_vecs,
                                                    mini_batch,
                                                    kmeans_kwargs,
                                                    random_state)
