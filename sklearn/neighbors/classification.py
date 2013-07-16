@@ -4,6 +4,7 @@
 #          Fabian Pedregosa <fabian.pedregosa@inria.fr>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Sparseness support by Lars Buitinck <L.J.Buitinck@uva.nl>
+#          Multioutput support by Arnaud Joly <a.joly@ulg.ac.be>
 #
 # License: BSD 3 clause (C) INRIA, University of Amsterdam
 
@@ -132,13 +133,13 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X: array
+        X : array of shape [n_samples, n_features]
             A 2-D array representing the test points.
 
         Returns
         -------
-        labels: array
-            List of class labels (one for each data sample).
+        y : array of shape [n_samples] or [n_samples, n_output]
+            Class labels for each data sample.
         """
         X = atleast2d_or_csr(X)
 
@@ -173,12 +174,12 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Parameters
         ----------
-        X: array, shape = (n_samples, n_features)
+        X : array, shape = (n_samples, n_features)
             A 2-D array representing the test points.
 
         Returns
         -------
-        probabilities : array, shape = [n_samples, n_classes]
+        y_proba : array, shape = [n_samples, n_classes]
             Probabilities of the samples for each class in the model,
             where classes are ordered arithmetically.
         """
@@ -220,6 +221,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             probabilities = probabilities[0]
 
         return probabilities
+
 
 class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                                 SupervisedIntegerMixin, ClassifierMixin):
@@ -324,20 +326,28 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         Parameters
         ----------
-        X: array
+        X: array of shape [n_samples, n_features]
             A 2-D array representing the test points.
 
         Returns
         -------
-        labels: array
-            List of class labels (one for each data sample).
+        labels: array of shape [n_samples] or [n_samples, n_output]
+            Class labels for each data sample.
+
         """
         X = atleast2d_or_csr(X)
         n_samples = X.shape[0]
 
         neigh_dist, neigh_ind = self.radius_neighbors(X)
-        inliers = [i for i, nind in enumerate(neigh_ind) if len(nind) != 0]
-        outliers = [i for i, nind in enumerate(neigh_ind) if len(nind) == 0]
+        inliers = np.array([i for i, nind in enumerate(neigh_ind)
+                            if len(nind) != 0], dtype=np.int)
+        outliers = np.array([i for i, nind in enumerate(neigh_ind)
+                             if len(nind) == 0], dtype=np.int)
+
+        if not self.outputs_2d_:
+            self._y = self._y.reshape((-1, 1))
+            self.classes_ = [self.classes_]
+        n_output = len(self.classes_)
 
         if self.outlier_label is not None:
             neigh_dist[outliers] = 1e-6
@@ -350,21 +360,29 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         weights = _get_weights(neigh_dist, self.weights)
 
-        pred_labels = np.array([self._y[ind] for ind in neigh_ind],
-                               dtype=object)
-        if weights is None:
-            mode = np.array([stats.mode(pl)[0] for pl in pred_labels[inliers]],
-                            dtype=np.int)
-        else:
-            mode = np.array([weighted_mode(pl, w)[0]
-                             for (pl, w)
-                             in zip(pred_labels[inliers], weights)],
-                            dtype=np.int)
+        y_pred = np.empty((n_samples, n_output), dtype=self.classes_[0].dtype)
+        for k, classes_k in enumerate(self.classes_):
+            pred_labels = np.array([self._y[ind, k] for ind in neigh_ind],
+                                   dtype=object)
+            if weights is None:
+                mode = np.array([stats.mode(pl)[0]
+                                 for pl in pred_labels[inliers]], dtype=np.int)
+            else:
+                mode = np.array([weighted_mode(pl, w)[0]
+                                 for (pl, w)
+                                 in zip(pred_labels[inliers], weights)],
+                                dtype=np.int)
 
-        mode = mode.ravel().astype(np.int)
-        prediction = np.empty(n_samples, dtype=self.classes_.dtype)
-        prediction[inliers] = self.classes_.take(mode)
+            mode = mode.ravel().astype(np.int)
+
+            y_pred[inliers, k] = classes_k.take(mode)
+
         if outliers:
-            prediction[outliers] = self.outlier_label
+            y_pred[outliers, :] = self.outlier_label
 
-        return prediction
+        if not self.outputs_2d_:
+            y_pred = y_pred.ravel()
+            self._y = self._y.ravel()
+            self.classes_ = self.classes_[0]
+
+        return y_pred
