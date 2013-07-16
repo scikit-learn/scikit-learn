@@ -6,6 +6,13 @@ Applying Spectral Co-Clustering to a generated dataset
 This example demonstrates how to generate a dataset for the Spectral
 Co-Clustering algorithm and fit it.
 
+The dataset is generated using the `make_biclusters` function, which
+creates a matrix of small values and implants bicluster with large
+values. The rows and columns are then shuffled and passed to the
+Spectral Co-Clustering algorithm. Rearranging the shuffled matrix to
+make biclusters contiguous shows how accurately the algorithm found
+the biclusters.
+
 """
 print(__doc__)
 
@@ -37,6 +44,6 @@ pl.matshow(data, cmap=pl.cm.Blues)
 pl.title("Shuffled dataset")
 
 pl.matshow(fit_data, cmap=pl.cm.Blues)
-pl.title("Rearranged to show biclusters")
+pl.title("After biclustering; rearranged to show biclusters")
 
 pl.show()

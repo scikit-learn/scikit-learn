@@ -6,10 +6,13 @@ Applying Spectral Biclustering to a generated dataset
 This example demonstrates how to generate a checkerboard dataset for
 the Spectral Biclustering algorithm and fit it.
 
-The row and column labels assigned to biclusters may not match the
-original row and column labels, which is why the visualization of the
-fitted checkerboard may look different the original. The appropriate
-rearrangement of rows and columns would make them match.
+The data is generated with the `make_checkerboard` function, then
+shuffled and passed to the Spectral Biclustering algorithm. The rows
+and columns of the shuffled matrix are rearranged to show the
+biclusters found by the algorithm.
+
+The outer product of the row and column label vectors shows a
+representation of the checkerboard structure.
 
 """
 print(__doc__)
@@ -21,7 +24,7 @@ import numpy as np
 import pylab as pl
 
 from sklearn.datasets import make_checkerboard
-from sklearn.cluster import SpectralBiclustering
+from sklearn.cluster.bicluster import SpectralBiclustering
 
 n_clusters = (4, 3)
 data, row_labels, column_labels = make_checkerboard(
@@ -42,11 +45,11 @@ pl.matshow(data, cmap=pl.cm.Blues)
 pl.title("Shuffled dataset")
 
 pl.matshow(fit_data, cmap=pl.cm.Blues)
-pl.title("Rearranged to show biclusters")
+pl.title("After biclustering; rearranged to show biclusters")
 
 pl.matshow(np.outer(np.sort(model.row_labels_) + 1,
                     np.sort(model.column_labels_) + 1),
            cmap=pl.cm.Blues)
-pl.title("Rearranged outer product of row and column labels")
+pl.title("Checkerboard structure of rearranged data")
 
 pl.show()
