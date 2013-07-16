@@ -11,10 +11,12 @@ import numpy as np
 cimport numpy as np
 np.import_array()  # required in order to use C-API
 
+
 # First, define a function to get an ndarray from a memory bufffer
 cdef extern from "arrayobject.h":
     object PyArray_SimpleNewFromData(int nd, np.npy_intp* dims,
                                      int typenum, void* data)
+
 
 cdef inline np.ndarray _buffer_to_ndarray(DTYPE_t* x, np.npy_intp n):
     # Wrap a memory buffer with an ndarray. Warning: this is not robust.
@@ -24,6 +26,7 @@ cdef inline np.ndarray _buffer_to_ndarray(DTYPE_t* x, np.npy_intp n):
 
     # Note: this Segfaults unless np.import_array() is called above
     return PyArray_SimpleNewFromData(1, &n, DTYPECODE, <void*>x)
+
 
 # some handy constants
 from libc.math cimport fmax, fmin, fabs, sqrt, exp, pow, cos, sin, asin
@@ -80,7 +83,7 @@ def get_valid_metric_ids(L):
     >>> sorted(L)
     ['cityblock', 'euclidean', 'l1', 'l2', 'manhattan']
     """
-    return [key for (key, val) in METRIC_MAPPING.iteritems()
+    return [key for (key, val) in METRIC_MAPPING.items()
             if (val.__name__ in L) or (val in L)]
 
 
