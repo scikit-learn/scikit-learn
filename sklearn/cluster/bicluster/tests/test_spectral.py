@@ -14,8 +14,8 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import SkipTest
 
-from sklearn.cluster import SpectralCoclustering
-from sklearn.cluster import SpectralBiclustering
+from sklearn.cluster.bicluster import SpectralCoclustering
+from sklearn.cluster.bicluster import SpectralBiclustering
 from sklearn.cluster.bicluster.spectral import _scale_normalize
 from sklearn.cluster.bicluster.spectral import _bistochastic_normalize
 from sklearn.cluster.bicluster.spectral import _log_normalize
