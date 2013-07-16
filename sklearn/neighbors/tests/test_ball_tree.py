@@ -11,13 +11,13 @@ V = np.dot(V, V.T)
 
 DIMENSION = 3
 
-METRICS = {'euclidean':{},
-           'manhattan':{},
-           'minkowski':dict(p=3),
-           'chebyshev':{},
-           'seuclidean':dict(V=np.random.random(DIMENSION)),
-           'wminkowski':dict(p=3, w=np.random.random(DIMENSION)),
-           'mahalanobis':dict(V=V)}
+METRICS = {'euclidean': {},
+           'manhattan': {},
+           'minkowski': dict(p=3),
+           'chebyshev': {},
+           'seuclidean': dict(V=np.random.random(DIMENSION)),
+           'wminkowski': dict(p=3, w=np.random.random(DIMENSION)),
+           'mahalanobis': dict(V=V)}
 
 DISCRETE_METRICS = ['hamming',
                     'canberra',
@@ -50,7 +50,7 @@ def test_ball_tree_query():
         # the indices may not match.  Distances should not have this problem.
         assert_allclose(dist1, dist2)
 
-    for (metric, kwargs) in METRICS.iteritems():
+    for (metric, kwargs) in METRICS.items():
         for k in (1, 3, 5):
             for dualtree in (True, False):
                 for breadth_first in (True, False):
@@ -148,7 +148,7 @@ def compute_kernel_slow(Y, X, kernel, h):
         return norm * (np.cos(0.5 * np.pi * d / h) * (d < h)).sum(-1)
     else:
         raise ValueError('kernel not recognized')
-    
+
 
 def test_ball_tree_KDE(n_samples=100, n_features=3):
     np.random.seed(0)
@@ -160,6 +160,7 @@ def test_ball_tree_KDE(n_samples=100, n_features=3):
                    'exponential', 'linear', 'cosine']:
         for h in [0.01, 0.1, 1]:
             dens_true = compute_kernel_slow(Y, X, kernel, h)
+
             def check_results(kernel, h, atol, rtol, breadth_first):
                 dens = bt.kernel_density(Y, h, atol=atol, rtol=rtol,
                                          kernel=kernel,
@@ -230,6 +231,7 @@ def test_ball_tree_pickle():
     for protocol in (0, 1, 2):
         yield check_pickle_protocol, protocol
 
+
 def test_neighbors_heap(n_pts=5, n_nbrs=10):
     heap = NeighborsHeap(n_pts, n_nbrs)
 
@@ -253,7 +255,6 @@ def test_node_heap(n_nodes=50):
     vals = np.random.random(n_nodes).astype(DTYPE)
 
     i1 = np.argsort(vals)
-    vals1 = vals[i1]
     vals2, i2 = nodeheap_sort(vals)
 
     assert_allclose(i1, i2)
@@ -269,7 +270,7 @@ def test_simultaneous_sort(n_rows=10, n_pts=201):
 
     # simultaneous sort rows using function
     simultaneous_sort(dist, ind)
-    
+
     # simultaneous sort rows using numpy
     i = np.argsort(dist2, axis=1)
     row_ind = np.arange(n_rows)[:, None]
@@ -289,47 +290,6 @@ def test_query_haversine():
 
     assert_allclose(dist1, dist2)
     assert_allclose(ind1, ind2)
-
-
-def _test_find_split_dim():
-    # check for several different random seeds
-    for i in range(5):
-        np.random.seed(i)
-        data = np.random.random((50, 5)).astype(DTYPE)
-        indices = np.arange(50, dtype=ITYPE)
-        np.random.shuffle(indices)
-
-        idx_start = 10
-        idx_end = 40
-
-        i_split = find_split_dim(data, indices, idx_start, idx_end)
-        i_split_2 = np.argmax(np.max(data[indices[idx_start:idx_end]], 0) -
-                              np.min(data[indices[idx_start:idx_end]], 0))
-
-        assert_(i_split == i_split_2)
-
-
-def _test_partition_indices():
-    # check for several different random seeds
-    for i in range(5):
-        np.random.seed(i)
-
-        data = np.random.random((50, 5)).astype(DTYPE)
-        indices = np.arange(50, dtype=ITYPE)
-        np.random.shuffle(indices)
-
-        split_dim = 2
-        split_index = 25
-        idx_start = 10
-        idx_end = 40
-
-        partition_indices(data, indices, split_dim,
-                          idx_start, split_index, idx_end)
-    
-        assert_(np.all(data[indices[idx_start:split_index], split_dim]
-                       <= data[indices[split_index], split_dim]) and
-                np.all(data[indices[split_index], split_dim]
-                       <= data[indices[split_index:idx_end], split_dim]))
 
 
 if __name__ == '__main__':
