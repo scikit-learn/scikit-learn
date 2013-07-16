@@ -77,13 +77,13 @@ used:
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> nbrs = NearestNeighbors(n_neighbors=2, algorithm='ball_tree').fit(X)
     >>> distances, indices = nbrs.kneighbors(X)
-    >>> indices
+    >>> indices                                           # doctest: +ELLIPSIS
     array([[0, 1],
            [1, 0],
            [2, 1],
            [3, 4],
            [4, 3],
-           [5, 4]])
+           [5, 4]]...)
     >>> distances
     array([[ 0.        ,  1.        ],
            [ 0.        ,  1.        ],
@@ -125,13 +125,13 @@ have the same interface; we'll show an example of using the KD Tree here:
     >>> import numpy as np
     >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
     >>> kdt = KDTree(X, leaf_size=30, metric='euclidean')
-    >>> kdt.query(X, k=2, return_distance=False)
+    >>> kdt.query(X, k=2, return_distance=False)          # doctest: +ELLIPSIS
     array([[0, 1],
            [1, 0],
            [2, 1],
            [3, 4],
            [4, 3],
-           [5, 4]])
+           [5, 4]]...)
 
 Refer to the :class:`KDTree` and :class:`BallTree` class documentation
 for more information on the options available for neighbors searches,
