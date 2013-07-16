@@ -63,16 +63,10 @@ def test_spectral_biclustering():
             for mat in (S, csr_matrix(S)):
                 for method in ('scale', 'bistochastic', 'log'):
                     for svd_method in ('randomized', 'arpack'):
-                        if svd_method == 'arpack':
-                            # fails with default value
-                            svd_kwargs = {'ncv': 20}
-                        else:
-                            svd_kwargs = {}
                         for mini_batch in (False, True):
                             model = SpectralBiclustering(n_clusters=n_clusters,
                                                          method=method,
                                                          svd_method=svd_method,
-                                                         svd_kwargs=svd_kwargs,
                                                          mini_batch=mini_batch,
                                                          random_state=random_state)
 
