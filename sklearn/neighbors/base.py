@@ -25,7 +25,7 @@ VALID_METRICS = dict(ball_tree=BallTree.valid_metrics,
                      kd_tree=KDTree.valid_metrics,
                      # The following list comes from the
                      # sklearn.metrics.pairwise doc string
-                     brute=(PAIRWISE_DISTANCE_FUNCTIONS.keys() +
+                     brute=(list(PAIRWISE_DISTANCE_FUNCTIONS.keys()) +
                             ['braycurtis', 'canberra', 'chebyshev',
                              'correlation', 'cosine', 'dice', 'hamming',
                              'jaccard', 'kulsinski', 'mahalanobis',
@@ -39,8 +39,10 @@ VALID_METRICS_SPARSE = dict(ball_tree=[],
                             kd_tree=[],
                             brute=PAIRWISE_DISTANCE_FUNCTIONS.keys())
 
+
 class NeighborsWarning(UserWarning):
     pass
+
 
 # Make sure that NeighborsWarning are displayed more than once
 warnings.simplefilter("always", NeighborsWarning)
@@ -196,9 +198,9 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             # A tree approach is better for small number of neighbors,
             # and KDTree is generally faster when available
             if (self.n_neighbors is None
-                   or self.n_neighbors < self._fit_X.shape[0] // 2):
+                    or self.n_neighbors < self._fit_X.shape[0] // 2):
                 if (callable(self.effective_metric_)
-                       or self.effective_metric_ in VALID_METRICS['kd_tree']):
+                        or self.effective_metric_ in VALID_METRICS['kd_tree']):
                     self._fit_method = 'kd_tree'
                 else:
                     self._fit_method = 'ball_tree'
