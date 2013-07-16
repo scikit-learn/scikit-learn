@@ -122,6 +122,10 @@ Changelog
      faster on sparse data (the speedup depends on the sparsity). By
      `Lars Buitinck`_.
 
+   - Python 3 support fixes by `Justin Vincent`_, `Lars Buitinck`_ and
+     `Olivier Grisel`_. All tests now pass under Python 3.3.
+
+
 API changes summary
 -------------------
 
@@ -1985,3 +1989,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Norbert Crombach: https://github.com/norbert
 
 .. _Eustache Diemert: https://github.com/oddskool
+
+.. _Justin Vincent: https://github.com/justinvf
