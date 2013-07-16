@@ -270,7 +270,7 @@ def make_multilabel_classification(n_samples=100, n_features=20, n_classes=5,
 
     return_indicator : bool, optional (default=False),
         If ``True``, return ``Y`` in the binary indicator format, else
-        return a tuple of lists of labels
+        return a tuple of lists of labels.
 
     random_state : int, RandomState instance or None, optional (default=None)
         If int, random_state is the seed used by the random number generator;
