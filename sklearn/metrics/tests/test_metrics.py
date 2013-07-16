@@ -864,17 +864,6 @@ def test_r2_one_case_error():
     assert_raises(ValueError, r2_score, [0], [0])
 
 
-def test_r2_overflow():
-    """r2_score should not overflow on large arrays of dtype=float32."""
-    # Simulate a large array by a small one with extreme values,
-    # but not extreme enough to overflow in the squared difference step.
-    y_32 = np.repeat(np.sqrt(np.finfo(np.float32).max), 10)
-    y_64 = y_32.astype(np.float64)
-    z = np.zeros(10, dtype=np.float32)
-
-    assert_equal(r2_score(y_32, z), r2_score(y_64, z))
-
-
 def test_symmetry():
     """Test the symmetry of score and loss functions"""
     y_true, y_pred, _ = make_prediction(binary=True)
