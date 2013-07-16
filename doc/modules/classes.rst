@@ -13,10 +13,10 @@ uses.
 
 .. _bicluster_ref:
 
-:mod:`sklearn.bicluster`: Biclustering
+:mod:`sklearn.cluster.bicluster`: Biclustering
 ======================================
 
-.. automodule:: sklearn.bicluster
+.. automodule:: sklearn.cluster.bicluster
    :no-members:
    :no-inherited-members:
 
@@ -24,14 +24,14 @@ uses.
 
 Classes
 -------
-.. currentmodule:: sklearn
+.. currentmodule:: sklearn.cluster.bicluster
 
 .. autosummary::
    :toctree: generated/
    :template: class.rst
 
-   bicluster.SpectralBiclustering
-   bicluster.SpectralCoclustering
+   SpectralBiclustering
+   SpectralCoclustering
 
 
 .. _cluster_ref:

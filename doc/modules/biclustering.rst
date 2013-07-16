@@ -5,7 +5,7 @@ Biclustering
 ============
 
 Biclustering can be performed with the module
-:mod:`sklearn.bicluster`. Biclustering algorithms simultaneously
+:mod:`sklearn.cluster.bicluster`. Biclustering algorithms simultaneously
 cluster rows and columns of a data matrix. These clusters of rows and
 columns are known as biclusters. Each determines a submatrix of the
 original data matrix with some desired properties.
@@ -73,7 +73,7 @@ Some models also have `row_labels_` and `column_labels_` attributes.
 These models partition the rows and columns, such as in the block
 diagonal and checkerboard bicluster structures.
 
-.. currentmodule:: sklearn.bicluster
+.. currentmodule:: sklearn.cluster.bicluster
 
 
 .. _spectral_coclustering:

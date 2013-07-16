@@ -21,7 +21,7 @@ import numpy as np
 import pylab as pl
 
 from sklearn.datasets import make_checkerboard
-from sklearn.bicluster import SpectralBiclustering
+from sklearn.cluster import SpectralBiclustering
 
 n_clusters = (4, 3)
 data, row_labels, column_labels = make_checkerboard(
