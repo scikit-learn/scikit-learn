@@ -246,19 +246,19 @@ X is a single real value and the outputs Y are the sine and cosine of X.
    :align: center
 
 The use of multi-output trees for classification is demonstrated in
-:ref:`example_ensemble_plot_forest_multioutput.py`. In this example, the inputs
+:ref:`example_plot_multioutput_face_completion.py`. In this example, the inputs
 X are the pixels of the upper half of faces and the outputs Y are the pixels of
 the lower half of those faces.
 
-.. figure:: ../auto_examples/ensemble/images/plot_forest_multioutput_1.png
-   :target: ../auto_examples/ensemble/plot_forest_multioutput.html
+.. figure:: ../auto_examples/images/plot_multioutput_face_completion_1.png
+   :target: ../auto_examples/plot_multioutput_face_completion.html
    :scale: 75
    :align: center
 
 .. topic:: Examples:
 
  * :ref:`example_tree_plot_tree_regression_multioutput.py`
- * :ref:`example_ensemble_plot_forest_multioutput.py`
+ * :ref:`example_plot_multioutput_face_completion.py`
 
 .. topic:: References:
 
