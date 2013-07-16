@@ -1553,28 +1553,53 @@ cdef class Tree:
         cdef SIZE_t k
         cdef SIZE_t c
 
-        cdef np.ndarray[np.float64_t, ndim=3] out
-        out = np.zeros((n_samples, n_outputs, max_n_classes), dtype=np.float64)
+        cdef np.ndarray[np.float64_t, ndim=2] out
+        cdef np.ndarray[np.float64_t, ndim=3] out_multi
 
-        for i from 0 <= i < n_samples:
-            node_id = 0
+        if n_outputs == 1:
+            out = np.zeros((n_samples, max_n_classes), dtype=np.float64)
 
-            # While node_id not a leaf
-            while children_left[node_id] != _TREE_LEAF: # and children_right[node_id] != _TREE_LEAF:
-                if X[i, feature[node_id]] <= threshold[node_id]:
-                    node_id = children_left[node_id]
-                else:
-                    node_id = children_right[node_id]
+            for i from 0 <= i < n_samples:
+                node_id = 0
 
-            offset_node = node_id * value_stride
-            offset_output = 0
+                # While node_id not a leaf
+                while children_left[node_id] != _TREE_LEAF: # and children_right[node_id] != _TREE_LEAF:
+                    if X[i, feature[node_id]] <= threshold[node_id]:
+                        node_id = children_left[node_id]
+                    else:
+                        node_id = children_right[node_id]
 
-            for k from 0 <= k < n_outputs:
-                for c from 0 <= c < n_classes[k]:
-                    out[i, k, c] = value[offset_node + offset_output + c]
-                offset_output += max_n_classes
+                offset_node = node_id * value_stride
 
-        return out
+                for c from 0 <= c < n_classes[0]:
+                    out[i, c] = value[offset_node + c]
+
+            return out
+
+        else: # n_outputs > 1
+            out_multi = np.zeros((n_samples,
+                                  n_outputs,
+                                  max_n_classes), dtype=np.float64)
+
+            for i from 0 <= i < n_samples:
+                node_id = 0
+
+                # While node_id not a leaf
+                while children_left[node_id] != _TREE_LEAF: # and children_right[node_id] != _TREE_LEAF:
+                    if X[i, feature[node_id]] <= threshold[node_id]:
+                        node_id = children_left[node_id]
+                    else:
+                        node_id = children_right[node_id]
+
+                offset_node = node_id * value_stride
+                offset_output = 0
+
+                for k from 0 <= k < n_outputs:
+                    for c from 0 <= c < n_classes[k]:
+                        out_multi[i, k, c] = value[offset_node + offset_output + c]
+                    offset_output += max_n_classes
+
+            return out_multi
 
     cpdef apply(self, np.ndarray[DTYPE_t, ndim=2] X):
         """Finds the terminal region (=leaf node) for each sample in X."""

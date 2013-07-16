@@ -285,8 +285,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         # Classification
         if isinstance(self, ClassifierMixin):
             if self.n_outputs_ == 1:
-                return self.classes_.take(np.argmax(proba[:, 0], axis=1),
-                                          axis=0)
+                return self.classes_.take(np.argmax(proba, axis=1), axis=0)
 
             else:
                 predictions = np.zeros((n_samples, self.n_outputs_))
@@ -301,7 +300,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         # Regression
         else:
             if self.n_outputs_ == 1:
-                return proba[:, 0, 0]
+                return proba[:, 0]
 
             else:
                 return proba[:, :, 0]
@@ -480,7 +479,7 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         proba = self.tree_.predict(X)
 
         if self.n_outputs_ == 1:
-            proba = proba[:, 0, :self.n_classes_]
+            proba = proba[:, :self.n_classes_]
             normalizer = proba.sum(axis=1)[:, np.newaxis]
             normalizer[normalizer == 0.0] = 1.0
             proba /= normalizer
