@@ -89,11 +89,14 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator)):
     """Base class for spectral biclustering."""
 
     def __init__(self, n_clusters, svd_method, n_svd_vecs, mini_batch,
-                 random_state):
+                 init, n_init, n_jobs, random_state):
         self.n_clusters = n_clusters
         self.svd_method = svd_method
         self.n_svd_vecs = n_svd_vecs
         self.mini_batch = mini_batch
+        self.init = init
+        self.n_init = n_init
+        self.n_jobs = n_jobs
         self.random_state = random_state
 
     def _check_parameters(self):
@@ -142,9 +145,13 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator)):
     def _k_means(self, data, n_clusters):
         if self.mini_batch:
             model = MiniBatchKMeans(n_clusters,
+                                    init=self.init,
+                                    n_init=self.n_init,
                                     random_state=self.random_state)
         else:
-            model = KMeans(n_clusters, random_state=self.random_state)
+            model = KMeans(n_clusters, init=self.init,
+                           n_init=self.n_init, n_jobs=self.n_jobs,
+                           random_state=self.random_state)
         model.fit(data)
         centroid = model.cluster_centers_
         labels = model.labels_
@@ -186,6 +193,28 @@ class SpectralCoclustering(BaseSpectral):
         Whether to use mini-batch k-means, which is faster but may get
         different results.
 
+    init : {'k-means++', 'random' or an ndarray}
+         Method for initialization of k-means algorithm; defaults to
+         'k-means++
+
+    n_init : int, optional, default: 10
+        Number of random initializations that are tried with the
+        k-means algorithm.
+
+        If mini-batch k-means is used, the best initialization is
+        chosen and the algorithm runs once. Otherwise, the algorithm
+        is run for each initialization and the best solution chosen.
+
+    n_jobs : int, optional, default: 1
+        The number of jobs to use for the computation. This works by breaking
+        down the pairwise matrix into n_jobs even slices and computing them in
+        parallel.
+
+        If -1 all CPUs are used. If 1 is given, no parallel computing code is
+        used at all, which is useful for debuging. For n_jobs below -1,
+        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        are used.
+
     random_state : int seed, RandomState instance, or None (default)
         A pseudo random number generator used by the K-Means
         initialization.
@@ -214,12 +243,15 @@ class SpectralCoclustering(BaseSpectral):
 
     """
     def __init__(self, n_clusters=3, svd_method='randomized',
-                 n_svd_vecs=None, mini_batch=False,
-                 random_state=None):
+                 n_svd_vecs=None, mini_batch=False, init='k-means++',
+                 n_init=10, n_jobs=1, random_state=None):
         super(SpectralCoclustering, self).__init__(n_clusters,
                                                    svd_method,
                                                    n_svd_vecs,
                                                    mini_batch,
+                                                   init,
+                                                   n_init,
+                                                   n_jobs,
                                                    random_state)
 
     def _fit(self, X):
@@ -316,12 +348,15 @@ class SpectralBiclustering(BaseSpectral):
     """
     def __init__(self, n_clusters=3, method='bistochastic',
                  n_components=6, n_best=3, svd_method='randomized',
-                 n_svd_vecs=None, mini_batch=False,
-                 random_state=None):
+                 n_svd_vecs=None, mini_batch=False, init='k-means++',
+                 n_init=10, n_jobs=1, random_state=None):
         super(SpectralBiclustering, self).__init__(n_clusters,
                                                    svd_method,
                                                    n_svd_vecs,
                                                    mini_batch,
+                                                   init,
+                                                   n_init,
+                                                   n_jobs,
                                                    random_state)
         self.method = method
         self.n_components = n_components
