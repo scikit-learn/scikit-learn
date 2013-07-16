@@ -4,7 +4,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 
 import scipy
-from scipy.spatial.distance import cdist, pdist, squareform
+from scipy.spatial.distance import cdist
 from sklearn.neighbors.dist_metrics import DistanceMetric
 from nose import SkipTest
 
@@ -35,24 +35,24 @@ class TestMetrics:
         V = np.random.random((d, d))
         VI = np.dot(V, V.T)
 
-        self.metrics = {'euclidean':{},
-                        'cityblock':{},
-                        'minkowski':dict(p=(1, 1.5, 2, 3)),
-                        'chebyshev':{},
-                        'seuclidean':dict(V=(np.random.random(d),)),
-                        'wminkowski':dict(p=(1, 1.5, 3),
-                                          w=(np.random.random(d),)),
-                        'mahalanobis':dict(VI=(VI,)),
-                        'hamming':{},
-                        'canberra':{},
-                        'braycurtis':{}}
+        self.metrics = {'euclidean': {},
+                        'cityblock': {},
+                        'minkowski': dict(p=(1, 1.5, 2, 3)),
+                        'chebyshev': {},
+                        'seuclidean': dict(V=(np.random.random(d),)),
+                        'wminkowski': dict(p=(1, 1.5, 3),
+                                           w=(np.random.random(d),)),
+                        'mahalanobis': dict(VI=(VI,)),
+                        'hamming': {},
+                        'canberra': {},
+                        'braycurtis': {}}
 
         self.bool_metrics = ['matching', 'jaccard', 'dice',
                              'kulsinski', 'rogerstanimoto', 'russellrao',
                              'sokalmichener', 'sokalsneath']
 
     def test_cdist(self):
-        for metric, argdict in self.metrics.iteritems():
+        for metric, argdict in self.metrics.items():
             keys = argdict.keys()
             for vals in itertools.product(*argdict.values()):
                 kwargs = dict(zip(keys, vals))
@@ -62,7 +62,7 @@ class TestMetrics:
         for metric in self.bool_metrics:
             D_true = cdist(self.X1_bool, self.X2_bool, metric)
             yield self.check_cdist_bool, metric, D_true
-            
+
     def check_cdist(self, metric, kwargs, D_true):
         if metric == 'canberra' and cmp_version(scipy.__version__, '0.9') <= 0:
             raise SkipTest("Canberra distance incorrect in scipy < 0.9")
@@ -76,7 +76,7 @@ class TestMetrics:
         assert_allclose(D12, D_true)
 
     def test_pdist(self):
-        for metric, argdict in self.metrics.iteritems():
+        for metric, argdict in self.metrics.items():
             keys = argdict.keys()
             for vals in itertools.product(*argdict.values()):
                 kwargs = dict(zip(keys, vals))
@@ -135,7 +135,7 @@ def test_pyfunc_metric():
 
     assert_allclose(D1, D2)
 
-        
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()
