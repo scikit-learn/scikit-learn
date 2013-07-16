@@ -595,12 +595,29 @@ class SupervisedIntegerMixin(object):
         X : {array-like, sparse matrix, BallTree, KDTree}
             Training data. If array or matrix, shape = [n_samples, n_features]
 
-        y : {array-like, sparse matrix}
-            Target values, array of integer values, shape = [n_samples]
+        y : array of int, shape = [n_samples] or [n_samples, n_outputs]
+            Target values
+
         """
         if not isinstance(X, (KDTree, BallTree)):
             X, y = check_arrays(X, y, sparse_format="csr")
-        self.classes_, self._y = unique(y, return_inverse=True)
+
+        if y.ndim == 1:
+            self.outputs_2d_ = False
+            y = y.reshape((-1, 1))
+        else:
+            self.outputs_2d_ = True
+
+        self.classes_ = []
+        self._y = np.empty_like(y, dtype=np.int)
+        for k in range(self._y.shape[1]):
+            classes, self._y[:, k] = unique(y[:, k], return_inverse=True)
+            self.classes_.append(classes)
+
+        if not self.outputs_2d_:
+            self.classes_ = self.classes_[0]
+            self._y = self._y.ravel()
+
         return self._fit(X)
 
 

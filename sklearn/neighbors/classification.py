@@ -143,16 +143,30 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         X = atleast2d_or_csr(X)
 
         neigh_dist, neigh_ind = self.kneighbors(X)
-        pred_labels = self._y[neigh_ind]
 
+        if not self.outputs_2d_:
+            self._y = self._y.reshape((-1, 1))
+            self.classes_ = [self.classes_]
+
+        n_output = len(self.classes_)
+        n_samples = X.shape[0]
         weights = _get_weights(neigh_dist, self.weights)
 
-        if weights is None:
-            mode, _ = stats.mode(pred_labels, axis=1)
-        else:
-            mode, _ = weighted_mode(pred_labels, weights, axis=1)
+        y_pred = np.empty((n_samples, n_output), dtype=self.classes_[0].dtype)
+        for k, classes_k in enumerate(self.classes_):
+            if weights is None:
+                mode, _ = stats.mode(self._y[neigh_ind, k], axis=1)
+            else:
+                mode, _ = weighted_mode(self._y[neigh_ind, k], weights, axis=1)
 
-        return self.classes_.take(mode.flatten().astype(np.int))
+            y_pred[:, k] = classes_k.take(mode.flatten().astype(np.int))
+
+        if not self.outputs_2d_:
+            y_pred = y_pred.ravel()
+            self._y = self._y.ravel()
+            self.classes_ = self.classes_[0]
+
+        return y_pred
 
     def predict_proba(self, X):
         """Return probability estimates for the test data X.
@@ -171,26 +185,41 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         X = atleast2d_or_csr(X)
 
         neigh_dist, neigh_ind = self.kneighbors(X)
-        pred_labels = self._y[neigh_ind]
+
+        if not self.outputs_2d_:
+            self._y = self._y.reshape((-1, 1))
+            self.classes_ = [self.classes_]
+
+        n_samples = X.shape[0]
 
         weights = _get_weights(neigh_dist, self.weights)
-
         if weights is None:
-            weights = np.ones_like(pred_labels)
+            weights = np.ones_like(neigh_ind)
 
-        probabilities = np.zeros((X.shape[0], self.classes_.size))
-
-        # a simple ':' index doesn't work right
         all_rows = np.arange(X.shape[0])
+        probabilities = []
+        for k, classes_k in enumerate(self.classes_):
+            pred_labels = self._y[:, k][neigh_ind]
+            proba_k = np.zeros((n_samples, classes_k.size))
 
-        for i, idx in enumerate(pred_labels.T):  # loop is O(n_neighbors)
-            probabilities[all_rows, idx] += weights[:, i]
+            # a simple ':' index doesn't work right
+            for i, idx in enumerate(pred_labels.T):  # loop is O(n_neighbors)
+                proba_k[all_rows, idx] += weights[:, i]
+            print proba_k
 
-        # normalize 'votes' into real [0,1] probabilities
-        probabilities = (probabilities.T / probabilities.sum(axis=1)).T
+            # normalize 'votes' into real [0,1] probabilities
+            normalizer = proba_k.sum(axis=1)[:, np.newaxis]
+            normalizer[normalizer == 0.0] = 1.0
+            proba_k /= normalizer
+
+            probabilities.append(proba_k)
+
+        if not self.outputs_2d_:
+            self._y = self._y.ravel()
+            self.classes_ = self.classes_[0]
+            probabilities = probabilities[0]
 
         return probabilities
-
 
 class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
                                 SupervisedIntegerMixin, ClassifierMixin):
