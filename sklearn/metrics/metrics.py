@@ -2392,8 +2392,8 @@ def r2_score(y_true, y_pred):
     if len(y_true) == 1:
         raise ValueError("r2_score can only be computed given more than one"
                          " sample.")
-    numerator = ((y_true - y_pred) ** 2).sum()
-    denominator = ((y_true - y_true.mean(axis=0)) ** 2).sum()
+    numerator = ((y_true - y_pred) ** 2).sum(dtype=np.float64)
+    denominator = ((y_true - y_true.mean(axis=0)) ** 2).sum(dtype=np.float64)
 
     if denominator == 0.0:
         if numerator == 0.0:
