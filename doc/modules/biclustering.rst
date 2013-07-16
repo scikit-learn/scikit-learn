@@ -25,10 +25,6 @@ with three rows and two columns induces a submatrix of shape `(3, 2)`::
 For visualization purposes, given a bicluster, the rows and columns of
 the data matrix may be rearranged to make the bicluster contiguous.
 
-.. figure:: ./images/bicluster_submatrix.png
-   :align: center
-   :scale: 75%
-
 Algorithms differ in how they define biclusters. Some of the
 common types include:
 
@@ -43,25 +39,13 @@ biclusters, which leads to different bicluster structures.
 Block diagonal or checkerboard structures occur when rows and columns
 are divided into partitions. If each row and each column belongs to
 exactly one bicluster, then rearranging the data matrix reveals the
-biclusters on the diagonal:
-
-.. figure:: ./images/partitioned_biclusters.png
-   :align: center
-   :scale: 75%
+biclusters on the diagonal.
 
 In the checkerboard case, each row belongs to all column clusters, and
-each column belongs to all row clusters:
-
-.. figure:: ./images/checkerboard_biclusters.png
-   :align: center
-   :scale: 75%
+each column belongs to all row clusters.
 
 Many other structures have been created. In the general case,
-each row and column may belong to any number of biclusters:
-
-.. figure:: ./images/unrestricted_biclusters.png
-   :align: center
-   :scale: 75%
+each row and column may belong to any number of biclusters.
 
 After fitting a model, row and column cluster membership can be found
 in the `rows_` and `columns_` attributes. `rows_[i]` is a binary vector
@@ -73,6 +57,15 @@ Some models also have `row_labels_` and `column_labels_` attributes.
 These models partition the rows and columns, such as in the block
 diagonal and checkerboard bicluster structures.
 
+.. note::
+
+    Biclustering has many other names in different fields including
+    co-clustering, two-mode clustering two-way clustering, block
+    clustering, coupled two-way clustering, etc. The names of some
+    algorithms, such as the Spectral Co-Clustering algorithm, reflect
+    these alternate names.
+
+
 .. currentmodule:: sklearn.cluster.bicluster
 
 
@@ -81,40 +74,19 @@ diagonal and checkerboard bicluster structures.
 Spectral Co-Clustering
 ======================
 
-The :class:`SpectralCoclustering` algorithm treats the input data
-matrix as a bipartite graph: the rows and columns of the matrix
-correspond to the two sets of vertices, and each entry corresponds to
-an edge between a row and a column. The algorithm approximates the
-normalized cut of this graph to find heavy subgraphs.
+The :class:`SpectralCoclustering` algorithm finds biclusters with
+values higher than those in the corresponding other rows and columns.
+Each row and each column belongs to exactly one bicluster, so
+rearranging the rows and columns to make partitions contiguous reveals
+these high values along the diagonal:
 
-For the following data matrix:
+.. note::
 
-.. figure:: ./images/bipartite_matrix.png
-   :align: center
-   :scale: 45%
-
-the corresponding bipartite graph is:
-
-.. figure:: ./images/bipartite_graph.png
-   :align: center
-   :scale: 45%
-
-The normalized cut of this bipartite graph is the partitioning of
-nodes into equal sizes so that edges within partitions have large
-weighs and edges between partitions have light weights. After
-clustering, the nodes of the graph may be rearranged to show these
-partitions:
-
-.. figure:: ./images/bipartite_graph_clustered.png
-   :align: center
-   :scale: 45%
-
-The corresponding rearrangement of the data matrix shows the
-characteristic block diagonal structure:
-
-.. figure:: ./images/bipartite_matrix_clustered.png
-   :align: center
-   :scale: 45%
+    The algorithm treats the input data matrix as a bipartite graph: the
+    rows and columns of the matrix correspond to the two sets of vertices,
+    and each entry corresponds to an edge between a row and a column. The
+    algorithm approximates the normalized cut of this graph to find heavy
+    subgraphs.
 
 
 Mathematical formulation
@@ -179,17 +151,16 @@ Spectral Biclustering
 =====================
 
 The :class:`SpectralBiclustering` algorithm assumes that the input
-data matrix has a hidden checkerboard structure. For instance, if
-there are two row partitions and three column partitions, each row
-will belong to three biclusters, and each column will belong to two
-biclusters. This partitioning reveals the checkerboard structure:
+data matrix has a hidden checkerboard structure. The rows and columns
+of a matrix with this structure may be partitioned so that the entries
+of any bicluster in the Cartesian product of row clusters and column
+clusters is are approximately constant. For instance, if there are two
+row partitions and three column partitions, each row will belong to
+three biclusters, and each column will belong to two biclusters.
 
-.. figure:: ./images/checkerboard_example.png
-   :align: center
-   :scale: 30%
-
-The algorithm tries to partition the rows and columns to uncover this
-structure.
+The algorithm partitions the rows and columns of a matrix so that a
+corresponding blockwise-constant checkerboard matrix provides a good
+approximation to the original matrix.
 
 
 Mathematical formulation
