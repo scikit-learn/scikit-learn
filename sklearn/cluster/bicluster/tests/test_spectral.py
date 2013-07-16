@@ -33,7 +33,10 @@ def test_spectral_coclustering():
     """Test Dhillon's Spectral CoClustering on a simple problem."""
     param_grid = {'svd_method': ['randomized', 'arpack'],
                   'n_svd_vecs': [None, 20],
-                  'mini_batch': [False, True]}
+                  'mini_batch': [False, True],
+                  'init': ['k-means++'],
+                  'n_init': [10],
+                  'n_jobs': [1]}
     random_state = 0
     for noise in (0, 0.5):
         S, rows, cols = make_biclusters((30, 30), 3, noise=noise,
@@ -61,7 +64,10 @@ def test_spectral_biclustering():
     param_grid = {'method': ['scale', 'bistochastic', 'log'],
                   'svd_method': ['randomized', 'arpack'],
                   'n_svd_vecs': [None, 20],
-                  'mini_batch': [False, True]}
+                  'mini_batch': [False, True],
+                  'init': ['k-means++'],
+                  'n_init': [10],
+                  'n_jobs': [1]}
     random_state = 0
     for noise in (0.5, 0):
         S, rows, cols = make_checkerboard((30, 30), 3, noise=noise,
