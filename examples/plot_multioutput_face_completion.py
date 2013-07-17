@@ -19,7 +19,6 @@ from sklearn.datasets import fetch_olivetti_faces
 from sklearn.utils.validation import check_random_state
 
 from sklearn.ensemble import ExtraTreesRegressor
-from sklearn.ensemble import AdaBoostRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import RidgeCV
