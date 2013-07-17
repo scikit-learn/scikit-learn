@@ -25,8 +25,8 @@ from sklearn.utils.testing import assert_array_almost_equal
 from scipy.stats import distributions
 
 from sklearn.base import BaseEstimator
-from sklearn.datasets.samples_generator import make_classification
-from sklearn.datasets.samples_generator import make_blobs
+from sklearn.datasets import make_classification
+from sklearn.datasets import make_blobs
 from sklearn.datasets import make_multilabel_classification
 from sklearn.grid_search import (GridSearchCV, RandomizedSearchCV,
                                  ParameterGrid, ParameterSampler)
