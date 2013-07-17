@@ -1,7 +1,5 @@
 """Testing for Spectral Biclustering methods"""
 
-from itertools import permutations
-
 import numpy as np
 from scipy.sparse import csr_matrix, issparse
 
@@ -12,7 +10,6 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_raises
-from sklearn.utils.testing import SkipTest
 
 from sklearn.cluster.bicluster import SpectralCoclustering
 from sklearn.cluster.bicluster import SpectralBiclustering
@@ -20,13 +17,9 @@ from sklearn.cluster.bicluster.spectral import _scale_normalize
 from sklearn.cluster.bicluster.spectral import _bistochastic_normalize
 from sklearn.cluster.bicluster.spectral import _log_normalize
 
+from sklearn.metrics.cluster.bicluster import consensus_score
+
 from sklearn.datasets import make_biclusters, make_checkerboard
-
-
-def _check_label_permutations(a, b, n_labels):
-    # TODO: replace with hungarian algorithm, when it is implemented
-    assert(np.any(np.array(p)[a] == b
-                  for p in permutations(range(n_labels))))
 
 
 def test_spectral_coclustering():
@@ -53,14 +46,12 @@ def test_spectral_coclustering():
                 assert_equal(model.rows_.shape, (3, 30))
                 assert_array_equal(model.rows_.sum(axis=0), np.ones(30))
                 assert_array_equal(model.columns_.sum(axis=0), np.ones(30))
-                _check_label_permutations(model.rows_, rows, 3)
-                _check_label_permutations(model.columns_, cols, 3)
+                assert_equal(consensus_score(model.biclusters_,
+                                             (rows, cols)), 1)
 
 
 def test_spectral_biclustering():
     """Test Kluger methods on a checkerboard dataset."""
-    raise SkipTest('Permutations are slow. Skipping until'
-                   ' faster matching algorithm is available.')
     param_grid = {'method': ['scale', 'bistochastic', 'log'],
                   'svd_method': ['randomized', 'arpack'],
                   'n_svd_vecs': [None, 20],
@@ -69,7 +60,7 @@ def test_spectral_biclustering():
                   'n_init': [10],
                   'n_jobs': [1]}
     random_state = 0
-    for noise in (0.5, 0):
+    for noise in (0.01, 0.5):
         S, rows, cols = make_checkerboard((30, 30), 3, noise=noise,
                                           random_state=random_state)
         for n_clusters in ((3, 3), 3):
@@ -92,8 +83,8 @@ def test_spectral_biclustering():
                                        np.repeat(3, 30))
                     assert_array_equal(model.columns_.sum(axis=0),
                                        np.repeat(3, 30))
-                    _check_label_permutations(model.rows_, rows, 3)
-                    _check_label_permutations(model.columns_, cols, 3)
+                    assert_equal(consensus_score(model.biclusters_,
+                                                 (rows, cols)), 1)
 
 
 def _do_scale_test(scaled):
