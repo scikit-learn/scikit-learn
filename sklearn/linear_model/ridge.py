@@ -383,10 +383,7 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
         return pairwise_kernels(X, Y, metric=self.kernel,
                                 filter_params=True, **params)
 
-    def fit(self, X, y, sample_weight=1.0):
-        X = safe_asarray(X, dtype=np.float)
-        y = np.asarray(y, dtype=np.float)
-
+    def _get_fit_intercept(self):
         if self.kernel != "linear":
             if self.fit_intercept == "auto":
                 fit_intercept = False
@@ -395,6 +392,13 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
                                  "non-linear kernel.")
         else:
             fit_intercept = self.fit_intercept
+        return fit_intercept
+
+    def fit(self, X, y, sample_weight=1.0):
+        X = safe_asarray(X, dtype=np.float)
+        y = np.asarray(y, dtype=np.float)
+
+        fit_intercept = self._get_fit_intercept()
 
         X, y, X_mean, y_mean, X_std = self._center_data(
             X, y, fit_intercept, self.normalize, self.copy_X,
@@ -417,6 +421,50 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
         self._set_intercept(X_mean, y_mean, X_std, fit_intercept)
 
         return self
+
+    def decision_function(self, X):
+        """Decision function of ridge regression.
+
+        Parameters
+        ----------
+        X : numpy array of shape [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = [n_samples] or [n_samples, n_targets]
+            Returns predicted values.
+        """
+        X = safe_asarray(X)
+        if self.kernel == "linear":
+            return safe_sparse_dot(X, self.coef_.T,
+                                   dense_output=True) + self.intercept_
+        else:
+            K = self._get_kernel(X, self.X_fit_)
+            return np.dot(K, self.dual_coef_)
+
+
+class _BaseRidgeClassifier(LinearClassifierMixin):
+
+    def decision_function(self, X):
+        """Decision function of ridge classification.
+
+        Parameters
+        ----------
+        X : numpy array of shape [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = [n_samples, n_classes]
+            Returns predicted values.
+        """
+        X = safe_asarray(X)
+        if self.kernel == "linear":
+            scores = safe_sparse_dot(X, self.coef_.T,
+                                   dense_output=True) + self.intercept_
+        else:
+            K = self._get_kernel(X, self.X_fit_)
+            scores = np.dot(K, self.dual_coef_)
+        return scores.ravel() if scores.shape[1] == 1 else scores
 
 
 class Ridge(_BaseRidge, RegressorMixin):
@@ -554,28 +602,8 @@ class Ridge(_BaseRidge, RegressorMixin):
         """
         return super(Ridge, self).fit(X, y, sample_weight=sample_weight)
 
-    def decision_function(self, X):
-        """Decision function of ridge regression.
 
-        Parameters
-        ----------
-        X : numpy array of shape [n_samples, n_features]
-
-        Returns
-        -------
-        C : array, shape = [n_samples] or [n_samples, n_targets]
-            Returns predicted values.
-        """
-        X = safe_asarray(X)
-        if self.kernel == "linear":
-            return safe_sparse_dot(X, self.coef_.T,
-                                   dense_output=True) + self.intercept_
-        else:
-            K = self._get_kernel(X, self.X_fit_)
-            return np.dot(K, self.dual_coef_)
-
-
-class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
+class RidgeClassifier(_BaseRidgeClassifier, _BaseRidge):
     """Classifier using Ridge regression.
 
     Parameters
@@ -696,33 +724,12 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
         super(RidgeClassifier, self).fit(X, Y, sample_weight=sample_weight)
         return self
 
-    def decision_function(self, X):
-        """Decision function of ridge classification.
-
-        Parameters
-        ----------
-        X : numpy array of shape [n_samples, n_features]
-
-        Returns
-        -------
-        C : array, shape = [n_samples, n_classes]
-            Returns predicted values.
-        """
-        X = safe_asarray(X)
-        if self.kernel == "linear":
-            scores = safe_sparse_dot(X, self.coef_.T,
-                                   dense_output=True) + self.intercept_
-        else:
-            K = self._get_kernel(X, self.X_fit_)
-            scores = np.dot(K, self.dual_coef_)
-        return scores.ravel() if scores.shape[1] == 1 else scores
-
     @property
     def classes_(self):
         return self._label_binarizer.classes_
 
 
-class _RidgeGCV(LinearModel):
+class _RidgeGCV(_BaseRidge):
     """Ridge regression with built-in Generalized Cross-Validation
 
     It allows efficient Leave-One-Out cross-validation.
@@ -763,7 +770,9 @@ class _RidgeGCV(LinearModel):
 
     def __init__(self, alphas=[0.1, 1.0, 10.0], fit_intercept=True,
                  normalize=False, score_func=None, loss_func=None,
-                 copy_X=True, gcv_mode=None, store_cv_values=False):
+                 copy_X=True, gcv_mode=None, store_cv_values=False,
+                 kernel="linear", gamma=None, degree=3, coef0=1,
+                 kernel_params=None):
         self.alphas = np.asarray(alphas)
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -772,10 +781,15 @@ class _RidgeGCV(LinearModel):
         self.copy_X = copy_X
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
+        self.kernel = kernel
+        self.kernel_params = kernel_params
+        self.gamma = gamma
+        self.degree = degree
+        self.coef0 = coef0
 
     def _pre_compute(self, X, y):
         # even if X is very sparse, K is usually very dense
-        K = safe_sparse_dot(X, X.T, dense_output=True)
+        K = self._get_kernel(X)
         v, Q = linalg.eigh(K)
         QT_y = np.dot(Q.T, y)
         return v, Q, QT_y
@@ -860,15 +874,19 @@ class _RidgeGCV(LinearModel):
 
         n_samples, n_features = X.shape
 
+        fit_intercept = self._get_fit_intercept()
+
         X, y, X_mean, y_mean, X_std = LinearModel._center_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X,
+            X, y, fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
 
         gcv_mode = self.gcv_mode
         with_sw = len(np.shape(sample_weight))
 
         if gcv_mode is None or gcv_mode == 'auto':
-            if sparse.issparse(X) or n_features > n_samples or with_sw:
+            if self.kernel != "linear":
+                gcv_mode = 'eigen'
+            elif sparse.issparse(X) or n_features > n_samples or with_sw:
                 gcv_mode = 'eigen'
             else:
                 gcv_mode = 'svd'
@@ -914,10 +932,12 @@ class _RidgeGCV(LinearModel):
             best = np.argmax(out) if self.score_func else np.argmin(out)
 
         self.alpha_ = self.alphas[best]
-        self.dual_coef_ = C[best]
-        self.coef_ = safe_sparse_dot(self.dual_coef_.T, X)
+        if self.kernel == "linear":
+            self.coef_ = safe_sparse_dot(C[best].T, X)
+        else:
+            self.dual_coef_ = C[best]
 
-        self._set_intercept(X_mean, y_mean, X_std)
+        self._set_intercept(X_mean, y_mean, X_std, fit_intercept)
 
         if self.store_cv_values:
             if len(y.shape) == 1:
@@ -929,11 +949,12 @@ class _RidgeGCV(LinearModel):
         return self
 
 
-class _BaseRidgeCV(LinearModel):
+class _BaseRidgeCV(_BaseRidge):
     def __init__(self, alphas=np.array([0.1, 1.0, 10.0]),
-                 fit_intercept=True, normalize=False, score_func=None,
+                 fit_intercept="auto", normalize=False, score_func=None,
                  loss_func=None, cv=None, gcv_mode=None,
-                 store_cv_values=False):
+                 store_cv_values=False, kernel="linear", gamma=None, degree=3,
+                 coef0=1, kernel_params=None):
         self.alphas = alphas
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -942,6 +963,11 @@ class _BaseRidgeCV(LinearModel):
         self.cv = cv
         self.gcv_mode = gcv_mode
         self.store_cv_values = store_cv_values
+        self.kernel = kernel
+        self.kernel_params = kernel_params
+        self.gamma = gamma
+        self.degree = degree
+        self.coef0 = coef0
 
     def fit(self, X, y, sample_weight=1.0):
         """Fit Ridge regression model
@@ -968,7 +994,13 @@ class _BaseRidgeCV(LinearModel):
                                   score_func=self.score_func,
                                   loss_func=self.loss_func,
                                   gcv_mode=self.gcv_mode,
-                                  store_cv_values=self.store_cv_values)
+                                  store_cv_values=self.store_cv_values,
+                                  kernel=self.kernel,
+                                  kernel_params=self.kernel_params,
+                                  gamma=self.gamma,
+                                  degree=self.degree,
+                                  coef0=self.coef0)
+
             estimator.fit(X, y, sample_weight=sample_weight)
             self.alpha_ = estimator.alpha_
             if self.store_cv_values:
@@ -982,13 +1014,23 @@ class _BaseRidgeCV(LinearModel):
             #        too!
             #fit_params = {'sample_weight' : sample_weight}
             fit_params = {}
-            gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept),
+            gs = GridSearchCV(Ridge(fit_intercept=self.fit_intercept,
+                                    kernel=self.kernel,
+                                    kernel_params=self.kernel_params,
+                                    gamma=self.gamma,
+                                    degree=self.degree,
+                                    coef0=self.coef0),
                               parameters, fit_params=fit_params, cv=self.cv)
             gs.fit(X, y)
             estimator = gs.best_estimator_
             self.alpha_ = gs.best_estimator_.alpha
 
-        self.coef_ = estimator.coef_
+        if self.kernel == "linear":
+            self.coef_ = estimator.coef_
+        else:
+            self.dual_coef_ = estimator.dual_coef_
+            self.X_fit_ = X
+
         self.intercept_ = estimator.intercept_
 
         return self
@@ -1075,7 +1117,7 @@ class RidgeCV(_BaseRidgeCV, RegressorMixin):
     pass
 
 
-class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
+class RidgeClassifierCV(_BaseRidgeClassifier, _BaseRidgeCV):
     """Ridge classifier with built-in cross-validation.
 
     By default, it performs Generalized Cross-Validation, which is a form of
@@ -1145,12 +1187,15 @@ class RidgeClassifierCV(LinearClassifierMixin, _BaseRidgeCV):
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
     """
-    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept=True,
+    def __init__(self, alphas=np.array([0.1, 1.0, 10.0]), fit_intercept="auto",
                  normalize=False, score_func=None, loss_func=None, cv=None,
-                 class_weight=None):
+                 class_weight=None, kernel="linear", gamma=None, degree=3,
+                 coef0=1, kernel_params=None):
         super(RidgeClassifierCV, self).__init__(
             alphas=alphas, fit_intercept=fit_intercept, normalize=normalize,
-            score_func=score_func, loss_func=loss_func, cv=cv)
+            score_func=score_func, loss_func=loss_func, cv=cv,
+            kernel=kernel, gamma=gamma, degree=degree, coef0=coef0,
+            kernel_params=kernel_params)
         self.class_weight = class_weight
 
     def fit(self, X, y, sample_weight=1.0, class_weight=None):
