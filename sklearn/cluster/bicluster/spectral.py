@@ -11,7 +11,7 @@ import numpy as np
 from scipy.sparse import dia_matrix
 from scipy.sparse import issparse
 
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, BiclusterMixin
 from sklearn.externals import six
 from sklearn.utils.arpack import svds
 from sklearn.cluster import KMeans
@@ -85,7 +85,8 @@ def _log_normalize(X):
     return L - row_avg - col_avg + avg
 
 
-class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator)):
+class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
+                                      BiclusterMixin)):
     """Base class for spectral biclustering."""
 
     def __init__(self, n_clusters, svd_method, n_svd_vecs, mini_batch,
