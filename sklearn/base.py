@@ -344,6 +344,35 @@ class ClusterMixin(object):
         return self.labels_
 
 
+class BiclusterMixin(object):
+    """Mixin class for all bicluster estimators in scikit-learn"""
+
+    def get_indices(self, i):
+        """Returns the row and column indices of the `i`th bicluster.
+
+        Only works if ``rows_`` and ``columns`` attributes exist.
+
+        """
+        row_idx = np.nonzero(self.rows_[i])[0]
+        col_idx = np.nonzero(self.columns_[i])[0]
+        return row_idx, col_idx
+
+    def get_shape(self, i):
+        """Returns shape of bicluster `i`."""
+        indices = self.get_indices(i)
+        return tuple(i.shape[0] for i in indices)
+
+    def get_bicluster(self, i, data):
+        """Returns the submatrix corresponding to bicluster `i`.
+
+        Works with sparse matrices. Only works if ``rows_`` and
+        ``columns`` attributes exist.
+
+        """
+        rows, cols = self.get_indices(i)
+        return data[rows, :][:, cols]
+
+
 ###############################################################################
 class TransformerMixin(object):
     """Mixin class for all transformers in scikit-learn."""
