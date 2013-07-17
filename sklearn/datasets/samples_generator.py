@@ -1339,11 +1339,11 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
     X : array of shape `shape`
         The generated array.
 
-    row_labels : array of shape (X.shape[0],)
-        The integer labels for membership of each row.
+    rows_ : array of shape (n_clusters, X.shape[0],)
+        The indicators for cluster membership of each row.
 
-    col_labels : array of shape (X.shape[1],)
-        The integer labels for membership of each column.
+    cols_ : array of shape (n_clusters, X.shape[1],)
+        The indicators for cluster membership of each column.
 
     References
     ----------
@@ -1386,7 +1386,10 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
         row_labels = row_labels[row_idx]
         col_labels = col_labels[col_idx]
 
-    return result, row_labels, col_labels
+    rows = np.vstack(row_labels == c for c in range(n_clusters))
+    cols = np.vstack(col_labels == c for c in range(n_clusters))
+
+    return result, rows, cols
 
 
 def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
@@ -1425,11 +1428,12 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
     X : array of shape `shape`
         The generated array.
 
-    row_labels : array of shape (X.shape[0],)
-        The integer labels for membership of each row.
+    rows_ : array of shape (n_clusters, X.shape[0],)
+        The indicators for cluster membership of each row.
 
-    col_labels : array of shape (X.shape[1],)
-        The integer labels for membership of each column.
+    cols_ : array of shape (n_clusters, X.shape[1],)
+        The indicators for cluster membership of each column.
+
 
     References
     ----------
@@ -1476,4 +1480,11 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
         row_labels = row_labels[row_idx]
         col_labels = col_labels[col_idx]
 
-    return result, row_labels, col_labels
+    rows = np.vstack(row_labels == label
+                     for label in range(n_row_clusters)
+                     for _ in range(n_col_clusters))
+    cols = np.vstack(col_labels == label
+                     for _ in range(n_row_clusters)
+                     for label in range(n_col_clusters))
+
+    return result, rows, cols

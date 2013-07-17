@@ -198,16 +198,14 @@ def test_make_s_curve():
 
 
 def test_make_biclusters():
-    X, row_labels, col_labels = make_biclusters(
+    X, rows, cols = make_biclusters(
         shape=(100, 100), n_clusters=4, shuffle=True, random_state=0)
     assert_equal(X.shape, (100, 100), "X shape mismatch")
-    assert_equal(row_labels.shape, (100,), "row labels mismatch")
-    assert_equal(col_labels.shape, (100,), "column labels mismatch")
-    assert_array_equal(np.unique(row_labels), np.arange(4))
-    assert_array_equal(np.unique(col_labels), np.arange(4))
+    assert_equal(rows.shape, (4, 100), "rows shape mismatch")
+    assert_equal(cols.shape, (4, 100,), "columns shape mismatch")
     assert_all_finite(X)
-    assert_all_finite(row_labels)
-    assert_all_finite(col_labels)
+    assert_all_finite(rows)
+    assert_all_finite(cols)
 
     X2, _, _ = make_biclusters(shape=(100, 100), n_clusters=4,
                                shuffle=True, random_state=0)
@@ -215,20 +213,18 @@ def test_make_biclusters():
 
 
 def test_make_checkerboard():
-    X, row_labels, col_labels = make_checkerboard(
+    X, rows, cols = make_checkerboard(
         shape=(100, 100), n_clusters=(20, 5),
         shuffle=True, random_state=0)
     assert_equal(X.shape, (100, 100), "X shape mismatch")
-    assert_equal(row_labels.shape, (100,), "row labels mismatch")
-    assert_equal(col_labels.shape, (100,), "column labels mismatch")
-    assert_array_equal(np.unique(row_labels), np.arange(20))
-    assert_array_equal(np.unique(col_labels), np.arange(5))
+    assert_equal(rows.shape, (20, 100), "rows shape mismatch")
+    assert_equal(cols.shape, (5, 100,), "columns shape mismatch")
 
-    X, row_labels, col_labels = make_checkerboard(
+    X, rows, cols = make_checkerboard(
         shape=(100, 100), n_clusters=2, shuffle=True, random_state=0)
     assert_all_finite(X)
-    assert_all_finite(row_labels)
-    assert_all_finite(col_labels)
+    assert_all_finite(rows)
+    assert_all_finite(cols)
 
     X1, _, _ = make_checkerboard(shape=(100, 100), n_clusters=2,
                                  shuffle=True, random_state=0)
