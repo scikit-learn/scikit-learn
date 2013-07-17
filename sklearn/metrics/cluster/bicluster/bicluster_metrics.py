@@ -7,12 +7,14 @@ from sklearn.utils.validation import check_arrays
 
 
 def _check_rows_and_columns(a, b):
+    """Unpacks the row and column arrays and checks their shape."""
     a_rows, a_cols = check_arrays(*a)
     b_rows, b_cols = check_arrays(*b)
     return a_rows, a_cols, b_rows, b_cols
 
 
 def _jaccard(a_rows, a_cols, b_rows, b_cols):
+    """Jaccard coefficient on the elements of the two biclusters."""
     intersection = ((a_rows * b_rows).sum() *
                     (a_cols * b_cols).sum())
 
@@ -23,6 +25,12 @@ def _jaccard(a_rows, a_cols, b_rows, b_cols):
 
 
 def _pairwise_similarity(a, b):
+    """Computes pairwise similarity matrix.
+
+    result[i, j] is the Jaccard coefficient of a's bicluster i and b's
+    bicluster j.
+
+    """
     a_rows, a_cols, b_rows, b_cols = _check_rows_and_columns(a, b)
     n_a = a_rows.shape[0]
     n_b = b_rows.shape[0]
