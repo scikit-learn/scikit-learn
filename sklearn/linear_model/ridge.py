@@ -10,6 +10,7 @@ Ridge regression
 
 from abc import ABCMeta, abstractmethod
 import warnings
+from numbers import Number
 
 import numpy as np
 from scipy import linalg
@@ -24,9 +25,10 @@ from ..utils import compute_class_weight
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 from ..externals import six
-from numbers import Number
+from ..metrics.pairwise import pairwise_kernels
 
 
+# All solvers assume y is a 2d array.
 def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3):
     n_samples, n_features = X.shape
     X1 = sp_linalg.aslinearoperator(X)
@@ -164,9 +166,39 @@ def _solve_svd(X, y, alpha):
     return np.dot(Vt.T, d_UT_y).T
 
 
+def _check_params(X, y, alpha):
+    n_samples = X.shape[0]
+
+    if y.ndim > 2:
+        raise ValueError("Target y has the wrong shape %s" % str(y.shape))
+
+    ravel = False
+    if y.ndim == 1:
+        y = y.reshape(-1, 1)
+        ravel = True
+
+    n_samples_, n_targets = y.shape
+
+    if n_samples != n_samples_:
+        raise ValueError("Number of samples in X and y does not correspond:"
+                         " %d != %d" % (n_samples, n_samples_))
+
+    # There should be either 1 or n_targets penalties
+    alpha = safe_asarray(alpha).ravel()
+    if alpha.size not in [1, n_targets]:
+        raise ValueError("Number of targets and number of penalties "
+                         "do not correspond: %d != %d"
+                         % (alpha.size, n_targets))
+
+    if alpha.size == 1 and n_targets > 1:
+        alpha = np.repeat(alpha, n_targets)
+
+    return y, alpha, ravel
+
+
 def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                      max_iter=None, tol=1e-3):
-    """Solve the ridge equation by the method of normal equations.
+    """Solve the ridge regression problem (without intercept).
 
     Parameters
     ----------
@@ -225,25 +257,14 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
     -----
     This function won't compute the intercept.
     """
-
     n_samples, n_features = X.shape
 
-    if y.ndim > 2:
-        raise ValueError("Target y has the wrong shape %s" % str(y.shape))
-
-    ravel = False
-    if y.ndim == 1:
-        y = y.reshape(-1, 1)
-        ravel = True
-
-    n_samples_, n_targets = y.shape
-
-    if n_samples != n_samples_:
-        raise ValueError("Number of samples in X and y does not correspond:"
-                         " %d != %d" % (n_samples, n_samples_))
+    # Check parameters
+    y, alpha, ravel = _check_params(X, y, alpha)
 
     has_sw = isinstance(sample_weight, np.ndarray) or sample_weight != 1.0
 
+    # Check solvers
     if solver == 'auto':
         # cholesky if it's a dense array and cg in
         # any other case
@@ -262,19 +283,10 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
                       fall back to dense_cholesky.""" % solver)
         solver = 'dense_cholesky'
 
-    # There should be either 1 or n_targets penalties
-    alpha = safe_asarray(alpha).ravel()
-    if alpha.size not in [1, n_targets]:
-        raise ValueError("Number of targets and number of penalties "
-                         "do not correspond: %d != %d"
-                         % (alpha.size, n_targets))
-
-    if alpha.size == 1 and n_targets > 1:
-        alpha = np.repeat(alpha, n_targets)
-
     if solver not in ('sparse_cg', 'dense_cholesky', 'svd', 'lsqr'):
         ValueError('Solver %s not understood' % solver)
 
+    # Solve ridge regression
     if solver == 'sparse_cg':
         coef = _solve_sparse_cg(X, y, alpha, max_iter, tol)
 
@@ -309,11 +321,45 @@ def ridge_regression(X, y, alpha, sample_weight=1.0, solver='auto',
     return coef
 
 
+def kernel_ridge_regression(K, y, alpha, sample_weight=1.0):
+    """Solve the kernel ridge regression problem (without intercept).
+
+    Parameters
+    ----------
+    K : array-like
+        shape = [n_samples, n_samples]
+        Kernel matrix
+
+    y : array-like, shape = [n_samples] or [n_samples, n_targets]
+        Target values
+
+    alpha : {float, array-like},
+        shape = [n_targets] if array-like
+        The l_2 penalty to be used. If an array is passed, penalties are
+        assumed to be specific to targets
+
+    sample_weight : float or numpy array of shape [n_samples]
+        Individual weights for each sample
+    """
+    y, alpha, ravel = _check_params(K, y, alpha)
+
+    dual_coef = _solve_dense_cholesky_kernel(K, y, alpha,
+                                             sample_weight=sample_weight)
+
+    if ravel:
+        # When y was passed as a 1d-array, we flatten the coefficients.
+        dual_coef = dual_coef.ravel()
+
+    return dual_coef
+
+
 class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
 
     @abstractmethod
-    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-                 copy_X=True, max_iter=None, tol=1e-3, solver="auto"):
+    def __init__(self, alpha=1.0, fit_intercept="auto", normalize=False,
+                 copy_X=True, max_iter=None, tol=1e-3, solver="auto",
+                 kernel="linear", gamma=None, degree=3, coef0=1,
+                 kernel_params=None):
         self.alpha = alpha
         self.fit_intercept = fit_intercept
         self.normalize = normalize
@@ -321,22 +367,55 @@ class _BaseRidge(six.with_metaclass(ABCMeta, LinearModel)):
         self.max_iter = max_iter
         self.tol = tol
         self.solver = solver
+        self.kernel = kernel
+        self.kernel_params = kernel_params
+        self.gamma = gamma
+        self.degree = degree
+        self.coef0 = coef0
+
+    def _get_kernel(self, X, Y=None):
+        if callable(self.kernel):
+            params = self.kernel_params or {}
+        else:
+            params = {"gamma": self.gamma,
+                      "degree": self.degree,
+                      "coef0": self.coef0}
+        return pairwise_kernels(X, Y, metric=self.kernel,
+                                filter_params=True, **params)
 
     def fit(self, X, y, sample_weight=1.0):
         X = safe_asarray(X, dtype=np.float)
         y = np.asarray(y, dtype=np.float)
 
+        if self.kernel != "linear":
+            if self.fit_intercept == "auto":
+                fit_intercept = False
+            else:
+                raise ValueError("fit_intercept=True not supported for "
+                                 "non-linear kernel.")
+        else:
+            fit_intercept = self.fit_intercept
+
         X, y, X_mean, y_mean, X_std = self._center_data(
-            X, y, self.fit_intercept, self.normalize, self.copy_X,
+            X, y, fit_intercept, self.normalize, self.copy_X,
             sample_weight=sample_weight)
 
-        self.coef_ = ridge_regression(X, y,
-                                      alpha=self.alpha,
-                                      sample_weight=sample_weight,
-                                      max_iter=self.max_iter,
-                                      tol=self.tol,
-                                      solver=self.solver)
-        self._set_intercept(X_mean, y_mean, X_std)
+        if self.kernel == "linear":
+            self.coef_ = ridge_regression(X, y,
+                                          alpha=self.alpha,
+                                          sample_weight=sample_weight,
+                                          max_iter=self.max_iter,
+                                          tol=self.tol,
+                                          solver=self.solver)
+        else:
+            K = self._get_kernel(X)
+            self.dual_coef_ = \
+                    kernel_ridge_regression(K, y, self.alpha,
+                                            sample_weight=sample_weight)
+            self.X_fit_ = X
+
+        self._set_intercept(X_mean, y_mean, X_std, fit_intercept)
+
         return self
 
 
@@ -400,10 +479,32 @@ class Ridge(_BaseRidge, RegressorMixin):
     tol : float
         Precision of the solution.
 
+    kernel: "linear" | "poly" | "rbf" | "sigmoid" | "cosine" | "precomputed"
+        Kernel.
+        Default: "linear"
+
+    degree : int, default=3
+        Degree for poly, rbf and sigmoid kernels. Ignored by other kernels.
+
+    gamma : float, optional
+        Kernel coefficient for rbf and poly kernels. Default: 1/n_features.
+        Ignored by other kernels.
+
+    coef0 : float, optional
+        Independent term in poly and sigmoid kernels.
+        Ignored by other kernels.
+
+    kernel_params : mapping of string to any, optional
+        Parameters (keyword arguments) and values for kernel passed as
+        callable object. Ignored by other kernels.
+
     Attributes
     ----------
     `coef_` : array, shape = [n_features] or [n_targets, n_features]
-        Weight vector(s).
+        Weight vector(s) (linear kernel).
+
+    `dual_coef_` : array, shape = [n_samples] or [n_targets, n_samples]
+        Weight vector(s) (non-linear kernel).
 
     See also
     --------
@@ -419,14 +520,19 @@ class Ridge(_BaseRidge, RegressorMixin):
     >>> X = np.random.randn(n_samples, n_features)
     >>> clf = Ridge(alpha=1.0)
     >>> clf.fit(X, y) # doctest: +NORMALIZE_WHITESPACE
-    Ridge(alpha=1.0, copy_X=True, fit_intercept=True, max_iter=None,
+    Ridge(alpha=1.0, coef0=1, copy_X=True, degree=3, fit_intercept='auto',
+          gamma=None, kernel='linear', kernel_params=None, max_iter=None,
           normalize=False, solver='auto', tol=0.001)
     """
-    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
-                 copy_X=True, max_iter=None, tol=1e-3, solver="auto"):
+    def __init__(self, alpha=1.0, fit_intercept='auto', normalize=False,
+                 copy_X=True, max_iter=None, tol=1e-3, solver="auto",
+                 kernel="linear", gamma=None, degree=3, coef0=1,
+                 kernel_params=None):
         super(Ridge, self).__init__(alpha=alpha, fit_intercept=fit_intercept,
                                     normalize=normalize, copy_X=copy_X,
-                                    max_iter=max_iter, tol=tol, solver=solver)
+                                    max_iter=max_iter, tol=tol, solver=solver,
+                                    kernel=kernel, gamma=gamma, degree=degree,
+                                    coef0=coef0, kernel_params=kernel_params)
 
     def fit(self, X, y, sample_weight=1.0):
         """Fit Ridge regression model
@@ -447,6 +553,26 @@ class Ridge(_BaseRidge, RegressorMixin):
         self : returns an instance of self.
         """
         return super(Ridge, self).fit(X, y, sample_weight=sample_weight)
+
+    def decision_function(self, X):
+        """Decision function of ridge regression.
+
+        Parameters
+        ----------
+        X : numpy array of shape [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = [n_samples] or [n_samples, n_targets]
+            Returns predicted values.
+        """
+        X = safe_asarray(X)
+        if self.kernel == "linear":
+            return safe_sparse_dot(X, self.coef_.T,
+                                   dense_output=True) + self.intercept_
+        else:
+            K = self._get_kernel(X, self.X_fit_)
+            return np.dot(K, self.dual_coef_)
 
 
 class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
@@ -493,10 +619,32 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     tol : float
         Precision of the solution.
 
+    kernel: "linear" | "poly" | "rbf" | "sigmoid" | "cosine" | "precomputed"
+        Kernel.
+        Default: "linear"
+
+    degree : int, default=3
+        Degree for poly, rbf and sigmoid kernels. Ignored by other kernels.
+
+    gamma : float, optional
+        Kernel coefficient for rbf and poly kernels. Default: 1/n_features.
+        Ignored by other kernels.
+
+    coef0 : float, optional
+        Independent term in poly and sigmoid kernels.
+        Ignored by other kernels.
+
+    kernel_params : mapping of string to any, optional
+        Parameters (keyword arguments) and values for kernel passed as
+        callable object. Ignored by other kernels.
+
     Attributes
     ----------
     `coef_` : array, shape = [n_features] or [n_classes, n_features]
-        Weight vector(s).
+        Weight vector(s) (linear kernel).
+
+    `dual_coef_` : array, shape = [n_samples] or [n_targets, n_samples]
+        Weight vector(s) (non-linear kernel).
 
     See also
     --------
@@ -508,12 +656,15 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
     a one-versus-all approach. Concretely, this is implemented by taking
     advantage of the multi-variate response support in Ridge.
     """
-    def __init__(self, alpha=1.0, fit_intercept=True, normalize=False,
+    def __init__(self, alpha=1.0, fit_intercept='auto', normalize=False,
                  copy_X=True, max_iter=None, tol=1e-3, class_weight=None,
-                 solver="auto"):
+                 solver="auto", kernel="linear", gamma=None, degree=3, coef0=1,
+                 kernel_params=None):
         super(RidgeClassifier, self).__init__(
             alpha=alpha, fit_intercept=fit_intercept, normalize=normalize,
-            copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver)
+            copy_X=copy_X, max_iter=max_iter, tol=tol, solver=solver,
+            kernel=kernel, gamma=gamma, degree=degree,
+            coef0=coef0, kernel_params=kernel_params)
         self.class_weight = class_weight
 
     def fit(self, X, y):
@@ -544,6 +695,27 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
         super(RidgeClassifier, self).fit(X, Y, sample_weight=sample_weight)
         return self
+
+    def decision_function(self, X):
+        """Decision function of ridge classification.
+
+        Parameters
+        ----------
+        X : numpy array of shape [n_samples, n_features]
+
+        Returns
+        -------
+        C : array, shape = [n_samples, n_classes]
+            Returns predicted values.
+        """
+        X = safe_asarray(X)
+        if self.kernel == "linear":
+            scores = safe_sparse_dot(X, self.coef_.T,
+                                   dense_output=True) + self.intercept_
+        else:
+            K = self._get_kernel(X, self.X_fit_)
+            scores = np.dot(K, self.dual_coef_)
+        return scores.ravel() if scores.shape[1] == 1 else scores
 
     @property
     def classes_(self):

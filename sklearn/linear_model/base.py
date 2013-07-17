@@ -156,10 +156,12 @@ class LinearModel(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     _center_data = staticmethod(center_data)
 
-    def _set_intercept(self, X_mean, y_mean, X_std):
+    def _set_intercept(self, X_mean, y_mean, X_std, fit_intercept=None):
         """Set the intercept_
         """
-        if self.fit_intercept:
+        fit_intercept = fit_intercept if fit_intercept is not None \
+                                      else self.fit_intercept
+        if fit_intercept:
             self.coef_ = self.coef_ / X_std
             self.intercept_ = y_mean - np.dot(X_mean, self.coef_.T)
         else:

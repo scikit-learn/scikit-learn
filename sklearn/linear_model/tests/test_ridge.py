@@ -459,3 +459,25 @@ def test_ridgecv_store_cv_values():
     y = rng.randn(n_samples, n_responses)
     r.fit(x, y)
     assert_equal(r.cv_values_.shape, (n_samples, n_responses, n_alphas))
+
+
+def test_kernel_ridge():
+    reg = Ridge(kernel="rbf", gamma=10)
+    reg.fit(X_diabetes, y_diabetes)
+
+    reg2 = Ridge()
+    reg2.fit(X_diabetes, y_diabetes)
+
+    assert_greater(reg.score(X_diabetes, y_diabetes),
+                   reg2.score(X_diabetes, y_diabetes))
+
+
+def test_kernel_ridge_classifier():
+    clf = RidgeClassifier(kernel="rbf", gamma=10)
+    clf.fit(X_iris, y_iris)
+
+    clf2 = RidgeClassifier()
+    clf2.fit(X_iris, y_iris)
+
+    assert_equal(clf.score(X_iris, y_iris), 1.0)
+    assert_equal(clf2.score(X_iris, y_iris), 0.8)
