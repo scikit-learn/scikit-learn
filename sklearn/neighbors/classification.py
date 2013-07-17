@@ -206,7 +206,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             # a simple ':' index doesn't work right
             for i, idx in enumerate(pred_labels.T):  # loop is O(n_neighbors)
                 proba_k[all_rows, idx] += weights[:, i]
-            print proba_k
 
             # normalize 'votes' into real [0,1] probabilities
             normalizer = proba_k.sum(axis=1)[:, np.newaxis]
@@ -276,7 +275,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
-    outlier_label: int, optional (default = None)
+    outlier_label : int, optional (default = None)
         Label, which is given for outlier samples (samples with no
         neighbors on given radius).
         If set to None, ValueError is raised, when outlier is detected.
@@ -326,12 +325,12 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         Parameters
         ----------
-        X: array of shape [n_samples, n_features]
+        X : array of shape [n_samples, n_features]
             A 2-D array representing the test points.
 
         Returns
         -------
-        labels: array of shape [n_samples] or [n_samples, n_output]
+        y : array of shape [n_samples] or [n_samples, n_output]
             Class labels for each data sample.
 
         """

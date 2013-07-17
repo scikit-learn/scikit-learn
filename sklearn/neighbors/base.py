@@ -579,6 +579,7 @@ class SupervisedFloatMixin(object):
 
         y : {array-like, sparse matrix}
             Target values, array of float values, shape = [n_samples]
+             or [n_samples, n_outputs]
         """
         if not isinstance(X, (KDTree, BallTree)):
             X, y = check_arrays(X, y, sparse_format="csr")
@@ -595,8 +596,8 @@ class SupervisedIntegerMixin(object):
         X : {array-like, sparse matrix, BallTree, KDTree}
             Training data. If array or matrix, shape = [n_samples, n_features]
 
-        y : array of int, shape = [n_samples] or [n_samples, n_outputs]
-            Target values
+        y : {array-like, sparse matrix}
+            Target values of shape = [n_samples] or [n_samples, n_outputs]
 
         """
         if not isinstance(X, (KDTree, BallTree)):

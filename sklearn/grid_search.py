@@ -179,7 +179,7 @@ class ParameterSampler(object):
 
     Returns
     -------
-    params: dict of string to any
+    params : dict of string to any
         **Yields** dictionaries mapping each estimator parameter to
         as sampled value.
 
@@ -399,8 +399,8 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
 
         Parameters
         ----------
-        X: array-like, shape = [n_samples, n_features]
-            Input data, where n_samples in the number of samples and
+        X : array-like, shape = [n_samples, n_features]
+            Input data, where n_samples is the number of samples and
             n_features is the number of features.
 
         y : array-like, shape = [n_samples] or [n_samples, n_output], optional

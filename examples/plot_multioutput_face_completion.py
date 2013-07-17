@@ -1,13 +1,14 @@
 """
-============================================
-Face completion with multi-output estimators
-============================================
+=============================================
+Face completion with a multi-output estimator
+=============================================
 
 This example shows the use of multi-output estimator to complete images.
 The goal is to predict the lower half of a face given its upper half.
 
-The first row of images shows true faces. The second half illustrates
-how an estimator completes the lower half of those faces.
+The first column of images shows true faces. The next columns illustrate
+how k nearest neighbors, extremely randomized trees, linear
+regression and ridge regression complete the lower half of those faces.
 
 """
 print(__doc__)
@@ -19,7 +20,6 @@ from sklearn.datasets import fetch_olivetti_faces
 from sklearn.utils.validation import check_random_state
 
 from sklearn.ensemble import ExtraTreesRegressor
-from sklearn.ensemble import AdaBoostRegressor
 from sklearn.neighbors import KNeighborsRegressor
 from sklearn.linear_model import LinearRegression
 from sklearn.linear_model import RidgeCV
@@ -31,26 +31,26 @@ targets = data.target
 data = data.images.reshape((len(data.images), -1))
 train = data[targets < 30]
 test = data[targets >= 30]  # Test on independent people
-n_pixels = data.shape[1]
 
-X_train = train[:, :int(0.5 * n_pixels)]  # Upper half of the faces
-y_train = train[:, int(0.5 * n_pixels):]  # Lower half of the faces
-X_test = test[:, :int(0.5 * n_pixels)]
-y_test = test[:, int(0.5 * n_pixels):]
-
+# Test on a subset of people
 n_faces = 5
 rng = check_random_state(4)
-face_ids = rng.randint(X_test.shape[0], size=(n_faces, ))
-X_test = X_test[face_ids, :]
-y_test = y_test[face_ids, :]
+face_ids = rng.randint(test.shape[0], size=(n_faces, ))
+test = test[face_ids, :]
 
-# Build a multi-output forest
+n_pixels = data.shape[1]
+X_train = train[:, :np.ceil(0.5 * n_pixels)]  # Upper half of the faces
+y_train = train[:, np.floor(0.5 * n_pixels):]  # Lower half of the faces
+X_test = test[:, :np.ceil(0.5 * n_pixels)]
+y_test = test[:, np.floor(0.5 * n_pixels):]
+
+# Fit estimators
 ESTIMATORS = {
-    "extra trees": ExtraTreesRegressor(n_estimators=10, max_features=32,
+    "Extra trees": ExtraTreesRegressor(n_estimators=10, max_features=32,
                                        random_state=0),
-    "knn": KNeighborsRegressor(),
-    "linear regression": LinearRegression(),
-    "ridge": RidgeCV(),
+    "K-nn": KNeighborsRegressor(),
+    "Linear regression": LinearRegression(),
+    "Ridge": RidgeCV(),
 }
 
 y_test_predict = dict()

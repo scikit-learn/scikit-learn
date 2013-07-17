@@ -232,7 +232,7 @@ which will be used to compute the weights.
    :align: center
    :scale: 75
 
-The use of multi-output nearest neighbors for regresion is demonstrated in
+The use of multi-output nearest neighbors for regression is demonstrated in
 :ref:`example_plot_multioutput_face_completion.py`. In this example, the inputs
 X are the pixels of the upper half of faces and the outputs Y are the pixels of
 the lower half of those faces.

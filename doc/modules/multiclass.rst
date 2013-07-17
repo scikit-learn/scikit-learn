@@ -19,8 +19,8 @@ classes is not assumed to be disjoint as in ordinary (binary or multiclass)
 classification. This is also called any-of classification.
 
 Multioutput-multiclass classification means that the estimators have to handle
-jointly several classification tasks. This is a generalisation over
-of multiclass classification task and the multilabel classification task.
+jointly several classification tasks. This is a generalisation
+of multiclass classification task and of multilabel classification task.
 
 The estimators provided in this module are meta-estimators: they require a base
 estimator to be provided in their constructor. For example, it is possible to
