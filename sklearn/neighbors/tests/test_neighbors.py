@@ -639,6 +639,22 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
         assert_array_almost_equal(results[0][1], results[1][1])
 
 
+def test_callable_metric():
+    metric = lambda x1, x2: np.sqrt(np.sum(x1 ** 2 + x2 ** 2))
+
+    X = np.random.random((20, 2))
+    nbrs1 = neighbors.NearestNeighbors(3, algorithm='auto', metric=metric)
+    nbrs2 = neighbors.NearestNeighbors(3, algorithm='brute', metric=metric)
+
+    nbrs1.fit(X)
+    nbrs2.fit(X)
+
+    dist1, ind1 = nbrs1.kneighbors(X)
+    dist2, ind2 = nbrs2.kneighbors(X)
+
+    assert_array_almost_equal(dist1, dist2)
+
+
 if __name__ == '__main__':
     import nose
     nose.runmodule()
