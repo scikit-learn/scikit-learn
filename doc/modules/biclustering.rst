@@ -34,18 +34,36 @@ common types include:
 * correlated rows or columns
 
 Algorithms also differ in how rows and columns may be assigned to
-biclusters, which leads to different bicluster structures.
+biclusters, which leads to different bicluster structures. Block
+diagonal or checkerboard structures occur when rows and columns are
+divided into partitions. Many other structures have been created. In
+the general case, each row and column may belong to any number of
+biclusters.
 
-Block diagonal or checkerboard structures occur when rows and columns
-are divided into partitions. If each row and each column belongs to
-exactly one bicluster, then rearranging the data matrix reveals the
-biclusters on the diagonal.
+If each row and each column belongs to exactly one bicluster, then
+rearranging the rows and columns of the data matrix reveals the
+biclusters on the diagonal. Here is an example of this structure
+where biclusters have higher average values than the other rows and
+columns:
+
+.. figure:: ../auto_examples/cluster/images/plot_spectral_coclustering_3.png
+   :target: ../auto_examples/cluster/images/plot_spectral_coclustering_3.png
+   :align: center
+   :scale: 50
+
+   An example of biclusters formed by partitioning rows and columns.
 
 In the checkerboard case, each row belongs to all column clusters, and
-each column belongs to all row clusters.
+each column belongs to all row clusters. Here is an example of this
+structure where the variance of the values within each bicluster is
+small:
 
-Many other structures have been created. In the general case,
-each row and column may belong to any number of biclusters.
+.. figure:: ../auto_examples/cluster/images/plot_spectral_biclustering_3.png
+   :target: ../auto_examples/cluster/images/plot_spectral_biclustering_3.png
+   :align: center
+   :scale: 50
+
+   An example of checkerboard biclusters.
 
 After fitting a model, row and column cluster membership can be found
 in the `rows_` and `columns_` attributes. `rows_[i]` is a binary vector
