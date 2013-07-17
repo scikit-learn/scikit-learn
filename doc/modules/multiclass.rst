@@ -33,13 +33,17 @@ improves.
     classifiers supported in scikit-learn grouped by the strategy used.
 
     - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`, :class:`sklearn.lda.LDA`,
-      :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`
+      :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
+      :ref:`Nearest Neighbors <neighbors>`
     - One-Vs-One: :class:`sklearn.svm.SVC`.
     - One-Vs-All: :class:`sklearn.svm.LinearSVC`,
       :class:`sklearn.linear_model.LogisticRegression`,
       :class:`sklearn.linear_model.SGDClassifier`,
       :class:`sklearn.linear_model.RidgeClassifier`.
 
+    Some estimators also support directly multi-label classification
+    :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
+    :ref:`Nearest Neighbors <neighbors>`.
 
 One-Vs-The-Rest
 ===============
