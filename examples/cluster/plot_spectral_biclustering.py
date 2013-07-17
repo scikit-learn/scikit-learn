@@ -1,10 +1,10 @@
 """
-=====================================================
-Applying Spectral Biclustering to a generated dataset
-=====================================================
+=============================================
+A demo of the Spectral Biclustering algorithm
+=============================================
 
-This example demonstrates how to generate a checkerboard dataset for
-the Spectral Biclustering algorithm and fit it.
+This example demonstrates how to generate a checkerboard dataset and
+bicluster it using the Spectral Biclustering algorithm.
 
 The data is generated with the `make_checkerboard` function, then
 shuffled and passed to the Spectral Biclustering algorithm. The rows

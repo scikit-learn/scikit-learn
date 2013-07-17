@@ -1,9 +1,9 @@
 """
-====================================
-Spectral Co-clustering of newsgroups
-====================================
+================================================================
+Biclustering documents with the Spectral Co-clustering algorithm
+================================================================
 
-This example demonstrates the spectral co-clustering algorithm on a
+This example demonstrates the Spectral Co-clustering algorithm on a
 few categories from the twenty newsgroups dataset.
 
 The TF-IDF vectorized posts form a word frequency matrix, which is
