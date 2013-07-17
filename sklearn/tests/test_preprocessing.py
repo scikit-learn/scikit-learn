@@ -145,6 +145,105 @@ def test_min_max_scaler_iris():
     assert_raises(ValueError, scaler.fit, X)
 
 
+def test_global_min_max_scaler_sparse():
+    rng = np.random.RandomState(42)
+    X = rng.uniform(1, 6, size=50).reshape(10, 5)  # only positive values
+
+    X[0, 0] = 0.0  # first value is 0
+    X[8, 3] = 7.0  # first value is 7 > maxX
+
+    X_csr = sp.csr_matrix(X)
+    X_csc = sp.csc_matrix(X)
+
+    assert_true(X_csr.data.size < X.size)
+    assert_true(X_csc.data.size < X.size)
+
+    # dense transform and back
+    scaler = MinMaxScaler(feature_range=(0, 1), per_feature=False)
+    X_trans = scaler.fit_transform(X)
+    X_trans_inv = scaler.inverse_transform(X_trans)
+
+    # dense transform and back w/o offset
+    scaler = MinMaxScaler(feature_range=(0, 1), per_feature=False, with_offset=False)
+    X_trans_woo = scaler.fit_transform(X)
+    X_trans_woo_inv = scaler.inverse_transform(X_trans_woo)
+
+    # csr transform and back
+    scaler = MinMaxScaler(feature_range=(0, 1), per_feature=False, with_offset=False)
+    X_csr_trans = scaler.fit_transform(X_csr)
+    X_csr_trans_inv = scaler.inverse_transform(X_csr_trans)
+
+    # csc transform and back
+    scaler = MinMaxScaler(feature_range=(0, 1), per_feature=False, with_offset=False)
+    X_csc_trans = scaler.fit_transform(X_csc)
+    X_csc_trans_inv = scaler.inverse_transform(X_csc_trans)
+
+    assert_true(len(np.argwhere(X_trans == 0.0)) == 1)
+    assert_true(len(np.argwhere(X_trans == 1.0)) == 1)
+
+    assert_true(X_trans[0, 0] == 0.0)
+    assert_true(X_trans[8, 3] == 1.0)
+
+    assert_array_almost_equal(X, X_trans_inv)
+    assert_array_almost_equal(X_csc_trans.todense(), X_csr_trans.todense())
+    assert_array_almost_equal(X_trans_woo, X_csr_trans.todense())
+    assert_array_almost_equal(X_trans_woo_inv, X)
+    assert_array_almost_equal(X, X_csr_trans_inv.todense())
+    assert_array_almost_equal(X, X_csc_trans_inv.todense())
+
+
+def test_min_max_scaler_sparse():
+    rng = np.random.RandomState(42)
+    X = rng.uniform(1, 6, size=50).reshape(10, 5)  # only positive values
+
+    X[0, :] = 0.0  # first value per feature is always 0
+
+    X_csr = sp.csr_matrix(X)
+    X_csc = sp.csc_matrix(X)
+
+    assert_true(X_csr.data.size < X.size)
+    assert_true(X_csc.data.size < X.size)
+
+    # dense transform and back
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    X_trans = scaler.fit_transform(X)
+    #X_trans_inv = scaler.inverse_transform(X_trans)
+
+    # csr transform and back
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    X_csr_trans = scaler.fit_transform(X_csr)
+    X_csr_trans_inv = scaler.inverse_transform(X_csr_trans)
+
+    # csc transform and back
+    scaler = MinMaxScaler(feature_range=(0, 1))
+    X_csc_trans = scaler.fit_transform(X_csc)
+    X_csc_trans_inv = scaler.inverse_transform(X_csc_trans)
+
+    #assert_array_almost_equal(X, X_trans_inv)
+    assert_array_almost_equal(X_trans, X_csr_trans.todense())
+    assert_array_almost_equal(X_trans, X_csc_trans.todense())
+    assert_array_almost_equal(X, X_csr_trans_inv.todense())
+    assert_array_almost_equal(X, X_csc_trans_inv.todense())
+
+
+def test_min_max_scaler_sparse_with_offset():
+    rng = np.random.RandomState(42)
+
+    # this does NOT contain any zeros
+    X = rng.uniform(1, 6, size=50).reshape(10, 5)  # only positive values
+
+    X_csr = sp.csr_matrix(X)
+
+    scaler = MinMaxScaler(feature_range=(0, 1), with_offset=True)
+    assert_raises(ValueError, scaler.fit, X_csr)
+
+    scaler = MinMaxScaler(feature_range=(0, 1), with_offset=False)
+    X_csr_trans = scaler.fit_transform(X_csr)
+    X_csr_trans_inv = scaler.inverse_transform(X_csr_trans)
+
+    assert_array_almost_equal(X_csr_trans_inv.data, X_csr.data)
+
+
 def test_min_max_scaler_zero_variance_features():
     """Check min max scaler on toy data with zero variance features"""
     X = [[0.,  1.,  0.5],

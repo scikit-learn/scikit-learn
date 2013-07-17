@@ -28,6 +28,7 @@ from .utils.sparsefuncs import inplace_csr_row_normalize_l1
 from .utils.sparsefuncs import inplace_csr_row_normalize_l2
 from .utils.sparsefuncs import inplace_csr_column_scale
 from .utils.sparsefuncs import mean_variance_axis0
+from .utils.sparsefuncs import min_max_axis0
 from .externals import six
 
 zip = six.moves.zip
@@ -176,6 +177,15 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         Set to False to perform inplace row normalization and avoid a
         copy (if the input is already a numpy array).
 
+    per_feature : boolean, optional, default is True
+        Set to False to normalize using the minimum/maximum of all
+        features, not per column
+
+    with_offset : boolean, optional, default is True for dense, 
+        and False for sparse X.
+        If False, no additive normalization is used, only scaling.
+
+
     Attributes
     ----------
     `min_` : ndarray, shape (n_features,)
@@ -185,9 +195,11 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         Per feature relative scaling of the data.
     """
 
-    def __init__(self, feature_range=(0, 1), copy=True):
+    def __init__(self, feature_range=(0, 1), copy=True, per_feature=True, with_offset=None):
         self.feature_range = feature_range
         self.copy = copy
+        self.per_feature = per_feature
+        self.with_offset = with_offset
 
     def fit(self, X, y=None):
         """Compute the minimum and maximum to be used for later scaling.
@@ -197,19 +209,52 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X : array-like, shape [n_samples, n_features]
             The data used to compute the per-feature minimum and maximum
             used for later scaling along the features axis.
+
+            If X is sparse, the additive term in scaling must amount to
+            zero, otherwise, an exception is raised.
         """
-        X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
-        warn_if_not_float(X, estimator=self)
         feature_range = self.feature_range
-        if feature_range[0] >= feature_range[1]:
-            raise ValueError("Minimum of desired feature range must be smaller"
-                             " than maximum. Got %s." % str(feature_range))
-        data_min = np.min(X, axis=0)
-        data_range = np.max(X, axis=0) - data_min
+        is_sparse = sp.issparse(X)
+        if is_sparse:
+            warn_if_not_float(X, estimator=self)
+            if self.per_feature:
+                data_min, data_max = min_max_axis0(X)
+            else:
+                data_min, data_max, dense = np.min(X.data), np.max(X.data), X.data.size == np.prod(X.shape)
+                if not dense:
+                    data_min = min(data_min, 0.)
+                    data_max = max(data_max, 0.)
+
+            data_range = data_max - data_min
+        else:
+            X = check_arrays(X, sparse_format="dense", copy=False)[0]
+            warn_if_not_float(X, estimator=self)
+            if feature_range[0] >= feature_range[1]:
+                raise ValueError("Minimum of desired feature range must be smaller"
+                                 " than maximum. Got %s." % str(feature_range))
+            if self.per_feature:
+                data_min = np.min(X, axis=0)
+                data_range = np.max(X, axis=0) - data_min
+            else:
+                data_min = np.min(X)
+                data_range = np.max(X) - data_min
+
         # Do not scale constant features
-        data_range[data_range == 0.0] = 1.0
+        if self.per_feature:
+            data_range[data_range == 0.0] = 1.0
+        elif data_range == 0.0:
+            data_range == 1.0
+
         self.scale_ = (feature_range[1] - feature_range[0]) / data_range
-        self.min_ = feature_range[0] - data_min * self.scale_
+        if self.with_offset == False or (self.with_offset is None and is_sparse):
+            self.min_ = 0.0
+        else:
+            self.min_ = feature_range[0] - data_min * self.scale_
+        if is_sparse:
+            if np.any(self.min_ != 0.0):
+                raise ValueError("For sparse X, the data minimum must equal the range minimum, "
+                                 "otherwise we'd need to densify the matrix, which you probably "
+                                 "do not want to happen.")
         self.data_range = data_range
         self.data_min = data_min
         return self
@@ -222,9 +267,19 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X : array-like with shape [n_samples, n_features]
             Input data that will be transformed.
         """
-        X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
-        X *= self.scale_
-        X += self.min_
+        if sp.issparse(X):
+            warn_if_not_float(X, estimator=self)
+            X = check_arrays(X, sparse_format="csr", copy=self.copy)[0]
+            if self.per_feature:
+                inplace_csr_column_scale(X, self.scale_)
+            else:
+                X.data *= self.scale_
+        else:
+            X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
+            warn_if_not_float(X, estimator=self)
+            X *= self.scale_
+            if not (isinstance(self.min_, float) and self.min_ == 0.0):
+                X += self.min_
         return X
 
     def inverse_transform(self, X):
@@ -235,9 +290,17 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
         X : array-like with shape [n_samples, n_features]
             Input data that will be transformed.
         """
-        X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
-        X -= self.min_
-        X /= self.scale_
+        if sp.issparse(X):
+            X = check_arrays(X, sparse_format="csr", copy=self.copy)[0]
+            if self.per_feature:
+                inplace_csr_column_scale(X, 1.0 / self.scale_)
+            else:
+                X.data /= self.scale_
+        else:
+            X = check_arrays(X, sparse_format="dense", copy=self.copy)[0]
+            if not (isinstance(self.min_, float) and self.min_ == 0.0):
+                X -= self.min_
+            X /= self.scale_
         return X
 
 

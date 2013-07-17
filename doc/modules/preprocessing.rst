@@ -145,6 +145,30 @@ full formula is::
 
     X_scaled = X_std / (max - min) + min
 
+The :class:`MinMaxScaler` can also be applied to sparse matrices in
+CSR or CSC format, *as long as the value of the ``min_`` attribute
+amounts to zero*.
+
+Finally, features do not have to be rescaled separately. Different
+feature ranges are interpreted as a relative "importance" by many
+classifiers (consider the k-Nearest Neighbor classifier, for example,
+where differences between features with a small range will influence
+distances, and thus classification, less). You may want to keep this
+relative importance information and still rescale your features to a
+sensible range. This can be done by setting ``per_feature``::
+
+  >>> X_train = np.array([[ 1., -1.,  2.],
+  ...                     [ 2.,  0.,  0.],
+  ...                     [ 0.,  1., -1.]])
+  ...
+  >>> min_max_scaler = preprocessing.MinMaxScaler(per_feature=False)
+  >>> X_train_minmax = min_max_scaler.fit_transform(X_train)
+  >>> X_train_minmax
+  array([[ 0.66666667,  0.        ,  1.        ],
+         [ 1.        ,  0.33333333,  0.33333333],
+         [ 0.33333333,  0.66666667,  0.        ]])
+
+
 .. topic:: References:
 
   Further discussion on the importance of centering and scaling data is
