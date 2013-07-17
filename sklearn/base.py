@@ -348,7 +348,7 @@ class BiclusterMixin(object):
     """Mixin class for all bicluster estimators in scikit-learn"""
 
     def get_indices(self, i):
-        """Returns the row and column indices of the `i`th bicluster.
+        """Returns the row and column indices of bicluster `i`.
 
         Only works if ``rows_`` and ``columns`` attributes exist.
 
