@@ -1,3 +1,5 @@
+from __future__ import division
+
 import numpy as np
 
 from sklearn.utils.hungarian import hungarian
@@ -42,6 +44,6 @@ def score_biclusters(a, b):
     """
     matrix = _pairwise_similarity(a, b)
     indices = hungarian(1 - matrix)
-    n_a = a[0].shape[0]
-    n_b = b[0].shape[0]
+    n_a = len(a[0])
+    n_b = len(b[0])
     return np.trace(matrix[:, indices[:, 1]]).sum() / max(n_a, n_b)
