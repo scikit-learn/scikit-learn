@@ -30,7 +30,8 @@ n_clusters = (4, 3)
 data, row_labels, column_labels = make_checkerboard(
     shape=(300, 300), n_clusters=n_clusters, noise=10,
     shuffle=True, random_state=0)
-model = SpectralBiclustering(n_clusters=n_clusters, method='log')
+model = SpectralBiclustering(n_clusters=n_clusters, method='log',
+                             random_state=0)
 model.fit(data)
 
 fit_data = data[np.argsort(model.row_labels_)]
