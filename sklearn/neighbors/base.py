@@ -115,8 +115,8 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             alg_check = algorithm
 
         if metric not in VALID_METRICS[alg_check]:
-            # callable metric is valid for brute force, kd_tree, and ball_tree
-            if callable(metric):
+            # callable metric is valid for brute force and ball_tree
+            if callable(metric) and algorithm != 'kd_tree':
                 pass
             else:
                 raise ValueError("metric '%s' not valid for algorithm '%s'"
@@ -199,8 +199,7 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
             # and KDTree is generally faster when available
             if (self.n_neighbors is None
                     or self.n_neighbors < self._fit_X.shape[0] // 2):
-                if (callable(self.effective_metric_)
-                        or self.effective_metric_ in VALID_METRICS['kd_tree']):
+                if self.effective_metric_ in VALID_METRICS['kd_tree']:
                     self._fit_method = 'kd_tree'
                 else:
                     self._fit_method = 'ball_tree'
