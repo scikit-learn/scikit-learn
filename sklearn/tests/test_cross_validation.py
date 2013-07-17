@@ -20,6 +20,7 @@ from sklearn import cross_validation as cval
 from sklearn.base import BaseEstimator
 from sklearn.datasets import make_regression
 from sklearn.datasets import load_iris
+from sklearn.datasets import make_multilabel_classification
 from sklearn.metrics import accuracy_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import explained_variance_score
@@ -273,6 +274,10 @@ def test_cross_val_score():
 
         scores = cval.cross_val_score(clf, X_sparse, y)
         assert_array_equal(scores, clf.score(X_sparse, y))
+
+        # test with multioutput y
+        scores = cval.cross_val_score(clf, X_sparse, X)
+        assert_array_equal(scores, clf.score(X_sparse, X))
 
     # test with X as list
     clf = MockListClassifier()
