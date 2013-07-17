@@ -1,10 +1,10 @@
 """
-======================================================
-Applying Spectral Co-Clustering to a generated dataset
-======================================================
+==============================================
+A demo of the Spectral Co-Clustering algorithm
+==============================================
 
-This example demonstrates how to generate a dataset for the Spectral
-Co-Clustering algorithm and fit it.
+This example demonstrates how to generate a dataset and bicluster it
+using the the Spectral Co-Clustering algorithm.
 
 The dataset is generated using the `make_biclusters` function, which
 creates a matrix of small values and implants bicluster with large

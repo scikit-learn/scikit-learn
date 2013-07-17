@@ -131,11 +131,15 @@ Then the rows of :math:`Z` are clustered using k-means. The first
 n_rows labels provide the row partitioning, and the remaining n_column
 labels provide the column partitioning.
 
+
 .. topic:: Examples:
 
- * :ref:`example_bicluster_spectral_coclustering.py`: A simple example
+ * :ref:`example_cluster_plot_spectral_coclustering.py`: A simple example
    showing how to generate a data matrix with biclusters and apply
    this method to it.
+
+ * :ref:`example_cluster_bicluster_newsgroups.py`: An example of finding
+   biclusters in the twenty newsgroup dataset.
 
 
 .. topic:: References:
@@ -218,10 +222,12 @@ yields the row labels. Similarly, projecting the columns to
 :math:`A^{\top} * U_{b}` and clustering this :math:`n \times q` matrix
 yields the column labels.
 
+
 .. topic:: Examples:
 
- * :ref:`example_bicluster_spectral_biclustering.py`: a simple example
+ * :ref:`example_cluster_plot_spectral_biclustering.py`: a simple example
    showing how to generate a checkerboard matrix and bicluster it.
+
 
 .. topic:: References:
 
