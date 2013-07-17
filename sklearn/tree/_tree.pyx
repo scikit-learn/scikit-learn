@@ -1547,8 +1547,7 @@ cdef class Tree:
         cdef SIZE_t value_stride = self.value_stride
 
         cdef SIZE_t node_id = 0
-        cdef SIZE_t offset_node
-        cdef SIZE_t offset_output
+        cdef SIZE_t offset
         cdef SIZE_t i
         cdef SIZE_t k
         cdef SIZE_t c
@@ -1563,16 +1562,17 @@ cdef class Tree:
                 node_id = 0
 
                 # While node_id not a leaf
-                while children_left[node_id] != _TREE_LEAF: # and children_right[node_id] != _TREE_LEAF:
+                while children_left[node_id] != _TREE_LEAF:
+                    # ... and children_right[node_id] != _TREE_LEAF:
                     if X[i, feature[node_id]] <= threshold[node_id]:
                         node_id = children_left[node_id]
                     else:
                         node_id = children_right[node_id]
 
-                offset_node = node_id * value_stride
+                offset = node_id * value_stride
 
                 for c from 0 <= c < n_classes[0]:
-                    out[i, c] = value[offset_node + c]
+                    out[i, c] = value[offset + c]
 
             return out
 
@@ -1585,19 +1585,19 @@ cdef class Tree:
                 node_id = 0
 
                 # While node_id not a leaf
-                while children_left[node_id] != _TREE_LEAF: # and children_right[node_id] != _TREE_LEAF:
+                while children_left[node_id] != _TREE_LEAF:
+                    # ... and children_right[node_id] != _TREE_LEAF:
                     if X[i, feature[node_id]] <= threshold[node_id]:
                         node_id = children_left[node_id]
                     else:
                         node_id = children_right[node_id]
 
-                offset_node = node_id * value_stride
-                offset_output = 0
+                offset = node_id * value_stride
 
                 for k from 0 <= k < n_outputs:
                     for c from 0 <= c < n_classes[k]:
-                        out_multi[i, k, c] = value[offset_node + offset_output + c]
-                    offset_output += max_n_classes
+                        out_multi[i, k, c] = value[offset + c]
+                    offset += max_n_classes
 
             return out_multi
 
@@ -1619,7 +1619,8 @@ cdef class Tree:
             node_id = 0
 
             # While node_id not a leaf
-            while children_left[node_id] != _TREE_LEAF: # and children_right[node_id] != _TREE_LEAF:
+            while children_left[node_id] != _TREE_LEAF:
+                # ... and children_right[node_id] != _TREE_LEAF:
                 if X[i, feature[node_id]] <= threshold[node_id]:
                     node_id = children_left[node_id]
                 else:
@@ -1648,7 +1649,8 @@ cdef class Tree:
         importances = np.zeros((self.n_features,))
 
         for node from 0 <= node < node_count:
-            if children_left[node] != _TREE_LEAF: # and children_right[node] != _TREE_LEAF:
+            if children_left[node] != _TREE_LEAF:
+                # ... and children_right[node] != _TREE_LEAF:
                 n_left = n_node_samples[children_left[node]]
                 n_right = n_node_samples[children_right[node]]
 
