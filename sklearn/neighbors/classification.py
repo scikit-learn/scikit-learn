@@ -206,7 +206,6 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             # a simple ':' index doesn't work right
             for i, idx in enumerate(pred_labels.T):  # loop is O(n_neighbors)
                 proba_k[all_rows, idx] += weights[:, i]
-            print proba_k
 
             # normalize 'votes' into real [0,1] probabilities
             normalizer = proba_k.sum(axis=1)[:, np.newaxis]
