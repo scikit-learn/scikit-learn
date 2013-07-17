@@ -18,6 +18,10 @@ predict a set of target labels for each instance; i.e., the set of target
 classes is not assumed to be disjoint as in ordinary (binary or multiclass)
 classification. This is also called any-of classification.
 
+Multioutput-multiclass classification means that the estimators have to handle
+jointly several classification tasks. This is a generalisation over
+of multiclass classification task and the multilabel classification task.
+
 The estimators provided in this module are meta-estimators: they require a base
 estimator to be provided in their constructor. For example, it is possible to
 use these estimators to turn a binary classifier or a regressor into a
@@ -32,18 +36,25 @@ improves.
     multiclass classification out-of-the-box. Below is a summary of the
     classifiers supported in scikit-learn grouped by the strategy used.
 
-    - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`, :class:`sklearn.lda.LDA`,
+    - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`,
+      :class:`sklearn.lda.LDA`,
       :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
-      :ref:`Nearest Neighbors <neighbors>`
+      :ref:`Nearest Neighbors <neighbors>`.
     - One-Vs-One: :class:`sklearn.svm.SVC`.
     - One-Vs-All: :class:`sklearn.svm.LinearSVC`,
       :class:`sklearn.linear_model.LogisticRegression`,
       :class:`sklearn.linear_model.SGDClassifier`,
       :class:`sklearn.linear_model.RidgeClassifier`.
 
-    Some estimators also support directly multi-label classification
-    :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
+    Some estimators also support directly multioutput-multiclass classification
+    tasks :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`,
     :ref:`Nearest Neighbors <neighbors>`.
+
+.. warning::
+
+    For the moment, no metrics support the multioutput-multiclass
+    classification task.
+
 
 One-Vs-The-Rest
 ===============
