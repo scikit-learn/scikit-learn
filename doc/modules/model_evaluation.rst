@@ -986,6 +986,66 @@ Here a small example of usage of the :func:`r2_score` function::
     for an example of R² score usage to
     evaluate Lasso and Elastic Net on sparse signals.
 
+Clustering metrics
+======================
+
+The :mod:`sklearn.metrics` implements several losses, scores and utility
+function for more information see the :ref:`clustering_evaluation`
+section.
+
+
+Biclustering metrics
+====================
+
+The :mod:`sklearn.metrics` module implements bicluster scoring
+metrics. For more information see the :ref:`biclustering_evaluation`
+section.
+
+
+.. _score_func_objects:
+
+.. currentmodule:: sklearn
+
+`Scoring` objects: defining your scoring rules
+===============================================
+While the above functions provide a simple interface for most use-cases, they
+can not directly be used for model selection and evaluation using
+:class:`grid_search.GridSearchCV` and
+:func:`cross_validation.cross_val_score`, as scoring functions have different
+signatures and might require additional parameters.
+
+Instead, :class:`grid_search.GridSearchCV` and
+:func:`cross_validation.cross_val_score` both take callables that implement
+estimator dependent functions. That allows for very flexible evaluation of
+models, for example taking complexity of the model into account.
+
+For scoring functions that take no additional parameters (which are most of
+them), you can simply provide a string as the ``scoring`` parameter. Possible
+values are:
+
+
+===================     ===============================================
+Scoring                 Function
+===================     ===============================================
+**Classification**
+'accuracy'              :func:`sklearn.metrics.accuracy_score`
+'average_precision'     :func:`sklearn.metrics.average_precision_score`
+'f1'                    :func:`sklearn.metrics.f1_score`
+'precision'             :func:`sklearn.metrics.precision_score`
+'recall'                :func:`sklearn.metrics.recall_score`
+'roc_auc'               :func:`sklearn.metrics.auc_score`
+
+**Clustering**
+'ari'`                  :func:`sklearn.metrics.adjusted_rand_score`
+
+**Regression**
+'mse'                   :func:`sklearn.metrics.mean_squared_error`
+'r2'                    :func:`sklearn.metrics.r2_score`
+===================     ===============================================
+
+The corresponding scorer objects are stored in the dictionary
+``sklearn.metrics.SCORERS``.
+
 .. currentmodule:: sklearn.metrics
 
 .. _clustering_metrics:

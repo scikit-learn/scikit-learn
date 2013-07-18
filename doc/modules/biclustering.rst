@@ -249,3 +249,62 @@ yields the column labels.
  * Kluger, Yuval, et al, 2003. `Spectral biclustering of microarray
    data: coclustering genes and conditions
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.135.1608>`__.
+
+
+.. _biclustering_evaluation:
+
+.. currentmodule:: sklearn.metrics
+
+Biclustering evaluation
+=======================
+
+There are two ways of evaluating a biclustering result: internal and
+external. Internal measures, such as cluster stability, rely only on
+the data and the result themselves. Currently there are no internal
+bicluster measures in scikit-learn. External measures refer to an
+external source of information, such as the true solution. When
+working with real data the true solution is usually unknown, but
+biclustering artificial data may be useful for evaluating algorithms
+precisely because the true solution is known.
+
+To compare a set of found biclusters to the set of true biclusters,
+two similarity measures are needed: a similarity measure for
+individual biclusters, and a way to combine these individual
+similarities into an overall score.
+
+To compare individual biclusters, several measures have been used. For
+now, only the Jaccard index is implemented:
+
+.. math::
+    J(A, B) = \frac{|A \cap B|}{|A| + |B| - |A \cap B|}
+
+where :math:`A` and :math:`B` are biclusters, :math:`|A \cap B|` is
+the number of elements in both, and :math:`|A \cup B|` is the number
+of elements in at least one of them. The Jaccard index achieves its
+minimum of 0 when the biclusters to not overlap at all and its maximum
+of 1 when they are identical.
+
+Several methods have been developed to compare two sets of biclusters.
+For now, only :func:`consensus_score` (Hochreiter, et al, 2010) is
+available:
+
+1. Compute bicluster similarities for pairs of biclusters, one in each
+   set, using the Jaccard index or a similar measure.
+
+2. Assign biclusters from one set to another in a one-to-one fashion
+   to maximize the sum of their similarities. This step is performed
+   using the Hungarian algorithm.
+
+3. The final sum of similarities is divided by the size of the larger
+   set.
+
+The minimum consensus score, 0, occurs when all pairs of biclusters
+are totally dissimilar. The maximum score, 1, occurs when both sets
+are identical.
+
+
+.. topic:: References:
+
+ * Hochreiter, Bodenhofer, et. al., 2010. `FABIA: factor analysis
+   for bicluster acquisition
+   <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2881408/>`__.
