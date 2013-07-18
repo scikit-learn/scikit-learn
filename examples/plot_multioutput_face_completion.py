@@ -6,8 +6,9 @@ Face completion with a multi-output estimator
 This example shows the use of multi-output estimator to complete images.
 The goal is to predict the lower half of a face given its upper half.
 
-The first columns of images shows true faces. The next columns illustrates
-how an estimator completes the lower half of those faces.
+The first column of images shows true faces. The next columns illustrate
+how k nearest neighbors, extremely randomized trees, linear
+regression and ridge regression complete the lower half of those faces.
 
 """
 print(__doc__)
