@@ -219,7 +219,7 @@ Feature selection as part of a pipeline
 
 Feature selection is usually used as a pre-processing step before doing 
 the actual learning. The recommended way to do this in scikit-learn is
-to use a :class:`Pipeline`::
+to use a :class:`sklearn.pipeline.Pipeline`::
 
   clf = Pipeline([
     ('feature_selection', RandomForestClassifier()),
@@ -227,7 +227,9 @@ to use a :class:`Pipeline`::
   ])
   clf.fit(X, y)
 
-In this snippet we make use of a first :class:`RandomForestClassifier` 
-to evaluate feature importances and select the most relevant features. 
-Then, a second classifier is trained on the transformed output (i.e. 
-using only relevant features).
+In this snippet we make use of a first 
+:class:`sklearn.ensemble.RandomForestClassifier` to evaluate feature 
+importances and select the most relevant features. Then, a second 
+classifier is trained on the transformed output (i.e. using only 
+relevant features). You can perform similar operations with the
+other feature selection methods and classifiers of course.
