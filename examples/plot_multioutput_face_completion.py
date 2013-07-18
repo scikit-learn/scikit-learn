@@ -31,26 +31,26 @@ targets = data.target
 data = data.images.reshape((len(data.images), -1))
 train = data[targets < 30]
 test = data[targets >= 30]  # Test on independent people
-n_pixels = data.shape[1]
 
-X_train = train[:, :int(0.5 * n_pixels)]  # Upper half of the faces
-y_train = train[:, int(0.5 * n_pixels):]  # Lower half of the faces
-X_test = test[:, :int(0.5 * n_pixels)]
-y_test = test[:, int(0.5 * n_pixels):]
-
+# Test on a subset of people
 n_faces = 5
 rng = check_random_state(4)
-face_ids = rng.randint(X_test.shape[0], size=(n_faces, ))
-X_test = X_test[face_ids, :]
-y_test = y_test[face_ids, :]
+face_ids = rng.randint(test.shape[0], size=(n_faces, ))
+test = test[face_ids, :]
 
-# Build a multi-output forest
+n_pixels = data.shape[1]
+X_train = train[:, :np.ceil(0.5 * n_pixels)]  # Upper half of the faces
+y_train = train[:, np.floor(0.5 * n_pixels):]  # Lower half of the faces
+X_test = test[:, :np.ceil(0.5 * n_pixels)]
+y_test = test[:, np.floor(0.5 * n_pixels):]
+
+# Fit estimators
 ESTIMATORS = {
-    "extra trees": ExtraTreesRegressor(n_estimators=10, max_features=32,
+    "Extra trees": ExtraTreesRegressor(n_estimators=10, max_features=32,
                                        random_state=0),
-    "knn": KNeighborsRegressor(),
-    "linear regression": LinearRegression(),
-    "ridge": RidgeCV(),
+    "K-nn": KNeighborsRegressor(),
+    "Linear regression": LinearRegression(),
+    "Ridge": RidgeCV(),
 }
 
 y_test_predict = dict()
