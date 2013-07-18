@@ -156,7 +156,7 @@ labels provide the column partitioning.
    showing how to generate a data matrix with biclusters and apply
    this method to it.
 
- * :ref:`example_cluster_bicluster_newsgroups.py`: An example of finding
+ * :ref:`example_cluster_plot_bicluster_newsgroups.py`: An example of finding
    biclusters in the twenty newsgroup dataset.
 
 
