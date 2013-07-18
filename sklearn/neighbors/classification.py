@@ -180,9 +180,9 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
         Returns
         -------
         p : array of shape = [n_samples, n_classes], or a list of n_outputs
-            such arrays if n_outputs > 1.
+            of such arrays if n_outputs > 1.
             The class probabilities of the input samples. Classes are ordered
-            by arithmetical order.
+            by lexicographic order.
         """
         X = atleast2d_or_csr(X)
 

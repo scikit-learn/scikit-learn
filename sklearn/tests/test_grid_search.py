@@ -629,7 +629,7 @@ def test_grid_search_with_multioutput_data():
                 assert_almost_equal(correct_score,
                                     cv_validation_scores[i])
 
-    # Test with a randomized serach
+    # Test with a randomized search
     for est in estimators:
         random_search = RandomizedSearchCV(est, est_parameters, cv=cv)
         random_search.fit(X, y)
