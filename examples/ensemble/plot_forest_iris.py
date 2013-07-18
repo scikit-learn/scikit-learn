@@ -20,7 +20,7 @@ In descending order of quality, when trained (outside of this example) on all
     ExtraTreesClassifier()  # 0.95 score
     RandomForestClassifier()  # 0.94 score
     AdaBoost(DecisionTree(max_depth=3))  # 0.94 score
-    DecisionTree(max_depth=None)  # 0.94 score``
+    DecisionTree(max_depth=None)  # 0.94 score
 
 Increasing `max_depth` for AdaBoost lowers the standard deviation of the scores (but
 the average score does not improve).
@@ -28,13 +28,15 @@ the average score does not improve).
 See the console's output for further details about each model.
 
 In this example you might try to:
-1) vary the `max_depth` for the DecisionTreeClassifier and AdaBoostClassifier, perhaps
-   try ``max_depth=3`` for the DecisionTreeClassifier or ``max_depth=None``
-   for AdaBoostClassifier
-2) vary `n_estimators`
 
-Remember that RandomForests and ExtraTrees can be fitted in parallel (each tree is
-built independently of the others), AdaBoost's samples are built iteratively.
+1) vary the ``max_depth`` for the ``DecisionTreeClassifier`` and
+   ``AdaBoostClassifier``, perhaps try ``max_depth=3`` for the
+   ``DecisionTreeClassifier`` or ``max_depth=None`` for ``AdaBoostClassifier``
+2) vary ``n_estimators``
+
+It is worth noting that RandomForests and ExtraTrees can be fitted in parallel
+on many cores as each tree is built independently of the others. AdaBoost's
+samples are built sequentially and so do not use multiple cores.
 """
 print(__doc__)
 
