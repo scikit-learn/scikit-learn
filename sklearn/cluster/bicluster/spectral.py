@@ -89,8 +89,9 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
                                       BiclusterMixin)):
     """Base class for spectral biclustering."""
 
-    def __init__(self, n_clusters, svd_method, n_svd_vecs, mini_batch,
-                 init, n_init, n_jobs, random_state):
+    def __init__(self, n_clusters=3, svd_method="randomized",
+                 n_svd_vecs=None, mini_batch=False, init="k-means++",
+                 n_init=10, n_jobs=1, random_state=None):
         self.n_clusters = n_clusters
         self.svd_method = svd_method
         self.n_svd_vecs = n_svd_vecs
