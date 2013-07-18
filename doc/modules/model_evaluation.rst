@@ -889,7 +889,16 @@ Clustering metrics
 ======================
 
 The :mod:`sklearn.metrics` implements several losses, scores and utility
-function for more information see the :ref:`clustering_evaluation` section.
+function for more information see the :ref:`clustering_evaluation`
+section.
+
+
+Biclustering metrics
+====================
+
+The :mod:`sklearn.metrics` module implements bicluster scoring
+metrics. For more information see the :ref:`biclustering_evaluation`
+section.
 
 
 .. _score_func_objects:
