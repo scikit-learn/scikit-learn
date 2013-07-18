@@ -32,7 +32,7 @@ from ..externals.six.moves import xrange, zip
 from ..tree import DecisionTreeClassifier, DecisionTreeRegressor
 from ..tree.tree import BaseDecisionTree
 from ..tree._tree import DTYPE
-from ..utils import check_arrays, check_random_state
+from ..utils import array2d, check_arrays, check_random_state
 from ..metrics import accuracy_score, r2_score
 
 
@@ -96,7 +96,7 @@ class BaseWeightBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         if ((getattr(X, "dtype", None) != DTYPE) or
             (X.ndim != 2) or
             (not X.flags.contiguous)):
-            X = np.ascontiguousarray(np.atleast_2d(X), dtype=DTYPE)
+            X = np.ascontiguousarray(array2d(X), dtype=DTYPE)
 
         if sample_weight is None:
             # Initialize weights to 1 / n_samples

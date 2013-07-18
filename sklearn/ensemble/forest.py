@@ -256,7 +256,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         if ((getattr(X, "dtype", None) != DTYPE) or
             (X.ndim != 2) or
             (not X.flags.contiguous)):
-            X = np.ascontiguousarray(np.atleast_2d(X), dtype=DTYPE)
+            X = np.ascontiguousarray(array2d(X), dtype=DTYPE)
 
         n_samples, self.n_features_ = X.shape
 
