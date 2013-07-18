@@ -1,7 +1,7 @@
 """
-=============================================
-Face completion with a multi-output estimator
-=============================================
+==============================================
+Face completion with a multi-output estimators
+==============================================
 
 This example shows the use of multi-output estimator to complete images.
 The goal is to predict the lower half of a face given its upper half.
@@ -14,7 +14,7 @@ regression and ridge regression complete the lower half of those faces.
 print(__doc__)
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from sklearn.datasets import fetch_olivetti_faces
 from sklearn.utils.validation import check_random_state
@@ -62,36 +62,36 @@ for name, estimator in ESTIMATORS.items():
 image_shape = (64, 64)
 
 n_cols = 1 + len(ESTIMATORS)
-pl.figure(figsize=(2. * n_cols, 2.26 * n_faces))
-pl.suptitle("Face completion with multi-output estimators", size=16)
+plt.figure(figsize=(2. * n_cols, 2.26 * n_faces))
+plt.suptitle("Face completion with multi-output estimators", size=16)
 
 for i in range(n_faces):
     true_face = np.hstack((X_test[i], y_test[i]))
 
     if i:
-        sub = pl.subplot(n_faces, n_cols, i * n_cols + 1,
-                         title="true faces")
+        sub = plt.subplot(n_faces, n_cols, i * n_cols + 1,
+                          title="true faces")
     else:
-        sub = pl.subplot(n_faces, n_cols, i * n_cols + 1)
+        sub = plt.subplot(n_faces, n_cols, i * n_cols + 1)
 
     sub.axis("off")
     sub.imshow(true_face.reshape(image_shape),
-               cmap=pl.cm.gray,
+               cmap=plt.cm.gray,
                interpolation="nearest")
 
     for j, est in enumerate(sorted(ESTIMATORS)):
         completed_face = np.hstack((X_test[i], y_test_predict[est][i]))
 
         if i:
-            sub = pl.subplot(n_faces, n_cols, i * n_cols + 2 + j)
+            sub = plt.subplot(n_faces, n_cols, i * n_cols + 2 + j)
 
         else:
-            sub = pl.subplot(n_faces, n_cols, i * n_cols + 2 + j,
-                             title=est)
+            sub = plt.subplot(n_faces, n_cols, i * n_cols + 2 + j,
+                              title=est)
 
         sub.axis("off")
         sub.imshow(completed_face.reshape(image_shape),
-                   cmap=pl.cm.gray,
+                   cmap=plt.cm.gray,
                    interpolation="nearest")
 
-pl.show()
+plt.show()

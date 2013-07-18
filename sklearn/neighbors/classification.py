@@ -138,7 +138,7 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Returns
         -------
-        y : array of shape [n_samples] or [n_samples, n_output]
+        y : array of shape [n_samples] or [n_samples, n_outputs]
             Class labels for each data sample.
         """
         X = atleast2d_or_csr(X)
@@ -149,11 +149,11 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
             self._y = self._y.reshape((-1, 1))
             self.classes_ = [self.classes_]
 
-        n_output = len(self.classes_)
+        n_outputs = len(self.classes_)
         n_samples = X.shape[0]
         weights = _get_weights(neigh_dist, self.weights)
 
-        y_pred = np.empty((n_samples, n_output), dtype=self.classes_[0].dtype)
+        y_pred = np.empty((n_samples, n_outputs), dtype=self.classes_[0].dtype)
         for k, classes_k in enumerate(self.classes_):
             if weights is None:
                 mode, _ = stats.mode(self._y[neigh_ind, k], axis=1)
@@ -179,9 +179,10 @@ class KNeighborsClassifier(NeighborsBase, KNeighborsMixin,
 
         Returns
         -------
-        y_proba : array, shape = [n_samples, n_classes]
-            Probabilities of the samples for each class in the model,
-            where classes are ordered arithmetically.
+        p : array of shape = [n_samples, n_classes], or a list of n_outputs
+            of such arrays if n_outputs > 1.
+            The class probabilities of the input samples. Classes are ordered
+            by lexicographic order.
         """
         X = atleast2d_or_csr(X)
 
@@ -330,7 +331,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         Returns
         -------
-        y : array of shape [n_samples] or [n_samples, n_output]
+        y : array of shape [n_samples] or [n_samples, n_outputs]
             Class labels for each data sample.
 
         """
@@ -346,7 +347,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
         if not self.outputs_2d_:
             self._y = self._y.reshape((-1, 1))
             self.classes_ = [self.classes_]
-        n_output = len(self.classes_)
+        n_outputs = len(self.classes_)
 
         if self.outlier_label is not None:
             neigh_dist[outliers] = 1e-6
@@ -359,7 +360,7 @@ class RadiusNeighborsClassifier(NeighborsBase, RadiusNeighborsMixin,
 
         weights = _get_weights(neigh_dist, self.weights)
 
-        y_pred = np.empty((n_samples, n_output), dtype=self.classes_[0].dtype)
+        y_pred = np.empty((n_samples, n_outputs), dtype=self.classes_[0].dtype)
         for k, classes_k in enumerate(self.classes_):
             pred_labels = np.array([self._y[ind, k] for ind in neigh_ind],
                                    dtype=object)
