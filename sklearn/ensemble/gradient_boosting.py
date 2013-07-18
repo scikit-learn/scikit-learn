@@ -45,6 +45,8 @@ from ..tree._tree import DTYPE, TREE_LEAF
 from ._gradient_boosting import predict_stages
 from ._gradient_boosting import predict_stage
 
+from ..feature_selection.from_model import _LearntSelectorMixin
+
 
 class QuantileEstimator(BaseEstimator):
     """An estimator predicting the alpha-quantile of the training targets."""
@@ -693,7 +695,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         return importances
 
 
-class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
+class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin,
+                                 _LearntSelectorMixin):
     """Gradient Boosting for classification.
 
     GB builds an additive model in a
@@ -930,7 +933,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
             yield self.classes_.take(np.argmax(proba, axis=1), axis=0)
 
 
-class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
+class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin,
+                                _LearntSelectorMixin):
     """Gradient Boosting for regression.
 
     GB builds an additive model in a forward stage-wise fashion;
