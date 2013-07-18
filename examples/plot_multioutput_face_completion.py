@@ -68,11 +68,12 @@ pl.suptitle("Face completion with multi-output estimators", size=16)
 for i in range(n_faces):
     true_face = np.hstack((X_test[i], y_test[i]))
 
-    if i != 0:
-        sub = pl.subplot(n_faces, n_cols, i * n_cols + 1)
-    else:
+    if i:
         sub = pl.subplot(n_faces, n_cols, i * n_cols + 1,
                          title="true faces")
+    else:
+        sub = pl.subplot(n_faces, n_cols, i * n_cols + 1)
+
     sub.axis("off")
     sub.imshow(true_face.reshape(image_shape),
                cmap=pl.cm.gray,
@@ -81,11 +82,13 @@ for i in range(n_faces):
     for j, est in enumerate(sorted(ESTIMATORS)):
         completed_face = np.hstack((X_test[i], y_test_predict[est][i]))
 
-        if i != 0:
+        if i:
             sub = pl.subplot(n_faces, n_cols, i * n_cols + 2 + j)
+
         else:
             sub = pl.subplot(n_faces, n_cols, i * n_cols + 2 + j,
                              title=est)
+
         sub.axis("off")
         sub.imshow(completed_face.reshape(image_shape),
                    cmap=pl.cm.gray,

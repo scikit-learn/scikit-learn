@@ -6,7 +6,6 @@ from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
-from sklearn.utils.testing import assert_greater
 
 from sklearn.datasets import make_classification
 from sklearn.datasets import make_multilabel_classification
