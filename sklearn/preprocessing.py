@@ -760,6 +760,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     --------
     sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
       dictionary items (also handles string-valued features).
+    sklearn.feature_extraction.FeatureHasher : performs an approximate one-hot
+      encoding of dictionary items or strings.
     """
     def __init__(self, n_values="auto", categorical_features="all",
                  dtype=np.float):
