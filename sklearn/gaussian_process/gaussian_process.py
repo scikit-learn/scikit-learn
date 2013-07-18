@@ -493,8 +493,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     # Ordinary Kriging
                     u = np.zeros(y.shape)
 
-                MSE = self.sigma2 * (1. - (rt ** 2.).sum(axis=0)
-                                     + (u ** 2.).sum(axis=0)).reshape(n_eval, self.y_mean.size)
+                MSE = np.vstack(map(lambda x: x * (1. - (rt ** 2.).sum(axis=0)
+                                      + (u.T ** 2.).sum(axis=0)),
+                                      self.sigma2.tolist())).sum(axis=0) / n_features
 
                 # Mean Squared Error might be slightly negative depending on
                 # machine precision: force to zero!
