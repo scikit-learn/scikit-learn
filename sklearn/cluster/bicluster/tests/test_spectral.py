@@ -60,31 +60,30 @@ def test_spectral_biclustering():
                   'n_init': [10],
                   'n_jobs': [1]}
     random_state = 0
-    for noise in (0.01, 0.5):
+    for noise in (0.5,):
         S, rows, cols = make_checkerboard((30, 30), 3, noise=noise,
                                           random_state=random_state)
-        for n_clusters in ((3, 3), 3):
-            for mat in (S, csr_matrix(S)):
-                for kwargs in ParameterGrid(param_grid):
-                    model = SpectralBiclustering(n_clusters=n_clusters,
-                                                 random_state=random_state,
-                                                 **kwargs)
+        for mat in (S, csr_matrix(S)):
+            for kwargs in ParameterGrid(param_grid):
+                model = SpectralBiclustering(n_clusters=3,
+                                             random_state=random_state,
+                                             **kwargs)
 
-                    if issparse(mat) and kwargs['method'] == 'log':
-                        # cannot take log of sparse matrix
-                        assert_raises(ValueError, model.fit, mat)
-                        continue
-                    else:
-                        model.fit(mat)
+                if issparse(mat) and kwargs['method'] == 'log':
+                    # cannot take log of sparse matrix
+                    assert_raises(ValueError, model.fit, mat)
+                    continue
+                else:
+                    model.fit(mat)
 
-                    assert_equal(model.rows_.shape, (9, 30))
-                    assert_equal(model.columns_.shape, (9, 30))
-                    assert_array_equal(model.rows_.sum(axis=0),
-                                       np.repeat(3, 30))
-                    assert_array_equal(model.columns_.sum(axis=0),
-                                       np.repeat(3, 30))
-                    assert_equal(consensus_score(model.biclusters_,
-                                                 (rows, cols)), 1)
+                assert_equal(model.rows_.shape, (9, 30))
+                assert_equal(model.columns_.shape, (9, 30))
+                assert_array_equal(model.rows_.sum(axis=0),
+                                   np.repeat(3, 30))
+                assert_array_equal(model.columns_.sum(axis=0),
+                                   np.repeat(3, 30))
+                assert_equal(consensus_score(model.biclusters_,
+                                             (rows, cols)), 1)
 
 
 def _do_scale_test(scaled):
