@@ -17,7 +17,7 @@ from sklearn.cluster.bicluster.spectral import _scale_normalize
 from sklearn.cluster.bicluster.spectral import _bistochastic_normalize
 from sklearn.cluster.bicluster.spectral import _log_normalize
 
-from sklearn.metrics.cluster.bicluster import score_biclusters
+from sklearn.metrics.cluster.bicluster import consensus_score
 
 from sklearn.datasets import make_biclusters, make_checkerboard
 
@@ -46,7 +46,8 @@ def test_spectral_coclustering():
                 assert_equal(model.rows_.shape, (3, 30))
                 assert_array_equal(model.rows_.sum(axis=0), np.ones(30))
                 assert_array_equal(model.columns_.sum(axis=0), np.ones(30))
-                assert_equal(score_biclusters(model.biclusters_, (rows, cols)), 1)
+                assert_equal(consensus_score(model.biclusters_,
+                                             (rows, cols)), 1)
 
 
 def test_spectral_biclustering():
@@ -82,7 +83,8 @@ def test_spectral_biclustering():
                                        np.repeat(3, 30))
                     assert_array_equal(model.columns_.sum(axis=0),
                                        np.repeat(3, 30))
-                    assert_equal(score_biclusters(model.biclusters_, (rows, cols)), 1)
+                    assert_equal(consensus_score(model.biclusters_,
+                                                 (rows, cols)), 1)
 
 
 def _do_scale_test(scaled):

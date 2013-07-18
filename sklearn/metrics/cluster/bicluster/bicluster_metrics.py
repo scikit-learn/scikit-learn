@@ -24,7 +24,7 @@ def _jaccard(a_rows, a_cols, b_rows, b_cols):
     return intersection / (a_size + b_size - intersection)
 
 
-def _pairwise_similarity(a, b):
+def _pairwise_similarity(a, b, similarity):
     """Computes pairwise similarity matrix.
 
     result[i, j] is the Jaccard coefficient of a's bicluster i and b's
@@ -37,20 +37,43 @@ def _pairwise_similarity(a, b):
     result = np.zeros((n_a, n_b))
     for i in range(n_a):
         for j in range(n_b):
-            result[i, j] = _jaccard(a_rows[i], a_cols[i], b_rows[j], b_cols[j])
+            result[i, j] = similarity(a_rows[i], a_cols[i],
+                                      b_rows[j], b_cols[j])
     return result
 
 
-def score_biclusters(a, b):
+def consensus_score(a, b, similarity="jaccard"):
     """The similarity of two sets of biclusters.
 
-    Similarity between individual biclusters is computed using the
-    Jaccard index. Then the best matching between sets is found using
-    the Hungarian algorithm. The final score is the sum of
-    similarities divided by the size of the larger set.
+    Similarity between individual biclusters is computed. Then the
+    best matching between sets is found using the Hungarian algorithm.
+    The final score is the sum of similarities divided by the size of
+    the larger set.
+
+    Parameters
+    ----------
+    a : (rows, columns)
+        Tuple of row and column indicators for a set of biclusters.
+
+    b : (rows, columns)
+        Another set of biclusters like `a`.
+
+    similarity : string or function, optional, default: "jaccard"
+        May be the string "jaccard" to use the Jaccard coefficient, or
+        any function that takes four arguments, each of which is a 1d
+        indicator vector: (a_rows, a_columns, b_rows, b_columns).
+
+    References
+    ----------
+
+    * Hochreiter, Bodenhofer, et. al., 2010. `FABIA: factor analysis
+      for bicluster acquisition
+      <https://www.ncbi.nlm.nih.gov/pmc/articles/PMC2881408/>`__.
 
     """
-    matrix = _pairwise_similarity(a, b)
+    if similarity == "jaccard":
+        similarity = _jaccard
+    matrix = _pairwise_similarity(a, b, similarity)
     indices = hungarian(1 - matrix)
     n_a = len(a[0])
     n_b = len(b[0])

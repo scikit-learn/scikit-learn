@@ -1,1 +1,3 @@
-from .bicluster_metrics import score_biclusters
+from .bicluster_metrics import consensus_score
+
+__all__ = ['consensus_score']
