@@ -131,7 +131,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         if ((getattr(X, "dtype", None) != DTYPE) or
             (X.ndim != 2) or
             (not X.flags.contiguous)):
-            X = array2d(X, dtype=DTYPE, order="C")
+            X = np.ascontiguousarray(np.atleast_2d(X), dtype=DTYPE)
 
         random_state = check_random_state(self.random_state)
         n_samples, self.n_features_ = X.shape

@@ -222,7 +222,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             For each datapoint x in X and for each tree in the forest,
             return the index of the leaf x ends up in.
         """
-        X = array2d(X, dtype=np.float32, order='C')
+        X = array2d(X, dtype=DTYPE)
         return np.array([est.tree_.apply(X) for est in self.estimators_]).T
 
     def fit(self, X, y, sample_weight=None):
@@ -256,7 +256,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         if ((getattr(X, "dtype", None) != DTYPE) or
             (X.ndim != 2) or
             (not X.flags.contiguous)):
-            X = array2d(X, dtype=DTYPE, order="C")
+            X = np.ascontiguousarray(np.atleast_2d(X), dtype=DTYPE)
 
         n_samples, self.n_features_ = X.shape
 

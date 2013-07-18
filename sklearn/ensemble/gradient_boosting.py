@@ -515,7 +515,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         if ((getattr(X, "dtype", None) != DTYPE) or
             (X.ndim != 2) or
             (not X.flags.contiguous)):
-            X = array2d(X, dtype=DTYPE, order="C")
+            X = np.ascontiguousarray(np.atleast_2d(X), dtype=DTYPE)
 
         y = np.ravel(y, order="C")
 
@@ -642,7 +642,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             classification are special cases with ``k == 1``,
             otherwise ``k==n_classes``.
         """
-        X = array2d(X, dtype=DTYPE, order='C')
+        X = array2d(X, dtype=DTYPE, order="C")
         score = self._init_decision_function(X)
         predict_stages(self.estimators_, X, self.learning_rate, score)
         return score
@@ -666,7 +666,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             classification are special cases with ``k == 1``,
             otherwise ``k==n_classes``.
         """
-        X = array2d(X, dtype=DTYPE, order='C')
+        X = array2d(X, dtype=DTYPE, order="C")
         score = self._init_decision_function(X)
         for i in range(self.n_estimators):
             predict_stage(self.estimators_, i, X, self.learning_rate, score)
