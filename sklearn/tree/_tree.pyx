@@ -53,31 +53,31 @@ cdef class Criterion:
                          DOUBLE_t* sample_weight,
                          SIZE_t* samples,
                          SIZE_t start,
-                         SIZE_t end):
+                         SIZE_t end) nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         pass
 
-    cdef void reset(self):
+    cdef void reset(self) nogil:
         """Reset the criterion at pos=start."""
         pass
 
-    cdef void update(self, SIZE_t new_pos):
+    cdef void update(self, SIZE_t new_pos) nogil:
         """Update the collected statistics by moving samples[pos:new_pos] from
            the right child to the left child."""
         pass
 
-    cdef double node_impurity(self):
+    cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of
            samples[start:end]."""
         pass
 
-    cdef double children_impurity(self):
+    cdef double children_impurity(self) nogil:
         """Evaluate the impurity in children nodes, i.e. the impurity of
            samples[start:pos] + the impurity of samples[pos:end]."""
         pass
 
-    cdef void node_value(self, double* dest):
+    cdef void node_value(self, double* dest) nogil:
         """Compute the node value of samples[start:end] into dest."""
         pass
 
@@ -162,7 +162,7 @@ cdef class ClassificationCriterion(Criterion):
                          DOUBLE_t* sample_weight,
                          SIZE_t* samples,
                          SIZE_t start,
-                         SIZE_t end):
+                         SIZE_t end) nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         # Initialize fields
@@ -210,7 +210,7 @@ cdef class ClassificationCriterion(Criterion):
         # Reset to pos=start
         self.reset()
 
-    cdef void reset(self):
+    cdef void reset(self) nogil:
         """Reset the criterion at pos=start."""
         self.pos = self.start
 
@@ -236,7 +236,7 @@ cdef class ClassificationCriterion(Criterion):
                 label_count_right[offset + c] = label_count_total[offset + c]
             offset += label_count_stride
 
-    cdef void update(self, SIZE_t new_pos):
+    cdef void update(self, SIZE_t new_pos) nogil:
         """Update the collected statistics by moving samples[pos:new_pos] from
             the right child to the left child."""
         cdef DOUBLE_t* y = self.y
@@ -284,13 +284,13 @@ cdef class ClassificationCriterion(Criterion):
 
         self.pos = new_pos
 
-    cdef double node_impurity(self):
+    cdef double node_impurity(self) nogil:
         pass
 
-    cdef double children_impurity(self):
+    cdef double children_impurity(self) nogil:
         pass
 
-    cdef void node_value(self, double* dest):
+    cdef void node_value(self, double* dest) nogil:
         """Compute the node value of samples[start:end] into dest."""
         cdef SIZE_t n_outputs = self.n_outputs
         cdef SIZE_t* n_classes = self.n_classes
@@ -321,7 +321,7 @@ cdef class Entropy(ClassificationCriterion):
 
         cross-entropy = - \sum_{k=0}^{K-1} pmk log(pmk)
     """
-    cdef double node_impurity(self):
+    cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of
            samples[start:end]."""
         cdef double weighted_n_node_samples = self.weighted_n_node_samples
@@ -352,7 +352,7 @@ cdef class Entropy(ClassificationCriterion):
 
         return total / n_outputs
 
-    cdef double children_impurity(self):
+    cdef double children_impurity(self) nogil:
         """Evaluate the impurity in children nodes, i.e. the impurity of
            samples[start:pos] + the impurity of samples[pos:end]."""
         cdef double weighted_n_node_samples = self.weighted_n_node_samples
@@ -410,7 +410,7 @@ cdef class Gini(ClassificationCriterion):
         index = \sum_{k=0}^{K-1} pmk (1 - pmk)
               = 1 - \sum_{k=0}^{K-1} pmk ** 2
     """
-    cdef double node_impurity(self):
+    cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of
            samples[start:end]."""
         cdef double weighted_n_node_samples = self.weighted_n_node_samples
@@ -442,7 +442,7 @@ cdef class Gini(ClassificationCriterion):
 
         return total / n_outputs
 
-    cdef double children_impurity(self):
+    cdef double children_impurity(self) nogil:
         """Evaluate the impurity in children nodes, i.e. the impurity of
            samples[start:pos] + the impurity of samples[pos:end]."""
         cdef double weighted_n_node_samples = self.weighted_n_node_samples
@@ -574,7 +574,7 @@ cdef class RegressionCriterion(Criterion):
                          DOUBLE_t* sample_weight,
                          SIZE_t* samples,
                          SIZE_t start,
-                         SIZE_t end):
+                         SIZE_t end) nogil:
         """Initialize the criterion at node samples[start:end] and
            children samples[start:start] and samples[start:end]."""
         # Initialize fields
@@ -635,7 +635,7 @@ cdef class RegressionCriterion(Criterion):
         # Reset to pos=start
         self.reset()
 
-    cdef void reset(self):
+    cdef void reset(self) nogil:
         """Reset the criterion at pos=start."""
         self.pos = self.start
 
@@ -665,7 +665,7 @@ cdef class RegressionCriterion(Criterion):
                             weighted_n_node_samples * (mean_right[k] *
                                                        mean_right[k]))
 
-    cdef void update(self, SIZE_t new_pos):
+    cdef void update(self, SIZE_t new_pos) nogil:
         """Update the collected statistics by moving samples[pos:new_pos] from
            the right child to the left child."""
         cdef DOUBLE_t* y = self.y
@@ -726,13 +726,13 @@ cdef class RegressionCriterion(Criterion):
 
         self.pos = new_pos
 
-    cdef double node_impurity(self):
+    cdef double node_impurity(self) nogil:
         pass
 
-    cdef double children_impurity(self):
+    cdef double children_impurity(self) nogil:
         pass
 
-    cdef void node_value(self, double* dest):
+    cdef void node_value(self, double* dest) nogil:
         """Compute the node value of samples[start:end] into dest."""
         cdef SIZE_t n_outputs = self.n_outputs
         cdef double* mean_total = self.mean_total
@@ -746,7 +746,7 @@ cdef class MSE(RegressionCriterion):
 
         MSE = var_left + var_right
     """
-    cdef double node_impurity(self):
+    cdef double node_impurity(self) nogil:
         """Evaluate the impurity of the current node, i.e. the impurity of
            samples[start:end]."""
         cdef SIZE_t n_outputs = self.n_outputs
@@ -763,7 +763,7 @@ cdef class MSE(RegressionCriterion):
 
         return total / n_outputs
 
-    cdef double children_impurity(self):
+    cdef double children_impurity(self) nogil:
         """Evaluate the impurity in children nodes, i.e. the impurity of
            samples[start:pos] + the impurity of samples[pos:end]."""
         cdef SIZE_t n_outputs = self.n_outputs

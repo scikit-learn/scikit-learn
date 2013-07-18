@@ -43,12 +43,12 @@ cdef class Criterion:
                          DOUBLE_t* sample_weight,
                          SIZE_t* samples,
                          SIZE_t start,
-                         SIZE_t end)
-    cdef void reset(self)
-    cdef void update(self, SIZE_t new_pos)
-    cdef double node_impurity(self)
-    cdef double children_impurity(self)
-    cdef void node_value(self, double* dest)
+                         SIZE_t end) nogil
+    cdef void reset(self) nogil
+    cdef void update(self, SIZE_t new_pos) nogil
+    cdef double node_impurity(self) nogil
+    cdef double children_impurity(self) nogil
+    cdef void node_value(self, double* dest) nogil
 
 
 # =============================================================================
