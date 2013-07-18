@@ -642,7 +642,7 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
 def test_callable_metric():
     metric = lambda x1, x2: np.sqrt(np.sum(x1 ** 2 + x2 ** 2))
 
-    X = np.random.random((20, 2))
+    X = np.random.RandomState(42).rand(20, 2)
     nbrs1 = neighbors.NearestNeighbors(3, algorithm='auto', metric=metric)
     nbrs2 = neighbors.NearestNeighbors(3, algorithm='brute', metric=metric)
 
