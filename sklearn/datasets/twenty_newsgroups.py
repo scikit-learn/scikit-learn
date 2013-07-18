@@ -36,7 +36,6 @@ vectorization step.
 # License: BSD 3 clause
 
 import os
-import urllib
 import logging
 import tarfile
 import pickle
@@ -52,7 +51,12 @@ from ..utils import check_random_state
 from ..utils.fixes import in1d
 from ..feature_extraction.text import CountVectorizer
 from ..preprocessing import normalize
-from ..externals import joblib
+from ..externals import joblib, six
+
+if six.PY3:
+    from urllib.request import urlopen
+else:
+    from urllib2 import urlopen
 
 
 logger = logging.getLogger(__name__)
@@ -77,7 +81,7 @@ def download_20newsgroups(target_dir, cache_path):
 
     if not os.path.exists(archive_path):
         logger.warn("Downloading dataset from %s (14 MB)", URL)
-        opener = urllib.urlopen(URL)
+        opener = urlopen(URL)
         open(archive_path, 'wb').write(opener.read())
 
     logger.info("Decompressing %s", archive_path)
