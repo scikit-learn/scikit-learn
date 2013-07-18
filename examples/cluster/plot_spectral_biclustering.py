@@ -24,26 +24,32 @@ import numpy as np
 import pylab as pl
 
 from sklearn.datasets import make_checkerboard
+from sklearn.datasets import samples_generator as sg
 from sklearn.cluster.bicluster import SpectralBiclustering
+from sklearn.metrics import consensus_score
 
 n_clusters = (4, 3)
-data, row_labels, column_labels = make_checkerboard(
+data, rows, columns = make_checkerboard(
     shape=(300, 300), n_clusters=n_clusters, noise=10,
-    shuffle=True, random_state=0)
+    shuffle=False, random_state=0)
+
+pl.matshow(data, cmap=pl.cm.Blues)
+pl.title("Original dataset")
+
+data, row_idx, col_idx = sg._shuffle(data, random_state=0)
+pl.matshow(data, cmap=pl.cm.Blues)
+pl.title("Shuffled dataset")
+
 model = SpectralBiclustering(n_clusters=n_clusters, method='log',
                              random_state=0)
 model.fit(data)
+score = consensus_score(model.biclusters_,
+                        (rows[:, row_idx], columns[:, col_idx]))
+
+print "consensus score: {:.1f}".format(score)
 
 fit_data = data[np.argsort(model.row_labels_)]
 fit_data = fit_data[:, np.argsort(model.column_labels_)]
-
-pl.matshow(data[np.argsort(row_labels)]
-               [:, np.argsort(column_labels)],
-           cmap=pl.cm.Blues)
-pl.title("Original dataset")
-
-pl.matshow(data, cmap=pl.cm.Blues)
-pl.title("Shuffled dataset")
 
 pl.matshow(fit_data, cmap=pl.cm.Blues)
 pl.title("After biclustering; rearranged to show biclusters")
