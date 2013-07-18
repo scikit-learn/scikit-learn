@@ -496,8 +496,7 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         ----------
         X : array-like, shape = [n_samples, n_features]
             Training vectors, where n_samples is the number of samples
-            and n_features is the number of features. Use fortran-style
-            to avoid memory copies.
+            and n_features is the number of features.
 
         y : array-like, shape = [n_samples]
             Target values (integers in classification, real numbers in
@@ -511,9 +510,14 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             Returns self.
         """
         # Check input
-        X, y = check_arrays(X, y, sparse_format='dense')
-        X = np.asfortranarray(X, dtype=DTYPE)
-        y = np.ravel(y, order='C')
+        X, y = check_arrays(X, y, sparse_format="dense")
+
+        if ((getattr(X, "dtype", None) != DTYPE) or
+            (X.ndim != 2) or
+            (not X.flags.contiguous)):
+            X = array2d(X, dtype=DTYPE, order="C")
+
+        y = np.ravel(y, order="C")
 
         # Check parameters
         n_samples, n_features = X.shape
@@ -816,8 +820,7 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         ----------
         X : array-like, shape = [n_samples, n_features]
             Training vectors, where n_samples is the number of samples
-            and n_features is the number of features. Use fortran-style
-            to avoid memory copies.
+            and n_features is the number of features.
 
         y : array-like, shape = [n_samples]
             Target values (integers in classification, real numbers in
@@ -1048,8 +1051,7 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
         ----------
         X : array-like, shape = [n_samples, n_features]
             Training vectors, where n_samples is the number of samples
-            and n_features is the number of features. Use fortran-style
-            to avoid memory copies.
+            and n_features is the number of features.
 
         y : array-like, shape = [n_samples]
             Target values (integers in classification, real numbers in

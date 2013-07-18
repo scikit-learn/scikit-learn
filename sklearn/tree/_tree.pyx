@@ -815,7 +815,7 @@ cdef class Splitter:
     def __setstate__(self, d):
         pass
 
-    cdef void init(self, np.ndarray[DTYPE_t, ndim=2] X,
+    cdef void init(self, np.ndarray[DTYPE_t, ndim=2, mode="c"] X,
                          np.ndarray[DOUBLE_t, ndim=2, mode="c"] y,
                          DOUBLE_t* sample_weight):
         """Initialize the splitter."""
@@ -904,7 +904,7 @@ cdef class BestSplitter(Splitter):
         cdef SIZE_t* features = self.features
         cdef SIZE_t n_features = self.n_features
 
-        cdef np.ndarray[DTYPE_t, ndim=2] X = self.X
+        cdef np.ndarray[DTYPE_t, ndim=2, mode="c"] X = self.X
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef unsigned int* random_state = &self.rand_r_state
@@ -1005,7 +1005,7 @@ cdef class BestSplitter(Splitter):
         feature[0] = best_feature
         threshold[0] = best_threshold
 
-cdef void sort(np.ndarray[DTYPE_t, ndim=2] X, SIZE_t current_feature,
+cdef void sort(np.ndarray[DTYPE_t, ndim=2, mode="c"] X, SIZE_t current_feature,
                SIZE_t* samples, SIZE_t length):
     """In-place sorting of samples[start:end] using
       X[sample[i], current_feature] as key."""
@@ -1066,7 +1066,7 @@ cdef class RandomSplitter(Splitter):
         cdef SIZE_t* features = self.features
         cdef SIZE_t n_features = self.n_features
 
-        cdef np.ndarray[DTYPE_t, ndim=2] X = self.X
+        cdef np.ndarray[DTYPE_t, ndim=2, mode="c"] X = self.X
         cdef SIZE_t max_features = self.max_features
         cdef SIZE_t min_samples_leaf = self.min_samples_leaf
         cdef unsigned int* random_state = &self.rand_r_state
@@ -1427,8 +1427,8 @@ cdef class Tree:
                       np.ndarray sample_weight=None):
         """Build a decision tree from the training set (X, y)."""
         # Prepare data before recursive partitioning
-        if X.dtype != DTYPE:
-            X = np.asarray(X, dtype=DTYPE)
+        if X.dtype != DTYPE or not X.flags.contiguous:
+            X = np.asarray(X, dtype=DTYPE, order="C")
 
         if y.dtype != DOUBLE or not y.flags.contiguous:
             y = np.asarray(y, dtype=DOUBLE, order="C")

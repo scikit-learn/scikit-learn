@@ -253,8 +253,10 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         # Precompute some data
         X, y = check_arrays(X, y, sparse_format="dense")
-        if (getattr(X, "dtype", None) != DTYPE or X.ndim != 2):
-            X = array2d(X, dtype=DTYPE)
+        if ((getattr(X, "dtype", None) != DTYPE) or
+            (X.ndim != 2) or
+            (not X.flags.contiguous)):
+            X = array2d(X, dtype=DTYPE, order="C")
 
         n_samples, self.n_features_ = X.shape
 
