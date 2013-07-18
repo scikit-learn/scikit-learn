@@ -772,6 +772,21 @@ details.
    metrics.silhouette_samples
    metrics.v_measure_score
 
+Biclustering metrics
+--------------------
+
+See the :ref:`biclustering_evaluation` section of the user guide for
+further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   metrics.consensus_score
+
+
 Pairwise metrics
 ----------------
 
