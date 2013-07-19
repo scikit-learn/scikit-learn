@@ -1,7 +1,6 @@
 from __future__ import division, print_function
 
 import warnings
-import inspect
 import numpy as np
 
 from functools import partial
@@ -113,6 +112,21 @@ ALL_METRICS = dict()
 ALL_METRICS.update(THRESHOLDED_METRICS)
 ALL_METRICS.update(CLASSIFICATION_METRICS)
 ALL_METRICS.update(REGRESSION_METRICS)
+
+METRICS_WITH_POS_LABEL = [
+    "roc_curve",
+
+    "precision_score", "recall_score", "f1_score", "f2_score", "f0.5_score",
+
+    "weighted_f0.5_score", "weighted_f1_score", "weighted_f2_score",
+    "weighted_precision_score", "weighted_recall_score",
+
+    "micro_f0.5_score", "micro_f1_score", "micro_f2_score",
+    "micro_precision_score", "micro_recall_score",
+
+    "macro_f0.5_score", "macro_f1_score", "macro_f2_score",
+    "macro_precision_score", "macro_recall_score",
+]
 
 METRICS_WITH_NORMALIZE_OPTION = {
     "accuracy_score ": accuracy_score,
@@ -1063,17 +1077,9 @@ def test_invariance_string_vs_numbers_labels():
         measure_with_number = metric(y1, y2)
 
         # Ugly, but handle case with a pos_label and label
-        if hasattr(metric, "func"):
-            argspect = inspect.getargspec(metric.func)
-        else:
-            argspect = inspect.getargspec(metric)
-
         metric_str = metric
-        if "pos_label" in argspect[0]:
+        if name in METRICS_WITH_POS_LABEL:
             metric_str = partial(metric_str, pos_label=pos_label_str)
-
-        if "labels" in argspect[0]:
-            metric_str = partial(metric_str, labels=labels_str)
 
         measure_with_str = metric_str(y1_str, y2_str)
 
