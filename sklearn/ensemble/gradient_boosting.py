@@ -36,6 +36,7 @@ from ..base import ClassifierMixin
 from ..base import RegressorMixin
 from ..utils import check_random_state, array2d, check_arrays
 from ..utils.extmath import logsumexp
+from ..utils.fixes import unique
 from ..externals import six
 
 from ..tree.tree import DecisionTreeRegressor
@@ -833,9 +834,8 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
         self : object
             Returns self.
         """
-        self.classes_ = np.unique(y)
+        self.classes_, y = unique(y, return_inverse=True)
         self.n_classes_ = len(self.classes_)
-        y = np.searchsorted(self.classes_, y)
 
         return super(GradientBoostingClassifier, self).fit(X, y)
 

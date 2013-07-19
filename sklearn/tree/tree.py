@@ -22,6 +22,7 @@ from ..externals import six
 from ..externals.six.moves import xrange
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import array2d, check_random_state
+from ..utils.fixes import unique
 from ..utils.validation import check_arrays
 
 from ._tree import Criterion, Splitter, Tree
@@ -152,10 +153,9 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             self.n_classes_ = []
 
             for k in xrange(self.n_outputs_):
-                unique = np.unique(y[:, k])
-                self.classes_.append(unique)
-                self.n_classes_.append(unique.shape[0])
-                y[:, k] = np.searchsorted(unique, y[:, k])
+                classes_k, y[:, k] = unique(y[:, k], return_inverse=True)
+                self.classes_.append(classes_k)
+                self.n_classes_.append(classes_k.shape[0])
 
         else:
             self.classes_ = [None] * self.n_outputs_

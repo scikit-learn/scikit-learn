@@ -54,7 +54,7 @@ from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
                     ExtraTreeClassifier, ExtraTreeRegressor)
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import array2d, check_random_state, check_arrays, safe_asarray
-from ..utils.fixes import bincount
+from ..utils.fixes import bincount, unique
 
 
 from .base import BaseEnsemble
@@ -276,7 +276,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             y = np.copy(y)
 
             if self.n_outputs_ == 1:
-                self.classes_ = np.unique(y)
+                self.classes_, y[:, 0] = unique(y[:, 0], return_inverse=True)
                 self.n_classes_ = len(self.classes_)
 
             else:
@@ -284,10 +284,9 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
                 self.n_classes_ = []
 
                 for k in xrange(self.n_outputs_):
-                    unique = np.unique(y[:, k])
-                    self.classes_.append(unique)
-                    self.n_classes_.append(unique.shape[0])
-                    y[:, k] = np.searchsorted(unique, y[:, k])
+                    classes_k, y[:, k] = unique(y[:, k], return_inverse=True)
+                    self.classes_.append(classes_k)
+                    self.n_classes_.append(classes_k.shape[0])
 
         else:
             if self.n_outputs_ == 1:
