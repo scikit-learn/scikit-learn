@@ -1,6 +1,13 @@
 import numpy as np
 
 
+def check_array_ndim(X):
+    if X.ndim != 2:
+        raise ValueError("Argument `X` has the wrong dimensionality."
+                         " It must have exactly two dimensions, but"
+                         " {} != 2".format(X.ndim))
+
+
 def get_indices(rows, columns):
     """Convert indicator vectors to lists of indices for bicluster `i`."""
     row_idx = np.nonzero(rows)[0]

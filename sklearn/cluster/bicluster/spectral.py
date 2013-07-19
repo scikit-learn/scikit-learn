@@ -25,6 +25,8 @@ from sklearn.utils.extmath import norm
 from sklearn.utils.validation import assert_all_finite
 from sklearn.utils.validation import check_arrays
 
+from .utils import check_array_ndim
+
 
 def _scale_normalize(X):
     """Normalize `X` by scaling rows and columns independently.
@@ -117,10 +119,7 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
 
         """
         X, = check_arrays(X, sparse_format='csr', dtype=np.float64)
-        if X.ndim != 2:
-            raise ValueError("Argument `X` has the wrong dimensionality."
-                             " It must have exactly two dimensions, but"
-                             " {} != 2".format(X.ndim))
+        check_array_ndim(X)
         self._check_parameters()
         self._fit(X)
 
