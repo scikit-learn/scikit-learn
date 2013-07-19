@@ -11,6 +11,7 @@ from nose.tools import assert_raises, assert_true
 
 from sklearn.metrics import mean_squared_error
 from sklearn.utils import check_random_state, tosequence
+from sklearn.utils.testing import assert_less
 
 from sklearn.ensemble import GradientBoostingClassifier
 from sklearn.ensemble import GradientBoostingRegressor
@@ -221,6 +222,33 @@ def test_feature_importances():
     # assert_array_equal(true_ranking, feature_importances.argsort())
 
 
+def test_feature_selection():
+    """Test feature selection using feature importances."""
+    X, y = datasets.make_classification(n_samples=1000,
+                                        n_features=10,
+                                        n_informative=3,
+                                        n_redundant=0,
+                                        n_repeated=0,
+                                        shuffle=False,
+                                        random_state=0)
+
+    for clf in [GradientBoostingClassifier(n_estimators=100, max_depth=5,
+                                           min_samples_split=1,
+                                           random_state=1),
+                GradientBoostingRegressor(n_estimators=100, max_depth=5,
+                                          min_samples_split=1, 
+                                          random_state=1)]:
+        clf.fit(X, y)
+        importances = clf.feature_importances_
+        n_important = sum(importances > 0.1)
+
+        assert_equal(importances.shape[0], 10)
+        assert_equal(n_important, 3)
+
+        X_new = clf.transform(X, threshold="mean")
+        assert_less(0 < X_new.shape[1], X.shape[1])
+
+
 def test_probability():
     """Predict probabilities."""
     clf = GradientBoostingClassifier(n_estimators=100, random_state=1)
@@ -314,7 +342,7 @@ def test_staged_predict():
     X, y = datasets.make_friedman1(n_samples=1200,
                                    random_state=1, noise=1.0)
     X_train, y_train = X[:200], y[:200]
-    X_test, y_test = X[200:], y[200:]
+    X_test, _y_test = X[200:], y[200:]
     clf = GradientBoostingRegressor()
     # test raise ValueError if not fitted
     assert_raises(ValueError, lambda X: np.fromiter(
