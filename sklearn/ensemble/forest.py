@@ -251,18 +251,15 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         """
         random_state = check_random_state(self.random_state)
 
-        # Precompute some data
+        # Convert data
         X, y = check_arrays(X, y, sparse_format="dense")
         if ((getattr(X, "dtype", None) != DTYPE) or
             (X.ndim != 2) or
             (not X.flags.contiguous)):
             X = np.ascontiguousarray(array2d(X), dtype=DTYPE)
 
+        # Remap output
         n_samples, self.n_features_ = X.shape
-
-        if not self.bootstrap and self.oob_score:
-            raise ValueError("Out of bag estimation only available"
-                             " if bootstrap=True")
 
         y = np.atleast_1d(y)
         if y.ndim == 1:
@@ -275,30 +272,25 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         if isinstance(self.base_estimator, ClassifierMixin):
             y = np.copy(y)
 
-            if self.n_outputs_ == 1:
-                self.classes_, y[:, 0] = unique(y[:, 0], return_inverse=True)
-                self.n_classes_ = len(self.classes_)
+            self.classes_ = []
+            self.n_classes_ = []
 
-            else:
-                self.classes_ = []
-                self.n_classes_ = []
-
-                for k in xrange(self.n_outputs_):
-                    classes_k, y[:, k] = unique(y[:, k], return_inverse=True)
-                    self.classes_.append(classes_k)
-                    self.n_classes_.append(classes_k.shape[0])
+            for k in xrange(self.n_outputs_):
+                classes_k, y[:, k] = unique(y[:, k], return_inverse=True)
+                self.classes_.append(classes_k)
+                self.n_classes_.append(classes_k.shape[0])
 
         else:
-            if self.n_outputs_ == 1:
-                self.classes_ = None
-                self.n_classes_ = 1
-
-            else:
-                self.classes_ = [None] * self.n_outputs_
-                self.n_classes_ = [1] * self.n_outputs_
+            self.classes_ = [None] * self.n_outputs_
+            self.n_classes_ = [1] * self.n_outputs_
 
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
+
+        # Check parameters
+        if not self.bootstrap and self.oob_score:
+            raise ValueError("Out of bag estimation only available"
+                             " if bootstrap=True")
 
         # Assign chunk of trees to jobs
         n_jobs, n_trees, _ = _partition_trees(self)
@@ -328,11 +320,6 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
                 self.oob_score_ = 0.0
                 n_classes_ = self.n_classes_
                 classes_ = self.classes_
-
-                if self.n_outputs_ == 1:
-                    n_classes_ = [n_classes_]
-                    classes_ = [classes_]
-
                 predictions = []
 
                 for k in xrange(self.n_outputs_):
@@ -406,6 +393,11 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
                                                 predictions[:, k])
 
                 self.oob_score_ /= self.n_outputs_
+
+        # Decapsulate classes attributes
+        if self.n_outputs_ == 1:
+            self.n_classes_ = self.n_classes_[0]
+            self.classes_ = self.classes_[0]
 
         return self
 

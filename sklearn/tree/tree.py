@@ -116,6 +116,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self : object
             Returns self.
         """
+        random_state = check_random_state(self.random_state)
+
         # Deprecations
         if sample_mask is not None:
             warn("The sample_mask parameter is deprecated as of version 0.14 "
@@ -134,7 +136,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
             (not X.flags.contiguous)):
             X = np.ascontiguousarray(array2d(X), dtype=DTYPE)
 
-        random_state = check_random_state(self.random_state)
+        # Determine output settings
         n_samples, self.n_features_ = X.shape
         is_classification = isinstance(self, ClassifierMixin)
 
