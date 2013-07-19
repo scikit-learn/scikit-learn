@@ -114,13 +114,15 @@ class NeighborsBase(six.with_metaclass(ABCMeta, BaseEstimator)):
         else:
             alg_check = algorithm
 
-        if metric not in VALID_METRICS[alg_check]:
-            # callable metric is valid for brute force and ball_tree
-            if callable(metric) and algorithm != 'kd_tree':
-                pass
-            else:
-                raise ValueError("metric '%s' not valid for algorithm '%s'"
-                                 % (metric, algorithm))
+        if callable(metric):
+            if algorithm == 'kd_tree':
+                # callable metric is only valid for brute force and ball_tree
+                raise ValueError(
+                    "kd_tree algorithm does not support callable metric '%s'"
+                    % metric)
+        elif metric not in VALID_METRICS[alg_check]:
+            raise ValueError("Metric '%s' not valid for algorithm '%s'"
+                             % (metric, algorithm))
 
         if self.metric in ['wminkowski', 'minkowski']:
             self.metric_kwds['p'] = p
