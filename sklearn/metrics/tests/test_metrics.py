@@ -1060,10 +1060,9 @@ def test_invariance_string_vs_numbers_labels():
     labels_str = ["eggs", "spam"]
 
     for name, metric in CLASSIFICATION_METRICS.items():
-        print(name)
         measure_with_number = metric(y1, y2)
 
-        # Ugly, but handle case with a pos_label
+        # Ugly, but handle case with a pos_label and label
         if hasattr(metric, "func"):
             argspect = inspect.getargspec(metric.func)
         else:
@@ -1082,7 +1081,7 @@ def test_invariance_string_vs_numbers_labels():
                            err_msg="{0} failed string vs number invariance "
                                    "test".format(name))
 
-    # Currently not supported
+    # TODO Currently not supported
     for name, metrics in THRESHOLDED_METRICS.items():
         assert_raises(ValueError, metrics, y1_str, y2_str)
 

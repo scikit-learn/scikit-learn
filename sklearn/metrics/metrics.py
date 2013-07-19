@@ -2058,7 +2058,7 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
     for i, label in enumerate(labels):
         values = [target_names[i]]
         for v in (p[i], r[i], f1[i]):
-            values += ["{0:0.2f}".format(float(v))]
+            values += ["{0:0.2f}".format(v)]
         values += ["{0}".format(s[i])]
         report += fmt % tuple(values)
 
@@ -2069,8 +2069,8 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
     for v in (np.average(p, weights=s),
               np.average(r, weights=s),
               np.average(f1, weights=s)):
-        values += ["%0.2f" % float(v)]
-    values += ['%d' % np.sum(s)]
+        values += ["{0:0.2f}".format(v)]
+    values += ['{0}'.format(np.sum(s))]
     report += fmt % tuple(values)
     return report
 
