@@ -1199,6 +1199,12 @@ def check_cv(cv, X=None, y=None, classifier=False):
     classifier : boolean optional
         Whether the task is a classification task, in which case
         stratified KFold will be used.
+
+    Returns
+    -------
+    checked_cv: a cross-validation generator instance.
+        The return value is guaranteed to be a cv generator instance, whatever
+        the input type.
     """
     is_sparse = sp.issparse(X)
     needs_indices = is_sparse or not hasattr(X, "shape")
