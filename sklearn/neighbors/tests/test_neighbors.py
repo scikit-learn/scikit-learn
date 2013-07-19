@@ -447,34 +447,34 @@ def test_kneighbors_graph():
 
     # n_neighbors = 1
     A = neighbors.kneighbors_graph(X, 1, mode='connectivity')
-    assert_array_equal(A.todense(), np.eye(A.shape[0]))
+    assert_array_equal(A.toarray(), np.eye(A.shape[0]))
 
     A = neighbors.kneighbors_graph(X, 1, mode='distance')
     assert_array_almost_equal(
-        A.todense(),
-        [[0.00,  1.01,        0.],
-         [1.01,  0.,          0.],
-         [0.00,  1.40716026,  0.]])
+        A.toarray(),
+        [[0.00, 1.01, 0.],
+         [1.01, 0., 0.],
+         [0.00, 1.40716026, 0.]])
 
     # n_neighbors = 2
     A = neighbors.kneighbors_graph(X, 2, mode='connectivity')
     assert_array_equal(
-        A.todense(),
-        [[1.,  1.,  0.],
-         [1.,  1.,  0.],
-         [0.,  1.,  1.]])
+        A.toarray(),
+        [[1., 1., 0.],
+         [1., 1., 0.],
+         [0., 1., 1.]])
 
     A = neighbors.kneighbors_graph(X, 2, mode='distance')
     assert_array_almost_equal(
-        A.todense(),
-        [[0.,          1.01,        2.23606798],
-         [1.01,        0.,          1.40716026],
-         [2.23606798,  1.40716026,  0.]])
+        A.toarray(),
+        [[0., 1.01, 2.23606798],
+         [1.01, 0., 1.40716026],
+         [2.23606798, 1.40716026, 0.]])
 
     # n_neighbors = 3
     A = neighbors.kneighbors_graph(X, 3, mode='connectivity')
     assert_array_almost_equal(
-        A.todense(),
+        A.toarray(),
         [[1, 1, 1], [1, 1, 1], [1, 1, 1]])
 
 
@@ -490,10 +490,10 @@ def test_kneighbors_graph_sparse(seed=36):
             assert_array_almost_equal(
                 neighbors.kneighbors_graph(X,
                                            n_neighbors,
-                                           mode=mode).todense(),
+                                           mode=mode).toarray(),
                 neighbors.kneighbors_graph(Xcsr,
                                            n_neighbors,
-                                           mode=mode).todense())
+                                           mode=mode).toarray())
 
 
 def test_radius_neighbors_graph():
@@ -502,17 +502,17 @@ def test_radius_neighbors_graph():
 
     A = neighbors.radius_neighbors_graph(X, 1.5, mode='connectivity')
     assert_array_equal(
-        A.todense(),
-        [[1.,  1.,  0.],
-         [1.,  1.,  1.],
-         [0.,  1.,  1.]])
+        A.toarray(),
+        [[1., 1., 0.],
+         [1., 1., 1.],
+         [0., 1., 1.]])
 
     A = neighbors.radius_neighbors_graph(X, 1.5, mode='distance')
     assert_array_almost_equal(
-        A.todense(),
-        [[0.,   1.01,       0.],
-         [1.01, 0.,         1.40716026],
-         [0.,   1.40716026, 0.]])
+        A.toarray(),
+        [[0., 1.01, 0.],
+         [1.01, 0., 1.40716026],
+         [0., 1.40716026, 0.]])
 
 
 def test_radius_neighbors_graph_sparse(seed=36):
@@ -527,10 +527,10 @@ def test_radius_neighbors_graph_sparse(seed=36):
             assert_array_almost_equal(
                 neighbors.radius_neighbors_graph(X,
                                                  n_neighbors,
-                                                 mode=mode).todense(),
+                                                 mode=mode).toarray(),
                 neighbors.radius_neighbors_graph(Xcsr,
                                                  n_neighbors,
-                                                 mode=mode).todense())
+                                                 mode=mode).toarray())
 
 
 def test_neighbors_badargs():
@@ -601,16 +601,16 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
     V = rng.rand(n_features, n_features)
     VI = np.dot(V, V.T)
 
-    metrics = [('euclidean',{}),
-               ('manhattan',{}),
-               ('minkowski',dict(p=1)),
-               ('minkowski',dict(p=2)),
-               ('minkowski',dict(p=3)),
-               ('minkowski',dict(p=np.inf)),
-               ('chebyshev',{}),
-               ('seuclidean',dict(V=rng.rand(n_features))),
-               ('wminkowski',dict(p=3, w=rng.rand(n_features))),
-               ('mahalanobis',dict(VI=VI))]
+    metrics = [('euclidean', {}),
+               ('manhattan', {}),
+               ('minkowski', dict(p=1)),
+               ('minkowski', dict(p=2)),
+               ('minkowski', dict(p=3)),
+               ('minkowski', dict(p=np.inf)),
+               ('chebyshev', {}),
+               ('seuclidean', dict(V=rng.rand(n_features))),
+               ('wminkowski', dict(p=3, w=rng.rand(n_features))),
+               ('mahalanobis', dict(VI=VI))]
     algorithms = ['brute', 'ball_tree', 'kd_tree']
     X = rng.rand(n_samples, n_features)
 
@@ -622,7 +622,7 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
         for algorithm in algorithms:
             # KD tree doesn't support all metrics
             if (algorithm == 'kd_tree' and
-                metric not in neighbors.KDTree.valid_metrics):
+                    metric not in neighbors.KDTree.valid_metrics):
                 assert_raises(ValueError,
                               neighbors.NearestNeighbors,
                               algorithm=algorithm,
@@ -633,7 +633,7 @@ def test_neighbors_metrics(n_samples=20, n_features=3,
                                                algorithm=algorithm,
                                                metric=metric, **kwds)
             neigh.fit(X)
-            results.append(neigh.kneighbors(test, return_distance=True))    
+            results.append(neigh.kneighbors(test, return_distance=True))
 
         assert_array_almost_equal(results[0][0], results[1][0])
         assert_array_almost_equal(results[0][1], results[1][1])
