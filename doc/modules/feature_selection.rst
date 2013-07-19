@@ -233,3 +233,4 @@ importances and select the most relevant features. Then, a second
 classifier is trained on the transformed output (i.e. using only 
 relevant features). You can perform similar operations with the
 other feature selection methods and classifiers of course.
+See the :class:`sklearn.pipeline.Pipeline` examples for more details.
