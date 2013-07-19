@@ -358,24 +358,23 @@ class BiclusterMixin(object):
         Only works if ``rows_`` and ``columns`` attributes exist.
 
         """
-        row_idx = np.nonzero(self.rows_[i])[0]
-        col_idx = np.nonzero(self.columns_[i])[0]
-        return row_idx, col_idx
+        from .cluster.bicluster.utils import get_indices
+        return get_indices(self.rows_[i], self.columns_[i])
 
     def get_shape(self, i):
         """Returns shape of bicluster `i`."""
-        indices = self.get_indices(i)
-        return tuple(i.shape[0] for i in indices)
+        from .cluster.bicluster.utils import get_shape
+        return get_shape(self.rows_[i], self.columns_[i])
 
-    def get_bicluster(self, i, data):
+    def get_submatrix(self, i, data):
         """Returns the submatrix corresponding to bicluster `i`.
 
         Works with sparse matrices. Only works if ``rows_`` and
         ``columns`` attributes exist.
 
         """
-        rows, cols = self.get_indices(i)
-        return data[rows, :][:, cols]
+        from .cluster.bicluster.utils import get_submatrix
+        return get_submatrix(self.rows_[i], self.columns_[i], data)
 
 
 ###############################################################################
