@@ -27,6 +27,7 @@ from ..preprocessing import LabelBinarizer
 from ..utils import check_arrays
 from ..utils import deprecated
 from ..utils.fixes import divide
+from ..utils.fixes import unique
 from ..utils.multiclass import unique_labels
 from ..utils.multiclass import type_of_target
 
@@ -425,7 +426,13 @@ def matthews_corrcoef(y_true, y_pred):
     if y_type != "binary":
         raise ValueError("%s is not supported" % y_type)
 
-    mcc = np.corrcoef(y_true, y_pred)[0, 1]
+    tp, tn, fp, fn = _tp_tn_fp_fn(y_true, y_pred)
+    tp, tn, fp, fn = tp[1], tn[1], fp[1], fn[1]
+
+    num = (tp * tn - fp * fn)
+    den = np.sqrt((tp + fp) * (tp + fn) * (tn + fp) * (tn + fn))
+    mcc = num / den
+
     if np.isnan(mcc):
         return 0.
     else:
@@ -499,7 +506,7 @@ def _binary_clf_curve(y_true, y_score, pos_label=None):
     return fps, tps, y_score[threshold_idxs]
 
 
-def precision_recall_curve(y_true, probas_pred):
+def precision_recall_curve(y_true, probas_pred, pos_label=None):
     """Compute precision-recall pairs for different probability thresholds
 
     Note: this implementation is restricted to the binary classification task.
@@ -704,6 +711,7 @@ def confusion_matrix(y_true, y_pred, labels=None):
     y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
     if y_type not in ("binary", "multiclass"):
         raise ValueError("%s is not supported" % y_type)
+
 
     if labels is None:
         labels = unique_labels(y_true, y_pred)
@@ -1373,6 +1381,7 @@ def _tp_tn_fp_fn(y_true, y_pred, labels=None):
         labels = unique_labels(y_true, y_pred)
     else:
         labels = np.asarray(labels)
+
     n_labels = labels.size
     true_pos = np.zeros((n_labels, ), dtype=np.int)
     false_pos = np.zeros((n_labels, ), dtype=np.int)
@@ -2021,13 +2030,13 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
-        labels = np.asarray(labels, dtype=np.int)
+        labels = np.asarray(labels)
 
     last_line_heading = 'avg / total'
 
     if target_names is None:
         width = len(last_line_heading)
-        target_names = ['%d' % l for l in labels]
+        target_names = ['{0}'.format(l) for l in labels]
     else:
         width = max(len(cn) for cn in target_names)
         width = max(width, len(last_line_heading))
@@ -2049,8 +2058,8 @@ def classification_report(y_true, y_pred, labels=None, target_names=None):
     for i, label in enumerate(labels):
         values = [target_names[i]]
         for v in (p[i], r[i], f1[i]):
-            values += ["%0.2f" % float(v)]
-        values += ["%d" % int(s[i])]
+            values += ["{0:0.2f}".format(float(v))]
+        values += ["{0}".format(s[i])]
         report += fmt % tuple(values)
 
     report += '\n'
