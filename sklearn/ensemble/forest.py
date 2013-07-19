@@ -394,7 +394,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
                 self.oob_score_ /= self.n_outputs_
 
-        # Decapsulate classes attributes
+        # Decapsulate classes_ attributes
         if self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]

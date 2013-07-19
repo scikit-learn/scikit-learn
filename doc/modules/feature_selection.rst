@@ -202,7 +202,7 @@ features::
   >>> X_new = clf.fit(X, y).transform(X)
   >>> clf.feature_importances_  # doctest: +SKIP
   array([ 0.04...,  0.05...,  0.4...,  0.4...])
-  >>> X_new.shape
+  >>> X_new.shape               # doctest: +SKIP
   (150, 2)
 
 .. topic:: Examples:
