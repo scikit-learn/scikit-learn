@@ -282,10 +282,9 @@ now, only the Jaccard index is implemented:
     J(A, B) = \frac{|A \cap B|}{|A| + |B| - |A \cap B|}
 
 where :math:`A` and :math:`B` are biclusters, :math:`|A \cap B|` is
-the number of elements in both, and :math:`|A \cup B|` is the number
-of elements in at least one of them. The Jaccard index achieves its
-minimum of 0 when the biclusters to not overlap at all and its maximum
-of 1 when they are identical.
+the number of elements in their intersection. The Jaccard index
+achieves its minimum of 0 when the biclusters to not overlap at all
+and its maximum of 1 when they are identical.
 
 Several methods have been developed to compare two sets of biclusters.
 For now, only :func:`consensus_score` (Hochreiter, et al, 2010) is
