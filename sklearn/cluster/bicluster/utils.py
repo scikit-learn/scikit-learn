@@ -37,4 +37,4 @@ def get_submatrix(rows, columns, data):
 
     """
     rows, cols = get_indices(rows, columns)
-    return data[rows, :][:, cols]
+    return data[rows[:, np.newaxis], cols]
