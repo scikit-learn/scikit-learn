@@ -15,9 +15,9 @@ with three rows and two columns induces a submatrix of shape `(3, 2)`::
 
     >>> import numpy as np
     >>> data = np.arange(100).reshape(10, 10)
-    >>> rows = np.array([0, 2, 3])
+    >>> rows = np.array([0, 2, 3])[:, np.newaxis]
     >>> columns = np.array([1, 2])
-    >>> data[rows][:, columns]
+    >>> data[rows, columns]
     array([[ 1,  2],
            [21, 22],
            [31, 32]])
@@ -36,9 +36,7 @@ common types include:
 Algorithms also differ in how rows and columns may be assigned to
 biclusters, which leads to different bicluster structures. Block
 diagonal or checkerboard structures occur when rows and columns are
-divided into partitions. Many other structures have been created. In
-the general case, each row and column may belong to any number of
-biclusters.
+divided into partitions.
 
 If each row and each column belongs to exactly one bicluster, then
 rearranging the rows and columns of the data matrix reveals the
@@ -78,7 +76,7 @@ diagonal and checkerboard bicluster structures.
 .. note::
 
     Biclustering has many other names in different fields including
-    co-clustering, two-mode clustering two-way clustering, block
+    co-clustering, two-mode clustering, two-way clustering, block
     clustering, coupled two-way clustering, etc. The names of some
     algorithms, such as the Spectral Co-Clustering algorithm, reflect
     these alternate names.
@@ -228,14 +226,13 @@ this best subset of singular vectors and clustered.
 
 For instance, if :math:`p` singular vectors were calculated, the
 :math:`q` best are found as described, where :math:`q<p`. Let
-:math:`U_b` be the matrix with columns the :math:`q` best left
-singular vectors, and similarly :math:`V_b` for the right. To
-partition the rows, the rows of :math:`A` are projected to a :math:`q`
-dimensional space: :math:`A * V_{b}`. Treating the :math:`m` rows of
-this :math:`m \times q` matrix as samples and clustering using k-means
-yields the row labels. Similarly, projecting the columns to
-:math:`A^{\top} * U_{b}` and clustering this :math:`n \times q` matrix
-yields the column labels.
+:math:`U` be the matrix with columns the :math:`q` best left singular
+vectors, and similarly :math:`V` for the right. To partition the rows,
+the rows of :math:`A` are projected to a :math:`q` dimensional space:
+:math:`A * V`. Treating the :math:`m` rows of this :math:`m \times q`
+matrix as samples and clustering using k-means yields the row labels.
+Similarly, projecting the columns to :math:`A^{\top} * U` and
+clustering this :math:`n \times q` matrix yields the column labels.
 
 
 .. topic:: Examples:
@@ -246,7 +243,7 @@ yields the column labels.
 
 .. topic:: References:
 
- * Kluger, Yuval, et al, 2003. `Spectral biclustering of microarray
+ * Kluger, Yuval, et. al., 2003. `Spectral biclustering of microarray
    data: coclustering genes and conditions
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.135.1608>`__.
 
@@ -279,13 +276,12 @@ now, only the Jaccard index is implemented:
     J(A, B) = \frac{|A \cap B|}{|A| + |B| - |A \cap B|}
 
 where :math:`A` and :math:`B` are biclusters, :math:`|A \cap B|` is
-the number of elements in both, and :math:`|A \cup B|` is the number
-of elements in at least one of them. The Jaccard index achieves its
-minimum of 0 when the biclusters to not overlap at all and its maximum
-of 1 when they are identical.
+the number of elements in their intersection. The Jaccard index
+achieves its minimum of 0 when the biclusters to not overlap at all
+and its maximum of 1 when they are identical.
 
 Several methods have been developed to compare two sets of biclusters.
-For now, only :func:`consensus_score` (Hochreiter, et al, 2010) is
+For now, only :func:`consensus_score` (Hochreiter et. al., 2010) is
 available:
 
 1. Compute bicluster similarities for pairs of biclusters, one in each
