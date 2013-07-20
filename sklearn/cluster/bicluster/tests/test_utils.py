@@ -2,8 +2,11 @@
 
 import numpy as np
 
+from scipy.sparse import csr_matrix, issparse
+
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_true
 
 from sklearn.cluster.bicluster.utils import get_indicators
 from sklearn.cluster.bicluster.utils import get_shape
@@ -29,7 +32,12 @@ def test_get_submatrix():
     data = np.arange(20).reshape(5, 4)
     rows = [True, True, False, False, True]
     cols = [False, False, True, True]
-    submatrix = get_submatrix(rows, cols, data)
-    assert_array_equal(submatrix, [[2, 3],
-                                   [6, 7],
-                                   [18, 19]])
+    for X in (data, csr_matrix(data)):
+        submatrix = get_submatrix(rows, cols, X)
+        if issparse(submatrix):
+            submatrix = submatrix.todense()
+        assert_array_equal(submatrix, [[2, 3],
+                                       [6, 7],
+                                       [18, 19]])
+        submatrix[:] = -1
+        assert_true(np.all(X != -1))
