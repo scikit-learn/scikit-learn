@@ -78,7 +78,7 @@ diagonal and checkerboard bicluster structures.
 .. note::
 
     Biclustering has many other names in different fields including
-    co-clustering, two-mode clustering two-way clustering, block
+    co-clustering, two-mode clustering, two-way clustering, block
     clustering, coupled two-way clustering, etc. The names of some
     algorithms, such as the Spectral Co-Clustering algorithm, reflect
     these alternate names.
