@@ -18,6 +18,7 @@ import pkgutil
 import numpy as np
 from scipy import sparse
 
+from sklearn.externals.six import PY3
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
@@ -830,7 +831,10 @@ def test_configure():
             # The configuration spits out warnings when not finding
             # Blas/Atlas development headers
             warnings.simplefilter('ignore', UserWarning)
-            execfile('setup.py', dict(__name__='__main__'))
+            if PY3:
+                exec(open('setup.py').read(), dict(__name__='__main__'))
+            else:
+                execfile('setup.py', dict(__name__='__main__'))
     finally:
         sys.argv = old_argv
         os.chdir(cwd)
@@ -987,8 +991,9 @@ def test_cluster_overwrite_params():
 def test_import_all_consistency():
     # Smoke test to check that any name in a __all__ list is actually defined
     # in the namespace of the module or package.
-    for importer, modname, ispkg in pkgutil.walk_packages(
-        path=sklearn.__path__, prefix='sklearn.', onerror=lambda x: None):
+    pkgs = pkgutil.walk_packages(path=sklearn.__path__, prefix='sklearn.',
+                                 onerror=lambda _: None)
+    for importer, modname, ispkg in pkgs:
         if ".tests." in modname:
             continue
         package = __import__(modname, fromlist="dummy")

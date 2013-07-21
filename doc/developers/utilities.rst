@@ -302,11 +302,11 @@ Hash Functions
   random projections::
 
     >>> from sklearn.utils import murmurhash3_32
-    >>> murmurhash3_32("some feature", seed=0)
-    -384616559
+    >>> murmurhash3_32("some feature", seed=0) == -384616559
+    True
 
-    >>> murmurhash3_32("some feature", seed=0, positive=True)
-    3910350737L
+    >>> murmurhash3_32("some feature", seed=0, positive=True) == 3910350737
+    True
 
   The ``sklearn.utils.murmurhash`` module can also be "cimported" from
   other cython modules so as to benefit from the high performance of

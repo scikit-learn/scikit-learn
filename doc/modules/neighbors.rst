@@ -29,20 +29,28 @@ learning methods, since they simply "remember" all of its training data
 
 Despite its simplicity, nearest neighbors has been successful in a
 large number of classification and regression problems, including
-handwritten digits or satellite image scenes. It is often successful
-in classification situations where the decision boundary is very irregular.
+handwritten digits or satellite image scenes. Being a non-parametric method,
+it is often successful in classification situations where the decision
+boundary is very irregular.
 
 The classes in :mod:`sklearn.neighbors` can handle either Numpy arrays or
-`scipy.sparse` matrices as input.  Arbitrary Minkowski metrics are supported
-for searches.
+`scipy.sparse` matrices as input.  For dense matrices, a large number of
+possible distance metrics are supported.  For sparse matrices, arbitrary
+Minkowski metrics are supported for searches.
 
+There are many learning routines which rely on nearest neighbors at their
+core.  One example is :ref:`kernel density estimation <kernel_density>`,
+discussed in the :ref:`density estimation <density_estimation>` section.
+
+
+.. _unsupervised_neighbors:
 
 Unsupervised Nearest Neighbors
 ==============================
 
 :class:`NearestNeighbors` implements unsupervised nearest neighbors learning.
 It acts as a uniform interface to three different nearest neighbors
-algorithms: :class:`BallTree`, :class:`scipy.spatial.cKDTree`, and a
+algorithms: :class:`BallTree`, :class:`KDTree`, and a
 brute-force algorithm based on routines in :mod:`sklearn.metrics.pairwise`.
 The choice of neighbors search algorithm is controlled through the keyword
 ``'algorithm'``, which must be one of
@@ -57,6 +65,79 @@ of each option, see `Nearest Neighbor Algorithms`_.
         neighbors, neighbor `k+1` and `k`, have identical distances but
         but different labels, the results will depend on the ordering of the
         training data.
+
+Finding the Nearest Neighbors
+-----------------------------
+For the simple task of finding the nearest neighbors between two sets of
+data, the unsupervised algorithms within :mod:`sklearn.neighbors` can be
+used:
+
+    >>> from sklearn.neighbors import NearestNeighbors
+    >>> import numpy as np
+    >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
+    >>> nbrs = NearestNeighbors(n_neighbors=2, algorithm='ball_tree').fit(X)
+    >>> distances, indices = nbrs.kneighbors(X)
+    >>> indices                                           # doctest: +ELLIPSIS
+    array([[0, 1],
+           [1, 0],
+           [2, 1],
+           [3, 4],
+           [4, 3],
+           [5, 4]]...)
+    >>> distances
+    array([[ 0.        ,  1.        ],
+           [ 0.        ,  1.        ],
+           [ 0.        ,  1.41421356],
+           [ 0.        ,  1.        ],
+           [ 0.        ,  1.        ],
+           [ 0.        ,  1.41421356]])
+
+Because the query set matches the training set, the nearest neighbor of each
+point is the point itself, at a distance of zero.
+
+It is also possible to efficiently produce a sparse graph showing the
+connections between neighboring points:
+
+    >>> nbrs.kneighbors_graph(X).toarray()
+    array([[ 1.,  1.,  0.,  0.,  0.,  0.],
+           [ 1.,  1.,  0.,  0.,  0.,  0.],
+           [ 0.,  1.,  1.,  0.,  0.,  0.],
+           [ 0.,  0.,  0.,  1.,  1.,  0.],
+           [ 0.,  0.,  0.,  1.,  1.,  0.],
+           [ 0.,  0.,  0.,  0.,  1.,  1.]])
+
+Our dataset is structured such that points nearby in index order are nearby
+in parameter space, leading to an approximately block-diagonal matrix of
+K-nearest neighbors.  Such a sparse graph is useful in a variety of
+circumstances which make use of spatial relationships between points for
+unsupervised learning: in particular, see :class:`sklearn.manifold.IsoMap`,
+:class:`sklearn.manifold.LocallyLinearEmbedding`, and
+:class:`sklearn.cluster.SpectralClustering`.
+
+KDTree and BallTree Classes
+---------------------------
+Alternatively, one can use the :class:`KDTree` or :class:`BallTree` classes
+directly to find nearest neighbors.  This is the functionality wrapped by
+the :class:`NearestNeighbors` class used above.  The Ball Tree and KD Tree
+have the same interface; we'll show an example of using the KD Tree here:
+
+    >>> from sklearn.neighbors import KDTree
+    >>> import numpy as np
+    >>> X = np.array([[-1, -1], [-2, -1], [-3, -2], [1, 1], [2, 1], [3, 2]])
+    >>> kdt = KDTree(X, leaf_size=30, metric='euclidean')
+    >>> kdt.query(X, k=2, return_distance=False)          # doctest: +ELLIPSIS
+    array([[0, 1],
+           [1, 0],
+           [2, 1],
+           [3, 4],
+           [4, 3],
+           [5, 4]]...)
+
+Refer to the :class:`KDTree` and :class:`BallTree` class documentation
+for more information on the options available for neighbors searches,
+including specification of query strategies, of various distance metrics, etc.
+For a list of available metrics, see the documentation of the
+:class:`DistanceMetric` class.
 
 .. _classification:
 
@@ -198,7 +279,7 @@ improvement over brute-force for large :math:`N`.
 An early approach to taking advantage of this aggregate information was
 the *KD tree* data structure (short for *K-dimensional tree*), which
 generalizes two-dimensional *Quad-trees* and 3-dimensional *Oct-trees*
-to an arbitrary number of dimensions.  The KD tree is a tree
+to an arbitrary number of dimensions.  The KD tree is a binary tree
 structure which recursively partitions the parameter space along the data
 axes, dividing it into nested orthotopic regions into which data points
 are filed.  The construction of a KD tree is very fast: because partitioning
@@ -210,7 +291,7 @@ neighbors searches, it becomes inefficient as :math:`D` grows very large:
 this is one manifestation of the so-called "curse of dimensionality".
 In scikit-learn, KD tree neighbors searches are specified using the
 keyword ``algorithm = 'kd_tree'``, and are computed using the class
-:class:`scipy.spatial.cKDTree`.
+:class:`KDTree`.
 
 
 .. topic:: References:
@@ -230,8 +311,8 @@ data structure was developed.  Where KD trees partition data along
 Cartesian axes, ball trees partition data in a series of nesting
 hyper-spheres.  This makes tree construction more costly than that of the
 KD tree, but
-results in a data structure which allows for efficient neighbors searches
-even in very high dimensions.
+results in a data structure which can be very efficient on highly-structured
+data, even in very high dimensions.
 
 A ball tree recursively divides the data into
 nodes defined by a centroid :math:`C` and radius :math:`r`, such that each
@@ -244,8 +325,10 @@ is reduced through use of the *triangle inequality*:
 With this setup, a single distance calculation between a test point and
 the centroid is sufficient to determine a lower and upper bound on the
 distance to all points within the node.
-Because of the spherical geometry of the ball tree nodes, its performance
-does not degrade at high dimensions.  In scikit-learn, ball-tree-based
+Because of the spherical geometry of the ball tree nodes, it can out-perform
+a *KD-tree* in high dimensions, though the actual performance is highly
+dependent on the structure of the training data.
+In scikit-learn, ball-tree-based
 neighbors searches are specified using the keyword ``algorithm = 'ball_tree'``,
 and are computed using the class :class:`sklearn.neighbors.BallTree`.
 Alternatively, the user can work with the :class:`BallTree` class directly.
@@ -277,7 +360,7 @@ depends on a number of factors:
 
   For small data sets (:math:`N` less than 30 or so), :math:`\log(N)` is
   comparable to :math:`N`, and brute force algorithms can be more efficient
-  than a tree-based approach.  Both :class:`cKDTree` and :class:`BallTree`
+  than a tree-based approach.  Both :class:`KDTree` and :class:`BallTree`
   address this through providing a *leaf size* parameter: this controls the
   number of samples at which a query switches to brute-force.  This allows both
   algorithms to approach the efficiency of a brute-force computation for small
@@ -412,4 +495,3 @@ the model from 0.81 to 0.82.
 
   * :ref:`example_neighbors_plot_nearest_centroid.py`: an example of
     classification using nearest centroid with different shrink thresholds.
-

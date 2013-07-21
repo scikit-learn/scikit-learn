@@ -341,8 +341,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 del coef, alpha, prev_alpha, prev_coef
                 # resize the coefs and alphas array
                 add_features = 2 * max(1, (max_features - n_active))
-                coefs.resize((n_iter + add_features, n_features))
-                alphas.resize(n_iter + add_features)
+                coefs = np.resize(coefs, (n_iter + add_features, n_features))
+                alphas = np.resize(alphas, n_iter + add_features)
             coef = coefs[n_iter]
             prev_coef = coefs[n_iter - 1]
             alpha = alphas[n_iter, np.newaxis]

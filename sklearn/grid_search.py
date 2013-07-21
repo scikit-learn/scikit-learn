@@ -11,7 +11,7 @@ from __future__ import print_function
 # License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
-from collections import Mapping, namedtuple
+from collections import Mapping, namedtuple, Sized
 from functools import partial, reduce
 from itertools import product
 import numbers
@@ -57,15 +57,16 @@ class ParameterGrid(object):
     --------
     >>> from sklearn.grid_search import ParameterGrid
     >>> param_grid = {'a': [1, 2], 'b': [True, False]}
-    >>> list(ParameterGrid(param_grid)) #doctest: +NORMALIZE_WHITESPACE
-    [{'a': 1, 'b': True}, {'a': 1, 'b': False},
-     {'a': 2, 'b': True}, {'a': 2, 'b': False}]
+    >>> list(ParameterGrid(param_grid)) == (
+    ...    [{'a': 1, 'b': True}, {'a': 1, 'b': False},
+    ...     {'a': 2, 'b': True}, {'a': 2, 'b': False}])
+    True
 
     >>> grid = [{'kernel': ['linear']}, {'kernel': ['rbf'], 'gamma': [1, 10]}]
-    >>> list(ParameterGrid(grid)) #doctest: +NORMALIZE_WHITESPACE
-    [{'kernel': 'linear'},
-     {'kernel': 'rbf', 'gamma': 1},
-     {'kernel': 'rbf', 'gamma': 10}]
+    >>> list(ParameterGrid(grid)) == [{'kernel': 'linear'},
+    ...                               {'kernel': 'rbf', 'gamma': 1},
+    ...                               {'kernel': 'rbf', 'gamma': 10}]
+    True
 
     See also
     --------
@@ -131,9 +132,10 @@ class IterGrid(ParameterGrid):
     --------
     >>> from sklearn.grid_search import IterGrid
     >>> param_grid = {'a':[1, 2], 'b':[True, False]}
-    >>> list(IterGrid(param_grid)) #doctest: +NORMALIZE_WHITESPACE
-    [{'a': 1, 'b': True}, {'a': 1, 'b': False},
-     {'a': 2, 'b': True}, {'a': 2, 'b': False}]
+    >>> list(IterGrid(param_grid)) == (
+    ...    [{'a': 1, 'b': True}, {'a': 1, 'b': False},
+    ...     {'a': 2, 'b': True}, {'a': 2, 'b': False}])
+    True
 
     See also
     --------
@@ -188,11 +190,14 @@ class ParameterSampler(object):
     >>> import numpy as np
     >>> np.random.seed(0)
     >>> param_grid = {'a':[1, 2], 'b': expon()}
-    >>> list(ParameterSampler(param_grid, n_iter=4))
-    ...  #doctest: +NORMALIZE_WHITESPACE +ELLIPSIS
-    [{'a': 1, 'b': 0.89...}, {'a': 1, 'b': 0.92...},
-     {'a': 2, 'b': 1.87...}, {'a': 2, 'b': 1.03...}]
-
+    >>> param_list = list(ParameterSampler(param_grid, n_iter=4))
+    >>> rounded_list = [dict((k, round(v, 6)) for (k, v) in d.items())
+    ...                 for d in param_list]
+    >>> rounded_list == [{'b': 0.89856, 'a': 1},
+    ...                  {'b': 0.923223, 'a': 1},
+    ...                  {'b': 1.878964, 'a': 2},
+    ...                  {'b': 1.038159, 'a': 2}]
+    True
     """
     def __init__(self, param_distributions, n_iter, random_state=None):
         self.param_distributions = param_distributions
@@ -446,12 +451,9 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                     "should have a 'score' method. The estimator %s "
                     "does not." % self.estimator)
 
-    def _fit(self, X, y, parameter_iterable, **params):
+    def _fit(self, X, y, parameter_iterable):
         """Actual fitting,  performing the search over parameters."""
 
-        if params:
-            warnings.warn("Passing additional parameters to GridSearchCV "
-                          "is ignored! The option will be removed in 0.15.")
         estimator = self.estimator
         cv = self.cv
 
@@ -484,6 +486,13 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                                  % (len(y), n_samples))
             y = np.asarray(y)
         cv = check_cv(cv, X, y, classifier=is_classifier(estimator))
+
+        if self.verbose > 0:
+            if isinstance(parameter_iterable, Sized):
+                n_candidates = len(parameter_iterable)
+                print("Fitting {0} folds for each of {1} candidates, totalling"
+                      " {2} fits".format(len(cv), n_candidates,
+                                         n_candidates * len(cv)))
 
         base_estimator = clone(self.estimator)
 
@@ -712,7 +721,11 @@ class GridSearchCV(BaseSearchCV):
             None for unsupervised learning.
 
         """
-        return self._fit(X, y, ParameterGrid(self.param_grid), **params)
+        if params:
+            warnings.warn("Additional parameters to GridSearchCV are ignored!"
+                          " The params argument will be removed in 0.15.",
+                          DeprecationWarning)
+        return self._fit(X, y, ParameterGrid(self.param_grid))
 
 
 class RandomizedSearchCV(BaseSearchCV):
@@ -851,12 +864,11 @@ class RandomizedSearchCV(BaseSearchCV):
             estimator, scoring, loss_func, score_func, fit_params, n_jobs, iid,
             refit, cv, verbose, pre_dispatch)
 
-    def fit(self, X, y=None, **params):
+    def fit(self, X, y=None):
         """Run fit on the estimator with randomly drawn parameters.
 
         Parameters
         ----------
-
         X: array-like, shape = [n_samples, n_features]
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
@@ -869,4 +881,4 @@ class RandomizedSearchCV(BaseSearchCV):
         sampled_params = ParameterSampler(self.param_distributions,
                                           self.n_iter,
                                           random_state=self.random_state)
-        return self._fit(X, y, sampled_params, **params)
+        return self._fit(X, y, sampled_params)

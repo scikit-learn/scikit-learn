@@ -327,7 +327,7 @@ class ProbabilisticPCA(PCA):
         Xr = X - self.mean_
         Xr -= np.dot(np.dot(Xr, self.components_.T), self.components_)
         n_samples = X.shape[0]
-        if n_features <= self.n_components:
+        if self.n_components is None or n_features <= self.n_components:
             delta = np.zeros(n_features)
         elif homoscedastic:
             delta = ((Xr ** 2).sum() * np.ones(n_features)

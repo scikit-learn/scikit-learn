@@ -193,8 +193,8 @@ def _check_clf_targets(y_true, y_pred):
 def auc(x, y, reorder=False):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
-    This is a general function, given points on a curve.  For computing the area
-    under the ROC-curve, see :func:`auc_score`.
+    This is a general function, given points on a curve.  For computing the
+    area under the ROC-curve, see :func:`auc_score`.
 
     Parameters
     ----------
@@ -1199,7 +1199,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     >>> f1_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
     0.66...
     >>> f1_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
-    0.80...
+    0.8...
     >>> f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
     0.66...
     >>> f1_score(y_true, y_pred, average='samples')  # doctest: +ELLIPSIS
@@ -1619,7 +1619,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     (0.66..., 0.66..., 0.66..., None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='micro')
     ... # doctest: +ELLIPSIS
-    (1.0, 0.66..., 0.80..., None)
+    (1.0, 0.66..., 0.8..., None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
     ... # doctest: +ELLIPSIS
     (0.66..., 0.66..., 0.66..., None)
@@ -2392,8 +2392,8 @@ def r2_score(y_true, y_pred):
     if len(y_true) == 1:
         raise ValueError("r2_score can only be computed given more than one"
                          " sample.")
-    numerator = ((y_true - y_pred) ** 2).sum()
-    denominator = ((y_true - y_true.mean(axis=0)) ** 2).sum()
+    numerator = ((y_true - y_pred) ** 2).sum(dtype=np.float64)
+    denominator = ((y_true - y_true.mean(axis=0)) ** 2).sum(dtype=np.float64)
 
     if denominator == 0.0:
         if numerator == 0.0:

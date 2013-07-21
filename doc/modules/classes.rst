@@ -868,8 +868,11 @@ Pairwise metrics
    neighbors.RadiusNeighborsClassifier
    neighbors.KNeighborsRegressor
    neighbors.RadiusNeighborsRegressor
-   neighbors.BallTree
    neighbors.NearestCentroid
+   neighbors.BallTree
+   neighbors.KDTree
+   neighbors.DistanceMetric
+   neighbors.KernelDensity
 
 .. autosummary::
    :toctree: generated/

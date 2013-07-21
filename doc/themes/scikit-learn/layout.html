@@ -205,7 +205,21 @@
     <p style="text-align: center;"><a href="http://http://code.google.com/opensource/"><img src="{{pathto('_static',1)}}/google-logo.png"
     alt="INRIA"/></a></p>
 
-    <p><a href="{{pathto('about')}}">Read more ...</a></p>
+    <p>Any donations are very welcome!</p>
+    <form action="https://www.paypal.com/cgi-bin/webscr" method="post"
+	  target="_top">
+      <input type="hidden" name="cmd" value="_s-xclick">
+      <input type="hidden" name="hosted_button_id" value="74EYUMF3FTSW8">
+      <input type="image"
+	     src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"
+	     border="0" name="submit" alt="PayPal - The safer, easier way to pay
+					   online!"
+	     style="margin: 0 auto; position: relative; left: 6%;">
+      <img alt="" border="0"
+	   src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1"
+	   height="1">
+    </form>
+    <p><a href="{{pathto('about')}}#donating-to-the-project">Read more here ...</a></p>
 
     {% endif %}
     <h3><a href="{{pathto('about')}}#citing-scikit-learn">Citing</a></h3>
