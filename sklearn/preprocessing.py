@@ -294,6 +294,9 @@ class StandardScaler(BaseEstimator, TransformerMixin):
     :func:`sklearn.preprocessing.scale` to perform centering and
     scaling without using the ``Transformer`` object oriented API
 
+    :class:`sklearn.preprocessing.RankScaler` to perform standardization
+    that is more robust to outliers, but slower and more memory-intensive.
+
     :class:`sklearn.decomposition.RandomizedPCA` with `whiten=True`
     to further remove the linear correlation across features.
     """
@@ -398,6 +401,96 @@ class Scaler(StandardScaler):
                       " will be removed in 0.15.", DeprecationWarning)
         super(Scaler, self).__init__(copy, with_mean, with_std)
 
+
+class RankScaler(BaseEstimator, TransformerMixin):
+    """Rank-standardize features to a percentile, in the range [0, 1].
+
+    Rank-scaling happens independently on each feature, by determining
+    the percentile of the feature value.
+    A feature value that is smaller than observed during fitting will scale to 0.
+    A feature value that is larger than observed during fitting will scale to 1.
+    A feature value that is the median will scale to 0.5.
+
+    Standardization of a dataset is a common requirement for many
+    machine learning estimators. Rank-scaling is useful when
+    estimators perform badly on StandardScalar features. Rank-scaling
+    is more robust than StandardScaler, because outliers can't have
+    large values post scaling. It is an empirical question whether
+    you want outliers to be given high importance (StandardScaler)
+    or not (RankScaler).
+
+    Memory used will be equivalent to the size of the initial fit X.
+    (An approximation could be made by downsampling, which would
+    improve memory and speed.)
+
+    TODO: min and max parameters?
+
+    Attributes
+    ----------
+    `sort_X_` : array of ints with shape [n_samples, n_features]
+        The rank-index of every feature in the fit X.
+
+    See also
+    --------
+    :class:`sklearn.preprocessing.StandardScaler` to perform standardization
+    that is faster, but less robust to outliers.
+    """
+
+    def __init__(self):
+        """
+        TODO: Add min and max parameters? Default = [0, 1]
+        """
+        self.copy=True  # We don't have self.copy=False implemented
+        pass
+
+    def fit(self, X, y=None):
+        """Compute the feature ranks for later scaling.
+
+        fit will take time O(n_features * n_samples * log(n_samples)),
+        and use memory O(n_samples * n_features).
+
+        Parameters
+        ----------
+        X : array-like or CSR matrix with shape [n_samples, n_features]
+            The data used to compute feature ranks.
+        """
+        X = check_arrays(X, copy=self.copy, sparse_format="csr")[0]
+        if sp.issparse(X):
+            raise ValueError("Cannot rank-standardize sparse matrices.")
+        if X.ndim != 2:
+            raise ValueError("Rank-standardization only tested on 2-D matrices.")
+        else:
+            self.sort_X_ = np.sort(X, axis=0)
+        return self
+
+    def transform(self, X):
+        """Perform rank-standardization.
+
+        transform will take O(n_samples * n_samples * log(n_fit_samples)),
+        where `n_fit_samples` is the number of samples used during `fit`.
+
+        Parameters
+        ----------
+        X : array-like with shape [n_samples, n_features]
+            The data used to scale along the features axis.
+        """
+#        copy = copy if copy is not None else self.copy
+#        X = check_arrays(X, copy=copy, sparse_format="csr")[0]
+        X = check_arrays(X, copy=self.copy, sparse_format="csr")[0]
+        if sp.issparse(X):
+            raise ValueError("Cannot rank-standardize sparse matrices.")
+        if X.ndim != 2:
+            raise ValueError("Rank-standardization only tested on 2-D matrices.")
+        else:
+            warn_if_not_float(X, estimator=self)
+            newX = []
+            for j in range(X.shape[1]):
+                newX.append(1. * (np.searchsorted(self.sort_X_[:,j], X[:,j], side='left') + np.searchsorted(self.sort_X_[:,j], X[:,j], side='right')) / (2 * self.sort_X_.shape[0]))
+            X = np.vstack(newX).T
+        return X
+
+#    def inverse_transform(self, X, copy=None):
+##       Not implemented
 
 def normalize(X, norm='l2', axis=1, copy=True):
     """Normalize a dataset along any axis

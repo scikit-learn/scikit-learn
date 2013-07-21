@@ -23,6 +23,7 @@ from sklearn.preprocessing import normalize
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import scale
 from sklearn.preprocessing import MinMaxScaler
+from sklearn.preprocessing import RankScaler
 from sklearn.preprocessing import add_dummy_feature
 
 from sklearn import datasets
@@ -62,6 +63,9 @@ def test_scaler_1d():
     X_scaled = scale(X)
     assert_array_almost_equal(X_scaled.mean(axis=0), 0.0)
     assert_array_almost_equal(X_scaled.std(axis=0), 1.0)
+
+#    rank_scaler = RankScaler()
+#    X_rank_scaled = rank_scaler.fit(X).transform(X)
 
 
 def test_scaler_2d_arrays():
@@ -111,6 +115,25 @@ def test_scaler_2d_arrays():
     assert_array_almost_equal(X_scaled.std(axis=0), [0., 1., 1., 1., 1.])
     # Check that X has not been copied
     assert_true(X_scaled is not X)
+
+
+    X = np.array([[1, 0, 0, 0, 1],
+                   [2, 1, 4, 1, 1],
+                   [3, 2, 3, 1, 0],
+                   [3, 0, 0, 4, 1]])
+
+    rank_scaler = RankScaler()
+    rank_scaler.fit(X)
+    X_scaled = rank_scaler.transform(X)
+    assert_array_almost_equal(X_scaled, [[ 0.125,  0.25 ,  0.25 ,  0.125,  0.625],
+                                         [ 0.375,  0.625,  0.875,  0.5  ,  0.625],
+                                         [ 0.75 ,  0.875,  0.625,  0.5  ,  0.125],
+                                         [ 0.75 ,  0.25 ,  0.25 ,  0.875,  0.625]])
+
+    X2 = np.array([[0, 1.5, 0, 5, 10]])
+    X2_scaled = rank_scaler.transform(X2)
+    assert_array_almost_equal(X2_scaled, [[ 0.  ,  0.75,  0.25,  1.  ,  1.  ]])
+
 
 
 def test_min_max_scaler_iris():
