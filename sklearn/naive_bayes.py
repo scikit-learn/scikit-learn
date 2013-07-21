@@ -195,6 +195,88 @@ class BaseDiscreteNB(BaseNB):
     _joint_log_likelihood(X) as per BaseNB
     """
 
+    def partial_fit(self, X, y, classes=None, sample_weight=None,
+                    class_prior=None):
+        """Incremental fit on a batch of samples.
+
+        This method is expected to be called several times consecutively
+        on different chunks of a dataset so as to implement out-of-core
+        or online learning.
+
+        This is especially useful when the whole dataset is too big to fit in
+        memory at once.
+
+        Parameters
+        ----------
+        X : {array-like, sparse matrix}, shape = [n_samples, n_features]
+            Training vectors, where n_samples is the number of samples and
+            n_features is the number of features.
+
+        y : array-like, shape = [n_samples]
+            Target values.
+
+        classes: array-like, shape = [n_classes]
+            List of all the classes that can possibly appear in the y vector.
+
+            Must be provided at the first call to partial_fit, can be omitted
+            in subsequent calls.
+
+        sample_weight : array-like, shape = [n_samples], optional
+            Weights applied to individual samples (1. for unweighted).
+
+        Returns
+        -------
+        self : object
+            Returns self.
+        """
+        X = atleast2d_or_csr(X)
+
+        if getattr(self, 'classes_', None) is None and classes is None:
+            raise ValueError("classes must be passed on the first call "
+                             "to partial_fit.")
+
+        elif (classes is not None
+              and getattr(self, 'classes_', None) is not None):
+            if not np.all(self.classes_ == np.unique(classes)):
+                raise ValueError(
+                    "`classes=%r` is not the same as on last call "
+                    "to partial_fit, was: %r" % (classes, self.classes_))
+
+        elif classes is not None:
+            # This is the first call to partial_fit
+            self.classes_ = classes
+
+            # Build a label binarizer instance that will be reused for all the
+            # consecutive calls to partial_fit
+            self._labelbin = LabelBinarizer()
+            self._labelbin.classes_ = self.classes_
+            self._labelbin.multilabel_ = False  # Not supported by NB models
+
+            # Initialize various cumulative counters
+            self._y_freq = np.zeros(len(classes), dtype=np.int64)
+            self._class_count = 0
+            self._class_feature_i_count = 0
+
+        Y = self._labelbin.transform(y)
+        n_samples, n_classes = Y.shape
+        if sample_weight is not None:
+            Y *= array2d(sample_weight).T
+
+        if self.fit_prior:
+            # empirical prior, with sample_weight taken into account
+            self._y_freq += Y.sum(axis=0)
+            self.class_log_prior_ = (np.log(self._y_freq)
+                                     - np.log(self._y_freq.sum()))
+        else:
+            self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
+
+        # N_c_i is the count of feature i in all samples of class c.
+        # N_c is the denominator with smoothing
+        N_c, N_c_i = self._count(X, Y, incrementally=True)
+        self.feature_log_prob_ = (np.log(N_c_i) - np.log(N_c.reshape(-1, 1)))
+
+        return self
+
     def fit(self, X, y, sample_weight=None, class_prior=None):
         """Fit Naive Bayes classifier according to X, y
 
@@ -315,10 +397,10 @@ class MultinomialNB(BaseDiscreteNB):
     --------
     >>> import numpy as np
     >>> X = np.random.randint(5, size=(6, 100))
-    >>> Y = np.array([1, 2, 3, 4, 5, 6])
+    >>> y = np.array([1, 2, 3, 4, 5, 6])
     >>> from sklearn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
-    >>> clf.fit(X, Y)
+    >>> clf.fit(X, y)
     MultinomialNB(alpha=1.0, class_prior=None, fit_prior=True)
     >>> print(clf.predict(X[2]))
     [3]
@@ -335,13 +417,16 @@ class MultinomialNB(BaseDiscreteNB):
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
-    def _count(self, X, Y):
+    def _count(self, X, Y, incrementally=False):
         """Count and smooth feature occurrences."""
         if np.any((X.data if issparse(X) else X) < 0):
-            raise ValueError("Input X must be non-negative.")
-        N_c_i = safe_sparse_dot(Y.T, X) + self.alpha
+            raise ValueError("Input X must be non-negative")
+        if incrementally:
+            self._class_feature_i_count += safe_sparse_dot(Y.T, X)
+            N_c_i = self._class_feature_i_count + self.alpha
+        else:
+            N_c_i = safe_sparse_dot(Y.T, X) + self.alpha
         N_c = np.sum(N_c_i, axis=1)
-
         return N_c, N_c_i
 
     def _joint_log_likelihood(self, X):
@@ -417,11 +502,15 @@ class BernoulliNB(BaseDiscreteNB):
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
-    def _count(self, X, Y):
+    def _count(self, X, Y, incrementally=False):
         """Count and smooth feature occurrences."""
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)
-        N_c_i = safe_sparse_dot(Y.T, X) + self.alpha
+        if incrementally:
+            self._class_feature_i_count += safe_sparse_dot(Y.T, X)
+            N_c_i = self._class_feature_i_count + self.alpha
+        else:
+            N_c_i = safe_sparse_dot(Y.T, X) + self.alpha
         N_c = Y.sum(axis=0) + self.alpha * Y.shape[1]
         return N_c, N_c_i
 

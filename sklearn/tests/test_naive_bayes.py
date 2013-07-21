@@ -62,8 +62,7 @@ def test_discrete_prior():
 
 
 def test_mnnb():
-    """
-    Multinomial Naive Bayes classification.
+    """Multinomial Naive Bayes classification.
 
     This checks that MultinomialNB implements fit and predict and returns
     correct values for a simple toy dataset.
@@ -83,6 +82,21 @@ def test_mnnb():
         y_pred_log_proba = clf.predict_log_proba(X)
         assert_array_almost_equal(np.log(y_pred_proba), y_pred_log_proba, 8)
 
+        # Check that incremental fitting yields the same results
+        clf2 = MultinomialNB()
+        clf2.partial_fit(X[:2], y2[:2], classes=np.unique(y2))
+        clf2.partial_fit(X[2:5], y2[2:5])
+        clf2.partial_fit(X[5:], y2[5:])
+
+        y_pred2 = clf2.predict(X)
+        assert_array_equal(y_pred2, y2)
+
+        y_pred_proba2 = clf2.predict_proba(X)
+        y_pred_log_proba2 = clf2.predict_log_proba(X)
+        assert_array_almost_equal(np.log(y_pred_proba2), y_pred_log_proba2, 8)
+        assert_array_almost_equal(y_pred_proba2, y_pred_proba)
+        assert_array_almost_equal(y_pred_log_proba2, y_pred_log_proba)
+
 
 def test_discretenb_pickle():
     """Test picklability of discrete naive Bayes classifiers"""
@@ -97,12 +111,36 @@ def test_discretenb_pickle():
 
         assert_array_equal(y_pred, clf.predict(X2))
 
+        if cls is not GaussianNB:
+            # re-enable me when partial_fit is implemented for GaussianNB
+            clf2 = cls().partial_fit(X2, y2, classes=np.unique(y2))
+            store = BytesIO()
+            pickle.dump(clf2, store)
+            clf2 = pickle.load(BytesIO(store.getvalue()))
+            assert_array_equal(y_pred, clf2.predict(X2))
 
-def test_input_check():
-    """Test input checks"""
+
+def test_input_check_fit():
+    """Test input checks for the fit method"""
     for cls in [BernoulliNB, MultinomialNB, GaussianNB]:
+        # check shape consistency
+        assert_raises(ValueError, cls().fit, X2, y2[:-1])
+
+
+def test_input_check_partial_fit():
+    for cls in [BernoulliNB, MultinomialNB]:
+        # check shape consistency
+        assert_raises(ValueError, cls().partial_fit, X2, y2[:-1],
+                      classes=np.unique(y2))
+
+        # classes is required for first call to partial fit
+        assert_raises(ValueError, cls().partial_fit, X2, y2)
+
+        # check consistency of consecutive classes values
         clf = cls()
-        assert_raises(ValueError, clf.fit, X2, y2[:-1])
+        clf.partial_fit(X2, y2, classes=np.unique(y2))
+        assert_raises(ValueError, clf.partial_fit, X2, y2,
+                      classes=np.arange(42))
 
 
 def test_discretenb_predict_proba():
