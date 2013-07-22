@@ -161,6 +161,12 @@ def test_input_check_partial_fit():
         assert_raises(ValueError, clf.partial_fit, X2, y2,
                       classes=np.arange(42))
 
+        # check consistency of input shape for partial_fit
+        assert_raises(ValueError, clf.partial_fit, X2[:, :-1], y2)
+
+        # check consistency of input shape for predict
+        assert_raises(ValueError, clf.predict, X2[:, :-1])
+
 
 def test_discretenb_predict_proba():
     """Test discrete NB classes' probability scores"""
