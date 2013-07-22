@@ -309,47 +309,43 @@ def test_max_features():
         reg.fit(boston.data, boston.target)
         assert_equal(reg.splitter_.max_features, boston.data.shape[1])
 
-        reg = TreeRegressor(max_features="auto")
-        reg.fit(boston.data, boston.target)
-        assert_equal(reg.splitter_.max_features, boston.data.shape[1])
-
-        reg = TreeRegressor(max_features="sqrt")
-        reg.fit(boston.data, boston.target)
-        assert_equal(reg.splitter_.max_features,
-                     int(np.sqrt(boston.data.shape[1])))
-
-        reg = TreeRegressor(max_features="log2")
-        reg.fit(boston.data, boston.target)
-        assert_equal(reg.splitter_.max_features,
-                     int(np.log2(boston.data.shape[1])))
-
-        reg = TreeRegressor(max_features=1)
-        reg.fit(boston.data, boston.target)
-        assert_equal(reg.splitter_.max_features, 1)
-
-        reg = TreeRegressor(max_features=7)
-        reg.fit(boston.data, boston.target)
-        assert_equal(reg.splitter_.max_features, 7)
-
-        reg = TreeRegressor(max_features=0.5)
-        reg.fit(boston.data, boston.target)
-        assert_equal(reg.splitter_.max_features,
-                     int(0.5 * boston.data.shape[1]))
-
-        reg = TreeRegressor(max_features=1.0)
-        reg.fit(boston.data, boston.target)
-        assert_equal(reg.splitter_.max_features, boston.data.shape[1])
-
-        reg = TreeRegressor(max_features=None)
-        reg.fit(boston.data, boston.target)
-        assert_equal(reg.splitter_.max_features, boston.data.shape[1])
-
     for name, TreeClassifier in CLF_TREES.items():
         clf = TreeClassifier(max_features="auto")
         clf.fit(iris.data, iris.target)
         assert_equal(clf.splitter_.max_features, 2)
 
     for name, TreeEstimator in ALL_TREES.items():
+        est = TreeEstimator(max_features="sqrt")
+        est.fit(iris.data, iris.target)
+        assert_equal(est.splitter_.max_features,
+                     int(np.sqrt(iris.data.shape[1])))
+
+        est = TreeEstimator(max_features="log2")
+        est.fit(iris.data, iris.target)
+        assert_equal(est.splitter_.max_features,
+                     int(np.log2(iris.data.shape[1])))
+
+        est = TreeEstimator(max_features=1)
+        est.fit(iris.data, iris.target)
+        assert_equal(est.splitter_.max_features, 1)
+
+        est = TreeEstimator(max_features=3)
+        est.fit(iris.data, iris.target)
+        assert_equal(est.splitter_.max_features, 3)
+
+        est = TreeEstimator(max_features=0.5)
+        est.fit(iris.data, iris.target)
+        assert_equal(est.splitter_.max_features,
+                     int(0.5 * iris.data.shape[1]))
+
+        est = TreeEstimator(max_features=1.0)
+        est.fit(iris.data, iris.target)
+        assert_equal(est.splitter_.max_features, iris.data.shape[1])
+
+        est = TreeEstimator(max_features=None)
+        est.fit(iris.data, iris.target)
+        assert_equal(est.splitter_.max_features, iris.data.shape[1])
+
         # use values of max_features that are invalid
         est = TreeEstimator(max_features=10)
         assert_raises(ValueError, est.fit, X, y)
