@@ -62,7 +62,7 @@ def test_discrete_prior():
 
 
 def test_mnnb():
-    """Multinomial Naive Bayes classification.
+    """Test Multinomial Naive Bayes classification.
 
     This checks that MultinomialNB implements fit and predict and returns
     correct values for a simple toy dataset.
