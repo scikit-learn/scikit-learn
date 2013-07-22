@@ -28,7 +28,7 @@ from sklearn.cluster.bicluster import SpectralCoclustering
 from sklearn.metrics import consensus_score
 
 data, rows, columns = make_biclusters(
-    shape=(300, 300), n_clusters=5, noise=10,
+    shape=(300, 300), n_clusters=5, noise=5,
     shuffle=False, random_state=0)
 
 pl.matshow(data, cmap=pl.cm.Blues)
