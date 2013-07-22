@@ -276,7 +276,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     else:
         w_init = np.asarray(w_init)
         if w_init.shape != (n_components, n_components):
-            raise ValueError("w_init has invalid shape -- should be %(shape)s"
+            raise ValueError('w_init has invalid shape -- should be %(shape)s'
                              % {'shape': (n_components, n_components)})
 
     kwargs = {'tol': tol,
@@ -290,7 +290,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     elif algorithm == 'deflation':
         W = _ica_def(X1, **kwargs)
     else:
-        raise ValueError('Invalid algorithm: must be either `parallel` or' +
+        raise ValueError('Invalid algorithm: must be either `parallel` or'
                          ' `deflation`.')
     del X1
 
@@ -443,8 +443,8 @@ class FastICA(BaseEstimator, TransformerMixin):
 
         return np.dot(X, self.components_.T)
 
-    @deprecated("To be removed in 0.16. Set fit_inverse_transform=True"
-                " and inspect the mixing_ attribute.")
+    @deprecated('To be removed in 0.16. Set fit_inverse_transform=True'
+                ' and inspect the mixing_ attribute.')
     def get_mixing_matrix(self):
         """Compute the mixing matrix.
 
@@ -452,7 +452,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         mixing_matrix : array, shape (n_features, n_components)
         """
-        return (self.mixing_ if hasattr(self, "mixing_")
+        return (self.mixing_ if hasattr(self, 'mixing_')
                              else linalg.pinv(self.components_))
 
     def inverse_transform(self, X):
@@ -469,6 +469,6 @@ class FastICA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_features)
         """
         if not self.fit_inverse_transform:
-            raise ValueError("inverse_transform not enabled;"
-                             " set fit_inverse_transform=True before fit")
+            raise ValueError('inverse_transform not enabled.'
+                             ' set fit_inverse_transform=True before fit')
         return np.dot(X, self.mixing_.T)
