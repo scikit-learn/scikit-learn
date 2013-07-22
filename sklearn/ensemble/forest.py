@@ -202,10 +202,10 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         self.n_jobs = n_jobs
         self.random_state = random_state
 
-        self.n_features_ = None
-        self.n_outputs_ = None
-        self.classes_ = None
-        self.n_classes_ = None
+        #self.n_features_ = None
+        #self.n_outputs_ = None
+        #self.classes_ = None
+        #self.n_classes_ = None
 
         self.verbose = verbose
 
@@ -268,20 +268,7 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
 
         self.n_outputs_ = y.shape[1]
 
-        if isinstance(self.base_estimator, ClassifierMixin):
-            y = np.copy(y)
-
-            self.classes_ = []
-            self.n_classes_ = []
-
-            for k in xrange(self.n_outputs_):
-                classes_k, y[:, k] = unique(y[:, k], return_inverse=True)
-                self.classes_.append(classes_k)
-                self.n_classes_.append(classes_k.shape[0])
-
-        else:
-            self.classes_ = [None] * self.n_outputs_
-            self.n_classes_ = [1] * self.n_outputs_
+        y = self._validate_y(y)
 
         if getattr(y, "dtype", None) != DOUBLE or not y.flags.contiguous:
             y = np.ascontiguousarray(y, dtype=DOUBLE)
@@ -310,95 +297,21 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
             for i in range(n_jobs))
 
         # Reduce
-        self.estimators_ = [tree for tree in itertools.chain(*all_trees)]
+        self.estimators_ = list(itertools.chain(*all_trees))
 
-        # Calculate out of bag predictions and score
         if self.oob_score:
-            if isinstance(self, ClassifierMixin):
-                self.oob_decision_function_ = []
-                self.oob_score_ = 0.0
-                n_classes_ = self.n_classes_
-                classes_ = self.classes_
-                predictions = []
-
-                for k in xrange(self.n_outputs_):
-                    predictions.append(np.zeros((n_samples,
-                                                 n_classes_[k])))
-
-                for estimator in self.estimators_:
-                    mask = np.ones(n_samples, dtype=np.bool)
-                    mask[estimator.indices_] = False
-                    p_estimator = estimator.predict_proba(X[mask, :])
-
-                    if self.n_outputs_ == 1:
-                        p_estimator = [p_estimator]
-
-                    for k in xrange(self.n_outputs_):
-                        predictions[k][mask, :] += p_estimator[k]
-
-                for k in xrange(self.n_outputs_):
-                    if (predictions[k].sum(axis=1) == 0).any():
-                        warn("Some inputs do not have OOB scores. "
-                             "This probably means too few trees were used "
-                             "to compute any reliable oob estimates.")
-
-                    decision = (predictions[k] /
-                                predictions[k].sum(axis=1)[:, np.newaxis])
-                    self.oob_decision_function_.append(decision)
-                    self.oob_score_ += np.mean(
-                        (y[:, k] == classes_[k].take(
-                            np.argmax(predictions[k], axis=1),
-                            axis=0)))
-
-                if self.n_outputs_ == 1:
-                    self.oob_decision_function_ = \
-                        self.oob_decision_function_[0]
-
-                self.oob_score_ /= self.n_outputs_
-
-            else:
-                # Regression:
-                predictions = np.zeros((n_samples, self.n_outputs_))
-                n_predictions = np.zeros((n_samples, self.n_outputs_))
-
-                for estimator in self.estimators_:
-                    mask = np.ones(n_samples, dtype=np.bool)
-                    mask[estimator.indices_] = False
-                    p_estimator = estimator.predict(X[mask, :])
-
-                    if self.n_outputs_ == 1:
-                        p_estimator = p_estimator[:, np.newaxis]
-
-                    predictions[mask, :] += p_estimator
-                    n_predictions[mask, :] += 1
-
-                if (n_predictions == 0).any():
-                    warn("Some inputs do not have OOB scores. "
-                         "This probably means too few trees were used "
-                         "to compute any reliable oob estimates.")
-                    n_predictions[n_predictions == 0] = 1
-
-                predictions /= n_predictions
-                self.oob_prediction_ = predictions
-
-                if self.n_outputs_ == 1:
-                    self.oob_prediction_ = \
-                        self.oob_prediction_.reshape((n_samples, ))
-
-                self.oob_score_ = 0.0
-
-                for k in xrange(self.n_outputs_):
-                    self.oob_score_ += r2_score(y[:, k],
-                                                predictions[:, k])
-
-                self.oob_score_ /= self.n_outputs_
+            self._set_oob_score(X, y)
 
         # Decapsulate classes_ attributes
-        if self.n_outputs_ == 1:
+        if hasattr(self, "classes_") and self.n_outputs_ == 1:
             self.n_classes_ = self.n_classes_[0]
             self.classes_ = self.classes_[0]
 
         return self
+
+    @abstractmethod
+    def _set_oob_score(self, X, y):
+        """Calculate out of bag predictions and score."""
 
     @property
     def feature_importances_(self):
@@ -445,6 +358,63 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             n_jobs=n_jobs,
             random_state=random_state,
             verbose=verbose)
+
+    def _set_oob_score(self, X, y):
+        n_classes_ = self.n_classes_
+        classes_ = self.classes_
+        n_samples = y.shape[0]
+
+        oob_decision_function = []
+        oob_score = 0.0
+        predictions = []
+
+        for k in xrange(self.n_outputs_):
+            predictions.append(np.zeros((n_samples,
+                                         n_classes_[k])))
+
+        for estimator in self.estimators_:
+            mask = np.ones(n_samples, dtype=np.bool)
+            mask[estimator.indices_] = False
+            p_estimator = estimator.predict_proba(X[mask, :])
+
+            if self.n_outputs_ == 1:
+                p_estimator = [p_estimator]
+
+            for k in xrange(self.n_outputs_):
+                predictions[k][mask, :] += p_estimator[k]
+
+        for k in xrange(self.n_outputs_):
+            if (predictions[k].sum(axis=1) == 0).any():
+                warn("Some inputs do not have OOB scores. "
+                     "This probably means too few trees were used "
+                     "to compute any reliable oob estimates.")
+
+            decision = (predictions[k] /
+                        predictions[k].sum(axis=1)[:, np.newaxis])
+            oob_decision_function.append(decision)
+            oob_score += np.mean( (y[:, k] == classes_[k].take(
+                    np.argmax(predictions[k], axis=1),
+                    axis=0)))
+
+        if self.n_outputs_ == 1:
+            self.oob_decision_function_ = oob_decision_function[0]
+        else:
+            self.oob_decision_function_ = oob_decision_function
+
+        self.oob_score_ = oob_score / self.n_outputs_
+
+    def _validate_y(self, y):
+        y = np.copy(y)
+
+        self.classes_ = []
+        self.n_classes_ = []
+
+        for k in xrange(self.n_outputs_):
+            classes_k, y[:, k] = unique(y[:, k], return_inverse=True)
+            self.classes_.append(classes_k)
+            self.n_classes_.append(classes_k.shape[0])
+
+        return y
 
     def predict(self, X):
         """Predict class for X.
@@ -621,6 +591,47 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
         y_hat = sum(all_y_hat) / self.n_estimators
 
         return y_hat
+
+    def _set_oob_score(self, X, y):
+        n_samples = y.shape[0]
+
+        predictions = np.zeros((n_samples, self.n_outputs_))
+        n_predictions = np.zeros((n_samples, self.n_outputs_))
+
+        for estimator in self.estimators_:
+            mask = np.ones(n_samples, dtype=np.bool)
+            mask[estimator.indices_] = False
+            p_estimator = estimator.predict(X[mask, :])
+
+            if self.n_outputs_ == 1:
+                p_estimator = p_estimator[:, np.newaxis]
+
+            predictions[mask, :] += p_estimator
+            n_predictions[mask, :] += 1
+
+        if (n_predictions == 0).any():
+            warn("Some inputs do not have OOB scores. "
+                 "This probably means too few trees were used "
+                 "to compute any reliable oob estimates.")
+            n_predictions[n_predictions == 0] = 1
+
+        predictions /= n_predictions
+        self.oob_prediction_ = predictions
+
+        if self.n_outputs_ == 1:
+            self.oob_prediction_ = \
+                self.oob_prediction_.reshape((n_samples, ))
+
+        self.oob_score_ = 0.0
+
+        for k in xrange(self.n_outputs_):
+            self.oob_score_ += r2_score(y[:, k],
+                                        predictions[:, k])
+
+        self.oob_score_ /= self.n_outputs_
+
+    def _validate_y(self, y):
+        return y
 
 
 class RandomForestClassifier(ForestClassifier):
@@ -1185,7 +1196,7 @@ class ExtraTreesRegressor(ForestRegressor):
                   DeprecationWarning)
 
 
-class RandomTreesEmbedding(BaseForest):
+class RandomTreesEmbedding(ForestRegressor):
     """An ensemble of totally random trees.
 
     An unsupervised transformation of a dataset to a high-dimensional

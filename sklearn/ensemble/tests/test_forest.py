@@ -10,7 +10,7 @@ from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_equal
 from numpy.testing import assert_almost_equal
-from nose.tools import assert_true
+from nose.tools import assert_false, assert_true
 
 from sklearn.utils.testing import assert_less, assert_greater
 
@@ -21,7 +21,7 @@ from sklearn.ensemble import RandomTreesEmbedding
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.svm import LinearSVC
-from sklearn.decomposition import RandomizedPCA
+from sklearn.decomposition import TruncatedSVD
 from sklearn import datasets
 
 # toy sample
@@ -146,6 +146,17 @@ def test_boston():
         score = clf.score(boston.data, boston.target)
         assert score < 3, ("Failed with max_features=None, "
                            "criterion %s and score = %f" % (c, score))
+
+
+def test_regressor_attributes():
+    """Regression models should not have a classes_ attribute."""
+    r = RandomForestRegressor()
+    assert_false(hasattr(r, "classes_"))
+    assert_false(hasattr(r, "n_classes_"))
+
+    r.fit([[1, 2, 3], [4, 5, 6]], [1, 2])
+    assert_false(hasattr(r, "classes_"))
+    assert_false(hasattr(r, "n_classes_"))
 
 
 def test_probability():
