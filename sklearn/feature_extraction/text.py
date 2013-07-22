@@ -149,7 +149,7 @@ class VectorizerMixin(object):
         Tokenize text_document into a sequence of character n-grams
         excluding any whitespace (operating only inside word boundaries)"""
         # normalize white spaces
-        text_document = self._white_spaces.sub(u" ", text_document)
+        text_document = self._white_spaces.sub(" ", text_document)
 
         min_n, max_n = self.ngram_range
         ngrams = []
