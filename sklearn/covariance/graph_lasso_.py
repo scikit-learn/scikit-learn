@@ -284,8 +284,8 @@ class GraphLasso(EmpiricalCovariance):
 
 ###############################################################################
 # Cross-validation with GraphLasso
-def graph_lasso_path(X, alphas, X_test=None, mode='cd', tol=1e-4,
-                     max_iter=100, verbose=False):
+def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
+                     tol=1e-4, max_iter=100, verbose=False):
     """l1-penalized covariance estimator along a path of decreasing alphas
 
     Parameters
@@ -329,7 +329,10 @@ def graph_lasso_path(X, alphas, X_test=None, mode='cd', tol=1e-4,
     """
     inner_verbose = max(0, verbose - 1)
     emp_cov = empirical_covariance(X)
-    covariance_ = emp_cov.copy()
+    if cov_init is None:
+        covariance_ = emp_cov.copy()
+    else:
+        covariance_ = cov_init
     covariances_ = list()
     precisions_ = list()
     scores_ = list()
