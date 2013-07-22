@@ -215,6 +215,7 @@ def _logistic_loss_grad_hess(w, X, y, alpha):
     d = z * (1 - z)
     # Precompute as much as possible
     d = np.sqrt(d, d)
+    # XXX: how to do this with sparse matrices?
     dX = d[:, np.newaxis] * X
     def Hs(s):
         ret = dX.T.dot(dX.dot(s))
