@@ -408,7 +408,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         self.fit_transform(X)
         return self
 
-    def transform(self, X, y=None):
+    def transform(self, X, y=None, copy=True):
         """Recover the sources from X (apply the unmixing matrix).
 
         Parameters
@@ -416,14 +416,20 @@ class FastICA(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Data to transform, where n_samples is the number of samples
             and n_features is the number of features.
+        copy : bool
+            If False, data passed to fit are overwritten.
 
         Returns
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
+
         X = array2d(X)
+        if copy is True:
+            X = X.copy()
         if self.whiten is True:
             X -= X.mean(axis=0)[np.newaxis]
+
         return np.dot(X, self.components_.T)
 
     def get_mixing_matrix(self):
