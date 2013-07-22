@@ -369,7 +369,7 @@ depends on a number of factors:
 * data structure: *intrinsic dimensionality* of the data and/or *sparsity*
   of the data. Intrinsic dimensionality refers to the dimension
   :math:`d \le D` of a manifold on which the data lies, which can be linearly
-  or nonlinearly embedded in the parameter space. Sparsity refers to the
+  or non-linearly embedded in the parameter space. Sparsity refers to the
   degree to which the data fills the parameter space (this is to be
   distinguished from the concept as used in "sparse" matrices.  The data
   matrix may have no zero entries, but the **structure** can still be
