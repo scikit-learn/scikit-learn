@@ -126,6 +126,7 @@ div.content-wrapper {
     margin-right: auto;
     border-radius: 15px;
     -moz-border-radius: 15px;
+    position: relative;
 }
 
 div.content {
