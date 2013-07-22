@@ -226,6 +226,10 @@ class BaseDiscreteNB(BaseNB):
         This is especially useful when the whole dataset is too big to fit in
         memory at once.
 
+        This method has some performance overhead hence it is better to call
+        partial_fit on chunks of data that are as large as possible
+        (as long as fitting in the memory budget) to hide the overhead.
+
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
