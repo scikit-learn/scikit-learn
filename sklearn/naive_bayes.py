@@ -422,7 +422,7 @@ class MultinomialNB(BaseDiscreteNB):
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
-    def _count(self, X, Y, incrementally=False):
+    def _count(self, X, Y):
         """Count and smooth feature occurrences."""
         if np.any((X.data if issparse(X) else X) < 0):
             raise ValueError("Input X must be non-negative")
