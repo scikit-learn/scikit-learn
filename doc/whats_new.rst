@@ -7,6 +7,10 @@
 
 Changelog
 ---------
+   - The core implementation of decisions trees has been rewritten from 
+     scratch, allowing for faster tree induction and lower memory 
+     consumption in all tree-based estimators. By `Gilles Louppe`_.
+
    - Ability to pass one penalty (alpha value) per target in
      :class:`linear_model.Ridge`, by @eickenberg and `Mathieu Blondel`_.
 
@@ -39,7 +43,7 @@ Changelog
      :func:`metrics.precision_score` and :func:`metrics.recall_score`
      by `Arnaud Joly`_.
 
-  -  Two new metrics :func:`metrics.hamming_loss` and
+   - Two new metrics :func:`metrics.hamming_loss` and
      :func:`metrics.jaccard_similarity_score`
      are added with multi-label support by `Arnaud Joly`_.
 
