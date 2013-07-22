@@ -313,6 +313,10 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
     def _set_oob_score(self, X, y):
         """Calculate out of bag predictions and score."""
 
+    def _validate_y(self, y):
+        # Default implementation
+        return y
+
     @property
     def feature_importances_(self):
         """Return the feature importances (the higher, the more important the
@@ -629,9 +633,6 @@ class ForestRegressor(six.with_metaclass(ABCMeta, BaseForest, RegressorMixin)):
                                         predictions[:, k])
 
         self.oob_score_ /= self.n_outputs_
-
-    def _validate_y(self, y):
-        return y
 
 
 class RandomForestClassifier(ForestClassifier):
@@ -1196,7 +1197,7 @@ class ExtraTreesRegressor(ForestRegressor):
                   DeprecationWarning)
 
 
-class RandomTreesEmbedding(ForestRegressor):
+class RandomTreesEmbedding(BaseForest):
     """An ensemble of totally random trees.
 
     An unsupervised transformation of a dataset to a high-dimensional
@@ -1283,6 +1284,9 @@ class RandomTreesEmbedding(ForestRegressor):
         if min_density is not None:
             warn("The min_density parameter is deprecated as of version 0.14 "
                  "and will be removed in 0.16.", DeprecationWarning)
+
+    def _set_oob_score(*args):
+        raise NotImplementedError("OOB score not supported by tree embedding")
 
     def fit(self, X, y=None):
         """Fit estimator.
