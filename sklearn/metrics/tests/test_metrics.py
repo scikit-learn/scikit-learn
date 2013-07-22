@@ -740,14 +740,8 @@ avg / total       0.51      0.53      0.47        75
 def test_classification_report_multiclass_with_string_label():
     y_true, y_pred, _ = make_prediction(binary=False)
 
-    y_true = y_true.astype(np.str)
-    y_true[y_true == "0"] = "blue"
-    y_true[y_true == "1"] = "green"
-    y_true[y_true == "2"] = "red"
-    y_pred = y_pred.astype(np.str)
-    y_pred[y_pred == "0"] = "blue"
-    y_pred[y_pred == "1"] = "green"
-    y_pred[y_pred == "2"] = "red"
+    y_true = np.array(["blue", "green", "red"])[y_true]
+    y_pred = np.array(["blue", "green", "red"])[y_pred]
 
     expected_report = """\
              precision    recall  f1-score   support
@@ -1063,12 +1057,8 @@ def test_invariance_string_vs_numbers_labels():
     """Ensure that classification metrics with string labels"""
     y1, y2, _ = make_prediction(binary=True)
 
-    y1_str = y1.astype(np.str)
-    y1_str[y1_str == "0"] = "eggs"
-    y1_str[y1_str == "1"] = "spam"
-    y2_str = y2.astype(np.str)
-    y2_str[y2_str == "0"] = "eggs"
-    y2_str[y2_str == "1"] = "spam"
+    y1_str = np.array(["eggs", "spam"])[y1]
+    y2_str = np.array(["eggs", "spam"])[y2]
 
     pos_label_str = "spam"
     labels_str = ["eggs", "spam"]

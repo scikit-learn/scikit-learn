@@ -1673,8 +1673,8 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
             if len(labels) == 1:
                 # Only negative labels
                 return (0., 0., 0., 0)
-            raise ValueError("pos_label=%d is not a valid label: %r" %
-                             (pos_label, labels))
+            raise ValueError("pos_label=%r is not a valid label: %r" %
+                             (pos_label, list(labels)))
         pos_label_idx = list(labels).index(pos_label)
         return (precision[pos_label_idx], recall[pos_label_idx],
                 fscore[pos_label_idx], support[pos_label_idx])
