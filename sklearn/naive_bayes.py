@@ -195,8 +195,7 @@ class BaseDiscreteNB(BaseNB):
     _joint_log_likelihood(X) as per BaseNB
     """
 
-    def partial_fit(self, X, y, classes=None, sample_weight=None,
-                    class_prior=None):
+    def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incremental fit on a batch of samples.
 
         This method is expected to be called several times consecutively
