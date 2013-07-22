@@ -275,6 +275,11 @@ class BaseDiscreteNB(BaseNB):
         # Count raw events from data before updating the class log prior
         # and feature log probas
         self._count(X, Y)
+
+        # XXX: OPTIM: we could introduce a public finalization method to
+        # be called by the user explicitly just once after several consecutive
+        # calls to partial_fit and prior any call to predict[_[log_]proba]
+        # to avoid computing the smooth log probas at each call to partial fit
         self._update_feature_log_prob()
         self._update_class_log_prior()
         return self
