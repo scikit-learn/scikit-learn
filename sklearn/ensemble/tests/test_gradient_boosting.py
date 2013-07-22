@@ -3,6 +3,7 @@ Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
 
 import numpy as np
+import warnings
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_equal
@@ -474,3 +475,14 @@ def test_mem_layout():
     clf.fit(X, y_)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(100, len(clf.estimators_))
+
+
+def test_oob_score():
+    """Test if oob_score is deprecated. """
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
+                                     subsample=0.5)
+    clf.fit(X, y)
+    with warnings.catch_warnings(record=True) as w:
+        _ = clf.oob_score_[0]
+        print "waring ....: ", w
+        assert_equal(len(w), 1)
