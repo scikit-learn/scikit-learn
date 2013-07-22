@@ -7,7 +7,6 @@ The :mod:`sklearn.pls` module implements Partial Least Squares (PLS).
 
 from ..base import BaseEstimator, RegressorMixin, TransformerMixin
 from ..utils import check_arrays
-from ..utils import deprecated
 
 import warnings
 import numpy as np
@@ -875,9 +874,10 @@ class CCA(_CCA):
     PLSCanonical
     PLSSVD
     """
-    @deprecated("This class has been moved to cca and will be removed in 0.15")
     def __init__(self, n_components=2, scale=True,
                  max_iter=500, tol=1e-06, copy=True):
+        warnings.warn("This class has been moved to cca and will be "
+                      "removed in 0.15")
         _CCA.__init__(self, n_components=n_components, scale=scale,
                       max_iter=max_iter, tol=tol, copy=copy)
 
