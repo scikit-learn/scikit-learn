@@ -40,10 +40,39 @@ from sklearn.pipeline import Pipeline
 ###############################################################################
 # Setting up
 
+def nudge_dataset(X, Y):
+    """
+    This produces a dataset 5 times bigger than the original one,
+    by moving the 8x8 images in X around by 1px to left, right, down, up
+    """
+    def nudge(X,  direction=(1, 0)):
+        """
+        moves the 8x8 images around by direction vectors
+        """ 
+        assert(direction in [(0,-1), (0, 1), (1, 0), (-1, 0)])
+        X_nudged = np.zeros((X.shape))
+        for i in xrange(8):
+            if direction[0] == -1: # left
+                X_nudged[:, i*8:(i+1)*8 - 1] = X[:, i*8 + 1:(i+1)*8]
+            elif direction[0] == 1: # right
+                X_nudged[:, i*8 + 1:(i+1)*8] = X[:, i*8:(i+1)*8 - 1]
+        for j in xrange(7):
+            if direction[1] == -1: # down
+                X_nudged[:, (j+1)*8:(j+2)*8] = X[:, j*8:(j+1)*8]
+            elif direction[1] == 1: # up
+                X_nudged[:, j*8:(j+1)*8] = X[:, (j+1)*8:(j+2)*8]
+        return X_nudged
+    X = np.concatenate([X] + [nudge(X, direction=(0, 1)), 
+        nudge(X, direction=(0, -1)), nudge(X, direction=(1, 0)),
+        nudge(X, direction=(-1, 0))], axis=0)
+    Y = np.concatenate([Y for i in xrange(5)], axis=0)
+    return X, Y
+
 # Load Data
 digits = datasets.load_digits()
-X = np.asarray(digits.data, 'float32') / digits.data.max()
-Y = digits.target
+X = np.asarray(digits.data, 'float32')
+X, Y = nudge_dataset(X, digits.target)
+X = (X - np.min(X, 0)) / (np.max(X, 0) + 0.0001) # 0-1 scaling
 X_train, X_test, Y_train, Y_test = train_test_split(X, Y,
                                                     test_size=0.2,
                                                     random_state=0)
@@ -61,10 +90,10 @@ classifier = Pipeline(steps=[('rbm', rbm), ('logistic', logistic)])
 # using a GridSearchCV. Here we are not performing cross-validation to
 # save time.
 rbm.learning_rate = 0.2
-rbm.n_iter = 30
+rbm.n_iter = 20
 # More components tend to give better prediction performance, but larger
 # fitting time
-rbm.n_components = 500
+rbm.n_components = 100
 logistic.C = 1e4
 
 # Training RBM-Logistic Pipeline
