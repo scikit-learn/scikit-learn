@@ -40,6 +40,7 @@ import logging
 import tarfile
 import pickle
 import shutil
+import re
 
 import numpy as np
 import scipy.sparse as sp
@@ -96,10 +97,54 @@ def download_20newsgroups(target_dir, cache_path):
     return cache
 
 
+def strip_newsgroup_header(text):
+    """
+    Given text in "news" format, strip the headers, by removing everything
+    before the first blank line.
+    """
+    _before, _blankline, after = text.partition(u'\n\n')
+    return after
+
+
+_QUOTE_RE = re.compile(ur'(writes in|writes:|wrote:|says:|said:'
+                      ur'|^In article|^Quoted from|^\||^>)')
+
+def strip_newsgroup_quoting(text):
+    """
+    Given text in "news" format, strip lines beginning with the quote
+    characters > or |, plus lines that often introduce a quoted section
+    (for example, because they contain the string 'writes:'.)
+    """
+    good_lines = [line for line in text.split(u'\n')
+                  if not _QUOTE_RE.search(line)]
+    return u'\n'.join(good_lines)
+
+
+def strip_newsgroup_footer(text):
+    """
+    Given text in "news" format, attempt to remove a signature block.
+
+    As a rough heuristic, we assume that signatures are set apart by either
+    a blank line or a line made of hyphens, and that it is the last such line
+    in the file (disregarding blank lines at the end).
+    """
+    lines = text.strip().split(u'\n')
+    for line_num in range(len(lines) - 1, -1, -1):
+        line = lines[line_num]
+        if line.strip().strip(u'-') == u'':
+            break
+
+    if line_num > 0:
+        return u'\n'.join(lines[:line_num])
+    else:
+        return text
+
+
 def fetch_20newsgroups(data_home=None, subset='train', categories=None,
                        shuffle=True, random_state=42,
+                       remove=(),
                        download_if_missing=True):
-    """Load the filenames of the 20 newsgroups dataset.
+    """Load the filenames and data from the 20 newsgroups dataset.
 
     Parameters
     ----------
@@ -127,6 +172,19 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     download_if_missing: optional, True by default
         If False, raise an IOError if the data is not locally available
         instead of trying to download the data from the source site.
+
+    remove: tuple
+        May contain any subset of ('headers', 'footers', 'quotes'). Each of
+        these are kinds of text that will be detected and removed from the
+        newsgroup posts, preventing classifiers from overfitting on
+        metadata.
+
+        'headers' removes newsgroup headers, 'footers' removes blocks at the
+        ends of posts that look like signatures, and 'quotes' removes lines
+        that appear to be quoting another post.
+
+        'headers' follows an exact standard; the other filters are not always
+        correct.
     """
 
     data_home = get_data_home(data_home=data_home)
@@ -169,6 +227,13 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
         raise ValueError(
             "subset can only be 'train', 'test' or 'all', got '%s'" % subset)
 
+    if 'headers' in remove:
+        data.data = [strip_newsgroup_header(text) for text in data.data]
+    if 'footers' in remove:
+        data.data = [strip_newsgroup_footer(text) for text in data.data]
+    if 'quotes' in remove:
+        data.data = [strip_newsgroup_quoting(text) for text in data.data]
+
     if categories is not None:
         labels = [(data.target_names.index(cat), cat) for cat in categories]
         # Sort the categories to have the ordering of the labels
@@ -199,7 +264,7 @@ def fetch_20newsgroups(data_home=None, subset='train', categories=None,
     return data
 
 
-def fetch_20newsgroups_vectorized(subset="train", data_home=None):
+def fetch_20newsgroups_vectorized(subset="train", remove=(), data_home=None):
     """Load the 20 newsgroups dataset and transform it into tf-idf vectors.
 
     This is a convenience function; the tf-idf transformation is done using the
@@ -218,6 +283,16 @@ def fetch_20newsgroups_vectorized(subset="train", data_home=None):
         Specify an download and cache folder for the datasets. If None,
         all scikit-learn data is stored in '~/scikit_learn_data' subfolders.
 
+    remove: tuple
+        May contain any subset of ('headers', 'footers', 'quotes'). Each of
+        these are kinds of text that will be detected and removed from the
+        newsgroup posts, preventing classifiers from overfitting on
+        metadata.
+
+        'headers' removes newsgroup headers, 'footers' removes blocks at the
+        ends of posts that look like signatures, and 'quotes' removes lines
+        that appear to be quoting another post.
+
     Returns
     -------
 
@@ -227,20 +302,25 @@ def fetch_20newsgroups_vectorized(subset="train", data_home=None):
         bunch.target_names: list, length [n_classes]
     """
     data_home = get_data_home(data_home=data_home)
-    target_file = os.path.join(data_home, "20newsgroup_vectorized.pk")
+    filebase = '20newsgroup_vectorized'
+    if remove:
+        filebase += 'remove-' + ('-'.join(remove))
+    target_file = os.path.join(data_home, filebase + ".pk")
 
     # we shuffle but use a fixed seed for the memoization
     data_train = fetch_20newsgroups(data_home=data_home,
                                     subset='train',
                                     categories=None,
                                     shuffle=True,
-                                    random_state=12)
+                                    random_state=12,
+                                    remove=remove)
 
     data_test = fetch_20newsgroups(data_home=data_home,
                                    subset='test',
                                    categories=None,
                                    shuffle=True,
-                                   random_state=12)
+                                   random_state=12,
+                                   remove=remove)
 
     if os.path.exists(target_file):
         X_train, X_test = joblib.load(target_file)

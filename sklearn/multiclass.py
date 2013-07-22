@@ -248,6 +248,25 @@ class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
         return predict_proba_ovr(self.estimators_, X,
                                  is_multilabel=self.multilabel_)
 
+    def decision_function(self, X):
+        """Returns the distance of each sample from the decision boundary for
+        each class. This can only be used with estimators which implement the
+        decision_function method.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+
+        Returns
+        -------
+        T : array-like, shape = [n_samples, n_classes]
+        """
+        if not hasattr(self.estimators_[0], "decision_function"):
+            raise AttributeError(
+                "Base estimator doesn't have a decision_function attribute.")
+        return np.array([est.decision_function(X).ravel()
+                         for est in self.estimators_]).T
+
     @property
     def multilabel_(self):
         """Whether this is a multilabel classifier"""
