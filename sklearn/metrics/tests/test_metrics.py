@@ -2,6 +2,7 @@ from __future__ import division, print_function
 
 from functools import partial
 import warnings
+from itertools import product
 import numpy as np
 
 from sklearn import datasets
@@ -47,12 +48,16 @@ from sklearn.metrics import (accuracy_score,
                              zero_one_score,
                              zero_one_loss)
 from sklearn.metrics.metrics import _check_clf_targets
+from sklearn.metrics.metrics import _check_reg_targets
+from sklearn.metrics.metrics import _column_or_1d
+
+
 from sklearn.externals.six.moves import xrange
 
 ALL_METRICS = {
     "accuracy_score": accuracy_score,
     "unormalized_accuracy_score": partial(accuracy_score, normalize=False),
-
+    "confusion_matrix": confusion_matrix,
     "hamming_loss": hamming_loss,
 
     "jaccard_similarity_score": jaccard_similarity_score,
@@ -115,6 +120,12 @@ MULTILABELS_METRICS = {
     "zero_one_loss": zero_one_loss,
     "unnormalized_zero_one_loss": partial(zero_one_loss, normalize=False),
 
+    "precision_score": precision_score,
+    "recall_score": recall_score,
+    "f1_score": f1_score,
+    "f2_score": partial(fbeta_score, beta=2),
+    "f0.5_score": partial(fbeta_score, beta=0.5),
+
     "weighted_f0.5_score": partial(fbeta_score, average="weighted", beta=0.5),
     "weighted_f1_score": partial(f1_score, average="weighted"),
     "weighted_f2_score": partial(fbeta_score, average="weighted", beta=2),
@@ -139,6 +150,13 @@ MULTILABELS_METRICS = {
     "macro_precision_score": partial(precision_score, average="macro"),
     "macro_recall_score": partial(recall_score, average="macro"),
 }
+
+MULTIOUTPUT_METRICS = {
+    "mean_absolute_error": mean_absolute_error,
+    "mean_squared_error": mean_squared_error,
+    "r2_score": r2_score,
+}
+
 
 SYMMETRIC_METRICS = {
     "accuracy_score": accuracy_score,
@@ -166,6 +184,8 @@ SYMMETRIC_METRICS = {
 NOT_SYMMETRIC_METRICS = {
     "explained_variance_score": explained_variance_score,
     "r2_score": r2_score,
+
+    "confusion_matrix": confusion_matrix,
 
     "precision_score": precision_score,
     "recall_score": recall_score,
@@ -973,15 +993,19 @@ def test_format_invariance_with_1d_vectors():
                                     "with mix list and np-array-column"
                                     % name)
 
-        # At the moment, these mix representations aren't allowed
+        # These mix representations aren't allowed
         assert_raises(ValueError, metric, y1_1d, y2_row)
         assert_raises(ValueError, metric, y1_row, y2_1d)
         assert_raises(ValueError, metric, y1_list, y2_row)
         assert_raises(ValueError, metric, y1_row, y2_list)
         assert_raises(ValueError, metric, y1_column, y2_row)
         assert_raises(ValueError, metric, y1_row, y2_column)
+
         # NB: We do not test for y1_row, y2_row as these may be
         # interpreted as multilabel or multioutput data.
+        if (name not in MULTIOUTPUT_METRICS and
+                name not in MULTILABELS_METRICS):
+            assert_raises(ValueError, metric, y1_row, y2_row)
 
 
 def test_clf_single_sample():
@@ -1040,9 +1064,8 @@ def test_multioutput_number_of_output_differ():
     y_true = np.array([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]])
     y_pred = np.array([[0, 0], [1, 0], [0, 0]])
 
-    assert_raises(ValueError, mean_squared_error, y_true, y_pred)
-    assert_raises(ValueError, mean_absolute_error, y_true, y_pred)
-    assert_raises(ValueError, r2_score, y_true, y_pred)
+    for name, metrics in MULTIOUTPUT_METRICS.items():
+        assert_raises(ValueError, metrics, y_true, y_pred)
 
 
 def test_multioutput_regression_invariance_to_dimension_shuffling():
@@ -1053,13 +1076,15 @@ def test_multioutput_regression_invariance_to_dimension_shuffling():
     y_pred = np.reshape(y_pred, (-1, n_dims))
 
     rng = check_random_state(314159)
-    for metric in [r2_score, mean_squared_error, mean_absolute_error]:
+    for name, metric in MULTIOUTPUT_METRICS.items():
         error = metric(y_true, y_pred)
 
         for _ in xrange(3):
             perm = rng.permutation(n_dims)
             assert_almost_equal(metric(y_true[:, perm], y_pred[:, perm]),
-                                error)
+                                error,
+                                err_msg="%s is not dimension shuffling"
+                                        "invariant" % name)
 
 
 def test_multilabel_representation_invariance():
@@ -1619,3 +1644,52 @@ def test__check_clf_targets():
                     assert_array_equal(y1out, np.squeeze(y1))
                     assert_array_equal(y2out, np.squeeze(y2))
                 assert_raises(ValueError, _check_clf_targets, y1[:-1], y2)
+
+
+def test__check_reg_targets():
+    # All of length 3
+    EXAMPLES = [
+        ("continuous", [1, 2, 3], 1),
+        ("continuous", [[1], [2], [3]], 1),
+        ("continuous-multioutput", [[1, 1], [2, 2], [3, 1]], 2),
+        ("continuous-multioutput", [[5, 1], [4, 2], [3, 1]], 2),
+        ("continuous-multioutput", [[1, 3, 4], [2, 2, 2], [3, 1, 1]], 3),
+    ]
+
+    for (type1, y1, n_out1), (type2, y2, n_out2) in product(EXAMPLES,
+                                                            EXAMPLES):
+
+        if type1 == type2 and n_out1 == n_out2:
+            y_type, y_check1, y_check2 = _check_reg_targets(y1, y2)
+            assert_equal(type1, y_type)
+            if type1 == 'continuous':
+                assert_array_equal(y_check1, np.reshape(y1, (-1, 1)))
+                assert_array_equal(y_check2, np.reshape(y2, (-1, 1)))
+            else:
+                assert_array_equal(y_check1, y1)
+                assert_array_equal(y_check2, y2)
+        else:
+            assert_raises(ValueError, _check_reg_targets, y1, y2)
+
+
+def test__column_or_1d():
+    EXAMPLES = [
+        ("binary", ["spam", "egg", "spam"]),
+        ("binary", [0, 1, 0, 1]),
+        ("continuous", np.arange(10) / 20.),
+        ("multiclass", [1, 2, 3]),
+        ("multiclass", [0, 1, 2, 2, 0]),
+        ("multiclass", [[1], [2], [3]]),
+        ("multilabel-indicator", [[0, 1, 0], [0, 0, 1]]),
+        ("multiclass-multioutput", [[1, 2, 3]]),
+        ("multiclass-multioutput", [[1, 1], [2, 2], [3, 1]]),
+        ("multiclass-multioutput", [[5, 1], [4, 2], [3, 1]]),
+        ("multiclass-multioutput", [[1, 2, 3]]),
+        ("continuous-multioutput", np.arange(30).reshape((-1, 3))),
+    ]
+
+    for y_type, y in EXAMPLES:
+        if y_type in ["binary", 'multiclass', "continuous"]:
+            assert_array_equal(_column_or_1d(y), np.ravel(y))
+        else:
+            assert_raises(ValueError, _column_or_1d, y)
