@@ -5,11 +5,15 @@
 # License: BSD Style.
 
 import time
+import warnings
 
 import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import array2d, check_random_state, as_float_array
+from ..utils import (array2d,
+                     check_random_state,
+                     as_float_array,
+                     gen_even_slices)
 from ..utils.extmath import safe_sparse_dot
 
 
@@ -386,6 +390,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
             The fitted model
         """
         X = array2d(X)
+        n_samples = X.shape[0]
         dtype = np.float32 if X.dtype.itemsize == 4 else np.float64
         rng = check_random_state(self.random_state)
 
@@ -398,24 +403,26 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self.h_samples_ = np.zeros((self.batch_size, self.n_components),
                                    dtype=dtype)
 
-        inds = np.arange(X.shape[0])
-        rng.shuffle(inds)
-
-        n_batches = int(np.ceil(len(inds) / float(self.batch_size)))
-
+        n_batches = n_samples / self.batch_size
+        if n_samples % self.batch_size != 0:
+            warnings.warn("Discarding some samples: \
+                sample size not divisible by chunk size.")
+        batch_slices = list(gen_even_slices(n_batches * self.batch_size,
+                                            n_batches))
         verbose = self.verbose
         for iteration in xrange(self.n_iter):
             pl = 0.
             if verbose:
                 begin = time.time()
-            for minibatch in xrange(n_batches):
-                pl_batch = self._fit(X[inds[minibatch::n_batches]], rng)
+
+            for batch_slice in batch_slices:
+                pl_batch = self._fit(X[batch_slice], rng)
 
                 if verbose:
                     pl += pl_batch.sum()
 
             if verbose:
-                pl /= X.shape[0]
+                pl /= n_samples
                 end = time.time()
                 print("Iteration %d, pseudo-likelihood = %.2f, time = %.2fs"
                       % (iteration, pl, end - begin))
