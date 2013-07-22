@@ -8,7 +8,11 @@ def configuration(parent_package='', top_path=None):
     import numpy
     from numpy.distutils.misc_util import Configuration
 
-    config = Configuration('utils', parent_package, top_path)
+    config = Configuration('utils', parent_package, top_path,
+        data_files=[('sklearn/utils', ['sklearn/utils/lgamma.pxd', 
+            'sklearn/utils/murmurhash.pxd', 
+            'sklearn/utils/seq_dataset.pxd', 
+            'sklearn/utils/weight_vector.pxd'])])
     config.add_subpackage('sparsetools')
 
     cblas_libs, blas_info = get_blas_info()
