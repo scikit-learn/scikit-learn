@@ -111,7 +111,7 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
     return W
 
 
-# Some standard nonlinear functions.
+# Some standard non-linear functions.
 # XXX: these should be optimized, as they can be a bottleneck.
 def _logcosh(x, fun_args):
     alpha = fun_args.get('alpha', 1.0)  # comment it out?
