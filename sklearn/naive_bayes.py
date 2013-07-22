@@ -195,8 +195,7 @@ class BaseDiscreteNB(BaseNB):
     _joint_log_likelihood(X) as per BaseNB
     """
 
-    def _update_log_probas(self, class_prior=None):
-        """Apply smoothing to raw counts and recompute log probabilities"""
+    def _update_class_log_prior(self, class_prior=None):
         n_classes = len(self.classes_)
         smoothed_fc = self.feature_count_ + self.alpha
         smoothed_cc = self.class_count_ + self.alpha * n_classes
@@ -286,7 +285,8 @@ class BaseDiscreteNB(BaseNB):
         # Count raw events from data before updating the class log prior
         # and feature log probas
         self._count(X, Y)
-        self._update_log_probas()
+        self._update_feature_log_prob()
+        self._update_class_log_prior()
         return self
 
     def fit(self, X, y, sample_weight=None, class_prior=None):
@@ -342,7 +342,8 @@ class BaseDiscreteNB(BaseNB):
         self.feature_count_ = np.zeros((n_classes, n_features),
                                        dtype=np.int64)
         self._count(X, Y)
-        self._update_log_probas(class_prior=class_prior)
+        self._update_feature_log_prob()
+        self._update_class_log_prior(class_prior=class_prior)
         return self
 
     # XXX The following is a stopgap measure; we need to set the dimensions
@@ -415,6 +416,14 @@ class MultinomialNB(BaseDiscreteNB):
     For the rationale behind the names `coef_` and `intercept_`, i.e.
     naive Bayes as a linear classifier, see J. Rennie et al. (2003),
     Tackling the poor assumptions of naive Bayes text classifiers, ICML.
+
+    References
+    ----------
+
+    C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
+    Information Retrieval. Cambridge University Press, pp. 234–265.
+    http://nlp.stanford.edu/IR-book/html/htmledition/
+        naive-bayes-text-classification-1.html
     """
 
     def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
@@ -428,6 +437,14 @@ class MultinomialNB(BaseDiscreteNB):
             raise ValueError("Input X must be non-negative")
         self.feature_count_ += safe_sparse_dot(Y.T, X)
         self.class_count_ += Y.sum(axis=0)
+
+    def _update_feature_log_prob(self):
+        """Apply smoothing to raw counts and recompute log probabilities"""
+        smoothed_fc = self.feature_count_ + self.alpha
+        smoothed_cc = smoothed_fc.sum(axis=1)
+
+        self.feature_log_prob_ = (np.log(smoothed_fc)
+                                  - np.log(smoothed_cc.reshape(-1, 1)))
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
@@ -489,6 +506,7 @@ class BernoulliNB(BaseDiscreteNB):
 
     C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
     Information Retrieval. Cambridge University Press, pp. 234–265.
+    http://nlp.stanford.edu/IR-book/html/htmledition/the-bernoulli-model-1.html
 
     A. McCallum and K. Nigam (1998). A comparison of event models for naive
     Bayes text classification. Proc. AAAI/ICML-98 Workshop on Learning for
@@ -511,6 +529,15 @@ class BernoulliNB(BaseDiscreteNB):
             X = binarize(X, threshold=self.binarize)
         self.feature_count_ += safe_sparse_dot(Y.T, X)
         self.class_count_ += Y.sum(axis=0)
+
+    def _update_feature_log_prob(self):
+        """Apply smoothing to raw counts and recompute log probabilities"""
+        n_classes = len(self.classes_)
+        smoothed_fc = self.feature_count_ + self.alpha
+        smoothed_cc = self.class_count_ + self.alpha * n_classes
+
+        self.feature_log_prob_ = (np.log(smoothed_fc)
+                                  - np.log(smoothed_cc.reshape(-1, 1)))
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
