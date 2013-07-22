@@ -24,8 +24,8 @@ datasets, and usually not useful for density estimation.
 Deep neural networks that are notoriously difficult to train from scratch can
 be simplified by initializing each layer's weights with the weights of an RBM.
 
-The makes assumptions regarding the distribution of inputs. At the moment,
-scikit-learn only provides :class:`BernoulliRBM`, which assumes the input are
+The model makes assumptions regarding the distribution of inputs. At the moment,
+scikit-learn only provides :class:`BernoulliRBM`, which assumes the inputs are
 either binary values or values between 0 and 1, each encoding the probability
 that the specific feature would be turned on.
 
