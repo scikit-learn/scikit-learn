@@ -225,8 +225,10 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
     return out
 
 
-cpdef sample_without_replacement(np.int_t n_population, np.int_t n_samples,
-                                 method="auto", random_state=None):
+cpdef sample_without_replacement(np.int_t n_population,
+                                 np.int_t n_samples,
+                                 method="auto",
+                                 random_state=None):
     """Sample integers without replacement.
 
     Select n_samples integers from the set [0, n_population) without
