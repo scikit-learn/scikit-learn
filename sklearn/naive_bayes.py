@@ -26,6 +26,7 @@ from .preprocessing import binarize, LabelBinarizer
 from .utils import array2d, atleast2d_or_csr
 from .utils.extmath import safe_sparse_dot, logsumexp
 from .utils import check_arrays
+from .utils.multiclass import _check_partial_fit_classes_consistency
 from .externals import six
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB']
@@ -251,20 +252,8 @@ class BaseDiscreteNB(BaseNB):
         X = atleast2d_or_csr(X)
         _, n_features = X.shape
 
-        if getattr(self, 'classes_', None) is None and classes is None:
-            raise ValueError("classes must be passed on the first call "
-                             "to partial_fit.")
-
-        elif (classes is not None
-              and getattr(self, 'classes_', None) is not None):
-            if not np.all(self.classes_ == np.unique(classes)):
-                raise ValueError(
-                    "`classes=%r` is not the same as on last call "
-                    "to partial_fit, was: %r" % (classes, self.classes_))
-
-        elif classes is not None:
+        if _check_partial_fit_classes_consistency(self, classes):
             # This is the first call to partial_fit
-            self.classes_ = classes
 
             # Build a label binarizer instance that will be reused for all the
             # consecutive calls to partial_fit

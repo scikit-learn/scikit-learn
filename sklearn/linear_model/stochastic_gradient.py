@@ -17,6 +17,7 @@ from ..base import BaseEstimator, RegressorMixin
 from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import array2d, atleast2d_or_csr, check_arrays, deprecated
 from ..utils.extmath import safe_sparse_dot
+from ..utils.multiclass import _check_partial_fit_classes_consistency
 from ..externals import six
 
 from .sgd_fast import plain_sgd as plain_sgd
@@ -341,16 +342,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
         _check_fit_data(X, y)
 
         self._validate_params()
-
-        if self.classes_ is None and classes is None:
-            raise ValueError("classes must be passed on the first call "
-                             "to partial_fit.")
-        elif classes is not None and self.classes_ is not None:
-            if not np.all(self.classes_ == np.unique(classes)):
-                raise ValueError("`classes` is not the same as on last call "
-                                 "to partial_fit.")
-        elif classes is not None:
-            self.classes_ = classes
+        _check_partial_fit_classes_consistency(self, classes)
 
         n_classes = self.classes_.shape[0]
 
