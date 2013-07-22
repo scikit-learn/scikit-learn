@@ -411,7 +411,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : array-like, shape (n_samples, n_features)
-            Training data, where n_samples is the number of samples
+            Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
         Returns
@@ -429,8 +429,8 @@ class FastICA(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_features)
             Data to transform, where n_samples is the number of samples
             and n_features is the number of features.
-        copy : bool
-            If False, data passed to fit are overwritten.
+        copy : bool (optional)
+            If False, data passed to fit are overwritten. Defaults to True.
 
         Returns
         -------
@@ -438,7 +438,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         """
 
         X = array2d(X)
-        if copy is True:
+        if copy:
             X = X.copy()
         if self.whiten is True:
             X -= X.mean(axis=0)[np.newaxis]
@@ -464,6 +464,8 @@ class FastICA(BaseEstimator, TransformerMixin):
         X : array-like, shape (n_samples, n_components)
             Sources, where n_samples is the number of samples
             and n_components is the number of components.
+        copy : bool (optional)
+            If False, data passed to fit are overwritten. Defaults to True.
 
         Returns
         -------
@@ -472,7 +474,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         if not self.fit_inverse_transform:
             raise ValueError('inverse_transform not enabled.'
                              ' set fit_inverse_transform=True before fit')
-        if copy is True:
+        if copy:
             X = X.copy()
 
         X = np.dot(X, self.mixing_.T)
