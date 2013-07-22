@@ -218,12 +218,28 @@ def test_inverse_transform():
     """Test FastICA.inverse_transform"""
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
-    ica = FastICA(n_components=5, random_state=0, fit_inverse_transform=True)
-    Xt = ica.fit_transform(X)
-    mixing_matrix = ica.get_mixing_matrix()
-    assert_equal(mixing_matrix.shape, (10, 5))
-    X2 = ica.inverse_transform(Xt)
-    assert_equal(X.shape, X2.shape)
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((100, 10))
+    expected = {(True, 5): (X.shape[1], 5),
+                (True, 10): (X.shape[1], 10),
+                (False, 5): (X.shape[1], 10),
+                (False, 10): (X.shape[1], 10)}
+
+    for whiten in [True, False]:
+        for n_components in [5, 10]:
+            ica = FastICA(n_components=n_components, random_state=rng,
+                          whiten=whiten, fit_inverse_transform=True)
+            Xt = ica.fit_transform(X)
+            mixing_matrix = ica.get_mixing_matrix()
+
+            expected_shape = expected[(whiten, n_components)]
+            assert_equal(mixing_matrix.shape, expected_shape)
+            X2 = ica.inverse_transform(Xt)
+            assert_equal(X.shape, X2.shape)
+
+            # reversibility test in non-reduction case
+            if n_components == X.shape[1]:
+                assert_array_almost_equal(X, X2)
 
 
 def test_refit_without_inverse():

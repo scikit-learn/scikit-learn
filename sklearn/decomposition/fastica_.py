@@ -223,7 +223,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     alpha = fun_args.get('alpha', 1.0)
     if not 1 <= alpha <= 2:
-        raise ValueError("alpha must be in [1,2]")
+        raise ValueError('alpha must be in [1,2]')
 
     if fun == 'logcosh':
         g = _logcosh
@@ -392,6 +392,8 @@ class FastICA(BaseEstimator, TransformerMixin):
             random_state=self.random_state)
         if self.whiten:
             self.components_ = np.dot(unmixing_, whitening_)
+            self.mean_ = array2d(X).T.mean(axis=-1)
+            self.whitening_ = whitening_
         else:
             self.components_ = unmixing_
 
@@ -453,9 +455,9 @@ class FastICA(BaseEstimator, TransformerMixin):
         mixing_matrix : array, shape (n_features, n_components)
         """
         return (self.mixing_ if hasattr(self, 'mixing_')
-                             else linalg.pinv(self.components_))
+                else linalg.pinv(self.components_))
 
-    def inverse_transform(self, X):
+    def inverse_transform(self, X, copy=True):
         """Transform the sources back to the mixed data (apply mixing matrix).
 
         Parameters
@@ -471,4 +473,11 @@ class FastICA(BaseEstimator, TransformerMixin):
         if not self.fit_inverse_transform:
             raise ValueError('inverse_transform not enabled.'
                              ' set fit_inverse_transform=True before fit')
-        return np.dot(X, self.mixing_.T)
+        if copy is True:
+            X = X.copy()
+
+        X = np.dot(X, self.mixing_.T)
+        if self.whiten:
+            X += self.mean_
+
+        return X
