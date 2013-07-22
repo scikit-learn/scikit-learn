@@ -11,9 +11,8 @@ import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
 from ..utils import check_random_state, atleast2d_or_csr
-from ..utils.mst import minimum_spanning_tree
-#from ..utils._csgraph import cs_graph_components
-from scipy.sparse.csgraph import connected_components
+from ..utils.sparsetools import minimum_spanning_tree
+from ..utils._csgraph import cs_graph_components
 
 
 class MSTCluster(BaseEstimator):
