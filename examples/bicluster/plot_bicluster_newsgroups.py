@@ -112,6 +112,6 @@ for cluster in xrange(len(categories)):
                            for i in word_scores.argsort()[:-10:-1])
 
     print("bicluster {} : {} documents, {} words".format(
-        cluster, n_rows, n_cols))
-    print("categories  : {}".format(cat_string))
-    print("words       : {}\n".format(', '.join(important_words)))
+        str(cluster).zfill(2), n_rows, n_cols))
+    print("categories   : {}".format(cat_string))
+    print("words        : {}\n".format(', '.join(important_words)))
