@@ -71,7 +71,7 @@ def test_gibbs():
                         n_iter=5, random_state=rng)
     rbm1.fit(X)
 
-    Xt1 = np.mean([rbm1.gibbs(X[0]) for i in range(100)], 0)
+    Xt1 = np.mean([rbm1.gibbs(X[0]) for i in range(200)], 0)
     Xt2 = np.mean([rbm1._sample_visibles(rbm1._sample_hiddens(X[0], rng), rng)
                    for i in range(1000)], 0)
 
