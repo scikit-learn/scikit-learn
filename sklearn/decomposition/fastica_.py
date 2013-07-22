@@ -395,10 +395,8 @@ class FastICA(BaseEstimator, TransformerMixin):
         else:
             self.components_ = unmixing_
 
-        try:
+        if hasattr(self, "mixing_"):
             del self.mixing_
-        except AttributeError:
-            pass
         if self.fit_inverse_transform:
             self.mixing_ = linalg.pinv(self.components_)
 
@@ -454,10 +452,8 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         mixing_matrix : array, shape (n_features, n_components)
         """
-        try:
-            return self.mixing_
-        except AttributeError:
-            return linalg.pinv(self.components_)
+        return (self.mixing_ if hasattr(self, "mixing_")
+                             else linalg.pinv(self.components_))
 
     def inverse_transform(self, X):
         """Transform the sources back to the mixed data (apply mixing matrix).
