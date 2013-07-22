@@ -271,6 +271,7 @@ def test_importances():
     clf.fit(X, y)
     importances = clf.feature_importances_
     n_important = sum(importances > 0.1)
+    print importances
 
     assert_equal(importances.shape[0], 10)
     assert_equal(n_important, 3)
