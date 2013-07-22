@@ -610,9 +610,6 @@ def test_classifiers_classes():
         if name in ["LabelPropagation", "LabelSpreading"]:
             # TODO some complication with -1 label
             y_ = y
-        elif name in ["RandomForestClassifier", "ExtraTreesClassifier"]:
-            # TODO not so easy because of multi-output
-            y_ = y_str_numbers
         else:
             y_ = y_names
 

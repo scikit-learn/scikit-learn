@@ -99,7 +99,7 @@ in bias::
     ...     random_state=0)
     >>> scores = cross_val_score(clf, X, y)
     >>> scores.mean()                             # doctest: +ELLIPSIS
-    0.97...
+    0.98...
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=1, random_state=0)
@@ -138,11 +138,6 @@ are usually not optimal. The best parameter values should always be cross-
 validated. In addition, note that bootstrap samples are used by default
 in random forests (``bootstrap=True``) while the default strategy is to
 use the original dataset for building extra-trees (``bootstrap=False``).
-
-When training on large datasets, where runtime and memory requirements
-are important, it might also be beneficial to adjust the ``min_density``
-parameter, that controls a heuristic for speeding up computations in
-each tree.  See :ref:`Complexity of trees<tree_complexity>` for details.
 
 Parallelization
 ---------------
@@ -199,10 +194,10 @@ a :class:`ExtraTreesClassifier` model.
    :align: center
    :scale: 75
 
-In practice those estimates are stored as an attribute named 
-``feature_importances_`` on the fitted model. This is an array with shape 
-``(n_features,)`` whose values are positive and sum to 1.0. The higher 
-the value, the more important is the contribution of the matching feature 
+In practice those estimates are stored as an attribute named
+``feature_importances_`` on the fitted model. This is an array with shape
+``(n_features,)`` whose values are positive and sum to 1.0. The higher
+the value, the more important is the contribution of the matching feature
 to the prediction function.
 
 .. topic:: Examples:
