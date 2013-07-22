@@ -249,7 +249,7 @@ yields the column labels.
 
 .. topic:: References:
 
- * Kluger, Yuval, et al, 2003. `Spectral biclustering of microarray
+ * Kluger, Yuval, et. al., 2003. `Spectral biclustering of microarray
    data: coclustering genes and conditions
    <http://citeseerx.ist.psu.edu/viewdoc/summary?doi=10.1.1.135.1608>`__.
 
@@ -287,7 +287,7 @@ achieves its minimum of 0 when the biclusters to not overlap at all
 and its maximum of 1 when they are identical.
 
 Several methods have been developed to compare two sets of biclusters.
-For now, only :func:`consensus_score` (Hochreiter, et al, 2010) is
+For now, only :func:`consensus_score` (Hochreiter et. al., 2010) is
 available:
 
 1. Compute bicluster similarities for pairs of biclusters, one in each
