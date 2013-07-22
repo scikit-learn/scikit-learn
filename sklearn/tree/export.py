@@ -55,11 +55,8 @@ def export_graphviz(decision_tree, out_file="tree.dot", feature_names=None,
     >>> iris = load_iris()
 
     >>> clf = clf.fit(iris.data, iris.target)
-    >>> import tempfile
     >>> export_file = tree.export_graphviz(clf,
-    ...     out_file='test_export_graphvix.dot')
-    >>> export_file.close()
-    >>> os.unlink(export_file.name)
+    ...     out_file='tree.dot')                # doctest: +SKIP
     """
     def node_to_str(tree, node_id):
         value = tree.value[node_id]
