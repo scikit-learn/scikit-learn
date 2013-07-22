@@ -15,7 +15,13 @@ from ..utils.extmath import safe_sparse_dot
 
 def logistic_sigmoid(x):
     """
-    Implements the logistic function, ``1 / (1 + e ** x)``.
+    Implements the logistic function, ``1 / (1 + e ** -x)``.
+
+    This implementation is more stable by splitting on positive and negative
+    values and computing::
+
+        1 / (1 + exp(-x_i)) if x_i > 0
+        exp(x_i) / (1 + exp(x_i)) if x_i <= 0
 
     Parameters
     ----------
@@ -26,8 +32,52 @@ def logistic_sigmoid(x):
     -------
     res: array, shape (M, N)
         Value of the logistic function evaluated at every point in x
+
+    Notes
+    -----
+    See the blog post describing this implementation:
+    http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
     """
-    return 1. / (1. + np.exp(-np.clip(x, -30, 30)))
+    positive_idx = x > 0
+    out = np.empty_like(x)
+    out[positive_idx] = 1. / (1 + np.exp(-x[positive_idx]))
+    exp_x = np.exp(x[~positive_idx])
+    out[~positive_idx] = exp_x / (1. + exp_x)
+    return out
+
+
+def log_logistic_sigmoid(x):
+    """
+    Implements the log of the logistic function, ``log(1 / (1 + e ** -x))``.
+
+    This implementation is more stable by splitting on positive and negative
+    values and computing::
+
+        -log(1 + exp(-x_i)) if x_i > 0
+        x_i - log(1 + exp(x_i)) if x_i <= 0
+
+    Parameters
+    ----------
+    x: array-like, shape (M, N)
+        Argument to the logistic function
+
+    Returns
+    -------
+    res: array, shape (M, N)
+        Value of the logarithm of the logistic function evaluated at every
+        point in x
+
+    Notes
+    -----
+    See the blog post describing this implementation:
+    http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
+    """
+    positive_idx = x > 0
+    out = np.empty_like(x)
+    out[positive_idx] = -np.log(1 + np.exp(-x[positive_idx]))
+    out[~positive_idx] = (x[~positive_idx] -
+                          np.log(1 + np.exp(x[~positive_idx])))
+    return out
 
 
 class BernoulliRBM(BaseEstimator, TransformerMixin):
@@ -319,7 +369,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         v_[np.arange(v.shape[0]), i_] = 1 - v_[np.arange(v.shape[0]), i_]
         fe_ = self.free_energy(v_)
 
-        return v.shape[1] * np.log(logistic_sigmoid(fe_ - fe))
+        return v.shape[1] * log_logistic_sigmoid(fe_ - fe)
 
     def fit(self, X, y=None):
         """
