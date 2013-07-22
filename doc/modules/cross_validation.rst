@@ -96,10 +96,10 @@ Computing cross-validated metrics
 The simplest way to use perform cross-validation in to call the
 :func:`cross_val_score` helper function on the estimator and the dataset.
 
-The following example demonstrates how to estimate the accuracy of a
-linear kernel support vector machine on the iris dataset by splitting
-the data and fitting a model and computing the score 5 consecutive times
-(with different splits each time)::
+The following example demonstrates how to estimate the accuracy of a linear
+kernel support vector machine on the iris dataset by splitting the data, fitting
+a model and computing the score 5 consecutive times (with different splits each
+time)::
 
   >>> clf = svm.SVC(kernel='linear', C=1)
   >>> scores = cross_validation.cross_val_score(
@@ -132,7 +132,7 @@ When the ``cv`` argument is an integer, :func:`cross_val_score` uses the
 :class:`KFold` or :class:`StratifiedKFold` strategies by default (depending on
 the absence or presence of the target array).
 
-It is also possible to use othe cross validation strategies by passing a cross
+It is also possible to use other cross validation strategies by passing a cross
 validation iterator instead, for instance::
 
   >>> n_samples = iris.data.shape[0]
@@ -277,8 +277,11 @@ not waste much data as only one sample is removed from the learning set::
 Leave-P-Out - LPO
 -----------------
 
-:class:`LeavePOut` is very similar to *Leave-One-Out*, as it creates all the
-possible training/test sets by removing :math:`P` samples from the complete set.
+:class:`LeavePOut` is very similar to :class:`LeaveOneOut` as it creates all
+the possible training/test sets by removing :math:`p` samples from the complete
+set. For :math:`n` samples, this produces :math:`{n \choose p}` train-test
+pairs. Unlike :class:`LeaveOneOut` and :class:`KFold`, the test sets will
+overlap for :math:`p > 1`.
 
 Example of Leave-2-Out::
 
@@ -366,7 +369,7 @@ Random permutations cross-validation a.k.a. Shuffle & Split
 
 The :class:`ShuffleSplit` iterator will generate a user defined number of
 independent train / test dataset splits. Samples are first shuffled and
-then splitted into a pair of train and test sets.
+then split into a pair of train and test sets.
 
 It is possible to control the randomness for reproducibility of the
 results by explicitly seeding the ``random_state`` pseudo random number

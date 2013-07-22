@@ -33,7 +33,7 @@ X = np.c_[X, np.random.randn(n_samples, 200 * n_features)]
 ###############################################################################
 # Classification and ROC analysis
 
-# Run classifier with crossvalidation and plot ROC curves
+# Run classifier with cross-validation and plot ROC curves
 cv = StratifiedKFold(y, n_folds=6)
 classifier = svm.SVC(kernel='linear', probability=True)
 

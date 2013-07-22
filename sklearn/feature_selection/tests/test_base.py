@@ -1,5 +1,3 @@
-import string
-
 import numpy as np
 from scipy import sparse as sp
 
@@ -34,7 +32,7 @@ Xt = np.arange(0, 20, 2).reshape(2, 5)
 Xinv = X.copy()
 Xinv[:, 1::2] = 0
 y = [0, 1]
-feature_names = list(string.uppercase[:10])
+feature_names = list('ABCDEFGHIJ')
 feature_names_t = feature_names[::2]
 feature_names_inv = np.array(feature_names)
 feature_names_inv[1::2] = ''

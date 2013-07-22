@@ -7,6 +7,8 @@
 
 Changelog
 ---------
+   - Ability to pass one penalty (alpha value) per target in
+     :class:`linear_model.Ridge`, by @eickenberg and `Mathieu Blondel`_.
 
    - Fixed :mod:`sklearn.linear_model.stochastic_gradient.py` L2 regularization
      issue (minor practical significants).
@@ -102,6 +104,27 @@ Changelog
    - Refactored and vectorized implementation of :func:`metrics.roc_curve`
      and :func:`metrics.precision_recall_curve`. By `Joel Nothman`_.
 
+   - The new estimator :class:`sklearn.decomposition.TruncatedSVD`
+     performs dimensionality reduction using SVD on sparse matrices,
+     and can be used for latent semantic analysis (LSA).
+     By `Lars Buitinck`_.
+
+   - Added self-contained example of out-of-core learning on text data
+     :ref:`example_applications_plot_out_of_core_classification.py`.
+     By `Eustache Diemert`_.
+
+   - The default number of components for
+     :class:`sklearn.decomposition.RandomizedPCA` is now correctly documented
+     to be ``n_features``. This was the default behavior, so programs using it
+     will continue to work as they did.
+
+   - :class:`sklearn.cluster.KMeans` now fits several orders of magnitude
+     faster on sparse data (the speedup depends on the sparsity). By
+     `Lars Buitinck`_.
+
+   - Python 3 support fixes by `Justin Vincent`_, `Lars Buitinck`_ and
+     `Olivier Grisel`_. All tests now pass under Python 3.3.
+
 
 API changes summary
 -------------------
@@ -112,6 +135,22 @@ API changes summary
    - Fixed bug in :class:`KFold` causing imperfect class balance in some
      cases. By `Alexandre Gramfort`_ and Tadej Janež.
 
+   - :class:`sklearn.neighbors.BallTree` has been refactored, and a
+     :class:`sklearn.neighbors.KDTree` has been
+     added which shares the same interface.  The Ball Tree now works with
+     a wide variety of distance metrics.  Both classes have many new
+     methods, including single-tree and dual-tree queries, breadth-first
+     and depth-first searching, and more advanced queries such as
+     kernel density estimation and 2-point correlation functions.
+     By `Jake Vanderplas`_
+
+   - Support for scipy.spatial.cKDTree within neighbors queries has been
+     removed, and the functionality replaced with the new :class:`KDTree`
+     class.
+
+   - :class:`sklearn.neighbors.KernelDensity` has been added, which performs
+     efficient kernel density estimation with a variety of kernels.
+
    - :class:`sklearn.decomposition.KernelPCA` now always returns output with
      ``n_components`` components, unless the new parameter ``remove_zero_eig``
      is set to ``True``. This new behavior is consistent with the way
@@ -121,6 +160,15 @@ API changes summary
    - ``gcv_mode="auto"`` no longer tries to perform SVD on a densified
      sparse matrix in :class:`sklearn.linear_model.RidgeCV`.
 
+   - Sparse matrix support in :class:`sklearn.decomposition.RandomizedPCA`
+     is now deprecated in favor of the new ``TruncatedSVD``.
+
+   - :class:`cross_validation.KFold` and
+     :class:`cross_validation.StratifiedKFold` now enforce `n_folds >= 2`
+     otherwise a ``ValueError`` is raised. By `Olivier Grisel`_.
+
+   - :func:`datasets.load_files`'s ``charset`` and ``charset_errors``
+     parameters were renamed ``encoding`` and ``decode_errors``.
 
 .. _changes_0_13_1:
 
@@ -331,7 +379,7 @@ Changelog
 
 API changes summary
 -------------------
-   - Renamed all occurences of ``n_atoms`` to ``n_components`` for consistency.
+   - Renamed all occurrences of ``n_atoms`` to ``n_components`` for consistency.
      This applies to :class:`decomposition.DictionaryLearning`,
      :class:`decomposition.MiniBatchDictionaryLearning`,
      :func:`decomposition.dict_learning`, :func:`decomposition.dict_learning_online`.
@@ -431,7 +479,7 @@ API changes summary
 
    - :func:`datasets.make_circles` now has the same number of inner and outer points.
 
-   - In the Naive Bayes classifiers, the ``class_prior`` parmeter was moved
+   - In the Naive Bayes classifiers, the ``class_prior`` parameter was moved
      from ``fit`` to ``__init__``.
 
 People
@@ -469,7 +517,7 @@ List of contributors for release 0.13 by number of commits.
  *   8  `James Bergstra`_
  *   7  Tadej Janež
  *   6  Brian Cajes
- *   6  `Jake VanderPlas`_
+ *   6  `Jake Vanderplas`_
  *   6  Michael
  *   6  Noel Dawe
  *   6  Tiago Nunes
@@ -718,7 +766,7 @@ People
  *   7  Marko Burjek
  *   5  `Nicolas Pinto`_
  *   4  Alexandre Abraham
- *   4  Jake VanderPlas
+ *   4  `Jake Vanderplas`_
  *   3  `Brian Holt`_
  *   3  `Edouard Duchesnay`_
  *   3  Florian Hoenig
@@ -824,7 +872,7 @@ Other changes
      Ridge regression, esp. for the ``n_samples > n_features`` case, in
      :class:`linear_model.RidgeCV`, by Reuben Fletcher-Costin.
 
-   - Refactoring and simplication of the :ref:`text_feature_extraction`
+   - Refactoring and simplification of the :ref:`text_feature_extraction`
      API and fixed a bug that caused possible negative IDF,
      by `Olivier Grisel`_.
 
@@ -1040,7 +1088,7 @@ Changelog
    - :ref:`k_means` support for sparse matrices by `Mathieu Blondel`_.
 
    - Improved documentation for developers and for the :mod:`sklearn.utils`
-     module, by `Jake VanderPlas`_.
+     module, by `Jake Vanderplas`_.
 
    - Vectorized 20newsgroups dataset loader
      (:func:`sklearn.datasets.fetch_20newsgroups_vectorized`) by
@@ -1070,7 +1118,7 @@ Changelog
 API changes summary
 -------------------
 
-Here are the code migration instructions when updgrading from scikit-learn
+Here are the code migration instructions when upgrading from scikit-learn
 version 0.9:
 
   - Some estimators that may overwrite their inputs to save memory previously
@@ -1261,7 +1309,7 @@ Changelog
 
    - Added :class:`Orthogonal Matching Pursuit <linear_model.OrthogonalMatchingPursuit>` by `Vlad Niculae`_
 
-   - Added 2D-patch extractor utilites in the :ref:`feature_extraction` module by `Vlad Niculae`_
+   - Added 2D-patch extractor utilities in the :ref:`feature_extraction` module by `Vlad Niculae`_
 
    - Implementation of :class:`linear_model.LassoLarsCV`
      (cross-validated Lasso solver using the Lars algorithm) and
@@ -1284,7 +1332,7 @@ Changelog
 API changes summary
 -------------------
 
-Here are the code migration instructions when updgrading from scikit-learn
+Here are the code migration instructions when upgrading from scikit-learn
 version 0.8:
 
   - The ``scikits.learn`` package was renamed ``sklearn``. There is
@@ -1298,7 +1346,7 @@ version 0.8:
 
   - Estimators no longer accept model parameters as ``fit`` arguments:
     instead all parameters must be only be passed as constructor
-    arguments or using the now public ``set_params`` method inhereted
+    arguments or using the now public ``set_params`` method inherited
     from :class:`base.BaseEstimator`.
 
     Some estimators can still accept keyword arguments on the ``fit``
@@ -1353,7 +1401,7 @@ version 0.8:
     and by default returns the pairwise distance. For the component wise distance,
     set the parameter ``sum_over_features`` to ``False``.
 
-Backward compatibilty package aliases and other deprecated classes and
+Backward compatibility package aliases and other deprecated classes and
 functions will be removed in version 0.11.
 
 
@@ -1410,7 +1458,7 @@ scikit-learn 0.8 was released on May 2011, one month after the first
 <https://github.com/scikit-learn/scikit-learn/wiki/Upcoming-events>`_ and is
 marked by the inclusion of important modules: :ref:`hierarchical_clustering`,
 :ref:`pls`, :ref:`NMF`, initial support for Python 3 and by important
-enhacements and bug fixes.
+enhancements and bug fixes.
 
 
 Changelog
@@ -1447,7 +1495,7 @@ Some other modules benefited from significant improvements or cleanups.
 
   - bug and style fixing in :ref:`k_means` algorithm by Jan Schlüter.
 
-  - Add attribute coverged to Gaussian Mixture Models by Vincent Schut.
+  - Add attribute converged to Gaussian Mixture Models by Vincent Schut.
 
   - Implement `transform`, `predict_log_proba` in :class:`lda.LDA` by `Mathieu Blondel`_.
 
@@ -1569,7 +1617,7 @@ Changelog
 People
 ------
 
-People that made this release possible preceeded by number of commits:
+People that made this release possible preceded by number of commits:
 
     - 85  `Fabian Pedregosa`_
     - 67  `Mathieu Blondel`_
@@ -1659,7 +1707,7 @@ Changelog
 People
 ------
 
-People that made this release possible preceeded by number of commits:
+People that made this release possible preceded by number of commits:
 
    * 207  `Olivier Grisel`_
 
@@ -1759,7 +1807,7 @@ Examples
       :ref:`example_mlcomp_sparse_document_classification.py`,
       :ref:`example_document_classification_20newsgroups.py`
 
-    - Many more examaples. `See here
+    - Many more examples. `See here
       <http://scikit-learn.org/stable/auto_examples/index.html>`_
       the full list of examples.
 
@@ -1767,7 +1815,7 @@ Examples
 External dependencies
 ---------------------
 
-    - Joblib is now a dependencie of this package, although it is
+    - Joblib is now a dependency of this package, although it is
       shipped with (sklearn.externals.joblib).
 
 Removed modules
@@ -1786,7 +1834,7 @@ Misc
 Authors
 -------
 
-The following is a list of authors for this release, preceeded by
+The following is a list of authors for this release, preceded by
 number of commits:
 
      * 262  Fabian Pedregosa
@@ -1939,3 +1987,7 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Joel Nothman: http://joelnothman.com
 
 .. _Norbert Crombach: https://github.com/norbert
+
+.. _Eustache Diemert: https://github.com/oddskool
+
+.. _Justin Vincent: https://github.com/justinvf

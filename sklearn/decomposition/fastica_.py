@@ -13,6 +13,8 @@ import numpy as np
 from scipy import linalg
 
 from ..base import BaseEstimator, TransformerMixin
+from ..externals import six
+from ..externals.six import moves
 from ..utils import array2d, as_float_array, check_random_state
 
 __all__ = ['fastica', 'FastICA']
@@ -45,11 +47,10 @@ def _sym_decorrelation(W):
     s, u = linalg.eigh(K)
     # u (resp. s) contains the eigenvectors (resp. square roots of
     # the eigenvalues) of W * W.T
-    W = np.dot(np.dot(np.dot(u, np.diag(1.0 / np.sqrt(s))), u.T), W)
-    return W
+    return np.dot(np.dot(u * (1. / np.sqrt(s)), u.T), W)
 
 
-def _ica_def(X, tol, g, gprime, fun_args, max_iter, w_init):
+def _ica_def(X, tol, g, fun_args, max_iter, w_init):
     """Deflationary FastICA using fun approx to neg-entropy function
 
     Used internally by FastICA.
@@ -63,24 +64,9 @@ def _ica_def(X, tol, g, gprime, fun_args, max_iter, w_init):
         w = w_init[j, :].copy()
         w /= np.sqrt((w ** 2).sum())
 
-        n_iterations = 0
-        # we set lim to tol+1 to be sure to enter at least once in next while
-        lim = tol + 1
-        while ((lim > tol) & (n_iterations < (max_iter - 1))):
+        for _ in moves.xrange(max_iter):
             wtx = np.dot(w.T, X)
-            nonlin = g(wtx, fun_args)
-            if isinstance(nonlin, tuple):
-                gwtx, g_wtx = nonlin
-            else:
-                if not callable(gprime):
-                    raise ValueError('The function supplied does not return a '
-                                     'tuple. Therefore fun_prime has to be a '
-                                     'function, not %s' % str(type(gprime)))
-                warnings.warn("Passing g and gprime separately is deprecated "
-                              "and will be removed in 0.14.",
-                              DeprecationWarning, stacklevel=2)
-                gwtx = nonlin
-                g_wtx = gprime(wtx, fun_args)
+            gwtx, g_wtx = g(wtx, fun_args)
 
             w1 = (X * gwtx).mean(axis=1) - g_wtx.mean() * w
 
@@ -90,14 +76,15 @@ def _ica_def(X, tol, g, gprime, fun_args, max_iter, w_init):
 
             lim = np.abs(np.abs((w1 * w).sum()) - 1)
             w = w1
-            n_iterations = n_iterations + 1
+            if lim < tol:
+                break
 
         W[j, :] = w
 
     return W
 
 
-def _ica_par(X, tol, g, gprime, fun_args, max_iter, w_init):
+def _ica_par(X, tol, g, fun_args, max_iter, w_init):
     """Parallel FastICA.
 
     Used internally by FastICA --main loop
@@ -107,25 +94,9 @@ def _ica_par(X, tol, g, gprime, fun_args, max_iter, w_init):
 
     W = _sym_decorrelation(w_init)
 
-    # we set lim to tol+1 to be sure to enter at least once in next while
-    lim = tol + 1
-    it = 0
-    while ((lim > tol) and (it < (max_iter - 1))):
+    for _ in moves.xrange(max_iter):
         wtx = np.dot(W, X)
-
-        nonlin = g(wtx, fun_args)
-        if isinstance(nonlin, tuple):
-            gwtx, g_wtx = nonlin
-        else:
-            if not callable(gprime):
-                raise ValueError('The function supplied does not return a '
-                                 'tuple. Therefore fun_prime has to be a '
-                                 'function, not %s' % str(type(gprime)))
-            warnings.warn("Passing g and gprime separately is deprecated "
-                          "and will be removed in 0.14.",
-                          DeprecationWarning, stacklevel=2)
-            gwtx = nonlin
-            g_wtx = gprime(wtx, fun_args)
+        gwtx, g_wtx = g(wtx, fun_args)
 
         W1 = (np.dot(gwtx, X.T) / float(p)
               - np.dot(np.diag(g_wtx.mean(axis=1)), W))
@@ -134,14 +105,35 @@ def _ica_par(X, tol, g, gprime, fun_args, max_iter, w_init):
 
         lim = max(abs(abs(np.diag(np.dot(W1, W.T))) - 1))
         W = W1
-        it += 1
+        if lim < tol:
+            break
 
     return W
 
 
+# Some standard nonlinear functions.
+# XXX: these should be optimized, as they can be a bottleneck.
+def _logcosh(x, fun_args):
+    alpha = fun_args.get('alpha', 1.0)  # comment it out?
+    gx = np.tanh(alpha * x)
+    g_x = alpha * (1 - gx ** 2)
+    return gx, g_x
+
+
+def _exp(x, fun_args):
+    exp = np.exp(-(x ** 2) / 2)
+    gx = x * exp
+    g_x = (1 - x ** 2) * exp
+    return gx, g_x
+
+
+def _cube(x, fun_args):
+    return x ** 3, 3 * x ** 2
+
+
 def fastica(X, n_components=None, algorithm="parallel", whiten=True,
-            fun="logcosh", fun_prime='', fun_args={}, max_iter=200,
-            tol=1e-04, w_init=None, random_state=None):
+            fun="logcosh", fun_args={}, max_iter=200, tol=1e-04, w_init=None,
+            random_state=None):
     """Perform Fast Independent Component Analysis.
 
     Parameters
@@ -170,11 +162,6 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
         def my_g(x):
             return x ** 3, 3 * x ** 2
-
-        Supplying the derivative through the `fun_prime` attribute is
-        still supported, but deprecated.
-    fun_prime : empty string ('') or function, optional, deprecated.
-        See fun.
     fun_args: dictionary, optional
         Arguments to send to the functional form.
         If empty and if fun='logcosh', fun_args will take value
@@ -235,45 +222,23 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     X = array2d(X).T
 
     alpha = fun_args.get('alpha', 1.0)
-    if (alpha < 1) or (alpha > 2):
+    if not 1 <= alpha <= 2:
         raise ValueError("alpha must be in [1,2]")
 
-    gprime = None
-    if isinstance(fun, str):
-        # Some standard nonlinear functions
-        # XXX: these should be optimized, as they can be a bottleneck.
-        if fun == 'logcosh':
-            def g(x, fun_args):
-                alpha = fun_args.get('alpha', 1.0)  # comment it out?
-                gx = np.tanh(alpha * x)
-                g_x = alpha * (1 - gx ** 2)
-                return gx, g_x
-
-        elif fun == 'exp':
-            def g(x, fun_args):
-                exp = np.exp(-(x ** 2) / 2)
-                gx = x * exp
-                g_x = (1 - x ** 2) * exp
-                return gx, g_x
-
-        elif fun == 'cube':
-            def g(x, fun_args):
-                return x ** 3, 3 * x ** 2
-
-        else:
-            raise ValueError('fun argument should be one of logcosh, exp or'
-                             ' cube')
+    if fun == 'logcosh':
+        g = _logcosh
+    elif fun == 'exp':
+        g = _exp
+    elif fun == 'cube':
+        g = _cube
     elif callable(fun):
         def g(x, fun_args):
             return fun(x, **fun_args)
-
-        if callable(fun_prime):
-            def gprime(x, fun_args):
-                return fun_prime(x, **fun_args)
-
     else:
-        raise ValueError('fun argument should be either a string '
-                         '(one of logcosh, exp or cube) or a function')
+        exc = ValueError if isinstance(fun, six.string_types) else TypeError
+        raise exc("Unknown function %r;"
+                  " should be one of 'logcosh', 'exp', 'cube' or callable"
+                  % fun)
 
     n, p = X.shape
 
@@ -316,7 +281,6 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     kwargs = {'tol': tol,
               'g': g,
-              'gprime': gprime,
               'fun_args': fun_args,
               'max_iter': max_iter,
               'w_init': w_init}
@@ -360,11 +324,6 @@ class FastICA(BaseEstimator, TransformerMixin):
 
         def my_g(x):
             return x ** 3, 3 * x ** 2
-
-        Supplying the derivative through the `fun_prime` attribute is
-        still supported, but deprecated.
-    fun_prime : empty string ('') or function, optional, deprecated.
-        See fun.
     fun_args: dictionary, optional
         Arguments to send to the functional form.
         If empty and if fun='logcosh', fun_args will take value
@@ -396,14 +355,13 @@ class FastICA(BaseEstimator, TransformerMixin):
     """
 
     def __init__(self, n_components=None, algorithm='parallel', whiten=True,
-                 fun='logcosh', fun_prime='', fun_args=None, max_iter=200,
-                 tol=1e-4, w_init=None, random_state=None):
+                 fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
+                 w_init=None, random_state=None):
         super(FastICA, self).__init__()
         self.n_components = n_components
         self.algorithm = algorithm
         self.whiten = whiten
         self.fun = fun
-        self.fun_prime = fun_prime
         self.fun_args = fun_args
         self.max_iter = max_iter
         self.tol = tol
@@ -414,7 +372,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         fun_args = {} if self.fun_args is None else self.fun_args
         whitening_, unmixing_, sources_ = fastica(
             X, self.n_components, self.algorithm, self.whiten, self.fun,
-            self.fun_prime, fun_args, self.max_iter, self.tol, self.w_init,
+            fun_args, self.max_iter, self.tol, self.w_init,
             random_state=self.random_state)
         if self.whiten:
             self.components_ = np.dot(unmixing_, whitening_)

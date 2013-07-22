@@ -21,12 +21,12 @@ def test_fetch():
 
     data2 = fetch(shuffle=True, random_state=37)
 
-    X1, X2 = data1.data, data2.data
+    X1, X2 = data1['data'], data2['data']
     assert_equal((581012, 54), X1.shape)
     assert_equal(X1.shape, X2.shape)
 
     assert_equal(X1.sum(), X2.sum())
 
-    y1, y2 = data1.target, data2.target
+    y1, y2 = data1['target'], data2['target']
     assert_equal((X1.shape[0],), y1.shape)
     assert_equal((X1.shape[0],), y2.shape)

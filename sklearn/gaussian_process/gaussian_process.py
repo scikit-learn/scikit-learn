@@ -109,7 +109,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         An array with shape (n_features, ) or (1, ).
         The parameters in the autocorrelation model.
         If thetaL and thetaU are also specified, theta0 is considered as
-        the starting point for the maximum likelihood rstimation of the
+        the starting point for the maximum likelihood estimation of the
         best set of parameters.
         Default assumes isotropic autocorrelation model with theta0 = 1e-1.
 
@@ -400,7 +400,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         batch_size : integer, optional
             An integer giving the maximum number of points that can be
-            evaluated simulatneously (depending on the available memory).
+            evaluated simultaneously (depending on the available memory).
             Default is None so that all given points are evaluated at the same
             time.
 

@@ -19,7 +19,7 @@ from .mst import MSTCluster
             " use sklearn.manifold.spectral_embedding instead")
 def spectral_embedding(*args, **kwargs):
     """Deprecated, use ``sklearn.manifold.spectral_embedding`` instead"""
-    from ..manifold.spectral_embedding import spectral_embedding
+    from ..manifold.spectral_embedding_ import spectral_embedding
     return spectral_embedding(*args, **kwargs)
 
 

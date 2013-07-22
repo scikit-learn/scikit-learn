@@ -219,7 +219,7 @@ def test_feature_union():
 
 def test_pipeline_transform():
     # Test whether pipeline works with a transformer at the end.
-    # Also test pipline.transform and pipeline.inverse_transform
+    # Also test pipeline.transform and pipeline.inverse_transform
     iris = load_iris()
     X = iris.data
     pca = PCA(n_components=2)

@@ -19,7 +19,7 @@ Learning a graph structure
 We use sparse inverse covariance estimation to find which quotes are
 correlated conditionally on the others. Specifically, sparse inverse
 covariance gives us a graph, that is a list of connection. For each
-symbol, the symbols that it is connected too are those useful to expain
+symbol, the symbols that it is connected too are those useful to explain
 its fluctuations.
 
 Clustering
@@ -83,6 +83,7 @@ from sklearn import cluster, covariance, manifold
 d1 = datetime.datetime(2003, 01, 01)
 d2 = datetime.datetime(2008, 01, 01)
 
+# kraft symbol has now changed from KFT to MDLZ in yahoo
 symbol_dict = {
     'TOT': 'Total',
     'XOM': 'Exxon',
@@ -111,7 +112,7 @@ symbol_dict = {
     'MMM': '3M',
     'MCD': 'Mc Donalds',
     'PEP': 'Pepsi',
-    'KFT': 'Kraft Foods',
+    'MDLZ': 'Kraft Foods',
     'K': 'Kellogg',
     'UN': 'Unilever',
     'MAR': 'Marriott',

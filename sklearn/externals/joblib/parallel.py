@@ -162,7 +162,7 @@ class Parallel(Logger):
         n_jobs: int
             The number of jobs to use for the computation. If -1 all CPUs
             are used. If 1 is given, no parallel computing code is used
-            at all, which is useful for debuging. For n_jobs below -1,
+            at all, which is useful for debugging. For n_jobs below -1,
             (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all
             CPUs but one are used.
         verbose: int, optional
@@ -186,11 +186,11 @@ class Parallel(Logger):
             * More readable code, in particular since it avoids
               constructing list of arguments.
 
-            * Easier debuging:
+            * Easier debugging:
                 - informative tracebacks even when the error happens on
                   the client side
                 - using 'n_jobs=1' enables to turn off parallel computing
-                  for debuging without changing the codepath
+                  for debugging without changing the codepath
                 - early capture of pickling errors
 
             * An optional progress meter.

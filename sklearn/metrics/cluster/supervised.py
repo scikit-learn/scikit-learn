@@ -303,13 +303,13 @@ def homogeneity_score(labels_true, labels_pred):
     Examples
     --------
 
-    Perfect labelings are homegenous::
+    Perfect labelings are homogeneous::
 
       >>> from sklearn.metrics.cluster import homogeneity_score
       >>> homogeneity_score([0, 0, 1, 1], [1, 1, 0, 0])
       1.0
 
-    Non-pefect labelings that further split classes into more clusters can be
+    Non-perfect labelings that further split classes into more clusters can be
     perfectly homogeneous::
 
       >>> print("%.6f" % homogeneity_score([0, 0, 1, 1], [0, 0, 1, 2]))
@@ -381,7 +381,7 @@ def completeness_score(labels_true, labels_pred):
       >>> completeness_score([0, 0, 1, 1], [1, 1, 0, 0])
       1.0
 
-    Non-pefect labelings that assign all classes members to the same clusters
+    Non-perfect labelings that assign all classes members to the same clusters
     are still complete::
 
       >>> print(completeness_score([0, 0, 1, 1], [0, 0, 0, 0]))
@@ -389,7 +389,7 @@ def completeness_score(labels_true, labels_pred):
       >>> print(completeness_score([0, 1, 2, 3], [0, 0, 1, 1]))
       1.0
 
-    If classes members are splitted across different clusters, the
+    If classes members are split across different clusters, the
     assignment cannot be complete::
 
       >>> print(completeness_score([0, 0, 1, 1], [0, 1, 0, 1]))
@@ -402,11 +402,11 @@ def completeness_score(labels_true, labels_pred):
 
 
 def v_measure_score(labels_true, labels_pred):
-    """V-Measure cluster labeling given a ground truth.
+    """V-measure cluster labeling given a ground truth.
 
     This score is identical to :func:`normalized_mutual_info_score`.
 
-    The V-Measure is the hormonic mean between homogeneity and completeness::
+    The V-measure is the harmonic mean between homogeneity and completeness::
 
         v = 2 * (homogeneity * completeness) / (homogeneity + completeness)
 
@@ -429,7 +429,7 @@ def v_measure_score(labels_true, labels_pred):
 
     Returns
     -------
-    completeness: float
+    v_measure: float
        score between 0.0 and 1.0. 1.0 stands for perfectly complete labeling
 
     References
@@ -467,7 +467,7 @@ def v_measure_score(labels_true, labels_pred):
 
     Labelings that have pure clusters with members coming from the same
     classes are homogeneous but un-necessary splits harms completeness
-    and thus penalize V-Measure as well::
+    and thus penalize V-measure as well::
 
       >>> print("%.6f" % v_measure_score([0, 0, 1, 1], [0, 0, 1, 2]))
       ...                                                  # doctest: +ELLIPSIS
@@ -476,7 +476,7 @@ def v_measure_score(labels_true, labels_pred):
       ...                                                  # doctest: +ELLIPSIS
       0.66...
 
-    If classes members are completly splitted across different clusters,
+    If classes members are completely split across different clusters,
     the assignment is totally incomplete, hence the V-Measure is null::
 
       >>> print("%.6f" % v_measure_score([0, 0, 0, 0], [0, 1, 2, 3]))
@@ -566,7 +566,7 @@ def mutual_info_score(labels_true, labels_pred, contingency=None):
 def adjusted_mutual_info_score(labels_true, labels_pred):
     """Adjusted Mutual Information between two clusterings
 
-    Adjusted Mutual Information (AMI) is an adjustement of the Mutual
+    Adjusted Mutual Information (AMI) is an adjustment of the Mutual
     Information (MI) score to account for chance. It accounts for the fact that
     the MI is generally higher for two clusterings with a larger number of
     clusters, regardless of whether there is actually more information shared.
@@ -616,7 +616,7 @@ def adjusted_mutual_info_score(labels_true, labels_pred):
       >>> adjusted_mutual_info_score([0, 0, 1, 1], [1, 1, 0, 0])
       1.0
 
-    If classes members are completly splitted across different clusters,
+    If classes members are completely split across different clusters,
     the assignment is totally in-complete, hence the AMI is null::
 
       >>> adjusted_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])
@@ -706,7 +706,7 @@ def normalized_mutual_info_score(labels_true, labels_pred):
       >>> normalized_mutual_info_score([0, 0, 1, 1], [1, 1, 0, 0])
       1.0
 
-    If classes members are completly splitted across different clusters,
+    If classes members are completely split across different clusters,
     the assignment is totally in-complete, hence the NMI is null::
 
       >>> normalized_mutual_info_score([0, 0, 0, 0], [0, 1, 2, 3])

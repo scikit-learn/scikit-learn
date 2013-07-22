@@ -210,7 +210,7 @@ def k_means(X, n_clusters, init='k-means++', precompute_distances=True,
         parallel.
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debuging. For n_jobs below -1,
+        used at all, which is useful for debugging. For n_jobs below -1,
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
@@ -305,7 +305,7 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
     X: array-like of floats, shape (n_samples, n_features)
         The observations to cluster.
 
-    k: int
+    n_clusters: int
         The number of clusters to form as well as the number of
         centroids to generate.
 
@@ -386,7 +386,7 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
             centers = _k_means._centers_dense(X, labels, n_clusters, distances)
 
         if verbose:
-            print('Iteration %i, inertia %s' % (i, inertia))
+            print('Iteration %2d, inertia %.3f' % (i, inertia))
 
         if best_inertia is None or inertia < best_inertia:
             best_labels = labels.copy()
@@ -395,7 +395,7 @@ def _kmeans_single(X, n_clusters, max_iter=300, init='k-means++',
 
         if np.sum((centers_old - centers) ** 2) < tol:
             if verbose:
-                print('Converged to similar centers at iteration', i)
+                print("Converged at iteration %d" % i)
             break
     return best_labels, best_inertia, best_centers
 
@@ -500,7 +500,7 @@ def _init_centroids(X, k, init, random_state=None, x_squared_norms=None,
 
     init_size : int, optional
         Number of samples to randomly sample for speeding up the
-        initialization (sometimes at the expense of accurracy): the
+        initialization (sometimes at the expense of accuracy): the
         only algorithm is initialized by running a batch KMeans on a
         random subset of the data. This needs to be larger than k.
 
@@ -597,7 +597,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
         parallel.
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debuging. For n_jobs below -1,
+        used at all, which is useful for debugging. For n_jobs below -1,
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
@@ -650,7 +650,7 @@ class KMeans(BaseEstimator, ClusterMixin, TransformerMixin):
 
         if hasattr(init, '__array__'):
             n_clusters = init.shape[0]
-            init = np.asanyarray(init, dtype=np.float64)
+            init = np.asarray(init, dtype=np.float64)
 
         self.n_clusters = n_clusters
         self.init = init
@@ -1016,7 +1016,7 @@ class MiniBatchKMeans(KMeans):
 
     init_size : int, optional, default: 3 * batch_size
         Number of samples to randomly sample for speeding up the
-        initialization (sometimes at the expense of accurracy): the
+        initialization (sometimes at the expense of accuracy): the
         only algorithm is initialized by running a batch KMeans on a
         random subset of the data. This needs to be larger than k.
 
@@ -1036,7 +1036,7 @@ class MiniBatchKMeans(KMeans):
 
     n_init : int, default=3
         Number of random initializations that are tried.
-        In constrast to KMeans, the algorithm is only run once, using the
+        In contrast to KMeans, the algorithm is only run once, using the
         best of the ``n_init`` initializations as measured by inertia.
 
     compute_labels : boolean

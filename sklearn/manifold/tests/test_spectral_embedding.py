@@ -11,8 +11,8 @@ from numpy.testing import assert_array_almost_equal
 from nose.tools import assert_raises
 from nose.plugins.skip import SkipTest
 
-from sklearn.manifold.spectral_embedding import SpectralEmbedding
-from sklearn.manifold.spectral_embedding import _graph_is_connected
+from sklearn.manifold.spectral_embedding_ import SpectralEmbedding
+from sklearn.manifold.spectral_embedding_ import _graph_is_connected
 from sklearn.metrics.pairwise import rbf_kernel
 from sklearn.metrics import normalized_mutual_info_score
 from sklearn.cluster import KMeans
@@ -69,16 +69,21 @@ def test_spectral_embedding_two_components(seed=36):
     se_precomp = SpectralEmbedding(n_components=1, affinity="precomputed",
                                    random_state=np.random.RandomState(seed))
     embedded_coordinate = se_precomp.fit_transform(affinity)
+    # Some numpy versions are touchy with types
+    embedded_coordinate = \
+        se_precomp.fit_transform(affinity.astype(np.float32))
     # thresholding on the first components using 0.
     label_ = np.array(embedded_coordinate.ravel() < 0, dtype="float")
     assert_equal(normalized_mutual_info_score(true_label, label_), 1.0)
 
     # test that we can still import spectral embedding
     from sklearn.cluster import spectral_embedding as se_deprecated
+    warnings.simplefilter("always", DeprecationWarning)
     with warnings.catch_warnings(record=True) as warning_list:
         embedded_depr = se_deprecated(affinity, n_components=1,
                                       random_state=np.random.RandomState(seed))
     assert_equal(len(warning_list), 1)
+    warnings.filters.pop(0)
     assert_true(_check_with_col_sign_flipping(embedded_coordinate,
                                               embedded_depr, 0.05))
 
@@ -139,8 +144,8 @@ def test_spectral_embedding_amg_solver(seed=36):
     assert_true(_check_with_col_sign_flipping(embed_amg, embed_arpack, 0.05))
 
 
-def test_pipline_spectral_clustering(seed=36):
-    """Test using pipline to do spectral clustering"""
+def test_pipeline_spectral_clustering(seed=36):
+    """Test using pipeline to do spectral clustering"""
     random_state = np.random.RandomState(seed)
     se_rbf = SpectralEmbedding(n_components=n_clusters,
                                affinity="rbf",

@@ -28,10 +28,10 @@ class RBFSampler(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    gamma: float
+    gamma : float
         Parameter of RBF kernel: exp(-γ × x²)
 
-    n_components: int
+    n_components : int
         Number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
@@ -57,7 +57,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -83,13 +83,13 @@ class RBFSampler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
             and n_features is the number of features.
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
         """
         X = atleast2d_or_csr(X)
         projection = safe_sparse_dot(X, self.random_weights_)
@@ -141,7 +141,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -167,13 +167,13 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
             and n_features is the number of features.
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
         """
         X = as_float_array(X, copy=True)
         X = array2d(X, copy=False)
@@ -261,11 +261,11 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
 
         Returns
         -------
-        X_new: {array, sparse matrix}, \
+        X_new : {array, sparse matrix}, \
                shape = (n_samples, n_features × (2×sample_steps + 1))
             Whether the return value is an array of sparse matrix depends on
             the type of the input X.

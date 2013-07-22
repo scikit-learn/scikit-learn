@@ -42,7 +42,7 @@ Some advantages of decision trees are:
 
     - Uses a white box model. If a given situation is observable in a model,
       the explanation for the condition is easily explained by boolean logic.
-      By constrast, in a black box model (e.g., in an artificial neural
+      By contrast, in a black box model (e.g., in an artificial neural
       network), results may be more difficult to interpret.
 
     - Possible to validate a model using statistical tests. That makes it
@@ -123,7 +123,7 @@ Once trained, we can export the tree in `Graphviz
 exporter. Below is an example export of a tree trained on the entire
 iris dataset::
 
-    >>> import StringIO
+    >>> from sklearn.externals.six import StringIO
     >>> with open("iris.dot", 'w') as f:
     ...     f = tree.export_graphviz(clf, out_file=f)
 
@@ -138,7 +138,8 @@ supported file type): ``dot -Tpdf iris.dot -o iris.pdf``.
 Alternatively, if we have Python module ``pydot`` installed, we can generate
 a PDF file (or any other supported file type) directly in Python::
 
-    >>> import StringIO, pydot # doctest: +SKIP
+    >>> from sklearn.externals.six import StringIO  # doctest: +SKIP
+    >>> import pydot # doctest: +SKIP
     >>> dot_data = StringIO.StringIO() # doctest: +SKIP
     >>> tree.export_graphviz(clf, out_file=dot_data) # doctest: +SKIP
     >>> graph = pydot.graph_from_dot_data(dot_data.getvalue()) # doctest: +SKIP

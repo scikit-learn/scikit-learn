@@ -73,6 +73,13 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
     True
     >>> v.transform({'foo': 4, 'unseen_feature': 3})
     array([[ 0.,  0.,  4.]])
+
+    See also
+    --------
+    DictVectorizer : performs vectorization in a similar as this class,
+      but using a hash table instead of only a hash function.
+    sklearn.preprocessing.OneHotEncoder : handles nominal/categorical features
+      encoded as columns of integers.
     """
 
     def __init__(self, dtype=np.float64, separator="=", sparse=True):
@@ -94,8 +101,6 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         -------
         self
         """
-        X = _tosequence(X)
-
         # collect all the possible feature names
         feature_names = set()
         for x in X:
@@ -127,6 +132,11 @@ class DictVectorizer(BaseEstimator, TransformerMixin):
         -------
         Xa : {array, sparse matrix}
             Feature vectors; always 2-d.
+
+        Notes
+        -----
+        Because this method requires two passes over X, it materializes X in
+        memory.
         """
         X = _tosequence(X)
         self.fit(X)
