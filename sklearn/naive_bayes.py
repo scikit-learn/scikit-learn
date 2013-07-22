@@ -273,8 +273,9 @@ class BaseDiscreteNB(BaseNB):
             self._labelbin.multilabel_ = False  # Not supported by NB models
 
             # Initialize various cumulative counters
-            self.class_count_ = np.zeros(len(classes), dtype=np.int64)
-            self.feature_count_ = np.zeros((len(classes), n_features),
+            n_effective_classes = len(classes) if len(classes) > 1 else 2
+            self.class_count_ = np.zeros(n_effective_classes, dtype=np.int64)
+            self.feature_count_ = np.zeros((n_effective_classes, n_features),
                                            dtype=np.int64)
 
         Y = self._labelbin.transform(y)
@@ -315,7 +316,6 @@ class BaseDiscreteNB(BaseNB):
         labelbin = LabelBinarizer()
         Y = labelbin.fit_transform(y)
         self.classes_ = labelbin.classes_
-        n_classes = len(self.classes_)
         if Y.shape[1] == 1:
             Y = np.concatenate((1 - Y, Y), axis=1)
 
@@ -338,8 +338,9 @@ class BaseDiscreteNB(BaseNB):
 
         # Count raw events from data before updating the class log prior
         # and feature log probas
-        self.class_count_ = np.zeros(n_classes, dtype=np.int64)
-        self.feature_count_ = np.zeros((n_classes, n_features),
+        n_effective_classes = Y.shape[1]
+        self.class_count_ = np.zeros(n_effective_classes, dtype=np.int64)
+        self.feature_count_ = np.zeros((n_effective_classes, n_features),
                                        dtype=np.int64)
         self._count(X, Y)
         self._update_feature_log_prob()
@@ -398,6 +399,10 @@ class MultinomialNB(BaseDiscreteNB):
 
     `class_count_` : array, shape = [n_classes]
         Integer number of samples encountered for each class during fitting.
+
+    `feature_count_` : array, shape = [n_classes, n_features]
+        Integer number of samples encountered for each (class, feature)
+        during fitting.
 
     Examples
     --------
@@ -488,6 +493,10 @@ class BernoulliNB(BaseDiscreteNB):
 
     `class_count_` : array, shape = [n_classes]
         Integer number of samples encountered for each class during fitting.
+
+    `feature_count_` : array, shape = [n_classes, n_features]
+        Integer number of samples encountered for each (class, feature)
+        during fitting.
 
     Examples
     --------
