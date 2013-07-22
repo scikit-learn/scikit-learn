@@ -395,7 +395,7 @@ def test_classes_shape():
 def test_random_hasher():
     # test random forest hashing on circles dataset
     # make sure that it is linearly separable.
-    # even after projected to two pca dimensions
+    # even after projected to two SVD dimensions
     # Note: Not all random_states produce perfect results.
     hasher = RandomTreesEmbedding(n_estimators=30, random_state=0)
     X, y = datasets.make_circles(factor=0.5)
@@ -409,8 +409,8 @@ def test_random_hasher():
     # one leaf active per data point per forest
     assert_equal(X_transformed.shape[0], X.shape[0])
     assert_array_equal(X_transformed.sum(axis=1), hasher.n_estimators)
-    pca = RandomizedPCA(n_components=2)
-    X_reduced = pca.fit_transform(X_transformed)
+    svd = TruncatedSVD(n_components=2)
+    X_reduced = svd.fit_transform(X_transformed)
     linear_clf = LinearSVC()
     linear_clf.fit(X_reduced, y)
     assert_equal(linear_clf.score(X_reduced, y), 1.)
