@@ -270,7 +270,7 @@ New Estimator Classes
 
    - :class:`manifold.SpectralEmbedding` and function
      :func:`manifold.spectral_embedding`, implementing the "laplacian
-     eigenmaps" transformation for nonlinear dimensionality reduction by Wei
+     eigenmaps" transformation for non-linear dimensionality reduction by Wei
      Li. See :ref:`spectral_embedding` in the user guide.
 
    - :class:`isotonic.IsotonicRegression` by `Fabian Pedregosa`_, `Alexandre Gramfort`_
