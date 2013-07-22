@@ -147,7 +147,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         is performed.
     algorithm : {'parallel', 'deflation'}, optional
         Apply a parallel or deflational FASTICA algorithm.
-    whiten: boolean, optional
+    whiten : boolean, optional
         If True perform an initial whitening of the data.
         If False, the data is assumed to have already been
         preprocessed: it should be centered, normed and white.
@@ -163,21 +163,21 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
         def my_g(x):
             return x ** 3, 3 * x ** 2
-    fun_args: dictionary, optional
+    fun_args : dictionary, optional
         Arguments to send to the functional form.
         If empty and if fun='logcosh', fun_args will take value
         {'alpha' : 1.0}
-    max_iter: int, optional
+    max_iter : int, optional
         Maximum number of iterations to perform
     tol: float, optional
         A positive scalar giving the tolerance at which the
         un-mixing matrix is considered to have converged
-    w_init: (n_components, n_components) array, optional
+    w_init : (n_components, n_components) array, optional
         Initial un-mixing array of dimension (n.comp,n.comp).
         If None (default) then an array of normal r.v.'s is used
-    source_only: boolean, optional
+    source_only : boolean, optional
         If True, only the sources matrix is returned.
-    random_state: int or RandomState
+    random_state : int or RandomState
         Pseudo number generator state used for random sampling.
 
     Returns
@@ -324,7 +324,7 @@ class FastICA(BaseEstimator, TransformerMixin):
 
         def my_g(x):
             return x ** 3, 3 * x ** 2
-    fun_args: dictionary, optional
+    fun_args : dictionary, optional
         Arguments to send to the functional form.
         If empty and if fun='logcosh', fun_args will take value
         {'alpha' : 1.0}
@@ -334,9 +334,9 @@ class FastICA(BaseEstimator, TransformerMixin):
         Tolerance on update at each iteration
     w_init : None of an (n_components, n_components) ndarray
         The mixing matrix to be used to initialize the algorithm.
-    random_state: int or RandomState
+    random_state : int or RandomState
         Pseudo number generator state used for random sampling.
-    fit_inverse_transform: boolean, optional, default=False
+    fit_inverse_transform : boolean, optional, default=False
         Whether to enable the inverse_transform method.
 
     Attributes
@@ -345,7 +345,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         The unmixing matrix
     `mixing_` : array, shape = [n_features, n_components]
         Mixing matrix. Only available when fit_inverse_transform is true.
-    `sources_`: 2D array, [n_samples, n_components]
+    `sources_` : 2D array, [n_samples, n_components]
         The estimated latent sources of the data.
 
     Notes
@@ -440,7 +440,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         X = array2d(X)
         if copy:
             X = X.copy()
-        if self.whiten is True:
+        if self.whiten:
             X -= X.mean(axis=0)[np.newaxis]
 
         return np.dot(X, self.components_.T)
