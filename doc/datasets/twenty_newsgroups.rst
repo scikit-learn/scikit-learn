@@ -86,9 +86,9 @@ for statistical analysis. This can be achieved with the utilities of the
 example that extract `TF-IDF`_ vectors of unigram tokens::
 
 
-  >>> from sklearn.feature_extraction.text import Vectorizer
+  >>> from sklearn.feature_extraction.text import TfidfVectorizer
   >>> documents = [open(f).read() for f in newsgroups_train.filenames]
-  >>> vectorizer = Vectorizer()
+  >>> vectorizer = TfidfVectorizer()
   >>> vectors = vectorizer.fit_transform(documents)
   >>> vectors.shape
   (1073, 21108)
