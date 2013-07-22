@@ -14,6 +14,7 @@ from scipy.sparse import issparse
 from sklearn.base import BaseEstimator, BiclusterMixin
 from sklearn.externals import six
 from sklearn.utils.arpack import svds
+from sklearn.utils.arpack import eigsh
 from sklearn.cluster import KMeans
 from sklearn.cluster import MiniBatchKMeans
 
@@ -138,6 +139,16 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
 
         elif self.svd_method == 'arpack':
             u, _, vt = svds(array, k=n_components, ncv=self.n_svd_vecs)
+            if np.any(np.isnan(vt)):
+                # some eigenvalues of A * A.T are negative, causing
+                # sqrt() to be np.nan. This causes some vectors in vt
+                # to be np.nan.
+                _, v = eigsh(safe_sparse_dot(array.T, array),
+                             ncv=self.n_svd_vecs)
+                vt = v.T
+            if np.any(np.isnan(u)):
+                _, u = eigsh(safe_sparse_dot(array, array.T),
+                             ncv=self.n_svd_vecs)
 
         assert_all_finite(u)
         assert_all_finite(vt)

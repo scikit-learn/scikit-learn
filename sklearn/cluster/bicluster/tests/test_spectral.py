@@ -60,7 +60,7 @@ def test_spectral_biclustering():
                   'n_init': [10],
                   'n_jobs': [1]}
     random_state = 0
-    for noise in (0.5,):
+    for noise in (0, 0.5):
         S, rows, cols = make_checkerboard((30, 30), 3, noise=noise,
                                           random_state=random_state)
         for mat in (S, csr_matrix(S)):
