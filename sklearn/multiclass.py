@@ -100,6 +100,7 @@ def predict_ovr(estimators, label_binarizer, X):
     thresh = 0 if hasattr(e, "decision_function") and is_classifier(e) else .5
     return label_binarizer.inverse_transform(Y.T, threshold=thresh)
 
+
 def predict_proba_ovr(estimators, X, is_multilabel):
     """Estimate probabilities using the one-vs-the-rest strategy.
 
@@ -115,6 +116,7 @@ def predict_proba_ovr(estimators, X, is_multilabel):
         Y /= np.sum(Y, axis=1)[:, np.newaxis]
     return Y
 
+
 class _ConstantPredictor(BaseEstimator):
     def fit(self, X, y):
         self.y_ = y
@@ -125,6 +127,7 @@ class _ConstantPredictor(BaseEstimator):
 
     def decision_function(self, X):
         return np.repeat(self.y_, X.shape[0])
+
 
 class OneVsRestClassifier(BaseEstimator, ClassifierMixin, MetaEstimatorMixin):
     """One-vs-the-rest (OvR) multiclass/multilabel strategy
