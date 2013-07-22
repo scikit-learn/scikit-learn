@@ -12,6 +12,10 @@ Bernoulli Restricted Boltzmann machine model (:class:`BernoulliRBM
 <sklearn.neural_network.BernoulliRBM>`) can perform effective non-linear
 feature extraction.
 
+In order to learn good latent representations from a small dataset, we
+artificially generate more labeled data by perturbing the training data with
+linear shifts of 1 pixel in each direction.
+
 This example shows how to build a classification pipeline with a BernoulliRBM
 feature extractor and a :class:`LogisticRegression
 <sklearn.linear_model.LogisticRegression>` classifier.  The hyperparameters
@@ -27,7 +31,7 @@ classification accuracy.
 print __doc__
 
 
-# Code source: Yann N. Dauphin
+# Authors: Yann N. Dauphin, Vlad Niculae, Gabriel Synnaeve
 # License: BSD
 
 import numpy as np
@@ -95,18 +99,18 @@ classifier = Pipeline(steps=[('rbm', rbm), ('logistic', logistic)])
 # Hyper-parameters. These were set by cross-validation,
 # using a GridSearchCV. Here we are not performing cross-validation to
 # save time.
-rbm.learning_rate = 0.2
+rbm.learning_rate = 0.06
 rbm.n_iter = 20
 # More components tend to give better prediction performance, but larger
 # fitting time
 rbm.n_components = 100
-logistic.C = 1e4
+logistic.C = 6000.0
 
 # Training RBM-Logistic Pipeline
 classifier.fit(X_train, Y_train)
 
 # Training Logistic regression
-logistic_classifier = linear_model.LogisticRegression(C=1e4)
+logistic_classifier = linear_model.LogisticRegression(C=100.0)
 logistic_classifier.fit(X_train, Y_train)
 
 ###############################################################################
@@ -126,7 +130,7 @@ print "Classification report for classifier %s:\n%s\n" % (
 # Plotting
 
 pl.figure(figsize=(4.2, 4))
-for i, comp in enumerate(rbm.components_[:100]):
+for i, comp in enumerate(rbm.components_):
     pl.subplot(10, 10, i + 1)
     pl.imshow(comp.reshape((8, 8)), cmap=pl.cm.gray_r,
               interpolation='nearest')
