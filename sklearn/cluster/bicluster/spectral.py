@@ -123,9 +123,9 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
         self._check_parameters()
         self._fit(X)
 
-    def _svd(self, array, n_components):
+    def _svd(self, array, n_components, n_discard):
         """Returns first `n_components` left and right singular
-        vectors u and v.
+        vectors u and v, discarding the first `n_discard`.
 
         """
         if self.svd_method == 'randomized':
@@ -141,6 +141,8 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
 
         assert_all_finite(u)
         assert_all_finite(vt)
+        u = u[:, n_discard:]
+        vt = vt[n_discard:]
         return u, vt.T
 
     def _k_means(self, data, n_clusters):
@@ -258,9 +260,9 @@ class SpectralCoclustering(BaseSpectral):
     def _fit(self, X):
         normalized_data, row_diag, col_diag = _scale_normalize(X)
         n_sv = 1 + int(np.ceil(np.log2(self.n_clusters)))
-        u, v = self._svd(normalized_data, n_sv)
-        z = np.vstack((row_diag[:, np.newaxis] * u[:, 1:],
-                       col_diag[:, np.newaxis] * v[:, 1:]))
+        u, v = self._svd(normalized_data, n_sv, n_discard=1)
+        z = np.vstack((row_diag[:, np.newaxis] * u,
+                       col_diag[:, np.newaxis] * v))
 
         _, labels = self._k_means(z, self.n_clusters)
 
@@ -396,12 +398,10 @@ class SpectralBiclustering(BaseSpectral):
             n_sv += 1
         elif self.method == 'log':
             normalized_data = _log_normalize(X)
-        u, v = self._svd(normalized_data, n_sv)
+        n_discard = 0 if self.method == 'log' else 1
+        u, v = self._svd(normalized_data, n_sv, n_discard)
         ut = u.T
         vt = v.T
-        if self.method != 'log':
-            ut = ut[1:]
-            vt = vt[1:]
 
         try:
             n_row_clusters, n_col_clusters = self.n_clusters
