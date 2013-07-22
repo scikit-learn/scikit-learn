@@ -178,6 +178,12 @@ def test_errors():
     model = SpectralBiclustering(svd_method='unknown')
     assert_raises(ValueError, model.fit, data)
 
+    model = SpectralBiclustering(n_components=0)
+    assert_raises(ValueError, model.fit, data)
+
+    model = SpectralBiclustering(n_best=0)
+    assert_raises(ValueError, model.fit, data)
+
     model = SpectralBiclustering(n_components=3, n_best=4)
     assert_raises(ValueError, model.fit, data)
 
