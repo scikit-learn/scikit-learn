@@ -1,20 +1,20 @@
-"""Meanshift clustering.
+"""Meanshift clustering."""
 
-Authors: Conrad Lee conradlee@gmail.com
-         Alexandre Gramfort alexandre.gramfort@inria.fr
-         Gael Varoquaux gael.varoquaux@normalesup.org
-"""
+# Authors: Conrad Lee <conradlee@gmail.com>
+#          Alexandre Gramfort <alexandre.gramfort@inria.fr>
+#          Gael Varoquaux <gael.varoquaux@normalesup.org>
 
 from collections import defaultdict
 import numpy as np
 
+from ..externals import six
 from ..utils import extmath, check_random_state
 from ..base import BaseEstimator, ClusterMixin
 from ..neighbors import NearestNeighbors
 
 
 def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
-    """Estimate the bandwith to use with MeanShift algorithm
+    """Estimate the bandwidth to use with MeanShift algorithm
 
     Parameters
     ----------
@@ -23,7 +23,7 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
 
     quantile : float, default 0.3
         should be between [0, 1]
-        0.5 means that the median is all pairwise distances is used.
+        0.5 means that the median of all pairwise distances is used.
 
     n_samples : int
         The number of samples to use. If None, all samples are used.
@@ -49,7 +49,7 @@ def estimate_bandwidth(X, quantile=0.3, n_samples=None, random_state=0):
 
 
 def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
-               cluster_all=True, max_iterations=300):
+               min_bin_freq=1, cluster_all=True, max_iterations=300):
     """Perform MeanShift Clustering of data using a flat kernel
 
     Seed using a binning technique for scalability.
@@ -92,14 +92,14 @@ def mean_shift(X, bandwidth=None, seeds=None, bin_seeding=False,
 
     Notes
     -----
-    See examples/plot_meanshift.py for an example.
+    See examples/cluster/plot_meanshift.py for an example.
 
     """
     if bandwidth is None:
         bandwidth = estimate_bandwidth(X)
     if seeds is None:
         if bin_seeding:
-            seeds = get_bin_seeds(X, bandwidth)
+            seeds = get_bin_seeds(X, bandwidth, min_bin_freq)
         else:
             seeds = X
     n_samples, n_features = X.shape
@@ -175,7 +175,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
         not sure how to set this, set it to the value of the bandwidth used
         in clustering.mean_shift.
 
-    min_bin_freq : integer, default 1
+    min_bin_freq : integer, optional
         Only bins with at least min_bin_freq will be selected as seeds.
         Raising this value decreases the number of seeds found, which
         makes mean_shift computationally cheaper.
@@ -183,7 +183,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
     Returns
     -------
     bin_seeds : array-like, shape=[n_samples, n_features]
-        Points used as initial kernel posistions in clustering.mean_shift.
+        Points used as initial kernel positions in clustering.mean_shift.
     """
 
     # Bin points
@@ -193,7 +193,7 @@ def get_bin_seeds(X, bin_size, min_bin_freq=1):
         bin_sizes[tuple(binned_point)] += 1
 
     # Select only those bins as seeds which have enough members
-    bin_seeds = np.array([point for point, freq in bin_sizes.iteritems() if
+    bin_seeds = np.array([point for point, freq in six.iteritems(bin_sizes) if
                           freq >= min_bin_freq], dtype=np.float32)
     bin_seeds = bin_seeds * bin_size
     return bin_seeds
@@ -205,7 +205,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
     Parameters
     ----------
     bandwidth : float, optional
-        Bandwith used in the RBF kernel
+        Bandwidth used in the RBF kernel
         If not set, the bandwidth is estimated.
         See clustering.estimate_bandwidth.
 
@@ -214,6 +214,10 @@ class MeanShift(BaseEstimator, ClusterMixin):
         the seeds are calculated by clustering.get_bin_seeds
         with bandwidth as the grid size and default values for
         other parameters.
+
+    min_bin_freq : int, optional
+       To speed up the algorithm, accept only those bins with at least
+       min_bin_freq points as seeds. If not defined, set to 1.
 
     cluster_all : boolean, default True
         If true, then all points are clustered, even those orphans that are
@@ -239,7 +243,7 @@ class MeanShift(BaseEstimator, ClusterMixin):
     and T the number of points. In higher dimensions the complexity will
     tend towards O(T*n^2).
 
-    Scalability can be boosted by using fewer seeds, for examply by using
+    Scalability can be boosted by using fewer seeds, for example by using
     a higher value of min_bin_freq in the get_bin_seeds function.
 
     Note that the estimate_bandwidth function is much less scalable than
@@ -254,24 +258,24 @@ class MeanShift(BaseEstimator, ClusterMixin):
 
     """
     def __init__(self, bandwidth=None, seeds=None, bin_seeding=False,
-                 cluster_all=True):
+                 min_bin_freq=1, cluster_all=True):
         self.bandwidth = bandwidth
         self.seeds = seeds
         self.bin_seeding = bin_seeding
         self.cluster_all = cluster_all
-        self.cluster_centers_ = None
-        self.labels_ = None
+        self.min_bin_freq = min_bin_freq
 
     def fit(self, X):
-        """ Compute MeanShift
+        """Perform clustering.
 
         Parameters
         -----------
         X : array-like, shape=[n_samples, n_features]
-            Input points.
+            Samples to cluster.
         """
         self.cluster_centers_, self.labels_ = \
             mean_shift(X, bandwidth=self.bandwidth, seeds=self.seeds,
+                       min_bin_freq=self.min_bin_freq,
                        bin_seeding=self.bin_seeding,
                        cluster_all=self.cluster_all)
         return self

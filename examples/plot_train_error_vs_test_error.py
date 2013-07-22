@@ -11,10 +11,10 @@ The example with an Elastic-Net regression model and the performance is
 measured using the explained variance a.k.a. R^2.
 
 """
-print __doc__
+print(__doc__)
 
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 from sklearn import linear_model
@@ -35,7 +35,7 @@ y_train, y_test = y[:n_samples_train], y[n_samples_train:]
 ###############################################################################
 # Compute train and test errors
 alphas = np.logspace(-5, 1, 60)
-enet = linear_model.ElasticNet(rho=0.7)
+enet = linear_model.ElasticNet(l1_ratio=0.7)
 train_errors = list()
 test_errors = list()
 for alpha in alphas:
@@ -46,7 +46,7 @@ for alpha in alphas:
 
 i_alpha_optim = np.argmax(test_errors)
 alpha_optim = alphas[i_alpha_optim]
-print "Optimal regularization parameter : %s" % alpha_optim
+print("Optimal regularization parameter : %s" % alpha_optim)
 
 # Estimate the coef_ on full data with optimal regularization parameter
 enet.set_params(alpha=alpha_optim)

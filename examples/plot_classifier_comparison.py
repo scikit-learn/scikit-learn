@@ -19,13 +19,13 @@ The plots show training points in solid colors and testing points
 semi-transparent. The lower right shows the classification accuracy on the test
 set.
 """
-print __doc__
+print(__doc__)
 
 
 # Code source: Gael Varoqueux
 #              Andreas Mueller
 # Modified for Documentation merge by Jaques Grobler
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 import pylab as pl
@@ -36,7 +36,7 @@ from sklearn.datasets import make_moons, make_circles, make_classification
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
-from sklearn.ensemble import RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, AdaBoostClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.lda import LDA
 from sklearn.qda import QDA
@@ -44,13 +44,14 @@ from sklearn.qda import QDA
 h = .02  # step size in the mesh
 
 names = ["Nearest Neighbors", "Linear SVM", "RBF SVM", "Decision Tree",
-         "Random Forest", "Naive Bayes", "LDA", "QDA"]
+         "Random Forest", "AdaBoost", "Naive Bayes", "LDA", "QDA"]
 classifiers = [
     KNeighborsClassifier(3),
     SVC(kernel="linear", C=0.025),
     SVC(gamma=2, C=1),
     DecisionTreeClassifier(max_depth=5),
     RandomForestClassifier(max_depth=5, n_estimators=10, max_features=1),
+    AdaBoostClassifier(),
     GaussianNB(),
     LDA(),
     QDA()]
@@ -66,7 +67,7 @@ datasets = [make_moons(noise=0.3, random_state=0),
             linearly_separable
             ]
 
-figure = pl.figure(figsize=(24, 8))
+figure = pl.figure(figsize=(27, 9))
 i = 1
 # iterate over datasets
 for ds in datasets:
@@ -100,7 +101,7 @@ for ds in datasets:
         clf.fit(X_train, y_train)
         score = clf.score(X_test, y_test)
 
-        # Plot the decision boundary. For that, we will asign a color to each
+        # Plot the decision boundary. For that, we will assign a color to each
         # point in the mesh [x_min, m_max]x[y_min, y_max].
         if hasattr(clf, "decision_function"):
             Z = clf.decision_function(np.c_[xx.ravel(), yy.ravel()])

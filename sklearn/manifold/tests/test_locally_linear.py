@@ -71,7 +71,7 @@ def test_lle_simple_grid():
 def test_lle_manifold():
     rng = np.random.RandomState(0)
     # similar test on a slightly more complex manifold
-    X = np.array(list(product(range(20), repeat=2)))
+    X = np.array(list(product(np.arange(20), repeat=2)))
     X = np.c_[X, X[:, 0] ** 2 / 20]
     X = X + 1e-10 * rng.uniform(size=X.shape)
     n_components = 2

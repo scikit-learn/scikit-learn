@@ -6,7 +6,7 @@ approximate kernel feature maps base on Fourier transforms.
 
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 import warnings
 
@@ -16,7 +16,8 @@ from scipy.linalg import svd
 
 from .base import BaseEstimator
 from .base import TransformerMixin
-from .utils import array2d, atleast2d_or_csr, check_random_state
+from .utils import (array2d, atleast2d_or_csr, check_random_state,
+                    as_float_array)
 from .utils.extmath import safe_sparse_dot
 from .metrics.pairwise import pairwise_kernels
 
@@ -27,11 +28,11 @@ class RBFSampler(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    gamma: float
-        parameter of RBF kernel: exp(-gamma * x**2)
+    gamma : float
+        Parameter of RBF kernel: exp(-γ × x²)
 
-    n_components: int
-        number of Monte Carlo samples per original feature.
+    n_components : int
+        Number of Monte Carlo samples per original feature.
         Equals the dimensionality of the computed feature space.
 
     random_state : {int, RandomState}, optional
@@ -44,7 +45,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
     Benjamin Recht.
     """
 
-    def __init__(self, gamma=1., n_components=100., random_state=None):
+    def __init__(self, gamma=1., n_components=100, random_state=None):
         self.gamma = gamma
         self.n_components = n_components
         self.random_state = random_state
@@ -56,7 +57,7 @@ class RBFSampler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -67,16 +68,14 @@ class RBFSampler(BaseEstimator, TransformerMixin):
         """
 
         X = atleast2d_or_csr(X)
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
 
-        self.random_weights_ = (np.sqrt(self.gamma)
-                                * self.random_state.normal(size=(n_features,
-                                                           self.n_components)))
+        self.random_weights_ = (np.sqrt(self.gamma) * random_state.normal(
+            size=(n_features, self.n_components)))
 
-        self.random_offset_ = self.random_state.uniform(0,
-                                                        2 * np.pi,
-                                                        size=self.n_components)
+        self.random_offset_ = random_state.uniform(0, 2 * np.pi,
+                                                   size=self.n_components)
         return self
 
     def transform(self, X, y=None):
@@ -84,18 +83,20 @@ class RBFSampler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
             and n_features is the number of features.
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
         """
         X = atleast2d_or_csr(X)
         projection = safe_sparse_dot(X, self.random_weights_)
-        return (np.sqrt(2.) / np.sqrt(self.n_components)
-                * np.cos(projection + self.random_offset_))
+        projection += self.random_offset_
+        np.cos(projection, projection)
+        projection *= np.sqrt(2.) / np.sqrt(self.n_components)
+        return projection
 
 
 class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
@@ -140,7 +141,7 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training data, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -151,16 +152,14 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
         """
 
         X = array2d(X)
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         n_features = X.shape[1]
-        uniform = self.random_state.uniform(size=(n_features,
-                                                  self.n_components))
+        uniform = random_state.uniform(size=(n_features, self.n_components))
         # transform by inverse CDF of sech
         self.random_weights_ = (1. / np.pi
                                 * np.log(np.tan(np.pi / 2. * uniform)))
-        self.random_offset_ = self.random_state.uniform(0,
-                                                        2 * np.pi,
-                                                        size=self.n_components)
+        self.random_offset_ = random_state.uniform(0, 2 * np.pi,
+                                                   size=self.n_components)
         return self
 
     def transform(self, X, y=None):
@@ -168,23 +167,26 @@ class SkewedChi2Sampler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
             and n_features is the number of features.
 
         Returns
         -------
-        X_new: array-like, shape (n_samples, n_components)
+        X_new : array-like, shape (n_samples, n_components)
         """
-        X = array2d(X)
+        X = as_float_array(X, copy=True)
+        X = array2d(X, copy=False)
         if (X < 0).any():
             raise ValueError("X may not contain entries smaller than zero.")
 
-        projection = safe_sparse_dot(np.log(X + self.skewedness),
-                                     self.random_weights_)
-
-        return (np.sqrt(2.) / np.sqrt(self.n_components)
-                * np.cos(projection + self.random_offset_))
+        X += self.skewedness
+        np.log(X, X)
+        projection = safe_sparse_dot(X, self.random_weights_)
+        projection += self.random_offset_
+        np.cos(projection, projection)
+        projection *= np.sqrt(2.) / np.sqrt(self.n_components)
+        return projection
 
 
 class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
@@ -242,14 +244,16 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         if self.sample_interval is None:
             # See reference, figure 2 c)
             if self.sample_steps == 1:
-                self.sample_interval = 0.8
+                self.sample_interval_ = 0.8
             elif self.sample_steps == 2:
-                self.sample_interval = 0.5
+                self.sample_interval_ = 0.5
             elif self.sample_steps == 3:
-                self.sample_interval = 0.4
+                self.sample_interval_ = 0.4
             else:
                 raise ValueError("If sample_steps is not in [1, 2, 3],"
                                  " you need to provide sample_interval")
+        else:
+            self.sample_interval_ = self.interval
         return self
 
     def transform(self, X, y=None):
@@ -257,11 +261,11 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: {array-like, sparse matrix}, shape = (n_samples, n_features)
+        X : {array-like, sparse matrix}, shape = (n_samples, n_features)
 
         Returns
         -------
-        X_new: {array, sparse matrix}, \
+        X_new : {array, sparse matrix}, \
                shape = (n_samples, n_features × (2×sample_steps + 1))
             Whether the return value is an array of sparse matrix depends on
             the type of the input X.
@@ -285,16 +289,16 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         X_nz = X[non_zero]
 
         X_step = np.zeros_like(X)
-        X_step[non_zero] = np.sqrt(X_nz * self.sample_interval)
+        X_step[non_zero] = np.sqrt(X_nz * self.sample_interval_)
 
         X_new = [X_step]
 
-        log_step_nz = self.sample_interval * np.log(X_nz)
-        step_nz = 2 * X_nz * self.sample_interval
+        log_step_nz = self.sample_interval_ * np.log(X_nz)
+        step_nz = 2 * X_nz * self.sample_interval_
 
-        for j in xrange(1, self.sample_steps):
+        for j in range(1, self.sample_steps):
             factor_nz = np.sqrt(step_nz /
-                                np.cosh(np.pi * j * self.sample_interval))
+                                np.cosh(np.pi * j * self.sample_interval_))
 
             X_step = np.zeros_like(X)
             X_step[non_zero] = factor_nz * np.cos(j * log_step_nz)
@@ -310,17 +314,17 @@ class AdditiveChi2Sampler(BaseEstimator, TransformerMixin):
         indices = X.indices.copy()
         indptr = X.indptr.copy()
 
-        data_step = np.sqrt(X.data * self.sample_interval)
+        data_step = np.sqrt(X.data * self.sample_interval_)
         X_step = sp.csr_matrix((data_step, indices, indptr),
                                shape=X.shape, dtype=X.dtype, copy=False)
         X_new = [X_step]
 
-        log_step_nz = self.sample_interval * np.log(X.data)
-        step_nz = 2 * X.data * self.sample_interval
+        log_step_nz = self.sample_interval_ * np.log(X.data)
+        step_nz = 2 * X.data * self.sample_interval_
 
-        for j in xrange(1, self.sample_steps):
+        for j in range(1, self.sample_steps):
             factor_nz = np.sqrt(step_nz /
-                                np.cosh(np.pi * j * self.sample_interval))
+                                np.cosh(np.pi * j * self.sample_interval_))
 
             data_step = factor_nz * np.cos(j * log_step_nz)
             X_step = sp.csr_matrix((data_step, indices, indptr),
@@ -344,14 +348,30 @@ class Nystroem(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     kernel : string or callable, default="rbf"
-        Kernel map to be approximated.
+        Kernel map to be approximated. A callable should accept two arguments
+        and the keyword arguments passed to this object as kernel_params, and
+        should return a floating point number.
 
     n_components : int
         Number of features to construct.
         How many data points will be used to construct the mapping.
 
-    gamma : float, default=1/n_features.
-        Parameter for the RBF kernel.
+    gamma : float, default=None
+        Gamma parameter for the RBF, polynomial, exponential chi² and
+        sigmoid kernels. Interpretation of the default value is left to
+        the kernel; see the documentation for sklearn.metrics.pairwise.
+        Ignored by other kernels.
+
+    degree : float, default=3
+        Degree of the polynomial kernel. Ignored by other kernels.
+
+    coef0 : float, default=1
+        Zero coefficient for polynomial and sigmoid kernels.
+        Ignored by other kernels.
+
+    kernel_params : mapping of string to any, optional
+        Additional parameters (keyword arguments) for kernel function passed
+        as callable object.
 
     random_state : {int, RandomState}, optional
         If int, random_state is the seed used by the random number generator;
@@ -388,14 +408,15 @@ class Nystroem(BaseEstimator, TransformerMixin):
     RBFSampler : An approximation to the RBF kernel using random Fourier
                  features.
 
-    sklearn.metric.pairwise.kernel_metrics : List of build-in kernels.
+    sklearn.metric.pairwise.kernel_metrics : List of built-in kernels.
     """
     def __init__(self, kernel="rbf", gamma=None, coef0=1, degree=3,
-                 n_components=100, random_state=None):
+                 kernel_params=None, n_components=100, random_state=None):
         self.kernel = kernel
         self.gamma = gamma
         self.coef0 = coef0
         self.degree = degree
+        self.kernel_params = kernel_params
         self.n_components = n_components
         self.random_state = random_state
 
@@ -405,8 +426,8 @@ class Nystroem(BaseEstimator, TransformerMixin):
         Samples a subset of training points, computes kernel
         on these and computes normalization matrix.
 
-        Parmeters
-        ---------
+        Parameters
+        ----------
         X : array-like, shape=(n_samples, n_feature)
             Training data.
         """
@@ -429,14 +450,12 @@ class Nystroem(BaseEstimator, TransformerMixin):
         basis_inds = inds[:n_components]
         basis = X[basis_inds]
 
-        if callable(self.kernel):
+        if False:
             basis_kernel = self.kernel(basis, basis)
         else:
-            params = {"gamma": self.gamma,
-                      "degree": self.degree,
-                      "coef0": self.coef0}
             basis_kernel = pairwise_kernels(basis, metric=self.kernel,
-                                            filter_params=True, **params)
+                                            filter_params=True,
+                                            **self._get_kernel_params())
 
         # sqrt of kernel matrix on basis vectors
         U, S, V = svd(basis_kernel)
@@ -462,10 +481,22 @@ class Nystroem(BaseEstimator, TransformerMixin):
             Transformed data.
         """
 
-        if callable(self.kernel):
+        if False:
             embedded = self.kernel(X, self.components_)
         else:
             embedded = pairwise_kernels(X, self.components_,
                                         metric=self.kernel,
-                                        gamma=self.gamma)
+                                        filter_params=True,
+                                        **self._get_kernel_params())
         return np.dot(embedded, self.normalization_.T)
+
+    def _get_kernel_params(self):
+        params = self.kernel_params
+        if params is None:
+            params = {}
+        if not callable(self.kernel):
+            params['gamma'] = self.gamma
+            params['degree'] = self.degree
+            params['coef0'] = self.coef0
+
+        return params

@@ -33,15 +33,19 @@ Notes:
 # Authors: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #          Jake Vanderplas <vanderplas@astro.washington.edu>
 #
-# License: Simplified BSD
+# License: BSD 3 clause
 
-from cStringIO import StringIO
-
+from io import BytesIO
 from os import makedirs
 from os.path import join
 from os.path import exists
 
-import urllib2
+try:
+    # Python 2
+    from urllib2 import urlopen
+except ImportError:
+    # Python 3
+    from urllib.request import urlopen
 
 import numpy as np
 
@@ -81,8 +85,8 @@ def _load_coverage(F, header_length=6,
 def _load_csv(F):
     """Load csv file.
 
-    Paramters
-    ---------
+    Parameters
+    ----------
     F : string or file object
         file object or name of file
 
@@ -218,26 +222,26 @@ def fetch_species_distributions(data_home=None,
     dtype = np.int16
 
     if not exists(join(data_home, DATA_ARCHIVE_NAME)):
-        print 'Downloading species data from %s to %s' % (SAMPLES_URL,
-                                                          data_home)
-        X = np.load(StringIO(urllib2.urlopen(SAMPLES_URL).read()))
+        print('Downloading species data from %s to %s' % (SAMPLES_URL,
+                                                          data_home))
+        X = np.load(BytesIO(urlopen(SAMPLES_URL).read()))
 
         for f in X.files:
-            fhandle = StringIO(X[f])
+            fhandle = BytesIO(X[f])
             if 'train' in f:
                 train = _load_csv(fhandle)
             if 'test' in f:
                 test = _load_csv(fhandle)
 
-        print 'Downloading coverage data from %s to %s' % (COVERAGES_URL,
-                                                           data_home)
+        print('Downloading coverage data from %s to %s' % (COVERAGES_URL,
+                                                           data_home))
 
-        X = np.load(StringIO(urllib2.urlopen(COVERAGES_URL).read()))
+        X = np.load(BytesIO(urlopen(COVERAGES_URL).read()))
 
         coverages = []
         for f in X.files:
-            fhandle = StringIO(X[f])
-            print ' - converting', f
+            fhandle = BytesIO(X[f])
+            print(' - converting', f)
             coverages.append(_load_coverage(fhandle))
         coverages = np.asarray(coverages,
                                dtype=dtype)

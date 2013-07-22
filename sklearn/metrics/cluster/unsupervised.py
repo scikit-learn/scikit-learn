@@ -2,7 +2,7 @@
 
 # Authors: Robert Layton <robertlayton@gmail.com>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 
@@ -15,13 +15,13 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
     """Compute the mean Silhouette Coefficient of all samples.
 
     The Silhouette Coefficient is calculated using the mean intra-cluster
-    distance (a) and the mean nearest-cluster distance (b) for each sample.
-    The Silhouette Coefficient for a sample is ``(b - a) / max(a, b)``.
-    To clarrify, b is the distance between a sample and the nearest cluster
-    that b is not a part of.
+    distance (``a``) and the mean nearest-cluster distance (``b``) for each
+    sample.  The Silhouette Coefficient for a sample is ``(b - a) / max(a,
+    b)``.  To clarify, ``b`` is the distance between a sample and the nearest
+    cluster that the sample is not a part of.
 
-    This function returns the mean Silhoeutte Coefficient over all samples.
-    To obtain the values for each sample, use silhouette_samples
+    This function returns the mean Silhouette Coefficient over all samples.
+    To obtain the values for each sample, use :func:`silhouette_samples`.
 
     The best value is 1 and the worst value is -1. Values near 0 indicate
     overlapping clusters. Negative values generally indicate that a sample has
@@ -39,12 +39,13 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
     metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
-        allowed by metrics.pairwise.pairwise_distances. If X is the distance
-        array itself, use "precomputed" as the metric.
+        allowed by :func:`metrics.pairwise.pairwise_distances
+        <sklearn.metrics.pairwise.pairwise_distances>`. If X is the distance
+        array itself, use ``metric="precomputed"``.
 
     sample_size : int or None
         The size of the sample to use when computing the Silhouette
-        Coefficient. If sample_size is None, no sampling is used.
+        Coefficient. If ``sample_size is None``, no sampling is used.
 
     random_state : integer or numpy.RandomState, optional
         The generator used to initialize the centers. If an integer is
@@ -64,11 +65,13 @@ def silhouette_score(X, labels, metric='euclidean', sample_size=None,
     References
     ----------
 
-    Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
-        Interpretation and Validation of Cluster Analysis". Computational
-        and Applied Mathematics 20: 53-65. doi:10.1016/0377-0427(87)90125-7.
+    .. [1] `Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
+       Interpretation and Validation of Cluster Analysis". Computational
+       and Applied Mathematics 20: 53-65.
+       <http://www.sciencedirect.com/science/article/pii/0377042787901257>`_
 
-    http://en.wikipedia.org/wiki/Silhouette_(clustering)
+    .. [2] `Wikipedia entry on the Silhouette Coefficient
+           <http://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
     if sample_size is not None:
@@ -91,10 +94,11 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     different clusters are not very similar to each other.
 
     The Silhouette Coefficient is calculated using the mean intra-cluster
-    distance (a) and the mean nearest-cluster distance (b) for each sample.
-    The Silhouette Coefficient for a sample is ``(b - a) / max(a, b)``.
+    distance (``a``) and the mean nearest-cluster distance (``b``) for each
+    sample.  The Silhouette Coefficient for a sample is ``(b - a) / max(a,
+    b)``.
 
-    This function returns the Silhoeutte Coefficient for each sample.
+    This function returns the Silhouette Coefficient for each sample.
 
     The best value is 1 and the worst value is -1. Values near 0 indicate
     overlapping clusters.
@@ -111,12 +115,12 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     metric : string, or callable
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
-        allowed by metrics.pairwise.pairwise_distances. If X is the distance
-        array itself, use "precomputed" as the metric.
+        allowed by :func:`sklearn.metrics.pairwise.pairwise_distances`. If X is
+        the distance array itself, use "precomputed" as the metric.
 
     `**kwds` : optional keyword parameters
         Any further parameters are passed directly to the distance function.
-        If using a scipy.spatial.distance metric, the parameters are still
+        If using a ``scipy.spatial.distance`` metric, the parameters are still
         metric dependent. See the scipy docs for usage examples.
 
     Returns
@@ -127,11 +131,13 @@ def silhouette_samples(X, labels, metric='euclidean', **kwds):
     References
     ----------
 
-    Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
-        Interpretation and Validation of Cluster Analysis". Computational
-        and Applied Mathematics 20: 53-65. doi:10.1016/0377-0427(87)90125-7.
+    .. [1] `Peter J. Rousseeuw (1987). "Silhouettes: a Graphical Aid to the
+       Interpretation and Validation of Cluster Analysis". Computational
+       and Applied Mathematics 20: 53-65.
+       <http://www.sciencedirect.com/science/article/pii/0377042787901257>`_
 
-    http://en.wikipedia.org/wiki/Silhouette_(clustering)
+    .. [2] `Wikipedia entry on the Silhouette Coefficient
+       <http://en.wikipedia.org/wiki/Silhouette_(clustering)>`_
 
     """
     distances = pairwise_distances(X, metric=metric, **kwds)

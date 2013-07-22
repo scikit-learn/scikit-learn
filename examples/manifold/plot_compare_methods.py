@@ -9,7 +9,7 @@ with various manifold learning methods.
 For a discussion and comparison of these algorithms, see the
 :ref:`manifold module page <manifold>`
 
-For a similiar example, where the methods are applied to a
+For a similar example, where the methods are applied to a
 sphere dataset, see :ref:`example_manifold_plot_manifold_sphere.py`
 
 Note that the purpose of the MDS is to find a low-dimensional
@@ -21,7 +21,7 @@ representation of the data in the low-dimensional space.
 
 # Author: Jake Vanderplas -- <vanderplas@astro.washington.edu>
 
-print __doc__
+print(__doc__)
 
 from time import time
 
@@ -30,7 +30,6 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.ticker import NullFormatter
 
 from sklearn import manifold, datasets
-from sklearn.metrics import euclidean_distances
 
 # Next line to silence pyflakes. This import is needed.
 Axes3D
@@ -62,7 +61,7 @@ for i, method in enumerate(methods):
                                         eigen_solver='auto',
                                         method=method).fit_transform(X)
     t1 = time()
-    print "%s: %.2g sec" % (methods[i], t1 - t0)
+    print("%s: %.2g sec" % (methods[i], t1 - t0))
 
     ax = fig.add_subplot(242 + i)
     pl.scatter(Y[:, 0], Y[:, 1], c=color, cmap=pl.cm.Spectral)
@@ -74,7 +73,7 @@ for i, method in enumerate(methods):
 t0 = time()
 Y = manifold.Isomap(n_neighbors, n_components).fit_transform(X)
 t1 = time()
-print "Isomap: %.2g sec" % (t1 - t0)
+print("Isomap: %.2g sec" % (t1 - t0))
 ax = fig.add_subplot(246)
 pl.scatter(Y[:, 0], Y[:, 1], c=color, cmap=pl.cm.Spectral)
 pl.title("Isomap (%.2g sec)" % (t1 - t0))
@@ -85,9 +84,9 @@ pl.axis('tight')
 
 t0 = time()
 mds = manifold.MDS(n_components, max_iter=100, n_init=1)
-Y = mds.fit_transform(euclidean_distances(X))
+Y = mds.fit_transform(X)
 t1 = time()
-print "MDS: %.2g sec" % (t1 - t0)
+print("MDS: %.2g sec" % (t1 - t0))
 ax = fig.add_subplot(247)
 pl.scatter(Y[:, 0], Y[:, 1], c=color, cmap=pl.cm.Spectral)
 pl.title("MDS (%.2g sec)" % (t1 - t0))
@@ -101,7 +100,7 @@ se = manifold.SpectralEmbedding(n_components=n_components,
                                 n_neighbors=n_neighbors)
 Y = se.fit_transform(X)
 t1 = time()
-print "SpectralEmbedding: %.2g sec" % (t1 - t0)
+print("SpectralEmbedding: %.2g sec" % (t1 - t0))
 ax = fig.add_subplot(248)
 pl.scatter(Y[:, 0], Y[:, 1], c=color, cmap=pl.cm.Spectral)
 pl.title("SpectralEmbedding (%.2g sec)" % (t1 - t0))

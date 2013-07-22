@@ -82,7 +82,7 @@ constructor. Then, you can generate samples from the HMM by calling `sample`.::
 
  * :ref:`example_plot_hmm_sampling.py`
 
-Training HMM parameters and infering the hidden states
+Training HMM parameters and inferring the hidden states
 ------------------------------------------------------
 
 You can train an HMM by calling the `fit` method. The input is "the list" of 
@@ -94,12 +94,13 @@ The inferred optimal hidden states can be obtained by calling `predict` method.
 The `predict` method can be specified with decoder algorithm.
 Currently the Viterbi algorithm (`viterbi`), and maximum a posteriori
 estimation (`map`) are supported.
-This time, the input is a single sequence of observed values.::
+This time, the input is a single sequence of observed values.  Note, the states
+in model2 will have a different order than those in the generating model.::
 
     >>> model2 = hmm.GaussianHMM(3, "full")
     >>> model2.fit([X]) # doctest: +ELLIPSIS, +NORMALIZE_WHITESPACE
     GaussianHMM(algorithm='viterbi',...
-    >>> Z2 = model.predict(X)
+    >>> Z2 = model2.predict(X)
 
 
 .. topic:: Examples:

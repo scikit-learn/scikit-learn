@@ -25,7 +25,7 @@ silhouette   silhouette coefficient
 =========== ========================================================
 
 """
-print __doc__
+print(__doc__)
 
 from time import time
 import numpy as np
@@ -60,16 +60,16 @@ print('% 9s' % 'init'
 def bench_k_means(estimator, name, data):
     t0 = time()
     estimator.fit(data)
-    print '% 9s   %.2fs    %i   %.3f   %.3f   %.3f   %.3f   %.3f    %.3f' % (
-        name, (time() - t0), estimator.inertia_,
-        metrics.homogeneity_score(labels, estimator.labels_),
-        metrics.completeness_score(labels, estimator.labels_),
-        metrics.v_measure_score(labels, estimator.labels_),
-        metrics.adjusted_rand_score(labels, estimator.labels_),
-        metrics.adjusted_mutual_info_score(labels,  estimator.labels_),
-        metrics.silhouette_score(data, estimator.labels_,
-                                 metric='euclidean',
-                                 sample_size=sample_size),)
+    print('% 9s   %.2fs    %i   %.3f   %.3f   %.3f   %.3f   %.3f    %.3f'
+          % (name, (time() - t0), estimator.inertia_,
+             metrics.homogeneity_score(labels, estimator.labels_),
+             metrics.completeness_score(labels, estimator.labels_),
+             metrics.v_measure_score(labels, estimator.labels_),
+             metrics.adjusted_rand_score(labels, estimator.labels_),
+             metrics.adjusted_mutual_info_score(labels,  estimator.labels_),
+             metrics.silhouette_score(data, estimator.labels_,
+                                      metric='euclidean',
+                                      sample_size=sample_size)))
 
 bench_k_means(KMeans(init='k-means++', n_clusters=n_digits, n_init=10),
               name="k-means++", data=data)
@@ -83,7 +83,7 @@ pca = PCA(n_components=n_digits).fit(data)
 bench_k_means(KMeans(init=pca.components_, n_clusters=n_digits, n_init=1),
               name="PCA-based",
               data=data)
-print 79 * '_'
+print(79 * '_')
 
 ###############################################################################
 # Visualize the results on PCA-reduced data
@@ -95,7 +95,7 @@ kmeans.fit(reduced_data)
 # Step size of the mesh. Decrease to increase the quality of the VQ.
 h = .02     # point in the mesh [x_min, m_max]x[y_min, y_max].
 
-# Plot the decision boundary. For that, we will asign a color to each
+# Plot the decision boundary. For that, we will assign a color to each
 x_min, x_max = reduced_data[:, 0].min() + 1, reduced_data[:, 0].max() - 1
 y_min, y_max = reduced_data[:, 1].min() + 1, reduced_data[:, 1].max() - 1
 xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))

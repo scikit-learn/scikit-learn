@@ -10,6 +10,7 @@ def configuration(parent_package='', top_path=None):
 
     config = Configuration('utils', parent_package, top_path)
     config.add_subpackage('sparsetools')
+    config.add_subpackage('mst')
 
     cblas_libs, blas_info = get_blas_info()
 
@@ -39,6 +40,11 @@ def configuration(parent_package='', top_path=None):
         'murmurhash',
         sources=['murmurhash.c', join('src', 'MurmurHash3.cpp')],
         include_dirs=['src'])
+
+    config.add_extension('lgamma',
+                         sources=['lgamma.c', join('src', 'gamma.c')],
+                         include_dirs=['src'],
+                         libraries=libraries)
 
     config.add_extension('graph_shortest_path',
                          sources=['graph_shortest_path.c'],

@@ -23,15 +23,16 @@ power iteration method:
     http://en.wikipedia.org/wiki/Power_iteration
 
 Here the computation is achieved thanks to Martinsson's Randomized SVD
-algoritm implemented in the scikit.
+algorithm implemented in the scikit.
 
 The graph data is fetched from the DBpedia dumps. DBpedia is an extraction
 of the latent structured data of the Wikipedia content.
 """
-print __doc__
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
-# License: Simplified BSD
+# License: BSD 3 clause
+
+from __future__ import print_function
 
 from bz2 import BZ2File
 import os
@@ -46,6 +47,8 @@ from scipy import sparse
 from sklearn.utils.extmath import randomized_svd
 from sklearn.externals.joblib import Memory
 
+
+print(__doc__)
 
 ###############################################################################
 # Where to download the data, if not already on disk
@@ -63,10 +66,10 @@ resources = [
 for url, filename in resources:
     if not os.path.exists(filename):
         import urllib
-        print "Downloading data from '%s', please wait..." % url
+        print("Downloading data from '%s', please wait..." % url)
         opener = urllib.urlopen(url)
         open(filename, 'wb').write(opener.read())
-        print
+        print()
 
 
 ###############################################################################
@@ -93,18 +96,18 @@ def short_name(nt_uri):
 def get_redirects(redirects_filename):
     """Parse the redirections and build a transitively closed map out of it"""
     redirects = {}
-    print "Parsing the NT redirect file"
+    print("Parsing the NT redirect file")
     for l, line in enumerate(BZ2File(redirects_filename)):
         split = line.split()
         if len(split) != 4:
-            print "ignoring malformed line: " + line
+            print("ignoring malformed line: " + line)
             continue
         redirects[short_name(split[0])] = short_name(split[2])
         if l % 1000000 == 0:
-            print "[%s] line: %08d" % (datetime.now().isoformat(), l)
+            print("[%s] line: %08d" % (datetime.now().isoformat(), l))
 
     # compute the transitive closure
-    print "Computing the transitive closure of the redirect relation"
+    print("Computing the transitive closure of the redirect relation")
     for l, source in enumerate(redirects.keys()):
         transitive_target = None
         target = redirects[source]
@@ -117,7 +120,7 @@ def get_redirects(redirects_filename):
             seen.add(target)
         redirects[source] = transitive_target
         if l % 1000000 == 0:
-            print "[%s] line: %08d" % (datetime.now().isoformat(), l)
+            print("[%s] line: %08d" % (datetime.now().isoformat(), l))
 
     return redirects
 
@@ -134,34 +137,34 @@ def get_adjacency_matrix(redirects_filename, page_links_filename, limit=None):
     from article names to python int (article indexes).
     """
 
-    print "Computing the redirect map"
+    print("Computing the redirect map")
     redirects = get_redirects(redirects_filename)
 
-    print "Computing the integer index map"
+    print("Computing the integer index map")
     index_map = dict()
     links = list()
     for l, line in enumerate(BZ2File(page_links_filename)):
         split = line.split()
         if len(split) != 4:
-            print "ignoring malformed line: " + line
+            print("ignoring malformed line: " + line)
             continue
         i = index(redirects, index_map, short_name(split[0]))
         j = index(redirects, index_map, short_name(split[2]))
         links.append((i, j))
         if l % 1000000 == 0:
-            print "[%s] line: %08d" % (datetime.now().isoformat(), l)
+            print("[%s] line: %08d" % (datetime.now().isoformat(), l))
 
         if limit is not None and l >= limit - 1:
             break
 
-    print "Computing the adjacency matrix"
+    print("Computing the adjacency matrix")
     X = sparse.lil_matrix((len(index_map), len(index_map)), dtype=np.float32)
     for i, j in links:
         X[i, j] = 1.0
     del links
-    print "Converting to CSR representation"
+    print("Converting to CSR representation")
     X = X.tocsr()
-    print "CSR conversion done"
+    print("CSR conversion done")
     return X, redirects, index_map
 
 
@@ -170,14 +173,14 @@ X, redirects, index_map = get_adjacency_matrix(
     redirects_filename, page_links_filename, limit=5000000)
 names = dict((i, name) for name, i in index_map.iteritems())
 
-print "Computing the principal singular vectors using randomized_svd"
+print("Computing the principal singular vectors using randomized_svd")
 t0 = time()
 U, s, V = randomized_svd(X, 5, n_iter=3)
-print "done in %0.3fs" % (time() - t0)
+print("done in %0.3fs" % (time() - t0))
 
 # print the names of the wikipedia related strongest compenents of the the
 # principal singular vector which should be similar to the highest eigenvector
-print "Top wikipedia pages according to principal singular vectors"
+print("Top wikipedia pages according to principal singular vectors")
 pprint([names[i] for i in np.abs(U.T[0]).argsort()[-10:]])
 pprint([names[i] for i in np.abs(V[0]).argsort()[-10:]])
 
@@ -197,14 +200,14 @@ def centrality_scores(X, alpha=0.85, max_iter=100, tol=1e-10):
     X = X.copy()
     incoming_counts = np.asarray(X.sum(axis=1)).ravel()
 
-    print "Normalizing the graph"
+    print("Normalizing the graph")
     for i in incoming_counts.nonzero()[0]:
         X.data[X.indptr[i]:X.indptr[i + 1]] *= 1.0 / incoming_counts[i]
     dangle = np.asarray(np.where(X.sum(axis=1) == 0, 1.0 / n, 0)).ravel()
 
     scores = np.ones(n, dtype=np.float32) / n  # initial guess
     for i in range(max_iter):
-        print "power iteration #%d" % i
+        print("power iteration #%d" % i)
         prev_scores = scores
         scores = (alpha * (scores * X + np.dot(dangle, prev_scores))
                   + (1 - alpha) * prev_scores.sum() / n)
@@ -213,14 +216,14 @@ def centrality_scores(X, alpha=0.85, max_iter=100, tol=1e-10):
         if scores_max == 0.0:
             scores_max = 1.0
         err = np.abs(scores - prev_scores).max() / scores_max
-        print "error: %0.6f" % err
+        print("error: %0.6f" % err)
         if err < n * tol:
             return scores
 
     return scores
 
-print "Computing principal eigenvector score using a power iteration method"
+print("Computing principal eigenvector score using a power iteration method")
 t0 = time()
 scores = centrality_scores(X, max_iter=100, tol=1e-10)
-print "done in %0.3fs" % (time() - t0)
+print("done in %0.3fs" % (time() - t0))
 pprint([names[i] for i in np.abs(scores).argsort()[-10:]])

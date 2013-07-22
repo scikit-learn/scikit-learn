@@ -35,10 +35,10 @@ the circular artifact separating the pixels in the corners, that have
 contributed to fewer projections than the central disk.
 """
 
-print __doc__
+print(__doc__)
 
 # Author: Emmanuelle Gouillart <emmanuelle.gouillart@nsup.org>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 import numpy as np
 from scipy import sparse

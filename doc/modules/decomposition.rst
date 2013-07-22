@@ -232,6 +232,86 @@ factorization, while larger values shrink many coefficients to zero.
      R. Jenatton, G. Obozinski, F. Bach, 2009
 
 
+.. _LSA:
+
+Truncated singular value decomposition and latent semantic analysis
+===================================================================
+
+:class:`TruncatedSVD` implements a variant of singular value decomposition
+(SVD) that only computes the :math:`k` largest singular values,
+where :math:`k` is a user-specified parameter.
+
+When truncated SVD is applied to term-document matrices
+(as returned by ``CountVectorizer`` or ``TfidfVectorizer``),
+this transformation is known as
+`latent semantic analysis <http://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
+(LSA), because it transforms such matrices
+to a "semantic" space of low dimensionality.
+In particular, LSA is known to combat the effects of synonymy and polysemy
+(both of which roughly mean there are multiple meanings per word),
+which cause term-document matrices to be overly sparse
+and exhibit poor similarity under measures such as cosine similarity.
+
+.. note::
+    LSA is also known as latent semantic indexing, LSI,
+    though strictly that refers to its use in persistent indexes
+    for information retrieval purposes.
+
+Mathematically, truncated SVD applied to training samples :math:`X`
+produces a low-rank approximation :math:`X`:
+
+.. math::
+    X \approx X_k = U_k \Sigma_k V_k^\top
+
+After this operation, :math:`U_k \Sigma_k^\top`
+is the transformed training set with :math:`k` features
+(called ``n_components`` in the API).
+
+To also transform a test set :math:`X`, we multiply it with :math:`V_k`:
+
+.. math::
+    X' = X V_k^\top
+
+.. note::
+    Most treatments of LSA in the natural language processing (NLP)
+    and information retrieval (IR) literature
+    swap the axis of the matrix :math:`X` so that it has shape
+    ``n_features`` × ``n_samples``.
+    We present LSA in a different way that matches the scikit-learn API better,
+    but the singular values found are the same.
+
+:class:`TruncatedSVD` is very similar to :class:`PCA`, but differs
+in that it works on sample matrices :math:`X` directly
+instead of their covariance matrices.
+When the columnwise (per-feature) means of :math:`X`
+are subtracted from the feature values,
+truncated SVD on the resulting matrix is equivalent to PCA.
+In practical terms, this means
+that the :class:`TruncatedSVD` transformer accepts ``scipy.sparse``
+matrices without the need to densify them,
+as densifying may fill up memory even for medium-sized document collections.
+
+While the :class:`TruncatedSVD` transformer
+works with any (sparse) feature matrix,
+using it on tf–idf matrices is recommended over raw frequency counts
+in an LSA/document processing setting.
+In particular, sublinear scaling and inverse document frequency
+should be turned on (``sublinear_tf=True, use_idf=True``)
+to bring the feature values closer to a Gaussian distribution,
+compensating for LSA's erroneous assumptions about textual data.
+
+.. topic:: Examples:
+
+   * :ref:`example_document_clustering.py`
+
+.. topic:: References:
+
+  * Christopher D. Manning, Prabhakar Raghavan and Hinrich Schütze (2008),
+    *Introduction to Information Retrieval*, Cambridge University Press,
+    chapter 18: `Matrix decompositions & latent semantic indexing
+    <http://nlp.stanford.edu/IR-book/pdf/18lsi.pdf>`_
+
+
 .. _DictionaryLearning:
 
 Dictionary Learning
@@ -365,6 +445,25 @@ iterating only once over a mini-batch. This can be used for online learning
 when the data is not readily available from the start, or for when the data
 does not fit into the memory.
 
+.. currentmodule:: sklearn.cluster
+
+.. image:: ../auto_examples/cluster/images/plot_dict_face_patches_1.png
+    :target: ../auto_examples/cluster/plot_dict_face_patches.html
+    :scale: 50%
+    :align: right
+
+.. topic:: **Clustering for dictionary learning**
+
+   Note that when using dictionary learning to extract a representation
+   (e.g. for sparse coding) clustering can be a good proxy to learn the
+   dictionary. For instance the :class:`MiniBatchKMeans` estimator is
+   computationally efficient and implements on-line learning
+   `partial_fit` method.
+
+    Example: :ref:`example_cluster_plot_dict_face_patches.py`
+
+.. currentmodule:: sklearn.decomposition
+
 .. _FA:
 
 Factor Analysis
@@ -411,13 +510,13 @@ structure of the error covariance :math:`\Psi`:
   :class:`ProbabilisticPCA`.
 
 * :math:`\Psi = diag(\psi_1, \psi_2, \dots, \psi_n)`: This model is called Factor
-  Analysis, a classical statistical model. The matrix W is sometimtes called
+  Analysis, a classical statistical model. The matrix W is sometimes called
   `factor loading matrix`.
 
 Both model essentially estimate a Gaussian with a low-rank covariance matrix.
-Because both models are probilistic they can be integrated in more complex
+Because both models are probabilistic they can be integrated in more complex
 models, e.g. Mixture of Factor Analysers. One gets very different models (e.g.
-:class:`ICA`) if non-Gaussian priors on the latent variables are assumed.
+:class:`FastICA`) if non-Gaussian priors on the latent variables are assumed.
 
 Factor Analysis `can` produce similar components (the columns of its loading
 matrix) to :class:`PCA`. However, one can not make any general statements
@@ -491,7 +590,7 @@ instead of :class:`PCA` or its variants, in the cases where the data matrix
 does not contain negative values.
 
 Unlike :class:`PCA`, the representation of a vector is obtained in an additive
-fashion, by superimposing the components, without substracting. Such additive
+fashion, by superimposing the components, without subtracting. Such additive
 models are efficient for representing images and text.
 
 It has been observed in [Hoyer, 04] that, when carefully constrained,
@@ -526,9 +625,9 @@ recommended in the dense case.
 passing an integer seed or a `RandomState` to :attr:`init`.
 
 In :class:`NMF`, sparseness can be enforced by setting the attribute
-:attr:`sparseness` to `data` or `components`. Sparse components lead to
-localized features, and sparse data leads to a more efficient representation
-of the data.
+:attr:`sparseness` to ``"data"`` or ``"components"``. Sparse components lead to
+localized features, and sparse data leads to a more efficient representation of
+the data.
 
 .. topic:: Examples:
 

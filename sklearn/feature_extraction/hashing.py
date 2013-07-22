@@ -1,5 +1,5 @@
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
-# License: 3-clause BSD.
+# License: BSD 3 clause
 
 import numbers
 
@@ -53,10 +53,14 @@ class FeatureHasher(BaseEstimator, TransformerMixin):
     non_negative : boolean, optional
         Whether output matrices should contain non-negative values only;
         effectively calls abs on the matrix prior to returning it.
-        When True, output values will be multinomially distributed.
-        When False, output values will be normally distributed (Gaussian) with
-        mean 0, assuming a good hash function.
+        When True, output values can be interpreted as frequencies.
+        When False, output values will have expected value zero.
 
+    See also
+    --------
+    DictVectorizer : vectorizes string-valued features using a hash table.
+    sklearn.preprocessing.OneHotEncoder : handles nominal/categorical features
+      encoded as columns of integers.
     """
 
     def __init__(self, n_features=(2 ** 20), input_type="dict",

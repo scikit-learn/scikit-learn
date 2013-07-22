@@ -3,3 +3,5 @@ Changes to Libsvm
 This is here mainly as checklist for incorporation of new versions of libsvm.
 
   * Add copyright to files svm.cpp and svm.h
+
+The changes made with respect to upstream are detailed in the heading of svm.cpp

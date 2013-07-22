@@ -1,7 +1,7 @@
 .. _metrics:
 
-Metrics, Affinities and Kernels
-===============================
+Pairwise metrics, Affinities and Kernels
+========================================
 
 The :mod:`sklearn.metrics.pairwise` submodule implements utilities to evaluate
 pairwise distances or affinity of sets of samples.
@@ -34,6 +34,34 @@ kernel:
 
 
 .. currentmodule:: sklearn.metrics.pairwise
+
+Cosine similarity
+-----------------
+:func:`cosine_similarity` computes the L2-normalized dot product of vectors.
+That is, if :math:`x` and :math:`y` are row vectors,
+their cosine similarity :math:`k` is defined as:
+
+.. math::
+
+    k(x, y) = \frac{x \dot y^\top}{\|x\| \|y\|}
+
+This is called cosine similarity, because Euclidean (L2) normalization
+projects the vectors onto the unit sphere,
+and their dot product is then the cosine of the angle between the points
+denoted by the vectors.
+
+This kernel is a popular choice for computing the similarity of documents
+represented as tf-idf vectors.
+:func:`cosine_similarity` accepts ``scipy.sparse`` matrices.
+(Note that the tf-idf functionality in ``sklearn.feature_extraction.text``
+can produce normalized vectors, in which case :func:`cosine_similarity`
+is equivalent to :func:`linear_kernel`, only slower.)
+
+.. topic:: References:
+
+    * C.D. Manning, P. Raghavan and H. Schütze (2008). Introduction to
+      Information Retrieval. Cambridge University Press.
+      http://nlp.stanford.edu/IR-book/html/htmledition/the-vector-space-model-for-scoring-1.html
 
 Chi Squared Kernel
 ------------------
@@ -68,7 +96,7 @@ The chi squared kernel is given by
 
 .. math::
 
-        k(x, y) = exp(-\gamma * \sum_i (x[i] - y[i]) ** 2 / (x[i] + y[i]))
+        k(x, y) = \exp \left (-\gamma \sum_i \frac{(x[i] - y[i]) ^ 2}{x[i] + y[i]} \right )
 
 The data is assumed to be non-negative, and is often normalized to have an L1-norm of one.
 The normalization is rationalized with the connection to the chi squared distance,

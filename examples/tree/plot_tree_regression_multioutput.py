@@ -12,7 +12,7 @@ We can see that if the maximum depth of the tree (controlled by the
 `max_depth` parameter) is set too high, the decision trees learn too fine
 details of the training data and learn from the noise, i.e. they overfit.
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 

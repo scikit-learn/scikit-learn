@@ -6,9 +6,28 @@ import numpy as np
 
 from sklearn.mixture import DPGMM, VBGMM
 from sklearn.mixture.dpgmm import log_normalize
+from sklearn.datasets import make_blobs
+from sklearn.utils.testing import assert_array_less
 from .test_gmm import GMMTester
 
 np.seterr(all='warn')
+
+
+def test_class_weights():
+    # check that the class weights are updated
+    # simple 3 cluster dataset
+    X, y = make_blobs(random_state=1)
+    for Model in [DPGMM, VBGMM]:
+        dpgmm = Model(n_components=10, random_state=1, alpha=20, n_iter=50)
+        dpgmm.fit(X)
+        # get indices of components that are used:
+        indices = np.unique(dpgmm.predict(X))
+        active = np.zeros(10, dtype=np.bool)
+        active[indices] = True
+        # used components are important
+        assert_array_less(.1, dpgmm.weights_[active])
+        # others are not
+        assert_array_less(dpgmm.weights_[~active], .05)
 
 
 def test_log_normalize():

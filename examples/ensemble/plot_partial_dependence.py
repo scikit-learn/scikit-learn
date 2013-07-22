@@ -27,14 +27,14 @@ The top right plot shows that the house age in a district does not have
 a strong influence on the (median) house price; so does the average rooms
 per household.
 The tick marks on the x-axis represent the deciles of the feature values
-in the trainig data.
+in the training data.
 
 Partial dependence plots with two target features enable us to visualize
 interactions among them. The two-way partial dependence plot shows the
 dependence of median house price on joint values of house age and avg.
 occupants per household. We can clearly see an interaction between the
 two features:
-For an avg. occupancy greather than two, the house price is nearly independent
+For an avg. occupancy greater than two, the house price is nearly independent
 of the house age, whereas for values less than two there is a strong dependence
 on age.
 
@@ -44,7 +44,7 @@ on age.
 .. [1] For classification you can think of it as the regression score before
        the link function.
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

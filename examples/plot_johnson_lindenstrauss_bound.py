@@ -87,6 +87,8 @@ On the twenty newsgroups on the other hand the dimensionality can be decreased
 from 56436 down to 10000 while reasonably preserving pairwise distances.
 
 """
+print(__doc__)
+
 import sys
 from time import time
 import numpy as np
@@ -147,8 +149,8 @@ else:
     data = load_digits().data[:500]
 
 n_samples, n_features = data.shape
-print "Embedding %d samples with dim %d using various random projections" % (
-    n_samples, n_features)
+print("Embedding %d samples with dim %d using various random projections"
+      % (n_samples, n_features))
 
 n_components_range = np.array([300, 1000, 10000])
 dists = euclidean_distances(data, squared=True).ravel()
@@ -161,13 +163,12 @@ for n_components in n_components_range:
     t0 = time()
     rp = SparseRandomProjection(n_components=n_components)
     projected_data = rp.fit_transform(data)
-    print "Projected %d samples from %d to %d in %0.3fs" % (
-        n_samples, n_features, n_components, time() - t0)
+    print("Projected %d samples from %d to %d in %0.3fs"
+          % (n_samples, n_features, n_components, time() - t0))
     if hasattr(rp, 'components_'):
         n_bytes = rp.components_.data.nbytes
         n_bytes += rp.components_.indices.nbytes
-        print "Random matrix with size: %0.3fMB" % (
-            n_bytes / 1e6)
+        print("Random matrix with size: %0.3fMB" % (n_bytes / 1e6))
 
     projected_dists = euclidean_distances(
         projected_data, squared=True).ravel()[nonzero]
@@ -182,8 +183,8 @@ for n_components in n_components_range:
     cb.set_label('Sample pairs counts')
 
     rates = projected_dists / dists
-    print "Mean distances rate: %0.2f (%0.2f)" % (
-        np.mean(rates), np.std(rates))
+    print("Mean distances rate: %0.2f (%0.2f)"
+          % (np.mean(rates), np.std(rates)))
 
     pl.figure()
     pl.hist(rates, bins=50, normed=True, range=(0., 2.))

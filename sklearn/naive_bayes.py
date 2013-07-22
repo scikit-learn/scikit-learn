@@ -13,7 +13,7 @@ are supervised learning methods based on applying Bayes' theorem with strong
 #         Lars Buitinck <L.J.Buitinck@uva.nl>
 #         (parts based on earlier work by Mathieu Blondel)
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 from abc import ABCMeta, abstractmethod
 
@@ -26,14 +26,13 @@ from .preprocessing import binarize, LabelBinarizer
 from .utils import array2d, atleast2d_or_csr
 from .utils.extmath import safe_sparse_dot, logsumexp
 from .utils import check_arrays
+from .externals import six
 
 __all__ = ['BernoulliNB', 'GaussianNB', 'MultinomialNB']
 
 
-class BaseNB(BaseEstimator, ClassifierMixin):
+class BaseNB(six.with_metaclass(ABCMeta, BaseEstimator, ClassifierMixin)):
     """Abstract base class for naive Bayes estimators"""
-
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def _joint_log_likelihood(self, X):
@@ -176,7 +175,7 @@ class GaussianNB(BaseNB):
     def _joint_log_likelihood(self, X):
         X = array2d(X)
         joint_log_likelihood = []
-        for i in xrange(np.size(self.classes_)):
+        for i in range(np.size(self.classes_)):
             jointi = np.log(self.class_prior_[i])
             n_ij = - 0.5 * np.sum(np.log(np.pi * self.sigma_[i, :]))
             n_ij -= 0.5 * np.sum(((X - self.theta_[i, :]) ** 2) /
@@ -211,10 +210,6 @@ class BaseDiscreteNB(BaseNB):
         sample_weight : array-like, shape = [n_samples], optional
             Weights applied to individual samples (1. for unweighted).
 
-        class_prior : array, shape [n_classes]
-            Custom prior probability per class.
-            Overrides the fit_prior parameter.
-
         Returns
         -------
         self : object
@@ -240,11 +235,11 @@ class BaseDiscreteNB(BaseNB):
             Y *= array2d(sample_weight).T
 
         if class_prior is not None:
-            warnings.warn('class_prior is deprecated in fit function and will '
-                          'be removed in version 0.15. Use the `__init__` '
-                          'parameter  class_weight instead.')
+            warnings.warn('class_prior has been made an ``__init__`` parameter'
+                          ' and will be removed from fit in version 0.15.',
+                          DeprecationWarning)
         else:
-            class_prior = self.class_weight
+            class_prior = self.class_prior
 
         if class_prior:
             if len(class_prior) != n_classes:
@@ -269,11 +264,11 @@ class BaseDiscreteNB(BaseNB):
     # XXX The following is a stopgap measure; we need to set the dimensions
     # of class_log_prior_ and feature_log_prob_ correctly.
     def _get_coef(self):
-        return (self.feature_log_prob_[1]
+        return (self.feature_log_prob_[1:]
                 if len(self.classes_) == 2 else self.feature_log_prob_)
 
     def _get_intercept(self):
-        return (self.class_log_prior_[1]
+        return (self.class_log_prior_[1:]
                 if len(self.classes_) == 2 else self.class_log_prior_)
 
     coef_ = property(_get_coef)
@@ -291,12 +286,17 @@ class MultinomialNB(BaseDiscreteNB):
 
     Parameters
     ----------
-    alpha: float, optional (default=1.0)
+    alpha : float, optional (default=1.0)
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
-    fit_prior: boolean
+
+    fit_prior : boolean
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
+
+    class_prior : array-like, size=[n_classes,]
+        Prior probabilities of the classes. If specified the priors are not
+        adjusted according to the data.
 
     Attributes
     ----------
@@ -319,7 +319,7 @@ class MultinomialNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import MultinomialNB
     >>> clf = MultinomialNB()
     >>> clf.fit(X, Y)
-    MultinomialNB(alpha=1.0, class_weight=None, fit_prior=True)
+    MultinomialNB(alpha=1.0, class_prior=None, fit_prior=True)
     >>> print(clf.predict(X[2]))
     [3]
 
@@ -330,10 +330,10 @@ class MultinomialNB(BaseDiscreteNB):
     Tackling the poor assumptions of naive Bayes text classifiers, ICML.
     """
 
-    def __init__(self, alpha=1.0, fit_prior=True, class_weight=None):
+    def __init__(self, alpha=1.0, fit_prior=True, class_prior=None):
         self.alpha = alpha
         self.fit_prior = fit_prior
-        self.class_weight = class_weight
+        self.class_prior = class_prior
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""
@@ -360,15 +360,21 @@ class BernoulliNB(BaseDiscreteNB):
 
     Parameters
     ----------
-    alpha: float, optional (default=1.0)
+    alpha : float, optional (default=1.0)
         Additive (Laplace/Lidstone) smoothing parameter
         (0 for no smoothing).
-    binarize: float or None, optional
+
+    binarize : float or None, optional
         Threshold for binarizing (mapping to booleans) of sample features.
         If None, input is presumed to already consist of binary vectors.
-    fit_prior: boolean
+
+    fit_prior : boolean
         Whether to learn class prior probabilities or not.
         If false, a uniform prior will be used.
+
+    class_prior : array-like, size=[n_classes,]
+        Prior probabilities of the classes. If specified the priors are not
+        adjusted according to the data.
 
     Attributes
     ----------
@@ -386,7 +392,7 @@ class BernoulliNB(BaseDiscreteNB):
     >>> from sklearn.naive_bayes import BernoulliNB
     >>> clf = BernoulliNB()
     >>> clf.fit(X, Y)
-    BernoulliNB(alpha=1.0, binarize=0.0, class_weight=None, fit_prior=True)
+    BernoulliNB(alpha=1.0, binarize=0.0, class_prior=None, fit_prior=True)
     >>> print(clf.predict(X[2]))
     [3]
 
@@ -405,11 +411,11 @@ class BernoulliNB(BaseDiscreteNB):
     """
 
     def __init__(self, alpha=1.0, binarize=.0, fit_prior=True,
-                 class_weight=None):
+                 class_prior=None):
         self.alpha = alpha
         self.binarize = binarize
         self.fit_prior = fit_prior
-        self.class_weight = class_weight
+        self.class_prior = class_prior
 
     def _count(self, X, Y):
         """Count and smooth feature occurrences."""

@@ -15,21 +15,20 @@ from sklearn.decomposition import dict_learning_online
 from sklearn.decomposition import sparse_encode
 
 
-rng = np.random.RandomState(0)
+rng_global = np.random.RandomState(0)
 n_samples, n_features = 10, 8
-X = rng.randn(n_samples, n_features)
+X = rng_global.randn(n_samples, n_features)
 
 
 def test_dict_learning_shapes():
     n_components = 5
-    dico = DictionaryLearning(n_components).fit(X)
+    dico = DictionaryLearning(n_components, random_state=0).fit(X)
     assert_true(dico.components_.shape == (n_components, n_features))
 
 
 def test_dict_learning_overcomplete():
     n_components = 12
-    X = rng.randn(n_samples, n_features)
-    dico = DictionaryLearning(n_components).fit(X)
+    dico = DictionaryLearning(n_components, random_state=0).fit(X)
     assert_true(dico.components_.shape == (n_components, n_features))
 
 
@@ -68,7 +67,8 @@ def test_dict_learning_unknown_fit_algorithm():
 
 def test_dict_learning_split():
     n_components = 5
-    dico = DictionaryLearning(n_components, transform_algorithm='threshold')
+    dico = DictionaryLearning(n_components, transform_algorithm='threshold',
+                              random_state=0)
     code = dico.fit(X).transform(X)
     dico.split_sign = True
     split_code = dico.transform(X)
@@ -78,8 +78,7 @@ def test_dict_learning_split():
 
 
 def test_dict_learning_online_shapes():
-#    rng = np.random.RandomState(0)
-#    X = rng.randn(12, 10)
+    rng = np.random.RandomState(0)
     n_components = 8
     code, dictionary = dict_learning_online(X, n_components=n_components,
                                             alpha=1, random_state=rng)
@@ -91,38 +90,44 @@ def test_dict_learning_online_shapes():
 def test_dict_learning_online_verbosity():
     n_components = 5
     # test verbosity
-    from cStringIO import StringIO
+    from sklearn.externals.six.moves import cStringIO as StringIO
     import sys
     old_stdout = sys.stdout
     sys.stdout = StringIO()
-    dico = MiniBatchDictionaryLearning(n_components, n_iter=20, verbose=1)
+    dico = MiniBatchDictionaryLearning(n_components, n_iter=20, verbose=1,
+                                       random_state=0)
     dico.fit(X)
-    dico = MiniBatchDictionaryLearning(n_components, n_iter=20, verbose=2)
+    dico = MiniBatchDictionaryLearning(n_components, n_iter=20, verbose=2,
+                                       random_state=0)
     dico.fit(X)
-    dict_learning_online(X, n_components=n_components, alpha=1, verbose=1)
-    dict_learning_online(X, n_components=n_components, alpha=1, verbose=2)
+    dict_learning_online(X, n_components=n_components, alpha=1, verbose=1,
+                         random_state=0)
+    dict_learning_online(X, n_components=n_components, alpha=1, verbose=2,
+                         random_state=0)
     sys.stdout = old_stdout
     assert_true(dico.components_.shape == (n_components, n_features))
 
 
 def test_dict_learning_online_estimator_shapes():
     n_components = 5
-    dico = MiniBatchDictionaryLearning(n_components, n_iter=20)
+    dico = MiniBatchDictionaryLearning(n_components, n_iter=20, random_state=0)
     dico.fit(X)
     assert_true(dico.components_.shape == (n_components, n_features))
 
 
 def test_dict_learning_online_overcomplete():
     n_components = 12
-    dico = MiniBatchDictionaryLearning(n_components, n_iter=20).fit(X)
+    dico = MiniBatchDictionaryLearning(n_components, n_iter=20,
+                                       random_state=0).fit(X)
     assert_true(dico.components_.shape == (n_components, n_features))
 
 
 def test_dict_learning_online_initialization():
     n_components = 12
+    rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)
     dico = MiniBatchDictionaryLearning(n_components, n_iter=0,
-                                       dict_init=V).fit(X)
+                                       dict_init=V, random_state=0).fit(X)
     assert_array_equal(dico.components_, V)
 
 
@@ -130,15 +135,14 @@ def test_dict_learning_online_partial_fit():
     # this test was not actually passing before!
     raise SkipTest
     n_components = 12
+    rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
-    rng1 = np.random.RandomState(0)
-    rng2 = np.random.RandomState(0)
     dico1 = MiniBatchDictionaryLearning(n_components, n_iter=10, batch_size=1,
                                         shuffle=False, dict_init=V,
-                                        random_state=rng1).fit(X)
+                                        random_state=0).fit(X)
     dico2 = MiniBatchDictionaryLearning(n_components, n_iter=1, dict_init=V,
-                                        random_state=rng2)
+                                        random_state=0)
     for ii, sample in enumerate(X):
         dico2.partial_fit(sample, iter_offset=ii * dico2.n_iter)
         # if ii == 1: break
@@ -149,6 +153,7 @@ def test_dict_learning_online_partial_fit():
 
 def test_sparse_encode_shapes():
     n_components = 12
+    rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     for algo in ('lasso_lars', 'lasso_cd', 'lars', 'omp', 'threshold'):
@@ -158,6 +163,7 @@ def test_sparse_encode_shapes():
 
 def test_sparse_encode_error():
     n_components = 12
+    rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     code = sparse_encode(X, V, alpha=0.001)
@@ -167,12 +173,14 @@ def test_sparse_encode_error():
 
 def test_unknown_method():
     n_components = 12
+    rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
     assert_raises(ValueError, sparse_encode, X, V, algorithm="<unknown>")
 
 
 def test_sparse_coder_estimator():
     n_components = 12
+    rng = np.random.RandomState(0)
     V = rng.randn(n_components, n_features)  # random init
     V /= np.sum(V ** 2, axis=1)[:, np.newaxis]
     code = SparseCoder(dictionary=V, transform_algorithm='lasso_lars',

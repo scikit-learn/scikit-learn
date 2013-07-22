@@ -14,7 +14,7 @@ the poles are cut from the sphere, as well as a thin slice down its
 side. This enables the manifold learning techniques to
 'spread it open' whilst projecting it onto two dimensions.
 
-For a similiar example, where the methods are applied to the
+For a similar example, where the methods are applied to the
 S-curve dataset, see :ref:`example_manifold_plot_compare_methods.py`
 
 Note that the purpose of the :ref:`MDS <multidimensional_scaling>` is
@@ -24,13 +24,13 @@ high-dimensional space, unlike other manifold-learning algorithms,
 it does not seeks an isotropic representation of the data in
 the low-dimensional space. Here the manifold problem matches fairly
 that of representing a flat map of the Earth, as with
-`map projection<http://en.wikipedia.org/wiki/Map_projection>`_
+`map projection <http://en.wikipedia.org/wiki/Map_projection>`_
 """
 
 # Author: Jaques Grobler <jaques.grobler@inria.fr>
-# License: BSD
+# License: BSD 3 clause
 
-print __doc__
+print(__doc__)
 
 from time import time
 
@@ -40,7 +40,6 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib.ticker import NullFormatter
 
 from sklearn import manifold
-from sklearn.metrics import euclidean_distances
 from sklearn.utils import check_random_state
 
 # Next line to silence pyflakes.
@@ -87,7 +86,7 @@ for i, method in enumerate(methods):
         .LocallyLinearEmbedding(n_neighbors, 2,
                                 method=method).fit_transform(sphere_data).T
     t1 = time()
-    print "%s: %.2g sec" % (methods[i], t1 - t0)
+    print("%s: %.2g sec" % (methods[i], t1 - t0))
 
     ax = fig.add_subplot(242 + i)
     pl.scatter(trans_data[0], trans_data[1], c=colors, cmap=pl.cm.rainbow)
@@ -101,7 +100,7 @@ t0 = time()
 trans_data = manifold.Isomap(n_neighbors, n_components=2)\
     .fit_transform(sphere_data).T
 t1 = time()
-print "%s: %.2g sec" % ('ISO', t1 - t0)
+print("%s: %.2g sec" % ('ISO', t1 - t0))
 
 ax = fig.add_subplot(246)
 pl.scatter(trans_data[0], trans_data[1],  c=colors, cmap=pl.cm.rainbow)
@@ -113,9 +112,9 @@ pl.axis('tight')
 # Perform Multi-dimensional scaling.
 t0 = time()
 mds = manifold.MDS(2, max_iter=100, n_init=1)
-trans_data = mds.fit_transform(euclidean_distances(sphere_data)).T
+trans_data = mds.fit_transform(sphere_data).T
 t1 = time()
-print "MDS: %.2g sec" % (t1 - t0)
+print("MDS: %.2g sec" % (t1 - t0))
 
 ax = fig.add_subplot(247)
 pl.scatter(trans_data[0], trans_data[1],  c=colors, cmap=pl.cm.rainbow)
@@ -130,7 +129,7 @@ se = manifold.SpectralEmbedding(n_components=2,
                                 n_neighbors=n_neighbors)
 trans_data = se.fit_transform(sphere_data).T
 t1 = time()
-print "Spectral Embedding: %.2g sec" % (t1 - t0)
+print("Spectral Embedding: %.2g sec" % (t1 - t0))
 
 ax = fig.add_subplot(248)
 pl.scatter(trans_data[0], trans_data[1],  c=colors, cmap=pl.cm.rainbow)

@@ -217,6 +217,7 @@ Samples generator
    decomposition.KernelPCA
    decomposition.FactorAnalysis
    decomposition.FastICA
+   decomposition.TruncatedSVD
    decomposition.NMF
    decomposition.SparsePCA
    decomposition.MiniBatchSparsePCA
@@ -279,6 +280,8 @@ Samples generator
    ensemble.RandomForestRegressor
    ensemble.ExtraTreesClassifier
    ensemble.ExtraTreesRegressor
+   ensemble.AdaBoostClassifier
+   ensemble.AdaBoostRegressor
    ensemble.GradientBoostingClassifier
    ensemble.GradientBoostingRegressor
 
@@ -362,6 +365,7 @@ From text
    :template: class.rst
 
    feature_extraction.text.CountVectorizer
+   feature_extraction.text.HashingVectorizer
    feature_extraction.text.TfidfTransformer
    feature_extraction.text.TfidfVectorizer
 
@@ -452,7 +456,9 @@ From text
    :template: class.rst
 
    grid_search.GridSearchCV
-   grid_search.IterGrid
+   grid_search.ParameterGrid
+   grid_search.ParameterSampler
+   grid_search.RandomizedSearchCV
 
 
 .. _hmm_ref:
@@ -661,6 +667,14 @@ user guide for further details.
 
 .. currentmodule:: sklearn
 
+Model Selection Interface
+-------------------------
+.. autosummary::
+   :toctree: generated/
+   :template: class_with_call.rst
+
+   metrics.Scorer
+
 Classification metrics
 ----------------------
 
@@ -668,6 +682,7 @@ Classification metrics
    :toctree: generated/
    :template: function.rst
 
+   metrics.accuracy_score
    metrics.auc
    metrics.auc_score
    metrics.average_precision_score
@@ -675,14 +690,16 @@ Classification metrics
    metrics.confusion_matrix
    metrics.f1_score
    metrics.fbeta_score
+   metrics.hamming_loss
    metrics.hinge_loss
+   metrics.jaccard_similarity_score
+   metrics.matthews_corrcoef
    metrics.precision_recall_curve
    metrics.precision_recall_fscore_support
    metrics.precision_score
    metrics.recall_score
    metrics.roc_curve
-   metrics.zero_one_score
-   metrics.zero_one
+   metrics.zero_one_loss
 
 Regression metrics
 ------------------
@@ -694,6 +711,7 @@ details.
    :toctree: generated/
    :template: function.rst
 
+   metrics.explained_variance_score
    metrics.mean_absolute_error
    metrics.mean_squared_error
    metrics.r2_score
@@ -702,7 +720,8 @@ details.
 Clustering metrics
 ------------------
 
-See the :ref:`clustering` section of the user guide for further details.
+See the :ref:`clustering_evaluation` section of the user guide for further
+details.
 
 .. automodule:: sklearn.metrics.cluster
    :no-members:
@@ -722,6 +741,7 @@ See the :ref:`clustering` section of the user guide for further details.
    metrics.mutual_info_score
    metrics.normalized_mutual_info_score
    metrics.silhouette_score
+   metrics.silhouette_samples
    metrics.v_measure_score
 
 Pairwise metrics
@@ -804,7 +824,6 @@ Pairwise metrics
     multiclass.fit_ecoc
     multiclass.predict_ecoc
 
-
 .. _naive_bayes_ref:
 
 :mod:`sklearn.naive_bayes`: Naive Bayes
@@ -849,8 +868,11 @@ Pairwise metrics
    neighbors.RadiusNeighborsClassifier
    neighbors.KNeighborsRegressor
    neighbors.RadiusNeighborsRegressor
-   neighbors.BallTree
    neighbors.NearestCentroid
+   neighbors.BallTree
+   neighbors.KDTree
+   neighbors.DistanceMetric
+   neighbors.KernelDensity
 
 .. autosummary::
    :toctree: generated/

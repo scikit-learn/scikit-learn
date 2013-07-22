@@ -4,7 +4,7 @@ Test the hashing module.
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2009 Gael Varoquaux
-# License: BSD Style, 3 clauses.
+# License: BSD 3 clause
 
 import nose
 import time
@@ -77,13 +77,18 @@ class KlassWithCachedMethod(object):
 def test_trival_hash():
     """ Smoke test hash on various types.
     """
-    obj_list = [1, 1., 1 + 1j,
-                'a',
-                (1, ), [1, ], {1:1},
+    obj_list = [1, 2, 1., 2., 1 + 1j, 2. + 1j,
+                'a', 'b',
+                (1, ), (1, 1, ), [1, ], [1, 1, ],
+                {1: 1}, {1: 2}, {2: 1},
                 None,
+                gc.collect,
+                [1, ].append,
                ]
     for obj1 in obj_list:
         for obj2 in obj_list:
+            # Check that 2 objects have the same hash only if they are
+            # the same.
             yield nose.tools.assert_equal, hash(obj1) == hash(obj2), \
                 obj1 is obj2
 
@@ -223,9 +228,18 @@ def test_hash_object_dtype():
                             hash(b))
 
 
+@with_numpy
+def test_numpy_scalar():
+    # Numpy scalars are built from compiled functions, and lead to
+    # strange pickling paths explored, that can give hash collisions
+    a = np.float64(2.0)
+    b = np.float64(3.0)
+    nose.tools.assert_not_equal(hash(a), hash(b))
+
+
 def test_dict_hash():
-    # Check that dictionaries hash consistently, eventhough the ordering
-    # of the keys is not garanteed
+    # Check that dictionaries hash consistently, even though the ordering
+    # of the keys is not guaranteed
     k = KlassWithCachedMethod()
 
     d = {'#s12069__c_maps.nii.gz': [33],
@@ -250,8 +264,8 @@ def test_dict_hash():
 
 
 def test_set_hash():
-    # Check that sets hash consistently, eventhough their ordering
-    # is not garanteed
+    # Check that sets hash consistently, even though their ordering
+    # is not guaranteed
     k = KlassWithCachedMethod()
 
     s = set(['#s12069__c_maps.nii.gz',

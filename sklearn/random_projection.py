@@ -25,7 +25,7 @@ The main theoretical result behind the efficiency of random projection is the
 """
 # Authors: Olivier Grisel <olivier.grisel@ensta.org>,
 #          Arnaud Joly <a.joly@ulg.ac.be>
-# License: Simple BSD
+# License: BSD 3 clause
 
 from __future__ import division
 import warnings
@@ -35,11 +35,13 @@ import numpy as np
 from numpy.testing import assert_equal
 import scipy.sparse as sp
 
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.utils import check_random_state
-from sklearn.utils.extmath import safe_sparse_dot
-from sklearn.utils.random import sample_without_replacement
-from sklearn.utils.validation import check_arrays
+from .base import BaseEstimator, TransformerMixin
+from .externals import six
+from .externals.six.moves import xrange
+from .utils import check_random_state
+from .utils.extmath import safe_sparse_dot
+from .utils.random import sample_without_replacement
+from .utils.validation import check_arrays
 
 
 __all__ = ["SparseRandomProjection",
@@ -129,7 +131,7 @@ def johnson_lindenstrauss_min_dim(n_samples, eps=0.1):
 
 def _check_density(density, n_features):
     """Factorize density check according to Li et al."""
-    if density is 'auto':
+    if density == 'auto':
         density = 1 / np.sqrt(n_features)
 
     elif density <= 0 or density > 1:
@@ -277,13 +279,13 @@ def sparse_random_matrix(n_components, n_features, density='auto',
         return np.sqrt(1 / density) / np.sqrt(n_components) * components
 
 
-class BaseRandomProjection(BaseEstimator, TransformerMixin):
+class BaseRandomProjection(six.with_metaclass(ABCMeta, BaseEstimator,
+                                              TransformerMixin)):
     """Base class for random projections.
 
     Warning: This class should not be used directly.
     Use derived classes instead.
     """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self, n_components='auto', eps=0.1, dense_output=False,
@@ -363,7 +365,7 @@ class BaseRandomProjection(BaseEstimator, TransformerMixin):
             elif self.n_components > n_features:
                 warnings.warn(
                     "The number of components is higher than the number of"
-                    " features: n_features > n_components (%s > %s)."
+                    " features: n_features < n_components (%s < %s)."
                     "The dimensionality of the problem will not be reduced."
                     % (n_features, self.n_components))
 
@@ -610,5 +612,5 @@ class SparseRandomProjection(BaseRandomProjection):
         self.density_ = _check_density(self.density, n_features)
         return sparse_random_matrix(n_components,
                                     n_features,
-                                    density=self.density,
+                                    density=self.density_,
                                     random_state=random_state)

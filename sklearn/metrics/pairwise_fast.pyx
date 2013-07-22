@@ -1,16 +1,20 @@
 # Author: Andreas Mueller <amueller@ais.uni-bonn.de>
 #
-# License: Simplified BSD
+# Licence: BSD 3 clause
 
 import numpy as np
 cimport numpy as np
 import cython
 
+np.import_array()
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
 @cython.cdivision(True)
-def _chi2_kernel_fast(cython.floating[:,:] X, cython.floating[:,:] Y, cython.floating[:, :] result):
+def _chi2_kernel_fast(cython.floating[:,:] X,
+                      cython.floating[:,:] Y,
+                      cython.floating[:, :] result):
     cdef int i, j, k
     cdef int n_samples_X = X.shape[0]
     cdef int n_samples_Y = Y.shape[0]

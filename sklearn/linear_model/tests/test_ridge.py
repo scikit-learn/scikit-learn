@@ -7,11 +7,13 @@ from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_greater
+from sklearn.utils.testing import assert_raises
 
 from sklearn import datasets
 from sklearn.metrics import mean_squared_error
 
 from sklearn.linear_model.base import LinearRegression
+from sklearn.linear_model.ridge import ridge_regression
 from sklearn.linear_model.ridge import Ridge
 from sklearn.linear_model.ridge import _RidgeGCV
 from sklearn.linear_model.ridge import RidgeCV
@@ -21,10 +23,10 @@ from sklearn.linear_model.ridge import RidgeClassifierCV
 
 from sklearn.cross_validation import KFold
 
-rng = np.random.RandomState(0)
 diabetes = datasets.load_diabetes()
 X_diabetes, y_diabetes = diabetes.data, diabetes.target
 ind = np.arange(X_diabetes.shape[0])
+rng = np.random.RandomState(0)
 rng.shuffle(ind)
 ind = ind[:200]
 X_diabetes, y_diabetes = X_diabetes[ind], y_diabetes[ind]
@@ -44,9 +46,10 @@ def test_ridge():
     TODO: for this test to be robust, we should use a dataset instead
     of np.random.
     """
+    rng = np.random.RandomState(0)
     alpha = 1.0
 
-    for solver in ("sparse_cg", "dense_cholesky", "lsqr"):
+    for solver in ("svd", "sparse_cg", "dense_cholesky", "lsqr"):
         # With more samples than features
         n_samples, n_features = 6, 5
         y = rng.randn(n_samples)
@@ -57,8 +60,10 @@ def test_ridge():
         assert_equal(ridge.coef_.shape, (X.shape[1], ))
         assert_greater(ridge.score(X, y), 0.47)
 
-        ridge.fit(X, y, sample_weight=np.ones(n_samples))
-        assert_greater(ridge.score(X, y), 0.47)
+        if solver == "dense_cholesky":
+            # Currently the only solver to support sample_weight.
+            ridge.fit(X, y, sample_weight=np.ones(n_samples))
+            assert_greater(ridge.score(X, y), 0.47)
 
         # With more features than samples
         n_samples, n_features = 5, 10
@@ -68,13 +73,50 @@ def test_ridge():
         ridge.fit(X, y)
         assert_greater(ridge.score(X, y), .9)
 
-        ridge.fit(X, y, sample_weight=np.ones(n_samples))
-        assert_greater(ridge.score(X, y), 0.9)
+        if solver == "dense_cholesky":
+            # Currently the only solver to support sample_weight.
+            ridge.fit(X, y, sample_weight=np.ones(n_samples))
+            assert_greater(ridge.score(X, y), 0.9)
+
+def test_ridge_singular():
+    # test on a singular matrix
+    rng = np.random.RandomState(0)
+    n_samples, n_features = 6, 6
+    y = rng.randn(n_samples / 2)
+    y = np.concatenate((y, y))
+    X = rng.randn(n_samples / 2, n_features)
+    X = np.concatenate((X, X), axis=0)
+
+    ridge = Ridge(alpha=0)
+    ridge.fit(X, y)
+    assert_greater(ridge.score(X, y), 0.9)
+
+def test_ridge_sample_weights():
+    rng = np.random.RandomState(0)
+    alpha = 1.0
+
+    #for solver in ("svd", "sparse_cg", "dense_cholesky", "lsqr"):
+    for solver in ("dense_cholesky", ):
+        for n_samples, n_features in ((6, 5), (5, 10)):
+            y = rng.randn(n_samples)
+            X = rng.randn(n_samples, n_features)
+            sample_weight = 1 + rng.rand(n_samples)
+
+            coefs = ridge_regression(X, y, alpha, sample_weight,
+                                     solver=solver)
+            # Sample weight can be implemented via a simple rescaling
+            # for the square loss
+            coefs2 = ridge_regression(
+                X * np.sqrt(sample_weight)[:, np.newaxis],
+                y * np.sqrt(sample_weight),
+                alpha, solver=solver)
+            assert_array_almost_equal(coefs, coefs2)
 
 
 def test_ridge_shapes():
     """Test shape of coef_ and intercept_
     """
+    rng = np.random.RandomState(0)
     n_samples, n_features = 5, 10
     X = rng.randn(n_samples, n_features)
     y = rng.randn(n_samples)
@@ -99,6 +141,7 @@ def test_ridge_shapes():
 def test_ridge_intercept():
     """Test intercept with multiple targets GH issue #708
     """
+    rng = np.random.RandomState(0)
     n_samples, n_features = 5, 10
     X = rng.randn(n_samples, n_features)
     y = rng.randn(n_samples)
@@ -141,6 +184,7 @@ def test_toy_ridge_object():
 def test_ridge_vs_lstsq():
     """On alpha=0., Ridge and OLS yield the same solution."""
 
+    rng = np.random.RandomState(0)
     # we need more samples than features
     n_samples, n_features = 5, 4
     y = rng.randn(n_samples)
@@ -156,6 +200,33 @@ def test_ridge_vs_lstsq():
     ridge.fit(X, y)
     ols.fit(X, y)
     assert_almost_equal(ridge.coef_, ols.coef_)
+
+
+def test_ridge_individual_penalties():
+    """Tests the ridge object using individual penalties"""
+
+    rng = np.random.RandomState(42)
+
+    n_samples, n_features, n_targets = 20, 10, 5
+    X = rng.randn(n_samples, n_features)
+    y = rng.randn(n_samples, n_targets)
+
+    penalties = np.arange(n_targets)
+
+    coef_cholesky = np.array([Ridge(alpha=alpha,
+                    solver="dense_cholesky").fit(X, target).coef_
+                     for alpha, target in zip(penalties, y.T)])
+
+    coefs_indiv_pen = [Ridge(alpha=penalties,
+                            solver=solver, tol=1e-6).fit(X, y).coef_
+                for solver in ['svd', 'sparse_cg', 'lsqr', 'dense_cholesky']]
+    for coef_indiv_pen in coefs_indiv_pen:
+        assert_array_almost_equal(coef_cholesky, coef_indiv_pen)
+
+
+    # Test error is raised when number of targets and penalties do not match.
+    ridge = Ridge(alpha=penalties[:3])
+    assert_raises(ValueError, ridge.fit, X, y)
 
 
 def _test_ridge_loo(filter_):
@@ -317,6 +388,12 @@ def test_dense_sparse():
         # test that the outputs are the same
         if ret_dense is not None and ret_sparse is not None:
             assert_array_almost_equal(ret_dense, ret_sparse, decimal=3)
+
+
+def test_ridge_cv_sparse_svd():
+    X = sp.csr_matrix(X_diabetes)
+    ridge = RidgeCV(gcv_mode="svd")
+    assert_raises(TypeError, ridge.fit, X)
 
 
 def test_class_weights():

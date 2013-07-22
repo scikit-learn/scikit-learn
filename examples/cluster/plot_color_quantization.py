@@ -22,9 +22,9 @@ randomly) is also shown.
 #          Olivier Grisel <olivier.grisel@ensta.org>
 #          Mathieu Blondel <mathieu@mblondel.org>
 #
-# License: BSD
+# License: BSD 3 clause
 
-print __doc__
+print(__doc__)
 import numpy as np
 import pylab as pl
 from sklearn.cluster import KMeans
@@ -39,7 +39,7 @@ n_colors = 64
 china = load_sample_image("china.jpg")
 
 # Convert to floats instead of the default 8 bits integer coding. Dividing by
-# 255 is important so that pl.imshow behaves works well on foat data (need to
+# 255 is important so that pl.imshow behaves works well on float data (need to
 # be in the range [0-1]
 china = np.array(china, dtype=np.float64) / 255
 
@@ -48,25 +48,25 @@ w, h, d = original_shape = tuple(china.shape)
 assert d == 3
 image_array = np.reshape(china, (w * h, d))
 
-print "Fitting estimator on a small sub-sample of the data"
+print("Fitting model on a small sub-sample of the data")
 t0 = time()
 image_array_sample = shuffle(image_array, random_state=0)[:1000]
 kmeans = KMeans(n_clusters=n_colors, random_state=0).fit(image_array_sample)
-print "done in %0.3fs." % (time() - t0)
+print("done in %0.3fs." % (time() - t0))
 
 # Get labels for all points
-print "Predicting color indices on the full image (k-means)"
+print("Predicting color indices on the full image (k-means)")
 t0 = time()
 labels = kmeans.predict(image_array)
-print "done in %0.3fs." % (time() - t0)
+print("done in %0.3fs." % (time() - t0))
 
 
 codebook_random = shuffle(image_array, random_state=0)[:n_colors + 1]
-print "Predicting color indices on the full image (random)"
+print("Predicting color indices on the full image (random)")
 t0 = time()
 dist = euclidean_distances(codebook_random, image_array, squared=True)
 labels_random = dist.argmin(axis=0)
-print "done in %0.3fs." % (time() - t0)
+print("done in %0.3fs." % (time() - t0))
 
 
 def recreate_image(codebook, labels, w, h):

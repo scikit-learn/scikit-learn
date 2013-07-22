@@ -27,8 +27,8 @@ Kernel:
   size O(k*N) which will run much faster. See the documentation for SVMs for
   more info on kernels.
 
-Example
--------
+Examples
+--------
 >>> from sklearn import datasets
 >>> from sklearn.semi_supervised import LabelPropagation
 >>> label_prop_model = LabelPropagation()
@@ -54,7 +54,6 @@ Non-Parametric Function Induction in Semi-Supervised Learning. AISTAT 2005
 # Authors: Clay Woolam <clay@woolam.org>
 # Licence: BSD
 
-import warnings
 from abc import ABCMeta, abstractmethod
 from scipy import sparse
 import numpy as np
@@ -63,6 +62,7 @@ from ..base import BaseEstimator, ClassifierMixin
 from ..metrics.pairwise import rbf_kernel
 from ..utils.graph import graph_laplacian
 from ..utils.extmath import safe_sparse_dot
+from ..externals import six
 from ..neighbors.unsupervised import NearestNeighbors
 
 
@@ -73,7 +73,8 @@ def _not_converged(y_truth, y_prediction, tol=1e-3):
     return np.abs(y_truth - y_prediction).sum() > tol
 
 
-class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
+class BaseLabelPropagation(six.with_metaclass(ABCMeta, BaseEstimator,
+                                              ClassifierMixin)):
     """Base class for label propagation module.
 
     Parameters
@@ -95,16 +96,9 @@ class BaseLabelPropagation(BaseEstimator, ClassifierMixin):
         Convergence tolerance: threshold to consider the system at steady
         state
     """
-    __metaclass__ = ABCMeta
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7,
-                 alpha=1, max_iter=30, tol=1e-3, max_iters=None):
-
-        if not max_iters is None:
-            max_iter = max_iters
-            warnings.warn("Parameter max_iters has been renamed to"
-                          "'max_iter' and will be removed in release 0.14.",
-                          DeprecationWarning, stacklevel=2)
+                 alpha=1, max_iter=30, tol=1e-3):
 
         self.max_iter = max_iter
         self.tol = tol
@@ -308,7 +302,7 @@ class LabelPropagation(BaseLabelPropagation):
 
     See Also
     --------
-    LabelSpreading : Alternate label proagation strategy more robust to noise
+    LabelSpreading : Alternate label propagation strategy more robust to noise
     """
     def _build_graph(self):
         """Matrix representing a fully connected graph between each sample
@@ -377,13 +371,7 @@ class LabelSpreading(BaseLabelPropagation):
     """
 
     def __init__(self, kernel='rbf', gamma=20, n_neighbors=7, alpha=0.2,
-                 max_iter=30, tol=1e-3, max_iters=None):
-
-        if not max_iters is None:
-            max_iter = max_iters
-            warnings.warn("Parameter max_iters has been renamed to"
-                          "'max_iter' and will be removed in release 0.14.",
-                          DeprecationWarning, stacklevel=2)
+                 max_iter=30, tol=1e-3):
 
         # this one has different base parameters
         super(LabelSpreading, self).__init__(kernel=kernel, gamma=gamma,

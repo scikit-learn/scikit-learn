@@ -36,7 +36,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
    - Support for dense data by Ming-Fang Weng
 
-   - Return indicies for support vectors, Fabian Pedregosa
+   - Return indices for support vectors, Fabian Pedregosa
      <fabian.pedregosa@inria.fr>
 
    - Fixes to avoid name collision, Fabian Pedregosa
@@ -707,7 +707,7 @@ void Solver::Solve(int l, const QMatrix& Q, const double *p_, const schar *y_,
 	while(1)
 	{
                 // set max_iter to -1 to disable the mechanism
-                if ((max_iter != -1) and (iter >= max_iter)) {
+                if ((max_iter != -1) && (iter >= max_iter)) {
                     info("WARN: libsvm Solver reached max_iter");
                     si->solve_timed_out = true;
                     break;
@@ -1895,7 +1895,7 @@ static decision_function svm_train_one(
 	return f;
 }
 
-// Platt's binary SVM Probablistic Output: an improvement from Lin et al.
+// Platt's binary SVM Probabilistic Output: an improvement from Lin et al.
 static void sigmoid_train(
 	int l, const double *dec_values, const double *labels, 
 	double& A, double& B)

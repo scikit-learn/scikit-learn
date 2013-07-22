@@ -1,11 +1,12 @@
 
 # Author: Mathieu Blondel <mathieu@mblondel.org>
 #         Arnaud Joly <a.joly@ulg.ac.be>
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 
 from .base import BaseEstimator, ClassifierMixin, RegressorMixin
+from .externals.six.moves import xrange
 from .utils import check_random_state
 from .utils.fixes import unique
 from .utils.validation import safe_asarray

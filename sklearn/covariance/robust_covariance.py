@@ -6,7 +6,7 @@ Here are implemented estimators that are resistant to outliers.
 """
 # Author: Virgile Fritsch <virgile.fritsch@inria.fr>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 import warnings
 import numbers
 import numpy as np
@@ -126,7 +126,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
             "Please check that the covariance matrix corresponding "
             "to the dataset is full rank and that MinCovDet is used with "
             "Gaussian-distributed data (or at least data drawn from a "
-            "unimodal, symetric distribution.")
+            "unimodal, symmetric distribution.")
     # Check convergence
     if np.allclose(det, previous_det):
         # c_step procedure converged
@@ -144,7 +144,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
     # Check early stopping
     if remaining_iterations == 0:
         if verbose:
-            print 'Maximum number of iterations reached'
+            print('Maximum number of iterations reached')
         det = fast_logdet(covariance)
         results = location, covariance, det, support, dist
 
@@ -289,7 +289,7 @@ def fast_mcd(X, support_fraction=None,
     Depending on the size of the initial sample, we have one, two or three
     such computation levels.
 
-    Note that only raw estimates are returned. If one is intersted in
+    Note that only raw estimates are returned. If one is interested in
     the correction and reweighting steps described in [Rouseeuw1999],
     see the MinCovDet object.
 
@@ -317,7 +317,7 @@ def fast_mcd(X, support_fraction=None,
     """
     random_state = check_random_state(random_state)
 
-    X = np.asanyarray(X)
+    X = np.asarray(X)
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
         warnings.warn("Only one sample available. "
@@ -365,7 +365,8 @@ def fast_mcd(X, support_fraction=None,
         n_subsets = n_samples // 300
         n_samples_subsets = n_samples // n_subsets
         samples_shuffle = random_state.permutation(n_samples)
-        h_subset = np.ceil(n_samples_subsets * (n_support / float(n_samples)))
+        h_subset = int(np.ceil(n_samples_subsets *
+                       (n_support / float(n_samples))))
         # b. perform a total of 500 trials
         n_trials_tot = 500
         # c. select 10 best (location, covariance) for each subset
@@ -398,7 +399,8 @@ def fast_mcd(X, support_fraction=None,
         ## 2. Pool the candidate supports into a merged set
         ##    (possibly the full dataset)
         n_samples_merged = min(1500, n_samples)
-        h_merged = np.ceil(n_samples_merged * (n_support / float(n_samples)))
+        h_merged = int(np.ceil(n_samples_merged *
+                       (n_support / float(n_samples))))
         if n_samples > 1500:
             n_best_merged = 10
         else:
@@ -461,7 +463,7 @@ class MinCovDet(EmpiricalCovariance):
 
     The Minimum Covariance Determinant covariance estimator is to be applied
     on Gaussian-distributed data, but could still be relevant on data
-    drawn from a unimodal, symetric distribution. It is not meant to be used
+    drawn from a unimodal, symmetric distribution. It is not meant to be used
     with multimodal data (the algorithm used to fit a MinCovDet object is
     likely to fail in such a case).
     One should consider projection pursuit methods to deal with multimodal
@@ -557,7 +559,7 @@ class MinCovDet(EmpiricalCovariance):
           Returns self.
 
         """
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
         # check that the empirical covariance is full rank
         if (linalg.svdvals(np.dot(X.T, X)) > 1e-8).sum() != n_features:
@@ -567,7 +569,7 @@ class MinCovDet(EmpiricalCovariance):
         raw_location, raw_covariance, raw_support, raw_dist = fast_mcd(
             X, support_fraction=self.support_fraction,
             cov_computation_method=self._nonrobust_covariance,
-            random_state=self.random_state)
+            random_state=random_state)
         if self.assume_centered:
             raw_location = np.zeros(n_features)
             raw_covariance = self._nonrobust_covariance(X[raw_support],

@@ -6,7 +6,7 @@ is called with the same input arguments.
 
 # Author: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 # Copyright (c) 2009 Gael Varoquaux
-# License: BSD Style, 3 clauses.
+# License: BSD 3 clause
 
 
 from __future__ import with_statement
@@ -92,7 +92,7 @@ class MemorizedFunc(Logger):
             arrays cannot be read by memmapping.
         verbose: int, optional
             The verbosity flag, controls messages that are issued as
-            the function is revaluated.
+            the function is reevaluated.
     """
     #-------------------------------------------------------------------------
     # Public interface
@@ -115,7 +115,7 @@ class MemorizedFunc(Logger):
                 arguments.
             verbose: int, optional
                 Verbosity flag, controls the debug messages that are issued
-                as functions are revaluated. The higher, the more verbose
+                as functions are reevaluated. The higher, the more verbose
             timestamp: float, optional
                 The reference time from which times in tracing messages
                 are reported.
@@ -246,8 +246,8 @@ class MemorizedFunc(Logger):
         if old_func_code == func_code:
             return True
 
-        # We have differing code, is this because we are refering to
-        # differing functions, or because the function we are refering as
+        # We have differing code, is this because we are referring to
+        # differing functions, or because the function we are referring as
         # changed?
 
         if old_first_line == first_line == -1:
@@ -464,9 +464,9 @@ class Memory(Logger):
                 compressed arrays cannot be read by memmapping.
             verbose: int, optional
                 Verbosity flag, controls the debug messages that are issued
-                as functions are revaluated.
+                as functions are reevaluated.
         """
-        # XXX: Bad explaination of the None value of cachedir
+        # XXX: Bad explanation of the None value of cachedir
         Logger.__init__(self)
         self._verbose = verbose
         self.mmap_mode = mmap_mode

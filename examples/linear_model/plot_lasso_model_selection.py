@@ -32,7 +32,7 @@ of grid points is smaller than the number of kinks in the path. Such a
 strategy can be interesting if the number of features is really large
 and there are enough samples to select a large amount. In terms of
 numerical errors, for heavily correlated variables, Lars will accumulate
-more erros, while the coordinate descent algorithm will only sample the
+more errors, while the coordinate descent algorithm will only sample the
 path on a grid.
 
 Note how the optimal value of alpha varies for each fold. This
@@ -41,10 +41,10 @@ evaluate the performance of a method for which a parameter is chosen by
 cross-validation: this choice of parameter may not be optimal for unseen
 data.
 """
-print __doc__
+print(__doc__)
 
 # Author: Olivier Grisel, Gael Varoquaux, Alexandre Gramfort
-# License: BSD Style.
+# License: BSD 3 clause
 
 import time
 
@@ -100,7 +100,7 @@ pl.title('Information-criterion for model selection (training time %.3fs)'
 # LassoCV: coordinate descent
 
 # Compute paths
-print "Computing regularization path using the coordinate descent lasso..."
+print("Computing regularization path using the coordinate descent lasso...")
 t1 = time.time()
 model = LassoCV(cv=20).fit(X, y)
 t_lasso_cv = time.time() - t1
@@ -113,7 +113,7 @@ ymin, ymax = 2300, 3800
 pl.plot(m_log_alphas, model.mse_path_, ':')
 pl.plot(m_log_alphas, model.mse_path_.mean(axis=-1), 'k',
         label='Average across the folds', linewidth=2)
-pl.axvline(-np.log10(model.alpha), linestyle='--', color='k',
+pl.axvline(-np.log10(model.alpha_), linestyle='--', color='k',
            label='alpha: CV estimate')
 
 pl.legend()
@@ -129,7 +129,7 @@ pl.ylim(ymin, ymax)
 # LassoLarsCV: least angle regression
 
 # Compute paths
-print "Computing regularization path using the Lars lasso..."
+print("Computing regularization path using the Lars lasso...")
 t1 = time.time()
 model = LassoLarsCV(cv=20).fit(X, y)
 t_lasso_lars_cv = time.time() - t1
@@ -141,7 +141,7 @@ pl.figure()
 pl.plot(m_log_alphas, model.cv_mse_path_, ':')
 pl.plot(m_log_alphas, model.cv_mse_path_.mean(axis=-1), 'k',
         label='Average across the folds', linewidth=2)
-pl.axvline(-np.log10(model.alpha), linestyle='--', color='k',
+pl.axvline(-np.log10(model.alpha_), linestyle='--', color='k',
            label='alpha CV')
 pl.legend()
 

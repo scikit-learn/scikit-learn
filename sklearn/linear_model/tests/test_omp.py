@@ -1,5 +1,5 @@
 # Author: Vlad Niculae
-# License: BSD style
+# Licence: BSD 3 clause
 
 import warnings
 

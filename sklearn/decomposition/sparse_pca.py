@@ -1,8 +1,6 @@
 """Matrix factorization with Sparse PCA"""
 # Author: Vlad Niculae, Gael Varoquaux, Alexandre Gramfort
-# License: BSD
-
-import warnings
+# License: BSD 3 clause
 
 import numpy as np
 
@@ -103,7 +101,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
         self : object
             Returns the instance itself.
         """
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         X = array2d(X)
         if self.n_components is None:
             n_components = X.shape[1]
@@ -115,7 +113,7 @@ class SparsePCA(BaseEstimator, TransformerMixin):
                                  tol=self.tol, max_iter=self.max_iter,
                                  method=self.method, n_jobs=self.n_jobs,
                                  verbose=self.verbose,
-                                 random_state=self.random_state,
+                                 random_state=random_state,
                                  code_init=code_init,
                                  dict_init=dict_init)
         self.components_ = Vt.T
@@ -220,14 +218,8 @@ class MiniBatchSparsePCA(SparsePCA):
     """
     def __init__(self, n_components=None, alpha=1, ridge_alpha=0.01,
                  n_iter=100, callback=None, batch_size=3, verbose=False,
-                 shuffle=True, n_jobs=1, method='lars', random_state=None,
-                 chunk_size=None):
+                 shuffle=True, n_jobs=1, method='lars', random_state=None):
 
-        if chunk_size is not None:
-            chunk_size = batch_size
-            warnings.warn("Parameter chunk_size has been renamed to "
-                          "'batch_size' and will be removed in release 0.14.",
-                          DeprecationWarning, stacklevel=2)
         self.n_components = n_components
         self.alpha = alpha
         self.ridge_alpha = ridge_alpha
@@ -254,7 +246,7 @@ class MiniBatchSparsePCA(SparsePCA):
         self : object
             Returns the instance itself.
         """
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         X = array2d(X)
         if self.n_components is None:
             n_components = X.shape[1]
@@ -267,6 +259,6 @@ class MiniBatchSparsePCA(SparsePCA):
                                      batch_size=self.batch_size,
                                      shuffle=self.shuffle,
                                      n_jobs=self.n_jobs, method=self.method,
-                                     random_state=self.random_state)
+                                     random_state=random_state)
         self.components_ = Vt.T
         return self

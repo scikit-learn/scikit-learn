@@ -4,13 +4,14 @@ Quadratic Discriminant Analysis
 
 # Author: Matthieu Perrot <matthieu.perrot@gmail.com>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 import warnings
 
 import numpy as np
 
 from .base import BaseEstimator, ClassifierMixin
+from .externals.six.moves import xrange
 from .utils.fixes import unique
 from .utils import check_arrays, array2d
 
@@ -31,15 +32,30 @@ class QDA(BaseEstimator, ClassifierMixin):
     ----------
     priors : array, optional, shape = [n_classes]
         Priors on classes
+        
+    reg_param : float, optional
+        Regularizes the covariance estimate as 
+        (1-reg_param)*Sigma + reg_param*np.eye(n_features)
 
     Attributes
     ----------
-    `means_` : array-like, shape = [n_classes, n_features]
-        Class means
-    `priors_` : array-like, shape = [n_classes]
-        Class priors (sum to 1)
     `covariances_` : list of array-like, shape = [n_features, n_features]
-        Covariance matrices of each class
+        Covariance matrices of each class.
+
+    `means_` : array-like, shape = [n_classes, n_features]
+        Class means.
+
+    `priors_` : array-like, shape = [n_classes]
+        Class priors (sum to 1).
+
+    `rotations_` : list of arrays
+        For each class an array of shape [n_samples, n_samples], the
+        rotation of the Gaussian distribution, i.e. its principal axis.
+
+    `scalings_` : array-like, shape = [n_classes, n_features]
+        Contains the scaling of the Gaussian
+        distributions along the principal axes for each
+        class, i.e. the variance in the rotated coordinate system.
 
     Examples
     --------
@@ -49,7 +65,7 @@ class QDA(BaseEstimator, ClassifierMixin):
     >>> y = np.array([1, 1, 1, 2, 2, 2])
     >>> clf = QDA()
     >>> clf.fit(X, y)
-    QDA(priors=None)
+    QDA(priors=None, reg_param=0.0)
     >>> print(clf.predict([[-0.8, -1]]))
     [1]
 
@@ -58,8 +74,9 @@ class QDA(BaseEstimator, ClassifierMixin):
     sklearn.lda.LDA: Linear discriminant analysis
     """
 
-    def __init__(self, priors=None):
+    def __init__(self, priors=None, reg_param=0.):
         self.priors = np.asarray(priors) if priors is not None else None
+        self.reg_param = reg_param
 
     def fit(self, X, y, store_covariances=False, tol=1.0e-4):
         """
@@ -70,8 +87,10 @@ class QDA(BaseEstimator, ClassifierMixin):
         X : array-like, shape = [n_samples, n_features]
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
+
         y : array, shape = [n_samples]
             Target values (integers)
+
         store_covariances : boolean
             If True the covariance matrices are computed and stored in the
             `self.covariances_` attribute.
@@ -104,6 +123,7 @@ class QDA(BaseEstimator, ClassifierMixin):
             if rank < n_features:
                 warnings.warn("Variables are collinear")
             S2 = (S ** 2) / (len(Xg) - 1)
+            S2 = ((1 - self.reg_param) * S2) + self.reg_param
             if store_covariances:
                 # cov = V * (S^2 / (n-1)) * V.T
                 cov.append(np.dot(S2 * Vt.T, Vt))
@@ -112,28 +132,35 @@ class QDA(BaseEstimator, ClassifierMixin):
         if store_covariances:
             self.covariances_ = cov
         self.means_ = np.asarray(means)
-        self.scalings = np.asarray(scalings)
-        self.rotations = rotations
+        self.scalings_ = np.asarray(scalings)
+        self.rotations_ = rotations
         return self
 
     @property
-    def classes(self):  # pragma: no cover
-        warnings.warn("QDA.classes is deprecated and will be removed in 0.14. "
-                      "Use QDA.classes_ instead.", DeprecationWarning,
+    def scalings(self):  # pragma: no cover
+        warnings.warn("QDA.scalings is deprecated and will be removed in 0.15."
+                      " Use QDA.scalings_ instead.", DeprecationWarning,
                       stacklevel=2)
-        return self.classes_
+        return self.scalings_
+
+    @property
+    def rotations(self):  # pragma: no cover
+        warnings.warn("QDA.rotations is deprecated and will be removed in "
+                      "0.15. Use QDA.rotations_ instead.", DeprecationWarning,
+                      stacklevel=2)
+        return self.rotations_
 
     def _decision_function(self, X):
         X = array2d(X)
         norm2 = []
         for i in range(len(self.classes_)):
-            R = self.rotations[i]
-            S = self.scalings[i]
+            R = self.rotations_[i]
+            S = self.scalings_[i]
             Xm = X - self.means_[i]
             X2 = np.dot(Xm, R * (S ** (-0.5)))
             norm2.append(np.sum(X2 ** 2, 1))
         norm2 = np.array(norm2).T   # shape = [len(X), n_classes]
-        return (-0.5 * (norm2 + np.sum(np.log(self.scalings), 1))
+        return (-0.5 * (norm2 + np.sum(np.log(self.scalings_), 1))
                 + np.log(self.priors_))
 
     def decision_function(self, X):
@@ -190,7 +217,7 @@ class QDA(BaseEstimator, ClassifierMixin):
         values = self._decision_function(X)
         # compute the likelihood of the underlying gaussian models
         # up to a multiplicative constant.
-        likelihood = np.exp(values - values.min(axis=1)[:, np.newaxis])
+        likelihood = np.exp(values - values.max(axis=1)[:, np.newaxis])
         # compute posterior probabilities
         return likelihood / likelihood.sum(axis=1)[:, np.newaxis]
 

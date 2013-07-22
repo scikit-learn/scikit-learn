@@ -5,26 +5,22 @@
 #
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #
-# License: BSD Style.
+# Licence: BSD 3 clause
 
 
 import numpy as np
 import sys
 from time import time
 
+from libc.math cimport exp, log, sqrt, pow, fabs
 cimport numpy as np
 cimport cython
 
 from sklearn.utils.weight_vector cimport WeightVector
 from sklearn.utils.seq_dataset cimport SequentialDataset
 
+np.import_array()
 
-cdef extern from "math.h":
-    cdef extern double exp(double x)
-    cdef extern double log(double x)
-    cdef extern double sqrt(double x)
-    cdef extern double pow(double x, double y)
-    cdef extern double fabs(double x)
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INTEGER
@@ -484,12 +480,12 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
 
             update *= class_weight * sample_weight
 
+            if penalty_type >= L2:
+                w.scale(1.0 - (rho * eta * alpha))
             if update != 0.0:
                 w.add(x_data_ptr, x_ind_ptr, xnnz, update)
                 if fit_intercept == 1:
                     intercept += update * intercept_decay
-            if penalty_type >= L2:
-                w.scale(1.0 - (rho * eta * alpha))
 
             if penalty_type == L1 or penalty_type == ELASTICNET:
                 u += ((1.0 - rho) * eta * alpha)
@@ -509,7 +505,7 @@ def plain_sgd(np.ndarray[DOUBLE, ndim=1, mode='c'] weights,
         # floating-point under-/overflow check.
         if np.any(np.isinf(weights)) or np.any(np.isnan(weights)) \
            or np.isnan(intercept) or np.isinf(intercept):
-            raise ValueError("floating-point under-/overflow occured.")
+            raise ValueError("floating-point under-/overflow occurred.")
 
     w.reset_wscale()
 

@@ -5,6 +5,8 @@ ctypedef np.float64_t DOUBLE
 ctypedef np.int_t INT
 ctypedef np.int8_t INT8
 
+np.import_array()
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -39,14 +41,15 @@ def _hc_get_descendent(int node, children, int n_leaves):
         The node for which we want the descendents.
 
     children : list of pairs. Length of n_nodes
-        List of the children of each nodes.
-        This is not defined for leaves.
+        The children of each non-leaf node. Values less than `n_samples` refer
+        to leaves of the tree. A greater value `i` indicates a node with
+        children `children[i - n_samples]`.
 
     n_leaves : int
         Number of leaves.
 
-    Return
-    ------
+    Returns
+    -------
     descendent : list of int
     """
     ind = [node]

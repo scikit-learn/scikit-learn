@@ -3,7 +3,7 @@ Testing for Gaussian Process module (sklearn.gaussian_process)
 """
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
-# License: BSD style
+# Licence: BSD 3 clause
 
 from nose.tools import raises
 from nose.tools import assert_true

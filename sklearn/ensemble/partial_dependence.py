@@ -1,9 +1,11 @@
 """Partial dependence plots for tree ensembles. """
 
 # Authors: Peter Prettenhofer
-# License: BSD Style.
+# License: BSD 3 clause
 
-from itertools import count, izip
+from itertools import count
+
+from sklearn.externals.six.moves import zip
 
 import numbers
 
@@ -13,6 +15,8 @@ from scipy.stats.mstats import mquantiles
 
 from ..utils.extmath import cartesian
 from ..externals.joblib import Parallel, delayed
+from ..externals import six
+from ..externals.six.moves import xrange
 from ..utils import array2d
 from ..tree._tree import DTYPE
 
@@ -85,7 +89,7 @@ def partial_dependence(gbrt, target_variables, grid=None, X=None,
         computed (size should be smaller than 3 for visual renderings).
     grid : array-like, shape=(n_points, len(target_variables))
         The grid of ``target_variables`` values for which the
-        partial dependecy should be evaluted (either ``grid`` or ``X``
+        partial dependecy should be evaluated (either ``grid`` or ``X``
         must be specified).
     X : array-like, shape=(n_samples, n_features)
         The data on which ``gbrt`` was trained. It is used to generate
@@ -169,7 +173,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
                             contour_kw=None, **fig_kw):
     """Partial dependence plots for ``features``.
 
-    The ``len(features)`` plots are aranged in a grid with ``n_cols``
+    The ``len(features)`` plots are arranged in a grid with ``n_cols``
     columns. Two-way partial dependence plots are plotted as contour
     plots.
 
@@ -188,7 +192,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         the name of the feature with index i.
     label : object
         The class label for which the PDPs should be computed.
-        Only if gbrt is a multi-class model. Must be in gbrt.classes_ .
+        Only if gbrt is a multi-class model. Must be in ``gbrt.classes_``.
     n_cols : int
         The number of columns in the grid plot (default: 3).
     percentiles : (low, high), default=(0.05, 0.95)
@@ -247,7 +251,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
             raise ValueError('label is not given for multi-class PDP')
         label_idx = np.searchsorted(gbrt.classes_, label)
         if gbrt.classes_[label_idx] != label:
-            raise ValueError('label %s not in gbrt.classes_' % str(label))
+            raise ValueError('label %s not in ``gbrt.classes_``' % str(label))
     else:
         # regression and binary classification
         label_idx = 0
@@ -269,7 +273,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
         feature_names = feature_names.tolist()
 
     def convert_feature(fx):
-        if isinstance(fx, basestring):
+        if isinstance(fx, six.string_types):
             try:
                 fx = feature_names.index(fx)
             except ValueError:
@@ -279,7 +283,7 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     # convert features into a seq of int tuples
     tmp_features = []
     for fxs in features:
-        if isinstance(fxs, (numbers.Integral, basestring)):
+        if isinstance(fxs, (numbers.Integral,) + six.string_types):
             fxs = (fxs,)
         try:
             fxs = np.array([convert_feature(fx) for fx in fxs], dtype=np.int32)
@@ -330,8 +334,8 @@ def plot_partial_dependence(gbrt, X, features, feature_names=None,
     n_cols = min(n_cols, len(features))
     n_rows = int(np.ceil(len(features) / float(n_cols)))
     axs = []
-    for i, fx, name, (pdp, axes) in izip(count(), features, names,
-                                         pd_result):
+    for i, fx, name, (pdp, axes) in zip(count(), features, names,
+                                        pd_result):
         ax = fig.add_subplot(n_rows, n_cols, i + 1)
 
         if len(axes) == 1:

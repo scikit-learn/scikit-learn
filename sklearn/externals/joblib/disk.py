@@ -5,7 +5,7 @@ Disk management utilities.
 # Authors: Gael Varoquaux <gael dot varoquaux at normalesup dot org>
 #          Lars Buitinck <L.J.Buitinck@uva.nl>
 # Copyright (c) 2010 Gael Varoquaux
-# License: BSD Style, 3 clauses.
+# License: BSD 3 clause
 
 
 import errno

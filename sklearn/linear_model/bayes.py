@@ -1,6 +1,7 @@
 """
 Various bayesian regression
 """
+from __future__ import print_function
 
 # Authors: V. Michel, F. Pedregosa, A. Gramfort
 # License: BSD 3 clause
@@ -26,12 +27,6 @@ class BayesianRidge(LinearModel, RegressorMixin):
 
     Parameters
     ----------
-    X : array, shape = (n_samples, n_features)
-        Training vectors.
-
-    y : array, shape = (length)
-        Target values for training vectors
-
     n_iter : int, optional
         Maximum number of iterations.  Default is 300.
 
@@ -61,13 +56,13 @@ class BayesianRidge(LinearModel, RegressorMixin):
         Default is False
 
     fit_intercept : boolean, optional
-        wether to calculate the intercept for this model. If set
+        whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
         Default is True.
 
     normalize : boolean, optional, default False
-        If True, the regressors X are normalized
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True
         If True, X will be copied; else, it may be overwritten.
@@ -206,7 +201,7 @@ class BayesianRidge(LinearModel, RegressorMixin):
             ### Check for convergence
             if iter_ != 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
                 if verbose:
-                    print "Convergence after ", str(iter_), " iterations"
+                    print("Convergence after ", str(iter_), " iterations")
                 break
             coef_old_ = np.copy(coef_)
 
@@ -233,12 +228,6 @@ class ARDRegression(LinearModel, RegressorMixin):
 
     Parameters
     ----------
-    X : array, shape = (n_samples, n_features)
-        Training vectors.
-
-    y : array, shape = (n_samples)
-        Target values for training vectors
-
     n_iter : int, optional
         Maximum number of iterations. Default is 300
 
@@ -270,13 +259,13 @@ class ARDRegression(LinearModel, RegressorMixin):
         the computation. Default is 1.e+4.
 
     fit_intercept : boolean, optional
-        wether to calculate the intercept for this model. If set
+        whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
         Default is True.
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     copy_X : boolean, optional, default True.
         If True, X will be copied; else, it may be overwritten.
@@ -419,13 +408,13 @@ class ARDRegression(LinearModel, RegressorMixin):
             ### Check for convergence
             if iter_ > 0 and np.sum(np.abs(coef_old_ - coef_)) < self.tol:
                 if verbose:
-                    print "Converged after %s iterations" % iter_
+                    print("Converged after %s iterations" % iter_)
                 break
             coef_old_ = np.copy(coef_)
 
         self.coef_ = coef_
         self.alpha_ = alpha_
         self.sigma_ = sigma_
-
+        self.lambda_ = lambda_
         self._set_intercept(X_mean, y_mean, X_std)
         return self

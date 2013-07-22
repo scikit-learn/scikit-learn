@@ -1,7 +1,7 @@
 """
-=====================================================
-A demo of the K Means clustering algorithm
-=====================================================
+====================================================================
+Comparison of the K-Means and MiniBatchKMeans clustering algorithms
+====================================================================
 
 We want to compare the performance of the MiniBatchKMeans and KMeans:
 the MiniBatchKMeans is faster, but gives slightly different results (see
@@ -12,7 +12,7 @@ MiniBatchKMeans, and plot the results.
 We will also plot the points that are labelled differently between the two
 algorithms.
 """
-print __doc__
+print(__doc__)
 
 import time
 

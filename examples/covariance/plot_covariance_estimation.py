@@ -19,7 +19,7 @@ Here we compare 3 approaches:
   according to a grid of potential shrinkage parameters.
 
 * A close formula proposed by Ledoit and Wolf to compute
-  the asymptotical optimal regularization parameter (minimizing a MSE
+  the asymptotically optimal regularization parameter (minimizing a MSE
   criterion), yielding the :class:`sklearn.covariance.LedoitWolf`
   covariance estimate.
 
@@ -40,7 +40,7 @@ approaches outperform cross-validation, which is significantly most
 computationally costly.
 
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

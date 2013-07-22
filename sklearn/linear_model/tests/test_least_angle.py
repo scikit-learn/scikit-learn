@@ -24,7 +24,7 @@ def test_simple():
     """
 
     # also test verbose output
-    from cStringIO import StringIO
+    from sklearn.externals.six.moves import cStringIO as StringIO
     import sys
     old_stdout = sys.stdout
     sys.stdout = StringIO()
@@ -168,7 +168,7 @@ def test_no_path_all_precomputed():
 
     alphas_, active_, coef_path_ = linear_model.lars_path(
         X, y, method="lasso", Gram=G, Xy=Xy, alpha_min=0.9)
-    print "---"
+    print("---")
     alpha_, active, coef = linear_model.lars_path(
         X, y, method="lasso", Gram=G, Xy=Xy, alpha_min=0.9, return_path=False)
 
@@ -384,21 +384,26 @@ def test_multitarget():
 
     for estimator in (linear_model.LassoLars(), linear_model.Lars()):
         estimator.fit(X, Y)
+        Y_pred = estimator.predict(X)
+        Y_dec = estimator.decision_function(X)
+        assert_array_almost_equal(Y_pred, Y_dec)
         alphas, active, coef, path = (estimator.alphas_, estimator.active_,
                                       estimator.coef_, estimator.coef_path_)
-        for k in xrange(n_targets):
+        for k in range(n_targets):
             estimator.fit(X, Y[:, k])
+            y_pred = estimator.predict(X)
             assert_array_almost_equal(alphas[k], estimator.alphas_)
             assert_array_almost_equal(active[k], estimator.active_)
             assert_array_almost_equal(coef[k], estimator.coef_)
             assert_array_almost_equal(path[k], estimator.coef_path_)
+            assert_array_almost_equal(Y_pred[:, k], y_pred)
 
 
 def test_lars_cv():
     """ Test the LassoLarsCV object by checking that the optimal alpha
         increases as the number of samples increases.
 
-        This property is not actualy garantied in general and is just a
+        This property is not actually garantied in general and is just a
         property of the given dataset, with the given steps chosen.
     """
     old_alpha = 0

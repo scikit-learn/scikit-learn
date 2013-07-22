@@ -5,7 +5,7 @@ sparse Logistic Regression
 
 # Author: Gael Varoquaux, Alexandre Gramfort
 #
-# License: BSD Style.
+# License: BSD 3 clause
 import itertools
 from abc import ABCMeta, abstractmethod
 
@@ -16,12 +16,12 @@ from scipy.interpolate import interp1d
 
 from .base import center_data
 from ..base import BaseEstimator, TransformerMixin
+from ..externals import six
+from ..externals.joblib import Memory, Parallel, delayed
 from ..utils import (as_float_array, check_random_state, safe_asarray,
                      check_arrays, safe_mask)
-from ..externals.joblib import Parallel, delayed
 from .least_angle import lars_path, LassoLarsIC
 from .logistic import LogisticRegression
-from ..externals.joblib import Memory
 
 
 ###############################################################################
@@ -55,14 +55,14 @@ def _resample_model(estimator_func, X, y, scaling=.5, n_resampling=200,
     return scores_
 
 
-class BaseRandomizedLinearModel(BaseEstimator, TransformerMixin):
+class BaseRandomizedLinearModel(six.with_metaclass(ABCMeta, BaseEstimator,
+                                                   TransformerMixin)):
     """Base class to implement randomized linear models for feature selection
 
     This implements the strategy by Meinshausen and Buhlman:
     stability selection with randomized sampling, and random re-weighting of
     the penalty.
     """
-    __metaclass__ = ABCMeta
 
     @abstractmethod
     def __init__(self):
@@ -96,7 +96,7 @@ class BaseRandomizedLinearModel(BaseEstimator, TransformerMixin):
 
         estimator_func, params = self._make_estimator_and_params(X, y)
         memory = self.memory
-        if isinstance(memory, basestring):
+        if isinstance(memory, six.string_types):
             memory = Memory(cachedir=memory)
 
         scores_ = memory.cache(
@@ -180,7 +180,7 @@ def _randomized_lasso(X, y, weights, mask, alpha=1., verbose=False,
 
 
 class RandomizedLasso(BaseRandomizedLinearModel):
-    """Randomized Lasso
+    """Randomized Lasso.
 
     Randomized Lasso works by resampling the train data and computing
     a Lasso on each resampling. In short, the features selected more
@@ -188,20 +188,26 @@ class RandomizedLasso(BaseRandomizedLinearModel):
 
     Parameters
     ----------
-    alpha : float, 'aic', or 'bic'
+    alpha : float, 'aic', or 'bic', optional
         The regularization parameter alpha parameter in the Lasso.
         Warning: this is not the alpha parameter in the stability selection
         article which is scaling.
 
-    scaling : float
+    scaling : float, optional
         The alpha parameter in the stability selection article used to
         randomly scale the features. Should be between 0 and 1.
 
-    sample_fraction : float
+    sample_fraction : float, optional
         The fraction of samples to be used in each randomized design.
         Should be between 0 and 1. If 1, all samples are used.
 
-    fit_intercept : boolean
+    n_resampling : int, optional
+        Number of randomized models.
+
+    selection_threshold: float, optional
+        The score above which features should be selected.
+
+    fit_intercept : boolean, optional
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
@@ -209,8 +215,8 @@ class RandomizedLasso(BaseRandomizedLinearModel):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
 
     precompute : True | False | 'auto'
         Whether to use a precomputed Gram matrix to speed up
@@ -243,7 +249,7 @@ class RandomizedLasso(BaseRandomizedLinearModel):
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
 
-            - None, in which case all the jobs are immediatly
+            - None, in which case all the jobs are immediately
               created and spawned. Use this for lightweight and
               fast-running jobs, to avoid delays due to on-demand
               spawning of the jobs
@@ -340,7 +346,7 @@ def _randomized_logistic(X, y, weights, mask, C=1., verbose=False,
         weight_dia = sparse.dia_matrix((1 - weights, 0), (size, size))
         X = X * weight_dia
     else:
-        X = (1 - weights) * X
+        X *= (1 - weights)
 
     C = np.atleast_1d(np.asarray(C, dtype=np.float))
     scores = np.zeros((X.shape[1], len(C)), dtype=np.bool)
@@ -364,18 +370,24 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 
     Parameters
     ----------
-    C : float
+    C : float, optional, default=1
         The regularization parameter C in the LogisticRegression.
 
-    scaling : float
+    scaling : float, optional, default=0.5
         The alpha parameter in the stability selection article used to
         randomly scale the features. Should be between 0 and 1.
 
-    sample_fraction : float
+    sample_fraction : float, optional, default=0.75
         The fraction of samples to be used in each randomized design.
         Should be between 0 and 1. If 1, all samples are used.
 
-    fit_intercept : boolean
+    n_resampling : int, optional, default=200
+        Number of randomized models.
+
+    selection_threshold: float, optional, default=0.25
+        The score above which features should be selected.
+
+    fit_intercept : boolean, optional, default=True
         whether to calculate the intercept for this model. If set
         to false, no intercept will be used in calculations
         (e.g. data is expected to be already centered).
@@ -383,10 +395,10 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
     verbose : boolean or integer, optional
         Sets the verbosity amount
 
-    normalize : boolean, optional
-        If True, the regressors X are normalized
+    normalize : boolean, optional, default=False
+        If True, the regressors X will be normalized before regression.
 
-    tol : float, optional
+    tol : float, optional, default=1e-3
          tolerance for stopping criteria of LogisticRegression
 
     n_jobs : integer, optional
@@ -405,7 +417,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
         explosion of memory consumption when more jobs get dispatched
         than CPUs can process. This parameter can be:
 
-            - None, in which case all the jobs are immediatly
+            - None, in which case all the jobs are immediately
               created and spawned. Use this for lightweight and
               fast-running jobs, to avoid delays due to on-demand
               spawning of the jobs
@@ -437,7 +449,7 @@ class RandomizedLogisticRegression(BaseRandomizedLinearModel):
 
     Notes
     -----
-    See examples/linear_model/plot_randomized_lasso.py for an example.
+    See examples/linear_model/plot_sparse_recovery.py for an example.
 
     References
     ----------
@@ -527,25 +539,25 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
     y : array-like, shape = [n_samples]
         target values.
 
-    scaling : float
+    scaling : float, optional, default=0.5
         The alpha parameter in the stability selection article used to
         randomly scale the features. Should be between 0 and 1.
 
-    random_state : integer or numpy.RandomState, optional
+    random_state : integer or numpy.random.RandomState, optional
         The generator used to randomize the design.
 
-    n_resampling : int
+    n_resampling : int, optional, default=200
         Number of randomized models.
 
-    n_grid : int
+    n_grid : int, optional, default=100
         Number of grid points. The path is linearly reinterpolated
         on a grid between 0 and 1 before computing the scores.
 
-    sample_fraction : float
+    sample_fraction : float, optional, default=0.75
         The fraction of samples to be used in each randomized design.
         Should be between 0 and 1. If 1, all samples are used.
 
-    eps : float
+    eps : float, optional
         Smallest value of alpha / alpha_max considered
 
     n_jobs : integer, optional
@@ -565,7 +577,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
 
     Notes
     -----
-    See examples/linear_model/plot_randomized_lasso.py for an example.
+    See examples/linear_model/plot_sparse_recovery.py for an example.
     """
     rng = check_random_state(random_state)
 
@@ -581,7 +593,7 @@ def lasso_stability_path(X, y, scaling=0.5, random_state=None,
             weights=1. - scaling * rng.random_integers(0, 1,
                                                        size=(n_features,)),
             eps=eps)
-        for k in xrange(n_resampling))
+        for k in range(n_resampling))
 
     all_alphas = sorted(list(set(itertools.chain(*[p[0] for p in paths]))))
     # Take approximately n_grid values

@@ -15,7 +15,7 @@ if version_info >= (2, 6, 0):
             fp, pathname, description = imp.find_module('_csgraph',
                                                         [dirname(__file__)])
         except ImportError:
-            import _csgraph
+            from . import _csgraph
             return _csgraph
         if fp is not None:
             try:
@@ -26,7 +26,7 @@ if version_info >= (2, 6, 0):
     _csgraph = swig_import_helper()
     del swig_import_helper
 else:
-    import _csgraph
+    from . import _csgraph
 del version_info
 try:
     _swig_property = property

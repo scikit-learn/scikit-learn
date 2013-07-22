@@ -15,5 +15,5 @@ Unsupervised learning
     modules/outlier_detection
     modules/hmm
     modules/neural_networks
-
+    modules/density
 

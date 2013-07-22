@@ -5,14 +5,13 @@
 #
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #
-# License: BSD Style.
-
+# Licence: BSD 3 clause
 
 import numpy as np
-
-
 cimport numpy as np
 cimport cython
+
+np.import_array()
 
 
 cdef class WeightVector(object):

@@ -10,7 +10,7 @@ The first row of images shows true faces. The second half illustrates
 how the forest completes the lower half of those faces.
 
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl
@@ -48,7 +48,7 @@ image_shape = (64, 64)
 pl.figure(figsize=(2. * n_faces, 2.26 * 2))
 pl.suptitle("Face completion with multi-output forests", size=16)
 
-for i in xrange(1, 1 + n_faces):
+for i in range(1, 1 + n_faces):
     face_id = np.random.randint(X_test.shape[0])
 
     true_face = np.hstack((X_test[face_id], Y_test[face_id]))

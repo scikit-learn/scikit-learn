@@ -51,6 +51,8 @@ def test_perfect_matches():
         assert_equal(score_func([0, 0, 0], [0, 0, 0]), 1.0)
         assert_equal(score_func([0, 1, 0], [42, 7, 42]), 1.0)
         assert_equal(score_func([0., 1., 0.], [42., 7., 42.]), 1.0)
+        assert_equal(score_func([0., 1., 2.], [42., 7., 2.]), 1.0)
+        assert_equal(score_func([0, 1, 2], [42, 7, 2]), 1.0)
 
 
 def test_homogeneous_but_not_complete_labeling():
