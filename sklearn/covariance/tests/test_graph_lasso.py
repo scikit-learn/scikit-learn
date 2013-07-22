@@ -61,9 +61,5 @@ def test_graph_lasso_cv(random_state=1):
     finally:
         sys.stdout = orig_stdout
 
-    # Smoke test with a different number of folds
-    GraphLassoCV(alphas=[0.8, 0.5], n_jobs=1).fit(X)
-
     # Smoke test with specified alphas
-#    GraphLassoCV(cv=KFold(n=X.shape[0], n_folds=5), n_jobs=1).fit(X)
-
+    GraphLassoCV(alphas=[0.8, 0.5], n_jobs=1).fit(X)
