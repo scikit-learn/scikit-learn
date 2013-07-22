@@ -484,5 +484,4 @@ def test_oob_score():
     clf.fit(X, y)
     with warnings.catch_warnings(record=True) as w:
         _ = clf.oob_score_[0]
-        print "waring ....: ", w
         assert_equal(len(w), 1)
