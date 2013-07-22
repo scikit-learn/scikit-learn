@@ -1,9 +1,15 @@
 from __future__ import division, print_function, absolute_import
 
+from nose import SkipTest
+
 import numpy as np
 from numpy.testing import assert_array_almost_equal
-from scipy.sparse.csgraph import breadth_first_tree, depth_first_tree,\
-    csgraph_to_dense, csgraph_from_dense
+try:
+    from scipy.sparse.csgraph import breadth_first_tree, depth_first_tree,\
+        csgraph_to_dense, csgraph_from_dense
+except ImportError:
+    # Oldish versions of scipy don't have that
+    raise SkipTest
 
 
 def test_graph_breadth_first():
@@ -25,7 +31,6 @@ def test_graph_breadth_first():
         assert_array_almost_equal(csgraph_to_dense(bfirst_test),
                                   bfirst)
 
-        
 
 def test_graph_depth_first():
     csgraph = np.array([[ 0, 1, 2, 0, 0],
