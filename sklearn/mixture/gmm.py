@@ -397,7 +397,7 @@ class GMM(BaseEstimator):
                     num_comp_in_X, random_state=random_state).T
         return X
 
-    def fit(self, X):
+    def fit(self, X, y = None):
         """Estimate model parameters with the expectation-maximization
         algorithm.
 
@@ -412,11 +412,17 @@ class GMM(BaseEstimator):
         X : array_like, shape (n, n_features)
             List of n_features-dimensional data points.  Each row
             corresponds to a single data point.
+        y : (optional) array, shape = [n]
+            If provided 'm' in init_params will be ignored
+            n_components and means_ will be re-calculated
         """
         ## initialization step
         X = np.asarray(X, dtype=np.float)
         if X.ndim == 1:
             X = X[:, np.newaxis]
+        if y is not None:
+            n_classes = len(np.unique(y))
+            self.n_components = n_classes
         if X.shape[0] < self.n_components:
             raise ValueError(
                 'GMM estimation with %s components, but got only %s samples' %
@@ -425,7 +431,9 @@ class GMM(BaseEstimator):
         max_log_prob = -np.infty
 
         for _ in range(self.n_init):
-            if 'm' in self.init_params or not hasattr(self, 'means_'):
+            if y is not None:
+                self.means_ = np.array([X[y == i, :].mean(axis=0) for i in np.unique(y)])
+            elif 'm' in self.init_params or not hasattr(self, 'means_'):
                 self.means_ = cluster.KMeans(
                     n_clusters=self.n_components,
                     random_state=self.random_state).fit(X).cluster_centers_
