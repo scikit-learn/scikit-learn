@@ -538,9 +538,12 @@ class GraphLassoCV(GraphLasso):
                 alpha_1 = path[best_index - 1][0]
                 alpha_0 = path[best_index + 1][0]
                 covs_init = path[best_index - 1][-1]
-            alphas = np.logspace(np.log10(alpha_1), np.log10(alpha_0),
-                                 n_alphas + 2)
-            alphas = alphas[1:-1]
+
+            if not isinstance(n_alphas, collections.Sequence):
+                alphas = np.logspace(np.log10(alpha_1), np.log10(alpha_0),
+                                     n_alphas + 2)
+                alphas = alphas[1:-1]
+
             if self.verbose and n_refinements > 1:
                 print('[GraphLassoCV] Done refinement % 2i out of %i: % 3is'
                       % (i + 1, n_refinements, time.time() - t0))

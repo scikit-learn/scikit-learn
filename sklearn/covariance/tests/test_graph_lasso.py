@@ -13,6 +13,7 @@ from sklearn.covariance import (graph_lasso, GraphLasso, GraphLassoCV,
 from sklearn.datasets.samples_generator import make_sparse_spd_matrix
 from sklearn.externals.six.moves import StringIO
 from sklearn.utils import check_random_state
+from sklearn.cross_validation import KFold
 
 
 def test_graph_lasso(random_state=0):
@@ -59,3 +60,10 @@ def test_graph_lasso_cv(random_state=1):
         GraphLassoCV(verbose=100, alphas=3).fit(X)
     finally:
         sys.stdout = orig_stdout
+
+    # Smoke test with a different number of folds
+    GraphLassoCV(alphas=[0.8, 0.5], n_jobs=1).fit(X)
+
+    # Smoke test with specified alphas
+#    GraphLassoCV(cv=KFold(n=X.shape[0], n_folds=5), n_jobs=1).fit(X)
+
