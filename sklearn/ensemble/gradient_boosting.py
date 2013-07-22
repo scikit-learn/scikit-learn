@@ -511,12 +511,9 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             Returns self.
         """
         # Check input
-        X, y = check_arrays(X, y, sparse_format="dense")
-
-        if ((getattr(X, "dtype", None) != DTYPE) or
-            (X.ndim != 2) or
-            (not X.flags.contiguous)):
-            X = np.ascontiguousarray(np.atleast_2d(X), dtype=DTYPE)
+        X, = check_arrays(X, dtype=DTYPE,
+                             sparse_format="dense",
+                             check_ccontiguous=True)
 
         y = np.ravel(y, order="C")
 
