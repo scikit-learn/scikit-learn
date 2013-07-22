@@ -365,7 +365,6 @@ def test_max_features():
 
 def test_error():
     """Test that it gives proper exception on deficient input."""
-
     for name, TreeEstimator in CLF_TREES.items():
         # predict before fit
         est = TreeEstimator()
@@ -461,7 +460,6 @@ def test_pickle():
 
 def test_multioutput():
     """Check estimators on multi-output problems."""
-
     X = [[-2, -1],
          [-1, -1],
          [-1, -2],
@@ -550,7 +548,6 @@ def test_unbalanced_iris():
 
 def test_memory_layout():
     """Check that it works no matter the memory layout"""
-
     for (name, TreeEstimator), dtype in product(ALL_TREES.items(),
                                                 [np.float64, np.float32]):
         est = TreeEstimator(random_state=0)
@@ -630,27 +627,3 @@ def test_sample_weight():
     internal = clf.tree_.children_left != tree._tree.TREE_LEAF
     assert_array_almost_equal(clf.tree_.threshold[internal],
                               clf2.tree_.threshold[internal])
-
-    # # Test negative weights
-    # X = iris.data
-    # y = iris.target
-
-    # sample_weight = -np.ones(X.shape[0])
-    # clf = tree.DecisionTreeClassifier(random_state=1)
-    # assert_raises(ValueError, clf.fit, X, y, sample_weight=sample_weight)
-
-    # sample_weight = np.ones(X.shape[0])
-    # sample_weight[0] = -1
-    # clf = tree.DecisionTreeClassifier(random_state=1)
-    # clf.fit(X, y, sample_weight=sample_weight)
-
-    # # Check that predict_proba returns valid probabilities in the presence of
-    # # samples with negative weight
-    # X = iris.data
-    # y = iris.target
-
-    # sample_weight = rng.normal(.5, 1.0, X.shape[0])
-    # clf = tree.DecisionTreeClassifier(random_state=1)
-    # clf.fit(X, y, sample_weight=sample_weight)
-    # proba = clf.predict_proba(X)
-    # assert (proba >= 0).all() and (proba <= 1).all()
