@@ -13,7 +13,7 @@ def configuration(parent_package="", top_path=None):
                          sources=["_tree.c", "rand_r.c"],
                          include_dirs=[numpy.get_include()],
                          libraries=libraries,
-                         extra_compile_args=["-O3", "-funroll-all-loops"])
+                         extra_compile_args=["-O3"])
 
     config.add_subpackage("tests")
 
