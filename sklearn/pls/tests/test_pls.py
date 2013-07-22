@@ -56,7 +56,7 @@ def test_pls():
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # center scale X, Y
     Xc, Yc, x_mean, y_mean, x_std, y_std =\
-        pls._center_scale_xy(X.copy(), Y.copy(), scale=True)
+        pls.pls_._center_scale_xy(X.copy(), Y.copy(), scale=True)
     assert_array_almost_equal(Xc, np.dot(T, P.T), err_msg="X != TP'")
     assert_array_almost_equal(Yc, np.dot(U, Q.T), err_msg="Y != UQ'")
 
@@ -229,7 +229,7 @@ def test_scale():
     # causes X[:, -1].std() to be zero
     X[:, -1] = 1.0
 
-    for clf in [pls.PLSCanonical(), pls.PLSRegression(), pls.CCA(),
+    for clf in [pls.PLSCanonical(), pls.PLSRegression(),
                 pls.PLSSVD()]:
         clf.set_params(scale=True)
         clf.fit(X, Y)
