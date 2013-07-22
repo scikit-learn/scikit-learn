@@ -315,9 +315,9 @@ a maximum amount of independent information. It is able to recover
     >>> X = np.dot(S, A.T)  # Generate observations
 
     >>> # Compute ICA
-    >>> ica = decomposition.FastICA()
-    >>> S_ = ica.fit(X).transform(X)  # Get the estimated sources
-    >>> A_ = ica.get_mixing_matrix()  # Get estimated mixing matrix
-    >>> np.allclose(X, np.dot(S_, A_.T))
+    >>> ica = decomposition.FastICA(fit_inverse_transform=True)
+    >>> S_ = ica.fit_transform(X)  # Get the estimated sources
+    >>> X_ = ica.inverse_transform(S_)  # Reconstruct the signal
+    >>> np.allclose(X, X_)
     True
 
