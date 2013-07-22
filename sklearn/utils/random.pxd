@@ -7,8 +7,8 @@ import numpy as np
 cimport numpy as np
 
 
-cdef np.array sample_without_replacement(np.int_t n_population,
-                                         np.int_t n_samples,
-                                         method=*,
-                                         random_state=*)
+cpdef sample_without_replacement(np.int_t n_population,
+                                 np.int_t n_samples,
+                                 method=*,
+                                 random_state=*)
 
