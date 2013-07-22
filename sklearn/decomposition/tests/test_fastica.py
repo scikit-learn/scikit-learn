@@ -227,6 +227,7 @@ def test_inverse_transform():
 
 
 def test_refit_without_inverse():
+    """Check that old mixing matrix doesn't linger after re-fit."""
     rng = np.random.RandomState(37)
     X = rng.random_sample((10, 5))
     ica = FastICA(fit_inverse_transform=True)
