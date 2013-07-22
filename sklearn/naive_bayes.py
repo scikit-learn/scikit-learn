@@ -318,11 +318,8 @@ class BaseDiscreteNB(BaseNB):
             Y = np.concatenate((1 - Y, Y), axis=1)
 
         if X.shape[0] != Y.shape[0]:
-            msg = "X and y have incompatible shapes."
-            if issparse(X):
-                msg += "\nNote: Sparse matrices cannot be indexed w/ boolean \
-                masks (use `indices=True` in CV)."
-            raise ValueError(msg)
+            msg = "X.shape[0]=%d and y.shape[0]=%d are incompatible."
+            raise ValueError(msg % (X.shape[0], y.shape[0]))
 
         if sample_weight is not None:
             Y *= array2d(sample_weight).T
