@@ -195,6 +195,27 @@ class BaseDiscreteNB(BaseNB):
     _joint_log_likelihood(X) as per BaseNB
     """
 
+    def _update_log_probas(self, class_prior=None):
+        """Apply smoothing to raw counts and recompute log probabilities"""
+        n_classes = len(self.classes_)
+        smoothed_fc = self.feature_count_ + self.alpha
+        smoothed_cc = self.class_count_ + self.alpha * n_classes
+
+        self.feature_log_prob_ = (np.log(smoothed_fc)
+                                  - np.log(smoothed_cc.reshape(-1, 1)))
+
+        if class_prior is not None:
+            if len(class_prior) != n_classes:
+                raise ValueError("Number of priors must match number of"
+                                 " classes.")
+            self.class_log_prior_ = np.log(class_prior)
+        elif self.fit_prior:
+            # empirical prior, with sample_weight taken into account
+            self.class_log_prior_ = (np.log(self.class_count_)
+                                     - np.log(self.class_count_.sum()))
+        else:
+            self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
+
     def partial_fit(self, X, y, classes=None, sample_weight=None):
         """Incremental fit on a batch of samples.
 
@@ -229,6 +250,7 @@ class BaseDiscreteNB(BaseNB):
             Returns self.
         """
         X = atleast2d_or_csr(X)
+        _, n_features = X.shape
 
         if getattr(self, 'classes_', None) is None and classes is None:
             raise ValueError("classes must be passed on the first call "
@@ -252,28 +274,19 @@ class BaseDiscreteNB(BaseNB):
             self._labelbin.multilabel_ = False  # Not supported by NB models
 
             # Initialize various cumulative counters
-            self._y_freq = np.zeros(len(classes), dtype=np.int64)
-            self._class_count = 0
-            self._class_feature_i_count = 0
+            self.class_count_ = np.zeros(len(classes), dtype=np.int64)
+            self.feature_count_ = np.zeros((len(classes), n_features),
+                                           dtype=np.int64)
 
         Y = self._labelbin.transform(y)
         n_samples, n_classes = Y.shape
         if sample_weight is not None:
             Y *= array2d(sample_weight).T
 
-        if self.fit_prior:
-            # empirical prior, with sample_weight taken into account
-            self._y_freq += Y.sum(axis=0)
-            self.class_log_prior_ = (np.log(self._y_freq)
-                                     - np.log(self._y_freq.sum()))
-        else:
-            self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
-
-        # N_c_i is the count of feature i in all samples of class c.
-        # N_c is the denominator with smoothing
-        N_c, N_c_i = self._count(X, Y, incrementally=True)
-        self.feature_log_prob_ = (np.log(N_c_i) - np.log(N_c.reshape(-1, 1)))
-
+        # Count raw events from data before updating the class log prior
+        # and feature log probas
+        self._count(X, Y)
+        self._update_log_probas()
         return self
 
     def fit(self, X, y, sample_weight=None, class_prior=None):
@@ -297,6 +310,7 @@ class BaseDiscreteNB(BaseNB):
             Returns self.
         """
         X = atleast2d_or_csr(X)
+        _, n_features = X.shape
 
         labelbin = LabelBinarizer()
         Y = labelbin.fit_transform(y)
@@ -322,24 +336,13 @@ class BaseDiscreteNB(BaseNB):
         else:
             class_prior = self.class_prior
 
-        if class_prior is not None:
-            if len(class_prior) != n_classes:
-                raise ValueError("Number of priors must match number of"
-                                 " classes.")
-            self.class_log_prior_ = np.log(class_prior)
-        elif self.fit_prior:
-            # empirical prior, with sample_weight taken into account
-            y_freq = Y.sum(axis=0)
-            self.class_log_prior_ = np.log(y_freq) - np.log(y_freq.sum())
-        else:
-            self.class_log_prior_ = np.zeros(n_classes) - np.log(n_classes)
-
-        # N_c_i is the count of feature i in all samples of class c.
-        # N_c is the denominator.
-        N_c, N_c_i = self._count(X, Y)
-
-        self.feature_log_prob_ = np.log(N_c_i) - np.log(N_c.reshape(-1, 1))
-
+        # Count raw events from data before updating the class log prior
+        # and feature log probas
+        self.class_count_ = np.zeros(n_classes, dtype=np.int64)
+        self.feature_count_ = np.zeros((n_classes, n_features),
+                                       dtype=np.int64)
+        self._count(X, Y)
+        self._update_log_probas(class_prior=class_prior)
         return self
 
     # XXX The following is a stopgap measure; we need to set the dimensions
@@ -392,6 +395,9 @@ class MultinomialNB(BaseDiscreteNB):
         referring to `class_log_prior_` and
         `feature_log_prob_`, respectively.)
 
+    `class_count_` : array, shape = [n_classes]
+        Integer number of samples encountered for each class during fitting.
+
     Examples
     --------
     >>> import numpy as np
@@ -420,13 +426,8 @@ class MultinomialNB(BaseDiscreteNB):
         """Count and smooth feature occurrences."""
         if np.any((X.data if issparse(X) else X) < 0):
             raise ValueError("Input X must be non-negative")
-        if incrementally:
-            self._class_feature_i_count += safe_sparse_dot(Y.T, X)
-            N_c_i = self._class_feature_i_count + self.alpha
-        else:
-            N_c_i = safe_sparse_dot(Y.T, X) + self.alpha
-        N_c = np.sum(N_c_i, axis=1)
-        return N_c, N_c_i
+        self.feature_count_ += safe_sparse_dot(Y.T, X)
+        self.class_count_ += Y.sum(axis=0)
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""
@@ -468,6 +469,9 @@ class BernoulliNB(BaseDiscreteNB):
     `feature_log_prob_` : array, shape = [n_classes, n_features]
         Empirical log probability of features given a class, P(x_i|y).
 
+    `class_count_` : array, shape = [n_classes]
+        Integer number of samples encountered for each class during fitting.
+
     Examples
     --------
     >>> import numpy as np
@@ -501,17 +505,12 @@ class BernoulliNB(BaseDiscreteNB):
         self.fit_prior = fit_prior
         self.class_prior = class_prior
 
-    def _count(self, X, Y, incrementally=False):
+    def _count(self, X, Y):
         """Count and smooth feature occurrences."""
         if self.binarize is not None:
             X = binarize(X, threshold=self.binarize)
-        if incrementally:
-            self._class_feature_i_count += safe_sparse_dot(Y.T, X)
-            N_c_i = self._class_feature_i_count + self.alpha
-        else:
-            N_c_i = safe_sparse_dot(Y.T, X) + self.alpha
-        N_c = Y.sum(axis=0) + self.alpha * Y.shape[1]
-        return N_c, N_c_i
+        self.feature_count_ += safe_sparse_dot(Y.T, X)
+        self.class_count_ += Y.sum(axis=0)
 
     def _joint_log_likelihood(self, X):
         """Calculate the posterior log probability of the samples X"""

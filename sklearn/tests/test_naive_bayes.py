@@ -97,6 +97,18 @@ def test_mnnb():
         assert_array_almost_equal(y_pred_proba2, y_pred_proba)
         assert_array_almost_equal(y_pred_log_proba2, y_pred_log_proba)
 
+        # Partial fit on the whole data at once should be the same as fit too
+        clf3 = MultinomialNB()
+        clf3.partial_fit(X, y2, classes=np.unique(y2))
+
+        y_pred3 = clf3.predict(X)
+        assert_array_equal(y_pred3, y2)
+        y_pred_proba3 = clf3.predict_proba(X)
+        y_pred_log_proba3 = clf3.predict_log_proba(X)
+        assert_array_almost_equal(np.log(y_pred_proba3), y_pred_log_proba3, 8)
+        assert_array_almost_equal(y_pred_proba3, y_pred_proba)
+        assert_array_almost_equal(y_pred_log_proba3, y_pred_log_proba)
+
 
 def test_discretenb_pickle():
     """Test picklability of discrete naive Bayes classifiers"""
@@ -112,8 +124,11 @@ def test_discretenb_pickle():
         assert_array_equal(y_pred, clf.predict(X2))
 
         if cls is not GaussianNB:
-            # re-enable me when partial_fit is implemented for GaussianNB
-            clf2 = cls().partial_fit(X2, y2, classes=np.unique(y2))
+            # TODO re-enable me when partial_fit is implemented for GaussianNB
+
+            # Test pickling of estimator trained with partial_fit
+            clf2 = cls().partial_fit(X2[:3], y2[:3], classes=np.unique(y2))
+            clf2.partial_fit(X2[3:], y2[3:])
             store = BytesIO()
             pickle.dump(clf2, store)
             clf2 = pickle.load(BytesIO(store.getvalue()))
