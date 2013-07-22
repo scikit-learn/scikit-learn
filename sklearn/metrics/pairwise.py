@@ -173,8 +173,6 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
             raise ValueError(
                 "Incompatible dimensions for Y and Y_norm_squared")
 
-    # TODO: a faster Cython implementation would do the clipping of negative
-    # values in a single pass over the output matrix.
     distances = safe_sparse_dot(X, Y.T, dense_output=True)
     distances *= -2
     distances += XX
@@ -189,7 +187,8 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     return distances if squared else np.sqrt(distances)
 
 
-def manhattan_distances(X, Y=None, sum_over_features=True):
+def manhattan_distances(X, Y=None, sum_over_features=True,
+                        size_threshold=5e8):
     """ Compute the L1 distances between the vectors in X and Y.
 
     With sum_over_features equal to False it returns the componentwise
@@ -206,6 +205,11 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
     sum_over_features : bool, default=True
         If True the function returns the pairwise distance matrix
         else it returns the componentwise L1 pairwise-distances.
+
+    size_threshold : int, default=5e8
+        Avoid creating temporary matrices bigger than size_threshold (in
+        bytes). If the problem size gets too big, the implementation then
+        breaks it down in smaller problems.
 
     Returns
     -------
@@ -240,11 +244,30 @@ def manhattan_distances(X, Y=None, sum_over_features=True):
         raise ValueError("manhattan_distance does not support sparse"
                          " matrices.")
     X, Y = check_pairwise_arrays(X, Y)
-    D = np.abs(X[:, np.newaxis, :] - Y[np.newaxis, :, :])
-    if sum_over_features:
-        D = np.sum(D, axis=2)
+    temporary_size = X.size * Y.shape[-1]
+    # Convert to bytes
+    temporary_size *= X.itemsize
+    if temporary_size > size_threshold and sum_over_features:
+        # Broadcasting the full thing would be too big: it's on the order
+        # of magnitude of the gigabyte
+        D = np.empty((X.shape[0], Y.shape[0]), dtype=X.dtype)
+        index = 0
+        increment = 1 + int(size_threshold / float(temporary_size) *
+                            X.shape[0])
+        while index < X.shape[0]:
+            this_slice = slice(index, index + increment)
+            tmp = X[this_slice, np.newaxis, :] - Y[np.newaxis, :, :]
+            tmp = np.abs(tmp, tmp)
+            tmp = np.sum(tmp, axis=2)
+            D[this_slice] = tmp
+            index += increment
     else:
-        D = D.reshape((-1, X.shape[1]))
+        D = X[:, np.newaxis, :] - Y[np.newaxis, :, :]
+        D = np.abs(D, D)
+        if sum_over_features:
+            D = np.sum(D, axis=2)
+        else:
+            D = D.reshape((-1, X.shape[1]))
     return D
 
 
@@ -434,7 +457,7 @@ def additive_chi2_kernel(X, Y=None):
     See also
     --------
     chi2_kernel : The exponentiated version of the kernel, which is usually
-        preferrable.
+        preferable.
 
     sklearn.kernel_approximation.AdditiveChi2Sampler : A Fourier approximation
         to this kernel.
@@ -608,7 +631,7 @@ def pairwise_distances(X, Y=None, metric="euclidean", n_jobs=1, **kwds):
         parallel.
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debuging. For n_jobs below -1,
+        used at all, which is useful for debugging. For n_jobs below -1,
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 
@@ -760,7 +783,7 @@ def pairwise_kernels(X, Y=None, metric="linear", filter_params=False,
         parallel.
 
         If -1 all CPUs are used. If 1 is given, no parallel computing code is
-        used at all, which is useful for debuging. For n_jobs below -1,
+        used at all, which is useful for debugging. For n_jobs below -1,
         (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
         are used.
 

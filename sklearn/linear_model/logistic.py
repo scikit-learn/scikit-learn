@@ -1,12 +1,12 @@
 import numpy as np
 
 from .base import LinearClassifierMixin, SparseCoefMixin
-from ..feature_selection.selector_mixin import SelectorMixin
+from ..feature_selection.from_model import _LearntSelectorMixin
 from ..svm.base import BaseLibLinear
 
 
-class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
-                         SparseCoefMixin):
+class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
+                         _LearntSelectorMixin, SparseCoefMixin):
     """Logistic Regression (aka logit, MaxEnt) classifier.
 
     In the multiclass case, the training algorithm uses a one-vs.-all (OvA)
@@ -48,11 +48,10 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
         (and therefore on the intercept) intercept_scaling has to be increased
 
     class_weight : {dict, 'auto'}, optional
-        Set the parameter C of class i to class_weight[i]*C for
-        SVC. If not given, all classes are supposed to have
-        weight one. The 'auto' mode uses the values of y to
-        automatically adjust weights inversely proportional to
-        class frequencies.
+        Over-/undersamples the samples of each class according to the given
+        weights. If not given, all classes are supposed to have weight one.
+        The 'auto' mode selects weights inversely proportional to class
+        frequencies in the training set.
 
     tol: float, optional
         Tolerance for stopping criteria.
@@ -102,7 +101,7 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
         super(LogisticRegression, self).__init__(
             penalty=penalty, dual=dual, loss='lr', tol=tol, C=C,
             fit_intercept=fit_intercept, intercept_scaling=intercept_scaling,
-            class_weight=class_weight, random_state=None)
+            class_weight=class_weight, random_state=random_state)
 
     def predict_proba(self, X):
         """Probability estimates.

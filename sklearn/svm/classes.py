@@ -1,10 +1,10 @@
 from .base import BaseLibLinear, BaseSVC, BaseLibSVM
 from ..base import RegressorMixin
 from ..linear_model.base import LinearClassifierMixin, SparseCoefMixin
-from ..feature_selection.selector_mixin import SelectorMixin
+from ..feature_selection.from_model import _LearntSelectorMixin
 
 
-class LinearSVC(BaseLibLinear, LinearClassifierMixin, SelectorMixin,
+class LinearSVC(BaseLibLinear, LinearClassifierMixin, _LearntSelectorMixin,
                 SparseCoefMixin):
     """Linear Support Vector Classification.
 
@@ -167,11 +167,11 @@ class SVC(BaseSVC):
          used to precompute the kernel matrix.
 
     degree : int, optional (default=3)
-        Degree of kernel function.
-        It is significant only in 'poly' and 'sigmoid'.
+        Degree of the polynomial kernel function ('poly').
+        Ignored by all other kernels.
 
     gamma : float, optional (default=0.0)
-        Kernel coefficient for 'rbf' and 'poly'.
+        Kernel coefficient for 'rbf', 'poly' and 'sigm'.
         If gamma is 0.0 then 1/n_features will be used instead.
 
     coef0 : float, optional (default=0.0)
@@ -254,7 +254,7 @@ class SVC(BaseSVC):
         Support Vector Machine for Regression implemented using libsvm.
 
     LinearSVC
-        Scalable Linear Support Vector Machine for classififcation
+        Scalable Linear Support Vector Machine for classification
         implemented using liblinear. Check the See also section of
         LinearSVC for more comparison element.
 

@@ -2,6 +2,7 @@
 *.so
 *~
 .#*
+*.lprof
 *.swp
 *.swo
 .DS_Store
@@ -14,6 +15,7 @@ doc/_build/
 doc/auto_examples/
 doc/modules/generated/
 doc/datasets/generated/
+*.pdf
 pip-log.txt
 scikit_learn.egg-info/
 .coverage
@@ -39,6 +41,7 @@ nips2010_pdf/
 *.tgz
 
 examples/cluster/joblib
+reuters/
 benchmarks/bench_covertype_data/
 
 *.prefs

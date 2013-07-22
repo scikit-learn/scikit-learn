@@ -13,10 +13,12 @@ import sys
 import traceback
 import inspect
 import pickle
+import pkgutil
 
 import numpy as np
 from scipy import sparse
 
+from sklearn.externals.six import PY3
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_true
@@ -46,7 +48,7 @@ dont_test = ['SparseCoder', 'EllipticEnvelope', 'EllipticEnvelop',
              'DictVectorizer', 'LabelBinarizer', 'LabelEncoder',
              'TfidfTransformer', 'IsotonicRegression', 'OneHotEncoder',
              'RandomTreesEmbedding', 'FeatureHasher', 'DummyClassifier',
-             'DummyRegressor']
+             'DummyRegressor', 'TruncatedSVD']
 
 
 def test_all_estimators():
@@ -608,9 +610,6 @@ def test_classifiers_classes():
         if name in ["LabelPropagation", "LabelSpreading"]:
             # TODO some complication with -1 label
             y_ = y
-        elif name in ["RandomForestClassifier", "ExtraTreesClassifier"]:
-            # TODO not so easy because of multi-output
-            y_ = y_str_numbers
         else:
             y_ = y_names
 
@@ -829,7 +828,10 @@ def test_configure():
             # The configuration spits out warnings when not finding
             # Blas/Atlas development headers
             warnings.simplefilter('ignore', UserWarning)
-            execfile('setup.py', dict(__name__='__main__'))
+            if PY3:
+                exec(open('setup.py').read(), dict(__name__='__main__'))
+            else:
+                execfile('setup.py', dict(__name__='__main__'))
     finally:
         sys.argv = old_argv
         os.chdir(cwd)
@@ -981,3 +983,19 @@ def test_cluster_overwrite_params():
                          "Estimator %s changes its parameter %s"
                          " from %s to %s during fit."
                          % (name, k, v, new_params[k]))
+
+
+def test_import_all_consistency():
+    # Smoke test to check that any name in a __all__ list is actually defined
+    # in the namespace of the module or package.
+    pkgs = pkgutil.walk_packages(path=sklearn.__path__, prefix='sklearn.',
+                                 onerror=lambda _: None)
+    for importer, modname, ispkg in pkgs:
+        if ".tests." in modname:
+            continue
+        package = __import__(modname, fromlist="dummy")
+        for name in getattr(package, '__all__', ()):
+            if getattr(package, name, None) is None:
+                raise AttributeError(
+                    "Module '{}' has no attribute '{}'".format(
+                        modname, name))

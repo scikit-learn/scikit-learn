@@ -83,7 +83,7 @@ class MockClassifier(BaseEstimator):
 
 X = np.ones((10, 2))
 X_sparse = coo_matrix(X)
-y = np.arange(10) / 2
+y = np.arange(10) // 2
 
 ##############################################################################
 # Tests
@@ -107,14 +107,18 @@ def test_kfold_valueerrors():
         # a characteristic of the code and not a behavior
         assert_true("The least populated class" in str(w[0]))
 
-    # Error when number of folds is <= 0
+    # Error when number of folds is <= 1
     assert_raises(ValueError, cval.KFold, 2, 0)
+    assert_raises(ValueError, cval.KFold, 2, 1)
+    assert_raises(ValueError, cval.StratifiedKFold, y, 0)
+    assert_raises(ValueError, cval.StratifiedKFold, y, 1)
 
     # When n is not integer:
-    assert_raises(ValueError, cval.KFold, 2.5, 1)
+    assert_raises(ValueError, cval.KFold, 2.5, 2)
 
     # When n_folds is not integer:
     assert_raises(ValueError, cval.KFold, 5, 1.5)
+    assert_raises(ValueError, cval.StratifiedKFold, y, 1.5)
 
 
 def test_kfold_indices():

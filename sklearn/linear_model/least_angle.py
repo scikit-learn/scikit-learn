@@ -341,8 +341,8 @@ def lars_path(X, y, Xy=None, Gram=None, max_iter=500,
                 del coef, alpha, prev_alpha, prev_coef
                 # resize the coefs and alphas array
                 add_features = 2 * max(1, (max_features - n_active))
-                coefs.resize((n_iter + add_features, n_features))
-                alphas.resize(n_iter + add_features)
+                coefs = np.resize(coefs, (n_iter + add_features, n_features))
+                alphas = np.resize(alphas, n_iter + add_features)
             coef = coefs[n_iter]
             prev_coef = coefs[n_iter - 1]
             alpha = alphas[n_iter, np.newaxis]
@@ -472,7 +472,7 @@ class Lars(LinearModel, RegressorMixin):
         present if the ``fit_path`` parameter is ``False``.
 
     ``coef_`` : array, shape = [n_features] | [n_targets, n_features]
-        Parameter vector (w in the fomulation formula).
+        Parameter vector (w in the formulation formula).
 
     ``intercept_`` : float | array of shape [n_targets]
         Independent term in decision function.
@@ -677,7 +677,7 @@ class LassoLars(Lars):
         present if the ``fit_path`` parameter is ``False``.
 
     ``coef_`` : array, shape = n_features or n_targets, n_features
-        Parameter vector (w in the fomulation formula).
+        Parameter vector (w in the formulation formula).
 
     ``intercept_`` : float or array of shape [n_targets]
         Independent term in decision function.
@@ -841,7 +841,7 @@ class LarsCV(Lars):
     max_iter: integer, optional
         Maximum number of iterations to perform.
 
-    cv : crossvalidation generator, optional
+    cv : cross-validation generator, optional
         see :mod:`sklearn.cross_validation`. If ``None`` is passed, default to
         a 5-fold strategy
 
@@ -862,7 +862,7 @@ class LarsCV(Lars):
     Attributes
     ----------
     ``coef_`` : array, shape = [n_features]
-        parameter vector (w in the fomulation formula)
+        parameter vector (w in the formulation formula)
 
     ``intercept_`` : float
         independent term in decision function
@@ -1011,7 +1011,7 @@ class LassoLarsCV(LarsCV):
     max_iter: integer, optional
         Maximum number of iterations to perform.
 
-    cv : crossvalidation generator, optional
+    cv : cross-validation generator, optional
         see sklearn.cross_validation module. If None is passed, default to
         a 5-fold strategy
 
@@ -1034,7 +1034,7 @@ class LassoLarsCV(LarsCV):
     Attributes
     ----------
     ``coef_`` : array, shape = [n_features]
-        parameter vector (w in the fomulation formula)
+        parameter vector (w in the formulation formula)
 
     ``intercept_`` : float
         independent term in decision function.
@@ -1127,7 +1127,7 @@ class LassoLarsIC(LassoLars):
     Attributes
     ----------
     ``coef_`` : array, shape = [n_features]
-        parameter vector (w in the fomulation formula)
+        parameter vector (w in the formulation formula)
 
     ``intercept_`` : float
         independent term in decision function.

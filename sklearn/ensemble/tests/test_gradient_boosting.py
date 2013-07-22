@@ -474,14 +474,3 @@ def test_mem_layout():
     clf.fit(X, y_)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(100, len(clf.estimators_))
-
-
-def test_min_density():
-    """Check if min_density is properly set when growing deep trees."""
-    clf = GradientBoostingClassifier(max_depth=6)
-    clf.fit(X, y)
-    assert clf.min_density == 0.1
-
-    clf = GradientBoostingClassifier(max_depth=5)
-    clf.fit(X, y)
-    assert clf.min_density == 0.0

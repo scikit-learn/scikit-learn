@@ -349,7 +349,7 @@ class LedoitWolf(EmpiricalCovariance):
                 + shrinkage*mu*np.identity(n_features)
 
     where mu = trace(cov) / n_features
-    and shinkage is given by the Ledoit and Wolf formula (see References)
+    and shrinkage is given by the Ledoit and Wolf formula (see References)
 
     References
     ----------
@@ -510,7 +510,7 @@ class OAS(EmpiricalCovariance):
                 + shrinkage*mu*np.identity(n_features)
 
     where mu = trace(cov) / n_features
-    and shinkage is given by the OAS formula (see References)
+    and shrinkage is given by the OAS formula (see References)
 
     References
     ----------

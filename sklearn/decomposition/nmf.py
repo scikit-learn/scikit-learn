@@ -97,7 +97,7 @@ def _initialize_nmf(X, n_components, variant=None, eps=1e-6,
     initialization: A head start for nonnegative
     matrix factorization - Pattern Recognition, 2008
 
-    http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf
+    http://tinyurl.com/nndsvd
     """
     check_non_negative(X, "NMF initialization")
     if variant not in (None, 'a', 'ar'):
@@ -287,7 +287,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
         more sparseness.
 
     eta : double, default: 0.1
-        Degree of correctness to mantain, if sparsity is not None. Smaller
+        Degree of correctness to maintain, if sparsity is not None. Smaller
         values mean larger error.
 
     tol : double, default: 1e-4
@@ -359,8 +359,7 @@ class ProjectedGradientNMF(BaseEstimator, TransformerMixin):
     C. Boutsidis, E. Gallopoulos: SVD based
     initialization: A head start for nonnegative
     matrix factorization - Pattern Recognition, 2008
-    http://scgroup.hpclab.ceid.upatras.gr/faculty/stratis/Papers/HPCLAB020107.pdf
-
+    http://tinyurl.com/nndsvd
     """
 
     def __init__(self, n_components=None, init=None, sparseness=None, beta=1,

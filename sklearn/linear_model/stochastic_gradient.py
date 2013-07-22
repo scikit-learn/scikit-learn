@@ -14,7 +14,7 @@ from ..externals.joblib import Parallel, delayed
 
 from .base import LinearClassifierMixin, SparseCoefMixin
 from ..base import BaseEstimator, RegressorMixin
-from ..feature_selection.selector_mixin import SelectorMixin
+from ..feature_selection.from_model import _LearntSelectorMixin
 from ..utils import array2d, atleast2d_or_csr, check_arrays, deprecated
 from ..utils.extmath import safe_sparse_dot
 from ..externals import six
@@ -504,7 +504,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
             Target values
 
         coef_init : array, shape = [n_classes,n_features]
-            The initial coeffients to warm-start the optimization.
+            The initial coefficients to warm-start the optimization.
 
         intercept_init : array, shape = [n_classes]
             The initial intercept to warm-start the optimization.
@@ -524,7 +524,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
                          sample_weight=sample_weight)
 
 
-class SGDClassifier(BaseSGDClassifier, SelectorMixin):
+class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
     """Linear model fitted by minimizing a regularized empirical loss with SGD.
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is
@@ -552,7 +552,7 @@ class SGDClassifier(BaseSGDClassifier, SelectorMixin):
         probability estimation in binary classifiers. 'modified_huber'
         is another smooth loss that brings tolerance to outliers.
         'squared_hinge' is like hinge but is quadratically penalized.
-        'perceptron'is the linear loss used by the perceptron algorithm.
+        'perceptron' is the linear loss used by the perceptron algorithm.
         The other losses are designed for regression but can be useful in
         classification as well; see SGDRegressor for a description.
 
@@ -858,7 +858,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             Target values
 
         coef_init : array, shape = [n_features]
-            The initial coeffients to warm-start the optimization.
+            The initial coefficients to warm-start the optimization.
 
         intercept_init : array, shape = [1]
             The initial intercept to warm-start the optimization.
@@ -937,7 +937,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
         self.intercept_ = np.atleast_1d(intercept)
 
 
-class SGDRegressor(BaseSGDRegressor, SelectorMixin):
+class SGDRegressor(BaseSGDRegressor, _LearntSelectorMixin):
     """Linear model fitted by minimizing a regularized empirical loss with SGD
 
     SGD stands for Stochastic Gradient Descent: the gradient of the loss is

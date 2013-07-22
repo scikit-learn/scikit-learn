@@ -162,7 +162,7 @@ class ElasticNet(LinearModel, RegressorMixin):
             Xy = np.dot(X.T, y) that can be precomputed. It is useful
             only when the Gram matrix is precomputed.
         coef_init: ndarray of shape n_features or (n_targets, n_features)
-            The initial coeffients to warm-start the optimization
+            The initial coefficients to warm-start the optimization
 
         Notes
         -----
@@ -586,7 +586,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
 
     Note that in certain cases, the Lars solver may be significantly
     faster to implement this functionality. In particular, linear
-    interpolation can be used to retrieve model coefficents between the
+    interpolation can be used to retrieve model coefficients between the
     values output by lars_path
 
     Examples
@@ -696,7 +696,8 @@ def enet_path(X, y, l1_ratio=0.5, eps=1e-3, n_alphas=100, alphas=None,
 
     Notes
     -----
-    See examples/plot_lasso_coordinate_descent_path.py for an example.
+    See examples/linear_model/plot_lasso_coordinate_descent_path.py
+    for an example.
 
     See also
     --------
@@ -1022,9 +1023,9 @@ class LassoCV(LinearModelCV, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    cv : integer or crossvalidation generator, optional
+    cv : integer or cross-validation generator, optional
         If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see the
+        Specific cross-validation objects can be passed, see the
         :mod:`sklearn.cross_validation` module for the list of possible
         objects.
 
@@ -1050,7 +1051,7 @@ class LassoCV(LinearModelCV, RegressorMixin):
 
     Notes
     -----
-    See examples/linear_model/lasso_path_with_crossvalidation.py
+    See examples/linear_model/plot_lasso_model_selection.py
     for an example.
 
     To avoid unnecessary memory duplication the X argument of the fit method
@@ -1121,9 +1122,9 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
         dual gap for optimality and continues until it is smaller
         than ``tol``.
 
-    cv : integer or crossvalidation generator, optional
+    cv : integer or cross-validation generator, optional
         If an integer is passed, it is the number of fold (default 3).
-        Specific crossvalidation objects can be passed, see the
+        Specific cross-validation objects can be passed, see the
         :mod:`sklearn.cross_validation` module for the list of possible
         objects.
 
@@ -1156,7 +1157,7 @@ class ElasticNetCV(LinearModelCV, RegressorMixin):
 
     Notes
     -----
-    See examples/linear_model/lasso_path_with_crossvalidation.py
+    See examples/linear_model/plot_lasso_model_selection.py
     for an example.
 
     To avoid unnecessary memory duplication the X argument of the fit method
@@ -1331,7 +1332,7 @@ class MultiTaskElasticNet(Lasso):
         y: ndarray, shape = (n_samples, n_tasks)
             Target
         coef_init: ndarray of shape n_features
-            The initial coeffients to warm-start the optimization
+            The initial coefficients to warm-start the optimization
 
         Notes
         -----

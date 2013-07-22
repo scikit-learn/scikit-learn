@@ -1,4 +1,4 @@
-# Author: Arnaud Joly
+# Author: Arnaud Joly, Joel Nothman
 #
 # License: BSD 3 clause
 """
@@ -7,22 +7,51 @@ Multi-class / multi-label utility function
 
 """
 from collections import Sequence
+from itertools import chain
 
 import numpy as np
 
 from ..externals.six import string_types
 
 
-def unique_labels(*lists_of_labels):
+def _unique_multiclass(y):
+    if isinstance(y, np.ndarray):
+        return np.unique(y)
+    else:
+        return set(y)
+
+
+def _unique_sequence_of_sequence(y):
+    return set(chain.from_iterable(y))
+
+
+def _unique_indicator(y):
+    return np.arange(y.shape[1])
+
+
+_FN_UNIQUE_LABELS = {
+    'binary': _unique_multiclass,
+    'multiclass': _unique_multiclass,
+    'multilabel-sequences': _unique_sequence_of_sequence,
+    'multilabel-indicator': _unique_indicator,
+}
+
+
+def unique_labels(*ys):
     """Extract an ordered array of unique labels
+
+    We don't allow:
+        - mix of multilabel and multiclass (single label) targets
+        - mix of label indicator matrix and anything else,
+          because there are no explicit labels)
+        - mix of label indicator matrices of different sizes
+        - mix of string and integer labels
+
+    At the moment, we also don't allow "mutliclass-multioutput" input type.
 
     Parameters
     ----------
-    lists_of_labels : list of labels,
-        The supported "list of labels" are:
-            - a list / tuple / numpy array of int
-            - a list of lists / tuples of int;
-            - a binary indicator matrix (2D numpy array)
+    ys : array-likes,
 
     Returns
     -------
@@ -44,23 +73,41 @@ def unique_labels(*lists_of_labels):
     array([1, 2, 3])
 
     """
-    def _unique_labels(y):
-        classes = None
-        if is_multilabel(y):
-            if is_label_indicator_matrix(y):
-                classes = np.arange(y.shape[1])
-            else:
-                classes = np.array(sorted(set.union(*map(set, y))))
+    if not ys:
+        raise ValueError('No argument has been passed.')
 
-        else:
-            classes = np.unique(y)
+    # Check that we don't mix label format
+    ys_types = set(type_of_target(x) for x in ys)
+    if ys_types == set(["binary", "multiclass"]):
+        ys_types = set(["multiclass"])
 
-        return classes
+    if len(ys_types) > 1:
+        raise ValueError("Mix type of y not allowed, got types %s" % ys_types)
 
-    if not lists_of_labels:
-        raise ValueError('No list of labels has been passed.')
+    label_type = ys_types.pop()
 
-    return np.unique(np.hstack(_unique_labels(y) for y in lists_of_labels))
+    # Check consistency for the indicator format
+    if (label_type == "multilabel-indicator" and
+            len(set(y.shape[1] for y in ys)) > 1):
+        raise ValueError("Multi-label binary indicator input with "
+                         "different numbers of labels")
+
+    # Get the unique set of labels
+    _unique_labels = _FN_UNIQUE_LABELS.get(label_type, None)
+    if not _unique_labels:
+        raise ValueError("Unknown label type")
+
+    ys_labels = set(chain.from_iterable(_unique_labels(y) for y in ys))
+
+    # Check that we don't mix string type with number type
+    if (len(set(isinstance(label, string_types) for label in ys_labels)) > 1):
+        raise ValueError("Mix of label input types (string and number)")
+
+    return np.array(sorted(ys_labels))
+
+
+def _is_integral_float(y):
+    return y.dtype.kind == 'f' and np.all(y.astype(int) == y)
 
 
 def is_label_indicator_matrix(y):
@@ -91,11 +138,52 @@ def is_label_indicator_matrix(y):
     >>> is_label_indicator_matrix(np.array([[1], [0], [0]]))
     False
     >>> is_label_indicator_matrix(np.array([[1, 0, 0]]))
-    False
+    True
 
     """
-    return (hasattr(y, "shape") and len(y.shape) == 2 and y.shape[1] > 1 and
-            y.shape[0] > 1 and np.size(np.unique(y)) <= 2)
+    if not (hasattr(y, "shape") and y.ndim == 2 and y.shape[1] > 1):
+        return False
+    labels = np.unique(y)
+    return len(labels) <= 2 and (y.dtype.kind in 'biu'  # bool, int, uint
+                                 or _is_integral_float(labels))
+
+
+def is_sequence_of_sequences(y):
+    """ Check if ``y`` is in the sequence of sequences format (multilabel).
+
+    Parameters
+    ----------
+    y : sequence or array.
+
+    Returns
+    -------
+    out : bool,
+        Return ``True``, if ``y`` is a sequence of sequences else ``False``.
+
+    >>> import numpy as np
+    >>> from sklearn.utils.multiclass import is_multilabel
+    >>> is_sequence_of_sequences([0, 1, 0, 1])
+    False
+    >>> is_sequence_of_sequences([[1], [0, 2], []])
+    True
+    >>> is_sequence_of_sequences(np.array([[1], [0, 2], []], dtype=object))
+    True
+    >>> is_sequence_of_sequences([(1,), (0, 2), ()])
+    True
+    >>> is_sequence_of_sequences(np.array([[1, 0], [0, 0]]))
+    False
+    >>> is_sequence_of_sequences(np.array([[1], [0], [0]]))
+    False
+    >>> is_sequence_of_sequences(np.array([[1, 0, 0]]))
+    False
+    """
+    # the explicit check for ndarray is for forward compatibility; future
+    # versions of Numpy might want to register ndarray as a Sequence
+    try:
+        return (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence)
+                and not isinstance(y[0], string_types))
+    except IndexError:
+        return False
 
 
 def is_multilabel(y):
@@ -125,10 +213,98 @@ def is_multilabel(y):
     >>> is_multilabel(np.array([[1], [0], [0]]))
     False
     >>> is_multilabel(np.array([[1, 0, 0]]))
-    False
+    True
 
     """
-    # the explicit check for ndarray is for forward compatibility; future
-    # versions of Numpy might want to register ndarray as a Sequence
-    return (not isinstance(y[0], np.ndarray) and isinstance(y[0], Sequence) and
-            not isinstance(y[0], string_types) or is_label_indicator_matrix(y))
+    return is_label_indicator_matrix(y) or is_sequence_of_sequences(y)
+
+
+def type_of_target(y):
+    """Determine the type of data indicated by target `y`
+
+    Parameters
+    ----------
+    y : array-like
+
+    Returns
+    -------
+    target_type : string
+        One of:
+        * 'continuous': `y` is an array-like of floats that are not all
+          integers, and is 1d or a column vector.
+        * 'continuous-multioutput': `y` is a 2d array of floats that are
+          not all integers, and both dimensions are of size > 1.
+        * 'binary': `y` contains <= 2 discrete values and is 1d or a column
+          vector.
+        * 'multiclass': `y` contains more than two discrete values, is not a
+          sequence of sequences, and is 1d or a column vector.
+        * 'mutliclass-multioutput': `y` is a 2d array that contains more
+          than two discrete values, is not a sequence of sequences, and both
+          dimensions are of size > 1.
+        * 'multilabel-sequences': `y` is a sequence of sequences, a 1d
+          array-like of objects that are sequences of labels.
+        * 'multilabel-indicator': `y` is a label indicator matrix, an array
+          of two dimensions with at least two columns, and at most 2 unique
+          values.
+        * 'unknown': `y` is array-like but none of the above, such as a 3d
+          array, or an array of non-sequence objects.
+
+    Examples
+    --------
+    >>> import numpy as np
+    >>> type_of_target([0.1, 0.6])
+    'continuous'
+    >>> type_of_target([1, -1, -1, 1])
+    'binary'
+    >>> type_of_target(['a', 'b', 'a'])
+    'binary'
+    >>> type_of_target([1, 0, 2])
+    'multiclass'
+    >>> type_of_target(['a', 'b', 'c'])
+    'multiclass'
+    >>> type_of_target(np.array([[1, 2], [3, 1]]))
+    'multiclass-multioutput'
+    >>> type_of_target(np.array([[1.5, 2.0], [3.0, 1.6]]))
+    'continuous-multioutput'
+    >>> type_of_target([['a', 'b'], ['c'], []])
+    'multilabel-sequences'
+    >>> type_of_target([[]])
+    'multilabel-sequences'
+    >>> type_of_target(np.array([[0, 1], [1, 1]]))
+    'multilabel-indicator'
+    """
+    # XXX: is there a way to duck-type this condition?
+    valid = (isinstance(y, (np.ndarray, Sequence))
+             and not isinstance(y, string_types))
+    if not valid:
+        raise ValueError('Expected array-like (array or non-string sequence), '
+                         'got %r' % y)
+
+    if is_sequence_of_sequences(y):
+        return 'multilabel-sequences'
+    elif is_label_indicator_matrix(y):
+        return 'multilabel-indicator'
+
+    try:
+        y = np.asarray(y)
+    except ValueError:
+        # known to fail in numpy 1.3 for array of arrays
+        return 'unknown'
+    if y.ndim > 2 or y.dtype == object:
+        return 'unknown'
+    if y.ndim == 2 and y.shape[1] == 0:
+        return 'unknown'
+    elif y.ndim == 2 and y.shape[1] > 1:
+        suffix = '-multioutput'
+    else:
+        # column vector or 1d
+        suffix = ''
+
+    # check float and contains non-integer float values:
+    if y.dtype.kind == 'f' and np.any(y != y.astype(int)):
+        return 'continuous' + suffix
+    if len(np.unique(y)) <= 2:
+        assert not suffix, "2d binary array-like should be multilabel"
+        return 'binary'
+    else:
+        return 'multiclass' + suffix

@@ -209,8 +209,8 @@ Backports
   independent back-ports in ``sklearn.mixture.gmm`` and
   :mod:`sklearn.gaussian_process`.
 
-- :func:`sparsetools.cs_graph_components`
-  (backported from ``scipy.sparse.cs_graph_components`` in scipy 0.9).
+- :func:`sparsetools.connected_components`
+  (backported from ``scipy.sparse.connected_components`` in scipy 0.12).
   Used in ``sklearn.cluster.hierarchical``, as well as in tests for
   :mod:`sklearn.feature_extraction`.
 
@@ -302,11 +302,11 @@ Hash Functions
   random projections::
 
     >>> from sklearn.utils import murmurhash3_32
-    >>> murmurhash3_32("some feature", seed=0)
-    -384616559
+    >>> murmurhash3_32("some feature", seed=0) == -384616559
+    True
 
-    >>> murmurhash3_32("some feature", seed=0, positive=True)
-    3910350737L
+    >>> murmurhash3_32("some feature", seed=0, positive=True) == 3910350737
+    True
 
   The ``sklearn.utils.murmurhash`` module can also be "cimported" from
   other cython modules so as to benefit from the high performance of

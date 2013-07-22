@@ -8,9 +8,11 @@ from scipy import interpolate
 from .base import BaseEstimator, TransformerMixin, RegressorMixin
 from .utils import as_float_array, check_arrays
 from ._isotonic import _isotonic_regression
+import warnings
 
 
-def isotonic_regression(y, weight=None, y_min=None, y_max=None):
+def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
+                        weight=None):
     """Solve the isotonic regression model::
 
         min sum w[i] (y[i] - y_[i]) ** 2
@@ -27,7 +29,7 @@ def isotonic_regression(y, weight=None, y_min=None, y_max=None):
     y : iterable of floating-point values
         The data.
 
-    weight : iterable of floating-point values, optional, default: None
+    sample_weight : iterable of floating-point values, optional, default: None
         Weights on each point of the regression.
         If None, weight is set to 1 (equal weights).
 
@@ -47,24 +49,31 @@ def isotonic_regression(y, weight=None, y_min=None, y_max=None):
     "Active set algorithms for isotonic regression; A unifying framework"
     by Michael J. Best and Nilotpal Chakravarti, section 3.
     """
+    if weight is not None:
+        warnings.warn("'weight' was renamed to 'sample_weight' and will "
+                      "be removed in 0.16.",
+                      DeprecationWarning)
+        sample_weight = weight
+
     y = np.asarray(y, dtype=np.float)
-    if weight is None:
-        weight = np.ones(len(y), dtype=y.dtype)
+    if sample_weight is None:
+        sample_weight = np.ones(len(y), dtype=y.dtype)
     else:
-        weight = np.asarray(weight, dtype=np.float)
+        sample_weight = np.asarray(sample_weight, dtype=np.float)
     if y_min is not None or y_max is not None:
         y = np.copy(y)
-        weight = np.copy(weight)
-        C = np.dot(weight, y * y) * 10  # upper bound on the cost function
+        sample_weight = np.copy(sample_weight)
+        # upper bound on the cost function
+        C = np.dot(sample_weight, y * y) * 10
         if y_min is not None:
             y[0] = y_min
-            weight[0] = C
+            sample_weight[0] = C
         if y_max is not None:
             y[-1] = y_max
-            weight[-1] = C
+            sample_weight[-1] = C
 
     solution = np.empty(len(y))
-    return _isotonic_regression(y, weight, solution)
+    return _isotonic_regression(y, sample_weight, solution)
 
 
 class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
@@ -111,11 +120,11 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         self.y_min = y_min
         self.y_max = y_max
 
-    def _check_fit_data(self, X, y, weight=None):
+    def _check_fit_data(self, X, y, sample_weight=None):
         if len(X.shape) != 1:
             raise ValueError("X should be a vector")
 
-    def fit(self, X, y, weight=None):
+    def fit(self, X, y, sample_weight=None, weight=None):
         """Fit the model using X, y as training data.
 
         Parameters
@@ -126,7 +135,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         y : array-like, shape=(n_samples,)
             Training target.
 
-        weight : array-like, shape=(n_samples,), optional, default: None
+        sample_weight : array-like, shape=(n_samples,), optional, default: None
             Weights. If set to None, all weights will be set to 1 (equal
             weights).
 
@@ -140,12 +149,20 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         X is stored for future use, as `transform` needs X to interpolate
         new input data.
         """
-        X, y, weight = check_arrays(X, y, weight, sparse_format='dense')
+        if weight is not None:
+            warnings.warn("'weight' was renamed to 'sample_weight' and will "
+                          "be removed in 0.16.",
+                          DeprecationWarning)
+            sample_weight = weight
+
+        X, y, sample_weight = check_arrays(X, y, sample_weight,
+                                           sparse_format='dense')
         y = as_float_array(y)
-        self._check_fit_data(X, y, weight)
+        self._check_fit_data(X, y, sample_weight)
         order = np.argsort(X)
         self.X_ = as_float_array(X[order], copy=False)
-        self.y_ = isotonic_regression(y[order], weight, self.y_min, self.y_max)
+        self.y_ = isotonic_regression(y[order], sample_weight, self.y_min,
+                                      self.y_max)
         return self
 
     def transform(self, T):
@@ -169,7 +186,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
                                  bounds_error=True)
         return f(T)
 
-    def fit_transform(self, X, y, weight=None):
+    def fit_transform(self, X, y, sample_weight=None, weight=None):
         """Fit model and transform y by linear interpolation.
 
         Parameters
@@ -180,7 +197,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         y : array-like, shape=(n_samples,)
             Training target.
 
-        weight : array-like, shape=(n_samples,), optional, default: None
+        sample_weight : array-like, shape=(n_samples,), optional, default: None
             Weights. If set to None, all weights will be equal to 1 (equal
             weights).
 
@@ -195,13 +212,21 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         for future use, as `transform` needs X to interpolate new input
         data.
         """
-        X, y, weight = check_arrays(X, y, weight, sparse_format='dense')
+        if weight is not None:
+            warnings.warn("'weight' was renamed to 'sample_weight' and will "
+                          "be removed in 0.16.",
+                          DeprecationWarning)
+            sample_weight = weight
+
+        X, y, sample_weight = check_arrays(X, y, sample_weight,
+                                           sparse_format='dense')
         y = as_float_array(y)
-        self._check_fit_data(X, y, weight)
+        self._check_fit_data(X, y, sample_weight)
         order = np.lexsort((y, X))
         order_inv = np.argsort(order)
         self.X_ = as_float_array(X[order], copy=False)
-        self.y_ = isotonic_regression(y[order], weight, self.y_min, self.y_max)
+        self.y_ = isotonic_regression(y[order], sample_weight, self.y_min,
+                                      self.y_max)
         return self.y_[order_inv]
 
     def predict(self, T):

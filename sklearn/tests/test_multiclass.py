@@ -13,6 +13,9 @@ from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
 
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+
 from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import MultinomialNB
 from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
@@ -29,30 +32,6 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 n_classes = 3
-
-
-# FIXME: - should use sets
-#        - should move to metrics module
-def multilabel_precision(Y_true, Y_pred):
-    n_predictions = 0
-    n_correct = 0
-    for i in range(len(Y_true)):
-        n_predictions += len(Y_pred[i])
-        for label in Y_pred[i]:
-            if label in Y_true[i]:
-                n_correct += 1
-    return float(n_correct) / n_predictions
-
-
-def multilabel_recall(Y_true, Y_pred):
-    n_labels = 0
-    n_correct = 0
-    for i in range(len(Y_true)):
-        n_labels += len(Y_true[i])
-        for label in Y_pred[i]:
-            if label in Y_true[i]:
-                n_correct += 1
-    return float(n_correct) / n_labels
 
 
 def test_ovr_exceptions():
@@ -141,9 +120,11 @@ def test_ovr_multilabel_dataset():
         clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
         Y_pred = clf.predict(X_test)
         assert_true(clf.multilabel_)
-        assert_almost_equal(multilabel_precision(Y_test, Y_pred), prec,
+        assert_almost_equal(precision_score(Y_test, Y_pred, average="micro"),
+                            prec,
                             decimal=2)
-        assert_almost_equal(multilabel_recall(Y_test, Y_pred), recall,
+        assert_almost_equal(recall_score(Y_test, Y_pred, average="micro"),
+                            recall,
                             decimal=2)
 
 
@@ -193,6 +174,32 @@ def test_ovr_single_label_predict_proba():
     # sample has the label is greater than 0.5.
     pred = np.array([l.argmax() for l in Y_proba])
     assert_false((pred - Y_pred).any())
+
+
+def test_ovr_multilabel_decision_function():
+    X, Y = datasets.make_multilabel_classification(n_samples=100,
+                                                   n_features=20,
+                                                   n_classes=5,
+                                                   n_labels=3,
+                                                   length=50,
+                                                   allow_unlabeled=True,
+                                                   random_state=0)
+    X_train, Y_train = X[:80], Y[:80]
+    X_test, Y_test = X[80:], Y[80:]
+    clf = OneVsRestClassifier(svm.SVC()).fit(X_train, Y_train)
+    assert_array_equal((clf.decision_function(X_test) > 0).nonzero()[1],
+                        np.hstack(clf.predict(X_test)))
+
+
+def test_ovr_single_label_decision_function():
+    X, Y = datasets.make_classification(n_samples=100,
+                                        n_features=20,
+                                        random_state=0)
+    X_train, Y_train = X[:80], Y[:80]
+    X_test, Y_test = X[80:], Y[80:]
+    clf = OneVsRestClassifier(svm.SVC()).fit(X_train, Y_train)
+    assert_array_equal(clf.decision_function(X_test).ravel() > 0,
+                       clf.predict(X_test))
 
 
 def test_ovr_gridsearch():

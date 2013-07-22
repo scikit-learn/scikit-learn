@@ -11,6 +11,7 @@ function such as linearity. For comparison a linear regression is also
 presented.
 
 """
+print(__doc__)
 
 # Author: Nelle Varoquaux <nelle.varoquaux@gmail.com>
 #         Alexandre Gramfort <alexandre.gramfort@inria.fr>

@@ -264,11 +264,11 @@ class BaseDiscreteNB(BaseNB):
     # XXX The following is a stopgap measure; we need to set the dimensions
     # of class_log_prior_ and feature_log_prob_ correctly.
     def _get_coef(self):
-        return (self.feature_log_prob_[1]
+        return (self.feature_log_prob_[1:]
                 if len(self.classes_) == 2 else self.feature_log_prob_)
 
     def _get_intercept(self):
-        return (self.class_log_prior_[1]
+        return (self.class_log_prior_[1:]
                 if len(self.classes_) == 2 else self.class_log_prior_)
 
     coef_ = property(_get_coef)

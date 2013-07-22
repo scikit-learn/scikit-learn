@@ -1,5 +1,5 @@
 """
-The :mod:`sklearn.pipeline` module implements utilites to build a composite
+The :mod:`sklearn.pipeline` module implements utilities to build a composite
 estimator, as a chain of transforms and estimators.
 """
 # Author: Edouard Duchesnay
@@ -242,8 +242,9 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
 
     Parameters
     ----------
-    transformers: list of (name, transformer)
-        List of transformer objects to be applied to the data.
+    transformer_list: list of (string, transformer) tuples
+        List of transformer objects to be applied to the data. The first
+        half of each tuple is the name of the transformer.
 
     n_jobs: int, optional
         Number of jobs to run in parallel (default 1).
@@ -289,7 +290,7 @@ class FeatureUnion(BaseEstimator, TransformerMixin):
         return self
 
     def fit_transform(self, X, y=None, **fit_params):
-        """Fit all tranformers using X, transform the data and concatenate
+        """Fit all transformers using X, transform the data and concatenate
         results.
 
         Parameters

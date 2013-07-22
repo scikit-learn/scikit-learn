@@ -12,13 +12,17 @@ import scipy.sparse as sp
 
 from .base import BaseEstimator, TransformerMixin
 from .externals.six import string_types
-from .utils import check_arrays, array2d, atleast2d_or_csr, safe_asarray
+from .utils import check_arrays
+from .utils import array2d
+from .utils import atleast2d_or_csr
+from .utils import atleast2d_or_csc
+from .utils import safe_asarray
 from .utils import warn_if_not_float
 from .utils.fixes import unique
 
 from .utils.multiclass import unique_labels
 from .utils.multiclass import is_multilabel
-from .utils.multiclass import is_label_indicator_matrix
+from .utils.multiclass import type_of_target
 
 from .utils.sparsefuncs import inplace_csr_row_normalize_l1
 from .utils.sparsefuncs import inplace_csr_row_normalize_l2
@@ -35,6 +39,7 @@ __all__ = ['Binarizer',
            'LabelEncoder',
            'MinMaxScaler',
            'Normalizer',
+           'OneHotEncoder',
            'StandardScaler',
            'binarize',
            'normalize',
@@ -239,7 +244,7 @@ class MinMaxScaler(BaseEstimator, TransformerMixin):
 class StandardScaler(BaseEstimator, TransformerMixin):
     """Standardize features by removing the mean and scaling to unit variance
 
-    Centering and scaling happen indepently on each feature by computing
+    Centering and scaling happen independently on each feature by computing
     the relevant statistics on the samples in the training set. Mean and
     standard deviation are then stored to be used on later data using the
     `transform` method.
@@ -534,7 +539,8 @@ def binarize(X, threshold=0.0, copy=True):
         un-necessary copy.
 
     threshold : float, optional (0.0 by default)
-        The lower bound that triggers feature values to be replaced by 1.0.
+        Feature values below this are replaced by 1, above it by 0.
+        Threshold may not be less than 0 for operations on sparse matrices.
 
     copy : boolean, optional, default is True
         set to False to perform inplace binarization and avoid a copy
@@ -554,6 +560,9 @@ def binarize(X, threshold=0.0, copy=True):
 
     X = check_arrays(X, sparse_format=sparse_format, copy=copy)[0]
     if sp.issparse(X):
+        if threshold < 0:
+            raise ValueError('Cannot binarize a sparse matrix with threshold '
+                             '< 0')
         cond = X.data > threshold
         not_cond = np.logical_not(cond)
         X.data[cond] = 1
@@ -570,8 +579,9 @@ def binarize(X, threshold=0.0, copy=True):
 class Binarizer(BaseEstimator, TransformerMixin):
     """Binarize data (set feature values to 0 or 1) according to a threshold
 
-    The default threshold is 0.0 so that any non-zero values are set to 1.0
-    and zeros are left untouched.
+    Values greater than the threshold map to 1, while values less than
+    or equal to the threshold map to 0. With the default threshold of 0,
+    only positive values map to 1.
 
     Binarization is a common operation on text count data where the
     analyst can decide to only consider the presence or absence of a
@@ -584,7 +594,8 @@ class Binarizer(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     threshold : float, optional (0.0 by default)
-        The lower bound that triggers feature values to be replaced by 1.0.
+        Feature values below this are replaced by 1, above it by 0.
+        Threshold may not be less than 0 for operations on sparse matrices.
 
     copy : boolean, optional, default is True
         set to False to perform inplace binarization and avoid a copy (if
@@ -626,6 +637,58 @@ class Binarizer(BaseEstimator, TransformerMixin):
         return binarize(X, threshold=self.threshold, copy=copy)
 
 
+def _transform_selected(X, transform, selected="all", copy=True):
+    """Apply a transform function to portion of selected features
+
+    Parameters
+    ----------
+    X : array-like or sparse matrix, shape=(n_samples, n_features)
+        Dense array or sparse matrix.
+
+    transform : callable
+        A callable transform(X) -> X_transformed
+
+    copy : boolean, optional
+        Copy X even if it could be avoided.
+
+    selected: "all" or array of indices or mask
+        Specify which features to apply the transform to.
+
+    Returns
+    -------
+    X : array or sparse matrix, shape=(n_samples, n_features_new)
+    """
+    if selected == "all":
+        return transform(X)
+
+    X = atleast2d_or_csc(X, copy=copy)
+
+    if len(selected) == 0:
+        return X
+
+    n_features = X.shape[1]
+    ind = np.arange(n_features)
+    sel = np.zeros(n_features, dtype=bool)
+    sel[np.asarray(selected)] = True
+    not_sel = np.logical_not(sel)
+    n_selected = np.sum(sel)
+
+    if n_selected == 0:
+        # No features selected.
+        return X
+    elif n_selected == n_features:
+        # All features selected.
+        return transform(X)
+    else:
+        X_sel = transform(X[:, ind[sel]])
+        X_not_sel = X[:, ind[not_sel]]
+
+        if sp.issparse(X_sel) or sp.issparse(X_not_sel):
+            return sp.hstack((X_sel, X_not_sel))
+        else:
+            return np.hstack((X_sel, X_not_sel))
+
+
 class OneHotEncoder(BaseEstimator, TransformerMixin):
     """Encode categorical integer features using a one-hot aka one-of-K scheme.
 
@@ -635,16 +698,26 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     feature. It is assumed that input features take on values in the range
     [0, n_values).
 
-    This encoding is needed for feeding categorical data to scikit-learn
-    estimators.
+    This encoding is needed for feeding categorical data to many scikit-learn
+    estimators, notably linear models and SVMs with the standard kernels.
 
     Parameters
     ----------
-    n_values : 'auto', int or array of int
+    n_values : 'auto', int or array of ints
         Number of values per feature.
-        'auto' : determine value range from training data.
-        int : maximum value for all features.
-        array : maximum value per feature.
+
+        - 'auto' : determine value range from training data.
+        - int : maximum value for all features.
+        - array : maximum value per feature.
+
+    categorical_features: "all" or array of indices or mask
+        Specify what features are treated as categorical.
+
+        - 'all' (default): All features are treated as categorical.
+        - array of indices: Array of categorical feature indices.
+        - mask: Array of length n_features and with dtype=bool.
+
+        Non-categorical features are always stacked to the right of the matrix.
 
     dtype : number type, default=np.float
         Desired dtype of output.
@@ -674,7 +747,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
     >>> enc = OneHotEncoder()
     >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], \
 [1, 0, 2]])  # doctest: +ELLIPSIS
-    OneHotEncoder(dtype=<... 'float'>, n_values='auto')
+    OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
+           n_values='auto')
     >>> enc.n_values_
     array([2, 3, 4])
     >>> enc.feature_indices_
@@ -684,12 +758,15 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
     See also
     --------
-    LabelEncoder : performs a one-hot encoding on arbitrary class labels.
     sklearn.feature_extraction.DictVectorizer : performs a one-hot encoding of
       dictionary items (also handles string-valued features).
+    sklearn.feature_extraction.FeatureHasher : performs an approximate one-hot
+      encoding of dictionary items or strings.
     """
-    def __init__(self, n_values="auto", dtype=np.float):
+    def __init__(self, n_values="auto", categorical_features="all",
+                 dtype=np.float):
         self.n_values = n_values
+        self.categorical_features = categorical_features
         self.dtype = dtype
 
     def fit(self, X, y=None):
@@ -707,12 +784,8 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         self.fit_transform(X)
         return self
 
-    def fit_transform(self, X, y=None):
-        """Fit OneHotEncoder to X, then transform X.
-
-        Equivalent to self.fit(X).transform(X), but more convenient and more
-        efficient. See fit for the parameters, transform for the return value.
-        """
+    def _fit_transform(self, X):
+        """Assumes X contains only categorical features."""
         X = check_arrays(X, sparse_format='dense', dtype=np.int)[0]
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
@@ -753,19 +826,17 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
 
         return out
 
-    def transform(self, X):
-        """Transform X using one-hot encoding.
+    def fit_transform(self, X, y=None):
+        """Fit OneHotEncoder to X, then transform X.
 
-        Parameters
-        ----------
-        X : array-like, shape=(n_samples, feature_indices_[-1])
-            Input array of type int.
-
-        Returns
-        -------
-        X_out : sparse matrix, dtype=int
-            Transformed input.
+        Equivalent to self.fit(X).transform(X), but more convenient and more
+        efficient. See fit for the parameters, transform for the return value.
         """
+        return _transform_selected(X, self._fit_transform,
+                                   self.categorical_features, copy=True)
+
+    def _transform(self, X):
+        """Asssumes X contains only categorical features."""
         X = check_arrays(X, sparse_format='dense', dtype=np.int)[0]
         if np.any(X < 0):
             raise ValueError("X needs to contain only non-negative integers.")
@@ -791,6 +862,22 @@ class OneHotEncoder(BaseEstimator, TransformerMixin):
         if self.n_values == 'auto':
             out = out[:, self.active_features_]
         return out
+
+    def transform(self, X):
+        """Transform X using one-hot encoding.
+
+        Parameters
+        ----------
+        X : array-like, shape=(n_samples, n_features)
+            Input array of type int.
+
+        Returns
+        -------
+        X_out : sparse matrix, dtype=int
+            Transformed input.
+        """
+        return _transform_selected(X, self._transform,
+                                   self.categorical_features, copy=True)
 
 
 class LabelEncoder(BaseEstimator, TransformerMixin):
@@ -979,9 +1066,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         -------
         self : returns an instance of self.
         """
-        self.multilabel = is_multilabel(y)
+        y_type = type_of_target(y)
+        self.multilabel = y_type.startswith('multilabel')
         if self.multilabel:
-            self.indicator_matrix_ = is_label_indicator_matrix(y)
+            self.indicator_matrix_ = y_type == 'multilabel-indicator'
 
         self.classes_ = unique_labels(y)
 
@@ -1005,8 +1093,10 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
         """
         self._check_fitted()
 
+        y_type = type_of_target(y)
+
         if self.multilabel or len(self.classes_) > 2:
-            if is_label_indicator_matrix(y):
+            if y_type == 'multilabel-indicator':
                 # nothing to do as y is already a label indicator matrix
                 return y
 
@@ -1016,14 +1106,14 @@ class LabelBinarizer(BaseEstimator, TransformerMixin):
 
         Y += self.neg_label
 
-        y_is_multilabel = is_multilabel(y)
+        y_is_multilabel = y_type.startswith('multilabel')
 
         if y_is_multilabel and not self.multilabel:
             raise ValueError("The object was not fitted with multilabel"
                              " input!")
 
         elif self.multilabel:
-            if not is_multilabel(y):
+            if not y_is_multilabel:
                 raise ValueError("y should be a list of label lists/tuples,"
                                  "got %r" % (y,))
 
@@ -1222,27 +1312,3 @@ def add_dummy_feature(X, value=1.0):
             return klass(add_dummy_feature(X.tocoo(), value))
     else:
         return np.hstack((np.ones((n_samples, 1)) * value, X))
-
-
-def balance_weights(y):
-    """Compute sample weights such that the class distribution of y becomes
-       balanced.
-
-    Parameters
-    ----------
-    y : array-like
-        Labels for the samples.
-
-    Returns
-    -------
-    weights : array-like
-        The sample weights.
-    """
-    y = safe_asarray(y)
-    y = np.searchsorted(np.unique(y), y)
-    bins = np.bincount(y)
-
-    weights = 1. / bins.take(y)
-    weights *= bins.min()
-
-    return weights
