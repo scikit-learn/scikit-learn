@@ -18,7 +18,7 @@ linear shifts of 1 pixel in each direction.
 
 This example shows how to build a classification pipeline with a BernoulliRBM
 feature extractor and a :class:`LogisticRegression
-<sklearn.linear_model.LogisticRegression>` classifier.  The hyperparameters
+<sklearn.linear_model.LogisticRegression>` classifier. The hyperparameters
 of the entire model (learning rate, hidden layer size, regularization)
 were optimized by grid search, but the search is not reproduced here because
 of runtime constraints.
