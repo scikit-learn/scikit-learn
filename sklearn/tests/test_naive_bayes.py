@@ -138,8 +138,12 @@ def test_discretenb_pickle():
 def test_input_check_fit():
     """Test input checks for the fit method"""
     for cls in [BernoulliNB, MultinomialNB, GaussianNB]:
-        # check shape consistency
+        # check shape consistency for number of samples at fit time
         assert_raises(ValueError, cls().fit, X2, y2[:-1])
+
+        # check shape consistency for number of input features at predict time
+        clf = cls().fit(X2, y2)
+        assert_raises(ValueError, clf.predict, X2[:, :-1])
 
 
 def test_input_check_partial_fit():
@@ -211,7 +215,27 @@ def test_discretenb_provide_prior():
         assert_array_equal(prior, np.array([.5, .5]))
 
 
-def test_sample_weight():
+def test_sample_weight_multiclass():
+    for cls in [BernoulliNB, MultinomialNB]:
+        # check shape consistency for number of samples at fit time
+        yield check_sample_weight_multiclass, cls
+
+
+def check_sample_weight_multiclass(cls):
+    X = [
+        [0, 0, 1],
+        [0, 1, 1],
+        [0, 1, 1],
+        [1, 0, 0],
+    ]
+    y = [0, 0, 1, 2]
+    sample_weight = np.array([1, 1, 2, 2], dtype=np.float)
+    sample_weight /= sample_weight.sum()
+    clf = cls().fit(X, y, sample_weight=sample_weight)
+    assert_array_equal(clf.predict(X), [0, 1, 1, 2])
+
+
+def test_sample_weight_mnb():
     clf = MultinomialNB()
     clf.fit([[1, 2], [1, 2], [1, 0]],
             [0, 0, 1],

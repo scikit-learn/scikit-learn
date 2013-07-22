@@ -253,7 +253,7 @@ class BaseDiscreteNB(BaseNB):
         self : object
             Returns self.
         """
-        X = atleast2d_or_csr(X)
+        X = atleast2d_or_csr(X).astype(np.float64)
         _, n_features = X.shape
 
         if _check_partial_fit_classes_consistency(self, classes):
@@ -267,12 +267,19 @@ class BaseDiscreteNB(BaseNB):
 
             # Initialize various cumulative counters
             n_effective_classes = len(classes) if len(classes) > 1 else 2
-            self.class_count_ = np.zeros(n_effective_classes, dtype=np.int64)
+            self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
             self.feature_count_ = np.zeros((n_effective_classes, n_features),
-                                           dtype=np.int64)
+                                           dtype=np.float64)
 
         Y = self._labelbin.transform(y)
         n_samples, n_classes = Y.shape
+
+        if X.shape[0] != Y.shape[0]:
+            msg = "X.shape[0]=%d and y.shape[0]=%d are incompatible."
+            raise ValueError(msg % (X.shape[0], y.shape[0]))
+
+        # convert to float to support sample weight consistently
+        Y = Y.astype(np.float64)
         if sample_weight is not None:
             Y *= array2d(sample_weight).T
 
@@ -308,7 +315,7 @@ class BaseDiscreteNB(BaseNB):
         self : object
             Returns self.
         """
-        X = atleast2d_or_csr(X)
+        X = atleast2d_or_csr(X).astype(np.float64)
         _, n_features = X.shape
 
         labelbin = LabelBinarizer()
@@ -321,6 +328,8 @@ class BaseDiscreteNB(BaseNB):
             msg = "X.shape[0]=%d and y.shape[0]=%d are incompatible."
             raise ValueError(msg % (X.shape[0], y.shape[0]))
 
+        # convert to float to support sample weight consistently
+        Y = Y.astype(np.float64)
         if sample_weight is not None:
             Y *= array2d(sample_weight).T
 
@@ -334,9 +343,9 @@ class BaseDiscreteNB(BaseNB):
         # Count raw events from data before updating the class log prior
         # and feature log probas
         n_effective_classes = Y.shape[1]
-        self.class_count_ = np.zeros(n_effective_classes, dtype=np.int64)
+        self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
         self.feature_count_ = np.zeros((n_effective_classes, n_features),
-                                       dtype=np.int64)
+                                       dtype=np.float64)
         self._count(X, Y)
         self._update_feature_log_prob()
         self._update_class_log_prior(class_prior=class_prior)
