@@ -1,7 +1,7 @@
 import numpy as np
 from sklearn.utils.testing import assert_array_almost_equal
 from sklearn.datasets import load_linnerud
-from sklearn import pls
+from sklearn.cross_decomposition import pls_
 
 
 def test_pls():
@@ -12,9 +12,9 @@ def test_pls():
     # ===========================================================
     # Compare 2 algo.: nipals vs. svd
     # ------------------------------
-    pls_bynipals = pls.PLSCanonical(n_components=X.shape[1])
+    pls_bynipals = pls_.PLSCanonical(n_components=X.shape[1])
     pls_bynipals.fit(X, Y)
-    pls_bysvd = pls.PLSCanonical(algorithm="svd", n_components=X.shape[1])
+    pls_bysvd = pls_.PLSCanonical(algorithm="svd", n_components=X.shape[1])
     pls_bysvd.fit(X, Y)
     # check equalities of loading (up to the sign of the second column)
     assert_array_almost_equal(
@@ -29,7 +29,7 @@ def test_pls():
 
     # Check PLS properties (with n_components=X.shape[1])
     # ---------------------------------------------------
-    plsca = pls.PLSCanonical(n_components=X.shape[1])
+    plsca = pls_.PLSCanonical(n_components=X.shape[1])
     plsca.fit(X, Y)
     T = plsca.x_scores_
     P = plsca.x_loadings_
@@ -56,7 +56,7 @@ def test_pls():
     # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
     # center scale X, Y
     Xc, Yc, x_mean, y_mean, x_std, y_std =\
-        pls.pls_._center_scale_xy(X.copy(), Y.copy(), scale=True)
+        pls_._center_scale_xy(X.copy(), Y.copy(), scale=True)
     assert_array_almost_equal(Xc, np.dot(T, P.T), err_msg="X != TP'")
     assert_array_almost_equal(Yc, np.dot(U, Q.T), err_msg="Y != UQ'")
 
@@ -74,7 +74,7 @@ def test_pls():
     # "Non regression test" on canonical PLS
     # --------------------------------------
     # The results were checked against the R-package plspm
-    pls_ca = pls.PLSCanonical(n_components=X.shape[1])
+    pls_ca = pls_.PLSCanonical(n_components=X.shape[1])
     pls_ca.fit(X, Y)
 
     x_weights = np.array(
@@ -104,7 +104,7 @@ def test_pls():
     # 2) Regression PLS (PLS2): "Non regression test"
     # ===============================================
     # The results were checked against the R-packages plspm, misOmics and pls
-    pls_2 = pls.PLSRegression(n_components=X.shape[1])
+    pls_2 = pls_.PLSRegression(n_components=X.shape[1])
     pls_2.fit(X, Y)
 
     x_weights = np.array(
@@ -149,7 +149,7 @@ def test_pls():
     Y = np.concatenate(
         (Y, np.random.normal(size=q_noise * n).reshape(n, q_noise)), axis=1)
     np.random.seed(None)
-    pls_ca = pls.PLSCanonical(n_components=3)
+    pls_ca = pls_.PLSCanonical(n_components=3)
     pls_ca.fit(X, Y)
 
     x_weights = np.array(
@@ -229,7 +229,7 @@ def test_scale():
     # causes X[:, -1].std() to be zero
     X[:, -1] = 1.0
 
-    for clf in [pls.PLSCanonical(), pls.PLSRegression(),
-                pls.PLSSVD()]:
+    for clf in [pls_.PLSCanonical(), pls_.PLSRegression(),
+                pls_.PLSSVD()]:
         clf.set_params(scale=True)
         clf.fit(X, Y)
