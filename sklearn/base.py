@@ -172,9 +172,10 @@ class BaseEstimator(object):
             # to represent
             args, varargs, kw, default = inspect.getargspec(init)
             if not varargs is None:
-                raise RuntimeError('scikit learn estimators should always '
-                                   'specify their parameters in the signature'
-                                   ' of their init (no varargs).')
+                raise RuntimeError("scikit learn estimators should always "
+                                   "specify their parameters in the signature"
+                                   " of their init (no varargs). %s doesn't "
+                                   "follow this convention." % (cls, ))
             # Remove 'self'
             # XXX: This is going to fail if the init is a staticmethod, but
             # who would do this?
