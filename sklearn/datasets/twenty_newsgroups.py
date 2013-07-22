@@ -106,8 +106,8 @@ def strip_newsgroup_header(text):
     return after
 
 
-_QUOTE_RE = re.compile(ur'(writes in|writes:|wrote:|says:|said:'
-                      ur'|^In article|^Quoted from|^\||^>)')
+_QUOTE_RE = re.compile(r'(writes in|writes:|wrote:|says:|said:'
+                       r'|^In article|^Quoted from|^\||^>)')
 
 def strip_newsgroup_quoting(text):
     """
