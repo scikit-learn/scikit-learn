@@ -122,7 +122,8 @@ def test_fastica_simple(add_noise=False):
     assert_equal(ica.components_.shape, (2, 2))
     assert_equal(ica.sources_.shape, (1000, 2))
 
-    sources = FastICA(fun=nl, algorithm=algo, random_state=0).fit_transform(m.T)
+    sources = FastICA(fun=nl, algorithm=algo, random_state=0).\
+                      fit_transform(m.T)
     assert_array_almost_equal(sources, ica.sources_)
     assert_array_almost_equal(sources, ica.transform(m.T))
 
