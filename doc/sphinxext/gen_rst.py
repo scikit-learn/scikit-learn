@@ -450,6 +450,7 @@ def generate_example_rst(app):
         -moz-box-shadow: 0px 0px 20px rgba(0, 0, 0, .0); /* FF3.5 - 3.6 */
         box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.0); /* Opera 10.5, IE9, FF4+, Chrome 10+ */
         padding: 0px
+        porder-color: white;
     }
 
     div.docstringWrapper p {
@@ -460,6 +461,8 @@ def generate_example_rst(app):
         box-shadow: 0px 0px 20px rgba(0, 0, 0, 1.00); /* Opera 10.5, IE9, FF4+, Chrome 10+ */
         padding: 13px;
         margin-top: 0px;
+        border-style: solid;
+        border-width: 1px;
     }
 
 
