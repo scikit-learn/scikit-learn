@@ -3,7 +3,9 @@
 Bayesian Ridge Regression
 =========================
 
-Computes a :ref:`bayesian_ridge_regression` on a synthetic dataset.
+Computes a Bayesian Ridge Regression on a synthetic dataset.
+
+See :ref:`bayesian_ridge_regression` for more information on the regressor.
 
 Compared to the OLS (ordinary least squares) estimator, the coefficient
 weights are slightly shifted toward zeros, which stabilises them.

@@ -1,7 +1,4 @@
 """
-
-.. _stock_market:
-
 =======================================
 Visualizing the stock market structure
 =======================================
@@ -12,6 +9,7 @@ the stock market structure from variations in historical quotes.
 The quantity that we use is the daily variation in quote price: quotes
 that are linked tend to cofluctuate during a day.
 
+.. _stock_market:
 
 Learning a graph structure
 --------------------------

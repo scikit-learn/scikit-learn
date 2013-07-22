@@ -3,11 +3,12 @@
 PLS Partial Least Squares
 =========================
 
-Simple usage of various PLS flavor:
-- PLSCanonical
-- PLSRegression, with multivariate response, a.k.a. PLS2
-- PLSRegression, with univariate response, a.k.a. PLS1
-- CCA
+Simple usage of various PLS flavors:
+
+* PLSCanonical
+* PLSRegression, with multivariate response, a.k.a. PLS2
+* PLSRegression, with univariate response, a.k.a. PLS1
+* CCA
 
 Given 2 multivariate covarying two-dimensional datasets, X, and Y,
 PLS extracts the 'directions of covariance', i.e. the components of each

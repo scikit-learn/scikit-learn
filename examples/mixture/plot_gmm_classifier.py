@@ -3,7 +3,9 @@
 GMM classification
 ==================
 
-Demonstration of :ref:`gmm` for classification.
+Demonstration of Gaussian mixture models for classification.
+
+See :ref:`gmm` for more information on the estimator.
 
 Plots predicted labels on both training and held out test data using a
 variety of GMM classifiers on the iris dataset.

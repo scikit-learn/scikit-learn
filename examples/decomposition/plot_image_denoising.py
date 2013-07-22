@@ -4,7 +4,8 @@ Image denoising using dictionary learning
 =========================================
 
 An example comparing the effect of reconstructing noisy fragments
-of Lena using online :ref:`DictionaryLearning` and various transform methods.
+of the Lena image using firstly online :ref:`DictionaryLearning` and
+various transform methods.
 
 The dictionary is fitted on the distorted left half of the image, and
 subsequently used to reconstruct the right half. Note that even better

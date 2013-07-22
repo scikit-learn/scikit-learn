@@ -3,7 +3,8 @@
 Shrinkage covariance estimation: LedoitWolf vs OAS and max-likelihood
 =======================================================================
 
-The usual estimator for covariance is the maximum likelihood estimator,
+When working with covariance estimation, the usual approach is to use
+a maximum likelihood estimator, such as the
 :class:`sklearn.covariance.EmpiricalCovariance`. It is unbiased, i.e. it
 converges to the true (population) covariance when given many
 observations. However, it can also be beneficial to regularize it, in

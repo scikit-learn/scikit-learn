@@ -5,6 +5,7 @@
 =========================================================
 The Digit Dataset
 =========================================================
+
 This dataset is made up of 1797 8x8 images. Each image,
 like the one shown below, is of a hand-written digit.
 In order to ultilise an 8x8 figure like this, we'd have to
