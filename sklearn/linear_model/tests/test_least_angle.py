@@ -329,14 +329,16 @@ def test_lasso_lars_vs_lasso_cd_ill_conditioned():
     assert_true(('Dropping a regressor' in warning_list[0].message.args[0])
                 or ('Early stopping' in warning_list[0].message.args[0]))
 
-    _, lasso_coef2 = linear_model.lasso_path(X, y,
-                                             alphas=lars_alphas, tol=1e-6,
-                                             return_models=False)
+    _, lasso_coef2, _ = linear_model.lasso_path(X, y,
+                                                alphas=lars_alphas, tol=1e-6,
+                                                return_models=False,
+                                                fit_intercept=False)
 
     lasso_coef = np.zeros((w.shape[0], len(lars_alphas)))
     for i, model in enumerate(linear_model.lasso_path(X, y, alphas=lars_alphas,
-                                                      tol=1e-6)):
+                                               tol=1e-6, fit_intercept=False)):
         lasso_coef[:, i] = model.coef_
+
     np.testing.assert_array_almost_equal(lars_coef, lasso_coef, decimal=1)
     np.testing.assert_array_almost_equal(lars_coef, lasso_coef2, decimal=1)
     np.testing.assert_array_almost_equal(lasso_coef, lasso_coef2, decimal=1)
