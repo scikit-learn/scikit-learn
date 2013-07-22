@@ -194,7 +194,7 @@ def test_lasso_path_return_models_vs_new_return_gives_same_coefficients():
     alphas_lars, _, coef_path_lars = lars_path(X, y, method='lasso')
     coef_path_cont_lars = interpolate.interp1d(alphas_lars[::-1],
                                                coef_path_lars[:, ::-1])
-    alphas_lasso2, coef_path_lasso2 = lasso_path(X, y, alphas=alphas,
+    alphas_lasso2, coef_path_lasso2, _ = lasso_path(X, y, alphas=alphas,
                                                  fit_intercept=False,
                                                  return_models=False)
     coef_path_cont_lasso = interpolate.interp1d(alphas_lasso2[::-1],
@@ -331,15 +331,14 @@ def test_enet_multitarget():
                                n_informative_features=10, n_targets=n_targets)
     estimator = ElasticNet(alpha=0.01, fit_intercept=True)
     estimator.fit(X, y)
-    coef, intercept, dual_gap, eps = (estimator.coef_, estimator.intercept_,
-                                      estimator.dual_gap_, estimator.eps_)
+    coef, intercept, dual_gap = (estimator.coef_, estimator.intercept_,
+                                 estimator.dual_gap_)
 
     for k in range(n_targets):
         estimator.fit(X, y[:, k])
         assert_array_almost_equal(coef[k, :], estimator.coef_)
         assert_array_almost_equal(intercept[k], estimator.intercept_)
         assert_array_almost_equal(dual_gap[k], estimator.dual_gap_)
-        assert_array_almost_equal(eps[k], estimator.eps_)
 
 
 if __name__ == '__main__':
