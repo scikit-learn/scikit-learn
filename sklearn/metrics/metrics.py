@@ -790,7 +790,7 @@ def zero_one_loss(y_true, y_pred, normalize=True):
 
     and with a list of labels format:
 
-    >>> zero_one_loss([(1,), (3,)], [(1, 2), tuple()])
+    >>> zero_one_loss([(1, ), (3, )], [(1, 2), tuple()])
     1.0
 
 
@@ -917,7 +917,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True):
 
     and with a list of labels format:
 
-    >>> jaccard_similarity_score([(1,), (3,)], [(1, 2), tuple()])
+    >>> jaccard_similarity_score([(1, ), (3, )], [(1, 2), tuple()])
     0.25
 
     """
@@ -1025,7 +1025,7 @@ def accuracy_score(y_true, y_pred, normalize=True):
 
     and with a list of labels format:
 
-    >>> accuracy_score([(1,), (3,)], [(1, 2), tuple()])
+    >>> accuracy_score([(1, ), (3, )], [(1, 2), tuple()])
     0.0
 
     """
@@ -1150,7 +1150,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     and with a list of labels format:
 
     >>> from sklearn.metrics import f1_score
-    >>> y_true = [(1, 2), (3,)]
+    >>> y_true = [(1, 2), (3, )]
     >>> y_pred = [(1, 2), tuple()]
     >>> f1_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
     0.66...
@@ -1290,7 +1290,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     and with a list of labels format:
 
     >>> from sklearn.metrics import fbeta_score
-    >>> y_true = [(1, 2), (3,)]
+    >>> y_true = [(1, 2), (3, )]
     >>> y_pred = [(1, 2), tuple()]
     >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)
     ... # doctest: +ELLIPSIS
@@ -1367,7 +1367,7 @@ def _tp_tn_fp_fn(y_true, y_pred, labels=None):
 
     and with a list of labels format:
 
-    >>> _tp_tn_fp_fn([(1, 2), (3,)], [(1, 2), tuple()])  # doctest: +ELLIPSIS
+    >>> _tp_tn_fp_fn([(1, 2), (3, )], [(1, 2), tuple()])  # doctest: +ELLIPSIS
     (array([1, 1, 0]), array([1, 1, 1]), array([0, 0, 0]), array([0, 0, 1]))
 
     """
@@ -1378,9 +1378,9 @@ def _tp_tn_fp_fn(y_true, y_pred, labels=None):
     else:
         labels = np.asarray(labels)
     n_labels = labels.size
-    true_pos = np.zeros((n_labels,), dtype=np.int)
-    false_pos = np.zeros((n_labels,), dtype=np.int)
-    false_neg = np.zeros((n_labels,), dtype=np.int)
+    true_pos = np.zeros((n_labels, ), dtype=np.int)
+    false_pos = np.zeros((n_labels, ), dtype=np.int)
+    false_neg = np.zeros((n_labels, ), dtype=np.int)
 
     if y_type == 'multilabel-indicator':
         true_pos = np.sum(np.logical_and(y_true == 1,
@@ -1563,7 +1563,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     and with a list of labels format:
 
     >>> from sklearn.metrics import precision_recall_fscore_support
-    >>> y_true = [(1, 2), (3,)]
+    >>> y_true = [(1, 2), (3, )]
     >>> y_pred = [(1, 2), tuple()]
     >>> precision_recall_fscore_support(y_true, y_pred, average='macro')
     ... # doctest: +ELLIPSIS
@@ -1817,7 +1817,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     and with a list of labels format:
 
     >>> from sklearn.metrics import precision_score
-    >>> y_true = [(1, 2), (3,)]
+    >>> y_true = [(1, 2), (3, )]
     >>> y_pred = [(1, 2), tuple()]
     >>> precision_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
     0.66...
@@ -1936,7 +1936,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     and with a list of labels format:
 
     >>> from sklearn.metrics import recall_score
-    >>> y_true = [(1, 2), (3,)]
+    >>> y_true = [(1, 2), (3, )]
     >>> y_pred = [(1, 2), tuple()]
     >>> recall_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
     0.66...
@@ -2138,7 +2138,7 @@ def hamming_loss(y_true, y_pred, classes=None):
 
     and with a list of labels format:
 
-    >>> hamming_loss([(1, 2), (3,)], [(1, 2), tuple()])  # doctest: +ELLIPSIS
+    >>> hamming_loss([(1, 2), (3, )], [(1, 2), tuple()])  # doctest: +ELLIPSIS
     0.166...
 
     """
@@ -2152,7 +2152,7 @@ def hamming_loss(y_true, y_pred, classes=None):
     if y_type == 'multilabel-indicator':
         return np.mean(y_true != y_pred)
     elif y_type == 'multilabel-sequences':
-        loss = np.array([len(set(pred) ^ set(true))
+        loss = np.array([len(set(pred).union(true))
                          for pred, true in zip(y_pred, y_true)])
 
         return np.mean(loss) / np.size(classes)
