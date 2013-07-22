@@ -13,10 +13,10 @@ Restricted Boltzmann Machines
 =============================
 
 Restricted Boltzmann Machines (RBM) are unsupervised nonlinear feature learners
-based on a probabilistic model.  The features extracted by an RBM give good
+based on a probabilistic model. The features extracted by an RBM give good
 results when fed into a linear classifier such as a linear SVM or perceptron.
 
-The training method is based on an approximation, for efficiency.  It prevents
+The training method is based on an approximation, for efficiency. It prevents
 the representations from straying far from the input data, which makes them
 capture interesting regularities, but makes the model less useful for small
 datasets, and usually not useful for density estimation.
@@ -24,7 +24,7 @@ datasets, and usually not useful for density estimation.
 Deep neural networks that are notoriously difficult to train from scratch can
 be simplified by initializing each layer's weights with the weights of an RBM.
 
-The makes assumptions regarding the distribution of inputs.  At the moment,
+The makes assumptions regarding the distribution of inputs. At the moment,
 scikit-learn only provides :class:`BernoulliRBM`, which assumes the input are
 either binary values or values between 0 and 1, each encoding the probability
 that the specific feature would be turned on.
@@ -48,7 +48,7 @@ The graphical model of an RBM is a fully-connected bipartite graph.
    :align: center
 
 The nodes are random variables whose states depend on the state of the other
-nodes they are connected to.  The model is therefore parameterized by the
+nodes they are connected to. The model is therefore parameterized by the
 weights of the connections, as well as one intercept (bias) term for each
 visible and hidden unit, ommited from the image for simplicity.
 
@@ -82,11 +82,11 @@ independencies:
 Bernoulli Restricted Boltzmann Machines
 ---------------------------------------
 
-In the :class:`BernoulliRBM`, all units are binary stochastic units.  This
+In the :class:`BernoulliRBM`, all units are binary stochastic units. This
 means that the input data should either be binary, or real-valued between 0 and
-1 signifying the probability that the visible unit would turn on or off.  This
+1 signifying the probability that the visible unit would turn on or off. This
 is a good model for character recognition, where the interest is on which
-pixels are active and which aren't.  For images of natural scenes it no longer
+pixels are active and which aren't. For images of natural scenes it no longer
 fits because of background, depth and the tendency of neighbouring pixels to
 take the same values.
 
@@ -109,7 +109,7 @@ Stochastic Maximum Likelihood Learning
 
 The training algorithm implemented in :class:`BernoulliRBM` is known as
 Stochastic Maximum Likelihood (SML) or Persistent Contrastive Divergence
-(PCD).  Optimizing Maximum Likelihood directly is infeasible because of
+(PCD). Optimizing Maximum Likelihood directly is infeasible because of
 the shape of the data likelihood:
 
 .. math::
@@ -118,30 +118,30 @@ the shape of the data likelihood:
 
 For simplicity the equation above is written for a single training example,
 but often in practice, as well as in this implementation, it is optimized by
-averaging over mini-batches.  The gradient with respect to the weights is
-formed of two terms corresponding to the ones above.  They are usually known as
+averaging over mini-batches. The gradient with respect to the weights is
+formed of two terms corresponding to the ones above. They are usually known as
 the positive gradient and the negative gradient, because of their respective
 signs.
 
 In maximizing the log likelihood, the positive gradient makes the model prefer
-hidden states that are compatible with the observed training data.  Because of
-the the bipartite structure of RBMs, it can be computed efficiently.  The
-negative gradient, however, is intractable.  Its goal is to lower the energy of
+hidden states that are compatible with the observed training data. Because of
+the the bipartite structure of RBMs, it can be computed efficiently. The
+negative gradient, however, is intractable. Its goal is to lower the energy of
 joint states that the model prefers, therefore making it stay true to the data
-and not fantasize.  It can be approximated by Markov Chain Monte Carlo using
+and not fantasize. It can be approximated by Markov Chain Monte Carlo using
 block Gibbs sampling by iteratively sampling each of :math:`v` and :math:`h`
-given the other, until the chain mixes.  Samples generated in this way are
-sometimes refered as fantasy particles.  This is inefficient and it's difficult
+given the other, until the chain mixes. Samples generated in this way are
+sometimes refered as fantasy particles. This is inefficient and it's difficult
 to determine whether the Markov chain mixes.
 
 The Contrastive Divergence method suggests to stop the chain after a small
-number of iterations, :math:`k`, usually even 1.  This method is fast and has
+number of iterations, :math:`k`, usually even 1. This method is fast and has
 low variance, but the samples are far from the true distribution.
 
-Persistent Contrastive Divergence addresses this.  Instead of starting a new
+Persistent Contrastive Divergence addresses this. Instead of starting a new
 chain each time the gradient is needed, and sampling after one Gibbs step, in
 PCD we keep a number of chains (fantasy particles) that are updated :math:`k`
-Gibbs steps after each weight update.  This allows the particles to explore the
+Gibbs steps after each weight update. This allows the particles to explore the
 space more thoroughly.
 
 .. topic:: References:
