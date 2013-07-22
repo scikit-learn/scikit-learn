@@ -129,6 +129,7 @@ def _check_clf_targets(y_true, y_pred):
         raise ValueError("Can't handle mix of {0} and {1}"
                          "".format(type_true, type_pred))
 
+    # We can't have more than one value on y_type => The set is no more needed
     y_type = y_type.pop()
 
     # No metrics support "multiclass-multioutput" format
