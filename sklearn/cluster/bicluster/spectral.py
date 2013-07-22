@@ -383,6 +383,12 @@ class SpectralBiclustering(BaseSpectral):
                                  " {}. It should either be a single integer"
                                  " or an iterable with two integers:"
                                  " `(n_row_clusters, n_column_clusters)`")
+        if self.n_components < 1:
+            raise ValueError("Parameter `n_components` must be greater than 0,"
+                             " but its value is {}".format(self.n_components))
+        if self.n_best < 1:
+            raise ValueError("Parameter `n_best` must be greater than 0,"
+                             " but its value is {}".format(self.n_best))
         if self.n_best > self.n_components:
             raise ValueError("`n_best` cannot be larger than"
                              " `n_components`, but {} >  {}"
