@@ -1,5 +1,5 @@
 """
-Testing for the bagging module (sklearn.ensemble.bagging).
+Testing for the ensemble module (sklearn.ensemble.ensemble).
 """
 
 # Authors: Gilles Louppe
@@ -16,7 +16,7 @@ from sklearn.utils.testing import assert_less, assert_greater
 
 from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.grid_search import GridSearchCV
-from sklearn.ensemble import BaggingClassifier, BaggingRegressor
+from sklearn.ensemble import RandomPatchesClassifier, RandomPatchesRegressor
 from sklearn.linear_model import SGDClassifier, Perceptron
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
@@ -42,11 +42,11 @@ def test_classification():
         base_estimator = base_estimator_class()
         base_estimator.fit(X_train, y_train)
 
-        bagging = BaggingClassifier(base_estimator=base_estimator_class(), n_estimators=20, random_state=rng)
-        bagging.fit(X_train, y_train)
+        ensemble = RandomPatchesClassifier(base_estimator=base_estimator_class(), n_estimators=20, random_state=rng)
+        ensemble.fit(X_train, y_train)
 
         score_base = base_estimator.score(X_test, y_test)
-        score_bagging = bagging.score(X_test, y_test)
+        score_ensemble = ensemble.score(X_test, y_test)
 
 
 def test_regression():
@@ -61,11 +61,11 @@ def test_regression():
         base_estimator = base_estimator_class()
         base_estimator.fit(X_train, y_train)
 
-        bagging = BaggingRegressor(base_estimator=base_estimator_class(), n_estimators=20, random_state=rng)
-        bagging.fit(X_train, y_train)
+        ensemble = RandomPatchesRegressor(base_estimator=base_estimator_class(), n_estimators=20, random_state=rng)
+        ensemble.fit(X_train, y_train)
 
         score_base = base_estimator.score(X_test, y_test)
-        score_bagging = bagging.score(X_test, y_test)
+        score_ensemble = ensemble.score(X_test, y_test)
 
 
 if __name__ == "__main__":
