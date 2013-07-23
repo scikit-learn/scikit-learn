@@ -23,21 +23,21 @@ from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.svm import SVC, SVR
 
 from sklearn.cross_validation import train_test_split
-from sklearn.datasets import make_classification
+from sklearn.datasets import make_classification, make_circles
 
 
 
 def test_toy():
     """Check classification on iris."""
     # Test with a classifier without predict_proba
-    X, y = make_classification(n_samples=500, n_features=20, n_informative=5)
+    X, y = make_circles(n_samples=500, noise=0.1)
     X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
 
     for base_estimator_class in [DummyClassifier, Perceptron, DecisionTreeClassifier, KNeighborsClassifier]:
         base_estimator = base_estimator_class()
         base_estimator.fit(X_train, y_train)
 
-        bagging = BaggingClassifier(base_estimator=base_estimator_class(), n_estimators=1000, oob_score=False, random_state=0)
+        bagging = BaggingClassifier(base_estimator=base_estimator_class(), n_estimators=500, oob_score=True, random_state=0)
         bagging.fit(X_train, y_train)
 
         score_base = base_estimator.score(X_test, y_test)
