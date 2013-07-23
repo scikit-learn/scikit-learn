@@ -1,284 +1,143 @@
-
-..
-    We are putting the title as a raw HTML so that it doesn't appear in
-    the contents
-
 .. raw:: html
 
-    <h1>scikit-learn: machine learning in Python</h1>
-    <style type="text/css">
-    p {
-        margin: 7px 0 7px 0 ;
-    }
-    span.linkdescr a {
-        color:  #3E4349 ;
-    }
-    span.linkdescr {
-        line-height: 1.3em;
-    }
-    div.topic p {
-        margin-top: .2em;
-        line-height: 1.3em;
-    }
-    div.topic {
-        background-color: #FFF0E0;
-        border-color: #FF9C34;
-    }
-    div.warning p {
-        margin-top: .0em;
-    }
-    </style>
-
-..
-   Here we are building a banner: a javascript selects randomly 4 images in
-   the list
-
-.. only:: html
-
-    .. |banner1| image:: auto_examples/svm/images/plot_oneclass_1.png
-       :height: 139
-       :target: auto_examples/svm/plot_oneclass.html
-
-    .. |banner2| image:: auto_examples/cluster/images/plot_ward_structured_vs_unstructured_2.png
-       :height: 139
-       :target: auto_examples/cluster/plot_ward_structured_vs_unstructured.html
-
-    .. |banner3| image:: auto_examples/gaussian_process/images/plot_gp_regression_1.png
-       :height: 139
-       :target: auto_examples/gaussian_process/plot_gp_regression.html
-
-    .. |banner4| image:: auto_examples/cluster/images/plot_lena_ward_segmentation_1.png
-       :height: 139
-       :target: auto_examples/cluster/plot_lena_ward_segmentation.html
-
-    .. |banner5| image:: auto_examples/svm/images/plot_svm_nonlinear_1.png
-       :height: 139
-       :target: auto_examples/svm/plot_svm_nonlinear.html
-
-    .. |banner6| image:: auto_examples/applications/images/plot_species_distribution_modeling_1.png
-       :height: 139
-       :target: auto_examples/applications/plot_species_distribution_modeling.html
-
-    .. |banner7| image:: auto_examples/gaussian_process/images/plot_gp_probabilistic_classification_after_regression_1.png
-       :height: 139
-       :target: auto_examples/gaussian_process/plot_gp_probabilistic_classification_after_regression.html
-
-    .. |banner8| image:: auto_examples/ensemble/images/plot_forest_importances_faces_1.png
-       :height: 139
-       :target: auto_examples/ensemble/plot_forest_importances_faces.html
-
-    .. |banner9| image:: auto_examples/svm/images/plot_weighted_samples_1.png
-       :height: 139
-       :target: auto_examples/svm/plot_weighted_samples.html
-
-    .. |banner10| image:: auto_examples/linear_model/images/plot_sgd_weighted_samples_1.png
-       :height: 139
-       :target: auto_examples/linear_model/plot_sgd_weighted_samples.html
-
-    .. |banner11| image:: auto_examples/cluster/images/plot_kmeans_digits_1.png
-       :height: 139
-       :target: auto_examples/cluster/plot_kmeans_digits.html
-
-    .. |banner12| image:: auto_examples/decomposition/images/plot_faces_decomposition_2.png
-       :height: 139
-       :target: auto_examples/decomposition/plot_faces_decomposition.html
-
-    .. |banner13| image:: auto_examples/decomposition/images/plot_faces_decomposition_3.png
-       :height: 139
-       :target: auto_examples/decomposition/plot_faces_decomposition.html
-
-    .. |banner14| image:: auto_examples/images/plot_lda_qda_1.png
-       :height: 139
-       :target: auto_examples/plot_lda_qda.html
-
-    .. |banner15| image:: auto_examples/cluster/images/plot_cluster_comparison_1.png
-       :height: 139
-       :target: auto_examples/cluster/plot_cluster_comparison.html
-
-    .. |center-div| raw:: html
-
-        <div style="text-align: center; margin: -7px 0 -10px 0;" id="banner">
-
-    .. |end-div| raw:: html
-
-        </div>
-
-        <SCRIPT>
-        // Function to select 4 imgs in random order from a div
-        function shuffle(e) {       // pass the divs to the function
-          var replace = $('<div>');
-          var size = 4;
-          var num_choices = e.size();
-
-          while (size >= 1) {
-            var rand = Math.floor(Math.random() * num_choices);
-            var temp = e.get(rand);      // grab a random div from our set
-            replace.append(temp);        // add the selected div to our new set
-            e = e.not(temp); // remove our selected div from the main set
-            size--;
-            num_choices--;
-          }
-          $('#banner').html(replace.html() ); // update our container div
-                                              // with the new, randomized divs
-        }
-        shuffle ($('#banner a.external'));
-
-	function preload_images() {
-	    var img = new Image();
-	    img.src="_static/plusBox.png";
-	    img.src="_static/minBox.png";
-	    img.src="_static/plusBoxHighlight.png";
-	    img.src="_static/minBoxHighlight.png";
-	    img.src="_static/noneBox.png";
-	}
-	preload_images();
-
-	//Function to make the index toctree collapsible
-	$(function () {
-            $('.toctree-l2')
-                .click(function(event){
-                    if (event.target.tagName.toLowerCase() != "a") {
-		        if ($(this).children('ul').length > 0) {
-                            $(this).css('list-style-image',
-                            (!$(this).children('ul').is(':hidden')) ? 'url(_static/plusBoxHighlight.png)' : 'url(_static/minBoxHighlight.png)');
-                            $(this).children('ul').toggle();
-                        }
-                        return true; //Makes links clickable
-                    }
-		})
-		.mousedown(function(event){ return false; }) //Firefox highlighting fix
-                .css({cursor:'pointer', 'list-style-image':'url(_static/plusBox.png)'})
-                .children('ul').hide();
-            $('ul li ul li:not(:has(ul))').css({cursor:'default', 'list-style-image':'url(_static/noneBox.png)'});
-	    $('.toctree-l3').css({cursor:'default', 'list-style-image':'url(_static/noneBox.png)'});
-            var sidebarbutton = $('#sidebarbutton');
-            sidebarbutton.css({
-	        'display': 'none'
-            });
-
-	    $('.toctree-l2').hover(
-	        function () {
-		    if ($(this).children('ul').length > 0) {
-		        $(this).css('background-color', '#D0D0D0').children('ul').css('background-color', '#F0F0F0');
-		        $(this).css('list-style-image',
-                            (!$(this).children('ul').is(':hidden')) ? 'url(_static/minBoxHighlight.png)' : 'url(_static/plusBoxHighlight.png)');
-		    }
-		    else {
-		        $(this).css('background-color', '#F9F9F9');
-		    }
-                },
-                function () {
-                    $(this).css('background-color', 'white').children('ul').css('background-color', 'white');
-		    if ($(this).children('ul').length > 0) {
-		        $(this).css('list-style-image',
-                            (!$(this).children('ul').is(':hidden')) ? 'url(_static/minBox.png)' : 'url(_static/plusBox.png)');
-		    }
-                }
-            );
-	});
-
-        </SCRIPT>
-
-    |center-div| |banner1| |banner2| |banner3| |banner4| |banner5| |banner6| |banner7| |banner8| |banner9| |banner10| |banner11| |banner12| |banner13| |banner14| |end-div|
+    <!-- Banner -->
+    <div class="container", style="width:100%">
+    <div class="row-fluid">
+    <div class="span6">
+    <div class="thumbnail"><img src="img/plot_classifier_comparison_1.png"/></div>
+    </div>
+    <div class="span6">
+      <h3>Scikit-learn : Machine Learning in Python</h3>
 
 
-.. topic:: Easy-to-use and general-purpose machine learning in Python
-
-    Scikit-learn integrates **machine learning** algorithms in the
-    tightly-knit scientific **Python** world, building upon `numpy
-    <http://numpy.scipy.org/>`_, `scipy <http://scipy.org>`_, and
-    `matplotlib <http://matplotlib.org>`_. As a machine-learning module,
-    it provides versatile tools for data mining and analysis in any field
-    of science and engineering. It strives to be **simple and
-    efficient**, accessible to everybody, and reusable in various
-    contexts.
-
-
-.. raw:: html
-
-  <table class="contentstable" style="width: 100% ; margin-top: -8px">
-    <tr valign="top">
-    </td><td align="right" width="2%">
-    <td width="28%">
-      <p class="biglink"><a class="biglink" href="supervised_learning.html">
-                Supervised learning</a><br/>
-         <span class="linkdescr">
-                <a href="modules/svm.html">Support vector machines</a>,
-                <a href="modules/linear_model.html">linear models</a>,
-                <a href="modules/naive_bayes.html">naive Bayes</a>,
-                <a href="modules/gaussian_process.html">Gaussian processes</a>...
-         </span></p>
-    </td><td align="right" width="3%">
-    </td><td align="center" width="32%">
-      <p class="biglink"><a class="biglink" href="unsupervised_learning.html">
-        Unsupervised learning</a><br/>
-         <span class="linkdescr">
-                <a href="modules/clustering.html">Clustering</a>,
-                <a href="modules/mixture.html">Gaussian mixture models</a>,
-                <a href="modules/manifold.html">manifold learning</a>,
-                <a href="modules/decomposition.html">matrix factorization</a>,
-                <a href="modules/covariance.html">covariance</a>...
-         </span></p>
-    </td><td align="right" width="3%">
-    </td><td align="right" width="30%">
-      <p class="biglink"><a class="biglink" href="index.html#user-guide">
-        And much more</a><br/>
-         <span class="linkdescr">
-                <a href="model_selection.html">Model selection</a>,
-                <a href="datasets/index.html">datasets</a>,
-                <a href="modules/feature_extraction.html">feature extraction...</a>
-                <strong>See below</strong>.</span></p>
-    </td></tr>
-  </table>
-
-
-**License:** Open source, commercially usable: **BSD license** (3 clause)
-
-.. raw:: html
-
-   <div class="admonition warning" style="margin: 3px 0; padding: 3px 7px">
-
-Documentation for scikit-learn **version** |release|. For other versions and
-printable format, see :ref:`documentation_resources`.
-
-.. raw:: html
+    <ul>
+    <li> building upon numpy, scipy, and matplotlib</li>
+    <li>provides versatile tools for data mining and analysis</li>
+    <li>simple and efficient</li>
+    <li>accessible to everybody, and reusable in various contexts</li>
+    <li>License: Open source, commercially usable: BSD license (3 clause)<li>
+    </ul>
+    <!-- Scikit-learn integrates machine learning algorithms in the tightly-knit scientific Python world, building upon numpy, scipy, and matplotlib. As a machine-learning module, it provides versatile tools for data mining and analysis in any field of science and engineering. It strives to be simple and efficient, accessible to everybody, and reusable in various contexts. -->
 
     </div>
-
-.. include:: includes/big_toc_css.rst
-
-User Guide
-==========
-
-.. toctree::
-   :numbered:
-
-   user_guide.rst
-
-Example Gallery
-===============
-
-.. toctree::
-   :maxdepth: 2
-
-   auto_examples/index
+    <!-- end section -->
+    </div>
+    </div>
+    </div>
 
 
-Development
-===========
-.. toctree::
-   :numbered:
 
-   developers/index
-   developers/performance
-   developers/utilities
-   developers/debugging
-   developers/maintainer
-   about
+    <!-- Block section -->
+    <div class="container", style="width:100%; background-color: rgb(78, 172, 197);">
+    <div class="row-fluid">
+    <!-- Classification -->
+    <div class="span4">
+    <h3><a href="#">Classification</a></h3>
+    <blockquote>
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eu lorem ac elit pharetra lacinia non in justo.
+    <small><a href="#">Examples</a></small>
+    </blockquote>
+    </div>
+    <!-- Regression -->
+    <div class="span4">
+    <h3><a href="#">Regression</a></h3>
+    <blockquote>
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eu lorem ac elit pharetra lacinia non in justo.
+    <small><a href="#">Examples</a></small>
+    </blockquote>
+    </div>
+    <!-- Clustering -->
+    <div class="span4">
+    <h3><a href="#">Clustering</a></h3>
+    <blockquote>
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eu lorem ac elit pharetra lacinia non in justo.
+    <small><a href="#">Examples</a></small>
+    </blockquote>
+    </div>
+    <!-- row -->
+    </div>
+    <div class="row-fluid">
+    <!-- Dimension reduction -->
+    <div class="span4">
+    <h3><a href="#">Dimension reduction</a></h3>
+    <blockquote>
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eu lorem ac elit pharetra lacinia non in justo.
+    <small><a href="#">Examples</a></small>
+    </blockquote>
+    </div>
+    <!-- Model selection -->
+    <div class="span4">
+    <h3><a href="#">Model selection</a></h3>
+    <blockquote>
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eu lorem ac elit pharetra lacinia non in justo.
+    <small><a href="#">Examples</a></small>
+    </blockquote>
+    </div>
+    <!-- Preprocessing -->
+    <div class="span4">
+    <h3><a href="#">Preprocessing</a></h3>
+    <blockquote>
+    Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eu lorem ac elit pharetra lacinia non in justo.
+    <small><a href="#">Examples</a></small>
+    </blockquote>
+    </div>
+    <!-- row -->
+    </div>
+    </div> <!-- container -->
 
-.. toctree::
-   :hidden:
 
-   support
-   whats_new
-   presentations
+
+
+
+
+
+    <!-- Who is using -->
+    <div class="container" style="padding-top: 40px">
+    <div class="row-fluid">
+    <!-- News -->
+    <div class="span3" style="border-right: 1px solid #CCC; padding-right:5px">
+    <h4>News</h4>
+    <ul>
+    <li>The scikit-learn international code sprint is around the corner! Please, sponsor us.</li>
+    <li>scikit-learn 0.13.1 is available for download. See what's new and tips on installing.</li>
+    </ul>
+    </div>
+    <!-- Sponsors -->
+    <div class="span3" style="border-right: 1px solid #CCC; padding-right:5px">
+    <h4>Sponsors/Donations</h4>
+    <p>Any donations are very welcome!</p>
+    <form target="_top" method="post" action="https://www.paypal.com/cgi-bin/webscr">
+    <input type="hidden" value="_s-xclick" name="cmd">
+    <input type="hidden" value="74EYUMF3FTSW8" name="hosted_button_id">
+    <input border="0" type="image" style="margin: 0 auto; position: relative; left: 6%;" alt="PayPal - The safer, easier way to pay online!" name="submit" src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif">
+    <img border="0" width="1" height="1" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" alt="">
+    </form>
+    <a href="#">Read more here ...</a>
+    </div>
+    <!-- Community -->
+    <div class="span3" style="border-right: 1px solid #CCC; padding-right:5px">
+    <h4>Community</h4>
+    <ul>
+    <li>The main mailing list is scikit-learn-general.</li>
+    <li>There is also a commit list scikit-learn-commits, where updates to the main repository and test failures get notified.</li>
+    </ul>
+    </div>
+
+
+    <div class="span3">
+    <h4>Who is using it</h4>
+    <div id="myCarousel" class="carousel slide">
+    <ol class="carousel-indicators">
+    <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
+    <li data-target="#myCarousel" data-slide-to="1"></li>
+    <li data-target="#myCarousel" data-slide-to="2"></li>
+    </ol>
+    <!-- Carousel items -->
+    <div class="carousel-inner">
+    <div class="active item"><img style="height:70px" src="img/inria.jpg"/></div>
+    <div class="item"><img style="height:70px" src="img/google.png"/></div>
+    <div class="item"><img style="height:70px" src="img/telecom.jpg"/></div>
+    </div>
+    </div>
+    <script>$('.carousel').carousel()</script>
+    </div>

@@ -15,11 +15,8 @@
 .. toctree::
    :numbered:
 
-   install
-   tutorial/index.rst
    supervised_learning.rst
    unsupervised_learning.rst
    model_selection.rst
    data_transforms.rst
    Dataset loading utilities <datasets/index.rst>
-   Reference <modules/classes.rst>

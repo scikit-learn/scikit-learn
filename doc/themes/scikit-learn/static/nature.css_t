@@ -8,7 +8,7 @@
  * :license: BSD, see LICENSE for details.
  *
  */
-/* @import url("minimalist.css") /\* google custom search  *\/ */
+/* @import url("minimalist.css") /\* google custom search *\/ */
 @import url("basic.css");
 
 /* -- page layout ----------------------------------------------------------- */
@@ -130,7 +130,7 @@ div.content-wrapper {
 }
 
 div.content {
-    margin-left: 210px;
+    /*margin-left: 210px;*/
     padding-bottom: 10px;
 }
 
@@ -341,6 +341,7 @@ div.body h3 {
 
 div.bodywrapper {
     margin: 0 0 0 0;
+    float: left;
 }
 
 
@@ -483,7 +484,7 @@ div.rel {
     -moz-border-radius: 5px;
 }
 
-div.rel div.spacer  {
+div.rel div.spacer {
     background-color: white;
     width: 1px;
     height: 57px;
@@ -491,7 +492,7 @@ div.rel div.spacer  {
     margin-bottom: -10px;
 }
 
-div.rel div.rellink  {
+div.rel div.rellink {
     display: inline-block;
     padding: 4px 2px 0px 2px;
     margin-left: auto;
@@ -507,12 +508,12 @@ div.rellarge {
     margin-right: 5px;
 }
 
-div.rellarge div.rellink  {
+div.rellarge div.rellink {
     width: 40%;
     margin-bottom: 0px;
 }
 
-div.rellarge div.spacer  {
+div.rellarge div.spacer {
     height: 45px;
 }
 
@@ -624,7 +625,7 @@ div.sprint-wrapper p {
     font-weight: initial;
 }
 
-div.sprint-wrapper:hover  {
+div.sprint-wrapper:hover {
     background-color: #FF9C34;
 }
 
@@ -645,8 +646,56 @@ div#examples.section .thumbnailContainer {
     overflow: auto;
 }
 
+/* Standard browsers hover */
+
+div#examples.section .figure:hover img ,
+div#examples.section .figure:focus img,
+div#examples.section .figure:active img{
+  z-index: 100;
+  /* Bigger box shadow */
+  -moz-box-shadow: 0px 0px 20px rgba(0, 0, 0, .5); /* FF3.5 - 3.6 */
+  -webkit-box-shadow: 0px 0px 20px rgba(0, 0, 0, .5); /* Saf3.0+, Chrome */
+  box-shadow: 0px 0px 20px rgba(0, 0, 0, .5); /* Opera 10.5, IE9, FF4+, Chrome 10+ */
+  /* --> Full image size */
+  /*width: 240px;*/
+  /*height: 132px;*/
+  -webkit-background-size: 240px 160px; /* Saf3-4 */
+  -moz-background-size: 240px 160px; /* FF3.6 */
+  background-size: 240px 160px; /* Opera, IE9, Saf5, Chrome, FF4 */
+  /* --> Half of height sutraction (Full image height - Thumbnail image height) */
+  margin-top: -0px;
+  /* IE6+IE7 does not hover because of z-index stacking context bug:
+     http://www.quirksmode.org/bugreports/archives/2006/01/Explorer_z_index_bug.html */
+  /* --> Thumbnail image size */
+  *width: 160px;
+  *height: 145px;
+  *margin-top: 0;
+  *margin-left: 0;
+}
+
+/* IE hover */
+
+.photos .photo:hover img,
+.photos .photo:focus img,
+.photos .photo:active img {
+  z-index: 100;
+  /* --> Full image size */
+  width: 240px;
+  height: 132px;
+  /* IE6+IE7 does not hover because of z-index stacking context bug:
+     http://www.quirksmode.org/bugreports/archives/2006/01/Explorer_z_index_bug.html */
+  /* --> Thumbnail image size */
+  *width: 160px;
+  *height: 145px;
+}
+
+/* The hover-effect for the examples gallery was adapted from Martin Michálek's
+/* example: http://www.vzhurudolu.cz/test/image-gallery-enlarge-on-hover/
+
+/*------------------------------------------------------------------------*/
+
 /* ------- Zoom plots to make them fit in layout -------------------------- */
-div.body img {
+div.body img.align-center {
     max-width:805px;
 }
 
@@ -674,4 +723,3 @@ div.body p {
     margin-top: 1.2em;
     margin-bottom: .1em;
 }
-

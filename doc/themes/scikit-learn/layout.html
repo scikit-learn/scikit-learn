@@ -20,6 +20,14 @@
 
 {% block extrahead %}
 
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Bootstrap -->
+<link rel="stylesheet" href="{{ pathto('_static/css/bootstrap.min.css', 1) }}" media`="screen" />
+<link rel="stylesheet" href="{{ pathto('_static/css/bootstrap-responsive.css', 1) }}"/>
+
+<script src="{{ pathto('_static/js/jquery.js', 1)}}"></script>
+<script src="{{ pathto('_static/js/bootstrap.min.js', 1)}}"></script>
+
 {% if theme_google_analytics|tobool %}
 <script type="text/javascript">
 
@@ -42,23 +50,6 @@
 {%- endif %}
 
 {% block header %}
-   {%- if theme_oldversion == true %}
-     <div class="warning-wrapper">
-       <p>Warning: This documentation is
-         for {{project}} <strong>version {{ release|e }}</strong>.
-         &mdash; <a href="http://scikit-learn.org/stable/">
-           Latest stable version</a></p></p>
-     </div>
-   {%- endif %}
-   {%- if theme_surveybanner == true %}
-     <div class="survey-wrapper">
-       <p>Please help us to improve <b>scikit-learn</b>
-	 by completing this quick survey.
-         &mdash; <a href="https://docs.google.com/spreadsheet/viewform?formkey=dFdyeGNhMzlCRWZUdldpMEZlZ1B1YkE6MQ#gid=0">
-           Click here..</a></p></p>
-     </div>
-   {%- endif %}
-
     <div class="header-wrapper">
       <div class="header">
         {%- if logo %}
@@ -71,11 +62,10 @@
           {%- block navbar -%}
           <div class="navbar">
           <ul>
-            <li><a href="{{pathto('install')}}">Download</a></li>
-            <li><a href="{{pathto('support')}}">Support</a></li>
-            <li><a href="{{pathto('user_guide')}}">User Guide</a></li>
+            <li><a href="{{pathto('index')}}">Home</a></li>
+            <li><a href="{{pathto('install')}}">Installation</a></li>
+            <li><a href="{{pathto('documentation')}}">Documentation</a></li>
             <li><a href="{{pathto('auto_examples/index')}}">Examples</a></li>
-            <li><a href="{{pathto('modules/classes')}}">Reference</a></li>
        </ul>
 
 <div class="search_form">
@@ -105,132 +95,67 @@
 {% block content %}
     <div class="content-wrapper">
 
-      <div class="sphinxsidebar">
-	<div class="sphinxsidebarwrapper">
-	  {%- if pagename != 'index' %}
-	  {%- if parents %}
-	  <div class="rel">
-	   {% else %}
-	   <div class="rel rellarge">
-	     {% endif %}
-	<!-- rellinks[1:] is an ugly hack to avoid link to module
-	    index  -->
-	{%- for rellink in rellinks[1:]|reverse %}
-	<div class="rellink">
-	<a href="{{ pathto(rellink[0]) }}" title="{{ rellink[1]|striptags|e }}"
-	    {{ accesskey(rellink[2]) }}>{{ rellink[3]|capitalize }}
-	    <br>
-	    <span class="smallrellink">
-	    {{ rellink[1]|striptags|truncate(16, killwords=True) }}
-	    </span>
-	    {%- if rellink[1]|striptags %}
-	    <span class="hiddenrellink">
-	    {{ rellink[1]|striptags}}
-	    </span>
-	    {% endif %}
-	    </a>
-	</div>
-	{%- if not loop.last %}
-	    <div class="spacer">
-	    &nbsp;
-	    </div>
-	{% endif %}
-	{%- endfor %}
-	<!-- Ad a link to the 'up' page -->
-	{%- if parents %}
-	<div class="spacer">
-	&nbsp;
-	</div>
-	<div class="rellink">
-	<a href="{{ parents[-1].link|e }}" title="{{ parents[-1].title|striptags }}" >
-	Up
-	<br>
-	<span class="smallrellink">
-	{{ parents[-1].title|striptags|truncate(16, killwords=True) }}
-	</span>
-	{%- if parents[-1].title|striptags != '<no title>' %}
-	<span class="hiddenrellink">
-	{{ parents[-1].title|striptags }}
-	</span>
-	{% endif %}
-	</a>
-	</div>
+{%- if pagename != 'index' %}
+    <div class="sphinxsidebar">
+    <div class="sphinxsidebarwrapper">
+    {%- if parents %}
+        <div class="rel">
+    {% else %}
+        <div class="rel rellarge">
+    {% endif %}
+<!-- rellinks[1:] is an ugly hack to avoid link to module
+index -->
+    {%- for rellink in rellinks[1:]|reverse %}
+        <div class="rellink">
+        <a href="{{ pathto(rellink[0]) }}" title="{{ rellink[1]|striptags|e }}"
+        {{ accesskey(rellink[2]) }}>{{ rellink[3]|capitalize }}
+        <br>
+        <span class="smallrellink">
+        {{ rellink[1]|striptags|truncate(16, killwords=True) }}
+        </span>
+        {%- if rellink[1]|striptags %}
+            <span class="hiddenrellink">
+            {{ rellink[1]|striptags}}
+            </span>
+        {% endif %}
+        </a>
+        </div>
+        {%- if not loop.last %}
+            <div class="spacer">
+            &nbsp;
+            </div>
+        {% endif %}
+    {%- endfor %}
+<!-- Ad a link to the 'up' page -->
+    {%- if parents %}
+        <div class="spacer">
+        &nbsp;
+        </div>
+        <div class="rellink">
+        <a href="{{ parents[-1].link|e }}" title="{{ parents[-1].title|striptags }}" >
+        Up
+        <br>
+        <span class="smallrellink">
+        {{ parents[-1].title|striptags|truncate(16, killwords=True) }}
+        </span>
+        {%- if parents[-1].title|striptags != '<no title>' %}
+            <span class="hiddenrellink">
+            {{ parents[-1].title|striptags }}
+            </span>
+            {% endif %}
+        </a>
+        </div>
     {%- endif %}
     </div>
     <p style="text-align: center; background-color: #FFE4E4">This documentation is
     for {{project}} <strong>version {{ release|e }}</strong>
     &mdash; <a href="http://scikit-learn.org/stable/support.html#documentation-resources">Other versions</a></p>
-    {% else %}
 
-    {%- if theme_sprintbanner == true %}
-      <div class="sprint-wrapper"><a href="https://github.com/scikit-learn/administrative/blob/master/sprint_paris_2013/proposal.rst#13funding-contact-information">
-       <p>The <strong> {{project}} international code sprint</strong>
-	  is around the corner! <strong>Please, sponsor us</strong>
-       </p>
-       </a>
-      </div>
-    {%- endif %}
-
-    <h3><a href="{{pathto('whats_new')}}">News</a></h3>
-
-    <p>scikit-learn 0.13 is available
-    for <a href="https://sourceforge.net/projects/scikit-learn/files/">download</a>.
-    See <a href="{{pathto('whats_new')}}">what's new</a> and tips
-    on <a href="{{pathto('install')}}">installing</a>.</p>
-
-
-    <h3><a href="{{pathto('presentations')}}">Presentations</a></h3>
-    <p>Get into the spirit with <a href="{{pathto('presentations')}}">videos</a> from Scikit-Learn tutorials.</p>
-
-    <h3><a href="{{pathto('developers/index')}}">Participate</a></h3>
-
-    <p>Fork
-    the <a href="http://github.com/scikit-learn/scikit-learn">source
-    code</a>, join the
-    <a href="{{pathto('support')}}#mailing-list">mailing
-    lists</a>, report bugs to
-    the <a href="https://github.com/scikit-learn/scikit-learn/issues">issue
-    tracker</a> or participate in the next
-    <a href="http://github.com/scikit-learn/scikit-learn/wiki/Upcoming-events">coding sprint</a>. <a href="{{pathto('developers/index')}}">Read More...</a>
-    </p>
-
-    <h3><a href="{{pathto('about')}}">Funding</a></h3>
-    <p>Generous funding provided
-    by <a href="http://www.inria.fr">INRIA</a>,
-    <a href="http://code.google.com/opensource/">Google</a>
-    and others.</p>
-    <p style="text-align: center;"><a href="http://www.inria.fr"><img src="{{pathto('_static',1)}}/inria-small.jpg"
-    alt="INRIA"/></a></p>
-    <p style="text-align: center;"><a href="http://http://code.google.com/opensource/"><img src="{{pathto('_static',1)}}/google-logo.png"
-    alt="INRIA"/></a></p>
-
-    <p>Any donations are very welcome!</p>
-    <form action="https://www.paypal.com/cgi-bin/webscr" method="post"
-	  target="_top">
-      <input type="hidden" name="cmd" value="_s-xclick">
-      <input type="hidden" name="hosted_button_id" value="74EYUMF3FTSW8">
-      <input type="image"
-	     src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"
-	     border="0" name="submit" alt="PayPal - The safer, easier way to pay
-					   online!"
-	     style="margin: 0 auto; position: relative; left: 6%;">
-      <img alt="" border="0"
-	   src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1"
-	   height="1">
-    </form>
-    <p><a href="{{pathto('about')}}#donating-to-the-project">Read more here ...</a></p>
-
-    {% endif %}
-    <h3><a href="{{pathto('about')}}#citing-scikit-learn">Citing</a></h3>
-    <p>If you use the software, please consider
-    <a href="{{pathto('about')}}#citing-scikit-learn">citing scikit-learn</a>.</p>
-
-    {%- if (pagename != 'index') %}
     <h3>{{ _('This page') }}</h3>
-	{{ toc }}
-    {% endif %}
+        {{ toc }}
     </div>
-	  </div>
+</div>
+{% endif %}
 
 
       <div class="content">
@@ -259,15 +184,6 @@
     {%- if last_updated %}
       {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
     {%- endif %}
-    {%- if show_sphinx %}
-      {% trans sphinx_version=sphinx_version|e %}Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> {{ sphinx_version }}{% endtrans %}. Design by <a href="http://angelsoler.net">Angel Soler</a>.
-    {%- endif %}
-    {%- if show_source and has_source and sourcename %}
-    <span style="padding-left: 5ex;">
-    <a href="{{ pathto('_sources/' + sourcename, true)|e }}"
-	    rel="nofollow">{{ _('Show this page source') }}</a>
-    </span>
-    {%- endif %}
     </div>
 
     {%- if pagename != 'index' %}
@@ -295,11 +211,9 @@
            }
        );
        var bodywrapper = $('.bodywrapper');
-   	var sidebarbutton = $('#sidebarbutton');
+    var sidebarbutton = $('#sidebarbutton');
         sidebarbutton.css({
-	    'height': '900px'
+'height': '900px'
        });
      </script>
 {%- endblock %}
-
-
