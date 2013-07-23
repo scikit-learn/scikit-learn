@@ -440,6 +440,7 @@ the ``feature_importances_`` property.
 .. topic:: Examples:
 
  * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
+ * :ref:`example_ensemble_plot_gradient_boosting_oob.py`
 
 
 Mathematical formulation
@@ -590,13 +591,15 @@ does poorly.
    :scale: 75
 
 For ``subsample < 1``, the improvement in deviance on the out-of-bag samples
-in the i-the iteration is stored in the attribute ``oob_improvement_[i]``.
+is stored in the attribute :attr:`~GradientBoostingRegressor.oob_improvement_` .
 Out-of-bag estimates can be used for model selection
 (e.g. to determine the optimal number of iterations).
 
 Another strategy to reduce the variance is by subsampling the features
-analogous to the random splits in Random Forests. The size of the subsample
-can be controlled via the ``max_features`` parameter.
+analogous to the random splits in :class:`RandomForestClassifier` .
+The size of the subsample can be controlled via the ``max_features`` parameter.
+
+.. note:: Using a small ``max_features`` value can significantly decrease the runtime.
 
 .. topic:: Examples:
 
