@@ -1,6 +1,6 @@
 .. _bicluster_examples:
 
-Bilustering
-----------
+Biclustering
+------------
 
 Examples concerning the :mod:`sklearn.cluster.bicluster` package.
