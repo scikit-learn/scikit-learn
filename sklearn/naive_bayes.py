@@ -269,6 +269,9 @@ class BaseDiscreteNB(BaseNB):
                                            dtype=np.float64)
 
         Y = self._labelbin.transform(y)
+        if Y.shape[1] == 1:
+            Y = np.concatenate((1 - Y, Y), axis=1)
+
         n_samples, n_classes = Y.shape
 
         if X.shape[0] != Y.shape[0]:
