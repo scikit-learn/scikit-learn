@@ -92,31 +92,6 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self.verbose = verbose
         self.random_state = random_state
 
-    def _sample_binomial(self, p, rng):
-        """
-        Sample from a binomial distribution in place.
-
-        Parameters
-        ----------
-        p: array-like, shape (M, N)
-            Probabilities of the multivariate binomial to sample
-
-        rng: RandomState
-            Random number generator to use
-
-        Notes
-        -----
-        This is equivalent to calling numpy.random.binomial(1, p) but is
-        faster because it uses in-place operations on p.
-
-        Returns
-        -------
-        x_new: array-like, shape (M, N)
-        """
-        p[rng.uniform(size=p.shape) < p] = 1.
-
-        return np.floor(p, p)
-
     def transform(self, X):
         """
         Computes the probabilities ``P({\bf h}_j=1|{\bf v}={\bf X})``.
@@ -141,12 +116,12 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         v: array-like, shape (n_samples, n_features)
-            Values of the visible layer
+        Values of the visible layer
 
         Returns
         -------
         h: array-like, shape (n_samples, n_components)
-            Corresponding mean field values for the hidden layer
+        Corresponding mean field values for the hidden layer
         """
         return logistic_sigmoid(safe_sparse_dot(v, self.components_.T)
                                 + self.intercept_hidden_)
@@ -167,23 +142,9 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         -------
         h: array-like, shape (n_samples, n_components)
         """
-        return self._sample_binomial(self._mean_hiddens(v), rng)
-
-    def _mean_visibles(self, h):
-        """
-        Computes the probabilities ``P({\bf v}_i=1|{\bf h})``.
-
-        Parameters
-        ----------
-        h: array-like, shape (n_samples, n_components)
-            Values of the hidden layer to take the mean over
-
-        Returns
-        -------
-        v: array-like, shape (n_samples, n_features)
-        """
-        return logistic_sigmoid(np.dot(h, self.components_)
-                                + self.intercept_visible_)
+        p = self._mean_hiddens(v)
+        p[rng.uniform(size=p.shape) < p] = 1.
+        return np.floor(p, out=p)
 
     def _sample_visibles(self, h, rng):
         """
@@ -201,9 +162,12 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         -------
         v: array-like, shape (n_samples, n_features)
         """
-        return self._sample_binomial(self._mean_visibles(h), rng)
+        p = logistic_sigmoid(np.dot(h, self.components_)
+                             + self.intercept_visible_)
+        p[rng.uniform(size=p.shape) < p] = 1.
+        return np.floor(p, out=p)
 
-    def free_energy(self, v):
+    def _free_energy(self, v):
         """
         Computes the free energy
         ``\mathcal{F}({\bf v}) = - \log \sum_{\bf h} e^{-E({\bf v},{\bf h})}``.
@@ -279,7 +243,8 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
                                          v_pos.sum(axis=0)).squeeze() -
                                          v_neg.sum(axis=0))
 
-        self.h_samples_ = self._sample_binomial(h_neg, rng)
+        h_neg[rng.uniform(size=h_neg.shape) < h_neg] = 1.0  # sample binomial
+        self.h_samples_ = np.floor(h_neg, out=h_neg)
 
         if self.verbose:
             return self.pseudo_likelihood(v_pos)
@@ -299,12 +264,12 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
             Value of the pseudo-likelihood (proxy to likelihood)
         """
         rng = check_random_state(self.random_state)
-        fe = self.free_energy(v)
+        fe = self._free_energy(v)
 
         v_ = v.copy()
         i_ = rng.randint(0, v.shape[1], v.shape[0])
         v_[np.arange(v.shape[0]), i_] = 1 - v_[np.arange(v.shape[0]), i_]
-        fe_ = self.free_energy(v_)
+        fe_ = self._free_energy(v_)
 
         return v.shape[1] * logistic_sigmoid(fe_ - fe, log=True)
 
