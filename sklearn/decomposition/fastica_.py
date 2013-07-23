@@ -275,7 +275,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     else:
         # X must be casted to floats to avoid typing issues with numpy
         # 2.0 and the line below
-        X1 = as_float_array(X, copy=False)  # copy has been taken of above
+        X1 = as_float_array(X, copy=False)  # copy has been taken care of above
 
     if w_init is None:
         w_init = random_state.normal(size=(n_components, n_components))
@@ -441,10 +441,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_components)
         """
-
-        X = array2d(X)
-        if copy:
-            X = X.copy()
+        X = array2d(X, copy=copy)
         if self.whiten:
             X -= self.mean_
 
