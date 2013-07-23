@@ -160,15 +160,24 @@ def test_project_and_cluster():
 
 def test_perfect_checkerboard():
     model = SpectralBiclustering(3, svd_method="arpack", random_state=0)
-    S, _, _ = make_checkerboard((30, 30), 3, noise=0,
-                                random_state=0)
+
+    S, rows, cols = make_checkerboard((30, 30), 3, noise=0,
+                                      random_state=0)
     model.fit(S)
-    S, _, _ = make_checkerboard((40, 30), 3, noise=0,
-                                random_state=0)
+    assert_equal(consensus_score(model.biclusters_,
+                                 (rows, cols)), 1)
+
+    S, rows, cols = make_checkerboard((40, 30), 3, noise=0,
+                                      random_state=0)
     model.fit(S)
-    S, _, _ = make_checkerboard((30, 40), 3, noise=0,
-                                random_state=0)
+    assert_equal(consensus_score(model.biclusters_,
+                                 (rows, cols)), 1)
+
+    S, rows, cols = make_checkerboard((30, 40), 3, noise=0,
+                                      random_state=0)
     model.fit(S)
+    assert_equal(consensus_score(model.biclusters_,
+                                 (rows, cols)), 1)
 
 
 def test_errors():
