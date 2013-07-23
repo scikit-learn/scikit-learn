@@ -231,10 +231,8 @@ def test_inverse_transform():
             ica = FastICA(n_components=n_components, random_state=rng,
                           whiten=whiten)
             Xt = ica.fit_transform(X)
-            mixing_matrix = ica.get_mixing_matrix()
-
             expected_shape = expected[(whiten, n_components)]
-            assert_equal(mixing_matrix.shape, expected_shape)
+            assert_equal(ica.mixing_.shape, expected_shape)
             X2 = ica.inverse_transform(Xt)
             assert_equal(X.shape, X2.shape)
 
