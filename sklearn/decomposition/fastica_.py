@@ -336,8 +336,6 @@ class FastICA(BaseEstimator, TransformerMixin):
         The mixing matrix to be used to initialize the algorithm.
     random_state : int or RandomState
         Pseudo number generator state used for random sampling.
-    fit_inverse_transform : boolean, optional, default=False
-        Whether to enable the inverse_transform method.
 
     Attributes
     ----------
@@ -358,7 +356,7 @@ class FastICA(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_components=None, algorithm='parallel', whiten=True,
                  fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
-                 w_init=None, random_state=None, fit_inverse_transform=False):
+                 w_init=None, random_state=None):
         super(FastICA, self).__init__()
         self.n_components = n_components
         self.algorithm = algorithm
@@ -369,7 +367,6 @@ class FastICA(BaseEstimator, TransformerMixin):
         self.tol = tol
         self.w_init = w_init
         self.random_state = random_state
-        self.fit_inverse_transform = fit_inverse_transform
 
     def fit_transform(self, X, y=None):
         """Fit the model and recover the sources from X.
@@ -397,11 +394,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         else:
             self.components_ = unmixing_
 
-        if hasattr(self, "mixing_"):
-            del self.mixing_
-        if self.fit_inverse_transform:
-            self.mixing_ = linalg.pinv(self.components_)
-
+        self.mixing_ = linalg.pinv(self.components_)
         self.sources_ = sources_
         return sources_
 
@@ -441,7 +434,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         if copy:
             X = X.copy()
         if self.whiten:
-            X -= X.mean(axis=0)[np.newaxis]
+            X -= self.mean_
 
         return np.dot(X, self.components_.T)
 
@@ -471,12 +464,8 @@ class FastICA(BaseEstimator, TransformerMixin):
         -------
         X_new : array-like, shape (n_samples, n_features)
         """
-        if not self.fit_inverse_transform:
-            raise ValueError('inverse_transform not enabled.'
-                             ' set fit_inverse_transform=True before fit')
         if copy:
             X = X.copy()
-
         X = np.dot(X, self.mixing_.T)
         if self.whiten:
             X += self.mean_
