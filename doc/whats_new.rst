@@ -149,6 +149,13 @@ Changelog
    - Most metrics now support string labels for multiclass classification
      by `Arnaud Joly`_ and `Lars Buitinck`_.
 
+   - Added :ref:`biclustering <biclustering>` algorithms
+     (:class:`sklearn.cluster.bicluster.SpectralCoclustering` and
+     :class:`sklearn.cluster.bicluster.SpectralBiclustering`), data
+     generation methods (:func:`sklearn.datasets.make_biclusters` and
+     :func:`sklearn.datasets.make_checkerboard`), and scoring metrics
+     (:func:`sklearn.metrics.consensus_score`). By `Kemal Eren`_.
+
 
 API changes summary
 -------------------
@@ -2037,3 +2044,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Denis Engemann: https://github.com/dengemann
 
 .. _Nicolas Trésegnie : http://nicolastr.com/
+
+.. _Kemal Eren: http://www.kemaleren.com
