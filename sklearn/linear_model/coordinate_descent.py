@@ -228,7 +228,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     >>> # Use lasso_path to compute a coefficient path
     >>> _, coef_path, _ = lasso_path(X, y, alphas=[5., 1., .5],
     ...                              return_models=False, fit_intercept=False)
-    >>> print coef_path
+    >>> print(coef_path)
     [[ 0.          0.          0.46874778]
      [ 0.2159048   0.4425765   0.23689075]]
 
@@ -239,7 +239,7 @@ def lasso_path(X, y, eps=1e-3, n_alphas=100, alphas=None,
     >>> from scipy import interpolate
     >>> coef_path_continuous = interpolate.interp1d(alphas[::-1],
     ...                                             coef_path_lars[:, ::-1])
-    >>> print coef_path_continuous([5., 1., .5])
+    >>> print(coef_path_continuous([5., 1., .5]))
     [[ 0.          0.          0.46915237]
      [ 0.2159048   0.4425765   0.23668876]]
 
