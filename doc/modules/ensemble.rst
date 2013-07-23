@@ -589,9 +589,10 @@ does poorly.
    :align: center
    :scale: 75
 
-For ``subsample < 1``, the deviance on the out-of-bag samples in the i-the iteration
-is stored in the attribute ``oob_score_[i]``. Out-of-bag estimates can be
-used for model selection (e.g. to determine the optimal number of iterations).
+For ``subsample < 1``, the improvement in deviance on the out-of-bag samples
+in the i-the iteration is stored in the attribute ``oob_improvement_[i]``.
+Out-of-bag estimates can be used for model selection
+(e.g. to determine the optimal number of iterations).
 
 Another strategy to reduce the variance is by subsampling the features
 analogous to the random splits in Random Forests. The size of the subsample
@@ -600,6 +601,7 @@ can be controlled via the ``max_features`` parameter.
 .. topic:: Examples:
 
  * :ref:`example_ensemble_plot_gradient_boosting_regularization.py`
+ * :ref:`example_ensemble_plot_gradient_boosting_oob.py`
 
 Interpretation
 --------------

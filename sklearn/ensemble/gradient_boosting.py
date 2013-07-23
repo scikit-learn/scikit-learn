@@ -792,10 +792,17 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     `feature_importances_` : array, shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
+    `oob_improvement_` : array, shape = [n_estimators]
+        The improvement in loss (= deviance) on the out-of-bag samples
+        relative to the previous iteration.
+        ``oob_improvement_[0]`` is the improvement in
+        loss of the first stage over the ``init`` estimator.
+
     `oob_score_` : array, shape = [n_estimators]
         Score of the training dataset obtained using an out-of-bag estimate.
         The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
         model at iteration ``i`` on the out-of-bag sample.
+        Deprecated: use `oob_improvement_` instead.
 
     `train_score_` : array, shape = [n_estimators]
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
