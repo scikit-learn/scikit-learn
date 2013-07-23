@@ -129,8 +129,12 @@ Changelog
    - Python 3 support fixes by `Justin Vincent`_, `Lars Buitinck`_ and
      `Olivier Grisel`_. All tests now pass under Python 3.3.
 
-   - Added :ref:`biclustering <biclustering>` algorithms, data
-     generation methods, and scoring metrics. By `Kemal Eren`_.
+   - Added :ref:`biclustering <biclustering>` algorithms
+     (:class:`sklearn.cluster.bicluster.SpectralCoclustering` and
+     :class:`sklearn.cluster.bicluster.SpectralBiclustering`), data
+     generation methods (:func:`sklearn.datasets.make_biclusters` and
+     :func:`sklearn.datasets.make_checkerboard`), and scoring metrics
+     (:func:`sklearn.metrics.consensus_score`). By `Kemal Eren`_.
 
 
 API changes summary
