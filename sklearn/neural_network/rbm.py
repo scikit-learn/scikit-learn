@@ -167,7 +167,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         p[rng.uniform(size=p.shape) < p] = 1.
         return np.floor(p, out=p)
 
-    def free_energy(self, v):
+    def _free_energy(self, v):
         """
         Computes the free energy
         ``\mathcal{F}({\bf v}) = - \log \sum_{\bf h} e^{-E({\bf v},{\bf h})}``.
@@ -264,12 +264,12 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
             Value of the pseudo-likelihood (proxy to likelihood)
         """
         rng = check_random_state(self.random_state)
-        fe = self.free_energy(v)
+        fe = self._free_energy(v)
 
         v_ = v.copy()
         i_ = rng.randint(0, v.shape[1], v.shape[0])
         v_[np.arange(v.shape[0]), i_] = 1 - v_[np.arange(v.shape[0]), i_]
-        fe_ = self.free_energy(v_)
+        fe_ = self._free_energy(v_)
 
         return v.shape[1] * logistic_sigmoid(fe_ - fe, log=True)
 
