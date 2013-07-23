@@ -5,6 +5,12 @@ Gradient Boosting Out-of-Bag estimates
 
 Out-of-bag (OOB) estimates can be a useful heuristic to estimate
 the "optimal" number of boosting iterations.
+OOB estimates are almost identical to cross-validation estimates but
+they can be computed on-the-fly without the need for repeated model
+fitting.
+OOB estimates are only available for Stochastic Gradient Boosting
+(i.e. ``subsample < 1.0``), the estimates are derived from the improvement
+in loss based on the out-of-bag examples.
 The OOB estimator is a pessimistic estimator of the true
 test loss, but remains a fairly good approximation for a small number of trees.
 
