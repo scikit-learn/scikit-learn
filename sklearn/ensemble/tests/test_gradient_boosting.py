@@ -485,3 +485,20 @@ def test_oob_score():
     with warnings.catch_warnings(record=True) as w:
         _ = clf.oob_score_[0]
         assert_equal(len(w), 1)
+
+
+def test_oob_improvement():
+    """Test if oob improvement has correct shape. """
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
+                                     subsample=0.5)
+    clf.fit(X, y)
+    assert clf.oob_improvement_.shape[0] == 100
+
+
+def test_oob_improvement_raise():
+    """Test if oob improvement has correct shape. """
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
+                                     subsample=1.0)
+    clf.fit(X, y)
+    assert_raises(AttributeError, lambda : clf.oob_improvement_)
+
