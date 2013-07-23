@@ -127,7 +127,7 @@ def test_fastica_simple(add_noise=False):
     assert_array_almost_equal(sources, ica.sources_)
     assert_array_almost_equal(sources, ica.transform(m.T))
 
-    assert_equal(ica.get_mixing_matrix().shape, (2, 2))
+    assert_equal(ica.mixing_.shape, (2, 2))
 
     for fn in [np.tanh, "exp(-.5(x^2))"]:
         ica = FastICA(fun=fn, algorithm=algo, random_state=0)
@@ -140,7 +140,7 @@ def test_fastica_nowhiten():
     m = [[0, 1], [1, 0]]
     ica = FastICA(whiten=False, random_state=0)
     ica.fit(m)
-    ica.get_mixing_matrix()
+    ica.mixing_
 
     # test for issue #697
     with warnings.catch_warnings(record=True) as w:
