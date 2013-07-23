@@ -112,6 +112,23 @@ def test_mnnb():
         assert_array_almost_equal(y_pred_log_proba3, y_pred_log_proba)
 
 
+def test_discretenb_partial_fit():
+    for cls in [MultinomialNB, BernoulliNB]:
+        clf1 = cls()
+        clf1.fit([[0, 1], [1, 0]], [0, 1])
+
+        clf2 = cls()
+        clf2.partial_fit([[0, 1], [1, 0]], [0, 1], classes=[0, 1])
+        assert_array_equal(clf1.class_count_, clf2.class_count_)
+        assert_array_equal(clf1.feature_count_, clf2.feature_count_)
+
+        clf3 = cls()
+        clf3.partial_fit([[0, 1]], [0], classes=[0, 1])
+        clf3.partial_fit([[1, 0]], [1])
+        assert_array_equal(clf1.class_count_, clf3.class_count_)
+        assert_array_equal(clf1.feature_count_, clf3.feature_count_)
+
+
 def test_discretenb_pickle():
     """Test picklability of discrete naive Bayes classifiers"""
 
