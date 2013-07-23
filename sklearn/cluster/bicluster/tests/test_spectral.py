@@ -31,23 +31,22 @@ def test_spectral_coclustering():
                   'n_init': [10],
                   'n_jobs': [1]}
     random_state = 0
-    for noise in (0, 0.5):
-        S, rows, cols = make_biclusters((30, 30), 3, noise=noise,
-                                        random_state=random_state)
-        S -= S.min()  # needs to be nonnegative before making it sparse
-        S = np.where(S < 1, 0, S)  # threshold some values
-        for mat in (S, csr_matrix(S)):
-            for kwargs in ParameterGrid(param_grid):
-                model = SpectralCoclustering(n_clusters=3,
-                                             random_state=random_state,
-                                             **kwargs)
-                model.fit(mat)
+    S, rows, cols = make_biclusters((30, 30), 3, noise=0.5,
+                                    random_state=random_state)
+    S -= S.min()  # needs to be nonnegative before making it sparse
+    S = np.where(S < 1, 0, S)  # threshold some values
+    for mat in (S, csr_matrix(S)):
+        for kwargs in ParameterGrid(param_grid):
+            model = SpectralCoclustering(n_clusters=3,
+                                         random_state=random_state,
+                                         **kwargs)
+            model.fit(mat)
 
-                assert_equal(model.rows_.shape, (3, 30))
-                assert_array_equal(model.rows_.sum(axis=0), np.ones(30))
-                assert_array_equal(model.columns_.sum(axis=0), np.ones(30))
-                assert_equal(consensus_score(model.biclusters_,
-                                             (rows, cols)), 1)
+            assert_equal(model.rows_.shape, (3, 30))
+            assert_array_equal(model.rows_.sum(axis=0), np.ones(30))
+            assert_array_equal(model.columns_.sum(axis=0), np.ones(30))
+            assert_equal(consensus_score(model.biclusters_,
+                                         (rows, cols)), 1)
 
 
 def test_spectral_biclustering():
@@ -60,30 +59,29 @@ def test_spectral_biclustering():
                   'n_init': [10],
                   'n_jobs': [1]}
     random_state = 0
-    for noise in (0, 0.5):
-        S, rows, cols = make_checkerboard((30, 30), 3, noise=noise,
-                                          random_state=random_state)
-        for mat in (S, csr_matrix(S)):
-            for kwargs in ParameterGrid(param_grid):
-                model = SpectralBiclustering(n_clusters=3,
-                                             random_state=random_state,
-                                             **kwargs)
+    S, rows, cols = make_checkerboard((30, 30), 3, noise=0.5,
+                                      random_state=random_state)
+    for mat in (S, csr_matrix(S)):
+        for kwargs in ParameterGrid(param_grid):
+            model = SpectralBiclustering(n_clusters=3,
+                                         random_state=random_state,
+                                         **kwargs)
 
-                if issparse(mat) and kwargs['method'] == 'log':
-                    # cannot take log of sparse matrix
-                    assert_raises(ValueError, model.fit, mat)
-                    continue
-                else:
-                    model.fit(mat)
+            if issparse(mat) and kwargs['method'] == 'log':
+                # cannot take log of sparse matrix
+                assert_raises(ValueError, model.fit, mat)
+                continue
+            else:
+                model.fit(mat)
 
-                assert_equal(model.rows_.shape, (9, 30))
-                assert_equal(model.columns_.shape, (9, 30))
-                assert_array_equal(model.rows_.sum(axis=0),
-                                   np.repeat(3, 30))
-                assert_array_equal(model.columns_.sum(axis=0),
-                                   np.repeat(3, 30))
-                assert_equal(consensus_score(model.biclusters_,
-                                             (rows, cols)), 1)
+            assert_equal(model.rows_.shape, (9, 30))
+            assert_equal(model.columns_.shape, (9, 30))
+            assert_array_equal(model.rows_.sum(axis=0),
+                               np.repeat(3, 30))
+            assert_array_equal(model.columns_.sum(axis=0),
+                               np.repeat(3, 30))
+            assert_equal(consensus_score(model.biclusters_,
+                                         (rows, cols)), 1)
 
 
 def _do_scale_test(scaled):
@@ -158,6 +156,28 @@ def test_project_and_cluster():
         labels = model._project_and_cluster(data, vectors,
                                             n_clusters=2)
         assert_array_equal(labels, [0, 0, 1, 1])
+
+
+def test_perfect_checkerboard():
+    model = SpectralBiclustering(3, svd_method="arpack", random_state=0)
+
+    S, rows, cols = make_checkerboard((30, 30), 3, noise=0,
+                                      random_state=0)
+    model.fit(S)
+    assert_equal(consensus_score(model.biclusters_,
+                                 (rows, cols)), 1)
+
+    S, rows, cols = make_checkerboard((40, 30), 3, noise=0,
+                                      random_state=0)
+    model.fit(S)
+    assert_equal(consensus_score(model.biclusters_,
+                                 (rows, cols)), 1)
+
+    S, rows, cols = make_checkerboard((30, 40), 3, noise=0,
+                                      random_state=0)
+    model.fit(S)
+    assert_equal(consensus_score(model.biclusters_,
+                                 (rows, cols)), 1)
 
 
 def test_errors():
