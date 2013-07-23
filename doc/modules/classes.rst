@@ -10,30 +10,6 @@ uses.
 .. contents:: List of modules
    :local:
 
-
-.. _bicluster_ref:
-
-:mod:`sklearn.cluster.bicluster`: Biclustering
-======================================
-
-.. automodule:: sklearn.cluster.bicluster
-   :no-members:
-   :no-inherited-members:
-
-**User guide:** See the :ref:`biclustering` section for further details.
-
-Classes
--------
-.. currentmodule:: sklearn.cluster.bicluster
-
-.. autosummary::
-   :toctree: generated/
-   :template: class.rst
-
-   SpectralBiclustering
-   SpectralCoclustering
-
-
 .. _cluster_ref:
 
 :mod:`sklearn.cluster`: Clustering
@@ -74,6 +50,28 @@ Functions
    cluster.dbscan
    cluster.mean_shift
    cluster.spectral_clustering
+
+.. _bicluster_ref:
+
+:mod:`sklearn.cluster.bicluster`: Biclustering
+======================================
+
+.. automodule:: sklearn.cluster.bicluster
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`biclustering` section for further details.
+
+Classes
+-------
+.. currentmodule:: sklearn.cluster.bicluster
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   SpectralBiclustering
+   SpectralCoclustering
 
 .. _covariance_ref:
 
