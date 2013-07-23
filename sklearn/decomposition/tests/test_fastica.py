@@ -220,15 +220,16 @@ def test_inverse_transform():
     X = rng.random_sample((100, 10))
     rng = np.random.RandomState(0)
     X = rng.random_sample((100, 10))
-    expected = {(True, 5): (X.shape[1], 5),
-                (True, 10): (X.shape[1], 10),
-                (False, 5): (X.shape[1], 10),
-                (False, 10): (X.shape[1], 10)}
+    n_features = X.shape[1]
+    expected = {(True, 5): (n_features, 5),
+                (True, 10): (n_features, 10),
+                (False, 5): (n_features, 10),
+                (False, 10): (n_features, 10)}
 
     for whiten in [True, False]:
         for n_components in [5, 10]:
             ica = FastICA(n_components=n_components, random_state=rng,
-                          whiten=whiten, fit_inverse_transform=True)
+                          whiten=whiten)
             Xt = ica.fit_transform(X)
             mixing_matrix = ica.get_mixing_matrix()
 
@@ -240,18 +241,6 @@ def test_inverse_transform():
             # reversibility test in non-reduction case
             if n_components == X.shape[1]:
                 assert_array_almost_equal(X, X2)
-
-
-def test_refit_without_inverse():
-    """Check that old mixing matrix doesn't linger after re-fit."""
-    rng = np.random.RandomState(37)
-    X = rng.random_sample((10, 5))
-    ica = FastICA(fit_inverse_transform=True)
-    ica.fit(X)
-    assert_true(hasattr(ica, "mixing_"))
-    ica.set_params(fit_inverse_transform=False)
-    ica.fit(X)
-    assert_false(hasattr(ica, "mixing_"))
 
 
 if __name__ == '__main__':
