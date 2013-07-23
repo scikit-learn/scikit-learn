@@ -58,7 +58,7 @@ clf = ensemble.GradientBoostingClassifier(**params)
 
 clf.fit(X_train, y_train)
 acc = clf.score(X_test, y_test)
-print("ACC: %.4f" % acc)
+print("ACC: {:.4f}".format(acc))
 
 n_estimators = params['n_estimators']
 x = np.arange(n_estimators) + 1
