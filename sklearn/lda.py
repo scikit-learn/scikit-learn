@@ -199,7 +199,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     def decision_function(self, X):
         """
-        This function return the decision function values related to each
+        This function returns the decision function values related to each
         class on an array of test vectors X.
 
         Parameters
@@ -257,7 +257,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     def predict_proba(self, X):
         """
-        This function return posterior probabilities of classification
+        This function returns posterior probabilities of classification
         according to each class on an array of test vectors X.
 
         Parameters
@@ -277,7 +277,7 @@ class LDA(BaseEstimator, ClassifierMixin, TransformerMixin):
 
     def predict_log_proba(self, X):
         """
-        This function return posterior log-probabilities of classification
+        This function returns posterior log-probabilities of classification
         according to each class on an array of test vectors X.
 
         Parameters

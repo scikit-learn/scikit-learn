@@ -24,8 +24,8 @@ dependence in the dictionary. The requested precision might not have been met.
 def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
     """Orthogonal Matching Pursuit step using the Cholesky decomposition.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     X: array, shape = (n_samples, n_features)
         Input dictionary. Columns are assumed to have unit norm.
 
@@ -43,8 +43,8 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
         value is only helpful if X is already Fortran-ordered, otherwise a
         copy is made anyway.
 
-    Returns:
-    --------
+    Returns
+    -------
     gamma: array, shape = (n_nonzero_coefs,)
         Non-zero elements of the solution
 
@@ -110,8 +110,8 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
 
     This function uses the the Cholesky decomposition method.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     Gram: array, shape = (n_features, n_features)
         Gram matrix of the input data matrix
 
@@ -136,8 +136,8 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
         Whether the covariance vector Xy must be copied by the algorithm.
         If False, it may be overwritten.
 
-    Returns:
-    --------
+    Returns
+    -------
     gamma: array, shape = (n_nonzero_coefs,)
         Non-zero elements of the solution
 

@@ -164,6 +164,20 @@ def test_sample_weight():
             [0, 0, 1],
             sample_weight=[1, 1, 4])
     assert_array_equal(clf.predict([1, 0]), [1])
-    positive_prior = np.exp(clf.intercept_)
+    positive_prior = np.exp(clf.intercept_[0])
     assert_array_almost_equal([1 - positive_prior, positive_prior],
                               [1 / 3., 2 / 3.])
+
+
+def test_coef_intercept_shape():
+    """coef_ and intercept_ should have shapes as in other linear models.
+
+    Non-regression test for issue #2127.
+    """
+    X = [[1, 0, 0], [1, 1, 1]]
+    y = [1, 2]  # binary classification
+
+    for clf in [MultinomialNB(), BernoulliNB()]:
+        clf.fit(X, y)
+        assert_equal(clf.coef_.shape, (1, 3))
+        assert_equal(clf.intercept_.shape, (1,))

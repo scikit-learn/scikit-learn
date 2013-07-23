@@ -1,4 +1,7 @@
 # encoding: utf-8
+# cython: cdivision=True
+# cython: boundscheck=False
+# cython: wraparound=False
 #
 # Author: Arnaud Joly
 #
@@ -23,8 +26,6 @@ np.import_array()
 from sklearn.utils import check_random_state
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cpdef _sample_without_replacement_check_input(np.int_t n_population,
                                               np.int_t n_samples):
     """ Check that input are consistent for sample_without_replacement"""
@@ -38,8 +39,6 @@ cpdef _sample_without_replacement_check_input(np.int_t n_population,
                          % (n_samples, n_population))
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cpdef _sample_without_replacement_with_tracking_selection(
         np.int_t n_population,
         np.int_t n_samples,
@@ -106,8 +105,6 @@ cpdef _sample_without_replacement_with_tracking_selection(
     return out
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cpdef _sample_without_replacement_with_pool(np.int_t n_population,
                                             np.int_t n_samples,
                                             random_state=None):
@@ -168,8 +165,6 @@ cpdef _sample_without_replacement_with_pool(np.int_t n_population,
     return out
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
 cpdef _sample_without_replacement_with_reservoir_sampling(
     np.int_t n_population,
     np.int_t n_samples,
@@ -230,10 +225,10 @@ cpdef _sample_without_replacement_with_reservoir_sampling(
     return out
 
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cpdef sample_without_replacement(np.int_t n_population, np.int_t n_samples,
-                                 method="auto", random_state=None):
+cpdef sample_without_replacement(np.int_t n_population,
+                                 np.int_t n_samples,
+                                 method="auto",
+                                 random_state=None):
     """Sample integers without replacement.
 
     Select n_samples integers from the set [0, n_population) without

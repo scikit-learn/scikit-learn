@@ -2,6 +2,7 @@ from __future__ import division, print_function
 
 from functools import partial
 import warnings
+from itertools import product
 import numpy as np
 
 from sklearn import datasets
@@ -47,12 +48,16 @@ from sklearn.metrics import (accuracy_score,
                              zero_one_score,
                              zero_one_loss)
 from sklearn.metrics.metrics import _check_clf_targets
+from sklearn.metrics.metrics import _check_reg_targets
+from sklearn.metrics.metrics import _column_or_1d
+
+
 from sklearn.externals.six.moves import xrange
 
 ALL_METRICS = {
     "accuracy_score": accuracy_score,
     "unormalized_accuracy_score": partial(accuracy_score, normalize=False),
-
+    "confusion_matrix": confusion_matrix,
     "hamming_loss": hamming_loss,
 
     "jaccard_similarity_score": jaccard_similarity_score,
@@ -92,7 +97,8 @@ ALL_METRICS = {
     "mean_absolute_error": mean_absolute_error,
     "mean_squared_error": mean_squared_error,
     "explained_variance_score": explained_variance_score,
-    "r2_score": r2_score
+    "r2_score": r2_score,
+    "confusion_matrix": partial(confusion_matrix, labels=range(3)),
 }
 
 METRICS_WITH_NORMALIZE_OPTION = {
@@ -113,6 +119,12 @@ MULTILABELS_METRICS = {
 
     "zero_one_loss": zero_one_loss,
     "unnormalized_zero_one_loss": partial(zero_one_loss, normalize=False),
+
+    "precision_score": precision_score,
+    "recall_score": recall_score,
+    "f1_score": f1_score,
+    "f2_score": partial(fbeta_score, beta=2),
+    "f0.5_score": partial(fbeta_score, beta=0.5),
 
     "weighted_f0.5_score": partial(fbeta_score, average="weighted", beta=0.5),
     "weighted_f1_score": partial(f1_score, average="weighted"),
@@ -139,7 +151,14 @@ MULTILABELS_METRICS = {
     "macro_recall_score": partial(recall_score, average="macro"),
 }
 
-SYMETRIC_METRICS = {
+MULTIOUTPUT_METRICS = {
+    "mean_absolute_error": mean_absolute_error,
+    "mean_squared_error": mean_squared_error,
+    "r2_score": r2_score,
+}
+
+
+SYMMETRIC_METRICS = {
     "accuracy_score": accuracy_score,
     "unormalized_accuracy_score": partial(accuracy_score, normalize=False),
 
@@ -162,9 +181,11 @@ SYMETRIC_METRICS = {
     "mean_squared_error": mean_squared_error
 }
 
-NOT_SYMETRIC_METRICS = {
+NOT_SYMMETRIC_METRICS = {
     "explained_variance_score": explained_variance_score,
     "r2_score": r2_score,
+
+    "confusion_matrix": confusion_matrix,
 
     "precision_score": precision_score,
     "recall_score": recall_score,
@@ -185,6 +206,8 @@ NOT_SYMETRIC_METRICS = {
     "macro_f2_score": partial(fbeta_score, average="macro", beta=2),
     "macro_precision_score": partial(precision_score, average="macro"),
     "macro_recall_score": partial(recall_score, average="macro"),
+
+    "confusion_matrix": partial(confusion_matrix, labels=range(3)),
 }
 
 THRESHOLDED_METRICS = {
@@ -516,7 +539,8 @@ def test_confusion_matrix_binary():
         assert_array_almost_equal(mcc, 0.57, decimal=2)
 
     test(y_true, y_pred)
-    test(map(str, y_true), map(str, y_pred))
+    test([str(y) for y in y_true],
+         [str(y) for y in y_pred])
 
 
 def test_matthews_corrcoef_nan():
@@ -636,7 +660,9 @@ def test_confusion_matrix_multiclass():
                                 [4, 24, 3]])
 
     test(y_true, y_pred)
-    test(map(str, y_true), map(str, y_pred), string_type=True)
+    test(list(str(y) for y in y_true),
+         list(str(y) for y in y_pred),
+         string_type=True)
 
 
 def test_confusion_matrix_multiclass_subset_labels():
@@ -817,7 +843,7 @@ def test_losses():
     assert_equal(accuracy_score(y_true, y_pred),
                  1 - zero_one_loss(y_true, y_pred))
 
-    with warnings.catch_warnings(True):
+    with warnings.catch_warnings(record=True):
     # Throw deprecated warning
         assert_equal(zero_one_score(y_true, y_pred),
                      1 - zero_one_loss(y_true, y_pred))
@@ -863,23 +889,23 @@ def test_symmetry():
     y_true, y_pred, _ = make_prediction(binary=True)
 
     # We shouldn't forget any metrics
-    assert_equal(set(SYMETRIC_METRICS).union(NOT_SYMETRIC_METRICS,
+    assert_equal(set(SYMMETRIC_METRICS).union(NOT_SYMMETRIC_METRICS,
                                              THRESHOLDED_METRICS),
                  set(ALL_METRICS))
 
-    assert_equal(set(SYMETRIC_METRICS).intersection(set(NOT_SYMETRIC_METRICS)),
+    assert_equal(set(SYMMETRIC_METRICS).intersection(set(NOT_SYMMETRIC_METRICS)),
                  set([]))
 
     # Symmetric metric
-    for name, metric in SYMETRIC_METRICS.items():
+    for name, metric in SYMMETRIC_METRICS.items():
         assert_almost_equal(metric(y_true, y_pred),
                             metric(y_pred, y_true),
-                            err_msg="%s is not symetric" % name)
+                            err_msg="%s is not symmetric" % name)
 
     # Not symmetric metrics
-    for name, metric in NOT_SYMETRIC_METRICS.items():
-        assert_true(metric(y_true, y_pred) != metric(y_pred, y_true),
-                    msg="%s seems to be symetric" % name)
+    for name, metric in NOT_SYMMETRIC_METRICS.items():
+        assert_true(np.any(metric(y_true, y_pred) != metric(y_pred, y_true)),
+                    msg="%s seems to be symmetric" % name)
 
     # Deprecated metrics
     with warnings.catch_warnings(record=True):
@@ -967,15 +993,34 @@ def test_format_invariance_with_1d_vectors():
                                     "with mix list and np-array-column"
                                     % name)
 
-        # At the moment, these mix representations aren't allowed
+        # These mix representations aren't allowed
         assert_raises(ValueError, metric, y1_1d, y2_row)
         assert_raises(ValueError, metric, y1_row, y2_1d)
         assert_raises(ValueError, metric, y1_list, y2_row)
         assert_raises(ValueError, metric, y1_row, y2_list)
         assert_raises(ValueError, metric, y1_column, y2_row)
         assert_raises(ValueError, metric, y1_row, y2_column)
+
         # NB: We do not test for y1_row, y2_row as these may be
         # interpreted as multilabel or multioutput data.
+        if (name not in MULTIOUTPUT_METRICS and
+                name not in MULTILABELS_METRICS):
+            assert_raises(ValueError, metric, y1_row, y2_row)
+
+
+def test_clf_single_sample():
+    """Non-regression test: scores should work with a single sample.
+
+    This is important for leave-one-out cross validation.
+    Score functions tested are those that formerly called np.squeeze,
+    which turns an array of size 1 into a 0-d array (!).
+    """
+
+    f2_score = lambda t, p: fbeta_score(t, p, 2)
+    for metric in [accuracy_score, f1_score, f2_score, hamming_loss,
+                   jaccard_similarity_score, precision_recall_fscore_support]:
+        # assert that no exception is thrown
+        score = metric([True], [True])
 
 
 def test_hinge_loss_binary():
@@ -983,7 +1028,7 @@ def test_hinge_loss_binary():
     pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
     assert_equal(hinge_loss(y_true, pred_decision), 1.2 / 4)
 
-    with warnings.catch_warnings(True):
+    with warnings.catch_warnings(record=True):
         # Test deprecated pos_label
         assert_equal(
             hinge_loss(-y_true, pred_decision),
@@ -993,7 +1038,7 @@ def test_hinge_loss_binary():
     pred_decision = np.array([-8.5, 0.5, 1.5, -0.3])
 
     assert_equal(hinge_loss(y_true, pred_decision), 1.2 / 4)
-    with warnings.catch_warnings(True):
+    with warnings.catch_warnings(record=True):
         # Test deprecated pos_label
         assert_equal(hinge_loss(y_true, pred_decision, pos_label=2,
                                 neg_label=0), 1.2 / 4)
@@ -1019,9 +1064,8 @@ def test_multioutput_number_of_output_differ():
     y_true = np.array([[1, 0, 0, 1], [0, 1, 1, 1], [1, 1, 0, 1]])
     y_pred = np.array([[0, 0], [1, 0], [0, 0]])
 
-    assert_raises(ValueError, mean_squared_error, y_true, y_pred)
-    assert_raises(ValueError, mean_absolute_error, y_true, y_pred)
-    assert_raises(ValueError, r2_score, y_true, y_pred)
+    for name, metrics in MULTIOUTPUT_METRICS.items():
+        assert_raises(ValueError, metrics, y_true, y_pred)
 
 
 def test_multioutput_regression_invariance_to_dimension_shuffling():
@@ -1032,13 +1076,15 @@ def test_multioutput_regression_invariance_to_dimension_shuffling():
     y_pred = np.reshape(y_pred, (-1, n_dims))
 
     rng = check_random_state(314159)
-    for metric in [r2_score, mean_squared_error, mean_absolute_error]:
+    for name, metric in MULTIOUTPUT_METRICS.items():
         error = metric(y_true, y_pred)
 
         for _ in xrange(3):
             perm = rng.permutation(n_dims)
             assert_almost_equal(metric(y_true[:, perm], y_pred[:, perm]),
-                                error)
+                                error,
+                                err_msg="%s is not dimension shuffling"
+                                        "invariant" % name)
 
 
 def test_multilabel_representation_invariance():
@@ -1598,3 +1644,52 @@ def test__check_clf_targets():
                     assert_array_equal(y1out, np.squeeze(y1))
                     assert_array_equal(y2out, np.squeeze(y2))
                 assert_raises(ValueError, _check_clf_targets, y1[:-1], y2)
+
+
+def test__check_reg_targets():
+    # All of length 3
+    EXAMPLES = [
+        ("continuous", [1, 2, 3], 1),
+        ("continuous", [[1], [2], [3]], 1),
+        ("continuous-multioutput", [[1, 1], [2, 2], [3, 1]], 2),
+        ("continuous-multioutput", [[5, 1], [4, 2], [3, 1]], 2),
+        ("continuous-multioutput", [[1, 3, 4], [2, 2, 2], [3, 1, 1]], 3),
+    ]
+
+    for (type1, y1, n_out1), (type2, y2, n_out2) in product(EXAMPLES,
+                                                            EXAMPLES):
+
+        if type1 == type2 and n_out1 == n_out2:
+            y_type, y_check1, y_check2 = _check_reg_targets(y1, y2)
+            assert_equal(type1, y_type)
+            if type1 == 'continuous':
+                assert_array_equal(y_check1, np.reshape(y1, (-1, 1)))
+                assert_array_equal(y_check2, np.reshape(y2, (-1, 1)))
+            else:
+                assert_array_equal(y_check1, y1)
+                assert_array_equal(y_check2, y2)
+        else:
+            assert_raises(ValueError, _check_reg_targets, y1, y2)
+
+
+def test__column_or_1d():
+    EXAMPLES = [
+        ("binary", ["spam", "egg", "spam"]),
+        ("binary", [0, 1, 0, 1]),
+        ("continuous", np.arange(10) / 20.),
+        ("multiclass", [1, 2, 3]),
+        ("multiclass", [0, 1, 2, 2, 0]),
+        ("multiclass", [[1], [2], [3]]),
+        ("multilabel-indicator", [[0, 1, 0], [0, 0, 1]]),
+        ("multiclass-multioutput", [[1, 2, 3]]),
+        ("multiclass-multioutput", [[1, 1], [2, 2], [3, 1]]),
+        ("multiclass-multioutput", [[5, 1], [4, 2], [3, 1]]),
+        ("multiclass-multioutput", [[1, 2, 3]]),
+        ("continuous-multioutput", np.arange(30).reshape((-1, 3))),
+    ]
+
+    for y_type, y in EXAMPLES:
+        if y_type in ["binary", 'multiclass', "continuous"]:
+            assert_array_equal(_column_or_1d(y), np.ravel(y))
+        else:
+            assert_raises(ValueError, _column_or_1d, y)

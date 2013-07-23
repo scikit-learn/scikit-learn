@@ -93,7 +93,7 @@ if __name__ == "__main__":
     op = optparse.OptionParser()
     op.add_option("--n-times",
                   dest="n_times", default=5, type=int,
-                  help="Bench results are average over n_times experiments")
+                  help="Benchmark results are average over n_times experiments")
 
     op.add_option("--n-features",
                   dest="n_features", default=10 ** 4, type=int,

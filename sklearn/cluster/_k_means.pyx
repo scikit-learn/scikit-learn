@@ -15,6 +15,7 @@ cimport cython
 
 from ..utils.extmath import norm
 from ..utils.fixes import bincount
+from sklearn.utils.sparsefuncs cimport add_row_csr
 
 ctypedef np.float64_t DOUBLE
 ctypedef np.int32_t INT
@@ -338,7 +339,7 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
 
     Parameters
     ----------
-    X: sparse matrix, shape (n_samples, n_features)
+    X: scipy.sparse.csr_matrix, shape (n_samples, n_features)
 
     labels: array of integers, shape (n_samples)
         Current label assignment
@@ -354,27 +355,39 @@ def _centers_sparse(X, np.ndarray[INT, ndim=1] labels, n_clusters,
     centers: array, shape (n_clusters, n_features)
         The resulting centers
     """
-    ## TODO: add support for CSR input
     n_features = X.shape[1]
 
-    centers = np.zeros((n_clusters, n_features), dtype=X.dtype)
-    n_samples_in_cluster = bincount(labels, minlength=n_clusters)
-    empty_clusters = np.where(n_samples_in_cluster == 0)[0]
+    cdef np.npy_intp cluster_id
+
+    cdef np.ndarray[DOUBLE, ndim=1] data = X.data
+    cdef np.ndarray[int, ndim=1] indices = X.indices
+    cdef np.ndarray[int, ndim=1] indptr = X.indptr
+
+    cdef np.ndarray[DOUBLE, ndim=2, mode="c"] centers = \
+        np.zeros((n_clusters, n_features))
+    cdef np.ndarray[np.npy_intp, ndim=1] far_from_centers
+    cdef np.ndarray[np.npy_intp, ndim=1, mode="c"] n_samples_in_cluster = \
+        bincount(labels, minlength=n_clusters)
+    cdef np.ndarray[np.npy_intp, ndim=1, mode="c"] empty_clusters = \
+        np.where(n_samples_in_cluster == 0)[0]
+
     # maybe also relocate small clusters?
 
-    if len(empty_clusters):
+    if empty_clusters.shape[0] > 0:
         # find points to reassign empty clusters to
         far_from_centers = distances.argsort()[::-1]
 
-    for i, cluster_id in enumerate(empty_clusters):
+    for i in range(empty_clusters.shape[0]):
+        cluster_id = empty_clusters[i]
+
         # XXX two relocated clusters could be close to each other
-        new_center = X[far_from_centers[i]]
-        new_center = new_center.todense().ravel()
-        centers[cluster_id] = new_center
+        centers[cluster_id] = 0.
+        add_row_csr(data, indices, indptr, far_from_centers[i],
+                    centers[cluster_id])
         n_samples_in_cluster[cluster_id] = 1
 
-    for label, sample in zip(labels, X):
-        centers[label, :] += sample.toarray().ravel()
+    for i in range(labels.shape[0]):
+        add_row_csr(data, indices, indptr, i, centers[labels[i]])
 
     centers /= n_samples_in_cluster[:, np.newaxis]
 

@@ -3,7 +3,7 @@
     ~~~~~~~~~~~~~~~~~
 
     Layout for scikit-learn, after a design made by Angel Soler
-    (http://webylimonada.org)
+    (http://angelsoler.net)
 
     Update: Collapsable sidebar added - 13/03/2012 - Jaques Grobler
     Update: Next-page button added - 16/03/2012 - Jaques Grobler
@@ -205,7 +205,21 @@
     <p style="text-align: center;"><a href="http://http://code.google.com/opensource/"><img src="{{pathto('_static',1)}}/google-logo.png"
     alt="INRIA"/></a></p>
 
-    <p><a href="{{pathto('about')}}">Read more ...</a></p>
+    <p>Any donations are very welcome!</p>
+    <form action="https://www.paypal.com/cgi-bin/webscr" method="post"
+	  target="_top">
+      <input type="hidden" name="cmd" value="_s-xclick">
+      <input type="hidden" name="hosted_button_id" value="74EYUMF3FTSW8">
+      <input type="image"
+	     src="https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif"
+	     border="0" name="submit" alt="PayPal - The safer, easier way to pay
+					   online!"
+	     style="margin: 0 auto; position: relative; left: 6%;">
+      <img alt="" border="0"
+	   src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1"
+	   height="1">
+    </form>
+    <p><a href="{{pathto('about')}}#donating-to-the-project">Read more here ...</a></p>
 
     {% endif %}
     <h3><a href="{{pathto('about')}}#citing-scikit-learn">Citing</a></h3>
@@ -247,7 +261,7 @@
       {% trans last_updated=last_updated|e %}Last updated on {{ last_updated }}.{% endtrans %}
     {%- endif %}
     {%- if show_sphinx %}
-      {% trans sphinx_version=sphinx_version|e %}Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> {{ sphinx_version }}{% endtrans %}. Design by <a href="http://desgrana.es">Desgrana</a>.
+      {% trans sphinx_version=sphinx_version|e %}Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> {{ sphinx_version }}{% endtrans %}. Design by <a href="http://angelsoler.net">Angel Soler</a>.
     {%- endif %}
     {%- if show_source and has_source and sourcename %}
     <span style="padding-left: 5ex;">

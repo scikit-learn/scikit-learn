@@ -504,7 +504,7 @@ class BaseSGDClassifier(BaseSGD, LinearClassifierMixin):
             Target values
 
         coef_init : array, shape = [n_classes,n_features]
-            The initial coeffients to warm-start the optimization.
+            The initial coefficients to warm-start the optimization.
 
         intercept_init : array, shape = [n_classes]
             The initial intercept to warm-start the optimization.
@@ -543,8 +543,8 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
 
     Parameters
     ----------
-    loss : str, 'hinge', 'log', 'modified_huber', 'squared_hinge',
-                'perceptron', or a regression loss: 'squared_loss', 'huber',
+    loss : str, 'hinge', 'log', 'modified_huber', 'squared_hinge',\
+                'perceptron', or a regression loss: 'squared_loss', 'huber',\
                 'epsilon_insensitive', or 'squared_epsilon_insensitive'
         The loss function to be used. Defaults to 'hinge'. The hinge loss is
         a margin loss used by standard linear SVM models. The 'log' loss is
@@ -552,7 +552,7 @@ class SGDClassifier(BaseSGDClassifier, _LearntSelectorMixin):
         probability estimation in binary classifiers. 'modified_huber'
         is another smooth loss that brings tolerance to outliers.
         'squared_hinge' is like hinge but is quadratically penalized.
-        'perceptron'is the linear loss used by the perceptron algorithm.
+        'perceptron' is the linear loss used by the perceptron algorithm.
         The other losses are designed for regression but can be useful in
         classification as well; see SGDRegressor for a description.
 
@@ -858,7 +858,7 @@ class BaseSGDRegressor(BaseSGD, RegressorMixin):
             Target values
 
         coef_init : array, shape = [n_features]
-            The initial coeffients to warm-start the optimization.
+            The initial coefficients to warm-start the optimization.
 
         intercept_init : array, shape = [1]
             The initial intercept to warm-start the optimization.

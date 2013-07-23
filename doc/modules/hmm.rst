@@ -82,8 +82,8 @@ constructor. Then, you can generate samples from the HMM by calling `sample`.::
 
  * :ref:`example_plot_hmm_sampling.py`
 
-Training HMM parameters and infering the hidden states
-------------------------------------------------------
+Training HMM parameters and inferring the hidden states
+-------------------------------------------------------
 
 You can train an HMM by calling the `fit` method. The input is "the list" of 
 the sequence of observed value. Note, since the EM algorithm is a gradient-based
@@ -105,7 +105,7 @@ in model2 will have a different order than those in the generating model.::
 
 .. topic:: Examples:
 
- * :ref:`example_plot_hmm_stock_analysis.py`
+ * :ref:`example_applications_plot_hmm_stock_analysis.py`
 
 
 Implementing HMMs with custom emission probabilities

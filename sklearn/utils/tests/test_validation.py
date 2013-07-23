@@ -84,10 +84,11 @@ def test_memmap():
 
 
 def test_ordering():
-    # Check that ordering is enforced correctly by the different
-    # validation utilities
-    # We need to check each validation utility, because a 'copy' without
-    # 'order=K' will kill the ordering
+    """Check that ordering is enforced correctly by validation utilities.
+
+    We need to check each validation utility, because a 'copy' without
+    'order=K' will kill the ordering.
+    """
     X = np.ones((10, 5))
     for A in X, X.T:
         for validator in (array2d, atleast2d_or_csr, atleast2d_or_csc):
@@ -98,6 +99,15 @@ def test_ordering():
                 assert_true(B.flags['F_CONTIGUOUS'])
                 if copy:
                     assert_false(A is B)
+
+    X = sp.csr_matrix(X)
+    X.data = X.data[::-1]
+    assert_false(X.data.flags['C_CONTIGUOUS'])
+
+    for validator in (atleast2d_or_csc, atleast2d_or_csr):
+        for copy in (True, False):
+            Y = validator(X, copy=copy, order='C')
+            assert_true(Y.data.flags['C_CONTIGUOUS'])
 
 
 def test_check_arrays():

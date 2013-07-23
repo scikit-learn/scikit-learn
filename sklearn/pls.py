@@ -19,7 +19,7 @@ def _nipals_twoblocks_inner_loop(X, Y, mode="A", max_iter=500, tol=1e-06,
                                  norm_y_weights=False):
     """Inner loop of the iterative NIPALS algorithm.
 
-    Provides an alternative to the svd(X'Y); returns the first left and rigth
+    Provides an alternative to the svd(X'Y); returns the first left and right
     singular vectors of X'Y.  See PLS for the meaning of the parameters.  It is
     similar to the Power method for determining the eigenvectors and
     eigenvalues of a X'Y.
@@ -77,6 +77,7 @@ def _svd_cross_product(X, Y):
 
 def _center_scale_xy(X, Y, scale=True):
     """ Center X, Y and scale if the scale parameter==True
+
     Returns
     -------
         X, Y, x_mean, y_mean, x_std, y_std
@@ -107,18 +108,18 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
     allow to obtain a specific implementation such as:
 
     - PLS2 regression, i.e., PLS 2 blocks, mode A, with asymmetric deflation
-      and unnormlized y weights such as defined by [Tenenhaus 1998] p. 132.
+      and unnormalized y weights such as defined by [Tenenhaus 1998] p. 132.
       With univariate response it implements PLS1.
 
-    - PLS canonical, i.e., PLS 2 blocks, mode A, with symetric deflation and
-      normlized y weights such as defined by [Tenenhaus 1998] (p. 132) and
+    - PLS canonical, i.e., PLS 2 blocks, mode A, with symmetric deflation and
+      normalized y weights such as defined by [Tenenhaus 1998] (p. 132) and
       [Wegelin et al. 2000]. This parametrization implements the original Wold
       algorithm.
 
     We use the terminology defined by [Wegelin et al. 2000].
     This implementation uses the PLS Wold 2 blocks algorithm based on two
     nested loops:
-    (i) The outer loop iterate over components.
+        (i) The outer loop iterate over components.
         (ii) The inner loop estimates the weights vectors. This can be done
         with two algo. (a) the inner loop of the original NIPALS algo. or (b) a
         SVD on residuals cross-covariance matrices.
@@ -392,7 +393,7 @@ class _PLS(BaseEstimator, TransformerMixin, RegressorMixin):
 
         Notes
         -----
-        This call require the estimation of a p x q matrix, which may
+        This call requires the estimation of a p x q matrix, which may
         be an issue in high dimensional space.
         """
         # Normalize
@@ -490,7 +491,7 @@ class PLSRegression(_PLS):
         Y block to latents rotations.
 
     coefs: array, [p, q]
-        The coeficients of the linear model: Y = X coefs + Err
+        The coefficients of the linear model: Y = X coefs + Err
 
     Notes
     -----
@@ -557,11 +558,11 @@ class PLSCanonical(_PLS):
     Parameters
     ----------
     X : array-like of predictors, shape = [n_samples, p]
-        Training vectors, where n_samples in the number of samples and
+        Training vectors, where n_samples is the number of samples and
         p is the number of predictors.
 
     Y : array-like of response, shape = [n_samples, q]
-        Training vectors, where n_samples in the number of samples and
+        Training vectors, where n_samples is the number of samples and
         q is the number of response variables.
 
     n_components : int, number of components to keep. (default 2).
@@ -621,15 +622,15 @@ class PLSCanonical(_PLS):
     current X score: x_score.
 
     The residual matrix of Y (Yk+1) block is obtained by deflation on the
-    current Y score. This performs a canonical symetric version of the PLS
-    regression. But slightly different than the CCA. This is mode mostly used
+    current Y score. This performs a canonical symmetric version of the PLS
+    regression. But slightly different than the CCA. This is mostly used
     for modeling.
 
     This implementation provides the same results that the "plspm" package
     provided in the R language (R-project), using the function plsca(X, Y).
     Results are equal or colinear with the function
     ``pls(..., mode = "canonical")`` of the "mixOmics" package. The difference
-    relies in the fact that mixOmics implmentation does not exactly implement
+    relies in the fact that mixOmics implementation does not exactly implement
     the Wold algorithm since it does not normalize y_weights to one.
 
     Examples
@@ -675,11 +676,11 @@ class CCA(_PLS):
     Parameters
     ----------
     X : array-like of predictors, shape = [n_samples, p]
-        Training vectors, where n_samples in the number of samples and
+        Training vectors, where n_samples is the number of samples and
         p is the number of predictors.
 
     Y : array-like of response, shape = [n_samples, q]
-        Training vectors, where n_samples in the number of samples and
+        Training vectors, where n_samples is the number of samples and
         q is the number of response variables.
 
     n_components : int, (default 2).
@@ -778,16 +779,16 @@ class PLSSVD(BaseEstimator, TransformerMixin):
     """Partial Least Square SVD
 
     Simply perform a svd on the crosscovariance matrix: X'Y
-    The are no iterative deflation here.
+    There are no iterative deflation here.
 
     Parameters
     ----------
     X : array-like of predictors, shape = [n_samples, p]
-        Training vector, where n_samples in the number of samples and
+        Training vector, where n_samples is the number of samples and
         p is the number of predictors. X will be centered before any analysis.
 
     Y : array-like of response, shape = [n_samples, q]
-        Training vector, where n_samples in the number of samples and
+        Training vector, where n_samples is the number of samples and
         q is the number of response variables. X will be centered before any
         analysis.
 
@@ -795,7 +796,7 @@ class PLSSVD(BaseEstimator, TransformerMixin):
         number of components to keep.
 
     scale : boolean, (default True)
-        scale X and Y
+        whether to scale X and Y.
 
     Attributes
     ----------

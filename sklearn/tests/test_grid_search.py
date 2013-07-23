@@ -125,10 +125,19 @@ def test_parameter_grid():
     # loop to assert we can iterate over the grid multiple times
     for i in xrange(2):
         # tuple + chain transforms {"a": 1, "b": 2} to ("a", 1, "b", 2)
-        points = set(tuple(chain(*p.items())) for p in grid2)
+        points = set(tuple(chain(*(sorted(p.items())))) for p in grid2)
         assert_equal(points,
-                     set(("foo", x, "bar", y)
-                         for x, y in product(params2["foo"], params2["bar"])))
+                     set(("bar", x, "foo", y)
+                         for x, y in product(params2["bar"], params2["foo"])))
+
+    # Special case: empty grid (useful to get default estimator settings)
+    empty = ParameterGrid({})
+    assert_equal(len(empty), 1)
+    assert_equal(list(empty), [{}])
+
+    has_empty = ParameterGrid([{'C': [1, 10]}, {}])
+    assert_equal(len(has_empty), 3)
+    assert_equal(list(has_empty), [{'C': 1}, {'C': 10}, {}])
 
 
 def test_grid_search():

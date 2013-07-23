@@ -15,6 +15,7 @@ from sklearn.utils.sparsefuncs import mean_variance_axis0
 from sklearn.preprocessing import Binarizer
 from sklearn.preprocessing import KernelCenterer
 from sklearn.preprocessing import LabelBinarizer
+from sklearn.preprocessing import _transform_selected
 from sklearn.preprocessing import OneHotEncoder
 from sklearn.preprocessing import LabelEncoder
 from sklearn.preprocessing import Normalizer
@@ -421,9 +422,9 @@ def test_normalize_errors():
 
 
 def test_binarizer():
-    X_ = np.array([[1, 0, 5], [2, 3, 0]])
+    X_ = np.array([[1, 0, 5], [2, 3, -1]])
 
-    for init in (np.array, sp.csr_matrix, sp.csc_matrix):
+    for init in (np.array, list, sp.csr_matrix, sp.csc_matrix):
 
         X = init(X_.copy())
 
@@ -432,7 +433,7 @@ def test_binarizer():
         assert_equal(np.sum(X_bin == 0), 4)
         assert_equal(np.sum(X_bin == 1), 2)
         X_bin = binarizer.transform(X)
-        assert_equal(type(X), type(X_bin))
+        assert_equal(sp.issparse(X), sp.issparse(X_bin))
 
         binarizer = Binarizer(copy=True).fit(X)
         X_bin = toarray(binarizer.transform(X))
@@ -449,10 +450,23 @@ def test_binarizer():
 
         binarizer = Binarizer(copy=False)
         X_bin = binarizer.transform(X)
-        assert_true(X_bin is X)
+        if init is not list:
+            assert_true(X_bin is X)
         X_bin = toarray(X_bin)
         assert_equal(np.sum(X_bin == 0), 2)
         assert_equal(np.sum(X_bin == 1), 4)
+
+    binarizer = Binarizer(threshold=-0.5, copy=True)
+    for init in (np.array, list):
+        X = init(X_.copy())
+
+        X_bin = toarray(binarizer.transform(X))
+        assert_equal(np.sum(X_bin == 0), 1)
+        assert_equal(np.sum(X_bin == 1), 5)
+        X_bin = binarizer.transform(X)
+
+    # Cannot use threshold < 0 for sparse
+    assert_raises(ValueError, binarizer.transform, sp.csc_matrix(X))
 
 
 def test_label_binarizer():
@@ -597,6 +611,67 @@ def test_one_hot_encoder():
     # test negative input to transform
     enc.fit([[0], [1]])
     assert_raises(ValueError, enc.transform, [[0], [-1]])
+
+
+def _check_transform_selected(X, X_expected, sel):
+    for M in (X, sp.csr_matrix(X)):
+        Xtr = _transform_selected(M, Binarizer().transform, sel)
+        assert_array_equal(toarray(Xtr), X_expected)
+
+
+def test_transform_selected():
+    X = [[3, 2, 1], [0, 1, 1]]
+
+    X_expected = [[1, 2, 1], [0, 1, 1]]
+    _check_transform_selected(X, X_expected, [0])
+    _check_transform_selected(X, X_expected, [True, False, False])
+
+    X_expected = [[1, 1, 1], [0, 1, 1]]
+    _check_transform_selected(X, X_expected, [0, 1, 2])
+    _check_transform_selected(X, X_expected, [True, True, True])
+    _check_transform_selected(X, X_expected, "all")
+
+    _check_transform_selected(X, X, [])
+    _check_transform_selected(X, X, [False, False, False])
+
+
+def _run_one_hot(X, X2, cat):
+    enc = OneHotEncoder(categorical_features=cat)
+    Xtr = enc.fit_transform(X)
+    X2tr = enc.transform(X2)
+    return Xtr, X2tr
+
+
+def _check_one_hot(X, X2, cat, n_features):
+    ind = np.where(cat)[0]
+    # With mask
+    A, B = _run_one_hot(X, X2, cat)
+    # With indices
+    C, D = _run_one_hot(X, X2, ind)
+    # Check shape
+    assert_equal(A.shape, (2, n_features))
+    assert_equal(B.shape, (1, n_features))
+    assert_equal(C.shape, (2, n_features))
+    assert_equal(D.shape, (1, n_features))
+    # Check that mask and indices give the same results
+    assert_array_equal(toarray(A), toarray(C))
+    assert_array_equal(toarray(B), toarray(D))
+
+
+def test_one_hot_encoder_categorical_features():
+    X = np.array([[3, 2, 1], [0, 1, 1]])
+    X2 = np.array([[1, 1, 1]])
+
+    cat = [True, False, False]
+    _check_one_hot(X, X2, cat, 4)
+
+    # Edge case: all non-categorical
+    cat = [False, False, False]
+    _check_one_hot(X, X2, cat, 3)
+
+    # Edge case: all categorical
+    cat = [True, True, True]
+    _check_one_hot(X, X2, cat, 5)
 
 
 def test_label_encoder():

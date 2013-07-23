@@ -32,7 +32,7 @@ The disadvantages of support vector machines include:
 
     - SVMs do not directly provide probability estimates, these are
       calculated using an expensive five-fold cross-validation
-      (see :ref:`Scores and probabilities <_scores_probabilities>`, below).
+      (see :ref:`Scores and probabilities <scores_probabilities>`, below).
 
 The support vector machines in scikit-learn support both dens
 (``numpy.ndarray`` and convertible to that by ``numpy.asarray``) and
@@ -148,7 +148,7 @@ are mostly similar, but the runtime is significantly less.
 For "one-vs-rest" :class:`LinearSVC` the attributes ``coef_`` and ``intercept_``
 have the shape ``[n_class, n_features]`` and ``[n_class]`` respectively.
 Each row of the coefficients corresponds to one of the ``n_class`` many
-"one-vs-rest" classifiers and simliar for the interecepts, in the
+"one-vs-rest" classifiers and similar for the intercepts, in the
 order of the "one" class.
 
 In the case of "one-vs-one" :class:`SVC`, the layout of the attributes

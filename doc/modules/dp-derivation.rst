@@ -287,7 +287,7 @@ distributions of :math:`\sigma` (as there are a lot more :math:`\sigma` s
 now) and :math:`X`.
 
 The bound for :math:`\sigma_{k,d}` is the same bound for :math:`\sigma_k` and can
-be safelly omitted.
+be safely omitted.
 
 **The bound for** :math:`X` :
 

@@ -50,7 +50,7 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         Algorithm used to compute the nearest neighbors:
 
         - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`scipy.spatial.cKDtree`
+        - 'kd_tree' will use :class:`KDtree`
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
           based on the values passed to :meth:`fit` method.
@@ -59,16 +59,25 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
         this parameter, using brute force.
 
     leaf_size : int, optional (default = 30)
-        Leaf size passed to BallTree or cKDTree.  This can affect the
+        Leaf size passed to BallTree or KDTree.  This can affect the
         speed of the construction and query, as well as the memory
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    p: integer, optional (default = 2)
-        Parameter for the Minkowski metric from
-        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
+    metric : string or DistanceMetric object (default='minkowski')
+        the distance metric to use for the tree.  The default metric is
+        minkowski, and with p=2 is equivalent to the standard Euclidean
+        metric. See the documentation of the DistanceMetric class for a
+        list of available metrics.
+
+    p : integer, optional (default = 2)
+        Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
+
+    **kwargs :
+        additional keyword arguments are passed to the distance function as
+        additional arguments.
 
     Examples
     --------
@@ -97,23 +106,25 @@ class KNeighborsRegressor(NeighborsBase, KNeighborsMixin,
 
        Regarding the Nearest Neighbors algorithms, if it is found that two
        neighbors, neighbor `k+1` and `k`, have identical distances but
-       but different labels, the results will depend on the odering of the
+       but different labels, the results will depend on the ordering of the
        training data.
 
     http://en.wikipedia.org/wiki/K-nearest_neighbor_algorithm
     """
 
     def __init__(self, n_neighbors=5, weights='uniform',
-                 algorithm='auto', leaf_size=30, p=2, **kwargs):
+                 algorithm='auto', leaf_size=30,
+                 p=2, metric='minkowski', **kwargs):
         if kwargs:
             if 'warn_on_equidistant' in kwargs:
+                kwargs.pop('warn_on_equidistant')
                 warnings.warn("The warn_on_equidistant parameter is "
                               "deprecated and will be removed in the future",
                               DeprecationWarning,
                               stacklevel=2)
         self._init_params(n_neighbors=n_neighbors,
                           algorithm=algorithm,
-                          leaf_size=leaf_size, p=p)
+                          leaf_size=leaf_size, metric=metric, p=p, **kwargs)
         self.weights = _check_weights(weights)
 
     def predict(self, X):
@@ -175,7 +186,7 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         Algorithm used to compute the nearest neighbors:
 
         - 'ball_tree' will use :class:`BallTree`
-        - 'kd_tree' will use :class:`scipy.spatial.cKDtree`
+        - 'kd_tree' will use :class:`KDtree`
         - 'brute' will use a brute-force search.
         - 'auto' will attempt to decide the most appropriate algorithm
           based on the values passed to :meth:`fit` method.
@@ -184,17 +195,25 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
         this parameter, using brute force.
 
     leaf_size : int, optional (default = 30)
-        Leaf size passed to BallTree or cKDTree.  This can affect the
+        Leaf size passed to BallTree or KDTree.  This can affect the
         speed of the construction and query, as well as the memory
         required to store the tree.  The optimal value depends on the
         nature of the problem.
 
-    p: integer, optional (default = 2)
-        Parameter for the Minkowski metric from
-        sklearn.metrics.pairwise.pairwise_distances. When p = 1, this is
+    metric : string or DistanceMetric object (default='minkowski')
+        the distance metric to use for the tree.  The default metric is
+        minkowski, and with p=2 is equivalent to the standard Euclidean
+        metric. See the documentation of the DistanceMetric class for a
+        list of available metrics.
+
+    p : integer, optional (default = 2)
+        Power parameter for the Minkowski metric. When p = 1, this is
         equivalent to using manhattan_distance (l1), and euclidean_distance
         (l2) for p = 2. For arbitrary p, minkowski_distance (l_p) is used.
 
+    **kwargs :
+        additional keyword arguments are passed to the distance function as
+        additional arguments.
 
     Examples
     --------
@@ -223,11 +242,12 @@ class RadiusNeighborsRegressor(NeighborsBase, RadiusNeighborsMixin,
     """
 
     def __init__(self, radius=1.0, weights='uniform',
-                 algorithm='auto', leaf_size=30, p=2):
+                 algorithm='auto', leaf_size=30,
+                 p=2, metric='minkowski', **kwargs):
         self._init_params(radius=radius,
                           algorithm=algorithm,
                           leaf_size=leaf_size,
-                          p=p)
+                          p=p, metric=metric, **kwargs)
         self.weights = _check_weights(weights)
 
     def predict(self, X):

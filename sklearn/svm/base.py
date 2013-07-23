@@ -59,8 +59,10 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
 
     Parameter documentation is in the derived `SVC` class.
     """
-    # see ./classes.py for SVC class.
 
+    # The order of these must match the integer values in LibSVM.
+    # XXX These are actually the same in the dense case. Need to factor
+    # this out.
     _sparse_kernels = ["linear", "poly", "rbf", "sigmoid", "precomputed"]
 
     @abstractmethod
@@ -285,19 +287,14 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                                  "the number of samples at training time" %
                                  (X.shape[1], self.shape_fit_[0]))
 
-        C = 0.0  # C is not useful here
-
         svm_type = LIBSVM_IMPL.index(self._impl)
 
         return libsvm.predict(
             X, self.support_, self.support_vectors_, self.n_support_,
-            self.dual_coef_, self._intercept_,
-            self._label, self.probA_, self.probB_,
-            svm_type=svm_type,
-            kernel=kernel, C=C, nu=self.nu,
-            probability=self.probability, degree=self.degree,
-            shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
-            coef0=self.coef0, gamma=self._gamma, epsilon=self.epsilon)
+            self.dual_coef_, self._intercept_, self._label,
+            self.probA_, self.probB_, svm_type=svm_type, kernel=kernel,
+            degree=self.degree, coef0=self.coef0, gamma=self._gamma,
+            cache_size=self.cache_size)
 
     def _sparse_predict(self, X):
         X = sp.csr_matrix(X, dtype=np.float64)
@@ -354,8 +351,6 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
         X = self._validate_for_predict(X)
         X = self._compute_kernel(X)
 
-        C = 0.0  # C is not useful here
-
         kernel = self.kernel
         if callable(kernel):
             kernel = 'precomputed'
@@ -365,10 +360,8 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
             self.dual_coef_, self._intercept_, self._label,
             self.probA_, self.probB_,
             svm_type=LIBSVM_IMPL.index(self._impl),
-            kernel=kernel, C=C, nu=self.nu,
-            probability=self.probability, degree=self.degree,
-            shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
-            coef0=self.coef0, gamma=self._gamma, epsilon=self.epsilon)
+            kernel=kernel, degree=self.degree, cache_size=self.cache_size,
+            coef0=self.coef0, gamma=self._gamma)
 
         # In binary case, we need to flip the sign of coef, intercept and
         # decision function.
@@ -528,8 +521,6 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
     def _dense_predict_proba(self, X):
         X = self._compute_kernel(X)
 
-        C = 0.0  # C is not useful here
-
         kernel = self.kernel
         if callable(kernel):
             kernel = 'precomputed'
@@ -539,10 +530,8 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
             X, self.support_, self.support_vectors_, self.n_support_,
             self.dual_coef_, self._intercept_, self._label,
             self.probA_, self.probB_,
-            svm_type=svm_type, kernel=kernel, C=C, nu=self.nu,
-            probability=self.probability, degree=self.degree,
-            shrinking=self.shrinking, tol=self.tol, cache_size=self.cache_size,
-            coef0=self.coef0, gamma=self._gamma, epsilon=self.epsilon)
+            svm_type=svm_type, kernel=kernel, degree=self.degree,
+            cache_size=self.cache_size, coef0=self.coef0, gamma=self._gamma)
 
         return pprob
 
@@ -652,10 +641,6 @@ class BaseLibLinear(BaseEstimator):
 
         y : array-like, shape = [n_samples]
             Target vector relative to X
-
-        class_weight : {dict, 'auto'}, optional
-            Weights associated with classes. If not given, all classes
-            are supposed to have weight one.
 
         Returns
         -------

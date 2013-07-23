@@ -252,7 +252,7 @@ Feature binarization
 --------------------
 
 **Feature binarization** is the process of **thresholding numerical
-features to get boolean values**. This can be useful for downsteam
+features to get boolean values**. This can be useful for downstream
 probabilistic estimators that make assumption that the input data
 is distributed according to a multi-variate `Bernoulli distribution
 <http://en.wikipedia.org/wiki/Bernoulli_distribution>`_. For instance,
@@ -260,7 +260,7 @@ this is the case for the most common class of `(Restricted) Boltzmann
 Machines <http://en.wikipedia.org/wiki/Boltzmann_machine>`_
 (not yet implemented in the scikit).
 
-It is also commmon among the text processing community to use binary
+It is also common among the text processing community to use binary
 feature values (probably to simplify the probabilistic reasoning) even
 if normalized counts (a.k.a. term frequencies) or TF-IDF valued features
 often perform slightly better in practice.
@@ -332,16 +332,17 @@ only one active.
 Continuing the example above::
 
   >>> enc = preprocessing.OneHotEncoder()
-  >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])
-  OneHotEncoder(dtype=<type 'float'>, n_values='auto')
+  >>> enc.fit([[0, 0, 3], [1, 1, 0], [0, 2, 1], [1, 0, 2]])  # doctest: +ELLIPSIS
+  OneHotEncoder(categorical_features='all', dtype=<... 'float'>,
+         n_values='auto')
   >>> enc.transform([[0, 1, 3]]).toarray()
   array([[ 1.,  0.,  0.,  1.,  0.,  0.,  0.,  0.,  1.]])
 
 By default, how many values each feature can take is inferred automatically from the dataset.
-It is possible to specify this explicitly using the parameter ``n_values``. 
+It is possible to specify this explicitly using the parameter ``n_values``.
 There are two genders, three possible continents and four web browsers in our
 dataset.
-Then we fit the estimator, and transform a data point. 
+Then we fit the estimator, and transform a data point.
 In the result, the first two numbers encode the gender, the next set of three
 numbers the continent and the last four the web browser.
 

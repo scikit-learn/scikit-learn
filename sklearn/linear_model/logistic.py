@@ -48,11 +48,10 @@ class LogisticRegression(BaseLibLinear, LinearClassifierMixin,
         (and therefore on the intercept) intercept_scaling has to be increased
 
     class_weight : {dict, 'auto'}, optional
-        Set the parameter C of class i to class_weight[i]*C for
-        SVC. If not given, all classes are supposed to have
-        weight one. The 'auto' mode uses the values of y to
-        automatically adjust weights inversely proportional to
-        class frequencies.
+        Over-/undersamples the samples of each class according to the given
+        weights. If not given, all classes are supposed to have weight one.
+        The 'auto' mode selects weights inversely proportional to class
+        frequencies in the training set.
 
     tol: float, optional
         Tolerance for stopping criteria.

@@ -34,102 +34,60 @@ from ..utils.multiclass import type_of_target
 ###############################################################################
 # General utilities
 ###############################################################################
-def _is_1d(x):
-    """Return True if x is 1d or a column vector
+def _column_or_1d(y):
+    """ Ravel column or 1d numpy array, else raises an error
 
     Parameters
     ----------
-    x : numpy array.
-
-    Return
-    ------
-    is_1d : boolean,
-        Return True if x can be considered as a 1d vector.
-
-    Examples
-    --------
-    >>> import numpy as np
-    >>> from sklearn.metrics.metrics import _is_1d
-    >>> _is_1d([1, 2, 3])
-    True
-    >>> _is_1d(np.array([1, 2, 3]))
-    True
-    >>> _is_1d([[1, 2, 3]])
-    False
-    >>> _is_1d(np.array([[1, 2, 3]]))
-    False
-    >>> _is_1d([[1], [2], [3]])
-    True
-    >>> _is_1d(np.array([[1], [2], [3]]))
-    True
-    >>> _is_1d([[1, 2], [3, 4]])
-    False
-    >>> _is_1d(np.array([[1, 2], [3, 4]]))
-    False
-
-    See also
-    --------
-    _check_1d_array
-
-    """
-    shape = np.shape(x)
-    return len(shape) == 1 or len(shape) == 2 and shape[1] == 1
-
-
-def _check_1d_array(y1, y2, ravel=False):
-    """Check that y1 and y2 are vectors of the same shape.
-
-    It convert 1d arrays (y1 and y2) of various shape to a common shape
-    representation. Note that ``y1`` and ``y2`` should have the same number of
-    elements.
-
-    Parameters
-    ----------
-    y1 : array-like,
-        y1 must be a "vector".
-
-    y2 : array-like
-        y2 must be a "vector".
-
-    ravel : boolean, optional (default=False),
-        If ``ravel``` is set to ``True``, then ``y1`` and ``y2`` are raveled.
+    y : array-like
 
     Returns
     -------
-    y1 : numpy array,
-        If ``ravel`` is set to ``True``, return np.ravel(y1), else
-        return y1.
-
-    y2 : numpy array,
-        Return y2  reshaped to have the shape of y1.
-
-    Examples
-    --------
-    >>> from sklearn.metrics.metrics import _check_1d_array
-    >>> _check_1d_array([1, 2], [[3], [4]])
-    (array([1, 2]), array([3, 4]))
-
-    See also
-    --------
-    _is_1d
+    y : array
 
     """
-    y1 = np.asarray(y1)
-    y2 = np.asarray(y2)
+    shape = np.shape(y)
+    if len(shape) == 1 or (len(shape) == 2 and shape[1] == 1):
+        return np.ravel(y)
+    raise ValueError("bad input shape {0}".format(shape))
 
-    if not _is_1d(y1):
-        raise ValueError("y1 can't be considered as a vector")
 
-    if not _is_1d(y2):
-        raise ValueError("y2 can't be considered as a vector")
+def _check_reg_targets(y_true, y_pred):
+    """Check that y_true and y_pred belong to the same regression task
 
-    if ravel:
-        return np.ravel(y1), np.ravel(y2)
-    else:
-        if np.shape(y1) != np.shape(y2):
-            y2 = np.reshape(y2, np.shape(y1))
+    Parameters
+    ----------
+    y_true : array-like,
 
-        return y1, y2
+    y_pred : array-like,
+
+    Returns
+    -------
+    type_true : one of {'continuous', continuous-multioutput'}
+        The type of the true target data, as output by
+        ``utils.multiclass.type_of_target``
+
+    y_true : array-like of shape = [n_samples, n_outputs]
+        Ground truth (correct) target values.
+
+    y_pred : array-like of shape = [n_samples, n_outputs]
+        Estimated target values.
+    """
+    y_true, y_pred = check_arrays(y_true, y_pred)
+
+    if y_true.ndim == 1:
+        y_true = y_true.reshape((-1, 1))
+
+    if y_pred.ndim == 1:
+        y_pred = y_pred.reshape((-1, 1))
+
+    if y_true.shape[1] != y_pred.shape[1]:
+        raise ValueError("y_true and y_pred have different number of output "
+                         "({0}!={1})".format(y_true.shape[1], y_true.shape[1]))
+
+    y_type = 'continuous' if y_true.shape[1] == 1 else 'continuous-multioutput'
+
+    return y_type, y_true, y_pred
 
 
 def _check_clf_targets(y_true, y_pred):
@@ -181,8 +139,8 @@ def _check_clf_targets(y_true, y_pred):
             # 'binary' can be removed
             type_true = type_pred = 'multiclass'
 
-        y_true = np.squeeze(y_true)
-        y_pred = np.squeeze(y_pred)
+        y_true = _column_or_1d(y_true)
+        y_pred = _column_or_1d(y_pred)
 
     else:
         raise ValueError("Can't handle %s/%s targets" % (type_true, type_pred))
@@ -193,8 +151,8 @@ def _check_clf_targets(y_true, y_pred):
 def auc(x, y, reorder=False):
     """Compute Area Under the Curve (AUC) using the trapezoidal rule
 
-    This is a general fuction, given points on a curve.  For computing the area
-    under the ROC-curve, see :func:`auc_score`.
+    This is a general function, given points on a curve.  For computing the
+    area under the ROC-curve, see :func:`auc_score`.
 
     Parameters
     ----------
@@ -466,8 +424,10 @@ def matthews_corrcoef(y_true, y_pred):
     -0.33...
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred)
-    y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=True)
+    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
+
+    if y_type != "binary":
+        raise ValueError("%s is not supported" % y_type)
 
     mcc = np.corrcoef(y_true, y_pred)[0, 1]
     if np.isnan(mcc):
@@ -508,7 +468,8 @@ def _binary_clf_curve(y_true, y_score, pos_label=None):
         Decreasing score values.
     """
     y_true, y_score = check_arrays(y_true, y_score)
-    y_true, y_score = _check_1d_array(y_true, y_score, ravel=True)
+    y_true = _column_or_1d(y_true)
+    y_score = _column_or_1d(y_score)
 
     # ensure binary classification if pos_label is not specified
     classes = np.unique(y_true)
@@ -744,6 +705,10 @@ def confusion_matrix(y_true, y_pred, labels=None):
            [1, 0, 2]])
 
     """
+    y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
+    if y_type not in ("binary", "multiclass"):
+        raise ValueError("%s is not supported" % y_type)
+
     if labels is None:
         labels = unique_labels(y_true, y_pred)
     else:
@@ -825,25 +790,18 @@ def zero_one_loss(y_true, y_pred, normalize=True):
 
     and with a list of labels format:
 
-    >>> zero_one_loss([(1,), (3,)], [(1, 2), tuple()])
+    >>> zero_one_loss([(1, ), (3, )], [(1, 2), tuple()])
     1.0
 
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred, allow_lists=True)
     score = accuracy_score(y_true, y_pred,
                            normalize=normalize)
 
     if normalize:
         return 1 - score
     else:
-        if hasattr(y_true, "shape"):
-            n_samples = (np.max(y_true.shape) if _is_1d(y_true)
-                         else y_true.shape[0])
-
-        else:
-            n_samples = len(y_true)
-
+        n_samples = len(y_true)
         return n_samples - score
 
 
@@ -959,7 +917,7 @@ def jaccard_similarity_score(y_true, y_pred, normalize=True):
 
     and with a list of labels format:
 
-    >>> jaccard_similarity_score([(1,), (3,)], [(1, 2), tuple()])
+    >>> jaccard_similarity_score([(1, ), (3, )], [(1, 2), tuple()])
     0.25
 
     """
@@ -1067,10 +1025,11 @@ def accuracy_score(y_true, y_pred, normalize=True):
 
     and with a list of labels format:
 
-    >>> accuracy_score([(1,), (3,)], [(1, 2), tuple()])
+    >>> accuracy_score([(1, ), (3, )], [(1, 2), tuple()])
     0.0
 
     """
+
     # Compute accuracy for each possible representation
     y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
     if y_type == 'multilabel-indicator':
@@ -1105,7 +1064,7 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) target values.
 
-    y_true : array-like or list of labels or label indicator matrix
+    y_pred : array-like or list of labels or label indicator matrix
         Estimated targets as returned by a classifier.
 
     labels : array
@@ -1191,12 +1150,12 @@ def f1_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     and with a list of labels format:
 
     >>> from sklearn.metrics import f1_score
-    >>> y_true = [(1, 2), (3,)]
+    >>> y_true = [(1, 2), (3, )]
     >>> y_pred = [(1, 2), tuple()]
     >>> f1_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
     0.66...
     >>> f1_score(y_true, y_pred, average='micro')  # doctest: +ELLIPSIS
-    0.80...
+    0.8...
     >>> f1_score(y_true, y_pred, average='weighted')  # doctest: +ELLIPSIS
     0.66...
     >>> f1_score(y_true, y_pred, average='samples')  # doctest: +ELLIPSIS
@@ -1226,7 +1185,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) target values.
 
-    y_true : array-like or list of labels or label indicator matrix
+    y_pred : array-like or list of labels or label indicator matrix
         Estimated targets as returned by a classifier.
 
     beta: float
@@ -1331,7 +1290,7 @@ def fbeta_score(y_true, y_pred, beta, labels=None, pos_label=1,
     and with a list of labels format:
 
     >>> from sklearn.metrics import fbeta_score
-    >>> y_true = [(1, 2), (3,)]
+    >>> y_true = [(1, 2), (3, )]
     >>> y_pred = [(1, 2), tuple()]
     >>> fbeta_score(y_true, y_pred, average='macro', beta=0.5)
     ... # doctest: +ELLIPSIS
@@ -1408,7 +1367,7 @@ def _tp_tn_fp_fn(y_true, y_pred, labels=None):
 
     and with a list of labels format:
 
-    >>> _tp_tn_fp_fn([(1, 2), (3,)], [(1, 2), tuple()])  # doctest: +ELLIPSIS
+    >>> _tp_tn_fp_fn([(1, 2), (3, )], [(1, 2), tuple()])  # doctest: +ELLIPSIS
     (array([1, 1, 0]), array([1, 1, 1]), array([0, 0, 0]), array([0, 0, 1]))
 
     """
@@ -1419,9 +1378,9 @@ def _tp_tn_fp_fn(y_true, y_pred, labels=None):
     else:
         labels = np.asarray(labels)
     n_labels = labels.size
-    true_pos = np.zeros((n_labels), dtype=np.int)
-    false_pos = np.zeros((n_labels), dtype=np.int)
-    false_neg = np.zeros((n_labels), dtype=np.int)
+    true_pos = np.zeros((n_labels, ), dtype=np.int)
+    false_pos = np.zeros((n_labels, ), dtype=np.int)
+    false_neg = np.zeros((n_labels, ), dtype=np.int)
 
     if y_type == 'multilabel-indicator':
         true_pos = np.sum(np.logical_and(y_true == 1,
@@ -1451,12 +1410,7 @@ def _tp_tn_fp_fn(y_true, y_pred, labels=None):
             false_neg[i] = np.sum(y_pred[y_true == label_i] != label_i)
 
     # Compute the true_neg using the tp, fp and fn
-    if hasattr(y_true, "shape"):
-        n_samples = (np.max(y_true.shape) if _is_1d(y_true)
-                     else y_true.shape[0])
-    else:
-        n_samples = len(y_true)
-
+    n_samples = len(y_true)
     true_neg = n_samples - true_pos - false_pos - false_neg
 
     return true_pos, true_neg, false_pos, false_neg
@@ -1480,7 +1434,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     value at 1 and worst score at 0.
 
     The F-beta score weights recall more than precision by a factor of
-    ``beta``. ``beta == 1.0`` means recall and precsion are equally important.
+    ``beta``. ``beta == 1.0`` means recall and precision are equally important.
 
     The support is the number of occurrences of each class in ``y_true``.
 
@@ -1493,7 +1447,7 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) target values.
 
-    y_true : array-like or list of labels or label indicator matrix
+    y_pred : array-like or list of labels or label indicator matrix
         Estimated targets as returned by a classifier.
 
     beta : float, 1.0 by default
@@ -1609,14 +1563,14 @@ def precision_recall_fscore_support(y_true, y_pred, beta=1.0, labels=None,
     and with a list of labels format:
 
     >>> from sklearn.metrics import precision_recall_fscore_support
-    >>> y_true = [(1, 2), (3,)]
+    >>> y_true = [(1, 2), (3, )]
     >>> y_pred = [(1, 2), tuple()]
     >>> precision_recall_fscore_support(y_true, y_pred, average='macro')
     ... # doctest: +ELLIPSIS
     (0.66..., 0.66..., 0.66..., None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='micro')
     ... # doctest: +ELLIPSIS
-    (1.0, 0.66..., 0.80..., None)
+    (1.0, 0.66..., 0.8..., None)
     >>> precision_recall_fscore_support(y_true, y_pred, average='weighted')
     ... # doctest: +ELLIPSIS
     (0.66..., 0.66..., 0.66..., None)
@@ -1779,7 +1733,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) target values.
 
-    y_true : array-like or list of labels or label indicator matrix
+    y_pred : array-like or list of labels or label indicator matrix
         Estimated targets as returned by a classifier.
 
     labels : array
@@ -1863,7 +1817,7 @@ def precision_score(y_true, y_pred, labels=None, pos_label=1,
     and with a list of labels format:
 
     >>> from sklearn.metrics import precision_score
-    >>> y_true = [(1, 2), (3,)]
+    >>> y_true = [(1, 2), (3, )]
     >>> y_pred = [(1, 2), tuple()]
     >>> precision_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
     0.66...
@@ -1901,7 +1855,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     y_true : array-like or list of labels or label indicator matrix
         Ground truth (correct) target values.
 
-    y_true : array-like or list of labels or label indicator matrix
+    y_pred : array-like or list of labels or label indicator matrix
         Estimated targets as returned by a classifier.
 
     labels : array
@@ -1982,7 +1936,7 @@ def recall_score(y_true, y_pred, labels=None, pos_label=1, average='weighted'):
     and with a list of labels format:
 
     >>> from sklearn.metrics import recall_score
-    >>> y_true = [(1, 2), (3,)]
+    >>> y_true = [(1, 2), (3, )]
     >>> y_pred = [(1, 2), tuple()]
     >>> recall_score(y_true, y_pred, average='macro')  # doctest: +ELLIPSIS
     0.66...
@@ -2184,11 +2138,12 @@ def hamming_loss(y_true, y_pred, classes=None):
 
     and with a list of labels format:
 
-    >>> hamming_loss([(1, 2), (3,)], [(1, 2), tuple()])  # doctest: +ELLIPSIS
+    >>> hamming_loss([(1, 2), (3, )], [(1, 2), tuple()])  # doctest: +ELLIPSIS
     0.166...
 
     """
     y_type, y_true, y_pred = _check_clf_targets(y_true, y_pred)
+
     if classes is None:
         classes = unique_labels(y_true, y_pred)
     else:
@@ -2197,13 +2152,15 @@ def hamming_loss(y_true, y_pred, classes=None):
     if y_type == 'multilabel-indicator':
         return np.mean(y_true != y_pred)
     elif y_type == 'multilabel-sequences':
-            loss = np.array([len(set(pred) ^ set(true))
-                             for pred, true in zip(y_pred, y_true)])
+        loss = np.array([len(set(pred).symmetric_difference(true))
+                         for pred, true in zip(y_pred, y_true)])
 
-            return np.mean(loss) / np.size(classes)
+        return np.mean(loss) / np.size(classes)
 
-    else:
+    elif y_type in ["binary", "multiclass"]:
         return sp_hamming(y_true, y_pred)
+    else:
+        raise ValueError("{0} is not supported".format(y_type))
 
 
 ###############################################################################
@@ -2238,12 +2195,7 @@ def mean_absolute_error(y_true, y_pred):
     0.75
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred)
-
-    # Handle mix 1d representation
-    if _is_1d(y_true):
-        y_true, y_pred = _check_1d_array(y_true, y_pred)
-
+    y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
     return np.mean(np.abs(y_pred - y_true))
 
 
@@ -2276,12 +2228,7 @@ def mean_squared_error(y_true, y_pred):
     0.708...
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred)
-
-    # Handle mix 1d representation
-    if _is_1d(y_true):
-        y_true, y_pred = _check_1d_array(y_true, y_pred)
-
+    y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
     return np.mean((y_pred - y_true) ** 2)
 
 
@@ -2319,11 +2266,10 @@ def explained_variance_score(y_true, y_pred):
     0.957...
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred)
+    y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
 
-    # Handle mix 1d representation
-    if _is_1d(y_true):
-        y_true, y_pred = _check_1d_array(y_true, y_pred)
+    if y_type != "continuous":
+        raise ValueError("{0} is not supported".format(y_type))
 
     numerator = np.var(y_true - y_pred)
     denominator = np.var(y_true)
@@ -2380,17 +2326,13 @@ def r2_score(y_true, y_pred):
     0.938...
 
     """
-    y_true, y_pred = check_arrays(y_true, y_pred)
-
-    # Handle mix 1d representation
-    if _is_1d(y_true):
-        y_true, y_pred = _check_1d_array(y_true, y_pred, ravel=True)
+    y_type, y_true, y_pred = _check_reg_targets(y_true, y_pred)
 
     if len(y_true) == 1:
         raise ValueError("r2_score can only be computed given more than one"
                          " sample.")
-    numerator = ((y_true - y_pred) ** 2).sum()
-    denominator = ((y_true - y_true.mean(axis=0)) ** 2).sum()
+    numerator = ((y_true - y_pred) ** 2).sum(dtype=np.float64)
+    denominator = ((y_true - y_true.mean(axis=0)) ** 2).sum(dtype=np.float64)
 
     if denominator == 0.0:
         if numerator == 0.0:

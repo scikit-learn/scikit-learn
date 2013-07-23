@@ -10,11 +10,14 @@ from scipy import stats
 from nose.tools import assert_raises
 
 from sklearn.utils.testing import assert_almost_equal
-from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_true, assert_false
 from sklearn.utils.testing import assert_less
+from sklearn.utils.testing import assert_equal
 
 from sklearn.decomposition import FastICA, fastica, PCA
 from sklearn.decomposition.fastica_ import _gs_decorrelation
+from sklearn.externals.six import moves
 
 
 def center_and_norm(x, axis=-1):
@@ -116,19 +119,28 @@ def test_fastica_simple(add_noise=False):
     # Test FastICA class
     ica = FastICA(fun=nl, algorithm=algo, random_state=0)
     ica.fit(m.T)
-    ica.get_mixing_matrix()
-    assert_true(ica.components_.shape == (2, 2))
-    assert_true(ica.sources_.shape == (1000, 2))
+    assert_equal(ica.components_.shape, (2, 2))
+    assert_equal(ica.sources_.shape, (1000, 2))
 
-    ica = FastICA(fun=np.tanh, algorithm=algo, random_state=0)
-    assert_raises(ValueError, ica.fit, m.T)
+    sources = FastICA(fun=nl, algorithm=algo, random_state=0).\
+                      fit_transform(m.T)
+    assert_array_almost_equal(sources, ica.sources_)
+    assert_array_almost_equal(sources, ica.transform(m.T))
+
+    assert_equal(ica.mixing_.shape, (2, 2))
+
+    for fn in [np.tanh, "exp(-.5(x^2))"]:
+        ica = FastICA(fun=fn, algorithm=algo, random_state=0)
+        assert_raises(ValueError, ica.fit, m.T)
+
+    assert_raises(TypeError, FastICA(fun=moves.xrange(10)).fit, m.T)
 
 
 def test_fastica_nowhiten():
     m = [[0, 1], [1, 0]]
     ica = FastICA(whiten=False, random_state=0)
     ica.fit(m)
-    ica.get_mixing_matrix()
+    ica.mixing_
 
     # test for issue #697
     with warnings.catch_warnings(record=True) as w:
@@ -180,6 +192,53 @@ def test_non_square_fastica(add_noise=False):
     if not add_noise:
         assert_almost_equal(np.dot(s1_, s1) / n_samples, 1, decimal=3)
         assert_almost_equal(np.dot(s2_, s2) / n_samples, 1, decimal=3)
+
+
+def test_fit_transform():
+    """Test FastICA.fit_transform"""
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((100, 10))
+    for whiten, n_components in [[True, 5], [False, 10]]:
+
+        ica = FastICA(n_components=5, whiten=whiten, random_state=0)
+        Xt = ica.fit_transform(X)
+        assert_equal(ica.components_.shape, (n_components, 10))
+        assert_equal(ica.sources_.shape, (100, n_components))
+
+        ica = FastICA(n_components=5, whiten=whiten, random_state=0)
+        ica.fit(X)
+        assert_equal(ica.components_.shape, (n_components, 10))
+        assert_equal(ica.sources_.shape, (100, n_components))
+        Xt2 = ica.transform(X)
+
+        assert_array_almost_equal(Xt, Xt2)
+
+
+def test_inverse_transform():
+    """Test FastICA.inverse_transform"""
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((100, 10))
+    rng = np.random.RandomState(0)
+    X = rng.random_sample((100, 10))
+    n_features = X.shape[1]
+    expected = {(True, 5): (n_features, 5),
+                (True, 10): (n_features, 10),
+                (False, 5): (n_features, 10),
+                (False, 10): (n_features, 10)}
+
+    for whiten in [True, False]:
+        for n_components in [5, 10]:
+            ica = FastICA(n_components=n_components, random_state=rng,
+                          whiten=whiten)
+            Xt = ica.fit_transform(X)
+            expected_shape = expected[(whiten, n_components)]
+            assert_equal(ica.mixing_.shape, expected_shape)
+            X2 = ica.inverse_transform(Xt)
+            assert_equal(X.shape, X2.shape)
+
+            # reversibility test in non-reduction case
+            if n_components == X.shape[1]:
+                assert_array_almost_equal(X, X2)
 
 
 if __name__ == '__main__':

@@ -15,5 +15,6 @@ Unsupervised learning
     modules/covariance
     modules/outlier_detection
     modules/hmm
+    modules/density
 
 

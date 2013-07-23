@@ -4,7 +4,7 @@ The 20 newsgroups text dataset
 ==============================
 
 The 20 newsgroups dataset comprises around 18000 newsgroups posts on
-20 topics splitted in two subsets: one for training (or development)
+20 topics split in two subsets: one for training (or development)
 and the other one for testing (or for performance evaluation). The split
 between the train and test set is based upon a messages posted before
 and after a specific date.
@@ -79,26 +79,32 @@ list of the categories to load to the ``fetch_20newsgroups`` function::
   >>> newsgroups_train.target[:10]
   array([1, 1, 1, 0, 1, 0, 0, 1, 1, 1])
 
+Converting text to vectors
+--------------------------
+
 In order to feed predictive or clustering models with the text data,
 one first need to turn the text into vectors of numerical values suitable
 for statistical analysis. This can be achieved with the utilities of the
 ``sklearn.feature_extraction.text`` as demonstrated in the following
-example that extract `TF-IDF`_ vectors of unigram tokens::
+example that extract `TF-IDF`_ vectors of unigram tokens
+from a subset of 20news::
 
-
-  >>> from sklearn.feature_extraction.text import Vectorizer
-  >>> documents = [open(f).read() for f in newsgroups_train.filenames]
-  >>> vectorizer = Vectorizer()
-  >>> vectors = vectorizer.fit_transform(documents)
+  >>> from sklearn.feature_extraction.text import TfidfVectorizer
+  >>> categories = ['alt.atheism', 'talk.religion.misc',
+  ...               'comp.graphics', 'sci.space']
+  >>> newsgroups_train = fetch_20newsgroups(subset='train',
+  ...                                       categories=categories)
+  >>> vectorizer = TfidfVectorizer()
+  >>> vectors = vectorizer.fit_transform(newsgroups_train.data)
   >>> vectors.shape
-  (1073, 21108)
+  (2034, 34118)
 
-The extracted TF-IDF vectors are very sparse with an average of 118 non zero
-components by sample in a more than 20000 dimensional space (less than 1% non
-zero features)::
+The extracted TF-IDF vectors are very sparse, with an average of 159 non-zero
+components by sample in a more than 30000-dimensional space
+(less than .5% non-zero features)::
 
-  >>> vectors.nnz / vectors.shape[0]
-  118
+  >>> vectors.nnz / float(vectors.shape[0])
+  159.01327433628319
 
 ``sklearn.datasets.fetch_20newsgroups_vectorized`` is a function which returns
 ready-to-use tfidf features instead of file names.
@@ -106,6 +112,103 @@ ready-to-use tfidf features instead of file names.
 .. _`20 newsgroups website`: http://people.csail.mit.edu/jrennie/20Newsgroups/
 .. _`TF-IDF`: http://en.wikipedia.org/wiki/Tf-idf
 
+
+Filtering text for more realistic training
+------------------------------------------
+It is easy for a classifier to overfit on particular things that appear in the
+20 Newsgroups data, such as newsgroup headers. Many classifiers achieve very
+high F-scores, but their results would not generalize to other documents that
+aren't from this window of time.
+
+For example, let's look at the results of a multinomial Naive Bayes classifier,
+which is fast to train and achieves a decent F-score::
+
+  >>> from sklearn.naive_bayes import MultinomialNB
+  >>> from sklearn import metrics
+  >>> newsgroups_test = fetch_20newsgroups(subset='test',
+  ...                                      categories=categories)
+  >>> vectors_test = vectorizer.transform(newsgroups_test.data)
+  >>> clf = MultinomialNB(alpha=.01)
+  >>> clf.fit(vectors, newsgroups_train.target)
+  >>> pred = clf.predict(vectors_test)
+  >>> metrics.f1_score(newsgroups_test.target, pred)
+  0.88251152461278892
+
+(The example :ref:`example_document_classification_20newsgroups.py` shuffles
+the training and test data, instead of segmenting by time, and in that case
+multinomial Naive Bayes gets a much higher F-score of 0.88. Are you suspicious
+yet of what's going on inside this classifier?)
+
+Let's take a look at what the most informative features are:
+
+  >>> import numpy as np
+  >>> def show_top10(classifier, vectorizer, categories):
+  ...     feature_names = np.asarray(vectorizer.get_feature_names())
+  ...     for i, category in enumerate(categories):
+  ...         top10 = np.argsort(classifier.coef_[i])[-10:]
+  ...         print("%s: %s" % (category, " ".join(feature_names[top10])))
+  ...  
+  >>> show_top10(clf, vectorizer, newsgroups_train.target_names)
+  alt.atheism: sgi livesey atheists writes people caltech com god keith edu
+  comp.graphics: organization thanks files subject com image lines university edu graphics
+  sci.space: toronto moon gov com alaska access henry nasa edu space
+  talk.religion.misc: article writes kent people christian jesus sandvik edu com god
+
+You can now see many things that these features have overfit to:
+
+- Almost every group is distinguished by whether headers such as
+  ``NNTP-Posting-Host:`` and ``Distribution:`` appear more or less often.
+- Another significant feature involves whether the sender is affiliated with
+  a university, as indicated either by their headers or their signature.
+- The word "article" is a significant feature, based on how often people quote
+  previous posts like this: "In article [article ID], [name] <[e-mail address]>
+  wrote:"
+- Other features match the names and e-mail addresses of particular people who
+  were posting at the time.
+
+With such an abundance of clues that distinguish newsgroups, the classifiers
+barely have to identify topics from text at all, and they all perform at the
+same high level.
+
+For this reason, the functions that load 20 Newsgroups data provide a
+parameter called **remove**, telling it what kinds of information to strip out
+of each file. **remove** should be a tuple containing any subset of
+``('headers', 'footers', 'quotes')``, telling it to remove headers, signature
+blocks, and quotation blocks respectively.
+
+  >>> newsgroups_test = fetch_20newsgroups(subset='test', 
+  ...                                      remove=('headers', 'footers', 'quotes'),
+  ...                                      categories=categories)
+  >>> vectors_test = vectorizer.transform(newsgroups_test.data)
+  >>> pred = clf.predict(vectors_test)
+  >>> metrics.f1_score(pred, newsgroups_test.target)
+  0.78409163025839435
+
+This classifier lost over a lot of its F-score, just because we removed
+metadata that has little to do with topic classification.
+It loses even more if we also strip this metadata from the training data:
+
+  >>> newsgroups_train = fetch_20newsgroups(subset='train',
+  ...                                       remove=('headers', 'footers', 'quotes'),
+  ...                                       categories=categories)
+  >>> vectors = vectorizer.fit_transform(newsgroups_train.data)
+  >>> clf = BernoulliNB(alpha=.01)
+  >>> clf.fit(vectors, newsgroups_train.target)
+  >>> vectors_test = vectorizer.transform(newsgroups_test.data)
+  >>> pred = clf.predict(vectors_test)
+  >>> metrics.f1_score(newsgroups_test.target, pred)
+  0.73160869205141166
+
+Some other classifiers cope better with this harder version of the task. Try
+running :ref:`example_grid_search_text_feature_extraction.py` with and without
+the ``--filter`` option to compare the results.
+
+.. topic:: Recommendation
+
+  When evaluating text classifiers on the 20 Newsgroups data, you
+  should strip newsgroup-related metadata. In scikit-learn, you can do this by
+  setting ``remove=('headers', 'footers', 'quotes')``. The F-score will be
+  lower because it is more realistic.
 
 .. topic:: Examples
 

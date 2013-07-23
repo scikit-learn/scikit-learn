@@ -213,7 +213,7 @@ def randomized_svd(M, n_components, n_oversamples=10, n_iter=0,
     U = np.dot(Q, Uhat)
 
     if flip_sign:
-        U, s, V = svd_flip(U, s, V)
+        U, V = svd_flip(U, V)
 
     if transpose:
         # transpose back the results according to the input convention
@@ -415,7 +415,7 @@ def cartesian(arrays, out=None):
 
     References
     ----------
-    http://stackoverflow.com/questions/1208118/using-numpy-to-build-an-array-of-all-combinations-of-two-arrays
+    http://stackoverflow.com/q/1208118
 
     """
     arrays = [np.asarray(x).ravel() for x in arrays]
@@ -434,7 +434,7 @@ def cartesian(arrays, out=None):
     return out
 
 
-def svd_flip(u, s, v):
+def svd_flip(u, v):
     """Sign correction to ensure deterministic output from SVD
 
     Adjusts the columns of u and the rows of v such that the loadings in the
@@ -442,7 +442,7 @@ def svd_flip(u, s, v):
 
     Parameters
     ----------
-    u, s, v: arrays,
+    u, v: arrays
         The output of `linalg.svd` or `sklearn.utils.extmath.randomized_svd`,
         with matching inner dimensions so one can compute `np.dot(u * s, v)`.
 
@@ -455,7 +455,7 @@ def svd_flip(u, s, v):
     signs = np.sign(u[max_abs_cols, xrange(u.shape[1])])
     u *= signs
     v *= signs[:, np.newaxis]
-    return u, s, v
+    return u, v
 
 
 def safe_min(X):

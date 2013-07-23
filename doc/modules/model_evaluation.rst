@@ -344,7 +344,7 @@ The  `F-measure <http://en.wikipedia.org/wiki/F1_score>`_
 harmonic mean of the precision and recall. A
 :math:`F_\beta` measure reaches its best value at 1 and worst score at 0.
 With :math:`\beta = 1`, the :math:`F_\beta` measure leads to the
-:math:`F_1` measure, wheres the recall and the precsion are equally important.
+:math:`F_1` measure, wheres the recall and the precision are equally important.
 
 Several functions allow you to analyze the precision, recall and F-measures
 score:

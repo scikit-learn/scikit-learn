@@ -142,7 +142,7 @@ the decision surface induced by the three classifiers.
    :align: center
    :scale: 75
 
-In the case of multi-class classification ``coef_`` is a two-dimensionaly
+In the case of multi-class classification ``coef_`` is a two-dimensionally
 array of ``shape=[n_classes, n_features]`` and ``intercept_`` is a one
 dimensional array of ``shape=[n_classes]``. The i-th row of ``coef_`` holds
 the weight vector of the OVA classifier for the i-th class; classes are
@@ -189,10 +189,6 @@ The Huber and epsilon-insensitive loss functions can be used for
 robust regression. The width of the insensitive region has to be
 specified via the parameter ``epsilon``. This parameter depends on the
 scale of the target variables.
-
-.. topic:: Examples:
-
- - :ref:`example_linear_model_plot_sgd_ols.py`,
 
 
 Stochastic Gradient Descent for sparse data

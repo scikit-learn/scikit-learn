@@ -217,7 +217,7 @@ of the training set is left out.
 
 This left out portion can be used to estimate the generalization error
 without having to rely on a separate validation set.  This estimate
-comes "for free" as no addictional data is needed and can be used for
+comes "for free" as no additional data is needed and can be used for
 model selection.
 
 This is currently implemented in the following classes:

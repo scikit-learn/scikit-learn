@@ -4,7 +4,7 @@ Concatenating multiple feature extraction methods
 =================================================
 
 In many real-world examples, there are many ways to extract features from a
-dataset. Often it is benefitial to combine several methods to obtain good
+dataset. Often it is beneficial to combine several methods to obtain good
 performance. This example shows how to use ``FeatureUnion`` to combine
 features obtained by PCA and univariate selection.
 

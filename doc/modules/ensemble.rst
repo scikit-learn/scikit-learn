@@ -99,7 +99,7 @@ in bias::
     ...     random_state=0)
     >>> scores = cross_val_score(clf, X, y)
     >>> scores.mean()                             # doctest: +ELLIPSIS
-    0.97...
+    0.98...
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=1, random_state=0)
@@ -138,11 +138,6 @@ are usually not optimal. The best parameter values should always be cross-
 validated. In addition, note that bootstrap samples are used by default
 in random forests (``bootstrap=True``) while the default strategy is to
 use the original dataset for building extra-trees (``bootstrap=False``).
-
-When training on large datasets, where runtime and memory requirements
-are important, it might also be beneficial to adjust the ``min_density``
-parameter, that controls a heuristic for speeding up computations in
-each tree.  See :ref:`Complexity of trees<tree_complexity>` for details.
 
 Parallelization
 ---------------
@@ -199,10 +194,10 @@ a :class:`ExtraTreesClassifier` model.
    :align: center
    :scale: 75
 
-In practice those estimates are stored as an attribute named 
-``feature_importances_`` on the fitted model. This is an array with shape 
-``(n_features,)`` whose values are positive and sum to 1.0. The higher 
-the value, the more important is the contribution of the matching feature 
+In practice those estimates are stored as an attribute named
+``feature_importances_`` on the fitted model. This is an array with shape
+``(n_features,)`` whose values are positive and sum to 1.0. The higher
+the value, the more important is the contribution of the matching feature
 to the prediction function.
 
 .. topic:: Examples:
@@ -235,7 +230,7 @@ the transformation performs an implicit, non-parametric density estimation.
  * :ref:`example_ensemble_plot_random_forest_embedding.py`
 
  * :ref:`example_manifold_plot_lle_digits.py` compares non-linear
-   dimensionality reduction technics on handwritten digits.
+   dimensionality reduction techniques on handwritten digits.
 
 .. seealso::
 
@@ -430,7 +425,7 @@ with least squares loss and 500 base learners to the Boston house price dataset
 The plot on the left shows the train and test error at each iteration.
 The train error at each iteration is stored in the
 :attr:`~GradientBoostingRegressor.train_score_` attribute
-of the gradient boosting model. The test error at each iterations can be optained
+of the gradient boosting model. The test error at each iterations can be obtained
 via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
 generator that yields the predictions at each stage. Plots like these can be used
 to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
@@ -684,7 +679,7 @@ interactions among the two features. For example, the two-variable PDP in the
 above Figure shows the dependence of median house price on joint
 values of house age and avg. occupants per household. We can clearly
 see an interaction between the two features:
-For an avg. occupancy greather than two, the house price is nearly independent
+For an avg. occupancy greater than two, the house price is nearly independent
 of the house age, whereas for values less than two there is a strong dependence
 on age.
 
