@@ -90,3 +90,19 @@ def test_gibbs_smoke():
     rbm1.fit(X)
     X_sampled = rbm1.gibbs(X)
     assert_all_finite(X_sampled)
+
+
+def test_pseudo_likelihood_no_clipping():
+    """
+    checks that the pseudo likelihood is computed without clipping,
+    which happened until commit 52d1b778ca7164ac04ea9f8ba39077054954b77a
+    the new implementation (as of commit
+    52d1b778ca7164ac04ea9f8ba39077054954b77a ) follows:
+    http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
+    """
+    rng = np.random.RandomState(42)
+    X = np.array([[0. for i in xrange(1000)], [1. for i in xrange(1000)]])
+    rbm1 = BernoulliRBM(n_components=10, batch_size=2,
+                        n_iter=10, random_state=rng)
+    rbm1.fit(X)
+    assert((rbm1.pseudo_likelihood(X) < -300).all())
