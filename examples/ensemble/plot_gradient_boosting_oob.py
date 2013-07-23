@@ -1,10 +1,11 @@
 """
-===============================
-Gradient Boosting OOB estimates
-===============================
+======================================
+Gradient Boosting Out-of-Bag estimates
+======================================
 
-Out-of-bag estimates can be used to estimate the "optimal" number of
-boosting iterations. The OOB estimator is a pessimistic estimator of the true
+Out-of-bag (OOB) estimates can be a useful heuristic to estimate
+the "optimal" number of boosting iterations.
+The OOB estimator is a pessimistic estimator of the true
 test loss, but remains a fairly good approximation for a small number of trees.
 
 The figure shows the cumulative sum of the negative OOB improvements
@@ -27,9 +28,8 @@ from sklearn import ensemble
 from sklearn.cross_validation import KFold
 from sklearn.cross_validation import train_test_split
 
-###############################################################################
-# Generate data (adapted from G. Ridgeway's gbm example)
 
+# Generate data (adapted from G. Ridgeway's gbm example)
 n = 1000
 rs = np.random.RandomState(13)
 x1 = rs.uniform(size=n)
@@ -45,8 +45,7 @@ X = X.astype(np.float32)
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5,
                                                     random_state=9)
 
-###############################################################################
-# Fit regression model
+# Fit classifier with out-of-bag estimates
 params = {'n_estimators': 1200, 'max_depth': 3, 'subsample': 0.5,
           'learning_rate': 0.01, 'min_samples_leaf': 1, 'random_state': 3}
 clf = ensemble.GradientBoostingClassifier(**params)
@@ -60,6 +59,7 @@ x = np.arange(n_estimators) + 1
 
 
 def heldout_score(clf, X_test, y_test):
+    """compute deviance scores on ``X_test`` and ``y_test``. """
     score = np.zeros((n_estimators,), dtype=np.float64)
     for i, y_pred in enumerate(clf.staged_decision_function(X_test)):
         score[i] = clf.loss_(y_test, y_pred)
@@ -77,20 +77,32 @@ def cv_estimate(n_folds=3):
     return val_scores
 
 
-test_score = heldout_score(clf, X_test, y_test)
+# Estimate best n_estimator using cross-validation
 cv_score = cv_estimate(3)
 
+# Compute best n_estimator for test data
+test_score = heldout_score(clf, X_test, y_test)
+
+# negative cumulative sum of oob improvements
 cumsum = -np.cumsum(clf.oob_improvement_)
+
+# min loss according to OOB
 oob_best_iter = x[np.argmin(cumsum)]
+
+# min loss according to test (normalize such that first loss is 0)
 test_score -= test_score[0]
 test_best_iter = x[np.argmin(test_score)]
+
+# min loss according to cv (normalize such that first loss is 0)
 cv_score -= cv_score[0]
 cv_best_iter = x[np.argmin(cv_score)]
 
+# color brew for the three curves
 oob_color = map(lambda x: x / 256.0, (190, 174, 212))
 test_color = map(lambda x: x / 256.0, (127, 201, 127))
 cv_color = map(lambda x: x / 256.0, (253, 192, 134))
 
+# plot curves and vertical lines for best iterations
 pl.plot(x, cumsum, label='OOB loss', color=oob_color)
 pl.plot(x, test_score, label='Test loss', color=test_color)
 pl.plot(x, cv_score, label='CV loss', color=cv_color)
@@ -98,6 +110,7 @@ pl.axvline(x=oob_best_iter, color=oob_color)
 pl.axvline(x=test_best_iter, color=test_color)
 pl.axvline(x=cv_best_iter, color=cv_color)
 
+# add three vertical lines to xticks
 xticks = pl.xticks()
 xticks_pos = np.array(xticks[0].tolist() +
                       [oob_best_iter, cv_best_iter, test_best_iter])
