@@ -220,6 +220,11 @@ def test_discretenb_provide_prior():
         prior = np.exp(clf.class_log_prior_)
         assert_array_equal(prior, np.array([.5, .5]))
 
+        # Inconsistent number of classes with prior
+        assert_raises(ValueError, clf.fit, [[0], [1], [2]], [0, 1, 2])
+        assert_raises(ValueError, clf.partial_fit, [[0], [1]], [0, 1],
+                      classes=[0, 1, 1])
+
 
 def test_sample_weight_multiclass():
     for cls in [BernoulliNB, MultinomialNB]:
