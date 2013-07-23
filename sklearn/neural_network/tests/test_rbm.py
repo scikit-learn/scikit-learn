@@ -64,6 +64,21 @@ def test_sample_hiddens():
     assert_almost_equal(h, hs, decimal=1)
 
 
+def test_fit_gibbs():
+    """ 
+    Gibbs on the RBM hidden layer should be able to recreate [[0], [1]] 
+    from the same input 
+    """
+    rng = np.random.RandomState(42)
+    X = np.array([[0.], [1.]])
+    rbm1 = BernoulliRBM(n_components=2, batch_size=5, # you need that much...
+                    n_iter=20, random_state=rng) # ...batch size and passes
+    rbm1.fit(X)
+    assert_almost_equal(rbm1.components_, np.array([[-0.1972], [-0.2029]]),
+        decimal=4)
+    assert_almost_equal(rbm1.gibbs(X), X)
+
+
 def test_gibbs():
     rng = np.random.RandomState(42)
     X = Xdigits[:100]
