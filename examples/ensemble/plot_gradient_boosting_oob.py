@@ -28,7 +28,7 @@ print(__doc__)
 # License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+from matplotlib import pyplot as plt
 
 from sklearn import ensemble
 from sklearn.cross_validation import KFold
@@ -109,15 +109,15 @@ test_color = map(lambda x: x / 256.0, (127, 201, 127))
 cv_color = map(lambda x: x / 256.0, (253, 192, 134))
 
 # plot curves and vertical lines for best iterations
-pl.plot(x, cumsum, label='OOB loss', color=oob_color)
-pl.plot(x, test_score, label='Test loss', color=test_color)
-pl.plot(x, cv_score, label='CV loss', color=cv_color)
-pl.axvline(x=oob_best_iter, color=oob_color)
-pl.axvline(x=test_best_iter, color=test_color)
-pl.axvline(x=cv_best_iter, color=cv_color)
+plt.plot(x, cumsum, label='OOB loss', color=oob_color)
+plt.plot(x, test_score, label='Test loss', color=test_color)
+plt.plot(x, cv_score, label='CV loss', color=cv_color)
+plt.axvline(x=oob_best_iter, color=oob_color)
+plt.axvline(x=test_best_iter, color=test_color)
+plt.axvline(x=cv_best_iter, color=cv_color)
 
 # add three vertical lines to xticks
-xticks = pl.xticks()
+xticks = plt.xticks()
 xticks_pos = np.array(xticks[0].tolist() +
                       [oob_best_iter, cv_best_iter, test_best_iter])
 xticks_label = np.array(map(lambda t: int(t), xticks[0]) +
@@ -125,10 +125,10 @@ xticks_label = np.array(map(lambda t: int(t), xticks[0]) +
 ind = np.argsort(xticks_pos)
 xticks_pos = xticks_pos[ind]
 xticks_label = xticks_label[ind]
-pl.xticks(xticks_pos, xticks_label)
+plt.xticks(xticks_pos, xticks_label)
 
-pl.legend(loc='upper right')
-pl.ylabel('normalized loss')
-pl.xlabel('number of iterations')
+plt.legend(loc='upper right')
+plt.ylabel('normalized loss')
+plt.xlabel('number of iterations')
 
-pl.show()
+plt.show()
