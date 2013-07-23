@@ -84,8 +84,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         self.splitter_ = None
         self.tree_ = None
 
-    def fit(self, X, y, sample_mask=None, X_argsorted=None,
-                  check_input=True, sample_weight=None):
+    def fit(self, X, y, sample_mask=None, X_argsorted=None, check_input=True,
+            sample_weight=None):
         """Build a decision tree from the training set (X, y).
 
         Parameters
@@ -129,9 +129,8 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         # Convert data
         if check_input:
-            X, = check_arrays(X, dtype=DTYPE,
-                                 sparse_format="dense",
-                                 check_ccontiguous=True)
+            X, = check_arrays(X, dtype=DTYPE, sparse_format="dense",
+                              check_ccontiguous=True)
 
         # Determine output settings
         n_samples, self.n_features_ = X.shape
@@ -442,11 +441,10 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
 
         if compute_importances is not None:
             warn("Setting compute_importances is no longer required as "
-                  "version 0.14. Variable importances are now computed on the "
-                  "fly when accessing the feature_importances_ attribute. "
-                  "This parameter will be removed in 0.16.",
-                  DeprecationWarning)
-
+                 "version 0.14. Variable importances are now computed on the "
+                 "fly when accessing the feature_importances_ attribute. "
+                 "This parameter will be removed in 0.16.",
+                 DeprecationWarning)
 
     def predict_proba(self, X):
         """Predict class probabilities of the input samples X.
@@ -633,10 +631,10 @@ class DecisionTreeRegressor(BaseDecisionTree, RegressorMixin):
 
         if compute_importances is not None:
             warn("Setting compute_importances is no longer required as "
-                  "version 0.14. Variable importances are now computed on the "
-                  "fly when accessing the feature_importances_ attribute. "
-                  "This parameter will be removed in 0.16.",
-                  DeprecationWarning)
+                 "version 0.14. Variable importances are now computed on the "
+                 "fly when accessing the feature_importances_ attribute. "
+                 "This parameter will be removed in 0.16.",
+                 DeprecationWarning)
 
 
 class ExtraTreeClassifier(DecisionTreeClassifier):
@@ -684,10 +682,10 @@ class ExtraTreeClassifier(DecisionTreeClassifier):
 
         if compute_importances is not None:
             warn("Setting compute_importances is no longer required as "
-                  "version 0.14. Variable importances are now computed on the "
-                  "fly when accessing the feature_importances_ attribute. "
-                  "This parameter will be removed in 0.16.",
-                  DeprecationWarning)
+                 "version 0.14. Variable importances are now computed on the "
+                 "fly when accessing the feature_importances_ attribute. "
+                 "This parameter will be removed in 0.16.",
+                 DeprecationWarning)
 
 
 class ExtraTreeRegressor(DecisionTreeRegressor):
@@ -735,8 +733,7 @@ class ExtraTreeRegressor(DecisionTreeRegressor):
 
         if compute_importances is not None:
             warn("Setting compute_importances is no longer required as "
-                  "version 0.14. Variable importances are now computed on the "
-                  "fly when accessing the feature_importances_ attribute. "
-                  "This parameter will be removed in 0.16.",
-                  DeprecationWarning)
-
+                 "version 0.14. Variable importances are now computed on the "
+                 "fly when accessing the feature_importances_ attribute. "
+                 "This parameter will be removed in 0.16.",
+                 DeprecationWarning)

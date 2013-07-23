@@ -600,7 +600,6 @@ def test_classifiers_classes():
     X, y = shuffle(X, y, random_state=1)
     X = StandardScaler().fit_transform(X)
     y_names = iris.target_names[y]
-    y_str_numbers = (2 * y + 1).astype(np.str)
     for name, Classifier in classifiers:
         if name in dont_test:
             continue

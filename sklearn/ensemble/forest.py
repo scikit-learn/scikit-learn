@@ -55,7 +55,6 @@ from ..tree import (DecisionTreeClassifier, DecisionTreeRegressor,
 from ..tree._tree import DTYPE, DOUBLE
 from ..utils import array2d, check_random_state, check_arrays, safe_asarray
 from ..utils.fixes import bincount, unique
-from ..utils.validation import check_arrays
 
 
 from .base import BaseEnsemble
@@ -253,9 +252,8 @@ class BaseForest(six.with_metaclass(ABCMeta, BaseEnsemble,
         random_state = check_random_state(self.random_state)
 
         # Convert data
-        X, = check_arrays(X, dtype=DTYPE,
-                             sparse_format="dense",
-                             check_ccontiguous=True)
+        X, = check_arrays(X, dtype=DTYPE, sparse_format="dense",
+                          check_ccontiguous=True)
 
         # Remap output
         n_samples, self.n_features_ = X.shape
@@ -396,9 +394,8 @@ class ForestClassifier(six.with_metaclass(ABCMeta, BaseForest,
             decision = (predictions[k] /
                         predictions[k].sum(axis=1)[:, np.newaxis])
             oob_decision_function.append(decision)
-            oob_score += np.mean( (y[:, k] == classes_[k].take(
-                    np.argmax(predictions[k], axis=1),
-                    axis=0)))
+            oob_score += np.mean((y[:, k] == classes_[k].take(
+                np.argmax(predictions[k], axis=1), axis=0)))
 
         if self.n_outputs_ == 1:
             self.oob_decision_function_ = oob_decision_function[0]
@@ -773,10 +770,10 @@ class RandomForestClassifier(ForestClassifier):
 
         if compute_importances is not None:
             warn("Setting compute_importances is no longer required as "
-                  "version 0.14. Variable importances are now computed on the "
-                  "fly when accessing the feature_importances_ attribute. "
-                  "This parameter will be removed in 0.16.",
-                  DeprecationWarning)
+                 "version 0.14. Variable importances are now computed on the "
+                 "fly when accessing the feature_importances_ attribute. "
+                 "This parameter will be removed in 0.16.",
+                 DeprecationWarning)
 
 
 class RandomForestRegressor(ForestRegressor):
@@ -906,10 +903,10 @@ class RandomForestRegressor(ForestRegressor):
 
         if compute_importances is not None:
             warn("Setting compute_importances is no longer required as "
-                  "version 0.14. Variable importances are now computed on the "
-                  "fly when accessing the feature_importances_ attribute. "
-                  "This parameter will be removed in 0.16.",
-                  DeprecationWarning)
+                 "version 0.14. Variable importances are now computed on the "
+                 "fly when accessing the feature_importances_ attribute. "
+                 "This parameter will be removed in 0.16.",
+                 DeprecationWarning)
 
 
 class ExtraTreesClassifier(ForestClassifier):
@@ -1054,10 +1051,10 @@ class ExtraTreesClassifier(ForestClassifier):
 
         if compute_importances is not None:
             warn("Setting compute_importances is no longer required as "
-                  "version 0.14. Variable importances are now computed on the "
-                  "fly when accessing the feature_importances_ attribute. "
-                  "This parameter will be removed in 0.16.",
-                  DeprecationWarning)
+                 "version 0.14. Variable importances are now computed on the "
+                 "fly when accessing the feature_importances_ attribute. "
+                 "This parameter will be removed in 0.16.",
+                 DeprecationWarning)
 
 
 class ExtraTreesRegressor(ForestRegressor):
@@ -1191,10 +1188,10 @@ class ExtraTreesRegressor(ForestRegressor):
 
         if compute_importances is not None:
             warn("Setting compute_importances is no longer required as "
-                  "version 0.14. Variable importances are now computed on the "
-                  "fly when accessing the feature_importances_ attribute. "
-                  "This parameter will be removed in 0.16.",
-                  DeprecationWarning)
+                 "version 0.14. Variable importances are now computed on the "
+                 "fly when accessing the feature_importances_ attribute. "
+                 "This parameter will be removed in 0.16.",
+                 DeprecationWarning)
 
 
 class RandomTreesEmbedding(BaseForest):

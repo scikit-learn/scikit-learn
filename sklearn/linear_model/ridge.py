@@ -24,7 +24,6 @@ from ..utils import compute_class_weight
 from ..preprocessing import LabelBinarizer
 from ..grid_search import GridSearchCV
 from ..externals import six
-from numbers import Number
 
 
 def _solve_sparse_cg(X, y, alpha, max_iter=None, tol=1e-3):
@@ -136,7 +135,6 @@ def _solve_dense_cholesky_kernel(K, y, alpha, sample_weight=None):
         return dual_coef
     else:
         # One penalty per target. We need to solve each target separately.
-        coef = np.empty([n_targets, n_features])
         dual_coefs = np.empty([n_targets, n_samples])
 
         for dual_coef, target, current_alpha in zip(dual_coefs, y.T, alpha):

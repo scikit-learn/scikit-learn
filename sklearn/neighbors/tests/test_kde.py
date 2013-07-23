@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.testing import assert_allclose, assert_raises, assert_equal
-from sklearn.neighbors import KernelDensity, BallTree, KDTree, NearestNeighbors
+from sklearn.neighbors import KernelDensity, KDTree, NearestNeighbors
 from sklearn.neighbors.ball_tree import kernel_norm
 
 
@@ -33,6 +33,7 @@ def test_KernelDensity(n_samples=100, n_features=3):
                    'exponential', 'linear', 'cosine']:
         for bandwidth in [0.01, 0.1, 1]:
             dens_true = compute_kernel_slow(Y, X, kernel, bandwidth)
+
             def check_results(kernel, bandwidth, atol, rtol):
                 kde = KernelDensity(kernel=kernel, bandwidth=bandwidth,
                                     atol=atol, rtol=rtol)
@@ -64,7 +65,7 @@ def test_KernelDensity_sampling(n_samples=100, n_features=3):
         # check that samples are in the right range
         nbrs = NearestNeighbors(n_neighbors=1).fit(X)
         dist, ind = nbrs.kneighbors(X, return_distance=True)
-        
+
         if kernel == 'tophat':
             assert np.all(dist < bandwidth)
         elif kernel == 'gaussian':
@@ -76,8 +77,6 @@ def test_KernelDensity_sampling(n_samples=100, n_features=3):
     for kernel in ['epanechnikov', 'exponential', 'linear', 'cosine']:
         kde = KernelDensity(bandwidth, kernel=kernel).fit(X)
         assert_raises(NotImplementedError, kde.sample, 100)
-    
-    
 
 
 def test_kde_algorithm_metric_choice():
@@ -98,16 +97,16 @@ def test_kde_algorithm_metric_choice():
                 y_dens = kde.eval(Y)
                 assert_equal(y_dens.shape, Y.shape[:1])
 
+
 def test_kde_score(n_samples=100, n_features=3):
-    np.random.seed(0)
-    X = np.random.random((n_samples, n_features))
-    Y = np.random.random((n_samples, n_features))
+    pass
+    #FIXME
+    #np.random.seed(0)
+    #X = np.random.random((n_samples, n_features))
+    #Y = np.random.random((n_samples, n_features))
+
 
 def test_kde_badargs():
-    np.random.seed(0)
-    X = np.random.random((10, 2))
-    Y = np.random.random((10, 2))
-
     assert_raises(ValueError, KernelDensity,
                   algorithm='blah')
     assert_raises(ValueError, KernelDensity,

@@ -188,7 +188,7 @@ def test_ovr_multilabel_decision_function():
     X_test, Y_test = X[80:], Y[80:]
     clf = OneVsRestClassifier(svm.SVC()).fit(X_train, Y_train)
     assert_array_equal((clf.decision_function(X_test) > 0).nonzero()[1],
-                        np.hstack(clf.predict(X_test)))
+                       np.hstack(clf.predict(X_test)))
 
 
 def test_ovr_single_label_decision_function():
