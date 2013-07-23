@@ -79,6 +79,25 @@ def test_fit_gibbs():
     assert_almost_equal(rbm1.components_,
                         np.array([[0.02649814], [0.02009084]]), decimal=4)
     assert_almost_equal(rbm1.gibbs(X), X)
+    return rbm1
+
+
+def test_fit_gibbs_sparse():
+    """
+    Gibbs on the RBM hidden layer should be able to recreate [[0], [1]] from
+    the same input even when the input is sparse, and test against non-sparse
+    """
+    rbm1 = test_fit_gibbs()
+    rng = np.random.RandomState(42)
+    from scipy.sparse import csc_matrix
+    X = csc_matrix([[0.], [1.]])
+    rbm2 = BernoulliRBM(n_components=2, batch_size=2,
+                        n_iter=42, random_state=rng)
+    rbm2.fit(X)
+    assert_almost_equal(rbm2.components_,
+                        np.array([[0.02649814], [0.02009084]]), decimal=4)
+    assert_almost_equal(rbm2.gibbs(X), X.toarray())
+    assert_almost_equal(rbm1.components_, rbm2.components_)
 
 
 def test_gibbs_smoke():
