@@ -134,7 +134,7 @@ def _cube(x, fun_args):
 
 def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             fun="logcosh", fun_args={}, max_iter=200, tol=1e-04, w_init=None,
-            random_state=None):
+            random_state=None, return_X_mean=False):
     """Perform Fast Independent Component Analysis.
 
     Parameters
@@ -179,23 +179,28 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         If True, only the sources matrix is returned.
     random_state : int or RandomState
         Pseudo number generator state used for random sampling.
+    return_X_mean : bool
+        If True, X_mean is returned too.
 
     Returns
     -------
-    K: (n_components, p) array or None.
+    K : (n_components, p) array or None.
         If whiten is 'True', K is the pre-whitening matrix that projects data
         onto the first n.comp principal components. If whiten is 'False', K is
         'None'.
 
-    W: (n_components, n_components) array
+    W : (n_components, n_components) array
         Estimated un-mixing matrix.
         The mixing matrix can be obtained by::
 
             w = np.dot(W, K.T)
             A = w.T * (w * w.T).I
 
-    S: (n_components, n) array
+    S : (n_components, n) array
         estimated source matrix
+
+    X_mean : array, shape=(n_features,)
+        The mean over features. Returned only if return_X_mean is True.
 
     Notes
     -----
@@ -219,7 +224,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     """
     random_state = check_random_state(random_state)
     # make interface compatible with other decompositions
-    X = array2d(X).T
+    X = array2d(X, copy=whiten).T  # a copy is required only for non whitened data
 
     alpha = fun_args.get('alpha', 1.0)
     if not 1 <= alpha <= 2:
@@ -254,7 +259,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     if whiten:
         # Centering the columns (ie the variables)
-        X = X - X.mean(axis=-1)[:, np.newaxis]
+        X_mean = X.mean(axis=-1)
+        X -= X_mean[:, np.newaxis]
 
         # Whitening and preprocessing by PCA
         u, d, _ = linalg.svd(X, full_matrices=False)
@@ -269,7 +275,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     else:
         # X must be casted to floats to avoid typing issues with numpy
         # 2.0 and the line below
-        X1 = as_float_array(X, copy=True)
+        X1 = as_float_array(X, copy=False)  # copy has been taken of above
 
     if w_init is None:
         w_init = random_state.normal(size=(n_components, n_components))
@@ -296,10 +302,16 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
 
     if whiten:
         S = np.dot(np.dot(W, K), X)
-        return K, W, S.T
+        if return_X_mean:
+            return K, W, S.T, X_mean
+        else:
+            return K, W, S.T
     else:
         S = np.dot(W, X)
-        return None, W, S.T
+        if return_X_mean:
+            return None, W, S.T, None
+        else:
+            return None, W, S.T
 
 
 class FastICA(BaseEstimator, TransformerMixin):
@@ -382,14 +394,14 @@ class FastICA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
         """
         fun_args = {} if self.fun_args is None else self.fun_args
-        whitening_, unmixing_, sources_ = fastica(
+        whitening_, unmixing_, sources_, X_mean = fastica(
             X=X, n_components=self.n_components, algorithm=self.algorithm,
             whiten=self.whiten, fun=self.fun, fun_args=fun_args,
             max_iter=self.max_iter, tol=self.tol, w_init=self.w_init,
-            random_state=self.random_state)
+            random_state=self.random_state, return_X_mean=True)
         if self.whiten:
             self.components_ = np.dot(unmixing_, whitening_)
-            self.mean_ = array2d(X).T.mean(axis=-1)
+            self.mean_ = X_mean
             self.whitening_ = whitening_
         else:
             self.components_ = unmixing_
