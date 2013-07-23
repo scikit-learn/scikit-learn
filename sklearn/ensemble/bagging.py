@@ -278,7 +278,17 @@ class BaggingClassifier(BaseBagging, ClassifierMixin):
         for estimator in self.estimators_:
             mask = np.ones(n_samples, dtype=np.bool)
             mask[estimator.indices_] = False
-            predictions[mask, :] += estimator.predict_proba(X[mask, :])
+
+            try:
+                predictions[mask, :] += estimator.predict_proba(X[mask, :])
+            except:
+                p = estimator.predict(X[mask, :])
+                j = 0
+
+                for i in xrange(n_samples):
+                    if mask[i]:
+                        predictions[i, p[j]] += 1
+                        j += 1
 
         if (predictions.sum(axis=1) == 0).any():
             warn("Some inputs do not have OOB scores. "
