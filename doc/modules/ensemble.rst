@@ -597,7 +597,8 @@ Out-of-bag estimates can be used for model selection
 
 Another strategy to reduce the variance is by subsampling the features
 analogous to the random splits in :class:`RandomForestClassifier` .
-The size of the subsample can be controlled via the ``max_features`` parameter.
+The number of subsampled features can be controlled via the ``max_features``
+parameter.
 
 .. note:: Using a small ``max_features`` value can significantly decrease the runtime.
 
