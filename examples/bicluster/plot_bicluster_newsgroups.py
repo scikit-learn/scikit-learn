@@ -12,8 +12,10 @@ then biclustered using Dhillon's Spectral Co-Clustering algorithm. The
 resulting document-word biclusters indicate subsets words used more
 often in those subsets documents.
 
-For each bicluster, its most common document categories and its ten
-most important words get printed.
+For a few of the best biclusters, its most common document categories
+and its ten most important words get printed. The best biclusters are
+determined by their normalized cut. The best words are determined by
+comparing their sums inside and outside the bicluster.
 
 For comparison, the documents are also clustered using
 MiniBatchKMeans. The document clusters derived from the biclusters
@@ -60,7 +62,7 @@ vectorizer = TfidfVectorizer(stop_words='english', min_df=5,
                              tokenizer=number_aware_tokenizer)
 cocluster = SpectralCoclustering(n_clusters=len(categories),
                                  svd_method='arpack', random_state=0)
-kmeans = MiniBatchKMeans(n_clusters=len(categories), batch_size=5000,
+kmeans = MiniBatchKMeans(n_clusters=len(categories), batch_size=20000,
                          random_state=0)
 
 print("Vectorizing...")
@@ -84,10 +86,28 @@ print("Done in {:.2f}s. V-measure: {:.4f}".format(
 feature_names = vectorizer.get_feature_names()
 document_names = list(newsgroups.target_names[i] for i in newsgroups.target)
 
-print("")
-print("Biclusters:")
-print("-----------")
-for cluster in xrange(len(categories)):
+
+def bicluster_ncut(i):
+    rows, cols = cocluster.get_indices(i)
+    if not (np.any(rows) and np.any(cols)):
+        import sys
+        return sys.float_info.max
+    row_complement = np.nonzero(np.logical_not(cocluster.rows_[i]))[0]
+    col_complement = np.nonzero(np.logical_not(cocluster.columns_[i]))[0]
+    weight = X[rows[:, np.newaxis], cols].sum()
+    cut = (X[row_complement[:, np.newaxis], cols].sum() +
+           X[rows[:, np.newaxis], col_complement].sum())
+    return cut / weight
+
+
+bicluster_ncuts = list(bicluster_ncut(i)
+                       for i in xrange(len(newsgroups.target_names)))
+best_idx = np.argsort(bicluster_ncuts)[:5]
+
+print ("")
+print("Best biclusters:")
+print("----------------")
+for idx, cluster in enumerate(best_idx):
     n_rows, n_cols = cocluster.get_shape(cluster)
     cluster_docs, cluster_words = cocluster.get_indices(cluster)
     if not len(cluster_docs) or not len(cluster_words):
@@ -108,9 +128,9 @@ for cluster in xrange(len(categories)):
                            word_col[out_of_cluster_docs, :].sum(axis=0))
     word_scores = word_scores.ravel()
     important_words = list(feature_names[cluster_words[i]]
-                           for i in word_scores.argsort()[:-10:-1])
+                           for i in word_scores.argsort()[:-11:-1])
 
     print("bicluster {} : {} documents, {} words".format(
-        str(cluster).zfill(2), n_rows, n_cols))
+        str(idx).zfill(2), n_rows, n_cols))
     print("categories   : {}".format(cat_string))
     print("words        : {}\n".format(', '.join(important_words)))
