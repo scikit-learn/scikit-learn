@@ -30,22 +30,54 @@ from .fast_dict import IntFloatDict, average_merge, max_merge,\
 ###############################################################################
 # For non fully-connected graphs
 
-def _fix_connectivity(X, connectivity, n_components, labels):
+# XXX: fishy stuff with COO/LIL
+
+def _fix_connectivity(X, connectivity, n_components=None):
     """
     Warning: modifies connectivity in place
     """
-    for i in range(n_components):
-        idx_i = np.where(labels == i)[0]
-        Xi = X[idx_i]
-        for j in range(i):
-            idx_j = np.where(labels == j)[0]
-            Xj = X[idx_j]
-            D = euclidean_distances(Xi, Xj)
-            ii, jj = np.where(D == np.min(D))
-            ii = ii[0]
-            jj = jj[0]
-            connectivity[idx_i[ii], idx_j[jj]] = True
-            connectivity[idx_j[jj], idx_i[ii]] = True
+    n_samples = X.shape[0]
+    if (connectivity.shape[0] != n_samples or
+        connectivity.shape[1] != n_samples):
+        raise ValueError('Wrong shape for connectivity matrix: %s '
+                         'when X is %s' % (connectivity.shape, X.shape))
+
+    # Make the connectivity matrix symmetric:
+    connectivity = connectivity + connectivity.T
+    # XXX: the above line does a copy anyhow, so we need to remove the
+    # copy argument
+
+    # Compute the number of nodes
+    n_components, labels = cs_graph_components(connectivity)
+
+    # Convert connectivity matrix to LIL
+    if not sparse.isspmatrix_lil(connectivity):
+        if not sparse.isspmatrix(connectivity):
+            connectivity = sparse.lil_matrix(connectivity)
+        else:
+            connectivity = connectivity.tolil()
+
+    if n_components > 1:
+        warnings.warn("the number of connected components of the"
+            " connectivity matrix is %d > 1. Completing it to avoid"
+            " stopping the tree early."
+            % n_components, stacklevel=2)
+        # XXX: Can we do without this above?
+        for i in range(n_components):
+            idx_i = np.where(labels == i)[0]
+            Xi = X[idx_i]
+            for j in range(i):
+                idx_j = np.where(labels == j)[0]
+                Xj = X[idx_j]
+                # XXX: distance should be plugable
+                D = euclidean_distances(Xi, Xj)
+                ii, jj = np.where(D == np.min(D))
+                ii = ii[0]
+                jj = jj[0]
+                connectivity[idx_i[ii], idx_j[jj]] = True
+                connectivity[idx_j[jj], idx_i[ii]] = True
+        n_components = 1
+
     return connectivity
 
 
@@ -122,35 +154,13 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
         children_ = out[:, :2].astype(np.intp)
         return children_, 1, n_samples, None
 
-    # Compute the number of nodes
-    if n_components is None:
-        n_components, labels = connected_components(connectivity)
-
-    # Convert connectivity matrix to LIL with a copy if needed
-    if sparse.isspmatrix_lil(connectivity) and copy:
-        connectivity = connectivity.copy()
-    elif not sparse.isspmatrix(connectivity):
-        connectivity = sparse.lil_matrix(connectivity)
-    else:
-        connectivity = connectivity.tolil()
-
-    if n_components > 1:
-        warnings.warn("the number of connected components of the "
-                      "connectivity matrix is %d > 1. Completing it to avoid "
-                      "stopping the tree early." % n_components)
-        connectivity = _fix_connectivity(X, connectivity, n_components, labels)
-        n_components = 1
-
+    connectivity = _fix_connectivity(X, connectivity,
+                                     n_components=n_components)
     if n_clusters is None:
-        n_nodes = 2 * n_samples - n_components
+        n_nodes = 2 * n_samples - 1
     else:
         assert n_clusters <= n_samples
         n_nodes = 2 * n_samples - n_clusters
-
-    if (connectivity.shape[0] != n_samples
-            or connectivity.shape[1] != n_samples):
-        raise ValueError('Wrong shape for connectivity matrix: %s '
-                         'when X is %s' % (connectivity.shape, X.shape))
 
     # create inertia matrix
     coord_row = []
@@ -305,25 +315,16 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
         children_ = out[:, :2].astype(np.int)
         return children_, 1, n_samples, None
 
-    # Compute the number of nodes
-    if n_components is None:
-        n_components, labels = cs_graph_components(connectivity)
+    connectivity = _fix_connectivity(X, connectivity,
+                                     n_components=n_components)
 
-    # We need a coo version of the connectivity to compute distances
-    if not sparse.isspmatrix(connectivity):
-        if copy:
-            connectivity = connectivity.copy()
-        # Put the diagonal to zero
-        connectivity.flat[::n_samples + 1] = 0
-        connectivity = sparse.coo_matrix(connectivity)
-    else:
-        connectivity = connectivity.tocoo(copy=copy)
-        # Put the diagonal to zero
-        diag_mask = (connectivity.row != connectivity.col)
-        connectivity.row = connectivity.row[diag_mask]
-        connectivity.col = connectivity.col[diag_mask]
-        connectivity.data = connectivity.data[diag_mask]
-        del diag_mask
+    connectivity = connectivity.tocoo()
+    # Put the diagonal to zero
+    diag_mask = (connectivity.row != connectivity.col)
+    connectivity.row = connectivity.row[diag_mask]
+    connectivity.col = connectivity.col[diag_mask]
+    connectivity.data = connectivity.data[diag_mask]
+    del diag_mask
     distances = X[connectivity.row] - X[connectivity.col]
     distances **= 2
     if linkage == 'average':
@@ -332,22 +333,8 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
         connectivity.data = distances.sum(axis=-1)
     del distances
 
-    connectivity = connectivity.tolil()
-
-    if n_components > 1:
-        warnings.warn("the number of connected components of the"
-                      " connectivity matrix is %d > 1. Completing it to avoid"
-                      " stopping the tree early."
-                      % n_components)
-        # XXX: should silence the SparseEfficiencyWarning
-        # XXX: should retrieve the fixed indices, to complete the
-        # distances matrix
-        connectivity = _fix_connectivity(X, connectivity,
-                                            n_components, labels)
-        n_components = 1
-
     if n_clusters is None:
-        n_nodes = 2 * n_samples - n_components
+        n_nodes = 2 * n_samples - 1
     else:
         assert n_clusters <= n_samples
         n_nodes = 2 * n_samples - n_clusters
@@ -361,8 +348,10 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
     A = np.empty(n_nodes, dtype=object)
     inertia = list()
 
+    # XXX: can we avoid switching to lil
+    connectivity = connectivity.tolil()
     # We are storing the graph in a list of IntFloatDict
-    for ind, (data, row)  in enumerate(zip(connectivity.data,
+    for ind, (data, row) in enumerate(zip(connectivity.data,
                                            connectivity.rows)):
         A[ind] = IntFloatDict(np.asarray(row, dtype=np.int32),
                         np.asarray(data, dtype=np.float64))

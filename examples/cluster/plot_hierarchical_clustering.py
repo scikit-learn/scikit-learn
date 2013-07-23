@@ -1,22 +1,37 @@
+"""
+Hierarchical clustering with and without structure
+===================================================
+
+* Demonstrates the percolation effect
+* Shows the effect of connectivity graph to capture manifold structure
+* Demonstrates the interest of having structure for speed reasons
+"""
+
 import time
 import pylab as pl
+import numpy as np
 
 from sklearn.cluster.hierarchical import HierarchicalLinkage
-from sklearn.neighbors import radius_neighbors_graph
-from sklearn import datasets
+from sklearn.neighbors import kneighbors_graph
 
-##############################################################################
 # Generate sample data
+n_samples = 1500
+np.random.seed(0)
+t = 1.5 * np.pi * (1 + 3 * np.random.rand(1, n_samples))
+x = t * np.cos(t)
+y = t * np.sin(t)
 
-N = 2000
-# XXX: random_state=0 triggers a bug...
-#X = datasets.make_moons(n_samples=N, noise=.05, random_state=0)[0]
-X = datasets.make_swiss_roll(n_samples=N, noise=.5, random_state=42)[0]
-X = X[:, [0, 2]]
+X = np.concatenate((x, y))
+X += .75 * np.random.randn(2, n_samples)
+X = X.T
 
-knn_graph = radius_neighbors_graph(X, 1.5)
+# Create a graph capturing local connectivity. Larger number of neighbors
+# will give more homogeneous clusters to the cost of computation
+# time. With a very large number of neighbors, the manifold structure of
+# the data is no longer respected
+knn_graph = kneighbors_graph(X, 20)
 
-for n_clusters in (60, 20, 3):
+for n_clusters in (30, 4):
     pl.figure(figsize=(12, 7))
     for connectivity in (None, knn_graph):
         for index, linkage in enumerate(('average', 'complete', 'ward')):
@@ -27,13 +42,14 @@ for n_clusters in (60, 20, 3):
             t0 = time.time()
             model.fit(X)
             elapsed_time = time.time() - t0
-            pl.scatter(X[:, 0], X[:, 1], c=model.labels_, cmap=pl.cm.spectral)
+            pl.scatter(X[:, 0], X[:, 1], c=model.labels_,
+                       cmap=pl.cm.spectral)
             pl.title('linkage=%s, connectivity=%r \n(time %.2fs)' % (linkage,
                      connectivity is not None, elapsed_time),
                      fontdict=dict(verticalalignment='top'))
             pl.axis('off')
 
-        pl.subplots_adjust(bottom=0, top=.9, hspace=0, wspace=0,
+        pl.subplots_adjust(bottom=0, top=.94, hspace=0, wspace=0,
                            left=0, right=1)
         pl.suptitle('n_cluster=%i' % n_clusters, size=15)
 
