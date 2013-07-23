@@ -87,3 +87,5 @@ People
   * `Wei Li <http://kuantkid.github.com>`_
 
   * `Arnaud Joly <http://www.ajoly.org>`_
+
+  * `Kemal Eren <http://www.kemaleren.com>`_
