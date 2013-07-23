@@ -6,7 +6,7 @@ A demo of the Spectral Biclustering algorithm
 This example demonstrates how to generate a checkerboard dataset and
 bicluster it using the Spectral Biclustering algorithm.
 
-The data is generated with the `make_checkerboard` function, then
+The data is generated with the ``make_checkerboard`` function, then
 shuffled and passed to the Spectral Biclustering algorithm. The rows
 and columns of the shuffled matrix are rearranged to show the
 biclusters found by the algorithm.
