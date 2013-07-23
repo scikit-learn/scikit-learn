@@ -4,15 +4,14 @@ Gradient Boosting OOB estimates
 ===============================
 
 Out-of-bag estimates can be used to estimate the "optimal" number of
-boosting iterations. To compute OOB estimates the ``subsample``
-argument has to be smaller than 1.
-The argument ``oob_improvement_[i]`` holds the improvement in loss on
-the out-of-bag samples for the i-th iteration.
+boosting iterations. The OOB estimator is a pessimistic estimator of the true
+test loss, but remains a fairly good approximation for a small number of trees.
 
-The generated plot shows the cumulative sum of the negative OOB improvements
-as a function of the boosting iteration. This function should track the
-loss on the test set.
-The plot also shows the performance of 3-fold cross validation which
+The figure shows the cumulative sum of the negative OOB improvements
+as a function of the boosting iteration. As you can see, it tracks the test
+loss for the first hundred iterations but then diverges in a
+pessimistic way.
+The figure also shows the performance of 3-fold cross validation which
 usually gives a better estimate but is computationally more demanding.
 """
 print(__doc__)
@@ -26,6 +25,7 @@ import pylab as pl
 
 from sklearn import ensemble
 from sklearn.cross_validation import KFold
+from sklearn.cross_validation import train_test_split
 
 ###############################################################################
 # Generate data (adapted from G. Ridgeway's gbm example)
@@ -42,13 +42,12 @@ y = rs.binomial(1, p, size=n)
 X = np.c_[x1, x2, x3]
 
 X = X.astype(np.float32)
-offset = int(X.shape[0] * 0.8)
-X_train, y_train = X[:offset], y[:offset]
-X_test, y_test = X[offset:], y[offset:]
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.5,
+                                                    random_state=9)
 
 ###############################################################################
 # Fit regression model
-params = {'n_estimators': 2000, 'max_depth': 4, 'subsample': 0.5,
+params = {'n_estimators': 1200, 'max_depth': 3, 'subsample': 0.5,
           'learning_rate': 0.01, 'min_samples_leaf': 1, 'random_state': 3}
 clf = ensemble.GradientBoostingClassifier(**params)
 
@@ -81,14 +80,12 @@ def cv_estimate(n_folds=3):
 test_score = heldout_score(clf, X_test, y_test)
 cv_score = cv_estimate(3)
 
-
-#pl.plot(x, -np.cumsum(clf.oob_score_))
 cumsum = -np.cumsum(clf.oob_improvement_)
 oob_best_iter = x[np.argmin(cumsum)]
 test_score -= test_score[0]
-test_best_iter = np.argmin(test_score)
+test_best_iter = x[np.argmin(test_score)]
 cv_score -= cv_score[0]
-cv_best_iter = np.argmin(cv_score)
+cv_best_iter = x[np.argmin(cv_score)]
 
 oob_color = map(lambda x: x / 256.0, (190, 174, 212))
 test_color = map(lambda x: x / 256.0, (127, 201, 127))
@@ -101,7 +98,18 @@ pl.axvline(x=oob_best_iter, color=oob_color)
 pl.axvline(x=test_best_iter, color=test_color)
 pl.axvline(x=cv_best_iter, color=cv_color)
 
+xticks = pl.xticks()
+xticks_pos = np.array(xticks[0].tolist() +
+                      [oob_best_iter, cv_best_iter, test_best_iter])
+xticks_label = np.array(map(lambda t: int(t), xticks[0]) +
+                        ['OOB', 'CV', 'Test'])
+ind = np.argsort(xticks_pos)
+xticks_pos = xticks_pos[ind]
+xticks_label = xticks_label[ind]
+pl.xticks(xticks_pos, xticks_label)
+
 pl.legend(loc='upper right')
 pl.ylabel('normalized loss')
+pl.xlabel('number of iterations')
 
 pl.show()
