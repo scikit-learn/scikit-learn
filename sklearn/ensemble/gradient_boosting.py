@@ -569,15 +569,15 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
 
         self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
 
-        if self.subsample < 1.0:
-            self._oob_score_ = np.zeros((self.n_estimators), dtype=np.float64)
-            self.oob_improvement_ = np.zeros((self.n_estimators),
-                                             dtype=np.float64)
-
         # pull some obj into local scope
         subsample = self.subsample
         loss_ = self.loss_
         do_oob = subsample < 1.0
+
+        if self.subsample < 1.0:
+            self._oob_score_ = np.zeros((self.n_estimators), dtype=np.float64)
+            self.oob_improvement_ = np.zeros((self.n_estimators),
+                                             dtype=np.float64)
 
         sample_mask = np.ones((n_samples,), dtype=np.bool)
         n_inbag = max(1, int(subsample * n_samples))
