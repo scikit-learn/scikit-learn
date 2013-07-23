@@ -64,6 +64,7 @@ def as_float_array(X, copy=True):
     """
     if isinstance(X, np.matrix) or (not isinstance(X, np.ndarray)
                                     and not sparse.issparse(X)):
+        X = X.copy() if copy else X
         return safe_asarray(X, dtype=np.float64)
     elif sparse.issparse(X) and X.dtype in [np.float32, np.float64]:
         return X.copy() if copy else X
