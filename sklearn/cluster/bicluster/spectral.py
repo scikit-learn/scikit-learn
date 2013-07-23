@@ -193,9 +193,9 @@ class SpectralCoclustering(BaseSpectral):
     svd_method : string, optional, default: 'randomized'
         Selects the algorithm for finding singular vectors. May be
         'randomized' or 'arpack'. If 'randomized', use
-        `sklearn.utils.extmath.randomized_svd`, which may be faster
+        :func:`sklearn.utils.extmath.randomized_svd`, which may be faster
         for large matrices. If 'arpack', use
-        `sklearn.utils.arpack.svds`, which is more accurate, but
+        :func:`sklearn.utils.arpack.svds`, which is more accurate, but
         possibly slower in some cases.
 
     n_svd_vecs : int, optional, default: None
@@ -209,7 +209,7 @@ class SpectralCoclustering(BaseSpectral):
 
     init : {'k-means++', 'random' or an ndarray}
          Method for initialization of k-means algorithm; defaults to
-         'k-means++
+         'k-means++'.
 
     n_init : int, optional, default: 10
         Number of random initializations that are tried with the
@@ -335,6 +335,28 @@ class SpectralBiclustering(BaseSpectral):
         Whether to use mini-batch k-means, which is faster but may get
         different results.
 
+    init : {'k-means++', 'random' or an ndarray}
+         Method for initialization of k-means algorithm; defaults to
+         'k-means++'.
+
+    n_init : int, optional, default: 10
+        Number of random initializations that are tried with the
+        k-means algorithm.
+
+        If mini-batch k-means is used, the best initialization is
+        chosen and the algorithm runs once. Otherwise, the algorithm
+        is run for each initialization and the best solution chosen.
+
+    n_jobs : int, optional, default: 1
+        The number of jobs to use for the computation. This works by breaking
+        down the pairwise matrix into n_jobs even slices and computing them in
+        parallel.
+
+        If -1 all CPUs are used. If 1 is given, no parallel computing code is
+        used at all, which is useful for debuging. For n_jobs below -1,
+        (n_cpus + 1 + n_jobs) are used. Thus for n_jobs = -2, all CPUs but one
+        are used.
+
     random_state : int seed, RandomState instance, or None (default)
         A pseudo random number generator used by the K-Means
         initialization.
@@ -353,7 +375,6 @@ class SpectralBiclustering(BaseSpectral):
 
     `column_labels_` : array-like, shape (n_cols,)
         Column partition labels.
-
 
     References
     ----------
