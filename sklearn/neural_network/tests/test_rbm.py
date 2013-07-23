@@ -5,6 +5,7 @@ from numpy.testing import assert_almost_equal, assert_array_equal
 from sklearn.base import clone
 from sklearn.datasets import load_digits
 from sklearn.neural_network import BernoulliRBM
+from sklearn.utils.validation import assert_all_finite
 
 np.seterr(all='warn')
 
@@ -80,15 +81,12 @@ def test_fit_gibbs():
     assert_almost_equal(rbm1.gibbs(X), X)
 
 
-def test_gibbs():
+def test_gibbs_smoke():
+    """ just seek if we don't get NaNs sampling the full digits dataset """
     rng = np.random.RandomState(42)
-    X = Xdigits[:100]
-    rbm1 = BernoulliRBM(n_components=2, batch_size=5,
-                        n_iter=5, random_state=rng)
+    X = Xdigits
+    rbm1 = BernoulliRBM(n_components=42, batch_size=10,
+                        n_iter=20, random_state=rng)
     rbm1.fit(X)
-
-    Xt1 = np.mean([rbm1.gibbs(X[0]) for i in range(200)], 0)
-    Xt2 = np.mean([rbm1._sample_visibles(rbm1._sample_hiddens(X[0], rng), rng)
-                   for i in range(1000)], 0)
-
-    assert_almost_equal(Xt1, Xt2, decimal=1)
+    X_sampled = rbm1.gibbs(X)
+    assert_all_finite(X_sampled)
