@@ -12,6 +12,7 @@ from .k_means_ import k_means, KMeans, MiniBatchKMeans
 from .dbscan_ import dbscan, DBSCAN
 from ..utils import deprecated
 
+
 # backward compatibility
 @deprecated("to be removed in 0.15;"
             " use sklearn.manifold.spectral_embedding instead")
@@ -37,5 +38,4 @@ __all__ = ['AffinityPropagation',
            'mean_shift',
            'spectral_clustering',
            'spectral_embedding',
-           'ward_tree',
-       ]
+           'ward_tree']
