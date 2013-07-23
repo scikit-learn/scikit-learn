@@ -4,8 +4,6 @@ classification and regression.
 """
 
 from .base import BaseEnsemble
-from .bagging import BaggingClassifier
-from .bagging import BaggingRegressor
 from .forest import RandomForestClassifier
 from .forest import RandomForestRegressor
 from .forest import RandomTreesEmbedding
@@ -23,7 +21,7 @@ from . import weight_boosting
 from . import gradient_boosting
 from . import partial_dependence
 
-__all__ = ["BaseEnsemble", "BaggingClassifier", "BaggingRegressor",
+__all__ = ["BaseEnsemble",
            "RandomForestClassifier", "RandomForestRegressor",
            "RandomTreesEmbedding", "ExtraTreesClassifier",
            "ExtraTreesRegressor", "RandomPatchesClassifier",

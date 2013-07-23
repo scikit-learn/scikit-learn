@@ -1,4 +1,4 @@
-"""RandomPatches meta-estimator."""
+"""Bagging meta-estimator."""
 
 # Author: Gilles Louppe <g.louppe@gmail.com>
 # License: BSD 3 clause
@@ -22,13 +22,13 @@ from ..utils.validation import check_arrays
 
 from .base import BaseEnsemble
 
-__all__ = ["RandomPatchesClassifier",
-           "RandomPatchesRegressor"]
+__all__ = ["BaggingClassifier",
+           "BaggingRegressor"]
 
 MAX_INT = np.iinfo(np.int32).max
 
 
-def _parallel_build_estimators(n_estimators, ensemble, X, y,
+def _parallel_build_estimators(n_estimators, bagging, X, y,
                                support_sample_weight, sample_weight, seeds,
                                verbose):
     """Private function used to build a batch of estimators within a job."""
@@ -42,7 +42,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y,
         random_state = check_random_state(seeds[i])
         seed = random_state.randint(MAX_INT)
 
-        estimator = ensemble._make_estimator(append=False)
+        estimator = bagging._make_estimator(append=False)
 
         try: # Not all estimator accept a random_state
             estimator.set_params(random_state=check_random_state(seed))
@@ -50,7 +50,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y,
             pass
 
         if support_sample_weight:
-            if ensemble.bootstrap:
+            if bagging.bootstrap:
                 indices = random_state.randint(0, n_samples, n_samples)
                 sample_counts = bincount(indices, minlength=n_samples)
 
@@ -68,7 +68,7 @@ def _parallel_build_estimators(n_estimators, ensemble, X, y,
                 estimator.fit(X, y, sample_weight=sample_weight)
 
         else:
-            if ensemble.bootstrap:
+            if bagging.bootstrap:
                 indices = random_state.randint(0, n_samples, n_samples)
                 sample_counts = bincount(indices, minlength=n_samples)
 
@@ -121,19 +121,19 @@ def _parallel_predict_regression(estimators, X):
     return sum(estimator.predict(X) for estimator in estimators)
 
 
-def _partition_estimators(ensemble):
+def _partition_estimators(bagging):
     """Private function used to partition estimators between jobs."""
     # Compute the number of jobs
-    if ensemble.n_jobs == -1:
-        n_jobs = min(cpu_count(), ensemble.n_estimators)
+    if bagging.n_jobs == -1:
+        n_jobs = min(cpu_count(), bagging.n_estimators)
 
     else:
-        n_jobs = min(ensemble.n_jobs, ensemble.n_estimators)
+        n_jobs = min(bagging.n_jobs, bagging.n_estimators)
 
     # Partition estimators between jobs
-    n_estimators = [ensemble.n_estimators // n_jobs] * n_jobs
+    n_estimators = [bagging.n_estimators // n_jobs] * n_jobs
 
-    for i in range(ensemble.n_estimators % n_jobs):
+    for i in range(bagging.n_estimators % n_jobs):
         n_estimators[i] += 1
 
     starts = [0] * (n_jobs + 1)
@@ -144,8 +144,8 @@ def _partition_estimators(ensemble):
     return n_jobs, n_estimators, starts
 
 
-class BaseRandomPatches(six.with_metaclass(ABCMeta, BaseEnsemble)):
-    """Base class for Random Patches meta-estimator.
+class BaseBagging(six.with_metaclass(ABCMeta, BaseEnsemble)):
+    """Base class for baggings of estimators.
 
     Warning: This class should not be used directly. Use derived classes
     instead.
@@ -160,7 +160,7 @@ class BaseRandomPatches(six.with_metaclass(ABCMeta, BaseEnsemble)):
                  n_jobs=1,
                  random_state=None,
                  verbose=0):
-        super(BaseRandomPatches, self).__init__(
+        super(BaseBagging, self).__init__(
             base_estimator=base_estimator,
             n_estimators=n_estimators)
 
@@ -176,8 +176,7 @@ class BaseRandomPatches(six.with_metaclass(ABCMeta, BaseEnsemble)):
         self.verbose = verbose
 
     def fit(self, X, y, sample_weight=None):
-        """Build a Random Patches ensemble of estimators from the training
-           set (X, y).
+        """Build a bagging of estimators from the training set (X, y).
 
         Parameters
         ----------
@@ -248,8 +247,8 @@ class BaseRandomPatches(six.with_metaclass(ABCMeta, BaseEnsemble)):
         return y
 
 
-class RandomPatchesClassifier(BaseRandomPatches, ClassifierMixin):
-    """RandomPatches Classifier."""
+class BaggingClassifier(BaseBagging, ClassifierMixin):
+    """Bagging Classifier."""
 
     def __init__(self,
                  base_estimator,
@@ -260,7 +259,7 @@ class RandomPatchesClassifier(BaseRandomPatches, ClassifierMixin):
                  random_state=None,
                  verbose=0):
 
-        super(RandomPatchesClassifier, self).__init__(
+        super(BaggingClassifier, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
             bootstrap=bootstrap,
@@ -314,7 +313,7 @@ class RandomPatchesClassifier(BaseRandomPatches, ClassifierMixin):
         """Predict class for X.
 
         The predicted class of an input sample is computed as the majority
-        prediction of the estimators in the ensemble.
+        prediction of the estimators in the bagging.
 
         Parameters
         ----------
@@ -356,7 +355,7 @@ class RandomPatchesClassifier(BaseRandomPatches, ClassifierMixin):
         """Predict class probabilities for X.
 
         The predicted class probabilities of an input sample is computed as
-        the mean predicted class probabilities of the estimators in the ensemble.
+        the mean predicted class probabilities of the estimators in the bagging.
 
         Parameters
         ----------
@@ -397,7 +396,7 @@ class RandomPatchesClassifier(BaseRandomPatches, ClassifierMixin):
         """Predict class log-probabilities for X.
 
         The predicted class log-probabilities of an input sample is computed as
-        the mean predicted class log-probabilities of the estimators in the ensemble.
+        the mean predicted class log-probabilities of the estimators in the bagging.
 
         Parameters
         ----------
@@ -413,8 +412,8 @@ class RandomPatchesClassifier(BaseRandomPatches, ClassifierMixin):
         return np.log(self.predict_proba(X))
 
 
-class RandomPatchesRegressor(BaseRandomPatches, RegressorMixin):
-    """RandomPatches Regressor."""
+class BaggingRegressor(BaseBagging, RegressorMixin):
+    """Bagging Regressor."""
 
     def __init__(self,
                  base_estimator,
@@ -424,7 +423,7 @@ class RandomPatchesRegressor(BaseRandomPatches, RegressorMixin):
                  n_jobs=1,
                  random_state=None,
                  verbose=0):
-        super(RandomPatchesRegressor, self).__init__(
+        super(BaggingRegressor, self).__init__(
             base_estimator,
             n_estimators=n_estimators,
             bootstrap=bootstrap,
@@ -437,7 +436,7 @@ class RandomPatchesRegressor(BaseRandomPatches, RegressorMixin):
         """Predict regression target for X.
 
         The predicted regression target of an input sample is computed as the
-        mean predicted regression targets of the estimators in the ensemble.
+        mean predicted regression targets of the estimators in the bagging.
 
         Parameters
         ----------
