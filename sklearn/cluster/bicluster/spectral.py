@@ -51,7 +51,7 @@ def _scale_normalize(X):
     return an, row_diag, col_diag
 
 
-def _bistochastic_normalize(X, maxiter=1000, tol=1e-5):
+def _bistochastic_normalize(X, max_iter=1000, tol=1e-5):
     """Normalize rows and columns of `X` simultaneously so that all
     rows sum to one constant and all columns sum to a different
     constant.
@@ -62,7 +62,7 @@ def _bistochastic_normalize(X, maxiter=1000, tol=1e-5):
     X = make_nonnegative(X)
     X_scaled = X
     dist = None
-    for _ in range(maxiter):
+    for _ in range(max_iter):
         X_new, _, _ = _scale_normalize(X_scaled)
         if issparse(X):
             dist = norm(X_scaled.data - X.data)
