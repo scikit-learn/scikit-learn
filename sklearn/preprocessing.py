@@ -537,7 +537,7 @@ def binarize(X, threshold=0.0, copy=True):
         un-necessary copy.
 
     threshold : float, optional (0.0 by default)
-        Feature values below this are replaced by 1, above it by 0.
+        Feature values below or equal to this are replaced by 0, above it by 1.
         Threshold may not be less than 0 for operations on sparse matrices.
 
     copy : boolean, optional, default is True
@@ -592,7 +592,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     threshold : float, optional (0.0 by default)
-        Feature values below this are replaced by 1, above it by 0.
+        Feature values below or equal to this are replaced by 0, above it by 1.
         Threshold may not be less than 0 for operations on sparse matrices.
 
     copy : boolean, optional, default is True
