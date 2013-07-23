@@ -312,7 +312,7 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
 
         The importance of a feature is computed as the (normalized) total
         reduction of the criterion brought by that feature.
-        It is also known as the Gini importance [4]_.
+        It is also known as the Gini importance.
 
         Returns
         -------

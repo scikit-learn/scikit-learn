@@ -462,7 +462,7 @@ class RidgeClassifier(LinearClassifierMixin, _BaseRidge):
 
     class_weight : dict, optional
         Weights associated with classes in the form
-        {class_label : weight}. If not given, all classes are
+        ``{class_label : weight}``. If not given, all classes are
         supposed to have weight one.
 
     copy_X : boolean, optional, default True
