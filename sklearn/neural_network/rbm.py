@@ -9,12 +9,13 @@ import warnings
 
 import numpy as np
 
-from ..base import BaseEstimator, TransformerMixin
-from ..utils import (array2d,
-                     check_random_state,
-                     as_float_array,
-                     gen_even_slices)
-from ..utils.extmath import safe_sparse_dot, logistic_sigmoid
+from ..base import BaseEstimator
+from ..base import TransformerMixin
+from ..utils import array2d, check_arrays
+from ..utils import check_random_state
+from ..utils import gen_even_slices
+from ..utils.extmath import safe_sparse_dot
+from ..utils.extmath import logistic_sigmoid
 
 
 class BernoulliRBM(BaseEstimator, TransformerMixin):
@@ -266,7 +267,6 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
             Approximations to the Likelihood Gradient. International Conference
             on Machine Learning (ICML) 2008
         """
-        v_pos = as_float_array(v_pos)
         h_pos = self._mean_hiddens(v_pos)
         v_neg = self._sample_visibles(self.h_samples_, rng)
         h_neg = self._mean_hiddens(v_neg)
@@ -276,8 +276,9 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         v_neg *= lr
         self.components_ += safe_sparse_dot(v_pos.T, h_pos).T
         self.components_ -= np.dot(v_neg.T, h_neg).T
-        self.intercept_hidden_ += lr * (h_pos.sum(0) - h_neg.sum(0))
-        self.intercept_visible_ += (v_pos.sum(0) - v_neg.sum(0))
+        self.intercept_hidden_ += lr * (h_pos.sum(axis=0) - h_neg.sum(axis=0))
+        self.intercept_visible_ += (np.asarray(v_pos.sum(axis=0)).squeeze() -
+                                    v_neg.sum(axis=0))
 
         self.h_samples_ = self._sample_binomial(h_neg, rng)
 
@@ -322,7 +323,8 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self:
             The fitted model
         """
-        X = array2d(X)
+        #X = array2d(X)
+        X, = check_arrays(X, sparse_format='csc', dtype=np.float)
         n_samples = X.shape[0]
         dtype = np.float32 if X.dtype.itemsize == 4 else np.float64
         rng = check_random_state(self.random_state)
