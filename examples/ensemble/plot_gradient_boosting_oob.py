@@ -20,7 +20,7 @@ print(__doc__)
 # License: BSD 3 clause
 
 import numpy as np
-import pylab as plt
+import pylab as pl
 
 from sklearn import ensemble
 from sklearn.cross_validation import KFold
@@ -80,7 +80,7 @@ test_score = heldout_score(clf, X_test, y_test)
 cv_score = cv_estimate(3)
 
 
-#plt.plot(x, -np.cumsum(clf.oob_score_))
+#pl.plot(x, -np.cumsum(clf.oob_score_))
 cumsum = -np.cumsum(clf.oob_improvement_)
 oob_best_iter = x[np.argmin(cumsum)]
 test_score -= test_score[0]
@@ -92,14 +92,14 @@ oob_color = map(lambda x: x / 256.0, (190, 174, 212))
 test_color = map(lambda x: x / 256.0, (127, 201, 127))
 cv_color = map(lambda x: x / 256.0, (253, 192, 134))
 
-plt.plot(x, cumsum, label='OOB loss', color=oob_color)
-plt.plot(x, test_score, label='Test loss', color=test_color)
-plt.plot(x, cv_score, label='CV loss', color=cv_color)
-plt.axvline(x=oob_best_iter, color=oob_color)
-plt.axvline(x=test_best_iter, color=test_color)
-plt.axvline(x=cv_best_iter, color=cv_color)
+pl.plot(x, cumsum, label='OOB loss', color=oob_color)
+pl.plot(x, test_score, label='Test loss', color=test_color)
+pl.plot(x, cv_score, label='CV loss', color=cv_color)
+pl.axvline(x=oob_best_iter, color=oob_color)
+pl.axvline(x=test_best_iter, color=test_color)
+pl.axvline(x=cv_best_iter, color=cv_color)
 
-plt.legend(loc='upper right')
-plt.ylabel('normalized loss')
+pl.legend(loc='upper right')
+pl.ylabel('normalized loss')
 
-plt.show()
+pl.show()
