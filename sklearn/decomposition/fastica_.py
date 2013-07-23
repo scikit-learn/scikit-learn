@@ -114,10 +114,13 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
 
 # Some standard non-linear functions.
 # XXX: these should be optimized, as they can be a bottleneck.
-def _logcosh(x, fun_args):
+
+def _logcosh(x, fun_args=None):
     alpha = fun_args.get('alpha', 1.0)  # comment it out?
     gx = np.tanh(alpha * x)
-    g_x = alpha * (1 - gx ** 2)
+    g_x = gx ** 2
+    g_x -= 1.
+    g_x *= -alpha
     return gx, g_x
 
 
@@ -224,7 +227,8 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     """
     random_state = check_random_state(random_state)
     # make interface compatible with other decompositions
-    X = array2d(X, copy=whiten).T  # a copy is required only for non whitened data
+    # a copy is required only for non whitened data
+    X = array2d(X, copy=whiten).T
 
     alpha = fun_args.get('alpha', 1.0)
     if not 1 <= alpha <= 2:
