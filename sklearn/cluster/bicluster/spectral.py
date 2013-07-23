@@ -187,7 +187,7 @@ class SpectralCoclustering(BaseSpectral):
 
     Parameters
     ----------
-    n_clusters : integer
+    n_clusters : integer, optional, default: 3
         The number of biclusters to find.
 
     svd_method : string, optional, default: 'randomized'
@@ -303,15 +303,18 @@ class SpectralBiclustering(BaseSpectral):
         The number of row and column clusters in the checkerboard
         structure.
 
-    method : string
+    method : string, optional, default: 'bistochastic'
         Method of normalizing and converting singular vectors into
         biclusters. May be one of 'scale', 'bistochastic', or 'log'.
-        CAUTION: if `method='log'`, the data must not be sparse.
+        The authors recommend using 'log'. If the data is sparse,
+        however, log normalization will not work, which is why the
+        default is 'bistochastic'. CAUTION: if `method='log'`, the
+        data must not be sparse.
 
-    n_components : integer
+    n_components : integer, optional, default: 6
         Number of singular vectors to check.
 
-    n_best : integer
+    n_best : integer, optional, default: 3
         Number of best singular vectors to which to project the data
         for clustering.
 
