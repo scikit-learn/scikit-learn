@@ -5,7 +5,6 @@
 # License: BSD Style.
 
 import time
-import warnings
 
 import numpy as np
 
@@ -107,7 +106,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         h: array, shape (n_samples, n_components)
             Latent representations of the data
         """
-        X = array2d(X)
+        X, = check_arrays(X, sparse_format='csc', dtype=np.float)
         return self._mean_hiddens(X)
 
     def _mean_hiddens(self, v):
@@ -235,14 +234,15 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         v_neg = self._sample_visibles(self.h_samples_, rng)
         h_neg = self._mean_hiddens(v_neg)
 
-        lr = self.learning_rate / self.batch_size
-        v_pos *= lr
-        v_neg *= lr
-        self.components_ += safe_sparse_dot(v_pos.T, h_pos).T
-        self.components_ -= np.dot(v_neg.T, h_neg).T
+        lr = float(self.learning_rate) / v_pos.shape[0]
+        #v_pos *= lr
+        #v_neg *= lr
+        self.components_ += lr * safe_sparse_dot(v_pos.T, h_pos).T
+        self.components_ -= lr * np.dot(v_neg.T, h_neg).T
         self.intercept_hidden_ += lr * (h_pos.sum(axis=0) - h_neg.sum(axis=0))
-        self.intercept_visible_ += (np.asarray(v_pos.sum(axis=0)).squeeze() -
-                                    v_neg.sum(axis=0))
+        self.intercept_visible_ += lr * (np.asarray(
+                                         v_pos.sum(axis=0)).squeeze() -
+                                         v_neg.sum(axis=0))
 
         h_neg[rng.uniform(size=h_neg.shape) < h_neg] = 1.0  # sample binomial
         self.h_samples_ = np.floor(h_neg, out=h_neg)
@@ -288,7 +288,6 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self:
             The fitted model
         """
-        #X = array2d(X)
         X, = check_arrays(X, sparse_format='csc', dtype=np.float)
         n_samples = X.shape[0]
         dtype = np.float32 if X.dtype.itemsize == 4 else np.float64
@@ -303,10 +302,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self.h_samples_ = np.zeros((self.batch_size, self.n_components),
                                    dtype=dtype)
 
-        n_batches = n_samples / self.batch_size
-        if n_samples % self.batch_size != 0:
-            warnings.warn("Discarding some samples: \
-                sample size not divisible by chunk size.")
+        n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         batch_slices = list(gen_even_slices(n_batches * self.batch_size,
                                             n_batches))
         verbose = self.verbose
