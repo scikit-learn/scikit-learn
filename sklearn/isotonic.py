@@ -12,7 +12,7 @@ import warnings
 
 
 def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
-                        weight=None):
+                        weight=None, increasing=True):
     """Solve the isotonic regression model::
 
         min sum w[i] (y[i] - y_[i]) ** 2
@@ -39,6 +39,10 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
     y_max : optional, default: None
         If not None, set the highest value of the fit to y_max.
 
+    increasing : boolean, optional, default: True
+        Whether to compute y_ is increasing (if set to True) or decreasing (if
+        set to False)
+
     Returns
     -------
     `y_` : list of floating-point values
@@ -60,6 +64,9 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
         sample_weight = np.ones(len(y), dtype=y.dtype)
     else:
         sample_weight = np.asarray(sample_weight, dtype=np.float)
+    if not increasing:
+        y = y[::-1]
+        sample_weight = sample_weight[::-1]
     if y_min is not None or y_max is not None:
         y = np.copy(y)
         sample_weight = np.copy(sample_weight)
@@ -73,7 +80,11 @@ def isotonic_regression(y, sample_weight=None, y_min=None, y_max=None,
             sample_weight[-1] = C
 
     solution = np.empty(len(y))
-    return _isotonic_regression(y, sample_weight, solution)
+    y_ = _isotonic_regression(y, sample_weight, solution)
+    if increasing:
+        return y_
+    else:
+        return y_[::-1]
 
 
 class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
@@ -116,9 +127,10 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
     Mathematics of Operations Research
     Vol. 14, No. 2 (May, 1989), pp. 303-308
     """
-    def __init__(self, y_min=None, y_max=None):
+    def __init__(self, y_min=None, y_max=None, increasing=True):
         self.y_min = y_min
         self.y_max = y_max
+        self.increasing = increasing
 
     def _check_fit_data(self, X, y, sample_weight=None):
         if len(X.shape) != 1:
@@ -162,7 +174,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         order = np.argsort(X)
         self.X_ = as_float_array(X[order], copy=False)
         self.y_ = isotonic_regression(y[order], sample_weight, self.y_min,
-                                      self.y_max)
+                                      self.y_max, increasing=self.increasing)
         return self
 
     def transform(self, T):
@@ -226,7 +238,7 @@ class IsotonicRegression(BaseEstimator, TransformerMixin, RegressorMixin):
         order_inv = np.argsort(order)
         self.X_ = as_float_array(X[order], copy=False)
         self.y_ = isotonic_regression(y[order], sample_weight, self.y_min,
-                                      self.y_max)
+                                      self.y_max, increasing=self.increasing)
         return self.y_[order_inv]
 
     def predict(self, T):
