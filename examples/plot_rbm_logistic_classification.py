@@ -101,6 +101,7 @@ classifier = Pipeline(steps=[('rbm', rbm), ('logistic', logistic)])
 # save time.
 rbm.learning_rate = 0.06
 rbm.n_iter = 20
+rbm.set_params(verbose=True)
 # More components tend to give better prediction performance, but larger
 # fitting time
 rbm.n_components = 100
