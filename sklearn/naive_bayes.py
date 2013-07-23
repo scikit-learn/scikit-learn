@@ -157,9 +157,6 @@ class GaussianNB(BaseNB):
 
         n_samples, n_features = X.shape
 
-        if n_samples != y.shape[0]:
-            raise ValueError("X and y have incompatible shapes")
-
         self.classes_ = unique_y = np.unique(y)
         n_classes = unique_y.shape[0]
 
