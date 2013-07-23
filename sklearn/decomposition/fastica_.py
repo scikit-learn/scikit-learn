@@ -342,7 +342,7 @@ class FastICA(BaseEstimator, TransformerMixin):
     `components_` : 2D array, [n_components, n_features]
         The unmixing matrix
     `mixing_` : array, shape = [n_features, n_components]
-        Mixing matrix. Only available when fit_inverse_transform is true.
+        Mixing matrix.
     `sources_` : 2D array, [n_samples, n_components]
         The estimated latent sources of the data.
 
@@ -438,8 +438,7 @@ class FastICA(BaseEstimator, TransformerMixin):
 
         return np.dot(X, self.components_.T)
 
-    @deprecated('To be removed in 0.16. Set fit_inverse_transform=True'
-                ' and inspect the mixing_ attribute.')
+    @deprecated('To be removed in 0.16. Use the mixing_ attribute.')
     def get_mixing_matrix(self):
         """Compute the mixing matrix.
 
