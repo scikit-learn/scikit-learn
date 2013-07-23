@@ -22,6 +22,8 @@ def configuration(parent_package='', top_path=None):
     config.add_subpackage('feature_extraction/tests')
     config.add_subpackage('cluster')
     config.add_subpackage('cluster/tests')
+    config.add_subpackage('cluster/bicluster')
+    config.add_subpackage('cluster/bicluster/tests')
     config.add_subpackage('covariance')
     config.add_subpackage('covariance/tests')
     config.add_subpackage('decomposition')
