@@ -37,6 +37,7 @@ print __doc__
 import numpy as np
 import pylab as pl
 
+from scipy.ndimage import convolve
 from sklearn import linear_model, datasets, metrics
 from sklearn.cross_validation import train_test_split
 from sklearn.neural_network import BernoulliRBM
@@ -51,30 +52,29 @@ def nudge_dataset(X, Y):
     This produces a dataset 5 times bigger than the original one,
     by moving the 8x8 images in X around by 1px to left, right, down, up
     """
-    def nudge(X,  direction=(1, 0)):
-        """
-        Moves an images around by direction vector
-        """
-        assert(direction in [(0, -1), (0, 1), (1, 0), (-1, 0)])
-        X_nudged = np.zeros(X.shape)
-        for i in xrange(8):
-            if direction[0] == -1:   # left
-                X_nudged[:, i * 8:(i + 1) * 8 - 1] = X[:,
-                                                       i * 8 + 1:(i + 1) * 8]
-            elif direction[0] == 1:  # right
-                X_nudged[:, i * 8 + 1:(i + 1) * 8] = X[:,
-                                                       i * 8:(i + 1) * 8 - 1]
-        for j in xrange(7):
-            if direction[1] == -1:   # down
-                X_nudged[:, (j + 1) * 8:(j + 2) * 8] = X[:, j * 8:(j + 1) * 8]
-            elif direction[1] == 1:  # up
-                X_nudged[:, j * 8:(j + 1) * 8] = X[:, (j + 1) * 8:(j + 2) * 8]
-        return X_nudged
+    direction_vectors = [
+        [[0, 1, 0],
+         [0, 0, 0],
+         [0, 0, 0]],
 
-    X = np.concatenate([X] + [nudge(X, direction=(0, 1)),
-                       nudge(X, direction=(0, -1)), nudge(X, direction=(1, 0)),
-                       nudge(X, direction=(-1, 0))], axis=0)
-    Y = np.concatenate([Y for i in xrange(5)], axis=0)
+        [[0, 0, 0],
+         [1, 0, 0],
+         [0, 0, 0]],
+
+        [[0, 0, 0],
+         [0, 0, 1],
+         [0, 0, 0]],
+
+        [[0, 0, 0],
+         [0, 0, 0],
+         [0, 1, 0]]]
+
+    shift = lambda x, w: convolve(x.reshape((8, 8)), mode='constant',
+                                  weights=w).ravel()
+    X = np.concatenate([X] +
+                       [np.apply_along_axis(shift, 1, X, vector)
+                        for vector in direction_vectors])
+    Y = np.concatenate([Y for _ in xrange(5)], axis=0)
     return X, Y
 
 # Load Data
@@ -89,7 +89,7 @@ X_train, X_test, Y_train, Y_test = train_test_split(X, Y,
 
 # Models we will use
 logistic = linear_model.LogisticRegression()
-rbm = BernoulliRBM(random_state=0)
+rbm = BernoulliRBM(random_state=0, verbose=True)
 
 classifier = Pipeline(steps=[('rbm', rbm), ('logistic', logistic)])
 
@@ -101,7 +101,6 @@ classifier = Pipeline(steps=[('rbm', rbm), ('logistic', logistic)])
 # save time.
 rbm.learning_rate = 0.06
 rbm.n_iter = 20
-rbm.set_params(verbose=True)
 # More components tend to give better prediction performance, but larger
 # fitting time
 rbm.n_components = 100
