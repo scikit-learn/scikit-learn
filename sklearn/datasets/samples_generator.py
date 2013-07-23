@@ -1348,10 +1348,10 @@ def make_biclusters(shape, n_clusters, noise=0.0, minval=10,
     X : array of shape `shape`
         The generated array.
 
-    rows_ : array of shape (n_clusters, X.shape[0],)
+    rows : array of shape (n_clusters, X.shape[0],)
         The indicators for cluster membership of each row.
 
-    cols_ : array of shape (n_clusters, X.shape[1],)
+    cols : array of shape (n_clusters, X.shape[1],)
         The indicators for cluster membership of each column.
 
     References
@@ -1435,10 +1435,10 @@ def make_checkerboard(shape, n_clusters, noise=0.0, minval=10,
     X : array of shape `shape`
         The generated array.
 
-    rows_ : array of shape (n_clusters, X.shape[0],)
+    rows : array of shape (n_clusters, X.shape[0],)
         The indicators for cluster membership of each row.
 
-    cols_ : array of shape (n_clusters, X.shape[1],)
+    cols : array of shape (n_clusters, X.shape[1],)
         The indicators for cluster membership of each column.
 
 
