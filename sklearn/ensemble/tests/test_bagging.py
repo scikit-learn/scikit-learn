@@ -18,33 +18,54 @@ from sklearn.dummy import DummyClassifier, DummyRegressor
 from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import BaggingClassifier, BaggingRegressor
 from sklearn.linear_model import SGDClassifier, Perceptron
-from sklearn.neighbors import KNeighborsClassifier
+from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.svm import SVC, SVR
 
 from sklearn.cross_validation import train_test_split
-from sklearn.datasets import make_classification, make_circles
+from sklearn.datasets import make_circles, load_boston
+from sklearn.utils import check_random_state
+
+rng = check_random_state(0)
 
 
+def test_classification():
+    """Check classification."""
+    X, y = make_circles(n_samples=100, noise=0.1, random_state=rng)
+    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=rng)
 
-def test_toy():
-    """Check classification on iris."""
-    # Test with a classifier without predict_proba
-    X, y = make_circles(n_samples=500, noise=0.1)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, random_state=0)
-
-    for base_estimator_class in [DummyClassifier, Perceptron, DecisionTreeClassifier, KNeighborsClassifier]:
+    for base_estimator_class in [DummyClassifier,
+                                 Perceptron,
+                                 DecisionTreeClassifier,
+                                 KNeighborsClassifier,
+                                 SVC]:
         base_estimator = base_estimator_class()
         base_estimator.fit(X_train, y_train)
 
-        bagging = BaggingClassifier(base_estimator=base_estimator_class(), n_estimators=500, oob_score=True, random_state=0)
+        bagging = BaggingClassifier(base_estimator=base_estimator_class(), n_estimators=20, random_state=rng)
         bagging.fit(X_train, y_train)
 
         score_base = base_estimator.score(X_test, y_test)
         score_bagging = bagging.score(X_test, y_test)
 
-        print base_estimator_class, score_base, score_bagging, score_base <= score_bagging
 
+def test_regression():
+    """Check regression."""
+    boston = load_boston()
+    X_train, X_test, y_train, y_test = train_test_split(boston.data, boston.target, random_state=rng)
+
+    for base_estimator_class in [DummyRegressor,
+                                 DecisionTreeRegressor,
+                                 KNeighborsRegressor,
+                                 SVR]:
+        base_estimator = base_estimator_class()
+        base_estimator.fit(X_train, y_train)
+
+        bagging = BaggingRegressor(base_estimator=base_estimator_class(), n_estimators=20, random_state=rng)
+        bagging.fit(X_train, y_train)
+
+        score_base = base_estimator.score(X_test, y_test)
+        score_bagging = bagging.score(X_test, y_test)
 
 
 if __name__ == "__main__":
