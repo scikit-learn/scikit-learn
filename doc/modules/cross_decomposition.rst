@@ -1,4 +1,4 @@
-.. _pls:
+.. _cross_decomposition:
 
 ======================
 Cross decomposition
