@@ -330,14 +330,14 @@ def _check_partial_fit_classes_consistency(clf, classes=None):
 
     elif classes is not None:
         if getattr(clf, 'classes_', None) is not None:
-            if not np.all(clf.classes_ == np.unique(classes)):
+            if not np.all(clf.classes_ == unique_labels(classes)):
                 raise ValueError(
                     "`classes=%r` is not the same as on last call "
                     "to partial_fit, was: %r" % (classes, clf.classes_))
 
         else:
             # This is the first call to partial_fit
-            clf.classes_ = np.unique(classes)
+            clf.classes_ = unique_labels(classes)
             return True
 
     # classes is None and clf.classes_ has already previously been set:
