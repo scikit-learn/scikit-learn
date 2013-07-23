@@ -495,6 +495,7 @@ def logistic_sigmoid(X, log=False, out=None):
     See the blog post describing this implementation:
     http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
     """
+    is_1d = X.ndim == 1
     X = array2d(X, dtype=np.float)
 
     n_samples, n_features = X.shape
@@ -507,4 +508,6 @@ def logistic_sigmoid(X, log=False, out=None):
     else:
         _logistic_sigmoid(n_samples, n_features, X, out)
 
-    return np.squeeze(out)
+    if is_1d:
+        return np.squeeze(out)
+    return out
