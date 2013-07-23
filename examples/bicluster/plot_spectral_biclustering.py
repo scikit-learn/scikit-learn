@@ -21,7 +21,7 @@ print(__doc__)
 # License: BSD 3 clause
 
 import numpy as np
-import pylab as pl
+from matplotlib import pyplot as plt
 
 from sklearn.datasets import make_checkerboard
 from sklearn.datasets import samples_generator as sg
@@ -33,12 +33,12 @@ data, rows, columns = make_checkerboard(
     shape=(300, 300), n_clusters=n_clusters, noise=10,
     shuffle=False, random_state=0)
 
-pl.matshow(data, cmap=pl.cm.Blues)
-pl.title("Original dataset")
+plt.matshow(data, cmap=plt.cm.Blues)
+plt.title("Original dataset")
 
 data, row_idx, col_idx = sg._shuffle(data, random_state=0)
-pl.matshow(data, cmap=pl.cm.Blues)
-pl.title("Shuffled dataset")
+plt.matshow(data, cmap=plt.cm.Blues)
+plt.title("Shuffled dataset")
 
 model = SpectralBiclustering(n_clusters=n_clusters, method='log',
                              random_state=0)
@@ -51,12 +51,12 @@ print "consensus score: {:.1f}".format(score)
 fit_data = data[np.argsort(model.row_labels_)]
 fit_data = fit_data[:, np.argsort(model.column_labels_)]
 
-pl.matshow(fit_data, cmap=pl.cm.Blues)
-pl.title("After biclustering; rearranged to show biclusters")
+plt.matshow(fit_data, cmap=plt.cm.Blues)
+plt.title("After biclustering; rearranged to show biclusters")
 
-pl.matshow(np.outer(np.sort(model.row_labels_) + 1,
-                    np.sort(model.column_labels_) + 1),
-           cmap=pl.cm.Blues)
-pl.title("Checkerboard structure of rearranged data")
+plt.matshow(np.outer(np.sort(model.row_labels_) + 1,
+                     np.sort(model.column_labels_) + 1),
+            cmap=plt.cm.Blues)
+plt.title("Checkerboard structure of rearranged data")
 
-pl.show()
+plt.show()
