@@ -30,8 +30,6 @@ from .fast_dict import IntFloatDict, average_merge, max_merge,\
 ###############################################################################
 # For non fully-connected graphs
 
-# XXX: fishy stuff with COO/LIL
-
 def _fix_connectivity(X, connectivity, n_components=None):
     """
     Warning: modifies connectivity in place
@@ -472,10 +470,10 @@ def _hc_cut(n_clusters, children, n_leaves):
 
 ###############################################################################
 
-class HierarchicalLinkage(BaseEstimator, ClusterMixin):
+class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
                  connectivity=None, copy=True, n_components=None,
-                 compute_full_tree='auto', linkage='complete'):
+                 compute_full_tree='auto', linkage='ward'):
         self.n_clusters = n_clusters
         self.memory = memory
         self.copy = copy
@@ -550,7 +548,7 @@ class HierarchicalLinkage(BaseEstimator, ClusterMixin):
         return self
 
 
-class LinkageAgglomeration(HierarchicalLinkage, AgglomerationTransform):
+class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
     def fit(self, X, y=None, **params):
         """Fit the hierarchical clustering on the data
 
@@ -563,13 +561,13 @@ class LinkageAgglomeration(HierarchicalLinkage, AgglomerationTransform):
         -------
         self
         """
-        return HierarchicalLinkage.fit(self, X.T, **params)
+        return AgglomerativeClustering.fit(self, X.T, **params)
 
 
 ###############################################################################
 # Backward compatibility: class for Ward hierarchical clustering
 
-class Ward(HierarchicalLinkage):
+class Ward(AgglomerativeClustering):
     """Ward hierarchical clustering: constructs a tree and cuts it.
 
     Parameters

@@ -1,5 +1,5 @@
 """
-Hierarchical clustering with and without structure
+Agglomerative clustering with and without structure
 ===================================================
 
 * Demonstrates the percolation effect
@@ -11,7 +11,7 @@ import time
 import pylab as pl
 import numpy as np
 
-from sklearn.cluster.hierarchical import HierarchicalLinkage
+from sklearn.cluster import AgglomerativeClustering 
 from sklearn.neighbors import kneighbors_graph
 
 # Generate sample data
@@ -36,7 +36,7 @@ for n_clusters in (30, 4):
     for connectivity in (None, knn_graph):
         for index, linkage in enumerate(('average', 'complete', 'ward')):
             pl.subplot(2, 3, (connectivity is None) * 3 + index + 1)
-            model = HierarchicalLinkage(linkage=linkage,
+            model = AgglomerativeClustering(linkage=linkage,
                                         connectivity=connectivity,
                                         n_clusters=n_clusters)
             t0 = time.time()
