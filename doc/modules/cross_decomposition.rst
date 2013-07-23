@@ -10,7 +10,7 @@ The cross decomposition module contains two main families of algorithms: the
 partial least squares (PLS) and the canonical correlation analysis (CCA).
 
 These families of algorithms are useful to find linear relations between two
-multivariate datasets: in PLS the `X` and `Y` arguments of the `fit` method
+multivariate datasets: the `X` and `Y` arguments of the `fit` method
 are 2D arrays.
 
 .. figure:: ../auto_examples/images/plot_pls_1.png

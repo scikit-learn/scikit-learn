@@ -4,8 +4,9 @@ __all__ = ['CCA']
 
 
 class CCA(_CCA):
-    """CCA Canonical Correlation Analysis. CCA inherits from PLS with
-    mode="B" and deflation_mode="canonical".
+    """CCA Canonical Correlation Analysis.
+
+    CCA inherits from PLS with mode="B" and deflation_mode="canonical".
 
     Parameters
     ----------
@@ -75,7 +76,7 @@ class CCA(_CCA):
 
     Examples
     --------
-    >>> from sklearn.cca import CCA
+    >>> from sklearn.cross_decomposition import CCA
     >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [3.,5.,4.]]
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> cca = CCA(n_components=1)

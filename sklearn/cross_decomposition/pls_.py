@@ -517,7 +517,7 @@ class PLSRegression(_PLS):
 
     Examples
     --------
-    >>> from sklearn.pls import PLSCanonical, PLSRegression
+    >>> from sklearn.cross_decomposition import PLSCanonical, PLSRegression
     >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> pls2 = PLSRegression(n_components=2)
@@ -635,7 +635,7 @@ class PLSCanonical(_PLS):
 
     Examples
     --------
-    >>> from sklearn.pls import PLSCanonical, PLSRegression
+    >>> from sklearn.cross_decomposition import PLSCanonical, PLSRegression
     >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [2.,5.,4.]]
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> plsca = PLSCanonical(n_components=2)
@@ -743,7 +743,7 @@ class _CCA(_PLS):
 
     Examples
     --------
-    >>> from sklearn.cca import CCA
+    >>> from sklearn.cross_decomposition import CCA
     >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [3.,5.,4.]]
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> cca = CCA(n_components=1)
@@ -849,7 +849,7 @@ class CCA(_CCA):
 
     Examples
     --------
-    >>> from sklearn.cca import CCA
+    >>> from sklearn.cross_decomposition import CCA
     >>> X = [[0., 0., 1.], [1.,0.,0.], [2.,2.,2.], [3.,5.,4.]]
     >>> Y = [[0.1, -0.2], [0.9, 1.1], [6.2, 5.9], [11.9, 12.3]]
     >>> cca = CCA(n_components=1)
