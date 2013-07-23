@@ -23,12 +23,34 @@ from ..utils.sparsetools import connected_components
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
-from .fast_dict import IntFloatDict, average_merge, min_merge, max_merge,\
-        WeightedEdge, argmin
+from .fast_dict import IntFloatDict, average_merge, max_merge,\
+        WeightedEdge
 
 
 ###############################################################################
-# Ward's algorithm
+# For non fully-connected graphs
+
+def _fix_connectivity(X, connectivity, n_components, labels):
+    """
+    Warning: modifies connectivity in place
+    """
+    for i in range(n_components):
+        idx_i = np.where(labels == i)[0]
+        Xi = X[idx_i]
+        for j in range(i):
+            idx_j = np.where(labels == j)[0]
+            Xj = X[idx_j]
+            D = euclidean_distances(Xi, Xj)
+            ii, jj = np.where(D == np.min(D))
+            ii = ii[0]
+            jj = jj[0]
+            connectivity[idx_i[ii], idx_j[jj]] = True
+            connectivity[idx_j[jj], idx_i[ii]] = True
+    return connectivity
+
+
+###############################################################################
+# Hierarchical tree building functions
 
 def ward_tree(X, connectivity=None, n_components=None, copy=True,
               n_clusters=None):
@@ -206,11 +228,9 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
     return children, n_components, n_leaves, parent
 
 
-###############################################################################
-# Linkage algorithm
-
+# average and complete linkage
 def linkage_tree(X, connectivity=None, n_components=None, copy=True,
-              n_clusters=None, linkage='complete'):
+                 n_clusters=None, linkage='complete'):
     """Linkage agglomerative clustering based on a Feature matrix.
 
     The inertia matrix uses a Heapq-based representation.
@@ -341,7 +361,7 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
     A = np.empty(n_nodes, dtype=object)
     inertia = list()
 
-    # XXX: we probably don't need a LIL anymore, but a CSR would do
+    # We are storing the graph in a list of IntFloatDict
     for ind, (data, row)  in enumerate(zip(connectivity.data,
                                            connectivity.rows)):
         A[ind] = IntFloatDict(np.asarray(row, dtype=np.int32),
@@ -380,9 +400,6 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
         # update the structure matrix A and the inertia matrix
         # a clever 'min' operation between A[i] and A[j]
         coord_col = join_func(A[i], A[j], used_node, n_i, n_j)
-        if k % 100 == 0:
-            print 'Iteration % 3i out of %i, d %.3f' % (
-                        k, n_nodes, d)
         for l, d in coord_col:
             A[l].append(k, d)
             # Here we use the information from coord_col (containing the
@@ -398,193 +415,27 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
 
     return children, n_components, n_leaves, parent
 
-# XXX: which MST algorithm is this?? Kruskal, I believe
-# We don't need to give X + connectivity to an MST algorithm??
-# We need a way to compute distances on a graph, and its not
-# 'neigbhor_graph', as we already have the graph
-def min_span_tree(X, connectivity=None, n_components=None, copy=True,
-                  n_clusters=None):
-    """Single linkage agglomerative clustering based on a Feature matrix.
 
-    Parameters
-    ----------
-    X : array of shape (n_samples, n_features)
-        feature matrix  representing n_samples samples to be clustered
-
-    connectivity : sparse matrix.
-        connectivity matrix. Defines for each sample the neigbhoring samples
-        following a given structure of the data. The matrix is assumed to
-        be symmetric and only the upper triangular half is used.
-        Default is None, i.e, the Ward algorithm is unstructured.
-
-    n_components : int (optional)
-        Number of connected components. If None the number of connected
-        components is estimated from the connectivity matrix.
-
-    copy : bool (optional)
-        Make a copy of connectivity or work inplace. If connectivity
-        is not of LIL type there will be a copy in any case.
-
-    n_clusters : int (optional)
-        Stop early the construction of the tree at n_clusters. This is
-        useful to decrease computation time if the number of clusters is
-        not small compared to the number of samples. In this case, the
-        complete tree is not computed, thus the 'children' output is of
-        limited use, and the 'parents' output should rather be used.
-        This option is valid only when specifying a connectivity matrix.
-
-    Returns
-    -------
-    children : 2D array, shape (n_nodes, 2)
-        list of the children of each nodes.
-        Leaves of the tree have empty list of children.
-
-    n_components : sparse matrix.
-        The number of connected components in the graph.
-
-    n_leaves : int
-        The number of leaves in the tree
-
-    parents : 1D array, shape (n_nodes, ) or None
-        The parent of each node. Only returned when a connectivity matrix
-        is specified, elsewhere 'None' is returned.
-    """
-    X = np.asarray(X)
-    if X.ndim == 1:
-        X = np.reshape(X, (-1, 1))
-    n_samples, n_features = X.shape
-
-    if connectivity is None:
-        if n_clusters is not None:
-            warnings.warn('Early stopping is implemented only for '
-                             'structured clustering (i.e. with '
-                             'explicit connectivity.', stacklevel=2)
-        out = scipy_func(X)
-        children_ = out[:, :2].astype(np.int)
-        return children_, 1, n_samples, None
-
-    # Compute the number of nodes
-    if n_components is None:
-        n_components, labels = cs_graph_components(connectivity)
-
-    # We need a coo version of the connectivity to compute distances
-    if not sparse.isspmatrix(connectivity):
-        if copy:
-            connectivity = connectivity.copy()
-        # Put the diagonal to zero
-        connectivity.flat[::n_samples + 1] = 0
-        connectivity = sparse.coo_matrix(connectivity)
-    else:
-        connectivity = connectivity.tocoo(copy=copy)
-        # Put the diagonal to zero
-        diag_mask = (connectivity.row != connectivity.col)
-        connectivity.row = connectivity.row[diag_mask]
-        connectivity.col = connectivity.col[diag_mask]
-        connectivity.data = connectivity.data[diag_mask]
-        del diag_mask
-    distances = X[connectivity.row] - X[connectivity.col]
-    distances **= 2
-    connectivity.data = distances.sum(axis=-1)
-    del distances
-
-    connectivity = connectivity.tolil()
-
-    if n_components > 1:
-        warnings.warn("the number of connected components of the"
-                      " connectivity matrix is %d > 1. Completing it to avoid"
-                      " stopping the tree early."
-                      % n_components)
-        # XXX: should silence the SparseEfficiencyWarning
-        # XXX: should retrieve the fixed indices, to complete the
-        # distances matrix
-        connectivity = _fix_connectivity(X, connectivity,
-                                            n_components, labels)
-        n_components = 1
-
-    if n_clusters is None:
-        n_nodes = 2 * n_samples - n_components
-    else:
-        assert n_clusters <= n_samples
-        n_nodes = 2 * n_samples - n_clusters
-
-    if (connectivity.shape[0] != n_samples or
-        connectivity.shape[1] != n_samples):
-        raise ValueError('Wrong shape for connectivity matrix: %s '
-                         'when X is %s' % (connectivity.shape, X.shape))
-
-    # create inertia heap and connection matrix
-    A = np.empty(n_nodes, dtype=object)
-
-    # XXX: we probably don't need a LIL anymore, but a CSR would do
-    for ind, (data, row) in enumerate(zip(connectivity.data,
-                                          connectivity.rows)):
-        A[ind] = IntFloatDict(np.asarray(row, dtype=np.int32),
-                              np.asarray(data, dtype=np.float64))
-        # We keep only the upper triangular for the heap
-        # Generator expressions are faster than arrays on the following
-    del connectivity
-
-    # prepare the main fields
-    parent = np.arange(n_nodes, dtype=np.int)
-    used_node = np.ones(n_nodes, dtype=np.int32)
-    children = []
-
-    # Should this be a deque?
-    available_nodes = range(n_samples)
-
-    # recursive merge loop
-    for k in xrange(n_samples, n_nodes):
-        while True:
-            i = available_nodes.pop(0)
-            if used_node[i]:
-                break
-        j, value = argmin(A[i])
-        while not used_node[j]:
-            # XXX: would be faster to maintain a table of heads
-            print "Go up parents", j
-            j = parent[j]
-        parent[i] = parent[j] = k
-        available_nodes.append(k)
-        children.append((i, j))
-        used_node[i] = used_node[j] = False
-
-        # update the structure matrix A
-        coord_col = min_merge(A[i], A[j], used_node)
-        A[k] = coord_col
-        # Clear A[i] and A[j] to save memory
-        A[i] = A[j] = 0
-
-    # Separate leaves in children (empty lists up to now)
-    n_leaves = n_samples
-    children = np.array(children)  # return numpy array for efficient caching
-
-    return children, n_components, n_leaves, parent
+def _complete_linkage(*args, **kwargs):
+    kwargs['linkage'] = 'complete'
+    return linkage_tree(*args, **kwargs)
 
 
-###############################################################################
-# For non fully-connected graphs
+def _average_linkage(*args, **kwargs):
+    kwargs['linkage'] = 'average'
+    return linkage_tree(*args, **kwargs)
 
-def _fix_connectivity(X, connectivity, n_components, labels):
-    """
-    Warning: modifies connectivity in place
-    """
-    for i in range(n_components):
-        idx_i = np.where(labels == i)[0]
-        Xi = X[idx_i]
-        for j in range(i):
-            idx_j = np.where(labels == j)[0]
-            Xj = X[idx_j]
-            D = euclidean_distances(Xi, Xj)
-            ii, jj = np.where(D == np.min(D))
-            ii = ii[0]
-            jj = jj[0]
-            connectivity[idx_i[ii], idx_j[jj]] = True
-            connectivity[idx_j[jj], idx_i[ii]] = True
-    return connectivity
+
+# Matching names to tree-building strategies
+_TREE_BUILDERS = dict(
+    ward=ward_tree,
+    complete=_complete_linkage,
+    average=_average_linkage,
+    )
+
 
 ###############################################################################
 # Functions for cutting  hierarchical clustering tree
-
 
 def _hc_cut(n_clusters, children, n_leaves):
     """Function cutting the ward tree for a given number of clusters.
@@ -631,73 +482,18 @@ def _hc_cut(n_clusters, children, n_leaves):
 
 
 ###############################################################################
-# Class for Ward hierarchical clustering
 
-class Ward(BaseEstimator, ClusterMixin):
-    """Ward hierarchical clustering: constructs a tree and cuts it.
-
-    Recursively merges the pair of clusters that minimally increases
-    within-cluster variance.
-
-    Parameters
-    ----------
-    n_clusters : int, default=2
-        The number of clusters to find.
-
-    connectivity : sparse matrix (optional)
-        Connectivity matrix. Defines for each sample the neighboring
-        samples following a given structure of the data.
-        Default is None, i.e, the hierarchical clustering algorithm is
-        unstructured.
-
-    memory : Instance of joblib.Memory or string (optional)
-        Used to cache the output of the computation of the tree.
-        By default, no caching is done. If a string is given, it is the
-        path to the caching directory.
-
-    copy : bool, default=True
-        Copy the connectivity matrix or work in-place.
-
-    n_components : int (optional)
-        The number of connected components in the graph defined by the \
-        connectivity matrix. If not set, it is estimated.
-
-    compute_full_tree: bool or 'auto' (optional)
-        Stop early the construction of the tree at n_clusters. This is
-        useful to decrease computation time if the number of clusters is
-        not small compared to the number of samples. This option is
-        useful only when specifying a connectivity matrix. Note also that
-        when varying the number of cluster and using caching, it may
-        be advantageous to compute the full tree.
-
-
-    Attributes
-    ----------
-    `children_` : array-like, shape = [n_nodes, 2]
-        The children of each non-leaf node. Values less than `n_samples` refer
-        to leaves of the tree. A greater value `i` indicates a node with
-        children `children_[i - n_samples]`.
-
-    `labels_` : array [n_samples]
-        cluster labels for each point
-
-    `n_leaves_` : int
-        Number of leaves in the hierarchical tree.
-
-    `n_components_` : int
-        The estimated number of connected components in the graph.
-
-    """
-
+class HierarchicalLinkage(BaseEstimator, ClusterMixin):
     def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
                  connectivity=None, copy=True, n_components=None,
-                 compute_full_tree='auto'):
+                 compute_full_tree='auto', linkage='complete'):
         self.n_clusters = n_clusters
         self.memory = memory
         self.copy = copy
         self.n_components = n_components
         self.connectivity = connectivity
         self.compute_full_tree = compute_full_tree
+        self.linkage = linkage
 
     def fit(self, X):
         """Fit the hierarchical clustering on the data
@@ -711,6 +507,11 @@ class Ward(BaseEstimator, ClusterMixin):
         -------
         self
         """
+        if not self.linkage in _TREE_BUILDERS:
+            raise ValueError("Unknown linkage type %s."
+                    "Valid options are %s" % (self.linkage,
+                    _TREE_BUILDERS.keys()))
+        tree_builder = _TREE_BUILDERS[self.linkage]
         memory = self.memory
         X = array2d(X)
         if isinstance(memory, six.string_types):
@@ -740,10 +541,13 @@ class Ward(BaseEstimator, ClusterMixin):
             n_clusters = None
 
         # Construct the tree
-        self.children_, self.n_components_, self.n_leaves_, parents = \
-            memory.cache(ward_tree)(X, self.connectivity,
-                                    n_components=self.n_components,
-                                    copy=self.copy, n_clusters=n_clusters)
+
+        self.children_, self.n_components, self.n_leaves_, parents = \
+                memory.cache(tree_builder)(X, self.connectivity,
+                            n_components=self.n_components,
+                            copy=self.copy, n_clusters=n_clusters,
+                            )#linkage=self.linkage)
+
         # Cut the tree
         if compute_full_tree:
             self.labels_ = _hc_cut(self.n_clusters, self.children_,
@@ -757,14 +561,31 @@ class Ward(BaseEstimator, ClusterMixin):
         return self
 
 
-###############################################################################
-# Ward-based feature agglomeration
+class LinkageAgglomeration(HierarchicalLinkage, AgglomerationTransform):
+    def fit(self, X, y=None, **params):
+        """Fit the hierarchical clustering on the data
 
-class WardAgglomeration(AgglomerationTransform, Ward):
-    """Feature agglomeration based on Ward hierarchical clustering
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            The data
+
+        Returns
+        -------
+        self
+        """
+        return HierarchicalLinkage.fit(self, X.T, **params)
+
+
+###############################################################################
+# Backward compatibility: c:lass for Ward hierarchical clustering
+
+class Ward(HierarchicalLinkage):
+    """Ward hierarchical clustering: constructs a tree and cuts it.
 
     Parameters
     ----------
+<<<<<<< HEAD
     n_clusters : int, default=2
         The number of clusters.
 
@@ -772,6 +593,15 @@ class WardAgglomeration(AgglomerationTransform, Ward):
         connectivity matrix. Defines for each feature the neighboring
         features following a given structure of the data.
         Default is None, i.e, the hierarchical agglomeration algorithm is
+=======
+    n_clusters : int or ndarray
+        The number of clusters to find.
+
+    connectivity : sparse matrix.
+        Connectivity matrix. Defines for each sample the neigbhoring
+        samples following a given structure of the data.
+        Default is None, i.e, the hiearchical clustering algorithm is
+>>>>>>> MISC: refactor Ward and linkage in same object
         unstructured.
 
     memory : Instance of joblib.Memory or string (optional)
@@ -781,6 +611,74 @@ class WardAgglomeration(AgglomerationTransform, Ward):
 
     copy : bool, default=True
         Copy the connectivity matrix or work in-place.
+
+    n_components : int (optional)
+        The number of connected components in the graph defined by the \
+        connectivity matrix. If not set, it is estimated.
+
+    compute_full_tree: bool or 'auto' (optional)
+        Stop early the construction of the tree at n_clusters. This is
+        useful to decrease computation time if the number of clusters is
+        not small compared to the number of samples. This option is
+        useful only when specifying a connectivity matrix. Note also that
+        when varying the number of cluster and using caching, it may
+        be advantageous to compute the full tree.
+
+
+    Attributes
+    ----------
+    `children_` : array-like, shape = [n_nodes, 2]
+<<<<<<< HEAD
+        The children of each non-leaf node. Values less than `n_samples` refer
+        to leaves of the tree. A greater value `i` indicates a node with
+        children `children_[i - n_samples]`.
+=======
+        List of the children of each nodes.  Leaves of the tree do not appear.
+>>>>>>> MISC: refactor Ward and linkage in same object
+
+    `labels_` : array [n_features]
+        cluster labels for each feature
+
+    `n_leaves_` : int
+        Number of leaves in the hierarchical tree.
+
+    `n_components_` : int
+        The estimated number of connected components in the graph.
+    """
+    linkage = 'ward'
+
+    def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
+                 connectivity=None, copy=True, n_components=None,
+                 compute_full_tree='auto'):
+        self.n_clusters = n_clusters
+        self.memory = memory
+        self.copy = copy
+        self.n_components = n_components
+        self.connectivity = connectivity
+        self.compute_full_tree = compute_full_tree
+
+
+class WardAgglomeration(AgglomerationTransform, Ward):
+    """Feature agglomeration based on Ward hierarchical clustering
+
+    Parameters
+    ----------
+    n_clusters : int or ndarray
+        The number of clusters.
+
+    connectivity : sparse matrix
+        connectivity matrix. Defines for each feature the neigbhoring
+        features following a given structure of the data.
+        Default is None, i.e, the hiearchical agglomeration algorithm is
+        unstructured.
+
+    memory : Instance of joblib.Memory or string
+        Used to cache the output of the computation of the tree.
+        By default, no caching is done. If a string is given, it is the
+        path to the caching directory.
+
+    copy : bool
+        Copy the connectivity matrix or work inplace.
 
     n_components : int (optional)
         The number of connected components in the graph defined by the
@@ -798,18 +696,15 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     Attributes
     ----------
     `children_` : array-like, shape = [n_nodes, 2]
-        The children of each non-leaf node. Values less than `n_samples` refer
-        to leaves of the tree. A greater value `i` indicates a node with
-        children `children_[i - n_samples]`.
+        List of the children of each nodes.
+        Leaves of the tree do not appear.
 
-    `labels_` : array [n_features]
-        cluster labels for each feature
+    `labels_` : array [n_samples]
+        cluster labels for each point
 
     `n_leaves_` : int
-        Number of leaves in the hierarchical tree.
+        Number of leaves in the hiearchical tree.
 
-    `n_components_` : int
-        The estimated number of connected components in the graph.
     """
 
     def fit(self, X, y=None, **params):
@@ -825,92 +720,5 @@ class WardAgglomeration(AgglomerationTransform, Ward):
         self
         """
         return Ward.fit(self, X.T, **params)
-
-###############################################################################
-
-class Linkage(Ward):
-    def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
-                 connectivity=None, copy=True, n_components=None,
-                 compute_full_tree='auto', linkage='complete'):
-        self.n_clusters = n_clusters
-        self.memory = memory
-        self.copy = copy
-        self.n_components = n_components
-        self.connectivity = connectivity
-        self.compute_full_tree = compute_full_tree
-        self.linkage = linkage
-
-    def fit(self, X):
-        """Fit the hierarchical clustering on the data
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            The samples a.k.a. observations.
-
-        Returns
-        -------
-        self
-        """
-        memory = self.memory
-        if isinstance(memory, basestring):
-            memory = Memory(cachedir=memory)
-
-        if not self.connectivity is None:
-            if not sparse.issparse(self.connectivity):
-                raise TypeError("`connectivity` should be a sparse matrix or "
-                        "None, got: %r" % type(self.connectivity))
-
-            if (self.connectivity.shape[0] != X.shape[0] or
-                    self.connectivity.shape[1] != X.shape[0]):
-                raise ValueError("`connectivity` does not have shape "
-                        "(n_samples, n_samples)")
-
-        n_samples = len(X)
-        compute_full_tree = self.compute_full_tree
-        if self.connectivity is None:
-            compute_full_tree = True
-        if compute_full_tree == 'auto':
-            # Early stopping is likely to give a speed up only for
-            # a large number of clusters. The actual threshold
-            # implemented here is heuristic
-            compute_full_tree = self.n_clusters > max(100, .02 * n_samples)
-        n_clusters = self.n_clusters
-        if compute_full_tree:
-            n_clusters = None
-
-        # Construct the tree
-        self.children_, self.n_components, self.n_leaves_, parents = \
-                memory.cache(linkage_tree)(X, self.connectivity,
-                            n_components=self.n_components,
-                            copy=self.copy, n_clusters=n_clusters,
-                            linkage=self.linkage)
-        # Cut the tree
-        if compute_full_tree:
-            self.labels_ = _hc_cut(self.n_clusters, self.children_,
-                                   self.n_leaves_)
-        else:
-            labels = _hierarchical.hc_get_heads(parents, copy=False)
-            # copy to avoid holding a reference on the original array
-            labels = np.copy(labels[:n_samples])
-            # Reasign cluster numbers
-            self.labels_ = np.searchsorted(np.unique(labels), labels)
-        return self
-
-
-class LinkageAgglomeration(Linkage, AgglomerationTransform):
-    def fit(self, X, y=None, **params):
-        """Fit the hierarchical clustering on the data
-
-        Parameters
-        ----------
-        X : array-like, shape = [n_samples, n_features]
-            The data
-
-        Returns
-        -------
-        self
-        """
-        return Linkage.fit(self, X.T, **params)
 
 
