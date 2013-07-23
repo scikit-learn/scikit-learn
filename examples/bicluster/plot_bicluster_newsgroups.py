@@ -62,7 +62,7 @@ vectorizer = TfidfVectorizer(stop_words='english', min_df=5,
                              tokenizer=number_aware_tokenizer)
 cocluster = SpectralCoclustering(n_clusters=len(categories),
                                  svd_method='arpack', random_state=0)
-kmeans = MiniBatchKMeans(n_clusters=len(categories), batch_size=5000,
+kmeans = MiniBatchKMeans(n_clusters=len(categories), batch_size=20000,
                          random_state=0)
 
 print("Vectorizing...")
