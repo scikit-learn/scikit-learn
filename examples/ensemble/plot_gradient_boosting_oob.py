@@ -6,12 +6,14 @@ Gradient Boosting OOB estimates
 Out-of-bag estimates can be used to estimate the "optimal" number of
 boosting iterations. To compute OOB estimates the ``subsample``
 argument has to be smaller than 1.
-The argument ``oob_improvement_[i]`` holds the improvement in loss for the i-th
-iteration.
+The argument ``oob_improvement_[i]`` holds the improvement in loss on
+the out-of-bag samples for the i-th iteration.
 
 The generated plot shows the cumulative sum of the negative OOB improvements
 as a function of the boosting iteration. This function should track the
 loss on the test set.
+The plot also shows the performance of 3-fold cross validation which
+usually gives a better estimate but is computationally more demanding.
 """
 print(__doc__)
 
