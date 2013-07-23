@@ -22,7 +22,9 @@ from scipy.sparse import issparse
 import warnings
 
 from .base import BaseEstimator, ClassifierMixin
-from .preprocessing import binarize, LabelBinarizer
+from .preprocessing import binarize
+from .preprocessing import LabelBinarizer
+from .preprocessing import label_binarize
 from .utils import array2d, atleast2d_or_csr
 from .utils.extmath import safe_sparse_dot, logsumexp
 from .utils import check_arrays
@@ -254,21 +256,14 @@ class BaseDiscreteNB(BaseNB):
         _, n_features = X.shape
 
         if _check_partial_fit_classes_consistency(self, classes):
-            # This is the first call to partial_fit
-
-            # Build a label binarizer instance that will be reused for all the
-            # consecutive calls to partial_fit
-            self._labelbin = LabelBinarizer()
-            self._labelbin.classes_ = self.classes_
-            self._labelbin.multilabel_ = False  # Not supported by NB models
-
-            # Initialize various cumulative counters
+            # This is the first call to partial_fit:
+            # initialize various cumulative counters
             n_effective_classes = len(classes) if len(classes) > 1 else 2
             self.class_count_ = np.zeros(n_effective_classes, dtype=np.float64)
             self.feature_count_ = np.zeros((n_effective_classes, n_features),
                                            dtype=np.float64)
 
-        Y = self._labelbin.transform(y)
+        Y = label_binarize(y, classes=self.classes_)
         if Y.shape[1] == 1:
             Y = np.concatenate((1 - Y, Y), axis=1)
 

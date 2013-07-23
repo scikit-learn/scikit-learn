@@ -976,6 +976,7 @@ Pairwise metrics
 
    preprocessing.add_dummy_feature
    preprocessing.binarize
+   preprocessing.label_binarize
    preprocessing.normalize
    preprocessing.scale
 
