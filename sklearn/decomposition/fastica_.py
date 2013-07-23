@@ -118,6 +118,7 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
 def _logcosh(x, fun_args=None):
     alpha = fun_args.get('alpha', 1.0)  # comment it out?
     gx = np.tanh(alpha * x)
+    # then compute g_x = alpha * (1 - gx ** 2) avoiding extra allocation
     g_x = gx ** 2
     g_x -= 1.
     g_x *= -alpha
