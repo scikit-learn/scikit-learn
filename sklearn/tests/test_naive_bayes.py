@@ -240,6 +240,14 @@ def check_sample_weight_multiclass(cls):
     clf = cls().fit(X, y, sample_weight=sample_weight)
     assert_array_equal(clf.predict(X), [0, 1, 1, 2])
 
+    # Check wample weight using the partial_fit method
+    clf = cls()
+    clf.partial_fit(X[:2], y[:2], classes=[0, 1, 2],
+                    sample_weight=sample_weight[:2])
+    clf.partial_fit(X[2:3], y[2:3], sample_weight=sample_weight[2:3])
+    clf.partial_fit(X[3:], y[3:], sample_weight=sample_weight[3:])
+    assert_array_equal(clf.predict(X), [0, 1, 1, 2])
+
 
 def test_sample_weight_mnb():
     clf = MultinomialNB()

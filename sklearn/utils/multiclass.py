@@ -328,16 +328,18 @@ def _check_partial_fit_classes_consistency(clf, classes=None):
         raise ValueError("classes must be passed on the first call "
                          "to partial_fit.")
 
-    elif (classes is not None
-          and getattr(clf, 'classes_', None) is not None):
-        if not np.all(clf.classes_ == np.unique(classes)):
-            raise ValueError(
-                "`classes=%r` is not the same as on last call "
-                "to partial_fit, was: %r" % (classes, clf.classes_))
-
     elif classes is not None:
-        # This is the first call to partial_fit
-        clf.classes_ = classes
-        return True
+        if getattr(clf, 'classes_', None) is not None:
+            if not np.all(clf.classes_ == np.unique(classes)):
+                raise ValueError(
+                    "`classes=%r` is not the same as on last call "
+                    "to partial_fit, was: %r" % (classes, clf.classes_))
 
+        else:
+            # This is the first call to partial_fit
+            clf.classes_ = np.unique(classes)
+            return True
+
+    # classes is None and clf.classes_ has already previously been set:
+    # nothing to do
     return False
