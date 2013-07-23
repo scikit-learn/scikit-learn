@@ -1,7 +1,7 @@
 """Hierarchical Agglomerative Clustering
 
-These routines perform some hierarchical agglomerative clustering of some
-input data. Currently, only Ward's algorithm is implemented.
+These routines perform some hierachical agglomerative clustering of some
+input data.
 
 Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
           Gael Varoquaux
@@ -398,7 +398,7 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
         used_node[i] = used_node[j] = False
 
         # update the structure matrix A and the inertia matrix
-        # a clever 'min' operation between A[i] and A[j]
+        # a clever 'min', or 'max' operation between A[i] and A[j]
         coord_col = join_func(A[i], A[j], used_node, n_i, n_j)
         for l, d in coord_col:
             A[l].append(k, d)
@@ -416,6 +416,7 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
     return children, n_components, n_leaves, parent
 
 
+# Matching names to tree-building strategies
 def _complete_linkage(*args, **kwargs):
     kwargs['linkage'] = 'complete'
     return linkage_tree(*args, **kwargs)
@@ -426,7 +427,6 @@ def _average_linkage(*args, **kwargs):
     return linkage_tree(*args, **kwargs)
 
 
-# Matching names to tree-building strategies
 _TREE_BUILDERS = dict(
     ward=ward_tree,
     complete=_complete_linkage,
@@ -578,22 +578,14 @@ class LinkageAgglomeration(HierarchicalLinkage, AgglomerationTransform):
 
 
 ###############################################################################
-# Backward compatibility: c:lass for Ward hierarchical clustering
+# Backward compatibility: class for Ward hierarchical clustering
 
 class Ward(HierarchicalLinkage):
     """Ward hierarchical clustering: constructs a tree and cuts it.
 
     Parameters
     ----------
-<<<<<<< HEAD
-    n_clusters : int, default=2
-        The number of clusters.
 
-    connectivity : sparse matrix (optional)
-        connectivity matrix. Defines for each feature the neighboring
-        features following a given structure of the data.
-        Default is None, i.e, the hierarchical agglomeration algorithm is
-=======
     n_clusters : int or ndarray
         The number of clusters to find.
 
@@ -601,7 +593,6 @@ class Ward(HierarchicalLinkage):
         Connectivity matrix. Defines for each sample the neigbhoring
         samples following a given structure of the data.
         Default is None, i.e, the hiearchical clustering algorithm is
->>>>>>> MISC: refactor Ward and linkage in same object
         unstructured.
 
     memory : Instance of joblib.Memory or string (optional)
@@ -628,13 +619,7 @@ class Ward(HierarchicalLinkage):
     Attributes
     ----------
     `children_` : array-like, shape = [n_nodes, 2]
-<<<<<<< HEAD
-        The children of each non-leaf node. Values less than `n_samples` refer
-        to leaves of the tree. A greater value `i` indicates a node with
-        children `children_[i - n_samples]`.
-=======
         List of the children of each nodes.  Leaves of the tree do not appear.
->>>>>>> MISC: refactor Ward and linkage in same object
 
     `labels_` : array [n_features]
         cluster labels for each feature
