@@ -30,14 +30,14 @@ from sklearn.cross_validation import train_test_split
 
 
 # Generate data (adapted from G. Ridgeway's gbm example)
-n = 1000
+n_samples = 1000
 rs = np.random.RandomState(13)
-x1 = rs.uniform(size=n)
-x2 = rs.uniform(size=n)
-x3 = rs.randint(0, 4, size=n)
+x1 = rs.uniform(size=n_samples)
+x2 = rs.uniform(size=n_samples)
+x3 = rs.randint(0, 4, size=n_samples)
 
 p = 1 / (1.0 + np.exp(-(np.sin(3 * x1) - 4 * x2 + x3)))
-y = rs.binomial(1, p, size=n)
+y = rs.binomial(1, p, size=n_samples)
 
 X = np.c_[x1, x2, x3]
 
