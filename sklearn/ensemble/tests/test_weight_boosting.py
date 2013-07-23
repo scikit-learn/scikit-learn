@@ -13,6 +13,7 @@ from sklearn.dummy import DummyRegressor
 from sklearn.grid_search import GridSearchCV
 from sklearn.ensemble import AdaBoostClassifier
 from sklearn.ensemble import AdaBoostRegressor
+from sklearn.tree import DecisionTreeClassifier, DecisionTreeRegressor
 from sklearn.utils import shuffle
 from sklearn import datasets
 
@@ -134,7 +135,7 @@ def test_staged_predict():
 def test_gridsearch():
     """Check that base trees can be grid-searched."""
     # AdaBoost classification
-    boost = AdaBoostClassifier()
+    boost = AdaBoostClassifier(base_estimator=DecisionTreeClassifier())
     parameters = {'n_estimators': (1, 2),
                   'base_estimator__max_depth': (1, 2),
                   'algorithm': ('SAMME', 'SAMME.R')}
@@ -142,7 +143,8 @@ def test_gridsearch():
     clf.fit(iris.data, iris.target)
 
     # AdaBoost regression
-    boost = AdaBoostRegressor(random_state=0)
+    boost = AdaBoostRegressor(base_estimator=DecisionTreeRegressor(),
+                              random_state=0)
     parameters = {'n_estimators': (1, 2),
                   'base_estimator__max_depth': (1, 2)}
     clf = GridSearchCV(boost, parameters)
