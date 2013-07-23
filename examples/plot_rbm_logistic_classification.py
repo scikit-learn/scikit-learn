@@ -1,6 +1,3 @@
-#!/usr/bin/python
-# -*- coding: utf-8 -*-
-
 """
 ===============================================================
 Restricted Boltzmann Machine features for digits classification
