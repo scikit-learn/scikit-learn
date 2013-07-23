@@ -17,8 +17,7 @@ most important words get printed.
 
 For comparison, the documents are also clustered using
 MiniBatchKMeans. The document clusters derived from the biclusters
-achieve a better V-measure score than clusters found by
-MiniBatchKMeans.
+achieve a better V-measure than clusters found by MiniBatchKMeans.
 
 """
 from __future__ import print_function
