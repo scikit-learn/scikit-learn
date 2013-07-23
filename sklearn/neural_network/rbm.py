@@ -235,10 +235,9 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         h_neg = self._mean_hiddens(v_neg)
 
         lr = float(self.learning_rate) / v_pos.shape[0]
-        #v_pos *= lr
-        #v_neg *= lr
-        self.components_ += lr * safe_sparse_dot(v_pos.T, h_pos).T
-        self.components_ -= lr * np.dot(v_neg.T, h_neg).T
+        update = safe_sparse_dot(v_pos.T, h_pos, dense_output=True).T
+        update -= np.dot(v_neg.T, h_neg).T
+        self.components_ += lr * update
         self.intercept_hidden_ += lr * (h_pos.sum(axis=0) - h_neg.sum(axis=0))
         self.intercept_visible_ += lr * (np.asarray(
                                          v_pos.sum(axis=0)).squeeze() -
