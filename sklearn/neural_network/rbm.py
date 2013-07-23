@@ -5,17 +5,27 @@
 # License: BSD Style.
 
 import time
+import warnings
 
 import numpy as np
 
 from ..base import BaseEstimator, TransformerMixin
-from ..utils import array2d, check_random_state, as_float_array
+from ..utils import (array2d,
+                     check_random_state,
+                     as_float_array,
+                     gen_even_slices)
 from ..utils.extmath import safe_sparse_dot
 
 
 def logistic_sigmoid(x):
     """
-    Implements the logistic function, ``1 / (1 + e ** x)``.
+    Implements the logistic function, ``1 / (1 + e ** -x)``.
+
+    This implementation is more stable by splitting on positive and negative
+    values and computing::
+
+        1 / (1 + exp(-x_i)) if x_i > 0
+        exp(x_i) / (1 + exp(x_i)) if x_i <= 0
 
     Parameters
     ----------
@@ -26,8 +36,52 @@ def logistic_sigmoid(x):
     -------
     res: array, shape (M, N)
         Value of the logistic function evaluated at every point in x
+
+    Notes
+    -----
+    See the blog post describing this implementation:
+    http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
     """
-    return 1. / (1. + np.exp(-np.clip(x, -30, 30)))
+    positive_idx = x > 0
+    out = np.empty_like(x)
+    out[positive_idx] = 1. / (1 + np.exp(-x[positive_idx]))
+    exp_x = np.exp(x[~positive_idx])
+    out[~positive_idx] = exp_x / (1. + exp_x)
+    return out
+
+
+def log_logistic_sigmoid(x):
+    """
+    Implements the log of the logistic function, ``log(1 / (1 + e ** -x))``.
+
+    This implementation is more stable by splitting on positive and negative
+    values and computing::
+
+        -log(1 + exp(-x_i)) if x_i > 0
+        x_i - log(1 + exp(x_i)) if x_i <= 0
+
+    Parameters
+    ----------
+    x: array-like, shape (M, N)
+        Argument to the logistic function
+
+    Returns
+    -------
+    res: array, shape (M, N)
+        Value of the logarithm of the logistic function evaluated at every
+        point in x
+
+    Notes
+    -----
+    See the blog post describing this implementation:
+    http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
+    """
+    positive_idx = x > 0
+    out = np.empty_like(x)
+    out[positive_idx] = -np.log(1 + np.exp(-x[positive_idx]))
+    out[~positive_idx] = (x[~positive_idx] -
+                          np.log(1 + np.exp(x[~positive_idx])))
+    return out
 
 
 class BernoulliRBM(BaseEstimator, TransformerMixin):
@@ -319,7 +373,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         v_[np.arange(v.shape[0]), i_] = 1 - v_[np.arange(v.shape[0]), i_]
         fe_ = self.free_energy(v_)
 
-        return v.shape[1] * np.log(logistic_sigmoid(fe_ - fe))
+        return v.shape[1] * log_logistic_sigmoid(fe_ - fe)
 
     def fit(self, X, y=None):
         """
@@ -336,6 +390,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
             The fitted model
         """
         X = array2d(X)
+        n_samples = X.shape[0]
         dtype = np.float32 if X.dtype.itemsize == 4 else np.float64
         rng = check_random_state(self.random_state)
 
@@ -348,24 +403,26 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self.h_samples_ = np.zeros((self.batch_size, self.n_components),
                                    dtype=dtype)
 
-        inds = np.arange(X.shape[0])
-        rng.shuffle(inds)
-
-        n_batches = int(np.ceil(len(inds) / float(self.batch_size)))
-
+        n_batches = n_samples / self.batch_size
+        if n_samples % self.batch_size != 0:
+            warnings.warn("Discarding some samples: \
+                sample size not divisible by chunk size.")
+        batch_slices = list(gen_even_slices(n_batches * self.batch_size,
+                                            n_batches))
         verbose = self.verbose
         for iteration in xrange(self.n_iter):
             pl = 0.
             if verbose:
                 begin = time.time()
-            for minibatch in xrange(n_batches):
-                pl_batch = self._fit(X[inds[minibatch::n_batches]], rng)
+
+            for batch_slice in batch_slices:
+                pl_batch = self._fit(X[batch_slice], rng)
 
                 if verbose:
                     pl += pl_batch.sum()
 
             if verbose:
-                pl /= X.shape[0]
+                pl /= n_samples
                 end = time.time()
                 print("Iteration %d, pseudo-likelihood = %.2f, time = %.2fs"
                       % (iteration, pl, end - begin))

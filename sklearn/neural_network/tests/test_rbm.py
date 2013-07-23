@@ -90,4 +90,3 @@ def test_gibbs_smoke():
     X_sampled = rbm1.gibbs(X)
     assert_all_finite(X_sampled)
 
-
