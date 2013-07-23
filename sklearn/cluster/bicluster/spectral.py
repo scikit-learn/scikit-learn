@@ -146,6 +146,9 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
                 _, v = eigsh(safe_sparse_dot(array.T, array),
                              ncv=self.n_svd_vecs)
                 vt = v.T
+            if np.any(np.isnan(u)):
+                _, u = eigsh(safe_sparse_dot(array, array.T),
+                             ncv=self.n_svd_vecs)
 
         assert_all_finite(u)
         assert_all_finite(vt)
