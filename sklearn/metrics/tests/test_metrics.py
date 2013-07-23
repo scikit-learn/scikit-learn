@@ -1,10 +1,10 @@
 from __future__ import division, print_function
 
+import warnings
+import numpy as np
+
 from functools import partial
 from itertools import product
-import warnings
-from itertools import product
-import numpy as np
 
 from sklearn import datasets
 from sklearn import svm
@@ -1630,7 +1630,7 @@ def test__check_clf_targets():
         (BIN, MCN): None,
     }
 
-    for (type1, y1), (type2, y2) in product(EXAMPLES, EXAMPLES):
+    for (type1, y1), (type2, y2) in product(EXAMPLES, repeat=2):
         try:
             expected = EXPECTED[type1, type2]
         except KeyError:
@@ -1670,7 +1670,7 @@ def test__check_reg_targets():
     ]
 
     for (type1, y1, n_out1), (type2, y2, n_out2) in product(EXAMPLES,
-                                                            EXAMPLES):
+                                                            repeat=2):
 
         if type1 == type2 and n_out1 == n_out2:
             y_type, y_check1, y_check2 = _check_reg_targets(y1, y2)
