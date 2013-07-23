@@ -30,7 +30,7 @@ from .utils import check_array_ndim
 
 
 def _scale_normalize(X):
-    """Normalize `X` by scaling rows and columns independently.
+    """Normalize ``X`` by scaling rows and columns independently.
 
     Returns the normalized matrix and the row and column scaling
     factors.
@@ -52,7 +52,7 @@ def _scale_normalize(X):
 
 
 def _bistochastic_normalize(X, max_iter=1000, tol=1e-5):
-    """Normalize rows and columns of `X` simultaneously so that all
+    """Normalize rows and columns of ``X`` simultaneously so that all
     rows sum to one constant and all columns sum to a different
     constant.
 
@@ -75,7 +75,7 @@ def _bistochastic_normalize(X, max_iter=1000, tol=1e-5):
 
 
 def _log_normalize(X):
-    """Normalize `X` according to Kluger's log-interactions scheme."""
+    """Normalize ``X`` according to Kluger's log-interactions scheme."""
     X = make_nonnegative(X, min_value=1)
     if issparse(X):
         raise ValueError("Cannot compute log of a sparse matrix,"
@@ -107,7 +107,7 @@ class BaseSpectral(six.with_metaclass(ABCMeta, BaseEstimator,
     def _check_parameters(self):
         legal_svd_methods = ('randomized', 'arpack')
         if self.svd_method not in legal_svd_methods:
-            raise ValueError("Unknown SVD method: '{}'. `svd_method` must be"
+            raise ValueError("Unknown SVD method: '{}'. svd_method must be"
                              " one of {}.".format(self.svd_method,
                                                   legal_svd_methods))
 
@@ -383,7 +383,7 @@ class SpectralBiclustering(BaseSpectral):
         super(SpectralBiclustering, self)._check_parameters()
         legal_methods = ('bistochastic', 'scale', 'log')
         if self.method not in legal_methods:
-            raise ValueError("Unknown method: '{}'. `method` must be"
+            raise ValueError("Unknown method: '{}'. method must be"
                              " one of {}.".format(self.method, legal_methods))
         try:
             int(self.n_clusters)
@@ -393,19 +393,19 @@ class SpectralBiclustering(BaseSpectral):
                 int(r)
                 int(c)
             except (ValueError, TypeError):
-                raise ValueError("Incorrect parameter `n_clusters` has value:"
+                raise ValueError("Incorrect parameter n_clusters has value:"
                                  " {}. It should either be a single integer"
                                  " or an iterable with two integers:"
-                                 " `(n_row_clusters, n_column_clusters)`")
+                                 " (n_row_clusters, n_column_clusters)")
         if self.n_components < 1:
-            raise ValueError("Parameter `n_components` must be greater than 0,"
+            raise ValueError("Parameter n_components must be greater than 0,"
                              " but its value is {}".format(self.n_components))
         if self.n_best < 1:
-            raise ValueError("Parameter `n_best` must be greater than 0,"
+            raise ValueError("Parameter n_best must be greater than 0,"
                              " but its value is {}".format(self.n_best))
         if self.n_best > self.n_components:
-            raise ValueError("`n_best` cannot be larger than"
-                             " `n_components`, but {} >  {}"
+            raise ValueError("n_best cannot be larger than"
+                             " n_components, but {} >  {}"
                              "".format(self.n_best, self.n_components))
 
     def _fit(self, X):
@@ -448,7 +448,7 @@ class SpectralBiclustering(BaseSpectral):
                                   for label in range(n_col_clusters))
 
     def _fit_best_piecewise(self, vectors, n_best, n_clusters):
-        """Find the `n_best` vectors that are best approximated by piecewise
+        """Find the ``n_best`` vectors that are best approximated by piecewise
         constant vectors.
 
         The piecewise vectors are found by k-means; the best is chosen
@@ -466,7 +466,7 @@ class SpectralBiclustering(BaseSpectral):
         return result
 
     def _project_and_cluster(self, data, vectors, n_clusters):
-        """Project `data` to `vectors` and cluster the result."""
+        """Project ``data`` to ``vectors`` and cluster the result."""
         projected = safe_sparse_dot(data, vectors)
         _, labels = self._k_means(projected, n_clusters)
         return labels
