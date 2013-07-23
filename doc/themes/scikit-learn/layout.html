@@ -43,6 +43,13 @@
 </script>
 {% endif %}
       <link rel="canonical" href="http://scikit-learn.org/stable/{{pagename}}.html">
+
+{%- if pagename == 'index' or pagename == 'documentation' %}
+    <style type="text/css">
+        div.bodywrapper {margin-left:-210px}
+    </style>
+{%- endif %}
+
 {% endblock %}
 
 {%- if pagename == 'index' %}
@@ -93,9 +100,9 @@
 {% endblock %}
 
 {% block content %}
-    <div class="content-wrapper">
+<div class="content-wrapper">
 
-{%- if pagename != 'index' %}
+{%- if pagename != 'index' and pagename != 'documentation' %}
     <div class="sphinxsidebar">
     <div class="sphinxsidebarwrapper">
     {%- if parents %}

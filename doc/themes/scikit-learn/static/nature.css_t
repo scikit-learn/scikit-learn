@@ -130,7 +130,7 @@ div.content-wrapper {
 }
 
 div.content {
-    /*margin-left: 210px;*/
+    margin-left: 210px;
     padding-bottom: 10px;
 }
 
@@ -341,7 +341,6 @@ div.body h3 {
 
 div.bodywrapper {
     margin: 0 0 0 0;
-    float: left;
 }
 
 
