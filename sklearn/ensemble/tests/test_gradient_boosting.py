@@ -485,7 +485,8 @@ def test_oob_score():
                                      subsample=0.5)
     clf.fit(X, y)
     with warnings.catch_warnings(record=True) as w:
-        _ = clf.oob_score_[0]
+        warnings.simplefilter("always")
+        _ = clf.oob_score_
         assert_equal(len(w), 1)
 
 
