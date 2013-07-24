@@ -78,7 +78,7 @@ class _PredictScorer(_BaseScorer):
 
 
 class _ProbaScorer(_BaseScorer):
-    def _score(self, clf, X, y):
+    def __call__(self, clf, X, y):
         """Evaluate predicted probabilities for X relative to y_true.
 
         Parameters

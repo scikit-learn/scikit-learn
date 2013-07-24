@@ -1,6 +1,7 @@
+import numpy as np
 import pickle
 
-from sklearn.utils.testing import assert_almost_equal
+from sklearn.utils.testing import assert_almost_equal, assert_array_equal
 from sklearn.utils.testing import assert_raises
 
 from sklearn.metrics import f1_score, r2_score, auc_score, fbeta_score
@@ -56,6 +57,32 @@ def test_regression_scorers():
     score1 = SCORERS['r2'](clf, X_test, y_test)
     score2 = r2_score(y_test, clf.predict(X_test))
     assert_almost_equal(score1, score2)
+
+
+def test_proba_scorer():
+    """Non-regression test for _ProbaScorer (which did not have __call__)."""
+    # This test can be removed once we have an actual scorer that uses
+    # predict_proba, e.g. by merging #2013.
+    def log_loss(y, p):
+        """Binary log loss with labels in {0, 1}."""
+        return -(y * np.log(p) + (1 - y) * np.log(1 - p))
+
+    log_loss_scorer = make_scorer(log_loss, greater_is_better=False,
+                                  needs_proba=True)
+
+    class DiscreteUniform(object):
+        def __init__(self, n_classes):
+            self.n_classes = n_classes
+
+        def predict_proba(self, X):
+            n = self.n_classes
+            return np.repeat(1. / n, n)
+
+    estimator = DiscreteUniform(5)
+    y_true = np.array([0, 0, 1, 1, 1])
+    y_pred = estimator.predict_proba(None)
+    assert_array_equal(log_loss(y_true, y_pred),
+                       -log_loss_scorer(estimator, None, y_true))
 
 
 def test_thresholded_scorers():
