@@ -31,7 +31,8 @@ def test_isotonic_regression():
 
 def test_isotonic_regression_reversed():
     y = np.array([10, 9, 10, 7, 6, 6.1, 5])
-    y_ = isotonic_regression(y, increasing=False)
+    y_ = IsotonicRegression(increasing=False).fit_transform(
+        np.arange(len(y)), y)
     assert_array_equal(np.ones(y_[:-1].shape), ((y_[:-1] - y_[1:]) >= 0))
 
 
