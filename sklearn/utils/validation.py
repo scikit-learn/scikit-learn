@@ -35,7 +35,8 @@ def safe_asarray(X, dtype=None, order=None, copy=False):
 
     Prevents copying X when possible; sparse matrices are passed through."""
     if sparse.issparse(X):
-        X = X.copy() if copy else X
+        if copy:
+            X = X.copy()
         assert_all_finite(X.data)
     else:
         X = np.array(X, dtype=dtype, order=order, copy=copy)
