@@ -275,19 +275,25 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
     ----------
     X: 2D ndarray, shape (n_samples, n_features)
         Data from which to compute the covariance estimate
+
     alphas: list of positive floats
         The list of regularization parameters, decreasing order
+
     X_test: 2D array, shape (n_test_samples, n_features), optional
-        Optional test matrix to measure generalisation error
+        Optional test matrix to measure generalization error
+
     mode: {'cd', 'lars'}
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
         very sparse underlying graphs, where p > n. Elsewhere prefer cd
         which is more numerically stable.
+
     tol: positive float, optional
         The tolerance to declare convergence: if the dual gap goes below
         this value, iterations are stopped
+
     max_iter: integer, optional
         The maximum number of iterations
+
     verbose: integer, optional
         The higher the verbosity flag, the more information is printed
         during the fitting.
@@ -296,11 +302,13 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
     -------
     covariances_: List of 2D ndarray, shape (n_features, n_features)
         The estimated covariance matrices
+
     precisions_: List of 2D ndarray, shape (n_features, n_features)
         The estimated (sparse) precision matrices
+
     scores_: List of float
-        The generalisation error (log-likelihood) on the test data.
-        Returned only if test data is passed.
+        The generalization error (log-likelihood) on the test data.
+        Returned only if X_test is provided.
     """
     inner_verbose = max(0, verbose - 1)
     emp_cov = empirical_covariance(X)
@@ -354,23 +362,29 @@ class GraphLassoCV(GraphLasso):
         grids of alpha to be used. If a list is given, it gives the
         grid to be used. See the notes in the class docstring for
         more details.
+
     n_refinements: strictly positive integer
         The number of time the grid is refined. Not used if explicit
         values of alphas are passed.
     cv : cross-validation generator, optional
         see sklearn.cross_validation module. If None is passed, default to
         a 3-fold strategy
+
     tol: positive float, optional
         The tolerance to declare convergence: if the dual gap goes below
         this value, iterations are stopped
+
     max_iter: integer, optional
         The maximum number of iterations
+
     mode: {'cd', 'lars'}
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
         very sparse underlying graphs, where p > n. Elsewhere prefer cd
         which is more numerically stable.
+
     n_jobs: int, optional
         number of jobs to run in parallel (default 1)
+
     verbose: boolean, optional
         If verbose is True, the objective function and dual gap are
         print at each iteration
@@ -449,7 +463,7 @@ class GraphLassoCV(GraphLasso):
                 # No need to see the convergence warnings on this grid:
                 # they will always be points that will not converge
                 # during the cross-validation
-                warnings.simplefilter('ignore',  ConvergenceWarning)
+                warnings.simplefilter('ignore', ConvergenceWarning)
                 # Compute the cross-validated loss on the current grid
                 this_path = Parallel(
                     n_jobs=self.n_jobs,
@@ -469,9 +483,9 @@ class GraphLassoCV(GraphLasso):
             path.extend(zip(alphas, scores, covs))
             path = sorted(path, key=operator.itemgetter(0), reverse=True)
 
-            # Find the maximum (we avoid using built in 'max' function to
+            # Find the maximum (avoid using the built-in 'max' function to
             # have a fully-reproducible selection of the smallest alpha
-            # is case of equality)
+            # in case of equality)
             best_score = -np.inf
             last_finite_idx = 0
             for index, (alpha, scores, _) in enumerate(path):
@@ -484,7 +498,7 @@ class GraphLassoCV(GraphLasso):
                     best_score = this_score
                     best_index = index
 
-            # Refine our grid
+            # Refine the grid
             if best_index == 0:
                 # We do not need to go back: we have chosen
                 # the highest value of alpha for which there are

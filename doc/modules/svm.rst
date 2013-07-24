@@ -32,7 +32,7 @@ The disadvantages of support vector machines include:
 
     - SVMs do not directly provide probability estimates, these are
       calculated using an expensive five-fold cross-validation
-      (see :ref:`Scores and probabilities <_scores_probabilities>`, below).
+      (see :ref:`Scores and probabilities <scores_probabilities>`, below).
 
 The support vector machines in scikit-learn support both dens
 (``numpy.ndarray`` and convertible to that by ``numpy.asarray``) and

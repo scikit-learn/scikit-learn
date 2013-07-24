@@ -2152,13 +2152,15 @@ def hamming_loss(y_true, y_pred, classes=None):
     if y_type == 'multilabel-indicator':
         return np.mean(y_true != y_pred)
     elif y_type == 'multilabel-sequences':
-        loss = np.array([len(set(pred).union(true))
+        loss = np.array([len(set(pred).symmetric_difference(true))
                          for pred, true in zip(y_pred, y_true)])
 
         return np.mean(loss) / np.size(classes)
 
-    else:
+    elif y_type in ["binary", "multiclass"]:
         return sp_hamming(y_true, y_pred)
+    else:
+        raise ValueError("{0} is not supported".format(y_type))
 
 
 ###############################################################################
