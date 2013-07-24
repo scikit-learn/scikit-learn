@@ -241,7 +241,7 @@ class BaseDiscreteNB(BaseNB):
         else:
             class_prior = self.class_prior
 
-        if class_prior:
+        if class_prior is not None:
             if len(class_prior) != n_classes:
                 raise ValueError("Number of priors must match number of"
                                  " classes.")
