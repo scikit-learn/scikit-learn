@@ -8,8 +8,10 @@
     <div class="span4">
     <h3 class="no-bg"><a href="#">Classification</a></h3>
     <blockquote class="index-categories">
-    The task of identifying to which set of categories a new observation belong
-    to.
+    <p class="box-tagline">Identifying to which set of categories a new observation belong
+    to.</p>
+    <strong>Applications</strong>: Spam detection, image recognition.</br>
+    <strong>Algorithms</strong>: SVM, nearest neighbors, random forest, ...
     <span class="example-links">
       <small class="float-right"><a href="#">Examples</a></small>
     </span>
@@ -20,7 +22,9 @@
     <div class="span4">
     <h3 class="no-bg"><a href="#">Regression</a></h3>
     <blockquote class="index-categories">
-    The task of estimating relationships between variables.
+    <class="box-tagline">Predicting a continuous value for a new example.</p>
+    <strong>Applications</strong>: drug response, stock prices.</br>
+    <strong>Algorithms</strong>: SVR, ridge regression, Lasso, ...
     <span class="example-links">
       <small class="float-right"><a href="#">Examples</a></small>
     </span>
@@ -31,8 +35,9 @@
     <div class="span4">
     <h3 class="no-bg"><a href="#">Clustering</a></h3>
     <blockquote class="index-categories">
-    The task of grouping automatically sets of objects such that each group
-    containts similar objects.
+    <p class="box-tagline">Automatic grouping of similar objects into sets.</p>
+    <strong>Applications</strong>: customer segmentation, grouping experiment outcomes</br>
+    <strong>Algorithms</strong>: k-Means, spectral clustering, mean-shift, ...
     <span class="example-links">
       <small class="float-right"><a href="#">Examples</a></small>
     </span>
@@ -46,7 +51,9 @@
     <div class="span4">
     <h3 class="no-bg"><a href="#">Dimension reduction</a></h3>
     <blockquote class="index-categories">
-    The task of reducing the number of random variables to consider.
+    <p class="box-tagline">Reducing the number of random variables to consider.</p>
+    <strong>Applications</strong>: visualization, increased efficiency</br>
+    <strong>Algorithms</strong>: PCA, Isomap, non-negative matrix factorization, ...</br>
     <span class="example-links">
       <small class="float-right"><a href="#">Examples</a></small>
     </span>
@@ -57,7 +64,9 @@
     <div class="span4">
     <h3 class="no-bg"><a href="#">Model selection</a></h3>
     <blockquote class="index-categories">
-    The task of comparing, validating and choosing parameters and models.
+    <p class="box-tagline">Comparing, validating and choosing parameters and models.</p>
+    <strong>Goal</strong>: Improved accuracy via parameter tuning</br>
+    <strong>Relevant modules</strong>: grid search, cross validation, evaluation metrics
     <span class="example-links">
       <small class="float-right"><a href="#">Examples</a></small>
     </span>
@@ -69,7 +78,9 @@
     <div class="span4">
     <h3 class="no-bg"><a href="#">Preprocessing</a></h3>
     <blockquote class="index-categories">
-    The task of creating and normalizing features.
+    <p class="box-tagline">Creating and normalizing features.</p>
+    Application: transforming input data such as text for use with machine learning algorithms.</br>
+    Relevant modules: preprocessing, feature extraction</br>
     <small class="float-right"><a href="#">Examples</a></small>
     </blockquote>
     </div>
