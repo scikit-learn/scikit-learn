@@ -32,23 +32,11 @@
     ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
     var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
   })();
-
 </script>
-
- {%- if theme_oldversion == false %}
-      <script type="text/javascript}">
-	  console.debug("DERP");
-	  var a = {{ master_doc }};
-	  console.debug(a);
-	  console.debug("{{pagename}}");
-
-      </script>
-      <link rel="canonical" href="{{pagename.link}}.html">
-   {%- endif %}
-
-
 {% endif %}
-
+{%- if theme_oldversion == false %}
+      <link rel="canonical" href="http://scikit-learn.org/stable/{{pagename}}.html">
+ {%- endif %}
 {% endblock %}
 
 {%- if pagename == 'index' %}
