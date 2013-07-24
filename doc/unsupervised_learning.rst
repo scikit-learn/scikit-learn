@@ -10,6 +10,7 @@ Unsupervised learning
     modules/mixture
     modules/manifold
     modules/clustering
+    modules/biclustering
     modules/decomposition
     modules/covariance
     modules/outlier_detection
