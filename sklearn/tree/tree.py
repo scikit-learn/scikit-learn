@@ -285,15 +285,16 @@ class BaseDecisionTree(six.with_metaclass(ABCMeta, BaseEstimator,
         # Classification
         if isinstance(self, ClassifierMixin):
             indices = np.argmax(self.tree_.value, axis=-1)
-            indices = np.atleast_1d(np.squeeze(indices))
             if self.n_outputs_ == 1:
-                values = self.classes_[indices]
+                values = self.classes_[indices[:, 0]]
             else:
                 values = np.transpose([classes[inds] for classes, inds
                                        in zip(self.classes_, indices.T)])
         # Regression
         else:
-            values = np.atleast_1d(np.squeeze(self.tree_.value))
+            values = self.tree_.value[..., 0]
+            if self.n_outputs_ == 1:
+                values = values[:, 0]
         return values[leaves]
 
     @property
@@ -470,11 +471,12 @@ class DecisionTreeClassifier(BaseDecisionTree, ClassifierMixin):
         normalizer = proba.sum(axis=-1)[..., np.newaxis]
         normalizer[normalizer == 0.0] = 1.0
         proba /= normalizer
-        proba = np.atleast_1d(np.squeeze(proba))
 
         leaves = self.tree_.predict_leaf(X)
         proba = proba[leaves]
-        if self.n_outputs_ > 1:
+        if self.n_outputs_ == 1:
+            proba = proba[:, 0, :]
+        else:
             proba = [proba_k[:, :k_n_classes] for proba_k, k_n_classes
                      in zip(np.rollaxis(proba, 1), self.n_classes_)]
         return proba
