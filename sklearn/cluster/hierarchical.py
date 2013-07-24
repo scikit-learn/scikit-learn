@@ -99,7 +99,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
     X : array of shape (n_samples, n_features)
         feature matrix  representing n_samples samples to be clustered
 
-    connectivity : sparse matrix.
+    connectivity : sparse matrix (optional).
         connectivity matrix. Defines for each sample the neighboring samples
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
@@ -251,7 +251,7 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
     X : array of shape (n_samples, n_features)
         feature matrix  representing n_samples samples to be clustered
 
-    connectivity : sparse matrix.
+    connectivity : sparse matrix (optional).
         connectivity matrix. Defines for each sample the neigbhoring samples
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
@@ -280,7 +280,7 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
         to leaves of the tree. A greater value `i` indicates a node with
         children `children[i - n_samples]`.
 
-    n_components : sparse matrix.
+    n_components : int
         The number of connected components in the graph.
 
     n_leaves : int
@@ -595,7 +595,7 @@ class Ward(AgglomerativeClustering):
         The number of connected components in the graph defined by the \
         connectivity matrix. If not set, it is estimated.
 
-    compute_full_tree: bool or 'auto' (optional)
+    compute_full_tree : bool or 'auto' (optional)
         Stop early the construction of the tree at n_clusters. This is
         useful to decrease computation time if the number of clusters is
         not small compared to the number of samples. This option is
@@ -662,7 +662,7 @@ class WardAgglomeration(AgglomerationTransform, Ward):
         The number of connected components in the graph defined by the
         connectivity matrix. If not set, it is estimated.
 
-    compute_full_tree: bool or 'auto' (optional)
+    compute_full_tree : bool or 'auto' (optional)
         Stop early the construction of the tree at n_clusters. This is
         useful to decrease computation time if the number of clusters is
         not small compared to the number of samples. This option is
