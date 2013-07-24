@@ -24,7 +24,7 @@ from ..utils.sparsetools import connected_components
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
 from .fast_dict import IntFloatDict, average_merge, max_merge,\
-        WeightedEdge
+    WeightedEdge
 
 
 ###############################################################################
@@ -295,21 +295,21 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
         X = np.reshape(X, (-1, 1))
     n_samples, n_features = X.shape
 
-    linkage_choices = {
-                        'complete': (hierarchy.complete, max_merge),
-                        'average': (hierarchy.weighted, average_merge),
-                      }
+    linkage_choices = {'complete': (hierarchy.complete, max_merge),
+                       'average': (hierarchy.weighted, average_merge),
+                       }
     try:
         scipy_func, join_func = linkage_choices[linkage]
     except KeyError:
-        raise ValueError('Unknown linkage option, linkage should be one '
+        raise ValueError(
+            'Unknown linkage option, linkage should be one '
             'of %s, but %s was given' % (linkage_choices.keys(), linkage))
 
     if connectivity is None:
         if n_clusters is not None:
             warnings.warn('Early stopping is implemented only for '
-                             'structured clustering (i.e. with '
-                             'explicit connectivity.', stacklevel=2)
+                          'structured clustering (i.e. with '
+                          'explicit connectivity.', stacklevel=2)
         out = scipy_func(X)
         children_ = out[:, :2].astype(np.int)
         return children_, 1, n_samples, None
@@ -351,14 +351,13 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
     connectivity = connectivity.tolil()
     # We are storing the graph in a list of IntFloatDict
     for ind, (data, row) in enumerate(zip(connectivity.data,
-                                           connectivity.rows)):
+                                          connectivity.rows)):
         A[ind] = IntFloatDict(np.asarray(row, dtype=np.int32),
-                        np.asarray(data, dtype=np.float64))
+                              np.asarray(data, dtype=np.float64))
         # We keep only the upper triangular for the heap
         # Generator expressions are faster than arrays on the following
         [inertia.append(WeightedEdge(d, ind, r))
-                            for r, d in zip(row, data)
-                            if r < ind]
+         for r, d in zip(row, data) if r < ind]
     del connectivity
 
     heapify(inertia)
@@ -502,8 +501,8 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
 
         if not self.linkage in _TREE_BUILDERS:
             raise ValueError("Unknown linkage type %s."
-                    "Valid options are %s" % (self.linkage,
-                    _TREE_BUILDERS.keys()))
+                             "Valid options are %s" % (self.linkage,
+                                                       _TREE_BUILDERS.keys()))
         tree_builder = _TREE_BUILDERS[self.linkage]
 
         if not self.connectivity is None:
