@@ -1197,11 +1197,13 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
     y : array-like
         Sequence of integer labels to encode.
 
-    classes : array of shape [n_class]
+    classes : array of shape [n_classes]
         Uniquely holds the label for each class.
 
     multilabel : boolean
-
+        Set to true if y is encoding a multilabel tasks (with a variable
+        number of label assignements per sample) rather than a multiclass task
+        where one sample has one and only one label assigned.
 
     neg_label: int (default: 0)
         Value with which negative labels must be encoded.
@@ -1215,6 +1217,18 @@ def label_binarize(y, classes, multilabel=False, neg_label=0, pos_label=1):
     >>> label_binarize([1, 6], classes=[1, 2, 4, 6])
     array([[1, 0, 0, 0],
            [0, 0, 0, 1]])
+
+    The class ordering is preserved:
+
+    >>> label_binarize([1, 6], classes=[1, 6, 4, 2])
+    array([[1, 0, 0, 0],
+           [0, 1, 0, 0]])
+
+    >>> label_binarize([(1, 2), (6,), ()], multilabel=True,
+    ...                classes=[1, 6, 4, 2])
+    array([[1, 0, 0, 1],
+           [0, 1, 0, 0],
+           [0, 0, 0, 0]])
 
     See also
     --------
