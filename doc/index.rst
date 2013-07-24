@@ -6,7 +6,7 @@
 
     <!-- Classification -->
     <div class="span4">
-    <h3 class="no-bg"><a href="#">Classification</a></h3>
+    <h2 class="no-bg"><a href="#">Classification</a></h2>
     <blockquote class="index-categories">
     <p class="box-tagline">Identifying to which set of categories a new observation belong
     to.</p>
@@ -20,7 +20,7 @@
 
     <!-- Regression -->
     <div class="span4">
-    <h3 class="no-bg"><a href="#">Regression</a></h3>
+    <h2 class="no-bg"><a href="#">Regression</a></h2>
     <blockquote class="index-categories">
     <p class="box-tagline">Predicting a continuous value for a new example.</p>
     <strong>Applications</strong>: drug response, stock prices.</br>
@@ -33,7 +33,7 @@
 
     <!-- Clustering -->
     <div class="span4">
-    <h3 class="no-bg"><a href="#">Clustering</a></h3>
+    <h2 class="no-bg"><a href="#">Clustering</a></h2>
     <blockquote class="index-categories">
     <p class="box-tagline">Automatic grouping of similar objects into sets.</p>
     <strong>Applications</strong>: customer segmentation, grouping experiment outcomes</br>
@@ -49,7 +49,7 @@
 
     <!-- Dimension reduction -->
     <div class="span4">
-    <h3 class="no-bg"><a href="#">Dimension reduction</a></h3>
+    <h2 class="no-bg"><a href="#">Dimension reduction</a></h2>
     <blockquote class="index-categories">
     <p class="box-tagline">Reducing the number of random variables to consider.</p>
     <strong>Applications</strong>: visualization, increased efficiency</br>
@@ -62,7 +62,7 @@
 
     <!-- Model selection -->
     <div class="span4">
-    <h3 class="no-bg"><a href="#">Model selection</a></h3>
+    <h2 class="no-bg"><a href="#">Model selection</a></h2>
     <blockquote class="index-categories">
     <p class="box-tagline">Comparing, validating and choosing parameters and models.</p>
     <strong>Goal</strong>: Improved accuracy via parameter tuning</br>
@@ -76,11 +76,11 @@
 
     <!-- Preprocessing -->
     <div class="span4">
-    <h3 class="no-bg"><a href="#">Preprocessing</a></h3>
+    <h2 class="no-bg"><a href="#">Preprocessing</a></h2>
     <blockquote class="index-categories">
     <p class="box-tagline">Creating and normalizing features.</p>
-    Application: transforming input data such as text for use with machine learning algorithms.</br>
-    Relevant modules: preprocessing, feature extraction</br>
+    <strong>Application</strong>: transforming input data such as text for use with machine learning algorithms.</br>
+    <strong>Relevant modules</strong>: preprocessing, feature extraction</br>
     <small class="float-right"><a href="#">Examples</a></small>
     </blockquote>
     </div>

@@ -342,10 +342,6 @@ div.bodywrapper {
     margin: 0 0 0 0;
 }
 
-div.body h3.no-bg, div.body h4.no-bg {
-    background-color: transparent;
-}
-    
 
 div.bodywrapper h1 {
     margin: 0 -10px 0 -10px;
@@ -750,3 +746,17 @@ span.example-links {
   padding-right: 15px;
   display: block;
 }
+
+/* New frontpage */
+p.box-tagline {
+    padding-bottom: 8px;
+}
+
+div.body h1.no-bg, div.body h2.no-bg, div.body h3.no-bg, div.body h4.no-bg {
+    background-color: transparent;
+}
+    
+div.body h2.no-bg, div.body h3.no-bg{
+    padding: 0px 0px 0px 20px;
+}
+
