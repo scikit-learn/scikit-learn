@@ -763,3 +763,6 @@ div.body h2.no-bg, div.body h3.no-bg{
     padding: 0px 0px 0px 20px;
 }
 
+div.box-rst-links, div.box-rst-links p {
+    display: inline;
+}
