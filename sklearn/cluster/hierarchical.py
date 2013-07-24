@@ -48,15 +48,15 @@ def _fix_connectivity(X, connectivity, n_components=None):
     # Make the connectivity matrix symmetric:
     connectivity = connectivity + connectivity.T
 
-    # Compute the number of nodes
-    n_components, labels = connected_components(connectivity)
-
     # Convert connectivity matrix to LIL
     if not sparse.isspmatrix_lil(connectivity):
         if not sparse.isspmatrix(connectivity):
             connectivity = sparse.lil_matrix(connectivity)
         else:
             connectivity = connectivity.tolil()
+
+    # Compute the number of nodes
+    n_components, labels = connected_components(connectivity)
 
     if n_components > 1:
         warnings.warn("the number of connected components of the "
@@ -350,11 +350,6 @@ def linkage_tree(X, connectivity=None, n_components=None,
     else:
         assert n_clusters <= n_samples
         n_nodes = 2 * n_samples - n_clusters
-
-    if (connectivity.shape[0] != n_samples
-            or connectivity.shape[1] != n_samples):
-        raise ValueError('Wrong shape for connectivity matrix: %s '
-                         'when X is %s' % (connectivity.shape, X.shape))
 
     # create inertia heap and connection matrix
     A = np.empty(n_nodes, dtype=object)
