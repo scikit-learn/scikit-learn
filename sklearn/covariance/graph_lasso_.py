@@ -337,6 +337,7 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
     scores_ = list()
     if X_test is not None:
         test_emp_cov = empirical_covariance(X_test)
+
     for alpha in alphas:
         try:
             # Capture the errors, and move on
@@ -357,7 +358,7 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
             scores_.append(this_score)
         if verbose == 1:
             sys.stderr.write('.')
-        elif verbose:
+        elif verbose > 1:
             if X_test is not None:
                 print('[graph_lasso_path] alpha: %.2e, score: %.2e'
                       % (alpha, this_score))
@@ -379,49 +380,50 @@ class GraphLassoCV(GraphLasso):
         grid to be used. See the notes in the class docstring for
         more details.
 
-    n_refinements : strictly positive integer
-        The number of time the grid is refined. Not used if explicit
+    n_refinements: strictly positive integer
+        The number of times the grid is refined. Not used if explicit
         values of alphas are passed.
 
-    cv : crossvalidation generator, optional
-        see sklearn.cross_validation module. If None is passed, default to
-        a 3-fold strategy.
+    cv : cross-validation generator, optional
+        see sklearn.cross_validation module. If None is passed, defaults to
+        a 3-fold strategy
 
-    tol : positive float, optional
+    tol: positive float, optional
         The tolerance to declare convergence: if the dual gap goes below
         this value, iterations are stopped.
 
-    max_iter : integer, optional
-        The maximum number of iterations.
+    max_iter: integer, optional
+        Maximum number of iterations.
 
-    mode : {'cd', 'lars'}
+    mode: {'cd', 'lars'}
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
-        very sparse underlying graphs, where p > n. Elsewhere prefer cd
-        which is more numerically stable.
+        very sparse underlying graphs, where number of features is greater
+        than number of samples. Elsewhere prefer cd which is more numerically
+        stable.
 
-    n_jobs : int, optional
+    n_jobs: int, optional
         number of jobs to run in parallel (default 1).
 
-    verbose : boolean, optional
-        If verbose is True, the objective function and dual gap are
-        print at each iteration.
+    verbose: boolean, optional
+        If verbose is True, the objective function and duality gap are
+        printed at each iteration.
 
     Attributes
     ----------
-    `covariance_` : array-like, shape (n_features, n_features)
-        Estimated covariance matrix
+    `covariance_` : numpy.ndarray, shape (n_features, n_features)
+        Estimated covariance matrix.
 
-    `precision_` : array-like, shape (n_features, n_features)
+    `precision_` : numpy.ndarray, shape (n_features, n_features)
         Estimated precision matrix (inverse covariance).
 
     `alpha_`: float
-        Penalization parameter selected
+        Penalization parameter selected.
 
     `cv_alphas_`: list of float
-        All the penalization parameters explored
+        All penalization parameters explored.
 
-    `cv_scores`: 2D array (n_alphas, n_folds)
-        The log-likelihood score on left-out data across the folds.
+    `cv_scores`: 2D numpy.ndarray (n_alphas, n_folds)
+        Log-likelihood score on left-out data across folds.
 
     See Also
     --------
@@ -429,11 +431,12 @@ class GraphLassoCV(GraphLasso):
 
     Notes
     -----
-    The search for the optimal alpha is done on an iteratively refined
-    grid: first the cross-validated scores on a grid are computed, then
-    a new refined grid is center around the maximum...
+    The search for the optimal penalization parameter (alpha) is done on an
+    iteratively refined grid: first the cross-validated scores on a grid are
+    computed, then a new refined grid is centered around the maximum, and so
+    on.
 
-    One of the challenges that we have to face is that the solvers can
+    One of the challenges which is faced here is that the solvers can
     fail to converge to a well-conditioned estimate. The corresponding
     values of alpha then come out as missing values, but the optimum may
     be close to these missing values.
@@ -472,7 +475,6 @@ class GraphLassoCV(GraphLasso):
             alpha_0 = 1e-2 * alpha_1
             alphas = np.logspace(np.log10(alpha_0), np.log10(alpha_1),
                                  n_alphas)[::-1]
-        covs_init = (None, None, None)
 
         t0 = time.time()
         for i in range(n_refinements):
@@ -482,6 +484,10 @@ class GraphLassoCV(GraphLasso):
                 # during the cross-validation
                 warnings.simplefilter('ignore', ConvergenceWarning)
                 # Compute the cross-validated loss on the current grid
+
+                # NOTE: Warm-restarting graph_lasso_path has been tried, and
+                # this did not allow to gain anything (same execution time with
+                # or without).
                 this_path = Parallel(
                     n_jobs=self.n_jobs,
                     verbose=self.verbose)(
@@ -491,7 +497,7 @@ class GraphLassoCV(GraphLasso):
                             tol=self.tol,
                             max_iter=int(.1 * self.max_iter),
                             verbose=inner_verbose)
-                        for (train, test), cov_init in zip(cv, covs_init))
+                        for train, test in cv)
 
             # Little danse to transform the list in what we need
             covs, _, scores = zip(*this_path)
@@ -500,7 +506,7 @@ class GraphLassoCV(GraphLasso):
             path.extend(zip(alphas, scores, covs))
             path = sorted(path, key=operator.itemgetter(0), reverse=True)
 
-            # Find the maximum (avoid using the built-in 'max' function to
+            # Find the maximum (avoid using built in 'max' function to
             # have a fully-reproducible selection of the smallest alpha
             # in case of equality)
             best_score = -np.inf
@@ -522,25 +528,24 @@ class GraphLassoCV(GraphLasso):
                 # non-zero coefficients
                 alpha_1 = path[0][0]
                 alpha_0 = path[1][0]
-                covs_init = path[0][-1]
             elif (best_index == last_finite_idx
                     and not best_index == len(path) - 1):
                 # We have non-converged models on the upper bound of the
                 # grid, we need to refine the grid there
                 alpha_1 = path[best_index][0]
                 alpha_0 = path[best_index + 1][0]
-                covs_init = path[best_index][-1]
             elif best_index == len(path) - 1:
                 alpha_1 = path[best_index][0]
                 alpha_0 = 0.01 * path[best_index][0]
-                covs_init = path[best_index][-1]
             else:
                 alpha_1 = path[best_index - 1][0]
                 alpha_0 = path[best_index + 1][0]
-                covs_init = path[best_index - 1][-1]
-            alphas = np.logspace(np.log10(alpha_1), np.log10(alpha_0),
-                                 n_alphas + 2)
-            alphas = alphas[1:-1]
+
+            if not isinstance(n_alphas, collections.Sequence):
+                alphas = np.logspace(np.log10(alpha_1), np.log10(alpha_0),
+                                     n_alphas + 2)
+                alphas = alphas[1:-1]
+
             if self.verbose and n_refinements > 1:
                 print('[GraphLassoCV] Done refinement % 2i out of %i: % 3is'
                       % (i + 1, n_refinements, time.time() - t0))
