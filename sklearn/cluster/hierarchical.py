@@ -243,16 +243,16 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
 
     The inertia matrix uses a Heapq-based representation.
 
-    This is the structured version, that takes into account a some topological
+    This is the structured version, that takes into account some topological
     structure between samples.
 
     Parameters
     ----------
     X : array of shape (n_samples, n_features)
-        feature matrix  representing n_samples samples to be clustered
+        feature matrix representing n_samples samples to be clustered
 
     connectivity : sparse matrix (optional).
-        connectivity matrix. Defines for each sample the neigbhoring samples
+        connectivity matrix. Defines for each sample the neighboring samples
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
         Default is None, i.e, the Ward algorithm is unstructured.
@@ -284,7 +284,7 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
         The number of connected components in the graph.
 
     n_leaves : int
-        The number of leaves in the tree
+        The number of leaves in the tree.
 
     parents : 1D array, shape (n_nodes, ) or None
         The parent of each node. Only returned when a connectivity matrix
@@ -580,7 +580,7 @@ class Ward(AgglomerativeClustering):
     connectivity : sparse matrix (optional)
         Connectivity matrix. Defines for each sample the neigbhoring
         samples following a given structure of the data.
-        Default is None, i.e, the hiearchical clustering algorithm is
+        Default is None, i.e, the hierarchical clustering algorithm is
         unstructured.
 
     memory : Instance of joblib.Memory or string (optional)
@@ -600,7 +600,7 @@ class Ward(AgglomerativeClustering):
         useful to decrease computation time if the number of clusters is
         not small compared to the number of samples. This option is
         useful only when specifying a connectivity matrix. Note also that
-        when varying the number of cluster and using caching, it may
+        when varying the number of clusters and using caching, it may
         be advantageous to compute the full tree.
 
 
@@ -647,7 +647,7 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     connectivity : sparse matrix
         connectivity matrix. Defines for each feature the neigbhoring
         features following a given structure of the data.
-        Default is None, i.e, the hiearchical agglomeration algorithm is
+        Default is None, i.e, the hierarchical agglomeration algorithm is
         unstructured.
 
     memory : Instance of joblib.Memory or string
@@ -682,7 +682,7 @@ class WardAgglomeration(AgglomerationTransform, Ward):
         cluster labels for each feature
 
     `n_leaves_` : int
-        Number of leaves in the hiearchical tree.
+        Number of leaves in the hierarchical tree.
 
     """
 
