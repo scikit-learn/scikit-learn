@@ -129,6 +129,9 @@ Changelog
    - Python 3 support fixes by `Justin Vincent`_, `Lars Buitinck`_ and
      `Olivier Grisel`_. All tests now pass under Python 3.3.
 
+   - Reduce memory footprint of FastICA by `Denis Engemann`_ and
+     `Alexandre Gramfort`_.
+
 
 API changes summary
 -------------------
@@ -2004,3 +2007,5 @@ David Huard, Dave Morrill, Ed Schofield, Travis Oliphant, Pearu Peterson.
 .. _Eustache Diemert: https://github.com/oddskool
 
 .. _Justin Vincent: https://github.com/justinvf
+
+.. _Denis Engemann: https://github.com/dengemann
