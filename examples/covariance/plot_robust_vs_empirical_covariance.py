@@ -4,16 +4,16 @@ Robust vs Empirical covariance estimate
 =======================================
 
 The usual covariance maximum likelihood estimate is very sensitive to the
-presence of outliers in the data set. In such a case, one would have better to
-use a robust estimator of covariance to guaranty that the estimation is
+presence of outliers in the data set. In such a case, it would be better to
+use a robust estimator of covariance to guarantee that the estimation is
 resistant to "erroneous" observations in the data set.
 
 Minimum Covariance Determinant Estimator
 ----------------------------------------
 The Minimum Covariance Determinant estimator is a robust, high-breakdown point
 (i.e. it can be used to estimate the covariance matrix of highly contaminated
-datasets, up to :math:`\frac{n_samples-n_features-1}{2}` outliers) estimator of
-covariance. The idea is to find :math:`\frac{n_samples+n_features+1}{2}`
+datasets, up to :math:`\\frac{n_samples - n_features-1}{2}` outliers) estimator of
+covariance. The idea is to find :math:`\\frac{n_samples+n_features+1}{2}`
 observations whose empirical covariance has the smallest determinant, yielding
 a "pure" subset of observations from which to compute standards estimates of
 location and covariance. After a correction step aiming at compensating the
@@ -90,10 +90,10 @@ for i, n_outliers in enumerate(range_n_outliers):
         inliers_mask[outliers_index] = False
 
         # fit a Minimum Covariance Determinant (MCD) robust estimator to data
-        MCD = MinCovDet().fit(X)
+        mcd = MinCovDet().fit(X)
         # compare raw robust estimates with the true location and covariance
-        err_loc_mcd[i, j] = np.sum(MCD.location_ ** 2)
-        err_cov_mcd[i, j] = MCD.error_norm(np.eye(n_features))
+        err_loc_mcd[i, j] = np.sum(mcd.location_ ** 2)
+        err_cov_mcd[i, j] = mcd.error_norm(np.eye(n_features))
 
         # compare estimators learned from the full data set with true
         # parameters
@@ -102,7 +102,7 @@ for i, n_outliers in enumerate(range_n_outliers):
             np.eye(n_features))
 
         # compare with an empirical covariance learned from a pure data set
-        # (i.e. "perfect" MCD)
+        # (i.e. "perfect" mcd)
         pure_X = X[inliers_mask]
         pure_location = pure_X.mean(0)
         pure_emp_cov = EmpiricalCovariance().fit(pure_X)
@@ -129,7 +129,7 @@ pl.subplot(2, 1, 2)
 x_size = range_n_outliers.size
 pl.errorbar(range_n_outliers, err_cov_mcd.mean(1),
             yerr=err_cov_mcd.std(1),
-            label="Robust covariance (MCD)", color='m')
+            label="Robust covariance (mcd)", color='m')
 pl.errorbar(range_n_outliers[:(x_size / 5 + 1)],
             err_cov_emp_full.mean(1)[:(x_size / 5 + 1)],
             yerr=err_cov_emp_full.std(1)[:(x_size / 5 + 1)],
