@@ -1,21 +1,161 @@
+.. currentmodule:: sklearn
+
 .. _model_evaluation:
 
-===================
-Model evaluation
-===================
+========================================================
+Model evaluation: quantifying the quality of predictions
+========================================================
 
-The :mod:`sklearn.metrics` module implements useful functions for assessing the
-performance of an estimator under a specific criterion.  Functions whose name
-ends with ``_score`` return a scalar value to maximize (the higher the better).
-Functions whose name ends with  ``_error`` or ``_loss`` return a scalar value
-to minimize (the lower the better).
+Here we discuss how to evaluate the quality of predictions of a model.
+There are 3 different use cases:
+
+* Automatic model-evaluation tools (such as
+  :func:`cross_validation.cross_val_score` and
+  :class:`grid_search.GridSearchCV`) embed a *scoring* strategy that
+  they use internally. This is discussed on section
+  :ref:`scoring_parameter`.
+
+* Estimators define a ``score`` method which provides a suitable evaluation
+  score for this estimator. This is not discussed on this page, but in
+  each estimator's documentation.
+
+* The :mod:`metrics` module implements useful functions for
+  assessing the prediction errors under a specific criterion:
+
+  - Functions ending with ``_score`` return a value to
+    maximize (the higher the better).
+  
+  - Functions ending with ``_error`` or ``_loss`` return a
+    value to minimize (the lower the better).
+
+  These are discussed on sections :ref:`classification_metrics`,
+  :ref:`regression_metrics`, and :ref:`clustering_metrics`.
+
+Finally, section :ref:`dummy_estimators` is useful to simulate the values of
+those metrics under the chance.
+
+.. seealso::
+   
+   For pairwise metrics, giving metrics between *samples* and not
+   estimators or predictions, see the :ref:`metrics` section.
+
+.. _scoring_parameter:
+
+The `scoring` parameter: defining model evaluation rules
+=========================================================
+
+Model selection and evaluation using tools such as
+:class:`grid_search.GridSearchCV` and
+:func:`cross_validation.cross_val_score`, take a `scoring` parameter that
+controls what metric they apply to models that they try out.
+
+Common cases: predefined values
+--------------------------------
+
+For the most common usecases, you can simply provide a string as the
+``scoring`` parameter. Possible values are:
+
+===================     ===============================================
+Scoring                 Function
+===================     ===============================================
+**Classification**
+'accuracy'              :func:`sklearn.metrics.accuracy_score`
+'average_precision'     :func:`sklearn.metrics.average_precision_score`
+'f1'                    :func:`sklearn.metrics.f1_score`
+'precision'             :func:`sklearn.metrics.precision_score`
+'recall'                :func:`sklearn.metrics.recall_score`
+'roc_auc'               :func:`sklearn.metrics.auc_score`
+
+**Clustering**
+'ari'`                  :func:`sklearn.metrics.adjusted_rand_score`
+
+**Regression**
+'mse'                   :func:`sklearn.metrics.mean_squared_error`
+'r2'                    :func:`sklearn.metrics.r2_score`
+===================     ===============================================
+
+Setting the `scoring` parameter to a wrong value should give you a list
+of acceptable values::
+
+    >>> from sklearn import svm, cross_validation, datasets
+    >>> iris = datasets.load_iris()
+    >>> X, y = iris.data, iris.target
+    >>> model = svm.SVC()
+    >>> cross_validation.cross_val_score(model, X, y, scoring='wrong_choice')
+    ValueError: wrong_choice is not a valid scoring value.Valid options are
+    ['accuracy', 'ari', 'average_precision', 'f1', 'mse', 'precision', 'r2',
+    'recall', 'roc_auc']
 
 .. note::
 
-    Estimators usually define a ``score`` method which provides a suitable evaluation
-    score for this estimator.
+    The corresponding scorer objects are stored in the dictionary
+    ``sklearn.metrics.SCORERS``.
 
-For pairwise metrics, see the :ref:`metrics` section.
+The above choices correspond to error *metric* functions that can be applied to
+predicted values. These are detailed below, in the next sections.
+
+
+.. currentmodule:: sklearn
+
+.. _score_func_objects:
+
+Defining your scoring strategy from score functions
+-----------------------------------------------------
+
+The scoring parameter can be a callable that takes model predictions and
+ground truth. 
+
+However, if you want to use a scoring function that takes additional parameters, such as
+:func:`fbeta_score`, you need to generate an appropriate scoring object.  The
+simplest way to generate a callable object for scoring is by using
+:func:`make_scorer`.
+That function converts score functions as above into callables that can be
+used for model evaluation.
+
+One typical use case is to wrap an existing scoring function from the library
+with non default value for its parameters such as the beta parameter for the
+:func:`fbeta_score` function::
+
+    >>> from sklearn.metrics import fbeta_score, make_scorer
+    >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
+    >>> from sklearn.grid_search import GridSearchCV
+    >>> from sklearn.svm import LinearSVC
+    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=ftwo_scorer)
+
+The second use case is to help build a completely new and custom scorer object
+from a simple python function::
+
+    >>> def my_custom_loss_func(ground_truth, predictions):
+    ...     diff = np.abs(ground_truth - predictions).max()
+    ...     return np.log(1 + diff)
+    ...
+    >>> my_custom_scorer = make_scorer(my_custom_loss_func, greater_is_better=False)
+    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=my_custom_scorer)
+
+:func:`make_scorer` takes as parameters the function you want to use, whether it is
+a score (``greater_is_better=True``) or a loss (``greater_is_better=False``),
+whether the function you provided takes predictions as input
+(``needs_threshold=False``) or needs confidence scores
+(``needs_threshold=True``) and any additional parameters, such as ``beta`` in
+the previous example.
+
+
+Implementing your own scoring object
+------------------------------------
+You can generate even more flexible model scores by constructing your own
+scoring object from scratch, without using the :func:`make_scorer` factory.
+For a callable to be a scorer, it needs to meet the protocol specified by
+the following two rules:
+
+- It can be called with parameters ``(estimator, X, y)``, where ``estimator``
+  it the model that should be evaluated, ``X`` is validation data and ``y`` is
+  the ground truth target for ``X`` (in the supervised case) or ``None`` in the
+  unsupervised case.
+
+- It returns a floating point number that quantifies the quality of
+  ``estimator``'s predictions on ``X`` which reference to ``y``.
+  Again, higher numbers are better.
+
 
 .. _classification_metrics:
 
@@ -885,111 +1025,15 @@ Here a small example of usage of the :func:`r2_score` function::
     for an example of R² score usage to
     evaluate Lasso and Elastic Net on sparse signals.
 
+.. currentmodule:: sklearn.metrics
+
+.. _clustering_metrics:
+
 Clustering metrics
 ======================
 
 The :mod:`sklearn.metrics` implements several losses, scores and utility
 function for more information see the :ref:`clustering_evaluation` section.
-
-
-.. _score_func_objects:
-
-.. currentmodule:: sklearn
-
-`Scoring` objects: defining your scoring rules
-===============================================
-While the above functions provide a simple interface for most use-cases, they
-can not directly be used for model selection and evaluation using
-:class:`grid_search.GridSearchCV` and
-:func:`cross_validation.cross_val_score`, as scoring functions have different
-signatures and might require additional parameters.
-
-Instead, :class:`grid_search.GridSearchCV` and
-:func:`cross_validation.cross_val_score` both take callables that implement
-estimator dependent functions. That allows for very flexible evaluation of
-models, for example taking complexity of the model into account.
-
-For scoring functions that take no additional parameters (which are most of
-them), you can simply provide a string as the ``scoring`` parameter. Possible
-values are:
-
-
-===================     ===============================================
-Scoring                 Function
-===================     ===============================================
-**Classification**
-'accuracy'              :func:`sklearn.metrics.accuracy_score`
-'average_precision'     :func:`sklearn.metrics.average_precision_score`
-'f1'                    :func:`sklearn.metrics.f1_score`
-'precision'             :func:`sklearn.metrics.precision_score`
-'recall'                :func:`sklearn.metrics.recall_score`
-'roc_auc'               :func:`sklearn.metrics.auc_score`
-
-**Clustering**
-'ari'`                  :func:`sklearn.metrics.adjusted_rand_score`
-
-**Regression**
-'mse'                   :func:`sklearn.metrics.mean_squared_error`
-'r2'                    :func:`sklearn.metrics.r2_score`
-===================     ===============================================
-
-The corresponding scorer objects are stored in the dictionary
-``sklearn.metrics.SCORERS``.
-
-.. currentmodule:: sklearn.metrics
-
-Creating scoring objects from score functions
----------------------------------------------
-If you want to use a scoring function that takes additional parameters, such as
-:func:`fbeta_score`, you need to generate an appropriate scoring object.  The
-simplest way to generate a callable object for scoring is by using
-:func:`make_scorer`.
-That function converts score functions as above into callables that can be
-used for model evaluation.
-
-One typical use case is to wrap an existing scoring function from the library
-with non default value for its parameters such as the beta parameter for the
-:func:`fbeta_score` function::
-
-    >>> from sklearn.metrics import fbeta_score, make_scorer
-    >>> ftwo_scorer = make_scorer(fbeta_score, beta=2)
-    >>> from sklearn.grid_search import GridSearchCV
-    >>> from sklearn.svm import LinearSVC
-    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=ftwo_scorer)
-
-The second use case is to help build a completely new and custom scorer object
-from a simple python function::
-
-    >>> def my_custom_loss_func(ground_truth, predictions):
-    ...     diff = np.abs(ground_truth - predictions).max()
-    ...     return np.log(1 + diff)
-    ...
-    >>> my_custom_scorer = make_scorer(my_custom_loss_func, greater_is_better=False)
-    >>> grid = GridSearchCV(LinearSVC(), param_grid={'C': [1, 10]}, scoring=my_custom_scorer)
-
-:func:`make_scorer` takes as parameters the function you want to use, whether it is
-a score (``greater_is_better=True``) or a loss (``greater_is_better=False``),
-whether the function you provided takes predictions as input
-(``needs_threshold=False``) or needs confidence scores
-(``needs_threshold=True``) and any additional parameters, such as ``beta`` in
-the previous example.
-
-
-Implementing your own scoring object
-------------------------------------
-You can generate even more flexible model scores by constructing your own
-scoring object from scratch, without using the :func:`make_scorer` factory.
-For a callable to be a scorer, it needs to meet the protocol specified by
-the following two rules:
-
-- It can be called with parameters ``(estimator, X, y)``, where ``estimator``
-  it the model that should be evaluated, ``X`` is validation data and ``y`` is
-  the ground truth target for ``X`` (in the supervised case) or ``None`` in the
-  unsupervised case.
-
-- It returns a floating point number that quantifies the quality of
-  ``estimator``'s predictions on ``X`` which reference to ``y``.
-  Again, higher numbers are better.
 
 
 .. _dummy_estimators:
