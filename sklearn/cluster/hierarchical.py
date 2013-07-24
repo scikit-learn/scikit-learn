@@ -274,6 +274,14 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=None,
         limited use, and the 'parents' output should rather be used.
         This option is valid only when specifying a connectivity matrix.
 
+    linkage : {"average", "complete"}, optional, default: "complete"
+        Which linkage critera to use. The linkage criterion determines which
+        distance to use between sets of observation.
+            - average uses the average of the distances of each observation of
+              the two sets
+            - complete or maximum linkage uses the maximum distances between
+              all observations of the two sets.
+
     Returns
     -------
     children : 2D array, shape (n_nodes, 2)
@@ -290,6 +298,10 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=None,
     parents : 1D array, shape (n_nodes, ) or None
         The parent of each node. Only returned when a connectivity matrix
         is specified, elsewhere 'None' is returned.
+
+    See also
+    --------
+    ward_tree
     """
     if copy is not None:
         warnings.warn("The copy argument is deprecated and will be removed "
@@ -477,6 +489,67 @@ def _hc_cut(n_clusters, children, n_leaves):
 ###############################################################################
 
 class AgglomerativeClustering(BaseEstimator, ClusterMixin):
+    """
+    Agglomerative Clustering
+
+    Recursively merges the pair of clusters that minimally increases
+    a giving linkage distance.
+
+    Parameters
+    ----------
+    n_clusters : int, default=2
+        The number of clusters to find.
+
+    connectivity : sparse matrix (optional)
+        Connectivity matrix. Defines for each sample the neigbhoring
+        samples following a given structure of the data.
+        Default is None, i.e, the hierarchical clustering algorithm is
+        unstructured.
+
+    memory : Instance of joblib.Memory or string (optional)
+        Used to cache the output of the computation of the tree.
+        By default, no caching is done. If a string is given, it is the
+        path to the caching directory.
+
+    n_components : int (optional)
+        The number of connected components in the graph defined by the \
+        connectivity matrix. If not set, it is estimated.
+
+    compute_full_tree : bool or 'auto' (optional)
+        Stop early the construction of the tree at n_clusters. This is
+        useful to decrease computation time if the number of clusters is
+        not small compared to the number of samples. This option is
+        useful only when specifying a connectivity matrix. Note also that
+        when varying the number of clusters and using caching, it may
+        be advantageous to compute the full tree.
+
+    linkage : {"ward", "complete", "average"}, optional, default: "ward"
+        Which linkage criterion to use. The linkage criterion determines which
+        distance to use between sets of observation. The algorithm will merge
+        the pairs of cluster that minimize this criterion.
+            - ward minimizes the variance of the clusters being merged.
+            - average uses the average of the distances of each observation of
+              the two sets.
+            - complete or maximum linkage uses the maximum distances between
+              all observations of the two sets.
+
+    Attributes
+    ----------
+    `children_` : array-like, shape = [n_nodes, 2]
+        The children of each non-leaf node. Values less than `n_samples` refer
+        to leaves of the tree. A greater value `i` indicates a node with
+        children `children_[i - n_samples]`.
+
+    `labels_` : array [n_samples]
+        cluster labels for each point
+
+    `n_leaves_` : int
+        Number of leaves in the hierarchical tree.
+
+    `n_components_` : int
+        The estimated number of connected components in the graph.
+    """
+
     def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
                  connectivity=None, copy=None, n_components=None,
                  compute_full_tree='auto', linkage='ward'):
