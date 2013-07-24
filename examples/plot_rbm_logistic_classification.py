@@ -25,14 +25,15 @@ example shows that the features extracted by the BernoulliRBM help improve the
 classification accuracy.
 """
 
-print __doc__
+from __future__ import print_function
 
+print(__doc__)
 
 # Authors: Yann N. Dauphin, Vlad Niculae, Gabriel Synnaeve
 # License: BSD
 
 import numpy as np
-import pylab as pl
+import matplotlib.pyplot as plt
 
 from scipy.ndimage import convolve
 from sklearn import linear_model, datasets, metrics
@@ -113,27 +114,28 @@ logistic_classifier.fit(X_train, Y_train)
 ###############################################################################
 # Evaluation
 
-print "Classification report for classifier %s:\n%s\n" % (
-    classifier, metrics.classification_report(
+print()
+print("Logistic regression using RBM features:\n%s\n" % (
+    metrics.classification_report(
         Y_test,
-        classifier.predict(X_test)))
+        classifier.predict(X_test))))
 
-print "Classification report for classifier %s:\n%s\n" % (
-    logistic_classifier, metrics.classification_report(
+print("Logistic regression using raw pixel features:\n%s\n" % (
+    metrics.classification_report(
         Y_test,
-        logistic_classifier.predict(X_test)))
+        logistic_classifier.predict(X_test))))
 
 ###############################################################################
 # Plotting
 
-pl.figure(figsize=(4.2, 4))
+plt.figure(figsize=(4.2, 4))
 for i, comp in enumerate(rbm.components_):
-    pl.subplot(10, 10, i + 1)
-    pl.imshow(comp.reshape((8, 8)), cmap=pl.cm.gray_r,
-              interpolation='nearest')
-    pl.xticks(())
-    pl.yticks(())
-pl.suptitle('100 components extracted by RBM', fontsize=16)
-pl.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
+    plt.subplot(10, 10, i + 1)
+    plt.imshow(comp.reshape((8, 8)), cmap=plt.cm.gray_r,
+               interpolation='nearest')
+    plt.xticks(())
+    plt.yticks(())
+plt.suptitle('100 components extracted by RBM', fontsize=16)
+plt.subplots_adjust(0.08, 0.02, 0.92, 0.85, 0.08, 0.23)
 
-pl.show()
+plt.show()
