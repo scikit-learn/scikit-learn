@@ -18,6 +18,9 @@ class _Hungarian(object):
     """Hungarian algorithm
 
     Calculate the Munkres solution to the classical assignment problem.
+
+    Warning: this code is not following scikit-learn standards and will be
+    refactored.
     """
 
     def compute(self, cost_matrix):
