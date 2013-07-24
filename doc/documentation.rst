@@ -7,7 +7,7 @@
                     <!-- Documentation overview -->
                     <div class="row-fluid">
                         <div class="span6 box">
-                            <h2><a href="tutorial/index.html">Tutorial</a></h2>
+                            <h2><a href="tutorial/basic/tutorial.html">Quick Start</a></h2>
                             <blockquote>A very short introduction into machine learning
                             problems and how to solve them using scikit-learn.
                             Introduced basic concepts and conventions.
@@ -25,13 +25,12 @@
 
                     <div class="row-fluid">
                         <div class="span6 box">
-                            <h2><a href="tutorial/machine_learning_map/index.html">Flow Chart</a></h2>
-                            <blockquote>A graphical overview of basic areas of machine
-                                learning, and guidance which kind of algorithms
-                                to use in a given situation.
+                            <h2><a href="tutorial/index.html">Tutorial</a></h2>
+                            <blockquote>A tutorial on statistical learning for
+                            data analysis. Contains a more in-depth discussion
+                            of important concepts.
                             </blockquote>
                         </div>
-
                         <div class="span6 box">
                             <h2><a href="modules/classes.html">API</a></h2>
                             <blockquote>The exact API of all functions and classes, as given by the docstrings.
@@ -43,6 +42,14 @@
                     </div>
 
                     <div class="row-fluid">
+                        <div class="span6 box">
+                            <h2><a href="tutorial/machine_learning_map/index.html">Flow Chart</a></h2>
+                            <blockquote>A graphical overview of basic areas of machine
+                                learning, and guidance which kind of algorithms
+                                to use in a given situation.
+                            </blockquote>
+                        </div>
+
                         <div class="span6 box">
                             <h2><a href="presentations.html">Additional Resources</a></h2>
                             <blockquote>Talks given, slide-sets and other information relevant to scikit-learn.

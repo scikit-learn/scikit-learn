@@ -1,9 +1,26 @@
 ===========================================
-Presentations and tutorials on scikit-learn
+External Resources, Videos and Talks
 ===========================================
 
 For written tutorials, see the :ref:`Tutorial section <tutorial_menu>` of
 the documentation.
+
+New to Scientific Python?
+==========================`
+For those that are still new to the scientific Python ecosystem, we highly
+recommend the `Python Scientific Lecture Notes
+<http://scipy-lectures.github.io/>`_. This will help you find your footing a
+bit and will definitely improve your scikit-learn experience.  A basic
+understanding of NumPy arrays is recommended to make the most of scikit-learn.
+
+External Tutorials
+===================
+
+There are several online tutorials available which are geared toward
+specific subject areas:
+
+- `Machine Learning for NeuroImaging in Python <http://nisl.github.com/>`_
+- `Machine Learning for Astronomical Data Analysis <http://astroml.github.com/sklearn_tutorial/>`_
 
 .. _videos:
 
