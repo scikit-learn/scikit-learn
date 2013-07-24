@@ -21,8 +21,7 @@ from ..utils.extmath import logistic_sigmoid
 
 
 class BernoulliRBM(BaseEstimator, TransformerMixin):
-    """
-    Bernoulli Restricted Boltzmann Machine (RBM)
+    """Bernoulli Restricted Boltzmann Machine (RBM).
 
     A Restricted Boltzmann Machine with binary visible units and
     binary hiddens. Parameters are estimated using Stochastic Maximum
@@ -49,7 +48,7 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         Number of iterations/sweeps over the training dataset to perform
         during training.
 
-    verbose: bool, optional
+    verbose : bool, optional
         The verbosity level.
 
     random_state : integer or numpy.RandomState, optional
@@ -101,54 +100,51 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         self.random_state = random_state
 
     def transform(self, X):
-        """
-        Computes the probabilities ``P({\bf h}_j=1|{\bf v}={\bf X})``.
+        """Compute the hidden layer activation probabilities, P(h=1|v=X).
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             The data to be transformed.
 
         Returns
         -------
-        h: array, shape (n_samples, n_components)
+        h : array, shape (n_samples, n_components)
             Latent representations of the data.
         """
         X, = check_arrays(X, sparse_format='csc', dtype=np.float)
         return self._mean_hiddens(X)
 
     def _mean_hiddens(self, v):
-        """
-        Computes the probabilities ``P({\bf h}_j=1|{\bf v})``.
+        """Computes the probabilities P(h=1|v).
 
         Parameters
         ----------
-        v: array-like, shape (n_samples, n_features)
+        v : array-like, shape (n_samples, n_features)
             Values of the visible layer.
 
         Returns
         -------
-        h: array-like, shape (n_samples, n_components)
+        h : array-like, shape (n_samples, n_components)
             Corresponding mean field values for the hidden layer.
         """
         return logistic_sigmoid(safe_sparse_dot(v, self.components_.T)
                                 + self.intercept_hidden_)
 
     def _sample_hiddens(self, v, rng):
-        """
-        Sample from the distribution ``P({\bf h}|{\bf v})``.
+        """Sample from the distribution P(h|v).
 
         Parameters
         ----------
-        v: array-like, shape (n_samples, n_features)
+        v : array-like, shape (n_samples, n_features)
             Values of the visible layer to sample from.
 
-        rng: RandomState
+        rng : RandomState
             Random number generator to use.
 
         Returns
         -------
-        h: array-like, shape (n_samples, n_components)
+        h : array-like, shape (n_samples, n_components)
             Values of the hidden layer.
         """
         p = self._mean_hiddens(v)
@@ -156,20 +152,19 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         return np.floor(p, out=p)
 
     def _sample_visibles(self, h, rng):
-        """
-        Sample from the distribution ``P({\bf v}|{\bf h})``.
+        """Sample from the distribution P(v|h).
 
         Parameters
         ----------
-        h: array-like, shape (n_samples, n_components)
+        h : array-like, shape (n_samples, n_components)
             Values of the hidden layer to sample from.
 
-        rng: RandomState
+        rng : RandomState
             Random number generator to use.
 
         Returns
         -------
-        v: array-like, shape (n_samples, n_features)
+        v : array-like, shape (n_samples, n_features)
             Values of the visible layer.
         """
         p = logistic_sigmoid(np.dot(h, self.components_)
@@ -178,18 +173,16 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         return np.floor(p, out=p)
 
     def _free_energy(self, v):
-        """
-        Computes the free energy
-        ``\mathcal{F}({\bf v}) = - \log \sum_{\bf h} e^{-E({\bf v},{\bf h})}``.
+        """Computes the free energy F(v) = - log sum_h exp(-E(v,h)).
 
         Parameters
         ----------
-        v: array-like, shape (n_samples, n_features)
+        v : array-like, shape (n_samples, n_features)
             Values of the visible layer.
 
         Returns
         -------
-        free_energy: array-like, shape (n_samples,)
+        free_energy : array-like, shape (n_samples,)
             The value of the free energy.
         """
         return - np.dot(v, self.intercept_visible_) - np.log(1. + np.exp(
@@ -197,17 +190,16 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
             .sum(axis=1)
 
     def gibbs(self, v):
-        """
-        Perform one Gibbs sampling step.
+        """Perform one Gibbs sampling step.
 
         Parameters
         ----------
-        v: array-like, shape (n_samples, n_features)
+        v : array-like, shape (n_samples, n_features)
             Values of the visible layer to start from.
 
         Returns
         -------
-        v_new: array-like, shape (n_samples, n_features)
+        v_new : array-like, shape (n_samples, n_features)
             Values of the visible layer after one Gibbs step.
         """
         rng = check_random_state(self.random_state)
@@ -219,24 +211,21 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     def _fit(self, v_pos, rng):
         """Inner fit for one mini-batch.
 
-        Adjust the parameters to maximize the likelihood of ``{\bf v}``
-        using Stochastic Maximum Likelihood (SML).
+        Adjust the parameters to maximize the likelihood of v using
+        Stochastic Maximum Likelihood (SML).
 
         Parameters
         ----------
-        v_pos: array-like, shape (n_samples, n_features)
+        v_pos : array-like, shape (n_samples, n_features)
             The data to use for training.
 
-        rng: RandomState
+        rng : RandomState
             Random number generator to use for sampling.
 
         Returns
         -------
-        pseudo_likelihood: array-like, shape (n_samples,)
-            If verbose=True, Pseudo Likelihood estimate for this batch.
-
-        References
-        ----------
+        pseudo_likelihood : array-like, shape (n_samples,)
+            If verbose=True, pseudo-likelihood estimate for this batch.
         """
         h_pos = self._mean_hiddens(v_pos)
         v_neg = self._sample_visibles(self.h_samples_, rng)
@@ -258,17 +247,16 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
             return self.pseudo_likelihood(v_pos)
 
     def pseudo_likelihood(self, v):
-        """
-        Compute the pseudo-likelihood of ``{\bf v}``.
+        """Compute the pseudo-likelihood of v.
 
         Parameters
         ----------
-        v: array-like, shape (n_samples, n_features)
+        v : array-like, shape (n_samples, n_features)
             Values of the visible layer.
 
         Returns
         -------
-        pseudo_likelihood: array-like, shape (n_samples,)
+        pseudo_likelihood : array-like, shape (n_samples,)
             Value of the pseudo-likelihood (proxy to likelihood).
         """
         rng = check_random_state(self.random_state)
@@ -282,17 +270,16 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         return v.shape[1] * logistic_sigmoid(fe_ - fe, log=True)
 
     def fit(self, X, y=None):
-        """
-        Fit the model to the data X.
+        """Fit the model to the data X.
 
         Parameters
         ----------
-        X: array-like, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             Training data.
 
         Returns
         -------
-        self:
+        self : BernoulliRBM
             The fitted model.
         """
         X, = check_arrays(X, sparse_format='csc', dtype=np.float)
