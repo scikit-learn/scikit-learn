@@ -722,23 +722,9 @@ div.body p {
     margin-bottom: .1em;
 }
 
-blockquote.index-categories {
-  padding: 0 0 0 15px;
-  margin: 0 0 20px;
-  border-left: 5px solid #eeeeee;
-}
-
-blockquote.index-categories p{
-  margin-bottom:0;
-  font-size:17.5px;
-  font-weight:300;
-  line-height: 1.25;
-}
-
 .float-right {
   float: right;
 }
-
 
 span.example-links {
   width: 100%;
@@ -747,15 +733,32 @@ span.example-links {
   display: block;
 }
 
-/* New frontpage */
-p.box-tagline {
-    padding-bottom: 8px;
+/* --- New frontpage ------------------------------------------------------- */
+
+div.box h2 {
+    background-color: transparent;
 }
+
+div.box blockquote {
+  padding: 0 0 0 15px;
+  margin: 0 0 20px;
+  border-left: 5px solid #eeeeee;
+}
+
+div.box .box-tagline {
+  margin-bottom:0;
+  font-size:17.5px;
+  font-weight:300;
+  line-height: 1.25;
+  padding-bottom: 8px;
+}
+
+
 
 div.body h1.no-bg, div.body h2.no-bg, div.body h3.no-bg, div.body h4.no-bg {
     background-color: transparent;
 }
-    
+
 div.body h2.no-bg, div.body h3.no-bg{
     padding: 0px 0px 0px 20px;
 }
