@@ -590,17 +590,22 @@ does poorly.
    :align: center
    :scale: 75
 
-For ``subsample < 1``, the improvement in deviance on the out-of-bag samples
-is stored in the attribute :attr:`~GradientBoostingRegressor.oob_improvement_` .
-Out-of-bag estimates can be used for model selection
-(e.g. to determine the optimal number of iterations).
-
 Another strategy to reduce the variance is by subsampling the features
 analogous to the random splits in :class:`RandomForestClassifier` .
 The number of subsampled features can be controlled via the ``max_features``
 parameter.
 
 .. note:: Using a small ``max_features`` value can significantly decrease the runtime.
+
+Stochastic gradient boosting allows to compute out-of-bag estimates of the
+test deviance by computing the improvement in deviance on the examples that are
+not included in the bootstrap sample (i.e. the out-of-bag examples).
+The improvements are stored in the attribute
+:attr:`~GradientBoostingRegressor.oob_improvement_`. ``oob_improvement_[i]`` holds
+the improvement in terms of the loss on the OOB sample if you add the i-th stage
+to the current predictions.
+Out-of-bag estimates can be used for model selection, for example to determine
+the optimal number of iterations.
 
 .. topic:: Examples:
 
