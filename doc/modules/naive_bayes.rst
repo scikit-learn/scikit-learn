@@ -188,7 +188,7 @@ incrementally as done with other classifiers as demonstrated in
 :ref:`example_applications_plot_out_of_core_classification.py`.
 
 Contrary to the ``fit`` method, the first call to ``partial_fit`` need to be
-passed the list of all the possible expected class labels.
+passed the list of all the expected class labels.
 
 note::
 
