@@ -7,14 +7,19 @@ Multiclass and multilabel algorithms
 
 .. currentmodule:: sklearn.multiclass
 
-The :mod:`sklearn.multiclass` module implements utilities to perform
-``multiclass`` and ``multilabel`` classification.
+The :mod:`sklearn.multiclass` module implements *meta-estimators* to perform
+``multiclass`` and ``multilabel`` classification. Those meta-estimators are
+meant to turn a binary classifier or a regressor into a multiclass/label classifier.
 
-    - Multiclass classification means classification with more than two classes.
-    - Multilabel classification is a different task, where a classifier is used to
+    - **Multiclass classification** means classification with more than two classes;
+      e.g., classify a set of images of fruits which may be oranges, apples, or pears.
+    - **Multilabel classification** is a different task, where a classifier is used to
       predict a set of target labels for each instance; i.e., the set of target
       classes is not assumed to be disjoint as in ordinary (binary or multiclass)
       classification. This is also called any-of classification.
+      e.g., predict the topics of a set of documents, from any combination
+      of religion, politics, and Apple. Every document may therefore refer to more than
+      one topic.
 
 The estimators provided in this module are meta-estimators:
 
@@ -23,10 +28,9 @@ The estimators provided in this module are meta-estimators:
     - error correcting output codes
 
 The meta-estimators require a base estimator to be provided in 
-their constructor. For example, it is possible to use these estimators 
-to turn a binary classifier or a regressor into a multiclass classifier.
-It is also possible to use these estimators with multiclass estimators
-in the hope that their accuracy or runtime performance improves.
+their constructor. It is also possible to use these estimators
+with multiclass estimators in the hope that their accuracy or
+runtime performance improves.
 
 .. warning::
 
