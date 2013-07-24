@@ -40,18 +40,18 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         Number of observations to compute the robust estimates of location
         and covariance from.
 
-    remaining_iterations : int
+    remaining_iterations : int, optional
         Number of iterations to perform.
         According to [Rouseeuw1999]_, two iterations are sufficient to get close
         to the minimum, and we never need more than 30 to reach convergence.
 
-    initial_estimates : 2-tuple
+    initial_estimates : 2-tuple, optional
         Initial estimates of location and shape from which to run the c_step
         procedure:
         - initial_estimates[0]: an initial location estimate
         - initial_estimates[1]: an initial covariance estimate
 
-    verbose : boolean
+    verbose : boolean, optional
         Verbose mode.
 
     random_state : integer or numpy.RandomState, optional
@@ -493,9 +493,9 @@ class MinCovDet(EmpiricalCovariance):
         Specify if the estimated precision is stored.
 
     assume_centered : Boolean
-        If True, the support of robust location and covariance estimates
-        is computed, and a covariance estimate is recomputed from it,
-        without centering the data.
+        If True, the support of the robust location and the covariance
+        estimates is computed, and a covariance estimate is recomputed from
+        it, without centering the data.
         Useful to work with data whose mean is significantly equal to
         zero but is not exactly zero.
         If False, the robust location and covariance are directly computed

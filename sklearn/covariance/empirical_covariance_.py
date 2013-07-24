@@ -123,7 +123,7 @@ class EmpiricalCovariance(BaseEstimator):
 
         Returns
         -------
-        precision_ : array-like,
+        `precision_` : array-like,
             The precision matrix associated to the current covariance object.
 
         """
