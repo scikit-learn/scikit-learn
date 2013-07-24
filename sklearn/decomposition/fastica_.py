@@ -394,6 +394,7 @@ class FastICA(BaseEstimator, TransformerMixin):
         self.tol = tol
         self.w_init = w_init
         self.random_state = random_state
+        self.compute_sources = compute_sources
 
     def fit_transform(self, X, y=None):
         """Fit the model and recover the sources from X.
@@ -413,7 +414,8 @@ class FastICA(BaseEstimator, TransformerMixin):
             X=X, n_components=self.n_components, algorithm=self.algorithm,
             whiten=self.whiten, fun=self.fun, fun_args=fun_args,
             max_iter=self.max_iter, tol=self.tol, w_init=self.w_init,
-            random_state=self.random_state, return_X_mean=True)
+            random_state=self.random_state, return_X_mean=True,
+            compute_sources=self.compute_sources)
         if self.whiten:
             self.components_ = np.dot(unmixing_, whitening_)
             self.mean_ = X_mean
@@ -422,7 +424,10 @@ class FastICA(BaseEstimator, TransformerMixin):
             self.components_ = unmixing_
 
         self.mixing_ = linalg.pinv(self.components_)
-        self.sources_ = sources_
+
+        if self.compute_sources:
+            self.sources_ = sources_
+
         return sources_
 
     def fit(self, X, y=None):
