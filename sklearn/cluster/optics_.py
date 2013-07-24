@@ -218,7 +218,7 @@ def optics(X, eps=float('inf'), min_samples=1, metric='euclidean',
     if metric != 'precomputed':
         # TODO: Construct BallTree with the correct metric once the
         # metrics branch has been merged into master
-        tree = BallTree(X)
+        tree = BallTree(X, metric=metric)
 
     seeds = np.ones(n, dtype=bool)
     i = 0
