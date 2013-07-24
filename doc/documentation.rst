@@ -9,13 +9,17 @@
                         <div class="span6">
                             <h3 class="no-bg"><a href="tutorial/index.html">Tutorial</a></h3>
                             <blockquote>
-                                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eu lorem ac elit pharetra lacinia non in justo.
+                            A very short introduction into machine learning
+                            problems and how to solve them using scikit-learn.
+                            Introduced basic concepts and conventions.
                             </blockquote>
                         </div>
                         <div class="span6">
                             <h3 class="no-bg"><a href="user_guide.html">User Guide</a></h3>
                             <blockquote>
-                                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eu lorem ac elit pharetra lacinia non in justo.
+                                The main documentation. This contains an
+                                in-depth description of all algorithms and how
+                                to apply them.
                             </blockquote>
                         </div>
                         <!-- row -->
@@ -23,16 +27,20 @@
 
                     <div class="row-fluid">
                         <div class="span6">
-                            <h3 class="no-bg"><a href="#">Flow Chart</a></h3>
+                            <h3 class="no-bg"><a href="tutorial/machine_learning_map/index.html">Flow Chart</a></h3>
                             <blockquote>
-                                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eu lorem ac elit pharetra lacinia non in justo.
+                                A graphical overview of basic areas of machine
+                                learning, and guidance which kind of algorithms
+                                to use in a given situation.
                             </blockquote>
                         </div>
 
                         <div class="span6">
                             <h3 class="no-bg"><a href="modules/classes.html">API</a></h3>
                             <blockquote>
-                                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eu lorem ac elit pharetra lacinia non in justo.
+                                The exact API of all functions and classes, as given by the docstrings.
+                                The API documents expected types and allowed features for all functions,
+                                and all parameters available for the algorithms.
                             </blockquote>
                         </div>
                         <!-- row -->
@@ -40,9 +48,10 @@
 
                     <div class="row-fluid">
                         <div class="span6">
-                            <h3 class="no-bg"><a href="presentations.html">Resources</a></h3>
+                            <h3 class="no-bg"><a href="presentations.html">Additional Resources</a></h3>
                             <blockquote>
-                                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eu lorem ac elit pharetra lacinia non in justo.
+                                Talks given, slide-sets and other information
+                                relevant to scikit-learn.
                             </blockquote>
                         </div>
                         <!-- row -->
