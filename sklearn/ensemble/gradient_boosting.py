@@ -23,6 +23,7 @@ The module structure is the following:
 from __future__ import print_function
 from __future__ import division
 from abc import ABCMeta, abstractmethod
+from warnings import warn
 
 import sys
 
@@ -567,34 +568,49 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
                                     dtype=np.object)
 
         self.train_score_ = np.zeros((self.n_estimators,), dtype=np.float64)
-        self.oob_score_ = np.zeros((self.n_estimators), dtype=np.float64)
+
+        # pull some obj into local scope
+        subsample = self.subsample
+        loss_ = self.loss_
+        do_oob = subsample < 1.0
+
+        if self.subsample < 1.0:
+            self._oob_score_ = np.zeros((self.n_estimators), dtype=np.float64)
+            self.oob_improvement_ = np.zeros((self.n_estimators),
+                                             dtype=np.float64)
 
         sample_mask = np.ones((n_samples,), dtype=np.bool)
-        n_inbag = max(1, int(self.subsample * n_samples))
+        n_inbag = max(1, int(subsample * n_samples))
 
         # perform boosting iterations
         for i in range(self.n_estimators):
 
             # subsampling
-            if self.subsample < 1.0:
+            if do_oob:
                 # TODO replace with ``np.choice`` if possible.
                 sample_mask = _random_sample_mask(n_samples, n_inbag,
                                                   random_state)
+                # OOB score before this stage
+                old_oob_score = loss_(y[~sample_mask],
+                                      y_pred[~sample_mask])
+
             # fit next stage of trees
             y_pred = self._fit_stage(i, X, y, y_pred, sample_mask,
                                      random_state)
 
             # track deviance (= loss)
-            if self.subsample < 1.0:
-                self.train_score_[i] = self.loss_(y[sample_mask],
-                                                  y_pred[sample_mask])
-                self.oob_score_[i] = self.loss_(y[~sample_mask],
-                                                y_pred[~sample_mask])
+            if do_oob:
+                self.train_score_[i] = loss_(y[sample_mask],
+                                             y_pred[sample_mask])
+                self._oob_score_[i] = loss_(y[~sample_mask],
+                                            y_pred[~sample_mask])
+                self.oob_improvement_[i] = old_oob_score - self._oob_score_[i]
+
                 if self.verbose > 1:
                     print("built tree %d of %d, train score = %.6e, "
-                          "oob score = %.6e" % (i + 1, self.n_estimators,
+                          "oob improvement = %.6e" % (i + 1, self.n_estimators,
                                                 self.train_score_[i],
-                                                self.oob_score_[i]))
+                                                self.oob_improvement_[i]))
 
             else:
                 # no need to fancy index w/ no subsampling
@@ -691,6 +707,17 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
         importances = total_sum / len(self.estimators_)
         return importances
 
+    @property
+    def oob_score_(self):
+        warn("The oob_score_ argument is replaced by oob_improvement_"
+             "as of version 0.14 and will be removed in 0.16.",
+             DeprecationWarning)
+        try:
+            return self._oob_score_
+        except AttributeError:
+            raise ValueError("Estimator not fitted, "
+                             "call `fit` before `oob_score_`.")
+
 
 class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     """Gradient Boosting for classification.
@@ -765,10 +792,17 @@ class GradientBoostingClassifier(BaseGradientBoosting, ClassifierMixin):
     `feature_importances_` : array, shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
+    `oob_improvement_` : array, shape = [n_estimators]
+        The improvement in loss (= deviance) on the out-of-bag samples
+        relative to the previous iteration.
+        ``oob_improvement_[0]`` is the improvement in
+        loss of the first stage over the ``init`` estimator.
+
     `oob_score_` : array, shape = [n_estimators]
         Score of the training dataset obtained using an out-of-bag estimate.
         The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
         model at iteration ``i`` on the out-of-bag sample.
+        Deprecated: use `oob_improvement_` instead.
 
     `train_score_` : array, shape = [n_estimators]
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
@@ -995,10 +1029,17 @@ class GradientBoostingRegressor(BaseGradientBoosting, RegressorMixin):
     `feature_importances_` : array, shape = [n_features]
         The feature importances (the higher, the more important the feature).
 
+    `oob_improvement_` : array, shape = [n_estimators]
+        The improvement in loss (= deviance) on the out-of-bag samples
+        relative to the previous iteration.
+        ``oob_improvement_[0]`` is the improvement in
+        loss of the first stage over the ``init`` estimator.
+
     `oob_score_` : array, shape = [n_estimators]
         Score of the training dataset obtained using an out-of-bag estimate.
         The i-th score ``oob_score_[i]`` is the deviance (= loss) of the
         model at iteration ``i`` on the out-of-bag sample.
+        Deprecated: use `oob_improvement_` instead.
 
     `train_score_` : array, shape = [n_estimators]
         The i-th score ``train_score_[i]`` is the deviance (= loss) of the
