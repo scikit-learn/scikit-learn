@@ -6,7 +6,7 @@ For written tutorials, see the :ref:`Tutorial section <tutorial_menu>` of
 the documentation.
 
 New to Scientific Python?
-==========================`
+==========================
 For those that are still new to the scientific Python ecosystem, we highly
 recommend the `Python Scientific Lecture Notes
 <http://scipy-lectures.github.io/>`_. This will help you find your footing a
