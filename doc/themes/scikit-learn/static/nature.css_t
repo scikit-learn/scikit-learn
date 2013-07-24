@@ -735,6 +735,33 @@ span.example-links {
 
 /* --- New frontpage ------------------------------------------------------- */
 
+div.banner-container {
+  width:100%;
+  background-color: rgb(78, 172, 197);
+}
+
+div.banner-inner {
+  max-width:1024px;
+  margin-left:auto;
+  margin-right:auto;
+  padding:20px 0px;
+}
+
+div.banner-container h1 {
+  font-family: Monaco, Menlo, Consolas, 'Courier New', monospace;
+  font-size: 45px;
+  margin-bottom: 0px;
+  color: white;
+}
+
+div.banner-container h2 {
+  font-size: 17px;
+  font-style: italic;
+  font-weight: normal;
+  color: white;
+  margin-top: -5px;
+}
+
 div.box h2 {
     background-color: transparent;
 }
@@ -752,8 +779,6 @@ div.box .box-tagline {
   line-height: 1.25;
   padding-bottom: 8px;
 }
-
-
 
 div.body h1.no-bg, div.body h2.no-bg, div.body h3.no-bg, div.body h4.no-bg {
     background-color: transparent;

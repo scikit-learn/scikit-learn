@@ -108,32 +108,25 @@
 </div>
 
 
-
 {%- if pagename == 'index' %}
 <!-- Banner -->
-<div class="container" style="width:100%; background-color: rgb(78, 172, 197);">
-    <div class="row-fluid" style="max-width:1024px; margin-left:auto; margin-right:auto; padding:20px 0px;">
+<div class="container banner-container">
+    <div class="row-fluid banner-inner">
         <div class="span6">
             <div class="thumbnail"><img src="{{ pathto('_static/banner_example.png', 1) }}"/></div>
         </div>
         <div class="span6">
-            <h1 class="no-bg">Scikit-learn : Machine Learning in Python</h1>
-
-
+            <h1>scikit-learn</h1>
+            <h2>Machine Learning in Python</h2>
             <ul>
-                <li>Building upon numpy, scipy, and matplotlib.</li>
-                <li>Provides versatile tools for data mining and analysis.</li>
-                <li>Simple and efficient.</li>
-                <li>Accessible to everybody, and reusable in various contexts.</li>
-                <li>License: Open source, commercially usable: BSD license.</li>
+                <li>Simple and efficient tools for data mining and data analysis</li>
+                <li>Accessible to everybody, and reusable in various contexts</li>
+                <li>Built on NumPy, SciPy, and matplotlib</li>
+                <li>Open source, commercially usable - BSD license</li>
             </ul>
-            <!-- Scikit-learn integrates machine learning algorithms in the tightly-knit scientific Python world, building upon numpy, scipy, and matplotlib. As a machine-learning module, it provides versatile tools for data mining and analysis in any field of science and engineering. It strives to be simple and efficient, accessible to everybody, and reusable in various contexts. -->
-
         </div>
-        <!-- end section -->
     </div>
 </div>
-
 {%- endif %}
 
 {% endblock %}
