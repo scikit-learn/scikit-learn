@@ -32,7 +32,12 @@ from .fast_dict import IntFloatDict, average_merge, max_merge,\
 
 def _fix_connectivity(X, connectivity, n_components=None):
     """
-    Warning: modifies connectivity in place
+    Fixes the connectivity matrix
+
+        - copies it
+        - makes it symmetric
+        - converts it to LIL if necessary
+        - completes it if necessary
     """
     n_samples = X.shape[0]
     if (connectivity.shape[0] != n_samples or
