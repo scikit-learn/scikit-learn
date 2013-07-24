@@ -473,7 +473,12 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
                           "The relevant new parameter is called ''scoring''.")
             scorer = make_scorer(self.score_func)
         elif isinstance(self.scoring, six.string_types):
-            scorer = SCORERS[self.scoring]
+            try:
+                scorer = SCORERS[self.scoring]
+            except KeyError:
+                raise ValueError('%s is not a valid scoring value.'
+                                 'Valid options are %s' % (self.scoring,
+                                 sorted(SCORERS.keys())))
         else:
             scorer = self.scoring
 

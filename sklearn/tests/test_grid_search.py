@@ -160,6 +160,10 @@ def test_grid_search():
     grid_search.decision_function(X)
     grid_search.transform(X)
 
+    # Test exception handling on scoring
+    grid_search.scoring = 'sklearn'
+    assert_raises(ValueError, grid_search.fit, X, y)
+
 
 def test_grid_search_no_score():
     # Test grid-search on classifier that has no score function.
