@@ -139,6 +139,6 @@ cdef class Tree:
                       np.ndarray y,
                       np.ndarray sample_weight=*)
 
-    cpdef predict(self, np.ndarray[DTYPE_t, ndim=2] X)
+    cpdef predict_leaf(self, np.ndarray[DTYPE_t, ndim=2] X)
     cpdef apply(self, np.ndarray[DTYPE_t, ndim=2] X)
     cpdef compute_feature_importances(self, normalize=*)
