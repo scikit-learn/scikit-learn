@@ -1,6 +1,5 @@
 .. raw:: html
 
-
     <!-- Block section -->
     <div class="container", style="width:100%;">
     <div class="row-fluid">
@@ -8,29 +7,35 @@
     <!-- Classification -->
     <div class="span4">
     <h3 class="no-bg"><a href="#">Classification</a></h3>
-    <blockquote>
+    <blockquote class="index-categories">
     The task of identifying to which set of categories a new observation belong
     to.
-    <small><a href="#">Examples</a></small>
+    <span class="example-links">
+      <small class="float-right"><a href="#">Examples</a></small>
+    </span>
     </blockquote>
     </div>
 
     <!-- Regression -->
     <div class="span4">
     <h3 class="no-bg"><a href="#">Regression</a></h3>
-    <blockquote>
+    <blockquote class="index-categories">
     The task of estimating relationships between variables.
-    <small><a href="#">Examples</a></small>
+    <span class="example-links">
+      <small class="float-right"><a href="#">Examples</a></small>
+    </span>
     </blockquote>
     </div>
 
     <!-- Clustering -->
     <div class="span4">
     <h3 class="no-bg"><a href="#">Clustering</a></h3>
-    <blockquote>
+    <blockquote class="index-categories">
     The task of grouping automatically sets of objects such that each group
     containts similar objects.
-    <small><a href="#">Examples</a></small>
+    <span class="example-links">
+      <small class="float-right"><a href="#">Examples</a></small>
+    </span>
     </blockquote>
     </div>
     <!-- row -->
@@ -40,18 +45,22 @@
     <!-- Dimension reduction -->
     <div class="span4">
     <h3 class="no-bg"><a href="#">Dimension reduction</a></h3>
-    <blockquote>
+    <blockquote class="index-categories">
     The task of reducing the number of random variables to consider.
-    <small><a href="#">Examples</a></small>
+    <span class="example-links">
+      <small class="float-right"><a href="#">Examples</a></small>
+    </span>
     </blockquote>
     </div>
 
     <!-- Model selection -->
     <div class="span4">
     <h3 class="no-bg"><a href="#">Model selection</a></h3>
-    <blockquote>
+    <blockquote class="index-categories">
     The task of comparing, validating and choosing parameters and models.
-    <small><a href="#">Examples</a></small>
+    <span class="example-links">
+      <small class="float-right"><a href="#">Examples</a></small>
+    </span>
     </blockquote>
     </div>
 
@@ -59,9 +68,9 @@
     <!-- Preprocessing -->
     <div class="span4">
     <h3 class="no-bg"><a href="#">Preprocessing</a></h3>
-    <blockquote>
+    <blockquote class="index-categories">
     The task of creating and normalizing features.
-    <small><a href="#">Examples</a></small>
+    <small class="float-right"><a href="#">Examples</a></small>
     </blockquote>
     </div>
     <!-- row -->
