@@ -242,7 +242,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=None,
 
 
 # average and complete linkage
-def linkage_tree(X, connectivity=None, n_components=None, copy=None,
+def linkage_tree(X, connectivity=None, n_components=None,
                  n_clusters=None, linkage='complete'):
     """Linkage agglomerative clustering based on a Feature matrix.
 
@@ -303,11 +303,6 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=None,
     --------
     ward_tree
     """
-    if copy is not None:
-        warnings.warn("The copy argument is deprecated and will be removed "
-                      "in 0.16. The connectivity is now always copied.",
-                      DeprecationWarning)
-
     X = np.asarray(X)
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
@@ -551,17 +546,10 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
-                 connectivity=None, copy=None, n_components=None,
+                 connectivity=None, n_components=None,
                  compute_full_tree='auto', linkage='ward'):
         self.n_clusters = n_clusters
         self.memory = memory
-        self.copy = copy
-        if copy is not None:
-            warnings.warn("The copy argument is deprecated and will be "
-                          "removed in 0.16. The connectivity is now "
-                          "always copied.",
-                          DeprecationWarning)
-
         self.n_components = n_components
         self.connectivity = connectivity
         self.compute_full_tree = compute_full_tree
