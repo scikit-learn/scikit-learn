@@ -13,6 +13,7 @@ from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_true
 
 from sklearn.metrics.pairwise import euclidean_distances
+from sklearn.metrics.pairwise import euclidean_distances_argmin
 from sklearn.metrics.pairwise import manhattan_distances
 from sklearn.metrics.pairwise import linear_kernel
 from sklearn.metrics.pairwise import chi2_kernel, additive_chi2_kernel
@@ -195,6 +196,14 @@ def test_euclidean_distances():
     Y = csr_matrix(Y)
     D = euclidean_distances(X, Y)
     assert_array_almost_equal(D, [[1., 2.]])
+
+
+def test_euclidean_distances_argmin():
+    """ Check the pairwise Euclidean minimum distances computation"""
+    X = [[0], [1]]
+    Y = [[-1], [2]]
+    D = euclidean_distances_argmin(X, Y)
+    assert_array_almost_equal(D, [0, 1])
 
 
 def test_chi_square_kernel():

@@ -34,6 +34,7 @@ kernel:
 #          Mathieu Blondel <mathieu@mblondel.org>
 #          Robert Layton <robertlayton@gmail.com>
 #          Andreas Mueller <amueller@ais.uni-bonn.de>
+#          Philippe Gervais <philippe.gervais@inria.fr>
 # License: BSD 3 clause
 
 import numpy as np
@@ -185,6 +186,51 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
         distances.flat[::distances.shape[0] + 1] = 0.0
 
     return distances if squared else np.sqrt(distances)
+
+
+# Name ? distances_argmin, distances_extrema
+def euclidean_distances_argmin(X, Y=None, axis=1, chunk_size=None,
+                              return_values=False):
+    """Pairwise distances from dense matrices.
+    Chunking performed on X.
+    chunk_size=None means automatic chunk size
+    """
+    X, Y = check_pairwise_arrays(X, Y)
+
+    if axis == 0:
+        X, Y = Y, X
+
+    if chunk_size is None:
+        # conservative estimate
+        chunk_size = max(int(X.shape[0] / 50.), 1)
+
+    if chunk_size <= 0:
+        chunk_size = 1
+    # Note: the last chunk may be incomplete
+    n_chunks = (X.shape[0] - 1) // chunk_size + 1
+    indices = np.empty(X.shape[0], dtype='int32')
+    if return_values:
+        values = np.empty(X.shape[0])
+
+    YY = (Y * Y).sum(axis=1)[np.newaxis, :]
+
+    for chunk in range(n_chunks):
+        sind = chunk * chunk_size
+        eind = (chunk + 1) * chunk_size
+        X_chunk = X[sind:eind, :]
+        tvar = np.dot(X_chunk, Y.T)
+        tvar *= -2
+        tvar += (X_chunk * X_chunk).sum(axis=1)[:, np.newaxis]
+        tvar += YY
+        np.maximum(tvar, 0, tvar)
+        indices[sind:eind] = tvar.argmin(axis=1)
+        if return_values:
+            values[sind:eind] = tvar[range(eind - sind), indices[sind:eind]]
+
+    if return_values:
+        return indices, values
+    else:
+        return indices
 
 
 def manhattan_distances(X, Y=None, sum_over_features=True,
