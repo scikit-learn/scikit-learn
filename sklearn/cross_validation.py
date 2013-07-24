@@ -1141,9 +1141,9 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         try:
             scorer = SCORERS[scoring]
         except KeyError:
-            raise ValueError('%s is not a valid scoring value.'
-                                'Valid options are %s' % (scoring,
-                                sorted(SCORERS.keys())))
+            raise ValueError('%r is not a valid scoring value. '
+                             'Valid options are %s' % (scoring,
+                             sorted(SCORERS.keys())))
     else:
         scorer = scoring
     if scorer is None and not hasattr(estimator, 'score'):

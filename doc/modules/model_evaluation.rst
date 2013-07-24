@@ -6,38 +6,31 @@
 Model evaluation: quantifying the quality of predictions
 ========================================================
 
-Here we discuss how to evaluate the quality of predictions of a model.
-There are 3 different use cases:
+There are 3 different approaches to evaluate the quality of predictions of a
+model:
 
-* Automatic model-evaluation tools (such as
+* **Estimator score method**: Estimators have a ``score`` method proving a
+  default evaluation criterion for the problem they are designed to solve.
+  This is not discussed on this page, but in each estimator's documentation.
+
+* **Scoring parameter**: Model-evaluation tools using 
+  :ref:`cross-validation <cross-validation>` (such as
   :func:`cross_validation.cross_val_score` and
-  :class:`grid_search.GridSearchCV`) embed a *scoring* strategy that
-  they use internally. This is discussed on section
-  :ref:`scoring_parameter`.
+  :class:`grid_search.GridSearchCV`) rely on an internal *scoring* strategy.
+  This is discussed on section :ref:`scoring_parameter`.
 
-* Estimators define a ``score`` method which provides a suitable evaluation
-  score for this estimator. This is not discussed on this page, but in
-  each estimator's documentation.
+* **Metric functions** The :mod:`metrics` module implements functions
+  assessing prediction errors for specific purpose. This is discussed in
+  the section :ref:`prediction_error_metrics`.
 
-* The :mod:`metrics` module implements useful functions for
-  assessing the prediction errors under a specific criterion:
-
-  - Functions ending with ``_score`` return a value to
-    maximize (the higher the better).
-  
-  - Functions ending with ``_error`` or ``_loss`` return a
-    value to minimize (the lower the better).
-
-  These are discussed on sections :ref:`classification_metrics`,
-  :ref:`regression_metrics`, and :ref:`clustering_metrics`.
-
-Finally, section :ref:`dummy_estimators` is useful to simulate the values of
-those metrics under the chance.
+Finally, :ref:`dummy_estimators` are useful to get a baseline
+value of those metrics under the chance.
 
 .. seealso::
    
-   For pairwise metrics, giving metrics between *samples* and not
-   estimators or predictions, see the :ref:`metrics` section.
+   For pairwise metrics, giving metrics (*e.g.* distances, kernels, ...)
+   between *samples* and not estimators or predictions, see the :ref:`metrics`
+   section.
 
 .. _scoring_parameter:
 
@@ -47,7 +40,7 @@ The `scoring` parameter: defining model evaluation rules
 Model selection and evaluation using tools such as
 :class:`grid_search.GridSearchCV` and
 :func:`cross_validation.cross_val_score`, take a `scoring` parameter that
-controls what metric they apply to models that they try out.
+controls what metric they apply to estimators evaluated.
 
 Common cases: predefined values
 --------------------------------
@@ -74,7 +67,7 @@ Scoring                 Function
 'r2'                    :func:`sklearn.metrics.r2_score`
 ===================     ===============================================
 
-Setting the `scoring` parameter to a wrong value should give you a list
+Setting the ``scoring`` parameter to a wrong value should give you a list
 of acceptable values::
 
     >>> from sklearn import svm, cross_validation, datasets
@@ -82,16 +75,15 @@ of acceptable values::
     >>> X, y = iris.data, iris.target
     >>> model = svm.SVC()
     >>> cross_validation.cross_val_score(model, X, y, scoring='wrong_choice')
-    ValueError: wrong_choice is not a valid scoring value.Valid options are
-    ['accuracy', 'ari', 'average_precision', 'f1', 'mse', 'precision', 'r2',
-    'recall', 'roc_auc']
+    Traceback (most recent call last):
+    ValueError: 'wrong_choice' is not a valid scoring value. Valid options are ['accuracy', 'ari', 'average_precision', 'f1', 'mse', 'precision', 'r2', 'recall', 'roc_auc']
 
 .. note::
 
     The corresponding scorer objects are stored in the dictionary
     ``sklearn.metrics.SCORERS``.
 
-The above choices correspond to error *metric* functions that can be applied to
+The above choices correspond to error-metric functions that can be applied to
 predicted values. These are detailed below, in the next sections.
 
 
@@ -156,11 +148,23 @@ the following two rules:
   ``estimator``'s predictions on ``X`` which reference to ``y``.
   Again, higher numbers are better.
 
+TODO
+
+- Functions ending with ``_score`` return a value to
+  maximize (the higher the better).
+
+- Functions ending with ``_error`` or ``_loss`` return a
+  value to minimize (the lower the better).
+
+.. _prediction_error_metrics:
+
+Function for prediction-error metrics
+======================================
 
 .. _classification_metrics:
 
 Classification metrics
-======================
+-----------------------
 
 .. currentmodule:: sklearn.metrics
 
@@ -211,7 +215,8 @@ confidence values or binary decisions value.
 In the following sub-sections, we will describe each of those functions.
 
 Accuracy score
----------------
+..............
+
 The :func:`accuracy_score` function computes the
 `accuracy <http://en.wikipedia.org/wiki/Accuracy_and_precision>`_, the fraction
 (default) or the number of correct predictions.
@@ -258,7 +263,8 @@ and with a list of labels format:
     the dataset.
 
 Area under the curve (AUC)
---------------------------
+...........................
+
 The :func:`auc_score` function computes the 'area under the curve' (AUC) which
 is the area under the receiver operating characteristic (ROC) curve.
 
@@ -281,7 +287,8 @@ and the :ref:`roc_metrics` section.
 .. _average_precision_metrics:
 
 Average precision score
------------------------
+........................
+
 The :func:`average_precision_score` function computes the average precision
 (AP) from prediction scores. This score corresponds to the area under the
 precision-recall curve.
@@ -300,7 +307,8 @@ and the :ref:`precision_recall_f_measure_metrics` section.
 
 
 Confusion matrix
-----------------
+................
+
 The :func:`confusion_matrix` function computes the `confusion matrix
 <http://en.wikipedia.org/wiki/Confusion_matrix>`_ to evaluate
 the accuracy on a classification problem.
@@ -341,10 +349,11 @@ from the :ref:`example_plot_confusion_matrix.py` example):
 
 
 Classification report
----------------------
+......................
+
 The :func:`classification_report` function builds a text report showing the
 main classification metrics. Here a small example with custom ``target_names``
-and inferred labels:
+and inferred labels::
 
    >>> from sklearn.metrics import classification_report
    >>> y_true = [0, 1, 2, 2, 0]
@@ -375,7 +384,8 @@ and inferred labels:
     grid search with a nested cross-validation.
 
 Hamming loss
-------------
+.............
+
 The :func:`hamming_loss` computes the average Hamming loss or `Hamming
 distance <http://en.wikipedia.org/wiki/Hamming_distance>`_ between two sets
 of samples.
@@ -390,7 +400,7 @@ Hamming loss :math:`L_{Hamming}` between two samples is defined as:
    L_{Hamming}(y, \hat{y}) = \frac{1}{n_\text{labels}} \sum_{j=0}^{n_\text{labels} - 1} 1(\hat{y}_j \not= y_j)
 
 where :math:`1(x)` is the `indicator function
-<http://en.wikipedia.org/wiki/Indicator_function>`_.
+<http://en.wikipedia.org/wiki/Indicator_function>`_. ::
 
   >>> from sklearn.metrics import hamming_loss
   >>> y_pred = [1, 2, 3, 4]
@@ -398,12 +408,12 @@ where :math:`1(x)` is the `indicator function
   >>> hamming_loss(y_true, y_pred)
   0.25
 
-In the multilabel case with binary indicator format:
+In the multilabel case with binary indicator format: ::
 
   >>> hamming_loss(np.array([[0.0, 1.0], [1.0, 1.0]]), np.zeros((2, 2)))
   0.75
 
-and with a list of labels format:
+and with a list of labels format: ::
 
   >>> hamming_loss([(1, 2), (3,)], [(1, 2), tuple()])  # doctest: +ELLIPSIS
   0.166...
@@ -426,7 +436,7 @@ and with a list of labels format:
 
 
 Jaccard similarity coefficient score
-------------------------------------
+.....................................
 
 The :func:`jaccard_similarity_score` function computes the average (default)
 or sum of `Jaccard similarity coefficients
@@ -466,11 +476,10 @@ and with a list of labels format:
   0.25
 
 
-
 .. _precision_recall_f_measure_metrics:
 
 Precision, recall and F-measures
---------------------------------
+.................................
 
 The `precision <http://en.wikipedia.org/wiki/Precision_and_recall#Precision>`_
 is intuitively the ability of the classifier not to label as
@@ -724,7 +733,7 @@ Here is an example where ``average`` is set to ``None``::
   (array([ 0.66...,  0.        ,  0.        ]), array([ 1.,  0.,  0.]), array([ 0.71...,  0.        ,  0.        ]), array([2, 2, 2]...))
 
 Hinge loss
-----------
+...........
 
 The :func:`hinge_loss` function computes the average
 `hinge loss function <http://en.wikipedia.org/wiki/Hinge_loss>`_. The hinge
@@ -758,7 +767,8 @@ with a svm classifier::
 
 
 Matthews correlation coefficient
---------------------------------
+.................................
+
 The :func:`matthews_corrcoef` function computes the Matthew's correlation
 coefficient (MCC) for binary classes (quoting the `Wikipedia article on the
 Matthew's correlation coefficient
@@ -793,7 +803,7 @@ function:
 .. _roc_metrics:
 
 Receiver operating characteristic (ROC)
----------------------------------------
+........................................
 
 The function :func:`roc_curve` computes the `receiver operating characteristic
 curve, or ROC curve (quoting
@@ -842,7 +852,8 @@ The following figure shows an example of such ROC curve.
 .. _zero_one_loss:
 
 Zero one loss
---------------
+..............
+
 The :func:`zero_one_loss` function computes the sum or the average of the 0-1
 classification loss (:math:`L_{0-1}`) over :math:`n_{\text{samples}}`. By
 defaults, the function normalizes over the sample. To get the sum of the
@@ -892,7 +903,7 @@ and with a list of labels format:
 .. _regression_metrics:
 
 Regression metrics
-==================
+-------------------
 
 .. currentmodule:: sklearn.metrics
 
@@ -903,7 +914,8 @@ to handle the multioutput case: :func:`mean_absolute_error`,
 
 
 Explained variance score
-------------------------
+.........................
+
 The :func:`explained_variance_score` computes the `explained variance
 regression score <http://en.wikipedia.org/wiki/Explained_variation>`_.
 
@@ -927,7 +939,8 @@ function::
     0.957...
 
 Mean absolute error
--------------------
+...................
+
 The :func:`mean_absolute_error` function computes the `mean absolute
 error <http://en.wikipedia.org/wiki/Mean_absolute_error>`_, which is a risk
 function corresponding to the expected value of the absolute error loss or
@@ -956,7 +969,8 @@ Here a small example of usage of the :func:`mean_absolute_error` function::
 
 
 Mean squared error
-------------------
+...................
+
 The :func:`mean_squared_error` function computes the `mean square
 error <http://en.wikipedia.org/wiki/Mean_squared_error>`_, which is a risk
 function corresponding to the expected value of the squared error loss or
@@ -990,7 +1004,8 @@ function::
     evaluate gradient boosting regression.
 
 R² score, the coefficient of determination
-------------------------------------------
+...........................................
+
 The :func:`r2_score` function computes R², the `coefficient of
 determination <http://en.wikipedia.org/wiki/Coefficient_of_determination>`_.
 It provides a measure of how well future samples are likely to
@@ -1030,7 +1045,7 @@ Here a small example of usage of the :func:`r2_score` function::
 .. _clustering_metrics:
 
 Clustering metrics
-======================
+-------------------
 
 The :mod:`sklearn.metrics` implements several losses, scores and utility
 function for more information see the :ref:`clustering_evaluation` section.
