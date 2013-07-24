@@ -10,7 +10,8 @@ they can be computed on-the-fly without the need for repeated model
 fitting.
 OOB estimates are only available for Stochastic Gradient Boosting
 (i.e. ``subsample < 1.0``), the estimates are derived from the improvement
-in loss based on the out-of-bag examples.
+in loss based on the examples not included in the boostrap sample
+(the so-called out-of-bag examples).
 The OOB estimator is a pessimistic estimator of the true
 test loss, but remains a fairly good approximation for a small number of trees.
 
@@ -19,7 +20,8 @@ as a function of the boosting iteration. As you can see, it tracks the test
 loss for the first hundred iterations but then diverges in a
 pessimistic way.
 The figure also shows the performance of 3-fold cross validation which
-usually gives a better estimate but is computationally more demanding.
+usually gives a better estimate of the test loss
+but is computationally more demanding.
 """
 print(__doc__)
 
