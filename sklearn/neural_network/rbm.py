@@ -1,7 +1,9 @@
 """Restricted Boltzmann Machine
 """
 
-# Author: Yann N. Dauphin <dauphiya@iro.umontreal.ca>
+# Main author: Yann N. Dauphin <dauphiya@iro.umontreal.ca>
+# Author: Vlad Niculae
+# Author: Gabriel Synnaeve
 # License: BSD Style.
 
 import time
@@ -23,7 +25,8 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
     A Restricted Boltzmann Machine with binary visible units and
     binary hiddens. Parameters are estimated using Stochastic Maximum
-    Likelihood (SML).
+    Likelihood (SML), also known as Persistent Contrastive Divergence (PCD)
+    [2].
 
     The time complexity of this implementation is ``O(d ** 2)`` assuming
     d ~ n_features ~ n_components.
@@ -31,10 +34,10 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     n_components : int, optional
-        Number of binary hidden units
+        Number of binary hidden units.
 
     learning_rate : float, optional
-        Learning rate to use during learning. It is *highly* recommended
+        The learning rate for weight updates. It is *highly* recommended
         to tune this hyper-parameter. Reasonable values are in the
         10**[0., -3.] range.
 
@@ -60,10 +63,10 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         units and n_components is the number of hidden units.
 
     intercept_hidden_ : array-like, shape (n_components,), optional
-        Biases of the hidden units
+        Biases of the hidden units.
 
     intercept_visible_ : array-like, shape (n_features,), optional
-        Biases of the visible units
+        Biases of the visible units.
 
     Examples
     --------
@@ -82,6 +85,10 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
     [1] Hinton, G. E., Osindero, S. and Teh, Y. A fast learning algorithm for
         deep belief nets. Neural Computation 18, pp 1527-1554.
         http://www.cs.toronto.edu/~hinton/absps/fastnc.pdf
+
+    [2] Tieleman, T. Training Restricted Boltzmann Machines using
+        Approximations to the Likelihood Gradient. International Conference
+        on Machine Learning (ICML) 2008
     """
     def __init__(self, n_components=256, learning_rate=0.1, batch_size=10,
                  n_iter=10, verbose=False, random_state=None):
@@ -99,12 +106,12 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X: array-like, shape (n_samples, n_features)
-            The data to be transformed
+            The data to be transformed.
 
         Returns
         -------
         h: array, shape (n_samples, n_components)
-            Latent representations of the data
+            Latent representations of the data.
         """
         X, = check_arrays(X, sparse_format='csc', dtype=np.float)
         return self._mean_hiddens(X)
@@ -116,12 +123,12 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         v: array-like, shape (n_samples, n_features)
-        Values of the visible layer
+            Values of the visible layer.
 
         Returns
         -------
         h: array-like, shape (n_samples, n_components)
-        Corresponding mean field values for the hidden layer
+            Corresponding mean field values for the hidden layer.
         """
         return logistic_sigmoid(safe_sparse_dot(v, self.components_.T)
                                 + self.intercept_hidden_)
@@ -133,14 +140,15 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         v: array-like, shape (n_samples, n_features)
-            Values of the visible layer to sample from
+            Values of the visible layer to sample from.
 
         rng: RandomState
-            Random number generator to use
+            Random number generator to use.
 
         Returns
         -------
         h: array-like, shape (n_samples, n_components)
+            Values of the hidden layer.
         """
         p = self._mean_hiddens(v)
         p[rng.uniform(size=p.shape) < p] = 1.
@@ -156,11 +164,12 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
             Values of the hidden layer to sample from.
 
         rng: RandomState
-            Random number generator to use
+            Random number generator to use.
 
         Returns
         -------
         v: array-like, shape (n_samples, n_features)
+            Values of the visible layer.
         """
         p = logistic_sigmoid(np.dot(h, self.components_)
                              + self.intercept_visible_)
@@ -175,12 +184,12 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         v: array-like, shape (n_samples, n_features)
-            Values of the visible layer
+            Values of the visible layer.
 
         Returns
         -------
         free_energy: array-like, shape (n_samples,)
-            The value of the free energy
+            The value of the free energy.
         """
         return - np.dot(v, self.intercept_visible_) - np.log(1. + np.exp(
             safe_sparse_dot(v, self.components_.T) + self.intercept_hidden_)) \
@@ -193,12 +202,12 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         v: array-like, shape (n_samples, n_features)
-            Values of the visible layer to start from
+            Values of the visible layer to start from.
 
         Returns
         -------
         v_new: array-like, shape (n_samples, n_features)
-            Values of the visible layer after one Gibbs step
+            Values of the visible layer after one Gibbs step.
         """
         rng = check_random_state(self.random_state)
         h_ = self._sample_hiddens(v, rng)
@@ -207,17 +216,18 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         return v_
 
     def _fit(self, v_pos, rng):
-        """
+        """Inner fit for one mini-batch.
+
         Adjust the parameters to maximize the likelihood of ``{\bf v}``
-        using Stochastic Maximum Likelihood (SML) [1].
+        using Stochastic Maximum Likelihood (SML).
 
         Parameters
         ----------
         v_pos: array-like, shape (n_samples, n_features)
-            The data to use for training
+            The data to use for training.
 
         rng: RandomState
-            Random number generator to use for sampling
+            Random number generator to use for sampling.
 
         Returns
         -------
@@ -226,9 +236,6 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
 
         References
         ----------
-        [1] Tieleman, T. Training Restricted Boltzmann Machines using
-            Approximations to the Likelihood Gradient. International Conference
-            on Machine Learning (ICML) 2008
         """
         h_pos = self._mean_hiddens(v_pos)
         v_neg = self._sample_visibles(self.h_samples_, rng)
@@ -256,12 +263,12 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         v: array-like, shape (n_samples, n_features)
-            Values of the visible layer
+            Values of the visible layer.
 
         Returns
         -------
         pseudo_likelihood: array-like, shape (n_samples,)
-            Value of the pseudo-likelihood (proxy to likelihood)
+            Value of the pseudo-likelihood (proxy to likelihood).
         """
         rng = check_random_state(self.random_state)
         fe = self._free_energy(v)
@@ -280,12 +287,12 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X: array-like, shape (n_samples, n_features)
-            Training data
+            Training data.
 
         Returns
         -------
         self:
-            The fitted model
+            The fitted model.
         """
         X, = check_arrays(X, sparse_format='csc', dtype=np.float)
         n_samples = X.shape[0]
@@ -331,12 +338,12 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X: array-like, shape (n_samples, n_features)
-            Training data
+            Training data.
 
         Returns
         -------
         X_transformed, array, shape (n_samples, n_components)
-            Latent representations of the input data
+            Latent representations of the input data.
         """
         X = array2d(X)
         self.fit(X, y)
