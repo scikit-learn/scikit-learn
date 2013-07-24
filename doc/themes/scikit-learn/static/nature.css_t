@@ -342,7 +342,7 @@ div.bodywrapper {
     margin: 0 0 0 0;
 }
 
-div.body h3.no-bg {
+div.body h3.no-bg, div.body h4.no-bg {
     background-color: transparent;
 }
     

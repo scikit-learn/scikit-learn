@@ -78,20 +78,20 @@
     </div> <!-- container -->
 
 
-    <!-- Who is using -->
     <div class="container" style="padding-top: 40px; width:100%">
     <div class="row-fluid">
     <!-- News -->
     <div class="span3" style="border-right: 1px solid #CCC; padding-right:5px">
-    <h4>News</h4>
+    <h4 class="no-bg">News</h4>
     <ul>
     <li>The scikit-learn international code sprint is around the corner! Please, sponsor us.</li>
-    <li>scikit-learn 0.13.1 is available for download. See what's new and tips on installing.</li>
+    <li>scikit-learn 0.13.1 is available for download.</li>
     </ul>
     </div>
+
     <!-- Sponsors -->
     <div class="span3" style="border-right: 1px solid #CCC; padding-right:5px">
-    <h4>Sponsors/Donations</h4>
+    <h4 class="no-bg">Sponsors/Donations</h4>
     <p>Any donations are very welcome!</p>
     <form target="_top" method="post" action="https://www.paypal.com/cgi-bin/webscr">
     <input type="hidden" value="_s-xclick" name="cmd">
@@ -101,18 +101,20 @@
     </form>
     <a href="#">Read more here ...</a>
     </div>
+
     <!-- Community -->
     <div class="span3" style="border-right: 1px solid #CCC; padding-right:5px">
-    <h4>Community</h4>
+    <h4 class="no-bg">Community</h4>
     <ul>
-    <li>The main mailing list is scikit-learn-general.</li>
-    <li>There is also a commit list scikit-learn-commits, where updates to the main repository and test failures get notified.</li>
+    <li>Appication and usage questions are best posted on <a href="#">stackoverflow.com</a> with tag sklearn.</li>
+    <li>The mailing list for general discussions is scikit-learn-general@lists.sourceforge.net</li>
+    <li>There is a #scikit-learn IRC channel on freenode that is frequented by devs and user.</li>
     </ul>
     </div>
 
-
+    <!-- who using -->
     <div class="span3">
-    <h4>Who is using it</h4>
+    <h4 class="no-bg">Who is using it</h4>
     <div id="myCarousel" class="carousel slide">
     <ol class="carousel-indicators">
     <li data-target="#myCarousel" data-slide-to="0" class="active"></li>
