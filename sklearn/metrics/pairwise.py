@@ -95,10 +95,19 @@ def check_pairwise_arrays(X, Y):
 
     if not (X.dtype == Y.dtype == np.float32):
         if Y is X:
-            X = Y = X.astype(np.float)
+            if issparse(X):
+                X.data = Y.data = np.asarray(X.data, dtype=np.float)
+            else:
+                X = Y = np.asarray(X, dtype=np.float)
         else:
-            X = X.astype(np.float)
-            Y = Y.astype(np.float)
+            if issparse(X):
+                X.data = np.asarray(X.data, dtype=np.float)
+            else:
+                X = np.asarray(X, dtype=np.float)
+            if issparse(Y):
+                Y.data = np.asarray(Y.data, dtype=np.float)
+            else:
+                Y = np.asarray(Y, dtype=np.float)
     return X, Y
 
 
@@ -188,8 +197,8 @@ def euclidean_distances(X, Y=None, Y_norm_squared=None, squared=False):
     return distances if squared else np.sqrt(distances)
 
 
-# Name ? distances_argmin, distances_extrema
-def euclidean_distances_argmin(X, Y=None, axis=1, chunk_size=None,
+def euclidean_distances_argmin(X, Y=None, axis=1,
+                               chunk_x_size=None, chunk_y_size=None,
                               return_values=False):
     """Pairwise distances from dense matrices.
     Chunking performed on X.
@@ -199,33 +208,65 @@ def euclidean_distances_argmin(X, Y=None, axis=1, chunk_size=None,
 
     if axis == 0:
         X, Y = Y, X
+        chunk_x_size, chunk_y_size = chunk_y_size, chunk_x_size
 
-    if chunk_size is None:
-        # conservative estimate
-        chunk_size = max(int(X.shape[0] / 50.), 1)
+    if chunk_x_size is None and chunk_y_size is None:
+        # Cut arrays in a given number of pieces, along x or Y, depending
+        # on which arrays is bigger.
+        chunk_num = 50
 
-    if chunk_size <= 0:
-        chunk_size = 1
-    # Note: the last chunk may be incomplete
-    n_chunks = (X.shape[0] - 1) // chunk_size + 1
+        if X.shape[0] >= Y.shape[0] / 2 and Y.shape[0] >= X.shape[0] / 2:
+            chunk_x_size = max(int(X.shape[0] / 7), 1)
+            chunk_y_size = max(int(Y.shape[0] / 7), 1)
+        elif X.shape[0] > Y.shape[0]:
+            chunk_x_size = max(int(X.shape[0] / chunk_num), 1)
+            chunk_y_size = Y.shape[0]
+        else:
+            chunk_x_size = X.shape[0]
+            chunk_y_size = max(int(Y.shape[0] / chunk_num), 1)
+
+    if chunk_x_size is None or chunk_x_size <= 0:
+        chunk_x_size = X.shape[0]
+    if chunk_y_size is None or chunk_y_size <= 0:
+        chunk_y_size = Y.shape[0]
+
+    # Note: the last chunk can be incomplete
+    n_chunks_x = (X.shape[0] - 1) // chunk_x_size + 1
+    n_chunks_y = (Y.shape[0] - 1) // chunk_y_size + 1
+
+    # Allocate output arrays
     indices = np.empty(X.shape[0], dtype='int32')
-    if return_values:
-        values = np.empty(X.shape[0])
+    values = np.empty(X.shape[0])
+    values.fill(float('inf'))
 
-    YY = (Y * Y).sum(axis=1)[np.newaxis, :]
+    for chunk_x in range(n_chunks_x):
+        x_sind = chunk_x * chunk_x_size
+        x_eind = min((chunk_x + 1) * chunk_x_size, X.shape[0])
+        X_chunk = X[x_sind:x_eind, :]
 
-    for chunk in range(n_chunks):
-        sind = chunk * chunk_size
-        eind = (chunk + 1) * chunk_size
-        X_chunk = X[sind:eind, :]
-        tvar = np.dot(X_chunk, Y.T)
-        tvar *= -2
-        tvar += (X_chunk * X_chunk).sum(axis=1)[:, np.newaxis]
-        tvar += YY
-        np.maximum(tvar, 0, tvar)
-        indices[sind:eind] = tvar.argmin(axis=1)
-        if return_values:
-            values[sind:eind] = tvar[range(eind - sind), indices[sind:eind]]
+        for chunk_y in range(n_chunks_y):
+            y_sind = chunk_y * chunk_y_size
+            y_eind = (chunk_y + 1) * chunk_y_size
+            Y_chunk = Y[y_sind:y_eind, :]
+
+            # Compute distances in chunk
+            tvar = np.dot(X_chunk, Y_chunk.T)
+            tvar *= -2
+            tvar += (X_chunk * X_chunk).sum(axis=1)[:, np.newaxis]
+            tvar += (Y_chunk * Y_chunk).sum(axis=1)[np.newaxis, :]
+            np.maximum(tvar, 0, tvar)
+
+            # Update indices and minimum values using chunk
+            min_indices = tvar.argmin(axis=1)
+            min_values = tvar[range(x_eind - x_sind), min_indices]
+
+            flags = values[x_sind:x_eind] > min_values
+
+            indices[x_sind:x_eind] = np.where(
+                flags, min_indices + y_sind, indices[x_sind:x_eind])
+
+            values[x_sind:x_eind] = np.where(
+                flags, min_values, values[x_sind:x_eind])
 
     if return_values:
         return indices, values

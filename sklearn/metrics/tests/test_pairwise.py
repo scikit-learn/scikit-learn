@@ -370,6 +370,10 @@ def test_check_sparse_arrays():
     assert_true(abs(XA_sparse - XA_checked).nnz == 0)
     assert_true(abs(XB_sparse - XB_checked).nnz == 0)
 
+    XA_checked, XB_checked = check_pairwise_arrays(XA_sparse, XA_sparse)
+    assert_true(XA_sparse == XB_checked)
+    assert_true(abs(XA_sparse - XA_checked).nnz == 0)
+
 
 def tuplify(X):
     """ Turns a numpy matrix (any n-dimensional array) into tuples."""
