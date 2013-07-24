@@ -9,7 +9,7 @@
     <div class="span4">
     <h3 class="no-bg"><a href="#">Classification</a></h3>
     <blockquote>
-    The task of identifying to which set of category a new observation belong
+    The task of identifying to which set of categories a new observation belong
     to.
     <small><a href="#">Examples</a></small>
     </blockquote>
@@ -50,7 +50,7 @@
     <div class="span4">
     <h3 class="no-bg"><a href="#">Model selection</a></h3>
     <blockquote>
-    The task of comparing, validating and choosing parameters and model.
+    The task of comparing, validating and choosing parameters and models.
     <small><a href="#">Examples</a></small>
     </blockquote>
     </div>
