@@ -22,7 +22,7 @@
     <div class="span4">
     <h3 class="no-bg"><a href="#">Regression</a></h3>
     <blockquote class="index-categories">
-    <class="box-tagline">Predicting a continuous value for a new example.</p>
+    <p class="box-tagline">Predicting a continuous value for a new example.</p>
     <strong>Applications</strong>: drug response, stock prices.</br>
     <strong>Algorithms</strong>: SVR, ridge regression, Lasso, ...
     <span class="example-links">
