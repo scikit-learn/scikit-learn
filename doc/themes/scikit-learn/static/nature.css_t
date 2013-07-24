@@ -750,6 +750,7 @@ div.banner-inner {
 div.banner-container h1 {
   font-family: Monaco, Menlo, Consolas, 'Courier New', monospace;
   font-size: 45px;
+  margin-top: 10px;
   margin-bottom: 0px;
   color: white;
 }
