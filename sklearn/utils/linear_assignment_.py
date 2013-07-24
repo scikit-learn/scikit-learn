@@ -2,55 +2,36 @@
 Solve the unique lowest-cost assignment problem using the
 Hungarian algorithm (also known as Munkres algorithm).
 
-References
-==========
-
-1. http://www.public.iastate.edu/~ddoty/HungarianAlgorithm.html
-
-2. Harold W. Kuhn. The Hungarian Method for the assignment problem.
-   *Naval Research Logistics Quarterly*, 2:83-97, 1955.
-
-3. Harold W. Kuhn. Variants of the Hungarian method for assignment
-   problems. *Naval Research Logistics Quarterly*, 3: 253-258, 1956.
-
-4. Munkres, J. Algorithms for the Assignment and Transportation Problems.
-   *Journal of the Society of Industrial and Applied Mathematics*,
-   5(1):32-38, March, 1957.
-
-5. http://en.wikipedia.org/wiki/Hungarian_algorithm
-
 """
-# Based on original code by Brain Clapper, adapted to numpy to scikits
-# learn coding standards by G. Varoquaux
+# Based on original code by Brain Clapper, adapted to numpy by Gael Varoquaux
 
-# Copyright (c) 2008 Brian M. Clapper <bmc@clapper.org>, G Varoquaux
-# Author: Brian M. Clapper, G Varoquaux
+# Copyright (c) 2008 Brian M. Clapper <bmc@clapper.org>, Gael Varoquaux
+# Author: Brian M. Clapper, Gael Varoquaux
 # LICENSE: BSD
 
 import numpy as np
 
-################################################################################
+
+###############################################################################
 # Object-oriented form of the algorithm
 class _Hungarian(object):
-    """
+    """Hungarian algorithm
+
     Calculate the Munkres solution to the classical assignment problem.
-    See the module documentation for usage.
     """
 
     def compute(self, cost_matrix):
         """
-        Compute the indices for the lowest-cost pairings between rows and
-        columns in the database. Returns a list of (row, column) tuples
-        that can be used to traverse the matrix.
+        Compute the indices for the lowest-cost pairings.
 
         Parameters
-        ===========
-        cost_matrix: 2D matrix
-                The cost matrix. Does not have to be square.
+        ----------
+        cost_matrix : 2D matrix
+            The cost matrix. Does not have to be square.
 
         Returns
-        ========
-        indices: 2D array of indices
+        -------
+        indices : 2D array of indices
             The pairs of (row, col) indices in the original array giving
             the original ordering.
         """
@@ -61,9 +42,9 @@ class _Hungarian(object):
         # transpose the cost function when needed. Just have to
         # remember to swap the result columns later in this function.
         doTranspose = (cost_matrix.shape[1] < cost_matrix.shape[0])
-        if doTranspose :
+        if doTranspose:
             self.C = (cost_matrix.T).copy()
-        else :
+        else:
             self.C = cost_matrix.copy()
 
         # At this point, m >= n.
@@ -79,13 +60,13 @@ class _Hungarian(object):
         done = False
         step = 1
 
-        steps = { 1 : self._step1,
-                  3 : self._step3,
-                  4 : self._step4,
-                  5 : self._step5,
-                  6 : self._step6 }
+        steps = {1: self._step1,
+                 3: self._step3,
+                 4: self._step4,
+                 5: self._step5,
+                 6: self._step6}
 
-        if m == 0 or n == 0 :
+        if m == 0 or n == 0:
             # No need to bother with assignments if one of the dimensions
             # of the cost matrix is zero-length.
             done = True
@@ -102,7 +83,7 @@ class _Hungarian(object):
 
         # We need to swap the columns because we originally
         # did a transpose on the input cost matrix.
-        if doTranspose :
+        if doTranspose:
             results = results[:, ::-1]
 
         return results.tolist()
@@ -113,8 +94,8 @@ class _Hungarian(object):
         # Step1: For each row of the matrix, find the smallest element and
         # subtract it from every element in its row.
         self.C -= self.C.min(axis=1)[:, np.newaxis]
-        # Step2: Find a zero (Z) in the resulting matrix. If there is no 
-        # starred zero in its row or column, star Z. Repeat for each element 
+        # Step2: Find a zero (Z) in the resulting matrix. If there is no
+        # starred zero in its row or column, star Z. Repeat for each element
         # in the matrix.
         for i, j in zip(*np.where(self.C == 0)):
             if self.col_uncovered[j] and self.row_uncovered[i]:
@@ -134,8 +115,8 @@ class _Hungarian(object):
         marked = (self.marked == 1)
         self.col_uncovered[np.any(marked, axis=0)] = False
 
-        if marked.sum() >= self.n :
-            return 7 # done
+        if marked.sum() >= self.n:
+            return 7  # done
         else:
             return 4
 
@@ -171,10 +152,9 @@ class _Hungarian(object):
                     col = star_col
                     self.row_uncovered[row] = False
                     self.col_uncovered[col] = True
-                    covered_C[:, col] = C[:, col]*(
-                                self.row_uncovered.astype(np.int))
+                    covered_C[:, col] = C[:, col] * (
+                        self.row_uncovered.astype(np.int))
                     covered_C[row] = 0
-
 
     def _step5(self):
         """
@@ -257,15 +237,44 @@ class _Hungarian(object):
         self.col_uncovered[:] = True
 
 
-
-################################################################################
+###############################################################################
 # Functional form for easier use
-def hungarian(cost_matrix):
-    """ Return the indices to permute the columns of the matrix
-        to minimize its trace.
+def linear_assignment(X):
+    """Solve the linear assignment problem using the Hungarian algorithm
+
+    The problem is also known as maximum weight matching in bipartite graphs.
+    The method is also known as the Munkres or Kuhn-Munkres algorithm.
+
+    Parameters
+    ----------
+    X : array
+        The cost matrix of the bipartite graph
+
+    Returns
+    -------
+    indices : array,
+        The pairs of (row, col) indices in the original array giving
+        the original ordering.
+
+    References
+    ----------
+
+    1. http://www.public.iastate.edu/~ddoty/HungarianAlgorithm.html
+
+    2. Harold W. Kuhn. The Hungarian Method for the assignment problem.
+       *Naval Research Logistics Quarterly*, 2:83-97, 1955.
+
+    3. Harold W. Kuhn. Variants of the Hungarian method for assignment
+       problems. *Naval Research Logistics Quarterly*, 3: 253-258, 1956.
+
+    4. Munkres, J. Algorithms for the Assignment and Transportation Problems.
+       *Journal of the Society of Industrial and Applied Mathematics*,
+       5(1):32-38, March, 1957.
+
+    5. http://en.wikipedia.org/wiki/Hungarian_algorithm
     """
     H = _Hungarian()
-    indices = H.compute(cost_matrix)
+    indices = H.compute(X)
     indices.sort()
     # Re-force dtype to ints in case of empty list
     indices = np.array(indices, dtype=int)
@@ -273,19 +282,3 @@ def hungarian(cost_matrix):
     # This is needed when dealing with an empty list
     indices.shape = (-1, 2)
     return indices
-
-
-def find_permutation(vectors, reference):
-    """ Returns the permutation indices of the vectors to maximize the
-        correlation to the reference
-    """
-    # Compute a correlation matrix
-    reference = reference/(reference**2).sum(axis=-1)[:, np.newaxis]
-    vectors = vectors/(vectors**2).sum(axis=-1)[:, np.newaxis]
-    K = np.abs(np.dot(reference, vectors.T))
-    K -= 1 + K.max()
-    K *= -1
-    return hungarian(K)
-
-
-
