@@ -30,18 +30,16 @@ cdef DTYPE_t _inner_log_logistic_sigmoid(DTYPE_t x):
 def _logistic_sigmoid(int n_samples, int n_features, 
                      np.ndarray[DTYPE_t, ndim=2] X,
                      np.ndarray[DTYPE_t, ndim=2] out):
-
-    for ii from 0 <= ii < n_samples:
-        for jj from 0 <= jj < n_features:
-            out[ii, jj] = _inner_logistic_sigmoid(X[ii, jj])
+    for i in range(n_samples):
+        for j in range(n_features):
+            out[i, j] = _inner_logistic_sigmoid(X[i, j])
     return out
 
 
 def _log_logistic_sigmoid(int n_samples, int n_features, 
                            np.ndarray[DTYPE_t, ndim=2] X,
                            np.ndarray[DTYPE_t, ndim=2] out):
-
-    for ii from 0 <= ii < n_samples:
-        for jj from 0 <= jj < n_features:
-            out[ii, jj] = _inner_log_logistic_sigmoid(X[ii, jj])
+    for i in range(n_samples):
+        for j in range(n_features):
+            out[i, j] = _inner_log_logistic_sigmoid(X[i, j])
     return out
