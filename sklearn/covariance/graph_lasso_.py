@@ -9,7 +9,6 @@ import warnings
 import operator
 import sys
 import time
-import itertools
 
 import numpy as np
 from scipy import linalg
