@@ -22,7 +22,8 @@ from .stochastic_gradient import SGDClassifier, SGDRegressor
 from .ridge import (Ridge, RidgeCV, RidgeClassifier, RidgeClassifierCV,
                     ridge_regression)
 from .logistic import LogisticRegression
-from .omp import orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit
+from .omp import (orthogonal_mp, orthogonal_mp_gram, OrthogonalMatchingPursuit,
+                  OrthogonalMatchingPursuitCV)
 from .passive_aggressive import PassiveAggressiveClassifier
 from .passive_aggressive import PassiveAggressiveRegressor
 from .perceptron import Perceptron
@@ -49,6 +50,7 @@ __all__ = ['ARDRegression',
            'MultiTaskElasticNet',
            'MultiTaskLasso',
            'OrthogonalMatchingPursuit',
+           'OrthogonalMatchingPursuitCV',
            'PassiveAggressiveClassifier',
            'PassiveAggressiveRegressor',
            'Perceptron',
