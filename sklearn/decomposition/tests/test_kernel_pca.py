@@ -1,14 +1,13 @@
 import numpy as np
 import scipy.sparse as sp
 
-from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_equal
-from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import (assert_array_almost_equal, assert_less,
+                                   assert_equal, assert_not_equal,
+                                   assert_raises)
 
 from sklearn.decomposition import PCA, KernelPCA
 from sklearn.datasets import make_circles
 from sklearn.linear_model import Perceptron
-from sklearn.utils.testing import assert_less
 from sklearn.pipeline import Pipeline
 from sklearn.grid_search import GridSearchCV
 from sklearn.metrics.pairwise import rbf_kernel
@@ -19,15 +18,28 @@ def test_kernel_pca():
     X_fit = rng.random_sample((5, 4))
     X_pred = rng.random_sample((2, 4))
 
+    def histogram(x, y, **kwargs):
+        """Histogram kernel implemented as a callable."""
+        assert_equal(kwargs, {})    # no kernel_params that we didn't ask for
+        return np.minimum(x, y).sum()
+
     for eigen_solver in ("auto", "dense", "arpack"):
-        for kernel in ("linear", "rbf", "poly"):
+        for kernel in ("linear", "rbf", "poly", histogram):
+            # histogram kernel produces singular matrix inside linalg.solve
+            # XXX use a least-squares approximation?
+            inv = not callable(kernel)
+
             # transform fit data
             kpca = KernelPCA(4, kernel=kernel, eigen_solver=eigen_solver,
-                             fit_inverse_transform=True)
+                             fit_inverse_transform=inv)
             X_fit_transformed = kpca.fit_transform(X_fit)
             X_fit_transformed2 = kpca.fit(X_fit).transform(X_fit)
             assert_array_almost_equal(np.abs(X_fit_transformed),
                                       np.abs(X_fit_transformed2))
+
+            # non-regression test: previously, gamma would be 0 by default,
+            # forcing all eigenvalues to 0 under the poly kernel
+            assert_not_equal(X_fit_transformed, [])
 
             # transform new data
             X_pred_transformed = kpca.transform(X_pred)
@@ -35,8 +47,9 @@ def test_kernel_pca():
                          X_fit_transformed.shape[1])
 
             # inverse transform
-            X_pred2 = kpca.inverse_transform(X_pred_transformed)
-            assert_equal(X_pred2.shape, X_pred.shape)
+            if inv:
+                X_pred2 = kpca.inverse_transform(X_pred_transformed)
+                assert_equal(X_pred2.shape, X_pred.shape)
 
 
 def test_invalid_parameters():
@@ -62,7 +75,7 @@ def test_kernel_pca_sparse():
             # transform new data
             X_pred_transformed = kpca.transform(X_pred)
             assert_equal(X_pred_transformed.shape[1],
-                    X_fit_transformed.shape[1])
+                         X_fit_transformed.shape[1])
 
             # inverse transform
             #X_pred2 = kpca.inverse_transform(X_pred_transformed)
@@ -96,6 +109,23 @@ def test_kernel_pca_n_components():
             assert_equal(shape, (2, c))
 
 
+def test_remove_zero_eig():
+    X = np.array([[1 - 1e-30, 1], [1, 1], [1, 1 - 1e-20]])
+
+    # n_components=None (default) => remove_zero_eig is True
+    kpca = KernelPCA()
+    Xt = kpca.fit_transform(X)
+    assert_equal(Xt.shape, (3, 0))
+
+    kpca = KernelPCA(n_components=2)
+    Xt = kpca.fit_transform(X)
+    assert_equal(Xt.shape, (3, 2))
+
+    kpca = KernelPCA(n_components=2, remove_zero_eig=True)
+    Xt = kpca.fit_transform(X)
+    assert_equal(Xt.shape, (3, 0))
+
+
 def test_kernel_pca_precomputed():
     rng = np.random.RandomState(0)
     X_fit = rng.random_sample((5, 4))
@@ -104,15 +134,16 @@ def test_kernel_pca_precomputed():
     for eigen_solver in ("dense", "arpack"):
         X_kpca = KernelPCA(4, eigen_solver=eigen_solver).\
             fit(X_fit).transform(X_pred)
-        X_kpca2 = KernelPCA(4, eigen_solver=eigen_solver,
-                kernel='precomputed').fit(np.dot(X_fit,
-                    X_fit.T)).transform(np.dot(X_pred, X_fit.T))
+        X_kpca2 = KernelPCA(
+            4, eigen_solver=eigen_solver, kernel='precomputed').fit(
+                np.dot(X_fit, X_fit.T)).transform(np.dot(X_pred, X_fit.T))
 
-        X_kpca_train = KernelPCA(4, eigen_solver=eigen_solver,
-                kernel='precomputed').fit_transform(np.dot(X_fit, X_fit.T))
-        X_kpca_train2 = KernelPCA(4, eigen_solver=eigen_solver,
-                kernel='precomputed').fit(np.dot(X_fit,
-                    X_fit.T)).transform(np.dot(X_fit, X_fit.T))
+        X_kpca_train = KernelPCA(
+            4, eigen_solver=eigen_solver,
+            kernel='precomputed').fit_transform(np.dot(X_fit, X_fit.T))
+        X_kpca_train2 = KernelPCA(
+            4, eigen_solver=eigen_solver, kernel='precomputed').fit(
+                np.dot(X_fit, X_fit.T)).transform(np.dot(X_fit, X_fit.T))
 
         assert_array_almost_equal(np.abs(X_kpca),
                                   np.abs(X_kpca2))

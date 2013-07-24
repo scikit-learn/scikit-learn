@@ -20,16 +20,29 @@ of learning with very large datasets.
 Standard kernelized SVMs do not scale well to large datasets, but using an
 approximate kernel map it is possible to use much more efficient linear SVMs.
 In particularly the combination of kernel map approximations with
-:class:`SGDClassifier` can make nonlinear learning on large datasets possible.
+:class:`SGDClassifier` can make non-linear learning on large datasets possible.
 
 Since there has not been much empirical work using approximate embeddings, it
 is advisable to compare results against exact kernel methods when possible.
 
 
+.. currentmodule:: sklearn.kernel_approximation
+
+.. _nystroem_kernel_approx:
+
+Nystroem Method for Kernel Approximation
+----------------------------------------
+The Nystroem method, as implemented in :class:`Nystroem` is a general method
+for low-rank approximations of kernels. It achieves this by essentially subsampling
+the data on which the kernel is evaluated.
+By default :class:`Nystroem` uses the ``rbf`` kernel, but it can use any
+kernel function or a precomputed kernel matrix.
+The number of samples used - which is also the dimensionality of the features computed -
+is given by the parameter ``n_components``.
+
+
 Radial Basis Function Kernel
 ----------------------------
-
-.. currentmodule:: sklearn.kernel_approximation
 
 The :class:`RBFSampler` constructs an approximate mapping for the radial basis
 function kernel. This transformation can be used to explicitly model a kernel map,
@@ -66,6 +79,10 @@ function does not actually depend on the data given to the ``fit`` function.
 Only the dimensionality of the data is used.
 Details on the method can be found in [RR2007]_.
 
+For a given value of ``n_components`` :class:`RBFSampler` is often less accurate
+as :class:`Nystroem`. :class:`RBFSampler` is cheaper to compute, though, making
+use of larger feature spaces more efficient.
+
 .. figure:: ../auto_examples/images/plot_kernel_approximation_2.png
     :target: ../auto_examples/plot_kernel_approximation.html
     :scale: 50%
@@ -81,14 +98,17 @@ Details on the method can be found in [RR2007]_.
 Additive Chi Squared Kernel
 ---------------------------
 
-The chi squared kernel is a kernel on histograms, often used in computer vision.
+The additive chi squared kernel is a kernel on histograms, often used in computer vision.
 
-The chi squared kernel is given by
+The additive chi squared kernel as used here is given by
 
 .. math::
 
         k(x, y) = \sum_i \frac{2x_iy_i}{x_i+y_i}
 
+This is not exactly the same as :func:`sklearn.metrics.additive_chi2_kernel`.
+The authors of [VZ2010]_ prefer the version above as it is always positive
+definite.
 Since the kernel is additive, it is possible to treat all components
 :math:`x_i` separately for embedding. This makes it possible to sample
 the Fourier transform in regular intervals, instead of approximating
@@ -98,7 +118,7 @@ The class :class:`AdditiveChi2Sampler` implements this component wise
 deterministic sampling. Each component is sampled `n` times, yielding
 `2n+1` dimensions per input dimension (the multiple of two stems
 from the real and complex part of the Fourier transform).
-In the literature, `n` is usually choosen to be `1` or `2`, transforming
+In the literature, `n` is usually chosen to be `1` or `2`, transforming
 the dataset to size `n_samples x 5 * n_features` (in the case of `n=2`).
 
 The approximate feature map provided by :class:`AdditiveChi2Sampler` can be combined

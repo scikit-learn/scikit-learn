@@ -42,7 +42,7 @@ Some advantages of decision trees are:
 
     - Uses a white box model. If a given situation is observable in a model,
       the explanation for the condition is easily explained by boolean logic.
-      By constrast, in a black box model (e.g., in an artificial neural
+      By contrast, in a black box model (e.g., in an artificial neural
       network), results may be more difficult to interpret.
 
     - Possible to validate a model using statistical tests. That makes it
@@ -104,7 +104,7 @@ the class labels for the training samples::
 After being fitted, the model can then be used to predict new values::
 
     >>> clf.predict([[2., 2.]])
-    array([ 1.])
+    array([1])
 
 :class:`DecisionTreeClassifier` is capable of both binary (where the
 labels are [-1, 1]) classification and multiclass (where the labels are
@@ -123,16 +123,23 @@ Once trained, we can export the tree in `Graphviz
 exporter. Below is an example export of a tree trained on the entire
 iris dataset::
 
+    >>> from sklearn.externals.six import StringIO
     >>> with open("iris.dot", 'w') as f:
     ...     f = tree.export_graphviz(clf, out_file=f)
 
 Then we can use Graphviz's ``dot`` tool to create a PDF file (or any other
 supported file type): ``dot -Tpdf iris.dot -o iris.pdf``.
 
+::
+
+    >>> import os
+    >>> os.unlink('iris.dot')
+
 Alternatively, if we have Python module ``pydot`` installed, we can generate
 a PDF file (or any other supported file type) directly in Python::
 
-    >>> import StringIO, pydot # doctest: +SKIP
+    >>> from sklearn.externals.six import StringIO  # doctest: +SKIP
+    >>> import pydot # doctest: +SKIP
     >>> dot_data = StringIO.StringIO() # doctest: +SKIP
     >>> tree.export_graphviz(clf, out_file=dot_data) # doctest: +SKIP
     >>> graph = pydot.graph_from_dot_data(dot_data.getvalue()) # doctest: +SKIP
@@ -151,7 +158,7 @@ a PDF file (or any other supported file type) directly in Python::
 After being fitted, the model can then be used to predict new values::
 
     >>> clf.predict(iris.data[0, :])
-    array([ 0.])
+    array([0])
 
 .. figure:: ../auto_examples/tree/images/plot_iris_1.png
    :target: ../auto_examples/tree/plot_iris.html
@@ -255,7 +262,7 @@ the lower half of those faces.
 
 .. topic:: References:
 
- * M. Dumont et al,  `Fast multi-class image annotation with random subwindows 
+ * M. Dumont et al,  `Fast multi-class image annotation with random subwindows
    and multiple output randomized trees
    <http://www.montefiore.ulg.ac.be/services/stochastic/pubs/2009/DMWG09/dumont-visapp09-shortpaper.pdf>`_, International Conference on
    Computer Vision Theory and Applications 2009
@@ -266,47 +273,23 @@ Complexity
 ==========
 
 In general, the run time cost to construct a balanced binary tree is
-:math:`O(n_{samples}n_{features}log(n_{samples}))` and query time
-:math:`O(log(n_{samples}))`.  Although the tree construction algorithm attempts
+:math:`O(n_{samples}n_{features}\log(n_{samples}))` and query time
+:math:`O(\log(n_{samples}))`.  Although the tree construction algorithm attempts
 to generate balanced trees, they will not always be balanced.  Assuming that the
 subtrees remain approximately balanced, the cost at each node consists of
 searching through :math:`O(n_{features})` to find the feature that offers the
 largest reduction in entropy.  This has a cost of
-:math:`O(n_{features}n_{samples}log(n_{samples}))` at each node, leading to a
+:math:`O(n_{features}n_{samples}\log(n_{samples}))` at each node, leading to a
 total cost over the entire trees (by summing the cost at each node) of
-:math:`O(n_{features}n_{samples}^{2}log(n_{samples}))`.
+:math:`O(n_{features}n_{samples}^{2}\log(n_{samples}))`.
 
 Scikit-learn offers a more efficient implementation for the construction of
 decision trees.  A naive implementation (as above) would recompute the class
 label histograms (for classification) or the means (for regression) at for each
 new split point along a given feature. By presorting the feature over all
 relevant samples, and retaining a running label count, we reduce the complexity
-at each node to :math:`O(n_{features}log(n_{samples}))`, which results in a
-total cost of :math:`O(n_{features}n_{samples}log(n_{samples}))`.
-
-This implementation also offers a parameter `min_density` to control an
-optimization heuristic. A sample mask is used to mask data points that are
-inactive at a given node, which avoids the copying of data (important for large
-datasets or training trees within an ensemble). Density is defined as the ratio
-of 'active' data samples to total samples at a given node.  The minimum density
-parameter specifies the level below which fancy indexing (and therefore data
-copied) and the sample mask reset.
-If `min_density` is 1, then fancy indexing is always used for data partitioning
-during the tree building phase. In this case, the size of memory (as a
-proportion of the input data :math:`a`) required at a node of depth :math:`n`
-can be approximated using a geometric series: :math:`size = a \frac{1 - r^n}{1 -
-r}` where :math:`r` is the ratio of samples used at each node.  A best case
-analysis shows that the lowest memory requirement (for an infinitely deep tree)
-is :math:`2 \times a`, where each partition divides the data in half.  A worst
-case analysis shows that the memory requirement can  increase to :math:`n \times
-a`. In practise it usually requires 3 to 4 times :math:`a`.
-Setting `min_density` to 0 will always use the sample mask to select the subset
-of samples at each node.  This results in little to no additional memory being
-allocated, making it appropriate for massive datasets or within ensemble
-learners. The default value for `min_density` is 0.1 which empirically
-leads to fast training for many problems.
-Typically high values of ``min_density`` will lead to excessive reallocation,
-slowing down the algorithm significantly.
+at each node to :math:`O(n_{features}\log(n_{samples}))`, which results in a
+total cost of :math:`O(n_{features}n_{samples}\log(n_{samples}))`.
 
 
 Tips on practical use
@@ -340,7 +323,7 @@ Tips on practical use
   * Balance your dataset before training to prevent the tree from creating
     a tree biased toward the classes that are dominant.
 
-  * All decision trees use Fortran ordered ``np.float32`` arrays internally.
+  * All decision trees use ``np.float32`` arrays internally.
     If training data is not in this format, a copy of the dataset will be made.
 
 
@@ -416,11 +399,11 @@ Select the parameters that minimises the impurity
 
 .. math::
 
-    \theta^* = argmin_\theta  G(Q, \theta)
+    \theta^* = \operatorname{argmin}_\theta  G(Q, \theta)
 
 Recurse for subsets :math:`Q_{left}(\theta^*)` and
 :math:`Q_{right}(\theta^*)` until the maximum allowable depth is reached,
-:math:`N_m < min\_samples` or :math:`N_m = 1`.
+:math:`N_m < \min_{samples}` or :math:`N_m = 1`.
 
 Classification criteria
 -----------------------
@@ -445,13 +428,13 @@ Cross-Entropy
 
 .. math::
 
-    H(X_m) = \sum_k p_{mk} log(p_{mk})
+    H(X_m) = \sum_k p_{mk} \log(p_{mk})
 
 and Misclassification
 
 .. math::
 
-    H(X_m) = 1 - max(p_{mk})
+    H(X_m) = 1 - \max(p_{mk})
 
 Regression criteria
 -------------------

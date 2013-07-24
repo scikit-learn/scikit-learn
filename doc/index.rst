@@ -89,7 +89,7 @@
 
     .. |banner14| image:: auto_examples/images/plot_lda_qda_1.png
        :height: 139
-       :target: auto_examples/plot_lda_vs_qda.html
+       :target: auto_examples/plot_lda_qda.html
 
     .. |banner15| image:: auto_examples/cluster/images/plot_cluster_comparison_1.png
        :height: 139

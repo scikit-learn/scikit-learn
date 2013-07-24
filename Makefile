@@ -29,16 +29,14 @@ inplace:
 	$(PYTHON) setup.py build_ext -i
 
 test-code: in
-	$(NOSETESTS) -s sklearn
+	$(NOSETESTS) -s -v sklearn
 test-doc:
-	$(NOSETESTS) -s --with-doctest --doctest-tests --doctest-extension=rst \
-	--doctest-extension=inc --doctest-fixtures=_fixture doc/ doc/modules/ \
+	$(NOSETESTS) -s -v doc/ doc/modules/ doc/datasets/ \
 	doc/developers doc/tutorial/basic doc/tutorial/statistical_inference
 
 test-coverage:
 	rm -rf coverage .coverage
-	$(NOSETESTS) -s --with-coverage --cover-html --cover-html-dir=coverage \
-	--cover-package=sklearn sklearn
+	$(NOSETESTS) -s -v --with-coverage sklearn
 
 test: test-code test-doc
 

@@ -10,7 +10,7 @@ shrunk_cov = (1-shrinkage)*cov + shrinkage*structured_estimate.
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Virgile Fritsch <virgile.fritsch@inria.fr>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 # avoid division truncation
 from __future__ import division
@@ -18,6 +18,7 @@ import warnings
 import numpy as np
 
 from .empirical_covariance_ import empirical_covariance, EmpiricalCovariance
+from ..externals.six.moves import xrange
 from ..utils import array2d
 
 
@@ -131,8 +132,8 @@ class ShrunkCovariance(EmpiricalCovariance):
             self.location_ = np.zeros(X.shape[1])
         else:
             self.location_ = X.mean(0)
-        covariance = empirical_covariance(X,
-                        assume_centered=self.assume_centered)
+        covariance = empirical_covariance(
+            X, assume_centered=self.assume_centered)
         covariance = shrunk_covariance(covariance, self.shrinkage)
         self._set_covariance(covariance)
 
@@ -181,8 +182,8 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
         return 0.
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
-        warnings.warn("Only one sample available. " \
-                          "You may want to reshape your data array")
+        warnings.warn("Only one sample available. "
+                      "You may want to reshape your data array")
         n_samples = 1
         n_features = X.size
     else:
@@ -218,8 +219,8 @@ def ledoit_wolf_shrinkage(X, assume_centered=False, block_size=1000):
     delta_ += np.sum(np.dot(X.T[block_size * n_splits:],
                             X[:, block_size * n_splits:]) ** 2)
     delta_ /= n_samples ** 2
-    beta_ += np.sum(np.dot(
-            X2.T[block_size * n_splits:], X2[:, block_size * n_splits:]))
+    beta_ += np.sum(np.dot(X2.T[block_size * n_splits:],
+                           X2[:, block_size * n_splits:]))
     # use delta_ to compute beta
     beta = 1. / (n_features * n_samples) * (beta_ / n_samples - delta_)
     # delta is the sum of the squared coefficients of (<X.T,X> - mu*Id) / p
@@ -243,7 +244,7 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
 
     assume_centered: Boolean
       If True, data are not centered before computation.
-      Usefull to work with data whose mean is significantly equal to
+      Useful to work with data whose mean is significantly equal to
       zero but is not exactly zero.
       If False, data are centered before computation.
 
@@ -280,8 +281,8 @@ def ledoit_wolf(X, assume_centered=False, block_size=1000):
         return np.atleast_2d((X ** 2).mean()), 0.
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
-        warnings.warn("Only one sample available. " \
-                          "You may want to reshape your data array")
+        warnings.warn("Only one sample available. "
+                      "You may want to reshape your data array")
         n_samples = 1
         n_features = X.size
     else:
@@ -348,7 +349,7 @@ class LedoitWolf(EmpiricalCovariance):
                 + shrinkage*mu*np.identity(n_features)
 
     where mu = trace(cov) / n_features
-    and shinkage is given by the Ledoit and Wolf formula (see References)
+    and shrinkage is given by the Ledoit and Wolf formula (see References)
 
     References
     ----------
@@ -387,7 +388,8 @@ class LedoitWolf(EmpiricalCovariance):
         else:
             self.location_ = X.mean(0)
         covariance, shrinkage = ledoit_wolf(X - self.location_,
-                        assume_centered=True, block_size=self.block_size)
+                                            assume_centered=True,
+                                            block_size=self.block_size)
         self.shrinkage_ = shrinkage
         self._set_covariance(covariance)
 
@@ -443,8 +445,8 @@ def oas(X, assume_centered=False):
         return np.atleast_2d((X ** 2).mean()), 0.
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
-        warnings.warn("Only one sample available. " \
-                          "You may want to reshape your data array")
+        warnings.warn("Only one sample available. "
+                      "You may want to reshape your data array")
         n_samples = 1
         n_features = X.size
     else:
@@ -508,7 +510,7 @@ class OAS(EmpiricalCovariance):
                 + shrinkage*mu*np.identity(n_features)
 
     where mu = trace(cov) / n_features
-    and shinkage is given by the OAS formula (see References)
+    and shrinkage is given by the OAS formula (see References)
 
     References
     ----------

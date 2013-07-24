@@ -4,16 +4,17 @@
 # cython: wraparound=False
 # Authors: Robert Layton <robertlayton@gmail.com>
 #           Corey Lynch <coreylynch9@gmail.com>
-# License: BSD Style.
+# Licence: BSD 3 clause
 
+from libc.math cimport exp
 from scipy.special import gammaln
 import numpy as np
 cimport numpy as np
 cimport cython
+from sklearn.utils.lgamma cimport lgamma
 
-cdef extern from "math.h":
-    cdef extern double exp(double x)
-    cdef extern double lgamma(double x)
+np.import_array()
+
 
 @cython.boundscheck(False)
 @cython.wraparound(False)

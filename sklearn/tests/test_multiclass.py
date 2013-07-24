@@ -5,15 +5,21 @@ from sklearn.utils.testing import assert_array_equal
 from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_true
+from sklearn.utils.testing import assert_false
 from sklearn.utils.testing import assert_raises
 
 from sklearn.utils.testing import assert_greater
 from sklearn.multiclass import OneVsRestClassifier
 from sklearn.multiclass import OneVsOneClassifier
 from sklearn.multiclass import OutputCodeClassifier
+
+from sklearn.metrics import precision_score
+from sklearn.metrics import recall_score
+
 from sklearn.svm import LinearSVC
 from sklearn.naive_bayes import MultinomialNB
-from sklearn.linear_model import LinearRegression, Lasso, ElasticNet, Ridge
+from sklearn.linear_model import (LinearRegression, Lasso, ElasticNet, Ridge,
+                                  Perceptron)
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.grid_search import GridSearchCV
 from sklearn.pipeline import Pipeline
@@ -26,30 +32,6 @@ perm = rng.permutation(iris.target.size)
 iris.data = iris.data[perm]
 iris.target = iris.target[perm]
 n_classes = 3
-
-
-# FIXME: - should use sets
-#        - should move to metrics module
-def multilabel_precision(Y_true, Y_pred):
-    n_predictions = 0
-    n_correct = 0
-    for i in range(len(Y_true)):
-        n_predictions += len(Y_pred[i])
-        for label in Y_pred[i]:
-            if label in Y_true[i]:
-                n_correct += 1
-    return float(n_correct) / n_predictions
-
-
-def multilabel_recall(Y_true, Y_pred):
-    n_labels = 0
-    n_correct = 0
-    for i in range(len(Y_true)):
-        n_labels += len(Y_true[i])
-        for label in Y_pred[i]:
-            if label in Y_true[i]:
-                n_correct += 1
-    return float(n_correct) / n_labels
 
 
 def test_ovr_exceptions():
@@ -77,7 +59,7 @@ def test_ovr_always_present():
     # Test that ovr works with classes that are always present or absent
     X = np.ones((10, 2))
     X[:5, :] = 0
-    y = [[int(i >= 5), 2, 3] for i in xrange(10)]
+    y = [[int(i >= 5), 2, 3] for i in range(10)]
     with warnings.catch_warnings(record=True):
         ovr = OneVsRestClassifier(DecisionTreeClassifier())
         ovr.fit(X, y)
@@ -138,10 +120,86 @@ def test_ovr_multilabel_dataset():
         clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
         Y_pred = clf.predict(X_test)
         assert_true(clf.multilabel_)
-        assert_almost_equal(multilabel_precision(Y_test, Y_pred), prec,
+        assert_almost_equal(precision_score(Y_test, Y_pred, average="micro"),
+                            prec,
                             decimal=2)
-        assert_almost_equal(multilabel_recall(Y_test, Y_pred), recall,
+        assert_almost_equal(recall_score(Y_test, Y_pred, average="micro"),
+                            recall,
                             decimal=2)
+
+
+def test_ovr_multilabel_predict_proba():
+    base_clf = MultinomialNB(alpha=1)
+    for au in (False, True):
+        X, Y = datasets.make_multilabel_classification(n_samples=100,
+                                                       n_features=20,
+                                                       n_classes=5,
+                                                       n_labels=3,
+                                                       length=50,
+                                                       allow_unlabeled=au,
+                                                       random_state=0)
+        X_train, Y_train = X[:80], Y[:80]
+        X_test, Y_test = X[80:], Y[80:]
+        clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
+
+        # decision function only estimator. Fails in current implementation.
+        decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
+        assert_raises(AttributeError, decision_only.predict_proba, X_test)
+
+        Y_pred = clf.predict(X_test)
+        Y_proba = clf.predict_proba(X_test)
+
+        # predict assigns a label if the probability that the
+        # sample has the label is greater than 0.5.
+        pred = [tuple(l.nonzero()[0]) for l in (Y_proba > 0.5)]
+        assert_equal(pred, Y_pred)
+
+
+def test_ovr_single_label_predict_proba():
+    base_clf = MultinomialNB(alpha=1)
+    X, Y = iris.data, iris.target
+    X_train, Y_train = X[:80], Y[:80]
+    X_test, Y_test = X[80:], Y[80:]
+    clf = OneVsRestClassifier(base_clf).fit(X_train, Y_train)
+
+    # decision function only estimator. Fails in current implementation.
+    decision_only = OneVsRestClassifier(svm.SVR()).fit(X_train, Y_train)
+    assert_raises(AttributeError, decision_only.predict_proba, X_test)
+
+    Y_pred = clf.predict(X_test)
+    Y_proba = clf.predict_proba(X_test)
+
+    assert_almost_equal(Y_proba.sum(axis=1), 1.0)
+    # predict assigns a label if the probability that the
+    # sample has the label is greater than 0.5.
+    pred = np.array([l.argmax() for l in Y_proba])
+    assert_false((pred - Y_pred).any())
+
+
+def test_ovr_multilabel_decision_function():
+    X, Y = datasets.make_multilabel_classification(n_samples=100,
+                                                   n_features=20,
+                                                   n_classes=5,
+                                                   n_labels=3,
+                                                   length=50,
+                                                   allow_unlabeled=True,
+                                                   random_state=0)
+    X_train, Y_train = X[:80], Y[:80]
+    X_test, Y_test = X[80:], Y[80:]
+    clf = OneVsRestClassifier(svm.SVC()).fit(X_train, Y_train)
+    assert_array_equal((clf.decision_function(X_test) > 0).nonzero()[1],
+                        np.hstack(clf.predict(X_test)))
+
+
+def test_ovr_single_label_decision_function():
+    X, Y = datasets.make_classification(n_samples=100,
+                                        n_features=20,
+                                        random_state=0)
+    X_train, Y_train = X[:80], Y[:80]
+    X_test, Y_test = X[80:], Y[80:]
+    clf = OneVsRestClassifier(svm.SVC()).fit(X_train, Y_train)
+    assert_array_equal(clf.decision_function(X_test).ravel() > 0,
+                       clf.predict(X_test))
 
 
 def test_ovr_gridsearch():
@@ -154,9 +212,9 @@ def test_ovr_gridsearch():
 
 
 def test_ovr_pipeline():
-    # test with pipeline with length one
-    # pipeline is a bit weird wrt duck-typing predict_proba and
-    # decision_function
+    # Test with pipeline of length one
+    # This test is needed because the multiclass estimators may fail to detect
+    # the presence of predict_proba or decision_function.
     clf = Pipeline([("tree", DecisionTreeClassifier())])
     ovr_pipe = OneVsRestClassifier(clf)
     ovr_pipe.fit(iris.data, iris.target)
@@ -209,6 +267,49 @@ def test_ovo_gridsearch():
     cv.fit(iris.data, iris.target)
     best_C = cv.best_estimator_.estimators_[0].C
     assert_true(best_C in Cs)
+
+
+def test_ovo_ties():
+    # test that ties are broken using the decision function, not defaulting to
+    # the smallest label
+    X = np.array([[1, 2], [2, 1], [-2, 1], [-2, -1]])
+    y = np.array([2, 0, 1, 2])
+    multi_clf = OneVsOneClassifier(Perceptron())
+    ovo_prediction = multi_clf.fit(X, y).predict(X)
+
+    # recalculate votes to make sure we have a tie
+    predictions = np.vstack([clf.predict(X) for clf in multi_clf.estimators_])
+    scores = np.vstack([clf.decision_function(X)
+                        for clf in multi_clf.estimators_])
+    # classifiers are in order 0-1, 0-2, 1-2
+    # aggregate votes:
+    votes = np.zeros((4, 3))
+    votes[np.arange(4), predictions[0]] += 1
+    votes[np.arange(4), 2 * predictions[1]] += 1
+    votes[np.arange(4), 1 + predictions[2]] += 1
+    # for the first point, there is one vote per class
+    assert_array_equal(votes[0, :], 1)
+    # for the rest, there is no tie and the prediction is the argmax
+    assert_array_equal(np.argmax(votes[1:], axis=1), ovo_prediction[1:])
+    # for the tie, the prediction is the class with the highest score
+    assert_equal(ovo_prediction[0], 1)
+    # score for one is greater than score for zero
+    assert_greater(scores[2, 0] - scores[0, 0], scores[0, 0] + scores[1, 0])
+    # score for one is greater than score for two
+    assert_greater(scores[2, 0] - scores[0, 0], -scores[1, 0] - scores[2, 0])
+
+
+def test_ovo_ties2():
+    # test that ties can not only be won by the first two labels
+    X = np.array([[1, 2], [2, 1], [-2, 1], [-2, -1]])
+    y_ref = np.array([2, 0, 1, 2])
+
+    # cycle through labels so that each label wins once
+    for i in range(3):
+        y = (y_ref + i) % 3
+        multi_clf = OneVsOneClassifier(Perceptron())
+        ovo_prediction = multi_clf.fit(X, y).predict(X)
+        assert_equal(ovo_prediction[0], (1 + i) % 3)
 
 
 def test_ecoc_exceptions():

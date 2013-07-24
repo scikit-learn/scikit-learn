@@ -5,11 +5,13 @@ specifically to work with sparse matrices.
 
 import numpy as np
 from scipy.sparse import coo_matrix, csr_matrix
+import scipy.stats
 
 from .. import SelectKBest, chi2
+from ..univariate_selection import _chisquare
 
 from nose.tools import assert_raises
-from numpy.testing import assert_equal
+from numpy.testing import assert_equal, assert_array_almost_equal
 
 # Feature 0 is highly informative for class 1;
 # feature 1 is the same everywhere;
@@ -64,3 +66,17 @@ def test_chi2_negative():
     X, y = [[0, 1], [-1e-20, 1]], [0, 1]
     for X in (X, np.array(X), csr_matrix(X)):
         assert_raises(ValueError, chi2, X, y)
+
+
+def test_chisquare():
+    """Test replacement for scipy.stats.chisquare against the original."""
+    obs = np.array([[2., 2.],
+                    [1., 1.]])
+    exp = np.array([[1.5, 1.5],
+                    [1.5, 1.5]])
+    # call SciPy first because our version overwrites obs
+    chi_scp, p_scp = scipy.stats.chisquare(obs, exp)
+    chi_our, p_our = _chisquare(obs, exp)
+
+    assert_array_almost_equal(chi_scp, chi_our)
+    assert_array_almost_equal(p_scp, p_our)

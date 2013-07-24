@@ -3,7 +3,7 @@
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         (mostly translation, see implementation details)
-# License: BSD style
+# Licence: BSD 3 clause
 
 """
 The built-in correlation models submodule for the gaussian_process module.
@@ -221,7 +221,7 @@ def cubic(theta, d):
         n_features = 1
 
     lth = theta.size
-    if  lth == 1:
+    if lth == 1:
         td = np.abs(d) * theta
     elif lth != n_features:
         raise Exception("Length of theta must be 1 or " + str(n_features))

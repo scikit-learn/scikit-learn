@@ -3,7 +3,7 @@ estimator.
 """
 
 # Author: Gael Varoquaux <gael.varoquaux@normalesup.org>
-# License: BSD Style
+# License: BSD 3 clause
 # Copyright: INRIA
 import warnings
 import operator
@@ -13,8 +13,8 @@ import time
 import numpy as np
 from scipy import linalg
 
-from .empirical_covariance_ import empirical_covariance, \
-                EmpiricalCovariance, log_likelihood
+from .empirical_covariance_ import (empirical_covariance, EmpiricalCovariance,
+                                    log_likelihood)
 
 from ..utils import ConvergenceWarning
 from ..utils.extmath import pinvh
@@ -22,6 +22,7 @@ from ..linear_model import lars_path
 from ..linear_model import cd_fast
 from ..cross_validation import check_cv, cross_val_score
 from ..externals.joblib import Parallel, delayed
+import collections
 
 
 ###############################################################################
@@ -154,57 +155,56 @@ def graph_lasso(emp_cov, alpha, cov_init=None, mode='cd', tol=1e-4,
     else:
         errors = dict(invalid='raise')
     try:
-        for i in xrange(max_iter):
-            for idx in xrange(n_features):
+        for i in range(max_iter):
+            for idx in range(n_features):
                 sub_covariance = covariance_[indices != idx].T[indices != idx]
                 row = emp_cov[idx, indices != idx]
                 with np.errstate(**errors):
                     if mode == 'cd':
                         # Use coordinate descent
                         coefs = -(precision_[indices != idx, idx]
-                                    / (precision_[idx, idx] + 1000 * eps))
+                                  / (precision_[idx, idx] + 1000 * eps))
                         coefs, _, _ = cd_fast.enet_coordinate_descent_gram(
-                                            coefs, alpha, 0, sub_covariance,
-                                            row, row, max_iter, tol)
+                            coefs, alpha, 0, sub_covariance, row, row,
+                            max_iter, tol)
                     else:
                         # Use LARS
-                        _, _, coefs = lars_path(sub_covariance, row,
-                                            Xy=row, Gram=sub_covariance,
-                                            alpha_min=alpha / (n_features - 1),
-                                            copy_Gram=True,
-                                            method='lars')
+                        _, _, coefs = lars_path(
+                            sub_covariance, row, Xy=row, Gram=sub_covariance,
+                            alpha_min=alpha / (n_features - 1), copy_Gram=True,
+                            method='lars')
                         coefs = coefs[:, -1]
                 # Update the precision matrix
-                precision_[idx, idx] = 1. / (covariance_[idx, idx] -
-                            np.dot(covariance_[indices != idx, idx], coefs))
-                precision_[indices != idx, idx] = \
-                                            - precision_[idx, idx] * coefs
-                precision_[idx, indices != idx] = \
-                                            - precision_[idx, idx] * coefs
+                precision_[idx, idx] = (
+                    1. / (covariance_[idx, idx]
+                          - np.dot(covariance_[indices != idx, idx], coefs)))
+                precision_[indices != idx, idx] = (- precision_[idx, idx]
+                                                   * coefs)
+                precision_[idx, indices != idx] = (- precision_[idx, idx]
+                                                   * coefs)
                 coefs = np.dot(sub_covariance, coefs)
                 covariance_[idx, indices != idx] = coefs
                 covariance_[indices != idx, idx] = coefs
             d_gap = _dual_gap(emp_cov, precision_, alpha)
             cost = _objective(emp_cov, precision_, alpha)
             if verbose:
-                print (
+                print(
                     '[graph_lasso] Iteration % 3i, cost % 3.2e, dual gap %.3e'
-                                                % (i, cost, d_gap))
+                    % (i, cost, d_gap))
             if return_costs:
                 costs.append((cost, d_gap))
             if np.abs(d_gap) < tol:
                 break
             if not np.isfinite(cost) and i > 0:
                 raise FloatingPointError('Non SPD result: the system is '
-                                    'too ill-conditioned for this solver')
+                                         'too ill-conditioned for this solver')
         else:
             warnings.warn('graph_lasso: did not converge after %i iteration:'
-                            'dual gap: %.3e' % (max_iter, d_gap),
-                            ConvergenceWarning)
+                          'dual gap: %.3e' % (max_iter, d_gap),
+                          ConvergenceWarning)
     except FloatingPointError as e:
         e.args = (e.args[0]
-                  + '. The system is too ill-conditioned for this solver',
-                 )
+                  + '. The system is too ill-conditioned for this solver',)
         raise e
     if return_costs:
         return covariance_, precision_, costs
@@ -259,37 +259,41 @@ class GraphLasso(EmpiricalCovariance):
 
     def fit(self, X, y=None):
         emp_cov = empirical_covariance(X)
-        self.covariance_, self.precision_ = graph_lasso(emp_cov,
-                                        alpha=self.alpha, mode=self.mode,
-                                        tol=self.tol, max_iter=self.max_iter,
-                                        verbose=self.verbose,
-                                        )
+        self.covariance_, self.precision_ = graph_lasso(
+            emp_cov, alpha=self.alpha, mode=self.mode, tol=self.tol,
+            max_iter=self.max_iter, verbose=self.verbose,)
         return self
 
 
 ###############################################################################
 # Cross-validation with GraphLasso
 def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
-                 tol=1e-4, max_iter=100, verbose=False):
+                     tol=1e-4, max_iter=100, verbose=False):
     """l1-penalized covariance estimator along a path of decreasing alphas
 
     Parameters
     ----------
     X: 2D ndarray, shape (n_samples, n_features)
         Data from which to compute the covariance estimate
+
     alphas: list of positive floats
         The list of regularization parameters, decreasing order
+
     X_test: 2D array, shape (n_test_samples, n_features), optional
-        Optional test matrix to measure generalisation error
+        Optional test matrix to measure generalization error
+
     mode: {'cd', 'lars'}
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
         very sparse underlying graphs, where p > n. Elsewhere prefer cd
         which is more numerically stable.
+
     tol: positive float, optional
         The tolerance to declare convergence: if the dual gap goes below
         this value, iterations are stopped
+
     max_iter: integer, optional
         The maximum number of iterations
+
     verbose: integer, optional
         The higher the verbosity flag, the more information is printed
         during the fitting.
@@ -298,11 +302,13 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
     -------
     covariances_: List of 2D ndarray, shape (n_features, n_features)
         The estimated covariance matrices
+
     precisions_: List of 2D ndarray, shape (n_features, n_features)
         The estimated (sparse) precision matrices
+
     scores_: List of float
-        The generalisation error (log-likelihood) on the test data.
-        Returned only if test data is passed.
+        The generalization error (log-likelihood) on the test data.
+        Returned only if X_test is provided.
     """
     inner_verbose = max(0, verbose - 1)
     emp_cov = empirical_covariance(X)
@@ -318,10 +324,9 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
     for alpha in alphas:
         try:
             # Capture the errors, and move on
-            covariance_, precision_ = graph_lasso(emp_cov, alpha=alpha,
-                                    cov_init=covariance_, mode=mode, tol=tol,
-                                    max_iter=max_iter,
-                                    verbose=inner_verbose)
+            covariance_, precision_ = graph_lasso(
+                emp_cov, alpha=alpha, cov_init=covariance_, mode=mode, tol=tol,
+                max_iter=max_iter, verbose=inner_verbose)
             covariances_.append(covariance_)
             precisions_.append(precision_)
             if X_test is not None:
@@ -338,17 +343,17 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
             sys.stderr.write('.')
         elif verbose:
             if X_test is not None:
-                print '[graph_lasso_path] alpha: %.2e, score: %.2e' % (alpha,
-                                                            this_score)
+                print('[graph_lasso_path] alpha: %.2e, score: %.2e'
+                      % (alpha, this_score))
             else:
-                print '[graph_lasso_path] alpha: %.2e' % alpha
+                print('[graph_lasso_path] alpha: %.2e' % alpha)
     if X_test is not None:
         return covariances_, precisions_, scores_
     return covariances_, precisions_
 
 
 class GraphLassoCV(GraphLasso):
-    """Sparse inverse covariance w/ cross-validated choice of the l1 penality
+    """Sparse inverse covariance w/ cross-validated choice of the l1 penalty
 
     Parameters
     ----------
@@ -357,23 +362,29 @@ class GraphLassoCV(GraphLasso):
         grids of alpha to be used. If a list is given, it gives the
         grid to be used. See the notes in the class docstring for
         more details.
+
     n_refinements: strictly positive integer
         The number of time the grid is refined. Not used if explicit
         values of alphas are passed.
-    cv : crossvalidation generator, optional
+    cv : cross-validation generator, optional
         see sklearn.cross_validation module. If None is passed, default to
         a 3-fold strategy
+
     tol: positive float, optional
         The tolerance to declare convergence: if the dual gap goes below
         this value, iterations are stopped
+
     max_iter: integer, optional
         The maximum number of iterations
+
     mode: {'cd', 'lars'}
         The Lasso solver to use: coordinate descent or LARS. Use LARS for
         very sparse underlying graphs, where p > n. Elsewhere prefer cd
         which is more numerically stable.
+
     n_jobs: int, optional
         number of jobs to run in parallel (default 1)
+
     verbose: boolean, optional
         If verbose is True, the objective function and dual gap are
         print at each iteration
@@ -435,16 +446,15 @@ class GraphLassoCV(GraphLasso):
         n_alphas = self.alphas
         inner_verbose = max(0, self.verbose - 1)
 
-        if operator.isSequenceType(n_alphas):
+        if isinstance(n_alphas, collections.Sequence):
             alphas = self.alphas
             n_refinements = 1
         else:
             n_refinements = self.n_refinements
             alpha_1 = alpha_max(emp_cov)
             alpha_0 = 1e-2 * alpha_1
-            alphas = np.logspace(np.log10(alpha_0),
-                                            np.log10(alpha_1),
-                                            n_alphas)[::-1]
+            alphas = np.logspace(np.log10(alpha_0), np.log10(alpha_1),
+                                 n_alphas)[::-1]
         covs_init = (None, None, None)
 
         t0 = time.time()
@@ -453,7 +463,7 @@ class GraphLassoCV(GraphLasso):
                 # No need to see the convergence warnings on this grid:
                 # they will always be points that will not converge
                 # during the cross-validation
-                warnings.simplefilter('ignore',  ConvergenceWarning)
+                warnings.simplefilter('ignore', ConvergenceWarning)
                 # Compute the cross-validated loss on the current grid
                 this_path = Parallel(
                     n_jobs=self.n_jobs,
@@ -473,9 +483,9 @@ class GraphLassoCV(GraphLasso):
             path.extend(zip(alphas, scores, covs))
             path = sorted(path, key=operator.itemgetter(0), reverse=True)
 
-            # Find the maximum (we avoid using built in 'max' function to
+            # Find the maximum (avoid using the built-in 'max' function to
             # have a fully-reproducible selection of the smallest alpha
-            # is case of equality)
+            # in case of equality)
             best_score = -np.inf
             last_finite_idx = 0
             for index, (alpha, scores, _) in enumerate(path):
@@ -488,16 +498,16 @@ class GraphLassoCV(GraphLasso):
                     best_score = this_score
                     best_index = index
 
-            # Refine our grid
+            # Refine the grid
             if best_index == 0:
-                # We do not need to go back: we have choosen
+                # We do not need to go back: we have chosen
                 # the highest value of alpha for which there are
                 # non-zero coefficients
                 alpha_1 = path[0][0]
                 alpha_0 = path[1][0]
                 covs_init = path[0][-1]
             elif (best_index == last_finite_idx
-                        and not best_index == len(path) - 1):
+                    and not best_index == len(path) - 1):
                 # We have non-converged models on the upper bound of the
                 # grid, we need to refine the grid there
                 alpha_1 = path[best_index][0]
@@ -515,10 +525,10 @@ class GraphLassoCV(GraphLasso):
                                  n_alphas + 2)
             alphas = alphas[1:-1]
             if self.verbose and n_refinements > 1:
-                print '[GraphLassoCV] Done refinement % 2i out of %i: % 3is'\
-                        % (i + 1, n_refinements, time.time() - t0)
+                print('[GraphLassoCV] Done refinement % 2i out of %i: % 3is'
+                      % (i + 1, n_refinements, time.time() - t0))
 
-        path = zip(*path)
+        path = list(zip(*path))
         cv_scores = list(path[1])
         alphas = list(path[0])
         # Finally, compute the score with alpha = 0
@@ -532,7 +542,7 @@ class GraphLassoCV(GraphLasso):
         self.cv_alphas_ = alphas
 
         # Finally fit the model with the selected alpha
-        self.covariance_, self.precision_ = graph_lasso(emp_cov,
-                        alpha=best_alpha, mode=self.mode, tol=self.tol,
-                        max_iter=self.max_iter, verbose=inner_verbose)
+        self.covariance_, self.precision_ = graph_lasso(
+            emp_cov, alpha=best_alpha, mode=self.mode, tol=self.tol,
+            max_iter=self.max_iter, verbose=inner_verbose)
         return self

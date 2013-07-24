@@ -7,6 +7,10 @@ import  numpy as np
 
 cimport cython
 
+from libc.float cimport DBL_MAX, FLT_MAX
+
+np.import_array()
+
 cdef extern from "cblas.h":
    enum CBLAS_ORDER:
        CblasRowMajor=101
@@ -33,14 +37,10 @@ cdef extern from "cblas.h":
                  int N, float *A, int lda, float *X,
                  int incX)
 
-cdef extern from "float.h":
-   cdef double DBL_MAX
-   cdef float FLT_MAX
+cdef extern from "src/cholesky_delete.h":
+    int cholesky_delete_dbl(int m, int n, double *L, int go_out)
+    int cholesky_delete_flt(int m, int n, float  *L, int go_out)
 
-cdef extern from "src/cholesky_delete.c":
-    int double_cholesky_delete (int m, int n, double *L, int go_out)
-    int float_cholesky_delete  (int m, int n, float  *L, int go_out)
-    
 ctypedef np.float64_t DOUBLE
 
 
@@ -99,17 +99,17 @@ def solve_triangular(np.ndarray X, np.ndarray y):
                    CblasNonUnit, <int> X.shape[0], <float *> X.data,
                    lda, <float *> y.data, 1)
     else:
-       raise ValueError ('Unsupported or inconsistent dtype in arrays X, y')
+       raise ValueError('Unsupported or inconsistent dtype in arrays X, y')
 
 
+# we should be using np.npy_intp or Py_ssize_t for indices, but BLAS wants int
 def cholesky_delete(np.ndarray L, int go_out):
     cdef int n = <int> L.shape[0]
-    cdef int m
+    cdef int m = <int> L.strides[0]
 
     if L.dtype.name == 'float64':
-       m = <int> L.strides[0] / sizeof (double)
-       double_cholesky_delete (m, n, <double *> L.data, go_out)
+        cholesky_delete_dbl(m / sizeof(double), n, <double *> L.data, go_out)
     elif L.dtype.name == 'float32':
-       m = <int> L.strides[0] / sizeof (float)
-       float_cholesky_delete (m, n, <float *> L.data, go_out)
-
+        cholesky_delete_flt(m / sizeof(float),  n, <float *> L.data,  go_out)
+    else:
+        raise TypeError("unsupported dtype %r." % L.dtype)

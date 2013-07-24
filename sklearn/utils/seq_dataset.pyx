@@ -5,12 +5,14 @@
 #
 # Author: Peter Prettenhofer <peter.prettenhofer@gmail.com>
 #
-# License: BSD Style.
+# Licence: BSD 3 clause
 
 import numpy as np
 
 cimport numpy as np
 cimport cython
+
+np.import_array()
 
 
 cdef class SequentialDataset:
@@ -55,8 +57,8 @@ cdef class ArrayDataset(SequentialDataset):
                   np.ndarray[DOUBLE, ndim=1, mode='c'] sample_weights):
         """A ``SequentialDataset`` backed by a two-dimensional numpy array.
 
-        Paramters
-        ---------
+        Parameters
+        ----------
         X : ndarray, dtype=np.float64, ndim=2, mode='c'
             The samples; a two-dimensional c-continuous numpy array of
             dtype np.float64.
@@ -75,7 +77,7 @@ cdef class ArrayDataset(SequentialDataset):
         self.feature_indices = feature_indices
         self.feature_indices_ptr = <INTEGER *> feature_indices.data
         self.current_index = -1
-        self.stride = X.strides[0] / X.strides[1]
+        self.stride = X.strides[0] / X.itemsize
         self.X_data_ptr = <DOUBLE *>X.data
         self.Y_data_ptr = <DOUBLE *>Y.data
         self.sample_weight_data = <DOUBLE *>sample_weights.data

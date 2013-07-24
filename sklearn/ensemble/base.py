@@ -3,7 +3,7 @@ Base class for ensemble-based estimators.
 """
 
 # Authors: Gilles Louppe
-# License: BSD 3
+# License: BSD 3 clause
 
 from ..base import clone
 from ..base import BaseEstimator
@@ -70,3 +70,7 @@ class BaseEnsemble(BaseEstimator, MetaEstimatorMixin):
     def __getitem__(self, index):
         """Returns the index'th estimator in the ensemble."""
         return self.estimators_[index]
+
+    def __iter__(self):
+        """Returns iterator over estimators in the ensemble."""
+        return iter(self.estimators_)

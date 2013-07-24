@@ -2,7 +2,7 @@
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Virgile Fritsch <virgile.fritsch@inria.fr>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 
@@ -41,8 +41,8 @@ def test_mcd():
     launch_mcd_on_dataset(500, 1, 100, 0.001, 0.001, 350)
 
 
-def launch_mcd_on_dataset(
-    n_samples, n_features, n_outliers, tol_loc, tol_cov, tol_support):
+def launch_mcd_on_dataset(n_samples, n_features, n_outliers, tol_loc, tol_cov,
+                          tol_support):
 
     rand_gen = np.random.RandomState(0)
     data = rand_gen.randn(n_samples, n_features)
@@ -82,7 +82,7 @@ def test_outlier_detection():
     rnd = np.random.RandomState(0)
     X = rnd.randn(100, 10)
     clf = EllipticEnvelope(contamination=0.1)
-    print clf.threshold
+    print(clf.threshold)
     assert_raises(Exception, clf.predict, X)
     assert_raises(Exception, clf.decision_function, X)
     clf.fit(X)

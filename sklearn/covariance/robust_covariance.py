@@ -6,7 +6,7 @@ Here are implemented estimators that are resistant to outliers.
 """
 # Author: Virgile Fritsch <virgile.fritsch@inria.fr>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 import warnings
 import numbers
 import numpy as np
@@ -118,8 +118,7 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
         remaining_iterations -= 1
 
     previous_dist = dist
-    dist = (np.dot(X - location, precision) \
-                * (X - location)).sum(axis=1)
+    dist = (np.dot(X - location, precision) * (X - location)).sum(axis=1)
     # Catch computation errors
     if np.isinf(det):
         raise ValueError(
@@ -127,25 +126,25 @@ def c_step(X, n_support, remaining_iterations=30, initial_estimates=None,
             "Please check that the covariance matrix corresponding "
             "to the dataset is full rank and that MinCovDet is used with "
             "Gaussian-distributed data (or at least data drawn from a "
-            "unimodal, symetric distribution.")
+            "unimodal, symmetric distribution.")
     # Check convergence
     if np.allclose(det, previous_det):
         # c_step procedure converged
         if verbose:
-            print "Optimal couple (location, covariance) found before" \
-                "ending iterations (%d left)" % (remaining_iterations)
+            print("Optimal couple (location, covariance) found before"
+                  "ending iterations (%d left)" % (remaining_iterations))
         results = location, covariance, det, support, dist
     elif det > previous_det:
         # determinant has increased (should not happen)
-        warnings.warn("Warning! det > previous_det (%.15f > %.15f)" \
-                          % (det, previous_det), RuntimeWarning)
+        warnings.warn("Warning! det > previous_det (%.15f > %.15f)"
+                      % (det, previous_det), RuntimeWarning)
         results = previous_location, previous_covariance, \
             previous_det, previous_support, previous_dist
 
     # Check early stopping
     if remaining_iterations == 0:
         if verbose:
-            print 'Maximum number of iterations reached'
+            print('Maximum number of iterations reached')
         det = fast_logdet(covariance)
         results = location, covariance, det, support, dist
 
@@ -227,7 +226,7 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         n_trials = estimates_list[0].shape[0]
     else:
         raise TypeError("Invalid 'n_trials' parameter, expected tuple or "
-                " integer, got %s (%s)" % (n_trials, type(n_trials)))
+                        " integer, got %s (%s)" % (n_trials, type(n_trials)))
 
     # compute `n_trials` location and shape estimates candidates in the subset
     all_estimates = []
@@ -244,10 +243,10 @@ def select_candidates(X, n_support, n_trials, select=1, n_iter=30,
         for j in range(n_trials):
             initial_estimates = (estimates_list[0][j], estimates_list[1][j])
             all_estimates.append(c_step(
-                    X, n_support, remaining_iterations=n_iter,
-                    initial_estimates=initial_estimates, verbose=verbose,
-                    cov_computation_method=cov_computation_method,
-                    random_state=random_state))
+                X, n_support, remaining_iterations=n_iter,
+                initial_estimates=initial_estimates, verbose=verbose,
+                cov_computation_method=cov_computation_method,
+                random_state=random_state))
     all_locs_sub, all_covs_sub, all_dets_sub, all_supports_sub, all_ds_sub = \
         zip(*all_estimates)
     # find the `n_best` best results among the `n_trials` ones
@@ -290,7 +289,7 @@ def fast_mcd(X, support_fraction=None,
     Depending on the size of the initial sample, we have one, two or three
     such computation levels.
 
-    Note that only raw estimates are returned. If one is intersted in
+    Note that only raw estimates are returned. If one is interested in
     the correction and reweighting steps described in [Rouseeuw1999],
     see the MinCovDet object.
 
@@ -318,11 +317,11 @@ def fast_mcd(X, support_fraction=None,
     """
     random_state = check_random_state(random_state)
 
-    X = np.asanyarray(X)
+    X = np.asarray(X)
     if X.ndim == 1:
         X = np.reshape(X, (1, -1))
-        warnings.warn("Only one sample available. " \
-                          "You may want to reshape your data array")
+        warnings.warn("Only one sample available. "
+                      "You may want to reshape your data array")
     n_samples, n_features = X.shape
 
     # minimum breakdown value
@@ -350,8 +349,7 @@ def fast_mcd(X, support_fraction=None,
             location = np.array([location])
             # get precision matrix in an optimized way
             precision = pinvh(covariance)
-            dist = (np.dot(X_centered, precision) \
-                        * (X_centered)).sum(axis=1)
+            dist = (np.dot(X_centered, precision) * (X_centered)).sum(axis=1)
         else:
             support = np.ones(n_samples, dtype=bool)
             covariance = np.asarray([[np.var(X)]])
@@ -359,17 +357,16 @@ def fast_mcd(X, support_fraction=None,
             X_centered = X - location
             # get precision matrix in an optimized way
             precision = pinvh(covariance)
-            dist = (np.dot(X_centered, precision) \
-                        * (X_centered)).sum(axis=1)
-
-    ### Starting FastMCD algorithm for p-dimensional case
+            dist = (np.dot(X_centered, precision) * (X_centered)).sum(axis=1)
+### Starting FastMCD algorithm for p-dimensional case
     if (n_samples > 500) and (n_features > 1):
         ## 1. Find candidate supports on subsets
         # a. split the set in subsets of size ~ 300
         n_subsets = n_samples // 300
         n_samples_subsets = n_samples // n_subsets
         samples_shuffle = random_state.permutation(n_samples)
-        h_subset = np.ceil(n_samples_subsets * (n_support / float(n_samples)))
+        h_subset = int(np.ceil(n_samples_subsets *
+                       (n_support / float(n_samples))))
         # b. perform a total of 500 trials
         n_trials_tot = 500
         # c. select 10 best (location, covariance) for each subset
@@ -402,7 +399,8 @@ def fast_mcd(X, support_fraction=None,
         ## 2. Pool the candidate supports into a merged set
         ##    (possibly the full dataset)
         n_samples_merged = min(1500, n_samples)
-        h_merged = np.ceil(n_samples_merged * (n_support / float(n_samples)))
+        h_merged = int(np.ceil(n_samples_merged *
+                       (n_support / float(n_samples))))
         if n_samples > 1500:
             n_best_merged = 10
         else:
@@ -465,7 +463,7 @@ class MinCovDet(EmpiricalCovariance):
 
     The Minimum Covariance Determinant covariance estimator is to be applied
     on Gaussian-distributed data, but could still be relevant on data
-    drawn from a unimodal, symetric distribution. It is not meant to be used
+    drawn from a unimodal, symmetric distribution. It is not meant to be used
     with multimodal data (the algorithm used to fit a MinCovDet object is
     likely to fail in such a case).
     One should consider projection pursuit methods to deal with multimodal
@@ -561,21 +559,21 @@ class MinCovDet(EmpiricalCovariance):
           Returns self.
 
         """
-        self.random_state = check_random_state(self.random_state)
+        random_state = check_random_state(self.random_state)
         n_samples, n_features = X.shape
         # check that the empirical covariance is full rank
         if (linalg.svdvals(np.dot(X.T, X)) > 1e-8).sum() != n_features:
-            warnings.warn("The covariance matrix associated to your dataset " \
-                              "is not full rank")
+            warnings.warn("The covariance matrix associated to your dataset "
+                          "is not full rank")
         # compute and store raw estimates
         raw_location, raw_covariance, raw_support, raw_dist = fast_mcd(
-                X, support_fraction=self.support_fraction,
-                cov_computation_method=self._nonrobust_covariance,
-                random_state=self.random_state)
+            X, support_fraction=self.support_fraction,
+            cov_computation_method=self._nonrobust_covariance,
+            random_state=random_state)
         if self.assume_centered:
             raw_location = np.zeros(n_features)
-            raw_covariance = self._nonrobust_covariance(
-                    X[raw_support], assume_centered=True)
+            raw_covariance = self._nonrobust_covariance(X[raw_support],
+                                                        assume_centered=True)
             # get precision matrix in an optimized way
             precision = pinvh(raw_covariance)
             raw_dist = np.sum(np.dot(X, precision) * X, 1)

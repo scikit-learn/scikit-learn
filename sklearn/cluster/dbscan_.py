@@ -5,9 +5,8 @@ DBSCAN: Density-Based Spatial Clustering of Applications with Noise
 
 # Author: Robert Layton <robertlayton@gmail.com>
 #
-# License: BSD
+# License: BSD 3 clause
 
-import warnings
 import numpy as np
 
 from ..base import BaseEstimator, ClusterMixin
@@ -51,7 +50,7 @@ def dbscan(X, eps=0.5, min_samples=5, metric='euclidean',
 
     Notes
     -----
-    See examples/plot_dbscan.py for an example.
+    See examples/cluster/plot_cluster_comparison.py for an example.
 
     References
     ----------
@@ -148,7 +147,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
 
     Notes
     -----
-    See examples/plot_dbscan.py for an example.
+    See examples/cluster/plot_cluster_comparison.py for an example.
 
     References
     ----------
@@ -159,14 +158,14 @@ class DBSCAN(BaseEstimator, ClusterMixin):
     """
 
     def __init__(self, eps=0.5, min_samples=5, metric='euclidean',
-            random_state=None):
+                 random_state=None):
         self.eps = eps
         self.min_samples = min_samples
         self.metric = metric
-        self.random_state = check_random_state(random_state)
+        self.random_state = random_state
 
-    def fit(self, X, **params):
-        """Perform DBSCAN clustering from vector array or distance matrix.
+    def fit(self, X):
+        """Perform DBSCAN clustering from features or distance matrix.
 
         Parameters
         ----------
@@ -177,12 +176,7 @@ class DBSCAN(BaseEstimator, ClusterMixin):
         params: dict
             Overwrite keywords from __init__.
         """
-        if params:
-            warnings.warn('Passing parameters to fit methods is '
-                          'deprecated and will be removed in 0.14',
-                          DeprecationWarning, stacklevel=2)
-            self.set_params(**params)
-        self.core_sample_indices_, self.labels_ = dbscan(X,
-                                                         **self.get_params())
+        clust = dbscan(X, **self.get_params())
+        self.core_sample_indices_, self.labels_ = clust
         self.components_ = X[self.core_sample_indices_].copy()
         return self

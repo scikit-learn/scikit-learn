@@ -1,7 +1,7 @@
 """
-=====================================================
-A demo of the K Means clustering algorithm
-=====================================================
+====================================================================
+Comparison of the K-Means and MiniBatchKMeans clustering algorithms
+====================================================================
 
 We want to compare the performance of the MiniBatchKMeans and KMeans:
 the MiniBatchKMeans is faster, but gives slightly different results (see
@@ -12,7 +12,7 @@ MiniBatchKMeans, and plot the results.
 We will also plot the points that are labelled differently between the two
 algorithms.
 """
-print __doc__
+print(__doc__)
 
 import time
 
@@ -79,7 +79,7 @@ for k, col in zip(range(n_clusters), colors):
     ax.plot(X[my_members, 0], X[my_members, 1], 'w',
             markerfacecolor=col, marker='.')
     ax.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
-                                    markeredgecolor='k', markersize=6)
+            markeredgecolor='k', markersize=6)
 ax.set_title('KMeans')
 ax.set_xticks(())
 ax.set_yticks(())
@@ -94,7 +94,7 @@ for k, col in zip(range(n_clusters), colors):
     ax.plot(X[my_members, 0], X[my_members, 1], 'w',
             markerfacecolor=col, marker='.')
     ax.plot(cluster_center[0], cluster_center[1], 'o', markerfacecolor=col,
-                                    markeredgecolor='k', markersize=6)
+            markeredgecolor='k', markersize=6)
 ax.set_title('MiniBatchKMeans')
 ax.set_xticks(())
 ax.set_yticks(())

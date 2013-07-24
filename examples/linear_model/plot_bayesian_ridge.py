@@ -6,7 +6,7 @@ Bayesian Ridge Regression
 Computes a :ref:`bayesian_ridge_regression` on a synthetic dataset.
 
 Compared to the OLS (ordinary least squares) estimator, the coefficient
-weights are slightly shifted toward zeros, wich stabilises them.
+weights are slightly shifted toward zeros, which stabilises them.
 
 As the prior on the weights is a Gaussian prior, the histogram of the
 estimated weights is Gaussian.
@@ -14,7 +14,7 @@ estimated weights is Gaussian.
 The estimation of the model is done by iteratively maximizing the
 marginal log-likelihood of the observations.
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

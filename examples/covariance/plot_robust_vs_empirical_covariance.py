@@ -5,8 +5,8 @@ Robust vs Empirical covariance estimate
 
 The usual covariance maximum likelihood estimate is very sensitive to
 the presence of outliers in the data set. In such a case, one would
-have better to use a robust estimator of covariance to garanty that
-the estimation is resistant to "errorneous" observations in the data
+have better to use a robust estimator of covariance to guarantee that
+the estimation is resistant to "erroneous" observations in the data
 set.
 
 The Minimum Covariance Determinant estimator is a robust,
@@ -41,7 +41,7 @@ gaussian distributed data sets:
     Graphical Statistics. December 1, 2005, 14(4): 928-946.
 
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl
@@ -122,8 +122,8 @@ pl.errorbar(range_n_outliers[:(x_size / 5 + 1)],
             yerr=err_cov_emp_full.std(1)[:(x_size / 5 + 1)],
             label="Full data set empirical covariance", color='green')
 pl.plot(range_n_outliers[(x_size / 5):(x_size / 2 - 1)],
-         err_cov_emp_full.mean(1)[(x_size / 5):(x_size / 2 - 1)],
-         color='green', ls='--')
+        err_cov_emp_full.mean(1)[(x_size / 5):(x_size / 2 - 1)], color='green',
+        ls='--')
 pl.errorbar(range_n_outliers, err_cov_emp_pure.mean(1),
             yerr=err_cov_emp_pure.std(1),
             label="Pure data set empirical covariance", color='black')

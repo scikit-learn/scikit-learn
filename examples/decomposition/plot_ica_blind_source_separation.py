@@ -9,7 +9,7 @@ recording the mixed signals. ICA is used to recover the sources
 ie. what is played by each instrument.
 
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl

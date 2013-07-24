@@ -23,7 +23,7 @@ Two families of ensemble methods are usually distinguished:
   tries to reduce the bias of the combined model. The motivation is to combine
   several weak models to produce a powerful ensemble.
 
-  **Examples:** AdaBoost, Least Squares Boosting, :ref:`Gradient Tree Boosting <gradient_boosting>`, ...
+  **Examples:** :ref:`AdaBoost <adaboost>`, :ref:`Gradient Tree Boosting <gradient_boosting>`, ...
 
 
 .. _forest:
@@ -54,7 +54,6 @@ Like :ref:`decision trees <tree>`, forests of trees also extend
 to :ref:`multi-output problems <tree_multioutput>`  (if Y is an array of size
 ``[n_samples, n_outputs]``).
 
-
 Random Forests
 --------------
 
@@ -73,7 +72,6 @@ increase in bias, hence yielding an overall better model.
 In contrast to the original publication [B2001]_, the scikit-learn
 implementation combines classifiers by averaging their probabilistic
 prediction, instead of letting each classifier vote for a single class.
-
 
 Extremely Randomized Trees
 --------------------------
@@ -101,7 +99,7 @@ in bias::
     ...     random_state=0)
     >>> scores = cross_val_score(clf, X, y)
     >>> scores.mean()                             # doctest: +ELLIPSIS
-    0.97...
+    0.98...
 
     >>> clf = RandomForestClassifier(n_estimators=10, max_depth=None,
     ...     min_samples_split=1, random_state=0)
@@ -141,12 +139,6 @@ validated. In addition, note that bootstrap samples are used by default
 in random forests (``bootstrap=True``) while the default strategy is to
 use the original dataset for building extra-trees (``bootstrap=False``).
 
-When training on large datasets, where runtime and memory requirements
-are important, it might also be beneficial to adjust the ``min_density``
-parameter, that controls a heuristic for speeding up computations in
-each tree.  See :ref:`Complexity of trees<tree_complexity>` for details.
-
-
 Parallelization
 ---------------
 
@@ -167,16 +159,16 @@ amount of time (e.g., on large datasets).
  * :ref:`example_ensemble_plot_forest_importances_faces.py`
  * :ref:`example_ensemble_plot_forest_multioutput.py`
 
-
 .. topic:: References
 
- .. [B2001] Leo Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
+ .. [B2001] L. Breiman, "Random Forests", Machine Learning, 45(1), 5-32, 2001.
 
- .. [B1998] Leo Breiman, "Arcing Classifiers", Annals of Statistics 1998.
+ .. [B1998] L. Breiman, "Arcing Classifiers", Annals of Statistics 1998.
 
- .. [GEW2006] Pierre Geurts, Damien Ernst., and Louis Wehenkel, "Extremely randomized
+ .. [GEW2006] P. Geurts, D. Ernst., and L. Wehenkel, "Extremely randomized
    trees", Machine Learning, 63(1), 3-42, 2006.
 
+.. _random_forest_feature_importance:
 
 Feature importance evaluation
 -----------------------------
@@ -202,21 +194,18 @@ a :class:`ExtraTreesClassifier` model.
    :align: center
    :scale: 75
 
-
-In practice those estimates can be computed by explicitly passing
-``compute_importances=True`` to the constructor of the decision trees,
-random forest and extremely randomized trees models. The result is stored
-as an attribute named ``feature_importances_`` on the fitted model. This
-is an array with shape ``(n_features,)`` whose values are positive and sum
-to 1.0. The higher the value, the more important is the contribution of
-the matching feature to the prediction function.
+In practice those estimates are stored as an attribute named
+``feature_importances_`` on the fitted model. This is an array with shape
+``(n_features,)`` whose values are positive and sum to 1.0. The higher
+the value, the more important is the contribution of the matching feature
+to the prediction function.
 
 .. topic:: Examples:
 
  * :ref:`example_ensemble_plot_forest_importances_faces.py`
  * :ref:`example_ensemble_plot_forest_importances.py`
 
-.. _random_hashing:
+.. _random_trees_embedding:
 
 Totally Random Trees Embedding
 ------------------------------
@@ -239,15 +228,109 @@ the transformation performs an implicit, non-parametric density estimation.
 .. topic:: Examples:
 
  * :ref:`example_ensemble_plot_random_forest_embedding.py`
- 
-  * :ref:`example_manifold_plot_lle_digits.py` compares non-linear
-    dimensionality reduction technics on handwritten digits.
+
+ * :ref:`example_manifold_plot_lle_digits.py` compares non-linear
+   dimensionality reduction techniques on handwritten digits.
 
 .. seealso::
 
    :ref:`manifold` techniques can also be useful to derive non-linear
    representations of feature space, also these approaches focus also on
    dimensionality reduction.
+
+
+.. _adaboost:
+
+AdaBoost
+========
+
+The module :mod:`sklearn.ensemble` includes the popular boosting algorithm
+AdaBoost, introduced in 1995 by Freud and Schapire [FS1995]_.
+
+The core principle of AdaBoost is to fit a sequence of weak learners (i.e.,
+models that are only slightly better than random guessing, such as small
+decision trees) on repeatedly modified versions of the data. The predictions
+from all of them are then combined through a weighted majority vote (or sum) to
+produce the final prediction. The data modifications at each so-called boosting
+iteration consist of applying weights :math:`w_1`, :math:`w_2`, ..., :math:`w_N`
+to each of the training samples. Initially, those weights are all set to
+:math:`w_i = 1/N`, so that the first step simply trains a weak learner on the
+original data. For each successive iteration, the sample weights are
+individually modified and the learning algorithm is reapplied to the reweighted
+data. At a given step, those training examples that were incorrectly predicted
+by the boosted model induced at the previous step have their weights increased,
+whereas the weights are decreased for those that were predicted correctly. As
+iterations proceed, examples that are difficult to predict receive
+ever-increasing influence. Each subsequent weak learner is thereby forced to
+concentrate on the examples that are missed by the previous ones in the sequence
+[HTF2009]_.
+
+.. figure:: ../auto_examples/ensemble/images/plot_adaboost_hastie_10_2_1.png
+   :target: ../auto_examples/ensemble/plot_adaboost_hastie_10_2.html
+   :align: center
+   :scale: 75
+
+AdaBoost can be used both for classification and regression problems:
+
+  - For multi-class classification, :class:`AdaBoostClassifier` implements
+    AdaBoost-SAMME and AdaBoost-SAMME.R [ZZRH2009]_.
+
+  - For regression, :class:`AdaBoostRegressor` implements AdaBoost.R2 [D1997]_.
+
+Usage
+-----
+
+The following example shows how to fit an AdaBoost classifier with 100 weak
+learners::
+
+    >>> from sklearn.cross_validation import cross_val_score
+    >>> from sklearn.datasets import load_iris
+    >>> from sklearn.ensemble import AdaBoostClassifier
+
+    >>> iris = load_iris()
+    >>> clf = AdaBoostClassifier(n_estimators=100)
+    >>> scores = cross_val_score(clf, iris.data, iris.target)
+    >>> scores.mean()                             # doctest: +ELLIPSIS
+    0.9...
+
+The number of weak learners is controlled by the parameter ``n_estimators``. The
+``learning_rate`` parameter controls the contribution of the weak learners in
+the final combination. By default, weak learners are decision stumps. Different
+weak learners can be specified through the ``base_estimator`` parameter.
+The main parameters to tune to obtain good results are ``n_estimators`` and
+the complexity of the base estimators (e.g., its depth ``max_depth`` or
+minimum required number of samples at a leaf ``min_samples_leaf`` in case of
+decision trees).
+
+.. topic:: Examples:
+
+ * :ref:`example_ensemble_plot_adaboost_hastie_10_2.py` compares the
+   classification error of a decision stump, decision tree, and a boosted
+   decision stump using AdaBoost-SAMME and AdaBoost-SAMME.R.
+
+ * :ref:`example_ensemble_plot_adaboost_multiclass.py` shows the performance
+   of AdaBoost-SAMME and AdaBoost-SAMME.R on a multi-class problem.
+
+ * :ref:`example_ensemble_plot_adaboost_twoclass.py` shows the decision boundary
+   and decision function values for a non-linearly separable two-class problem
+   using AdaBoost-SAMME.
+
+ * :ref:`example_ensemble_plot_adaboost_regression.py` demonstrates regression
+   with the AdaBoost.R2 algorithm.
+
+.. topic:: References
+
+ .. [FS1995] Y. Freud, and R. Schapire, "A decision theoretic generalization of
+             online learning and an application to boosting", 1997.
+
+ .. [ZZRH2009] J. Zhu, H. Zou, S. Rosset, T. Hastie. "Multi-class AdaBoost",
+               2009.
+
+ .. [D1997] H. Drucker. "Improving Regressors using Boosting Techniques", 1997.
+
+ .. [HTF2009] T. Hastie, R. Tibshirani and J. Friedman, "Elements of
+              Statistical Learning Ed. 2", Springer, 2009.
+
 
 .. _gradient_boosting:
 
@@ -319,7 +402,7 @@ Regression
 :class:`GradientBoostingRegressor` supports a number of
 :ref:`different loss functions <gradient_boosting_loss>`
 for regression which can be specified via the argument
-``loss`` which defaults to least squares (``'ls'``).
+``loss``; the default loss function for regression is least squares (``'ls'``).
 
 ::
 
@@ -337,17 +420,26 @@ for regression which can be specified via the argument
     6.90...
 
 The figure below shows the results of applying :class:`GradientBoostingRegressor`
-with least squares loss and 500 base learners to the Boston house-price dataset
-(see :func:`sklearn.datasets.load_boston`).
+with least squares loss and 500 base learners to the Boston house price dataset
+(:func:`sklearn.datasets.load_boston`).
 The plot on the left shows the train and test error at each iteration.
-Plots like these are often used for early stopping. The plot on the right
-shows the feature importances which can be obtained via the ``feature_importances_``
-property.
+The train error at each iteration is stored in the
+:attr:`~GradientBoostingRegressor.train_score_` attribute
+of the gradient boosting model. The test error at each iterations can be obtained
+via the :meth:`~GradientBoostingRegressor.staged_predict` method which returns a
+generator that yields the predictions at each stage. Plots like these can be used
+to determine the optimal number of trees (i.e. ``n_estimators``) by early stopping.
+The plot on the right shows the feature importances which can be obtained via
+the ``feature_importances_`` property.
 
 .. figure:: ../auto_examples/ensemble/images/plot_gradient_boosting_regression_1.png
    :target: ../auto_examples/ensemble/plot_gradient_boosting_regression.html
    :align: center
    :scale: 75
+
+.. topic:: Examples:
+
+ * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
 
 
 Mathematical formulation
@@ -503,14 +595,165 @@ used for model selection (e.g. to determine the optimal number of iterations).
 
 Another strategy to reduce the variance is by subsampling the features
 analogous to the random splits in Random Forests. The size of the subsample
-can be controled via the ``max_features`` parameter.
+can be controlled via the ``max_features`` parameter.
 
+.. topic:: Examples:
+
+ * :ref:`example_ensemble_plot_gradient_boosting_regularization.py`
+
+Interpretation
+--------------
+
+Individual decision trees can be interpreted easily by simply
+visualizing the tree structure. Gradient boosting models, however,
+comprise hundreds of regression trees thus they cannot be easily
+interpreted by visual inspection of the individual trees. Fortunately,
+a number of techniques have been proposed to summarize and interpret
+gradient boosting models.
+
+Feature importance
+..................
+
+Often features do not contribute equally to predict the target
+response; in many situations the majority of the features are in fact
+irrelevant.
+When interpreting a model, the first question usually is: what are
+those important features and how do they contributing in predicting
+the target response?
+
+Individual decision trees intrinsically perform feature selection by selecting
+appropriate split points. This information can be used to measure the
+importance of each feature; the basic idea is: the more often a
+feature is used in the split points of a tree the more important that
+feature is. This notion of importance can be extended to decision tree
+ensembles by simply averaging the feature importance of each tree (see
+:ref:`random_forest_feature_importance` for more details).
+
+The feature importance scores of a fit gradient boosting model can be
+accessed via the ``feature_importances_`` property::
+
+    >>> from sklearn.datasets import make_hastie_10_2
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+
+    >>> X, y = make_hastie_10_2(random_state=0)
+    >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
+    ...     max_depth=1, random_state=0).fit(X, y)
+    >>> clf.feature_importances_  # doctest: +ELLIPSIS
+    array([ 0.11,  0.1 ,  0.11,  ...
 
 .. topic:: Examples:
 
  * :ref:`example_ensemble_plot_gradient_boosting_regression.py`
- * :ref:`example_ensemble_plot_gradient_boosting_regularization.py`
- * :ref:`example_ensemble_plot_gradient_boosting_quantile.py`
+
+.. currentmodule:: sklearn.ensemble.partial_dependence
+
+Partial dependence
+..................
+
+Partial dependence plots (PDP) show the dependence between the target response
+and a set of 'target' features, marginalizing over the
+values of all other features (the 'complement' features).
+Intuitively, we can interpret the partial dependence as the expected
+target response [1]_ as a function of the 'target' features [2]_.
+
+Due to the limits of human perception the size of the target feature
+set must be small (usually, one or two) thus the target features are
+usually chosen among the most important features.
+
+The Figure below shows four one-way and one two-way partial dependence plots
+for the California housing dataset:
+
+.. figure:: ../auto_examples/ensemble/images/plot_partial_dependence_1.png
+   :target: ../auto_examples/ensemble/plot_partial_dependence.html
+   :align: center
+   :scale: 70
+
+One-way PDPs tell us about the interaction between the target
+response and the target feature (e.g. linear, non-linear).
+The upper left plot in the above Figure shows the effect of the
+median income in a district on the median house price; we can
+clearly see a linear relationship among them.
+
+PDPs with two target features show the
+interactions among the two features. For example, the two-variable PDP in the
+above Figure shows the dependence of median house price on joint
+values of house age and avg. occupants per household. We can clearly
+see an interaction between the two features:
+For an avg. occupancy greater than two, the house price is nearly independent
+of the house age, whereas for values less than two there is a strong dependence
+on age.
+
+The module :mod:`partial_dependence` provides a convenience function
+:func:`~sklearn.ensemble.partial_dependence.plot_partial_dependence`
+to create one-way and two-way partial dependence plots. In the below example
+we show how to create a grid of partial dependence plots: two one-way
+PDPs for the features ``0`` and ``1`` and a two-way PDP between the two
+features::
+
+    >>> from sklearn.datasets import make_hastie_10_2
+    >>> from sklearn.ensemble import GradientBoostingClassifier
+    >>> from sklearn.ensemble.partial_dependence import plot_partial_dependence
+
+    >>> X, y = make_hastie_10_2(random_state=0)
+    >>> clf = GradientBoostingClassifier(n_estimators=100, learning_rate=1.0,
+    ...     max_depth=1, random_state=0).fit(X, y)
+    >>> features = [0, 1, (0, 1)]
+    >>> fig, axs = plot_partial_dependence(clf, X, features) #doctest: +SKIP
+
+For multi-class models, you need to set the class label for which the
+PDPs should be created via the ``label`` argument::
+
+    >>> from sklearn.datasets import load_iris
+    >>> iris = load_iris()
+    >>> mc_clf = GradientBoostingClassifier(n_estimators=10,
+    ...     max_depth=1).fit(iris.data, iris.target)
+    >>> features = [3, 2, (3, 2)]
+    >>> fig, axs = plot_partial_dependence(mc_clf, X, features, label=0) #doctest: +SKIP
+
+If you need the raw values of the partial dependence function rather
+than the plots you can use the
+:func:`~sklearn.ensemble.partial_dependence.partial_dependence` function::
+
+    >>> from sklearn.ensemble.partial_dependence import partial_dependence
+
+    >>> pdp, axes = partial_dependence(clf, [0], X=X)
+    >>> pdp  # doctest: +ELLIPSIS
+    array([[ 2.46643157,  2.46643157, ...
+    >>> axes  # doctest: +ELLIPSIS
+    [array([-1.62497054, -1.59201391, ...
+
+The function requires either the argument ``grid`` which specifies the
+values of the target features on which the partial dependence function
+should be evaluated or the argument ``X`` which is a convenience mode
+for automatically creating ``grid`` from the training data. If ``X``
+is given, the ``axes`` value returned by the function gives the axis
+for each target feature.
+
+For each value of the 'target' features in the ``grid`` the partial
+dependence function need to marginalize the predictions of a tree over
+all possible values of the 'complement' features. In decision trees
+this function can be evaluated efficiently without reference to the
+training data. For each grid point a weighted tree traversal is
+performed: if a split node involves a 'target' feature, the
+corresponding left or right branch is followed, otherwise both
+branches are followed, each branch is weighted by the fraction of
+training samples that entered that branch. Finally, the partial
+dependence is given by a weighted average of all visited leaves. For
+tree ensembles the results of each individual tree are again
+averaged.
+
+.. rubric:: Footnotes
+
+.. [1] For classification with ``loss='deviance'``  the target
+   response is logit(p).
+
+.. [2] More precisely its the expectation of the target response after
+   accounting for the initial model; partial dependence plots
+   do not include the ``init`` model.
+
+.. topic:: Examples:
+
+ * :ref:`example_ensemble_plot_partial_dependence.py`
 
 
 .. topic:: References

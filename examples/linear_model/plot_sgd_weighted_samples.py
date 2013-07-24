@@ -6,7 +6,7 @@ SGD: Weighted samples
 Plot decision function of a weighted dataset, where the size of points
 is proportional to its weight.
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl
@@ -41,7 +41,7 @@ Z = Z.reshape(xx.shape)
 samples_weights = pl.contour(xx, yy, Z, levels=[0], linestyles=['dashed'])
 
 pl.legend([no_weights.collections[0], samples_weights.collections[0]],
-    ["no weights", "with weights"], loc="lower left")
+          ["no weights", "with weights"], loc="lower left")
 
 pl.xticks(())
 pl.yticks(())

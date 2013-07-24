@@ -159,6 +159,7 @@ Loaders
    datasets.load_linnerud
    datasets.fetch_mldata
    datasets.fetch_olivetti_faces
+   datasets.fetch_california_housing
    datasets.load_sample_image
    datasets.load_sample_images
    datasets.load_svmlight_file
@@ -216,6 +217,7 @@ Samples generator
    decomposition.KernelPCA
    decomposition.FactorAnalysis
    decomposition.FastICA
+   decomposition.TruncatedSVD
    decomposition.NMF
    decomposition.SparsePCA
    decomposition.MiniBatchSparsePCA
@@ -278,12 +280,31 @@ Samples generator
    ensemble.RandomForestRegressor
    ensemble.ExtraTreesClassifier
    ensemble.ExtraTreesRegressor
+   ensemble.AdaBoostClassifier
+   ensemble.AdaBoostRegressor
    ensemble.GradientBoostingClassifier
    ensemble.GradientBoostingRegressor
 
 .. autosummary::
    :toctree: generated/
    :template: function.rst
+
+
+partial dependence
+------------------
+
+.. automodule:: sklearn.ensemble.partial_dependence
+   :no-members:
+   :no-inherited-members:
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   ensemble.partial_dependence.partial_dependence
+   ensemble.partial_dependence.plot_partial_dependence
 
 
 .. _feature_extraction_ref:
@@ -344,6 +365,7 @@ From text
    :template: class.rst
 
    feature_extraction.text.CountVectorizer
+   feature_extraction.text.HashingVectorizer
    feature_extraction.text.TfidfTransformer
    feature_extraction.text.TfidfVectorizer
 
@@ -434,7 +456,9 @@ From text
    :template: class.rst
 
    grid_search.GridSearchCV
-   grid_search.IterGrid
+   grid_search.ParameterGrid
+   grid_search.ParameterSampler
+   grid_search.RandomizedSearchCV
 
 
 .. _hmm_ref:
@@ -500,8 +524,9 @@ From text
    :toctree: generated/
    :template: class.rst
 
-   kernel_approximation.RBFSampler
    kernel_approximation.AdditiveChi2Sampler
+   kernel_approximation.Nystroem
+   kernel_approximation.RBFSampler
    kernel_approximation.SkewedChi2Sampler
 
 :mod:`sklearn.semi_supervised` Semi-Supervised Learning
@@ -618,12 +643,14 @@ From text
     manifold.LocallyLinearEmbedding
     manifold.Isomap
     manifold.MDS
+    manifold.SpectralEmbedding
 
 .. autosummary::
     :toctree: generated
     :template: function.rst
 
     manifold.locally_linear_embedding
+    manifold.spectral_embedding
 
 
 .. _metrics_ref:
@@ -631,11 +658,22 @@ From text
 :mod:`sklearn.metrics`: Metrics
 ===============================
 
+See the :ref:`model_evaluation` section and the :ref:`metrics` section of the
+user guide for further details.
+
 .. automodule:: sklearn.metrics
    :no-members:
    :no-inherited-members:
 
 .. currentmodule:: sklearn
+
+Model Selection Interface
+-------------------------
+.. autosummary::
+   :toctree: generated/
+   :template: class_with_call.rst
+
+   metrics.Scorer
 
 Classification metrics
 ----------------------
@@ -644,36 +682,46 @@ Classification metrics
    :toctree: generated/
    :template: function.rst
 
-   metrics.confusion_matrix
-   metrics.roc_curve
+   metrics.accuracy_score
    metrics.auc
-   metrics.precision_score
-   metrics.recall_score
-   metrics.fbeta_score
-   metrics.f1_score
    metrics.auc_score
    metrics.average_precision_score
-   metrics.precision_recall_fscore_support
    metrics.classification_report
-   metrics.precision_recall_curve
-   metrics.zero_one_score
-   metrics.zero_one
+   metrics.confusion_matrix
+   metrics.f1_score
+   metrics.fbeta_score
+   metrics.hamming_loss
    metrics.hinge_loss
+   metrics.jaccard_similarity_score
+   metrics.matthews_corrcoef
+   metrics.precision_recall_curve
+   metrics.precision_recall_fscore_support
+   metrics.precision_score
+   metrics.recall_score
+   metrics.roc_curve
+   metrics.zero_one_loss
 
 Regression metrics
 ------------------
+
+See the :ref:`regression_metrics` section of the user guide for further
+details.
 
 .. autosummary::
    :toctree: generated/
    :template: function.rst
 
-   metrics.r2_score
+   metrics.explained_variance_score
+   metrics.mean_absolute_error
    metrics.mean_squared_error
+   metrics.r2_score
+
 
 Clustering metrics
 ------------------
 
-See the :ref:`clustering` section of the user guide for further details.
+See the :ref:`clustering_evaluation` section of the user guide for further
+details.
 
 .. automodule:: sklearn.metrics.cluster
    :no-members:
@@ -693,6 +741,7 @@ See the :ref:`clustering` section of the user guide for further details.
    metrics.mutual_info_score
    metrics.normalized_mutual_info_score
    metrics.silhouette_score
+   metrics.silhouette_samples
    metrics.v_measure_score
 
 Pairwise metrics
@@ -708,15 +757,17 @@ Pairwise metrics
    :toctree: generated/
    :template: function.rst
 
+   metrics.pairwise.additive_chi2_kernel
+   metrics.pairwise.chi2_kernel
+   metrics.pairwise.distance_metrics
    metrics.pairwise.euclidean_distances
-   metrics.pairwise.manhattan_distances
+   metrics.pairwise.kernel_metrics
    metrics.pairwise.linear_kernel
+   metrics.pairwise.manhattan_distances
+   metrics.pairwise.pairwise_distances
+   metrics.pairwise.pairwise_kernels
    metrics.pairwise.polynomial_kernel
    metrics.pairwise.rbf_kernel
-   metrics.pairwise.distance_metrics
-   metrics.pairwise.pairwise_distances
-   metrics.pairwise.kernel_metrics
-   metrics.pairwise.pairwise_kernels
 
 
 .. _mixture_ref:
@@ -773,7 +824,6 @@ Pairwise metrics
     multiclass.fit_ecoc
     multiclass.predict_ecoc
 
-
 .. _naive_bayes_ref:
 
 :mod:`sklearn.naive_bayes`: Naive Bayes
@@ -818,8 +868,11 @@ Pairwise metrics
    neighbors.RadiusNeighborsClassifier
    neighbors.KNeighborsRegressor
    neighbors.RadiusNeighborsRegressor
-   neighbors.BallTree
    neighbors.NearestCentroid
+   neighbors.BallTree
+   neighbors.KDTree
+   neighbors.DistanceMetric
+   neighbors.KernelDensity
 
 .. autosummary::
    :toctree: generated/
@@ -923,6 +976,33 @@ Pairwise metrics
    :template: class.rst
 
    qda.QDA
+
+.. _random_projection_ref:
+
+:mod:`sklearn.random_projection`: Random projection
+===================================================
+
+.. automodule:: sklearn.random_projection
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`random_projection` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   random_projection.GaussianRandomProjection
+   random_projection.SparseRandomProjection
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   random_projection.johnson_lindenstrauss_min_dim
+
 
 .. _svm_ref:
 

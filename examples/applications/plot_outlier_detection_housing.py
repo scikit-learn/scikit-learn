@@ -9,7 +9,7 @@ a better understanding of the data structure.
 
 We selected two sets of two variables from the boston housing data set
 as an illustration of what kind of analysis can be done with several
-outlier detection tools. For the purpose of vizualisation, we are working
+outlier detection tools. For the purpose of visualization, we are working
 with two-dimensional examples, but one should be aware that things are
 not so trivial in high-dimension, as it will be pointed out.
 
@@ -40,15 +40,15 @@ distribution: the location seems to be well estimated, although the covariance
 is hard to estimate due to the banana-shaped distribution. Anyway, we can
 get rid of some outlying observations.
 The One-Class SVM is able to capture the real data structure, but the
-difficulty is to adjust its kernel bandwith parameter so as to obtain
+difficulty is to adjust its kernel bandwidth parameter so as to obtain
 a good compromise between the shape of the data scatter matrix and the
 risk of over-fitting the data.
 
 """
-print __doc__
+print(__doc__)
 
 # Author: Virgile Fritsch <virgile.fritsch@inria.fr>
-# License: BSD
+# License: BSD 3 clause
 
 import numpy as np
 from sklearn.covariance import EllipticEnvelope
@@ -64,9 +64,9 @@ X2 = load_boston()['data'][:, [5, 12]]  # "banana"-shaped
 # Define "classifiers" to be used
 classifiers = {
     "Empirical Covariance": EllipticEnvelope(support_fraction=1.,
-                                            contamination=0.261),
+                                             contamination=0.261),
     "Robust Covariance (Minimum Covariance Determinant)":
-        EllipticEnvelope(contamination=0.261),
+    EllipticEnvelope(contamination=0.261),
     "OCSVM": OneClassSVM(nu=0.261, gamma=0.05)}
 colors = ['m', 'g', 'b']
 legend1 = {}

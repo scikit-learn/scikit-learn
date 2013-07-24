@@ -19,7 +19,7 @@ decision function for a variety of parameter values, and the second
 is a heatmap of the classifier's cross-validation accuracy as
 a function of `C` and `gamma`.
 '''
-print __doc__
+print(__doc__)
 
 import numpy as np
 import pylab as pl
@@ -95,7 +95,7 @@ for (k, (C, gamma, clf)) in enumerate(classifiers):
     # visualize decision function for these parameters
     pl.subplot(len(C_2d_range), len(gamma_2d_range), k + 1)
     pl.title("gamma 10^%d, C 10^%d" % (np.log10(gamma), np.log10(C)),
-        size='medium')
+             size='medium')
 
     # visualize parameter's effect on decision function
     pl.pcolormesh(xx, yy, -Z, cmap=pl.cm.jet)
@@ -105,8 +105,8 @@ for (k, (C, gamma, clf)) in enumerate(classifiers):
     pl.axis('tight')
 
 # plot the scores of the grid
-# grid_scores_ contains parameter settings and scores
-score_dict = grid.grid_scores_
+# cv_scores_ contains parameter settings and scores
+score_dict = grid.cv_scores_
 
 # We extract just the scores
 scores = [x[1] for x in score_dict]

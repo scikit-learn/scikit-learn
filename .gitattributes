@@ -1,5 +1,6 @@
 /sklearn/__check_build/_check_build.c -diff
 /sklearn/_hmmc.c -diff
+/sklearn/_isotonic.c -diff
 /sklearn/cluster/_hierarchical.c -diff
 /sklearn/cluster/_k_means.c -diff
 /sklearn/datasets/_svmlight_format.c -diff
@@ -7,6 +8,7 @@
 /sklearn/feature_extraction/_hashing.c -diff
 /sklearn/linear_model/cd_fast.c -diff
 /sklearn/linear_model/sgd_fast.c -diff
+/sklearn/metrics/pairwise_fast.c -diff
 /sklearn/neighbors/ball_tree.c -diff
 /sklearn/svm/liblinear.c -diff
 /sklearn/svm/libsvm.c -diff
@@ -15,6 +17,7 @@
 /sklearn/utils/arraybuilder.c -diff
 /sklearn/utils/arrayfuncs.c -diff
 /sklearn/utils/graph_shortest_path.c -diff
+/sklearn/utils/lgamma.c -diff
 /sklearn/utils/murmurhash.c -diff
 /sklearn/utils/seq_dataset.c -diff
 /sklearn/utils/sparsefuncs.c -diff

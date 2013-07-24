@@ -3,7 +3,7 @@
 
 # Author: Vlad Niculae
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 import warnings
 
@@ -24,8 +24,8 @@ dependence in the dictionary. The requested precision might not have been met.
 def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
     """Orthogonal Matching Pursuit step using the Cholesky decomposition.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     X: array, shape = (n_samples, n_features)
         Input dictionary. Columns are assumed to have unit norm.
 
@@ -43,8 +43,8 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
         value is only helpful if X is already Fortran-ordered, otherwise a
         copy is made anyway.
 
-    Returns:
-    --------
+    Returns
+    -------
     gamma: array, shape = (n_nonzero_coefs,)
         Non-zero elements of the solution
 
@@ -66,7 +66,7 @@ def _cholesky_omp(X, y, n_nonzero_coefs, tol=None, copy_X=True):
     residual = y
     gamma = np.empty(0)
     n_active = 0
-    indices = range(X.shape[1])  # keeping track of swapping
+    indices = np.arange(X.shape[1])  # keeping track of swapping
 
     max_features = X.shape[1] if tol is not None else n_nonzero_coefs
     L = np.empty((max_features, max_features), dtype=X.dtype)
@@ -110,8 +110,8 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
 
     This function uses the the Cholesky decomposition method.
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     Gram: array, shape = (n_features, n_features)
         Gram matrix of the input data matrix
 
@@ -136,8 +136,8 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
         Whether the covariance vector Xy must be copied by the algorithm.
         If False, it may be overwritten.
 
-    Returns:
-    --------
+    Returns
+    -------
     gamma: array, shape = (n_nonzero_coefs,)
         Non-zero elements of the solution
 
@@ -155,7 +155,7 @@ def _gram_omp(Gram, Xy, n_nonzero_coefs, tol_0=None, tol=None,
     nrm2, swap = linalg.get_blas_funcs(('nrm2', 'swap'), (Gram,))
     potrs, = get_lapack_funcs(('potrs',), (Gram,))
 
-    indices = range(len(Gram))  # keeping track of swapping
+    indices = np.arange(len(Gram))  # keeping track of swapping
     alpha = Xy
     tol_curr = tol_0
     delta = 0
@@ -273,7 +273,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
         y = y[:, np.newaxis]
     if y.shape[1] > 1:  # subsequent targets will be affected
         copy_X = True
-    if n_nonzero_coefs == None and tol == None:
+    if n_nonzero_coefs is None and tol is None:
         # default for n_nonzero_coefs is 0.1 * n_features
         # but at least one.
         n_nonzero_coefs = max(int(0.1 * X.shape[1]), 1)
@@ -298,7 +298,7 @@ def orthogonal_mp(X, y, n_nonzero_coefs=None, tol=None, precompute_gram=False,
                                   copy_Gram=copy_X, copy_Xy=False)
 
     coef = np.zeros((X.shape[1], y.shape[1]))
-    for k in xrange(y.shape[1]):
+    for k in range(y.shape[1]):
         x, idx = _cholesky_omp(X, y[:, k], n_nonzero_coefs, tol,
                                copy_X=copy_X)
         coef[idx, k] = x
@@ -375,9 +375,9 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
         if tol is not None:
             norms_squared = [norms_squared]
 
-    if n_nonzero_coefs == None and tol is None:
+    if n_nonzero_coefs is None and tol is None:
         n_nonzero_coefs = int(0.1 * len(Gram))
-    if tol is not None and norms_squared == None:
+    if tol is not None and norms_squared is None:
         raise ValueError('Gram OMP needs the precomputed norms in order '
                          'to evaluate the error sum of squares.')
     if tol is not None and tol < 0:
@@ -386,7 +386,7 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
         raise ValueError("The number of atoms must be positive")
     if tol is None and n_nonzero_coefs > len(Gram):
         raise ValueError("The number of atoms cannot be more than the number "
-                          "of features")
+                         "of features")
     coef = np.zeros((len(Gram), Xy.shape[1]))
     for k in range(Xy.shape[1]):
         x, idx = _gram_omp(Gram, Xy[:, k], n_nonzero_coefs,
@@ -467,9 +467,9 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
     decomposition.sparse_encode
 
     """
-    def __init__(self, copy_X=True, copy_Gram=True,
-            copy_Xy=True, n_nonzero_coefs=None, tol=None,
-            fit_intercept=True, normalize=True, precompute_gram=False):
+    def __init__(self, copy_X=True, copy_Gram=True, copy_Xy=True,
+                 n_nonzero_coefs=None, tol=None, fit_intercept=True,
+                 normalize=True, precompute_gram=False):
         self.n_nonzero_coefs = n_nonzero_coefs
         self.tol = tol
         self.fit_intercept = fit_intercept
@@ -515,18 +515,20 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
         if y.ndim == 1:
             y = y[:, np.newaxis]
 
-        if self.n_nonzero_coefs == None and self.tol is None:
+        if self.n_nonzero_coefs is None and self.tol is None:
             # default for n_nonzero_coefs is 0.1 * n_features
             # but at least one.
-            self.n_nonzero_coefs = max(int(0.1 * n_features), 1)
-        if (Gram is not None or Xy is not None) and (self.fit_intercept is True
-                                                 or self.normalize is True):
-            warnings.warn('Mean subtraction (fit_intercept) and '
-                 'normalization cannot be applied on precomputed Gram '
-                 'and Xy matrices. Your precomputed values are ignored '
-                 'and recomputed. To avoid this, do the scaling yourself '
-                 'and call with fit_intercept and normalize set to False.',
-                 RuntimeWarning, stacklevel=2)
+            self.n_nonzero_coefs_ = max(int(0.1 * n_features), 1)
+        else:
+            self.n_nonzero_coefs_ = self.n_nonzero_coefs
+        if (Gram is not None or Xy is not None) and (self.fit_intercept
+                                                     or self.normalize):
+            warnings.warn('Mean subtraction (fit_intercept) and normalization '
+                          'cannot be applied on precomputed Gram and Xy '
+                          'matrices. Your precomputed values are ignored and '
+                          'recomputed. To avoid this, do the scaling yourself '
+                          'and call with fit_intercept and normalize set to '
+                          'False.', RuntimeWarning, stacklevel=2)
             Gram, Xy = None, None
 
         if Gram is not None:
@@ -546,14 +548,14 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
                 Gram /= X_std[:, np.newaxis]
 
             norms_sq = np.sum(y ** 2, axis=0) if self.tol is not None else None
-            self.coef_ = orthogonal_mp_gram(Gram, Xy, self.n_nonzero_coefs,
+            self.coef_ = orthogonal_mp_gram(Gram, Xy, self.n_nonzero_coefs_,
                                             self.tol, norms_sq,
                                             self.copy_Gram, True).T
         else:
             precompute_gram = self.precompute_gram
             if precompute_gram == 'auto':
                 precompute_gram = X.shape[0] > X.shape[1]
-            self.coef_ = orthogonal_mp(X, y, self.n_nonzero_coefs, self.tol,
+            self.coef_ = orthogonal_mp(X, y, self.n_nonzero_coefs_, self.tol,
                                        precompute_gram=self.precompute_gram,
                                        copy_X=self.copy_X).T
 

@@ -6,7 +6,7 @@ SVM Exercise
 This exercise is used in the :ref:`using_kernels_tut` part of the
 :ref:`supervised_learning_tut` section of the :ref:`stat_learn_tut_index`.
 """
-print __doc__
+print(__doc__)
 
 
 import numpy as np
@@ -42,8 +42,7 @@ for fig_num, kernel in enumerate(('linear', 'rbf', 'poly')):
     pl.scatter(X[:, 0], X[:, 1], c=y, zorder=10, cmap=pl.cm.Paired)
 
     # Circle out the test data
-    pl.scatter(X_test[:, 0], X_test[:, 1],
-            s=80, facecolors='none', zorder=10)
+    pl.scatter(X_test[:, 0], X_test[:, 1], s=80, facecolors='none', zorder=10)
 
     pl.axis('tight')
     x_min = X[:, 0].min()
@@ -57,9 +56,8 @@ for fig_num, kernel in enumerate(('linear', 'rbf', 'poly')):
     # Put the result into a color plot
     Z = Z.reshape(XX.shape)
     pl.pcolormesh(XX, YY, Z > 0, cmap=pl.cm.Paired)
-    pl.contour(XX, YY, Z, colors=['k', 'k', 'k'],
-              linestyles=['--', '-', '--'],
-              levels=[-.5, 0, .5])
+    pl.contour(XX, YY, Z, colors=['k', 'k', 'k'], linestyles=['--', '-', '--'],
+               levels=[-.5, 0, .5])
 
     pl.title(kernel)
 pl.show()

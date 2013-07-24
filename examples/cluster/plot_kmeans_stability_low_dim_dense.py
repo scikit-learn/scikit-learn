@@ -21,10 +21,10 @@ between ground truth clusters.
 The dataset used for evaluation is a 2D grid of isotropic gaussian
 clusters widely spaced.
 """
-print __doc__
+print(__doc__)
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 import numpy as np
 import pylab as pl
@@ -57,7 +57,7 @@ def make_data(random_state, n_samples_per_center, grid_size, scale):
     centers = np.array([[i, j]
                         for i in range(grid_size)
                         for j in range(grid_size)])
-    n_clusters_true, n_featues = centers.shape
+    n_clusters_true, n_features = centers.shape
 
     noise = random_state.normal(
         scale=scale, size=(n_samples_per_center, centers.shape[1]))
@@ -81,14 +81,14 @@ cases = [
 ]
 
 for factory, init, params in cases:
-    print "Evaluation of %s with %s init" % (factory.__name__, init)
+    print("Evaluation of %s with %s init" % (factory.__name__, init))
     inertia = np.empty((len(n_init_range), n_runs))
 
     for run_id in range(n_runs):
         X, y = make_data(run_id, n_samples_per_center, grid_size, scale)
         for i, n_init in enumerate(n_init_range):
             km = factory(n_clusters=n_clusters, init=init, random_state=run_id,
-                    n_init=n_init, **params).fit(X)
+                         n_init=n_init, **params).fit(X)
             inertia[i, run_id] = km.inertia_
     p = pl.errorbar(n_init_range, inertia.mean(axis=1), inertia.std(axis=1))
     plots.append(p[0])

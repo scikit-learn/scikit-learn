@@ -3,7 +3,7 @@
 Gaussian Mixture Model Selection
 =================================
 
-This example shows that model selection can be perfomed with
+This example shows that model selection can be performed with
 Gaussian Mixture Models using information-theoretic criteria (BIC).
 Model selection concerns both the covariance type
 and the number of components in the model.
@@ -14,7 +14,7 @@ Unlike Bayesian procedures, such inferences are prior-free.
 In that case, the model with 2 components and full covariance
 (which corresponds to the true generative model) is selected.
 """
-print __doc__
+print(__doc__)
 
 import itertools
 

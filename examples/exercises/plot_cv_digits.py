@@ -6,7 +6,7 @@ Cross-validation on Digits Dataset Exercise
 This exercise is used in the :ref:`cv_generators_tut` part of the
 :ref:`model_selection_tut` section of the :ref:`stat_learn_tut_index`.
 """
-print __doc__
+print(__doc__)
 
 
 import numpy as np

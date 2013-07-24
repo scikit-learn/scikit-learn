@@ -27,6 +27,7 @@ div.header-wrapper {
     min-height: 50px;
     margin-left: auto;
     margin-right: auto;
+    margin-top: 0px;
     border-radius: 0px 0px 15px 15px;
     -moz-border-radius: 0px 0px 15px 15px;
 }
@@ -387,6 +388,10 @@ div.highlight{
     background-color: white;
 }
 
+div.highlight a {
+    text-decoration: underline;
+}
+
 div.note {
     background-color: #eee;
     border: 1px solid #ccc;
@@ -562,6 +567,68 @@ div.warning-wrapper p {
     margin: 0;
 }
 
+/* -------- banner for advertising the survey ------------------------------*/
+
+div.survey-wrapper {
+    z-index: 10;
+    background-color: #FF9C34;
+    text-align: center;
+    position: fixed;
+    top: 0px;
+    left: 0px;
+    width: 100%;
+    padding-top: 1px;
+    height: 21px;
+    box-shadow: 4px -4px 10px 3px #8AA, inset 4px 0px 13px 3px #FF9E6D;
+}
+div.survey-wrapper p {
+    margin: 0;
+    white-space: nowrap;
+}
+
+{% if theme_surveybanner == true %}
+/* for survey banner */
+div.header-wrapper {
+    margin-top: 21px;
+}
+{% endif %}
+
+/*-----------------------The Code Sprint Sponser Banner---------------------*/
+
+div.sprint-wrapper {
+    font-weight: bold;
+    font-size: 110%;
+    padding: 5px;
+    margin: 7px 7px 3px 7px;
+    background-color: #FFC588;
+    border-radius: 15px;
+    -o-transition:.5s;
+    -ms-transition:.5s;
+    -moz-transition:.5s;
+    -webkit-transition:.5s;
+    transition:.5s;
+}
+
+div.sprint-wrapper a {
+    display: block;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+    cursor: pointer;
+    color: black;
+}
+
+div.sprint-wrapper p {
+    padding: 0px 0px 0px 2px;
+    font-weight: initial;
+}
+
+div.sprint-wrapper:hover  {
+    background-color: #FF9C34;
+}
+
+/*-----------------------The Examples Gallery-------------------------------*/
+
 /* ------- Fix maximum size of thumbnails in example gallery -------------- */
 div#examples.section .figure img {
     max-width: 160px;
@@ -569,6 +636,63 @@ div#examples.section .figure img {
     display: block;
     margin: auto;
 }
+
+div#examples.section .thumbnailContainer {
+    position: relative;
+    float: left;
+    width: 160px;
+    height: 145px;
+    margin: 20px 20px 78px 0px
+}
+
+/* Standard browsers hover */
+
+div#examples.section .figure:hover img ,
+div#examples.section .figure:focus img,
+div#examples.section .figure:active img{
+  z-index: 100;
+  /* Bigger box shadow  */
+  -moz-box-shadow: 0px 0px 20px rgba(0, 0, 0, .5); /* FF3.5 - 3.6 */
+  -webkit-box-shadow: 0px 0px 20px rgba(0, 0, 0, .5); /* Saf3.0+, Chrome */
+  box-shadow: 0px 0px 20px rgba(0, 0, 0, .5); /* Opera 10.5, IE9, FF4+, Chrome 10+ */
+  /* --> Full image size */
+  /*width: 240px;*/
+  /*height: 132px;*/
+  -webkit-background-size: 240px 160px; /* Saf3-4 */
+  -moz-background-size: 240px 160px; /* FF3.6 */
+  background-size: 240px 160px; /* Opera, IE9, Saf5, Chrome, FF4 */
+  /* --> Half of height sutraction (Full image height - Thumbnail image height) */
+  margin-top: -0px;
+  /* IE6+IE7 does not hover because of z-index stacking context bug:
+     http://www.quirksmode.org/bugreports/archives/2006/01/Explorer_z_index_bug.html */
+  /* --> Thumbnail image size */
+  *width: 160px;
+  *height: 145px;
+  *margin-top: 0;
+  *margin-left: 0;
+}
+
+/* IE hover */
+
+.photos .photo:hover img,
+.photos .photo:focus img,
+.photos .photo:active img {
+  z-index: 100;
+  /* --> Full image size */
+  width: 240px;
+  height: 132px;
+  /* IE6+IE7 does not hover because of z-index stacking context bug:
+     http://www.quirksmode.org/bugreports/archives/2006/01/Explorer_z_index_bug.html */
+  /* --> Thumbnail image size */
+  *width: 160px;
+  *height: 145px;
+}
+
+/* The hover-effect for the examples gallery was adapted from Martin Michálek's
+/* example: http://www.vzhurudolu.cz/test/image-gallery-enlarge-on-hover/
+
+/*------------------------------------------------------------------------*/
+
 
 /* ------- Zoom plots to make them fit in layout -------------------------- */
 div.body img {

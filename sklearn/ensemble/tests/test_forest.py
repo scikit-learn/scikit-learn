@@ -3,14 +3,14 @@ Testing for the forest module (sklearn.ensemble.forest).
 """
 
 # Authors: Gilles Louppe, Brian Holt, Andreas Mueller
-# License: BSD 3
+# License: BSD 3 clause
 
 import numpy as np
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_equal
 from numpy.testing import assert_almost_equal
-from nose.tools import assert_true
+from nose.tools import assert_false, assert_true
 
 from sklearn.utils.testing import assert_less, assert_greater
 
@@ -21,7 +21,7 @@ from sklearn.ensemble import RandomTreesEmbedding
 from sklearn.ensemble import ExtraTreesClassifier
 from sklearn.ensemble import ExtraTreesRegressor
 from sklearn.svm import LinearSVC
-from sklearn.decomposition import RandomizedPCA
+from sklearn.decomposition import TruncatedSVD
 from sklearn import datasets
 
 # toy sample
@@ -148,13 +148,24 @@ def test_boston():
                            "criterion %s and score = %f" % (c, score))
 
 
+def test_regressor_attributes():
+    """Regression models should not have a classes_ attribute."""
+    r = RandomForestRegressor()
+    assert_false(hasattr(r, "classes_"))
+    assert_false(hasattr(r, "n_classes_"))
+
+    r.fit([[1, 2, 3], [4, 5, 6]], [1, 2])
+    assert_false(hasattr(r, "classes_"))
+    assert_false(hasattr(r, "n_classes_"))
+
+
 def test_probability():
     """Predict probabilities."""
     olderr = np.seterr(divide="ignore")
 
     # Random forest
     clf = RandomForestClassifier(n_estimators=10, random_state=1,
-            max_features=1, max_depth=1)
+                                 max_features=1, max_depth=1)
     clf.fit(iris.data, iris.target)
     assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1),
                               np.ones(iris.data.shape[0]))
@@ -163,7 +174,7 @@ def test_probability():
 
     # Extra-trees
     clf = ExtraTreesClassifier(n_estimators=10, random_state=1, max_features=1,
-            max_depth=1)
+                               max_depth=1)
     clf.fit(iris.data, iris.target)
     assert_array_almost_equal(np.sum(clf.predict_proba(iris.data), axis=1),
                               np.ones(iris.data.shape[0]))
@@ -183,7 +194,7 @@ def test_importances():
                                         shuffle=False,
                                         random_state=0)
 
-    clf = RandomForestClassifier(n_estimators=10, compute_importances=True)
+    clf = RandomForestClassifier(n_estimators=10)
     clf.fit(X, y)
     importances = clf.feature_importances_
     n_important = sum(importances > 0.1)
@@ -194,26 +205,23 @@ def test_importances():
     X_new = clf.transform(X, threshold="mean")
     assert_less(0 < X_new.shape[1], X.shape[1])
 
-    clf = RandomForestClassifier(n_estimators=10)
-    clf.fit(X, y)
-    assert_true(clf.feature_importances_ is None)
-
 
 def test_oob_score_classification():
-    """Check that oob prediction is as acurate as
-    usual prediction on the training set.
-    Not really a good test that prediction is independent."""
+    """Check that oob prediction is a good estimation of the generalization
+    error."""
     clf = RandomForestClassifier(oob_score=True, random_state=rng)
-    clf.fit(X, y)
-    training_score = clf.score(X, y)
-    assert_almost_equal(training_score, clf.oob_score_)
+    n_samples = iris.data.shape[0]
+    clf.fit(iris.data[:n_samples / 2, :], iris.target[:n_samples / 2])
+    test_score = clf.score(iris.data[n_samples / 2:, :],
+                           iris.target[n_samples / 2:])
+    assert_less(abs(test_score - clf.oob_score_), 0.1)
 
 
 def test_oob_score_regression():
     """Check that oob prediction is pessimistic estimate.
     Not really a good test that prediction is independent."""
     clf = RandomForestRegressor(n_estimators=50, oob_score=True,
-            random_state=rng)
+                                random_state=rng)
     n_samples = boston.data.shape[0]
     clf.fit(boston.data[:n_samples / 2, :], boston.target[:n_samples / 2])
     test_score = clf.score(boston.data[n_samples / 2:, :],
@@ -367,7 +375,7 @@ def test_multioutput():
     assert_equal(log_proba[1].shape, (4, 4))
 
     # toy regression problem
-    clf = ExtraTreesRegressor(random_state=5)
+    clf = ExtraTreesRegressor(random_state=0)
     y_hat = clf.fit(X, y).predict(T)
     assert_almost_equal(y_hat, y_true)
     assert_equal(y_hat.shape, (4, 2))
@@ -375,10 +383,31 @@ def test_multioutput():
     np.seterr(**olderr)
 
 
+def test_classes_shape():
+    """Test that n_classes_ and classes_ have proper shape."""
+    # Classification, single output
+    clf = RandomForestClassifier()
+    clf.fit(X, y)
+
+    assert_equal(clf.n_classes_, 2)
+    assert_equal(clf.classes_, [-1, 1])
+
+    # Classification, multi-output
+    _y = np.vstack((y, np.array(y) * 2)).T
+    clf = RandomForestClassifier()
+    clf.fit(X, _y)
+
+    assert_equal(len(clf.n_classes_), 2)
+    assert_equal(len(clf.classes_), 2)
+    assert_equal(clf.n_classes_, [2, 2])
+    assert_equal(clf.classes_, [[-1, 1], [-2, 2]])
+
+
 def test_random_hasher():
     # test random forest hashing on circles dataset
     # make sure that it is linearly separable.
-    # even after projected to two pca dimensions
+    # even after projected to two SVD dimensions
+    # Note: Not all random_states produce perfect results.
     hasher = RandomTreesEmbedding(n_estimators=30, random_state=0)
     X, y = datasets.make_circles(factor=0.5)
     X_transformed = hasher.fit_transform(X)
@@ -391,11 +420,37 @@ def test_random_hasher():
     # one leaf active per data point per forest
     assert_equal(X_transformed.shape[0], X.shape[0])
     assert_array_equal(X_transformed.sum(axis=1), hasher.n_estimators)
-    pca = RandomizedPCA(n_components=2)
-    X_reduced = pca.fit_transform(X_transformed)
+    svd = TruncatedSVD(n_components=2)
+    X_reduced = svd.fit_transform(X_transformed)
     linear_clf = LinearSVC()
     linear_clf.fit(X_reduced, y)
     assert_equal(linear_clf.score(X_reduced, y), 1.)
+
+
+def test_parallel_train():
+    rng = np.random.RandomState(12321)
+    X = rng.randn(100, 1000)
+    y = rng.randint(0, 2, 100)
+
+    clfs = [
+        RandomForestClassifier(n_estimators=20,
+                               n_jobs=n_jobs,
+                               random_state=12345)
+        for n_jobs in range(1, 9)
+    ]
+
+    for clf in clfs:
+        clf.fit(X, y)
+
+    X2 = rng.randn(100, 1000)
+
+    probas = []
+    for clf in clfs:
+        proba = clf.predict_proba(X2)
+        probas.append(proba)
+
+    for proba1, proba2 in zip(probas, probas[1:]):
+        assert_true(np.allclose(proba1, proba2))
 
 
 if __name__ == "__main__":

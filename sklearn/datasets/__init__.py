@@ -14,6 +14,7 @@ from .base import get_data_home
 from .base import clear_data_home
 from .base import load_sample_images
 from .base import load_sample_image
+from .covtype import fetch_covtype
 from .mlcomp import load_mlcomp
 from .lfw import load_lfw_pairs
 from .lfw import load_lfw_people
@@ -39,11 +40,13 @@ from .samples_generator import make_spd_matrix
 from .samples_generator import make_swiss_roll
 from .samples_generator import make_s_curve
 from .samples_generator import make_sparse_spd_matrix
+from .samples_generator import make_gaussian_quantiles
 from .svmlight_format import load_svmlight_file
 from .svmlight_format import load_svmlight_files
 from .svmlight_format import dump_svmlight_file
 from .olivetti_faces import fetch_olivetti_faces
 from .species_distributions import fetch_species_distributions
+from .california_housing import fetch_california_housing
 from ..utils import deprecated
 
 __all__ = ['clear_data_home',
@@ -55,8 +58,9 @@ __all__ = ['clear_data_home',
            'fetch_mldata',
            'fetch_olivetti_faces',
            'fetch_species_distributions',
+           'fetch_california_housing',
+           'fetch_covtype',
            'get_data_home',
-           'load_20newsgroups',
            'load_boston',
            'load_diabetes',
            'load_digits',
@@ -77,6 +81,7 @@ __all__ = ['clear_data_home',
            'make_friedman1',
            'make_friedman2',
            'make_friedman3',
+           'make_gaussian_quantiles',
            'make_hastie_10_2',
            'make_low_rank_matrix',
            'make_moons',

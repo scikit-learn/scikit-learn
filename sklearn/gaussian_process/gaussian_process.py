@@ -1,9 +1,10 @@
+from __future__ import print_function
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
 #         (mostly translation, see implementation details)
-# License: BSD style
+# Licence: BSD 3 clause
 
 import numpy as np
 from scipy import linalg, optimize, rand
@@ -11,7 +12,6 @@ from scipy import linalg, optimize, rand
 from ..base import BaseEstimator, RegressorMixin
 from ..metrics.pairwise import manhattan_distances
 from ..utils import array2d, check_random_state
-from ..utils import deprecated
 from . import regression_models as regression
 from . import correlation_models as correlation
 
@@ -109,7 +109,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         An array with shape (n_features, ) or (1, ).
         The parameters in the autocorrelation model.
         If thetaL and thetaU are also specified, theta0 is considered as
-        the starting point for the maximum likelihood rstimation of the
+        the starting point for the maximum likelihood estimation of the
         best set of parameters.
         Default assumes isotropic autocorrelation model with theta0 = 1e-1.
 
@@ -244,9 +244,6 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         self.random_start = random_start
         self.random_state = random_state
 
-        # Run input checks
-        self._check_params()
-
     def fit(self, X, y):
         """
         The Gaussian Process model fitting method.
@@ -267,6 +264,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             A fitted Gaussian Process model object awaiting data to perform
             predictions.
         """
+        # Run input checks
+        self._check_params()
+
         self.random_state = check_random_state(self.random_state)
 
         # Force data to 2D numpy.array
@@ -304,10 +304,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         # Calculate matrix of distances D between samples
         D, ij = l1_cross_distances(X)
-        if np.min(np.sum(D, axis=1)) == 0. \
-                                    and self.corr != correlation.pure_nugget:
+        if (np.min(np.sum(D, axis=1)) == 0.
+                and self.corr != correlation.pure_nugget):
             raise Exception("Multiple input features cannot have the same"
-                    " value")
+                            " value.")
 
         # Regression matrix and parameters
         F = self.regr(X)
@@ -318,12 +318,12 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             p = 1
         if n_samples_F != n_samples:
             raise Exception("Number of rows in F and X do not match. Most "
-                          + "likely something is going wrong with the "
-                          + "regression model.")
+                            "likely something is going wrong with the "
+                            "regression model.")
         if p > n_samples_F:
             raise Exception(("Ordinary least squares problem is undetermined "
-                           + "n_samples=%d must be greater than the "
-                           + "regression model size p=%d.") % (n_samples, p))
+                             "n_samples=%d must be greater than the "
+                             "regression model size p=%d.") % (n_samples, p))
         if self.beta0 is not None:
             if self.beta0.shape[0] != p:
                 raise Exception("Shapes of beta0 and F do not match.")
@@ -342,18 +342,18 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # Maximum Likelihood Estimation of the parameters
             if self.verbose:
                 print("Performing Maximum Likelihood Estimation of the "
-                    + "autocorrelation parameters...")
+                      "autocorrelation parameters...")
             self.theta_, self.reduced_likelihood_function_value_, par = \
                 self._arg_max_reduced_likelihood_function()
             if np.isinf(self.reduced_likelihood_function_value_):
                 raise Exception("Bad parameter region. "
-                              + "Try increasing upper bound")
+                                "Try increasing upper bound")
 
         else:
             # Given parameters
             if self.verbose:
                 print("Given autocorrelation parameters. "
-                    + "Computing Gaussian Process model parameters...")
+                      "Computing Gaussian Process model parameters...")
             self.theta_ = self.theta0
             self.reduced_likelihood_function_value_, par = \
                 self.reduced_likelihood_function()
@@ -372,7 +372,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             # (it is required only when MSE is wanted in self.predict)
             if self.verbose:
                 print("Light storage mode specified. "
-                    + "Flushing autocorrelation matrix...")
+                      "Flushing autocorrelation matrix...")
             self.D = None
             self.ij = None
             self.F = None
@@ -400,7 +400,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         batch_size : integer, optional
             An integer giving the maximum number of points that can be
-            evaluated simulatneously (depending on the available memory).
+            evaluated simultaneously (depending on the available memory).
             Default is None so that all given points are evaluated at the same
             time.
 
@@ -424,8 +424,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         if n_features_X != n_features:
             raise ValueError(("The number of features in X (X.shape[1] = %d) "
-                           + "should match the sample size used for fit() "
-                           + "which is %d.") % (n_features_X, n_features))
+                             "should match the sample size used for fit() "
+                             "which is %d.") % (n_features_X, n_features))
 
         if batch_size is None:
             # No memory management
@@ -458,8 +458,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     # Light storage mode (need to recompute C, F, Ft and G)
                     if self.verbose:
                         print("This GaussianProcess used 'light' storage mode "
-                            + "at instanciation. Need to recompute "
-                            + "autocorrelation matrix...")
+                              "at instantiation. Need to recompute "
+                              "autocorrelation matrix...")
                     reduced_likelihood_function_value, par = \
                         self.reduced_likelihood_function()
                     self.C = par['C']
@@ -477,7 +477,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                     u = np.zeros(y.shape)
 
                 MSE = self.sigma2 * (1. - (rt ** 2.).sum(axis=0)
-                                        + (u ** 2.).sum(axis=0))
+                                     + (u ** 2.).sum(axis=0))
 
                 # Mean Squared Error might be slightly negative depending on
                 # machine precision: force to zero!
@@ -580,8 +580,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         if D is None:
             # Light storage mode (need to recompute D, ij and F)
             D, ij = l1_cross_distances(self.X)
-            if np.min(np.sum(D, axis=1)) == 0. \
-                                    and self.corr != correlation.pure_nugget:
+            if (np.min(np.sum(D, axis=1)) == 0.
+                    and self.corr != correlation.pure_nugget):
                 raise Exception("Multiple X are not allowed")
             F = self.regr(self.X)
 
@@ -617,7 +617,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             condF = sv[0] / sv[-1]
             if condF > 1e15:
                 raise Exception("F is too ill conditioned. Poor combination "
-                              + "of regression model and observations.")
+                                "of regression model and observations.")
             else:
                 # Ft is too ill conditioned, get out (try different theta)
                 return reduced_likelihood_function_value, par
@@ -646,24 +646,6 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         par['G'] = G
 
         return reduced_likelihood_function_value, par
-
-    @deprecated("to be removed in 0.14, access ``self.theta_`` etc. directly "
-                " after fit.")
-    def arg_max_reduced_likelihood_function(self):
-        return self._arg_max_reduced_likelihood_function()
-
-    @property
-    @deprecated('``theta`` is deprecated and will be removed in 0.14, '
-                'please use ``theta_`` instead.')
-    def theta(self):
-        return self.theta_
-
-    @property
-    @deprecated("``reduced_likelihood_function_value`` is deprecated and will"
-                "be removed in 0.14, please use "
-                "``reduced_likelihood_function_value_`` instead.")
-    def reduced_likelihood_function_value(self):
-        return self.reduced_likelihood_function_value_
 
     def _arg_max_reduced_likelihood_function(self):
         """
@@ -695,9 +677,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         best_optimal_par = []
 
         if self.verbose:
-            print "The chosen optimizer is: " + str(self.optimizer)
+            print("The chosen optimizer is: " + str(self.optimizer))
             if self.random_start > 1:
-                print str(self.random_start) + " random starts are required."
+                print(str(self.random_start) + " random starts are required.")
 
         percent_completed = 0.
 
@@ -708,15 +690,15 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         if self.optimizer == 'fmin_cobyla':
 
             def minus_reduced_likelihood_function(log10t):
-                return - self.reduced_likelihood_function(theta=10.
-                                                                  ** log10t)[0]
+                return - self.reduced_likelihood_function(
+                    theta=10. ** log10t)[0]
 
             constraints = []
             for i in range(self.theta0.size):
-                constraints.append(lambda log10t: \
-                            log10t[i] - np.log10(self.thetaL[0, i]))
-                constraints.append(lambda log10t: \
-                            np.log10(self.thetaU[0, i]) - log10t[i])
+                constraints.append(lambda log10t:
+                                   log10t[i] - np.log10(self.thetaL[0, i]))
+                constraints.append(lambda log10t:
+                                   np.log10(self.thetaU[0, i]) - log10t[i])
 
             for k in range(self.random_start):
 
@@ -735,7 +717,8 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 try:
                     log10_optimal_theta = \
                         optimize.fmin_cobyla(minus_reduced_likelihood_function,
-                                np.log10(theta0), constraints, iprint=0)
+                                             np.log10(theta0), constraints,
+                                             iprint=0)
                 except ValueError as ve:
                     print("Optimization failed. Try increasing the ``nugget``")
                     raise ve
@@ -758,7 +741,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 if self.verbose and self.random_start > 1:
                     if (20 * k) / self.random_start > percent_completed:
                         percent_completed = (20 * k) / self.random_start
-                        print "%s completed" % (5 * percent_completed)
+                        print("%s completed" % (5 * percent_completed))
 
             optimal_rlf_value = best_optimal_rlf_value
             optimal_par = best_optimal_par
@@ -790,16 +773,16 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
                 print("Now improving allowing for anisotropy...")
             for i in self.random_state.permutation(theta0.size):
                 if verbose:
-                    print "Proceeding along dimension %d..." % (i + 1)
+                    print("Proceeding along dimension %d..." % (i + 1))
                 self.theta0 = array2d(theta_iso)
                 self.thetaL = array2d(thetaL[0, i])
                 self.thetaU = array2d(thetaU[0, i])
 
                 def corr_cut(t, d):
-                    return corr(array2d(np.hstack([
-                         optimal_theta[0][0:i],
-                         t[0],
-                         optimal_theta[0][(i + 1)::]])), d)
+                    return corr(array2d(np.hstack([optimal_theta[0][0:i],
+                                                   t[0],
+                                                   optimal_theta[0][(i + 1)::]]
+                                                  )), d)
 
                 self.corr = corr_cut
                 optimal_theta[0, i], optimal_rlf_value, optimal_par = \
@@ -813,9 +796,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         else:
 
-            raise NotImplementedError(("This optimizer ('%s') is not "
-                                    + "implemented yet. Please contribute!")
-                                    % self.optimizer)
+            raise NotImplementedError("This optimizer ('%s') is not "
+                                      "implemented yet. Please contribute!"
+                                      % self.optimizer)
 
         return optimal_theta, optimal_rlf_value, optimal_par
 
@@ -826,9 +809,9 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             if self.regr in self._regression_types:
                 self.regr = self._regression_types[self.regr]
             else:
-                raise ValueError(("regr should be one of %s or callable, "
-                               + "%s was given.")
-                               % (self._regression_types.keys(), self.regr))
+                raise ValueError("regr should be one of %s or callable, "
+                                 "%s was given."
+                                 % (self._regression_types.keys(), self.regr))
 
         # Check regression weights if given (Ordinary Kriging)
         if self.beta0 is not None:
@@ -842,14 +825,14 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             if self.corr in self._correlation_types:
                 self.corr = self._correlation_types[self.corr]
             else:
-                raise ValueError(("corr should be one of %s or callable, "
-                               + "%s was given.")
-                               % (self._correlation_types.keys(), self.corr))
+                raise ValueError("corr should be one of %s or callable, "
+                                 "%s was given."
+                                 % (self._correlation_types.keys(), self.corr))
 
         # Check storage mode
         if self.storage_mode != 'full' and self.storage_mode != 'light':
             raise ValueError("Storage mode should either be 'full' or "
-                           + "'light', %s was given." % self.storage_mode)
+                             "'light', %s was given." % self.storage_mode)
 
         # Check correlation parameters
         self.theta0 = array2d(self.theta0)
@@ -860,10 +843,10 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
             self.thetaU = array2d(self.thetaU)
             if self.thetaL.size != lth or self.thetaU.size != lth:
                 raise ValueError("theta0, thetaL and thetaU must have the "
-                               + "same length.")
+                                 "same length.")
             if np.any(self.thetaL <= 0) or np.any(self.thetaU < self.thetaL):
                 raise ValueError("The bounds must satisfy O < thetaL <= "
-                               + "thetaU.")
+                                 "thetaU.")
 
         elif self.thetaL is None and self.thetaU is None:
             if np.any(self.theta0 <= 0):
@@ -871,7 +854,7 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
 
         elif self.thetaL is None or self.thetaU is None:
             raise ValueError("thetaL and thetaU should either be both or "
-                           + "neither specified.")
+                             "neither specified.")
 
         # Force verbose type to bool
         self.verbose = bool(self.verbose)
@@ -884,14 +867,14 @@ class GaussianProcess(BaseEstimator, RegressorMixin):
         if np.any(self.nugget) < 0.:
             raise ValueError("nugget must be positive or zero.")
         if (n_samples is not None
-            and self.nugget.shape not in [(), (n_samples,)]):
+                and self.nugget.shape not in [(), (n_samples,)]):
             raise ValueError("nugget must be either a scalar "
                              "or array of length n_samples.")
 
         # Check optimizer
         if not self.optimizer in self._optimizer_types:
             raise ValueError("optimizer should be one of %s"
-                           % self._optimizer_types)
+                             % self._optimizer_types)
 
         # Force random_start type to int
         self.random_start = int(self.random_start)

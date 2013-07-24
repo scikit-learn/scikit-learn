@@ -25,7 +25,7 @@ Manifold learning
    :align: center
    :scale: 60
 
-Manifold learning is an approach to nonlinear dimensionality reduction.
+Manifold learning is an approach to non-linear dimensionality reduction.
 Algorithms for this task are based on the idea that the dimensionality of
 many data sets is only artificially high.
 
@@ -62,7 +62,7 @@ dimensionality reduction frameworks have been designed, such as Principal
 Component Analysis (PCA), Independent Component Analysis, Linear 
 Discriminant Analysis, and others.  These algorithms define specific 
 rubrics to choose an "interesting" linear projection of the data.
-These methods can be powerful, but often miss important nonlinear 
+These methods can be powerful, but often miss important non-linear 
 structure in the data.
 
 
@@ -77,7 +77,7 @@ structure in the data.
 .. centered:: |PCA_img| |LDA_img|
 
 Manifold Learning can be thought of as an attempt to generalize linear
-frameworks like PCA to be sensitive to nonlinear structure in data. Though
+frameworks like PCA to be sensitive to non-linear structure in data. Though
 supervised variants exist, the typical manifold learning problem is
 unsupervised: it learns the high-dimensional structure of the data
 from the data itself, without the use of predetermined classifications.
@@ -154,7 +154,7 @@ Locally Linear Embedding
 Locally linear embedding (LLE) seeks a lower-dimensional projection of the data
 which preserves distances within local neighborhoods.  It can be thought
 of as a series of local Principal Component Analyses which are globally
-compared to find the best nonlinear embedding.
+compared to find the best non-linear embedding.
 
 Locally linear embedding can be performed with function
 :func:`locally_linear_embedding` or its object-oriented counterpart
@@ -202,7 +202,7 @@ of neighbors is greater than the number of input dimensions, the matrix
 defining each local neighborhood is rank-deficient.  To address this, standard
 LLE applies an arbitrary regularization parameter :math:`r`, which is chosen
 relative to the trace of the local weight matrix.  Though it can be shown
-formally that as :math:`r \to 0`, the solution coverges to the desired
+formally that as :math:`r \to 0`, the solution converges to the desired
 embedding, there is no guarantee that the optimal solution will be found
 for :math:`r > 0`.  This problem manifests itself in embeddings which distort
 the underlying geometry of the manifold.
@@ -297,6 +297,52 @@ The overall complexity of standard HLLE is
      high-dimensional data" <http://www.pnas.org/content/100/10/5591>`_
      Donoho, D. & Grimes, C. Proc Natl Acad Sci USA. 100:5591 (2003)
 
+.. _spectral_embedding:
+
+Spectral Embedding
+====================
+
+Spectral Embedding (also known as Laplacian Eigenmaps) is one method
+to calculate non-linear embedding. It finds a low dimensional representation
+of the data using a spectral decomposition of the graph Laplacian.
+The graph generated can be considered as a discrete approximation of the 
+low dimensional manifold in the high dimensional space. Minimization of a 
+cost function based on the graph ensures that points close to each other on 
+the manifold are mapped close to each other in the low dimensional space, 
+preserving local distances. Spectral embedding can be  performed with the
+function :func:`spectral_embedding` or its object-oriented counterpart
+:class:`SpectralEmbedding`.
+
+Complexity
+----------
+
+The Spectral Embedding algorithm comprises three stages:
+
+1. **Weighted Graph Construction**. Transform the raw input data into
+   graph representation using affinity (adjacency) matrix representation.
+
+2. **Graph Laplacian Construction**. unnormalized Graph Laplacian
+   is constructed as :math:`L = D - A` for and normalized one as
+   :math:`L = D^{-\frac{1}{2}} (D - A) D^{-\frac{1}{2}}`.  
+
+3. **Partial Eigenvalue Decomposition**. Eigenvalue decomposition is 
+   done on graph Laplacian
+
+The overall complexity of spectral embedding is
+:math:`O[D \log(k) N \log(N)] + O[D N k^3] + O[d N^2]`.
+
+* :math:`N` : number of training data points
+* :math:`D` : input dimension
+* :math:`k` : number of nearest neighbors
+* :math:`d` : output dimension
+
+.. topic:: References:
+
+   * `"Laplacian Eigenmaps for Dimensionality Reduction
+     and Data Representation" 
+     <http://www.cse.ohio-state.edu/~mbelkin/papers/LEM_NC_03.pdf>`_
+     M. Belkin, P. Niyogi, Neural Computation, June 2003; 15 (6):1373-1396
+
 
 Local Tangent Space Alignment
 =============================
@@ -314,7 +360,7 @@ tangent spaces to learn the embedding.  LTSA can be performed with function
    :target: ../auto_examples/manifold/plot_lle_digits.html
    :align: center
    :scale: 50
-   
+
 Complexity
 ----------
 
@@ -348,7 +394,8 @@ The overall complexity of standard LTSA is
 Multi-dimensional Scaling (MDS)
 ===============================
 
-Multidimensional scaling (:class:`MDS`) seeks a low-dimensional
+`Multidimensional scaling <http://en.wikipedia.org/wiki/Multidimensional_scaling>`_
+(:class:`MDS`) seeks a low-dimensional
 representation of the data in which the distances respect well the
 distances in the original high-dimensional space.
 
@@ -360,7 +407,7 @@ countries.
 
 There exists two types of MDS algorithm: metric and non metric. In the
 scikit-learn, the class :class:`MDS` implements both. In Metric MDS, the input
-simiarity matrix arises from a metric (and thus respects the triangular
+similarity matrix arises from a metric (and thus respects the triangular
 inequality), the distances between output two points are then set to be as
 close as possible to the similarity or dissimilarity data. In the non metric
 vision, the algorithms will try to preserve the order of the distances, and
@@ -452,7 +499,7 @@ Tips on practical use
 
 .. seealso::
 
-   :ref:`random_hashing` can also be useful to derive non-linear
+   :ref:`random_trees_embedding` can also be useful to derive non-linear
    representations of feature space, also it does not perform
    dimensionality reduction.
 

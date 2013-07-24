@@ -1,3 +1,6 @@
-This directory is backported from scipy 0.9:
-scipy.sparse.sparsetools
+Backport of Minimum Spanning Tree
 
+This code was backported from scipy 0.13, to cover a requirement in new code.
+It was backported by Robert Layton <robertlayton@gmail.com> on 23rd May, 2013.
+
+This folder should be removed when the scipy dependency for scikit-learn reaches v0.13 or higher.

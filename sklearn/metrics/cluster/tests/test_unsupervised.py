@@ -4,7 +4,7 @@ from scipy.sparse import csr_matrix
 from .... import datasets
 from ..unsupervised import silhouette_score
 from ... import pairwise_distances
-from nose.tools import assert_false
+from nose.tools import assert_false, assert_almost_equal
 
 
 def test_silhouette():
@@ -19,11 +19,17 @@ def test_silhouette():
     assert(silhouette > 0)
     # Test without calculating D
     silhouette_metric = silhouette_score(X, y, metric='euclidean')
-    assert(silhouette == silhouette_metric)
+    assert_almost_equal(silhouette, silhouette_metric)
     # Test with sampling
     silhouette = silhouette_score(D, y, metric='precomputed',
-                                  sample_size=int(X.shape[0] / 2))
+                                  sample_size=int(X.shape[0] / 2),
+                                  random_state=0)
+    silhouette_metric = silhouette_score(X, y, metric='euclidean',
+                                         sample_size=int(X.shape[0] / 2),
+                                         random_state=0)
     assert(silhouette > 0)
+    assert(silhouette_metric > 0)
+    assert_almost_equal(silhouette_metric, silhouette)
     # Test with sparse X
     X_sparse = csr_matrix(X)
     D = pairwise_distances(X_sparse, metric='euclidean')

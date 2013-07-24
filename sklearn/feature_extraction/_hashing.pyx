@@ -1,5 +1,5 @@
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
-# License: 3-clause BSD.
+# License: BSD 3 clause
 
 import array
 from cpython cimport array
@@ -9,6 +9,8 @@ cimport numpy as np
 import numpy as np
 
 from sklearn.utils.murmurhash cimport murmurhash3_bytes_s32
+
+np.import_array()
 
 
 @cython.boundscheck(False)

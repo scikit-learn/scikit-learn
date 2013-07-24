@@ -1,13 +1,15 @@
 import numpy as np
 from scipy.sparse import csr_matrix
 
-from sklearn.utils.testing import assert_array_equal
-from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_array_equal, assert_equal
+from sklearn.utils.testing import assert_array_almost_equal, assert_raises
 
+from sklearn.metrics.pairwise import kernel_metrics
 from sklearn.kernel_approximation import RBFSampler
 from sklearn.kernel_approximation import AdditiveChi2Sampler
 from sklearn.kernel_approximation import SkewedChi2Sampler
-from sklearn.metrics.pairwise import rbf_kernel
+from sklearn.kernel_approximation import Nystroem
+from sklearn.metrics.pairwise import polynomial_kernel, rbf_kernel
 
 # generate data
 rng = np.random.RandomState(0)
@@ -34,6 +36,7 @@ def test_additive_chi2_sampler():
     transform = AdditiveChi2Sampler(sample_steps=3)
     X_trans = transform.fit_transform(X)
     Y_trans = transform.transform(Y)
+
     kernel_approx = np.dot(X_trans, Y_trans.T)
 
     assert_array_almost_equal(kernel, kernel_approx, 1)
@@ -43,6 +46,15 @@ def test_additive_chi2_sampler():
 
     assert_array_equal(X_trans, X_sp_trans.A)
     assert_array_equal(Y_trans, Y_sp_trans.A)
+
+    # test error is raised on negative input
+    Y_neg = Y.copy()
+    Y_neg[0, 0] = -1
+    assert_raises(ValueError, transform.transform, Y_neg)
+
+    # test error on invalid sample_steps
+    transform = AdditiveChi2Sampler(sample_steps=4)
+    assert_raises(ValueError, transform.fit, X)
 
 
 def test_skewed_chi2_sampler():
@@ -56,8 +68,8 @@ def test_skewed_chi2_sampler():
 
     # we do it in log-space in the hope that it's more stable
     # this array is n_samples_x x n_samples_y big x n_features
-    log_kernel = ((np.log(X_c) / 2.) + (np.log(Y_c) / 2.) +
-        np.log(2.) - np.log(X_c + Y_c))
+    log_kernel = ((np.log(X_c) / 2.) + (np.log(Y_c) / 2.) + np.log(2.) -
+                  np.log(X_c + Y_c))
     # reduce to n_samples_x x n_samples_y by summing over features in log-space
     kernel = np.exp(log_kernel.sum(axis=2))
 
@@ -66,8 +78,14 @@ def test_skewed_chi2_sampler():
                                   random_state=42)
     X_trans = transform.fit_transform(X)
     Y_trans = transform.transform(Y)
+
     kernel_approx = np.dot(X_trans, Y_trans.T)
     assert_array_almost_equal(kernel, kernel_approx, 1)
+
+    # test error is raised on negative input
+    Y_neg = Y.copy()
+    Y_neg[0, 0] = -1
+    assert_raises(ValueError, transform.transform, Y_neg)
 
 
 def test_rbf_sampler():
@@ -99,8 +117,59 @@ def test_input_validation():
     RBFSampler().fit(X).transform(X)
 
 
-if __name__ == "__main__":
-    test_additive_chi2_sampler()
-    test_input_validation()
-    test_skewed_chi2_sampler()
-    test_rbf_sampler()
+def test_nystroem_approximation():
+    # some basic tests
+    rnd = np.random.RandomState(0)
+    X = rnd.uniform(size=(10, 4))
+
+    # With n_components = n_samples this is exact
+    X_transformed = Nystroem(n_components=X.shape[0]).fit_transform(X)
+    K = rbf_kernel(X)
+    assert_array_almost_equal(np.dot(X_transformed, X_transformed.T), K)
+
+    trans = Nystroem(n_components=2, random_state=rnd)
+    X_transformed = trans.fit(X).transform(X)
+    assert_equal(X_transformed.shape, (X.shape[0], 2))
+
+    # test callable kernel
+    linear_kernel = lambda X, Y: np.dot(X, Y.T)
+    trans = Nystroem(n_components=2, kernel=linear_kernel, random_state=rnd)
+    X_transformed = trans.fit(X).transform(X)
+    assert_equal(X_transformed.shape, (X.shape[0], 2))
+
+    # test that available kernels fit and transform
+    kernels_available = kernel_metrics()
+    for kern in kernels_available:
+        trans = Nystroem(n_components=2, kernel=kern, random_state=rnd)
+        X_transformed = trans.fit(X).transform(X)
+        assert_equal(X_transformed.shape, (X.shape[0], 2))
+
+
+def test_nystroem_poly_kernel_params():
+    """Non-regression: Nystroem should pass other parameters beside gamma."""
+    rnd = np.random.RandomState(37)
+    X = rnd.uniform(size=(10, 4))
+
+    K = polynomial_kernel(X, degree=3.1, coef0=.1)
+    nystroem = Nystroem(kernel="polynomial", n_components=X.shape[0],
+                        degree=3.1, coef0=.1)
+    X_transformed = nystroem.fit_transform(X)
+    assert_array_almost_equal(np.dot(X_transformed, X_transformed.T), K)
+
+
+def test_nystroem_callable():
+    """Test Nystroem on a callable."""
+    rnd = np.random.RandomState(42)
+    n_samples = 10
+    X = rnd.uniform(size=(n_samples, 4))
+
+    def logging_histogram_kernel(x, y, log):
+        """Histogram kernel that writes to a log."""
+        log.append(1)
+        return np.minimum(x, y).sum()
+
+    kernel_log = []
+    Nystroem(kernel=logging_histogram_kernel,
+             n_components=(n_samples - 1),
+             kernel_params={'log': kernel_log}).fit(X)
+    assert_equal(len(kernel_log), n_samples * (n_samples - 1) / 2)

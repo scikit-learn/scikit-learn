@@ -9,15 +9,15 @@ Sparsity Example: Fitting only features 1  and 2
 Features 1 and 2 of the diabetes-dataset are fitted and
 plotted below. It illustrates that although feature 2
 has a strong coefficient on the full model, it does not
-give us much regarding `y` when compared to just feautre 1
+give us much regarding `y` when compared to just feature 1
 
 """
-print __doc__
+print(__doc__)
 
 
 # Code source: Gael Varoqueux
 # Modified for Documentation merge by Jaques Grobler
-# License: BSD
+# License: BSD 3 clause
 
 import pylab as pl
 import numpy as np

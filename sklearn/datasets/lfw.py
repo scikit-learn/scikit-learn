@@ -11,7 +11,7 @@ must predict whether the two images are from the same person.
 
 An alternative task, Face Recognition or Face Identification is:
 given the picture of the face of an unknown person, identify the name
-of the person by refering to a gallery of previously seen pictures of
+of the person by referring to a gallery of previously seen pictures of
 identified persons.
 
 Both Face Verification and Face Recognition are tasks that are typically
@@ -21,7 +21,7 @@ implemented in the OpenCV library. The LFW faces were extracted by this face
 detector from various online websites.
 """
 # Copyright (c) 2011 Olivier Grisel <olivier.grisel@ensta.org>
-# License: Simplified BSD
+# License: BSD 3 clause
 
 from os import listdir, makedirs, remove
 from os.path import join, exists, isdir
@@ -33,6 +33,7 @@ import urllib
 from .base import get_data_home, Bunch
 from ..externals.joblib import Memory
 
+from ..externals.six import b, u
 
 logger = logging.getLogger(__name__)
 
@@ -167,7 +168,7 @@ def _load_imgs(file_paths, slice_, color, resize):
 #
 
 def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
-                     min_faces_per_person=0):
+                      min_faces_per_person=0):
     """Perform the actual data loading for the lfw people dataset
 
     This operation is meant to be cached by a joblib wrapper.
@@ -208,9 +209,9 @@ def _fetch_lfw_people(data_folder_path, slice_=None, color=False, resize=None,
 
 
 def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
-                    min_faces_per_person=None, color=False,
-                    slice_=(slice(70, 195), slice(78, 172)),
-                    download_if_missing=True):
+                     min_faces_per_person=0, color=False,
+                     slice_=(slice(70, 195), slice(78, 172)),
+                     download_if_missing=True):
     """Loader for the Labeled Faces in the Wild (LFW) people dataset
 
     This dataset is a collection of JPEG pictures of famous people
@@ -283,7 +284,7 @@ def fetch_lfw_people(data_home=None, funneled=True, resize=0.5,
 
 
 def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
-                    color=False, resize=None):
+                     color=False, resize=None):
     """Perform the actual data loading for the LFW pairs dataset
 
     This operation is meant to be cached by a joblib wrapper.
@@ -291,7 +292,7 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
     # parse the index file to find the number of pairs to be able to allocate
     # the right amount of memory before starting to decode the jpeg files
     with open(index_file_path, 'rb') as index_file:
-        split_lines = [ln.strip().split('\t') for ln in index_file]
+        split_lines = [ln.strip().split(b('\t')) for ln in index_file]
     pair_specs = [sl for sl in split_lines if len(sl) > 2]
     n_pairs = len(pair_specs)
 
@@ -315,7 +316,10 @@ def _fetch_lfw_pairs(index_file_path, data_folder_path, slice_=None,
         else:
             raise ValueError("invalid line %d: %r" % (i + 1, components))
         for j, (name, idx) in enumerate(pair):
-            person_folder = join(data_folder_path, name)
+            try:
+                person_folder = join(data_folder_path, name)
+            except TypeError:
+                person_folder = join(data_folder_path, str(name, 'UTF-8'))
             filenames = list(sorted(listdir(person_folder)))
             file_path = join(person_folder, filenames[idx])
             file_paths.append(file_path)
@@ -339,7 +343,7 @@ def load_lfw_people(download_if_missing=False, **kwargs):
 
 
 def fetch_lfw_pairs(subset='train', data_home=None, funneled=True, resize=0.5,
-                   color=False, slice_=(slice(70, 195), slice(78, 172)),
+                    color=False, slice_=(slice(70, 195), slice(78, 172)),
                     download_if_missing=True):
     """Loader for the Labeled Faces in the Wild (LFW) pairs dataset
 

@@ -31,6 +31,7 @@ DOWNLOAD_URL = 'http://sourceforge.net/projects/scikit-learn/files/'
 # We can actually import a restricted version of sklearn that
 # does not need the compiled code
 import sklearn
+
 VERSION = sklearn.__version__
 
 ###############################################################################
@@ -45,14 +46,12 @@ if len(set(('develop', 'release', 'bdist_egg', 'bdist_rpm',
             )).intersection(sys.argv)) > 0:
     import setuptools
     extra_setuptools_args = dict(
-            zip_safe=False,  # the package can run out of an .egg file
-            include_package_data=True,
-        )
+        zip_safe=False,  # the package can run out of an .egg file
+        include_package_data=True,
+    )
 else:
     extra_setuptools_args = dict()
 
-###############################################################################
-from numpy.distutils.core import setup
 
 def configuration(parent_package='', top_path=None):
     if os.path.exists('MANIFEST'):
@@ -73,77 +72,50 @@ def configuration(parent_package='', top_path=None):
     return config
 
 
-if __name__ == "__main__":
+def setup_package():
+    metadata = dict(name=DISTNAME,
+                    maintainer=MAINTAINER,
+                    maintainer_email=MAINTAINER_EMAIL,
+                    description=DESCRIPTION,
+                    license=LICENSE,
+                    url=URL,
+                    version=VERSION,
+                    download_url=DOWNLOAD_URL,
+                    long_description=LONG_DESCRIPTION,
+                    classifiers=['Intended Audience :: Science/Research',
+                                 'Intended Audience :: Developers',
+                                 'License :: OSI Approved',
+                                 'Programming Language :: C',
+                                 'Programming Language :: Python',
+                                 'Topic :: Software Development',
+                                 'Topic :: Scientific/Engineering',
+                                 'Operating System :: Microsoft :: Windows',
+                                 'Operating System :: POSIX',
+                                 'Operating System :: Unix',
+                                 'Operating System :: MacOS'],
+                    **extra_setuptools_args)
 
-    old_path = os.getcwd()
-    local_path = os.path.dirname(os.path.abspath(sys.argv[0]))
-    # python 3 compatibility stuff.
-    # Simplified version of scipy strategy: copy files into
-    # build/py3k, and patch them using lib2to3.
-    if sys.version_info[0] == 3:
+    if len(sys.argv) >= 2 and ('--help' in sys.argv[1:] or sys.argv[1]
+       in ('--help-commands', 'egg_info', '--version', 'clean')):
+
+        # For these actions, NumPy is not required.
+        #
+        # They are required to succeed without Numpy for example when
+        # pip is used to install Scikit when Numpy is not yet present in
+        # the system.
         try:
-            import lib2to3cache
+            from setuptools import setup
         except ImportError:
-            pass
-        local_path = os.path.join(local_path, 'build', 'py3k')
-        if os.path.exists(local_path):
-            shutil.rmtree(local_path)
-        print("Copying source tree into build/py3k for 2to3 transformation"
-              "...")
-        shutil.copytree(os.path.join(old_path, 'sklearn'),
-                        os.path.join(local_path, 'sklearn'))
-        import lib2to3.main
-        from io import StringIO
-        print("Converting to Python3 via 2to3...")
-        _old_stdout = sys.stdout
-        try:
-            sys.stdout = StringIO()  # supress noisy output
-            res = lib2to3.main.main("lib2to3.fixes",
-                                    ['-x', 'import', '-w', local_path])
-        finally:
-            sys.stdout = _old_stdout
+            from distutils.core import setup
 
-        if res != 0:
-            raise Exception('2to3 failed, exiting ...')
+        metadata['version'] = VERSION
+    else:
+        from numpy.distutils.core import setup
 
-        # Ugly hack to make pip work with Python 3, see
-        # http://projects.scipy.org/numpy/ticket/1857.
-        # Explanation: pip messes with __file__ which interacts badly with the
-        # change in directory due to the 2to3 conversion.  Therefore we restore
-        # __file__ to what it would have been otherwise.
-        global __file__
-        __file__ = os.path.join(os.curdir, os.path.basename(__file__))
-        if '--egg-base' in sys.argv: 
-            # Change pip-egg-info entry to absolute path, so pip can find it 
-            # after changing directory. 
-            idx = sys.argv.index('--egg-base')
-            if sys.argv[idx + 1] == 'pip-egg-info': 
-                sys.argv[idx + 1] = os.path.join(old_path, 'pip-egg-info') 
+        metadata['configuration'] = configuration
 
-    os.chdir(local_path)
-    sys.path.insert(0, local_path)
+    setup(**metadata)
 
-    setup(configuration=configuration,
-          name=DISTNAME,
-          maintainer=MAINTAINER,
-          maintainer_email=MAINTAINER_EMAIL,
-          description=DESCRIPTION,
-          license=LICENSE,
-          url=URL,
-          version=VERSION,
-          download_url=DOWNLOAD_URL,
-          long_description=LONG_DESCRIPTION,
-          classifiers=[
-              'Intended Audience :: Science/Research',
-              'Intended Audience :: Developers',
-              'License :: OSI Approved',
-              'Programming Language :: C',
-              'Programming Language :: Python',
-              'Topic :: Software Development',
-              'Topic :: Scientific/Engineering',
-              'Operating System :: Microsoft :: Windows',
-              'Operating System :: POSIX',
-              'Operating System :: Unix',
-              'Operating System :: MacOS'
-             ],
-      **extra_setuptools_args)
+
+if __name__ == "__main__":
+    setup_package()

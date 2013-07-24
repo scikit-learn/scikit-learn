@@ -19,7 +19,7 @@ Learning a graph structure
 We use sparse inverse covariance estimation to find which quotes are
 correlated conditionally on the others. Specifically, sparse inverse
 covariance gives us a graph, that is a list of connection. For each
-symbol, the symbols that it is connected too are those useful to expain
+symbol, the symbols that it is connected too are those useful to explain
 its fluctuations.
 
 Clustering
@@ -61,10 +61,10 @@ is to position the labels minimizing overlap. For this we use an
 heuristic based on the direction of the nearest neighbor along each
 axis.
 """
-print __doc__
+print(__doc__)
 
 # Author: Gael Varoquaux gael.varoquaux@normalesup.org
-# License: BSD
+# License: BSD 3 clause
 
 import datetime
 
@@ -83,69 +83,69 @@ from sklearn import cluster, covariance, manifold
 d1 = datetime.datetime(2003, 01, 01)
 d2 = datetime.datetime(2008, 01, 01)
 
+# kraft symbol has now changed from KFT to MDLZ in yahoo
 symbol_dict = {
-        'TOT': 'Total',
-        'XOM': 'Exxon',
-        'CVX': 'Chevron',
-        'COP': 'ConocoPhillips',
-        'VLO': 'Valero Energy',
-        'MSFT': 'Microsoft',
-        'IBM': 'IBM',
-        'TWX': 'Time Warner',
-        'CMCSA': 'Comcast',
-        'CVC': 'Cablevision',
-        'YHOO': 'Yahoo',
-        'DELL': 'Dell',
-        'HPQ': 'HP',
-        'AMZN': 'Amazon',
-        'TM': 'Toyota',
-        'CAJ': 'Canon',
-        'MTU': 'Mitsubishi',
-        'SNE': 'Sony',
-        'F': 'Ford',
-        'HMC': 'Honda',
-        'NAV': 'Navistar',
-        'NOC': 'Northrop Grumman',
-        'BA': 'Boeing',
-        'KO': 'Coca Cola',
-        'MMM': '3M',
-        'MCD': 'Mc Donalds',
-        'PEP': 'Pepsi',
-        'KFT': 'Kraft Foods',
-        'K': 'Kellogg',
-        'UN': 'Unilever',
-        'MAR': 'Marriott',
-        'PG': 'Procter Gamble',
-        'CL': 'Colgate-Palmolive',
-        'NWS': 'News Corp',
-        'GE': 'General Electrics',
-        'WFC': 'Wells Fargo',
-        'JPM': 'JPMorgan Chase',
-        'AIG': 'AIG',
-        'AXP': 'American express',
-        'BAC': 'Bank of America',
-        'GS': 'Goldman Sachs',
-        'AAPL': 'Apple',
-        'SAP': 'SAP',
-        'CSCO': 'Cisco',
-        'TXN': 'Texas instruments',
-        'XRX': 'Xerox',
-        'LMT': 'Lookheed Martin',
-        'WMT': 'Wal-Mart',
-        'WAG': 'Walgreen',
-        'HD': 'Home Depot',
-        'GSK': 'GlaxoSmithKline',
-        'PFE': 'Pfizer',
-        'SNY': 'Sanofi-Aventis',
-        'NVS': 'Novartis',
-        'KMB': 'Kimberly-Clark',
-        'R': 'Ryder',
-        'GD': 'General Dynamics',
-        'RTN': 'Raytheon',
-        'CVS': 'CVS',
-        'CAT': 'Caterpillar',
-        'DD': 'DuPont de Nemours',
-    }
+    'TOT': 'Total',
+    'XOM': 'Exxon',
+    'CVX': 'Chevron',
+    'COP': 'ConocoPhillips',
+    'VLO': 'Valero Energy',
+    'MSFT': 'Microsoft',
+    'IBM': 'IBM',
+    'TWX': 'Time Warner',
+    'CMCSA': 'Comcast',
+    'CVC': 'Cablevision',
+    'YHOO': 'Yahoo',
+    'DELL': 'Dell',
+    'HPQ': 'HP',
+    'AMZN': 'Amazon',
+    'TM': 'Toyota',
+    'CAJ': 'Canon',
+    'MTU': 'Mitsubishi',
+    'SNE': 'Sony',
+    'F': 'Ford',
+    'HMC': 'Honda',
+    'NAV': 'Navistar',
+    'NOC': 'Northrop Grumman',
+    'BA': 'Boeing',
+    'KO': 'Coca Cola',
+    'MMM': '3M',
+    'MCD': 'Mc Donalds',
+    'PEP': 'Pepsi',
+    'MDLZ': 'Kraft Foods',
+    'K': 'Kellogg',
+    'UN': 'Unilever',
+    'MAR': 'Marriott',
+    'PG': 'Procter Gamble',
+    'CL': 'Colgate-Palmolive',
+    'NWS': 'News Corp',
+    'GE': 'General Electrics',
+    'WFC': 'Wells Fargo',
+    'JPM': 'JPMorgan Chase',
+    'AIG': 'AIG',
+    'AXP': 'American express',
+    'BAC': 'Bank of America',
+    'GS': 'Goldman Sachs',
+    'AAPL': 'Apple',
+    'SAP': 'SAP',
+    'CSCO': 'Cisco',
+    'TXN': 'Texas instruments',
+    'XRX': 'Xerox',
+    'LMT': 'Lookheed Martin',
+    'WMT': 'Wal-Mart',
+    'WAG': 'Walgreen',
+    'HD': 'Home Depot',
+    'GSK': 'GlaxoSmithKline',
+    'PFE': 'Pfizer',
+    'SNY': 'Sanofi-Aventis',
+    'NVS': 'Novartis',
+    'KMB': 'Kimberly-Clark',
+    'R': 'Ryder',
+    'GD': 'General Dynamics',
+    'RTN': 'Raytheon',
+    'CVS': 'CVS',
+    'CAT': 'Caterpillar',
+    'DD': 'DuPont de Nemours'}
 
 symbols, names = np.array(symbol_dict.items()).T
 
@@ -175,7 +175,7 @@ _, labels = cluster.affinity_propagation(edge_model.covariance_)
 n_labels = labels.max()
 
 for i in range(n_labels + 1):
-    print 'Cluster %i: %s' % ((i + 1), ', '.join(names[labels == i]))
+    print('Cluster %i: %s' % ((i + 1), ', '.join(names[labels == i])))
 
 ###############################################################################
 # Find a low-dimension embedding for visualization: find the best position of
@@ -224,7 +224,7 @@ ax.add_collection(lc)
 # Add a label to each node. The challenge here is that we want to
 # position the labels to avoid overlap with other labels
 for index, (name, label, (x, y)) in enumerate(
-    zip(names, labels, embedding.T)):
+        zip(names, labels, embedding.T)):
 
     dx = x - embedding[0]
     dx[index] = 1

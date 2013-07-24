@@ -1,4 +1,9 @@
-"""Compares FeatureHasher and DictVectorizer by using both to vectorize
+"""
+===========================================
+FeatureHasher and DictVectorizer Comparison
+===========================================
+
+Compares FeatureHasher and DictVectorizer by using both to vectorize
 text documents.
 
 The example demonstrates syntax and speed only; it doesn't actually do
@@ -11,7 +16,7 @@ for FeatureHasher is to be expected due to hash collisions.
 """
 
 # Author: Lars Buitinck <L.J.Buitinck@uva.nl>
-# License: 3-clause BSD
+# License: BSD 3 clause
 
 from __future__ import print_function
 from collections import defaultdict
@@ -57,7 +62,7 @@ categories = [
     'talk.religion.misc',
 ]
 # Uncomment the following line to use a larger set (11k+ documents)
-#categories=None
+#categories = None
 
 print(__doc__)
 print("Usage: %s [n_features_for_hashing]" % sys.argv[0])
@@ -72,16 +77,19 @@ except ValueError:
     print("not a valid number of features: %r" % sys.argv[1])
     sys.exit(1)
 
+
 print("Loading 20 newsgroups training data")
 raw_data = fetch_20newsgroups(subset='train', categories=categories).data
-print("%d documents" % len(raw_data))
+data_size_mb = sum(len(s.encode('utf-8')) for s in raw_data) / 1e6
+print("%d documents - %0.3fMB" % (len(raw_data), data_size_mb))
 print()
 
 print("DictVectorizer")
 t0 = time()
 vectorizer = DictVectorizer()
 vectorizer.fit_transform(token_freqs(d) for d in raw_data)
-print("done in %fs" % (time() - t0))
+duration = time() - t0
+print("done in %fs at %0.3fMB/s" % (duration, data_size_mb / duration))
 print("Found %d unique terms" % len(vectorizer.get_feature_names()))
 print()
 
@@ -89,7 +97,8 @@ print("FeatureHasher on frequency dicts")
 t0 = time()
 hasher = FeatureHasher(n_features=n_features)
 X = hasher.transform(token_freqs(d) for d in raw_data)
-print("done in %fs" % (time() - t0))
+duration = time() - t0
+print("done in %fs at %0.3fMB/s" % (duration, data_size_mb / duration))
 print("Found %d unique terms" % n_nonzero_columns(X))
 print()
 
@@ -97,5 +106,6 @@ print("FeatureHasher on raw tokens")
 t0 = time()
 hasher = FeatureHasher(n_features=n_features, input_type="string")
 X = hasher.transform(tokens(d) for d in raw_data)
-print("done in %fs" % (time() - t0))
+duration = time() - t0
+print("done in %fs at %0.3fMB/s" % (duration, data_size_mb / duration))
 print("Found %d unique terms" % n_nonzero_columns(X))

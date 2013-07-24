@@ -1,3 +1,4 @@
+from __future__ import print_function
 import numpy as np
 
 from numpy.testing import assert_array_equal, assert_array_almost_equal
@@ -197,7 +198,7 @@ def train_hmm_and_keep_track_of_log_likelihood(hmm, obs, n_iter=1, **kwargs):
     hmm.n_iter = 1
     hmm.fit(obs)
     loglikelihoods = []
-    for n in xrange(n_iter):
+    for n in range(n_iter):
         hmm.n_iter = 1
         hmm.init_params = ''
         hmm.fit(obs)
@@ -215,7 +216,7 @@ class GaussianHMMBaseTester(object):
         self.startprob = self.startprob / self.startprob.sum()
         self.transmat = prng.rand(n_components, n_components)
         self.transmat /= np.tile(self.transmat.sum(axis=1)[:, np.newaxis],
-                (1, n_components))
+                                 (1, n_components))
         self.means = prng.randint(-20, 20, (n_components, n_features))
         self.covars = {
             'spherical': (1.0 + 2 * np.dot(prng.rand(n_components, 1),
@@ -238,7 +239,7 @@ class GaussianHMMBaseTester(object):
     def test_bad_covariance_type(self):
         hmm.GaussianHMM(20, self.covariance_type)
         self.assertRaises(ValueError, hmm.GaussianHMM, 20,
-                'badcovariance_type')
+                          'badcovariance_type')
 
     def test_eval_and_decode(self):
         h = hmm.GaussianHMM(self.n_components, self.covariance_type)
@@ -249,7 +250,7 @@ class GaussianHMMBaseTester(object):
         # picks the actual component used to generate the observations.
         h.means_ = 20 * h.means_
 
-        gaussidx = np.repeat(range(self.n_components), 5)
+        gaussidx = np.repeat(np.arange(self.n_components), 5)
         nobs = len(gaussidx)
         obs = self.prng.randn(nobs, self.n_features) + h.means_[gaussidx]
 
@@ -275,13 +276,13 @@ class GaussianHMMBaseTester(object):
     def test_fit(self, params='stmc', n_iter=5, verbose=False, **kwargs):
         h = hmm.GaussianHMM(self.n_components, self.covariance_type)
         h.startprob_ = self.startprob
-        h.transmat_ = hmm.normalize(self.transmat
-                + np.diag(self.prng.rand(self.n_components)), 1)
+        h.transmat_ = hmm.normalize(
+            self.transmat + np.diag(self.prng.rand(self.n_components)), 1)
         h.means_ = 20 * self.means
         h.covars_ = self.covars[self.covariance_type]
 
         # Create training data by sampling from the HMM.
-        train_obs = [h.sample(n=10)[0] for x in xrange(10)]
+        train_obs = [h.sample(n=10)[0] for x in range(10)]
 
         # Mess up the parameters and see if we can re-learn them.
         h.n_iter = 0
@@ -292,10 +293,8 @@ class GaussianHMMBaseTester(object):
 
         # Check that the loglik is always increasing during training
         if not np.all(np.diff(trainll) > 0) and verbose:
-            print
-            print ('Test train: %s (%s)\n  %s\n  %s'
-                   % (self.covariance_type, params, trainll, np.diff(trainll)))
-
+            print('Test train: %s (%s)\n  %s\n  %s'
+                  % (self.covariance_type, params, trainll, np.diff(trainll)))
         delta_min = np.diff(trainll).min()
         self.assertTrue(
             delta_min > -0.8,
@@ -326,8 +325,8 @@ class GaussianHMMBaseTester(object):
         h = hmm.GaussianHMM(self.n_components, self.covariance_type)
         h.startprob_ = self.startprob
         h.startprob_prior = startprob_prior
-        h.transmat_ = hmm.normalize(self.transmat
-                + np.diag(self.prng.rand(self.n_components)), 1)
+        h.transmat_ = hmm.normalize(
+            self.transmat + np.diag(self.prng.rand(self.n_components)), 1)
         h.transmat_prior = transmat_prior
         h.means_ = 20 * self.means
         h.means_prior = means_prior
@@ -337,7 +336,7 @@ class GaussianHMMBaseTester(object):
         h.covars_weight = covars_weight
 
         # Create training data by sampling from the HMM.
-        train_obs = [h.sample(n=10)[0] for x in xrange(10)]
+        train_obs = [h.sample(n=10)[0] for x in range(10)]
 
         # Mess up the parameters and see if we can re-learn them.
         h.n_iter = 0
@@ -348,9 +347,8 @@ class GaussianHMMBaseTester(object):
 
         # Check that the loglik is always increasing during training
         if not np.all(np.diff(trainll) > 0) and verbose:
-            print
-            print ('Test MAP train: %s (%s)\n  %s\n  %s'
-                   % (self.covariance_type, params, trainll, np.diff(trainll)))
+            print('Test MAP train: %s (%s)\n  %s\n  %s'
+                  % (self.covariance_type, params, trainll, np.diff(trainll)))
         # XXX: Why such a large tolerance?
         self.assertTrue(np.all(np.diff(trainll) > -0.5))
 
@@ -409,8 +407,8 @@ class MultinomialHMMTestCase(TestCase):
         self.transmat = [[0.7, 0.3], [0.4, 0.6]]
 
         self.h = hmm.MultinomialHMM(self.n_components,
-                               startprob=self.startprob,
-                               transmat=self.transmat)
+                                    startprob=self.startprob,
+                                    transmat=self.transmat)
         self.h.emissionprob_ = self.emissionprob
 
     def test_set_emissionprob(self):
@@ -431,12 +429,8 @@ class MultinomialHMMTestCase(TestCase):
 
     def test_decode_map_algorithm(self):
         observations = [0, 1, 2]
-        h = hmm.MultinomialHMM(
-            self.n_components,
-            startprob=self.startprob,
-            transmat=self.transmat,
-            algorithm="map",
-            )
+        h = hmm.MultinomialHMM(self.n_components, startprob=self.startprob,
+                               transmat=self.transmat, algorithm="map",)
         h.emissionprob_ = self.emissionprob
         logprob, state_sequence = h.decode(observations)
         assert_array_equal(state_sequence, [1, 0, 0])
@@ -450,7 +444,7 @@ class MultinomialHMMTestCase(TestCase):
             [0.23170303, 0.76829697],
             [0.62406281, 0.37593719],
             [0.86397706, 0.13602294],
-            ])
+        ])
 
     def test_attributes(self):
         h = hmm.MultinomialHMM(self.n_components)
@@ -481,7 +475,7 @@ class MultinomialHMMTestCase(TestCase):
         self.assertEqual(h.n_symbols, self.n_symbols)
 
     def test_eval(self):
-        idx = np.repeat(range(self.n_components), 10)
+        idx = np.repeat(np.arange(self.n_components), 10)
         nobs = len(idx)
         obs = [int(x) for x in np.floor(self.prng.rand(nobs) * self.n_symbols)]
 
@@ -499,12 +493,12 @@ class MultinomialHMMTestCase(TestCase):
         h = self.h
 
         # Create training data by sampling from the HMM.
-        train_obs = [h.sample(n=10)[0] for x in xrange(10)]
+        train_obs = [h.sample(n=10)[0] for x in range(10)]
 
         # Mess up the parameters and see if we can re-learn them.
         h.startprob_ = hmm.normalize(self.prng.rand(self.n_components))
         h.transmat_ = hmm.normalize(self.prng.rand(self.n_components,
-                                                  self.n_components), axis=1)
+                                                   self.n_components), axis=1)
         h.emissionprob_ = hmm.normalize(
             self.prng.rand(self.n_components, self.n_symbols), axis=1)
 
@@ -513,21 +507,20 @@ class MultinomialHMMTestCase(TestCase):
 
         # Check that the loglik is always increasing during training
         if not np.all(np.diff(trainll) > 0) and verbose:
-            print
-            print 'Test train: (%s)\n  %s\n  %s' % (params, trainll,
-                                                    np.diff(trainll))
+            print('Test train: (%s)\n  %s\n  %s' % (params, trainll,
+                                                    np.diff(trainll)))
         self.assertTrue(np.all(np.diff(trainll) > -1.e-3))
 
     def test_fit_emissionprob(self):
         self.test_fit('e')
 
-    def test_fit_with_init(self, params='ste', n_iter=5,
-                            verbose=False, **kwargs):
+    def test_fit_with_init(self, params='ste', n_iter=5, verbose=False,
+                           **kwargs):
         h = self.h
         learner = hmm.MultinomialHMM(self.n_components)
 
         # Create training data by sampling from the HMM.
-        train_obs = [h.sample(n=10)[0] for x in xrange(10)]
+        train_obs = [h.sample(n=10)[0] for x in range(10)]
 
         # use init_function to initialize paramerters
         learner._init(train_obs, params)
@@ -537,9 +530,9 @@ class MultinomialHMMTestCase(TestCase):
 
         # Check that the loglik is always increasing during training
         if not np.all(np.diff(trainll) > 0) and verbose:
-            print
-            print 'Test train: (%s)\n  %s\n  %s' % (params, trainll,
-                                                    np.diff(trainll))
+            print()
+            print('Test train: (%s)\n  %s\n  %s' % (params, trainll,
+                                                    np.diff(trainll)))
         self.assertTrue(np.all(np.diff(trainll) > -1.e-3))
 
 
@@ -556,7 +549,7 @@ def create_random_gmm(n_mix, n_features, covariance_type, prng=0):
         'diag': (mincv + mincv * prng.rand(n_mix, n_features)) ** 2,
         'full': np.array(
             [make_spd_matrix(n_features, random_state=prng)
-             + mincv * np.eye(n_features) for x in xrange(n_mix)])
+             + mincv * np.eye(n_features) for x in range(n_mix)])
     }[covariance_type]
     g.weights_ = hmm.normalize(prng.rand(n_mix))
     return g
@@ -576,9 +569,9 @@ class GMMHMMBaseTester(object):
         self.transmat /= np.tile(self.transmat.sum(axis=1)[:, np.newaxis],
                                  (1, self.n_components))
 
-        self.gmms = []
-        for state in xrange(self.n_components):
-            self.gmms.append(create_random_gmm(
+        self.gmms_ = []
+        for state in range(self.n_components):
+            self.gmms_.append(create_random_gmm(
                 self.n_mix, self.n_features, self.covariance_type,
                 prng=self.prng))
 
@@ -604,15 +597,15 @@ class GMMHMMBaseTester(object):
                           np.zeros((self.n_components - 2, self.n_components)))
 
     def test_eval_and_decode(self):
-        h = hmm.GMMHMM(self.n_components, gmms=self.gmms)
+        h = hmm.GMMHMM(self.n_components, gmms=self.gmms_)
         # Make sure the means are far apart so posteriors.argmax()
         # picks the actual component used to generate the observations.
-        for g in h.gmms:
+        for g in h.gmms_:
             g.means_ *= 20
 
-        refstateseq = np.repeat(range(self.n_components), 5)
+        refstateseq = np.repeat(np.arange(self.n_components), 5)
         nobs = len(refstateseq)
-        obs = [h.gmms[x].sample(1).flatten() for x in refstateseq]
+        obs = [h.gmms_[x].sample(1).flatten() for x in refstateseq]
 
         ll, posteriors = h.eval(obs)
 
@@ -625,7 +618,7 @@ class GMMHMMBaseTester(object):
     def test_sample(self, n=1000):
         h = hmm.GMMHMM(self.n_components, self.covariance_type,
                        startprob=self.startprob, transmat=self.transmat,
-                       gmms=self.gmms)
+                       gmms=self.gmms_)
         samples = h.sample(n)[0]
         self.assertEqual(samples.shape, (n, self.n_features))
 
@@ -634,11 +627,11 @@ class GMMHMMBaseTester(object):
         h.startprob_ = self.startprob
         h.transmat_ = hmm.normalize(
             self.transmat + np.diag(self.prng.rand(self.n_components)), 1)
-        h.gmms = self.gmms
+        h.gmms_ = self.gmms_
 
         # Create training data by sampling from the HMM.
-        train_obs = [h.sample(n=10,
-            random_state=self.prng)[0] for x in xrange(10)]
+        train_obs = [h.sample(n=10, random_state=self.prng)[0]
+                     for x in range(10)]
 
         # Mess up the parameters and see if we can re-learn them.
         h.n_iter = 0
@@ -651,9 +644,8 @@ class GMMHMMBaseTester(object):
             h, train_obs, n_iter=n_iter, params=params)[1:]
 
         if not np.all(np.diff(trainll) > 0) and verbose:
-            print
-            print 'Test train: (%s)\n  %s\n  %s' % (params, trainll,
-                                                    np.diff(trainll))
+            print('Test train: (%s)\n  %s\n  %s' % (params, trainll,
+                                                    np.diff(trainll)))
 
         # XXX: this test appears to check that training log likelihood should
         # never be decreasing (up to a tolerance of 0.5, why?) but this is not

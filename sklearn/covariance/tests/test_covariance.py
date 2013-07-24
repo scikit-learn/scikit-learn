@@ -2,7 +2,7 @@
 #         Gael Varoquaux <gael.varoquaux@normalesup.org>
 #         Virgile Fritsch <virgile.fritsch@inria.fr>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
 import warnings
@@ -44,7 +44,7 @@ def test_covariance():
                   cov.error_norm, emp_cov, norm='foo')
     # Mahalanobis distances computation test
     mahal_dist = cov.mahalanobis(X)
-    print np.amin(mahal_dist), np.amax(mahal_dist)
+    print(np.amin(mahal_dist), np.amax(mahal_dist))
     assert(np.amin(mahal_dist) > 0)
 
     # test with n_features = 1
@@ -120,12 +120,12 @@ def test_ledoit_wolf():
     assert_almost_equal(ledoit_wolf_shrinkage(X_centered,
                                               assume_centered=True),
                         shrinkage_)
-    assert_almost_equal(ledoit_wolf_shrinkage(X_centered,
-                                assume_centered=True, block_size=6),
+    assert_almost_equal(ledoit_wolf_shrinkage(X_centered, assume_centered=True,
+                                              block_size=6),
                         shrinkage_)
     # compare shrunk covariance obtained from data and from MLE estimate
     lw_cov_from_mle, lw_shinkrage_from_mle = ledoit_wolf(X_centered,
-                                                        assume_centered=True)
+                                                         assume_centered=True)
     assert_array_almost_equal(lw_cov_from_mle, lw.covariance_, 4)
     assert_almost_equal(lw_shinkrage_from_mle, lw.shrinkage_)
     # compare estimates given by LW and ShrunkCovariance

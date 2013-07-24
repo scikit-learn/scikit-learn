@@ -69,13 +69,12 @@ ax.set_title("PCA reduction (2d) of transformed data (%dd)" %
 ax.set_xticks(())
 ax.set_yticks(())
 
-# Plot the decision in original space. For that, we will asign a color to each
+# Plot the decision in original space. For that, we will assign a color to each
 # point in the mesh [x_min, m_max] x [y_min, y_max].
 h = .01
 x_min, x_max = X[:, 0].min() - .5, X[:, 0].max() + .5
 y_min, y_max = X[:, 1].min() - .5, X[:, 1].max() + .5
-xx, yy = np.meshgrid(np.arange(x_min, x_max, h),
-        np.arange(y_min, y_max, h))
+xx, yy = np.meshgrid(np.arange(x_min, x_max, h), np.arange(y_min, y_max, h))
 
 # transform grid using RandomTreesEmbedding
 transformed_grid = hasher.transform(np.c_[xx.ravel(), yy.ravel()])

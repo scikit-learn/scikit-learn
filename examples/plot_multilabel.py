@@ -1,5 +1,5 @@
 # Authors: Vlad Niculae, Mathieu Blondel
-# License: BSD
+# License: BSD 3 clause
 """
 =========================
 Multilabel classification
@@ -29,7 +29,7 @@ Note: in the plot, "unlabeled samples" does not mean that we don't know the
 labels (as in semi-supervised learning) but that the samples simply do *not*
 have a label.
 """
-print __doc__
+print(__doc__)
 
 import numpy as np
 import matplotlib.pylab as pl

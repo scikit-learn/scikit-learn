@@ -24,32 +24,60 @@ There are different ways to get scikit-learn installed:
     If you wish to contribute to the project, it's recommended you
     :ref:`install the latest development version<install_bleeding_edge>`.
 
+
 .. _install_official_release:
 
 Installing an official release
 ==============================
 
 
-Installing from source
-----------------------
+Getting the dependencies
+------------------------
 
-Installing from source requires you to have installed python (>= 2.6), numpy
-(>= 1.3), scipy (>= 0.7), setuptools, python development headers and a working
-C++ compiler. Under Debian-based systems you can get all this by executing with
-root privileges::
+Installing from source requires you to have installed Python (>= 2.6),
+NumPy (>= 1.3), SciPy (>= 0.7), setuptools, Python development headers
+and a working C++ compiler.
+Under Debian-based operating systems, which include Ubuntu,
+you can install all these requirements by issuing::
 
-    sudo apt-get install python-dev python-numpy python-numpy-dev python-setuptools python-numpy-dev python-scipy libatlas-dev g++
+    sudo apt-get install build-essential python-dev python-numpy python-setuptools python-scipy libatlas-dev libatlas3-base
 
 .. note::
 
-    In Order to build the documentation and run the example code contains in
+    In order to build the documentation and run the example code contains in
     this documentation you will need matplotlib::
 
         sudo apt-get install python-matplotlib
 
 .. note::
 
-    On Ubuntu LTS (10.04) the package `libatlas-dev` is called `libatlas-headers`
+    On older versions of Ubuntu,
+    you might need to ``apt-get install python-numpy-dev``
+    to get the header files for NumPy.
+
+    On Ubuntu 10.04 LTS, the package `libatlas-dev` is called `libatlas-headers`.
+
+.. note::
+
+    The above installs the ATLAS implementation of BLAS
+    (the Basic Linear Algebra Subprograms library).
+    Ubuntu 11.10 and later, and recent (testing) versions of Debian,
+    offer an alternative implementation called OpenBLAS.
+
+    Using OpenBLAS can give speedups in some scikit-learn modules,
+    but it doesn't play nicely with joblib/multiprocessing,
+    so using it is not recommended unless you know what you're doing.
+
+    If you do want to use OpenBLAS, then replacing ATLAS
+    only requires two commands.
+    ATLAS has to be removed, otherwise NumPy may not work::
+
+        sudo apt-get remove libatlas3gf-base libatlas-dev
+        sudo apt-get install libopenblas-dev
+
+On Red Hat and clones (e.g. CentOS), install the dependencies using::
+
+    sudo yum -y install gcc gcc-c++ numpy python-devel scipy
 
 Easy install
 ~~~~~~~~~~~~
@@ -146,28 +174,31 @@ These can make installation and upgrading much easier for users since
 the integration includes the ability to automatically install
 dependencies (numpy, scipy) that scikit-learn requires.
 
-The following is an imcomplete list of Python and OS distributions
-that provide their own version of scikit-learn:
+The following is an incomplete list of Python and OS distributions
+that provide their own version of scikit-learn.
 
 
 Debian and derivatives (Ubuntu)
 -------------------------------
 
-The Debian package is named python-sklearn (formerly
-python-scikits-learn) and can be installed using the following
-commands with root privileges::
+The Debian package is named ``python-sklearn``
+(formerly ``python-scikits-learn``)
+and can be installed using the following command::
 
-      apt-get install python-sklearn
+      sudo apt-get install python-sklearn
 
 Additionally, backport builds of the most recent release of
 scikit-learn for existing releases of Debian and Ubuntu are available
-from `NeuroDebian repository
+from the `NeuroDebian repository
 <http://neuro.debian.net/pkgs/python-sklearn.html>`__ .
 
-Python(x, y)
-------------
+A quick-'n'-dirty way of rolling your own ``.deb`` package
+is to `use stdeb <https://github.com/scikit-learn/scikit-learn/wiki/Quick-packaging-for-Debian-Ubuntu>`_.
 
-The `Python(x, y) <http://pythonxy.com>`_ distributes scikit-learn as an additional plugin, which can
+Python(x,y)
+-----------
+
+The `Python(x,y) <http://pythonxy.com>`_ distributes scikit-learn as an additional plugin, which can
 be found in the `Additional plugins <http://code.google.com/p/pythonxy/wiki/AdditionalPlugins>`_
 page.
 
@@ -180,20 +211,37 @@ The `Enthought Python Distribution
 version.
 
 
-Macports
+MacPorts
 --------
 
-The macport's package is named `py26-sklearn` or `py27-sklearn` depending
-on the version of Python. It can be installed by typing the following
+The MacPorts package is named ``py<XY>-scikits-learn``,
+where ``XY`` denotes the Python version.
+It can be installed by typing the following
 command::
 
-    sudo port install py26-sklearn
+    sudo port install py26-scikit-learn
 
 or::
 
-    sudo port install py27-sklearn
+    sudo port install py27-scikit-learn
 
-depending on the version of Python you want to use.
+
+Archlinux
+---------
+
+Archlinux's package is provided at 
+`Arch User Repository (AUR) <https://aur.archlinux.org/>`_ with name
+`python2-scikit-learn` for latest stable version and `python2-scikit-learn-git`
+for building from git version. If `yaourt` is available, it can be installed
+by typing the following command::
+
+     sudo yaourt -S python2-scikit-learn
+
+or::
+
+     sudo yaourt -S python2-scikit-learn-git
+
+depending on the version of scikit-learn you want to use.
 
 
 NetBSD

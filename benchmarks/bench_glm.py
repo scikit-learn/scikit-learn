@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
     for i in range(n_iter):
 
-        print 'Iteration %s of %s' % (i, n_iter)
+        print('Iteration %s of %s' % (i, n_iter))
 
         n_samples, n_features = 10 * i + 3, 10 * i + 3
 
@@ -46,12 +46,13 @@ if __name__ == '__main__':
         lasso.fit(X, Y)
         time_lasso[i] = total_seconds(datetime.now() - start)
 
-    pl.xlabel('Dimesions')
-    pl.ylabel('Time (in seconds)')
+    pl.figure('scikit-learn GLM benchmark results')
+    pl.xlabel('Dimensions')
+    pl.ylabel('Time (s)')
     pl.plot(dimensions, time_ridge, color='r')
     pl.plot(dimensions, time_ols, color='g')
     pl.plot(dimensions, time_lasso, color='b')
 
-    pl.legend(['Ridge', 'OLS', 'LassoLars'])
+    pl.legend(['Ridge', 'OLS', 'LassoLars'], loc='upper left')
     pl.axis('tight')
     pl.show()

@@ -3,8 +3,9 @@ Several basic tests for hierarchical clustering procedures
 
 """
 # Authors: Vincent Michel, 2010, Gael Varoquaux 2012
-# License: BSD-like
+# License: BSD 3 clause
 import warnings
+from tempfile import mkdtemp
 
 import numpy as np
 from scipy import sparse
@@ -13,6 +14,7 @@ from scipy.cluster import hierarchy
 from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_raises
 from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_array_almost_equal
 
 from sklearn.cluster import Ward, WardAgglomeration, ward_tree
 from sklearn.cluster.hierarchical import _hc_cut
@@ -78,6 +80,10 @@ def test_ward_clustering():
     connectivity = grid_to_graph(*mask.shape)
     clustering = Ward(n_clusters=10, connectivity=connectivity)
     clustering.fit(X)
+    # test caching
+    clustering = Ward(n_clusters=10, connectivity=connectivity,
+                      memory=mkdtemp())
+    clustering.fit(X)
     labels = clustering.labels_
     assert_true(np.size(np.unique(labels)) == 10)
     # Check that we obtain the same solution with early-stopping of the
@@ -94,7 +100,7 @@ def test_ward_clustering():
     assert_raises(TypeError, clustering.fit, X)
     clustering = Ward(n_clusters=10,
                       connectivity=sparse.lil_matrix(
-                                connectivity.todense()[:10, :10]))
+                          connectivity.todense()[:10, :10]))
     assert_raises(ValueError, clustering.fit, X)
 
 
@@ -114,6 +120,7 @@ def test_ward_agglomeration():
     assert_true(Xred.shape[1] == 5)
     Xfull = ward.inverse_transform(Xred)
     assert_true(np.unique(Xfull[0]).size == 5)
+    assert_array_almost_equal(ward.transform(Xfull), Xred)
 
 
 def assess_same_labelling(cut1, cut2):
@@ -166,8 +173,8 @@ def test_connectivity_popagation():
                   (.018, .153), (.018, .153), (.018, .153),
                   (.018, .153), (.018, .153), (.018, .153),
                   (.018, .152), (.018, .149), (.018, .144),
-                 ])
-    nn = NearestNeighbors(n_neighbors=10, warn_on_equidistant=False).fit(X)
+                  ])
+    nn = NearestNeighbors(n_neighbors=10).fit(X)
     connectivity = nn.kneighbors_graph(X)
     ward = Ward(n_clusters=4, connectivity=connectivity)
     # If changes are not propagated correctly, fit crashes with an

@@ -4,12 +4,12 @@
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Olivier Grisel <olivier.grisel@ensta.org>
 #         Mathieu Blondel <mathieu@mblondel.org>
-# License: BSD Style.
+# License: BSD 3 clause
 
 import numpy as np
-import warnings
 from scipy import linalg
 from math import log
+import warnings
 
 from ..base import BaseEstimator, TransformerMixin
 from ..utils import array2d, check_random_state, as_float_array
@@ -48,13 +48,13 @@ def _assess_dimension_(spectrum, rank, n_samples, n_features):
     """
     if rank > len(spectrum):
         raise ValueError("The tested rank cannot exceed the rank of the"
-                " dataset")
+                         " dataset")
     from scipy.special import gammaln
 
     pu = -rank * np.log(2)
     for i in range(rank):
         pu += (gammaln((n_features - i) / 2)
-                - np.log(np.pi) * (n_features - i) / 2)
+               - np.log(np.pi) * (n_features - i) / 2)
 
     pl = np.sum(np.log(spectrum[:rank]))
     pl = -pl * n_samples / 2
@@ -174,6 +174,7 @@ class PCA(BaseEstimator, TransformerMixin):
     RandomizedPCA
     KernelPCA
     SparsePCA
+    TruncatedSVD
     """
     def __init__(self, n_components=None, copy=True, whiten=False):
         self.n_components = n_components
@@ -232,8 +233,8 @@ class PCA(BaseEstimator, TransformerMixin):
         X -= self.mean_
         U, S, V = linalg.svd(X, full_matrices=False)
         self.explained_variance_ = (S ** 2) / n_samples
-        self.explained_variance_ratio_ = self.explained_variance_ / \
-                                        self.explained_variance_.sum()
+        self.explained_variance_ratio_ = (self.explained_variance_ /
+                                          self.explained_variance_.sum())
 
         if self.whiten:
             self.components_ = V / S[:, np.newaxis] * np.sqrt(n_samples)
@@ -243,9 +244,9 @@ class PCA(BaseEstimator, TransformerMixin):
         if self.n_components == 'mle':
             if n_samples < n_features:
                 raise ValueError("n_components='mle' is only supported "
-                "if n_samples >= n_features")
+                                 "if n_samples >= n_features")
             self.n_components = _infer_dimension_(self.explained_variance_,
-                                            n_samples, n_features)
+                                                  n_samples, n_features)
 
         elif (self.n_components is not None
               and 0 < self.n_components
@@ -258,9 +259,9 @@ class PCA(BaseEstimator, TransformerMixin):
         if self.n_components is not None:
             self.components_ = self.components_[:self.n_components, :]
             self.explained_variance_ = \
-                    self.explained_variance_[:self.n_components]
+                self.explained_variance_[:self.n_components]
             self.explained_variance_ratio_ = \
-                    self.explained_variance_ratio_[:self.n_components]
+                self.explained_variance_ratio_[:self.n_components]
 
         return (U, S, V)
 
@@ -326,11 +327,11 @@ class ProbabilisticPCA(PCA):
         Xr = X - self.mean_
         Xr -= np.dot(np.dot(Xr, self.components_.T), self.components_)
         n_samples = X.shape[0]
-        if n_features <= self.n_components:
+        if self.n_components is None or n_features <= self.n_components:
             delta = np.zeros(n_features)
         elif homoscedastic:
-            delta = (Xr ** 2).sum() * np.ones(n_features) \
-                    / (n_samples * n_features)
+            delta = ((Xr ** 2).sum() * np.ones(n_features)
+                     / (n_samples * n_features))
         else:
             delta = (Xr ** 2).mean(0) / (n_features - self.n_components)
         self.covariance_ = np.diag(delta)
@@ -341,14 +342,6 @@ class ProbabilisticPCA(PCA):
             add_cov = np.outer(self.components_[k], self.components_[k])
             self.covariance_ += self.explained_variance_[k] * add_cov
         return self
-
-    @property
-    def dim(self):
-        warnings.warn("Using dim is deprecated "
-                "since version 0.12, and backward compatibility "
-                "won't be maintained from version 0.14 onward. ",
-                DeprecationWarning, stacklevel=2)
-        return self._dim
 
     def score(self, X, y=None):
         """Return a score associated to new data
@@ -368,8 +361,8 @@ class ProbabilisticPCA(PCA):
         log_like = np.zeros(X.shape[0])
         self.precision_ = linalg.inv(self.covariance_)
         log_like = -.5 * (Xr * (np.dot(Xr, self.precision_))).sum(axis=1)
-        log_like -= .5 * (fast_logdet(self.covariance_) + \
-                                    n_features * log(2 * np.pi))
+        log_like -= .5 * (fast_logdet(self.covariance_)
+                          + n_features * log(2 * np.pi))
         return log_like
 
 
@@ -380,19 +373,17 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     Decomposition of the data and keeping only the most significant
     singular vectors to project the data to a lower dimensional space.
 
-    This implementation uses a randomized SVD implementation and can
-    handle both scipy.sparse and numpy dense arrays as input.
-
     Parameters
     ----------
-    n_components : int
-        Maximum number of components to keep: default is 50.
+    n_components : int, optional
+        Maximum number of components to keep. When not given or None, this
+        is set to n_features (the second dimension of the training data).
 
     copy : bool
         If False, data passed to fit are overwritten
 
     iterated_power : int, optional
-        Number of iteration for the power method. 3 by default.
+        Number of iterations for the power method. 3 by default.
 
     whiten : bool, optional
         When True (False by default) the `components_` vectors are divided
@@ -434,6 +425,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     --------
     PCA
     ProbabilisticPCA
+    TruncatedSVD
 
     References
     ----------
@@ -445,10 +437,17 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
     .. [MRT] `A randomized algorithm for the decomposition of matrices
       Per-Gunnar Martinsson, Vladimir Rokhlin and Mark Tygert`
 
+    Notes
+    -----
+    This class supports sparse matrix input for backward compatibility, but
+    actually computes a truncated SVD instead of a PCA in that case (i.e. no
+    centering is performed). This support is deprecated; use the class
+    TruncatedSVD for sparse matrix support.
+
     """
 
     def __init__(self, n_components=None, copy=True, iterated_power=3,
-            whiten=False, random_state=None):
+                 whiten=False, random_state=None):
         self.n_components = n_components
         self.copy = copy
         self.iterated_power = iterated_power
@@ -461,7 +460,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X: array-like or scipy.sparse matrix, shape (n_samples, n_features)
+        X: array-like, shape (n_samples, n_features)
             Training vector, where n_samples in the number of samples and
             n_features is the number of features.
 
@@ -471,7 +470,12 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
             Returns the instance itself.
         """
         random_state = check_random_state(self.random_state)
-        if not hasattr(X, 'todense'):
+        if hasattr(X, 'todense'):
+            warnings.warn("Sparse matrix support is deprecated"
+                          " and will be dropped in 0.16."
+                          " Use TruncatedSVD instead.",
+                          DeprecationWarning)
+        else:
             # not a sparse matrix, ensure this is a 2D array
             X = np.atleast_2d(as_float_array(X, copy=self.copy))
 
@@ -506,7 +510,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like or scipy.sparse matrix, shape (n_samples, n_features)
+        X : array-like, shape (n_samples, n_features)
             New data, where n_samples in the number of samples
             and n_features is the number of features.
 
@@ -515,6 +519,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         X_new : array-like, shape (n_samples, n_components)
 
         """
+        # XXX remove scipy.sparse support here in 0.16
         X = atleast2d_or_csr(X)
         if self.mean_ is not None:
             X = X - self.mean_
@@ -529,7 +534,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
 
         Parameters
         ----------
-        X : array-like or scipy.sparse matrix, shape (n_samples, n_components)
+        X : array-like, shape (n_samples, n_components)
             New data, where n_samples in the number of samples
             and n_components is the number of components.
 
@@ -542,6 +547,7 @@ class RandomizedPCA(BaseEstimator, TransformerMixin):
         If whitening is enabled, inverse_transform does not compute the
         exact inverse operation of transform.
         """
+        # XXX remove scipy.sparse support here in 0.16
         X_original = safe_sparse_dot(X, self.components_)
         if self.mean_ is not None:
             X_original = X_original + self.mean_

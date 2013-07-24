@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import scipy.sparse as sp
 
@@ -8,8 +10,8 @@ from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_greater
 
-from sklearn.linear_model.coordinate_descent import Lasso, ElasticNet, \
-                                                    ElasticNetCV
+from sklearn.linear_model.coordinate_descent import (Lasso, ElasticNet,
+                                                     ElasticNetCV)
 
 
 def test_sparse_coef():
@@ -56,7 +58,10 @@ def test_enet_toy_list_input():
 
     # this should be the same as unregularized least squares
     clf = ElasticNet(alpha=0, l1_ratio=1.0)
-    clf.fit(X, Y)
+    with warnings.catch_warnings(record=True):
+        # catch warning about alpha=0.
+        # this is discouraged but should work.
+        clf.fit(X, Y)
     pred = clf.predict(T)
     assert_array_almost_equal(clf.coef_, [1])
     assert_array_almost_equal(pred, [2, 3, 4])
@@ -162,8 +167,8 @@ def _test_sparse_enet_not_as_toy_dataset(alpha, fit_intercept, positive):
 
     # check the convergence is the same as the dense version
     d_clf = ElasticNet(alpha=alpha, l1_ratio=0.8, fit_intercept=fit_intercept,
-                      max_iter=max_iter, tol=1e-7, positive=positive,
-                      warm_start=True)
+                       max_iter=max_iter, tol=1e-7, positive=positive,
+                       warm_start=True)
     d_clf.fit(X_train.todense(), y_train)
 
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
@@ -208,15 +213,13 @@ def test_sparse_lasso_not_as_toy_dataset():
     X_train, X_test = X[n_samples / 2:], X[:n_samples / 2]
     y_train, y_test = y[n_samples / 2:], y[:n_samples / 2]
 
-    s_clf = Lasso(alpha=0.1, fit_intercept=False,
-                        max_iter=max_iter, tol=1e-7)
+    s_clf = Lasso(alpha=0.1, fit_intercept=False, max_iter=max_iter, tol=1e-7)
     s_clf.fit(X_train, y_train)
     assert_almost_equal(s_clf.dual_gap_, 0, 4)
     assert_greater(s_clf.score(X_test, y_test), 0.85)
 
     # check the convergence is the same as the dense version
-    d_clf = Lasso(alpha=0.1, fit_intercept=False, max_iter=max_iter,
-            tol=1e-7)
+    d_clf = Lasso(alpha=0.1, fit_intercept=False, max_iter=max_iter, tol=1e-7)
     d_clf.fit(X_train.todense(), y_train)
     assert_almost_equal(d_clf.dual_gap_, 0, 4)
     assert_greater(d_clf.score(X_test, y_test), 0.85)
@@ -235,7 +238,7 @@ def test_enet_multitarget():
     coef, intercept, dual_gap, eps = (estimator.coef_, estimator.intercept_,
                                       estimator.dual_gap_, estimator.eps_)
 
-    for k in xrange(n_targets):
+    for k in range(n_targets):
         estimator.fit(X, y[:, k])
         assert_array_almost_equal(coef[k, :], estimator.coef_)
         assert_array_almost_equal(intercept[k], estimator.intercept_)

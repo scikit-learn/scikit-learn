@@ -18,10 +18,10 @@ We compute then compute a cross-validation estimate of the coefficient of
 determination (R2) without reperforming MLE, using the set of correlation
 parameters found on the whole dataset.
 """
-print __doc__
+print(__doc__)
 
 # Author: Vincent Dubourg <vincent.dubourg@gmail.com>
-# License: BSD style
+# Licence: BSD 3 clause
 
 from sklearn import datasets
 from sklearn.gaussian_process import GaussianProcess
@@ -48,4 +48,4 @@ gp.thetaL, gp.thetaU = None, None  # None bounds deactivate MLE
 K = 20  # folds
 R2 = cross_val_score(gp, X, y=y, cv=KFold(y.size, K), n_jobs=1).mean()
 print("The %d-Folds estimate of the coefficient of determination is R2 = %s"
-    % (K, R2))
+      % (K, R2))

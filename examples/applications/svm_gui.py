@@ -13,13 +13,13 @@ negative examples click the right button.
 If all examples are from the same class, it uses a one-class SVM.
 
 """
-from __future__ import division
+from __future__ import division, print_function
 
-print __doc__
+print(__doc__)
 
 # Author: Peter Prettenhoer <peter.prettenhofer@gmail.com>
 #
-# License: BSD Style.
+# License: BSD 3 clause
 
 import matplotlib
 matplotlib.use('TkAgg')
@@ -35,6 +35,7 @@ import numpy as np
 
 from sklearn import svm
 from sklearn.datasets import dump_svmlight_file
+from sklearn.externals.six.moves import xrange
 
 y_min, y_max = -50, 50
 x_min, x_max = -50, 50
@@ -81,7 +82,7 @@ class Controller(object):
         self.fitted = False
 
     def fit(self):
-        print "fit the model"
+        print("fit the model")
         train = np.array(self.model.data)
         X = train[:, 0:2]
         y = train[:, 2]
@@ -93,14 +94,14 @@ class Controller(object):
         kernel_map = {0: "linear", 1: "rbf", 2: "poly"}
         if len(np.unique(y)) == 1:
             clf = svm.OneClassSVM(kernel=kernel_map[self.kernel.get()],
-                      gamma=gamma, coef0=coef0, degree=degree)
+                                  gamma=gamma, coef0=coef0, degree=degree)
             clf.fit(X)
         else:
             clf = svm.SVC(kernel=kernel_map[self.kernel.get()], C=C,
                           gamma=gamma, coef0=coef0, degree=degree)
             clf.fit(X, y)
         if hasattr(clf, 'score'):
-            print "Accuracy:", clf.score(X, y) * 100
+            print("Accuracy:", clf.score(X, y) * 100)
         X1, X2, Z = self.decision_surface(clf)
         self.model.clf = clf
         self.model.set_surface((X1, X2, Z))
@@ -233,11 +234,9 @@ class View(object):
                                                  linestyles=linestyles))
         elif type == 1:
             self.contours.append(self.ax.contourf(X1, X2, Z, 10,
-                                             cmap=matplotlib.cm.bone,
-                                             origin='lower',
-                                             alpha=0.85))
-            self.contours.append(self.ax.contour(X1, X2, Z, [0.0],
-                                                 colors='k',
+                                                  cmap=matplotlib.cm.bone,
+                                                  origin='lower', alpha=0.85))
+            self.contours.append(self.ax.contour(X1, X2, Z, [0.0], colors='k',
                                                  linestyles=['solid']))
         else:
             raise ValueError("surface type unknown")
@@ -308,8 +307,8 @@ def get_parser():
     from optparse import OptionParser
     op = OptionParser()
     op.add_option("--output",
-              action="store", type="str", dest="output",
-              help="Path where to dump data.")
+                  action="store", type="str", dest="output",
+                  help="Path where to dump data.")
     return op
 
 

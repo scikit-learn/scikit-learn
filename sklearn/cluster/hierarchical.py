@@ -1,6 +1,6 @@
 """Hierarchical Agglomerative Clustering
 
-These routines perform some hierachical agglomerative clustering of some
+These routines perform some hierarchical agglomerative clustering of some
 input data. Currently, only Ward's algorithm is implemented.
 
 Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
@@ -15,10 +15,11 @@ from scipy import sparse
 from scipy.cluster import hierarchy
 
 from ..base import BaseEstimator, ClusterMixin
-from ..utils._csgraph import cs_graph_components
 from ..externals.joblib import Memory
+from ..externals import six
 from ..metrics import euclidean_distances
 from ..utils import array2d
+from ..utils.sparsetools import connected_components
 
 from . import _hierarchical
 from ._feature_agglomeration import AgglomerationTransform
@@ -31,9 +32,12 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
               n_clusters=None):
     """Ward clustering based on a Feature matrix.
 
+    Recursively merges the pair of clusters that minimally increases
+    within-cluster variance.
+
     The inertia matrix uses a Heapq-based representation.
 
-    This is the structured version, that takes into account a some topological
+    This is the structured version, that takes into account some topological
     structure between samples.
 
     Parameters
@@ -42,7 +46,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
         feature matrix  representing n_samples samples to be clustered
 
     connectivity : sparse matrix.
-        connectivity matrix. Defines for each sample the neigbhoring samples
+        connectivity matrix. Defines for each sample the neighboring samples
         following a given structure of the data. The matrix is assumed to
         be symmetric and only the upper triangular half is used.
         Default is None, i.e, the Ward algorithm is unstructured.
@@ -66,10 +70,11 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
     Returns
     -------
     children : 2D array, shape (n_nodes, 2)
-        list of the children of each nodes.
-        Leaves of the tree have empty list of children.
+        The children of each non-leaf node. Values less than `n_samples` refer
+        to leaves of the tree. A greater value `i` indicates a node with
+        children `children[i - n_samples]`.
 
-    n_components : sparse matrix.
+    n_components : int
         The number of connected components in the graph.
 
     n_leaves : int
@@ -87,15 +92,15 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
     if connectivity is None:
         if n_clusters is not None:
             warnings.warn('Early stopping is implemented only for '
-                             'structured Ward clustering (i.e. with '
-                             'explicit connectivity.', stacklevel=2)
+                          'structured Ward clustering (i.e. with '
+                          'explicit connectivity.', stacklevel=2)
         out = hierarchy.ward(X)
         children_ = out[:, :2].astype(np.int)
         return children_, 1, n_samples, None
 
     # Compute the number of nodes
     if n_components is None:
-        n_components, labels = cs_graph_components(connectivity)
+        n_components, labels = connected_components(connectivity)
 
     # Convert connectivity matrix to LIL with a copy if needed
     if sparse.isspmatrix_lil(connectivity) and copy:
@@ -106,12 +111,10 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
         connectivity = connectivity.tolil()
 
     if n_components > 1:
-        warnings.warn("the number of connected components of the"
-        " connectivity matrix is %d > 1. Completing it to avoid"
-        " stopping the tree early."
-        % n_components)
-        connectivity = _fix_connectivity(X, connectivity,
-                                            n_components, labels)
+        warnings.warn("the number of connected components of the "
+                      "connectivity matrix is %d > 1. Completing it to avoid "
+                      "stopping the tree early." % n_components)
+        connectivity = _fix_connectivity(X, connectivity, n_components, labels)
         n_components = 1
 
     if n_clusters is None:
@@ -120,8 +123,8 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
         assert n_clusters <= n_samples
         n_nodes = 2 * n_samples - n_clusters
 
-    if (connectivity.shape[0] != n_samples or
-        connectivity.shape[1] != n_samples):
+    if (connectivity.shape[0] != n_samples
+            or connectivity.shape[1] != n_samples):
         raise ValueError('Wrong shape for connectivity matrix: %s '
                          'when X is %s' % (connectivity.shape, X.shape))
 
@@ -146,9 +149,9 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
     moments_2 = np.zeros((n_nodes, n_features))
     moments_2[:n_samples] = X
     inertia = np.empty(len(coord_row), dtype=np.float)
-    _hierarchical.compute_ward_dist(moments_1, moments_2,
-                             coord_row, coord_col, inertia)
-    inertia = zip(inertia, coord_row, coord_col)
+    _hierarchical.compute_ward_dist(moments_1, moments_2, coord_row, coord_col,
+                                    inertia)
+    inertia = list(six.moves.zip(inertia, coord_row, coord_col))
     heapify(inertia)
 
     # prepare the main fields
@@ -160,7 +163,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
     not_visited = np.empty(n_nodes, dtype=np.int8)
 
     # recursive merge loop
-    for k in xrange(n_samples, n_nodes):
+    for k in range(n_samples, n_nodes):
         # identify the merge
         while True:
             inert, i, j = heappop(inertia)
@@ -193,7 +196,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
                                         coord_row, coord_col, ini)
         # List comprehension is faster than a for loop
         [heappush(inertia, (ini[idx], k, coord_col[idx]))
-            for idx in xrange(n_additions)]
+            for idx in range(n_additions)]
 
     # Separate leaves in children (empty lists up to now)
     n_leaves = n_samples
@@ -236,8 +239,9 @@ def _hc_cut(n_clusters, children, n_leaves):
         The number of clusters to form.
 
     children : list of pairs. Length of n_nodes
-        List of the children of each nodes.
-        Leaves have empty list of children and are not stored.
+        The children of each non-leaf node. Values less than `n_samples` refer
+        to leaves of the tree. A greater value `i` indicates a node with
+        children `children[i - n_samples]`.
 
     n_leaves : int
         Number of leaves of the tree.
@@ -250,8 +254,8 @@ def _hc_cut(n_clusters, children, n_leaves):
     """
     if n_clusters > n_leaves:
         raise ValueError('Cannot extract more clusters than samples: '
-            '%s clusters where given for a tree with %s leaves.'
-            % (n_clusters, n_leaves))
+                         '%s clusters where given for a tree with %s leaves.'
+                         % (n_clusters, n_leaves))
     # In this function, we store nodes as a heap to avoid recomputing
     # the max of the nodes: the first element is always the smallest
     # We use negated indices as heaps work on smallest elements, and we
@@ -266,8 +270,7 @@ def _hc_cut(n_clusters, children, n_leaves):
         heappushpop(nodes, -these_children[1])
     label = np.zeros(n_leaves, dtype=np.int)
     for i, node in enumerate(nodes):
-        label[_hierarchical._hc_get_descendent(-node,
-                                children, n_leaves)] = i
+        label[_hierarchical._hc_get_descendent(-node, children, n_leaves)] = i
     return label
 
 
@@ -277,24 +280,27 @@ def _hc_cut(n_clusters, children, n_leaves):
 class Ward(BaseEstimator, ClusterMixin):
     """Ward hierarchical clustering: constructs a tree and cuts it.
 
+    Recursively merges the pair of clusters that minimally increases
+    within-cluster variance.
+
     Parameters
     ----------
-    n_clusters : int or ndarray
+    n_clusters : int, default=2
         The number of clusters to find.
 
-    connectivity : sparse matrix.
-        Connectivity matrix. Defines for each sample the neigbhoring
+    connectivity : sparse matrix (optional)
+        Connectivity matrix. Defines for each sample the neighboring
         samples following a given structure of the data.
-        Default is None, i.e, the hiearchical clustering algorithm is
+        Default is None, i.e, the hierarchical clustering algorithm is
         unstructured.
 
-    memory : Instance of joblib.Memory or string
+    memory : Instance of joblib.Memory or string (optional)
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    copy : bool
-        Copy the connectivity matrix or work inplace.
+    copy : bool, default=True
+        Copy the connectivity matrix or work in-place.
 
     n_components : int (optional)
         The number of connected components in the graph defined by the \
@@ -312,13 +318,18 @@ class Ward(BaseEstimator, ClusterMixin):
     Attributes
     ----------
     `children_` : array-like, shape = [n_nodes, 2]
-        List of the children of each nodes.  Leaves of the tree do not appear.
+        The children of each non-leaf node. Values less than `n_samples` refer
+        to leaves of the tree. A greater value `i` indicates a node with
+        children `children_[i - n_samples]`.
 
     `labels_` : array [n_samples]
         cluster labels for each point
 
     `n_leaves_` : int
-        Number of leaves in the hiearchical tree.
+        Number of leaves in the hierarchical tree.
+
+    `n_components_` : int
+        The estimated number of connected components in the graph.
 
     """
 
@@ -346,18 +357,18 @@ class Ward(BaseEstimator, ClusterMixin):
         """
         memory = self.memory
         X = array2d(X)
-        if isinstance(memory, basestring):
-            memory = Memory(cachedir=memory)
+        if isinstance(memory, six.string_types):
+            memory = Memory(cachedir=memory, verbose=0)
 
         if not self.connectivity is None:
             if not sparse.issparse(self.connectivity):
                 raise TypeError("`connectivity` should be a sparse matrix or "
-                        "None, got: %r" % type(self.connectivity))
+                                "None, got: %r" % type(self.connectivity))
 
             if (self.connectivity.shape[0] != X.shape[0] or
                     self.connectivity.shape[1] != X.shape[0]):
                 raise ValueError("`connectivity` does not have shape "
-                        "(n_samples, n_samples)")
+                                 "(n_samples, n_samples)")
 
         n_samples = len(X)
         compute_full_tree = self.compute_full_tree
@@ -373,10 +384,10 @@ class Ward(BaseEstimator, ClusterMixin):
             n_clusters = None
 
         # Construct the tree
-        self.children_, self.n_components, self.n_leaves_, parents = \
-                memory.cache(ward_tree)(X, self.connectivity,
-                            n_components=self.n_components,
-                            copy=self.copy, n_clusters=n_clusters)
+        self.children_, self.n_components_, self.n_leaves_, parents = \
+            memory.cache(ward_tree)(X, self.connectivity,
+                                    n_components=self.n_components,
+                                    copy=self.copy, n_clusters=n_clusters)
         # Cut the tree
         if compute_full_tree:
             self.labels_ = _hc_cut(self.n_clusters, self.children_,
@@ -398,22 +409,22 @@ class WardAgglomeration(AgglomerationTransform, Ward):
 
     Parameters
     ----------
-    n_clusters : int or ndarray
+    n_clusters : int, default=2
         The number of clusters.
 
-    connectivity : sparse matrix
-        connectivity matrix. Defines for each feature the neigbhoring
+    connectivity : sparse matrix (optional)
+        connectivity matrix. Defines for each feature the neighboring
         features following a given structure of the data.
-        Default is None, i.e, the hiearchical agglomeration algorithm is
+        Default is None, i.e, the hierarchical agglomeration algorithm is
         unstructured.
 
-    memory : Instance of joblib.Memory or string
+    memory : Instance of joblib.Memory or string (optional)
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    copy : bool
-        Copy the connectivity matrix or work inplace.
+    copy : bool, default=True
+        Copy the connectivity matrix or work in-place.
 
     n_components : int (optional)
         The number of connected components in the graph defined by the
@@ -431,15 +442,18 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     Attributes
     ----------
     `children_` : array-like, shape = [n_nodes, 2]
-        List of the children of each nodes.
-        Leaves of the tree do not appear.
+        The children of each non-leaf node. Values less than `n_samples` refer
+        to leaves of the tree. A greater value `i` indicates a node with
+        children `children_[i - n_samples]`.
 
-    `labels_` : array [n_samples]
-        cluster labels for each point
+    `labels_` : array [n_features]
+        cluster labels for each feature
 
     `n_leaves_` : int
-        Number of leaves in the hiearchical tree.
+        Number of leaves in the hierarchical tree.
 
+    `n_components_` : int
+        The estimated number of connected components in the graph.
     """
 
     def fit(self, X, y=None, **params):
