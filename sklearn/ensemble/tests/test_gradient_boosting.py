@@ -3,6 +3,7 @@ Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 """
 
 import numpy as np
+import warnings
 from numpy.testing import assert_array_equal
 from numpy.testing import assert_array_almost_equal
 from numpy.testing import assert_equal
@@ -474,3 +475,49 @@ def test_mem_layout():
     clf.fit(X, y_)
     assert_array_equal(clf.predict(T), true_result)
     assert_equal(100, len(clf.estimators_))
+
+
+def test_oob_score():
+    """Test if oob_score is deprecated. """
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
+                                     subsample=0.5)
+    clf.fit(X, y)
+    with warnings.catch_warnings(record=True) as w:
+        _ = clf.oob_score_[0]
+        assert_equal(len(w), 1)
+
+
+def test_oob_improvement():
+    """Test if oob improvement has correct shape and regression test. """
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
+                                     subsample=0.5)
+    clf.fit(X, y)
+    assert clf.oob_improvement_.shape[0] == 100
+    # hard-coded regression test - change if modification in OOB computation
+    assert_array_almost_equal(clf.oob_improvement_[:5],
+                              np.array([ 0.19, 0.15, 0.12,-0.12, -0.11]),
+                              decimal=2)
+
+
+def test_oob_improvement_raise():
+    """Test if oob improvement has correct shape. """
+    clf = GradientBoostingClassifier(n_estimators=100, random_state=1,
+                                     subsample=1.0)
+    clf.fit(X, y)
+    assert_raises(AttributeError, lambda : clf.oob_improvement_)
+
+
+def test_iris():
+    """Check OOB improvement on multi-class dataset."""
+    clf = GradientBoostingClassifier(n_estimators=100, loss='deviance',
+                                     random_state=1, subsample=0.5)
+    clf.fit(iris.data, iris.target)
+    score = clf.score(iris.data, iris.target)
+    assert score > 0.9, "Failed with subsample %.1f " \
+           "and score = %f" % (subsample, score)
+
+    assert clf.oob_improvement_.shape[0] == clf.n_estimators
+    # hard-coded regression test - change if modification in OOB computation
+    assert_array_almost_equal(clf.oob_improvement_[:5],
+                              np.array([12.68, 10.45, 8.18, 6.43, 5.02]),
+                              decimal=2)
