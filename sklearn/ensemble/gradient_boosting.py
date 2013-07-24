@@ -511,9 +511,8 @@ class BaseGradientBoosting(six.with_metaclass(ABCMeta, BaseEnsemble)):
             Returns self.
         """
         # Check input
-        X, = check_arrays(X, dtype=DTYPE,
-                             sparse_format="dense",
-                             check_ccontiguous=True)
+        X, = check_arrays(X, dtype=DTYPE, sparse_format="dense",
+                          check_ccontiguous=True)
 
         y = np.ravel(y, order="C")
 

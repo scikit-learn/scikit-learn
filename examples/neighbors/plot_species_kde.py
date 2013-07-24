@@ -81,7 +81,7 @@ for i in range(2):
     plt.subplot(1, 2, i + 1)
 
     # construct a kernel density estimate of the distribution
-    print " - computing KDE in spherical coordinates"
+    print(" - computing KDE in spherical coordinates")
     kde = KernelDensity(bandwidth=0.04, metric='haversine',
                         kernel='gaussian', algorithm='ball_tree')
     kde.fit(Xtrain[ytrain == i])
@@ -96,14 +96,14 @@ for i in range(2):
     plt.contourf(X, Y, Z, levels=levels, cmap=plt.cm.Reds)
 
     if basemap:
-        print " - plot coastlines using basemap"
+        print(" - plot coastlines using basemap")
         m = Basemap(projection='cyl', llcrnrlat=Y.min(),
                     urcrnrlat=Y.max(), llcrnrlon=X.min(),
                     urcrnrlon=X.max(), resolution='c')
         m.drawcoastlines()
         m.drawcountries()
     else:
-        print " - plot coastlines from coverage"
+        print(" - plot coastlines from coverage")
         plt.contour(X, Y, land_reference,
                     levels=[-9999], colors="k",
                     linestyles="solid")

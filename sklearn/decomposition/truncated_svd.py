@@ -55,7 +55,7 @@ class TruncatedSVD(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    components_ : array, shape (n_components, n_features)
+    `components_` : array, shape (n_components, n_features)
 
     See also
     --------

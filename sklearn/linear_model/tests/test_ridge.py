@@ -78,6 +78,7 @@ def test_ridge():
             ridge.fit(X, y, sample_weight=np.ones(n_samples))
             assert_greater(ridge.score(X, y), 0.9)
 
+
 def test_ridge_singular():
     # test on a singular matrix
     rng = np.random.RandomState(0)
@@ -90,6 +91,7 @@ def test_ridge_singular():
     ridge = Ridge(alpha=0)
     ridge.fit(X, y)
     assert_greater(ridge.score(X, y), 0.9)
+
 
 def test_ridge_sample_weights():
     rng = np.random.RandomState(0)
@@ -213,16 +215,15 @@ def test_ridge_individual_penalties():
 
     penalties = np.arange(n_targets)
 
-    coef_cholesky = np.array([Ridge(alpha=alpha,
-                    solver="dense_cholesky").fit(X, target).coef_
-                     for alpha, target in zip(penalties, y.T)])
+    coef_cholesky = np.array([
+        Ridge(alpha=alpha, solver="dense_cholesky").fit(X, target).coef_
+        for alpha, target in zip(penalties, y.T)])
 
-    coefs_indiv_pen = [Ridge(alpha=penalties,
-                            solver=solver, tol=1e-6).fit(X, y).coef_
-                for solver in ['svd', 'sparse_cg', 'lsqr', 'dense_cholesky']]
+    coefs_indiv_pen = [
+        Ridge(alpha=penalties, solver=solver, tol=1e-6).fit(X, y).coef_
+        for solver in ['svd', 'sparse_cg', 'lsqr', 'dense_cholesky']]
     for coef_indiv_pen in coefs_indiv_pen:
         assert_array_almost_equal(coef_cholesky, coef_indiv_pen)
-
 
     # Test error is raised when number of targets and penalties do not match.
     ridge = Ridge(alpha=penalties[:3])

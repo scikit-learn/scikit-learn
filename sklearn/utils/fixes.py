@@ -214,7 +214,7 @@ else:
 
 try:
     if (not np.allclose(np.divide(.4, 1), np.divide(.4, 1, dtype=np.float))
-        or not np.allclose(np.divide(.4, 1), .4)):
+            or not np.allclose(np.divide(.4, 1), .4)):
         raise TypeError('Divide not working with dtype: '
                         'https://github.com/numpy/numpy/issues/3484')
     divide = np.divide

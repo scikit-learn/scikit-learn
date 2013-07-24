@@ -287,8 +287,6 @@ class BaseLibSVM(six.with_metaclass(ABCMeta, BaseEstimator)):
                                  "the number of samples at training time" %
                                  (X.shape[1], self.shape_fit_[0]))
 
-        C = 0.0  # C is not useful here
-
         svm_type = LIBSVM_IMPL.index(self._impl)
 
         return libsvm.predict(
@@ -522,8 +520,6 @@ class BaseSVC(BaseLibSVM, ClassifierMixin):
 
     def _dense_predict_proba(self, X):
         X = self._compute_kernel(X)
-
-        C = 0.0  # C is not useful here
 
         kernel = self.kernel
         if callable(kernel):

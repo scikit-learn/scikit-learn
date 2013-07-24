@@ -123,7 +123,7 @@ aren't from this window of time.
 For example, let's look at the results of a multinomial Naive Bayes classifier,
 which is fast to train and achieves a decent F-score::
 
-  >>> from sklearn.naive_bayes import BernoulliNB
+  >>> from sklearn.naive_bayes import MultinomialNB
   >>> from sklearn import metrics
   >>> newsgroups_test = fetch_20newsgroups(subset='test',
   ...                                      categories=categories)

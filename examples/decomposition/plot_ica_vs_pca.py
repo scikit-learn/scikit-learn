@@ -82,7 +82,7 @@ pl.subplot(2, 2, 1)
 plot_samples(S / S.std())
 pl.title('True Independent Sources')
 
-axis_list = [pca.components_.T, ica.get_mixing_matrix()]
+axis_list = [pca.components_.T, ica.mixing_]
 pl.subplot(2, 2, 2)
 plot_samples(X / np.std(X), axis_list=axis_list)
 pl.legend(['PCA', 'ICA'], loc='upper left')

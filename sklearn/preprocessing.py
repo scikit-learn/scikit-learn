@@ -11,7 +11,6 @@ import numpy as np
 import scipy.sparse as sp
 
 from .base import BaseEstimator, TransformerMixin
-from .externals.six import string_types
 from .utils import check_arrays
 from .utils import array2d
 from .utils import atleast2d_or_csr
@@ -21,7 +20,6 @@ from .utils import warn_if_not_float
 from .utils.fixes import unique
 
 from .utils.multiclass import unique_labels
-from .utils.multiclass import is_multilabel
 from .utils.multiclass import type_of_target
 
 from .utils.sparsefuncs import inplace_csr_row_normalize_l1
@@ -539,7 +537,7 @@ def binarize(X, threshold=0.0, copy=True):
         un-necessary copy.
 
     threshold : float, optional (0.0 by default)
-        Feature values below this are replaced by 1, above it by 0.
+        Feature values below or equal to this are replaced by 0, above it by 1.
         Threshold may not be less than 0 for operations on sparse matrices.
 
     copy : boolean, optional, default is True
@@ -594,7 +592,7 @@ class Binarizer(BaseEstimator, TransformerMixin):
     Parameters
     ----------
     threshold : float, optional (0.0 by default)
-        Feature values below this are replaced by 1, above it by 0.
+        Feature values below or equal to this are replaced by 0, above it by 1.
         Threshold may not be less than 0 for operations on sparse matrices.
 
     copy : boolean, optional, default is True

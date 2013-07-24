@@ -109,6 +109,7 @@ def strip_newsgroup_header(text):
 _QUOTE_RE = re.compile(r'(writes in|writes:|wrote:|says:|said:'
                        r'|^In article|^Quoted from|^\||^>)')
 
+
 def strip_newsgroup_quoting(text):
     """
     Given text in "news" format, strip lines beginning with the quote

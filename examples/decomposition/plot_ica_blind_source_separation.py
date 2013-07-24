@@ -32,8 +32,8 @@ X = np.dot(S, A.T)  # Generate observations
 # Compute ICA
 ica = FastICA()
 S_ = ica.fit(X).transform(X)  # Get the estimated sources
-A_ = ica.get_mixing_matrix()  # Get estimated mixing matrix
-assert np.allclose(X, np.dot(S_, A_.T))
+A_ = ica.mixing_  # Get estimated mixing matrix
+assert np.allclose(X, np.dot(S_, A_.T) + ica.mean_)
 
 ###############################################################################
 # Plot results

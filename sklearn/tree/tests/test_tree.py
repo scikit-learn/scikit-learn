@@ -25,7 +25,6 @@ from sklearn.tree import ExtraTreeRegressor
 from sklearn import tree
 from sklearn import datasets
 from sklearn.utils import safe_asarray
-from sklearn.utils.validation import check_random_state
 from sklearn.utils.fixes import bincount
 
 CLF_CRITERIONS = ("gini", "entropy")
