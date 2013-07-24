@@ -229,6 +229,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=None,
 
         _hierarchical.compute_ward_dist(moments_1, moments_2,
                                         coord_row, coord_col, ini)
+
         # List comprehension is faster than a for loop
         [heappush(inertia, (ini[idx], k, coord_col[idx]))
             for idx in range(n_additions)]
