@@ -791,3 +791,7 @@ div.body h2.no-bg, div.body h3.no-bg{
 div.box-rst-links, div.box-rst-links p {
     display: inline;
 }
+
+.example-links p {
+    display: inline;
+}

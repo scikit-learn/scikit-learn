@@ -26,7 +26,13 @@
 
     </div>
     <span class="example-links">
-      <small class="float-right"><a href="#">Examples</a></small>
+    <small class="float-right">
+    
+:ref:`Examples<general_examples>`
+
+.. raw:: html
+
+    </small>
     </span>
     </blockquote>
     </div>
@@ -52,7 +58,13 @@
 
     </div>
     <span class="example-links">
-      <small class="float-right"><a href="#">Examples</a></small>
+    <small class="float-right">
+    
+:ref:`Examples<general_examples>`
+
+.. raw:: html
+
+    </small>
     </span>
     </blockquote>
     </div>
@@ -78,7 +90,13 @@
 
     </div>
     <span class="example-links">
-      <small class="float-right"><a href="#">Examples</a></small>
+      <small class="float-right">
+      
+:ref:`Examples<cluster_examples>`
+
+.. raw:: html
+
+      </small>
     </span>
     </blockquote>
     </div>
@@ -107,7 +125,13 @@
 
     </div>
     <span class="example-links">
-      <small class="float-right"><a href="#">Examples</a></small>
+      <small class="float-right">
+
+:ref:`Examples<manifold_examples>`
+
+.. raw:: html
+
+      </small>
     </span>
     </blockquote>
     </div>
@@ -133,7 +157,13 @@
     
     </div>
     <span class="example-links">
-      <small class="float-right"><a href="#">Examples</a></small>
+    <small class="float-right">
+    
+:ref:`Examples<general_examples>`
+
+.. raw:: html
+
+    </small>
     </span>
     </blockquote>
     </div>
@@ -159,7 +189,15 @@
 .. raw:: html
 
     </div>
-    <small class="float-right"><a href="#">Examples</a></small>
+    <span class="example-links">
+    <small class="float-right">
+    
+:ref:`Examples<general_examples>`
+
+.. raw:: html
+
+    </small>
+    </span>
     </blockquote>
     </div>
     <!-- row -->
