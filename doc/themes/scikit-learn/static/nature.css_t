@@ -767,18 +767,20 @@ div.box h2 {
     background-color: transparent;
 }
 
+div.box h2 p {
+    margin: 0;
+    padding: 0;
+    display: inline;
+}
+
+div.box h2 p em {
+    font-style: normal;
+}
+
 div.box blockquote {
   padding: 0 0 0 15px;
   margin: 0 0 20px;
   border-left: 5px solid #eeeeee;
-}
-
-div.box .box-tagline {
-  margin-bottom:0;
-  font-size:17.5px;
-  font-weight:300;
-  line-height: 1.25;
-  padding-bottom: 8px;
 }
 
 div.body h1.no-bg, div.body h2.no-bg, div.body h3.no-bg, div.body h4.no-bg {
@@ -789,18 +791,14 @@ div.body h2.no-bg, div.body h3.no-bg{
     padding: 0px 0px 0px 20px;
 }
 
-div.box-rst-links, div.box-rst-links p {
+div.box-links {
+    margin-top: 8px;
+    color: #888;
+    font-size: 85%;
+    line-height: 1.5em;
+}
+
+div.box-links p {
     display: inline;
 }
 
-.example-links p {
-    display: inline;
-}
-
-div.box em {
-    font-style: normal;
-}
-
-div.box h2 p {
-    display: inline;
-}
