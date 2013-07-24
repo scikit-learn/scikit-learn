@@ -296,17 +296,14 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
         """
         X, = check_arrays(X, sparse_format='csc', dtype=np.float)
         n_samples = X.shape[0]
-        dtype = np.float32 if X.dtype.itemsize == 4 else np.float64
         rng = check_random_state(self.random_state)
 
         self.components_ = np.asarray(
             rng.normal(0, 0.01, (self.n_components, X.shape[1])),
-            dtype=dtype,
             order='fortran')
-        self.intercept_hidden_ = np.zeros(self.n_components, dtype=dtype)
-        self.intercept_visible_ = np.zeros(X.shape[1], dtype=dtype)
-        self.h_samples_ = np.zeros((self.batch_size, self.n_components),
-                                   dtype=dtype)
+        self.intercept_hidden_ = np.zeros(self.n_components, )
+        self.intercept_visible_ = np.zeros(X.shape[1], )
+        self.h_samples_ = np.zeros((self.batch_size, self.n_components))
 
         n_batches = int(np.ceil(float(n_samples) / self.batch_size))
         batch_slices = list(gen_even_slices(n_batches * self.batch_size,
