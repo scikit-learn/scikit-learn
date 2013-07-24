@@ -1,8 +1,11 @@
+import sys
+
 import numpy as np
 
 from numpy.testing import assert_almost_equal, assert_array_equal
 
 from sklearn.datasets import load_digits
+from sklearn.externals.six.moves import cStringIO as StringIO
 from sklearn.neural_network import BernoulliRBM
 from sklearn.utils.validation import assert_all_finite
 
@@ -111,3 +114,13 @@ def test_pseudo_likelihood_no_clipping():
                         n_iter=10, random_state=rng)
     rbm1.fit(X)
     assert((rbm1.pseudo_likelihood(X) < -300).all())
+
+
+def test_rbm_verbose():
+    rbm = BernoulliRBM(n_iter=2, verbose=10)
+    old_stdout = sys.stdout
+    sys.stdout = StringIO()
+    try:
+        rbm.fit(Xdigits)
+    finally:
+        sys.stdout = old_stdout
