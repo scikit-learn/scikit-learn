@@ -24,7 +24,7 @@ from .utils import check_arrays, check_random_state, safe_mask
 from .utils.fixes import unique
 from .externals.joblib import Parallel, delayed
 from .externals.six import string_types, with_metaclass
-from .metrics import SCORERS, Scorer
+from .metrics import make_scorer, SCORERS
 
 __all__ = ['Bootstrap',
            'KFold',
@@ -1136,7 +1136,7 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
         warnings.warn("Passing function as ``score_func`` is "
                       "deprecated and will be removed in 0.15. "
                       "Either use strings or score objects.", stacklevel=2)
-        scorer = Scorer(score_func)
+        scorer = make_scorer(score_func)
     elif isinstance(scoring, string_types):
         scorer = SCORERS[scoring]
     else:
@@ -1299,7 +1299,7 @@ def permutation_test_score(estimator, X, y, scoring=None, cv=None,
         warnings.warn("Passing function as ``score_func`` is "
                       "deprecated and will be removed in 0.15. "
                       "Either use strings or score objects.")
-        scorer = Scorer(score_func)
+        scorer = make_scorer(score_func)
     elif isinstance(scoring, string_types):
         scorer = SCORERS[scoring]
     else:

@@ -29,17 +29,15 @@ Here is a sample output of a run on a quad-core machine::
    'vect__max_features': (None, 5000, 10000, 50000)}
   done in 1737.030s
 
-  Best score: 0.940
+  Best score: 0.923
   Best parameters set:
-      clf__alpha: 9.9999999999999995e-07
-      clf__n_iter: 50
-      clf__penalty: 'elasticnet'
-      tfidf__use_idf: True
-      vect__max_n: 2
-      vect__max_df: 0.75
-      vect__max_features: 50000
+      clf__alpha: 1e-06
+      clf__penalty: 'l2'
+      vect__max_df: 1.0
+      vect__ngram_range: (1, 2)
 
 """
+
 
 # Author: Olivier Grisel <olivier.grisel@ensta.org>
 #         Peter Prettenhofer <peter.prettenhofer@gmail.com>
@@ -49,6 +47,7 @@ Here is a sample output of a run on a quad-core machine::
 from __future__ import print_function
 
 from pprint import pprint
+import sys
 from time import time
 import logging
 
@@ -111,7 +110,8 @@ if __name__ == "__main__":
 
     # find the best parameters for both the feature extraction and the
     # classifier
-    grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1, verbose=1)
+    grid_search = GridSearchCV(pipeline, parameters, n_jobs=-1, verbose=1,
+                               scoring="f1")
 
     print("Performing grid search...")
     print("pipeline:", [name for name, _ in pipeline.steps])
@@ -127,3 +127,8 @@ if __name__ == "__main__":
     best_parameters = grid_search.best_estimator_.get_params()
     for param_name in sorted(parameters.keys()):
         print("\t%s: %r" % (param_name, best_parameters[param_name]))
+
+    # Uncomment the following line to get a detailed (and long!) report
+    # about the cross-validation results, including precision and recall
+    # per fold for all settings.
+    #grid_search.report(sys.stdout)
