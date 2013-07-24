@@ -104,7 +104,7 @@ m = Memory(joblib_cache_folder, mmap_mode='r')
 
 # Load the data, then cache and memmap the train/test split
 @m.cache
-def load_data(dtype=np.float32, order='F'):
+def load_data(dtype=np.float32, order='C'):
     ######################################################################
     ## Load dataset
     print("Loading dataset...")
