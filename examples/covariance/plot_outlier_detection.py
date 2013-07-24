@@ -3,8 +3,8 @@
 Outlier detection with several methods.
 ==========================================
 
-This example illustrates two ways of performing :ref:`outlier_detection`
-when the amount of contamination is known:
+When the amount of contamination is known, this example illustrates two
+different ways of performing :ref:`outlier_detection`:
 
 - based on a robust estimator of covariance, which is assuming that the
   data are Gaussian distributed and performs better than the One-Class SVM

@@ -9,6 +9,7 @@ Files that generate images should start with 'plot'
 """
 from time import time
 import os
+import re
 import shutil
 import traceback
 import glob
@@ -355,7 +356,7 @@ SINGLE_IMAGE = """
 """
 
 
-def extract_docstring(filename):
+def extract_docstring(filename, ignore_heading=False):
     """ Extract a module-level docstring, if any
     """
     lines = file(filename).readlines()
@@ -363,7 +364,6 @@ def extract_docstring(filename):
     if lines[0].startswith('#!'):
         lines.pop(0)
         start_row = 1
-
     docstring = ''
     first_par = ''
     tokens = tokenize.generate_tokens(iter(lines).next)
@@ -377,8 +377,18 @@ def extract_docstring(filename):
             # the first one:
             paragraphs = '\n'.join(line.rstrip()
                               for line in docstring.split('\n')).split('\n\n')
-            if len(paragraphs) > 0:
-                first_par = paragraphs[0]
+            if paragraphs:
+                if ignore_heading:
+                    if len(paragraphs) > 1:
+                        first_par = re.sub('\n', ' ', paragraphs[1])
+                        first_par = (first_par[:95] + '...') if len(first_par) > 95 else first_par
+                    else:
+                        raise ValueError("Docstring not found by gallery",
+                                         "Please check your example's layout",
+                                         " and make sure it's correct")
+                else:
+                    first_par = paragraphs[0]
+
         break
     return docstring, first_par, erow + 1 + start_row
 
@@ -404,6 +414,8 @@ def generate_example_rst(app):
     #      due to how it messes up the layout. Will be fixed at a later point
     fhindex.write("""\
 
+
+
 .. raw:: html
 
 
@@ -416,36 +428,121 @@ def generate_example_rst(app):
     .figure {
         float: left;
         margin: 10px;
-        position: absolute;
-        top: 0;
-        left: 0;
         -webkit-border-radius: 10px; /* Saf3-4, iOS 1-3.2, Android <1.6 */
         -moz-border-radius: 10px; /* FF1-3.6 */
         border-radius: 10px; /* Opera 10.5, IE9, Saf5, Chrome, FF4, iOS 4, Android 2.1+ */
         border: 2px solid #fff;
-        -webkit-transition: all 0.15s ease-out;  /* Saf3.2+, Chrome */
-        -moz-transition: all 0.15s ease-out;  /* FF4+ */
-        -ms-transition: all 0.15s ease-out;  /* IE10? */
-        -o-transition: all 0.15s ease-out;  /* Opera 10.5+ */
-        transition: all 0.15s ease-out;
-        background-repeat: no-repeat;
+        background-color: white;
         /* --> Thumbnail image size */
         width: 150px;
         height: 100px;
         -webkit-background-size: 150px 100px; /* Saf3-4 */
         -moz-background-size: 150px 100px; /* FF3.6 */
-        background-size: 150px 100px; /* Opera, IE9, Saf5, Chrome, FF4 */
     }
 
     .figure img {
         display: inline;
-        }
-
-    .figure .caption {
-        width: 170px;
-        text-align: center !important;
     }
+
+    div.docstringWrapper p.caption {
+        display: block;
+        -webkit-box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.0);
+        -moz-box-shadow: 0px 0px 20px rgba(0, 0, 0, .0); /* FF3.5 - 3.6 */
+        box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.0); /* Opera 10.5, IE9, FF4+, Chrome 10+ */
+        padding: 0px;
+        border: white;
+    }
+
+    div.docstringWrapper p {
+        display: none;
+        background-color: white;
+        -webkit-box-shadow: 0px 0px 20px rgba(0, 0, 0, 1.00);
+        -moz-box-shadow: 0px 0px 20px rgba(0, 0, 0, 1.00); /* FF3.5 - 3.6 */
+        box-shadow: 0px 0px 20px rgba(0, 0, 0, 1.00); /* Opera 10.5, IE9, FF4+, Chrome 10+ */
+        padding: 13px;
+        margin-top: 0px;
+        border-style: solid;
+        border-width: 1px;
+    }
+
+
     </style>
+
+
+.. raw:: html
+
+
+        <script type="text/javascript">
+
+        function animateClone(e){
+          var position;
+          position = $(this).position();
+          var clone = $(this).closest('.thumbnailContainer').find('.clonedItem');
+          var clone_fig = clone.find('.figure');
+          clone.css("left", position.left - 70).css("top", position.top - 70).css("position", "absolute").css("z-index", 1000).css("background-color", "white");
+
+          var cloneImg = clone_fig.find('img');
+
+          clone.show();
+          clone.animate({
+                height: "270px",
+                width: "320px"
+            }, 0
+          );
+          cloneImg.css({
+                'max-height': "200px",
+                'max-width': "280px"
+          });
+          cloneImg.animate({
+                height: "200px",
+                width: "280px"
+            }, 0
+           );
+          clone_fig.css({
+               'margin-top': '20px',
+          });
+          clone_fig.show();
+          clone.find('p').css("display", "block");
+          clone_fig.css({
+               height: "240",
+               width: "305px"
+          });
+          cloneP_height = clone.find('p.caption').height();
+          clone_fig.animate({
+               height: (200 + cloneP_height)
+           }, 0
+          );
+
+          clone.bind("mouseleave", function(e){
+              clone.animate({
+                  height: "100px",
+                  width: "150px"
+              }, 10, function(){$(this).hide();});
+              clone_fig.animate({
+                  height: "100px",
+                  width: "150px"
+              }, 10, function(){$(this).hide();});
+          });
+        } //end animateClone()
+
+
+        $(window).load(function () {
+            $(".figure").css("z-index", 1);
+
+            $(".docstringWrapper").each(function(i, obj){
+                var clone;
+                var $obj = $(obj);
+                clone = $obj.clone();
+                clone.addClass("clonedItem");
+                clone.appendTo($obj.closest(".thumbnailContainer"));
+                clone.hide();
+                $obj.bind("mouseenter", animateClone);
+            }); // end each
+        }); // end
+
+        </script>
+
+
 
 Examples
 ========
@@ -523,13 +620,17 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
     for fname in sorted_listdir:
         if fname.endswith('py'):
             generate_file_rst(fname, target_dir, src_dir, plot_gallery)
+            new_fname = os.path.join(src_dir, fname)
+            _, fdocstring, _ = extract_docstring(new_fname, True)
             thumb = os.path.join(dir, 'images', 'thumb', fname[:-3] + '.png')
             link_name = os.path.join(dir, fname).replace(os.path.sep, '_')
             fhindex.write("""
 
 .. raw:: html
 
+
     <div class="thumbnailContainer">
+        <div class="docstringWrapper">
 
 
 """)
@@ -547,6 +648,9 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
 
 .. raw:: html
 
+
+    <p>%s
+    </p></div>
     </div>
 
 
@@ -555,7 +659,7 @@ def generate_dir_rst(dir, fhindex, example_dir, root_dir, plot_gallery):
 
    %s/%s
 
-""" % (link_name, dir, fname[:-3]))
+""" % (link_name, fdocstring, dir, fname[:-3]))
     fhindex.write("""
 .. raw:: html
 
@@ -789,7 +893,7 @@ def generate_file_rst(fname, target_dir, src_dir, plot_gallery):
         # generate thumb file
         this_template = plot_rst_template
         if os.path.exists(first_image_file):
-            make_thumbnail(first_image_file, thumb_file, 200, 140)
+            make_thumbnail(first_image_file, thumb_file, 400, 280)
 
     if not os.path.exists(thumb_file):
         # create something to replace the thumbnail
