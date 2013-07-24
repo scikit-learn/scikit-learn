@@ -92,7 +92,7 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
     W = _sym_decorrelation(w_init)
     del w_init
     p_ = float(X.shape[1])
-    for _ in moves.xrange(max_iter):
+    for ii in moves.xrange(max_iter):
         gwtx, g_wtx = g(np.dot(W, X), fun_args)
         W1 = _sym_decorrelation(np.dot(gwtx, X.T) / p_
                                - g_wtx[:, np.newaxis] * W)
@@ -275,8 +275,6 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         # see (13.6) p.267 Here X1 is white and data
         # in X has been projected onto a subspace by PCA
         X1 *= np.sqrt(p)
-        if not compute_sources:
-            del X  # destroy original
     else:
         # X must be casted to floats to avoid typing issues with numpy
         # 2.0 and the line below
@@ -308,13 +306,19 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     del X1
 
     if whiten:
-        S = np.dot(np.dot(W, K), X).T if compute_sources else None
+        if compute_sources:
+            S = np.dot(np.dot(W, K), X).T
+        else:
+            S = None
         if return_X_mean:
             return K, W, S, X_mean
         else:
             return K, W, S
     else:
-        S = np.dot(W, X).T if compute_sources else None
+        if compute_sources:
+            S = np.dot(W, X).T
+        else:
+            S = None
         if return_X_mean:
             return None, W, S, None
         else:
