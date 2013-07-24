@@ -29,6 +29,12 @@ def test_isotonic_regression():
     assert_array_equal(ir.fit_transform(np.ones(len(x)), y), y)
 
 
+def test_isotonic_regression_reversed():
+    y = np.array([10, 9, 10, 7, 6, 6.1, 5])
+    y_ = isotonic_regression(y, increasing=False)
+    assert_array_equal(np.ones(y_[:-1].shape), ((y_[:-1] - y_[1:]) >= 0))
+
+
 def test_assert_raises_exceptions():
     ir = IsotonicRegression()
     rng = np.random.RandomState(42)
@@ -36,3 +42,8 @@ def test_assert_raises_exceptions():
     assert_raises(ValueError, ir.fit, [0, 1, 2], [5, 7])
     assert_raises(ValueError, ir.fit, rng.randn(3, 10), [0, 1, 2])
     assert_raises(ValueError, ir.transform, rng.randn(3, 10))
+
+
+if __name__ == "__main__":
+    import nose
+    nose.run(argv=['', __file__])
