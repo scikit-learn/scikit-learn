@@ -5,6 +5,7 @@
 =========================================================
 Logistic Regression 3-class Classifier
 =========================================================
+
 Show below is a logistic-regression classifiers decision boundaries on the
 `iris <http://en.wikipedia.org/wiki/Iris_flower_data_set>`_ dataset. The
 datapoints are colored according to their labels.

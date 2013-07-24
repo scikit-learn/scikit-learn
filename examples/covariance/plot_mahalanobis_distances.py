@@ -3,6 +3,9 @@
 Robust covariance estimation and Mahalanobis distances relevance
 ================================================================
 
+An example to show covariance estimation with the Mahalanobis
+distances on Gaussian distributed data.
+
 For Gaussian distributed data, the distance of an observation
 :math:`x_i` to the mode of the distribution can be computed using its
 Mahalanobis distance: :math:`d_{(\mu,\Sigma)}(x_i)^2 = (x_i -
