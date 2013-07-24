@@ -1,6 +1,6 @@
 """Hierarchical Agglomerative Clustering
 
-These routines perform some hierachical agglomerative clustering of some
+These routines perform some hierarchical agglomerative clustering of some
 input data.
 
 Authors : Vincent Michel, Bertrand Thirion, Alexandre Gramfort,
@@ -46,7 +46,7 @@ def _fix_connectivity(X, connectivity, n_components=None):
     # copy argument
 
     # Compute the number of nodes
-    n_components, labels = cs_graph_components(connectivity)
+    n_components, labels = connected_components(connectivity)
 
     # Convert connectivity matrix to LIL
     if not sparse.isspmatrix_lil(connectivity):
@@ -56,15 +56,15 @@ def _fix_connectivity(X, connectivity, n_components=None):
             connectivity = connectivity.tolil()
 
     if n_components > 1:
-        warnings.warn("the number of connected components of the"
-            " connectivity matrix is %d > 1. Completing it to avoid"
-            " stopping the tree early."
-            % n_components, stacklevel=2)
-        # XXX: Can we do without this above?
-        for i in range(n_components):
+        warnings.warn("the number of connected components of the "
+                      "connectivity matrix is %d > 1. Completing it to avoid "
+                      "stopping the tree early." % n_components,
+                      stacklevel=2)
+        # XXX: Can we do without completing the matrix?
+        for i in xrange(n_components):
             idx_i = np.where(labels == i)[0]
             Xi = X[idx_i]
-            for j in range(i):
+            for j in xrange(i):
                 idx_j = np.where(labels == j)[0]
                 Xj = X[idx_j]
                 # XXX: distance should be plugable
@@ -276,8 +276,9 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
     Returns
     -------
     children : 2D array, shape (n_nodes, 2)
-        list of the children of each nodes.
-        Leaves of the tree have empty list of children.
+        The children of each non-leaf node. Values less than `n_samples` refer
+        to leaves of the tree. A greater value `i` indicates a node with
+        children `children[i - n_samples]`.
 
     n_components : sparse matrix.
         The number of connected components in the graph.
@@ -337,8 +338,8 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
         assert n_clusters <= n_samples
         n_nodes = 2 * n_samples - n_clusters
 
-    if (connectivity.shape[0] != n_samples or
-        connectivity.shape[1] != n_samples):
+    if (connectivity.shape[0] != n_samples
+            or connectivity.shape[1] != n_samples):
         raise ValueError('Wrong shape for connectivity matrix: %s '
                          'when X is %s' % (connectivity.shape, X.shape))
 
@@ -456,7 +457,7 @@ def _hc_cut(n_clusters, children, n_leaves):
     # are interested in largest elements
     # children[-1] is the root of the tree
     nodes = [-(max(children[-1]) + 1)]
-    for i in range(n_clusters - 1):
+    for i in xrange(n_clusters - 1):
         # As we have a heap, nodes[0] is the smallest element
         these_children = children[-nodes[0] - n_leaves]
         # Insert the 2 children and remove the largest node
@@ -494,15 +495,16 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         -------
         self
         """
+        X = array2d(X)
+        memory = self.memory
+        if isinstance(memory, six.string_types):
+            memory = Memory(cachedir=memory, verbose=0)
+
         if not self.linkage in _TREE_BUILDERS:
             raise ValueError("Unknown linkage type %s."
                     "Valid options are %s" % (self.linkage,
                     _TREE_BUILDERS.keys()))
         tree_builder = _TREE_BUILDERS[self.linkage]
-        memory = self.memory
-        X = array2d(X)
-        if isinstance(memory, six.string_types):
-            memory = Memory(cachedir=memory, verbose=0)
 
         if not self.connectivity is None:
             if not sparse.issparse(self.connectivity):
@@ -528,13 +530,10 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
             n_clusters = None
 
         # Construct the tree
-
-        self.children_, self.n_components, self.n_leaves_, parents = \
-                memory.cache(tree_builder)(X, self.connectivity,
-                            n_components=self.n_components,
-                            copy=self.copy, n_clusters=n_clusters,
-                            )#linkage=self.linkage)
-
+        self.children_, self.n_components_, self.n_leaves_, parents = \
+            memory.cache(tree_builder)(X, self.connectivity,
+                                       n_components=self.n_components,
+                                       copy=self.copy, n_clusters=n_clusters)
         # Cut the tree
         if compute_full_tree:
             self.labels_ = _hc_cut(self.n_clusters, self.children_,
@@ -570,13 +569,15 @@ class FeatureAgglomeration(AgglomerativeClustering, AgglomerationTransform):
 class Ward(AgglomerativeClustering):
     """Ward hierarchical clustering: constructs a tree and cuts it.
 
+    Recursively merges the pair of clusters that minimally increases
+    within-cluster variance.
+
     Parameters
     ----------
-
     n_clusters : int or ndarray
         The number of clusters to find.
 
-    connectivity : sparse matrix.
+    connectivity : sparse matrix (optional)
         Connectivity matrix. Defines for each sample the neigbhoring
         samples following a given structure of the data.
         Default is None, i.e, the hiearchical clustering algorithm is
@@ -606,13 +607,18 @@ class Ward(AgglomerativeClustering):
     Attributes
     ----------
     `children_` : array-like, shape = [n_nodes, 2]
-        List of the children of each nodes.  Leaves of the tree do not appear.
+        The children of each non-leaf node. Values less than `n_samples` refer
+        to leaves of the tree. A greater value `i` indicates a node with
+        children `children_[i - n_samples]`.
 
     `labels_` : array [n_features]
         cluster labels for each feature
 
     `n_leaves_` : int
         Number of leaves in the hierarchical tree.
+
+    `n_components_` : int
+        The estimated number of connected components in the graph.
 
     `n_components_` : int
         The estimated number of connected components in the graph.
@@ -649,8 +655,8 @@ class WardAgglomeration(AgglomerationTransform, Ward):
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    copy : bool
-        Copy the connectivity matrix or work inplace.
+    copy : bool, default=True
+        Copy the connectivity matrix or work in-place.
 
     n_components : int (optional)
         The number of connected components in the graph defined by the
@@ -668,11 +674,12 @@ class WardAgglomeration(AgglomerationTransform, Ward):
     Attributes
     ----------
     `children_` : array-like, shape = [n_nodes, 2]
-        List of the children of each nodes.
-        Leaves of the tree do not appear.
+        The children of each non-leaf node. Values less than `n_samples` refer
+        to leaves of the tree. A greater value `i` indicates a node with
+        children `children_[i - n_samples]`.
 
-    `labels_` : array [n_samples]
-        cluster labels for each point
+    `labels_` : array [n_features]
+        cluster labels for each feature
 
     `n_leaves_` : int
         Number of leaves in the hiearchical tree.
