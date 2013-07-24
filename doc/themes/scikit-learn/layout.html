@@ -47,6 +47,10 @@
 {%- if pagename == 'index' or pagename == 'documentation' %}
     <style type="text/css">
         div.bodywrapper {margin-left:-210px}
+    {%- if pagename == 'index'%}
+            div.body {margin: 0px}
+    {%- endif %}
+
     </style>
 {%- endif %}
 

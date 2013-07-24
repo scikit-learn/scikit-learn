@@ -16,7 +16,6 @@
 body {
     font-family: Helvetica, Arial, sans-serif;
     font-size: 100%;
-    background-color: #4eacc5;
     margin: 0;
     padding: 0;
 }
@@ -343,6 +342,10 @@ div.bodywrapper {
     margin: 0 0 0 0;
 }
 
+div.body h3.no-bg{
+    background-color: transparent;
+}
+    
 
 div.bodywrapper h1 {
     margin: 0 -10px 0 -10px;

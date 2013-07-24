@@ -1,13 +1,13 @@
 .. raw:: html
 
     <!-- Banner -->
-    <div class="container", style="width:100%">
+    <div class="container", style="width:100%; background-color: rgb(78, 172, 197);">
     <div class="row-fluid">
     <div class="span6">
     <div class="thumbnail"><img src="img/plot_classifier_comparison_1.png"/></div>
     </div>
     <div class="span6">
-      <h3>Scikit-learn : Machine Learning in Python</h3>
+      <h3 class="no-bg">Scikit-learn : Machine Learning in Python</h3>
 
 
     <ul>
@@ -28,7 +28,7 @@
 
 
     <!-- Block section -->
-    <div class="container", style="width:100%; background-color: rgb(78, 172, 197);">
+    <div class="container", style="width:100%;">
     <div class="row-fluid">
     <!-- Classification -->
     <div class="span4">
@@ -86,13 +86,8 @@
     </div> <!-- container -->
 
 
-
-
-
-
-
     <!-- Who is using -->
-    <div class="container" style="padding-top: 40px">
+    <div class="container" style="padding-top: 40px; width:100%">
     <div class="row-fluid">
     <!-- News -->
     <div class="span3" style="border-right: 1px solid #CCC; padding-right:5px">
