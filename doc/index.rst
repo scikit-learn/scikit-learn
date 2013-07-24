@@ -1,38 +1,12 @@
 .. raw:: html
 
-    <!-- Banner -->
-    <div class="container", style="width:100%; background-color: rgb(78, 172, 197);">
-    <div class="row-fluid">
-    <div class="span6">
-    <div class="thumbnail"><img src="img/plot_classifier_comparison_1.png"/></div>
-    </div>
-    <div class="span6">
-      <h3 class="no-bg">Scikit-learn : Machine Learning in Python</h3>
-
-
-    <ul>
-    <li> building upon numpy, scipy, and matplotlib</li>
-    <li>provides versatile tools for data mining and analysis</li>
-    <li>simple and efficient</li>
-    <li>accessible to everybody, and reusable in various contexts</li>
-    <li>License: Open source, commercially usable: BSD license (3 clause)<li>
-    </ul>
-    <!-- Scikit-learn integrates machine learning algorithms in the tightly-knit scientific Python world, building upon numpy, scipy, and matplotlib. As a machine-learning module, it provides versatile tools for data mining and analysis in any field of science and engineering. It strives to be simple and efficient, accessible to everybody, and reusable in various contexts. -->
-
-    </div>
-    <!-- end section -->
-    </div>
-    </div>
-    </div>
-
-
 
     <!-- Block section -->
     <div class="container", style="width:100%;">
     <div class="row-fluid">
     <!-- Classification -->
     <div class="span4">
-    <h3><a href="#">Classification</a></h3>
+    <h3 class="no-bg"><a href="#">Classification</a></h3>
     <blockquote>
     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eu lorem ac elit pharetra lacinia non in justo.
     <small><a href="#">Examples</a></small>
@@ -40,7 +14,7 @@
     </div>
     <!-- Regression -->
     <div class="span4">
-    <h3><a href="#">Regression</a></h3>
+    <h3 class="no-bg"><a href="#">Regression</a></h3>
     <blockquote>
     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eu lorem ac elit pharetra lacinia non in justo.
     <small><a href="#">Examples</a></small>
@@ -48,7 +22,7 @@
     </div>
     <!-- Clustering -->
     <div class="span4">
-    <h3><a href="#">Clustering</a></h3>
+    <h3 class="no-bg"><a href="#">Clustering</a></h3>
     <blockquote>
     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eu lorem ac elit pharetra lacinia non in justo.
     <small><a href="#">Examples</a></small>
@@ -59,7 +33,7 @@
     <div class="row-fluid">
     <!-- Dimension reduction -->
     <div class="span4">
-    <h3><a href="#">Dimension reduction</a></h3>
+    <h3 class="no-bg"><a href="#">Dimension reduction</a></h3>
     <blockquote>
     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eu lorem ac elit pharetra lacinia non in justo.
     <small><a href="#">Examples</a></small>
@@ -67,7 +41,7 @@
     </div>
     <!-- Model selection -->
     <div class="span4">
-    <h3><a href="#">Model selection</a></h3>
+    <h3 class="no-bg"><a href="#">Model selection</a></h3>
     <blockquote>
     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eu lorem ac elit pharetra lacinia non in justo.
     <small><a href="#">Examples</a></small>
@@ -75,7 +49,7 @@
     </div>
     <!-- Preprocessing -->
     <div class="span4">
-    <h3><a href="#">Preprocessing</a></h3>
+    <h3 class="no-bg"><a href="#">Preprocessing</a></h3>
     <blockquote>
     Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eu lorem ac elit pharetra lacinia non in justo.
     <small><a href="#">Examples</a></small>

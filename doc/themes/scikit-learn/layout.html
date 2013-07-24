@@ -61,46 +61,73 @@
 {%- endif %}
 
 {% block header %}
-    <div class="header-wrapper">
-      <div class="header">
+<div class="header-wrapper">
+    <div class="header">
         {%- if logo %}
-          <p class="logo"><a href="{{ pathto(master_doc) }}">
+        <p class="logo"><a href="{{ pathto(master_doc) }}">
             <img src="{{ pathto('_static/' + logo, 1) }}" alt="Logo"/>
-          </a>
-          </p>
+        </a>
+        </p>
         {%- endif %}
 
-          {%- block navbar -%}
-          <div class="navbar">
-          <ul>
-            <li><a href="{{pathto('index')}}">Home</a></li>
-            <li><a href="{{pathto('install')}}">Installation</a></li>
-            <li><a href="{{pathto('documentation')}}">Documentation</a></li>
-            <li><a href="{{pathto('auto_examples/index')}}">Examples</a></li>
-       </ul>
+        {%- block navbar -%}
+        <div class="navbar">
+            <ul>
+                <li><a href="{{pathto('index')}}">Home</a></li>
+                <li><a href="{{pathto('install')}}">Installation</a></li>
+                <li><a href="{{pathto('documentation')}}">Documentation</a></li>
+                <li><a href="{{pathto('auto_examples/index')}}">Examples</a></li>
+            </ul>
 
-<div class="search_form">
+            <div class="search_form">
 
-<div id="cse" style="width: 100%;"></div>
-<script src="http://www.google.com/jsapi" type="text/javascript"></script>
-<script type="text/javascript">
-  google.load('search', '1', {language : 'en'});
-  google.setOnLoadCallback(function() {
-    var customSearchControl = new google.search.CustomSearchControl('016639176250731907682:tjtqbvtvij0');
-    customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
-    var options = new google.search.DrawOptions();
-    options.setAutoComplete(true);
-    customSearchControl.draw('cse', options);
-  }, true);
-</script>
+                <div id="cse" style="width: 100%;"></div>
+                <script src="http://www.google.com/jsapi"
+                    type="text/javascript"></script>
+                <script type="text/javascript"> google.load('search', '1',
+                    {language : 'en'}); google.setOnLoadCallback(function() {
+                        var customSearchControl = new
+                        google.search.CustomSearchControl('016639176250731907682:tjtqbvtvij0');
+                        customSearchControl.setResultSetSize(google.search.Search.FILTERED_CSE_RESULTSET);
+                        var options = new google.search.DrawOptions();
+                        options.setAutoComplete(true);
+                        customSearchControl.draw('cse', options); }, true);
+                </script>
 
-</div>
-          </div> <!-- end navbar -->
-          {%- endblock -%}
+            </div>
+        </div> <!-- end navbar -->
 
+        {%- endblock -%}
 
-       </div>
     </div>
+</div>
+{%- if pagename == 'index' %}
+<!-- Banner -->
+<div class="container" style="width:100%; background-color: rgb(78, 172, 197);">
+    <div class="row-fluid" style="max-width:1024px; margin-left:auto; margin-right:auto; padding:20px 0px;">
+        <div class="span6">
+            <div class="thumbnail"><img src="img/plot_classifier_comparison_1.png"/></div>
+        </div>
+        <div class="span6">
+            <h3 class="no-bg">Scikit-learn : Machine Learning in Python</h3>
+
+
+            <ul>
+                <li> building upon numpy, scipy, and matplotlib</li>
+                <li>provides versatile tools for data mining and analysis</li>
+                <li>simple and efficient</li>
+                <li>accessible to everybody, and reusable in various contexts</li>
+                <li>License: Open source, commercially usable: BSD license (3 clause)<li>
+            </ul>
+            <!-- Scikit-learn integrates machine learning algorithms in the tightly-knit scientific Python world, building upon numpy, scipy, and matplotlib. As a machine-learning module, it provides versatile tools for data mining and analysis in any field of science and engineering. It strives to be simple and efficient, accessible to everybody, and reusable in various contexts. -->
+
+        </div>
+        <!-- end section -->
+    </div>
+</div>
+
+{%- endif %}
+
 {% endblock %}
 
 {% block content %}
