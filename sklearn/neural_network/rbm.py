@@ -12,6 +12,7 @@ import numpy as np
 
 from ..base import BaseEstimator
 from ..base import TransformerMixin
+from ..externals.six.moves import xrange
 from ..utils import check_arrays
 from ..utils import check_random_state
 from ..utils import gen_even_slices
