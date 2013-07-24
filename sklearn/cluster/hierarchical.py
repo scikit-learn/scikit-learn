@@ -496,7 +496,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         The number of clusters to find.
 
     connectivity : sparse matrix (optional)
-        Connectivity matrix. Defines for each sample the neigbhoring
+        Connectivity matrix. Defines for each sample the neighboring
         samples following a given structure of the data.
         Default is None, i.e, the hierarchical clustering algorithm is
         unstructured.
@@ -650,7 +650,7 @@ class Ward(AgglomerativeClustering):
         The number of clusters to find.
 
     connectivity : sparse matrix (optional)
-        Connectivity matrix. Defines for each sample the neigbhoring
+        Connectivity matrix. Defines for each sample the neighboring
         samples following a given structure of the data.
         Default is None, i.e, the hierarchical clustering algorithm is
         unstructured.
@@ -720,7 +720,7 @@ class WardAgglomeration(AgglomerationTransform, Ward):
         The number of clusters.
 
     connectivity : sparse matrix
-        connectivity matrix. Defines for each feature the neigbhoring
+        connectivity matrix. Defines for each feature the neighboring
         features following a given structure of the data.
         Default is None, i.e, the hierarchical agglomeration algorithm is
         unstructured.
