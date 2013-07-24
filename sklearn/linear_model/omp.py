@@ -13,7 +13,9 @@ from scipy.linalg.lapack import get_lapack_funcs
 
 from .base import LinearModel
 from ..base import RegressorMixin
-from ..utils import array2d
+from ..utils import array2d, as_float_array
+from ..cross_validation import check_cv
+from ..externals.joblib import Parallel, delayed
 from ..utils.arrayfuncs import solve_triangular
 
 premature = """ Orthogonal matching pursuit ended prematurely due to linear
@@ -453,9 +455,9 @@ def orthogonal_mp_gram(Gram, Xy, n_nonzero_coefs=None, tol=None,
 
     for k in range(Xy.shape[1]):
         out = _gram_omp(Gram, Xy[:, k], n_nonzero_coefs,
-                           norms_squared[k] if tol is not None else None, tol,
-                           copy_Gram=copy_Gram, copy_Xy=copy_Xy,
-                           return_path=return_path)
+                        norms_squared[k] if tol is not None else None, tol,
+                        copy_Gram=copy_Gram, copy_Xy=copy_Xy,
+                        return_path=return_path)
         if return_path:
             _, idx, coefs = out
             coef = coef[:, :, :len(idx)]
@@ -632,4 +634,185 @@ class OrthogonalMatchingPursuit(LinearModel, RegressorMixin):
                                        copy_X=self.copy_X).T
 
         self._set_intercept(X_mean, y_mean, X_std)
+        return self
+
+
+def _omp_path_residues(X_train, y_train, X_test, y_test, copy=True,
+                       fit_intercept=True, normalize=True, max_iter=100):
+    """Compute the residues on left-out data for a full LARS path
+
+    Parameters
+    -----------
+    X_train : array, shape (n_samples, n_features)
+        The data to fit the LARS on
+
+    y_train : array, shape (n_samples)
+        The target variable to fit LARS on
+
+    X_test : array, shape (n_samples, n_features)
+        The data to compute the residues on
+
+    y_test : array, shape (n_samples)
+        The target variable to compute the residues on
+
+    copy : boolean, optional
+        Whether X_train, X_test, y_train and y_test should be copied.  If
+        False, they may be overwritten.
+
+    fit_intercept : boolean
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional, default False
+        If True, the regressors X will be normalized before regression.
+
+    max_iter : integer, optional
+        Maximum numbers of iterations to perform, therefore maximum features
+        to include. 100 by default.
+
+    Returns
+    -------
+        residues: array, shape [n_samples, max_features]
+            Residues of the prediction on the test data
+    """
+
+    if copy:
+        X_train = X_train.copy()
+        y_train = y_train.copy()
+        X_test = X_test.copy()
+        y_test = y_test.copy()
+
+    if fit_intercept:
+        X_mean = X_train.mean(axis=0)
+        X_train -= X_mean
+        X_test -= X_mean
+        y_mean = y_train.mean(axis=0)
+        y_train = as_float_array(y_train, copy=False)
+        y_train -= y_mean
+        y_test = as_float_array(y_test, copy=False)
+        y_test -= y_mean
+
+    if normalize:
+        norms = np.sqrt(np.sum(X_train ** 2, axis=0))
+        nonzeros = np.flatnonzero(norms)
+        X_train[:, nonzeros] /= norms[nonzeros]
+
+    coefs = orthogonal_mp(X_train, y_train, n_nonzero_coefs=max_iter, tol=None,
+                          precompute_gram=False, copy_X=False,
+                          return_path=True)
+    if coefs.ndim == 1:
+        coefs = coefs[:, np.newaxis]
+    if normalize:
+        coefs[nonzeros] /= norms[nonzeros][:, np.newaxis]
+
+    return np.dot(coefs.T, X_test.T) - y_test
+
+
+class OrthogonalMatchingPursuitCV(LinearModel, RegressorMixin):
+    """Cross-validated Orthogonal Mathching Pursuit model (OMP)
+
+    Parameters
+    ----------
+    copy : bool, optional
+        Whether the design matrix X must be copied by the algorithm. A false
+        value is only helpful if X is already Fortran-ordered, otherwise a
+        copy is made anyway.
+
+    fit_intercept : boolean, optional
+        whether to calculate the intercept for this model. If set
+        to false, no intercept will be used in calculations
+        (e.g. data is expected to be already centered).
+
+    normalize : boolean, optional
+        If False, the regressors X are assumed to be already normalized.
+
+    max_iter : integer, optional
+        Maximum numbers of iterations to perform, therefore maximum features
+        to include. 10% of ``n_features`` but at least 1 by default.
+
+    cv : cross-validation generator, optional
+        see :mod:`sklearn.cross_validation`. If ``None`` is passed, default to
+        a 5-fold strategy
+
+    n_jobs : integer, optional
+        Number of CPUs to use during the cross validation. If ``-1``, use
+        all the CPUs
+
+    verbose : boolean or integer, optional
+        Sets the verbosity amount
+
+    Attributes
+    ----------
+    `n_nonzero_coefs_` : int
+        Estimated number of non-zero coefficients giving the best mean
+        squared error over the cross-validation folds.
+
+    `coef_` : array, shape = (n_features,) or (n_features, n_targets)
+        parameter vector (w in the problem formulation).
+
+    `intercept_` : float or array, shape = (n_targets,)
+        independent term in decision function.
+
+    See also
+    --------
+    orthogonal_mp
+    orthogonal_mp_gram
+    lars_path
+    Lars
+    LassoLars
+    OrthogonalMatchingPursuit
+    LarsCV
+    LassoLarsCV
+    decomposition.sparse_encode
+
+    """
+    def __init__(self, copy=True, fit_intercept=True, normalize=True,
+                 max_iter=None, cv=None, n_jobs=1, verbose=False):
+        self.copy = copy
+        self.fit_intercept = fit_intercept
+        self.normalize = normalize
+        self.max_iter = max_iter
+        self.cv = cv
+        self.n_jobs = n_jobs
+        self.verbose = verbose
+
+    def fit(self, X, y):
+        """Fit the model using X, y as training data.
+
+        Parameters
+        ----------
+        X : array-like, shape = [n_samples, n_features]
+            Training data.
+
+        y : array-like, shape = [n_samples]
+            Target values.
+
+        Returns
+        -------
+        self : object
+            returns an instance of self.
+        """
+        X = array2d(X)
+        cv = check_cv(self.cv, X, y, classifier=False)
+        max_iter = (max(int(0.1 * X.shape[1]), 1) if not self.max_iter
+                    else self.max_iter)
+        cv_paths = Parallel(n_jobs=self.n_jobs, verbose=self.verbose)(
+            delayed(_omp_path_residues)(
+                X[train], y[train], X[test], y[test], self.copy,
+                self.fit_intercept, self.normalize, max_iter)
+            for train, test in cv)
+
+        min_early_stop = min(fold.shape[0] for fold in cv_paths)
+        mse_folds = np.array([(fold[:min_early_stop] ** 2).mean(axis=1)
+                              for fold in cv_paths])
+        best_n_nonzero_coefs = np.argmin(mse_folds.mean(axis=0)) + 1
+        self.n_nonzero_coefs_ = best_n_nonzero_coefs
+        omp = OrthogonalMatchingPursuit(n_nonzero_coefs=best_n_nonzero_coefs,
+                                        copy_X=self.copy,
+                                        fit_intercept=self.fit_intercept,
+                                        normalize=self.normalize)
+        omp.fit(X, y)
+        self.coef_ = omp.coef_
+        self.intercept_ = omp.intercept_
         return self
