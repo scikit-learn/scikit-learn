@@ -100,10 +100,11 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
         lim = max(abs(abs(np.diag(np.dot(W1, W.T))) - 1))
         W = W1
         if lim < tol:
-            print 'Converged after %i iterations.' % (ii + 1)
             break
     else:
-        print 'Did not converge.'
+        warnings.warn('FastICA did not converge.' +
+                      ' You might want' +
+                      ' to increase the number of iterations.')
 
     return W
 

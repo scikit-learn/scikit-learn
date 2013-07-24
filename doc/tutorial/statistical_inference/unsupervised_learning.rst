@@ -317,7 +317,6 @@ a maximum amount of independent information. It is able to recover
     >>> # Compute ICA
     >>> ica = decomposition.FastICA()
     >>> S_ = ica.fit_transform(X)  # Get the estimated sources
-    Converged after 2 iterations.
     >>> A_ = ica.mixing_.T
     >>> np.allclose(X,  np.dot(S_, A_) + ica.mean_)
     True
