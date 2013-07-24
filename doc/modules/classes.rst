@@ -882,6 +882,26 @@ Pairwise metrics
    neighbors.radius_neighbors_graph
 
 
+.. _neural_network_ref:
+
+:mod:`sklearn.neural_network`: Neural network models
+=====================================================
+
+.. automodule:: sklearn.neural_network
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`neural_network` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   neural_network.BernoulliRBM
+
+
 .. _pls_ref:
 
 :mod:`sklearn.pls`: Partial Least Squares
