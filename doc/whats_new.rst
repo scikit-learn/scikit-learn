@@ -387,6 +387,9 @@ Changelog
      with little observations attached to them, by `Gael Varoquaux`_.
 
 
+   - New transformer :ref:`neural_network.BernoulliRBM`
+     by `Yann Dauphin`_.
+
 API changes summary
 -------------------
    - Renamed all occurrences of ``n_atoms`` to ``n_components`` for consistency.

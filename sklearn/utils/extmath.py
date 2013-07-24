@@ -10,7 +10,9 @@ from scipy import linalg
 
 from . import check_random_state
 from .fixes import qr_economic
+from ._logistic_sigmoid import _logistic_sigmoid, _log_logistic_sigmoid
 from ..externals.six.moves import xrange
+from .validation import array2d
 
 
 def norm(v):
@@ -455,3 +457,57 @@ def svd_flip(u, v):
     u *= signs
     v *= signs[:, np.newaxis]
     return u, v
+
+
+def logistic_sigmoid(X, log=False, out=None):
+    """
+    Implements the logistic function, ``1 / (1 + e ** -x)`` and its log.
+
+    This implementation is more stable by splitting on positive and negative
+    values and computing::
+
+        1 / (1 + exp(-x_i)) if x_i > 0
+        exp(x_i) / (1 + exp(x_i)) if x_i <= 0
+
+    The log is computed using::
+
+        -log(1 + exp(-x_i)) if x_i > 0
+        x_i - log(1 + exp(x_i)) if x_i <= 0
+
+    Parameters
+    ----------
+    X: array-like, shape (M, N)
+        Argument to the logistic function
+
+    log: boolean, default: False
+        Whether to compute the logarithm of the logistic function.
+
+    out: array-like, shape: (M, N), optional:
+        Preallocated output array.
+
+    Returns
+    -------
+    out: array, shape (M, N)
+        Value of the logistic function evaluated at every point in x
+
+    Notes
+    -----
+    See the blog post describing this implementation:
+    http://fa.bianp.net/blog/2013/numerical-optimizers-for-logistic-regression/
+    """
+    is_1d = X.ndim == 1
+    X = array2d(X, dtype=np.float)
+
+    n_samples, n_features = X.shape
+
+    if out is None:
+        out = np.empty_like(X)
+
+    if log:
+        _log_logistic_sigmoid(n_samples, n_features, X, out)
+    else:
+        _logistic_sigmoid(n_samples, n_features, X, out)
+
+    if is_1d:
+        return np.squeeze(out)
+    return out
