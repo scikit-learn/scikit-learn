@@ -47,8 +47,6 @@ def _fix_connectivity(X, connectivity, n_components=None):
 
     # Make the connectivity matrix symmetric:
     connectivity = connectivity + connectivity.T
-    # XXX: the above line does a copy anyhow, so we need to remove the
-    # copy argument
 
     # Compute the number of nodes
     n_components, labels = connected_components(connectivity)
@@ -87,7 +85,7 @@ def _fix_connectivity(X, connectivity, n_components=None):
 ###############################################################################
 # Hierarchical tree building functions
 
-def ward_tree(X, connectivity=None, n_components=None, copy=True,
+def ward_tree(X, connectivity=None, n_components=None, copy=None,
               n_clusters=None):
     """Ward clustering based on a Feature matrix.
 
@@ -114,10 +112,6 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
         Number of connected components. If None the number of connected
         components is estimated from the connectivity matrix.
 
-    copy : bool (optional)
-        Make a copy of connectivity or work inplace. If connectivity
-        is not of LIL type there will be a copy in any case.
-
     n_clusters : int (optional)
         Stop early the construction of the tree at n_clusters. This is
         useful to decrease computation time if the number of clusters is
@@ -143,6 +137,11 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
         The parent of each node. Only returned when a connectivity matrix
         is specified, elsewhere 'None' is returned.
     """
+    if copy is not None:
+        warnings.warn("The copy argument is deprecated and will be removed "
+                      "in 0.16. The connectivity is now always copied.",
+                      DeprecationWarning)
+
     X = np.asarray(X)
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
@@ -242,7 +241,7 @@ def ward_tree(X, connectivity=None, n_components=None, copy=True,
 
 
 # average and complete linkage
-def linkage_tree(X, connectivity=None, n_components=None, copy=True,
+def linkage_tree(X, connectivity=None, n_components=None, copy=None,
                  n_clusters=None, linkage='complete'):
     """Linkage agglomerative clustering based on a Feature matrix.
 
@@ -265,10 +264,6 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
     n_components : int (optional)
         Number of connected components. If None the number of connected
         components is estimated from the connectivity matrix.
-
-    copy : bool (optional)
-        Make a copy of connectivity or work inplace. If connectivity
-        is not of LIL type there will be a copy in any case.
 
     n_clusters : int (optional)
         Stop early the construction of the tree at n_clusters. This is
@@ -295,6 +290,11 @@ def linkage_tree(X, connectivity=None, n_components=None, copy=True,
         The parent of each node. Only returned when a connectivity matrix
         is specified, elsewhere 'None' is returned.
     """
+    if copy is not None:
+        warnings.warn("The copy argument is deprecated and will be removed "
+                      "in 0.16. The connectivity is now always copied.",
+                      DeprecationWarning)
+
     X = np.asarray(X)
     if X.ndim == 1:
         X = np.reshape(X, (-1, 1))
@@ -477,11 +477,17 @@ def _hc_cut(n_clusters, children, n_leaves):
 
 class AgglomerativeClustering(BaseEstimator, ClusterMixin):
     def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
-                 connectivity=None, copy=True, n_components=None,
+                 connectivity=None, copy=None, n_components=None,
                  compute_full_tree='auto', linkage='ward'):
         self.n_clusters = n_clusters
         self.memory = memory
         self.copy = copy
+        if copy is not None:
+            warnings.warn("The copy argument is deprecated and will be "
+                          "removed in 0.16. The connectivity is now "
+                          "always copied.",
+                          DeprecationWarning)
+
         self.n_components = n_components
         self.connectivity = connectivity
         self.compute_full_tree = compute_full_tree
@@ -537,7 +543,7 @@ class AgglomerativeClustering(BaseEstimator, ClusterMixin):
         self.children_, self.n_components_, self.n_leaves_, parents = \
             memory.cache(tree_builder)(X, self.connectivity,
                                        n_components=self.n_components,
-                                       copy=self.copy, n_clusters=n_clusters)
+                                       n_clusters=n_clusters)
         # Cut the tree
         if compute_full_tree:
             self.labels_ = _hc_cut(self.n_clusters, self.children_,
@@ -592,9 +598,6 @@ class Ward(AgglomerativeClustering):
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
 
-    copy : bool, default=True
-        Copy the connectivity matrix or work in-place.
-
     n_components : int (optional)
         The number of connected components in the graph defined by the \
         connectivity matrix. If not set, it is estimated.
@@ -630,11 +633,17 @@ class Ward(AgglomerativeClustering):
     linkage = 'ward'
 
     def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
-                 connectivity=None, copy=True, n_components=None,
+                 connectivity=None, copy=None, n_components=None,
                  compute_full_tree='auto'):
         self.n_clusters = n_clusters
         self.memory = memory
         self.copy = copy
+        if copy is not None:
+            warnings.warn("The copy argument is deprecated and will be "
+                          "removed in 0.16. The connectivity is now "
+                          "always copied.",
+                          DeprecationWarning)
+
         self.n_components = n_components
         self.connectivity = connectivity
         self.compute_full_tree = compute_full_tree
@@ -658,9 +667,6 @@ class WardAgglomeration(AgglomerationTransform, Ward):
         Used to cache the output of the computation of the tree.
         By default, no caching is done. If a string is given, it is the
         path to the caching directory.
-
-    copy : bool, default=True
-        Copy the connectivity matrix or work in-place.
 
     n_components : int (optional)
         The number of connected components in the graph defined by the
