@@ -12,7 +12,7 @@ import numpy as np
 
 from ..base import BaseEstimator
 from ..base import TransformerMixin
-from ..utils import array2d, check_arrays
+from ..utils import check_arrays
 from ..utils import check_random_state
 from ..utils import gen_even_slices
 from ..utils.extmath import safe_sparse_dot
@@ -327,21 +327,3 @@ class BernoulliRBM(BaseEstimator, TransformerMixin):
                       % (iteration, pl, end - begin))
 
         return self
-
-    def fit_transform(self, X, y=None):
-        """
-        Fit the model to the data X and transform it.
-
-        Parameters
-        ----------
-        X: array-like, shape (n_samples, n_features)
-            Training data.
-
-        Returns
-        -------
-        X_transformed, array, shape (n_samples, n_components)
-            Latent representations of the input data.
-        """
-        X = array2d(X)
-        self.fit(X, y)
-        return self.transform(X)
