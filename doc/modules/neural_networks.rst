@@ -1,7 +1,7 @@
 .. _neural_network:
 
 ====================================
-Neural network models (unsupervised)
+Neural Network models (unsupervised)
 ====================================
 
 .. currentmodule:: sklearn.neural_network
@@ -13,21 +13,24 @@ Restricted Boltzmann Machines
 =============================
 
 Restricted Boltzmann Machines (RBM) are unsupervised nonlinear feature learners
-based on a probabilistic model. The features extracted by an RBM give good
-results when fed into a linear classifier such as a linear SVM or perceptron.
-
-The training method is based on an approximation, for efficiency. It prevents
-the representations from straying far from the input data, which makes them
-capture interesting regularities, but makes the model less useful for small
-datasets, and usually not useful for density estimation.
-
-Deep neural networks that are notoriously difficult to train from scratch can
-be simplified by initializing each layer's weights with the weights of an RBM.
+based on a probabilistic model. The features extracted by an RBM or a hierarchy
+of RBMs often give good results when fed into a linear classifier such as a
+linear SVM or a perceptron.
 
 The model makes assumptions regarding the distribution of inputs. At the moment,
 scikit-learn only provides :class:`BernoulliRBM`, which assumes the inputs are
 either binary values or values between 0 and 1, each encoding the probability
 that the specific feature would be turned on.
+
+The RBM tries to maximize the likelihood of the data using a particular
+graphical model. The parameter learning algorithm used (:ref:`Stochastic
+Maximum Likelihood <sml>`) prevents the representations from straying far
+from the input data, which makes them capture interesting regularities, but
+makes the model less useful for small datasets, and usually not useful for
+density estimation.
+
+The method gained popularity for initializing deep neural networks with the
+weights of independent RBMs. This method is known as unsupervized pre-training.
 
 .. figure:: ../auto_examples/images/plot_rbm_logistic_classification_1.png
    :target: ../auto_examples/plot_rbm_logistic_classification.html
@@ -70,14 +73,15 @@ joint probability of the model is defined in terms of the energy:
 
 The word *restricted* refers to the bipartite structure of the model, which
 prohibits direct interaction between hidden units, or between visible units.
-This makes inference much easier by assuming the following conditional
-independencies:
+This means that the following conditional independencies are assumed:
 
 .. math::
 
    h_i \bot h_j | \mathbf{v} \\
    v_i \bot v_j | \mathbf{h}
 
+The bipartite structure allows for the use of efficient block Gibbs sampling for
+inference.
 
 Bernoulli Restricted Boltzmann Machines
 ---------------------------------------
@@ -104,45 +108,46 @@ where :math:`\sigma` is the logistic sigmoid function:
 
    \sigma(x) = \frac{1}{1 + e^{-x}}
 
+.. _sml:
+
 Stochastic Maximum Likelihood Learning
 --------------------------------------
 
 The training algorithm implemented in :class:`BernoulliRBM` is known as
 Stochastic Maximum Likelihood (SML) or Persistent Contrastive Divergence
 (PCD). Optimizing Maximum Likelihood directly is infeasible because of
-the shape of the data likelihood:
+the form of the data likelihood:
 
 .. math::
 
    \log P(v) = \log \sum_h e^{-E(v, h)} - \log \sum_{x, y} e^{-E(x, y)}
 
-For simplicity the equation above is written for a single training example,
-but often in practice, as well as in this implementation, it is optimized by
-averaging over mini-batches. The gradient with respect to the weights is
-formed of two terms corresponding to the ones above. They are usually known as
-the positive gradient and the negative gradient, because of their respective
-signs.
+For simplicity the equation above is written for a single training example.
+The gradient with respect to the weights is formed of two terms corresponding to
+the ones above. They are usually known as the positive gradient and the negative
+gradient, because of their respective signs.  In this implementation, the
+gradients are estimated over mini-batches of samples.
 
 In maximizing the log likelihood, the positive gradient makes the model prefer
 hidden states that are compatible with the observed training data. Because of
 the the bipartite structure of RBMs, it can be computed efficiently. The
 negative gradient, however, is intractable. Its goal is to lower the energy of
-joint states that the model prefers, therefore making it stay true to the data
-and not fantasize. It can be approximated by Markov Chain Monte Carlo using
-block Gibbs sampling by iteratively sampling each of :math:`v` and :math:`h`
-given the other, until the chain mixes. Samples generated in this way are
-sometimes refered as fantasy particles. This is inefficient and it's difficult
-to determine whether the Markov chain mixes.
+joint states that the model prefers, therefore making it stay true to the data.
+It can be approximated by Markov Chain Monte Carlo using block Gibbs sampling by
+iteratively sampling each of :math:`v` and :math:`h` given the other, until the
+chain mixes. Samples generated in this way are sometimes refered as fantasy
+particles. This is inefficient and it is difficult to determine whether the
+Markov chain mixes.
 
 The Contrastive Divergence method suggests to stop the chain after a small
 number of iterations, :math:`k`, usually even 1. This method is fast and has
-low variance, but the samples are far from the true distribution.
+low variance, but the samples are far from the model distribution.
 
 Persistent Contrastive Divergence addresses this. Instead of starting a new
-chain each time the gradient is needed, and sampling after one Gibbs step, in
-PCD we keep a number of chains (fantasy particles) that are updated :math:`k`
-Gibbs steps after each weight update. This allows the particles to explore the
-space more thoroughly.
+chain each time the gradient is needed, and performing only one Gibbs sampling
+step, in PCD we keep a number of chains (fantasy particles) that are updated
+:math:`k` Gibbs steps after each weight update. This allows the particles to
+explore the space more thoroughly.
 
 .. topic:: References:
 
