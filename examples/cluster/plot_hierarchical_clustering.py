@@ -8,10 +8,10 @@ Agglomerative clustering with and without structure
 """
 
 import time
-import pylab as pl
+import matplotlib.pyplot as plt
 import numpy as np
 
-from sklearn.cluster import AgglomerativeClustering 
+from sklearn.cluster import AgglomerativeClustering
 from sklearn.neighbors import kneighbors_graph
 
 # Generate sample data
@@ -32,27 +32,27 @@ X = X.T
 knn_graph = kneighbors_graph(X, 20)
 
 for n_clusters in (30, 4):
-    pl.figure(figsize=(12, 7))
+    plt.figure(figsize=(12, 7))
     for connectivity in (None, knn_graph):
         for index, linkage in enumerate(('average', 'complete', 'ward')):
-            pl.subplot(2, 3, (connectivity is None) * 3 + index + 1)
+            plt.subplot(2, 3, (connectivity is None) * 3 + index + 1)
             model = AgglomerativeClustering(linkage=linkage,
-                                        connectivity=connectivity,
-                                        n_clusters=n_clusters)
+                                            connectivity=connectivity,
+                                            n_clusters=n_clusters)
             t0 = time.time()
             model.fit(X)
             elapsed_time = time.time() - t0
-            pl.scatter(X[:, 0], X[:, 1], c=model.labels_,
-                       cmap=pl.cm.spectral)
-            pl.title('linkage=%s, connectivity=%r \n(time %.2fs)' % (linkage,
-                     connectivity is not None, elapsed_time),
-                     fontdict=dict(verticalalignment='top'))
-            pl.axis('off')
+            plt.scatter(X[:, 0], X[:, 1], c=model.labels_,
+                        cmap=plt.cm.spectral)
+            plt.title('linkage=%s, connectivity=%r \n(time %.2fs)' % (linkage,
+                      connectivity is not None, elapsed_time),
+                      fontdict=dict(verticalalignment='top'))
+            plt.axis('off')
 
-        pl.subplots_adjust(bottom=0, top=.94, hspace=0, wspace=0,
-                           left=0, right=1)
-        pl.suptitle('n_cluster=%i' % n_clusters, size=15)
+        plt.subplots_adjust(bottom=0, top=.94, hspace=0, wspace=0,
+                            left=0, right=1)
+        plt.suptitle('n_cluster=%i' % n_clusters, size=15)
 
 
-pl.show()
+plt.show()
 
