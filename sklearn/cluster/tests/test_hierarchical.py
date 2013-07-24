@@ -17,9 +17,40 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
 
 from sklearn.cluster import Ward, WardAgglomeration, ward_tree
-from sklearn.cluster import AgglomerativeClustering
-from sklearn.cluster.hierarchical import _hc_cut, _TREE_BUILDERS
+from sklearn.cluster import AgglomerativeClustering, FeatureAgglomeration
+from sklearn.cluster.hierarchical import (_hc_cut, _TREE_BUILDERS,
+    linkage_tree)
 from sklearn.feature_extraction.image import grid_to_graph
+
+
+def test_linkage_misc():
+    # Misc tests on linkage
+    X = np.ones((5, 5))
+    assert_raises(ValueError,
+                  AgglomerativeClustering(linkage='foobar').fit,
+                  X)
+    assert_raises(ValueError, linkage_tree, X, linkage='foobar')
+    assert_raises(ValueError, linkage_tree, X, connectivity=np.ones((4, 4)))
+
+    # Smoke test FeatureAgglomeration
+    FeatureAgglomeration().fit(X)
+
+    with warnings.catch_warnings(record=True) as warning_list:
+        warnings.simplefilter("always", UserWarning)
+        # Use the copy argument, to raise a warning
+        Ward(copy=True).fit(X)
+    # We should be getting 2 warnings: one for using Ward that is
+    # deprecated, one for using the copy argument
+    assert_equal(len(warning_list), 2)
+
+    with warnings.catch_warnings(record=True) as warning_list:
+        warnings.simplefilter("always", UserWarning)
+        # Use the copy argument, to raise a warning
+        ward_tree(X, copy=True)
+    # We should be getting 1 warnings: for using the copy argument
+    assert_equal(len(warning_list), 1)
+
+
 
 
 def test_structured_linkage_tree():
@@ -73,15 +104,16 @@ def test_height_linkage_tree():
     mask = np.ones([10, 10], dtype=np.bool)
     X = rnd.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
-    for linkage_tree in _TREE_BUILDERS.values():
-        children, n_nodes, n_leaves, parent = linkage_tree(X.T, connectivity)
+    for linkage_func in _TREE_BUILDERS.values():
+        children, n_nodes, n_leaves, parent = linkage_func(X.T, connectivity)
         n_nodes = 2 * X.shape[1] - 1
         assert_true(len(children) + n_leaves == n_nodes)
 
 
-def test_ward_clustering():
+def test_agglomerative_clustering():
     """
-    Check that we obtain the correct number of clusters with Ward clustering.
+    Check that we obtain the correct number of clusters with
+    agglomerative clustering.
     """
     rnd = np.random.RandomState(0)
     mask = np.ones([10, 10], dtype=np.bool)
@@ -155,26 +187,28 @@ def assess_same_labelling(cut1, cut2):
 
 
 def test_scikit_vs_scipy():
-    """Test scikit ward with full connectivity (i.e. unstructured) vs scipy
+    """Test scikit linkage with full connectivity (i.e. unstructured) vs scipy
     """
-    from scipy.sparse import lil_matrix
     n, p, k = 10, 5, 3
     rnd = np.random.RandomState(0)
 
-    connectivity = lil_matrix(np.ones((n, n)))
-    for i in range(5):
-        X = .1 * rnd.normal(size=(n, p))
-        X -= 4 * np.arange(n)[:, np.newaxis]
-        X -= X.mean(axis=1)[:, np.newaxis]
+    # Not using a lil_matrix here, just to check that non sparse
+    # matrices are well handled
+    connectivity = np.ones((n, n))
+    for linkage in _TREE_BUILDERS.keys():
+        for i in range(5):
+            X = .1 * rnd.normal(size=(n, p))
+            X -= 4 * np.arange(n)[:, np.newaxis]
+            X -= X.mean(axis=1)[:, np.newaxis]
 
-        out = hierarchy.ward(X)
+            out = hierarchy.linkage(X, method=linkage)
 
-        children_ = out[:, :2].astype(np.int)
-        children, _, n_leaves, _ = ward_tree(X, connectivity)
+            children_ = out[:, :2].astype(np.int)
+            children, _, n_leaves, _ = _TREE_BUILDERS[linkage](X, connectivity)
 
-        cut = _hc_cut(k, children, n_leaves)
-        cut_ = _hc_cut(k, children_, n_leaves)
-        assess_same_labelling(cut, cut_)
+            cut = _hc_cut(k, children, n_leaves)
+            cut_ = _hc_cut(k, children_, n_leaves)
+            assess_same_labelling(cut, cut_)
 
     # Test error management in _hc_cut
     assert_raises(ValueError, _hc_cut, n_leaves + 1, children, n_leaves)
@@ -185,7 +219,7 @@ def test_connectivity_popagation():
     Check that connectivity in the ward tree is propagated correctly during
     merging.
     """
-    from sklearn.neighbors import NearestNeighbors
+    from sklearn.neighbors import kneighbors_graph
 
     X = np.array([(.014, .120), (.014, .099), (.014, .097),
                   (.017, .153), (.017, .153), (.018, .153),
@@ -193,8 +227,7 @@ def test_connectivity_popagation():
                   (.018, .153), (.018, .153), (.018, .153),
                   (.018, .152), (.018, .149), (.018, .144),
                   ])
-    nn = NearestNeighbors(n_neighbors=10).fit(X)
-    connectivity = nn.kneighbors_graph(X)
+    connectivity = kneighbors_graph(X, 10)
     ward = Ward(n_clusters=4, connectivity=connectivity)
     # If changes are not propagated correctly, fit crashes with an
     # IndexError
