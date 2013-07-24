@@ -72,7 +72,7 @@ def nudge_dataset(X, Y):
     X = np.concatenate([X] +
                        [np.apply_along_axis(shift, 1, X, vector)
                         for vector in direction_vectors])
-    Y = np.concatenate([Y for _ in xrange(5)], axis=0)
+    Y = np.concatenate([Y for _ in range(5)], axis=0)
     return X, Y
 
 # Load Data
