@@ -40,6 +40,12 @@ from sklearn.metrics.cluster import v_measure_score
 
 
 def number_aware_tokenizer(doc):
+    """ Tokenizer that maps all numeric tokens to a placeholder.
+
+    For many applications, tokens that begin with a number are not directly
+    useful, but the fact that such a token exists can be relevant.  By applying
+    this form of dimensionality reduction, some methods may perform better.
+    """
     token_pattern = re.compile(u'(?u)\\b\\w\\w+\\b')
     tokens = token_pattern.findall(doc)
     tokens = ["#NUMBER" if token[0] in "0123456789_" else token
@@ -104,7 +110,7 @@ bicluster_ncuts = list(bicluster_ncut(i)
                        for i in xrange(len(newsgroups.target_names)))
 best_idx = np.argsort(bicluster_ncuts)[:5]
 
-print ("")
+print()
 print("Best biclusters:")
 print("----------------")
 for idx, cluster in enumerate(best_idx):
@@ -131,6 +137,6 @@ for idx, cluster in enumerate(best_idx):
                            for i in word_scores.argsort()[:-11:-1])
 
     print("bicluster {} : {} documents, {} words".format(
-        str(idx).zfill(2), n_rows, n_cols))
+        idx, n_rows, n_cols))
     print("categories   : {}".format(cat_string))
     print("words        : {}\n".format(', '.join(important_words)))
