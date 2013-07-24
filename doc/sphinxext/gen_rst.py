@@ -449,8 +449,8 @@ def generate_example_rst(app):
         -webkit-box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.0);
         -moz-box-shadow: 0px 0px 20px rgba(0, 0, 0, .0); /* FF3.5 - 3.6 */
         box-shadow: 0px 0px 20px rgba(0, 0, 0, 0.0); /* Opera 10.5, IE9, FF4+, Chrome 10+ */
-        padding: 0px
-        porder-color: white;
+        padding: 0px;
+        border: white;
     }
 
     div.docstringWrapper p {
