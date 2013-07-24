@@ -65,6 +65,7 @@
 {%- endif %}
 
 {% block header %}
+
 <div class="header-wrapper">
     <div class="header">
         {%- if logo %}
@@ -105,6 +106,9 @@
 
     </div>
 </div>
+
+
+
 {%- if pagename == 'index' %}
 <!-- Banner -->
 <div class="container" style="width:100%; background-color: rgb(78, 172, 197);">
@@ -135,6 +139,13 @@
 {% endblock %}
 
 {% block content %}
+<!-- Github "fork me" ribbon -->
+<a href="https://github.com/scikit-learn/scikit-learn">
+  <img style="position: absolute; top: 0; right: 0; border: 0;"
+       src="{{ pathto('_static/img/forkme.png', 1) }}"
+       alt="Fork me on GitHub">
+</a>
+
 <div class="content-wrapper">
 
 {%- if pagename != 'index' and pagename != 'documentation' %}
@@ -208,7 +219,6 @@ index -->
       </div>
     </div>
 {% endblock %}
-
 
 {% block relbar1 %}{% endblock %}
 {% block relbar2 %}{% endblock %}
