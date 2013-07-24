@@ -11,7 +11,7 @@ from nose.tools import assert_raises
 
 from sklearn.utils.testing import assert_almost_equal
 from sklearn.utils.testing import assert_array_almost_equal
-from sklearn.utils.testing import assert_true, assert_false
+from sklearn.utils.testing import assert_true
 from sklearn.utils.testing import assert_less
 from sklearn.utils.testing import assert_equal
 
@@ -79,7 +79,7 @@ def test_fastica_simple(add_noise=False):
 
     # function as fun arg
     def g_test(x):
-        return x ** 3, 3 * x ** 2
+        return x ** 3, (3 * x ** 2).mean(axis=-1)
 
     algos = ['parallel', 'deflation']
     nls = ['logcosh', 'exp', 'cube', g_test]
