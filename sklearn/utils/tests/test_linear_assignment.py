@@ -44,7 +44,6 @@ def test_hungarian():
 
     m = _Hungarian()
     for cost_matrix, expected_total in matrices:
-        print np.array(cost_matrix)
         cost_matrix = np.array(cost_matrix)
         indexes = m.compute(cost_matrix)
         total_cost = 0
