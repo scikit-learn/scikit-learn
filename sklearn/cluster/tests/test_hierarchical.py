@@ -17,13 +17,14 @@ from sklearn.utils.testing import assert_equal
 from sklearn.utils.testing import assert_array_almost_equal
 
 from sklearn.cluster import Ward, WardAgglomeration, ward_tree
-from sklearn.cluster.hierarchical import _hc_cut
+from sklearn.cluster import AgglomerativeClustering
+from sklearn.cluster.hierarchical import _hc_cut, _TREE_BUILDERS
 from sklearn.feature_extraction.image import grid_to_graph
 
 
-def test_structured_ward_tree():
+def test_structured_linkage_tree():
     """
-    Check that we obtain the correct solution for structured ward tree.
+    Check that we obtain the correct solution for structured linkage trees.
     """
     rnd = np.random.RandomState(0)
     mask = np.ones([10, 10], dtype=np.bool)
@@ -31,44 +32,51 @@ def test_structured_ward_tree():
     mask[4:7, 4:7] = 0
     X = rnd.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
-    children, n_components, n_leaves, parent = ward_tree(X.T, connectivity)
-    n_nodes = 2 * X.shape[1] - 1
-    assert_true(len(children) + n_leaves == n_nodes)
-    # Check that ward_tree raises a ValueError with a connectivity matrix
-    # of the wrong shape
-    assert_raises(ValueError, ward_tree, X.T, np.ones((4, 4)))
+    for tree_builder in _TREE_BUILDERS.values():
+        children, n_components, n_leaves, parent = \
+            tree_builder(X.T, connectivity)
+        n_nodes = 2 * X.shape[1] - 1
+        assert_true(len(children) + n_leaves == n_nodes)
+        # Check that ward_tree raises a ValueError with a connectivity matrix
+        # of the wrong shape
+        assert_raises(ValueError,
+                      tree_builder, X.T, np.ones((4, 4)))
 
 
-def test_unstructured_ward_tree():
+def test_unstructured_linkage_tree():
     """
-    Check that we obtain the correct solution for unstructured ward tree.
+    Check that we obtain the correct solution for unstructured linkage trees.
     """
     rnd = np.random.RandomState(0)
     X = rnd.randn(50, 100)
-    for this_X in (X, X[0]):
-        with warnings.catch_warnings(record=True) as warning_list:
-            warnings.simplefilter("always", UserWarning)
-            warnings.simplefilter("ignore", DeprecationWarning)
-            # With specified a number of clusters just for the sake of
-            # raising a warning and testing the warning code
-            children, n_nodes, n_leaves, parent = ward_tree(this_X.T,
-                                                            n_clusters=10)
-        assert_equal(len(warning_list), 1)
-        n_nodes = 2 * X.shape[1] - 1
-        assert_equal(len(children) + n_leaves, n_nodes)
+
+    for tree_builder in _TREE_BUILDERS.values():
+        for this_X in (X, X[0]):
+            with warnings.catch_warnings(record=True) as warning_list:
+                warnings.simplefilter("always", UserWarning)
+                warnings.simplefilter("ignore", DeprecationWarning)
+
+                # With specified a number of clusters just for the sake of
+                # raising a warning and testing the warning code
+                children, n_nodes, n_leaves, parent = tree_builder(
+                    this_X.T, n_clusters=10)
+            assert_equal(len(warning_list), 1)
+            n_nodes = 2 * X.shape[1] - 1
+            assert_equal(len(children) + n_leaves, n_nodes)
 
 
-def test_height_ward_tree():
+def test_height_linkage_tree():
     """
-    Check that the height of ward tree is sorted.
+    Check that the height of the results of linkage tree is sorted.
     """
     rnd = np.random.RandomState(0)
     mask = np.ones([10, 10], dtype=np.bool)
     X = rnd.randn(50, 100)
     connectivity = grid_to_graph(*mask.shape)
-    children, n_nodes, n_leaves, parent = ward_tree(X.T, connectivity)
-    n_nodes = 2 * X.shape[1] - 1
-    assert_true(len(children) + n_leaves == n_nodes)
+    for linkage_tree in _TREE_BUILDERS.values():
+        children, n_nodes, n_leaves, parent = linkage_tree(X.T, connectivity)
+        n_nodes = 2 * X.shape[1] - 1
+        assert_true(len(children) + n_leaves == n_nodes)
 
 
 def test_ward_clustering():
@@ -79,32 +87,40 @@ def test_ward_clustering():
     mask = np.ones([10, 10], dtype=np.bool)
     X = rnd.randn(100, 50)
     connectivity = grid_to_graph(*mask.shape)
-    clustering = Ward(n_clusters=10, connectivity=connectivity)
-    clustering.fit(X)
-    # test caching
-    clustering = Ward(n_clusters=10, connectivity=connectivity,
-                      memory=mkdtemp())
-    clustering.fit(X)
-    labels = clustering.labels_
-    assert_true(np.size(np.unique(labels)) == 10)
-    # Turn caching off now
-    clustering = Ward(n_clusters=10, connectivity=connectivity)
-    # Check that we obtain the same solution with early-stopping of the
-    # tree building
-    clustering.compute_full_tree = False
-    clustering.fit(X)
-    np.testing.assert_array_equal(clustering.labels_, labels)
-    clustering.connectivity = None
-    clustering.fit(X)
-    assert_true(np.size(np.unique(clustering.labels_)) == 10)
-    # Check that we raise a TypeError on dense matrices
-    clustering = Ward(n_clusters=10,
-                      connectivity=connectivity.todense())
-    assert_raises(TypeError, clustering.fit, X)
-    clustering = Ward(n_clusters=10,
-                      connectivity=sparse.lil_matrix(
-                          connectivity.todense()[:10, :10]))
-    assert_raises(ValueError, clustering.fit, X)
+    for linkage in ("ward", "complete", "average"):
+        clustering = AgglomerativeClustering(n_clusters=10,
+                                             connectivity=connectivity,
+                                             linkage=linkage)
+        clustering.fit(X)
+        # test caching
+        clustering = AgglomerativeClustering(
+            n_clusters=10, connectivity=connectivity,
+            memory=mkdtemp(),
+            linkage=linkage)
+        clustering.fit(X)
+        labels = clustering.labels_
+        assert_true(np.size(np.unique(labels)) == 10)
+        # Turn caching off now
+        clustering = AgglomerativeClustering(n_clusters=10,
+                            connectivity=connectivity, linkage=linkage)
+        # Check that we obtain the same solution with early-stopping of the
+        # tree building
+        clustering.compute_full_tree = False
+        clustering.fit(X)
+        np.testing.assert_array_equal(clustering.labels_, labels)
+        clustering.connectivity = None
+        clustering.fit(X)
+        assert_true(np.size(np.unique(clustering.labels_)) == 10)
+        # Check that we raise a TypeError on dense matrices
+        clustering = AgglomerativeClustering(n_clusters=10,
+                        connectivity=connectivity.todense(),
+                        linkage=linkage)
+        assert_raises(TypeError, clustering.fit, X)
+        clustering = AgglomerativeClustering(n_clusters=10,
+                        connectivity=sparse.lil_matrix(
+                            connectivity.todense()[:10, :10]),
+                        linkage=linkage)
+        assert_raises(ValueError, clustering.fit, X)
 
 
 def test_ward_agglomeration():
