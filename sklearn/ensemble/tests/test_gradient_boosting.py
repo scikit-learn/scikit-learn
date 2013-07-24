@@ -4,11 +4,13 @@ Testing for the gradient boosting module (sklearn.ensemble.gradient_boosting).
 
 import numpy as np
 import warnings
-from numpy.testing import assert_array_equal
-from numpy.testing import assert_array_almost_equal
-from numpy.testing import assert_equal
 
-from nose.tools import assert_raises, assert_true
+from sklearn.utils.testing import assert_equal
+from sklearn.utils.testing import assert_array_equal
+from sklearn.utils.testing import assert_array_almost_equal
+from sklearn.utils.testing import assert_raises
+from sklearn.utils.testing import assert_true
+
 
 from sklearn.metrics import mean_squared_error
 from sklearn.utils import check_random_state, tosequence
@@ -495,7 +497,7 @@ def test_oob_improvement():
     assert clf.oob_improvement_.shape[0] == 100
     # hard-coded regression test - change if modification in OOB computation
     assert_array_almost_equal(clf.oob_improvement_[:5],
-                              np.array([ 0.19, 0.15, 0.12,-0.12, -0.11]),
+                              np.array([0.19, 0.15, 0.12, -0.12, -0.11]),
                               decimal=2)
 
 
@@ -507,14 +509,14 @@ def test_oob_improvement_raise():
     assert_raises(AttributeError, lambda : clf.oob_improvement_)
 
 
-def test_iris():
+def test_oob_multilcass_iris():
     """Check OOB improvement on multi-class dataset."""
     clf = GradientBoostingClassifier(n_estimators=100, loss='deviance',
                                      random_state=1, subsample=0.5)
     clf.fit(iris.data, iris.target)
     score = clf.score(iris.data, iris.target)
     assert score > 0.9, "Failed with subsample %.1f " \
-           "and score = %f" % (subsample, score)
+           "and score = %f" % (0.5, score)
 
     assert clf.oob_improvement_.shape[0] == clf.n_estimators
     # hard-coded regression test - change if modification in OOB computation
