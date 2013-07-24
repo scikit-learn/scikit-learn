@@ -1,7 +1,7 @@
 """
-===============================================================
-Restricted Boltzmann Machine features for digits classification
-===============================================================
+==============================================================
+Restricted Boltzmann Machine features for digit classification
+==============================================================
 
 For greyscale image data where pixel values can be interpreted as degrees of
 blackness on a white background, like handwritten digit recognition, the
