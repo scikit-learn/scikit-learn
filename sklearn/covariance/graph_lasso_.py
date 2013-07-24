@@ -316,14 +316,13 @@ def graph_lasso_path(X, alphas, cov_init=None, X_test=None, mode='cd',
 
     Returns
     -------
-    covariances_ : List of 2D ndarray, shape (n_features, n_features)
+    `covariances_` : List of 2D ndarray, shape (n_features, n_features)
         The estimated covariance matrices.
 
-    precisions_ : List of 2D ndarray, shape (n_features, n_features)
+    `precisions_` : List of 2D ndarray, shape (n_features, n_features)
         The estimated (sparse) precision matrices.
 
-    scores_ : List of float
-
+    `scores_` : List of float
         The generalisation error (log-likelihood) on the test data.
         Returned only if test data is passed.
     """
