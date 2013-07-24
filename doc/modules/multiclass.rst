@@ -7,23 +7,30 @@ Multiclass and multilabel algorithms
 
 .. currentmodule:: sklearn.multiclass
 
-This module implements multiclass and multilabel learning algorithms:
+The :mod:`sklearn.multiclass` module implements utilities to perform
+``multiclass`` and ``multilabel`` classification.
+
+    - Multiclass classification means classification with more than two classes.
+    - Multilabel classification is a different task, where a classifier is used to
+      predict a set of target labels for each instance; i.e., the set of target
+      classes is not assumed to be disjoint as in ordinary (binary or multiclass)
+      classification. This is also called any-of classification.
+
+The estimators provided in this module are meta-estimators:
+
     - one-vs-the-rest / one-vs-all
     - one-vs-one
     - error correcting output codes
 
-Multiclass classification means classification with more than two classes.
-Multilabel classification is a different task, where a classifier is used to
-predict a set of target labels for each instance; i.e., the set of target
-classes is not assumed to be disjoint as in ordinary (binary or multiclass)
-classification. This is also called any-of classification.
+The meta-estimators require a base estimator to be provided in 
+their constructor. For example, it is possible to use these estimators 
+to turn a binary classifier or a regressor into a multiclass classifier.
+It is also possible to use these estimators with multiclass estimators
+in the hope that their accuracy or runtime performance improves.
 
-The estimators provided in this module are meta-estimators: they require a base
-estimator to be provided in their constructor. For example, it is possible to
-use these estimators to turn a binary classifier or a regressor into a
-multiclass classifier. It is also possible to use these estimators with
-multiclass estimators in the hope that their accuracy or runtime performance
-improves.
+.. warning::
+
+   One-vs-all is currently the only meta-estimator usable for multilabel classification.
 
 .. note::
 
@@ -33,7 +40,7 @@ improves.
     classifiers supported in scikit-learn grouped by the strategy used.
 
     - Inherently multiclass: :ref:`Naive Bayes <naive_bayes>`, :class:`sklearn.lda.LDA`,
-      :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`
+      :ref:`Decision Trees <tree>`, :ref:`Random Forests <forest>`, :class:`sklearn.neighbors.KNeighborsClassifier`
     - One-Vs-One: :class:`sklearn.svm.SVC`.
     - One-Vs-All: :class:`sklearn.svm.LinearSVC`,
       :class:`sklearn.linear_model.LogisticRegression`,
@@ -52,7 +59,12 @@ classifiers are needed), one advantage of this approach is its
 interpretability. Since each class is represented by one and one classifier
 only, it is possible to gain knowledge about the class by inspecting its
 corresponding classifier. This is the most commonly used strategy and is a fair
-default choice. Below is an example::
+default choice. 
+
+Multiclass learning
+-------------------
+
+Below is an example of multiclass learning using OvR::
 
   >>> from sklearn import datasets
   >>> from sklearn.multiclass import OneVsRestClassifier
@@ -68,8 +80,8 @@ default choice. Below is an example::
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 2,
          2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2])
 
-Multilabel learning with OvR
-----------------------------
+Multilabel learning
+-------------------
 
 :class:`OneVsRestClassifier` also supports multilabel classification.
 To use this feature, feed the classifier a list of tuples containing
@@ -98,7 +110,12 @@ O(n_classes^2) complexity. However, this method may be advantageous for
 algorithms such as kernel algorithms which don't scale well with
 `n_samples`. This is because each individual learning problem only involves
 a small subset of the data whereas, with one-vs-the-rest, the complete
-dataset is used `n_classes` times. Below is an example::
+dataset is used `n_classes` times.
+
+Multiclass learning
+-------------------
+
+Below is an example of multiclass learning using OvO::
 
   >>> from sklearn import datasets
   >>> from sklearn.multiclass import OneVsOneClassifier
@@ -150,7 +167,11 @@ In practice, however, this may not happen as classifier mistakes will
 typically be correlated. The error-correcting output codes have a similar
 effect to bagging.
 
-Example::
+
+Multiclass learning
+-------------------
+
+Below is an example of multiclass learning using Output-Codes::
 
   >>> from sklearn import datasets
   >>> from sklearn.multiclass import OutputCodeClassifier
