@@ -39,6 +39,7 @@ def _gs_decorrelation(w, W, j):
     w -= np.dot(np.dot(w, W[:j].T), W[:j])
     return w
 
+
 def _sym_decorrelation(W):
     """ Symmetric decorrelation
     i.e. W <- (W * W.T) ^{-1/2} * W
@@ -81,17 +82,17 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
 
     return W
 
+
 def _ica_par(X, tol, g, fun_args, max_iter, w_init):
     """Parallel FastICA.
 
     Used internally by FastICA --main loop
 
     """
-    # with profile.timestamp('init-W'):
     W = _sym_decorrelation(w_init)
     del w_init
     p_ = float(X.shape[1])
-    for ii, _ in enumerate(moves.xrange(max_iter), 1):
+    for _ in moves.xrange(max_iter):
         gwtx, g_wtx = g(np.dot(W, X), fun_args)
         W1 = _sym_decorrelation(np.dot(gwtx, X.T) / p_
                                - g_wtx[:, np.newaxis] * W)
@@ -99,10 +100,8 @@ def _ica_par(X, tol, g, fun_args, max_iter, w_init):
         lim = max(abs(abs(np.diag(np.dot(W1, W.T))) - 1))
         W = W1
         if lim < tol:
+            print 'Converged after %i iterations.' % (ii + 1)
             break
-
-    if ii < max_iter:
-        print 'Converged after %i iterations.' % ii
     else:
         print 'Did not converge.'
 
@@ -130,6 +129,7 @@ def _exp(x, fun_args):
 
 def _cube(x, fun_args):
     return x ** 3, (3 * x ** 2).mean(axis=-1)
+
 
 def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             fun="logcosh", fun_args={}, max_iter=200, tol=1e-04, w_init=None,
@@ -280,8 +280,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     else:
         # X must be casted to floats to avoid typing issues with numpy
         # 2.0 and the line below
-        # X1 = as_float_array(X, copy=False)  # copy has been taken care of above
-        X1 = X
+        X1 = as_float_array(X, copy=False)  # copy has been taken care of
 
     if w_init is None:
         w_init = np.asarray(random_state.normal(size=(n_components,
@@ -357,7 +356,7 @@ class FastICA(BaseEstimator, TransformerMixin):
     random_state : int or RandomState
         Pseudo number generator state used for random sampling.
     compute_sources : bool, optional
-        If False, sources are not computes but only the rotation matrix. This
+        If False, sources are not computed but only the rotation matrix. This
         can save memory when working with big data. Defaults to True.
 
     Attributes
