@@ -52,6 +52,28 @@ Functions
    cluster.mean_shift
    cluster.spectral_clustering
 
+.. _bicluster_ref:
+
+:mod:`sklearn.cluster.bicluster`: Biclustering
+======================================
+
+.. automodule:: sklearn.cluster.bicluster
+   :no-members:
+   :no-inherited-members:
+
+**User guide:** See the :ref:`biclustering` section for further details.
+
+Classes
+-------
+.. currentmodule:: sklearn.cluster.bicluster
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   SpectralBiclustering
+   SpectralCoclustering
+
 .. _covariance_ref:
 
 :mod:`sklearn.covariance`: Covariance Estimators
@@ -191,6 +213,8 @@ Samples generator
    datasets.make_sparse_uncorrelated
    datasets.make_spd_matrix
    datasets.make_swiss_roll
+   datasets.make_biclusters
+   datasets.make_checkerboard
 
 
 .. _decomposition_ref:
@@ -743,6 +767,21 @@ details.
    metrics.silhouette_score
    metrics.silhouette_samples
    metrics.v_measure_score
+
+Biclustering metrics
+--------------------
+
+See the :ref:`biclustering_evaluation` section of the user guide for
+further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: function.rst
+
+   metrics.consensus_score
+
 
 Pairwise metrics
 ----------------
