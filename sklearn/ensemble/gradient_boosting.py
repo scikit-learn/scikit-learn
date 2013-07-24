@@ -210,7 +210,8 @@ class LeastSquaresError(RegressionLossFunction):
         But it has to update the predictions.
         """
         # update predictions
-        y_pred[:, k] += learning_rate * tree.predict(X).ravel()
+        leaves = tree.predict_leaf(X)
+        y_pred[:, k] += learning_rate * tree.value[leaves].ravel()
 
     def _update_terminal_region(self, tree, terminal_regions, leaf, X, y,
                                 residual, pred):
