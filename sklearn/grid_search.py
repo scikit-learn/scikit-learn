@@ -476,7 +476,7 @@ class BaseSearchCV(six.with_metaclass(ABCMeta, BaseEstimator,
             try:
                 scorer = SCORERS[self.scoring]
             except KeyError:
-                raise ValueError('%s is not a valid scoring value.'
+                raise ValueError('%r is not a valid scoring value. '
                                  'Valid options are %s' % (self.scoring,
                                  sorted(SCORERS.keys())))
         else:
