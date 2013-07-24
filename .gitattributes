@@ -18,7 +18,7 @@
 /sklearn/utils/arrayfuncs.c -diff
 /sklearn/utils/graph_shortest_path.c -diff
 /sklearn/utils/lgamma.c -diff
-sklearn/utils/_logistic_sigmoid.c -diff
+/sklearn/utils/_logistic_sigmoid.c -diff
 /sklearn/utils/murmurhash.c -diff
 /sklearn/utils/seq_dataset.c -diff
 /sklearn/utils/sparsefuncs.c -diff
