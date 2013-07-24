@@ -5,8 +5,8 @@ Reference: Tables 8.3 and 8.4 page 196 in the book:
 Independent Component Analysis, by  Hyvarinen et al.
 """
 
-# Author: Pierre Lafaye de Micheaux, Stefan van der Walt, Gael Varoquaux,
-#         Bertrand Thirion, Alexandre Gramfort
+# Authors: Pierre Lafaye de Micheaux, Stefan van der Walt, Gael Varoquaux,
+#          Bertrand Thirion, Alexandre Gramfort, Denis A. Engemann
 # License: BSD 3 clause
 import warnings
 import numpy as np
@@ -39,13 +39,11 @@ def _gs_decorrelation(w, W, j):
     w -= np.dot(np.dot(w, W[:j].T), W[:j])
     return w
 
-
 def _sym_decorrelation(W):
     """ Symmetric decorrelation
     i.e. W <- (W * W.T) ^{-1/2} * W
     """
-    K = np.dot(W, W.T)
-    s, u = linalg.eigh(K)
+    s, u = linalg.eigh(np.dot(W, W.T))
     # u (resp. s) contains the eigenvectors (resp. square roots of
     # the eigenvalues) of W * W.T
     return np.dot(np.dot(u * (1. / np.sqrt(s)), u.T), W)
@@ -58,7 +56,7 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
     """
 
     n_components = w_init.shape[0]
-    W = np.zeros((n_components, n_components), dtype=float)
+    W = np.zeros((n_components, n_components), dtype=X.dtype)
 
     # j is the index of the extracted component
     for j in range(n_components):
@@ -66,8 +64,7 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
         w /= np.sqrt((w ** 2).sum())
 
         for _ in moves.xrange(max_iter):
-            wtx = np.dot(w.T, X)
-            gwtx, g_wtx = g(wtx, fun_args)
+            gwtx, g_wtx = g(np.dot(w.T, X), fun_args)
 
             w1 = (X * gwtx).mean(axis=1) - g_wtx.mean() * w
 
@@ -84,61 +81,59 @@ def _ica_def(X, tol, g, fun_args, max_iter, w_init):
 
     return W
 
-
 def _ica_par(X, tol, g, fun_args, max_iter, w_init):
     """Parallel FastICA.
 
     Used internally by FastICA --main loop
 
     """
-    n, p = X.shape
-
+    # with profile.timestamp('init-W'):
     W = _sym_decorrelation(w_init)
-
-    for _ in moves.xrange(max_iter):
-        wtx = np.dot(W, X)
-        gwtx, g_wtx = g(wtx, fun_args)
-
-        W1 = (np.dot(gwtx, X.T) / float(p)
-              - np.dot(np.diag(g_wtx.mean(axis=1)), W))
-
-        W1 = _sym_decorrelation(W1)
-
+    del w_init
+    p_ = float(X.shape[1])
+    for ii, _ in enumerate(moves.xrange(max_iter), 1):
+        gwtx, g_wtx = g(np.dot(W, X), fun_args)
+        W1 = _sym_decorrelation(np.dot(gwtx, X.T) / p_
+                               - g_wtx[:, np.newaxis] * W)
+        del gwtx, g_wtx
         lim = max(abs(abs(np.diag(np.dot(W1, W.T))) - 1))
         W = W1
         if lim < tol:
             break
+
+    if ii < max_iter:
+        print 'Converged after %i iterations.' % ii
+    else:
+        print 'Did not converge.'
 
     return W
 
 
 # Some standard non-linear functions.
 # XXX: these should be optimized, as they can be a bottleneck.
-
 def _logcosh(x, fun_args=None):
     alpha = fun_args.get('alpha', 1.0)  # comment it out?
-    gx = np.tanh(alpha * x)
+    gx = np.tanh(alpha * x, out=x)
     # then compute g_x = alpha * (1 - gx ** 2) avoiding extra allocation
     g_x = gx ** 2
     g_x -= 1.
     g_x *= -alpha
-    return gx, g_x
+    return gx, g_x.mean(axis=-1)
 
 
 def _exp(x, fun_args):
     exp = np.exp(-(x ** 2) / 2)
     gx = x * exp
     g_x = (1 - x ** 2) * exp
-    return gx, g_x
+    return gx, g_x.mean(axis=-1)
 
 
 def _cube(x, fun_args):
-    return x ** 3, 3 * x ** 2
-
+    return x ** 3, (3 * x ** 2).mean(axis=-1)
 
 def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             fun="logcosh", fun_args={}, max_iter=200, tol=1e-04, w_init=None,
-            random_state=None, return_X_mean=False):
+            random_state=None, return_X_mean=False, compute_sources=True):
     """Perform Fast Independent Component Analysis.
 
     Parameters
@@ -183,8 +178,11 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         If True, only the sources matrix is returned.
     random_state : int or RandomState
         Pseudo number generator state used for random sampling.
-    return_X_mean : bool
+    return_X_mean : bool, optional
         If True, X_mean is returned too.
+    compute_sources : bool, optional
+        If False, sources are not computes but only the rotation matrix. This
+        can save memory when working with big data. Defaults to True.
 
     Returns
     -------
@@ -200,7 +198,7 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
             w = np.dot(W, K.T)
             A = w.T * (w * w.T).I
 
-    S : (n_components, n) array
+    S : (n_components, n) array | None
         estimated source matrix
 
     X_mean : array, shape=(n_features,)
@@ -277,13 +275,18 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
         # see (13.6) p.267 Here X1 is white and data
         # in X has been projected onto a subspace by PCA
         X1 *= np.sqrt(p)
+        if not compute_sources:
+            del X  # destroy original
     else:
         # X must be casted to floats to avoid typing issues with numpy
         # 2.0 and the line below
-        X1 = as_float_array(X, copy=False)  # copy has been taken care of above
+        # X1 = as_float_array(X, copy=False)  # copy has been taken care of above
+        X1 = X
 
     if w_init is None:
-        w_init = random_state.normal(size=(n_components, n_components))
+        w_init = np.asarray(random_state.normal(size=(n_components,
+                            n_components)), dtype=X1.dtype)
+
     else:
         w_init = np.asarray(w_init)
         if w_init.shape != (n_components, n_components):
@@ -306,17 +309,17 @@ def fastica(X, n_components=None, algorithm="parallel", whiten=True,
     del X1
 
     if whiten:
-        S = np.dot(np.dot(W, K), X)
+        S = np.dot(np.dot(W, K), X).T if compute_sources else None
         if return_X_mean:
-            return K, W, S.T, X_mean
+            return K, W, S, X_mean
         else:
-            return K, W, S.T
+            return K, W, S
     else:
-        S = np.dot(W, X)
+        S = np.dot(W, X).T if compute_sources else None
         if return_X_mean:
-            return None, W, S.T, None
+            return None, W, S, None
         else:
-            return None, W, S.T
+            return None, W, S
 
 
 class FastICA(BaseEstimator, TransformerMixin):
@@ -353,6 +356,9 @@ class FastICA(BaseEstimator, TransformerMixin):
         The mixing matrix to be used to initialize the algorithm.
     random_state : int or RandomState
         Pseudo number generator state used for random sampling.
+    compute_sources : bool, optional
+        If False, sources are not computes but only the rotation matrix. This
+        can save memory when working with big data. Defaults to True.
 
     Attributes
     ----------
@@ -373,7 +379,7 @@ class FastICA(BaseEstimator, TransformerMixin):
 
     def __init__(self, n_components=None, algorithm='parallel', whiten=True,
                  fun='logcosh', fun_args=None, max_iter=200, tol=1e-4,
-                 w_init=None, random_state=None):
+                 w_init=None, random_state=None, compute_sources=True):
         super(FastICA, self).__init__()
         self.n_components = n_components
         self.algorithm = algorithm
