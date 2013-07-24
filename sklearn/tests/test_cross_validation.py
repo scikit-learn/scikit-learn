@@ -274,6 +274,9 @@ def test_cross_val_score():
     clf = MockListClassifier()
     scores = cval.cross_val_score(clf, X.tolist(), y)
 
+    assert_raises(ValueError, cval.cross_val_score, clf, X, y,
+                  scoring="sklearn")
+
 
 def test_cross_val_score_precomputed():
     # test for svm with precomputed kernel

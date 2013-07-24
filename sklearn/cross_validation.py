@@ -1138,7 +1138,12 @@ def cross_val_score(estimator, X, y=None, scoring=None, cv=None, n_jobs=1,
                       "Either use strings or score objects.", stacklevel=2)
         scorer = make_scorer(score_func)
     elif isinstance(scoring, string_types):
-        scorer = SCORERS[scoring]
+        try:
+            scorer = SCORERS[scoring]
+        except KeyError:
+            raise ValueError('%s is not a valid scoring value.'
+                                'Valid options are %s' % (scoring,
+                                sorted(SCORERS.keys())))
     else:
         scorer = scoring
     if scorer is None and not hasattr(estimator, 'score'):
