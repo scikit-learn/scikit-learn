@@ -301,7 +301,7 @@ def linkage_tree(X, connectivity=None, n_components=None,
 
     See also
     --------
-    ward_tree
+    ward_tree : hierarchical clustering with ward linkage
     """
     X = np.asarray(X)
     if X.ndim == 1:
@@ -689,14 +689,19 @@ class Ward(AgglomerativeClustering):
     `n_components_` : int
         The estimated number of connected components in the graph.
 
-    `n_components_` : int
-        The estimated number of connected components in the graph.
+    See also
+    --------
+    AgglomerativeClustering : agglomerative hierarchical clustering
     """
     linkage = 'ward'
 
     def __init__(self, n_clusters=2, memory=Memory(cachedir=None, verbose=0),
                  connectivity=None, copy=None, n_components=None,
                  compute_full_tree='auto'):
+
+        warnings.warn("The Ward class is deprecated since 0.14 and will be "
+                      "removed in 0.17. Use the AgglomerativeClustering "
+                      "instead.", DeprecationWarning)
         self.n_clusters = n_clusters
         self.memory = memory
         self.copy = copy
