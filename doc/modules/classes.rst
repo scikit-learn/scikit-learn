@@ -1080,6 +1080,26 @@ Low-level methods
    tree.export_graphviz
 
 
+.. _earth_ref:
+
+:mod:`sklearn.earth`: Earth
+===========================
+
+.. automodule:: sklearn.earth
+   :no-members:
+   :no-inherited-members:
+   
+**User guide:** See the :ref:`earth` section for further details.
+
+.. currentmodule:: sklearn
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+
+   earth.Earth
+
+
 .. _utils_ref:
 
 :mod:`sklearn.utils`: Utilities
