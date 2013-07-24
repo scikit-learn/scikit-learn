@@ -796,3 +796,11 @@ div.box-rst-links, div.box-rst-links p {
 .example-links p {
     display: inline;
 }
+
+div.box em {
+    font-style: normal;
+}
+
+div.box h2 p {
+    display: inline;
+}
