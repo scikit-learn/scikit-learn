@@ -2,7 +2,7 @@ from __future__ import division
 
 import numpy as np
 
-from sklearn.utils.hungarian import hungarian
+from sklearn.utils.linear_assignment_ import linear_assignment
 from sklearn.utils.validation import check_arrays
 
 
@@ -74,7 +74,7 @@ def consensus_score(a, b, similarity="jaccard"):
     if similarity == "jaccard":
         similarity = _jaccard
     matrix = _pairwise_similarity(a, b, similarity)
-    indices = hungarian(1 - matrix)
+    indices = linear_assignment(1 - matrix)
     n_a = len(a[0])
     n_b = len(b[0])
     return np.trace(matrix[:, indices[:, 1]]).sum() / max(n_a, n_b)
