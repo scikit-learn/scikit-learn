@@ -1038,21 +1038,24 @@ def test_imputation_pickle():
 def test_imputation_copy():
     """Test imputation with copy=True."""
     l = 5
-    X = sparse_random_matrix(l, l, density=0.75)
 
-    # Dense
-    imputer = Imputer(missing_values=0, strategy="mean", copy=True)
-    Xt = imputer.fit(X).transform(X)
-    Xt[0, 0] = np.nan
-    # Check that the objects are different and that they don't use
-    # the same buffer
-    assert_false(np.equal(X.todense(), Xt).all())
+    # Test default behaviour and with copy=True
+    for params in [{}, {'copy' : True}]:
+        X = sparse_random_matrix(l, l, density=0.75)
 
-    # Sparse
-    imputer = Imputer(missing_values=0, strategy="mean", copy=True)
-    X = X.todense()
-    Xt = imputer.fit(X).transform(X)
-    Xt[0, 0] = np.nan
-    # Check that the objects are different and that they don't use
-    # the same buffer
-    assert_false(np.equal(X, Xt).all())
+        # Dense
+        imputer = Imputer(missing_values=0, strategy="mean", **params)
+        Xt = imputer.fit(X).transform(X)
+        Xt[0, 0] = np.nan
+        # Check that the objects are different and that they don't use
+        # the same buffer
+        assert_false(np.equal(X.todense(), Xt).all())
+
+        # Sparse
+        imputer = Imputer(missing_values=0, strategy="mean", **params)
+        X = X.todense()
+        Xt = imputer.fit(X).transform(X)
+        Xt[0, 0] = np.nan
+        # Check that the objects are different and that they don't use
+        # the same buffer
+        assert_false(np.equal(X, Xt).all())

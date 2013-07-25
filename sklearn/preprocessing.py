@@ -1421,19 +1421,19 @@ def _get_median(negative_elements, n_zeros, positive_elements):
     median_position = (n_elems - 1) / 2.0
 
     if round(median_position) == median_position:
-        median = _get_elem_at(negative_elements, n_zeros,
+        median = _get_elem_at_rank(negative_elements, n_zeros,
                               positive_elements, median_position)
     else:
-        a = _get_elem_at(negative_elements, n_zeros,
+        a = _get_elem_at_rank(negative_elements, n_zeros,
                          positive_elements, math.floor(median_position))
-        b = _get_elem_at(negative_elements, n_zeros,
+        b = _get_elem_at_rank(negative_elements, n_zeros,
                          positive_elements, math.ceil(median_position))
         median = (a + b) / 2.0
 
     return median
 
 
-def _get_elem_at(negative_elements, n_zeros, positive_elements, k):
+def _get_elem_at_rank(negative_elements, n_zeros, positive_elements, k):
     """Compute the kth largest element of the array formed by
        negative_elements, n_zeros zeros and positive_elements."""
     len_neg = len(negative_elements)
@@ -1478,13 +1478,6 @@ def _most_frequent(array, extra_value, n_repeat):
 class Imputer(BaseEstimator, TransformerMixin):
     """Imputation transformer for completing missing values.
 
-    Notes:
-    - When `axis=0`, columns which only contained missing values at `fit`
-      are discarded upon `transform`.
-    - When `axis=1`, an exception is raised if there are rows for which it is
-      not possible to fill in the missing values (e.g., because they only
-      contain missing values).
-
     Parameters
     ----------
     missing_values : integer or string, optional (default="NaN")
@@ -1515,8 +1508,16 @@ class Imputer(BaseEstimator, TransformerMixin):
 
     Attributes
     ----------
-    `statistics_`: array of shape = [n_features] or [n_samples]
+    `statistics_` : array of shape (n_features,) or (n_samples,)
         The statistics along the imputation axis.
+
+    Notes
+    -----
+    - When ``axis=0``, columns which only contained missing values at `fit`
+      are discarded upon `transform`.
+    - When ``axis=1``, an exception is raised if there are rows for which it is
+      not possible to fill in the missing values (e.g., because they only
+      contain missing values).
     """
     def __init__(self, missing_values="NaN", strategy="mean",
                  axis=0, verbose=0, copy=True):
@@ -1532,8 +1533,8 @@ class Imputer(BaseEstimator, TransformerMixin):
         Parameters
         ----------
         X : {array-like, sparse matrix}, shape = [n_samples, n_features]
-            Input data, where `n_samples` is the number of samples and
-            `n_features` is the number of features.
+            Input data, where ``n_samples`` is the number of samples and
+            ``n_features`` is the number of features.
 
         Returns
         -------
