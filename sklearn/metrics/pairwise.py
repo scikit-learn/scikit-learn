@@ -44,6 +44,7 @@ from scipy.sparse import issparse
 
 from ..utils import atleast2d_or_csr
 from ..utils import gen_even_slices
+from ..utils import safe_asarray
 from ..utils.extmath import safe_sparse_dot
 from ..preprocessing import normalize
 from ..externals.joblib import Parallel
@@ -95,19 +96,10 @@ def check_pairwise_arrays(X, Y):
 
     if not (X.dtype == Y.dtype == np.float32):
         if Y is X:
-            if issparse(X):
-                X.data = Y.data = np.asarray(X.data, dtype=np.float)
-            else:
-                X = Y = np.asarray(X, dtype=np.float)
+            X = Y = safe_asarray(X, dtype=np.float)
         else:
-            if issparse(X):
-                X.data = np.asarray(X.data, dtype=np.float)
-            else:
-                X = np.asarray(X, dtype=np.float)
-            if issparse(Y):
-                Y.data = np.asarray(Y.data, dtype=np.float)
-            else:
-                Y = np.asarray(Y, dtype=np.float)
+            X = safe_asarray(X, dtype=np.float)
+            Y = safe_asarray(Y, dtype=np.float)
     return X, Y
 
 
