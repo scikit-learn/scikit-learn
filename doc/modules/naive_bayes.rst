@@ -187,11 +187,11 @@ memory. To handle this case both :class:`MultinomialNB` and
 incrementally as done with other classifiers as demonstrated in
 :ref:`example_applications_plot_out_of_core_classification.py`.
 
-Contrary to the ``fit`` method, the first call to ``partial_fit`` need to be
+Contrary to the ``fit`` method, the first call to ``partial_fit`` needs to be
 passed the list of all the expected class labels.
 
 note::
 
   The ``partial_fit`` method call of naive Bayes models introduces some
   computational overhead. It is recommended to use data chunk sizes that are as
-  large as possible, that is as large as the available RAM allows.
+  large as possible, that is as the available RAM allows.

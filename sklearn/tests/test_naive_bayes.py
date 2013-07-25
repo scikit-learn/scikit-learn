@@ -350,7 +350,7 @@ def test_check_accuracy_on_digits():
     scores = cross_val_score(BernoulliNB(alpha=10), X_3v8 > 0, y_3v8, cv=10)
     assert_greater(scores.mean(), 0.94)
 
-    # Bernoulli NB (maybe not appropriate for this dataset...)
+    # Gaussian NB (maybe not appropriate for this dataset...)
     scores = cross_val_score(GaussianNB(), X > 0, y, cv=10)
     assert_greater(scores.mean(), 0.68)
 
