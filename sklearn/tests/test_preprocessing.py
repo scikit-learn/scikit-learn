@@ -840,10 +840,14 @@ def _test_statistics(X, X_true,
 
     # Normal matrix, axis = 1
     imputer = Imputer(missing_values, strategy=strategy, axis=1)
-    X_trans = imputer.fit(X.transpose()).transform(X.copy().transpose())
-    assert_array_equal(imputer.statistics_, statistics,
-                       err_msg % (1, False))
-    assert_array_equal(X_trans, X_true.transpose(), err_msg % (1, False))
+    imputer.fit(X.transpose())
+    if np.isnan(statistics).any():
+        assert_raises(ValueError, imputer.transform, X.copy().transpose())
+    else:
+        X_trans = imputer.transform(X.copy().transpose())
+        assert_array_equal(imputer.statistics_, statistics,
+                           err_msg % (1, False))
+        assert_array_equal(X_trans, X_true.transpose(), err_msg % (1, False))
 
     # Sparse matrix, axis = 0
     imputer = Imputer(missing_values, strategy=strategy, axis=0)
@@ -859,15 +863,19 @@ def _test_statistics(X, X_true,
     # Sparse matrix, axis = 1
     imputer = Imputer(missing_values, strategy=strategy, axis=1)
     imputer.fit(sp.csc_matrix(X.transpose()))
-    X_trans = imputer.transform(sp.csc_matrix(X.copy().transpose()))
+    if np.isnan(statistics).any():
+        assert_raises(ValueError, imputer.transform,
+                      sp.csc_matrix(X.copy().transpose()))
+    else:
+        X_trans = imputer.transform(sp.csc_matrix(X.copy().transpose()))
 
-    if sp.issparse(X_trans):
-        X_trans = X_trans.toarray()
+        if sp.issparse(X_trans):
+            X_trans = X_trans.toarray()
 
-    assert_array_equal(imputer.statistics_, statistics,
-                       err_msg % (1, True))
-    assert_array_equal(X_trans, X_true.transpose(),
-                       err_msg % (1, True))
+        assert_array_equal(imputer.statistics_, statistics,
+                           err_msg % (1, True))
+        assert_array_equal(X_trans, X_true.transpose(),
+                           err_msg % (1, True))
 
 
 def test_imputation_mean_median_only_zero():
