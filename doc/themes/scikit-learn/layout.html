@@ -20,12 +20,12 @@
 {% set script_files = script_files + ['_static/sidebar.js'] %}
 {% endif %}
 
-{% block extrahead %}
-
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <!-- Bootstrap -->
 <link rel="stylesheet" href="{{ pathto('_static/css/bootstrap.min.css', 1) }}" media`="screen" />
 <link rel="stylesheet" href="{{ pathto('_static/css/bootstrap-responsive.css', 1) }}"/>
+
+{% block extrahead %}
 
 <script src="{{ pathto('_static/js/bootstrap.min.js', 1)}}"></script>
 
