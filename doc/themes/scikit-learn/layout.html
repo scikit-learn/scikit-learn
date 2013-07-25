@@ -14,6 +14,8 @@
 #}
 {% extends "basic/layout.html" %}
 
+<script src="{{ pathto('_static/js/jquery.js', 1)}}"></script>
+
 {% if theme_collapsiblesidebar|tobool %}
 {% set script_files = script_files + ['_static/sidebar.js'] %}
 {% endif %}
@@ -25,7 +27,6 @@
 <link rel="stylesheet" href="{{ pathto('_static/css/bootstrap.min.css', 1) }}" media`="screen" />
 <link rel="stylesheet" href="{{ pathto('_static/css/bootstrap-responsive.css', 1) }}"/>
 
-<script src="{{ pathto('_static/js/jquery.js', 1)}}"></script>
 <script src="{{ pathto('_static/js/bootstrap.min.js', 1)}}"></script>
 
 {% if theme_google_analytics|tobool %}
