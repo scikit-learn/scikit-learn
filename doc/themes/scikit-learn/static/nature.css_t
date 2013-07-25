@@ -407,12 +407,16 @@ div.topic {
     border: 1px solid #CCC;
     margin: 10px 0px;
     padding: 7px 7px 0px;
+    border-radius: 4px;
+    -moz-border-radius: 4px;
 }
 
 div.admonition {
     margin-bottom: 10px;
     margin-top: 10px;
     padding: 7px;
+    border-radius: 4px;
+    -moz-border-radius: 4px;
 }
 
 div.warning {
@@ -435,10 +439,10 @@ p.admonition-title:after {
 
 pre {
     padding: 10px;
-    background-color: #F5F8FC;
+    background-color: #f8f8f8;
     color: #222;
     line-height: 1.2em;
-    border: 1px solid #D6D6D6;
+    border: 1px solid #ddd;
     margin: 1.5em 0 1.5em 0;
 }
 
