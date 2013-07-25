@@ -37,6 +37,7 @@ zip = six.moves.zip
 map = six.moves.map
 
 __all__ = ['Binarizer',
+           'Imputer',
            'KernelCenterer',
            'LabelBinarizer',
            'LabelEncoder',
@@ -1398,17 +1399,18 @@ def add_dummy_feature(X, value=1.0):
         return np.hstack((np.ones((n_samples, 1)) * value, X))
 
 
-def _get_mask(X, missing_values):
+def _get_mask(X, value_to_mask):
     """Compute the boolean mask X == missing_values."""
-    if missing_values == "NaN" or np.isnan(missing_values):
+    if value_to_mask == "NaN" or np.isnan(value_to_mask):
         return np.isnan(X)
     else:
-        return np.equal(X, missing_values)
+        return X == value_to_mask
 
 
 def _get_median(negative_elements, n_zeros, positive_elements):
     """Compute the median of the array formed by negative_elements,
-       n_zeros zeros and positive_elements."""
+       n_zeros zeros and positive_elements. This function is used
+       to support sparse matrices."""
     negative_elements = np.sort(negative_elements, kind='heapsort')
     positive_elements = np.sort(positive_elements, kind='heapsort')
 

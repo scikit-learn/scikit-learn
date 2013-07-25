@@ -11,9 +11,9 @@ value using the `strategy` hyper-parameter.
 
 Script output:
 
-  Score with the entire dataset = 0.556914670698
-  Score without the samples containing missing values = 0.520166053514
-  Score after imputation of the missing values = 0.532282005499
+  Score with the entire dataset = 0.56
+  Score without the samples containing missing values = 0.53
+  Score after imputation of the missing values = 0.54
 
 """
 import numpy as np
@@ -35,7 +35,7 @@ n_features = X_full.shape[1]
 # Estimate the score on the entire dataset, with no missing values
 estimator = RandomForestRegressor(random_state=0, n_estimators=100)
 score = cross_val_score(estimator, X_full, y_full).mean()
-print("Score with the entire dataset = %s" % score)
+print("Score with the entire dataset = %.2f" % score)
 
 # Add missing values in 50% of the lines
 missing_rate = 0.50
@@ -52,7 +52,7 @@ X_filtered = X_full[~missing_samples, :]
 y_filtered = y_full[~missing_samples, :]
 estimator = RandomForestRegressor(random_state=0, n_estimators=100)
 score = cross_val_score(estimator, X_filtered, y_filtered).mean()
-print("Score without the samples containing missing values = %s" % score)
+print("Score without the samples containing missing values = %.2f" % score)
 
 # Estimate the score after imputation of the missing values
 X_missing = X_full.copy()
@@ -64,4 +64,4 @@ estimator = Pipeline([("imputer", Imputer(missing_values=missing_values,
                       ("forest", RandomForestRegressor(random_state=0,
                                                        n_estimators=100))])
 score = cross_val_score(estimator, X_missing, y_missing).mean()
-print("Score after imputation of the missing values = %s" % score)
+print("Score after imputation of the missing values = %.2f" % score)
