@@ -195,9 +195,11 @@ index -->
         </div>
     {%- endif %}
     </div>
+    {%- if pagename != "install" %} 
     <p style="text-align: center; background-color: #FFE4E4">This documentation is
     for {{project}} <strong>version {{ release|e }}</strong>
     &mdash; <a href="http://scikit-learn.org/stable/support.html#documentation-resources">Other versions</a></p>
+    {%- endif %}
 
     <h3>{{ _('This page') }}</h3>
         {{ toc }}
