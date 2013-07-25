@@ -93,8 +93,7 @@ __all__ = ['clear_data_home',
            'make_sparse_uncorrelated',
            'make_spd_matrix',
            'make_swiss_roll',
-           'mldata_filename',
-           'samples_generator']
+           'mldata_filename']
 
 
 # backward compatibility
