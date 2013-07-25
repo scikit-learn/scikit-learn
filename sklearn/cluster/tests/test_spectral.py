@@ -159,14 +159,15 @@ def test_affinities():
     # Note: in the following, random_state has been selected to have
     # a dataset that yields a stable eigen decomposition both when built
     # on OSX and Linux
-    X, y = make_blobs(n_samples=40, random_state=2,
-                      centers=[[1, 1], [-1, -1]], cluster_std=0.4)
+    X, y = make_blobs(n_samples=20, random_state=2,
+                      centers=[[1, 1], [-1, -1]], cluster_std=0.1
+                      )
     # nearest neighbors affinity
     sp = SpectralClustering(n_clusters=2, affinity='nearest_neighbors',
                             random_state=0)
     labels = sp.fit(X).labels_
     assert_equal(adjusted_rand_score(y, labels), 1)
-
+    
     sp = SpectralClustering(n_clusters=2, gamma=2, random_state=0)
     labels = sp.fit(X).labels_
     assert_equal(adjusted_rand_score(y, labels), 1)
